@@ -40,7 +40,7 @@ public class LoginController {
 	@Autowired
 	private JwtUserDetailsService userDetailsService;
 
-	@PostMapping("/insta/login")
+	@PostMapping("/ec/login")
 	public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception {
 		LoginData loginData = new LoginData();
 
@@ -50,48 +50,13 @@ public class LoginController {
 		
 		
 		  Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities(); 
-		  boolean isAdmin;
-		  boolean isPartner;
-		  String role;
 		  ArrayList<String> roles = new ArrayList<String>();
 		  for(GrantedAuthority grantedAuthority : authorities) 
 		  { 
 			  roles.add(grantedAuthority.getAuthority());
 		  }
-		if(roles.contains("admin") || roles.contains("nonadmin"))
-		{
-			return ResponseEntity.ok(new JwtResponse(token,String.join(",", roles)));
-		}
-		else
-		{
-			throw new Exception ("User does not have required roles to login!");
-			
-		}
-		
+		  return ResponseEntity.ok(new JwtResponse(token,roles));
 	}
-
-	@PostMapping("/insta/partnerlogin")
-	public ResponseEntity<?> loginNonadmin(@RequestBody UserSignInData userData) throws Exception {
-		LoginData loginData = new LoginData();
-		System.out.println(userData.getPassword()+"--"+userData.getUserName());
-		authenticate(userData.getUserName(), userData.getPassword());
-		final UserDetails userDetails = userDetailsService.loadUserByUsername(userData.getUserName());
-		final String token = jwtTokenUtil.generateToken(userDetails);
-		
-		System.out.println("Token Generated");
-		  Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities(); 
-		  ArrayList<String> role = new ArrayList<String>(); 
-		  for(GrantedAuthority grantedAuthority : authorities) 
-		  { 
-			  role.add(grantedAuthority.getAuthority());
-			} 
-		  if(!role.contains("agent") && !role.contains("partner"))
-		  {
-			  throw new Exception("User does not have required role to login");
-		  }
-		return ResponseEntity.ok(new JwtResponse(token,String.join(",", role)));
-	}
-
 
 	private void authenticate(String username, String password) throws Exception {
 		try {

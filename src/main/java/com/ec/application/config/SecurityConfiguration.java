@@ -27,7 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-	public static final String SIGN_UP_URL = "/insta/login";
+	public static final String SIGN_UP_URL = "/ec/login";
 	
 	@Autowired
 	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -42,12 +42,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 				http.csrf().disable()
 						// dont authenticate this particular request
-						.authorizeRequests().antMatchers("/insta/login","/insta/partnerlogin","/insta/extemail","/extemail","/**.html","/styles/**","/*.jpg","/assets/pages/scripts/**").permitAll()
+						.authorizeRequests().antMatchers("**","/ec/login","/ec/partnerlogin","/**.html","/styles/**","/*.jpg","/assets/pages/scripts/**").permitAll()
 						// all other requests need to be authenticated
-						.anyRequest().authenticated().and().
+						.anyRequest().authenticated().and()
 						// make sure we use stateless session; session won't be used to
 						// store user's state.
-						exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
+						.exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
 						.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().cors();
 
 				// Add a filter to validate the tokens with every request
@@ -85,6 +85,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	
 	 @Override
 	    public void configure(WebSecurity web) throws Exception {
-		 web.ignoring().antMatchers("**/login.html","**/scripts/**.js","/**.jpg","/**.ico","/**.html","/header.html","**.html","/**.css","/**.js","/insta/**/login.html","/insta/**/scripts/**.js","/insta/**.jpg","/insta/**.ico","/insta/**.html","/insta/header.html","/insta/**.html","/insta/**.css","/insta/**.js","**/insta/extemail","**/extemail");  
+		 web.ignoring().antMatchers("**/login.html","**/scripts/**.js","/**.jpg","/**.ico","/**.html","/header.html","**.html","/**.css","/**.js","/ec/**/login.html","/ec/**/scripts/**.js","/ec/**.jpg","/ec/**.ico","/ec/**.html","/ec/header.html","/ec/**.html","/ec/**.css","/ec/**.js","**/ec/extemail","**/extemail");  
 	    }
 }

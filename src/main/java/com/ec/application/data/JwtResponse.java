@@ -1,32 +1,36 @@
 package com.ec.application.data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class JwtResponse implements Serializable{
 
 	private static final long serialVersionUID = -8091879091924046844L;
 	private String token;
-	private String role;
+	private ArrayList<String> roles;
 	
-	public JwtResponse(String token, String role)
+	public JwtResponse(String token, ArrayList<String> roles) 
 	{
 		this.token=token;
-		this.role=role;
+		this.roles=roles;
 	}
-	public String getRole() {
-		return role;
-	}
-	public void setRole(String role) {
-		this.role = role;
-	}
-	public JwtResponse(String token2) {
-		this.token=token2;
-	}
+
 	public String getToken() {
 		return token;
 	}
 	public void setToken(String token) {
 		this.token = token;
 	}
+	public ArrayList<String> getRoles() {
+		return roles;
+	}
+	public void setRoles(ArrayList<String> roles) {
+		this.roles = roles;
+	}
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+	
+	
 	
 }
