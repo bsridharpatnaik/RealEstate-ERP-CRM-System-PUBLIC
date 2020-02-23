@@ -1,8 +1,8 @@
 package com.ec.application.model;
 
 import java.io.Serializable;
-import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -11,9 +11,6 @@ import javax.persistence.Table;
 
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "Machinery")
@@ -26,8 +23,11 @@ private static final long serialVersionUID = 1L;
 	@Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
 	Long machineryId;
+	
 	@NonNull
+	@Column(unique=true)
 	String machineryName;
+	
 	String machineryDescription;
 	
 	public Long getMachineryId() {
