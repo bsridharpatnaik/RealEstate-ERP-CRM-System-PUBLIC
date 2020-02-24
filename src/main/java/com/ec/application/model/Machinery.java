@@ -19,7 +19,7 @@ import com.ec.application.SoftDelete.SoftDeletableEntity;
 @Table(name = "Machinery")
 @Audited
 @Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class Machinery extends SoftDeletableEntity implements Serializable
+public class Machinery extends SoftDeletableEntity
 {
 
 private static final long serialVersionUID = 1L;

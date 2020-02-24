@@ -67,7 +67,7 @@ public class CategoryService
 	{
 		try
 		{
-			categoryRepo.deleteById(id);
+			categoryRepo.softDeleteById(id);
 		}
 		catch(Exception e)
 		{
