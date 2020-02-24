@@ -5,7 +5,10 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
+import org.hibernate.envers.Audited;
+
 @MappedSuperclass
+@Audited
 public class SoftDeletableEntity implements Serializable
 {
 
