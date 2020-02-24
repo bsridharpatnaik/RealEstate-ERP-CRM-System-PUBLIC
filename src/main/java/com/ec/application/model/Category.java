@@ -25,7 +25,7 @@ private static final long serialVersionUID = 1L;
 	Long categoryId;
 	
 	@NonNull
-	@Column(unique=true)
+	@Column(unique=true,name="category_name")
 	String categoryName;
 	
 	String categoryDescription;

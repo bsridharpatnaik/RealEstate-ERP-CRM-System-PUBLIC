@@ -1,14 +1,19 @@
 package com.ec.application.SoftDelete;
 
-import javax.persistence.Column;
+import java.io.Serializable;
 
-public class SoftDeletableEntity 
+import javax.persistence.Column;
+import javax.persistence.MappedSuperclass;
+
+@MappedSuperclass
+public class SoftDeletableEntity implements Serializable
 {
 
 	public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
 
+	
     @Column(name="is_deleted", columnDefinition="BOOLEAN DEFAULT true")
-    private boolean isDeleted;
+    public boolean isDeleted;
 
 	public boolean isDeleted() {
 		return isDeleted;
