@@ -69,7 +69,7 @@ public class MachineryService
 	{
 		try
 		{
-			machineryRepo.deleteById(id);
+			machineryRepo.softDeleteById(id);
 		}
 		catch(Exception e)
 		{

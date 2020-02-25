@@ -9,13 +9,17 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
+
+import com.ec.application.SoftDelete.SoftDeletableEntity;
 
 @Entity
 @Table(name = "Category")
 @Audited
-public class Category implements Serializable
+@Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
+public class Category extends SoftDeletableEntity
 {
 
 private static final long serialVersionUID = 1L;
@@ -25,7 +29,7 @@ private static final long serialVersionUID = 1L;
 	Long categoryId;
 	
 	@NonNull
-	@Column(unique=true)
+	@Column(unique=true,name="category_name")
 	String categoryName;
 	
 	String categoryDescription;
