@@ -37,9 +37,7 @@
 							"mode": "raw",
 							"raw": "{\n\t\"userName\":\"sridhar\",\n\t\"password\":\"Test@123\"\n}",
 							"options": {
-								"raw": {
-									"language": "json"
-								}
+								"raw": {}
 							}
 						},
 						"url": {
@@ -270,6 +268,278 @@
 							"path": [
 								"ec",
 								"machinery"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Vendor",
+			"item": [
+				{
+					"name": "Create Vendor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"vendorName\":\"JCBB\",\n\t\"vendorAddress\":\"ABC\",\n\t\"vendorPhone\":\"2323232\",\n\t\"vendorEmail\":\"ven@dd.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/vendor/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"vendor",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get BY ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/vendor/3",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"vendor",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete BY ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/machinery/1",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"machinery",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update By ID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"machineryName\":\"JC\",\n\t\"machineryDescription\":\"A\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/vendor/5",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"vendor",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get By Name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/machinery/name/JCB",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"machinery",
+								"name",
+								"JCB"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "By Partial Name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/machinery/partialname/JCBB",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"machinery",
+								"partialname",
+								"JCBB"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Paged",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/vendor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"vendor"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "User/Role",
+			"item": [
+				{
+					"name": "Fetch All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/javascript",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\":\"santhosh\",\n\t\"password\":\"Test@123\",\n\t\"role\":\"admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "javascript"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/user/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"user",
+								"create"
 							]
 						}
 					},

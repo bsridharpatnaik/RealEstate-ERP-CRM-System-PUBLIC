@@ -46,11 +46,17 @@ public class MachineryService
         
 		Machinery newMachinery = new Machinery();
         newMachinery = payload;
-        if(!machineryRepo.existsByMachineryName(newMachinery.getMachineryName()))
+        if(!machineryRepo.existsByMachineryName(newMachinery.getMachineryName()) && 
+        		!newMachinery.getMachineryName().equalsIgnoreCase(MachineryForUpdate.getMachineryName()))
         {		
         	MachineryForUpdate.setMachineryName(newMachinery.getMachineryName());
             MachineryForUpdate.setMachineryDescription(newMachinery.getMachineryDescription());
         }
+        else if(newMachinery.getMachineryName().equalsIgnoreCase(MachineryForUpdate.getMachineryName()))
+        {
+        	MachineryForUpdate.setMachineryDescription(newMachinery.getMachineryDescription());
+        }
+        
         else 
         {
         	throw new Exception("Machinery with same Name already exists");
