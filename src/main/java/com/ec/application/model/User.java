@@ -13,14 +13,18 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.BatchSize;
 import org.springframework.lang.NonNull;
 
+import com.ec.application.SoftDelete.SoftDeletableEntity;
+
 
 @Entity
-@Table(name = "security_user")
-public class User {
+@Table(name = "security_user",uniqueConstraints={@UniqueConstraint(columnNames={"user_name"})})
+public class User extends SoftDeletableEntity
+{
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
