@@ -100,6 +100,7 @@ public class UserService
 			for(String role : roles)
 			{
 				Role roleEntity = rRepo.findByName(role);
+				if(roleEntity!=null)
 				roleset.add(roleEntity);
 			}
 			user.setRoles(roleset);
