@@ -6,7 +6,7 @@ public class CreateUserData
 {
 	String username;
 	String password;
-	ArrayList<String> role;
+	ArrayList<String> roles;
 	public String getUsername() {
 		return username;
 	}
@@ -20,10 +20,10 @@ public class CreateUserData
 		this.password = password;
 	}
 	public ArrayList<String> getRole() {
-		return role;
+		return roles;
 	}
 	public void setRole(ArrayList<String> role) {
-		this.role = role;
+		this.roles = role;
 	}
 	
 }

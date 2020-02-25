@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.CreateUserData;
+import com.ec.application.data.ResetPasswordData;
+import com.ec.application.data.UpdateRolesForUserData;
 import com.ec.application.model.Role;
 import com.ec.application.model.User;
 import com.ec.application.repository.RoleRepo;
@@ -25,26 +27,34 @@ public class UserService
 	@Autowired
 	RoleRepo rRepo;
 	
-	public User createUser(CreateUserData userData)
+	public User createUser(CreateUserData userData) throws Exception
 	{		
 		String username = userData.getUsername();
 		String password = userData.getPassword();
-		String role = userData.getRole(); 
+		ArrayList<String> roles = userData.getRole(); 
 	
-		if(!rRepo.findByUserName(username))
+		if(uRepo.findUserByUsername(username).size()==0)
 		{
 			User user = new User();
-			
-			Role roleEntity = rRepo.findByName(role);
 			Set<Role> roleset = new HashSet<Role>();
-			roleset.add(roleEntity);
-			user.setUserName(username);
-			user.setStatus(true);
-			user.setRoles(roleset);
-			user.setPassword(bCryptPassword(password));
-			user.setPasswordExpired(false);
-			uRepo.save(user);
-			return user;
+			
+			for(String role : roles)
+			{
+				Role roleEntity = rRepo.findByName(role);
+				roleset.add(roleEntity);
+			}
+				user.setUserName(username);
+				user.setStatus(true);
+				user.setRoles(roleset);
+				user.setPassword(bCryptPassword(password));
+				user.setPasswordExpired(false);
+				uRepo.save(user);
+				return user;
+	
+		}
+		else
+		{
+			throw new Exception("User already exists");
 		}
 	}
 
@@ -60,18 +70,45 @@ public class UserService
 		return uRepo.findAll(pageable);
 	}
 	
-	public void updateUser(String username, String password) throws Exception 
+	public User resetPassword(ResetPasswordData rpData) throws Exception 
 	{
+		String username = rpData.getUsername();
+		String password = rpData.getNewPassword();
 		ArrayList<User> users = uRepo.findUserByUsername(username);
 		if(users.size()==1)
 		{
 			User user = users.get(0);
 			user.setPassword(bCryptPassword(password));
 			uRepo.save(user);
+			return user;
 		}
 		else 
 		{
 			throw new Exception ("No or Multiple users found by username!");
 		}
+	}
+	public User updateRolesForUser(UpdateRolesForUserData upRoleData) throws Exception 
+	{
+		String username = upRoleData.getUsername();
+		ArrayList<String> roles = upRoleData.getRoles();
+		ArrayList<User> users = uRepo.findUserByUsername(username);
+		if(users.size()==1)
+		{
+			User user = users.get(0);
+			Set<Role> roleset = new HashSet<Role>();
+			
+			for(String role : roles)
+			{
+				Role roleEntity = rRepo.findByName(role);
+				roleset.add(roleEntity);
+			}
+			user.setRoles(roleset);
+			uRepo.save(user);
+			return user;
 		}
+		else 
+		{
+			throw new Exception ("No or Multiple users found by username!");
+		}
+	}
 	}

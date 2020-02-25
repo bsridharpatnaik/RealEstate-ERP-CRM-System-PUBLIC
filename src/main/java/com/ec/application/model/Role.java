@@ -7,11 +7,16 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
+
 import com.ec.application.SoftDelete.SoftDeletableEntity;
 
 
 @Entity
 @Table(name = "role")
+@Audited
+@Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
 public class Role extends SoftDeletableEntity {
 
 	private static final long serialVersionUID = 1L;

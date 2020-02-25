@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.data.CreateUserData;
 import com.ec.application.data.ResetPasswordData;
+import com.ec.application.data.UpdateRolesForUserData;
 import com.ec.application.model.User;
 import com.ec.application.service.UserService;
 
@@ -41,6 +42,13 @@ public class UserController
 	@ResponseStatus(HttpStatus.OK)
 	public User updateUser(@RequestBody ResetPasswordData payload) throws Exception{
 		
-		return userService.updateUser(payload);
+		return userService.resetPassword(payload);
+	}
+	
+	@PostMapping("/updateroles") 
+	@ResponseStatus(HttpStatus.OK)
+	public User updateRolesForUser(@RequestBody UpdateRolesForUserData payload) throws Exception{
+		
+		return userService.updateRolesForUser(payload);
 	}
 }
