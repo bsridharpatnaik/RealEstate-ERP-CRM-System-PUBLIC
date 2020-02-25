@@ -25,7 +25,7 @@ public class Machinery extends SoftDeletableEntity
 private static final long serialVersionUID = 1L;
 	
 	@Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
 	Long machineryId;
 	
 	@NonNull

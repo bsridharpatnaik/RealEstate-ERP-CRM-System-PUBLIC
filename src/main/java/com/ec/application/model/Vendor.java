@@ -20,14 +20,50 @@ import com.ec.application.SoftDelete.SoftDeletableEntity;
 public class Vendor extends SoftDeletableEntity
 {
 	@Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-	Long vendorid;
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "vendorid", updatable = false, nullable = false)
+	Long vendorId;
 	
 	@NonNull
 	@Column(unique=true)
-	String VendorName;
+	String vendorName;
 	
-	String VendorAddress;
-	String VendorPhone;
-	String VendorEmail;
+	String vendorAddress;
+	String vendorPhone;
+	String vendorEmail;
+	
+	
+	public Long getVendorId() {
+		return vendorId;
+	}
+	public void setVendorId(Long vendorId) {
+		this.vendorId = vendorId;
+	}
+	public String getVendorName() {
+		return vendorName;
+	}
+	public void setVendorName(String vendorName) {
+		this.vendorName = vendorName;
+	}
+	public String getVendorAddress() {
+		return vendorAddress;
+	}
+	public void setVendorAddress(String vendorAddress) {
+		this.vendorAddress = vendorAddress;
+	}
+	public String getVendorPhone() {
+		return vendorPhone;
+	}
+	public void setVendorPhone(String vendorPhone) {
+		this.vendorPhone = vendorPhone;
+	}
+	public String getVendorEmail() {
+		return vendorEmail;
+	}
+	public void setVendorEmail(String vendorEmail) {
+		this.vendorEmail = vendorEmail;
+	}
+	
+	
+	
 }
