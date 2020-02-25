@@ -1,10 +1,12 @@
 package com.ec.application.data;
 
+import java.util.ArrayList;
+
 public class CreateUserData 
 {
 	String username;
 	String password;
-	String role;
+	ArrayList<String> role;
 	public String getUsername() {
 		return username;
 	}
@@ -17,10 +19,11 @@ public class CreateUserData
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	public String getRole() {
+	public ArrayList<String> getRole() {
 		return role;
 	}
-	public void setRole(String role) {
+	public void setRole(ArrayList<String> role) {
 		this.role = role;
 	}
+	
 }

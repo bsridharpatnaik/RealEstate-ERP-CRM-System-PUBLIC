@@ -10,37 +10,27 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.ec.application.data.CreateUserData;
-import com.ec.application.data.ResetPasswordData;
-import com.ec.application.model.User;
-import com.ec.application.service.UserService;
+import com.ec.application.model.Role;
+import com.ec.application.service.RoleService;
 
 @RestController
-@RequestMapping("ec/user")
-public class UserController 
+@RequestMapping("ec/role")
+public class RoleController 
 {
-
 	@Autowired
-	UserService userService;
+	RoleService roleService;
 	
 	@GetMapping
-	public Page<User> returnAllPayments(Pageable pageable) 
+	public Page<Role> returnAllRoles(Pageable pageable) 
 	{
 		
-		return userService.fetchAll(pageable);
-	}
-	@PostMapping("/create") 
-	@ResponseStatus(HttpStatus.CREATED)
-	public User createUser(@RequestBody CreateUserData payload) throws Exception{
-		
-		return userService.createUser(payload);
+		return roleService.findAll(pageable);
 	}
 	
-	@PostMapping("/updatepassword") 
-	@ResponseStatus(HttpStatus.OK)
-	public User updateUser(@RequestBody ResetPasswordData payload) throws Exception{
+	@PostMapping("/create") 
+	@ResponseStatus(HttpStatus.CREATED)
+	public Role createRole(@RequestBody Role payload) throws Exception{
 		
-		return userService.updateUser(payload);
+		return roleService.createRole(payload);
 	}
 }
