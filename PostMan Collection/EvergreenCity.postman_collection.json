@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "70e71471-2ad0-48e8-a7b4-7b3545585f8a",
+		"_postman_id": "00497ef0-d77b-4aa3-af56-c248383bf8ff",
 		"name": "EvergreenCity",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -502,9 +502,23 @@
 					"name": "Fetch All Users",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
 						"url": {
-							"raw": ""
+							"raw": "http://{{serverUrl}}/ec/user",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"user"
+							]
 						}
 					},
 					"response": []
@@ -517,16 +531,21 @@
 							{
 								"key": "Content-Type",
 								"name": "Content-Type",
-								"value": "application/javascript",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"username\":\"santhosh\",\n\t\"password\":\"Test@123\",\n\t\"role\":\"admin\"\n}",
+							"raw": "{\n\t\"username\":\"santhosh21\",\n\t\"password\":\"Test@123\",\n\t\"role\":[\"clerk\"]\n}",
 							"options": {
 								"raw": {
-									"language": "javascript"
+									"language": "json"
 								}
 							}
 						},
@@ -544,8 +563,161 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Create Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\"admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/role/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"role",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch All Roles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/role",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"role"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\":\"santhosh1\",\n\t\"newPassword\":\"bhagbjsd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/user/updatepassword",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"user",
+								"updatepassword"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Roles for User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\":\"sri\",\n\t\"roles\":[\"clerk\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/user/updateroles",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"user",
+								"updateroles"
+							]
+						}
+					},
+					"response": []
 				}
 			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Category",
+			"item": [],
 			"protocolProfileBehavior": {}
 		}
 	],

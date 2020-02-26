@@ -85,9 +85,9 @@ public class VendorService
 
 	public ArrayList<Vendor> findVendorsByName(String name) 
 	{
-		ArrayList<Vendor> machinertList = new ArrayList<Vendor>();
-		machinertList = VendorRepo.findByVendorName(name);
-		return machinertList;
+		ArrayList<Vendor> vendorList = new ArrayList<Vendor>();
+		vendorList = VendorRepo.findByVendorName(name);
+		return vendorList;
 	}
 
 	public ArrayList<Vendor> findVendorsByPartialName(String name) 

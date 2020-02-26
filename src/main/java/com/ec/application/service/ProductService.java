@@ -44,10 +44,15 @@ public class ProductService
         
 		Product newProduct = new Product();
         newProduct = payload;
-        if(!productRepo.existsByProductName(newProduct.getProductName()))
+        if(!productRepo.existsByProductName(newProduct.getProductName())
+        		&& !newProduct.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
         {		
         	ProductForUpdate.setProductName(newProduct.getProductName());
             ProductForUpdate.setProductDescription(newProduct.getProductDescription());
+        }
+        else if(newProduct.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
+        {
+        	ProductForUpdate.setProductDescription(newProduct.getProductDescription());
         }
         else 
         {
@@ -77,9 +82,9 @@ public class ProductService
 
 	public ArrayList<Product> findProductsByName(String name) 
 	{
-		ArrayList<Product> machinertList = new ArrayList<Product>();
-		machinertList = productRepo.findByproductName(name);
-		return machinertList;
+		ArrayList<Product> productList = new ArrayList<Product>();
+		productList = productRepo.findByproductName(name);
+		return productList;
 	}
 
 	public ArrayList<Product> findProductsByPartialName(String name) 

@@ -44,10 +44,15 @@ public class CategoryService
         
 		Category newCategory = new Category();
         newCategory = payload;
-        if(!categoryRepo.existsByCategoryName(newCategory.getCategoryName()))
+        if(!categoryRepo.existsByCategoryName(newCategory.getCategoryName()) && 
+        		!newCategory.getCategoryName().equalsIgnoreCase(CategoryForUpdate.getCategoryName()))
         {		
         	CategoryForUpdate.setCategoryName(newCategory.getCategoryName());
             CategoryForUpdate.setCategoryDescription(newCategory.getCategoryDescription());
+        }
+        else if(newCategory.getCategoryName().equalsIgnoreCase(CategoryForUpdate.getCategoryName()))
+        {
+        	CategoryForUpdate.setCategoryDescription(newCategory.getCategoryDescription());
         }
         else 
         {
@@ -77,9 +82,9 @@ public class CategoryService
 
 	public ArrayList<Category> findCategorysByName(String name) 
 	{
-		ArrayList<Category> machinertList = new ArrayList<Category>();
-		machinertList = categoryRepo.findBycategoryName(name);
-		return machinertList;
+		ArrayList<Category> categorytList = new ArrayList<Category>();
+		categorytList = categoryRepo.findBycategoryName(name);
+		return categorytList;
 	}
 
 	public ArrayList<Category> findCategorysByPartialName(String name) 

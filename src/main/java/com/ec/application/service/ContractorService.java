@@ -44,10 +44,16 @@ public class ContractorService
         
 		Contractor newContractor = new Contractor();
         newContractor = payload;
-        if(!contractorRepo.existsByContractorName(newContractor.getContractorName()))
+        if(!contractorRepo.existsByContractorName(newContractor.getContractorName())
+        		&& !newContractor.getContractorName().equals(ContractorForUpdate.getContractorName()))
+        	
         {		
         	ContractorForUpdate.setContractorName(newContractor.getContractorName());
             ContractorForUpdate.setContractorDescription(newContractor.getContractorDescription());
+        }
+        else if(newContractor.getContractorName().equalsIgnoreCase(ContractorForUpdate.getContractorName()))
+        {
+        	ContractorForUpdate.setContractorDescription(newContractor.getContractorDescription());
         }
         else 
         {
@@ -77,9 +83,9 @@ public class ContractorService
 
 	public ArrayList<Contractor> findContractorsByName(String name) 
 	{
-		ArrayList<Contractor> machinertList = new ArrayList<Contractor>();
-		machinertList = contractorRepo.findBycontractorName(name);
-		return machinertList;
+		ArrayList<Contractor> contractorList = new ArrayList<Contractor>();
+		contractorList = contractorRepo.findBycontractorName(name);
+		return contractorList;
 	}
 
 	public ArrayList<Contractor> findContractorsByPartialName(String name) 
