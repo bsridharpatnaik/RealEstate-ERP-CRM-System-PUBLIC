@@ -49,10 +49,12 @@ public class ProductService
         {		
         	ProductForUpdate.setProductName(newProduct.getProductName());
             ProductForUpdate.setProductDescription(newProduct.getProductDescription());
+            ProductForUpdate.setMeasurementUnit(newProduct.getMeasurementUnit());
         }
         else if(newProduct.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
         {
         	ProductForUpdate.setProductDescription(newProduct.getProductDescription());
+        	ProductForUpdate.setMeasurementUnit(newProduct.getMeasurementUnit());
         }
         else 
         {

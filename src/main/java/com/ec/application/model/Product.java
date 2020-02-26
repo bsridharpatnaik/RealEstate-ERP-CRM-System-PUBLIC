@@ -1,12 +1,12 @@
 package com.ec.application.model;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Where;
@@ -14,6 +14,7 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
+
 
 @Entity
 @Table(name = "Product")
@@ -34,12 +35,15 @@ private static final long serialVersionUID = 1L;
 	
 	String productDescription;
 	
+	String measurementUnit;
+	
 	public Long getProductId() {
 		return productId;
 	}
 	public void setProductId(Long productId) {
 		this.productId = productId;
 	}
+	
 	
 	
 	public String getProductName() {
@@ -57,6 +61,13 @@ private static final long serialVersionUID = 1L;
 	public static long getSerialversionuid() {
 		return serialVersionUID;
 	}
+	public String getMeasurementUnit() {
+		return measurementUnit;
+	}
+	public void setMeasurementUnit(String measurementUnit) {
+		this.measurementUnit = measurementUnit;
+	}
+	
 	
 	
 }

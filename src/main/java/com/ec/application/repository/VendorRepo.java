@@ -3,6 +3,7 @@ package com.ec.application.repository;
 import java.util.ArrayList;
 
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
@@ -19,5 +20,5 @@ public interface VendorRepo extends BaseRepository<Vendor, Long>
 	ArrayList<Vendor> findByVendorName(String VendorName);
 
 	@Query(value="SELECT m from Vendor m where vendorName LIKE %:name%")
-	ArrayList<Vendor> findByPartialName(String name);
+	ArrayList<Vendor> findByPartialName(@Param("name") String name);
 }

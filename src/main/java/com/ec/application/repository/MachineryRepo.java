@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
@@ -18,5 +19,5 @@ public interface MachineryRepo extends BaseRepository<Machinery, Long>
 	ArrayList<Machinery> findBymachineryName(String machineryName);
 
 	@Query(value="SELECT m from Machinery m where machineryName LIKE %:name%")
-	ArrayList<Machinery> findByPartialName(String name);
+	ArrayList<Machinery> findByPartialName(@Param("name") String name);
 }

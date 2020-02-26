@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
@@ -19,5 +20,5 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	ArrayList<Product> findByproductName(String productName);
 
 	@Query(value="SELECT m from Product m where productName LIKE %:name%")
-	ArrayList<Product> findByPartialName(String name);
+	ArrayList<Product> findByPartialName(@Param("name") String name);
 }
