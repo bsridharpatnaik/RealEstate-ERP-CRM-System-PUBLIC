@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
@@ -14,5 +15,5 @@ import com.ec.application.model.User;
 public interface UserRepo extends BaseRepository<User, Long>
 {
 	@Query(value="SELECT c FROM User c WHERE c.userName like :userName")
-    public ArrayList<User> findUserByUsername(String userName);
+    public ArrayList<User> findUserByUsername(@Param("userName") String userName);
 }
