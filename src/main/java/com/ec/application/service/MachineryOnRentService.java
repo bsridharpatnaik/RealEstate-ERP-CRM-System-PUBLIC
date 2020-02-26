@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,26 +45,26 @@ public class MachineryOnRentService
 	private MachineryOnRent populateData(CreateMORentData payload) 
 	{
 		MachineryOnRent machineryOnRent = new MachineryOnRent();
-		Location location = locationRepo.getOne(payload.getLocationId());
-		Vendor vendor = vendorRepo.getOne(payload.getVendorId());
-		Machinery machinery = machineryRepo.getOne(payload.getMachineryId());
+		Optional<Location> locationOpt = locationRepo.findById(payload.getLocationId());
+		Optional<Vendor> vendorOpt = vendorRepo.findById(payload.getVendorId());
+		Optional<Machinery> machineryOpt = machineryRepo.findById(payload.getMachineryId());
 		
 		machineryOnRent.setAmountCharged(payload.getAmountCharged());
+		machineryOnRent.setStartDate(payload.getStartDate());
 		machineryOnRent.setEndDate(payload.getEndDate());
 		machineryOnRent.setEndMeterReading(payload.getEndMeterReading());
 		machineryOnRent.setInitialMeterReading(payload.getInitialMeterReading());
-		machineryOnRent.setLocation(location);
-		machineryOnRent.setMachinery(machinery);
+		machineryOnRent.setLocation(locationOpt.get());
+		machineryOnRent.setMachinery(machineryOpt.get());
 		machineryOnRent.setMode(payload.getMode());
 		machineryOnRent.setNoOfTrips(payload.getNoOfTrips());
-		machineryOnRent.setVendor(vendor);
+		machineryOnRent.setVendor(vendorOpt.get());
 		machineryOnRent.setDate(payload.getDate());
 		return morRepo.save(machineryOnRent);
 	}
 
 	public Page<MachineryOnRent> findAll(Pageable pageable) 
 	{
-		// TODO Auto-generated method stub
 		return morRepo.findAll(pageable);
 	}
 	

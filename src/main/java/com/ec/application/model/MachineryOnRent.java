@@ -2,7 +2,10 @@ package com.ec.application.model;
 
 import java.util.Date;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -12,9 +15,11 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
@@ -29,34 +34,42 @@ public class MachineryOnRent extends SoftDeletableEntity
     @GeneratedValue(strategy = GenerationType.AUTO)
 	Long Id;
 	
-	@JsonProperty("Date")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	@Column(nullable = false)
 	Date Date;
 	
-	@ManyToOne
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="machineryId",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Machinery machinery;
 	
-	@ManyToOne
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="vendorId",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Vendor vendor;
 	
-	@ManyToOne
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="locationId",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Location location;
 	
 	String mode;
 	
 	@JsonProperty("StartDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	@Column(nullable = false)
 	Date startDate;
 	
 	@JsonProperty("EndDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	@Column(nullable = false)
 	Date endDate;
 	
+	@Column(nullable = false)
 	Long initialMeterReading;
+	@Column(nullable = false)
 	Long endMeterReading;
+	@Column(nullable = false)
 	Long noOfTrips;
 	Float amountCharged;
 	
@@ -76,6 +89,8 @@ public class MachineryOnRent extends SoftDeletableEntity
 	public Machinery getMachinery() {
 		return machinery;
 	}
+	
+	
 	public void setMachinery(Machinery machinery) {
 		this.machinery = machinery;
 	}
