@@ -36,6 +36,7 @@ public class MachineryOnRent extends SoftDeletableEntity
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
+	@NonNull
 	Date Date;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
@@ -58,18 +59,23 @@ public class MachineryOnRent extends SoftDeletableEntity
 	@JsonProperty("StartDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
+	@NonNull
 	Date startDate;
 	
 	@JsonProperty("EndDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
+	@NonNull
 	Date endDate;
 	
 	@Column(nullable = false)
+	@NonNull
 	Long initialMeterReading;
 	@Column(nullable = false)
+	@NonNull
 	Long endMeterReading;
 	@Column(nullable = false)
+	@NonNull
 	Long noOfTrips;
 	Float amountCharged;
 	

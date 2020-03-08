@@ -3,6 +3,7 @@ package com.ec.application.repository;
 import java.util.ArrayList;
 
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -19,4 +20,6 @@ public interface CategoryRepo extends BaseRepository<Category, Long>
 
 	@Query(value="SELECT m from Category m where categoryName LIKE %:name%")
 	ArrayList<Category> findByPartialName(@Param("name") String name);
+	
+	
 }

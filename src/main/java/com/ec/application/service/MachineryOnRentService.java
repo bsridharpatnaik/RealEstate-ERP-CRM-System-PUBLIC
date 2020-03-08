@@ -2,6 +2,7 @@ package com.ec.application.service;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,16 +36,43 @@ public class MachineryOnRentService
 	public MachineryOnRent createData(CreateMORentData payload)
 	{
 		MachineryOnRent machineryOnRent = new MachineryOnRent();
-		
-		machineryOnRent = populateData(payload);
-		
+		populateData(machineryOnRent,payload);
 		return morRepo.save(machineryOnRent);
 		
 	}
-
-	private MachineryOnRent populateData(CreateMORentData payload) 
+	public MachineryOnRent UpdateData(CreateMORentData payload,Long id) throws Exception
 	{
-		MachineryOnRent machineryOnRent = new MachineryOnRent();
+		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
+		if(!machineryOnRentOpt.isPresent())
+			throw new Exception("Machinery On rent by ID "+id+" Not found");
+		MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
+		populateData(machineryOnRent,payload);
+		return morRepo.save(machineryOnRent);
+		
+	}
+	
+	public MachineryOnRent findById(Long id) throws Exception
+	{
+		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
+		if(!machineryOnRentOpt.isPresent())
+			throw new Exception("Machinery On rent by ID "+id+" Not found");
+		MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
+		return morRepo.save(machineryOnRent);
+		
+	}
+	public void DeleteData(Long id) throws Exception
+	{
+		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
+		if(!machineryOnRentOpt.isPresent())
+			throw new Exception("Machinery On rent by ID "+id+" Not found");
+		MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
+		morRepo.softDeleteById(id);
+	}
+	
+	
+
+	private MachineryOnRent populateData(MachineryOnRent machineryOnRent,CreateMORentData payload) 
+	{
 		Optional<Location> locationOpt = locationRepo.findById(payload.getLocationId());
 		Optional<Vendor> vendorOpt = vendorRepo.findById(payload.getVendorId());
 		Optional<Machinery> machineryOpt = machineryRepo.findById(payload.getMachineryId());
