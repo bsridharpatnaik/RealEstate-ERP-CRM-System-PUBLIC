@@ -70,4 +70,10 @@ public class MachineryController
 	{
 		return machineryService.findMachinerysByPartialName(name);
 	}
+	
+	@GetMapping("/idandnames")
+	public ArrayList<?> returnIdAndNames() 
+	{
+		return machineryService.findIdAndNames();
+	}
 }

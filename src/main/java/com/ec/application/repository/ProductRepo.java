@@ -21,4 +21,13 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value="SELECT m from Product m where productName LIKE %:name%")
 	ArrayList<Product> findByPartialName(@Param("name") String name);
+
+	@Query(value="SELECT m from Product m where m.category.categoryName=categoryname")
+	ArrayList<String> returnNameByCategory(String categoryname);
+
+	@Query(value="SELECT m from Product m where m.category.categoryId=id")
+	ArrayList<Product> existsByCategoryId(Long id);
+
+	@Query(value="SELECT productId,productName from Product m")
+	ArrayList<?> findIdAndNames();
 }

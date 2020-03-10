@@ -21,17 +21,17 @@ public class Location extends SoftDeletableEntity
 {
 	@Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-	Long loationId;
+	Long locationId;
 	
 	@NonNull
 	@Column(unique=true,name="location_name")
 	String locationName;
 	String locationDescription;
 	public Long getLoationId() {
-		return loationId;
+		return locationId;
 	}
 	public void setLoationId(Long loationId) {
-		this.loationId = loationId;
+		this.locationId = loationId;
 	}
 	public String getLocationName() {
 		return locationName;

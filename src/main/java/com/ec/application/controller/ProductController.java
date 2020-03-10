@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Product;
 import com.ec.application.service.ProductService;
 
@@ -48,13 +49,13 @@ public class ProductController
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Product createProduct(@RequestBody Product payload) throws Exception{
+	public Product createProduct(@RequestBody ProductCreateData payload) throws Exception{
 		
 		return productService.createProduct(payload);
 	}
 
 	@PutMapping("/{id}")
-	public Product updateProduct(@PathVariable Long id, @RequestBody Product Product) throws Exception 
+	public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception 
 	{
 		return productService.updateProduct(id, Product);
 	} 
@@ -68,5 +69,10 @@ public class ProductController
 	public ArrayList<Product> returnCusByPartialName(@PathVariable String name) 
 	{
 		return productService.findProductsByPartialName(name);
+	}
+	@GetMapping("/idandnames")
+	public ArrayList<?> returnIdAndNames() 
+	{
+		return productService.findIdAndNames();
 	}
 }

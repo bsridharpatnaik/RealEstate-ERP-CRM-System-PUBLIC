@@ -69,4 +69,9 @@ public class VendorController
 	{
 		return VendorService.findVendorsByPartialName(name);
 	}
+	@GetMapping("/idandnames")
+	public ArrayList<?> returnIdAndNames() 
+	{
+		return VendorService.findIdAndNames();
+	}
 }

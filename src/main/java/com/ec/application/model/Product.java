@@ -1,19 +1,24 @@
 package com.ec.application.model;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 
 @Entity
@@ -37,6 +42,12 @@ private static final long serialVersionUID = 1L;
 	
 	String measurementUnit;
 	
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="categoryId",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@NotFound(action=NotFoundAction.IGNORE)
+	Category category;
+	
 	public Long getProductId() {
 		return productId;
 	}
@@ -46,6 +57,12 @@ private static final long serialVersionUID = 1L;
 	
 	
 	
+	public Category getCategory() {
+		return category;
+	}
+	public void setCategory(Category category) {
+		this.category = category;
+	}
 	public String getProductName() {
 		return productName;
 	}

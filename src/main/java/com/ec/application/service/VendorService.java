@@ -94,4 +94,10 @@ public class VendorService
 	{
 		return VendorRepo.findByPartialName(name);
 	}
+
+	public ArrayList<?> findIdAndNames() 
+	{
+		// TODO Auto-generated method stub
+		return VendorRepo.findIdAndNames();
+	}
 }

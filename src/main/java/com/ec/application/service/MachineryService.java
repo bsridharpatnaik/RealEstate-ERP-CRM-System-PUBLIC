@@ -94,4 +94,10 @@ public class MachineryService
 	{
 		return machineryRepo.findByPartialName(name);
 	}
+
+	public ArrayList<?> findIdAndNames() 
+	{
+		// TODO Auto-generated method stub
+		return machineryRepo.findIdAndNames();
+	}
 }

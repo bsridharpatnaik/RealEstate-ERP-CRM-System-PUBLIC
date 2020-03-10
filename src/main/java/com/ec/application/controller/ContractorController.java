@@ -69,4 +69,9 @@ public class ContractorController
 	{
 		return contractorService.findContractorsByPartialName(name);
 	}
+	@GetMapping("/idandnames")
+	public ArrayList<?> returnidandNames() 
+	{
+		return contractorService.findIdAndNames();
+	}
 }

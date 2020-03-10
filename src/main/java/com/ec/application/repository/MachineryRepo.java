@@ -20,4 +20,7 @@ public interface MachineryRepo extends BaseRepository<Machinery, Long>
 
 	@Query(value="SELECT m from Machinery m where machineryName LIKE %:name%")
 	ArrayList<Machinery> findByPartialName(@Param("name") String name);
+
+	@Query(value="SELECT machineryId,machineryName from Machinery m")
+	ArrayList<?> findIdAndNames();
 }

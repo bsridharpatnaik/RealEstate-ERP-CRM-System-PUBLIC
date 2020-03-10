@@ -20,6 +20,9 @@ public interface CategoryRepo extends BaseRepository<Category, Long>
 
 	@Query(value="SELECT m from Category m where categoryName LIKE %:name%")
 	ArrayList<Category> findByPartialName(@Param("name") String name);
+
+	@Query(value="SELECT categoryId,categoryName from Category m")
+	ArrayList<?> findIdAndNames();
 	
 	
 }

@@ -33,7 +33,7 @@ public class MachineryOnRentService
 	@Autowired
 	MachineryRepo machineryRepo;
 	
-	public MachineryOnRent createData(CreateMORentData payload)
+	public MachineryOnRent createData(CreateMORentData payload) throws Exception
 	{
 		MachineryOnRent machineryOnRent = new MachineryOnRent();
 		populateData(machineryOnRent,payload);
@@ -71,12 +71,14 @@ public class MachineryOnRentService
 	
 	
 
-	private MachineryOnRent populateData(MachineryOnRent machineryOnRent,CreateMORentData payload) 
+	private MachineryOnRent populateData(MachineryOnRent machineryOnRent,CreateMORentData payload) throws Exception 
 	{
 		Optional<Location> locationOpt = locationRepo.findById(payload.getLocationId());
 		Optional<Vendor> vendorOpt = vendorRepo.findById(payload.getVendorId());
 		Optional<Machinery> machineryOpt = machineryRepo.findById(payload.getMachineryId());
 		
+		if(!locationOpt.isPresent() || !vendorOpt.isPresent() || !machineryOpt.isPresent())
+			throw new Exception("Location/Vendor/Machinery not found");
 		machineryOnRent.setAmountCharged(payload.getAmountCharged());
 		machineryOnRent.setStartDate(payload.getStartDate());
 		machineryOnRent.setEndDate(payload.getEndDate());
@@ -88,7 +90,7 @@ public class MachineryOnRentService
 		machineryOnRent.setNoOfTrips(payload.getNoOfTrips());
 		machineryOnRent.setVendor(vendorOpt.get());
 		machineryOnRent.setDate(payload.getDate());
-		return morRepo.save(machineryOnRent);
+		return machineryOnRent;
 	}
 
 	public Page<MachineryOnRent> findAll(Pageable pageable) 

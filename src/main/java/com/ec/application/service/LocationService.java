@@ -90,4 +90,10 @@ public class LocationService
 	{
 		return LocationRepo.findByPartialName(name);
 	}
+
+	public ArrayList<?> findIdAndNames() 
+	{
+		// TODO Auto-generated method stub
+		return LocationRepo.findIdAndNames();
+	}
 }

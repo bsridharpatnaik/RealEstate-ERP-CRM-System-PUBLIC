@@ -21,4 +21,7 @@ public interface ContractorRepo extends BaseRepository<Contractor, Long>
 
 	@Query(value="SELECT m from Contractor m where contractorName LIKE %:name%")
 	ArrayList<Contractor> findByPartialName(@Param("name") String name);
+
+	@Query(value="SELECT contractorId,contractorName from Contractor m")
+	ArrayList<?> findIdAndNames();
 }

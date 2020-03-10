@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.ec.application.model.Category;
 import com.ec.application.service.CategoryService;
 
@@ -26,6 +25,7 @@ public class CategoryController
 {
 	@Autowired
 	CategoryService categoryService;
+	
 	
 	@GetMapping
 	public Page<Category> returnAllPayments(Pageable pageable) 
@@ -43,6 +43,7 @@ public class CategoryController
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteCategory(@PathVariable Long id) throws Exception
 	{
+		
 		categoryService.deleteCategory(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
@@ -68,5 +69,11 @@ public class CategoryController
 	public ArrayList<Category> returnCusByPartialName(@PathVariable String name) 
 	{
 		return categoryService.findCategorysByPartialName(name);
+	}
+	
+	@GetMapping("/idandnames")
+	public ArrayList<?> returnIDandNames() 
+	{
+		return categoryService.findIdAndNames();
 	}
 }

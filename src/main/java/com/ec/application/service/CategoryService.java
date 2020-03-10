@@ -9,7 +9,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.model.Category;
+import com.ec.application.model.Product;
 import com.ec.application.repository.CategoryRepo;
+import com.ec.application.repository.ProductRepo;
 
 
 @Service
@@ -18,6 +20,9 @@ public class CategoryService
 
 	@Autowired
 	CategoryRepo categoryRepo;
+	
+	@Autowired
+	ProductRepo pRepo;
 	
 	public Page<Category> findAll(Pageable pageable)
 	{
@@ -72,6 +77,9 @@ public class CategoryService
 	{
 		try
 		{
+			ArrayList<Product> products = pRepo.existsByCategoryId(id);
+			if(products.size()>0)
+				throw new Exception("Cannot delete category. Category already assigned to product");
 			categoryRepo.softDeleteById(id);
 		}
 		catch(Exception e)
@@ -90,5 +98,11 @@ public class CategoryService
 	public ArrayList<Category> findCategorysByPartialName(String name) 
 	{
 		return categoryRepo.findByPartialName(name);
+	}
+
+	public ArrayList<?> findIdAndNames() 
+	{
+		// TODO Auto-generated method stub
+		return categoryRepo.findIdAndNames();
 	}
 }

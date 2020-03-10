@@ -20,4 +20,7 @@ public interface LocationRepo extends BaseRepository<Location, Long>
 
 	@Query(value="SELECT m from Location m where locationName LIKE %:name%")
 	ArrayList<Location> findByPartialName(@Param("name") String name);
+
+	@Query(value="SELECT locationId,locationName from Location m")
+	ArrayList<?> findIdAndNames();
 }

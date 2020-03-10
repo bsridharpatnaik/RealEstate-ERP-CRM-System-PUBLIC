@@ -92,4 +92,10 @@ public class ContractorService
 	{
 		return contractorRepo.findByPartialName(name);
 	}
+
+	public ArrayList<?> findIdAndNames() 
+	{
+		// TODO Auto-generated method stub
+		return contractorRepo.findIdAndNames();
+	}
 }

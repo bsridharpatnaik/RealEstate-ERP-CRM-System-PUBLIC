@@ -3,6 +3,7 @@ package com.ec.application.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -48,7 +49,7 @@ public class User extends SoftDeletableEntity
 	private boolean passwordExpired;
 	
 	
-	@ManyToMany(fetch = FetchType.EAGER)
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
 	@JoinTable(name = "user_role", joinColumns = {
 			@JoinColumn(name = "userId", referencedColumnName = "userId") }, inverseJoinColumns = {
 					@JoinColumn(name = "role_name", referencedColumnName = "name") })

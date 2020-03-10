@@ -21,4 +21,7 @@ public interface VendorRepo extends BaseRepository<Vendor, Long>
 
 	@Query(value="SELECT m from Vendor m where vendorName LIKE %:name%")
 	ArrayList<Vendor> findByPartialName(@Param("name") String name);
+
+	@Query(value="SELECT vendorId,vendorName from Vendor m")
+	ArrayList<?> findIdAndNames();
 }

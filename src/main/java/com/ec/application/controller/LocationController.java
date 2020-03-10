@@ -70,4 +70,9 @@ public class LocationController
 	{
 		return LocationService.findLocationsByPartialName(name);
 	}
+	@GetMapping("/idandnames")
+	public ArrayList<?> returnIdAndNames() 
+	{
+		return LocationService.findIdAndNames();
+	}
 }
