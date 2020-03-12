@@ -272,6 +272,32 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "ID and Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/machinery/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"machinery",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
@@ -487,6 +513,32 @@
 							"path": [
 								"ec",
 								"vendor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID and Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/vendor/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"vendor",
+								"idandnames"
 							]
 						}
 					},
@@ -737,7 +789,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"categoryName\":\"Rods\",\n\t\"categoryDescription\":\"iron Rods\"\n}",
+							"raw": "{\n\t\"categoryName\":\"Rodss\",\n\t\"categoryDescription\":\"iron Rods\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -796,7 +848,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://{{serverUrl}}/ec/category/1",
+							"raw": "http://{{serverUrl}}/ec/category/250",
 							"protocol": "http",
 							"host": [
 								"{{serverUrl}}"
@@ -804,7 +856,7 @@
 							"path": [
 								"ec",
 								"category",
-								"1"
+								"250"
 							]
 						}
 					},
@@ -904,6 +956,58 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "All Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/category/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"category",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Category",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/category/142",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"category",
+								"142"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
@@ -930,7 +1034,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"productName\":\"ros\",\n\t\"productDescription\":\"dsadasd\",\n\t\"measurementUnit\":\"Kgs\"\n}",
+							"raw": "{\n\t\"categoryId\":234,\n\t\"productName\":\"ross\",\n\t\"productDescription\":\"dsadasd\",\n\t\"measurementUnit\":\"Kgs\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1119,6 +1223,32 @@
 								"ec",
 								"product",
 								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID and Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/product/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"product",
+								"idandnames"
 							]
 						}
 					},
@@ -1316,6 +1446,251 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "All Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/location/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"location",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Unloading Area",
+			"item": [
+				{
+					"name": "Create Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"locationName\":\"Building 3\",\n\t\"locationDescription\":\"dssadasd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/unloadingarea/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"unloadingarea",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Location",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"locationName\":\"Building 4\",\n\t\"locationDescription\":\"dssadasd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/location/8",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"location",
+								"8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/location/8",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"location",
+								"8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch By Name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/location/name/Building%204",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"location",
+								"name",
+								"Building%204"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Partial Name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/location/partialname/Building%204",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"location",
+								"partialname",
+								"Building%204"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/location",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"location"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/location/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"location",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
@@ -1342,7 +1717,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "\n{\n\t\"date\":\"2019-08-10\",\n\t\"machineryId\":6,\n\t\"vendorId\":12,\n\t\"locationId\":23,\n\t\"startDate\":\"2019-08-11\",\n\t\"endDate\":\"2019-10-20\",\n\t\"initialMeterReading\":100,\n\t\"endMeterReading\":120,\n\t\"noOfTrips\":12,\n\t\"amountCharged\":\"1223\",\n\t\"mode\":\"Dailu\"\n}",
+							"raw": "\n{\n\t\"date\":\"2019-08-10\",\n\t\"machineryId\":10,\n\t\"vendorId\":161,\n\t\"locationId\":269,\n\t\"startDate\":\"2019-08-11\",\n\t\"endDate\":\"2019-10-20\",\n\t\"initialMeterReading\":100,\n\t\"endMeterReading\":120,\n\t\"noOfTrips\":12,\n\t\"amountCharged\":\"1223\",\n\t\"mode\":\"Dailu\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1383,6 +1758,288 @@
 							],
 							"path": [
 								"ec",
+								"mor"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Audit",
+			"item": [],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Contractor",
+			"item": [
+				{
+					"name": "Fetch All",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Contractor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractorName\":\"Test123\",\n\t\"contractorDescription\":\"2323\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get One Contractor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor/265",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor",
+								"265"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Contractor",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"contractorName\":\"Test1233\",\n\t\"contractorDescription\":\"2323\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor/265",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor",
+								"265"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Contractor By Name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor/name/Test1233",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor",
+								"name",
+								"Test1233"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Partial Name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor/partialname/Test1233",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor",
+								"partialname",
+								"Test1233"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID And Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Contractor",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/contractor/265",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"contractor",
+								"265"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Dropdowns",
+			"item": [
+				{
+					"name": "MachineryOnRent",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/dropdown/mor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"dropdown",
 								"mor"
 							]
 						}

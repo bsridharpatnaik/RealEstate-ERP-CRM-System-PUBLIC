@@ -1,14 +1,16 @@
 package com.ec.application.service;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.CreateMORentData;
+import com.ec.application.data.MORDropdownData;
+import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.Location;
 import com.ec.application.model.Machinery;
 import com.ec.application.model.MachineryOnRent;
@@ -32,6 +34,9 @@ public class MachineryOnRentService
 	
 	@Autowired
 	MachineryRepo machineryRepo;
+	
+	@Autowired
+	PopulateDropdownService populateDropdownService;
 	
 	public MachineryOnRent createData(CreateMORentData payload) throws Exception
 	{
@@ -93,9 +98,12 @@ public class MachineryOnRentService
 		return machineryOnRent;
 	}
 
-	public Page<MachineryOnRent> findAll(Pageable pageable) 
+	public MachineryOnRentWithDropdownData findAll(Pageable pageable) 
 	{
-		return morRepo.findAll(pageable);
+		MachineryOnRentWithDropdownData morWithDDData = new MachineryOnRentWithDropdownData();
+		morWithDDData.setMachineryOnRent(morRepo.findAll(pageable));
+		morWithDDData.setMorDropdownData(populateDropdownService.fetchData());
+		return morWithDDData;
 	}
 	
 

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.data.CreateMORentData;
-import com.ec.application.model.Category;
+import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.MachineryOnRent;
 import com.ec.application.service.MachineryOnRentService;
 
@@ -29,7 +29,7 @@ public class MachineryOnRentController
 	MachineryOnRentService morService;
 	
 	@GetMapping
-	public Page<MachineryOnRent> returnAllMor(Pageable pageable) 
+	public MachineryOnRentWithDropdownData returnAllMor(Pageable pageable) 
 	{
 		
 		return morService.findAll(pageable);
