@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.model.Vendor;
+import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.VendorRepo;
 
 @Service
@@ -17,6 +18,9 @@ public class VendorService
 
 	@Autowired
 	VendorRepo VendorRepo;
+	
+	@Autowired
+	MachineryOnRentRepo morRepo;
 	
 	public Page<Vendor> findAll(Pageable pageable)
 	{
@@ -75,6 +79,8 @@ public class VendorService
 	{
 		try
 		{
+			if(morRepo.findByVendorId(id).size()>0)
+				throw new Exception("Cannot delete Vendor. Vendor already in use.");
 			VendorRepo.softDeleteById(id);
 		}
 		catch(Exception e)
