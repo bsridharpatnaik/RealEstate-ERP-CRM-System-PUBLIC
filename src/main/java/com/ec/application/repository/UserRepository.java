@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
-import com.ec.application.model.User;
+import com.ec.application.model.UserRoles.User;
 
 @Component
 public interface UserRepository  extends JpaRepository<User, Long>{

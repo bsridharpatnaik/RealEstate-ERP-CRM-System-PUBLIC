@@ -6,10 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.Contractor;
 import com.ec.application.model.MachineryOnRent;
-import com.ec.application.model.Product;
-import com.ec.application.model.Vendor;
+import com.ec.application.model.BasicEntities.Contractor;
+import com.ec.application.model.BasicEntities.Product;
+import com.ec.application.model.BasicEntities.Vendor;
 
 @Repository
 public interface MachineryOnRentRepo extends BaseRepository<MachineryOnRent, Long>

@@ -8,8 +8,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.Contractor;
-import com.ec.application.model.Machinery;
+import com.ec.application.model.BasicEntities.Contractor;
+import com.ec.application.model.BasicEntities.Machinery;
 
 @Repository
 public interface ContractorRepo extends BaseRepository<Contractor, Long>

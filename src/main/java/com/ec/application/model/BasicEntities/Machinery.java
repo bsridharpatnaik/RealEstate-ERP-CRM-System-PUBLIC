@@ -1,4 +1,4 @@
-package com.ec.application.model;
+package com.ec.application.model.BasicEntities;
 
 import java.io.Serializable;
 

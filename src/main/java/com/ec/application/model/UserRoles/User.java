@@ -1,4 +1,4 @@
-package com.ec.application.model;
+package com.ec.application.model.UserRoles;
 
 import java.util.HashSet;
 import java.util.Set;

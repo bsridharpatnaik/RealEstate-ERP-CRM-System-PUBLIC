@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import com.ec.application.data.CreateUserData;
 import com.ec.application.data.ResetPasswordData;
 import com.ec.application.data.UpdateRolesForUserData;
-import com.ec.application.model.Role;
-import com.ec.application.model.User;
+import com.ec.application.model.UserRoles.Role;
+import com.ec.application.model.UserRoles.User;
 import com.ec.application.repository.RoleRepo;
 import com.ec.application.repository.UserRepo;
 

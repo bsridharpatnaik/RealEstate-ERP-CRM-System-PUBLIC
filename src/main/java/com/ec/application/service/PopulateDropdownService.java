@@ -1,11 +1,13 @@
 package com.ec.application.service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.MORDropdownData;
+import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryRepo;
 import com.ec.application.repository.VendorRepo;
@@ -23,35 +25,35 @@ public class PopulateDropdownService
 	@Autowired
 	VendorRepo vendorRepo;
 	
-	public ArrayList<MORDropdownData> fetchData() 
+	public List<NameAndProjectionDataForDropDown> fetchData() 
 	{
-		ArrayList<MORDropdownData> morDropdownDataList = new ArrayList<MORDropdownData>();
+		List<NameAndProjectionDataForDropDown> morDropdownDataList = new ArrayList<NameAndProjectionDataForDropDown>();
 		String[] fields = new String[]{"vendor","machinery","location"};
 		for(String field : fields)
 		{
-			MORDropdownData morDropdownData = new MORDropdownData();
+			NameAndProjectionDataForDropDown morDropdownData = new NameAndProjectionDataForDropDown();
 			morDropdownData = getValues(field);
 			morDropdownDataList.add(morDropdownData);
 		}
 		return morDropdownDataList;
 	}
 
-	private MORDropdownData getValues(String field) 
+	private NameAndProjectionDataForDropDown getValues(String field) 
 	{
-		MORDropdownData morDropdownData = new MORDropdownData();
+		NameAndProjectionDataForDropDown morDropdownData = new NameAndProjectionDataForDropDown();
 		switch(field)
 		{
 			case "vendor":
-				morDropdownData.setField("vendor");
-				morDropdownData.setValues(vendorRepo.findIdAndNames());
+				morDropdownData.setName("vendor");
+				morDropdownData.setProjection(vendorRepo.findIdAndNames());
 				break;
 			case "machinery":
-				morDropdownData.setField("machinery");
-				morDropdownData.setValues(machineryRepo.findIdAndNames());
+				morDropdownData.setName("machinery");
+				morDropdownData.setProjection(machineryRepo.findIdAndNames());
 				break;
 			case "location":
-				morDropdownData.setField("location");
-				morDropdownData.setValues(locRepo.findIdAndNames());
+				morDropdownData.setName("location");
+				morDropdownData.setProjection(locRepo.findIdAndNames());
 				break;
 		}
 		return morDropdownData;

@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.model.Contractor;
+import com.ec.application.model.BasicEntities.Contractor;
 import com.ec.application.repository.ContractorRepo;
 
 

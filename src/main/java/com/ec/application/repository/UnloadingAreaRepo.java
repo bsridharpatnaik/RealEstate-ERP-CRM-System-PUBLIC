@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.UnloadingArea;
+import com.ec.application.model.BasicEntities.UnloadingArea;
 
 @Repository
 public interface UnloadingAreaRepo extends BaseRepository<UnloadingArea, Long>

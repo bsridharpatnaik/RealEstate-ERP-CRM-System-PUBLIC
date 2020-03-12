@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.data.CreateUserData;
 import com.ec.application.data.ResetPasswordData;
 import com.ec.application.data.UpdateRolesForUserData;
-import com.ec.application.model.User;
+import com.ec.application.model.UserRoles.User;
 import com.ec.application.service.UserService;
 
 @RestController

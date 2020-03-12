@@ -8,8 +8,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.Product;
-import com.ec.application.model.Machinery;
+import com.ec.application.model.BasicEntities.Machinery;
+import com.ec.application.model.BasicEntities.Product;
 
 @Repository
 public interface ProductRepo extends BaseRepository<Product, Long>

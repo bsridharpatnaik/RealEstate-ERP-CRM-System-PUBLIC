@@ -1,4 +1,4 @@
-package com.ec.application.model;
+package com.ec.application.model.UserRoles;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,16 +12,29 @@ import org.hibernate.envers.Audited;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
 
+
 @Entity
-@Table(name = "measurement_unit")
+@Table(name = "role")
 @Audited
 @Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class MeasurementUnit extends SoftDeletableEntity
-{
+public class Role extends SoftDeletableEntity {
+
+	private static final long serialVersionUID = 1L;
 
 	@NotNull
 	@Size(max = 50)
 	@Id
 	@Column(length = 50,unique=true)
-	String name;
+	private String name;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	
+	
 }

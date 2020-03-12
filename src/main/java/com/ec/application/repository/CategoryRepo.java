@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.Category;
+import com.ec.application.model.BasicEntities.Category;
 
 @Repository
 public interface CategoryRepo extends BaseRepository<Category, Long>

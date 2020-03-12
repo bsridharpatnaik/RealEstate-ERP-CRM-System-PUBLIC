@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.ec.application.data.LoginData;
 import com.ec.application.exception.ValidationError;
-import com.ec.application.model.User;
+import com.ec.application.model.UserRoles.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {

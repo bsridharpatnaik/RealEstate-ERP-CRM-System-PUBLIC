@@ -21,7 +21,7 @@ import com.ec.application.config.JWTTokenUtils;
 import com.ec.application.data.JwtResponse;
 import com.ec.application.data.LoginData;
 import com.ec.application.data.UserSignInData;
-import com.ec.application.model.Role;
+import com.ec.application.model.UserRoles.Role;
 import com.ec.application.service.JwtUserDetailsService;
 
 

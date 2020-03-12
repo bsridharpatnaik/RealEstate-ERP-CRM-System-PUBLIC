@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.model.Role;
+import com.ec.application.model.UserRoles.Role;
 import com.ec.application.repository.RoleRepo;
 
 @Service

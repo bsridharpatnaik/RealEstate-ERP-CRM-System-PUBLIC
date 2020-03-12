@@ -9,8 +9,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.Role;
-import com.ec.application.model.User;
+import com.ec.application.model.UserRoles.Role;
+import com.ec.application.model.UserRoles.User;
 
 @Repository
 public interface RoleRepo  extends BaseRepository<Role, Long>

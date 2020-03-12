@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import com.ec.application.model.Role;
+
+import com.ec.application.model.UserRoles.Role;
 import com.ec.application.service.RoleService;
 
 @RestController

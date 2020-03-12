@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MORDropdownData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
-import com.ec.application.model.Location;
-import com.ec.application.model.Machinery;
 import com.ec.application.model.MachineryOnRent;
-import com.ec.application.model.Vendor;
+import com.ec.application.model.BasicEntities.Location;
+import com.ec.application.model.BasicEntities.Machinery;
+import com.ec.application.model.BasicEntities.Vendor;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.MachineryRepo;
@@ -102,7 +102,7 @@ public class MachineryOnRentService
 	{
 		MachineryOnRentWithDropdownData morWithDDData = new MachineryOnRentWithDropdownData();
 		morWithDDData.setMachineryOnRent(morRepo.findAll(pageable));
-		morWithDDData.setMorDropdownData(populateDropdownService.fetchData());
+		morWithDDData.setMorDropdown(populateDropdownService.fetchData());
 		return morWithDDData;
 	}
 	

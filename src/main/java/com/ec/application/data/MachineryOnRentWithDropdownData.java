@@ -1,6 +1,7 @@
 package com.ec.application.data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 
@@ -9,13 +10,13 @@ import com.ec.application.model.MachineryOnRent;
 public class MachineryOnRentWithDropdownData 
 {
 
-	ArrayList<MORDropdownData> morDropdownData;
+	List<NameAndProjectionDataForDropDown> morDropdown;
 	Page<MachineryOnRent> machineryOnRent;
-	public ArrayList<MORDropdownData> getMorDropdownData() {
-		return morDropdownData;
+	public List<NameAndProjectionDataForDropDown> getMorDropdown() {
+		return morDropdown;
 	}
-	public void setMorDropdownData(ArrayList<MORDropdownData> morDropdownData) {
-		this.morDropdownData = morDropdownData;
+	public void setMorDropdown(List<NameAndProjectionDataForDropDown> morDropdown) {
+		this.morDropdown = morDropdown;
 	}
 	public Page<MachineryOnRent> getMachineryOnRent() {
 		return machineryOnRent;
@@ -23,4 +24,6 @@ public class MachineryOnRentWithDropdownData
 	public void setMachineryOnRent(Page<MachineryOnRent> machineryOnRent) {
 		this.machineryOnRent = machineryOnRent;
 	}
+	
+	
 }
