@@ -10,12 +10,12 @@ import com.ec.application.model.MachineryOnRent;
 public class MachineryOnRentWithDropdownData 
 {
 
-	List<NameAndProjectionDataForDropDown> morDropdown;
+	NameAndProjectionDataForDropDown morDropdown;
 	Page<MachineryOnRent> machineryOnRent;
-	public List<NameAndProjectionDataForDropDown> getMorDropdown() {
+	public NameAndProjectionDataForDropDown getMorDropdown() {
 		return morDropdown;
 	}
-	public void setMorDropdown(List<NameAndProjectionDataForDropDown> morDropdown) {
+	public void setMorDropdown(NameAndProjectionDataForDropDown morDropdown) {
 		this.morDropdown = morDropdown;
 	}
 	public Page<MachineryOnRent> getMachineryOnRent() {
@@ -24,6 +24,5 @@ public class MachineryOnRentWithDropdownData
 	public void setMachineryOnRent(Page<MachineryOnRent> machineryOnRent) {
 		this.machineryOnRent = machineryOnRent;
 	}
-	
 	
 }

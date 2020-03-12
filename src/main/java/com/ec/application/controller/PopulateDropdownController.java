@@ -23,7 +23,7 @@ public class PopulateDropdownController
 	PopulateDropdownService pdService;
 	
 	@GetMapping("/mor")
-	public List<NameAndProjectionDataForDropDown> findProductbyvehicleNoProducts() 
+	public NameAndProjectionDataForDropDown findProductbyvehicleNoProducts() 
 	{
 		return pdService.fetchData();
 	}

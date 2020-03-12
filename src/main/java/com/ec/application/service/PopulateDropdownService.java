@@ -25,38 +25,14 @@ public class PopulateDropdownService
 	@Autowired
 	VendorRepo vendorRepo;
 	
-	public List<NameAndProjectionDataForDropDown> fetchData() 
+	public NameAndProjectionDataForDropDown fetchData() 
 	{
-		List<NameAndProjectionDataForDropDown> morDropdownDataList = new ArrayList<NameAndProjectionDataForDropDown>();
-		String[] fields = new String[]{"vendor","machinery","location"};
-		for(String field : fields)
-		{
-			NameAndProjectionDataForDropDown morDropdownData = new NameAndProjectionDataForDropDown();
-			morDropdownData = getValues(field);
-			morDropdownDataList.add(morDropdownData);
-		}
+		NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
+		morDropdownDataList.setVendor(vendorRepo.findIdAndNames());
+		morDropdownDataList.setMachinery(machineryRepo.findIdAndNames());
+		morDropdownDataList.setLocation(locRepo.findIdAndNames());
 		return morDropdownDataList;
-	}
-
-	private NameAndProjectionDataForDropDown getValues(String field) 
-	{
-		NameAndProjectionDataForDropDown morDropdownData = new NameAndProjectionDataForDropDown();
-		switch(field)
-		{
-			case "vendor":
-				morDropdownData.setName("vendor");
-				morDropdownData.setProjection(vendorRepo.findIdAndNames());
-				break;
-			case "machinery":
-				morDropdownData.setName("machinery");
-				morDropdownData.setProjection(machineryRepo.findIdAndNames());
-				break;
-			case "location":
-				morDropdownData.setName("location");
-				morDropdownData.setProjection(locRepo.findIdAndNames());
-				break;
-		}
-		return morDropdownData;
+		
 	}
 
 }

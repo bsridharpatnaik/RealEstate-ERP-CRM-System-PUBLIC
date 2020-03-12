@@ -8,8 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.model.Category;
-import com.ec.application.model.Product;
+import com.ec.application.model.BasicEntities.Category;
+import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ProductRepo;
 
