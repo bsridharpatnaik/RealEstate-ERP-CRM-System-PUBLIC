@@ -1763,6 +1763,73 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get MOR by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/mor/282",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"mor",
+								"282"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update MOR",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\n{\n\t\"date\":\"2019-08-12\",\n\t\"machineryId\":10,\n\t\"vendorId\":161,\n\t\"locationId\":280,\n\t\"startDate\":\"2019-08-11\",\n\t\"endDate\":\"2019-10-20\",\n\t\"initialMeterReading\":100,\n\t\"endMeterReading\":120,\n\t\"noOfTrips\":13,\n\t\"amountCharged\":\"1223\",\n\t\"mode\":\"Dailu\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/mor/282",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"mor",
+								"282"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
