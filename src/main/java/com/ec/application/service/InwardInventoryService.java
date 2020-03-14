@@ -1,14 +1,18 @@
 package com.ec.application.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import com.ec.application.data.InwardInventoryData;
+import com.ec.application.data.InwardInventoryWithDropdownValues;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.UnloadingAreaRepo;
 import com.ec.application.repository.VendorRepo;
 
+@Service
 public class InwardInventoryService 
 {
 
@@ -23,6 +27,9 @@ public class InwardInventoryService
 	
 	@Autowired
 	UnloadingAreaRepo unloadingAreaRepo;
+	
+	@Autowired
+	PopulateDropdownService populateDropdownService;
 	
 	public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception
 	{
@@ -58,5 +65,13 @@ public class InwardInventoryService
 			throw new Exception("Unloading Area with ID not found");
 		if(iiData.getQuantity()<=0)
 			throw new Exception("Quantity have to be greater the zero");
+	}
+
+	public InwardInventoryWithDropdownValues findAll(Pageable pageable) 
+	{
+		InwardInventoryWithDropdownValues inwardInventoryWithDropdownValues = new InwardInventoryWithDropdownValues();
+		inwardInventoryWithDropdownValues.setMorDropdown(populateDropdownService.fetchData("inward"));
+		inwardInventoryWithDropdownValues.setInwardInventory(inwInvRepo.findAll(pageable));
+		return inwardInventoryWithDropdownValues;
 	}
 }

@@ -102,7 +102,7 @@ public class MachineryOnRentService
 	{
 		MachineryOnRentWithDropdownData morWithDDData = new MachineryOnRentWithDropdownData();
 		morWithDDData.setMachineryOnRent(morRepo.findAll(pageable));
-		morWithDDData.setMorDropdown(populateDropdownService.fetchData());
+		morWithDDData.setMorDropdown(populateDropdownService.fetchData("mor"));
 		return morWithDDData;
 	}
 	

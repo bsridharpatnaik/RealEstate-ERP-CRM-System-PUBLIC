@@ -13,8 +13,28 @@ public class NameAndProjectionDataForDropDown
 	List<IdNameProjections> vendor;
 	List<IdNameProjections> machinery;
 	List<IdNameProjections> location;
-	
+	List<IdNameProjections> unloadingArea;
+	List<IdNameProjections> category;
+	List<IdNameProjections> product;
 
+	public List<IdNameProjections> getUnloadingArea() {
+		return unloadingArea;
+	}
+	public void setUnloadingArea(List<IdNameProjections> unloadingArea) {
+		this.unloadingArea = unloadingArea;
+	}
+	public List<IdNameProjections> getCategory() {
+		return category;
+	}
+	public void setCategory(List<IdNameProjections> category) {
+		this.category = category;
+	}
+	public List<IdNameProjections> getProduct() {
+		return product;
+	}
+	public void setProduct(List<IdNameProjections> product) {
+		this.product = product;
+	}
 	public List<IdNameProjections> getVendor() {
 		return vendor;
 	}

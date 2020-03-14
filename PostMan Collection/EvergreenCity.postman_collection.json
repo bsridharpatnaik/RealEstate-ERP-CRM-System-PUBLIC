@@ -1699,6 +1699,32 @@
 			"name": "Machinery On Rent",
 			"item": [
 				{
+					"name": "MachineryOnRent",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/dropdown/mor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"dropdown",
+								"mor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create MOR",
 					"request": {
 						"method": "POST",
@@ -2086,9 +2112,55 @@
 		},
 		{
 			"name": "Dropdowns",
+			"item": [],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Inward Inventory",
 			"item": [
 				{
-					"name": "MachineryOnRent",
+					"name": "Create Inward Inventory",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Date\": \"2020-03-03\",\n    \"vendorId\": 161,\n    \"productId\": 253,\n    \"quantity\": 100,\n    \"vehicleNo\": \"sdsad\",\n    \"vendorSlipNo\": \"sqwqw\",\n    \"ourSlipNo\": \"sdas\",\n    \"unloadingAreaId\": 294\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/inward/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"inward",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch All",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -2099,15 +2171,14 @@
 							}
 						],
 						"url": {
-							"raw": "http://{{serverUrl}}/ec/dropdown/mor",
+							"raw": "http://{{serverUrl}}/ec/inward",
 							"protocol": "http",
 							"host": [
 								"{{serverUrl}}"
 							],
 							"path": [
 								"ec",
-								"dropdown",
-								"mor"
+								"inward"
 							]
 						}
 					},

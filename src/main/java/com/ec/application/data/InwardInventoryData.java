@@ -29,8 +29,8 @@ public class InwardInventoryData
 	@NonNull
 	Float quantity;
 	String vehicleNo;
-	Long vendorSlipNo;
-	Long ourSlipNo;
+	String vendorSlipNo;
+	String ourSlipNo;
 	@NonNull
 	Long unloadingAreaId;
 	public Date getDate() {
@@ -63,16 +63,16 @@ public class InwardInventoryData
 	public void setVehicleNo(String vehicleNo) {
 		this.vehicleNo = vehicleNo;
 	}
-	public Long getVendorSlipNo() {
+	public String getVendorSlipNo() {
 		return vendorSlipNo;
 	}
-	public void setVendorSlipNo(Long vendorSlipNo) {
+	public void setVendorSlipNo(String vendorSlipNo) {
 		this.vendorSlipNo = vendorSlipNo;
 	}
-	public Long getOurSlipNo() {
+	public String getOurSlipNo() {
 		return ourSlipNo;
 	}
-	public void setOurSlipNo(Long ourSlipNo) {
+	public void setOurSlipNo(String ourSlipNo) {
 		this.ourSlipNo = ourSlipNo;
 	}
 	public Long getUnloadingAreaId() {

@@ -1,6 +1,7 @@
 package com.ec.application.service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.BasicEntities.Category;
 import com.ec.application.model.BasicEntities.Product;
@@ -124,7 +126,7 @@ public class ProductService
 		return productRepo.returnNameByCategory(categoryname);
 	}
 
-	public ArrayList<?> findIdAndNames() 
+	public List<IdNameProjections> findIdAndNames() 
 	{
 		// TODO Auto-generated method stub
 		return productRepo.findIdAndNames();

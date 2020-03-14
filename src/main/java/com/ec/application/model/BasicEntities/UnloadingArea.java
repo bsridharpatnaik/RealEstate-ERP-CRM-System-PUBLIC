@@ -17,7 +17,7 @@ import com.ec.application.SoftDelete.SoftDeletableEntity;
 @Table(name = "Unloading_Location")
 @Audited
 @Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class UnloadingArea 
+public class UnloadingArea extends SoftDeletableEntity
 {
 
 	@Id

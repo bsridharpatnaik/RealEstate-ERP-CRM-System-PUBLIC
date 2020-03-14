@@ -1,6 +1,7 @@
 package com.ec.application.controller;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.model.BasicEntities.Category;
 import com.ec.application.service.CategoryService;
 
@@ -73,7 +75,7 @@ public class CategoryController
 	}
 	
 	@GetMapping("/idandnames")
-	public ArrayList<?> returnIDandNames() 
+	public List<IdNameProjections> returnIDandNames() 
 	{
 		return categoryService.findIdAndNames();
 	}

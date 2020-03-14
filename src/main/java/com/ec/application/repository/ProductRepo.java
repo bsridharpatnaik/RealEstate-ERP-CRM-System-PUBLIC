@@ -1,12 +1,14 @@
 package com.ec.application.repository;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.SoftDelete.BaseRepository;
 import com.ec.application.model.BasicEntities.Machinery;
 import com.ec.application.model.BasicEntities.Product;
@@ -28,6 +30,6 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value="SELECT m from Product m where m.category.categoryId=id")
 	ArrayList<Product> existsByCategoryId(Long id);
 
-	@Query(value="SELECT productId,productName from Product m")
-	ArrayList<?> findIdAndNames();
+	@Query(value="SELECT productId as id,productName as name from Product m")
+	List<IdNameProjections> findIdAndNames();
 }
