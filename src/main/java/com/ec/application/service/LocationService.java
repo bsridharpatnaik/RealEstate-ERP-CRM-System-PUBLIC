@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.model.BasicEntities.Location;
+import com.ec.application.model.BasicEntities.UnloadingArea;
 import com.ec.application.repository.LocationRepo;
 
 @Service
@@ -97,5 +98,14 @@ public class LocationService
 	{
 		// TODO Auto-generated method stub
 		return LocationRepo.findIdAndNames();
+	}
+	
+	public boolean checkIfUnloadingAreaExists(Long id)
+	{
+		Optional<Location> location = LocationRepo.findById(id);
+		if(location.isPresent())
+			return true;
+		else
+			return false;
 	}
 }

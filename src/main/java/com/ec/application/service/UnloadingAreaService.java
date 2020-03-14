@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.model.BasicEntities.UnloadingArea;
+import com.ec.application.model.BasicEntities.Vendor;
 import com.ec.application.repository.UnloadingAreaRepo;
 
 @Service
@@ -96,5 +97,12 @@ public class UnloadingAreaService
 		// TODO Auto-generated method stub
 		return UnloadingAreaRepo.findIdAndNames();
 	}
-
+	public boolean checkIfUnloadingAreaExists(Long id)
+	{
+		Optional<UnloadingArea> unloadingArea = UnloadingAreaRepo.findById(id);
+		if(unloadingArea.isPresent())
+			return true;
+		else
+			return false;
+	}
 }

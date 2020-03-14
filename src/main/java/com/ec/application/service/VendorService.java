@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.Projections.IdNameProjections;
+import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.model.BasicEntities.Vendor;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.VendorRepo;
@@ -107,5 +108,13 @@ public class VendorService
 	{
 		// TODO Auto-generated method stub
 		return VendorRepo.findIdAndNames();
+	}
+	public boolean checkIfVendorExists(Long id)
+	{
+		Optional<Vendor> vendor = VendorRepo.findById(id);
+		if(vendor.isPresent())
+			return true;
+		else
+			return false;
 	}
 }

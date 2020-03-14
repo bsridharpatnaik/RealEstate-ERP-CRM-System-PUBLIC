@@ -129,4 +129,13 @@ public class ProductService
 		// TODO Auto-generated method stub
 		return productRepo.findIdAndNames();
 	}
+	
+	public boolean checkIfProductExists(Long id)
+	{
+		Optional<Product> Products = productRepo.findById(id);
+		if(Products.isPresent())
+			return true;
+		else
+			return false;
+	}
 }

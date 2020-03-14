@@ -3,13 +3,18 @@ package com.ec.application.data;
 import java.util.List;
 
 import com.ec.application.Projections.IdNameProjections;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+@JsonInclude(Include.NON_NULL)
 public class NameAndProjectionDataForDropDown 
 {
 
 	List<IdNameProjections> vendor;
 	List<IdNameProjections> machinery;
 	List<IdNameProjections> location;
+	
+
 	public List<IdNameProjections> getVendor() {
 		return vendor;
 	}

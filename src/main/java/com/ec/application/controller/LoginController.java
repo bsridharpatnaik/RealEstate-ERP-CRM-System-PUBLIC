@@ -55,7 +55,8 @@ public class LoginController {
 		  { 
 			  roles.add(grantedAuthority.getAuthority());
 		  }
-		  return ResponseEntity.ok(new JwtResponse(token,roles));
+		  String name = userDetails.getUsername();
+		  return ResponseEntity.ok(new JwtResponse(name,token,roles));
 	}
 
 	private void authenticate(String username, String password) throws Exception {
