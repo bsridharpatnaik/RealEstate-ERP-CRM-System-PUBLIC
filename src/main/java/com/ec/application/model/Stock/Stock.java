@@ -50,4 +50,12 @@ public class Stock extends SoftDeletableEntity
 	
 	@NonNull
 	Float quantityInHand;
+
+	public Stock(@NonNull Product product, @NonNull Warehouse warehouse, @NonNull Float quantityInHand) {
+		super();
+		this.product = product;
+		this.warehouse = warehouse;
+		this.quantityInHand = quantityInHand;
+	}
+	
 }

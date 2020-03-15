@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.ec.application.data.CreateUserData;
 import com.ec.application.data.ResetPasswordData;
 import com.ec.application.data.UpdateRolesForUserData;
+import com.ec.application.data.UsersWithRoleNameListData;
 import com.ec.application.model.UserRoles.Role;
 import com.ec.application.model.UserRoles.User;
 import com.ec.application.repository.RoleRepo;
@@ -65,9 +66,12 @@ public class UserService
 		return bcyptedPassword;
 	}
 
-	public Page<User> fetchAll(Pageable pageable)
+	public UsersWithRoleNameListData fetchAll(Pageable pageable)
 	{
-		return uRepo.findAll(pageable);
+		UsersWithRoleNameListData usersWithRoleNameListData = new UsersWithRoleNameListData();
+		usersWithRoleNameListData.setUsers(uRepo.findAll(pageable));
+		usersWithRoleNameListData.setRoles(rRepo.findRoleNames());
+		return usersWithRoleNameListData;
 	}
 	
 	public User resetPassword(ResetPasswordData rpData) throws Exception 

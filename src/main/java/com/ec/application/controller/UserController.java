@@ -1,7 +1,6 @@
 package com.ec.application.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.data.CreateUserData;
 import com.ec.application.data.ResetPasswordData;
 import com.ec.application.data.UpdateRolesForUserData;
+import com.ec.application.data.UsersWithRoleNameListData;
 import com.ec.application.model.UserRoles.User;
 import com.ec.application.service.UserService;
 
@@ -26,7 +26,7 @@ public class UserController
 	UserService userService;
 	
 	@GetMapping
-	public Page<User> returnAllPayments(Pageable pageable) 
+	public UsersWithRoleNameListData returnAllUsers(Pageable pageable) 
 	{
 		
 		return userService.fetchAll(pageable);
