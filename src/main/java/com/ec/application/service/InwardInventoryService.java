@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.InwardInventoryWithDropdownValues;
 import com.ec.application.model.InwardInventory;
+import com.ec.application.model.OutwardInventory;
 import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
@@ -20,7 +21,7 @@ public class InwardInventoryService
 {
 
 	@Autowired
-	InwardInventoryRepo inwInvRepo;
+	InwardInventoryRepo inwardInventoryRepo;
 	
 	@Autowired
 	ProductRepo productRepo;
@@ -46,13 +47,13 @@ public class InwardInventoryService
 		setFields(inwardInventory,iiData);
 		Float closingStock = stockService.updateStock(iiData.getProductId(), "Default", iiData.getQuantity(), "inward");
 		inwardInventory.setClosingStock(closingStock);
-		return inwInvRepo.save(inwardInventory);
+		return inwardInventoryRepo.save(inwardInventory);
 		
 	}
 
 	public InwardInventory findInwardnventory(Long id) throws Exception
 	{
-		Optional<InwardInventory> inwardInventoryOpt = inwInvRepo.findById(id);
+		Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
 		if(inwardInventoryOpt.isPresent()==false)
 			throw new Exception("Inward inventory with ID not found");
 		return inwardInventoryOpt.get();
@@ -60,7 +61,7 @@ public class InwardInventoryService
 	}
 	public InwardInventory updateInwardnventory(InwardInventoryData iiData, Long id) throws Exception
 	{
-		Optional<InwardInventory> inwardInventoryOpt = inwInvRepo.findById(id);
+		Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
 		if(!inwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
@@ -69,7 +70,7 @@ public class InwardInventoryService
 		validateInputs(iiData);
 		setFields(inwardInventory,iiData);
 		updateStock(oldProductId,iiData.getProductId(),inwardInventory,iiData.getQuantity(),oldQuantity);
-		return inwInvRepo.save(inwardInventory);
+		return inwardInventoryRepo.save(inwardInventory);
 		
 	}
 	private void updateStock(Long oldProductId,Long newProductId,InwardInventory inwardInventory , Float  quantity, Float oldQuantity) throws Exception 
@@ -134,7 +135,25 @@ public class InwardInventoryService
 	{
 		InwardInventoryWithDropdownValues inwardInventoryWithDropdownValues = new InwardInventoryWithDropdownValues();
 		inwardInventoryWithDropdownValues.setMorDropdown(populateDropdownService.fetchData("inward"));
-		inwardInventoryWithDropdownValues.setInwardInventory(inwInvRepo.findAll(pageable));
+		inwardInventoryWithDropdownValues.setInwardInventory(inwardInventoryRepo.findAll(pageable));
 		return inwardInventoryWithDropdownValues;
+	}
+	
+	public void deleteInwardnventory(Long id) throws Exception 
+	{
+		Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
+		if(!inwardInventoryOpt.isPresent())
+			throw new Exception("Inward Inventory with ID not found");
+		InwardInventory inwardInventory = inwardInventoryOpt.get();
+		updateStockBeforeDelete(inwardInventory);
+		inwardInventoryRepo.softDeleteById(id);
+	}
+	private void updateStockBeforeDelete(InwardInventory inwardInventory) throws Exception 
+	{
+		Float stock = inwardInventory.getQuantity();
+		Float currentStock = stockRepo.findStockForProductAsList(inwardInventory.getProduct().getProductId()).get(0).getQuantityInHand();
+		if(currentStock<stock)
+			throw new Exception("Cannot Delete. Stock will go negative if deleted");
+		stockService.updateStock(inwardInventory.getProduct().getProductId(), "Default", stock, "outward");
 	}
 }

@@ -2183,6 +2183,99 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Find Inward inventory",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/inward/373",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"inward",
+								"373"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Inward inventory",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Date\": \"2020-03-03\",\n    \"vendorId\": 161,\n    \"productId\": 253,\n    \"quantity\": 10,\n    \"vehicleNo\": \"sdsad\",\n    \"vendorSlipNo\": \"sqwqw\",\n    \"ourSlipNo\": \"sdas\",\n    \"unloadingAreaId\": 301\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/inward/303",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"inward",
+								"303"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Inward",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/inward/373",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"inward",
+								"373"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
@@ -2336,6 +2429,58 @@
 							"path": [
 								"ec",
 								"outward"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get One Outward",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/outward/335",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"outward",
+								"335"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Outward",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/outward/378",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"outward",
+								"378"
 							]
 						}
 					},

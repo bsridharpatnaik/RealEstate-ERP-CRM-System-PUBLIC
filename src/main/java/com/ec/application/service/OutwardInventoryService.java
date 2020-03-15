@@ -6,10 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryWithDropdownValues;
-import com.ec.application.model.InwardInventory;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
@@ -148,6 +146,20 @@ public class OutwardInventoryService
 			throw new Exception("Outward inventory with ID not found");
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		return outwardInventory;
+	}
+	public void deleteOutwardnventory(Long id) throws Exception 
+	{
+		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
+		if(!outwardInventoryOpt.isPresent())
+			throw new Exception("Outward Inventory with ID not found");
+		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		updateStockBeforeDelete(outwardInventory);
+		outwardInventoryRepo.softDeleteById(id);
+	}
+	private void updateStockBeforeDelete(OutwardInventory outwardInventory) throws Exception 
+	{
+		Float stock = outwardInventory.getQuantity();
+		stockService.updateStock(outwardInventory.getProduct().getProductId(), "Default", stock, "inward");
 	}
 
 }
