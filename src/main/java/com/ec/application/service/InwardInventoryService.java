@@ -31,11 +31,16 @@ public class InwardInventoryService
 	@Autowired
 	PopulateDropdownService populateDropdownService;
 	
+	@Autowired
+	StockService stockService;
+	
 	public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception
 	{
 		InwardInventory inwardInventory = new InwardInventory();
 		validateInputs(iiData);
 		setFields(inwardInventory,iiData);
+		Float closingStock = stockService.updateStock(iiData.getProductId(), "Default", iiData.getQuantity(), "inward");
+		inwardInventory.setClosingStock(closingStock);
 		return inwInvRepo.save(inwardInventory);
 		
 	}

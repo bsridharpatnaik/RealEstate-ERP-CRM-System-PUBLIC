@@ -16,7 +16,6 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
-import com.ec.application.model.StockID;
 import com.ec.application.model.BasicEntities.Product;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -25,7 +24,6 @@ import lombok.NonNull;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Audited
-@IdClass(StockID.class)
 @Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
 public class Stock extends SoftDeletableEntity
 {
@@ -33,6 +31,9 @@ public class Stock extends SoftDeletableEntity
 	private static final long serialVersionUID = 1L;
 	
 	@Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+	Long stockId;
+	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="productId",nullable=false	)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -40,7 +41,6 @@ public class Stock extends SoftDeletableEntity
 	@NonNull
 	Product product;
 	
-	@Id
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="warehouseName",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -57,5 +57,51 @@ public class Stock extends SoftDeletableEntity
 		this.warehouse = warehouse;
 		this.quantityInHand = quantityInHand;
 	}
+
+
+	public Long getStockId() {
+		return stockId;
+	}
+
+
+	public void setStockId(Long stockId) {
+		this.stockId = stockId;
+	}
+
+
+	public Product getProduct() {
+		return product;
+	}
+
+	public void setProduct(Product product) {
+		this.product = product;
+	}
+
+	public Warehouse getWarehouse() {
+		return warehouse;
+	}
+
+	public void setWarehouse(Warehouse warehouse) {
+		this.warehouse = warehouse;
+	}
+
+	public Float getQuantityInHand() {
+		return quantityInHand;
+	}
+
+	public void setQuantityInHand(Float quantityInHand) {
+		this.quantityInHand = quantityInHand;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+
+	public Stock() {
+		super();
+	}
+	
+	
 	
 }

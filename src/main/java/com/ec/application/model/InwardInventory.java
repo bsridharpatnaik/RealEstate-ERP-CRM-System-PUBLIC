@@ -64,7 +64,15 @@ public class InwardInventory extends SoftDeletableEntity
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	UnloadingArea unloadingArea;
 	
+	Float closingStock;
 	
+	
+	public Float getClosingStock() {
+		return closingStock;
+	}
+	public void setClosingStock(Float closingStock) {
+		this.closingStock = closingStock;
+	}
 	public Long getId() {
 		return Id;
 	}
