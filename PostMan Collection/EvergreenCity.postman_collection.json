@@ -1498,7 +1498,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"locationName\":\"Building 3\",\n\t\"locationDescription\":\"dssadasd\"\n}",
+							"raw": "{\n\t\"unloadingAreaName\":\"Building 30\",\n\t\"unloadingAreaDescription\":\"dssadasd\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1653,14 +1653,14 @@
 							}
 						],
 						"url": {
-							"raw": "http://{{serverUrl}}/ec/location",
+							"raw": "http://{{serverUrl}}/ec/unloadingarea",
 							"protocol": "http",
 							"host": [
 								"{{serverUrl}}"
 							],
 							"path": [
 								"ec",
-								"location"
+								"unloadingarea"
 							]
 						}
 					},
@@ -2137,7 +2137,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"Date\": \"2020-03-03\",\n    \"vendorId\": 161,\n    \"productId\": 253,\n    \"quantity\": 100,\n    \"vehicleNo\": \"sdsad\",\n    \"vendorSlipNo\": \"sqwqw\",\n    \"ourSlipNo\": \"sdas\",\n    \"unloadingAreaId\": 294\n}",
+							"raw": "{\n    \"Date\": \"2020-03-03\",\n    \"vendorId\": 161,\n    \"productId\": 253,\n    \"quantity\": 100,\n    \"vehicleNo\": \"sdsad\",\n    \"vendorSlipNo\": \"sqwqw\",\n    \"ourSlipNo\": \"sdas\",\n    \"unloadingAreaId\": 301\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2179,6 +2179,91 @@
 							"path": [
 								"ec",
 								"inward"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Stock",
+			"item": [
+				{
+					"name": "Fetch All Stock",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/stock",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"stock"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Stock By ProductID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/stock/product/253",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"stock",
+								"product",
+								"253"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Stock By Category",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/stock/category/236",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"stock",
+								"category",
+								"236"
 							]
 						}
 					},
