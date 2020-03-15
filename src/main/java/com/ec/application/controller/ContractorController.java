@@ -1,6 +1,7 @@
 package com.ec.application.controller;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.model.BasicEntities.Contractor;
 import com.ec.application.service.ContractorService;
 
@@ -73,7 +75,7 @@ public class ContractorController
 		return contractorService.findContractorsByPartialName(name);
 	}
 	@GetMapping("/idandnames")
-	public ArrayList<?> returnidandNames() 
+	public List<IdNameProjections> returnidandNames() 
 	{
 		return contractorService.findIdAndNames();
 	}

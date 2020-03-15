@@ -16,7 +16,14 @@ public class NameAndProjectionDataForDropDown
 	List<IdNameProjections> unloadingArea;
 	List<IdNameProjections> category;
 	List<IdNameProjections> product;
-
+	List<IdNameProjections> contractor;
+	
+	public List<IdNameProjections> getContractor() {
+		return contractor;
+	}
+	public void setContractor(List<IdNameProjections> contractor) {
+		this.contractor = contractor;
+	}
 	public List<IdNameProjections> getUnloadingArea() {
 		return unloadingArea;
 	}

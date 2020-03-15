@@ -18,6 +18,7 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.ec.application.model.BasicEntities.Contractor;
 import com.ec.application.model.BasicEntities.Location;
 import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.model.BasicEntities.UnloadingArea;
@@ -29,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Table(name = "outward_inventory")
 @Audited
 @Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class OutwardInventory 
+public class OutwardInventory extends SoftDeletableEntity
 {
 
 	@Id
@@ -42,9 +43,9 @@ public class OutwardInventory
 	Date Date;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="vendorId",nullable=false)
+	@JoinColumn(name="contractorId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Vendor vendor;
+	Contractor contractor;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="productId",nullable=false)
@@ -78,11 +79,12 @@ public class OutwardInventory
 	public void setDate(Date date) {
 		Date = date;
 	}
-	public Vendor getVendor() {
-		return vendor;
+	
+	public Contractor getContractor() {
+		return contractor;
 	}
-	public void setVendor(Vendor vendor) {
-		this.vendor = vendor;
+	public void setContractor(Contractor contractor) {
+		this.contractor = contractor;
 	}
 	public Product getProduct() {
 		return product;

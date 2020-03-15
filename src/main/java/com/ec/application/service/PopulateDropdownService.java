@@ -1,14 +1,11 @@
 package com.ec.application.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.data.MORDropdownData;
 import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.repository.CategoryRepo;
+import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryRepo;
 import com.ec.application.repository.ProductRepo;
@@ -36,8 +33,12 @@ public class PopulateDropdownService
 	
 	@Autowired
 	CategoryRepo categoryRepo;
-
 	
+	@Autowired
+	LocationRepo locationRepo;
+
+	@Autowired
+	ContractorRepo contractorRepo;
 	public NameAndProjectionDataForDropDown fetchData(String page) 
 	{
 		NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
@@ -52,6 +53,12 @@ public class PopulateDropdownService
 		case "inward":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());
 			morDropdownDataList.setUnloadingArea(unloadingAreaRepo.findIdAndNames());
+			break;
+		case "outward":
+			morDropdownDataList.setProduct(productRepo.findIdAndNames());
+			morDropdownDataList.setUnloadingArea(unloadingAreaRepo.findIdAndNames());
+			morDropdownDataList.setLocation(locationRepo.findIdAndNames());
+			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
 			break;
 		}
 		

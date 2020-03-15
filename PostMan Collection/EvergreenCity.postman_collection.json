@@ -2271,6 +2271,78 @@
 				}
 			],
 			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Outward Inventory",
+			"item": [
+				{
+					"name": "Outward Inventory Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Date\": \"2020-03-03\",\n    \"contractorId\": 265,\n    \"productId\": 253,\n    \"quantity\": 10,\n    \"unloadingAreaId\": 301,\n    \"usageLocation\":280,\n    \"slipNo\":\"wqwq\",\n    \"purpose\":\"sdsdasdsa\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/outward/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"outward",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch All",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/outward",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"outward"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
 		}
 	],
 	"protocolProfileBehavior": {}
