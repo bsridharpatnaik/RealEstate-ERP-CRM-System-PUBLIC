@@ -1,11 +1,15 @@
 package com.ec.application.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryWithDropdownValues;
+import com.ec.application.model.InwardInventory;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
@@ -54,7 +58,50 @@ public class OutwardInventoryService
 		outwardnventory.setClosingStock(closingStock);
 		return outwardInventoryRepo.save(outwardnventory);
 	}
-	
+	public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception
+	{
+		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
+		if(!outwardInventoryOpt.isPresent())
+			throw new Exception("Inventory Entry with ID not found");
+		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		Long oldProductId = outwardInventory.getProduct().getProductId();
+		Float oldQuantity = stockRepo.findStockForProductAsList(outwardInventory.getProduct().getProductId()).get(0).getQuantityInHand();
+		validateInputs(iiData);
+		setFields(outwardInventory,iiData);
+		updateStock(oldProductId,iiData.getProductId(),outwardInventory,iiData.getQuantity(),oldQuantity);
+		return outwardInventoryRepo.save(outwardInventory);
+		
+	}
+	private void updateStock(Long oldProductId,Long newProductId,OutwardInventory outwardInventory , Float  quantity, Float oldQuantity) throws Exception 
+	{
+		if(oldProductId.equals(newProductId)==false)
+		{
+			Float closingStock = stockService.updateStock(oldProductId, "Default",oldQuantity , "inward");
+			closingStock = stockService.updateStock(newProductId, "Default",quantity , "inward");
+			outwardInventory.setClosingStock(closingStock);
+		}
+		else if(oldProductId.equals(newProductId) && quantity>oldQuantity)
+		{
+			Float diffInStock =  quantity - oldQuantity;
+			Float currentStock = stockRepo.findStockForProductAsList(newProductId).get(0).getQuantityInHand();
+			
+			if(diffInStock>currentStock)
+				throw new Exception("Stock cannot be updated as available stock is less than difference requested in stock");
+			
+			Float closingStock = stockService.updateStock(newProductId, "Default", diffInStock, "outward");
+			outwardInventory.setClosingStock(closingStock);
+			
+			
+		}
+		else if(oldProductId.equals(newProductId) && quantity<oldQuantity)
+		{
+			Float diffInStock = quantity - oldQuantity;
+			Float closingStock = stockService.updateStock(newProductId, "Default", diffInStock, "inward");
+			outwardInventory.setClosingStock(closingStock);
+		}
+		
+		
+	}
 	private void setFields(OutwardInventory outwardnventory, OutwardInventoryData oiData) 
 	{
 		outwardnventory.setDate(oiData.getDate());
@@ -93,6 +140,14 @@ public class OutwardInventoryService
 		inwardInventoryWithDropdownValues.setMorDropdown(populateDropdownService.fetchData("outward"));
 		inwardInventoryWithDropdownValues.setOutwardInventory(outwardInventoryRepo.findAll(pageable));
 		return inwardInventoryWithDropdownValues;
+	}
+	public OutwardInventory findOutwardnventory(Long id) throws Exception 
+	{
+		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
+		if(outwardInventoryOpt.isPresent()==false)
+			throw new Exception("Outward inventory with ID not found");
+		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		return outwardInventory;
 	}
 
 }

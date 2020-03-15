@@ -85,7 +85,5 @@ public class StockService
 		{
 			return stocks.get(0);
 		}
-		
-		
 	}
 }
