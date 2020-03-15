@@ -1034,7 +1034,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"categoryId\":234,\n\t\"productName\":\"ross\",\n\t\"productDescription\":\"dsadasd\",\n\t\"measurementUnit\":\"Kgs\"\n}",
+							"raw": "{\n\t\"categoryId\":236,\n\t\"productName\":\"bricks\",\n\t\"productDescription\":\"dsadasd\",\n\t\"measurementUnit\":\"Kgs\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
