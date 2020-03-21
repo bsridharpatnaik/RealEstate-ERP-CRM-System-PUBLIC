@@ -1,2 +1,2 @@
-# insta-backend
-Insta insure Backend development
+# ec-inventorymanagement
+Inventory Management system for Evergreencity
