@@ -94,10 +94,15 @@ public class ProductService
         
     }
 
-	public Product findSingleProduct(Long id) 
+	public Product findSingleProduct(Long id) throws Exception 
 	{
-		Optional<Product> Products = productRepo.findById(id);
-		return Products.get();
+		Product product = new Product();
+		Optional<Product> productOpt = productRepo.findById(id);
+		if(!productOpt.isPresent())
+			throw new Exception("Product Not Found With product ID");
+		else
+			product = productOpt.get();
+		return product;
 	}
 	public void deleteProduct(Long id) throws Exception 
 	{

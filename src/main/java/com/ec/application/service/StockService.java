@@ -45,6 +45,7 @@ public class StockService
 	public Float updateStock(Long productId,String warehousename, Float quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId,warehousename);
+	
 		Float oldStock = currentStock.getQuantityInHand();
 		Float newStock = (float) 0;
 		switch(operation)

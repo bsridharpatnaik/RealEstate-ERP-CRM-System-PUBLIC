@@ -27,6 +27,8 @@ public class InwardInventoryService
 	ProductRepo productRepo;
 	
 	@Autowired
+	ProductService productService;
+	@Autowired
 	VendorRepo vendorRepo;
 	
 	@Autowired
@@ -104,11 +106,11 @@ public class InwardInventoryService
 		
 	}
 
-	private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) 
+	private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
 	{
 		inwardInventory.setDate(iiData.getDate());
 		inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
-		inwardInventory.setProduct(productRepo.findById(iiData.getProductId()).get());
+		inwardInventory.setProduct(productService.findSingleProduct(iiData.getProductId()));
 		inwardInventory.setQuantity(iiData.getQuantity());
 		inwardInventory.setUnloadingArea(unloadingAreaRepo.findById(iiData.getUnloadingAreaId()).get());
 		inwardInventory.setVehicleNo(iiData.getVehicleNo());

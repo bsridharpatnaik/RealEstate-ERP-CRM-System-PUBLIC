@@ -21,6 +21,9 @@ import com.ec.application.repository.VendorRepo;
 public class OutwardInventoryService 
 {
 	@Autowired
+	ProductService productService;
+	
+	@Autowired
 	ProductRepo productRepo;
 	
 	@Autowired
@@ -100,11 +103,11 @@ public class OutwardInventoryService
 		
 		
 	}
-	private void setFields(OutwardInventory outwardnventory, OutwardInventoryData oiData) 
+	private void setFields(OutwardInventory outwardnventory, OutwardInventoryData oiData) throws Exception 
 	{
 		outwardnventory.setDate(oiData.getDate());
 		outwardnventory.setLocation(locationRepo.findById(oiData.getUsageLocation()).get());
-		outwardnventory.setProduct(productRepo.findById(oiData.getProductId()).get());
+		outwardnventory.setProduct(productService.findSingleProduct(oiData.getProductId()));
 		outwardnventory.setPurpose(oiData.getPurpose());
 		outwardnventory.setQuantity(oiData.getQuantity());
 		outwardnventory.setSlipNo(oiData.getSlipNo());

@@ -2,3 +2,10 @@ create database ec;
 INSERT INTO `ec`.`role` (`name`) VALUES ('admin');
 INSERT INTO `ec`.`security_user` (`user_id`, `password`, `password_expired`, `status`, `user_name`) VALUES ('10001', '$2a$04$EkXqoj71td10Q0aOPts1yeaAPKJz6DUy0STutLCU0HbeYi2x3RDvm', b'0', b'1', 'sridhar');
 INSERT INTO `ec`.`user_role` (`user_id`, `role_name`) VALUES ('10001', 'admin');
+
+CREATE TABLE `warehouse` (
+  `warehouse_name` varchar(50) NOT NULL,
+  PRIMARY KEY (`warehouse_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+INSERT INTO `ec`.`warehouse` (`warehouse_name`) VALUES ('Default');

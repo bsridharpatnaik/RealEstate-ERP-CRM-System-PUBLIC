@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.repository.InwardInventoryRepo;
+import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
@@ -32,11 +33,15 @@ public class CheckBeforeDeleteService
 	@Autowired
 	WarehouseRepo warehouseRepo;
 	
+	@Autowired
+	LostDamagedInventoryRepo lostDamagedInventoryRepo;
+	
 	public boolean isProductUsed(Long productId) throws Exception
 	{
 		if(inwardInventoryRepo.productUsageCount(productId) > 0 
 				|| outwardInventoryRepo.productUsageCount(productId) > 0
-				|| stockRepo.productUsageCount(productId) >0)
+				|| stockRepo.productUsageCount(productId) >0
+				|| lostDamagedInventoryRepo.productUsageCount(productId) > 0)
 			return true;
 		else
 			return false;
@@ -62,8 +67,7 @@ public class CheckBeforeDeleteService
 	
 	public boolean isContractorUsed(Long contractorId) throws Exception
 	{
-		if(machineryOnRentRepo.contractorUsageCount(contractorId) > 0 
-				|| outwardInventoryRepo.contractorUsageCount(contractorId) > 0) 
+		if(outwardInventoryRepo.contractorUsageCount(contractorId) > 0) 
 			return true;
 		else
 			return false;
@@ -86,6 +90,15 @@ public class CheckBeforeDeleteService
 	public boolean isWarehouseUsed(String warehouseName) throws Exception
 	{
 		if(stockRepo.warehouseCount(warehouseName) > 0) 
+			return true;
+		else
+			return false;
+	}
+	
+	public boolean isVendorUsed(Long vendorId) throws Exception
+	{
+		if(machineryOnRentRepo.vendorCount(vendorId) > 0 ||
+				inwardInventoryRepo.vendorCount(vendorId) > 0	) 
 			return true;
 		else
 			return false;

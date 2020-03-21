@@ -324,7 +324,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"vendorName\":\"JCBB\",\n\t\"vendorAddress\":\"ABC\",\n\t\"vendorPhone\":\"2323232\",\n\t\"vendorEmail\":\"ven@dd.com\"\n}",
+							"raw": "{\n\t\"vendorName\":\"Vendor 2\",\n\t\"vendorAddress\":\"ABC\",\n\t\"vendorPhone\":\"2323232\",\n\t\"vendorEmail\":\"ven@dd.com\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -789,7 +789,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"categoryName\":\"Rodss\",\n\t\"categoryDescription\":\"iron Rods\"\n}",
+							"raw": "{\n\t\"categoryName\":\"Plumbing Material\",\n\t\"categoryDescription\":\"iron Rods\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -995,7 +995,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://{{serverUrl}}/ec/category/142",
+							"raw": "http://{{serverUrl}}/ec/category/236",
 							"protocol": "http",
 							"host": [
 								"{{serverUrl}}"
@@ -1003,7 +1003,7 @@
 							"path": [
 								"ec",
 								"category",
-								"142"
+								"236"
 							]
 						}
 					},
@@ -1034,7 +1034,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"categoryId\":236,\n\t\"productName\":\"bricks\",\n\t\"productDescription\":\"dsadasd\",\n\t\"measurementUnit\":\"Kgs\"\n}",
+							"raw": "{\n\t\"categoryId\":11,\n\t\"productName\":\"Sand\",\n\t\"productDescription\":\"dsadasd\",\n\t\"measurementUnit\":\"Kgs\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1214,7 +1214,7 @@
 							}
 						],
 						"url": {
-							"raw": "http://{{serverUrl}}/ec/product/4",
+							"raw": "http://{{serverUrl}}/ec/product/253",
 							"protocol": "http",
 							"host": [
 								"{{serverUrl}}"
@@ -1222,7 +1222,7 @@
 							"path": [
 								"ec",
 								"product",
-								"4"
+								"253"
 							]
 						}
 					},
@@ -2137,7 +2137,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"Date\": \"2020-03-03\",\n    \"vendorId\": 161,\n    \"productId\": 253,\n    \"quantity\": 100,\n    \"vehicleNo\": \"sdsad\",\n    \"vendorSlipNo\": \"sqwqw\",\n    \"ourSlipNo\": \"sdas\",\n    \"unloadingAreaId\": 301\n}",
+							"raw": "{\n    \"Date\": \"2020-03-03\",\n    \"vendorId\": 5,\n    \"productId\": 13,\n    \"quantity\": 100,\n    \"vehicleNo\": \"sdsad\",\n    \"vendorSlipNo\": \"sqwqw\",\n    \"ourSlipNo\": \"sdas\",\n    \"unloadingAreaId\": 21\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2481,6 +2481,145 @@
 								"ec",
 								"outward",
 								"378"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Lost Damaged inventory",
+			"item": [
+				{
+					"name": "Create Lost Damaged",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-03-12\",\n\t\"productId\":13,\n\t\"quantity\":12,\n\t\"theftLocation\":\"Balcomu\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/lostdamaged/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"lostdamaged",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Lost Damaged",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-03-12\",\n\t\"productId\":13,\n\t\"quantity\":11,\n\t\"theftLocation\":\"Balcomu\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/lostdamaged/38",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"lostdamaged",
+								"38"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Lost Damaged",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/lostdamaged",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"lostdamaged"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Lost Damaged",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrl}}/ec/lostdamaged/38",
+							"protocol": "http",
+							"host": [
+								"{{serverUrl}}"
+							],
+							"path": [
+								"ec",
+								"lostdamaged",
+								"38"
 							]
 						}
 					},

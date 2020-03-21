@@ -41,7 +41,7 @@ public class ProductController
 	}
 	
 	@GetMapping("/{id}")
-	public Product findProductbyvehicleNoProducts(@PathVariable long id) 
+	public Product findProductbyvehicleNoProducts(@PathVariable long id) throws Exception 
 	{
 		return productService.findSingleProduct(id);
 	}
