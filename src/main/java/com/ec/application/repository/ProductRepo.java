@@ -32,4 +32,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value="SELECT productId as id,productName as name from Product m")
 	List<IdNameProjections> findIdAndNames();
+	
+	@Query(value="SELECT count(*) from Product m where m.category.categoryId=:categoryId")
+	int categoryUsageCount(Long categoryId);
 }

@@ -21,6 +21,9 @@ public class ContractorService
 	@Autowired
 	ContractorRepo contractorRepo;
 	
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
+	
 	public Page<Contractor> findAll(Pageable pageable)
 	{
 		return contractorRepo.findAll(pageable);
@@ -73,14 +76,10 @@ public class ContractorService
 	}
 	public void deleteContractor(Long id) throws Exception 
 	{
-		try
-		{
+		if(!checkBeforeDeleteService.isContractorUsed(id))
 			contractorRepo.softDeleteById(id);
-		}
-		catch(Exception e)
-		{
-			throw new Exception("Not able to delete Contractor");
-		}
+		else 
+			throw new Exception("Contractor in use. Cannot Delete.");	
 	}
 
 	public ArrayList<Contractor> findContractorsByName(String name) 

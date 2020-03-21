@@ -27,6 +27,8 @@ public class ProductService
 	@Autowired
 	CategoryRepo categoryRepo;
 	
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
 	public Page<Product> findAll(Pageable pageable)
 	{
 		return productRepo.findAll(pageable);
@@ -99,14 +101,10 @@ public class ProductService
 	}
 	public void deleteProduct(Long id) throws Exception 
 	{
-		try
-		{
-			productRepo.softDeleteById(id);
-		}
-		catch(Exception e)
-		{
-			throw new Exception("Not able to delete Product");
-		}
+		if(!checkBeforeDeleteService.isProductUsed(id))
+				productRepo.softDeleteById(id);
+			else
+				throw new Exception("Cannot Delete. Product already in use");
 	}
 
 	public ArrayList<Product> findProductsByName(String name) 

@@ -20,6 +20,9 @@ public class UnloadingAreaService
 	@Autowired
 	UnloadingAreaRepo UnloadingAreaRepo;
 	
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
+	
 	public Page<UnloadingArea> findAll(Pageable pageable)
 	{
 		return UnloadingAreaRepo.findAll(pageable);
@@ -72,14 +75,10 @@ public class UnloadingAreaService
 	}
 	public void deleteUnloadingArea(Long id) throws Exception 
 	{
-		try
-		{
+		if(!checkBeforeDeleteService.isunloadingAreaUsed(id))
 			UnloadingAreaRepo.softDeleteById(id);
-		}
-		catch(Exception e)
-		{
-			throw new Exception("Not able to delete UnloadingArea");
-		}
+		else 
+			throw new Exception("UnloadingArea in Use. Cannot Delete.");
 	}
 
 	public ArrayList<UnloadingArea> findUnloadingAreasByName(String name) 

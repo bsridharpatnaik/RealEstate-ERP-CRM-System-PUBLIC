@@ -26,6 +26,8 @@ public class CategoryService
 	@Autowired
 	ProductRepo pRepo;
 	
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
 	public Page<Category> findAll(Pageable pageable)
 	{
 		return categoryRepo.findAll(pageable);
@@ -77,17 +79,10 @@ public class CategoryService
 	}
 	public void deleteCategory(Long id) throws Exception 
 	{
-		try
-		{
-			ArrayList<Product> products = pRepo.existsByCategoryId(id);
-			if(products.size()>0)
+			if(!checkBeforeDeleteService.isCategoryUsed(id))
+				categoryRepo.softDeleteById(id);
+			else
 				throw new Exception("Cannot delete category. Category already assigned to product");
-			categoryRepo.softDeleteById(id);
-		}
-		catch(Exception e)
-		{
-			throw new Exception("Not able to delete Category");
-		}
 	}
 
 	public ArrayList<Category> findCategorysByName(String name) 

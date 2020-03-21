@@ -22,6 +22,9 @@ public class MachineryService
 	@Autowired
 	MachineryRepo machineryRepo;
 	
+	@Autowired 
+	CheckBeforeDeleteService checkBeforeDeleteService;
+	
 	public Page<Machinery> findAll(Pageable pageable)
 	{
 		return machineryRepo.findAll(pageable);
@@ -74,14 +77,10 @@ public class MachineryService
 	}
 	public void deleteMachinery(Long id) throws Exception 
 	{
-		try
-		{
-			machineryRepo.softDeleteById(id);
-		}
-		catch(Exception e)
-		{
-			throw new Exception("Not able to delete Machinery");
-		}
+		if(!checkBeforeDeleteService.isMachineryUsed(id))
+				machineryRepo.softDeleteById(id);
+			else
+				throw new Exception("Machinery already in use");
 	}
 
 	public ArrayList<Machinery> findMachinerysByName(String name) 

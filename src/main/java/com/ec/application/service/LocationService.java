@@ -20,6 +20,9 @@ public class LocationService
 	@Autowired
 	LocationRepo LocationRepo;
 	
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
+	
 	public Page<Location> findAll(Pageable pageable)
 	{
 		return LocationRepo.findAll(pageable);
@@ -72,14 +75,11 @@ public class LocationService
 	}
 	public void deleteLocation(Long id) throws Exception 
 	{
-		try
-		{
+		if(!checkBeforeDeleteService.isLocationUsed(id))
 			LocationRepo.softDeleteById(id);
-		}
-		catch(Exception e)
-		{
-			throw new Exception("Not able to delete Location");
-		}
+		else
+			throw new Exception("Location in use. Cannot delete.");
+		
 	}
 
 	public ArrayList<Location> findLocationsByName(String name) 

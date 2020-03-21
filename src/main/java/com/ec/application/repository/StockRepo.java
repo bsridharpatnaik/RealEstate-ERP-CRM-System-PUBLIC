@@ -24,4 +24,10 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 
 	@Query(value="SELECT m from Stock m where m.product.productId=:productId")
 	List<Stock> findStockForProductAsList(Long productId);
+
+	@Query(value="SELECT count(*) from Stock m where m.product.productId=:productId")
+	int productUsageCount(Long productId);
+
+	@Query(value="SELECT count(*) from Stock m where m.warehouse.warehouseName=:warehouseName")
+	int warehouseCount(String warehouseName);
 }

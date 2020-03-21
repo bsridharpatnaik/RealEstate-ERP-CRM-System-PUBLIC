@@ -18,5 +18,14 @@ public interface MachineryOnRentRepo extends BaseRepository<MachineryOnRent, Lon
 	@Query(value="SELECT m from MachineryOnRent m where m.vendor.vendorId=:id")
 	ArrayList<MachineryOnRent> findByVendorId(Long id);
 
+	@Query(value="SELECT count(*) from MachineryOnRent m where m.machinery.machineryId=:machineryId")
+	int machineryUsageCount(Long machineryId);
+
+	@Query(value="SELECT count(*) from MachineryOnRent m where m.contractor.contractorId=:contractorId")
+	int contractorUsageCount(Long contractorId);
+	
+	@Query(value="SELECT count(*) from MachineryOnRent m where m.location.locationId=:locationId")
+	int locationUsageCount(Long locationId);
+
 }
 
