@@ -18,9 +18,10 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
-import com.ec.application.model.BasicEntities.Location;
+import com.ec.application.model.BasicEntities.Contact;
+import com.ec.application.model.BasicEntities.UsageLocation;
 import com.ec.application.model.BasicEntities.Machinery;
-import com.ec.application.model.BasicEntities.Vendor;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -48,14 +49,14 @@ public class MachineryOnRent extends SoftDeletableEntity
 	Machinery machinery;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="vendorId",nullable=false)
+	@JoinColumn(name="contactId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Vendor vendor;
+	Contact contact;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="locationId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Location location;
+	UsageLocation usageLocation;
 	
 	String mode;
 	
@@ -103,17 +104,18 @@ public class MachineryOnRent extends SoftDeletableEntity
 	public void setMachinery(Machinery machinery) {
 		this.machinery = machinery;
 	}
-	public Vendor getVendor() {
-		return vendor;
+	
+	public Contact getContact() {
+		return contact;
 	}
-	public void setVendor(Vendor vendor) {
-		this.vendor = vendor;
+	public void setContact(Contact contact) {
+		this.contact = contact;
 	}
-	public Location getLocation() {
-		return location;
+	public UsageLocation getUsageLocation() {
+		return usageLocation;
 	}
-	public void setLocation(Location location) {
-		this.location = location;
+	public void setUsageLocation(UsageLocation usageLocation) {
+		this.usageLocation = usageLocation;
 	}
 	public String getMode() {
 		return mode;

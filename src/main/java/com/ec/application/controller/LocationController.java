@@ -21,11 +21,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.Projections.IdNameProjections;
-import com.ec.application.model.BasicEntities.Location;
+import com.ec.application.model.BasicEntities.UsageLocation;
 import com.ec.application.service.LocationService;
 
 @RestController
-@RequestMapping("ec/location")
+@RequestMapping("inventory/location")
 public class LocationController 
 {
 
@@ -33,7 +33,7 @@ public class LocationController
 	LocationService LocationService;
 	
 	@GetMapping
-	public Page<Location> returnAllPayments(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	public Page<UsageLocation> returnAllPayments(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
@@ -41,7 +41,7 @@ public class LocationController
 	}
 	
 	@GetMapping("/{id}")
-	public Location findLocationbyvehicleNoLocations(@PathVariable long id) 
+	public UsageLocation findLocationbyvehicleNoLocations(@PathVariable long id) 
 	{
 		return LocationService.findSingleLocation(id);
 	}
@@ -54,24 +54,24 @@ public class LocationController
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Location createLocation(@RequestBody Location payload) throws Exception{
+	public UsageLocation createLocation(@RequestBody UsageLocation payload) throws Exception{
 		
 		return LocationService.createLocation(payload);
 	}
 
 	@PutMapping("/{id}")
-	public Location updateLocation(@PathVariable Long id, @RequestBody Location Location) throws Exception 
+	public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocation Location) throws Exception 
 	{
 		return LocationService.updateLocation(id, Location);
 	} 
 	
 	@GetMapping("/name/{name}")
-	public ArrayList<Location> returnCusByName(@PathVariable String name) 
+	public ArrayList<UsageLocation> returnCusByName(@PathVariable String name) 
 	{
 		return LocationService.findLocationsByName(name);
 	}
 	@GetMapping("/partialname/{name}")
-	public ArrayList<Location> returnCusByPartialName(@PathVariable String name) 
+	public ArrayList<UsageLocation> returnCusByPartialName(@PathVariable String name) 
 	{
 		return LocationService.findLocationsByPartialName(name);
 	}

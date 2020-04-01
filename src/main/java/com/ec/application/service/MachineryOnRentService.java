@@ -12,13 +12,11 @@ import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MORDropdownData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.MachineryOnRent;
-import com.ec.application.model.BasicEntities.Location;
+import com.ec.application.model.BasicEntities.UsageLocation;
 import com.ec.application.model.BasicEntities.Machinery;
-import com.ec.application.model.BasicEntities.Vendor;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.MachineryRepo;
-import com.ec.application.repository.VendorRepo;
 
 @Service
 public class MachineryOnRentService 
@@ -28,9 +26,6 @@ public class MachineryOnRentService
 	
 	@Autowired
 	LocationRepo locationRepo;
-	
-	@Autowired
-	VendorRepo vendorRepo;
 	
 	@Autowired
 	MachineryRepo machineryRepo;
@@ -78,22 +73,22 @@ public class MachineryOnRentService
 
 	private MachineryOnRent populateData(MachineryOnRent machineryOnRent,CreateMORentData payload) throws Exception 
 	{
-		Optional<Location> locationOpt = locationRepo.findById(payload.getLocationId());
-		Optional<Vendor> vendorOpt = vendorRepo.findById(payload.getVendorId());
+		Optional<UsageLocation> locationOpt = locationRepo.findById(payload.getLocationId());
+		//Optional<Vendor> vendorOpt = vendorRepo.findById(payload.getVendorId());
 		Optional<Machinery> machineryOpt = machineryRepo.findById(payload.getMachineryId());
 		
-		if(!locationOpt.isPresent() || !vendorOpt.isPresent() || !machineryOpt.isPresent())
-			throw new Exception("Location/Vendor/Machinery not found");
+		//if(!locationOpt.isPresent() || !vendorOpt.isPresent() || !machineryOpt.isPresent())
+		//	throw new Exception("Location/Vendor/Machinery not found");
 		machineryOnRent.setAmountCharged(payload.getAmountCharged());
 		machineryOnRent.setStartDate(payload.getStartDate());
 		machineryOnRent.setEndDate(payload.getEndDate());
 		machineryOnRent.setEndMeterReading(payload.getEndMeterReading());
 		machineryOnRent.setInitialMeterReading(payload.getInitialMeterReading());
-		machineryOnRent.setLocation(locationOpt.get());
+		machineryOnRent.setUsageLocation(locationOpt.get());
 		machineryOnRent.setMachinery(machineryOpt.get());
 		machineryOnRent.setMode(payload.getMode());
 		machineryOnRent.setNoOfTrips(payload.getNoOfTrips());
-		machineryOnRent.setVendor(vendorOpt.get());
+		//machineryOnRent.setVendor(vendorOpt.get());
 		machineryOnRent.setDate(payload.getDate());
 		return machineryOnRent;
 	}

@@ -14,7 +14,6 @@ import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.UnloadingAreaRepo;
-import com.ec.application.repository.VendorRepo;
 
 @Service
 public class InwardInventoryService 
@@ -28,8 +27,7 @@ public class InwardInventoryService
 	
 	@Autowired
 	ProductService productService;
-	@Autowired
-	VendorRepo vendorRepo;
+	
 	
 	@Autowired
 	UnloadingAreaRepo unloadingAreaRepo;
@@ -114,7 +112,7 @@ public class InwardInventoryService
 		inwardInventory.setQuantity(iiData.getQuantity());
 		inwardInventory.setUnloadingArea(unloadingAreaRepo.findById(iiData.getUnloadingAreaId()).get());
 		inwardInventory.setVehicleNo(iiData.getVehicleNo());
-		inwardInventory.setVendor(vendorRepo.findById(iiData.getVendorId()).get());
+		//inwardInventory.setVendor(vendorRepo.findById(iiData.getVendorId()).get());
 		inwardInventory.setVendorSlipNo(iiData.getVendorSlipNo());
 	}
 
@@ -125,8 +123,8 @@ public class InwardInventoryService
 		
 		if(!productRepo.existsById(iiData.getProductId()))
 				throw new Exception("Product with ID not found");
-		if(!vendorRepo.existsById(iiData.getVendorId()))
-			throw new Exception("Vendor with ID not found");
+		//if(!vendorRepo.existsById(iiData.getVendorId()))
+		//	throw new Exception("Vendor with ID not found");
 		if(!unloadingAreaRepo.existsById(iiData.getUnloadingAreaId()))
 			throw new Exception("Unloading Area with ID not found");
 		if(iiData.getQuantity()<=0)

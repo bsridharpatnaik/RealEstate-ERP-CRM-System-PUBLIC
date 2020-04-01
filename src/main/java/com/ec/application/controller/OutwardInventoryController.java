@@ -22,7 +22,7 @@ import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
 
 @RestController
-@RequestMapping("ec/outward")
+@RequestMapping("inventory/outward")
 public class OutwardInventoryController 
 {
 	@Autowired

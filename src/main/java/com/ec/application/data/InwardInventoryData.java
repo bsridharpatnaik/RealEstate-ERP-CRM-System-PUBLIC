@@ -12,7 +12,6 @@ import org.springframework.lang.NonNull;
 
 import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.model.BasicEntities.UnloadingArea;
-import com.ec.application.model.BasicEntities.Vendor;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

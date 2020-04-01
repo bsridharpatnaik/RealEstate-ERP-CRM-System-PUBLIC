@@ -14,7 +14,4 @@ public interface InwardInventoryRepo extends BaseRepository<InwardInventory, Lon
 
 	@Query(value="SELECT count(*) from InwardInventory m where m.unloadingArea.unloadingAreaId=:unloadingAreaId")
 	int unloadingAreaCount(Long unloadingAreaId);
-
-	@Query(value="SELECT count(*) from InwardInventory m where m.vendor.vendorId=:vendorId")
-	int vendorCount(Long vendorId);
 }

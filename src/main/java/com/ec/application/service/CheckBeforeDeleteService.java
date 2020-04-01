@@ -65,13 +65,7 @@ public class CheckBeforeDeleteService
 			return false;
 	}
 	
-	public boolean isContractorUsed(Long contractorId) throws Exception
-	{
-		if(outwardInventoryRepo.contractorUsageCount(contractorId) > 0) 
-			return true;
-		else
-			return false;
-	}
+
 	public boolean isLocationUsed(Long locationId) throws Exception
 	{
 		if(machineryOnRentRepo.locationUsageCount(locationId) > 0 
@@ -90,15 +84,6 @@ public class CheckBeforeDeleteService
 	public boolean isWarehouseUsed(String warehouseName) throws Exception
 	{
 		if(stockRepo.warehouseCount(warehouseName) > 0) 
-			return true;
-		else
-			return false;
-	}
-	
-	public boolean isVendorUsed(Long vendorId) throws Exception
-	{
-		if(machineryOnRentRepo.vendorCount(vendorId) > 0 ||
-				inwardInventoryRepo.vendorCount(vendorId) > 0	) 
 			return true;
 		else
 			return false;

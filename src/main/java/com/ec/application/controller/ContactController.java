@@ -17,51 +17,57 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.application.data.CreateMORentData;
-import com.ec.application.data.MachineryOnRentWithDropdownData;
-import com.ec.application.model.MachineryOnRent;
-import com.ec.application.service.MachineryOnRentService;
+import com.ec.application.model.BasicEntities.Contact;
+import com.ec.application.service.ContactService;
 
 @RestController
-@RequestMapping("inventory/mor")
-public class MachineryOnRentController 
+@RequestMapping("inventory/contact")
+public class ContactController 
 {
-
 	@Autowired
-	MachineryOnRentService morService;
+	ContactService contactService;
 	
 	@GetMapping
-	public MachineryOnRentWithDropdownData returnAllMor(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	public Page<Contact> returnAllPayments(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
-		return morService.findAll(pageable);
+		return contactService.findAll(pageable);
 	}
-	
-	@PostMapping("/create") 
-	@ResponseStatus(HttpStatus.CREATED)
-	public MachineryOnRent createMachineryOnRent(@RequestBody CreateMORentData payload) throws Exception{
-		
-		return morService.createData(payload);
-	}
-	
-	@PutMapping("/{id}")
-	public MachineryOnRent updateMOR(@PathVariable Long id, @RequestBody CreateMORentData payload) throws Exception 
-	{
-		return morService.UpdateData(payload, id);
-	} 
 	
 	@GetMapping("/{id}")
-	public MachineryOnRent findMORbyvehicleNoMORs(@PathVariable long id) throws Exception 
+	public Contact findContactbyvehicleNoContacts(@PathVariable long id) throws Exception 
 	{
-		return morService.findById(id);
+		return contactService.findSingleContact(id);
 	}
 
 	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteMOR(@PathVariable Long id) throws Exception
+	public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception
 	{
-		morService.DeleteData(id);
+		
+		//contactService.deleteContact(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	
+	@PostMapping("/create") 
+	@ResponseStatus(HttpStatus.CREATED)
+	public Contact createContact(@RequestBody Contact payload) throws Exception
+	{
+		Contact contact = new Contact();
+		try
+		{
+			contact = contactService.createContact(payload);
+		}
+		catch(NullPointerException e) 
+        { 
+            throw new Exception("Some of the required fields are missing"); 
+        }
+		return contact;
+	}
+
+	@PutMapping("/{id}")
+	public Contact updateContact(@PathVariable Long id, @RequestBody Contact Contact) throws Exception 
+	{
+		return contactService.updateContact(id, Contact);
+	} 
+
 }

@@ -16,7 +16,7 @@ import com.ec.application.model.Stock.Stock;
 import com.ec.application.service.StockService;
 
 @RestController
-@RequestMapping("ec/stock")
+@RequestMapping("inventory/stock")
 public class StockController 
 {
 	@Autowired

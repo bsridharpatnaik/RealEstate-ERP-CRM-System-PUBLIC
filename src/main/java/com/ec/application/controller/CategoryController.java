@@ -25,7 +25,7 @@ import com.ec.application.model.BasicEntities.Category;
 import com.ec.application.service.CategoryService;
 
 @RestController
-@RequestMapping("ec/category")
+@RequestMapping("inventory/category")
 public class CategoryController 
 {
 	@Autowired

@@ -18,9 +18,9 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.ec.application.model.BasicEntities.Contact;
 import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.model.BasicEntities.UnloadingArea;
-import com.ec.application.model.BasicEntities.Vendor;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -41,9 +41,9 @@ public class InwardInventory extends SoftDeletableEntity
 	Date Date;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="vendorId",nullable=false)
+	@JoinColumn(name="contactId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Vendor vendor;
+	Contact contact;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="productId",nullable=false)
@@ -67,6 +67,12 @@ public class InwardInventory extends SoftDeletableEntity
 	Float closingStock;
 	
 	
+	public Contact getContact() {
+		return contact;
+	}
+	public void setContact(Contact contact) {
+		this.contact = contact;
+	}
 	public Float getClosingStock() {
 		return closingStock;
 	}
@@ -85,12 +91,7 @@ public class InwardInventory extends SoftDeletableEntity
 	public void setDate(Date date) {
 		Date = date;
 	}
-	public Vendor getVendor() {
-		return vendor;
-	}
-	public void setVendor(Vendor vendor) {
-		this.vendor = vendor;
-	}
+	
 	public Product getProduct() {
 		return product;
 	}

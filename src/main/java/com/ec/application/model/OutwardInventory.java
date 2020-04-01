@@ -18,11 +18,9 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
-import com.ec.application.model.BasicEntities.Contractor;
-import com.ec.application.model.BasicEntities.Location;
+import com.ec.application.model.BasicEntities.UsageLocation;
 import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.model.BasicEntities.UnloadingArea;
-import com.ec.application.model.BasicEntities.Vendor;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -43,11 +41,6 @@ public class OutwardInventory extends SoftDeletableEntity
 	Date Date;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="contractorId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Contractor contractor;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="productId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Product product;
@@ -64,7 +57,7 @@ public class OutwardInventory extends SoftDeletableEntity
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="locationId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Location location;
+	UsageLocation usageLocation;
 	String purpose;
 	Float closingStock;
 	public Long getId() {
@@ -80,12 +73,6 @@ public class OutwardInventory extends SoftDeletableEntity
 		Date = date;
 	}
 	
-	public Contractor getContractor() {
-		return contractor;
-	}
-	public void setContractor(Contractor contractor) {
-		this.contractor = contractor;
-	}
 	public Product getProduct() {
 		return product;
 	}
@@ -110,11 +97,12 @@ public class OutwardInventory extends SoftDeletableEntity
 	public void setUnloadingArea(UnloadingArea unloadingArea) {
 		this.unloadingArea = unloadingArea;
 	}
-	public Location getLocation() {
-		return location;
+	
+	public UsageLocation getUsageLocation() {
+		return usageLocation;
 	}
-	public void setLocation(Location location) {
-		this.location = location;
+	public void setUsageLocation(UsageLocation usageLocation) {
+		this.usageLocation = usageLocation;
 	}
 	public String getPurpose() {
 		return purpose;

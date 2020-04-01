@@ -9,19 +9,19 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.BasicEntities.Location;
+import com.ec.application.model.BasicEntities.UsageLocation;
 
 @Repository
-public interface LocationRepo extends BaseRepository<Location, Long>
+public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 {
 
 	boolean existsByLocationName(String locationName);
 
-	ArrayList<Location> findByLocationName(String locationName);
+	ArrayList<UsageLocation> findByLocationName(String locationName);
 
-	@Query(value="SELECT m from Location m where locationName LIKE %:name%")
-	ArrayList<Location> findByPartialName(@Param("name") String name);
+	@Query(value="SELECT m from UsageLocation m where locationName LIKE %:name%")
+	ArrayList<UsageLocation> findByPartialName(@Param("name") String name);
 
-	@Query(value="SELECT locationId as id,locationName as name from Location m")
+	@Query(value="SELECT locationId as id,locationName as name from UsageLocation m")
 	List<IdNameProjections> findIdAndNames();
 }

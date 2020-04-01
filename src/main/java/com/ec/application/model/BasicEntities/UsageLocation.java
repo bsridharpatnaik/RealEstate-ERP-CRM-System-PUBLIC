@@ -17,7 +17,7 @@ import com.ec.application.SoftDelete.SoftDeletableEntity;
 @Table(name = "Usage_Location")
 @Audited
 @Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class Location extends SoftDeletableEntity
+public class UsageLocation extends SoftDeletableEntity
 {
 	@Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
