@@ -1,12 +1,15 @@
 package com.ec.gateway.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.ec.gateway.Data.CreateUserData;
 import com.ec.gateway.Data.ResetPasswordData;
 import com.ec.gateway.Data.UpdateRolesForUserData;
+import com.ec.gateway.Data.UserReturnData;
 import com.ec.gateway.Data.UsersWithRoleNameListData;
 import com.ec.gateway.Model.Role;
 import com.ec.gateway.Model.User;
@@ -118,9 +122,20 @@ public class UserService
 		}
 	}
 
-	public String fetchUserName() 
+	public UserReturnData fetchUserName() 
 	{
+		UserReturnData userReturnData = new UserReturnData();
+		List<String> roles = new ArrayList<String>();
+		
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		return auth.getName();
+		userReturnData.setUsername(auth.getName());
+		
+		Collection<SimpleGrantedAuthority> authorities = (Collection<SimpleGrantedAuthority>)SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+		for(SimpleGrantedAuthority authority : authorities)
+		{
+			roles.add(authority.getAuthority());
+		}
+		userReturnData.setRoles(roles);
+		return userReturnData;
 	}
 	}

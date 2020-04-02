@@ -13,13 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.gateway.Data.CreateUserData;
 import com.ec.gateway.Data.ResetPasswordData;
 import com.ec.gateway.Data.UpdateRolesForUserData;
+import com.ec.gateway.Data.UserReturnData;
 import com.ec.gateway.Data.UsersWithRoleNameListData;
 import com.ec.gateway.Model.User;
 import com.ec.gateway.Service.UserService;
 
 
 @RestController
-@RequestMapping("ec/user")
+@RequestMapping("/user")
 public class UserController 
 {
 
@@ -53,10 +54,9 @@ public class UserController
 		return userService.updateRolesForUser(payload);
 	}
 	
-	@GetMapping("/me")
-	public String returnUserName() 
+	@GetMapping(value="/me",produces="application/json")
+	public UserReturnData returnUserName() 
 	{
-		
 		return userService.fetchUserName();
 	}
 }
