@@ -6,17 +6,19 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
-import com.ec.gateway.bean.auth.Data.CreateUserData;
-import com.ec.gateway.bean.auth.Data.ResetPasswordData;
-import com.ec.gateway.bean.auth.Data.Role;
-import com.ec.gateway.bean.auth.Data.UpdateRolesForUserData;
-import com.ec.gateway.bean.auth.Data.User;
-import com.ec.gateway.bean.auth.Data.UsersWithRoleNameListData;
-import com.ec.gateway.repository.RoleRepo;
-import com.ec.gateway.repository.UserRepo;
+import com.ec.gateway.Data.CreateUserData;
+import com.ec.gateway.Data.ResetPasswordData;
+import com.ec.gateway.Data.UpdateRolesForUserData;
+import com.ec.gateway.Data.UsersWithRoleNameListData;
+import com.ec.gateway.Model.Role;
+import com.ec.gateway.Model.User;
+import com.ec.gateway.Repository.RoleRepo;
+import com.ec.gateway.Repository.UserRepo;
 
 @Service
 public class UserService 
@@ -114,5 +116,11 @@ public class UserService
 		{
 			throw new Exception ("No or Multiple users found by username!");
 		}
+	}
+
+	public String fetchUserName() 
+	{
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		return auth.getName();
 	}
 	}

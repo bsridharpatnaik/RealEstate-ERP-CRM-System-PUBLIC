@@ -1,4 +1,4 @@
-package com.ec.gateway.controller;
+package com.ec.gateway.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.gateway.Model.Role;
 import com.ec.gateway.Service.RoleService;
-import com.ec.gateway.bean.auth.Data.Role;
 
 
 @RestController

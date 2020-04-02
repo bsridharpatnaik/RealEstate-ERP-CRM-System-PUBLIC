@@ -1,4 +1,4 @@
-package com.ec.gateway.controller;
+package com.ec.gateway.Controller;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.gateway.Data.JwtResponse;
+import com.ec.gateway.Data.LoginData;
+import com.ec.gateway.Data.UserSignInData;
+import com.ec.gateway.JWTUtils.JWTTokenUtils;
 import com.ec.gateway.Service.JwtUserDetailsService;
-import com.ec.gateway.bean.auth.JWTTokenUtils;
-import com.ec.gateway.bean.auth.Data.JwtResponse;
-import com.ec.gateway.bean.auth.Data.LoginData;
-import com.ec.gateway.bean.auth.Data.UserSignInData;
 
 
 

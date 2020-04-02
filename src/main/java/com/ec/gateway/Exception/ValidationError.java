@@ -1,4 +1,4 @@
-package com.ec.gateway.exception;
+package com.ec.gateway.Exception;
 
 public class ValidationError {
 

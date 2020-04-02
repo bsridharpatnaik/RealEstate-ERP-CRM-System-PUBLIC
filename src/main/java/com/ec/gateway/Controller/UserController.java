@@ -1,4 +1,4 @@
-package com.ec.gateway.controller;
+package com.ec.gateway.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.gateway.Data.CreateUserData;
+import com.ec.gateway.Data.ResetPasswordData;
+import com.ec.gateway.Data.UpdateRolesForUserData;
+import com.ec.gateway.Data.UsersWithRoleNameListData;
+import com.ec.gateway.Model.User;
 import com.ec.gateway.Service.UserService;
-import com.ec.gateway.bean.auth.Data.CreateUserData;
-import com.ec.gateway.bean.auth.Data.ResetPasswordData;
-import com.ec.gateway.bean.auth.Data.UpdateRolesForUserData;
-import com.ec.gateway.bean.auth.Data.User;
-import com.ec.gateway.bean.auth.Data.UsersWithRoleNameListData;
 
 
 @RestController
@@ -51,5 +51,12 @@ public class UserController
 	public User updateRolesForUser(@RequestBody UpdateRolesForUserData payload) throws Exception{
 		
 		return userService.updateRolesForUser(payload);
+	}
+	
+	@GetMapping("/me")
+	public String returnUserName() 
+	{
+		
+		return userService.fetchUserName();
 	}
 }

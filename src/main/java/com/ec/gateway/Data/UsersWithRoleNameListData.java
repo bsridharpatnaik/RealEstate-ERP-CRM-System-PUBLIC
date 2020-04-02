@@ -1,8 +1,10 @@
-package com.ec.gateway.bean.auth.Data;
+package com.ec.gateway.Data;
 
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+
+import com.ec.gateway.Model.User;
 
 public class UsersWithRoleNameListData 
 {

@@ -1,4 +1,4 @@
-package com.ec.gateway.exception;
+package com.ec.gateway.Exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

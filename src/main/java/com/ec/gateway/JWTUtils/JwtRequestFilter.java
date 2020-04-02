@@ -1,5 +1,5 @@
 
-package com.ec.gateway.bean.auth;
+package com.ec.gateway.JWTUtils;
 
 import java.io.IOException;
 

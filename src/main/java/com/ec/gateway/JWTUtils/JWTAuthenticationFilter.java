@@ -1,4 +1,4 @@
-package com.ec.gateway.bean.auth;
+package com.ec.gateway.JWTUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,8 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.ec.gateway.bean.auth.Data.LoginData;
-import com.ec.gateway.exception.ValidationError;
+import com.ec.gateway.Data.LoginData;
+import com.ec.gateway.Exception.ValidationError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {

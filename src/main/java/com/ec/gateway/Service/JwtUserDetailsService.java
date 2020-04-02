@@ -13,8 +13,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.ec.gateway.bean.auth.Data.Role;
-import com.ec.gateway.repository.UserRepository;
+import com.ec.gateway.Model.Role;
+import com.ec.gateway.Repository.UserRepository;
 
 
 @Service
@@ -27,9 +27,9 @@ public class JwtUserDetailsService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		
-		List<com.ec.gateway.bean.auth.Data.User> findByUserName = userRepo.findByUserName(username);
+		List<com.ec.gateway.Model.User> findByUserName = userRepo.findByUserName(username);
 		if(findByUserName.size() > 0) {
-			com.ec.gateway.bean.auth.Data.User user = findByUserName.get(0);
+			com.ec.gateway.Model.User user = findByUserName.get(0);
 			
 			List<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toList());
 

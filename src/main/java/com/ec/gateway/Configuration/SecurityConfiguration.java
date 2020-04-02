@@ -1,4 +1,4 @@
-package com.ec.gateway.bean.auth;
+package com.ec.gateway.Configuration;
 
 import java.util.Arrays;
 
@@ -21,6 +21,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.ec.gateway.JWTUtils.JwtAuthenticationEntryPoint;
+import com.ec.gateway.JWTUtils.JwtRequestFilter;
 
 
 @Configuration

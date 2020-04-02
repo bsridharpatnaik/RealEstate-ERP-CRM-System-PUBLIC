@@ -1,4 +1,4 @@
-package com.ec.gateway.bean.auth.Data;
+package com.ec.gateway.Model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

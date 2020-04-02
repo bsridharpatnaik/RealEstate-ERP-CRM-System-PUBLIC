@@ -1,4 +1,4 @@
-package com.ec.gateway.repository;
+package com.ec.gateway.Repository;
 
 import java.util.ArrayList;
 
@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.ec.gateway.bean.auth.Data.User;
+import com.ec.gateway.Model.User;
 
 
 @Repository

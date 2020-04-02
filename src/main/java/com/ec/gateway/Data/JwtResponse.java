@@ -1,4 +1,4 @@
-package com.ec.gateway.bean.auth.Data;
+package com.ec.gateway.Data;
 
 import java.io.Serializable;
 import java.util.ArrayList;

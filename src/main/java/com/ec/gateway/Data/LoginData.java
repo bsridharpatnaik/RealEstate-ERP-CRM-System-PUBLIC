@@ -1,6 +1,6 @@
-package com.ec.gateway.bean.auth.Data;
+package com.ec.gateway.Data;
 
-import com.ec.gateway.exception.ValidationError;
+import com.ec.gateway.Exception.ValidationError;
 
 public class LoginData {
 	

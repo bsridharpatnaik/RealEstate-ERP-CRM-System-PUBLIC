@@ -5,8 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.ec.gateway.bean.auth.Data.Role;
-import com.ec.gateway.repository.RoleRepo;
+import com.ec.gateway.Model.Role;
+import com.ec.gateway.Repository.RoleRepo;
 
 @Service
 public class RoleService 
