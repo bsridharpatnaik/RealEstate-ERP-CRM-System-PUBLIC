@@ -57,6 +57,6 @@ public class UserController
 	@GetMapping(value="/me",produces="application/json")
 	public UserReturnData returnUserName() 
 	{
-		return userService.fetchUserName();
+		return userService.fetchUserDetails();
 	}
 }

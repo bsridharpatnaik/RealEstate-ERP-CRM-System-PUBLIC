@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -122,13 +124,14 @@ public class UserService
 		}
 	}
 
-	public UserReturnData fetchUserName() 
+	public UserReturnData fetchUserDetails() 
 	{
 		UserReturnData userReturnData = new UserReturnData();
 		List<String> roles = new ArrayList<String>();
 		
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		userReturnData.setUsername(auth.getName());
+		
 		
 		Collection<SimpleGrantedAuthority> authorities = (Collection<SimpleGrantedAuthority>)SecurityContextHolder.getContext().getAuthentication().getAuthorities();
 		for(SimpleGrantedAuthority authority : authorities)
