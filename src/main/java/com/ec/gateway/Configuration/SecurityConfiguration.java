@@ -88,12 +88,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	
 	
 	@Override
-	public void configure(WebSecurity web) throws Exception {
+	public void configure(WebSecurity web) throws Exception 
+	{
 	    // Allow eureka client to be accessed without authentication
 	    web.ignoring().antMatchers(//"**",
-	    		"/*/")
-	            .antMatchers("/eureka/**.**","/eureka/**","**/scripts/**.js","/**.jpg","/**.ico","/**.html","/header.html",
-	            		"**.html","/**.css","/**.js")//
+	    		"/*/","/eureka/**.**","/eureka/**","**/scripts/**.js","/**.jpg","/**.ico","/**.html","/header.html",
+	            		"**.html","/**.css","/**.js","/eureka/**/**")//
 	            .antMatchers(HttpMethod.OPTIONS, "/**"); // Request type options should be allowed.
 	}
 }
