@@ -3,6 +3,7 @@ package com.ec.application.service;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -17,12 +18,14 @@ public class UserDetailsService
 	@Autowired
 	HttpServletRequest request;
 	
+	@Value("${eureka.serverurl}")
+	private String reqUrl;
     public UserReturnData getCurrentUser()
     {
     	System.out.println(request.getHeader("Authorization"));
     	UserReturnData userDetails = webClientBuilder.build()
 					    	.get()
-					    	.uri("http://localhost:8080/user/me")
+					    	.uri(reqUrl+"/user/me")
 					    	.header("Authorization", request.getHeader("Authorization"))
 					    	.retrieve()
 					    	.bodyToMono(UserReturnData.class)
