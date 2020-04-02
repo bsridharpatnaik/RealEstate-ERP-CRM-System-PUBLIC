@@ -29,8 +29,20 @@ public class ProductService
 	
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
+	
+	@Autowired
+	UserDetailsService userDetailsService;
+	
 	public Page<Product> findAll(Pageable pageable)
 	{
+		try
+		{
+			System.out.println(userDetailsService.getCurrentUser().getUsername());
+		}
+		catch(Exception e)
+		{
+			
+		}
 		return productRepo.findAll(pageable);
     }
 	

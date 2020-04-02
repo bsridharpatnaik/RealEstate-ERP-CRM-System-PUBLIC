@@ -26,7 +26,7 @@ import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.service.ProductService;
 
 @RestController
-@RequestMapping("inventory/product")
+@RequestMapping("/product")
 public class ProductController 
 {
 	@Autowired
