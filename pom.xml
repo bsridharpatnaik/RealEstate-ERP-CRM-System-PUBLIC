@@ -3,13 +3,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.arjun</groupId>
-	<artifactId>gateway</artifactId>
+	<groupId>com.ec</groupId>
+	<artifactId>common-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>jar</packaging>
+	<packaging>war</packaging>
 
-	<name>gateway</name>
-	<description>Gateway </description>
+	<name>common-service</name>
+	<description>common-service </description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -168,10 +168,11 @@
 	</dependencyManagement>
 
 	<build>
+	<finalName>ec</finalName>
 		<plugins>
 			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
