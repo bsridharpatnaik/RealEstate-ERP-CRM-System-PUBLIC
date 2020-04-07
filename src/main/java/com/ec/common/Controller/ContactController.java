@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.common.Data.ContactClubbedData;
 import com.ec.common.Data.CreateContactData;
 import com.ec.common.Model.Contact;
 import com.ec.common.Service.ContactService;
@@ -51,9 +52,9 @@ public class ContactController
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Contact createContact(@RequestBody CreateContactData payload) throws Exception
+	public ContactClubbedData createContact(@RequestBody CreateContactData payload) throws Exception
 	{
-		Contact contact = new Contact();
+		ContactClubbedData contact = new ContactClubbedData();
 		try
 		{
 			contact = contactService.createContact(payload);

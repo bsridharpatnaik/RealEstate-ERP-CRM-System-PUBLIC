@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import com.ec.common.Data.ContactClubbedData;
 import com.ec.common.Data.ContactInventoryData;
 import com.ec.common.Data.CreateContactData;
 import com.ec.common.Data.CustomerTypeEnum;
@@ -20,28 +22,32 @@ public class ContactService
 	@Autowired
 	ContactRepo contactRepo;
 	
-	public Contact createContact(CreateContactData payload) throws Exception
+	@Autowired
+	RestTemplate restTemplate;
+	
+	public ContactClubbedData createContact(CreateContactData payload) throws Exception
 	{
+		ContactClubbedData contactClubbedData = new ContactClubbedData();
 		Contact contact=new Contact();
 		validatePayload(payload);
 		formatMobileNo(payload);
 		populateContactFields(contact,payload);
 		checkIfExists("create",contact);
-		contactRepo.save(contact);
+		contactClubbedData.setContact(contactRepo.save(contact));
 		
-		/*
-		if(payload.getContactType()!=CustomerTypeEnum.CUSTOMER)
+		
+		if(payload.getContactType()!=CustomerTypeEnum.CUSTOMER.toString())
 		{
 			ContactInventoryData contactInventoryData = new ContactInventoryData(
 					contact.getContactId(),
 					payload.getGSTDetails(),
 					payload.getContactPerson(),
 					payload.getContactPersonMobileNo());
-			passContactToInventory(contactInventoryData);
+			contactClubbedData.setContactInventoryData(passContactToInventory(contactInventoryData));
 		}
 		else
-			passContactToCRM(contact.getContactId(),payload); */
-		return contact;
+			passContactToCRM(contact.getContactId(),payload); 
+		return contactClubbedData;
 	}
 
 	private void passContactToCRM(Long contactId, CreateContactData payload) 
@@ -50,9 +56,11 @@ public class ContactService
 		
 	}
 
-	private void passContactToInventory(ContactInventoryData payload) 
+	private ContactInventoryData passContactToInventory(ContactInventoryData payload) 
 	{
-		// TODO Auto-generated method stub
+		String url = "http://inventory/contact/create";
+		ContactInventoryData response = restTemplate.postForObject(url, payload, ContactInventoryData.class);
+		return response;
 		
 	}
 
@@ -157,5 +165,10 @@ public class ContactService
 	    number = number.replaceAll("^[0]{1,4}", "+"); // e.g. 004912345678 -> +4912345678
 
 	    return number;
+	}
+	
+	public void  postCallToInventory(ContactInventoryData contactInventoryData)
+	{
+		
 	}
 }

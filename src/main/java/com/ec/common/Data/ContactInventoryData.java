@@ -16,6 +16,9 @@ public class ContactInventoryData
 		this.contactPerson = contactPerson;
 		this.contactPersonMobileNo = contactPersonMobileNo;
 	}
+	public ContactInventoryData() {
+		// TODO Auto-generated constructor stub
+	}
 	public Long getContactId() {
 		return contactId;
 	}
