@@ -10,7 +10,7 @@ import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.service.PopulateDropdownService;
 
 @RestController
-@RequestMapping("inventory/dropdown")
+@RequestMapping("/dropdown")
 public class PopulateDropdownController 
 {
 

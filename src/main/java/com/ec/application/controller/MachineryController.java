@@ -25,7 +25,7 @@ import com.ec.application.model.BasicEntities.Machinery;
 import com.ec.application.service.MachineryService;
 
 @RestController
-@RequestMapping("inventory/machinery")
+@RequestMapping("/machinery")
 public class MachineryController 
 {
 	@Autowired

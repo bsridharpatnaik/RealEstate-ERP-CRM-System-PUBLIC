@@ -18,7 +18,6 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
-import com.ec.application.model.BasicEntities.Contact;
 import com.ec.application.model.BasicEntities.Product;
 import com.ec.application.model.BasicEntities.UnloadingArea;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -40,11 +39,12 @@ public class InwardInventory extends SoftDeletableEntity
 	@NonNull
 	Date Date;
 	
+	/*
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="contactId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Contact contact;
-	
+	*/
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="productId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -66,13 +66,6 @@ public class InwardInventory extends SoftDeletableEntity
 	
 	Float closingStock;
 	
-	
-	public Contact getContact() {
-		return contact;
-	}
-	public void setContact(Contact contact) {
-		this.contact = contact;
-	}
 	public Float getClosingStock() {
 		return closingStock;
 	}

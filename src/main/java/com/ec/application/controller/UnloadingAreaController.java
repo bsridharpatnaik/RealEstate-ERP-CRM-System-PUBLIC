@@ -25,7 +25,7 @@ import com.ec.application.model.BasicEntities.UnloadingArea;
 import com.ec.application.service.UnloadingAreaService;
 
 @RestController
-@RequestMapping("inventory/unloadingarea")
+@RequestMapping("/unloadingarea")
 public class UnloadingAreaController 
 {
 

@@ -23,7 +23,7 @@ import com.ec.application.model.MachineryOnRent;
 import com.ec.application.service.MachineryOnRentService;
 
 @RestController
-@RequestMapping("inventory/mor")
+@RequestMapping("/mor")
 public class MachineryOnRentController 
 {
 

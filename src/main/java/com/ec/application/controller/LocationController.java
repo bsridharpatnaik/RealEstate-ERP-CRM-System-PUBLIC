@@ -25,7 +25,7 @@ import com.ec.application.model.BasicEntities.UsageLocation;
 import com.ec.application.service.LocationService;
 
 @RestController
-@RequestMapping("inventory/location")
+@RequestMapping("/location")
 public class LocationController 
 {
 

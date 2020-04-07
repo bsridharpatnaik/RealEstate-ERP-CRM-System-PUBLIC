@@ -18,7 +18,6 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
-import com.ec.application.model.BasicEntities.Contact;
 import com.ec.application.model.BasicEntities.UsageLocation;
 import com.ec.application.model.BasicEntities.Machinery;
 
@@ -51,7 +50,7 @@ public class MachineryOnRent extends SoftDeletableEntity
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="contactId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Contact contact;
+	ContactInfo contactInfo;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="locationId",nullable=false)
@@ -83,6 +82,13 @@ public class MachineryOnRent extends SoftDeletableEntity
 	Long noOfTrips;
 	Float amountCharged;
 	
+	
+	public ContactInfo getContactInfo() {
+		return contactInfo;
+	}
+	public void setContactInfo(ContactInfo contactInfo) {
+		this.contactInfo = contactInfo;
+	}
 	public Long getId() {
 		return Id;
 	}
@@ -103,13 +109,6 @@ public class MachineryOnRent extends SoftDeletableEntity
 	
 	public void setMachinery(Machinery machinery) {
 		this.machinery = machinery;
-	}
-	
-	public Contact getContact() {
-		return contact;
-	}
-	public void setContact(Contact contact) {
-		this.contact = contact;
 	}
 	public UsageLocation getUsageLocation() {
 		return usageLocation;

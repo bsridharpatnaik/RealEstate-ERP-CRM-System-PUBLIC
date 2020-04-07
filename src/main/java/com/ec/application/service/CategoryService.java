@@ -28,6 +28,7 @@ public class CategoryService
 	
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
+	
 	public Page<Category> findAll(Pageable pageable)
 	{
 		return categoryRepo.findAll(pageable);

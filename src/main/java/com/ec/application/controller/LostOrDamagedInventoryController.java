@@ -22,7 +22,7 @@ import com.ec.application.model.LostDamagedInventory;
 import com.ec.application.service.LostDamagedInventoryService;
 
 @RestController
-@RequestMapping("inventory/lostdamaged")
+@RequestMapping("/lostdamaged")
 public class LostOrDamagedInventoryController 
 {
 	@Autowired
