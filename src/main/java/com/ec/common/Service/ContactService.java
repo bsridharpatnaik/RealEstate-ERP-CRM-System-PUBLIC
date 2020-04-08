@@ -2,18 +2,23 @@ package com.ec.common.Service;
 
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.beans.factory.annotation.Value;
+
 import com.ec.common.Data.ContactClubbedData;
 import com.ec.common.Data.ContactInventoryData;
 import com.ec.common.Data.CreateContactData;
 import com.ec.common.Data.CustomerTypeEnum;
+import com.ec.common.Data.URLRepository;
 import com.ec.common.Model.Contact;
 import com.ec.common.Repository.ContactRepo;
 
@@ -27,8 +32,11 @@ public class ContactService
 	@Autowired
 	RestTemplate restTemplate;
 	
+	@Autowired
+	HttpServletRequest httpRequest;
+	
 	@Value("${inven.serverurl}")
-	private String reqUrl;
+	private String reqServer;
 	
 	@Transactional
 	public ContactClubbedData createContact(CreateContactData payload) throws Exception
@@ -64,8 +72,10 @@ public class ContactService
 
 	private ContactInventoryData passContactToInventory(ContactInventoryData payload) 
 	{
-		String url = reqUrl + "/contact/create";
-		ContactInventoryData response = restTemplate.postForObject(url, payload, ContactInventoryData.class);
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Authorization", httpRequest.getHeader("Authorization"));      
+		HttpEntity<ContactInventoryData> request = new HttpEntity<>(payload, headers);
+		ContactInventoryData response = restTemplate.postForObject(reqServer + URLRepository.addCustomerInfo, request, ContactInventoryData.class);
 		return response;
 		
 	}
