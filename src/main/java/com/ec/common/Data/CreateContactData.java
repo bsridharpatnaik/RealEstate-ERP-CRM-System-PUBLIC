@@ -89,13 +89,14 @@ public class CreateContactData
 	}
 
 
+	
 	public String getGSTDetails() {
 		return GSTDetails;
 	}
 
 
-	public void setGSTDetails(String gSTDetails) {
-		GSTDetails = gSTDetails;
+	public void setGSTDetails(String GSTDetails) {
+		this.GSTDetails = GSTDetails;
 	}
 
 

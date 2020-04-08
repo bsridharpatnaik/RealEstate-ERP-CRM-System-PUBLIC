@@ -2,12 +2,14 @@ package com.ec.common.Service;
 
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
+import org.springframework.beans.factory.annotation.Value;
 import com.ec.common.Data.ContactClubbedData;
 import com.ec.common.Data.ContactInventoryData;
 import com.ec.common.Data.CreateContactData;
@@ -25,6 +27,10 @@ public class ContactService
 	@Autowired
 	RestTemplate restTemplate;
 	
+	@Value("${inven.serverurl}")
+	private String reqUrl;
+	
+	@Transactional
 	public ContactClubbedData createContact(CreateContactData payload) throws Exception
 	{
 		ContactClubbedData contactClubbedData = new ContactClubbedData();
@@ -58,7 +64,7 @@ public class ContactService
 
 	private ContactInventoryData passContactToInventory(ContactInventoryData payload) 
 	{
-		String url = "http://inventory/contact/create";
+		String url = reqUrl + "/contact/create";
 		ContactInventoryData response = restTemplate.postForObject(url, payload, ContactInventoryData.class);
 		return response;
 		
@@ -152,7 +158,8 @@ public class ContactService
 			return false;
 	}
 
-	public String normalizePhoneNumber(String number) {
+	public String normalizePhoneNumber(String number) 
+	{
 
 	    number = number.replaceAll("[^+0-9]", ""); // All weird characters such as /, -, ...
 
@@ -165,10 +172,5 @@ public class ContactService
 	    number = number.replaceAll("^[0]{1,4}", "+"); // e.g. 004912345678 -> +4912345678
 
 	    return number;
-	}
-	
-	public void  postCallToInventory(ContactInventoryData contactInventoryData)
-	{
-		
 	}
 }
