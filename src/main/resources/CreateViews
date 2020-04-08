@@ -1,0 +1,19 @@
+CREATE OR REPLACE VIEW supplier as 
+SELECT 
+c.contact_id,c.name,c.mobile_no,c.email_id,c.address,c.contact_type,ci.contact_person,
+ci.contact_person_mobile_no,ci.gstdetails
+FROM ec.contact c
+INNER JOIN  contact_info ci on c.contact_id=ci.contact_id
+WHERE 
+c.contact_type='SUPPLIER'
+AND ci.is_deleted=0;
+
+CREATE OR REPLACE VIEW contractor as 
+SELECT 
+c.contact_id,c.name,c.mobile_no,c.email_id,c.address,c.contact_type,ci.contact_person,
+ci.contact_person_mobile_no,ci.gstdetails
+FROM ec.contact c
+INNER JOIN  contact_info ci on c.contact_id=ci.contact_id
+WHERE 
+c.contact_type='CONTRACTOR'
+AND ci.is_deleted=0;
