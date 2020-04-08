@@ -18,9 +18,10 @@ public class UserDetailsService
 	@Autowired
 	HttpServletRequest request;
 	
-	@Value("${eureka.serverurl}")
+	@Value("${gate.serverurl}")
 	private String reqUrl;
-    public UserReturnData getCurrentUser()
+    
+	public UserReturnData getCurrentUser()
     {
     	System.out.println(request.getHeader("Authorization"));
     	UserReturnData userDetails = webClientBuilder.build()

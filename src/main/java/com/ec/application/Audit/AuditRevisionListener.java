@@ -15,7 +15,7 @@ public class AuditRevisionListener implements RevisionListener
     {
         AuditRevisionEntity audit = (AuditRevisionEntity) revisionEntity;
         //Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = userDetailsService.getCurrentUser().getUsername();
-        audit.setUsername(username);
+        //String username = userDetailsService.getCurrentUser().getUsername();
+        audit.setUsername("ss");
     }
 }
