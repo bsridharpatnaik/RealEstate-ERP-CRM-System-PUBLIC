@@ -5,8 +5,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "supplier")
-public class Supplier extends Contact
+@Table(name = "contractor")
+public class Contractor extends Contact
 {
 
 	@Id
