@@ -1,21 +1,27 @@
 package com.ec.application.model;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Subselect;
+
 @Entity
-@Table(name = "contractor")
+@Subselect("select * from contractor")
+@Immutable
 public class Contractor extends Contact
 {
 
 	@Id
-	Long contact_id;
+	@Column(name="contact_id")
+	Long contactId;
 	
 	public Long getContact_id() {
-		return contact_id;
+		return contactId;
 	}
 	public void setContact_id(Long contact_id) {
-		this.contact_id = contact_id;
+		this.contactId = contact_id;
 	}
 }

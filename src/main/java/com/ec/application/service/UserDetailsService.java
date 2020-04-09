@@ -18,7 +18,7 @@ public class UserDetailsService
 	@Autowired
 	HttpServletRequest request;
 	
-	@Value("${gate.serverurl}")
+	@Value("${common.serverurl}")
 	private String reqUrl;
     
 	public UserReturnData getCurrentUser()

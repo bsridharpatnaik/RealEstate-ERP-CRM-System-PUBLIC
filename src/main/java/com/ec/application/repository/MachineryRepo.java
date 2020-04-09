@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.BasicEntities.Machinery;
+import com.ec.application.model.Machinery;
 
 @Repository
 public interface MachineryRepo extends BaseRepository<Machinery, Long>

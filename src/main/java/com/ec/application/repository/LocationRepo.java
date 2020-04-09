@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.BasicEntities.UsageLocation;
+import com.ec.application.model.UsageLocation;
 
 @Repository
 public interface LocationRepo extends BaseRepository<UsageLocation, Long>

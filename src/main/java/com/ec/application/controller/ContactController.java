@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.model.Category;
 import com.ec.application.model.ContactInfo;
-import com.ec.application.model.BasicEntities.Category;
 import com.ec.application.service.ContactInfoService;
 
 @RestController

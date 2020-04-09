@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.Projections.IdNameProjections;
-import com.ec.application.model.BasicEntities.UsageLocation;
+import com.ec.application.model.UsageLocation;
 import com.ec.application.service.LocationService;
 
 @RestController

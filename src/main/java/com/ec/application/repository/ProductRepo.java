@@ -10,8 +10,8 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.BasicEntities.Machinery;
-import com.ec.application.model.BasicEntities.Product;
+import com.ec.application.model.Machinery;
+import com.ec.application.model.Product;
 
 @Repository
 public interface ProductRepo extends BaseRepository<Product, Long>
@@ -25,14 +25,14 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	ArrayList<Product> findByPartialName(@Param("name") String name);
 
 	@Query(value="SELECT m from Product m where m.category.categoryName=categoryname")
-	ArrayList<String> returnNameByCategory(String categoryname);
+	ArrayList<String> returnNameByCategory(@Param("categoryname")String categoryname);
 
 	@Query(value="SELECT m from Product m where m.category.categoryId=id")
-	ArrayList<Product> existsByCategoryId(Long id);
+	ArrayList<Product> existsByCategoryId(@Param("id")Long id);
 
 	@Query(value="SELECT productId as id,productName as name from Product m")
 	List<IdNameProjections> findIdAndNames();
 	
 	@Query(value="SELECT count(*) from Product m where m.category.categoryId=:categoryId")
-	int categoryUsageCount(Long categoryId);
+	int categoryUsageCount(@Param("categoryId")Long categoryId);
 }

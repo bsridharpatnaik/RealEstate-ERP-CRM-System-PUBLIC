@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.Stock.Warehouse;
+import com.ec.application.model.Warehouse;
 
 public interface WarehouseRepo extends BaseRepository<Warehouse, String>
 {

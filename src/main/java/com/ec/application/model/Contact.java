@@ -1,5 +1,6 @@
 package com.ec.application.model;
 
+import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
 import org.hibernate.envers.Audited;
@@ -8,61 +9,81 @@ import org.hibernate.envers.Audited;
 @Audited
 public class Contact 
 {
+	@Column(name="name")
 	String name;
-	String mobile_no;
-	String email_id;
-	String address;
-	String contact_type;
-	String contact_person;
-	String contact_person_mobile_no;
-	String gstdetails;
+	
+	@Column(name="mobile_no")
+	String mobileNo;
+	
+	@Column(name="address")
+	String emailId;
+	
+	@Column(name="contact_type")
+	String contactType;
+	
+	@Column(name="contact_person")
+	String contactPerson;
+	
+	@Column(name="contact_person_mobile_no")
+	String contactPersonMobileNo;
+	
+	@Column(name="gstdetails")
+	String GSTDetails;
+
 	public String getName() {
 		return name;
 	}
+
 	public void setName(String name) {
 		this.name = name;
 	}
-	public String getMobile_no() {
-		return mobile_no;
+
+	public String getMobileNo() {
+		return mobileNo;
 	}
-	public void setMobile_no(String mobile_no) {
-		this.mobile_no = mobile_no;
+
+	public void setMobileNo(String mobileNo) {
+		this.mobileNo = mobileNo;
 	}
-	public String getEmail_id() {
-		return email_id;
+
+	public String getEmailId() {
+		return emailId;
 	}
-	public void setEmail_id(String email_id) {
-		this.email_id = email_id;
+
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
 	}
-	public String getAddress() {
-		return address;
+
+	public String getContactType() {
+		return contactType;
 	}
-	public void setAddress(String address) {
-		this.address = address;
+
+	public void setContactType(String contactType) {
+		this.contactType = contactType;
 	}
-	public String getContact_type() {
-		return contact_type;
+
+	public String getContactPerson() {
+		return contactPerson;
 	}
-	public void setContact_type(String contact_type) {
-		this.contact_type = contact_type;
+
+	public void setContactPerson(String contactPerson) {
+		this.contactPerson = contactPerson;
 	}
-	public String getContact_person() {
-		return contact_person;
+
+	public String getContactPersonMobileNo() {
+		return contactPersonMobileNo;
 	}
-	public void setContact_person(String contact_person) {
-		this.contact_person = contact_person;
+
+	public void setContactPersonMobileNo(String contactPersonMobileNo) {
+		this.contactPersonMobileNo = contactPersonMobileNo;
 	}
-	public String getContact_person_mobile_no() {
-		return contact_person_mobile_no;
+
+	public String getGSTDetails() {
+		return GSTDetails;
 	}
-	public void setContact_person_mobile_no(String contact_person_mobile_no) {
-		this.contact_person_mobile_no = contact_person_mobile_no;
-	}
-	public String getGstdetails() {
-		return gstdetails;
-	}
-	public void setGstdetails(String gstdetails) {
-		this.gstdetails = gstdetails;
+
+	public void setGSTDetails(String gSTDetails) {
+		GSTDetails = gSTDetails;
 	}
 	
 	

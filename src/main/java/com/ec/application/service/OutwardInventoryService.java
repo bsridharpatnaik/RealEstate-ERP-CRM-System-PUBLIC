@@ -13,7 +13,6 @@ import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
-import com.ec.application.repository.UnloadingAreaRepo;
 @Service
 public class OutwardInventoryService 
 {
@@ -22,9 +21,6 @@ public class OutwardInventoryService
 	
 	@Autowired
 	ProductRepo productRepo;
-	
-	@Autowired
-	UnloadingAreaRepo unloadingAreaRepo;
 	
 	@Autowired
 	PopulateDropdownService populateDropdownService;
@@ -102,7 +98,7 @@ public class OutwardInventoryService
 		outwardnventory.setPurpose(oiData.getPurpose());
 		outwardnventory.setQuantity(oiData.getQuantity());
 		outwardnventory.setSlipNo(oiData.getSlipNo());
-		outwardnventory.setUnloadingArea(unloadingAreaRepo.findById(oiData.getUnloadingAreaId()).get());
+		//outwardnventory.setUnloadingArea(unloadingAreaRepo.findById(oiData.getUnloadingAreaId()).get());
 		//outwardnventory.setContractor(contractorRepo.findById(oiData.getContractorId()).get());
 	}
 
@@ -115,8 +111,8 @@ public class OutwardInventoryService
 				throw new Exception("Product with ID not found");
 		//if(!contractorRepo.existsById(oiData.getContractorId()))
 		//	throw new Exception("Vendor with ID not found");
-		if(!unloadingAreaRepo.existsById(oiData.getUnloadingAreaId()))
-			throw new Exception("Unloading Area with ID not found");
+		//if(!unloadingAreaRepo.existsById(oiData.getUnloadingAreaId()))
+		//	throw new Exception("Unloading Area with ID not found");
 		if(!locationRepo.existsById(oiData.getUsageLocation()))
 			throw new Exception("Usage Location Not Found");
 		if(oiData.getQuantity()<=0)

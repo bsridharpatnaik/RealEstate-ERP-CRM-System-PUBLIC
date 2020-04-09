@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.Projections.IdNameProjections;
 import com.ec.application.SoftDelete.BaseRepository;
-import com.ec.application.model.BasicEntities.Category;
+import com.ec.application.model.Category;
 
 @Repository
 public interface CategoryRepo extends BaseRepository<Category, Long>

@@ -8,9 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.model.BasicEntities.Product;
-import com.ec.application.model.Stock.Stock;
-import com.ec.application.model.Stock.Warehouse;
+import com.ec.application.model.Product;
+import com.ec.application.model.Stock;
+import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;

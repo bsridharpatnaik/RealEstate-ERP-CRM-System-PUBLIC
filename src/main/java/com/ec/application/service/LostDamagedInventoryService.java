@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
 import com.ec.application.model.LostDamagedInventory;
-import com.ec.application.model.BasicEntities.Product;
+import com.ec.application.model.Product;
 import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;

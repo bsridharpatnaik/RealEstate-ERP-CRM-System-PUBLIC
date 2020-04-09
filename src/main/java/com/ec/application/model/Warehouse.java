@@ -1,4 +1,4 @@
-package com.ec.application.model.Stock;
+package com.ec.application.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

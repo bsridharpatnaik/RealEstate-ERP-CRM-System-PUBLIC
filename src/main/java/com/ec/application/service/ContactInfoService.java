@@ -3,8 +3,8 @@ package com.ec.application.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.model.Category;
 import com.ec.application.model.ContactInfo;
-import com.ec.application.model.BasicEntities.Category;
 import com.ec.application.repository.ContactInfoRepo;
 
 @Service

@@ -10,8 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.Projections.IdNameProjections;
-import com.ec.application.model.BasicEntities.UsageLocation;
-import com.ec.application.model.BasicEntities.UnloadingArea;
+import com.ec.application.model.UsageLocation;
 import com.ec.application.repository.LocationRepo;
 
 @Service

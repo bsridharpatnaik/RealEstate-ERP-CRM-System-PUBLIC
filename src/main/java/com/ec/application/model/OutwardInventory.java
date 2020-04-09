@@ -18,9 +18,6 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
-import com.ec.application.model.BasicEntities.UsageLocation;
-import com.ec.application.model.BasicEntities.Product;
-import com.ec.application.model.BasicEntities.UnloadingArea;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -52,7 +49,7 @@ public class OutwardInventory extends SoftDeletableEntity
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="unloadingAreaId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	UnloadingArea unloadingArea;
+	Warehouse warehouse;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="locationId",nullable=false)
@@ -60,6 +57,14 @@ public class OutwardInventory extends SoftDeletableEntity
 	UsageLocation usageLocation;
 	String purpose;
 	Float closingStock;
+	
+	
+	public Warehouse getWarehouse() {
+		return warehouse;
+	}
+	public void setWarehouse(Warehouse warehouse) {
+		this.warehouse = warehouse;
+	}
 	public Long getId() {
 		return Id;
 	}
@@ -90,12 +95,6 @@ public class OutwardInventory extends SoftDeletableEntity
 	}
 	public void setSlipNo(String slipNo) {
 		SlipNo = slipNo;
-	}
-	public UnloadingArea getUnloadingArea() {
-		return unloadingArea;
-	}
-	public void setUnloadingArea(UnloadingArea unloadingArea) {
-		this.unloadingArea = unloadingArea;
 	}
 	
 	public UsageLocation getUsageLocation() {

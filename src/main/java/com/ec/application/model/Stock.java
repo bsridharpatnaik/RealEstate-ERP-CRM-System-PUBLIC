@@ -1,4 +1,4 @@
-package com.ec.application.model.Stock;
+package com.ec.application.model;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -16,7 +16,6 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
 import com.ec.application.SoftDelete.SoftDeletableEntity;
-import com.ec.application.model.BasicEntities.Product;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.NonNull;

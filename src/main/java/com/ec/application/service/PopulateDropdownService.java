@@ -8,8 +8,6 @@ import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryRepo;
 import com.ec.application.repository.ProductRepo;
-import com.ec.application.repository.UnloadingAreaRepo;
-
 @Service
 public class PopulateDropdownService 
 {
@@ -20,8 +18,8 @@ public class PopulateDropdownService
 	@Autowired
 	MachineryRepo machineryRepo;
 	
-	@Autowired
-	UnloadingAreaRepo unloadingAreaRepo;
+	//@Autowired
+	//UnloadingAreaRepo unloadingAreaRepo;
 	
 	@Autowired
 	ProductRepo productRepo;
@@ -45,11 +43,11 @@ public class PopulateDropdownService
 		//case inward inventory
 		case "inward":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());
-			morDropdownDataList.setUnloadingArea(unloadingAreaRepo.findIdAndNames());
+			//morDropdownDataList.setUnloadingArea(unloadingAreaRepo.findIdAndNames());
 			break;
 		case "outward":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());
-			morDropdownDataList.setUnloadingArea(unloadingAreaRepo.findIdAndNames());
+			//morDropdownDataList.setUnloadingArea(unloadingAreaRepo.findIdAndNames());
 			morDropdownDataList.setLocation(locationRepo.findIdAndNames());
 			//morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
 			break;

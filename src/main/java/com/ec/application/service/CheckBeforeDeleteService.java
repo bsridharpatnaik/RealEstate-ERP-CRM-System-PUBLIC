@@ -76,9 +76,9 @@ public class CheckBeforeDeleteService
 	}
 	public boolean isunloadingAreaUsed(Long unloadingAreaId) throws Exception
 	{
-		if(inwardInventoryRepo.unloadingAreaCount(unloadingAreaId) > 0) 
+		/*if(inwardInventoryRepo.unloadingAreaCount(unloadingAreaId) > 0) 
 			return true;
-		else
+		else*/
 			return false;
 	}
 	public boolean isWarehouseUsed(String warehouseName) throws Exception
