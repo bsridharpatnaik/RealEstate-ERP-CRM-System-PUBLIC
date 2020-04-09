@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.common.Data.ContactClubbedData;
 import com.ec.common.Data.CreateContactData;
-import com.ec.common.Model.Contact;
+import com.ec.common.Model.ContactAllInfo;
+import com.ec.common.Model.ContactBasicInfo;
 import com.ec.common.Service.ContactService;
 
 @RestController
@@ -29,8 +29,9 @@ public class ContactController
 
 	@Autowired
 	ContactService contactService;
+	
 	@GetMapping
-	public Page<Contact> returnAllContacts(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	public Page<ContactAllInfo> returnAllContacts(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
@@ -38,9 +39,9 @@ public class ContactController
 	}
 	
 	@GetMapping("/{id}")
-	public Contact findContactbyvehicleNoContacts(@PathVariable long id) throws Exception 
+	public ContactAllInfo findContactbyvehicleNoContacts(@PathVariable long id) throws Exception 
 	{
-		return contactService.findSingleContact(id);
+		return contactService.findSingleContactFromAll(id);
 	}
 
 	@DeleteMapping(value = "/{id}")
@@ -48,26 +49,20 @@ public class ContactController
 	{
 		
 		//contactService.deleteContact(id);
-		return ResponseEntity.ok("Entity deleted");
+		return ResponseEntity.ok("Cannot Delete Enitity. Contact Administrator.");
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public ContactClubbedData createContact(@RequestBody CreateContactData payload) throws Exception
+	public ContactAllInfo createContact(@RequestBody CreateContactData payload) throws Exception
 	{
-		ContactClubbedData contact = new ContactClubbedData();
-		try
-		{
-			contact = contactService.createContact(payload);
-		}
-		catch(NullPointerException e) 
-        { 
-            throw new Exception("Some of the required fields are missing"); 
-        }
-		return contact;
+		try {
+			return(contactService.createContact(payload));}
+		catch(NullPointerException e){ 
+            throw new Exception("Some of the required fields are missing"); }
 	}
 
 	@PutMapping("/{id}")
-	public Contact updateContact(@PathVariable Long id, @RequestBody CreateContactData payload) throws Exception 
+	public ContactBasicInfo updateContact(@PathVariable Long id, @RequestBody CreateContactData payload) throws Exception 
 	{
 		return contactService.updateContact(id, payload);
 	} 

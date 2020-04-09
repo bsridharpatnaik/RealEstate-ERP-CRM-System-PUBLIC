@@ -1,6 +1,6 @@
 package com.ec.common.Data;
 
-public class ContactInventoryData 
+public class ContactNonBasicData 
 {
 
 	Long contactId;
@@ -9,14 +9,14 @@ public class ContactInventoryData
 	String contactPersonMobileNo;
 	
 	
-	public ContactInventoryData(Long contactId, String gSTDetails, String contactPerson, String contactPersonMobileNo) {
+	public ContactNonBasicData(Long contactId, String gSTDetails, String contactPerson, String contactPersonMobileNo) {
 		super();
 		this.contactId = contactId;
 		GSTDetails = gSTDetails;
 		this.contactPerson = contactPerson;
 		this.contactPersonMobileNo = contactPersonMobileNo;
 	}
-	public ContactInventoryData() {
+	public ContactNonBasicData() {
 		// TODO Auto-generated constructor stub
 	}
 	public Long getContactId() {

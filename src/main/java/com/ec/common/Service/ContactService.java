@@ -14,173 +14,183 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.ec.common.Data.ContactClubbedData;
-import com.ec.common.Data.ContactInventoryData;
+import com.ec.common.Data.ContactNonBasicData;
 import com.ec.common.Data.CreateContactData;
 import com.ec.common.Data.CustomerTypeEnum;
 import com.ec.common.Data.URLRepository;
-import com.ec.common.Model.Contact;
-import com.ec.common.Repository.ContactRepo;
+import com.ec.common.Model.ContactAllInfo;
+import com.ec.common.Model.ContactBasicInfo;
+import com.ec.common.Repository.ContactAllInfoRepo;
+import com.ec.common.Repository.ContactBasicInfoRepo;
 
 @Service
-public class ContactService 
-{
+public class ContactService {
 
-	@Autowired
-	ContactRepo contactRepo;
-	
-	@Autowired
-	RestTemplate restTemplate;
-	
-	@Autowired
-	HttpServletRequest httpRequest;
-	
-	@Value("${inven.serverurl}")
-	private String reqServer;
-	
-	@Transactional
-	public ContactClubbedData createContact(CreateContactData payload) throws Exception
-	{
-		ContactClubbedData contactClubbedData = new ContactClubbedData();
-		Contact contact=new Contact();
-		validatePayload(payload);
-		formatMobileNo(payload);
-		populateContactFields(contact,payload);
-		checkIfExists("create",contact);
-		contactClubbedData.setContact(contactRepo.save(contact));
+    @Autowired
+    ContactBasicInfoRepo contactRepo;
+    
+    @Autowired
+    ContactAllInfoRepo allContactsRepo;
+
+    @Autowired
+    RestTemplate restTemplate;
+
+    @Autowired
+    HttpServletRequest httpRequest;
+
+    @Value("${inven.serverurl}")
+    private String reqServer;
+
+    @Transactional
+    public ContactAllInfo createContact(CreateContactData payload) throws Exception {
+    	ContactAllInfo contactAllInfo = new ContactAllInfo();
+        ContactBasicInfo contact = new ContactBasicInfo();
+        formatMobileNo(payload);
+        populateContactFields(contact, payload);
+        checkIfExists("create", contact);
+        contactRepo.save(contact);
+        PopulateBasicFields(contactAllInfo,contact);
+        
+        if (payload.getContactType() != CustomerTypeEnum.CUSTOMER.toString()) 
+        {
+            ContactNonBasicData contactInventoryData = new ContactNonBasicData(
+                contact.getContactId(),
+                payload.getGSTDetails(),
+                payload.getContactPerson(),
+                payload.getContactPersonMobileNo());
+            ContactNonBasicData contactNonBasicData = passContactToInventory(contactInventoryData);
+            PopulateNonBasicFields(contactAllInfo,contactNonBasicData);
+        } 
+        else
+            passContactToCRM(contact.getContactId(), payload);
+        
+        
+        return contactAllInfo;
+    }
+
+    private void PopulateNonBasicFields(ContactAllInfo contactAllInfo, ContactNonBasicData contactNonBasicData) 
+    {
+    	contactAllInfo.setGSTDetails(contactNonBasicData.getGSTDetails());
+    	contactAllInfo.setContactPerson(contactNonBasicData.getContactPerson());
+    	contactAllInfo.setContactPersonMobileNo(contactNonBasicData.getContactPersonMobileNo());
 		
-		
-		if(payload.getContactType()!=CustomerTypeEnum.CUSTOMER.toString())
-		{
-			ContactInventoryData contactInventoryData = new ContactInventoryData(
-					contact.getContactId(),
-					payload.getGSTDetails(),
-					payload.getContactPerson(),
-					payload.getContactPersonMobileNo());
-			contactClubbedData.setContactInventoryData(passContactToInventory(contactInventoryData));
-		}
-		else
-			passContactToCRM(contact.getContactId(),payload); 
-		return contactClubbedData;
+	}
+
+	private void PopulateBasicFields(ContactAllInfo contactAllInfo, ContactBasicInfo contact) 
+    {
+		contactAllInfo.setContactId(contact.getContactId());
+		contactAllInfo.setContactType(contact.getContactType().toString());
+		contactAllInfo.setEmailId(contact.getEmailId());
+		contactAllInfo.setMobileNo(contact.getMobileNo());
+		contactAllInfo.setName(contact.getName());;
 	}
 
 	private void passContactToCRM(Long contactId, CreateContactData payload) 
 	{
-		// TODO Auto-generated method stub
-		
-	}
+        // TODO Auto-generated method stub
 
-	private ContactInventoryData passContactToInventory(ContactInventoryData payload) 
-	{
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Authorization", httpRequest.getHeader("Authorization"));      
-		HttpEntity<ContactInventoryData> request = new HttpEntity<>(payload, headers);
-		ContactInventoryData response = restTemplate.postForObject(reqServer + URLRepository.addCustomerInfo, request, ContactInventoryData.class);
-		return response;
-		
-	}
+    }
 
-	private void populateContactFields(Contact contact, CreateContactData payload) 
-	{
-		contact.setAddress(payload.getAddress());
-		System.out.println();
-		contact.setContactType(CustomerTypeEnum.valueOf(payload.getContactType()));
-		contact.setEmailId(payload.getEmailId());
-		contact.setMobileNo(payload.getMobileNo());
-		contact.setName(payload.getName());
-	}
+    private ContactNonBasicData passContactToInventory(ContactNonBasicData payload) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", httpRequest.getHeader("Authorization"));
+        HttpEntity < ContactNonBasicData > request = new HttpEntity < > (payload, headers);
+        ContactNonBasicData response = restTemplate.postForObject(reqServer + URLRepository.addCustomerInfo, request, ContactNonBasicData.class);
+        return response;
 
-	
-	private void checkIfExists(String type, Contact contact) throws Exception 
-	{
-		if(type.equalsIgnoreCase("create"))
-		if(checkIfExistsWithSameNamePhone(contact.getName(),contact.getMobileNo()))
-		{
-			throw new Exception("Contact with same name and mobileno exits");
-		}
-		else if(type.equals("update"))
-		{
-			Optional<Contact> contactOpt = contactRepo.findById(contact.getContactId());
-			if(!contactOpt.isPresent())
-				throw new Exception("Contact not found with ID");
-			Contact contactForUpdate = contactOpt.get();
-			if(contactForUpdate.getName()!=contact.getName() || contactForUpdate.getMobileNo()!=contact.getMobileNo())
-			{
-				Boolean isExist = checkIfExistsWithSameNamePhone(contact.getName(),contact.getMobileNo());
-				if(isExist)
-					throw new Exception("Contact with same name and mobile no exists");
-			}
-		}
-		
-	}
+    }
 
-	private void validatePayload(CreateContactData payload) throws Exception 
-	{
-		
-	}
+    private void populateContactFields(ContactBasicInfo contact, CreateContactData payload) {
+        contact.setAddress(payload.getAddress());
+        System.out.println();
+        contact.setContactType(CustomerTypeEnum.valueOf(payload.getContactType()));
+        contact.setEmailId(payload.getEmailId());
+        contact.setMobileNo(payload.getMobileNo());
+        contact.setName(payload.getName());
+    }
 
-	private void formatMobileNo(CreateContactData payload)
-	{
-		if(!(payload.getContactPersonMobileNo()==null))
-			payload.setContactPersonMobileNo(normalizePhoneNumber(payload.getContactPersonMobileNo()));
-		payload.setMobileNo(normalizePhoneNumber(payload.getMobileNo()));
-	}
-	private boolean checkIfExistsWithSameNamePhone(String name,String mobileNo) 
-	{
-		int count = contactRepo.getCountByNameNo(name, mobileNo);
-		if(count>0)
-			return true;
-		else
-			return false;
-	}
 
-	public Page<Contact> findAll(Pageable pageable) 
-	{
-		return contactRepo.findAll(pageable);
-	}
+    private void checkIfExists(String type, ContactBasicInfo contact) throws Exception {
+        if (type.equalsIgnoreCase("create"))
+            if (checkIfExistsWithSameNamePhone(contact.getName(), contact.getMobileNo())) {
+                throw new Exception("Contact with same name and mobileno exits");
+            }
+        else if (type.equals("update")) {
+            Optional < ContactBasicInfo > contactOpt = contactRepo.findById(contact.getContactId());
+            if (!contactOpt.isPresent())
+                throw new Exception("Contact not found with ID");
+            ContactBasicInfo contactForUpdate = contactOpt.get();
+            if (contactForUpdate.getName() != contact.getName() || contactForUpdate.getMobileNo() != contact.getMobileNo()) {
+                Boolean isExist = checkIfExistsWithSameNamePhone(contact.getName(), contact.getMobileNo());
+                if (isExist)
+                    throw new Exception("Contact with same name and mobile no exists");
+            }
+        }
 
-	public Contact findSingleContact(long id) throws Exception 
-	{
-		Optional<Contact> ContactOpt = contactRepo.findById(id);
-		if(!ContactOpt.isPresent())
-			throw new Exception("Contact not found with ID "+id);
-		return ContactOpt.get();
-		
-	}
+    }
 
-	public Contact updateContact(Long id, CreateContactData payload) throws Exception 
-	{
-		Contact contact = findSingleContact(id);
-		validatePayload(payload);
-		formatMobileNo(payload);
-		Boolean isNameMobileChanged = checkIfNameMobilenoChanged(contact,payload);
-		populateContactFields(contact,payload);
-		if(isNameMobileChanged)
-			checkIfExists("update",contact);
-		return contactRepo.save(contact);
-	}
-	private Boolean checkIfNameMobilenoChanged(Contact contact, CreateContactData payload) 
-	{
-		if(!contact.getName().equalsIgnoreCase(payload.getName()) 
-				|| !contact.getMobileNo().equals(payload.getMobileNo()))
-			return true;
-		else
-			return false;
-	}
+    private void formatMobileNo(CreateContactData payload) {
+        if (!(payload.getContactPersonMobileNo() == null))
+            payload.setContactPersonMobileNo(normalizePhoneNumber(payload.getContactPersonMobileNo()));
+        payload.setMobileNo(normalizePhoneNumber(payload.getMobileNo()));
+    }
+    private boolean checkIfExistsWithSameNamePhone(String name, String mobileNo) {
+        int count = contactRepo.getCountByNameNo(name, mobileNo);
+        if (count > 0)
+            return true;
+        else
+            return false;
+    }
 
-	public String normalizePhoneNumber(String number) 
-	{
+    public Page <ContactAllInfo> findAll(Pageable pageable) 
+    {
+        return allContactsRepo.findAll(pageable);
+    }
 
-	    number = number.replaceAll("[^+0-9]", ""); // All weird characters such as /, -, ...
+    public ContactAllInfo findSingleContactFromAll(long id) throws Exception 
+    {
+        Optional < ContactAllInfo > ContactOpt = allContactsRepo.findById(id);
+        if (!ContactOpt.isPresent())
+            throw new Exception("Contact not found with ID " + id);
+        return ContactOpt.get();
+    }
 
-	    String country_code = "0";
+    public ContactBasicInfo findContactById(long id) throws Exception 
+    {
+        Optional <ContactBasicInfo> ContactOpt = contactRepo.findById(id);
+        if (!ContactOpt.isPresent())
+            throw new Exception("Contact not found with ID " + id);
+        return ContactOpt.get();
+    }
+    public ContactBasicInfo updateContact(Long id, CreateContactData payload) throws Exception {
+        ContactBasicInfo contact = findContactById(id);
+        formatMobileNo(payload);
+        Boolean isNameMobileChanged = checkIfNameMobilenoChanged(contact, payload);
+        populateContactFields(contact, payload);
+        if (isNameMobileChanged)
+            checkIfExists("update", contact);
+        return contactRepo.save(contact);
+    }
+    private Boolean checkIfNameMobilenoChanged(ContactBasicInfo contact, CreateContactData payload) {
+        if (!contact.getName().equalsIgnoreCase(payload.getName()) ||
+            !contact.getMobileNo().equals(payload.getMobileNo()))
+            return true;
+        else
+            return false;
+    }
 
-	    if (number.substring(0, 1).compareTo("0") == 0 && number.substring(1, 2).compareTo("0") != 0) {
-	        number = "+" + country_code + number.substring(1); // e.g. 0172 12 34 567 -> + (country_code) 172 12 34 567
-	    }
+    public String normalizePhoneNumber(String number) {
 
-	    number = number.replaceAll("^[0]{1,4}", "+"); // e.g. 004912345678 -> +4912345678
+        number = number.replaceAll("[^+0-9]", ""); // All weird characters such as /, -, ...
 
-	    return number;
-	}
+        String country_code = "0";
+
+        if (number.substring(0, 1).compareTo("0") == 0 && number.substring(1, 2).compareTo("0") != 0) {
+            number = "+" + country_code + number.substring(1); // e.g. 0172 12 34 567 -> + (country_code) 172 12 34 567
+        }
+
+        number = number.replaceAll("^[0]{1,4}", "+"); // e.g. 004912345678 -> +4912345678
+
+        return number;
+    }
 }

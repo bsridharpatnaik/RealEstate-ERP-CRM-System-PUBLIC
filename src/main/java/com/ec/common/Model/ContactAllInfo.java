@@ -1,0 +1,108 @@
+package com.ec.common.Model;
+
+import java.io.Serializable;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Subselect;
+
+@Entity
+@Subselect("select * from AllContacts")
+@Immutable
+public class ContactAllInfo implements Serializable
+{
+	@Id
+	@Column(name="contact_id")
+	Long contactId;
+	
+	
+	@Column(name="name")
+	String name;
+	
+	@Column(name="mobile_no")
+	String mobileNo;
+	
+	@Column(name="address")
+	String emailId;
+	
+	@Column(name="contact_type")
+	String contactType;
+	
+	@Column(name="contact_person")
+	String contactPerson;
+	
+	@Column(name="contact_person_mobile_no")
+	String contactPersonMobileNo;
+	
+	@Column(name="gstdetails")
+	String GSTDetails;
+
+	public Long getContactId() {
+		return contactId;
+	}
+
+	public void setContactId(Long contactId) {
+		this.contactId = contactId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getMobileNo() {
+		return mobileNo;
+	}
+
+	public void setMobileNo(String mobileNo) {
+		this.mobileNo = mobileNo;
+	}
+
+	public String getEmailId() {
+		return emailId;
+	}
+
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
+	}
+
+	public String getContactType() {
+		return contactType;
+	}
+
+	public void setContactType(String contactType) {
+		this.contactType = contactType;
+	}
+
+	public String getContactPerson() {
+		return contactPerson;
+	}
+
+	public void setContactPerson(String contactPerson) {
+		this.contactPerson = contactPerson;
+	}
+
+	public String getContactPersonMobileNo() {
+		return contactPersonMobileNo;
+	}
+
+	public void setContactPersonMobileNo(String contactPersonMobileNo) {
+		this.contactPersonMobileNo = contactPersonMobileNo;
+	}
+
+	public String getGSTDetails() {
+		return GSTDetails;
+	}
+
+	public void setGSTDetails(String gSTDetails) {
+		GSTDetails = gSTDetails;
+	}
+
+	
+}

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "Contact")
-public class Contact
+public class ContactBasicInfo
 {
 
 	private static final long serialVersionUID = 1L;
@@ -37,7 +37,7 @@ public class Contact
 	String name;
 	
 	@NonNull
-	@Column(nullable=false)
+	@Column(nullable=false,unique=true)
 	String mobileNo;
 	
 	String emailId;
@@ -61,74 +61,89 @@ public class Contact
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
 	@UpdateTimestamp
 	private Date modified;
-	
-	
-	public String getContactType() 
-	{
-		return contactType.name();
-	}
 
-	public void setContactType(CustomerTypeEnum contactType) {
-		this.contactType = contactType;
-	}
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
-
-	public Date getCreated() {
-		return created;
-	}
-
-	public void setCreated(Date created) {
-		this.created = created;
-	}
-
-	public Date getModified() {
-		return modified;
-	}
-
-	public void setModified(Date modified) {
-		this.modified = modified;
-	}
 
 	public Long getContactId() {
 		return contactId;
 	}
 
+
 	public void setContactId(Long contactId) {
 		this.contactId = contactId;
 	}
+
 
 	public String getName() {
 		return name;
 	}
 
+
 	public void setName(String name) {
 		this.name = name;
 	}
+
 
 	public String getMobileNo() {
 		return mobileNo;
 	}
 
+
 	public void setMobileNo(String mobileNo) {
 		this.mobileNo = mobileNo;
 	}
+
 
 	public String getEmailId() {
 		return emailId;
 	}
 
+
 	public void setEmailId(String emailId) {
 		this.emailId = emailId;
 	}
+
 
 	public String getAddress() {
 		return address;
 	}
 
+
 	public void setAddress(String address) {
 		this.address = address;
+	}
+
+
+	public CustomerTypeEnum getContactType() {
+		return contactType;
+	}
+
+
+	public void setContactType(CustomerTypeEnum contactType) {
+		this.contactType = contactType;
+	}
+
+
+	public Date getCreated() {
+		return created;
+	}
+
+
+	public void setCreated(Date created) {
+		this.created = created;
+	}
+
+
+	public Date getModified() {
+		return modified;
+	}
+
+
+	public void setModified(Date modified) {
+		this.modified = modified;
+	}
+
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
 	}
 }
