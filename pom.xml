@@ -16,6 +16,7 @@
    <description>Inventory Mangement</description>
    <properties>
       <java.version>1.8</java.version>
+       <org.springframework-version>4.2.5.RELEASE</org.springframework-version>
    </properties>
    <dependencies>
       <dependency>
@@ -53,7 +54,7 @@
       <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context-support</artifactId>
-         <version>${spring.version}</version>
+         <version>5.2.5.RELEASE</version>
       </dependency>
       <dependency>
          <groupId>org.hibernate</groupId>
@@ -145,7 +146,7 @@
 -->
    </dependencies>
    <build>
-      <finalName>ec</finalName>
+      <finalName>inventory-service</finalName>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
