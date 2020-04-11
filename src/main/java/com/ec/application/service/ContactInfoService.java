@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,24 @@ public class ContactInfoService
 		if(contactInfoRepo.conactUsageCount(payload.getContactId())==0)
 			return contactInfoRepo.save(payload);
 		else
-			throw new Exception("Contact Info already exists!");
+		{
+			Optional<ContactInfo> contactInfo = contactInfoRepo.findById(payload.getContactId());
+			if(contactInfo.isPresent())
+			{
+				populateFields(contactInfo.get(),payload);
+				contactInfoRepo.save(contactInfo.get());
+				return contactInfo.get();
+			}
+			else 
+				throw new Exception("Contact ID not found");
+		}
     }
+
+	private void populateFields(ContactInfo contactInfo, ContactInfo payload) 
+	{
+		contactInfo.setContactId(payload.getContactId());
+		contactInfo.setContactPerson(payload.getContactPerson());
+		contactInfo.setContactPersonMobileNo(payload.getContactPerson());
+		contactInfo.setGstNumber(payload.getGstNumber());;
+	}
 }

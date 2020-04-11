@@ -27,8 +27,8 @@ public class Contact
 	@Column(name="contact_person_mobile_no")
 	String contactPersonMobileNo;
 	
-	@Column(name="gstdetails")
-	String GSTDetails;
+	@Column(name="gst_number")
+	String GSTNumber;
 
 	public String getName() {
 		return name;
@@ -78,13 +78,13 @@ public class Contact
 		this.contactPersonMobileNo = contactPersonMobileNo;
 	}
 
-	public String getGSTDetails() {
-		return GSTDetails;
+	public String getGSTNumber() {
+		return GSTNumber;
 	}
 
-	public void setGSTDetails(String gSTDetails) {
-		GSTDetails = gSTDetails;
+	public void setGSTNumber(String gSTNumber) {
+		GSTNumber = gSTNumber;
 	}
-	
+
 	
 }

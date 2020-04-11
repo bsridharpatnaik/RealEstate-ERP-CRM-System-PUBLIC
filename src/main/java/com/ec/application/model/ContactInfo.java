@@ -24,7 +24,9 @@ public class ContactInfo extends SoftDeletableEntity
 {
 	@Id
 	Long contactId;
-	String GSTDetails;
+	
+	@Column(name = "gst_number")
+	String gstNumber;
 	String contactPerson;
 	String contactPersonMobileNo;
 	
@@ -43,10 +45,10 @@ public class ContactInfo extends SoftDeletableEntity
 	public ContactInfo()
 	{}
 	
-	public ContactInfo(Long contactId, String gSTDetails, String contactPerson, String contactPersonMobileNo) {
+	public ContactInfo(Long contactId, String GSTNumber, String contactPerson, String contactPersonMobileNo) {
 		super();
 		this.contactId = contactId;
-		this.GSTDetails = gSTDetails;
+		this.gstNumber = GSTNumber;
 		this.contactPerson = contactPerson;
 		this.contactPersonMobileNo = contactPersonMobileNo;
 	}
@@ -56,12 +58,32 @@ public class ContactInfo extends SoftDeletableEntity
 	public void setContactId(Long contactId) {
 		this.contactId = contactId;
 	}
-	public String getGSTDetails() {
-		return GSTDetails;
+	
+
+	public String getGstNumber() {
+		return gstNumber;
 	}
-	public void setGSTDetails(String gSTDetails) {
-		GSTDetails = gSTDetails;
+
+	public void setGstNumber(String gstNumber) {
+		this.gstNumber = gstNumber;
 	}
+
+	public Date getCreated() {
+		return created;
+	}
+
+	public void setCreated(Date created) {
+		this.created = created;
+	}
+
+	public Date getModified() {
+		return modified;
+	}
+
+	public void setModified(Date modified) {
+		this.modified = modified;
+	}
+
 	public String getContactPerson() {
 		return contactPerson;
 	}
