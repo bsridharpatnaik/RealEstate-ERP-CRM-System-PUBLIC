@@ -13,7 +13,7 @@ import com.ec.common.Model.ContactBasicInfo;
 public interface ContactBasicInfoRepo extends JpaRepository<ContactBasicInfo, Long>
 {
 
-	@Query(value="SELECT count(*) from ContactBasicInfo m where name=:name and mobileNo=:mobileNo")
-	int getCountByNameNo(String name,String mobileNo);
+	@Query(value="SELECT count(*) from ContactBasicInfo m where mobileNo=:mobileNo")
+	int getCountByMobileNo(String mobileNo);
 
 }

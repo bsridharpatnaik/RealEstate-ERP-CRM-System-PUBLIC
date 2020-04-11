@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.ec.common.Data.CreateContactData;
 import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.ContactBasicInfo;
 import com.ec.common.Service.ContactService;
@@ -47,22 +45,18 @@ public class ContactController
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception
 	{
-		
 		//contactService.deleteContact(id);
 		return ResponseEntity.ok("Cannot Delete Enitity. Contact Administrator.");
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public ContactAllInfo createContact(@RequestBody CreateContactData payload) throws Exception
+	public ContactAllInfo createContact(@RequestBody ContactAllInfo payload) throws Exception
 	{
-		try {
-			return(contactService.createContact(payload));}
-		catch(NullPointerException e){ 
-            throw new Exception("Some of the required fields are missing"); }
+		return(contactService.createContact(payload));
 	}
 
 	@PutMapping("/{id}")
-	public ContactBasicInfo updateContact(@PathVariable Long id, @RequestBody CreateContactData payload) throws Exception 
+	public ContactAllInfo updateContact(@PathVariable Long id, @RequestBody ContactAllInfo payload) throws Exception 
 	{
 		return contactService.updateContact(id, payload);
 	} 

@@ -4,15 +4,15 @@ public class ContactNonBasicData
 {
 
 	Long contactId;
-	String GSTDetails;
+	String gstNumber;
 	String contactPerson;
 	String contactPersonMobileNo;
 	
 	
-	public ContactNonBasicData(Long contactId, String gSTDetails, String contactPerson, String contactPersonMobileNo) {
+	public ContactNonBasicData(Long contactId, String GSTNumber, String contactPerson, String contactPersonMobileNo) {
 		super();
 		this.contactId = contactId;
-		GSTDetails = gSTDetails;
+		this.gstNumber = GSTNumber;
 		this.contactPerson = contactPerson;
 		this.contactPersonMobileNo = contactPersonMobileNo;
 	}
@@ -25,11 +25,12 @@ public class ContactNonBasicData
 	public void setContactId(Long contactId) {
 		this.contactId = contactId;
 	}
-	public String getGSTDetails() {
-		return GSTDetails;
+	
+	public String getGstNumber() {
+		return gstNumber;
 	}
-	public void setGSTDetails(String gSTDetails) {
-		GSTDetails = gSTDetails;
+	public void setGstNumber(String gstNumber) {
+		this.gstNumber = gstNumber;
 	}
 	public String getContactPerson() {
 		return contactPerson;

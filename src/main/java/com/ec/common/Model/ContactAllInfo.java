@@ -5,9 +5,11 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.validation.constraints.Pattern;
 
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
+import org.springframework.lang.NonNull;
 
 @Entity
 @Subselect("select * from AllContacts")
@@ -18,16 +20,22 @@ public class ContactAllInfo implements Serializable
 	@Column(name="contact_id")
 	Long contactId;
 	
-	
+	@NonNull
 	@Column(name="name")
 	String name;
 	
+	@NonNull
+	@Pattern(regexp="(^$|[0-9]{10})")
 	@Column(name="mobile_no")
 	String mobileNo;
 	
 	@Column(name="address")
+	String address;
+	
+	@Column(name="email_id")
 	String emailId;
 	
+	@NonNull
 	@Column(name="contact_type")
 	String contactType;
 	
@@ -37,8 +45,8 @@ public class ContactAllInfo implements Serializable
 	@Column(name="contact_person_mobile_no")
 	String contactPersonMobileNo;
 	
-	@Column(name="gstdetails")
-	String GSTDetails;
+	@Column(name="gst_number")
+	String gstNumber;
 
 	public Long getContactId() {
 		return contactId;
@@ -62,6 +70,14 @@ public class ContactAllInfo implements Serializable
 
 	public void setMobileNo(String mobileNo) {
 		this.mobileNo = mobileNo;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
 	}
 
 	public String getEmailId() {
@@ -96,13 +112,12 @@ public class ContactAllInfo implements Serializable
 		this.contactPersonMobileNo = contactPersonMobileNo;
 	}
 
-	public String getGSTDetails() {
-		return GSTDetails;
+	public String getGstNumber() {
+		return gstNumber;
 	}
 
-	public void setGSTDetails(String gSTDetails) {
-		GSTDetails = gSTDetails;
+	public void setGstNumber(String gstNumber) {
+		this.gstNumber = gstNumber;
 	}
 
-	
 }

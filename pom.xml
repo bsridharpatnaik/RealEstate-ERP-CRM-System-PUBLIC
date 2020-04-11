@@ -9,7 +9,7 @@
 	<packaging>war</packaging>
 
 	<name>common-service</name>
-	<description>common-service </description>
+	<description>common-service</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -170,7 +170,7 @@
 	</dependencyManagement>
 
 	<build>
-	<finalName>ec</finalName>
+	<finalName>common-service</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
