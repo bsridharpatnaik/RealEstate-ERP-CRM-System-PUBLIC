@@ -1,5 +1,6 @@
 package com.ec.common.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,11 @@ import org.springframework.web.client.RestTemplate;
 import com.ec.common.Data.ContactNonBasicData;
 import com.ec.common.Data.CustomerTypeEnum;
 import com.ec.common.Data.URLRepository;
+import com.ec.common.Filters.ContactFilterAttributeEnum;
+import com.ec.common.Filters.ContactSpecifications;
+import com.ec.common.Filters.FilterAttributeData;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.FilterPayload;
 import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.ContactBasicInfo;
 import com.ec.common.Repository.ContactAllInfoRepo;
@@ -157,5 +164,45 @@ public class ContactService {
 			throw new Exception("Contact not found by ID");
 		return contactAllInfo.get();
 	}
-    
+
+	public Page<ContactAllInfo> findFilteredContacts(FilterDataList contactFilterDataList, Pageable pageable) 
+	{
+		Specification<ContactAllInfo> spec = fetchSpecification(contactFilterDataList);
+		if(spec!=null)
+			return allContactsRepo.findAll(spec, pageable);
+		return allContactsRepo.findAll(pageable);
+	}
+
+	private Specification<ContactAllInfo> fetchSpecification(FilterDataList contactFilterDataList) 
+	{
+		Specification<ContactAllInfo> specification = null;
+		for(FilterAttributeData attrData:contactFilterDataList.getFilterData())
+		{
+			String attrName = attrData.getAttrName();
+			String attrValue = attrData.getAttrValue();
+			
+			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.NAME.toString()))
+				if(specification == null)
+					specification = ContactSpecifications.whereNameContains(attrValue);
+				else
+					specification = specification.and(ContactSpecifications.whereNameContains(attrValue));
+		
+			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.MOBILENUMBER.toString()))
+				if(specification == null)
+					specification = ContactSpecifications.whereMobileNoContains(attrValue);
+				else
+					specification = specification.and(ContactSpecifications.whereMobileNoContains(attrValue));
+		
+			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.ADDRESS.toString()))
+				if(specification == null)
+					specification = ContactSpecifications.whereAddressContains(attrValue);
+				else
+					specification = specification.and(ContactSpecifications.whereAddressContains(attrValue));
+			}
+		return specification;
+	}
+	public List<ContactAllInfo> findFilteredContacts2(FilterPayload filterPayload) 
+	{
+		
+	}
 }
