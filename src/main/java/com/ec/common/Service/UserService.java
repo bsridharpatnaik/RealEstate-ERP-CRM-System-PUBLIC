@@ -8,7 +8,9 @@ import java.util.Set;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +22,13 @@ import com.ec.common.Data.ResetPasswordData;
 import com.ec.common.Data.UpdateRolesForUserData;
 import com.ec.common.Data.UserReturnData;
 import com.ec.common.Data.UsersWithRoleNameListData;
+import com.ec.common.Filters.ContactFilterAttributeEnum;
+import com.ec.common.Filters.ContactSpecifications;
+import com.ec.common.Filters.FilterAttributeData;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.UserFilterAttributeEnum;
+import com.ec.common.Filters.UserSpecifications;
+import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.Role;
 import com.ec.common.Model.User;
 import com.ec.common.Repository.RoleRepo;
@@ -132,5 +141,33 @@ public class UserService {
 		}
 		userReturnData.setRoles(roles);
 		return userReturnData;
+	}
+
+	public Page<User> findFilteredUsers(FilterDataList contactFilterDataList, Pageable pageable) 
+	{
+		Specification<User> spec = fetchSpecification(contactFilterDataList);
+		if(spec!=null)
+			return uRepo.findAll(spec, pageable);
+		return uRepo.findAll(pageable);
+	}
+
+	private Specification<User> fetchSpecification(FilterDataList contactFilterDataList) 
+	{
+		Specification<User> specification = null;
+		for(FilterAttributeData attrData:contactFilterDataList.getFilterData())
+		{
+			String attrName = attrData.getAttrName();
+			List<String> attrValues = attrData.getAttrValue();
+			
+			Specification<User> internalSpecification = null;
+			for(String attrValue : attrValues)
+			{
+				internalSpecification= internalSpecification==null?
+						UserSpecifications.whereUsernameContains(attrValue)
+						:internalSpecification.or(UserSpecifications.whereUsernameContains(attrValue));
+			}
+			specification= specification==null?internalSpecification:specification.and(internalSpecification);
+		}
+		return specification;
 	}
 }

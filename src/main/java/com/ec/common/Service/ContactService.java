@@ -183,35 +183,58 @@ public class ContactService {
 		for(FilterAttributeData attrData:contactFilterDataList.getFilterData())
 		{
 			String attrName = attrData.getAttrName();
-			String attrValue = attrData.getAttrValue();
+			List<String> attrValues = attrData.getAttrValue();
 			
 			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.NAME.toString()))
-				if(specification == null)
-					specification = ContactSpecifications.whereNameContains(attrValue);
-				else
-					specification = specification.and(ContactSpecifications.whereNameContains(attrValue));
-		
+			{
+				Specification<ContactAllInfo> internalSpecification = null;
+				for(String attrValue : attrValues)
+				{
+					internalSpecification= internalSpecification==null?
+							ContactSpecifications.whereNameContains(attrValue)
+							:internalSpecification.or(ContactSpecifications.whereNameContains(attrValue));
+				}
+				specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			}
 			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.MOBILENUMBER.toString()))
-				if(specification == null)
-					specification = ContactSpecifications.whereMobileNoContains(attrValue);
-				else
-					specification = specification.and(ContactSpecifications.whereMobileNoContains(attrValue));
-		
+			{
+				Specification<ContactAllInfo> internalSpecification = null;
+				for(String attrValue : attrValues)
+				{
+					internalSpecification= internalSpecification==null?
+							ContactSpecifications.whereMobileNoContains(attrValue):
+							internalSpecification.or(ContactSpecifications.whereMobileNoContains(attrValue));
+				}
+				specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			}
+			
 			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.ADDRESS.toString()))
-				if(specification == null)
-					specification = ContactSpecifications.whereAddressContains(attrValue);
-				else
-					specification = specification.and(ContactSpecifications.whereAddressContains(attrValue));
+			{
+				Specification<ContactAllInfo> internalSpecification = null;
+				for(String attrValue : attrValues)
+				{
+					internalSpecification= internalSpecification==null?
+							ContactSpecifications.whereAddressContains(attrValue):
+							internalSpecification.or(ContactSpecifications.whereAddressContains(attrValue));
+				}
+				specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			}
 			
 			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.CONTACTTYPE.toString()))
-				if(specification == null)
-					specification = ContactSpecifications.whereContactTypeEquals(attrValue);
-				else
-					specification = specification.and(ContactSpecifications.whereContactTypeEquals(attrValue));
+			{
+				Specification<ContactAllInfo> internalSpecification = null;
+				for(String attrValue : attrValues)
+				{
+					internalSpecification= internalSpecification==null?
+							ContactSpecifications.whereContactTypeEquals(attrValue)
+							:internalSpecification.or(ContactSpecifications.whereContactTypeEquals(attrValue));
+				}
+				specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			}
 			
 			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.NAMEORMOBILE.toString()))
 				if(specification == null)
-					specification = ContactSpecifications.whereNameContains(attrValue).or(ContactSpecifications.whereMobileNoContains(attrValue));
+					specification = ContactSpecifications.whereNameContains(attrValues.get(0)).or(ContactSpecifications.whereMobileNoContains(attrValues.get(0)));
 				
 			}
 		return specification;
