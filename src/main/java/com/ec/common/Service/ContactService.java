@@ -70,6 +70,9 @@ public class ContactService {
 		formatMobileNo(payload);
 		if(!contact.getMobileNo().equals(payload.getMobileNo()))
 				exitIfMobileNoExists(payload);
+		if(payload.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER) && 
+				(!contact.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER)))
+			throw new Exception("Cannot convert contact from non-customer to customer");		
 		PopulateBasicFields(payload, contact);
 		contactRepo.save(contact);
 		payload.setContactId(contact.getContactId());
