@@ -10,5 +10,6 @@ public enum ContactFilterAttributeEnum implements Serializable
 	NAME,
 	CONTACTTYPE,
 	MOBILENUMBER,
-	ADDRESS;	
+	ADDRESS,
+	NAMEORMOBILE;	
 }

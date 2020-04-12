@@ -3,6 +3,8 @@ package com.ec.common.Service;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
@@ -23,7 +25,6 @@ import com.ec.common.Filters.ContactFilterAttributeEnum;
 import com.ec.common.Filters.ContactSpecifications;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.FilterPayload;
 import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.ContactBasicInfo;
 import com.ec.common.Repository.ContactAllInfoRepo;
@@ -44,6 +45,9 @@ public class ContactService {
 
     @Autowired
     HttpServletRequest httpRequest;
+    
+    @PersistenceContext
+    private EntityManager em;
 
     @Value("${inven.serverurl}")
     private String reqServer;
@@ -198,11 +202,18 @@ public class ContactService {
 					specification = ContactSpecifications.whereAddressContains(attrValue);
 				else
 					specification = specification.and(ContactSpecifications.whereAddressContains(attrValue));
+			
+			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.CONTACTTYPE.toString()))
+				if(specification == null)
+					specification = ContactSpecifications.whereContactTypeEquals(attrValue);
+				else
+					specification = specification.and(ContactSpecifications.whereContactTypeEquals(attrValue));
+			
+			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.NAMEORMOBILE.toString()))
+				if(specification == null)
+					specification = ContactSpecifications.whereNameContains(attrValue).or(ContactSpecifications.whereMobileNoContains(attrValue));
+				
 			}
 		return specification;
-	}
-	public List<ContactAllInfo> findFilteredContacts2(FilterPayload filterPayload) 
-	{
-		
 	}
 }

@@ -28,4 +28,9 @@ public final class ContactSpecifications
         return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
                 -> cb.like(root.get(ContactAllInfo_.address), "%"+address+"%");
     }
+    
+    public static Specification<ContactAllInfo> whereContactTypeEquals(@NonNull String contactType) {
+        return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+                -> cb.equal(root.get(ContactAllInfo_.contactType), "%"+contactType+"%");
+    }
 }
