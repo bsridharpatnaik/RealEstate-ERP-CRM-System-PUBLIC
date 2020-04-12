@@ -1,6 +1,7 @@
 package com.ec.common.Repository;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,4 +18,7 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
 {
 	@Query(value="SELECT c FROM User c WHERE c.userName like :userName")
     public ArrayList<User> findUserByUsername(@Param("userName") String userName);
+
+	@Query(value="SELECT DISTINCT userName FROM User c")
+	public List<String> findUserNames();
 }

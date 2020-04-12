@@ -1,7 +1,6 @@
 package com.ec.common.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -16,10 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.common.Data.CreateUserData;
 import com.ec.common.Data.ResetPasswordData;
 import com.ec.common.Data.UpdateRolesForUserData;
+import com.ec.common.Data.UserListWithTypeAheadData;
 import com.ec.common.Data.UserReturnData;
-import com.ec.common.Data.UsersWithRoleNameListData;
 import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.User;
 import com.ec.common.Service.UserService;
 
@@ -33,7 +31,7 @@ public class UserController
 	UserService userService;
 	
 	@GetMapping
-	public UsersWithRoleNameListData returnAllUsers(Pageable pageable) 
+	public UserListWithTypeAheadData returnAllUsers(Pageable pageable) 
 	{
 		
 		return userService.fetchAll(pageable);
@@ -41,7 +39,7 @@ public class UserController
 	
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public Page<User> returnFilteredContacts(@RequestBody FilterDataList contactFilterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	public UserListWithTypeAheadData returnFilteredContacts(@RequestBody FilterDataList contactFilterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
