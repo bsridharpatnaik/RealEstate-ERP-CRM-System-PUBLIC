@@ -5,7 +5,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +20,7 @@ import com.ec.common.Data.UpdateRolesForUserData;
 import com.ec.common.Data.UserListWithTypeAheadData;
 import com.ec.common.Data.UserReturnData;
 import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.User;
 import com.ec.common.Service.UserService;
 
@@ -60,6 +63,12 @@ public class UserController
 		return userService.resetPassword(payload);
 	}
 	
+	@GetMapping("/{id}")
+	public User findUserByID(@PathVariable long id) throws Exception 
+	{
+		return userService.findSingleUserFromAll(id);
+	}
+	
 	@PostMapping("/updateroles") 
 	@ResponseStatus(HttpStatus.OK)
 	public User updateRolesForUser(@RequestBody UpdateRolesForUserData payload) throws Exception{
@@ -72,4 +81,10 @@ public class UserController
 	{
 		return userService.fetchUserDetails();
 	}
+	
+	@PutMapping("/{id}")
+	public User updateUser(@PathVariable Long id, @RequestBody CreateUserData payload) throws Exception 
+	{
+		return userService.updateContact(id, payload);
+	} 
 }

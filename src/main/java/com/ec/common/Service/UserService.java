@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -176,4 +177,44 @@ public class UserService {
 		}
 		return specification;
 	}
+
+	public User findSingleUserFromAll(long id) throws Exception 
+	{
+		Optional<User> user = uRepo.findById(id);
+		if(user.isPresent())
+			return user.get();
+		else
+			throw new Exception("User ID not found");
+	}
+
+	public User updateContact(Long id, CreateUserData payload) throws Exception 
+	{
+	    User user = findSingleUserFromAll(id);
+	    String username = payload.getUsername();
+	    if(!user.getUserName().equals(payload.getUsername()))
+	    {
+	    	if(uRepo.findUserNames().contains(username))
+	    		throw new Exception("Username already exists");
+	    }
+	    
+	    ArrayList < String > roles = payload.getRole();
+	    Set < Role > roleset = new HashSet < Role > ();
+
+	    for (String role: roles) {
+	        Role roleEntity = rRepo.findByName(role);
+	        if (roleEntity != null)
+	            roleset.add(roleEntity);
+	    }
+	    if (roleset.size() < 1)
+	        throw new Exception("Role(s) not Found!");
+	    user.setUserName(username);
+	    user.setStatus(true);
+	    user.setRoles(roleset);
+	    user.setPassword(bCryptPassword(payload.getPassword()));
+	    user.setPasswordExpired(false);
+	    uRepo.save(user);
+	    return user;
+	}
+	
+	
 }
