@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.common.Data.ContactsWithTypeAhead;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Service.ContactService;
@@ -30,20 +31,20 @@ public class ContactController
 	ContactService contactService;
 	
 	@GetMapping
-	public Page<ContactAllInfo> returnAllContacts(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	public ContactsWithTypeAhead returnAllContacts(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
-		return contactService.findAll(pageable);
+		return contactService.findAllWithTypeAhead(pageable);
 	}
 	
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public Page<ContactAllInfo> returnFilteredContacts(@RequestBody FilterDataList contactFilterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	public ContactsWithTypeAhead returnFilteredContacts(@RequestBody FilterDataList contactFilterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
-		return contactService.findFilteredContacts(contactFilterDataList,pageable);
+		return contactService.findFilteredContactsWithTA(contactFilterDataList,pageable);
 	}
 	
 	@GetMapping("/{id}")

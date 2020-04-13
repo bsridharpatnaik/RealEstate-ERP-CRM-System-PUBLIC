@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.ec.common.Data.ContactNonBasicData;
+import com.ec.common.Data.ContactsWithTypeAhead;
 import com.ec.common.Data.CustomerTypeEnum;
 import com.ec.common.Data.URLRepository;
 import com.ec.common.Filters.ContactFilterAttributeEnum;
@@ -88,11 +89,6 @@ public class ContactService {
 		contactRepo.save(contact);
 		payload.setContactId(contact.getContactId());
 		return payload;
-    }
-    
-    public Page <ContactAllInfo> findAll(Pageable pageable) 
-    {
-        return allContactsRepo.findAll(pageable);
     }
     
     public ContactBasicInfo findContactById(long id) throws Exception 
@@ -169,12 +165,26 @@ public class ContactService {
 		return contactAllInfo.get();
 	}
 
-	public Page<ContactAllInfo> findFilteredContacts(FilterDataList contactFilterDataList, Pageable pageable) 
+	public ContactsWithTypeAhead findAllWithTypeAhead(Pageable pageable) 
+    {
+    	ContactsWithTypeAhead contactsWithTypeAhead = new ContactsWithTypeAhead();
+    	Page <ContactAllInfo> contacts = allContactsRepo.findAll(pageable);
+    	List<String> names = allContactsRepo.findContactNames();
+    	contactsWithTypeAhead.setContactNames(names);
+    	contactsWithTypeAhead.setContacts(contacts);
+        return contactsWithTypeAhead;
+    }
+    
+	
+	public ContactsWithTypeAhead findFilteredContactsWithTA(FilterDataList contactFilterDataList, Pageable pageable) 
 	{
 		Specification<ContactAllInfo> spec = fetchSpecification(contactFilterDataList);
+		ContactsWithTypeAhead contactsWithTypeAhead = new ContactsWithTypeAhead();
 		if(spec!=null)
-			return allContactsRepo.findAll(spec, pageable);
-		return allContactsRepo.findAll(pageable);
+			contactsWithTypeAhead.setContacts(allContactsRepo.findAll(spec, pageable));
+		else 		
+			contactsWithTypeAhead.setContacts(allContactsRepo.findAll(pageable));
+		return contactsWithTypeAhead;
 	}
 
 	private Specification<ContactAllInfo> fetchSpecification(FilterDataList contactFilterDataList) 
