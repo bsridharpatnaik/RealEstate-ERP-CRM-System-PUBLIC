@@ -168,25 +168,32 @@ public class ContactService {
 	public ContactsWithTypeAhead findAllWithTypeAhead(Pageable pageable) 
     {
     	ContactsWithTypeAhead contactsWithTypeAhead = new ContactsWithTypeAhead();
-    	Page <ContactAllInfo> contacts = allContactsRepo.findAll(pageable);
-    	List<String> names = allContactsRepo.findContactNames();
-    	contactsWithTypeAhead.setContactNames(names);
-    	contactsWithTypeAhead.setContacts(contacts);
+    	contactsWithTypeAhead.setContactNames(fetchContactNamesAndNumbers());
+    	contactsWithTypeAhead.setContacts(allContactsRepo.findAll(pageable));
         return contactsWithTypeAhead;
     }
     
 	
 	public ContactsWithTypeAhead findFilteredContactsWithTA(FilterDataList contactFilterDataList, Pageable pageable) 
 	{
-		Specification<ContactAllInfo> spec = fetchSpecification(contactFilterDataList);
 		ContactsWithTypeAhead contactsWithTypeAhead = new ContactsWithTypeAhead();
+		Specification<ContactAllInfo> spec = fetchSpecification(contactFilterDataList);
+		
 		if(spec!=null)
 			contactsWithTypeAhead.setContacts(allContactsRepo.findAll(spec, pageable));
 		else 		
 			contactsWithTypeAhead.setContacts(allContactsRepo.findAll(pageable));
+
+		contactsWithTypeAhead.setContactNames(fetchContactNamesAndNumbers());
 		return contactsWithTypeAhead;
 	}
 
+	private List<String> fetchContactNamesAndNumbers()
+	{
+		List<String> namesAndNumbers = allContactsRepo.findContactNames();
+    	namesAndNumbers.addAll(allContactsRepo.findContactNumbers());
+    	return namesAndNumbers;
+	}
 	private Specification<ContactAllInfo> fetchSpecification(FilterDataList contactFilterDataList) 
 	{
 		Specification<ContactAllInfo> specification = null;

@@ -8,13 +8,13 @@ import com.ec.common.Model.ContactAllInfo;
 
 public class ContactsWithTypeAhead 
 {
-	List<String> contactNames;
+	List<String> contactNamesAndNumbers;
 	Page<ContactAllInfo> contacts;
 	public List<String> getContactNames() {
-		return contactNames;
+		return contactNamesAndNumbers;
 	}
 	public void setContactNames(List<String> contactNames) {
-		this.contactNames = contactNames;
+		this.contactNamesAndNumbers = contactNames;
 	}
 	public Page<ContactAllInfo> getContacts() {
 		return contacts;

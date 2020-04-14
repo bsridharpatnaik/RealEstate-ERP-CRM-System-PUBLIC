@@ -1,5 +1,6 @@
 package com.ec.common.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -21,4 +22,7 @@ public interface ContactAllInfoRepo extends JpaRepository<ContactAllInfo, Long>,
 	
 	@Query(value="SELECT DISTINCT name from ContactAllInfo m")
 	List<String> findContactNames();
+
+	@Query(value="SELECT DISTINCT mobileNo from ContactAllInfo m")
+	List<String> findContactNumbers();
 }
