@@ -13,13 +13,13 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
-import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.ec.application.ReusableClasses.ReusableFields;
 
 @Entity
 @Table(name = "Machinery")
 @Audited
-@Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class Machinery extends SoftDeletableEntity
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class Machinery extends ReusableFields
 {
 
 private static final long serialVersionUID = 1L;

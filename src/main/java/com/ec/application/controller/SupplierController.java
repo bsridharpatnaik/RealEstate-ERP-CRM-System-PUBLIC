@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.application.Projections.IdNameProjections;
+import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.model.Supplier;
 import com.ec.application.service.SupplierService;
 

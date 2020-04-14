@@ -1,4 +1,4 @@
-package com.ec.application.Projections;
+package com.ec.application.ReusableClasses;
 
 public interface IdNameProjections 
 {

@@ -7,13 +7,17 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.Projections.IdNameProjections;
+import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.AllCategoriesWithNamesData;
 import com.ec.application.model.Category;
-import com.ec.application.model.Product;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ProductRepo;
+import com.ec.common.Filters.CategorySpecifications;
+import com.ec.common.Filters.FilterAttributeData;
+import com.ec.common.Filters.FilterDataList;
 
 
 @Service
@@ -102,5 +106,41 @@ public class CategoryService
 	{
 		// TODO Auto-generated method stub
 		return categoryRepo.findIdAndNames();
+	}
+
+	public AllCategoriesWithNamesData findFilteredCategoriesWithTA(FilterDataList filterDataList, Pageable pageable) 
+	{
+		AllCategoriesWithNamesData allCategoriesWithNamesData = new AllCategoriesWithNamesData();
+		Specification<Category> spec = fetchSpecification(filterDataList);
+		
+		if(spec!=null) allCategoriesWithNamesData.setCategories(categoryRepo.findAll(spec, pageable));
+		else allCategoriesWithNamesData.setCategories(categoryRepo.findAll(pageable));
+
+		allCategoriesWithNamesData.setNames(categoryRepo.getNames());
+		return allCategoriesWithNamesData;
+		
+	}
+
+	private Specification<Category> fetchSpecification(FilterDataList filterDataList) 
+	{
+		Specification<Category> specification = null;
+		for(FilterAttributeData attrData:filterDataList.getFilterData())
+		{
+			String attrName = attrData.getAttrName();
+			List<String> attrValues = attrData.getAttrValue();
+			
+			if(attrName.toUpperCase().equals("NAME"))
+			{
+				Specification<Category> internalSpecification = null;
+				for(String attrValue : attrValues)
+				{
+					internalSpecification= internalSpecification==null?
+							CategorySpecifications.whereCategoryNameContains(attrValue)
+							:internalSpecification.or(CategorySpecifications.whereCategoryNameContains(attrValue));
+				}
+				specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			}
+		}
+		return specification;
 	}
 }

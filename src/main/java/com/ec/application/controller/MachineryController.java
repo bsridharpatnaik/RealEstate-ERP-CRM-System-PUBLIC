@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.application.Projections.IdNameProjections;
+import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.model.Machinery;
 import com.ec.application.service.MachineryService;
 

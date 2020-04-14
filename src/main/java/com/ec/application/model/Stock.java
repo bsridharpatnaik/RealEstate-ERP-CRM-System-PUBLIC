@@ -15,7 +15,7 @@ import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
-import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.NonNull;
@@ -23,8 +23,8 @@ import lombok.NonNull;
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Audited
-@Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class Stock extends SoftDeletableEntity
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class Stock extends ReusableFields
 {
 	
 	private static final long serialVersionUID = 1L;

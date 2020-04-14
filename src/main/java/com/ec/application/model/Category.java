@@ -16,15 +16,15 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
-import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "Category")
 @Audited
-@Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class Category extends SoftDeletableEntity
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class Category extends ReusableFields
 {
 
 private static final long serialVersionUID = 1L;
@@ -39,31 +39,6 @@ private static final long serialVersionUID = 1L;
 	
 	String categoryDescription;
 	
-	@CreationTimestamp
-	@Column(name = "created_at")
-	@JsonProperty("created_at")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
-	private Date created;
-	
-	
-	@Column(name = "updated_at")
-	@JsonProperty("updated_at")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
-	@UpdateTimestamp
-	private Date modified;
-		
-	public Date getCreated() {
-		return created;
-	}
-	public void setCreated(Date created) {
-		this.created = created;
-	}
-	public Date getModified() {
-		return modified;
-	}
-	public void setModified(Date modified) {
-		this.modified = modified;
-	}
 	public Long getCategoryId() {
 		return categoryId;
 	}

@@ -11,13 +11,13 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
-import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.ec.application.ReusableClasses.ReusableFields;
 
 @Entity
 @Table(name = "Usage_Location")
 @Audited
-@Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class UsageLocation extends SoftDeletableEntity
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class UsageLocation extends ReusableFields
 {
 	@Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

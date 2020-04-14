@@ -2,7 +2,7 @@ package com.ec.application.data;
 
 import java.util.List;
 
-import com.ec.application.Projections.IdNameProjections;
+import com.ec.application.ReusableClasses.IdNameProjections;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 

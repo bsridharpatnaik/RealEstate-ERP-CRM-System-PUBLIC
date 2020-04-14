@@ -1,20 +1,22 @@
-package com.ec.application.SoftDelete;
+package com.ec.application.ReusableClasses;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.util.Assert;
 
 @NoRepositoryBean
-public interface BaseRepository<T, ID> extends JpaRepository<T, ID> {
+public interface BaseRepository<T, ID> extends JpaRepository<T, ID>, JpaSpecificationExecutor<T> 
+{
 
 
     default void softDelete(T entity) {
 
         Assert.notNull(entity, "The entity must not be null!");
-        Assert.isInstanceOf(SoftDeletableEntity.class, entity, "The entity must be soft deletable!");
+        Assert.isInstanceOf(ReusableFields.class, entity, "The entity must be soft deletable!");
 
-        ((SoftDeletableEntity)entity).setDeleted(true);
+        ((ReusableFields)entity).setDeleted(true);
         save(entity);
     }
 

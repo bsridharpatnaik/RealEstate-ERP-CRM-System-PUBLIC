@@ -17,15 +17,15 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
-import com.ec.application.SoftDelete.SoftDeletableEntity;
+import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 
 @Entity
 @Table(name = "Product")
 @Audited
-@Where(clause = SoftDeletableEntity.SOFT_DELETED_CLAUSE)
-public class Product extends SoftDeletableEntity
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class Product extends ReusableFields
 {
 
 private static final long serialVersionUID = 1L;

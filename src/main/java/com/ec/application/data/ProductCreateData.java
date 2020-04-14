@@ -1,10 +1,15 @@
 package com.ec.application.data;
 
+import org.springframework.lang.NonNull;
+
 public class ProductCreateData 
 {
 	Long categoryId;
+	@NonNull
 	String productName;
 	String productDescription;
+	@NonNull
+	
 	String measurementUnit;
 	public Long getCategoryId() {
 		return categoryId;

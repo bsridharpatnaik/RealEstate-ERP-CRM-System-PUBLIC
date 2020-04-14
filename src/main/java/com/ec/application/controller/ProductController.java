@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.application.Projections.IdNameProjections;
+import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.AllProductsWithNamesData;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Product;
 import com.ec.application.service.ProductService;
+import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/product")
@@ -38,6 +40,15 @@ public class ProductController
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
 		return productService.findAll(pageable);
+	}
+	
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public AllProductsWithNamesData returnFilteredProducts(@RequestBody FilterDataList filterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	{
+		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
+		Pageable pageable = PageRequest.of(page, size);
+		return productService.findFilteredProductsWithTA(filterDataList,pageable);
 	}
 	
 	@GetMapping("/{id}")

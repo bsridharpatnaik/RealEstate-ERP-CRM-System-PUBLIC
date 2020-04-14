@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.ec.application.SoftDelete.BaseRepository;
+import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.model.OutwardInventory;
@@ -16,7 +16,7 @@ import com.ec.application.service.StockService;
 public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, Long>
 {
 
-	@Query(value="SELECT m from OutwardInventory m where m.product.productId =:productId")
+	@Query(value="SELECT count(m) from OutwardInventory m where m.product.productId =:productId")
 	int productUsageCount(@Param("productId")Long productId);
 
 	@Query(value="SELECT m from OutwardInventory m where m.usageLocation.locationId=:locationId")

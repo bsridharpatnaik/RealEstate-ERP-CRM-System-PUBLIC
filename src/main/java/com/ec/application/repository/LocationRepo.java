@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.ec.application.Projections.IdNameProjections;
-import com.ec.application.SoftDelete.BaseRepository;
+import com.ec.application.ReusableClasses.BaseRepository;
+import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.model.UsageLocation;
 
 @Repository

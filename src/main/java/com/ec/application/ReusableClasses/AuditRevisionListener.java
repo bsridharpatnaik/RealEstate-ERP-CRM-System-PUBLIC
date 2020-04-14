@@ -1,4 +1,4 @@
-package com.ec.application.Audit;
+package com.ec.application.ReusableClasses;
 
 
 import com.ec.application.service.UserDetailsService;

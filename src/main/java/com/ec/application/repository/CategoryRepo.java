@@ -8,8 +8,8 @@ import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.ec.application.Projections.IdNameProjections;
-import com.ec.application.SoftDelete.BaseRepository;
+import com.ec.application.ReusableClasses.BaseRepository;
+import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.model.Category;
 
 @Repository
@@ -25,6 +25,9 @@ public interface CategoryRepo extends BaseRepository<Category, Long>
 
 	@Query(value="SELECT categoryId as id,categoryName as name from Category m")
 	List<IdNameProjections> findIdAndNames();
-	
+
+	@Query(value="SELECT categoryName as name from Category m")
+	List<String> getNames();
+
 	
 }

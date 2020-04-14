@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.ec.application.Projections.IdNameProjections;
-import com.ec.application.SoftDelete.BaseRepository;
+import com.ec.application.ReusableClasses.BaseRepository;
+import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.model.Machinery;
 import com.ec.application.model.Product;
 
@@ -35,4 +35,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	
 	@Query(value="SELECT count(*) from Product m where m.category.categoryId=:categoryId")
 	int categoryUsageCount(@Param("categoryId")Long categoryId);
+
+	@Query(value="SELECT productName from Product m")
+	List<String> getNames();
 }

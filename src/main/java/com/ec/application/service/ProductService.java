@@ -7,14 +7,19 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.Projections.IdNameProjections;
+import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.AllProductsWithNamesData;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Category;
 import com.ec.application.model.Product;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ProductRepo;
+import com.ec.common.Filters.FilterAttributeData;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.ProductSpecifications;
 
 
 @Service
@@ -146,5 +151,52 @@ public class ProductService
 			return true;
 		else
 			return false;
+	}
+
+	public AllProductsWithNamesData findFilteredProductsWithTA(FilterDataList filterDataList, Pageable pageable) 
+	{
+		AllProductsWithNamesData allProductsWithNamesData = new AllProductsWithNamesData();
+		Specification<Product> spec = fetchSpecification(filterDataList);
+		
+		if(spec!=null) allProductsWithNamesData.setProducts(productRepo.findAll(spec, pageable));
+		else allProductsWithNamesData.setProducts(productRepo.findAll(pageable));
+
+		allProductsWithNamesData.setProductNames(productRepo.getNames());
+		return allProductsWithNamesData;
+	}
+	
+	private Specification<Product> fetchSpecification(FilterDataList filterDataList) 
+	{
+		Specification<Product> specification = null;
+		for(FilterAttributeData attrData:filterDataList.getFilterData())
+		{
+			String attrName = attrData.getAttrName();
+			List<String> attrValues = attrData.getAttrValue();
+			
+			if(attrName.toUpperCase().equals("NAME"))
+			{
+				Specification<Product> internalSpecification = null;
+				for(String attrValue : attrValues)
+				{
+					internalSpecification= internalSpecification==null?
+							ProductSpecifications.whereProductNameContains(attrValue)
+							:internalSpecification.or(ProductSpecifications.whereProductNameContains(attrValue));
+				}
+				specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			}
+			
+			if(attrName.toUpperCase().equals("CATEGORY"))
+			{
+				Specification<Product> internalSpecification = null;
+				for(String attrValue : attrValues)
+				{
+					internalSpecification= internalSpecification==null?
+							ProductSpecifications.whereCategoryNameEquals(attrValue)
+							:internalSpecification.or(ProductSpecifications.whereCategoryNameEquals(attrValue));
+				}
+				specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			}
+		}
+		return specification;
 	}
 }
