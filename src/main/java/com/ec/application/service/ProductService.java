@@ -156,47 +156,11 @@ public class ProductService
 	public AllProductsWithNamesData findFilteredProductsWithTA(FilterDataList filterDataList, Pageable pageable) 
 	{
 		AllProductsWithNamesData allProductsWithNamesData = new AllProductsWithNamesData();
-		Specification<Product> spec = fetchSpecification(filterDataList);
-		
+		Specification<Product> spec = ProductSpecifications.getSpecification(filterDataList);
 		if(spec!=null) allProductsWithNamesData.setProducts(productRepo.findAll(spec, pageable));
 		else allProductsWithNamesData.setProducts(productRepo.findAll(pageable));
 
 		allProductsWithNamesData.setProductNames(productRepo.getNames());
 		return allProductsWithNamesData;
-	}
-	
-	private Specification<Product> fetchSpecification(FilterDataList filterDataList) 
-	{
-		Specification<Product> specification = null;
-		for(FilterAttributeData attrData:filterDataList.getFilterData())
-		{
-			String attrName = attrData.getAttrName();
-			List<String> attrValues = attrData.getAttrValue();
-			
-			if(attrName.toUpperCase().equals("NAME"))
-			{
-				Specification<Product> internalSpecification = null;
-				for(String attrValue : attrValues)
-				{
-					internalSpecification= internalSpecification==null?
-							ProductSpecifications.whereProductNameContains(attrValue)
-							:internalSpecification.or(ProductSpecifications.whereProductNameContains(attrValue));
-				}
-				specification= specification==null?internalSpecification:specification.and(internalSpecification);
-			}
-			
-			if(attrName.toUpperCase().equals("CATEGORY"))
-			{
-				Specification<Product> internalSpecification = null;
-				for(String attrValue : attrValues)
-				{
-					internalSpecification= internalSpecification==null?
-							ProductSpecifications.whereCategoryNameEquals(attrValue)
-							:internalSpecification.or(ProductSpecifications.whereCategoryNameEquals(attrValue));
-				}
-				specification= specification==null?internalSpecification:specification.and(internalSpecification);
-			}
-		}
-		return specification;
 	}
 }
