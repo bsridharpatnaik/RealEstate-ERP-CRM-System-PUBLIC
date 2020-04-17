@@ -85,6 +85,6 @@ public class UserController
 	@PutMapping("/{id}")
 	public User updateUser(@PathVariable Long id, @RequestBody CreateUserData payload) throws Exception 
 	{
-		return userService.updateContact(id, payload);
+		return userService.updateUser(id, payload);
 	} 
 }

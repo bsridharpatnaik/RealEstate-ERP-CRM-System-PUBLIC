@@ -187,8 +187,14 @@ public class UserService {
 			throw new Exception("User ID not found");
 	}
 
-	public User updateContact(Long id, CreateUserData payload) throws Exception 
+	public User updateUser(Long id, CreateUserData payload) throws Exception 
 	{
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+		
+		if(payload.getUsername().equalsIgnoreCase(auth.getName()))
+			throw new Exception("Cannot update logged in user");
+		
 	    User user = findSingleUserFromAll(id);
 	    String username = payload.getUsername();
 	    if(!user.getUserName().equals(payload.getUsername()))
