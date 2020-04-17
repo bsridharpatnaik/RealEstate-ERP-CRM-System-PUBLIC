@@ -1,10 +1,8 @@
 package com.ec.application.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -21,8 +19,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.AllMachineriesWithNamesData;
 import com.ec.application.model.Machinery;
 import com.ec.application.service.MachineryService;
+import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/machinery")
@@ -31,12 +31,13 @@ public class MachineryController
 	@Autowired
 	MachineryService machineryService;
 	
-	@GetMapping
-	public Page<Machinery> returnAllPayments(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public AllMachineriesWithNamesData returnFilteredMachineries(@RequestBody FilterDataList filterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
-		return machineryService.findAll(pageable);
+		return machineryService.findFilteredMachineriesWithTA(filterDataList,pageable);
 	}
 	
 	@GetMapping("/{id}")
@@ -63,17 +64,6 @@ public class MachineryController
 	{
 		return machineryService.updateMachinery(id, Machinery);
 	} 
-	
-	@GetMapping("/name/{name}")
-	public ArrayList<Machinery> returnCusByName(@PathVariable String name) 
-	{
-		return machineryService.findMachinerysByName(name);
-	}
-	@GetMapping("/partialname/{name}")
-	public ArrayList<Machinery> returnCusByPartialName(@PathVariable String name) 
-	{
-		return machineryService.findMachinerysByPartialName(name);
-	}
 	
 	@GetMapping("/idandnames")
 	public List<IdNameProjections> returnIdAndNames() 

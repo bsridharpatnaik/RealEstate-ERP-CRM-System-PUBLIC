@@ -24,4 +24,7 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 
 	@Query(value="SELECT locationId as id,locationName as name from UsageLocation m")
 	List<IdNameProjections> findIdAndNames();
+
+	@Query(value="SELECT locationName from UsageLocation m")
+	List<String> getNames();
 }

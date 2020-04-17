@@ -16,8 +16,8 @@ public class SpecificationsBuilder<T>
 {
 
 	  //#######################################//
-	 //     Level 0   						 //
-	//######################################//
+	 //    				 Level 0   		      //
+	//#######################################//
 	
 	
     public Specification<T> whereDirectFieldContains(String key,List<String> names)
@@ -47,8 +47,8 @@ public class SpecificationsBuilder<T>
     
     
 	  //#######################################//
-	 //     Level 1   						 //
-	//######################################//
+	 //     			Level 1			 	  //
+	//#######################################//
     
 	public Specification<T> whereChildFieldContains(String childTable, String childFiledName,
 			List<String> names) 
@@ -79,7 +79,7 @@ public class SpecificationsBuilder<T>
 	
 	  //#######################################//
 	 //     Reusable Spec Setter for NULLs    //
-	//######################################//
+	//#######################################//
 	
     public Specification<T> specAndCondition(Specification<T> finalSpec, Specification<T> internalSpec) 
 	{
@@ -95,7 +95,7 @@ public class SpecificationsBuilder<T>
     
     
 	  //############################################//
-	 //     Reusable method to fetch filter Data    //
+	 //     Reusable method to fetch filter Data   //
 	//############################################//
     
     public static List<String> fetchValueFromFilterList(FilterDataList filterDataList, String field) 

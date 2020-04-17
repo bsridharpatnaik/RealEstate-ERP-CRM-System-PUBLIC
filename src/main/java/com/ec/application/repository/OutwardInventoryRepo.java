@@ -19,6 +19,6 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 	@Query(value="SELECT count(m) from OutwardInventory m where m.product.productId =:productId")
 	int productUsageCount(@Param("productId")Long productId);
 
-	@Query(value="SELECT m from OutwardInventory m where m.usageLocation.locationId=:locationId")
+	@Query(value="SELECT count(m) from OutwardInventory m where m.usageLocation.locationId=:locationId")
 	int locationUsageCount(@Param("locationId")Long locationId);
 }

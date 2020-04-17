@@ -25,4 +25,8 @@ public interface MachineryRepo extends BaseRepository<Machinery, Long>
 
 	@Query(value="SELECT machineryId as id,machineryName as name from Machinery m")
 	List<IdNameProjections> findIdAndNames();
+	
+	@Query(value="SELECT machineryName from Machinery m")
+	List<String> getNames();
+	
 }

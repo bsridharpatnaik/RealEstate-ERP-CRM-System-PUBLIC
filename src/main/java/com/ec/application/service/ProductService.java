@@ -128,15 +128,6 @@ public class ProductService
 		return productList;
 	}
 
-	public ArrayList<Product> findProductsByPartialName(String name) 
-	{
-		return productRepo.findByPartialName(name);
-	}
-
-	public ArrayList<String> returnNameByCategory(String categoryname) 
-	{
-		return productRepo.returnNameByCategory(categoryname);
-	}
 
 	public List<IdNameProjections> findIdAndNames() 
 	{

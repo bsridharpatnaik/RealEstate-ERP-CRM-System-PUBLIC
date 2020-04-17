@@ -42,14 +42,6 @@ public class CategoryController
 		return categoryService.findFilteredCategoriesWithTA(filterDataList,pageable);
 	}
 	
-	@GetMapping
-	public Page<Category> returnAllPayments(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
-	{
-		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
-		Pageable pageable = PageRequest.of(page, size);
-		return categoryService.findAll(pageable);
-	}
-	
 	@GetMapping("/{id}")
 	public Category findCategorybyvehicleNoCategorys(@PathVariable long id) 
 	{
@@ -81,17 +73,4 @@ public class CategoryController
 	{
 		return categoryService.findIdAndNames();
 	}
-	
-	/*
-	 * @GetMapping("/name/{name}")
-	public ArrayList<Category> returnCusByName(@PathVariable String name) 
-	{
-		return categoryService.findCategorysByName(name);
-	}
-	@GetMapping("/partialname/{name}")
-	public ArrayList<Category> returnCusByPartialName(@PathVariable String name) 
-	{
-		return categoryService.findCategorysByPartialName(name);
-	}
-	 */
 }

@@ -90,18 +90,6 @@ public class CategoryService
 				throw new Exception("Cannot delete category. Category already assigned to product");
 	}
 
-	public ArrayList<Category> findCategorysByName(String name) 
-	{
-		ArrayList<Category> categorytList = new ArrayList<Category>();
-		categorytList = categoryRepo.findBycategoryName(name);
-		return categorytList;
-	}
-
-	public ArrayList<Category> findCategorysByPartialName(String name) 
-	{
-		return categoryRepo.findByPartialName(name);
-	}
-
 	public List<IdNameProjections> findIdAndNames() 
 	{
 		// TODO Auto-generated method stub
@@ -111,7 +99,7 @@ public class CategoryService
 	public AllCategoriesWithNamesData findFilteredCategoriesWithTA(FilterDataList filterDataList, Pageable pageable) 
 	{
 		AllCategoriesWithNamesData allCategoriesWithNamesData = new AllCategoriesWithNamesData();
-		Specification<Category> spec = fetchSpecification(filterDataList);
+		Specification<Category> spec = CategorySpecifications.getSpecification(filterDataList);
 		
 		if(spec!=null) allCategoriesWithNamesData.setCategories(categoryRepo.findAll(spec, pageable));
 		else allCategoriesWithNamesData.setCategories(categoryRepo.findAll(pageable));
@@ -119,28 +107,5 @@ public class CategoryService
 		allCategoriesWithNamesData.setNames(categoryRepo.getNames());
 		return allCategoriesWithNamesData;
 		
-	}
-
-	private Specification<Category> fetchSpecification(FilterDataList filterDataList) 
-	{
-		Specification<Category> specification = null;
-		for(FilterAttributeData attrData:filterDataList.getFilterData())
-		{
-			String attrName = attrData.getAttrName();
-			List<String> attrValues = attrData.getAttrValue();
-			
-			if(attrName.toUpperCase().equals("NAME"))
-			{
-				Specification<Category> internalSpecification = null;
-				for(String attrValue : attrValues)
-				{
-					internalSpecification= internalSpecification==null?
-							CategorySpecifications.whereCategoryNameContains(attrValue)
-							:internalSpecification.or(CategorySpecifications.whereCategoryNameContains(attrValue));
-				}
-				specification= specification==null?internalSpecification:specification.and(internalSpecification);
-			}
-		}
-		return specification;
 	}
 }

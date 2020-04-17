@@ -34,14 +34,6 @@ public class ProductController
 	@Autowired
 	ProductService productService;
 	
-	@GetMapping
-	public Page<Product> returnAllPayments(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
-	{
-		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
-		Pageable pageable = PageRequest.of(page, size);
-		return productService.findAll(pageable);
-	}
-	
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public AllProductsWithNamesData returnFilteredProducts(@RequestBody FilterDataList filterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
@@ -76,16 +68,6 @@ public class ProductController
 		return productService.updateProduct(id, Product);
 	} 
 	
-	@GetMapping("/name/{name}")
-	public ArrayList<Product> returnCusByName(@PathVariable String name) 
-	{
-		return productService.findProductsByName(name);
-	}
-	@GetMapping("/partialname/{name}")
-	public ArrayList<Product> returnCusByPartialName(@PathVariable String name) 
-	{
-		return productService.findProductsByPartialName(name);
-	}
 	@GetMapping("/idandnames")
 	public List<IdNameProjections> returnIdAndNames() 
 	{

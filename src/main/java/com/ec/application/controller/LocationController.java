@@ -1,10 +1,8 @@
 package com.ec.application.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -21,8 +19,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.AllLocationWithNamesData;
 import com.ec.application.model.UsageLocation;
 import com.ec.application.service.LocationService;
+import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/location")
@@ -30,54 +30,46 @@ public class LocationController
 {
 
 	@Autowired
-	LocationService LocationService;
+	LocationService locationService;
 	
-	@GetMapping
-	public Page<UsageLocation> returnAllPayments(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public AllLocationWithNamesData returnFilteredLocations(@RequestBody FilterDataList filterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
-		return LocationService.findAll(pageable);
+		return locationService.findFilteredLocationsWithTA(filterDataList,pageable);
 	}
 	
 	@GetMapping("/{id}")
 	public UsageLocation findLocationbyvehicleNoLocations(@PathVariable long id) 
 	{
-		return LocationService.findSingleLocation(id);
+		return locationService.findSingleLocation(id);
 	}
 
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteLocation(@PathVariable Long id) throws Exception
 	{
-		LocationService.deleteLocation(id);
+		locationService.deleteLocation(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
 	public UsageLocation createLocation(@RequestBody UsageLocation payload) throws Exception{
 		
-		return LocationService.createLocation(payload);
+		return locationService.createLocation(payload);
 	}
 
 	@PutMapping("/{id}")
 	public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocation Location) throws Exception 
 	{
-		return LocationService.updateLocation(id, Location);
+		return locationService.updateLocation(id, Location);
 	} 
 	
-	@GetMapping("/name/{name}")
-	public ArrayList<UsageLocation> returnCusByName(@PathVariable String name) 
-	{
-		return LocationService.findLocationsByName(name);
-	}
-	@GetMapping("/partialname/{name}")
-	public ArrayList<UsageLocation> returnCusByPartialName(@PathVariable String name) 
-	{
-		return LocationService.findLocationsByPartialName(name);
-	}
+	
 	@GetMapping("/idandnames")
 	public List<IdNameProjections> returnIdAndNames() 
 	{
-		return LocationService.findIdAndNames();
+		return locationService.findIdAndNames();
 	}
 }

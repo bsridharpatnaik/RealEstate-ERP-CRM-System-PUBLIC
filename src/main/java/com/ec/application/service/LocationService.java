@@ -7,31 +7,34 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.AllLocationWithNamesData;
+import com.ec.application.model.Category;
 import com.ec.application.model.UsageLocation;
 import com.ec.application.repository.LocationRepo;
+import com.ec.common.Filters.CategorySpecifications;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.LocationSpecifications;
 
 @Service
 public class LocationService 
 {
 	@Autowired
-	LocationRepo LocationRepo;
+	LocationRepo locationRepo;
 	
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
 	
-	public Page<UsageLocation> findAll(Pageable pageable)
-	{
-		return LocationRepo.findAll(pageable);
-    }
+	
 	
 	public UsageLocation createLocation(UsageLocation payload) throws Exception 
 	{
-		if(!LocationRepo.existsByLocationName(payload.getLocationName()))
+		if(!locationRepo.existsByLocationName(payload.getLocationName()))
 		{
-			LocationRepo.save(payload);
+			locationRepo.save(payload);
 			return payload;
 		}
 		else
@@ -42,12 +45,12 @@ public class LocationService
 
 	public UsageLocation updateLocation(Long id, UsageLocation payload) throws Exception 
 	{
-		Optional<UsageLocation> LocationForUpdateOpt = LocationRepo.findById(id);
+		Optional<UsageLocation> LocationForUpdateOpt = locationRepo.findById(id);
         UsageLocation LocationForUpdate = LocationForUpdateOpt.get();
         
 		UsageLocation newLocation = new UsageLocation();
         newLocation = payload;
-        if(!LocationRepo.existsByLocationName(newLocation.getLocationName()) && 
+        if(!locationRepo.existsByLocationName(newLocation.getLocationName()) && 
         		!LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
         {		
         	LocationForUpdate.setLocationName(newLocation.getLocationName());
@@ -63,48 +66,39 @@ public class LocationService
         	throw new Exception("Location with same Name already exists");
         }
         	
-        return LocationRepo.save(LocationForUpdate);
+        return locationRepo.save(LocationForUpdate);
         
     }
 
 	public UsageLocation findSingleLocation(Long id) 
 	{
-		Optional<UsageLocation> Locations = LocationRepo.findById(id);
+		Optional<UsageLocation> Locations = locationRepo.findById(id);
 		return Locations.get();
 	}
 	public void deleteLocation(Long id) throws Exception 
 	{
 		if(!checkBeforeDeleteService.isLocationUsed(id))
-			LocationRepo.softDeleteById(id);
+			locationRepo.softDeleteById(id);
 		else
 			throw new Exception("Location in use. Cannot delete.");
 		
 	}
 
-	public ArrayList<UsageLocation> findLocationsByName(String name) 
-	{
-		ArrayList<UsageLocation> locationList = new ArrayList<UsageLocation>();
-		locationList = LocationRepo.findByLocationName(name);
-		return locationList;
-	}
-
-	public ArrayList<UsageLocation> findLocationsByPartialName(String name) 
-	{
-		return LocationRepo.findByPartialName(name);
-	}
-
 	public List<IdNameProjections> findIdAndNames() 
 	{
-		// TODO Auto-generated method stub
-		return LocationRepo.findIdAndNames();
+		return locationRepo.findIdAndNames();
 	}
-	
-	public boolean checkIfUnloadingAreaExists(Long id)
+
+	public AllLocationWithNamesData findFilteredLocationsWithTA(FilterDataList filterDataList, Pageable pageable) 
 	{
-		Optional<UsageLocation> location = LocationRepo.findById(id);
-		if(location.isPresent())
-			return true;
-		else
-			return false;
+		AllLocationWithNamesData allLocationsWithNamesData = new AllLocationWithNamesData();
+		Specification<UsageLocation> spec = LocationSpecifications.getSpecification(filterDataList);
+		
+		if(spec!=null) allLocationsWithNamesData.setLocations(locationRepo.findAll(spec, pageable));
+		else allLocationsWithNamesData.setLocations(locationRepo.findAll(pageable));
+
+		allLocationsWithNamesData.setNames(locationRepo.getNames());
+		return allLocationsWithNamesData;
 	}
+
 }

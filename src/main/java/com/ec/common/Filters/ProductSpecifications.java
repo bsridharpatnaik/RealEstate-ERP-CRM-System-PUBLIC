@@ -15,20 +15,20 @@ import com.ec.application.model.Product_;
 
 public final class ProductSpecifications 
 {
-	static SpecificationsBuilder<Product> specificationsBuilder = new SpecificationsBuilder<Product>();
+	static SpecificationsBuilder<Product> specbldr = new SpecificationsBuilder<Product>();
 	
 	public static Specification<Product> getSpecification(FilterDataList filterDataList)
 	{
-		List<String> productNames = specificationsBuilder.fetchValueFromFilterList(filterDataList,"product");
-		List<String> categoryNames = specificationsBuilder.fetchValueFromFilterList(filterDataList,"category");
+		List<String> productNames = specbldr.fetchValueFromFilterList(filterDataList,"product");
+		List<String> categoryNames = specbldr.fetchValueFromFilterList(filterDataList,"category");
 		Specification<Product> finalSpec = null;
 		if(productNames != null && productNames.size()>0)
-			finalSpec = specificationsBuilder.specAndCondition(finalSpec, specificationsBuilder.whereDirectFieldContains(Product_.PRODUCT_NAME, productNames));
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(Product_.PRODUCT_NAME, productNames));
 		
 		if(categoryNames != null && categoryNames.size()>0)
 		{
-			finalSpec = specificationsBuilder.specAndCondition(finalSpec,
-					specificationsBuilder.whereChildFieldContains(Product_.CATEGORY,Category_.CATEGORY_NAME, categoryNames));
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereChildFieldContains(Product_.CATEGORY,Category_.CATEGORY_NAME, categoryNames));
 		}	
 		return finalSpec;	
 	}
