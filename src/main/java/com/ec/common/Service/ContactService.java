@@ -10,7 +10,6 @@ import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpEntity;
@@ -26,8 +25,10 @@ import com.ec.common.Filters.ContactFilterAttributeEnum;
 import com.ec.common.Filters.ContactSpecifications;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Model.Address;
 import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.ContactBasicInfo;
+import com.ec.common.Repository.AddressRepo;
 import com.ec.common.Repository.ContactAllInfoRepo;
 import com.ec.common.Repository.ContactBasicInfoRepo;
 import com.ec.utils.CommonUtils;
@@ -43,6 +44,9 @@ public class ContactService {
 
     @Autowired
     RestTemplate restTemplate;
+    
+    @Autowired
+    AddressRepo addressRepo;
 
     @Autowired
     HttpServletRequest httpRequest;
@@ -58,10 +62,11 @@ public class ContactService {
     @Transactional
     public ContactAllInfo createContact(ContactAllInfo payload) throws Exception 
     {
+    	Address address = new Address();
     	ContactBasicInfo contact = new ContactBasicInfo();
         formatMobileNo(payload);
         exitIfMobileNoExists(payload);
-        PopulateBasicFields(payload, contact);
+        PopulateBasicFields(payload, contact, address);
         contactRepo.save(contact);
         payload.setContactId(contact.getContactId());
         if (payload.getContactType() != CustomerTypeEnum.CUSTOMER.toString()) 
@@ -79,13 +84,14 @@ public class ContactService {
     public ContactAllInfo updateContact(Long id, ContactAllInfo payload) throws Exception 
     {
 		ContactBasicInfo contact = findContactById(id);
+		Address address = contact.getAddress();
 		formatMobileNo(payload);
 		if(!contact.getMobileNo().equals(payload.getMobileNo()))
 				exitIfMobileNoExists(payload);
 		if(payload.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER) && 
 				(!contact.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER)))
 			throw new Exception("Cannot convert contact from non-customer to customer");		
-		PopulateBasicFields(payload, contact);
+		PopulateBasicFields(payload, contact, address);
 		contactRepo.save(contact);
 		payload.setContactId(contact.getContactId());
 		return payload;
@@ -115,13 +121,25 @@ public class ContactService {
     	contactAllInfo.setContactPersonMobileNo(contactNonBasicData.getContactPersonMobileNo());
 	}
 
-	private void PopulateBasicFields(ContactAllInfo payload, ContactBasicInfo contact) 
+	private void PopulateBasicFields(ContactAllInfo payload, ContactBasicInfo contact,Address address) 
     {
-		contact.setAddress(payload.getAddress());
 		contact.setContactType(CustomerTypeEnum.valueOf(payload.getContactType()));
 		contact.setEmailId(payload.getEmailId());
 		contact.setMobileNo(payload.getMobileNo());
 		contact.setName(payload.getName());
+		populateAddressFields(payload,address);
+		contact.setAddress(address);
+	}
+
+	private void populateAddressFields(ContactAllInfo payload, Address address) 
+	{
+		address.setAddr_line1(payload.getAddr_line1());
+		address.setAddr_line2(payload.getAddr_line2());
+		address.setCity(payload.getCity());
+		address.setState(payload.getState());
+		address.setZip(payload.getZip());
+		
+		addressRepo.save(address);
 	}
 
 	private void passContactToCRM(Long contactId, ContactAllInfo payload) 

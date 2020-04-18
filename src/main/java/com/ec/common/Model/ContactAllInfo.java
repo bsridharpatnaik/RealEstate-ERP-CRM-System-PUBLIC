@@ -29,8 +29,21 @@ public class ContactAllInfo implements Serializable
 	@Column(name="mobile_no")
 	String mobileNo;
 	
-	@Column(name="address")
-	String address;
+	@Column(name="addr_line1")
+	String addr_line1;
+	
+	
+	@Column(name="addr_line2")
+	String addr_line2;
+	
+	@Column(name="city")
+	String city;
+	
+	@Column(name="state")
+	String state;
+	
+	@Column(name="zip")
+	String zip;
 	
 	@Column(name="email_id")
 	String emailId;
@@ -47,6 +60,47 @@ public class ContactAllInfo implements Serializable
 	
 	@Column(name="gst_number")
 	String gstNumber;
+
+	
+	public String getAddr_line1() {
+		return addr_line1;
+	}
+
+	public void setAddr_line1(String addr_line1) {
+		this.addr_line1 = addr_line1;
+	}
+
+	public String getAddr_line2() {
+		return addr_line2;
+	}
+
+	public void setAddr_line2(String addr_line2) {
+		this.addr_line2 = addr_line2;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getZip() {
+		return zip;
+	}
+
+	public void setZip(String zip) {
+		this.zip = zip;
+	}
 
 	public Long getContactId() {
 		return contactId;
@@ -70,14 +124,6 @@ public class ContactAllInfo implements Serializable
 
 	public void setMobileNo(String mobileNo) {
 		this.mobileNo = mobileNo;
-	}
-
-	public String getAddress() {
-		return address;
-	}
-
-	public void setAddress(String address) {
-		this.address = address;
 	}
 
 	public String getEmailId() {

@@ -26,7 +26,7 @@ public final class ContactSpecifications
     
     public static Specification<ContactAllInfo> whereAddressContains(@NonNull String address) {
         return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
-                -> cb.like(root.get(ContactAllInfo_.address), "%"+address+"%");
+                -> cb.like(root.get(ContactAllInfo_.addr_line1), "%"+address+"%");
     }
     
     public static Specification<ContactAllInfo> whereContactTypeEquals(@NonNull String contactType) {

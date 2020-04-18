@@ -2,13 +2,17 @@ package com.ec.common.Model;
 
 import java.util.Date;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -18,11 +22,12 @@ import org.springframework.lang.NonNull;
 
 import com.ec.common.Data.CustomerTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "Contact")
-public class ContactBasicInfo
+public class ContactBasicInfo 
 {
 
 	private static final long serialVersionUID = 1L;
@@ -42,12 +47,16 @@ public class ContactBasicInfo
 	
 	String emailId;
 	
-	String address;
-	
 	@NonNull
 	@Column(nullable=false)
 	@Enumerated(EnumType.STRING)
 	CustomerTypeEnum contactType;
+	
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="addrId",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	Address address;
+	
 	
 	@CreationTimestamp
 	@Column(name = "created_at")
@@ -61,6 +70,17 @@ public class ContactBasicInfo
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
 	@UpdateTimestamp
 	private Date modified;
+
+	
+
+	public Address getAddress() {
+		return address;
+	}
+
+
+	public void setAddress(Address address) {
+		this.address = address;
+	}
 
 
 	public Long getContactId() {
@@ -101,17 +121,6 @@ public class ContactBasicInfo
 	public void setEmailId(String emailId) {
 		this.emailId = emailId;
 	}
-
-
-	public String getAddress() {
-		return address;
-	}
-
-
-	public void setAddress(String address) {
-		this.address = address;
-	}
-
 
 	public CustomerTypeEnum getContactType() {
 		return contactType;
