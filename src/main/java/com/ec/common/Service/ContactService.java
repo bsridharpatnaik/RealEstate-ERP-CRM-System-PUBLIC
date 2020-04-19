@@ -69,7 +69,7 @@ public class ContactService {
         PopulateBasicFields(payload, contact, address);
         contactRepo.save(contact);
         payload.setContactId(contact.getContactId());
-        if (payload.getContactType() != CustomerTypeEnum.CUSTOMER.toString()) 
+        if (!payload.getContactType().equalsIgnoreCase(CustomerTypeEnum.CUSTOMER.toString())) 
         {
 	        ContactNonBasicData contactNonBasicData = fetchNonBasicData(payload,contact);
 	        PopulateNonBasicFields(payload,contactNonBasicData);
@@ -248,9 +248,13 @@ public class ContactService {
 				Specification<ContactAllInfo> internalSpecification = null;
 				for(String attrValue : attrValues)
 				{
-					internalSpecification= internalSpecification==null?
-							ContactSpecifications.whereAddressContains(attrValue):
-							internalSpecification.or(ContactSpecifications.whereAddressContains(attrValue));
+					Specification<ContactAllInfo> childSpecification = ContactSpecifications.whereAddress1Contains(attrValue)
+							.or(ContactSpecifications.whereAddress2Contains(attrValue))
+							.or(ContactSpecifications.whereCityContains(attrValue))
+							.or(ContactSpecifications.whereStateContains(attrValue))
+							.or(ContactSpecifications.whereZipContains(attrValue));
+					internalSpecification= internalSpecification==null?childSpecification
+							:internalSpecification.or(childSpecification);
 				}
 				specification= specification==null?internalSpecification:specification.and(internalSpecification);
 			}

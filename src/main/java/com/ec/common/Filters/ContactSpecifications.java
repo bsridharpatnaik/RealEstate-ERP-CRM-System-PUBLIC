@@ -24,9 +24,29 @@ public final class ContactSpecifications
                 -> cb.like(root.get(ContactAllInfo_.mobileNo), "%"+mobileNo+"%");
     }
     
-    public static Specification<ContactAllInfo> whereAddressContains(@NonNull String address) {
+    public static Specification<ContactAllInfo> whereAddress1Contains(@NonNull String address) {
         return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
                 -> cb.like(root.get(ContactAllInfo_.addr_line1), "%"+address+"%");
+    }
+    
+    public static Specification<ContactAllInfo> whereAddress2Contains(@NonNull String address) {
+        return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+                -> cb.like(root.get(ContactAllInfo_.addr_line2), "%"+address+"%");
+    }
+    
+    public static Specification<ContactAllInfo> whereCityContains(@NonNull String address) {
+        return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+                -> cb.like(root.get(ContactAllInfo_.city), "%"+address+"%");
+    }
+    
+    public static Specification<ContactAllInfo> whereStateContains(@NonNull String address) {
+        return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+                -> cb.like(root.get(ContactAllInfo_.state), "%"+address+"%");
+    }
+    
+    public static Specification<ContactAllInfo> whereZipContains(@NonNull String address) {
+        return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+                -> cb.like(root.get(ContactAllInfo_.zip), "%"+address+"%");
     }
     
     public static Specification<ContactAllInfo> whereContactTypeEquals(@NonNull String contactType) {
