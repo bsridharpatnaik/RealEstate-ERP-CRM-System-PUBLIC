@@ -21,7 +21,7 @@ public class ContractorService
 	public List<IdNameProjections> getContractorNames()
 	{
 		List<IdNameProjections> contractorNames = new ArrayList<IdNameProjections>();
-		contractorNames = contractorRepo.getContractorNames();
+		contractorNames = contractorRepo.findIdAndNames();
 		return contractorNames;
 	}
 

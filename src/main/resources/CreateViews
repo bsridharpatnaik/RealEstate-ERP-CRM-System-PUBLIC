@@ -5,7 +5,7 @@ c.contact_id,c.name,c.mobile_no,c.email_id,c.address,c.contact_type,ci.contact_p
 ci.contact_person_mobile_no,ci.gst_number,
 a.addr_line1,a.addr_line2,a.city,a.state,a.zip
 FROM contact c
-INNER JOIN  contact_info ci on c.contact_id=ci.contact_id
+LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
 INNER JOIN address a on a.addr_id = c.addr_id
 WHERE 
 c.contact_type='SUPPLIER'
@@ -19,7 +19,7 @@ c.contact_id,c.name,c.mobile_no,c.email_id,c.address,c.contact_type,ci.contact_p
 ci.contact_person_mobile_no,ci.gst_number,
 a.addr_line1,a.addr_line2,a.city,a.state,a.zip
 FROM contact c
-INNER JOIN  contact_info ci on c.contact_id=ci.contact_id
+LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
 INNER JOIN address a on a.addr_id = c.addr_id
 WHERE 
 c.contact_type='CONTRACTOR'
@@ -32,7 +32,7 @@ c.contact_id,c.name,c.mobile_no,c.email_id,c.address,c.contact_type,ci.contact_p
 ci.contact_person_mobile_no,ci.gst_number,
 a.addr_line1,a.addr_line2,a.city,a.state,a.zip
 FROM contact c
-INNER JOIN  contact_info ci on c.contact_id=ci.contact_id
+LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
 INNER JOIN address a on a.addr_id = c.addr_id
 WHERE ci.is_deleted=0 OR ci.is_deleted IS NULL;
 			  

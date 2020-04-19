@@ -1,5 +1,7 @@
 package com.ec.application.controller;
 
+import java.text.ParseException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +23,7 @@ import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.MachineryOnRent;
 import com.ec.application.service.MachineryOnRentService;
+import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/mor")
@@ -30,12 +33,13 @@ public class MachineryOnRentController
 	@Autowired
 	MachineryOnRentService morService;
 	
-	@GetMapping
-	public MachineryOnRentWithDropdownData returnAllMor(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public MachineryOnRentWithDropdownData returnAllMor(@RequestBody FilterDataList filterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) throws ParseException 
 	{
 		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
 		Pageable pageable = PageRequest.of(page, size);
-		return morService.findAll(pageable);
+		return morService.findAllWithDropdown(filterDataList,pageable);
 	}
 	
 	@PostMapping("/create") 

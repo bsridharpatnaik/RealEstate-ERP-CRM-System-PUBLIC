@@ -1,21 +1,27 @@
 package com.ec.application.service;
 
-import java.util.ArrayList;
+import java.text.ParseException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.Machinery;
 import com.ec.application.model.MachineryOnRent;
+import com.ec.application.model.Product;
+import com.ec.application.model.Supplier;
 import com.ec.application.model.UsageLocation;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.MachineryRepo;
+import com.ec.application.repository.SupplierRepo;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.MachineryOnRentSpecifications;
+import com.ec.common.Filters.ProductSpecifications;
 
 @Service
 public class MachineryOnRentService 
@@ -28,6 +34,9 @@ public class MachineryOnRentService
 	
 	@Autowired
 	MachineryRepo machineryRepo;
+	
+	@Autowired
+	SupplierRepo supplierRepo;
 	
 	@Autowired
 	PopulateDropdownService populateDropdownService;
@@ -73,11 +82,11 @@ public class MachineryOnRentService
 	private MachineryOnRent populateData(MachineryOnRent machineryOnRent,CreateMORentData payload) throws Exception 
 	{
 		Optional<UsageLocation> locationOpt = locationRepo.findById(payload.getLocationId());
-		//Optional<Vendor> vendorOpt = vendorRepo.findById(payload.getVendorId());
+		Optional<Supplier> supplierOpt = supplierRepo.findById(payload.getContactId());
 		Optional<Machinery> machineryOpt = machineryRepo.findById(payload.getMachineryId());
 		
-		//if(!locationOpt.isPresent() || !vendorOpt.isPresent() || !machineryOpt.isPresent())
-		//	throw new Exception("Location/Vendor/Machinery not found");
+		if(!locationOpt.isPresent() || !supplierOpt.isPresent() || !machineryOpt.isPresent())
+			throw new Exception("Location/Vendor/Machinery not found");
 		machineryOnRent.setAmountCharged(payload.getAmountCharged());
 		machineryOnRent.setStartDate(payload.getStartDate());
 		machineryOnRent.setEndDate(payload.getEndDate());
@@ -87,15 +96,20 @@ public class MachineryOnRentService
 		machineryOnRent.setMachinery(machineryOpt.get());
 		machineryOnRent.setMode(payload.getMode());
 		machineryOnRent.setNoOfTrips(payload.getNoOfTrips());
-		//machineryOnRent.setVendor(vendorOpt.get());
+		machineryOnRent.setSupplier(supplierOpt.get());
 		machineryOnRent.setDate(payload.getDate());
+		machineryOnRent.setVehicleNo(payload.getVehicleNo());
 		return machineryOnRent;
 	}
 
-	public MachineryOnRentWithDropdownData findAll(Pageable pageable) 
+	public MachineryOnRentWithDropdownData findAllWithDropdown(FilterDataList filterDataList, Pageable pageable) throws ParseException 
 	{
 		MachineryOnRentWithDropdownData morWithDDData = new MachineryOnRentWithDropdownData();
-		morWithDDData.setMachineryOnRent(morRepo.findAll(pageable));
+		Specification<MachineryOnRent> spec = MachineryOnRentSpecifications.getSpecification(filterDataList);
+		
+		if(spec!=null) morWithDDData.setMachineryOnRent(morRepo.findAll(spec,pageable));
+		else morWithDDData.setMachineryOnRent(morRepo.findAll(pageable));
+		
 		morWithDDData.setMorDropdown(populateDropdownService.fetchData("mor"));
 		return morWithDDData;
 	}

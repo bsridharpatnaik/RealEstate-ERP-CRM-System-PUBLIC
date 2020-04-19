@@ -7,9 +7,11 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
+import org.hibernate.envers.Audited;
 
 @Entity
 @Subselect("select * from supplier")
+@Audited
 @Immutable
 public class Supplier extends Contact
 {

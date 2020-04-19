@@ -13,6 +13,6 @@ import com.ec.application.model.Contractor;
 public interface ContractorRepo extends BaseRepository<Contractor, Long>
 {
 	@Query(value="SELECT contactId as id,name as name from Contractor m")
-	List<IdNameProjections> getContractorNames();
+	List<IdNameProjections> findIdAndNames();
 
 }

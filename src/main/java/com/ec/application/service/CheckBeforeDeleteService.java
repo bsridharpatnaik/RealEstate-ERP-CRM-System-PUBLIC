@@ -30,8 +30,8 @@ public class CheckBeforeDeleteService
 	@Autowired
 	StockRepo stockRepo;
 	
-	@Autowired
-	WarehouseRepo warehouseRepo;
+	//@Autowired
+	//WarehouseRepo warehouseRepo;
 	
 	@Autowired
 	LostDamagedInventoryRepo lostDamagedInventoryRepo;

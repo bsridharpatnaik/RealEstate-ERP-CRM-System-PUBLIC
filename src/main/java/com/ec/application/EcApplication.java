@@ -1,6 +1,9 @@
 package com.ec.application;
 
-import org.hibernate.annotations.Loader;
+import java.util.TimeZone;
+
+import javax.annotation.PostConstruct;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
@@ -13,7 +16,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 //@EnableEurekaClient
 //@EnableWebSecurity
 public class EcApplication  extends SpringBootServletInitializer{
-	private static final String ZONE_ID_INDIA = "Asia/Kolkata";
+	
+	@PostConstruct
+	public void started() {
+		 TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
+	}
 	
 	@Bean
 	public WebClient.Builder getWebClientBuilder()

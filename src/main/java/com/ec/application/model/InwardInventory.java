@@ -59,7 +59,7 @@ public class InwardInventory extends ReusableFields
 	String ourSlipNo;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="unloadingAreaId",nullable=false)
+	@JoinColumn(name="warehouse_id",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Warehouse warehouse;
 	Float closingStock;

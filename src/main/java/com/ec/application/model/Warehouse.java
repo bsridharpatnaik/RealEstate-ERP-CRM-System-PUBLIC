@@ -12,6 +12,7 @@ import javax.validation.constraints.Size;
 
 import org.hibernate.envers.Audited;
 
+import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -20,13 +21,27 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Audited
-public class Warehouse 
+public class Warehouse extends ReusableFields
 {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "warehouse_id", updatable = false, nullable = false)
+	Long warehouseId;
+	
 	@NotNull
 	@Size(max = 50)
-	@Id
 	@Column(length = 50,unique=true)
 	String warehouseName;
+
+	
+	public Long getWarehouseId() {
+		return warehouseId;
+	}
+
+	public void setWarehouseId(Long warehouseId) {
+		this.warehouseId = warehouseId;
+	}
 
 	public String getWarehouseName() {
 		return warehouseName;

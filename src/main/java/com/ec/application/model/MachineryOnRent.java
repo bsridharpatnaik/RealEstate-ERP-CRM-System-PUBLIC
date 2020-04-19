@@ -45,14 +45,16 @@ public class MachineryOnRent extends ReusableFields
 	Machinery machinery;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="contactId",nullable=false)
+	@JoinColumn(name="contact_id",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	ContactInfo contactInfo;
+	Supplier supplier;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="locationId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	UsageLocation usageLocation;
+	
+	String vehicleNo;
 	
 	String mode;
 	
@@ -70,21 +72,25 @@ public class MachineryOnRent extends ReusableFields
 	
 	@Column(nullable = false)
 	@NonNull
-	Long initialMeterReading;
+	Double initialMeterReading;
 	@Column(nullable = false)
 	@NonNull
-	Long endMeterReading;
-	@Column(nullable = false)
-	@NonNull
-	Long noOfTrips;
-	Float amountCharged;
+	Double endMeterReading;
+	Double noOfTrips;
+	Double amountCharged;
 	
 	
-	public ContactInfo getContactInfo() {
-		return contactInfo;
+	public String getVehicleNo() {
+		return vehicleNo;
 	}
-	public void setContactInfo(ContactInfo contactInfo) {
-		this.contactInfo = contactInfo;
+	public void setVehicleNo(String vehicleNo) {
+		this.vehicleNo = vehicleNo;
+	}
+	public Supplier getSupplier() {
+		return supplier;
+	}
+	public void setSupplier(Supplier supplier) {
+		this.supplier = supplier;
 	}
 	public Long getId() {
 		return Id;
@@ -131,29 +137,28 @@ public class MachineryOnRent extends ReusableFields
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate;
 	}
-	public Long getInitialMeterReading() {
+	public Double getInitialMeterReading() {
 		return initialMeterReading;
 	}
-	public void setInitialMeterReading(Long initialMeterReading) {
+	public void setInitialMeterReading(Double initialMeterReading) {
 		this.initialMeterReading = initialMeterReading;
 	}
-	public Long getEndMeterReading() {
+	public Double getEndMeterReading() {
 		return endMeterReading;
 	}
-	public void setEndMeterReading(Long endMeterReading) {
+	public void setEndMeterReading(Double endMeterReading) {
 		this.endMeterReading = endMeterReading;
 	}
-	public Long getNoOfTrips() {
+	public Double getNoOfTrips() {
 		return noOfTrips;
 	}
-	public void setNoOfTrips(Long noOfTrips) {
+	public void setNoOfTrips(Double noOfTrips) {
 		this.noOfTrips = noOfTrips;
 	}
-	public Float getAmountCharged() {
+	public Double getAmountCharged() {
 		return amountCharged;
 	}
-	public void setAmountCharged(Float amountCharged) {
+	public void setAmountCharged(Double amountCharged) {
 		this.amountCharged = amountCharged;
 	}
-	
 }

@@ -10,25 +10,30 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class NameAndProjectionDataForDropDown 
 {
 
-	List<IdNameProjections> vendor;
 	List<IdNameProjections> machinery;
-	List<IdNameProjections> location;
-	List<IdNameProjections> unloadingArea;
+	List<IdNameProjections> usagelocation;
+	List<IdNameProjections> warehouse;
 	List<IdNameProjections> category;
 	List<IdNameProjections> product;
 	List<IdNameProjections> contractor;
-	
-	public List<IdNameProjections> getContractor() {
-		return contractor;
+	List<IdNameProjections> supplier;
+	public List<IdNameProjections> getMachinery() {
+		return machinery;
 	}
-	public void setContractor(List<IdNameProjections> contractor) {
-		this.contractor = contractor;
+	public void setMachinery(List<IdNameProjections> machinery) {
+		this.machinery = machinery;
 	}
-	public List<IdNameProjections> getUnloadingArea() {
-		return unloadingArea;
+	public List<IdNameProjections> getUsagelocation() {
+		return usagelocation;
 	}
-	public void setUnloadingArea(List<IdNameProjections> unloadingArea) {
-		this.unloadingArea = unloadingArea;
+	public void setUsagelocation(List<IdNameProjections> usagelocation) {
+		this.usagelocation = usagelocation;
+	}
+	public List<IdNameProjections> getWarehouse() {
+		return warehouse;
+	}
+	public void setWarehouse(List<IdNameProjections> warehouse) {
+		this.warehouse = warehouse;
 	}
 	public List<IdNameProjections> getCategory() {
 		return category;
@@ -42,24 +47,19 @@ public class NameAndProjectionDataForDropDown
 	public void setProduct(List<IdNameProjections> product) {
 		this.product = product;
 	}
-	public List<IdNameProjections> getVendor() {
-		return vendor;
+	public List<IdNameProjections> getContractor() {
+		return contractor;
 	}
-	public void setVendor(List<IdNameProjections> vendor) {
-		this.vendor = vendor;
+	public void setContractor(List<IdNameProjections> contractor) {
+		this.contractor = contractor;
 	}
-	public List<IdNameProjections> getMachinery() {
-		return machinery;
+	public List<IdNameProjections> getSupplier() {
+		return supplier;
 	}
-	public void setMachinery(List<IdNameProjections> machinery) {
-		this.machinery = machinery;
+	public void setSupplier(List<IdNameProjections> supplier) {
+		this.supplier = supplier;
 	}
-	public List<IdNameProjections> getLocation() {
-		return location;
-	}
-	public void setLocation(List<IdNameProjections> location) {
-		this.location = location;
-	}
+	
 	
 }
 

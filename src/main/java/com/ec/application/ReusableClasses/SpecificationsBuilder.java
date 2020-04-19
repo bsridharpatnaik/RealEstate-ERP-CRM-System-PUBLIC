@@ -1,14 +1,17 @@
 package com.ec.application.ReusableClasses;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
 
-import com.ec.application.model.Product;
+import org.springframework.data.jpa.domain.Specification;
+
+import com.ec.application.model.MachineryOnRent;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 
@@ -44,7 +47,25 @@ public class SpecificationsBuilder<T>
         return finalSpec;
     }
     
+    public Specification<T> whereDirectFieldDateGreaterThan(String key, List<String> startDates) throws ParseException 
+    {
+    	Date startDate=new SimpleDateFormat("yyyy/MM/dd").parse(startDates.get(0));
+    	Specification<T> finalSpec = null;
+    	Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+	            -> cb.greaterThanOrEqualTo(root.get(key), startDate);
+	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	return finalSpec; 
+	}
     
+    public Specification<T> whereDirectFieldDateLessThan(String key, List<String> endDates) throws ParseException 
+    {
+    	Date startDate=new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
+    	Specification<T> finalSpec = null;
+    	Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+	            -> cb.lessThanOrEqualTo(root.get(key), startDate);
+	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	return finalSpec; 
+	}
     
 	  //#######################################//
 	 //     			Level 1			 	  //
@@ -108,6 +129,10 @@ public class SpecificationsBuilder<T>
 		}
 		return returnValue;
 	}
+
+	
+
+	
 
     
    
