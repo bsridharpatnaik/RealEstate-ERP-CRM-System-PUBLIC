@@ -62,27 +62,47 @@ public class ContactService {
     @Transactional
     public ContactAllInfo createContact(ContactAllInfo payload) throws Exception 
     {
+    	ContactAllInfo returnContactAllInfo = new ContactAllInfo();
+    	ContactNonBasicData contactNonBasicData = new ContactNonBasicData();
     	Address address = new Address();
     	ContactBasicInfo contact = new ContactBasicInfo();
         formatMobileNo(payload);
         exitIfMobileNoExists(payload);
         PopulateBasicFields(payload, contact, address);
         contactRepo.save(contact);
-        payload.setContactId(contact.getContactId());
+        
         if (!payload.getContactType().equalsIgnoreCase(CustomerTypeEnum.CUSTOMER.toString())) 
-        {
-	        ContactNonBasicData contactNonBasicData = fetchNonBasicData(payload,contact);
-	        PopulateNonBasicFields(payload,contactNonBasicData);
-        }
+        	contactNonBasicData = fetchNonBasicData(payload,contact);
         else
         {
         	
         }
-        return payload;
+        
+        populateContactForReturn(returnContactAllInfo,contact,contactNonBasicData);
+        return returnContactAllInfo;
     }
 
-    public ContactAllInfo updateContact(Long id, ContactAllInfo payload) throws Exception 
+    private void populateContactForReturn(ContactAllInfo returnContactAllInfo, ContactBasicInfo contact, ContactNonBasicData contactNonBasicData) 
     {
+    	returnContactAllInfo.setAddr_line1(contact.getAddress().getAddr_line1());
+    	returnContactAllInfo.setAddr_line2(contact.getAddress().getAddr_line2());
+    	returnContactAllInfo.setCity(contact.getAddress().getCity());
+    	returnContactAllInfo.setContactId(contact.getContactId());
+    	returnContactAllInfo.setContactPerson(contactNonBasicData.getContactPerson());
+    	returnContactAllInfo.setContactPersonMobileNo(contactNonBasicData.getContactPersonMobileNo());
+    	returnContactAllInfo.setContactType(contact.getContactType().toString());
+    	returnContactAllInfo.setEmailId(contact.getEmailId());
+    	returnContactAllInfo.setGstNumber(contactNonBasicData.getGstNumber());
+    	returnContactAllInfo.setMobileNo(contact.getMobileNo());
+    	returnContactAllInfo.setName(contact.getName());
+    	returnContactAllInfo.setState(contact.getAddress().getState());
+    	returnContactAllInfo.setZip(contact.getAddress().getZip());
+	}
+
+    @Transactional
+	public ContactAllInfo updateContact(Long id, ContactAllInfo payload) throws Exception 
+    {
+		ContactAllInfo returnContactAllInfo = new ContactAllInfo();
 		ContactBasicInfo contact = findContactById(id);
 		Address address = contact.getAddress();
 		formatMobileNo(payload);
@@ -91,10 +111,13 @@ public class ContactService {
 		if(payload.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER) && 
 				(!contact.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER)))
 			throw new Exception("Cannot convert contact from non-customer to customer");		
+		
 		PopulateBasicFields(payload, contact, address);
 		contactRepo.save(contact);
-		payload.setContactId(contact.getContactId());
-		return payload;
+		ContactNonBasicData contactNonBasicData  = fetchNonBasicData(payload,contact);
+		
+		populateContactForReturn(returnContactAllInfo,contact,contactNonBasicData);
+		return returnContactAllInfo;
     }
     
     public ContactBasicInfo findContactById(long id) throws Exception 
@@ -113,14 +136,8 @@ public class ContactService {
                 payload.getContactPerson(),
                 payload.getContactPersonMobileNo());
           return passContactToInventory(contactInventoryData);    
-    }
-    private void PopulateNonBasicFields(ContactAllInfo contactAllInfo, ContactNonBasicData contactNonBasicData) 
-    {
-    	contactAllInfo.setGstNumber(contactNonBasicData.getGstNumber());
-    	contactAllInfo.setContactPerson(contactNonBasicData.getContactPerson());
-    	contactAllInfo.setContactPersonMobileNo(contactNonBasicData.getContactPersonMobileNo());
-	}
-
+   }
+ 
 	private void PopulateBasicFields(ContactAllInfo payload, ContactBasicInfo contact,Address address) 
     {
 		contact.setContactType(CustomerTypeEnum.valueOf(payload.getContactType()));
