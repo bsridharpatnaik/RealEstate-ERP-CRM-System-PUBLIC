@@ -99,6 +99,7 @@ public class MachineryOnRentService
 		machineryOnRent.setSupplier(supplierOpt.get());
 		machineryOnRent.setDate(payload.getDate());
 		machineryOnRent.setVehicleNo(payload.getVehicleNo());
+		machineryOnRent.setAdditionalNotes(payload.getAdditionalNotes());
 		return machineryOnRent;
 	}
 

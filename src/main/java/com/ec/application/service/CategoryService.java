@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllCategoriesWithNamesData;
 import com.ec.application.model.Category;
 import com.ec.application.repository.CategoryRepo;
@@ -104,7 +105,7 @@ public class CategoryService
 		if(spec!=null) allCategoriesWithNamesData.setCategories(categoryRepo.findAll(spec, pageable));
 		else allCategoriesWithNamesData.setCategories(categoryRepo.findAll(pageable));
 
-		allCategoriesWithNamesData.setNames(categoryRepo.getNames());
+		allCategoriesWithNamesData.setNames(ReusableMethods.removeNullsFromStringList(categoryRepo.getNames()));
 		return allCategoriesWithNamesData;
 		
 	}

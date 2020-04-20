@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllMachineriesWithNamesData;
 import com.ec.application.model.Machinery;
 import com.ec.application.repository.MachineryRepo;
@@ -92,7 +93,7 @@ public class MachineryService
 		if(spec!=null) allMachineriesWithNamesData.setMachineries(machineryRepo.findAll(spec, pageable));
 			else allMachineriesWithNamesData.setMachineries(machineryRepo.findAll(pageable));
 
-		allMachineriesWithNamesData.setMachineryNames(machineryRepo.getNames());
+		allMachineriesWithNamesData.setMachineryNames(ReusableMethods.removeNullsFromStringList(machineryRepo.getNames()));
 		return allMachineriesWithNamesData;
 	}
 }

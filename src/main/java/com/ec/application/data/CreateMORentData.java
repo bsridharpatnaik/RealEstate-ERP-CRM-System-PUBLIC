@@ -22,11 +22,10 @@ public class CreateMORentData
 	@NonNull
 	private long locationId;
 	
-	@NonNull
+	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	private Date startDate;
 	
-	@NonNull
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	private Date endDate;
 	
@@ -36,9 +35,16 @@ public class CreateMORentData
 	Double amountCharged;
 	String mode;
 	String vehicleNo;
+	String additionalNotes;
 	
 	
 	
+	public String getAdditionalNotes() {
+		return additionalNotes;
+	}
+	public void setAdditionalNotes(String additionalNotes) {
+		this.additionalNotes = additionalNotes;
+	}
 	public String getVehicleNo() {
 		return vehicleNo;
 	}

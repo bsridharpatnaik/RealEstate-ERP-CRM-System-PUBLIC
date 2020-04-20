@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllLocationWithNamesData;
 import com.ec.application.model.Category;
 import com.ec.application.model.UsageLocation;
@@ -55,11 +56,13 @@ public class LocationService
         {		
         	LocationForUpdate.setLocationName(newLocation.getLocationName());
             LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+            LocationForUpdate.setUsageArea(newLocation.getUsageArea());
            
         }
         else if(LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
         {
         	LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+        	LocationForUpdate.setUsageArea(newLocation.getUsageArea());
         }
         else 
         {
@@ -96,8 +99,11 @@ public class LocationService
 		
 		if(spec!=null) allLocationsWithNamesData.setLocations(locationRepo.findAll(spec, pageable));
 		else allLocationsWithNamesData.setLocations(locationRepo.findAll(pageable));
-
-		allLocationsWithNamesData.setNames(locationRepo.getNames());
+		
+		List<String> namesList = locationRepo.getNames();
+		namesList.addAll(locationRepo.getUsageAreas());
+		namesList = ReusableMethods.removeNullsFromStringList(namesList);
+		allLocationsWithNamesData.setNames(namesList);
 		return allLocationsWithNamesData;
 	}
 

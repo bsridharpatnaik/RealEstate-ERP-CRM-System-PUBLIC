@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllProductsWithNamesData;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Category;
@@ -150,8 +151,10 @@ public class ProductService
 		Specification<Product> spec = ProductSpecifications.getSpecification(filterDataList);
 		if(spec!=null) allProductsWithNamesData.setProducts(productRepo.findAll(spec, pageable));
 		else allProductsWithNamesData.setProducts(productRepo.findAll(pageable));
-
-		allProductsWithNamesData.setProductNames(productRepo.getNames());
+		List<String> names = productRepo.getNames();
+		names.addAll(categoryRepo.getNames());
+		allProductsWithNamesData.setCategoryNamesForDropdown(categoryRepo.findIdAndNames());
+		allProductsWithNamesData.setProductAndCategoryNames(ReusableMethods.removeNullsFromStringList(names));
 		return allProductsWithNamesData;
 	}
 }

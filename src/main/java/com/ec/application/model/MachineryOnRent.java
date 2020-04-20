@@ -56,30 +56,30 @@ public class MachineryOnRent extends ReusableFields
 	
 	String vehicleNo;
 	
+	String additionalNotes;
+	
 	String mode;
 	
 	@JsonProperty("StartDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
-	@Column(nullable = false)
-	@NonNull
 	Date startDate;
 	
 	@JsonProperty("EndDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
-	@Column(nullable = false)
-	@NonNull
 	Date endDate;
 	
-	@Column(nullable = false)
-	@NonNull
 	Double initialMeterReading;
-	@Column(nullable = false)
-	@NonNull
 	Double endMeterReading;
 	Double noOfTrips;
 	Double amountCharged;
 	
 	
+	public String getAdditionalNotes() {
+		return additionalNotes;
+	}
+	public void setAdditionalNotes(String additionalNotes) {
+		this.additionalNotes = additionalNotes;
+	}
 	public String getVehicleNo() {
 		return vehicleNo;
 	}
