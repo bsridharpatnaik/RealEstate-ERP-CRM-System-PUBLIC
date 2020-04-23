@@ -87,4 +87,16 @@ public class StockService
 			return stocks.get(0);
 		}
 	}
+
+	public Float getStock(Warehouse warehouse, Product product) 
+	{
+		///
+		///
+		
+		///
+		///
+		///
+		///
+		return Float.valueOf("100.00");
+	}
 }

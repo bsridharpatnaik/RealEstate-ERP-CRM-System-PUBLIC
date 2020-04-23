@@ -38,8 +38,7 @@ public class CheckBeforeDeleteService
 	
 	public boolean isProductUsed(Long productId) throws Exception
 	{
-		if(inwardInventoryRepo.productUsageCount(productId) > 0 
-				|| outwardInventoryRepo.productUsageCount(productId) > 0
+		if(outwardInventoryRepo.productUsageCount(productId) > 0
 				|| stockRepo.productUsageCount(productId) >0
 				|| lostDamagedInventoryRepo.productUsageCount(productId) > 0)
 			return true;

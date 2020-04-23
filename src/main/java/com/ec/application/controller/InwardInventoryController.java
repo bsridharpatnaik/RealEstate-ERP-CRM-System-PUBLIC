@@ -28,39 +28,11 @@ public class InwardInventoryController
 	@Autowired
 	InwardInventoryService iiService;
 	
-	@GetMapping
-	public InwardInventoryWithDropdownValues returnAllInward(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
-	{
-		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
-		Pageable pageable = PageRequest.of(page, size);
-		return iiService.findAll(pageable);
-	}
-	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
 	public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception
 	{
 		
 		return iiService.createInwardnventory(payload);
-	}
-	
-	@GetMapping("/{id}")
-	public InwardInventory getInwardInventory(@PathVariable Long id) throws Exception
-	{
-		
-		return iiService.findInwardnventory(id);
-	}
-	@PutMapping("/{id}")
-	public InwardInventory updateInwardInventory(@RequestBody InwardInventoryData payload,@PathVariable Long id) throws Exception
-	{
-		
-		return iiService.updateInwardnventory(payload, id);
-	}
-	
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteInwardInventory(@PathVariable Long id) throws Exception
-	{
-		iiService.deleteInwardnventory(id);
-		return ResponseEntity.ok("Entity deleted");
 	}
 }

@@ -1,18 +1,23 @@
 package com.ec.application.service;
 
-import java.util.Optional;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.InwardInventoryWithDropdownValues;
+import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.model.InwardInventory;
-import com.ec.application.model.OutwardInventory;
+import com.ec.application.model.InwardOutwardList;
+import com.ec.application.model.Product;
+import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
+import com.ec.application.repository.SupplierRepo;
+import com.ec.application.repository.WarehouseRepo;
 
 @Service
 public class InwardInventoryService 
@@ -28,8 +33,8 @@ public class InwardInventoryService
 	ProductService productService;
 	
 	
-	//@Autowired
-	//UnloadingAreaRepo unloadingAreaRepo;
+	@Autowired
+	SupplierRepo supplierRepo;
 	
 	@Autowired
 	PopulateDropdownService populateDropdownService;
@@ -39,16 +44,66 @@ public class InwardInventoryService
 	
 	@Autowired
 	StockRepo stockRepo;
+	
+	@Autowired
+	WarehouseRepo warehouseRepo;
+	
 	public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception
 	{
 		InwardInventory inwardInventory = new InwardInventory();
 		validateInputs(iiData);
 		setFields(inwardInventory,iiData);
-		Float closingStock = stockService.updateStock(iiData.getProductId(), "Default", iiData.getQuantity(), "inward");
-		inwardInventory.setClosingStock(closingStock);
+		System.out.println("");
+		//Float closingStock = stockService.updateStock(iiData.getProductId(), "Default", iiData.getQuantity(), "inward");
+		//inwardInventory.setClosingStock(closingStock);
 		return inwardInventoryRepo.save(inwardInventory);
-		
 	}
+	
+	private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
+	{
+		inwardInventory.setDate(iiData.getDate());
+		inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
+		inwardInventory.setVehicleNo(iiData.getVehicleNo());
+		inwardInventory.setVendorSlipNo(iiData.getVendorSlipNo());
+		inwardInventory.setAdditionalInfo(iiData.getAdditionalComments());
+		inwardInventory.setSupplier(supplierRepo.findById(iiData.getSupplierId()).get());
+		inwardInventory.setWarehouse(warehouseRepo.findById(iiData.getWarehouseId()).get());
+		inwardInventory.setInwardOutwardList(fetchInwardOutwardList(iiData.getProductWithQuantities(),warehouseRepo.findById(iiData.getWarehouseId()).get()));
+	}
+
+	private Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities, Warehouse warehouse) 
+	{
+		Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
+		for(ProductWithQuantity productWithQuantity : productWithQuantities)
+		{
+			InwardOutwardList inwardOutwardList = new InwardOutwardList();
+			Product product = productRepo.findById(productWithQuantity.getProductId()).get();
+			inwardOutwardList.setProduct(product);
+			inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
+			inwardOutwardListSet.add(inwardOutwardList);
+		}
+		return inwardOutwardListSet;
+	}
+
+	private void validateInputs(InwardInventoryData iiData) throws Exception 
+	{
+		for(ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities())
+		{
+			if(!productRepo.existsById(productWithQuantity.getProductId()))
+				throw new Exception("Product not found with ID "+ productWithQuantity.getProductId());
+			if(productWithQuantity.getQuantity()<=0)
+				throw new Exception("Quantity cannot be less that or equals zero");
+		}
+		if(!supplierRepo.existsById(iiData.getSupplierId()))
+			throw new Exception("Supplier not found with ID");
+		if(!warehouseRepo.existsById(iiData.getWarehouseId()))
+			throw new Exception("Warehouse not found");
+	}
+}
+/*
+	
+
+}
 
 	public InwardInventory findInwardnventory(Long id) throws Exception
 	{
@@ -103,17 +158,7 @@ public class InwardInventoryService
 		
 	}
 
-	private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
-	{
-		inwardInventory.setDate(iiData.getDate());
-		inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
-		inwardInventory.setProduct(productService.findSingleProduct(iiData.getProductId()));
-		inwardInventory.setQuantity(iiData.getQuantity());
-		//inwardInventory.setUnloadingArea(unloadingAreaRepo.findById(iiData.getUnloadingAreaId()).get());
-		inwardInventory.setVehicleNo(iiData.getVehicleNo());
-		//inwardInventory.setVendor(vendorRepo.findById(iiData.getVendorId()).get());
-		inwardInventory.setVendorSlipNo(iiData.getVendorSlipNo());
-	}
+	
 
 	private void validateInputs(InwardInventoryData iiData) throws Exception 
 	{
@@ -155,4 +200,4 @@ public class InwardInventoryService
 			throw new Exception("Cannot Delete. Stock will go negative if deleted");
 		stockService.updateStock(inwardInventory.getProduct().getProductId(), "Default", stock, "outward");
 	}
-}
+} */

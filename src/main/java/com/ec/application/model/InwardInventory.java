@@ -1,6 +1,8 @@
 package com.ec.application.model;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -10,6 +12,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -30,52 +34,70 @@ public class InwardInventory extends ReusableFields
 
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-	Long Id;
+	Long in_inventoryId;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
 	Date Date;
 	
-	/*
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="contactId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Contact contact;
-	*/
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="productId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Product product;
-	
-	@NonNull
-	Float quantity;
-	
 	@NonNull
 	String vehicleNo;
 	
-	String vendorSlipNo;
+	String supplierSlipNo;
 	
 	String ourSlipNo;
+	
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
+	@JoinTable(name = "inventory_entry", joinColumns = {
+			@JoinColumn(name = "in_inventoryId", referencedColumnName = "in_inventoryId") }, inverseJoinColumns = {
+					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
+	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="warehouse_id",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Warehouse warehouse;
-	Float closingStock;
 	
-	public Float getClosingStock() {
-		return closingStock;
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="contactId",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	Supplier supplier;
+	
+	String additionalInfo;
+	
+	public Long getIn_inventoryId() {
+		return in_inventoryId;
 	}
-	public void setClosingStock(Float closingStock) {
-		this.closingStock = closingStock;
+	public void setIn_inventoryId(Long in_inventoryId) {
+		this.in_inventoryId = in_inventoryId;
 	}
-	public Long getId() {
-		return Id;
+	public String getSupplierSlipNo() {
+		return supplierSlipNo;
 	}
-	public void setId(Long id) {
-		Id = id;
+	public void setSupplierSlipNo(String supplierSlipNo) {
+		this.supplierSlipNo = supplierSlipNo;
 	}
+	public Set<InwardOutwardList> getInwardOutwardList() {
+		return inwardOutwardList;
+	}
+	public void setInwardOutwardList(Set<InwardOutwardList> inwardOutwardList) {
+		this.inwardOutwardList = inwardOutwardList;
+	}
+	public Supplier getSupplier() {
+		return supplier;
+	}
+	public void setSupplier(Supplier supplier) {
+		this.supplier = supplier;
+	}
+	public String getAdditionalInfo() {
+		return additionalInfo;
+	}
+	public void setAdditionalInfo(String additionalInfo) {
+		this.additionalInfo = additionalInfo;
+	}
+	
+	
 	public Date getDate() {
 		return Date;
 	}
@@ -83,18 +105,6 @@ public class InwardInventory extends ReusableFields
 		Date = date;
 	}
 	
-	public Product getProduct() {
-		return product;
-	}
-	public void setProduct(Product product) {
-		this.product = product;
-	}
-	public Float getQuantity() {
-		return quantity;
-	}
-	public void setQuantity(Float quantity) {
-		this.quantity = quantity;
-	}
 	public String getVehicleNo() {
 		return vehicleNo;
 	}
@@ -102,10 +112,10 @@ public class InwardInventory extends ReusableFields
 		this.vehicleNo = vehicleNo;
 	}
 	public String getVendorSlipNo() {
-		return vendorSlipNo;
+		return supplierSlipNo;
 	}
 	public void setVendorSlipNo(String vendorSlipNo) {
-		this.vendorSlipNo = vendorSlipNo;
+		this.supplierSlipNo = vendorSlipNo;
 	}
 	public String getOurSlipNo() {
 		return ourSlipNo;

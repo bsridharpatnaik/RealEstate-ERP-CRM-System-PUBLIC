@@ -1,18 +1,11 @@
 package com.ec.application.data;
 
 import java.util.Date;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import java.util.List;
 
 import org.springframework.lang.NonNull;
 
-import com.ec.application.model.Product;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 public class InwardInventoryData 
 {
@@ -21,39 +14,38 @@ public class InwardInventoryData
 	@NonNull
 	Date Date;
 	@NonNull
-	Long vendorId;
+	Long supplierId;
 	@NonNull
-	Long productId;
+	Long warehouseId;
 	@NonNull
-	Float quantity;
+	List<ProductWithQuantity> productWithQuantities;
 	String vehicleNo;
 	String vendorSlipNo;
 	String ourSlipNo;
-	@NonNull
-	Long unloadingAreaId;
+	String additionalComments;
 	public Date getDate() {
 		return Date;
 	}
 	public void setDate(Date date) {
 		Date = date;
 	}
-	public Long getVendorId() {
-		return vendorId;
+	public Long getSupplierId() {
+		return supplierId;
 	}
-	public void setVendorId(Long vendorId) {
-		this.vendorId = vendorId;
+	public void setSupplierId(Long supplierId) {
+		this.supplierId = supplierId;
 	}
-	public Long getProductId() {
-		return productId;
+	public Long getWarehouseId() {
+		return warehouseId;
 	}
-	public void setProductId(Long productId) {
-		this.productId = productId;
+	public void setWarehouseId(Long warehouseId) {
+		this.warehouseId = warehouseId;
 	}
-	public Float getQuantity() {
-		return quantity;
+	public List<ProductWithQuantity> getProductWithQuantities() {
+		return productWithQuantities;
 	}
-	public void setQuantity(Float quantity) {
-		this.quantity = quantity;
+	public void setProductWithQuantities(List<ProductWithQuantity> productWithQuantities) {
+		this.productWithQuantities = productWithQuantities;
 	}
 	public String getVehicleNo() {
 		return vehicleNo;
@@ -73,12 +65,10 @@ public class InwardInventoryData
 	public void setOurSlipNo(String ourSlipNo) {
 		this.ourSlipNo = ourSlipNo;
 	}
-	public Long getUnloadingAreaId() {
-		return unloadingAreaId;
+	public String getAdditionalComments() {
+		return additionalComments;
 	}
-	public void setUnloadingAreaId(Long unloadingAreaId) {
-		this.unloadingAreaId = unloadingAreaId;
+	public void setAdditionalComments(String additionalComments) {
+		this.additionalComments = additionalComments;
 	}
-	
-	
 }
