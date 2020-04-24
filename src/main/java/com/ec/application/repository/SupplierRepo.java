@@ -13,6 +13,6 @@ import com.ec.application.model.Supplier;
 public interface SupplierRepo extends BaseRepository<Supplier, Long>
 {
 	@Query(value="SELECT contactId as id,name as name from Supplier m")
-	List<IdNameProjections> getSupplierNames();
+	List<IdNameProjections> findIdAndNames();
 
 }

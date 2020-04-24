@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.model.Product;
@@ -14,6 +15,8 @@ import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.StockSpecification;
 
 @Service
 public class StockService 
@@ -27,19 +30,12 @@ public class StockService
 	@Autowired
 	WarehouseRepo warehouseRepo;
 
-	public Page<Stock> findStockForAll(Pageable pageable)
+	public Page<Stock> findStockForAll(FilterDataList filterDataList,Pageable pageable)
 	{
-		return stockRepo.findAll(pageable);
-	}
-	
-	public Page<Stock> findStockForCategory(Pageable pageable,Long categoryID)
-	{
-		return stockRepo.findStockForCategory(pageable,categoryID);
-	}
-	
-	public Page<Stock> findStockForProduct(Pageable pageable,Long productId)
-	{
-		return stockRepo.findStockForProduct(pageable,productId);
+		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
+		
+		if(spec!=null) return stockRepo.findAll(spec,pageable);
+		else return stockRepo.findAll(pageable);
 	}
 	
 	public Float updateStock(Long productId,String warehousename, Float quantity, String operation) throws Exception
@@ -86,17 +82,5 @@ public class StockService
 		{
 			return stocks.get(0);
 		}
-	}
-
-	public Float getStock(Warehouse warehouse, Product product) 
-	{
-		///
-		///
-		
-		///
-		///
-		///
-		///
-		return Float.valueOf("100.00");
 	}
 }

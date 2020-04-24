@@ -99,6 +99,23 @@ public class SpecificationsBuilder<T>
 	
 	
 	  //#######################################//
+	 //     			Level 2		 	  //
+	//#######################################//
+  
+	public Specification<T> whereGrandChildFieldContains(String childTable, String grandChildTable,String grandChildFiledName,
+			List<String> names) 
+	{
+		Specification<T> finalSpec = null;
+  	for(String name:names)
+  	{
+  		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+  	            -> cb.like(root.get(childTable).get(grandChildTable).get(grandChildFiledName), "%"+ name  +"%");
+  	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+  	}
+      return finalSpec;
+	}
+	
+	  //#######################################//
 	 //     Reusable Spec Setter for NULLs    //
 	//#######################################//
 	

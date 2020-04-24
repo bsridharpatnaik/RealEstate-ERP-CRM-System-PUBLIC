@@ -48,13 +48,14 @@ public class PopulateDropdownService
 		case "mor":
 			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
 			morDropdownDataList.setMachinery(machineryRepo.findIdAndNames());
-			morDropdownDataList.setSupplier(supplierRepo.getSupplierNames());
+			morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
 			break;
 		//case inward inventory
 		case "inward":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());
 			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
 			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+			morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
 			break;
 		case "outward":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());

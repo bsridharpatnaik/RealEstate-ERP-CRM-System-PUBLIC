@@ -22,7 +22,7 @@ public class SupplierService
 	public List<IdNameProjections> getSupplierNames()
 	{
 		List<IdNameProjections> supplierNames = new ArrayList<IdNameProjections>();
-		supplierNames = supplierRepo.getSupplierNames();
+		supplierNames = supplierRepo.findIdAndNames();
 		return supplierNames;
 	}
 
