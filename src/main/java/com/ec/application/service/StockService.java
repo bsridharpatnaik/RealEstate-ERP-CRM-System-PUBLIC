@@ -1,14 +1,16 @@
 package com.ec.application.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.data.SingleStockInfo;
+import com.ec.application.data.StockInformation;
 import com.ec.application.model.Product;
 import com.ec.application.model.Stock;
 import com.ec.application.model.Warehouse;
@@ -30,12 +32,14 @@ public class StockService
 	@Autowired
 	WarehouseRepo warehouseRepo;
 
-	public Page<Stock> findStockForAll(FilterDataList filterDataList,Pageable pageable)
+	public StockInformation findStockForAll(FilterDataList filterDataList)
 	{
 		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
+		List<Stock> allStocks = new ArrayList<Stock>();
+		if(spec!=null) allStocks = stockRepo.findAll(spec);
+		else allStocks = stockRepo.findAll();
 		
-		if(spec!=null) return stockRepo.findAll(spec,pageable);
-		else return stockRepo.findAll(pageable);
+		return fetchStockInformation(allStocks);
 	}
 	
 	public Float updateStock(Long productId,String warehousename, Float quantity, String operation) throws Exception
@@ -82,5 +86,34 @@ public class StockService
 		{
 			return stocks.get(0);
 		}
+	}
+	
+	public StockInformation fetchStockInformation(List<Stock> allStocks)
+	{
+		StockInformation stockInformation = new StockInformation();
+		List<SingleStockInfo> stockInformationsList = new ArrayList<SingleStockInfo>();
+		List<Long> uniqueProductIds = fetchUniqueProductIds(allStocks);
+		for(Long productId : uniqueProductIds)
+		{
+			SingleStockInfo singleStockInfo = new SingleStockInfo();
+			singleStockInfo.setProductId(productId);
+			singleStockInfo.setTotalQuantityInHand(stockRepo.getTotalStockForProduct(productId));
+			singleStockInfo.setDetailedStock(findStockForProductAsList(productId,allStocks));
+			stockInformationsList.add(singleStockInfo);
+		}
+		stockInformation.setStockInformation(stockInformationsList);
+		return stockInformation;
+	}
+
+	private List<Stock> findStockForProductAsList(Long productId, List<Stock> allStocks) 
+	{
+		List<Stock> stocks = allStocks.stream().filter(p -> p.getProduct().getProductId()==productId).collect(Collectors.toList());
+		return stocks;
+	}
+
+	private List<Long> fetchUniqueProductIds(List<Stock> allStocks) 
+	{
+		return allStocks.stream()
+                .map(p -> p.getProduct().getProductId()).distinct().collect(Collectors.toList());
 	}
 }

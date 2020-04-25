@@ -32,4 +32,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value="SELECT productName from Product m")
 	List<String> getNames();
+
+	@Query(value="SELECT distinct productId from Product m")
+	List<Long> fetchUniqueProductIds();
 }

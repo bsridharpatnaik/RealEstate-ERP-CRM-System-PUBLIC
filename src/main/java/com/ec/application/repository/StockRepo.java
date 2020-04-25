@@ -34,4 +34,7 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 	
 	@Query(value="SELECT m from Stock m where m.warehouse.warehouseId=:warehouseId")
 	Page<Stock> findStockForWarehouse(Pageable pageable, @Param("warehouseId") Long warehouseId);
+
+	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId")
+	Float getTotalStockForProduct(@Param("productId")Long productId);
 }

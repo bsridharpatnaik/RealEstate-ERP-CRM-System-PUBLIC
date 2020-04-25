@@ -23,6 +23,14 @@
          <groupId>org.springframework.boot</groupId>
          <artifactId>spring-boot-starter-webflux</artifactId>
       </dependency>
+      <!-- https://mvnrepository.com/artifact/com.github.bohnman/squiggly-filter-jackson -->
+<dependency>
+    <groupId>com.github.bohnman</groupId>
+    <artifactId>squiggly-filter-jackson</artifactId>
+    <version>1.2.0</version>
+</dependency>
+
+      
       <dependency>
          <groupId>org.projectreactor</groupId>
          <artifactId>reactor-spring</artifactId>
