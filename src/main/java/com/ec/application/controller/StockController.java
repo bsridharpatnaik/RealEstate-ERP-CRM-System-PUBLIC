@@ -22,7 +22,8 @@ public class StockController
 	
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public StockInformation returnAllStock(@RequestBody FilterDataList filterDataList,@RequestParam(name = "fields", required = false) String fields) 
+	public StockInformation returnAllStock(@RequestBody FilterDataList filterDataList,
+			@RequestParam(name = "fields", required = false,defaultValue="stockInformation{productId}") String fields) 
 	{
 		return stockService.findStockForAll(filterDataList);
 	}
