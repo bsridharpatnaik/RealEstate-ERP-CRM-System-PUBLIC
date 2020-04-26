@@ -53,7 +53,7 @@ public class OutwardInventoryService
 			throw new Exception("Inventory Entry with ID not found");
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		Long oldProductId = outwardInventory.getProduct().getProductId();
-		Float oldQuantity = stockRepo.findStockForProductAsList(outwardInventory.getProduct().getProductId()).get(0).getQuantityInHand();
+		Float oldQuantity = stockRepo.findStockForProductAndWarehouse(outwardInventory.getProduct().getProductId(),outwardInventory.getWarehouse().getWarehouseName()).get(0).getQuantityInHand();
 		validateInputs(iiData);
 		setFields(outwardInventory,iiData);
 		updateStock(oldProductId,iiData.getProductId(),outwardInventory,iiData.getQuantity(),oldQuantity);
@@ -71,7 +71,7 @@ public class OutwardInventoryService
 		else if(oldProductId.equals(newProductId) && quantity>oldQuantity)
 		{
 			Float diffInStock =  quantity - oldQuantity;
-			Float currentStock = stockRepo.findStockForProductAsList(newProductId).get(0).getQuantityInHand();
+			Float currentStock = stockRepo.findStockForProductAndWarehouse(newProductId,outwardInventory.getWarehouse().getWarehouseName()).get(0).getQuantityInHand();
 			
 			if(diffInStock>currentStock)
 				throw new Exception("Stock cannot be updated as available stock is less than difference requested in stock");
@@ -119,8 +119,8 @@ public class OutwardInventoryService
 			throw new Exception("Quantity have to be greater the zero");
 		
 		//Modify this for multiple warehouses
-		if(stockRepo.findStockForProductAsList(oiData.getProductId()).get(0).getQuantityInHand() < oiData.getQuantity())
-			throw new Exception("Requested Quantity should not be greater than available quantity");
+		//if(stockRepo.findStockForProductAndWarehouse(oiData.getProductId(),warehouseName).get(0).getQuantityInHand() < oiData.getQuantity())
+			//throw new Exception("Requested Quantity should not be greater than available quantity");
 	}
 	public OutwardInventoryWithDropdownValues findAll(Pageable pageable) 
 	{

@@ -8,9 +8,12 @@ import java.util.List;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.SetAttribute;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import com.ec.application.model.InwardInventory;
+import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.MachineryOnRent;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
@@ -96,7 +99,7 @@ public class SpecificationsBuilder<T>
     	}
         return finalSpec;
 	}
-	
+
 	
 	  //#######################################//
 	 //     			Level 2		 	  //
@@ -146,6 +149,8 @@ public class SpecificationsBuilder<T>
 		}
 		return returnValue;
 	}
+
+	
 
 	
 

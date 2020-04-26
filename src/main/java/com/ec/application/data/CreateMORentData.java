@@ -33,6 +33,7 @@ public class CreateMORentData
 	Double endMeterReading;
 	Double noOfTrips;
 	Double amountCharged;
+	@NonNull
 	String mode;
 	String vehicleNo;
 	String additionalNotes;

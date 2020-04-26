@@ -70,6 +70,7 @@ public class LostDamagedInventoryService
 	private void UpdateStockBeforeUpdate(Long oldProductId, Float oldQuantity, LostDamagedInventory lostDamagedInventory) throws Exception 
 	{
 		Long newProductId = lostDamagedInventory.getProduct().getProductId();
+		String warehouseName = lostDamagedInventory.getWarehouse().getWarehouseName();
 		Float quantity = lostDamagedInventory.getQuantity();
 		if(oldProductId.equals(newProductId)==false)
 		{
@@ -88,7 +89,7 @@ public class LostDamagedInventoryService
 			Float diffInStock =  oldQuantity - quantity ;
 			
 			//update this in case of multi warehouse
-			Float currentStock = stockRepo.findStockForProductAsList(newProductId).get(0).getQuantityInHand();
+			Float currentStock = stockRepo.findStockForProductAndWarehouse(newProductId,warehouseName).get(0).getQuantityInHand();
 			
 			if(diffInStock>currentStock)
 				throw new Exception("Stock cannot be updated as available stock is less than difference requested in stock");

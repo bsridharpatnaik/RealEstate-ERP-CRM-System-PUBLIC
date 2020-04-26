@@ -56,6 +56,7 @@ public class ProductService
 				product.setMeasurementUnit(payload.getMeasurementUnit());
 				product.setProductDescription(payload.getProductDescription());
 				product.setProductName(payload.getProductName());
+				product.setReorderQuantity(payload.getReorderQuantity());
 				productRepo.save(product);
 				return product;
 			}
@@ -88,12 +89,14 @@ public class ProductService
             ProductForUpdate.setProductDescription(payload.getProductDescription());
             ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
             ProductForUpdate.setCategory(categoryOpt.get());
+            ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
         }
         else if(payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
         {
         		ProductForUpdate.setProductDescription(payload.getProductDescription());
         		ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
         		ProductForUpdate.setCategory(categoryOpt.get());
+        		ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
         }
         else 
         {

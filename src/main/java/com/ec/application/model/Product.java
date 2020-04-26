@@ -42,6 +42,8 @@ private static final long serialVersionUID = 1L;
 	
 	String measurementUnit;
 	
+	Float reorderQuantity;
+	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="categoryId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
@@ -55,8 +57,12 @@ private static final long serialVersionUID = 1L;
 		this.productId = productId;
 	}
 	
-	
-	
+	public Float getReorderQuantity() {
+		return reorderQuantity;
+	}
+	public void setReorderQuantity(Float reorderQuantity) {
+		this.reorderQuantity = reorderQuantity;
+	}
 	public Category getCategory() {
 		return category;
 	}

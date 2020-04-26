@@ -13,6 +13,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
@@ -49,7 +51,22 @@ public class LostDamagedInventory extends ReusableFields
 	@NonNull
 	String locationOfTheft;
 
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="warehouseName",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@NotFound(action=NotFoundAction.IGNORE)
+	@NonNull
+	Warehouse warehouse;
 	
+	
+	public Warehouse getWarehouse() {
+		return warehouse;
+	}
+
+	public void setWarehouse(Warehouse warehouse) {
+		this.warehouse = warehouse;
+	}
+
 	public Date getDate() {
 		return Date;
 	}

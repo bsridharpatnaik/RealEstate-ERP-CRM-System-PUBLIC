@@ -17,6 +17,7 @@ public class NameAndProjectionDataForDropDown
 	List<IdNameProjections> product;
 	List<IdNameProjections> contractor;
 	List<IdNameProjections> supplier;
+	
 	public List<IdNameProjections> getMachinery() {
 		return machinery;
 	}

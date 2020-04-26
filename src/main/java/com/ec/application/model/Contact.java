@@ -15,7 +15,7 @@ public class Contact
 	@Column(name="mobile_no")
 	String mobileNo;
 	
-	@Column(name="address")
+	@Column(name="email_id")
 	String emailId;
 	
 	@Column(name="contact_type")

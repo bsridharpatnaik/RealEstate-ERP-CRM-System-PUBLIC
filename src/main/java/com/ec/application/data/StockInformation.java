@@ -2,17 +2,19 @@ package com.ec.application.data;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 public class StockInformation 
 {
-	List<SingleStockInfo> stockInformation;
+	Page<SingleStockInfo> stockInformation;
 
-	public List<SingleStockInfo> getStockInformation() {
+	public Page<SingleStockInfo> getStockInformation() {
 		return stockInformation;
 	}
 
-	public void setStockInformation(List<SingleStockInfo> stockInformation) {
+	public void setStockInformation(Page<SingleStockInfo> stockInformation) {
 		this.stockInformation = stockInformation;
 	}
-	
+
 	
 }
