@@ -51,6 +51,6 @@ public final class ContactSpecifications
     
     public static Specification<ContactAllInfo> whereContactTypeEquals(@NonNull String contactType) {
         return (Root<ContactAllInfo> root, CriteriaQuery<?> query, CriteriaBuilder cb)
-                -> cb.equal(root.get(ContactAllInfo_.contactType), "%"+contactType+"%");
+                -> cb.equal(root.get(ContactAllInfo_.contactType), contactType);
     }
 }
