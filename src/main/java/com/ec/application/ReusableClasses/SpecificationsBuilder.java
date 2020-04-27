@@ -101,6 +101,7 @@ public class SpecificationsBuilder<T>
 	}
 
 	
+
 	  //#######################################//
 	 //     			Level 2		 	  //
 	//#######################################//
@@ -116,6 +117,18 @@ public class SpecificationsBuilder<T>
   	    finalSpec  = specOrCondition(finalSpec,internalSpec);
   	}
       return finalSpec;
+	}
+	
+	public Specification<T> whereChildFieldListContains(String childTableName, String gcTable,String fieldName, List<String> names) 
+	{
+		Specification<T> finalSpec = null;
+    	for(String name:names)
+    	{
+    		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+	            -> cb.like(root.join(childTableName).join(gcTable).get(fieldName), "%"+name+"%" );
+	            finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	}
+		return finalSpec;
 	}
 	
 	  //#######################################//
@@ -150,6 +163,7 @@ public class SpecificationsBuilder<T>
 		return returnValue;
 	}
 
+	
 	
 
 	

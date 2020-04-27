@@ -3,6 +3,8 @@ package com.ec.common.Filters;
 import java.text.ParseException;
 import java.util.List;
 
+import javax.persistence.criteria.SetJoin;
+
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
@@ -12,6 +14,7 @@ import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardInventory_;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.InwardOutwardList_;
+import com.ec.application.model.Product_;
 import com.ec.application.model.Supplier_;
 import com.ec.application.model.Warehouse_;
 
@@ -35,9 +38,9 @@ static SpecificationsBuilder<InwardInventory> specbldr = new SpecificationsBuild
 		if(endDates != null && endDates.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldDateLessThan(InwardInventory_.DATE, endDates));
 		
-		//if(productNames != null && productNames.size()>0)
-			//finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldListContains(
-					//InwardInventory_.inwardOutwardList,InwardOutwardList_.PRODUCT,productNames));
+		if(productNames != null && productNames.size()>0)
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldListContains(
+					InwardInventory_.INWARD_OUTWARD_LIST,InwardOutwardList_.PRODUCT,Product_.PRODUCT_NAME,productNames));
 		
 		if(supplierNames != null && supplierNames.size()>0)
 				finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(InwardInventory_.SUPPLIER, Supplier_.NAME, supplierNames));	
