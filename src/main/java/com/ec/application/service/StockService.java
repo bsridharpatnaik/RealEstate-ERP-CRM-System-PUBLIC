@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.data.SingleStockInfo;
 import com.ec.application.data.StockInformation;
+import com.ec.application.model.InwardInventory;
+import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.Product;
 import com.ec.application.model.Stock;
 import com.ec.application.model.Warehouse;
@@ -205,5 +207,24 @@ public class StockService
     		}
         }
 		return differenceInStock;
+	}
+
+	public void updateClosingStockFromMap(InwardInventory inwardInventory, HashMap<Long, Float> closingStocks) 
+	{
+		Iterator closingStockIterator = closingStocks.entrySet().iterator();
+		while (closingStockIterator.hasNext()) 
+		{ 
+            Map.Entry mapElementOld = (Map.Entry)closingStockIterator.next();
+            Long productId = (Long) mapElementOld.getKey();
+            Float closingStock = (Float) mapElementOld.getValue();
+            Set<InwardOutwardList> inwardOutwardListSet = inwardInventory.getInwardOutwardList();
+            for(InwardOutwardList inwardOutwardList:inwardOutwardListSet)
+            {
+            	if(inwardOutwardList.getProduct().getProductId()==productId)
+            		inwardOutwardList.setClosingStock(closingStock);
+            }
+            inwardInventory.setInwardOutwardList(inwardOutwardListSet);
+		}
+		
 	}
 }

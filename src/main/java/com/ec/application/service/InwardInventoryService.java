@@ -192,6 +192,7 @@ public class InwardInventoryService
 		String oldWarehouseName  = inwardInventory.getWarehouse().getWarehouseName();
 		String newWarehousename = warehouseRepo.findById(iiData.getWarehouseId()).get().getWarehouseName();
 		HashMap<Long, Float> closingStocks = stockService.modifyStockBeforeUpdate(oldWarehouseName,newWarehousename,oldStock,newStock,"inward");
+		stockService.updateClosingStockFromMap(inwardInventory, closingStocks);
 	}
 
 	private HashMap<Long, Float> fetchMapFromList(List<ProductWithQuantity> newProductQuantityList) 
