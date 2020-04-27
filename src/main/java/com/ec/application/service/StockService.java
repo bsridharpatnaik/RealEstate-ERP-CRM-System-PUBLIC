@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.SingleStockInfo;
 import com.ec.application.data.StockInformation;
 import com.ec.application.model.InwardInventory;
@@ -226,5 +227,13 @@ public class StockService
             inwardInventory.setInwardOutwardList(inwardOutwardListSet);
 		}
 		
+	}
+
+	public Float findStockForProductWarehouse(CurrentStockRequest currentStockRequest) 
+	{
+		Long productId = currentStockRequest.getProductId();
+		Long warehouseId = currentStockRequest.getWarehouseId();
+		Float currentStock = stockRepo.getCurrentStockForProductWarehouse(productId,warehouseId);
+		return currentStock;
 	}
 }

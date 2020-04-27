@@ -37,4 +37,7 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 
 	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId")
 	Float getTotalStockForProduct(@Param("productId")Long productId);
+
+	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId and m.warehouse.warehouseId=:warehouseId")
+	Float getCurrentStockForProductWarehouse(@Param("productId")Long productId, @Param("warehouseId")Long warehouseId);
 }
