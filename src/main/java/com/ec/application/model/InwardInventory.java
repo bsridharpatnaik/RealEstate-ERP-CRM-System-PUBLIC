@@ -49,7 +49,7 @@ public class InwardInventory extends ReusableFields
 	String ourSlipNo;
 	
 	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "inventory_entry", joinColumns = {
+	@JoinTable(name = "inwardinventory_entry", joinColumns = {
 			@JoinColumn(name = "in_inventoryId", referencedColumnName = "in_inventoryId") }, inverseJoinColumns = {
 					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
 	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;

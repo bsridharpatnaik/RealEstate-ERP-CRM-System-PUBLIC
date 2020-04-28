@@ -19,9 +19,6 @@ public class CheckBeforeDeleteService
 	InwardInventoryRepo inwardInventoryRepo;
 	
 	@Autowired
-	OutwardInventoryRepo outwardInventoryRepo;
-	
-	@Autowired
 	MachineryOnRentRepo machineryOnRentRepo;
 	
 	@Autowired
@@ -38,8 +35,7 @@ public class CheckBeforeDeleteService
 	
 	public boolean isProductUsed(Long productId) throws Exception
 	{
-		if(outwardInventoryRepo.productUsageCount(productId) > 0
-				|| stockRepo.productUsageCount(productId) >0
+		if(stockRepo.productUsageCount(productId) >0
 				|| lostDamagedInventoryRepo.productUsageCount(productId) > 0)
 			return true;
 		else
@@ -68,7 +64,8 @@ public class CheckBeforeDeleteService
 	public boolean isLocationUsed(Long locationId) throws Exception
 	{
 		if(machineryOnRentRepo.locationUsageCount(locationId) > 0 
-				|| outwardInventoryRepo.locationUsageCount(locationId) > 0) 
+				//|| outwardInventoryRepo.locationUsageCount(locationId) > 0
+				) 
 			return true;
 		else
 			return false;

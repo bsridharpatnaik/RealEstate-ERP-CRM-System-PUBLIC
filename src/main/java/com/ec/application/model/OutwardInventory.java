@@ -1,6 +1,8 @@
 package com.ec.application.model;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -10,6 +12,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -30,22 +34,21 @@ public class OutwardInventory extends ReusableFields
 
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-	Long Id;
+	Long ou_inventoryId;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
 	Date Date;
 	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="productId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Product product;
+	String purpose;
+	String slipNo;
 	
-	@NonNull
-	Float quantity;
-	
-	String SlipNo;
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
+	@JoinTable(name = "outwardinventory_entry", joinColumns = {
+			@JoinColumn(name = "ou_inventoryId", referencedColumnName = "ou_inventoryId") }, inverseJoinColumns = {
+					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
+	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="warehouse_id",nullable=false)
@@ -53,69 +56,86 @@ public class OutwardInventory extends ReusableFields
 	Warehouse warehouse;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="contactId",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	Contractor contractor;
+	
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="locationId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	UsageLocation usageLocation;
-	String purpose;
-	Float closingStock;
 	
-	
-	public Warehouse getWarehouse() {
-		return warehouse;
+	String additionalInfo;
+
+	public Long getOu_inventoryId() {
+		return ou_inventoryId;
 	}
-	public void setWarehouse(Warehouse warehouse) {
-		this.warehouse = warehouse;
+
+	public void setOu_inventoryId(Long ou_inventoryId) {
+		this.ou_inventoryId = ou_inventoryId;
 	}
-	public Long getId() {
-		return Id;
-	}
-	public void setId(Long id) {
-		Id = id;
-	}
+
 	public Date getDate() {
 		return Date;
 	}
+
 	public void setDate(Date date) {
 		Date = date;
 	}
-	
-	public Product getProduct() {
-		return product;
-	}
-	public void setProduct(Product product) {
-		this.product = product;
-	}
-	public Float getQuantity() {
-		return quantity;
-	}
-	public void setQuantity(Float quantity) {
-		this.quantity = quantity;
-	}
-	public String getSlipNo() {
-		return SlipNo;
-	}
-	public void setSlipNo(String slipNo) {
-		SlipNo = slipNo;
-	}
-	
-	public UsageLocation getUsageLocation() {
-		return usageLocation;
-	}
-	public void setUsageLocation(UsageLocation usageLocation) {
-		this.usageLocation = usageLocation;
-	}
+
 	public String getPurpose() {
 		return purpose;
 	}
+
 	public void setPurpose(String purpose) {
 		this.purpose = purpose;
 	}
-	public Float getClosingStock() {
-		return closingStock;
+
+	public String getSlipNo() {
+		return slipNo;
 	}
-	public void setClosingStock(Float closingStock) {
-		this.closingStock = closingStock;
+
+	public void setSlipNo(String slipNo) {
+		this.slipNo = slipNo;
 	}
-	
-	
+
+	public Set<InwardOutwardList> getInwardOutwardList() {
+		return inwardOutwardList;
+	}
+
+	public void setInwardOutwardList(Set<InwardOutwardList> inwardOutwardList) {
+		this.inwardOutwardList = inwardOutwardList;
+	}
+
+	public Warehouse getWarehouse() {
+		return warehouse;
+	}
+
+	public void setWarehouse(Warehouse warehouse) {
+		this.warehouse = warehouse;
+	}
+
+	public Contractor getContractor() {
+		return contractor;
+	}
+
+	public void setContractor(Contractor contractor) {
+		this.contractor = contractor;
+	}
+
+	public UsageLocation getUsageLocation() {
+		return usageLocation;
+	}
+
+	public void setUsageLocation(UsageLocation usageLocation) {
+		this.usageLocation = usageLocation;
+	}
+
+	public String getAdditionalInfo() {
+		return additionalInfo;
+	}
+
+	public void setAdditionalInfo(String additionalInfo) {
+		this.additionalInfo = additionalInfo;
+	}
 }

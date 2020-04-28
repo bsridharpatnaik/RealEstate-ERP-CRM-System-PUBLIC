@@ -1,18 +1,30 @@
 package com.ec.application.service;
 
+import java.text.ParseException;
 import java.util.Optional;
+
+import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.data.OutwardInventoryData;
-import com.ec.application.data.OutwardInventoryWithDropdownValues;
+import com.ec.application.data.OutwardInventoryCreateData;
+import com.ec.application.data.ProductWithQuantity;
+import com.ec.application.data.ReturnInwardInventoryData;
+import com.ec.application.data.ReturnOutwardInventoryData;
+import com.ec.application.model.InwardInventory;
 import com.ec.application.model.OutwardInventory;
+import com.ec.application.model.Warehouse;
+import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
+import com.ec.application.repository.WarehouseRepo;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.OutwardInventorySpecification;
 @Service
 public class OutwardInventoryService 
 {
@@ -37,15 +49,89 @@ public class OutwardInventoryService
 	@Autowired
 	StockRepo stockRepo;
 	
-	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
+	@Autowired
+	ContractorRepo contractorRepo;
+	
+	@Autowired
+	WarehouseRepo warehouseRepo;
+	
+	@Autowired
+	InwardInventoryService iiService;
+	
+	@Transactional
+	public OutwardInventory createOutwardnventory(OutwardInventoryCreateData oiData) throws Exception
 	{
-		OutwardInventory outwardnventory = new OutwardInventory();
+		OutwardInventory outwardInventory = new OutwardInventory();
 		validateInputs(oiData);
-		setFields(outwardnventory,oiData);
-		Float closingStock = stockService.updateStock(oiData.getProductId(), "Default", oiData.getQuantity(), "outward");
-		outwardnventory.setClosingStock(closingStock);
-		return outwardInventoryRepo.save(outwardnventory);
+		setFields(outwardInventory,oiData);
+		//updateStockForCreateInwardInventory(inwardInventory);
+		return outwardInventoryRepo.save(outwardInventory);
 	}
+
+	private void setFields(OutwardInventory outwardInventory, OutwardInventoryCreateData oiData) 
+	{
+		Warehouse warehouse = warehouseRepo.findById(oiData.getWarehouseId()).get();
+		outwardInventory.setAdditionalInfo(oiData.getAdditionalInfo());
+		outwardInventory.setContractor(contractorRepo.findById(oiData.getContractorId()).get());
+		outwardInventory.setUsageLocation(locationRepo.findById(oiData.getUsageLocationId()).get());
+		outwardInventory.setWarehouse(warehouse);;
+		outwardInventory.setDate(oiData.getDate());
+		outwardInventory.setPurpose(oiData.getPurpose());
+		outwardInventory.setSlipNo(oiData.getPurpose());
+		outwardInventory.setInwardOutwardList(iiService.fetchInwardOutwardList(oiData.getProductWithQuantities(),warehouse));	
+	}
+
+	private void validateInputs(OutwardInventoryCreateData oiData) throws Exception 
+	{
+		if(!locationRepo.existsById(oiData.getUsageLocationId()))
+			throw new Exception("Usage Location not found.");
+		if(!contractorRepo.existsById(oiData.getContractorId()))
+			throw new Exception("Contractor not found.");
+		if(!warehouseRepo.existsById(oiData.getWarehouseId()))
+			throw new Exception("Contractor not found.");
+		for(ProductWithQuantity productWithQuantity : oiData.getProductWithQuantities())
+		{
+			if(!productRepo.existsById(productWithQuantity.getProductId()))
+				throw new Exception("Product not found.");
+			if(productWithQuantity.getQuantity()<=0)
+				throw new Exception("Quantity should be greater than zero");
+		}
+	}
+	
+	public OutwardInventory findOutwardnventory(Long id) throws Exception 
+	{
+		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
+		if(outwardInventoryOpt.isPresent()==false)
+			throw new Exception("Outward inventory with ID not found");
+		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		return outwardInventory;
+	}
+
+	public ReturnOutwardInventoryData fetchOutwardnventory(FilterDataList filterDataList, Pageable pageable) throws ParseException 
+	{
+		ReturnOutwardInventoryData returnOutwardInventoryData = new ReturnOutwardInventoryData();
+		
+		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
+		
+		if(spec!=null) returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(spec,pageable));
+		else returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(pageable));
+		returnOutwardInventoryData.setIiDropdown(populateDropdownService.fetchData("outward"));
+		return returnOutwardInventoryData;
+	}
+
+	@Transactional
+	public void deleteOutwardInventoryById(Long id) throws Exception 
+	{
+		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
+		if(!outwardInventoryOpt.isPresent())
+			throw new Exception("Outward Inventory with ID not found");
+		OutwardInventory inwardInventory = outwardInventoryOpt.get();
+		//updateStockBeforeDelete(inwardInventory);
+		outwardInventoryRepo.softDeleteById(id);
+	}
+	
+	
+	/*
 	public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception
 	{
 		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
@@ -90,38 +176,7 @@ public class OutwardInventoryService
 		
 		
 	}
-	private void setFields(OutwardInventory outwardnventory, OutwardInventoryData oiData) throws Exception 
-	{
-		outwardnventory.setDate(oiData.getDate());
-		outwardnventory.setUsageLocation(locationRepo.findById(oiData.getUsageLocation()).get());
-		outwardnventory.setProduct(productService.findSingleProduct(oiData.getProductId()));
-		outwardnventory.setPurpose(oiData.getPurpose());
-		outwardnventory.setQuantity(oiData.getQuantity());
-		outwardnventory.setSlipNo(oiData.getSlipNo());
-		//outwardnventory.setUnloadingArea(unloadingAreaRepo.findById(oiData.getUnloadingAreaId()).get());
-		//outwardnventory.setContractor(contractorRepo.findById(oiData.getContractorId()).get());
-	}
-
-	private void validateInputs(OutwardInventoryData oiData) throws Exception 
-	{
-		if(oiData.getProductId() == null || oiData.getUnloadingAreaId()==null || oiData.getContractorId()==null || oiData.getUsageLocation()==null)
-			throw new Exception("Required field missing");
-		
-		if(!productRepo.existsById(oiData.getProductId()))
-				throw new Exception("Product with ID not found");
-		//if(!contractorRepo.existsById(oiData.getContractorId()))
-		//	throw new Exception("Vendor with ID not found");
-		//if(!unloadingAreaRepo.existsById(oiData.getUnloadingAreaId()))
-		//	throw new Exception("Unloading Area with ID not found");
-		if(!locationRepo.existsById(oiData.getUsageLocation()))
-			throw new Exception("Usage Location Not Found");
-		if(oiData.getQuantity()<=0)
-			throw new Exception("Quantity have to be greater the zero");
-		
-		//Modify this for multiple warehouses
-		//if(stockRepo.findStockForProductAndWarehouse(oiData.getProductId(),warehouseName).get(0).getQuantityInHand() < oiData.getQuantity())
-			//throw new Exception("Requested Quantity should not be greater than available quantity");
-	}
+	
 	public OutwardInventoryWithDropdownValues findAll(Pageable pageable) 
 	{
 		OutwardInventoryWithDropdownValues inwardInventoryWithDropdownValues = new OutwardInventoryWithDropdownValues();
@@ -151,5 +206,5 @@ public class OutwardInventoryService
 		Float stock = outwardInventory.getQuantity();
 		stockService.updateStock(outwardInventory.getProduct().getProductId(), "Default", stock, "inward");
 	}
-
+*/
 }

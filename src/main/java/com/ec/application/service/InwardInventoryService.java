@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
@@ -95,7 +96,7 @@ public class InwardInventoryService
 		inwardInventory.setInwardOutwardList(fetchInwardOutwardList(iiData.getProductWithQuantities(),warehouseRepo.findById(iiData.getWarehouseId()).get()));
 	}
 
-	private Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities, Warehouse warehouse) 
+	public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities, Warehouse warehouse) 
 	{
 		Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
 		for(ProductWithQuantity productWithQuantity : productWithQuantities)

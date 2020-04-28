@@ -20,7 +20,7 @@ import com.ec.application.model.Warehouse_;
 
 public final class InwardInventorySpecification 
 {
-static SpecificationsBuilder<InwardInventory> specbldr = new SpecificationsBuilder<InwardInventory>();
+	static SpecificationsBuilder<InwardInventory> specbldr = new SpecificationsBuilder<InwardInventory>();
 	
 	public static Specification<InwardInventory> getSpecification(FilterDataList filterDataList) throws ParseException
 	{
