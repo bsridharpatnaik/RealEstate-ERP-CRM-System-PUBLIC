@@ -1,11 +1,14 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
+import static java.util.stream.Collectors.counting;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -14,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
@@ -123,6 +125,12 @@ public class InwardInventoryService
 			throw new Exception("Supplier not found with ID");
 		if(!warehouseRepo.existsById(iiData.getWarehouseId()))
 			throw new Exception("Warehouse not found");
+		
+		 Long duplicateProductIdCount = iiData.getProductWithQuantities().stream()
+        	.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream().filter(e -> e.getValue() > 1).count();
+		
+		if(duplicateProductIdCount>0)
+			throw new Exception("Duplicate product IDs found in request");
 	}
 
 	public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList,Pageable pageable) throws ParseException 
@@ -178,13 +186,14 @@ public class InwardInventoryService
 			throw new Exception("Inventory Entry with ID not found");
 		validateInputs(iiData);
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
-		updateStockForBeforeUpdate(inwardInventory,iiData);
+		HashMap<Long, Float> closingStocks = updateStockForBeforeUpdate(inwardInventory,iiData);
 		setFields(inwardInventory,iiData);
+		inwardInventory = stockService.updateClosingStockToSet(inwardInventory,closingStocks);
 		return inwardInventoryRepo.save(inwardInventory);
 		
 	}
 
-	private void updateStockForBeforeUpdate(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
+	private HashMap<Long, Float> updateStockForBeforeUpdate(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
 	{
 		Set<InwardOutwardList> oldProductQuantityList = inwardInventory.getInwardOutwardList();
 		List<ProductWithQuantity> newProductQuantityList = iiData.getProductWithQuantities();
@@ -193,9 +202,8 @@ public class InwardInventoryService
 		String oldWarehouseName  = inwardInventory.getWarehouse().getWarehouseName();
 		String newWarehousename = warehouseRepo.findById(iiData.getWarehouseId()).get().getWarehouseName();
 		HashMap<Long, Float> closingStocks = stockService.modifyStockBeforeUpdate(oldWarehouseName,newWarehousename,oldStock,newStock,"inward");
-		stockService.updateClosingStockFromMap(inwardInventory, closingStocks);
+		return closingStocks;
 	}
-
 	private HashMap<Long, Float> fetchMapFromList(List<ProductWithQuantity> newProductQuantityList) 
 	{
 		HashMap<Long, Float> newStock = new HashMap<Long, Float>();

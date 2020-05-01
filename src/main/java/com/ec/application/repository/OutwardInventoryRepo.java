@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.OutwardInventoryCreateData;
+import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.PopulateDropdownService;
 import com.ec.application.service.StockService;

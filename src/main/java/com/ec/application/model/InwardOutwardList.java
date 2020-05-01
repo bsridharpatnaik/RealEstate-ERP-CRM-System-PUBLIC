@@ -34,7 +34,6 @@ public class InwardOutwardList extends ReusableFields
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Product product;
 	Float quantity;
-	
 	Float closingStock;
 
 	public Long getEntryid() {

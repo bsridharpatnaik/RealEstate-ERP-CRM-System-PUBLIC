@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.data.OutwardInventoryCreateData;
+import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.data.ReturnOutwardInventoryData;
@@ -59,7 +59,7 @@ public class OutwardInventoryService
 	InwardInventoryService iiService;
 	
 	@Transactional
-	public OutwardInventory createOutwardnventory(OutwardInventoryCreateData oiData) throws Exception
+	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
 	{
 		OutwardInventory outwardInventory = new OutwardInventory();
 		validateInputs(oiData);
@@ -68,7 +68,22 @@ public class OutwardInventoryService
 		return outwardInventoryRepo.save(outwardInventory);
 	}
 
-	private void setFields(OutwardInventory outwardInventory, OutwardInventoryCreateData oiData) 
+	public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception
+	{
+		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
+		if(!outwardInventoryOpt.isPresent())
+			throw new Exception("Inventory Entry with ID not found");
+		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		//Long oldProductId = outwardInventory.getProduct().getProductId();
+		//Float oldQuantity = stockRepo.findStockForProductAndWarehouse(outwardInventory.getProduct().getProductId(),outwardInventory.getWarehouse().getWarehouseName()).get(0).getQuantityInHand();
+		validateInputs(iiData);
+		setFields(outwardInventory,iiData);
+		//updateStock(oldProductId,iiData.getProductId(),outwardInventory,iiData.getQuantity(),oldQuantity);
+		return outwardInventoryRepo.save(outwardInventory);
+		
+	}
+	
+	private void setFields(OutwardInventory outwardInventory, OutwardInventoryData oiData) 
 	{
 		Warehouse warehouse = warehouseRepo.findById(oiData.getWarehouseId()).get();
 		outwardInventory.setAdditionalInfo(oiData.getAdditionalInfo());
@@ -81,7 +96,7 @@ public class OutwardInventoryService
 		outwardInventory.setInwardOutwardList(iiService.fetchInwardOutwardList(oiData.getProductWithQuantities(),warehouse));	
 	}
 
-	private void validateInputs(OutwardInventoryCreateData oiData) throws Exception 
+	private void validateInputs(OutwardInventoryData oiData) throws Exception 
 	{
 		if(!locationRepo.existsById(oiData.getUsageLocationId()))
 			throw new Exception("Usage Location not found.");

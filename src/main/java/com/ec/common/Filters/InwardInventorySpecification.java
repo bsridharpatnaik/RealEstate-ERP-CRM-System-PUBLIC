@@ -25,7 +25,7 @@ public final class InwardInventorySpecification
 	public static Specification<InwardInventory> getSpecification(FilterDataList filterDataList) throws ParseException
 	{
 		List<String> startDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"startDate");
-		List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"EndDate");
+		List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"endDate");
 		List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"productNames");
 		List<String> supplierNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"supplierNames");
 		List<String> warehouseNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"warehouseNames");

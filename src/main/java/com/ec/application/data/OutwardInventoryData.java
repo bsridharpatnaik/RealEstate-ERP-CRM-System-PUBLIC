@@ -7,7 +7,7 @@ import org.springframework.lang.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-public class OutwardInventoryCreateData 
+public class OutwardInventoryData 
 {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@NonNull

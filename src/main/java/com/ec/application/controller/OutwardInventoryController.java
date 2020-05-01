@@ -9,13 +9,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.application.data.OutwardInventoryCreateData;
+import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
@@ -32,7 +33,7 @@ public class OutwardInventoryController
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public OutwardInventory createOutwardInventory(@RequestBody OutwardInventoryCreateData payload) throws Exception
+	public OutwardInventory createOutwardInventory(@RequestBody OutwardInventoryData payload) throws Exception
 	{
 		return oiService.createOutwardnventory(payload);
 	}
@@ -60,14 +61,16 @@ public class OutwardInventoryController
 		oiService.deleteOutwardInventoryById(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	/*
 	
 	@PutMapping("/{id}")
-	public OutwardInventory updateOutwardInventory(@RequestBody OutwardInventoryCreateData payload,@PathVariable Long id) throws Exception
+	public OutwardInventory updateOutwardInventory(@RequestBody OutwardInventoryData payload,@PathVariable Long id) throws Exception
 	{
 		
-		return outwardInventoryService.updateOutwardnventory(payload, id);
+		return oiService.updateOutwardnventory(payload, id);
 	}
+	/*
+	
+	
 	
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteOutwardInventory(@PathVariable Long id) throws Exception

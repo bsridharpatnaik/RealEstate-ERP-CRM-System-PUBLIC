@@ -19,5 +19,5 @@ public final class ReusableMethods
 	{
 		while(itemList.remove(null)) {}
 		return itemList;
-	}
+	}	
 }
