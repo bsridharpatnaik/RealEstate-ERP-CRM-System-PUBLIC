@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.SingleStockInfo;
 import com.ec.application.data.StockInformation;
@@ -205,10 +206,8 @@ public class StockService
 		return differenceInStock;
 	}
 
-	public Float findStockForProductWarehouse(CurrentStockRequest currentStockRequest) 
+	public Float findStockForProductWarehouse(Long productId,Long warehouseId) 
 	{
-		Long productId = currentStockRequest.getProductId();
-		Long warehouseId = currentStockRequest.getWarehouseId();
 		Float currentStock = stockRepo.getCurrentStockForProductWarehouse(productId,warehouseId);
 		return currentStock;
 	}
@@ -244,5 +243,20 @@ public class StockService
 		inwardOutwardSet.clear();
         inwardOutwardSet.addAll(inwardOutwardList);
 		return inwardOutwardSet;
+	}
+
+	public List<ProductIdAndStockProjection> findStockForProductListWarehouse(CurrentStockRequest currentStockRequest) 
+	{
+		List<Long> productIds = currentStockRequest.getProductIds();
+		Long warehouseId = currentStockRequest.getWarehouseId();
+		List<ProductIdAndStockProjection> stockInfo = stockRepo.getCurrentStockForProductListWarehouse(productIds,warehouseId);
+		List<Long> returnedProductIds = stockInfo.stream().map(ProductIdAndStockProjection::getProductId).collect(Collectors.toList());
+		productIds.removeAll(returnedProductIds);
+		for(Long productId:productIds)
+		{
+			ProductIdAndStockProjection productsWarehouseStockProjection = new ProductIdAndStockProjection(productId,(float)0);
+			stockInfo.add(productsWarehouseStockProjection);
+		}
+		return stockInfo;
 	}
 }
