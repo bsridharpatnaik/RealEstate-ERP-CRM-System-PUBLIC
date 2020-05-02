@@ -74,8 +74,6 @@ public class OutwardInventoryService
 		if(!outwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
-		//Long oldProductId = outwardInventory.getProduct().getProductId();
-		//Float oldQuantity = stockRepo.findStockForProductAndWarehouse(outwardInventory.getProduct().getProductId(),outwardInventory.getWarehouse().getWarehouseName()).get(0).getQuantityInHand();
 		validateInputs(iiData);
 		setFields(outwardInventory,iiData);
 		//updateStock(oldProductId,iiData.getProductId(),outwardInventory,iiData.getQuantity(),oldQuantity);
