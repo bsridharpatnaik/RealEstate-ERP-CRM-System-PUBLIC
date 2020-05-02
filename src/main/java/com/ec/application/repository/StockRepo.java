@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
+import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.model.Stock;
 
 @Repository
@@ -40,4 +41,8 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 
 	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId and m.warehouse.warehouseId=:warehouseId")
 	Float getCurrentStockForProductWarehouse(@Param("productId")Long productId, @Param("warehouseId")Long warehouseId);
+
+	@Query(value="SELECT new com.ec.application.ReusableClasses.ProductIdAndStockProjection(m.product.productId, SUM(quantityInHand)) from Stock m "
+			+ "where m.product.productId IN :productIds and m.warehouse.warehouseId=:warehouseId group by m.product.productId")
+	List<ProductIdAndStockProjection> getCurrentStockForProductListWarehouse(@Param("productIds")List<Long> productIds,@Param("warehouseId") Long warehouseId);
 }

@@ -1,5 +1,7 @@
 package com.ec.application.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.StockInformation;
 import com.ec.application.service.StockService;
@@ -36,19 +39,16 @@ public class StockController
 	}
 	
 	@PostMapping("/current")
-	public Float returnStockForProductWarehouse(@RequestBody CurrentStockRequest currentStockRequest) 
+	public List<ProductIdAndStockProjection> returnStockForProductWarehouse(@RequestBody CurrentStockRequest currentStockRequest) 
 	{
-		return stockService.findStockForProductWarehouse(currentStockRequest);
+		return stockService.findStockForProductListWarehouse(currentStockRequest);
 	}
 	
 	@GetMapping("/current")
 	public Float getStockForProductWarehouse(@RequestParam Long productId, @RequestParam Long warehouseId) 
 	{
-		Float currentStock = (float) 0;
-		CurrentStockRequest currentStockRequest = new CurrentStockRequest();
-		currentStockRequest.setProductId(productId);
-		currentStockRequest.setWarehouseId(warehouseId);
-		currentStock = stockService.findStockForProductWarehouse(currentStockRequest);
+		Float currentStock;
+		currentStock = stockService.findStockForProductWarehouse(productId,warehouseId);
 		return currentStock==null?0:currentStock;
 	}
 }

@@ -254,7 +254,7 @@ public class StockService
 		productIds.removeAll(returnedProductIds);
 		for(Long productId:productIds)
 		{
-			ProductIdAndStockProjection productsWarehouseStockProjection = new ProductIdAndStockProjection(productId,(float)0);
+			ProductIdAndStockProjection productsWarehouseStockProjection = new ProductIdAndStockProjection(productId,(double)0);
 			stockInfo.add(productsWarehouseStockProjection);
 		}
 		return stockInfo;

@@ -1,19 +1,20 @@
 package com.ec.application.data;
 
+import java.util.List;
+
 import org.springframework.lang.NonNull;
 
 public class CurrentStockRequest 
 {
 	@NonNull
-	Long productId;
+	List<Long> productIds;
 	@NonNull
 	Long warehouseId;
-	
-	public Long getProductId() {
-		return productId;
+	public List<Long> getProductIds() {
+		return productIds;
 	}
-	public void setProductId(Long productId) {
-		this.productId = productId;
+	public void setProductIds(List<Long> productIds) {
+		this.productIds = productIds;
 	}
 	public Long getWarehouseId() {
 		return warehouseId;
