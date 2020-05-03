@@ -5,6 +5,7 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Table(name = "contact_info")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@NamedQuery(name = "ContactInfo.findAll", query="select u from ContactInfo u order by u.created_at desc")
 public class ContactInfo extends ReusableFields
 {
 	@Id
@@ -30,6 +32,7 @@ public class ContactInfo extends ReusableFields
 	String contactPerson;
 	String contactPersonMobileNo;
 	
+	/*
 	@CreationTimestamp
 	@Column(name = "created_at")
 	@JsonProperty("created_at")
@@ -42,6 +45,8 @@ public class ContactInfo extends ReusableFields
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
 	@UpdateTimestamp
 	private Date modified;
+	
+	*/
 	public ContactInfo()
 	{}
 	
@@ -66,14 +71,6 @@ public class ContactInfo extends ReusableFields
 
 	public void setGstNumber(String gstNumber) {
 		this.gstNumber = gstNumber;
-	}
-
-	public Date getCreated() {
-		return created;
-	}
-
-	public void setCreated(Date created) {
-		this.created = created;
 	}
 
 	public Date getModified() {

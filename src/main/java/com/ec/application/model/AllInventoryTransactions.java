@@ -5,6 +5,7 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQuery;
 
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
@@ -14,6 +15,7 @@ import org.hibernate.envers.Audited;
 @Subselect("select * from all_inventory")
 @Immutable
 @Audited
+@NamedQuery(name = "AllInventoryTransactions.findAll", query="select u from AllInventoryTransactions u order by u.created_at desc")
 public class AllInventoryTransactions 
 {
 	
@@ -56,6 +58,30 @@ public class AllInventoryTransactions
 	
 	@Column(name="warehouse_name")
 	String warehouseName;
+	
+	@Column(name="created_at")
+	String created_at;
+	
+	@Column(name="updated_at")
+	String updated_at;
+
+	
+
+	public String getCreated_at() {
+		return created_at;
+	}
+
+	public void setCreated_at(String created_at) {
+		this.created_at = created_at;
+	}
+
+	public String getUpdated_at() {
+		return updated_at;
+	}
+
+	public void setUpdated_at(String updated_at) {
+		this.updated_at = updated_at;
+	}
 
 	public String getType() {
 		return type;
