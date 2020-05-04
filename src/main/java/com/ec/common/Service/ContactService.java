@@ -279,6 +279,8 @@ public class ContactService {
 			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.CONTACTTYPE.toString()))
 			{
 				Specification<ContactAllInfo> internalSpecification = null;
+				attrValues = checkIfContainsAll(attrValues);
+	
 				for(String attrValue : attrValues)
 				{
 					internalSpecification= internalSpecification==null?
@@ -294,5 +296,17 @@ public class ContactService {
 				
 			}
 		return specification;
+	}
+
+	private List<String> checkIfContainsAll(List<String> attrValues) 
+	{
+		if(attrValues.contains("All"))
+		{
+			attrValues.clear();
+			attrValues.add("CUSTOMER");
+			attrValues.add("SUPPLIER");
+			attrValues.add("CONTRACTOR");
+		}
+		return attrValues;
 	}
 }
