@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.model.AllInventoryTransactions;
 import com.ec.application.repository.AllInventoryRepo;
 import com.ec.common.Filters.FilterDataList;
@@ -15,13 +16,15 @@ public class AllInventoryService
 	@Autowired
 	AllInventoryRepo allInventoryRepo;
 	
-	public Page<AllInventoryTransactions> findAll(Pageable pageable) 
+	@Autowired
+	PopulateDropdownService populateDropdownService;
+	
+	
+	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable) 
 	{
-		return allInventoryRepo.findAll(pageable);
-	}
-
-	public Page<AllInventoryTransactions> fetchAllInventory(FilterDataList filterDataList, Pageable pageable) 
-	{
-		return allInventoryRepo.findAll(pageable);
+		AllInventoryReturnData allInventoryReturnData = new AllInventoryReturnData();
+		allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
+		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
+		return allInventoryReturnData;
 	}
 }
