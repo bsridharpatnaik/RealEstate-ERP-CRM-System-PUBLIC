@@ -34,7 +34,8 @@ public class OutwardInventory extends ReusableFields
 
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-	Long ou_inventoryId;
+	@Column(name="outwardid")
+	Long outwardid;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
@@ -46,7 +47,7 @@ public class OutwardInventory extends ReusableFields
 	
 	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
 	@JoinTable(name = "outwardinventory_entry", joinColumns = {
-			@JoinColumn(name = "ou_inventoryId", referencedColumnName = "ou_inventoryId") }, inverseJoinColumns = {
+			@JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns = {
 					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
 	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;
 	
@@ -66,13 +67,14 @@ public class OutwardInventory extends ReusableFields
 	UsageLocation usageLocation;
 	
 	String additionalInfo;
+	
 
-	public Long getOu_inventoryId() {
-		return ou_inventoryId;
+	public Long getOutwardid() {
+		return outwardid;
 	}
 
-	public void setOu_inventoryId(Long ou_inventoryId) {
-		this.ou_inventoryId = ou_inventoryId;
+	public void setOutwardid(Long outwardid) {
+		this.outwardid = outwardid;
 	}
 
 	public Date getDate() {

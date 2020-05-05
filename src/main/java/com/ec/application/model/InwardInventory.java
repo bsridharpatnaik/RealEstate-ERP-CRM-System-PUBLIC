@@ -34,7 +34,8 @@ public class InwardInventory extends ReusableFields
 
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-	Long in_inventoryId;
+	@Column(name="inwardid")
+	Long inwardid;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
@@ -50,7 +51,7 @@ public class InwardInventory extends ReusableFields
 	
 	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
 	@JoinTable(name = "inwardinventory_entry", joinColumns = {
-			@JoinColumn(name = "in_inventoryId", referencedColumnName = "in_inventoryId") }, inverseJoinColumns = {
+			@JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns = {
 					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
 	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;
 	
@@ -66,11 +67,11 @@ public class InwardInventory extends ReusableFields
 	
 	String additionalInfo;
 	
-	public Long getIn_inventoryId() {
-		return in_inventoryId;
+	public Long getInwardid() {
+		return inwardid;
 	}
-	public void setIn_inventoryId(Long in_inventoryId) {
-		this.in_inventoryId = in_inventoryId;
+	public void setInwardid(Long inwardid) {
+		this.inwardid = inwardid;
 	}
 	public String getSupplierSlipNo() {
 		return supplierSlipNo;

@@ -1,10 +1,13 @@
 package com.ec.application.controller;
 
+import java.text.ParseException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +30,7 @@ public class WarehouseController
 	WarehouseService warehouseService;
 	
 	@GetMapping
-	public Page<Warehouse> returnAllWarehouses(Pageable pageable) 
+	public Page<Warehouse> returnAllWarehouses(@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws ParseException
 	{
 		
 		return warehouseService.findAll(pageable);

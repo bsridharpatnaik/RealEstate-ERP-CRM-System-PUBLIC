@@ -29,6 +29,28 @@ public class Contact
 	
 	@Column(name="gst_number")
 	String GSTNumber;
+	
+	@Column(name="created_at")
+	String created;
+
+	@Column(name="updated_at")
+	String updated;
+	
+	public String getCreated() {
+		return created;
+	}
+
+	public void setCreated(String created) {
+		this.created = created;
+	}
+
+	public String getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(String updated) {
+		this.updated = updated;
+	}
 
 	public String getName() {
 		return name;

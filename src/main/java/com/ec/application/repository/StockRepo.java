@@ -37,10 +37,10 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 	Page<Stock> findStockForWarehouse(Pageable pageable, @Param("warehouseId") Long warehouseId);
 
 	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId")
-	Float getTotalStockForProduct(@Param("productId")Long productId);
+	Double getTotalStockForProduct(@Param("productId")Long productId);
 
 	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId and m.warehouse.warehouseId=:warehouseId")
-	Float getCurrentStockForProductWarehouse(@Param("productId")Long productId, @Param("warehouseId")Long warehouseId);
+	Double getCurrentStockForProductWarehouse(@Param("productId")Long productId, @Param("warehouseId")Long warehouseId);
 
 	@Query(value="SELECT new com.ec.application.ReusableClasses.ProductIdAndStockProjection(m.product.productId, SUM(quantityInHand)) from Stock m "
 			+ "where m.product.productId IN :productIds and m.warehouse.warehouseId=:warehouseId group by m.product.productId")

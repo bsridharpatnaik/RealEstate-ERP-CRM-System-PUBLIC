@@ -38,7 +38,7 @@ WHERE ci.is_deleted=0 OR ci.is_deleted IS NULL;
 
 -- All Inventory
 
-
+-- select * from all_inventory;
 CREATE OR replace VIEW all_inventory 
 AS 
   SELECT tx.*, 
@@ -48,9 +48,9 @@ AS
          c.contact_type, 
          w.warehouse_id, 
          w.warehouse_name 
-  FROM   (SELECT 'inward'                         AS TYPE, 
-                 ii.in_inventory_id               AS id, 
-                 Date_format(ii.DATE, "%y-%m-%d") AS date, 
+  FROM   (SELECT 'inward'                         AS type, 
+                 ii.inwardid               AS id, 
+                 Date_format(ii.DATE, "%Y-%m-%d") AS date, 
                  ii.contact_id                    AS contactid, 
                  ii.warehouse_id                  AS warehouseid, 
                  ioe.product_id                   AS productid, 
@@ -60,14 +60,14 @@ AS
                  ioe.updated_at 
           FROM   inward_inventory ii 
                  inner join inwardinventory_entry iie 
-                         ON ii.in_inventory_id = iie.in_inventory_id 
+                         ON ii.inwardid = iie.inwardid 
                  inner join inward_outward_entries ioe 
                          ON iie.entry_id = ioe.entryid 
           WHERE  ii.is_deleted = 0 
           UNION ALL 
-          SELECT 'outward'                        AS TYPE, 
-                 oi.ou_inventory_id, 
-                 Date_format(oi.DATE, "%y-%m-%d") AS date, 
+          SELECT 'outward'                        AS type, 
+                 oi.outwardid, 
+                 Date_format(oi.DATE, "%Y-%m-%d") AS date, 
                  oi.contact_id                    AS contactid, 
                  oi.warehouse_id                  AS warehouseid, 
                  ioe.product_id                   AS productid, 
@@ -77,14 +77,14 @@ AS
                  ioe.updated_at 
           FROM   outward_inventory oi 
                  inner join outwardinventory_entry oie 
-                         ON oi.ou_inventory_id = oie.ou_inventory_id 
+                         ON oi.outwardid = oie.outwardid 
                  inner join inward_outward_entries ioe 
                          ON oie.entry_id = ioe.entryid 
           WHERE  oi.is_deleted = 0 
           UNION ALL 
-          SELECT 'lost/damaged'                    AS TYPE, 
+          SELECT 'lost/damaged'                    AS type, 
                  id, 
-                 Date_format(ldi.DATE, "%y-%m-%d") AS date, 
+                 Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
                  ''                                AS contactid, 
                  ldi.warehouse_name                AS warehouseid, 
                  ldi.product_id                    AS productid, 
@@ -93,8 +93,9 @@ AS
                  ldi.created_at, 
                  ldi.updated_at 
           FROM   lost_damaged_inventory ldi) AS tx 
-         left join allcontacts c 
+         left join AllContacts c 
                 ON c.contact_id = tx.contactid 
          inner join warehouse w 
                  ON w.warehouse_id = tx.warehouseid 
   ORDER  BY id DESC; 
+

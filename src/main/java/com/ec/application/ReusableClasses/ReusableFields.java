@@ -26,13 +26,13 @@ public class ReusableFields implements Serializable
 
     @CreationTimestamp
 	@Column(name = "created_at")
-	@JsonProperty("created_at")
+	@JsonProperty("created")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss ")
 	private Date created;
 	
 	
 	@Column(name = "updated_at")
-	@JsonProperty("updated_at")
+	@JsonProperty("updated")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
 	@UpdateTimestamp
 	private Date modified;

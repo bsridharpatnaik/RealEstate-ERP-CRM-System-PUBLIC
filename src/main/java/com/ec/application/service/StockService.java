@@ -45,9 +45,18 @@ public class StockService
 	ProductRepo productRepo;
 	
 	@Autowired
+	ProductService productService;
+	
+	@Autowired
 	WarehouseRepo warehouseRepo;
+	
+	@Autowired
+	PopulateDropdownService populateDropdownService;
+	
+	@Autowired
+	WarehouseService warehouseService;
 
-	public StockInformation findStockForAll(FilterDataList filterDataList,Pageable pageable)
+	public StockInformation findStockForAll(FilterDataList filterDataList,Pageable pageable) throws Exception
 	{
 		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
 		List<Stock> allStocks = new ArrayList<Stock>();
@@ -103,20 +112,24 @@ public class StockService
 		}
 	}
 	
-	public StockInformation fetchStockInformation(List<Stock> allStocks,Pageable pageable)
+	public StockInformation fetchStockInformation(List<Stock> allStocks,Pageable pageable) throws Exception
 	{
 		StockInformation stockInformation = new StockInformation();
 		List<SingleStockInfo> stockInformationsList = new ArrayList<SingleStockInfo>();
 		List<Long> uniqueProductIds = fetchUniqueProductIds(allStocks);
 		for(Long productId : uniqueProductIds)
 		{
+			Product product = productService.findSingleProduct(productId);
 			SingleStockInfo singleStockInfo = new SingleStockInfo();
 			singleStockInfo.setProductId(productId);
+			singleStockInfo.setProductName(product.getProductName());
+			singleStockInfo.setCategoryName(product.getCategory().getCategoryName());
 			singleStockInfo.setTotalQuantityInHand(stockRepo.getTotalStockForProduct(productId));
 			singleStockInfo.setDetailedStock(findStockForProductAsList(productId,allStocks));
 			stockInformationsList.add(singleStockInfo);
 		}
 		stockInformation.setStockInformation(convertListStockToPages(stockInformationsList,pageable));
+		stockInformation.setStockDropdownValues(populateDropdownService.fetchData("stock"));
 		return stockInformation;
 	}
 
@@ -206,9 +219,9 @@ public class StockService
 		return differenceInStock;
 	}
 
-	public Float findStockForProductWarehouse(Long productId,Long warehouseId) 
+	public Double findStockForProductWarehouse(Long productId,Long warehouseId) 
 	{
-		Float currentStock = stockRepo.getCurrentStockForProductWarehouse(productId,warehouseId);
+		Double currentStock = stockRepo.getCurrentStockForProductWarehouse(productId,warehouseId);
 		return currentStock;
 	}
 

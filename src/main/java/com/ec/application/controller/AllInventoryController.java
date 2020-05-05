@@ -4,6 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,10 +28,8 @@ public class AllInventoryController
 
 	@PostMapping 
 	@ResponseStatus(HttpStatus.OK)
-	public Page<AllInventoryTransactions> fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) throws Exception
+	public Page<AllInventoryTransactions> fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws Exception
 	{
-		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
-		Pageable pageable = PageRequest.of(page, size);
 		return allInventoryService.fetchAllInventory(filterDataList,pageable);
 	}
 }

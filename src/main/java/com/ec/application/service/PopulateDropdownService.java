@@ -62,10 +62,19 @@ public class PopulateDropdownService
 			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
 			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
 			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
+			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+			break;
+		case "stock":
+			morDropdownDataList.setProduct(productRepo.findIdAndNames());
+			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+			break;
+		case "lostdamaged":
+			morDropdownDataList.setProduct(productRepo.findIdAndNames());
+			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
 			break;
 		}
 		return morDropdownDataList;
-		
 	}
 
 }

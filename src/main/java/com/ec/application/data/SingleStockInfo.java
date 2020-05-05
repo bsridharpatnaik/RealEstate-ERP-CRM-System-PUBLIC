@@ -8,7 +8,9 @@ public class SingleStockInfo
 {
 
 	Long productId;
-	Float totalQuantityInHand;
+	String productName;
+	String categoryName;
+	Double totalQuantityInHand;
 	List<Stock> detailedStock;
 	public Long getProductId() {
 		return productId;
@@ -16,10 +18,23 @@ public class SingleStockInfo
 	public void setProductId(Long productId) {
 		this.productId = productId;
 	}
-	public Float getTotalQuantityInHand() {
+	public String getProductName() {
+		return productName;
+	}
+	public void setProductName(String productName) {
+		this.productName = productName;
+	}
+	
+	public String getCategoryName() {
+		return categoryName;
+	}
+	public void setCategoryName(String categoryName) {
+		this.categoryName = categoryName;
+	}
+	public Double getTotalQuantityInHand() {
 		return totalQuantityInHand;
 	}
-	public void setTotalQuantityInHand(Float totalQuantityInHand) {
+	public void setTotalQuantityInHand(Double totalQuantityInHand) {
 		this.totalQuantityInHand = totalQuantityInHand;
 	}
 	public List<Stock> getDetailedStock() {

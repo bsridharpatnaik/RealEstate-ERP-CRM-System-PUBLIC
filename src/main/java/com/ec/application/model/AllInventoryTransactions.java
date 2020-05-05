@@ -11,11 +11,12 @@ import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.envers.Audited;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 @Entity
 @Subselect("select * from all_inventory")
 @Immutable
 @Audited
-@NamedQuery(name = "AllInventoryTransactions.findAll", query="select u from AllInventoryTransactions u order by u.created_at desc")
 public class AllInventoryTransactions 
 {
 	
@@ -26,6 +27,7 @@ public class AllInventoryTransactions
 	@Column(name="type")
 	String type;
 	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(name="date")
 	Date date;
 	
@@ -51,36 +53,53 @@ public class AllInventoryTransactions
 	Long mobileNo;
 	
 	@Column(name="email_id")
-	String email_id;
+	String emailId;
 	
 	@Column(name="contact_type")
-	String contact_type;
+	String contactType;
 	
 	@Column(name="warehouse_name")
 	String warehouseName;
 	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(name="created_at")
-	String created_at;
+	String created;
 	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(name="updated_at")
-	String updated_at;
+	String updated;
 
 	
-
-	public String getCreated_at() {
-		return created_at;
+	public String getEmailId() {
+		return emailId;
 	}
 
-	public void setCreated_at(String created_at) {
-		this.created_at = created_at;
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
 	}
 
-	public String getUpdated_at() {
-		return updated_at;
+	public String getContactType() {
+		return contactType;
 	}
 
-	public void setUpdated_at(String updated_at) {
-		this.updated_at = updated_at;
+	public void setContactType(String contactType) {
+		this.contactType = contactType;
+	}
+
+	public String getCreated() {
+		return created;
+	}
+
+	public void setCreated(String created) {
+		this.created = created;
+	}
+
+	public String getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(String updated) {
+		this.updated = updated;
 	}
 
 	public String getType() {
@@ -164,19 +183,19 @@ public class AllInventoryTransactions
 	}
 
 	public String getEmail_id() {
-		return email_id;
+		return emailId;
 	}
 
 	public void setEmail_id(String email_id) {
-		this.email_id = email_id;
+		this.emailId = email_id;
 	}
 
 	public String getContact_type() {
-		return contact_type;
+		return contactType;
 	}
 
 	public void setContact_type(String contact_type) {
-		this.contact_type = contact_type;
+		this.contactType = contact_type;
 	}
 
 	public String getWarehouseName() {

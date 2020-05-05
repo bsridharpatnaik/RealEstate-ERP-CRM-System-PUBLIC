@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Table(name = "contact_info")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-@NamedQuery(name = "ContactInfo.findAll", query="select u from ContactInfo u order by u.created_at desc")
+//@NamedQuery(name = "ContactInfo.findAll", query="select u from ContactInfo u order by u.created_at desc")
 public class ContactInfo extends ReusableFields
 {
 	@Id
@@ -72,15 +72,7 @@ public class ContactInfo extends ReusableFields
 	public void setGstNumber(String gstNumber) {
 		this.gstNumber = gstNumber;
 	}
-
-	public Date getModified() {
-		return modified;
-	}
-
-	public void setModified(Date modified) {
-		this.modified = modified;
-	}
-
+	
 	public String getContactPerson() {
 		return contactPerson;
 	}

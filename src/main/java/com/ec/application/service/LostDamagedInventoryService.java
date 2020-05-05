@@ -8,17 +8,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
+import com.ec.application.data.LostDamagedReturnData;
 import com.ec.application.model.LostDamagedInventory;
-import com.ec.application.model.Product;
 import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
+import com.ec.application.repository.WarehouseRepo;
+import com.ec.common.Filters.FilterDataList;
 
 @Service
 public class LostDamagedInventoryService 
 {
 	@Autowired
-	LostDamagedInventoryRepo LostDamagedInventoryRepo;
+	LostDamagedInventoryRepo lostDamagedInventoryRepo;
 	
 	@Autowired
 	ProductRepo productRepo;
@@ -32,18 +34,34 @@ public class LostDamagedInventoryService
 	@Autowired
 	StockRepo stockRepo;
 	
+	@Autowired
+	WarehouseRepo warehouseRepo;
+	
+	@Autowired
+	PopulateDropdownService populateDropdownService;
+	
 	public LostDamagedInventory createData(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
 		LostDamagedInventory lostDamagedInventory = new LostDamagedInventory();
+		validatePayload(payload);
 		populateData(lostDamagedInventory,payload);
 		Float closingStock = adjustStock(payload);
 		lostDamagedInventory.setClosingStock(closingStock);
-		return LostDamagedInventoryRepo.save(lostDamagedInventory);
+		return lostDamagedInventoryRepo.save(lostDamagedInventory);
+	}
+	
+	public LostDamagedReturnData findFiilteredostDamagedList(FilterDataList filterDataList, Pageable pageable)
+	{
+		LostDamagedReturnData lostDamagedReturnData = new LostDamagedReturnData();
+		lostDamagedReturnData.setLostDamagedInventories(lostDamagedInventoryRepo.findAll(pageable));
+		lostDamagedReturnData.setLdDropdown(populateDropdownService.fetchData("lostdamaged"));
+		return lostDamagedReturnData;
 	}
 	
 	private Float adjustStock(CreateLostOrDamagedInventoryData payload) throws Exception 
 	{
-		return stockService.updateStock(payload.getProductId(), "Default", payload.getQuantity(), "outward");
+		String warehouseName = warehouseRepo.findById(payload.getWarehouseId()).get().getWarehouseName();
+		return stockService.updateStock(payload.getProductId(),warehouseName , payload.getQuantity(), "outward");
 	}
 	private void populateData(LostDamagedInventory lostDamagedInventory, CreateLostOrDamagedInventoryData payload) throws Exception 
 	{
@@ -51,22 +69,34 @@ public class LostDamagedInventoryService
 		lostDamagedInventory.setQuantity(payload.getQuantity());
 		lostDamagedInventory.setProduct(productService.findSingleProduct(payload.getProductId()));
 		lostDamagedInventory.setDate(payload.getDate());
+		lostDamagedInventory.setWarehouse(warehouseRepo.findById(payload.getWarehouseId()).get());
 	}
 	
 	public LostDamagedInventory UpdateData(CreateLostOrDamagedInventoryData payload,Long id) throws Exception
 	{
-		Optional<LostDamagedInventory> lostDamagedInventoryOpt = LostDamagedInventoryRepo.findById(id);
+		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
+		validatePayload(payload);
 		if(!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Machinery On rent by ID "+id+" Not found");
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
-		
 		Long oldProductId = lostDamagedInventory.getProduct().getProductId();
 		Float oldQuantity = lostDamagedInventory.getQuantity();
 		populateData(lostDamagedInventory,payload);
-		UpdateStockBeforeUpdate(oldProductId,oldQuantity,lostDamagedInventory);
-		return LostDamagedInventoryRepo.save(lostDamagedInventory);	
+		//UpdateStockBeforeUpdate(oldProductId,oldQuantity,lostDamagedInventory);
+		return lostDamagedInventoryRepo.save(lostDamagedInventory);	
 	}
 	
+	private void validatePayload(CreateLostOrDamagedInventoryData payload) throws Exception 
+	{
+		if(!productRepo.findById(payload.getProductId()).isPresent())
+			throw new Exception("Invalid Product ID");
+		if(!warehouseRepo.findById(payload.getWarehouseId()).isPresent())
+			throw new Exception("Invalid warehouse ID");
+		if(payload.getQuantity()<=0)
+			throw new Exception("Quantity should be greater than zero");
+		
+	}
+/*
 	private void UpdateStockBeforeUpdate(Long oldProductId, Float oldQuantity, LostDamagedInventory lostDamagedInventory) throws Exception 
 	{
 		Long newProductId = lostDamagedInventory.getProduct().getProductId();
@@ -93,37 +123,37 @@ public class LostDamagedInventoryService
 			
 			if(diffInStock>currentStock)
 				throw new Exception("Stock cannot be updated as available stock is less than difference requested in stock");
-			
 			Float closingStock = stockService.updateStock(newProductId, "Default", diffInStock, "outward");
 			lostDamagedInventory.setClosingStock(closingStock);
 		}
 		
 	}
+	
+	*/
 	public LostDamagedInventory findById(Long id) throws Exception
 	{
-		Optional<LostDamagedInventory> lostDamagedInventoryOpt = LostDamagedInventoryRepo.findById(id);
+		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
 		if(!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Lost Damaged Inventory by ID "+id+" Not found");
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
-		return lostDamagedInventory;
-		
+		return lostDamagedInventory;	
 	}
 	public void DeleteData(Long id) throws Exception
 	{
-		Optional<LostDamagedInventory> lostDamagedInventoryOpt = LostDamagedInventoryRepo.findById(id);
+		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
 		if(!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Machinery On rent by ID "+id+" Not found");
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
 		AdjustStockBeforeDelete(lostDamagedInventory);
-		LostDamagedInventoryRepo.softDeleteById(id);
+		lostDamagedInventoryRepo.softDeleteById(id);
 	}
 	private void AdjustStockBeforeDelete(LostDamagedInventory lostDamagedInventory) throws Exception 
 	{
-		stockService.updateStock(lostDamagedInventory.getProduct().getProductId(), "Default", lostDamagedInventory.getQuantity(), "inward");
+		stockService.updateStock(lostDamagedInventory.getProduct().getProductId(),lostDamagedInventory.getWarehouse().getWarehouseName() , lostDamagedInventory.getQuantity(), "inward");
 	}
 
 	public Page<LostDamagedInventory> findAll(Pageable pageable) {
-		Page<LostDamagedInventory> allLODInv = LostDamagedInventoryRepo.findAll(pageable);
+		Page<LostDamagedInventory> allLODInv = lostDamagedInventoryRepo.findAll(pageable);
 		return allLODInv;
 	}
 

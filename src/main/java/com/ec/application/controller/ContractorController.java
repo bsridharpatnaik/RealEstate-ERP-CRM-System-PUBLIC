@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,10 +25,8 @@ public class ContractorController
 	ContractorService contractorService;
 	
 	@GetMapping
-	public Page<Contractor> returnAllContractors(@RequestParam(name="page",required = false) Integer page,@RequestParam(name="size",required = false) Integer size) 
+	public Page<Contractor> returnAllContractors(@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
 	{
-		page= page==null?0:page; size = size==null?Integer.MAX_VALUE:size; 
-		Pageable pageable = PageRequest.of(page, size);
 		return contractorService.findAll(pageable);
 	}
 	

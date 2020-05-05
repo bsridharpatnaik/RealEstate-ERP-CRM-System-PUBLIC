@@ -20,6 +20,17 @@ public class CreateLostOrDamagedInventoryData
 	
 	@NonNull
 	String theftLocation;
+	
+	@NonNull
+	Long warehouseId;
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
 
 	public Long getProductId() {
 		return productId;
@@ -45,13 +56,11 @@ public class CreateLostOrDamagedInventoryData
 		this.theftLocation = theftLocation;
 	}
 
-	public Date getDate() {
-		return date;
+	public Long getWarehouseId() {
+		return warehouseId;
 	}
 
-	public void setDate(Date date) {
-		this.date = date;
+	public void setWarehouseId(Long warehouseId) {
+		this.warehouseId = warehouseId;
 	}
-	
-	
 }
