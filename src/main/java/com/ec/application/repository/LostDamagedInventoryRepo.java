@@ -12,4 +12,8 @@ public interface LostDamagedInventoryRepo extends BaseRepository<LostDamagedInve
 	@Query(value="SELECT count(*) from LostDamagedInventory m where m.product.productId=:productId")
 	int productUsageCount(@Param("productId") Long productId);
 
+	@Query(value="SELECT count(*) from LostDamagedInventory m where m.warehouse.warehouseName=:warehouseName")
+	int warehouseUsageCount(@Param("warehouseName") String warehouseName);
+
+	
 }

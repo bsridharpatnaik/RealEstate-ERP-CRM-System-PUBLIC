@@ -5,13 +5,15 @@ import java.util.Date;
 import org.springframework.lang.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CreateMORentData 
 {
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@NonNull
-	private Date date;
+	@JsonProperty("Date")
+	private Date Date;
 	
 	@NonNull
 	private long machineryId;
@@ -58,11 +60,12 @@ public class CreateMORentData
 	public void setMode(String mode) {
 		this.mode = mode;
 	}
+	
 	public Date getDate() {
-		return date;
+		return Date;
 	}
 	public void setDate(Date date) {
-		this.date = date;
+		Date = date;
 	}
 	public long getMachineryId() {
 		return machineryId;

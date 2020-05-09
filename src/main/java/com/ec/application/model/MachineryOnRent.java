@@ -37,7 +37,7 @@ public class MachineryOnRent extends ReusableFields
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
-	Date date;
+	Date Date;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="machineryId",nullable=false)
@@ -79,11 +79,12 @@ public class MachineryOnRent extends ReusableFields
 		Id = id;
 	}
 	
+
 	public Date getDate() {
-		return date;
+		return Date;
 	}
 	public void setDate(Date date) {
-		this.date = date;
+		Date = date;
 	}
 	public Machinery getMachinery() {
 		return machinery;

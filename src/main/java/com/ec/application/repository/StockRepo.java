@@ -31,7 +31,7 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 	int productUsageCount(@Param("productId")Long productId);
 
 	@Query(value="SELECT count(*) from Stock m where m.warehouse.warehouseName=:warehouseName")
-	int warehouseCount(@Param("warehouseName")String warehouseName);
+	int warehouseUsageCount(@Param("warehouseName")String warehouseName);
 	
 	@Query(value="SELECT m from Stock m where m.warehouse.warehouseId=:warehouseId")
 	Page<Stock> findStockForWarehouse(Pageable pageable, @Param("warehouseId") Long warehouseId);

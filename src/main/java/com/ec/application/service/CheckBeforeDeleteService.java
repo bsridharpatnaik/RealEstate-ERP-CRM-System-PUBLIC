@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.repository.InwardInventoryRepo;
+import com.ec.application.repository.InwardOutwardListRepo;
 import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
@@ -19,6 +20,12 @@ public class CheckBeforeDeleteService
 	InwardInventoryRepo inwardInventoryRepo;
 	
 	@Autowired
+	OutwardInventoryRepo outwardInventoryRepo;
+	
+	@Autowired
+	LostDamagedInventoryRepo lostDamagedInventoryRepo;
+	
+	@Autowired
 	MachineryOnRentRepo machineryOnRentRepo;
 	
 	@Autowired
@@ -27,16 +34,17 @@ public class CheckBeforeDeleteService
 	@Autowired
 	StockRepo stockRepo;
 	
-	//@Autowired
-	//WarehouseRepo warehouseRepo;
+	@Autowired
+	WarehouseRepo warehouseRepo;
 	
 	@Autowired
-	LostDamagedInventoryRepo lostDamagedInventoryRepo;
-	
+	InwardOutwardListRepo inwardOutwardListRepo;
+
 	public boolean isProductUsed(Long productId) throws Exception
 	{
 		if(stockRepo.productUsageCount(productId) >0
-				|| lostDamagedInventoryRepo.productUsageCount(productId) > 0)
+				|| lostDamagedInventoryRepo.productUsageCount(productId) > 0 
+				|| inwardOutwardListRepo.productUsageCount(productId)>0)
 			return true;
 		else
 			return false;
@@ -48,8 +56,7 @@ public class CheckBeforeDeleteService
 		if(productRepo.categoryUsageCount(categoryId) > 0)
 			return true;
 		else
-			return false;
-		
+			return false;	
 	}
 	
 	public boolean isMachineryUsed(Long machineryId) throws Exception
@@ -64,22 +71,18 @@ public class CheckBeforeDeleteService
 	public boolean isLocationUsed(Long locationId) throws Exception
 	{
 		if(machineryOnRentRepo.locationUsageCount(locationId) > 0 
-				//|| outwardInventoryRepo.locationUsageCount(locationId) > 0
-				) 
+			|| outwardInventoryRepo.locationUsageCount(locationId) > 0) 
 			return true;
 		else
 			return false;
 	}
-	public boolean isunloadingAreaUsed(Long unloadingAreaId) throws Exception
-	{
-		/*if(inwardInventoryRepo.unloadingAreaCount(unloadingAreaId) > 0) 
-			return true;
-		else*/
-			return false;
-	}
+	
 	public boolean isWarehouseUsed(String warehouseName) throws Exception
 	{
-		if(stockRepo.warehouseCount(warehouseName) > 0) 
+		if(stockRepo.warehouseUsageCount(warehouseName) > 0
+				|| lostDamagedInventoryRepo.warehouseUsageCount(warehouseName) > 0
+				|| inwardInventoryRepo.warehouseUsageCount(warehouseName) >0
+				|| outwardInventoryRepo.warehouseUsageCount(warehouseName) >0)
 			return true;
 		else
 			return false;
