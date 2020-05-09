@@ -153,109 +153,10 @@ public class StockService
                 .map(p -> p.getProduct().getProductId()).distinct().collect(Collectors.toList());
 	}
 
-	public HashMap<Long, Float> modifyStockBeforeUpdate(String oldWarehouseName, String newWarehousename, HashMap<Long, Float> oldStock,
-			HashMap<Long, Float> newStock, String transType) throws Exception 
-	{
-		HashMap<Long, Float> differenceInStock = new HashMap<Long, Float>();
-		MapDifference<Long , Float> diff = Maps.difference(oldStock, newStock);
-		Set<Long> keysOnlyInOld = diff.entriesOnlyOnLeft().keySet();
-		Set<Long> keysOnlyInNew = diff.entriesOnlyOnRight().keySet();
-		differenceInStock = findStockForCommonIds(oldStock,newStock);
-		HashMap<Long, Float> closingStocks = updateStockForMaps(differenceInStock,keysOnlyInOld,keysOnlyInNew,oldStock,newStock,oldWarehouseName,newWarehousename,transType);
-		return closingStocks;
-	}
-	private HashMap<Long, Float> updateStockForMaps(HashMap<Long, Float> differenceInStock, Set<Long> keysOnlyInOld,
-			Set<Long> keysOnlyInNew, HashMap<Long, Float> oldStock, HashMap<Long, Float> newStock,String oldWarehouseName,String newWarehousename,String transType ) throws Exception 
-	{
-		HashMap<Long, Float> closingStocks = new HashMap<Long, Float>();
-		for(Long onlyInOldProductId : keysOnlyInOld)
-		{
-			String updateType = transType.equalsIgnoreCase("inward")?"outward":"inward";
-			Float closingStock = updateStock(onlyInOldProductId, oldWarehouseName, oldStock.get(onlyInOldProductId), updateType);
-			closingStocks.put(onlyInOldProductId, closingStock);
-		}
-		for(Long onlyInNewProductId : keysOnlyInNew)
-		{
-			String updateType = transType.equalsIgnoreCase("inward")?"inward":"outward";
-			Float closingStock = updateStock(onlyInNewProductId, newWarehousename, newStock.get(onlyInNewProductId), updateType);
-			closingStocks.put(onlyInNewProductId, closingStock);
-		}
-		Iterator diffInStockIterator = differenceInStock.entrySet().iterator();
-		while (diffInStockIterator.hasNext()) 
-		{ 
-            Map.Entry mapElementOld = (Map.Entry)diffInStockIterator.next(); 
-            if(newWarehousename.equalsIgnoreCase(oldWarehouseName))
-            {
-            	Float closingStock = updateStock((long)mapElementOld.getKey(), newWarehousename, (Float) mapElementOld.getValue(), transType);
-            	closingStocks.put((long)mapElementOld.getKey(), closingStock);
-            }
-            else
-            {
-            	String updateType = transType.equalsIgnoreCase("inward")?"outward":"inward";
-            	Long productId = (long)mapElementOld.getKey();
-            	updateStock(productId, oldWarehouseName, oldStock.get(productId), updateType);
-            	Float closingStock = updateStock(productId, newWarehousename, oldStock.get(productId), transType);
-            	closingStocks.put(productId, oldStock.get(productId));
-            }
-		}
-		return closingStocks; 
-		
-	}
-
-	private HashMap<Long, Float> findStockForCommonIds(HashMap<Long, Float> oldStock, HashMap<Long, Float> newStock) 
-	{
-		HashMap<Long, Float> differenceInStock = new HashMap<Long, Float>();
-		
-		Iterator oldStockIterator = oldStock.entrySet().iterator(); 
-		while (oldStockIterator.hasNext()) 
-		{ 
-            Map.Entry mapElementOld = (Map.Entry)oldStockIterator.next(); 
-            Long oldProductId = (Long) mapElementOld.getKey();
-            Float oldQuantity = (Float) mapElementOld.getValue();
-            Float newQuantity = newStock.get(oldProductId);
-            if(newQuantity!=null)
-                differenceInStock.put(oldProductId, newQuantity - oldQuantity);
-        }
-		return differenceInStock;
-	}
-
 	public Double findStockForProductWarehouse(Long productId,Long warehouseId) 
 	{
 		Double currentStock = stockRepo.getCurrentStockForProductWarehouse(productId,warehouseId);
 		return currentStock;
-	}
-
-	public InwardInventory updateClosingStockToSet(InwardInventory inwardInventory, HashMap<Long, Float> closingStocks) 
-	{
-		Set<InwardOutwardList> inwardOutwardSet = new HashSet<InwardOutwardList>();
-		inwardOutwardSet = inwardInventory.getInwardOutwardList();
-		inwardOutwardSet = updateClosingStockToInwardOutwardSet(inwardOutwardSet,closingStocks);
-		inwardInventory.setInwardOutwardList(inwardOutwardSet);
-		return inwardInventory;
-	}
-
-	private Set<InwardOutwardList> updateClosingStockToInwardOutwardSet(Set<InwardOutwardList> inwardOutwardSet,
-			HashMap<Long, Float> closingStocks) 
-	{
-		Iterator closingStockIterator = closingStocks.entrySet().iterator();
-		LinkedList<InwardOutwardList> inwardOutwardList = new LinkedList<InwardOutwardList>();
-        inwardOutwardList.addAll(inwardOutwardSet);
-		while (closingStockIterator.hasNext()) 
-		{ 
-            Map.Entry mapElementOld = (Map.Entry)closingStockIterator.next();
-            Long productId = (Long) mapElementOld.getKey();
-            Float closingStock = (Float) mapElementOld.getValue();
-            
-            for(int ctr=0;ctr<inwardOutwardList.size();ctr++)
-            {
-            	Long tempProductId = inwardOutwardList.get(ctr).getProduct().getProductId();
-            	if(tempProductId.equals(productId))
-            		inwardOutwardList.get(ctr).setClosingStock(closingStock);
-            }
-		}
-		inwardOutwardSet.clear();
-        inwardOutwardSet.addAll(inwardOutwardList);
-		return inwardOutwardSet;
 	}
 
 	public List<ProductIdAndStockProjection> findStockForProductListWarehouse(CurrentStockRequest currentStockRequest) 

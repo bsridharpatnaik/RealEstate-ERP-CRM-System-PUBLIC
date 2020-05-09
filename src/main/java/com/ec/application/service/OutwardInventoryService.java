@@ -2,6 +2,7 @@ package com.ec.application.service;
 
 import java.text.ParseException;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 
@@ -15,6 +16,7 @@ import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.model.InwardInventory;
+import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ContractorRepo;
@@ -64,10 +66,25 @@ public class OutwardInventoryService
 		OutwardInventory outwardInventory = new OutwardInventory();
 		validateInputs(oiData);
 		setFields(outwardInventory,oiData);
-		//updateStockForCreateInwardInventory(inwardInventory);
+		updateStockForCreateOutwardInventory(outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
 	}
 
+	private void updateStockForCreateOutwardInventory(OutwardInventory outwardInventory) throws Exception 
+	{
+		Set<InwardOutwardList> productsWithQuantities = outwardInventory.getInwardOutwardList();
+		String warehouseName = outwardInventory.getWarehouse().getWarehouseName();
+		
+		for(InwardOutwardList oiList : productsWithQuantities)
+		{
+			Long productId = oiList.getProduct().getProductId();
+			Float quantity =  oiList.getQuantity();
+			Float closingStock = stockService.updateStock(productId, warehouseName, quantity, "outward");
+			oiList.setClosingStock(closingStock);
+		}
+	}
+
+	@Transactional
 	public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception
 	{
 		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
@@ -75,8 +92,9 @@ public class OutwardInventoryService
 			throw new Exception("Inventory Entry with ID not found");
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		validateInputs(iiData);
+		updateStockBeforeDelete(outwardInventory);
 		setFields(outwardInventory,iiData);
-		//updateStock(oldProductId,iiData.getProductId(),outwardInventory,iiData.getQuantity(),oldQuantity);
+		updateStockForCreateOutwardInventory(outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
 		
 	}
@@ -138,86 +156,21 @@ public class OutwardInventoryService
 		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
 		if(!outwardInventoryOpt.isPresent())
 			throw new Exception("Outward Inventory with ID not found");
-		OutwardInventory inwardInventory = outwardInventoryOpt.get();
-		//updateStockBeforeDelete(inwardInventory);
-		outwardInventoryRepo.softDeleteById(id);
-	}
-	
-	
-	/*
-	public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception
-	{
-		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
-		if(!outwardInventoryOpt.isPresent())
-			throw new Exception("Inventory Entry with ID not found");
-		OutwardInventory outwardInventory = outwardInventoryOpt.get();
-		Long oldProductId = outwardInventory.getProduct().getProductId();
-		Float oldQuantity = stockRepo.findStockForProductAndWarehouse(outwardInventory.getProduct().getProductId(),outwardInventory.getWarehouse().getWarehouseName()).get(0).getQuantityInHand();
-		validateInputs(iiData);
-		setFields(outwardInventory,iiData);
-		updateStock(oldProductId,iiData.getProductId(),outwardInventory,iiData.getQuantity(),oldQuantity);
-		return outwardInventoryRepo.save(outwardInventory);
-		
-	}
-	private void updateStock(Long oldProductId,Long newProductId,OutwardInventory outwardInventory , Float  quantity, Float oldQuantity) throws Exception 
-	{
-		if(oldProductId.equals(newProductId)==false)
-		{
-			Float closingStock = stockService.updateStock(oldProductId, "Default",oldQuantity , "inward");
-			closingStock = stockService.updateStock(newProductId, "Default",quantity , "inward");
-			outwardInventory.setClosingStock(closingStock);
-		}
-		else if(oldProductId.equals(newProductId) && quantity>oldQuantity)
-		{
-			Float diffInStock =  quantity - oldQuantity;
-			Float currentStock = stockRepo.findStockForProductAndWarehouse(newProductId,outwardInventory.getWarehouse().getWarehouseName()).get(0).getQuantityInHand();
-			
-			if(diffInStock>currentStock)
-				throw new Exception("Stock cannot be updated as available stock is less than difference requested in stock");
-			
-			Float closingStock = stockService.updateStock(newProductId, "Default", diffInStock, "outward");
-			outwardInventory.setClosingStock(closingStock);
-			
-			
-		}
-		else if(oldProductId.equals(newProductId) && quantity<oldQuantity)
-		{
-			Float diffInStock = quantity - oldQuantity;
-			Float closingStock = stockService.updateStock(newProductId, "Default", diffInStock, "inward");
-			outwardInventory.setClosingStock(closingStock);
-		}
-		
-		
-	}
-	
-	public OutwardInventoryWithDropdownValues findAll(Pageable pageable) 
-	{
-		OutwardInventoryWithDropdownValues inwardInventoryWithDropdownValues = new OutwardInventoryWithDropdownValues();
-		inwardInventoryWithDropdownValues.setMorDropdown(populateDropdownService.fetchData("outward"));
-		inwardInventoryWithDropdownValues.setOutwardInventory(outwardInventoryRepo.findAll(pageable));
-		return inwardInventoryWithDropdownValues;
-	}
-	public OutwardInventory findOutwardnventory(Long id) throws Exception 
-	{
-		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
-		if(outwardInventoryOpt.isPresent()==false)
-			throw new Exception("Outward inventory with ID not found");
-		OutwardInventory outwardInventory = outwardInventoryOpt.get();
-		return outwardInventory;
-	}
-	public void deleteOutwardnventory(Long id) throws Exception 
-	{
-		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
-		if(!outwardInventoryOpt.isPresent())
-			throw new Exception("Outward Inventory with ID not found");
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		updateStockBeforeDelete(outwardInventory);
 		outwardInventoryRepo.softDeleteById(id);
 	}
+
 	private void updateStockBeforeDelete(OutwardInventory outwardInventory) throws Exception 
 	{
-		Float stock = outwardInventory.getQuantity();
-		stockService.updateStock(outwardInventory.getProduct().getProductId(), "Default", stock, "inward");
+		String warehouseName = outwardInventory.getWarehouse().getWarehouseName();
+		for(InwardOutwardList ioList : outwardInventory.getInwardOutwardList())
+		{
+			Float stock = ioList.getQuantity();
+			Float currentStock = stockRepo.findStockForProductAndWarehouse(ioList.getProduct().getProductId(),warehouseName).get(0).getQuantityInHand();
+			if(currentStock<stock)
+				throw new Exception("Cannot Delete. Stock will go negative if deleted");
+			stockService.updateStock(ioList.getProduct().getProductId(), warehouseName, stock, "inward");
+		}
 	}
-*/
 }

@@ -37,7 +37,7 @@ public class MachineryOnRent extends ReusableFields
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
-	Date Date;
+	Date date;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="machineryId",nullable=false)
@@ -60,11 +60,11 @@ public class MachineryOnRent extends ReusableFields
 	
 	String mode;
 	
-	@JsonProperty("StartDate")
+	@JsonProperty("startDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	Date startDate;
 	
-	@JsonProperty("EndDate")
+	@JsonProperty("endDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	Date endDate;
 	
@@ -72,26 +72,6 @@ public class MachineryOnRent extends ReusableFields
 	Double endMeterReading;
 	Double noOfTrips;
 	Double amountCharged;
-	
-	
-	public String getAdditionalNotes() {
-		return additionalNotes;
-	}
-	public void setAdditionalNotes(String additionalNotes) {
-		this.additionalNotes = additionalNotes;
-	}
-	public String getVehicleNo() {
-		return vehicleNo;
-	}
-	public void setVehicleNo(String vehicleNo) {
-		this.vehicleNo = vehicleNo;
-	}
-	public Supplier getSupplier() {
-		return supplier;
-	}
-	public void setSupplier(Supplier supplier) {
-		this.supplier = supplier;
-	}
 	public Long getId() {
 		return Id;
 	}
@@ -100,24 +80,40 @@ public class MachineryOnRent extends ReusableFields
 	}
 	
 	public Date getDate() {
-		return Date;
+		return date;
 	}
 	public void setDate(Date date) {
-		Date = date;
+		this.date = date;
 	}
 	public Machinery getMachinery() {
 		return machinery;
 	}
-	
-	
 	public void setMachinery(Machinery machinery) {
 		this.machinery = machinery;
+	}
+	public Supplier getSupplier() {
+		return supplier;
+	}
+	public void setSupplier(Supplier supplier) {
+		this.supplier = supplier;
 	}
 	public UsageLocation getUsageLocation() {
 		return usageLocation;
 	}
 	public void setUsageLocation(UsageLocation usageLocation) {
 		this.usageLocation = usageLocation;
+	}
+	public String getVehicleNo() {
+		return vehicleNo;
+	}
+	public void setVehicleNo(String vehicleNo) {
+		this.vehicleNo = vehicleNo;
+	}
+	public String getAdditionalNotes() {
+		return additionalNotes;
+	}
+	public void setAdditionalNotes(String additionalNotes) {
+		this.additionalNotes = additionalNotes;
 	}
 	public String getMode() {
 		return mode;
@@ -161,4 +157,5 @@ public class MachineryOnRent extends ReusableFields
 	public void setAmountCharged(Double amountCharged) {
 		this.amountCharged = amountCharged;
 	}
+	
 }

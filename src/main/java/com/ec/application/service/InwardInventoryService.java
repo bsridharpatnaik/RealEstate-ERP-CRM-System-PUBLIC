@@ -1,11 +1,12 @@
 package com.ec.application.service;
 
-import java.text.ParseException;
 import static java.util.stream.Collectors.counting;
+
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
@@ -163,6 +165,7 @@ public class InwardInventoryService
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
 		updateStockBeforeDelete(inwardInventory);
 		inwardInventoryRepo.softDeleteById(id);
+		
 	}
 	@Transactional
 	private void updateStockBeforeDelete(InwardInventory inwardInventory) throws Exception 
@@ -186,41 +189,10 @@ public class InwardInventoryService
 			throw new Exception("Inventory Entry with ID not found");
 		validateInputs(iiData);
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
-		HashMap<Long, Float> closingStocks = updateStockForBeforeUpdate(inwardInventory,iiData);
+		updateStockBeforeDelete(inwardInventory);
 		setFields(inwardInventory,iiData);
-		inwardInventory = stockService.updateClosingStockToSet(inwardInventory,closingStocks);
+		updateStockForCreateInwardInventory(inwardInventory);
 		return inwardInventoryRepo.save(inwardInventory);
 		
-	}
-
-	private HashMap<Long, Float> updateStockForBeforeUpdate(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
-	{
-		Set<InwardOutwardList> oldProductQuantityList = inwardInventory.getInwardOutwardList();
-		List<ProductWithQuantity> newProductQuantityList = iiData.getProductWithQuantities();
-		HashMap<Long, Float> oldStock = fetchMapFromList(oldProductQuantityList);
-		HashMap<Long, Float> newStock = fetchMapFromList(newProductQuantityList);
-		String oldWarehouseName  = inwardInventory.getWarehouse().getWarehouseName();
-		String newWarehousename = warehouseRepo.findById(iiData.getWarehouseId()).get().getWarehouseName();
-		HashMap<Long, Float> closingStocks = stockService.modifyStockBeforeUpdate(oldWarehouseName,newWarehousename,oldStock,newStock,"inward");
-		return closingStocks;
-	}
-	private HashMap<Long, Float> fetchMapFromList(List<ProductWithQuantity> newProductQuantityList) 
-	{
-		HashMap<Long, Float> newStock = new HashMap<Long, Float>();
-		for(ProductWithQuantity productWithQuantity:newProductQuantityList)
-		{
-			newStock.put(productWithQuantity.getProductId(), productWithQuantity.getQuantity());
-		}
-		return newStock;
-	}
-
-	private HashMap<Long, Float> fetchMapFromList(Set<InwardOutwardList> oldProductQuantityList) 
-	{
-		HashMap<Long, Float> oldStock = new HashMap<Long, Float>();
-		for(InwardOutwardList inwardOutwardList:oldProductQuantityList)
-		{
-			oldStock.put(inwardOutwardList.getProduct().getProductId(), inwardOutwardList.getQuantity());
-		}
-		return oldStock;
 	}
 }
