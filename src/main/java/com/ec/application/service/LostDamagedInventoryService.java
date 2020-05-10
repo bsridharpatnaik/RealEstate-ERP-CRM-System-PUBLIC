@@ -3,6 +3,8 @@ package com.ec.application.service;
 import java.text.ParseException;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,12 +47,13 @@ public class LostDamagedInventoryService
 	@Autowired
 	PopulateDropdownService populateDropdownService;
 	
+	@Transactional
 	public LostDamagedInventory createData(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
 		LostDamagedInventory lostDamagedInventory = new LostDamagedInventory();
 		validatePayload(payload);
 		populateData(lostDamagedInventory,payload);
-		Float closingStock = adjustStock(payload);
+		Float closingStock = adjustStockBeforeCreate(payload);
 		lostDamagedInventory.setClosingStock(closingStock);
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);
 	}
@@ -66,7 +69,7 @@ public class LostDamagedInventoryService
 		return lostDamagedReturnData;
 	}
 	
-	private Float adjustStock(CreateLostOrDamagedInventoryData payload) throws Exception 
+	private Float adjustStockBeforeCreate(CreateLostOrDamagedInventoryData payload) throws Exception 
 	{
 		String warehouseName = warehouseRepo.findById(payload.getWarehouseId()).get().getWarehouseName();
 		return stockService.updateStock(payload.getProductId(),warehouseName , payload.getQuantity(), "outward");
@@ -80,6 +83,7 @@ public class LostDamagedInventoryService
 		lostDamagedInventory.setWarehouse(warehouseRepo.findById(payload.getWarehouseId()).get());
 	}
 	
+	@Transactional
 	public LostDamagedInventory UpdateData(CreateLostOrDamagedInventoryData payload,Long id) throws Exception
 	{
 		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
@@ -87,8 +91,9 @@ public class LostDamagedInventoryService
 		if(!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Machinery On rent by ID "+id+" Not found");
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
+		AdjustStockBeforeDelete(lostDamagedInventory);
 		populateData(lostDamagedInventory,payload);
-		//UpdateStockBeforeUpdate(oldProductId,oldQuantity,lostDamagedInventory);
+		adjustStockBeforeCreate(payload);
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);	
 	}
 	
@@ -102,40 +107,7 @@ public class LostDamagedInventoryService
 			throw new Exception("Quantity should be greater than zero");
 		
 	}
-/*
-	private void UpdateStockBeforeUpdate(Long oldProductId, Float oldQuantity, LostDamagedInventory lostDamagedInventory) throws Exception 
-	{
-		Long newProductId = lostDamagedInventory.getProduct().getProductId();
-		String warehouseName = lostDamagedInventory.getWarehouse().getWarehouseName();
-		Float quantity = lostDamagedInventory.getQuantity();
-		if(oldProductId.equals(newProductId)==false)
-		{
-			Float closingStock = stockService.updateStock(oldProductId, "Default",oldQuantity , "outward");
-			closingStock = stockService.updateStock(newProductId, "Default",quantity , "inward");
-			lostDamagedInventory.setClosingStock(closingStock);
-		}
-		else if(oldProductId.equals(newProductId) && quantity>oldQuantity)
-		{
-			Float diffInStock = quantity - oldQuantity;
-			Float closingStock = stockService.updateStock(newProductId, "Default", diffInStock, "inward");
-			lostDamagedInventory.setClosingStock(closingStock);
-		}
-		else if(oldProductId.equals(newProductId) && quantity<oldQuantity)
-		{
-			Float diffInStock =  oldQuantity - quantity ;
-			
-			//update this in case of multi warehouse
-			Float currentStock = stockRepo.findStockForProductAndWarehouse(newProductId,warehouseName).get(0).getQuantityInHand();
-			
-			if(diffInStock>currentStock)
-				throw new Exception("Stock cannot be updated as available stock is less than difference requested in stock");
-			Float closingStock = stockService.updateStock(newProductId, "Default", diffInStock, "outward");
-			lostDamagedInventory.setClosingStock(closingStock);
-		}
-		
-	}
 	
-	*/
 	public LostDamagedInventory findById(Long id) throws Exception
 	{
 		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
@@ -144,6 +116,8 @@ public class LostDamagedInventoryService
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
 		return lostDamagedInventory;	
 	}
+	
+	@Transactional
 	public void DeleteData(Long id) throws Exception
 	{
 		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
