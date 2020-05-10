@@ -29,7 +29,7 @@ public final class OutwardInventorySpecification
 		List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"productNames");
 		List<String> contractorNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"contractorNames");
 		List<String> warehouseNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"warehouseNames");
-		List<String> usageLocations = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"usageLocations");
+		List<String> usageLocations = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"usageLocation");
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"globalSearch");
 		
 		Specification<OutwardInventory> finalSpec = null;
