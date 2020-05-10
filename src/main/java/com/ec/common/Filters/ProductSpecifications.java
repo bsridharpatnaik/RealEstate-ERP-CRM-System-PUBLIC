@@ -19,7 +19,7 @@ public final class ProductSpecifications
 	
 	public static Specification<Product> getSpecification(FilterDataList filterDataList)
 	{
-		List<String> names = specbldr.fetchValueFromFilterList(filterDataList,"name");
+		List<String> names = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"name");
 		Specification<Product> finalSpec = null;
 		if(names != null && names.size()>0)
 		{

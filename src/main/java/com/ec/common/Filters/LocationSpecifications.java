@@ -15,7 +15,7 @@ static SpecificationsBuilder<UsageLocation> specbldr = new SpecificationsBuilder
 	
 	public static Specification<UsageLocation> getSpecification(FilterDataList filterDataList)
 	{
-		List<String> locationNames = specbldr.fetchValueFromFilterList(filterDataList,"name");
+		List<String> locationNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"name");
 		Specification<UsageLocation> finalSpec = null;
 		if(locationNames != null && locationNames.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(UsageLocation_.LOCATION_NAME, locationNames));	

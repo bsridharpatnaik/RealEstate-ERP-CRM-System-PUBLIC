@@ -34,6 +34,12 @@ public class AllInventoryTransactions
 	@Column(name="contactid")
 	Long contactId;
 	
+	@Column(name="product_name")
+	String productName;
+	
+	@Column(name="measurement_unit")
+	String measurementUnit;
+	
 	@Column(name="warehouseid")
 	Long warehouseId;
 	
@@ -69,37 +75,12 @@ public class AllInventoryTransactions
 	@Column(name="updated_at")
 	String updated;
 
-	
-	public String getEmailId() {
-		return emailId;
+	public Long getId() {
+		return id;
 	}
 
-	public void setEmailId(String emailId) {
-		this.emailId = emailId;
-	}
-
-	public String getContactType() {
-		return contactType;
-	}
-
-	public void setContactType(String contactType) {
-		this.contactType = contactType;
-	}
-
-	public String getCreated() {
-		return created;
-	}
-
-	public void setCreated(String created) {
-		this.created = created;
-	}
-
-	public String getUpdated() {
-		return updated;
-	}
-
-	public void setUpdated(String updated) {
-		this.updated = updated;
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public String getType() {
@@ -108,14 +89,6 @@ public class AllInventoryTransactions
 
 	public void setType(String type) {
 		this.type = type;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
 	}
 
 	public Date getDate() {
@@ -132,6 +105,22 @@ public class AllInventoryTransactions
 
 	public void setContactId(Long contactId) {
 		this.contactId = contactId;
+	}
+
+	public String getProductName() {
+		return productName;
+	}
+
+	public void setProductName(String productName) {
+		this.productName = productName;
+	}
+
+	public String getMeasurementUnit() {
+		return measurementUnit;
+	}
+
+	public void setMeasurementUnit(String measurementUnit) {
+		this.measurementUnit = measurementUnit;
 	}
 
 	public Long getWarehouseId() {
@@ -182,20 +171,20 @@ public class AllInventoryTransactions
 		this.mobileNo = mobileNo;
 	}
 
-	public String getEmail_id() {
+	public String getEmailId() {
 		return emailId;
 	}
 
-	public void setEmail_id(String email_id) {
-		this.emailId = email_id;
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
 	}
 
-	public String getContact_type() {
+	public String getContactType() {
 		return contactType;
 	}
 
-	public void setContact_type(String contact_type) {
-		this.contactType = contact_type;
+	public void setContactType(String contactType) {
+		this.contactType = contactType;
 	}
 
 	public String getWarehouseName() {
@@ -204,5 +193,21 @@ public class AllInventoryTransactions
 
 	public void setWarehouseName(String warehouseName) {
 		this.warehouseName = warehouseName;
+	}
+
+	public String getCreated() {
+		return created;
+	}
+
+	public void setCreated(String created) {
+		this.created = created;
+	}
+
+	public String getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(String updated) {
+		this.updated = updated;
 	}
 }

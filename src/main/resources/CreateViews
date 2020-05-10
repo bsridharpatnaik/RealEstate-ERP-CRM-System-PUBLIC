@@ -38,10 +38,12 @@ WHERE ci.is_deleted=0 OR ci.is_deleted IS NULL;
 
 -- All Inventory
 
--- select * from all_inventory;
 CREATE OR replace VIEW all_inventory 
 AS 
+
   SELECT tx.*, 
+		p.product_name,
+        p.measurement_unit,
          c.name, 
          c.mobile_no, 
          c.email_id, 
@@ -97,5 +99,5 @@ AS
                 ON c.contact_id = tx.contactid 
          inner join warehouse w 
                  ON w.warehouse_id = tx.warehouseid 
+		inner join product p on p.product_id = tx.productid
   ORDER  BY id DESC; 
-
