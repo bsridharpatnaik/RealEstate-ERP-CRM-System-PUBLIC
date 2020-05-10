@@ -1,5 +1,7 @@
 package com.ec.application.controller;
 
+import java.text.ParseException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -35,7 +37,7 @@ public class LostOrDamagedInventoryController
 	
 	@PostMapping 
 	@ResponseStatus(HttpStatus.OK)
-	public LostDamagedReturnData returnAllLostDamaged(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
+	public LostDamagedReturnData returnAllLostDamaged(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws ParseException
 	{	
 		return lostDamagedInventoryService.findFiilteredostDamagedList(filterDataList, pageable);
 	}

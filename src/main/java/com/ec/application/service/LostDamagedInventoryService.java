@@ -1,20 +1,25 @@
 package com.ec.application.service;
 
+import java.text.ParseException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
 import com.ec.application.data.LostDamagedReturnData;
+import com.ec.application.model.InwardInventory;
 import com.ec.application.model.LostDamagedInventory;
 import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;
 import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.InwardInventorySpecification;
+import com.ec.common.Filters.LostDamagedInventorySpecification;
 
 @Service
 public class LostDamagedInventoryService 
@@ -50,10 +55,13 @@ public class LostDamagedInventoryService
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);
 	}
 	
-	public LostDamagedReturnData findFiilteredostDamagedList(FilterDataList filterDataList, Pageable pageable)
+	public LostDamagedReturnData findFiilteredostDamagedList(FilterDataList filterDataList, Pageable pageable) throws ParseException
 	{
+		Specification<LostDamagedInventory> spec = LostDamagedInventorySpecification.getSpecification(filterDataList);
+		
 		LostDamagedReturnData lostDamagedReturnData = new LostDamagedReturnData();
-		lostDamagedReturnData.setLostDamagedInventories(lostDamagedInventoryRepo.findAll(pageable));
+		if(spec!=null) lostDamagedReturnData.setLostDamagedInventories(lostDamagedInventoryRepo.findAll(spec,pageable));
+		else lostDamagedReturnData.setLostDamagedInventories(lostDamagedInventoryRepo.findAll(pageable));
 		lostDamagedReturnData.setLdDropdown(populateDropdownService.fetchData("lostdamaged"));
 		return lostDamagedReturnData;
 	}
@@ -79,8 +87,6 @@ public class LostDamagedInventoryService
 		if(!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Machinery On rent by ID "+id+" Not found");
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
-		Long oldProductId = lostDamagedInventory.getProduct().getProductId();
-		Float oldQuantity = lostDamagedInventory.getQuantity();
 		populateData(lostDamagedInventory,payload);
 		//UpdateStockBeforeUpdate(oldProductId,oldQuantity,lostDamagedInventory);
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);	
