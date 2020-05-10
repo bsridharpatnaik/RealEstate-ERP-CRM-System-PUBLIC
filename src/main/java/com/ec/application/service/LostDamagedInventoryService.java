@@ -93,7 +93,7 @@ public class LostDamagedInventoryService
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
 		AdjustStockBeforeDelete(lostDamagedInventory);
 		populateData(lostDamagedInventory,payload);
-		adjustStockBeforeCreate(payload);
+		lostDamagedInventory.setClosingStock(adjustStockBeforeCreate(payload));
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);	
 	}
 	
