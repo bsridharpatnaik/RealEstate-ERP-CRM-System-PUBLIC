@@ -8,6 +8,11 @@ import org.springframework.data.jpa.domain.Specification;
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.model.AllInventoryTransactions;
 import com.ec.application.model.AllInventoryTransactions_;
+import com.ec.application.model.InwardInventory;
+import com.ec.application.model.InwardInventory_;
+import com.ec.application.model.InwardOutwardList_;
+import com.ec.application.model.Product_;
+import com.ec.application.model.Supplier_;
 
 public class AllInventorySpecification 
 {
@@ -41,7 +46,18 @@ static SpecificationsBuilder<AllInventoryTransactions> specbldr = new Specificat
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldDateLessThan(AllInventoryTransactions_.DATE, endDates));
 		
 		if(globalSearch != null && globalSearch.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(AllInventoryTransactions_.PRODUCT_NAME, productNames));
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(AllInventoryTransactions_.PRODUCT_NAME, globalSearch));
+		
+		
+		if(globalSearch != null && globalSearch.size()>0)
+		{
+			Specification<AllInventoryTransactions> internalSpec = null;
+			internalSpec = specbldr.specOrCondition(internalSpec,
+					specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(AllInventoryTransactions_.PRODUCT_NAME, globalSearch)));
+			internalSpec = specbldr.specOrCondition(internalSpec,
+					specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(AllInventoryTransactions_.NAME, globalSearch)));
+			finalSpec = specbldr.specAndCondition(finalSpec,internalSpec);
+		}
 		
 		return finalSpec;
 		

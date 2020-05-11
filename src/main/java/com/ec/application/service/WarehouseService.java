@@ -41,8 +41,9 @@ public class WarehouseService
 		
 		if(warehouse.getWarehouseName() != payload.getWarehouseName() && warehouseRepo.countByName(payload.getWarehouseName())>0)
 			throw new Exception("Warehouse already exists!");
-		else
-			return warehouseRepo.save(payload);
+		
+		warehouse.setWarehouseName(payload.getWarehouseName());
+		return warehouseRepo.save(warehouse);
     }
 	
 	public List<IdNameProjections> findIdAndNames() 
