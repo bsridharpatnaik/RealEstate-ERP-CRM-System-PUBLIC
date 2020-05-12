@@ -48,9 +48,9 @@ public class Stock extends ReusableFields
 	Warehouse warehouse;
 	
 	@NonNull
-	Float quantityInHand;
+	Double quantityInHand;
 
-	public Stock(@NonNull Product product, @NonNull Warehouse warehouse, @NonNull Float quantityInHand) {
+	public Stock(@NonNull Product product, @NonNull Warehouse warehouse, @NonNull Double quantityInHand) {
 		super();
 		this.product = product;
 		this.warehouse = warehouse;
@@ -84,11 +84,11 @@ public class Stock extends ReusableFields
 		this.warehouse = warehouse;
 	}
 
-	public Float getQuantityInHand() {
+	public Double getQuantityInHand() {
 		return quantityInHand;
 	}
 
-	public void setQuantityInHand(Float quantityInHand) {
+	public void setQuantityInHand(Double quantityInHand) {
 		this.quantityInHand = quantityInHand;
 	}
 

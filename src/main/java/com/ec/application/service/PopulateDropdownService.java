@@ -72,6 +72,7 @@ public class PopulateDropdownService
 		case "lostdamaged":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());
 			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
 			break;
 		case "allinventory":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());

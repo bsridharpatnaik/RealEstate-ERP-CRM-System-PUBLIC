@@ -16,7 +16,7 @@ public class CreateLostOrDamagedInventoryData
 	Long productId;
 	
 	@NonNull
-	Float quantity;
+	Double quantity;
 	
 	@NonNull
 	String theftLocation;
@@ -40,11 +40,11 @@ public class CreateLostOrDamagedInventoryData
 		this.productId = productId;
 	}
 
-	public Float getQuantity() {
+	public Double getQuantity() {
 		return quantity;
 	}
 
-	public void setQuantity(Float quantity) {
+	public void setQuantity(Double quantity) {
 		this.quantity = quantity;
 	}
 

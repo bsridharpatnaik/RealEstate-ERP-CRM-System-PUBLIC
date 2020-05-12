@@ -42,7 +42,7 @@ private static final long serialVersionUID = 1L;
 	
 	String measurementUnit;
 	
-	Float reorderQuantity;
+	Double reorderQuantity;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="categoryId",nullable=false)
@@ -57,10 +57,10 @@ private static final long serialVersionUID = 1L;
 		this.productId = productId;
 	}
 	
-	public Float getReorderQuantity() {
+	public Double getReorderQuantity() {
 		return reorderQuantity;
 	}
-	public void setReorderQuantity(Float reorderQuantity) {
+	public void setReorderQuantity(Double reorderQuantity) {
 		this.reorderQuantity = reorderQuantity;
 	}
 	public Category getCategory() {

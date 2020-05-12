@@ -55,6 +55,9 @@ public class StockService
 	
 	@Autowired
 	WarehouseService warehouseService;
+	
+	@Autowired
+	InventoryNotificationService inventoryNotificationService;
 
 	public StockInformation findStockForAll(FilterDataList filterDataList,Pageable pageable) throws Exception
 	{
@@ -66,12 +69,12 @@ public class StockService
 		return fetchStockInformation(allStocks,pageable);
 	}
 	
-	public Float updateStock(Long productId,String warehousename, Float quantity, String operation) throws Exception
+	public Double updateStock(Long productId,String warehousename, Double quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId,warehousename);
 	
-		Float oldStock = currentStock.getQuantityInHand();
-		Float newStock = (float) 0;
+		Double oldStock = currentStock.getQuantityInHand();
+		Double newStock = (double) 0;
 		switch(operation)
 		{
 		case "inward":
@@ -86,8 +89,10 @@ public class StockService
 		{
 			currentStock.setQuantityInHand(newStock);
 			stockRepo.save(currentStock);
+			inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
 			return newStock;
 		}
+		
 	}
 
 	private Stock findOrInsertStock(Long productId,String warehousename) throws Exception 
@@ -103,7 +108,7 @@ public class StockService
 		List<Stock> stocks = stockRepo.findByIdName(productId,warehousename);
 		if(stocks.size()==0)
 		{
-			Stock stock = new Stock(product,warehouse,(float) 0.0);
+			Stock stock = new Stock(product,warehouse, 0.0);
 			return stockRepo.save(stock);
 		}
 		else
@@ -159,6 +164,12 @@ public class StockService
 		return currentStock;
 	}
 
+	public Double findTotalStockForProduct(Long productId) 
+	{
+		Double currentStock = stockRepo.getCurrentTotalStockForProduct(productId);
+		return currentStock;
+	}
+	
 	public List<ProductIdAndStockProjection> findStockForProductListWarehouse(CurrentStockRequest currentStockRequest) 
 	{
 		List<Long> productIds = currentStockRequest.getProductIds();

@@ -53,7 +53,7 @@ public class LostDamagedInventoryService
 		LostDamagedInventory lostDamagedInventory = new LostDamagedInventory();
 		validatePayload(payload);
 		populateData(lostDamagedInventory,payload);
-		Float closingStock = adjustStockBeforeCreate(payload);
+		Double closingStock = adjustStockBeforeCreate(payload);
 		lostDamagedInventory.setClosingStock(closingStock);
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);
 	}
@@ -69,7 +69,7 @@ public class LostDamagedInventoryService
 		return lostDamagedReturnData;
 	}
 	
-	private Float adjustStockBeforeCreate(CreateLostOrDamagedInventoryData payload) throws Exception 
+	private Double adjustStockBeforeCreate(CreateLostOrDamagedInventoryData payload) throws Exception 
 	{
 		String warehouseName = warehouseRepo.findById(payload.getWarehouseId()).get().getWarehouseName();
 		return stockService.updateStock(payload.getProductId(),warehouseName , payload.getQuantity(), "outward");

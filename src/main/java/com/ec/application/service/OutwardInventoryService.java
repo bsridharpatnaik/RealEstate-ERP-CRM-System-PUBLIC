@@ -78,8 +78,8 @@ public class OutwardInventoryService
 		for(InwardOutwardList oiList : productsWithQuantities)
 		{
 			Long productId = oiList.getProduct().getProductId();
-			Float quantity =  oiList.getQuantity();
-			Float closingStock = stockService.updateStock(productId, warehouseName, quantity, "outward");
+			Double quantity =  oiList.getQuantity();
+			Double closingStock = stockService.updateStock(productId, warehouseName, quantity, "outward");
 			oiList.setClosingStock(closingStock);
 		}
 	}
@@ -166,8 +166,8 @@ public class OutwardInventoryService
 		String warehouseName = outwardInventory.getWarehouse().getWarehouseName();
 		for(InwardOutwardList ioList : outwardInventory.getInwardOutwardList())
 		{
-			Float stock = ioList.getQuantity();
-			Float currentStock = stockRepo.findStockForProductAndWarehouse(ioList.getProduct().getProductId(),warehouseName).get(0).getQuantityInHand();
+			Double stock = ioList.getQuantity();
+			Double currentStock = stockRepo.findStockForProductAndWarehouse(ioList.getProduct().getProductId(),warehouseName).get(0).getQuantityInHand();
 			if(currentStock<stock)
 				throw new Exception("Cannot Delete. Stock will go negative if deleted");
 			stockService.updateStock(ioList.getProduct().getProductId(), warehouseName, stock, "inward");

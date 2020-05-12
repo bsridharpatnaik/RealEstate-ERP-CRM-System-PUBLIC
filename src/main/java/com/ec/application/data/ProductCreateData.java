@@ -9,13 +9,13 @@ public class ProductCreateData
 	String productName;
 	String productDescription;
 	@NonNull
-	Float reorderQuantity;
+	Double reorderQuantity;
 	String measurementUnit;
 	
-	public Float getReorderQuantity() {
+	public Double getReorderQuantity() {
 		return reorderQuantity;
 	}
-	public void setReorderQuantity(Float reorderQuantity) {
+	public void setReorderQuantity(Double reorderQuantity) {
 		this.reorderQuantity = reorderQuantity;
 	}
 	public Long getCategoryId() {

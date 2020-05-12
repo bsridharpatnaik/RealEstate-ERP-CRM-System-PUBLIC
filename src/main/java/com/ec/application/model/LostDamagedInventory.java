@@ -44,9 +44,9 @@ public class LostDamagedInventory extends ReusableFields
 	Product product;
 	
 	@NonNull
-	Float quantity;
+	Double quantity;
 	
-	Float closingStock;
+	Double closingStock;
 	
 	@NonNull
 	String locationOfTheft;
@@ -91,19 +91,19 @@ public class LostDamagedInventory extends ReusableFields
 		this.product = product;
 	}
 
-	public Float getQuantity() {
+	public Double getQuantity() {
 		return quantity;
 	}
 
-	public void setQuantity(Float quantity) {
+	public void setQuantity(Double quantity) {
 		this.quantity = quantity;
 	}
 
-	public Float getClosingStock() {
+	public Double getClosingStock() {
 		return closingStock;
 	}
 
-	public void setClosingStock(Float closingStock) {
+	public void setClosingStock(Double closingStock) {
 		this.closingStock = closingStock;
 	}
 

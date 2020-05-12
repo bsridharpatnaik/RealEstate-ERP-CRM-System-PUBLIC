@@ -33,8 +33,8 @@ public class InwardOutwardList extends ReusableFields
 	@JoinColumn(name="productId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Product product;
-	Float quantity;
-	Float closingStock;
+	Double quantity;
+	Double closingStock;
 
 	public Long getEntryid() {
 		return entryid;
@@ -46,12 +46,12 @@ public class InwardOutwardList extends ReusableFields
 	}
 
 
-	public void setClosingStock(Float closingStock) {
+	public void setClosingStock(Double closingStock) {
 		this.closingStock = closingStock;
 	}
 
 
-	public Float getClosingStock() {
+	public Double getClosingStock() {
 		return closingStock;
 	}
 
@@ -61,10 +61,10 @@ public class InwardOutwardList extends ReusableFields
 	public void setProduct(Product product) {
 		this.product = product;
 	}
-	public Float getQuantity() {
+	public Double getQuantity() {
 		return quantity;
 	}
-	public void setQuantity(Float quantity) {
+	public void setQuantity(Double quantity) {
 		this.quantity = quantity;
 	}
 	

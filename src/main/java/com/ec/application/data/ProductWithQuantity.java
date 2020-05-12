@@ -7,7 +7,7 @@ public class ProductWithQuantity
 	@NonNull
 	Long productId;
 	@NonNull
-	Float quantity;
+	Double quantity;
 	
 	public Long getProductId() {
 		return productId;
@@ -15,10 +15,10 @@ public class ProductWithQuantity
 	public void setProductId(Long productId) {
 		this.productId = productId;
 	}
-	public Float getQuantity() {
+	public Double getQuantity() {
 		return quantity;
 	}
-	public void setQuantity(Float quantity) {
+	public void setQuantity(Double quantity) {
 		this.quantity = quantity;
 	}
 }
