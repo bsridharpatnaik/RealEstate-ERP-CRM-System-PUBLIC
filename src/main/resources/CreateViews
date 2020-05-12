@@ -1,0 +1,103 @@
+-- Supplier
+CREATE OR REPLACE VIEW supplier as 
+SELECT 
+c.contact_id,c.name,c.mobile_no,c.email_id,c.contact_type,ci.contact_person,
+ci.contact_person_mobile_no,ci.gst_number,
+a.addr_line1,a.addr_line2,a.city,a.state,a.zip
+FROM contact c
+LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
+INNER JOIN address a on a.addr_id = c.addr_id
+WHERE 
+c.contact_type='SUPPLIER'
+AND ci.is_deleted=0;
+
+
+-- Contrator
+CREATE OR REPLACE VIEW contractor as 
+SELECT 
+c.contact_id,c.name,c.mobile_no,c.email_id,c.contact_type,ci.contact_person,
+ci.contact_person_mobile_no,ci.gst_number,
+a.addr_line1,a.addr_line2,a.city,a.state,a.zip
+FROM contact c
+LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
+INNER JOIN address a on a.addr_id = c.addr_id
+WHERE 
+c.contact_type='CONTRACTOR'
+AND ci.is_deleted=0;
+
+-- All contacts
+CREATE OR REPLACE VIEW AllContacts as 
+SELECT 
+c.contact_id,c.name,c.mobile_no,c.email_id,c.contact_type,ci.contact_person,
+ci.contact_person_mobile_no,ci.gst_number,
+a.addr_line1,a.addr_line2,a.city,a.state,a.zip
+FROM contact c
+LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
+INNER JOIN address a on a.addr_id = c.addr_id
+WHERE ci.is_deleted=0 OR ci.is_deleted IS NULL;
+
+-- All Inventory
+
+CREATE OR replace VIEW all_inventory 
+AS 
+
+  SELECT tx.*, 
+		p.product_name,
+        p.measurement_unit,
+         c.name, 
+         c.mobile_no, 
+         c.email_id, 
+         c.contact_type, 
+         w.warehouse_id, 
+         w.warehouse_name 
+  FROM   (SELECT 'inward'                         AS type, 
+                 ii.inwardid               AS id, 
+                 Date_format(ii.DATE, "%Y-%m-%d") AS date, 
+                 ii.contact_id                    AS contactid, 
+                 ii.warehouse_id                  AS warehouseid, 
+                 ioe.product_id                   AS productid, 
+                 ioe.quantity, 
+                 ioe.closing_stock, 
+                 ioe.created_at, 
+                 ioe.updated_at 
+          FROM   inward_inventory ii 
+                 inner join inwardinventory_entry iie 
+                         ON ii.inwardid = iie.inwardid 
+                 inner join inward_outward_entries ioe 
+                         ON iie.entry_id = ioe.entryid 
+          WHERE  ii.is_deleted = 0 
+          UNION ALL 
+          SELECT 'outward'                        AS type, 
+                 oi.outwardid, 
+                 Date_format(oi.DATE, "%Y-%m-%d") AS date, 
+                 oi.contact_id                    AS contactid, 
+                 oi.warehouse_id                  AS warehouseid, 
+                 ioe.product_id                   AS productid, 
+                 ioe.quantity, 
+                 ioe.closing_stock, 
+                 ioe.created_at, 
+                 ioe.updated_at 
+          FROM   outward_inventory oi 
+                 inner join outwardinventory_entry oie 
+                         ON oi.outwardid = oie.outwardid 
+                 inner join inward_outward_entries ioe 
+                         ON oie.entry_id = ioe.entryid 
+          WHERE  oi.is_deleted = 0 
+          UNION ALL 
+          SELECT 'lost/damaged'                    AS type, 
+                 id, 
+                 Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
+                 ''                                AS contactid, 
+                 ldi.warehouse_name                AS warehouseid, 
+                 ldi.product_id                    AS productid, 
+                 ldi.quantity, 
+                 ldi.closing_stock, 
+                 ldi.created_at, 
+                 ldi.updated_at 
+          FROM   lost_damaged_inventory ldi) AS tx 
+         left join AllContacts c 
+                ON c.contact_id = tx.contactid 
+         inner join warehouse w 
+                 ON w.warehouse_id = tx.warehouseid 
+		inner join product p on p.product_id = tx.productid
+  ORDER  BY id DESC; 
