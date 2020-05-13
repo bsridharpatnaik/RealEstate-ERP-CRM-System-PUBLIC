@@ -6,6 +6,10 @@ public class ReturnAllNotificationsData
 {
 	List<ReturnSingleNotification> notifications;
 
+	public ReturnAllNotificationsData() {
+		super();
+	}
+
 	public List<ReturnSingleNotification> getNotifications() {
 		return notifications;
 	}

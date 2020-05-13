@@ -43,8 +43,8 @@ public class AllNotificationService
 
 	private ReturnAllNotificationsData getInventoryNotification() throws Exception 
 	{
-		try
-		{
+		//try
+		//{
 			String url = reqUrl+"notification";
 			System.out.println(url);
 			HttpHeaders headers = new HttpHeaders();
@@ -57,11 +57,11 @@ public class AllNotificationService
 		    } else {
 		        throw new Exception ("Error fetching notification");
 		    }
-		}
-		catch(Exception e)
-		{
-			throw new Exception ("Error fetching notification");
-		}
+		//}
+		//catch(Exception e)
+		//{
+		//	throw new Exception ("Error fetching notification");
+		//}
 	}
 
 }

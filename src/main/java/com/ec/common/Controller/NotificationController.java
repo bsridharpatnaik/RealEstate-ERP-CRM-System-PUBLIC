@@ -16,7 +16,7 @@ public class NotificationController
 	AllNotificationService allNotificationService;
 	
 	@GetMapping
-	public ReturnAllNotificationsData fetchAllNotifications()
+	public ReturnAllNotificationsData fetchAllNotifications() throws Exception
 	{
 		return allNotificationService.getAllNotifications();
 	}
