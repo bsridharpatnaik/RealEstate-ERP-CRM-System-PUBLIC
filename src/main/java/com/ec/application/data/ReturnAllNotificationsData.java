@@ -4,14 +4,13 @@ import java.util.List;
 
 public class ReturnAllNotificationsData 
 {
-	List<ReturnSingleNotification> inventoryNormalizedNotifications;
+	List<ReturnSingleNotification> notifications;
 
-	public List<ReturnSingleNotification> getInventoryNormalizedNotifications() {
-		return inventoryNormalizedNotifications;
+	public List<ReturnSingleNotification> getNotifications() {
+		return notifications;
 	}
 
-	public void setInventoryNormalizedNotifications(List<ReturnSingleNotification> inventoryNormalizedNotifications) {
-		this.inventoryNormalizedNotifications = inventoryNormalizedNotifications;
+	public void setNotifications(List<ReturnSingleNotification> notifications) {
+		this.notifications = notifications;
 	}
-	
 }

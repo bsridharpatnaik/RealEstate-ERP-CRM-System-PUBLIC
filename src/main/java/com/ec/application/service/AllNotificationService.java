@@ -21,7 +21,7 @@ public class AllNotificationService
 		ReturnAllNotificationsData returnAllNotificationsData = new ReturnAllNotificationsData();
 		List<ReturnSingleNotification> allNotifications = new ArrayList<ReturnSingleNotification>();
 		allNotifications.addAll(getInventoryNotification());
-		returnAllNotificationsData.setInventoryNormalizedNotifications(allNotifications);
+		returnAllNotificationsData.setNotifications(allNotifications);
 		return returnAllNotificationsData;
 	}
 

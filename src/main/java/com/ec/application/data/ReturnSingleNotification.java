@@ -1,6 +1,8 @@
 package com.ec.application.data;
 
-public class ReturnSingleNotification 
+import com.ec.application.ReusableClasses.ReusableFields;
+
+public class ReturnSingleNotification extends ReusableFields
 {
 	Long notificationId;
 	String type;

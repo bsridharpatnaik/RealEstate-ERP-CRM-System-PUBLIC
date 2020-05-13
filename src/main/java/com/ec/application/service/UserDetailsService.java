@@ -26,7 +26,7 @@ public class UserDetailsService
     	System.out.println(request.getHeader("Authorization"));
     	UserReturnData userDetails = webClientBuilder.build()
 					    	.get()
-					    	.uri(reqUrl+"/user/me")
+					    	.uri(reqUrl+"user/me")
 					    	.header("Authorization", request.getHeader("Authorization"))
 					    	.retrieve()
 					    	.bodyToMono(UserReturnData.class)
