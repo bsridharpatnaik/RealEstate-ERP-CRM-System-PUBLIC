@@ -87,5 +87,10 @@ public class CheckBeforeDeleteService
 		else
 			return false;
 	}
+
+	public boolean isUsageAreaUsed(Long id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }
 
