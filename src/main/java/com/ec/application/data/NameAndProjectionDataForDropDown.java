@@ -17,7 +17,15 @@ public class NameAndProjectionDataForDropDown
 	List<IdNameProjections> product;
 	List<IdNameProjections> contractor;
 	List<IdNameProjections> supplier;
+	List<IdNameProjections> usageArea;
 	
+	
+	public List<IdNameProjections> getUsageArea() {
+		return usageArea;
+	}
+	public void setUsageArea(List<IdNameProjections> usageArea) {
+		this.usageArea = usageArea;
+	}
 	public List<IdNameProjections> getMachinery() {
 		return machinery;
 	}

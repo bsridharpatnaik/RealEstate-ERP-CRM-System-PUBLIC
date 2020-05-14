@@ -32,6 +32,7 @@ public final class InwardInventorySpecification
 		List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"productNames");
 		List<String> supplierNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"supplierNames");
 		List<String> warehouseNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"warehouseNames");
+		List<String> invoiceReceived = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"invoiceReceived");
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"globalSearch");
 		Specification<InwardInventory> finalSpec = null;
 		
@@ -50,6 +51,9 @@ public final class InwardInventorySpecification
 		
 		if(warehouseNames != null && warehouseNames.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(InwardInventory_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, warehouseNames));	
+		
+		if(invoiceReceived != null && invoiceReceived.size()>0)
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectBoleanFieldEquals(InwardInventory_.INVOICE_RECEIVED,invoiceReceived));
 	
 		if(globalSearch != null && globalSearch.size()>0)
 		{

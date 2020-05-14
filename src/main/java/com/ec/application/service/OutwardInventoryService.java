@@ -13,9 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
-import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.data.ReturnOutwardInventoryData;
-import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.Warehouse;
@@ -24,6 +22,7 @@ import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
+import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.OutwardInventorySpecification;
@@ -59,6 +58,9 @@ public class OutwardInventoryService
 	
 	@Autowired
 	InwardInventoryService iiService;
+	
+	@Autowired
+	UsageAreaRepo usageAreaRepo;
 	
 	@Transactional
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
@@ -105,6 +107,7 @@ public class OutwardInventoryService
 		outwardInventory.setAdditionalInfo(oiData.getAdditionalInfo());
 		outwardInventory.setContractor(contractorRepo.findById(oiData.getContractorId()).get());
 		outwardInventory.setUsageLocation(locationRepo.findById(oiData.getUsageLocationId()).get());
+		outwardInventory.setUsageArea(usageAreaRepo.findById(oiData.getUsageAreaId()).get());
 		outwardInventory.setWarehouse(warehouse);;
 		outwardInventory.setDate(oiData.getDate());
 		outwardInventory.setPurpose(oiData.getPurpose());
@@ -120,6 +123,9 @@ public class OutwardInventoryService
 			throw new Exception("Contractor not found.");
 		if(!warehouseRepo.existsById(oiData.getWarehouseId()))
 			throw new Exception("Contractor not found.");
+		
+		if(!usageAreaRepo.existsById(oiData.getUsageAreaId()))
+			throw new Exception("Usage Area not found.");
 		for(ProductWithQuantity productWithQuantity : oiData.getProductWithQuantities())
 		{
 			if(!productRepo.existsById(productWithQuantity.getProductId()))

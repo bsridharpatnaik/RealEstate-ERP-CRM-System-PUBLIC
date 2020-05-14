@@ -12,8 +12,8 @@ public class CreateMORentData
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@NonNull
-	@JsonProperty("Date")
-	private Date Date;
+	@JsonProperty("date")
+	private Date date;
 	
 	@NonNull
 	private long machineryId;
@@ -60,12 +60,12 @@ public class CreateMORentData
 	public void setMode(String mode) {
 		this.mode = mode;
 	}
-	
+
 	public Date getDate() {
-		return Date;
+		return date;
 	}
 	public void setDate(Date date) {
-		Date = date;
+		this.date = date;
 	}
 	public long getMachineryId() {
 		return machineryId;

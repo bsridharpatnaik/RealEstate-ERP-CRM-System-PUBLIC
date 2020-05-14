@@ -12,7 +12,7 @@ public class InwardInventoryData
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@NonNull
-	Date Date;
+	Date date;
 	@NonNull
 	Long supplierId;
 	@NonNull
@@ -23,11 +23,21 @@ public class InwardInventoryData
 	String vendorSlipNo;
 	String ourSlipNo;
 	String additionalComments;
+	
+	@NonNull
+	Boolean invoiceReceived;
+	
+	public Boolean getInvoiceReceived() {
+		return invoiceReceived;
+	}
+	public void setInvoiceReceived(Boolean invoiceReceived) {
+		this.invoiceReceived = invoiceReceived;
+	}
 	public Date getDate() {
-		return Date;
+		return date;
 	}
 	public void setDate(Date date) {
-		Date = date;
+		this.date = date;
 	}
 	public Long getSupplierId() {
 		return supplierId;

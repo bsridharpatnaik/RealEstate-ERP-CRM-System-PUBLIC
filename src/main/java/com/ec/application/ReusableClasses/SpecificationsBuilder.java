@@ -37,7 +37,17 @@ public class SpecificationsBuilder<T>
     	}
         return finalSpec;
     }
-    
+    public Specification<T> whereDirectBoleanFieldEquals(String key,List<String> names)
+    {
+    	Specification<T> finalSpec = null;
+    	for(String name:names)
+    	{
+    		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+    	            -> cb.equal(root.get(key), Boolean.parseBoolean(name));
+    	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	}
+        return finalSpec;
+    }
     public Specification<T> whereDirectFieldEquals(String key,List<String> names)
     {
     	Specification<T> finalSpec = null;

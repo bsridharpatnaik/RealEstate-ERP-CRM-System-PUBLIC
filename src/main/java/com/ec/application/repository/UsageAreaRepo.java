@@ -29,5 +29,8 @@ public interface UsageAreaRepo extends BaseRepository<UsageArea, Long>
 	@Query(value="SELECT usageAreaName as name from UsageArea m")
 	List<String> getNames();
 
+	@Query(value="SELECT count(m) from UsageArea m where m.usageAreaId=:id")
+	int usageAreaUsageCount(@Param("id")Long id);
+
 	
 }

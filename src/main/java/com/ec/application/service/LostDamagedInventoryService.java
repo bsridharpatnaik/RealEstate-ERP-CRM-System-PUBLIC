@@ -89,7 +89,7 @@ public class LostDamagedInventoryService
 		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
 		validatePayload(payload);
 		if(!lostDamagedInventoryOpt.isPresent())
-			throw new Exception("Machinery On rent by ID "+id+" Not found");
+			throw new Exception("Lost Damaged inventory by ID "+id+" Not found");
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
 		AdjustStockBeforeDelete(lostDamagedInventory);
 		populateData(lostDamagedInventory,payload);

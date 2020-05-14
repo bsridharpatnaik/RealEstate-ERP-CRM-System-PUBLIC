@@ -10,6 +10,7 @@ import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.SupplierRepo;
+import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
 @Service
 public class PopulateDropdownService 
@@ -38,6 +39,9 @@ public class PopulateDropdownService
 	
 	@Autowired
 	ContractorRepo contractorRepo;
+	
+	@Autowired
+	UsageAreaRepo usageAreaRepo;
 
 	public NameAndProjectionDataForDropDown fetchData(String page) 
 	{
@@ -63,6 +67,7 @@ public class PopulateDropdownService
 			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
 			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
 			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+			morDropdownDataList.setWarehouse(usageAreaRepo.findIdAndNames());
 			break;
 		case "stock":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());

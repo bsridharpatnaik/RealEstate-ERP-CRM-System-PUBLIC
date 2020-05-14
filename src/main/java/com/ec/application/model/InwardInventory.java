@@ -40,7 +40,7 @@ public class InwardInventory extends ReusableFields
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
-	Date Date;
+	Date date;
 	
 	@NonNull
 	String vehicleNo;
@@ -67,6 +67,16 @@ public class InwardInventory extends ReusableFields
 	
 	String additionalInfo;
 	
+	@NonNull
+	@Column(nullable = false)
+	Boolean invoiceReceived;
+	
+	public Boolean getInvoiceReceived() {
+		return invoiceReceived;
+	}
+	public void setInvoiceReceived(Boolean invoiceReceived) {
+		this.invoiceReceived = invoiceReceived;
+	}
 	public Long getInwardid() {
 		return inwardid;
 	}
@@ -97,15 +107,12 @@ public class InwardInventory extends ReusableFields
 	public void setAdditionalInfo(String additionalInfo) {
 		this.additionalInfo = additionalInfo;
 	}
-	
-	
 	public Date getDate() {
-		return Date;
+		return date;
 	}
 	public void setDate(Date date) {
-		Date = date;
+		this.date = date;
 	}
-	
 	public String getVehicleNo() {
 		return vehicleNo;
 	}

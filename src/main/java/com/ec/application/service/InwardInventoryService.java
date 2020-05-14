@@ -90,6 +90,7 @@ public class InwardInventoryService
 
 	private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
 	{
+		inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
 		inwardInventory.setDate(iiData.getDate());
 		inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
 		inwardInventory.setVehicleNo(iiData.getVehicleNo());

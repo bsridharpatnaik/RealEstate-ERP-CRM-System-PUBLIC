@@ -11,7 +11,7 @@ public class OutwardInventoryData
 {
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@NonNull
-	Date Date;
+	Date date;
 	
 	@NonNull
 	Long contractorId;
@@ -28,16 +28,29 @@ public class OutwardInventoryData
 	String purpose;
 	
 	@NonNull
+	Long  usageAreaId;
+	
+	@NonNull
 	List<ProductWithQuantity> productWithQuantities;
 	
 	String additionalInfo;
 
+	
+
+	public Long getUsageAreaId() {
+		return usageAreaId;
+	}
+
+	public void setUsageAreaId(Long usageAreaId) {
+		this.usageAreaId = usageAreaId;
+	}
+
 	public Date getDate() {
-		return Date;
+		return date;
 	}
 
 	public void setDate(Date date) {
-		Date = date;
+		this.date = date;
 	}
 
 	public Long getContractorId() {

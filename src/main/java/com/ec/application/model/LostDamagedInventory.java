@@ -36,7 +36,7 @@ public class LostDamagedInventory extends ReusableFields
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
-	Date Date;
+	Date date;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="productId",nullable=false)
@@ -58,21 +58,20 @@ public class LostDamagedInventory extends ReusableFields
 	@NonNull
 	Warehouse warehouse;
 	
-	
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
 	public Warehouse getWarehouse() {
 		return warehouse;
 	}
 
 	public void setWarehouse(Warehouse warehouse) {
 		this.warehouse = warehouse;
-	}
-
-	public Date getDate() {
-		return Date;
-	}
-
-	public void setDate(Date date) {
-		Date = date;
 	}
 
 	public Long getId() {

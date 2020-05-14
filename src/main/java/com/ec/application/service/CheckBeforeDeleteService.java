@@ -10,6 +10,7 @@ import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
+import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
 
 @Service
@@ -36,6 +37,9 @@ public class CheckBeforeDeleteService
 	
 	@Autowired
 	WarehouseRepo warehouseRepo;
+	
+	@Autowired
+	UsageAreaRepo usageAreaRepo;
 	
 	@Autowired
 	InwardOutwardListRepo inwardOutwardListRepo;
@@ -89,8 +93,10 @@ public class CheckBeforeDeleteService
 	}
 
 	public boolean isUsageAreaUsed(Long id) {
-		// TODO Auto-generated method stub
-		return false;
+		if(usageAreaRepo.usageAreaUsageCount(id) > 0)
+			return true;
+		else
+			return false;
 	}
 }
 

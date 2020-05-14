@@ -14,6 +14,7 @@ import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.OutwardInventory_;
 import com.ec.application.model.Product_;
 import com.ec.application.model.Supplier_;
+import com.ec.application.model.UsageArea_;
 import com.ec.application.model.UsageLocation_;
 import com.ec.application.model.Warehouse_;
 
@@ -30,6 +31,7 @@ public final class OutwardInventorySpecification
 		List<String> contractorNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"contractorNames");
 		List<String> warehouseNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"warehouseNames");
 		List<String> usageLocations = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"usageLocation");
+		List<String> usageAreas = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"usageArea");
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"globalSearch");
 		
 		Specification<OutwardInventory> finalSpec = null;
@@ -52,6 +54,10 @@ public final class OutwardInventorySpecification
 	
 		if(usageLocations != null && usageLocations.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(OutwardInventory_.USAGE_LOCATION, UsageLocation_.LOCATION_NAME, usageLocations));	
+		
+		if(usageAreas != null && usageAreas.size()>0)
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(OutwardInventory_.USAGE_AREA, UsageArea_.USAGE_AREA_NAME,usageAreas ));	
+		
 		
 		if(globalSearch != null && globalSearch.size()>0)
 		{

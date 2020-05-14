@@ -40,7 +40,7 @@ public class OutwardInventory extends ReusableFields
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
-	Date Date;
+	Date date;
 	
 	String purpose;
 	String slipNo;
@@ -57,6 +57,11 @@ public class OutwardInventory extends ReusableFields
 	Warehouse warehouse;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="usageAreaId",nullable=true)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	UsageArea usageArea;
+	
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="contactId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Contractor contractor;
@@ -68,6 +73,22 @@ public class OutwardInventory extends ReusableFields
 	
 	String additionalInfo;
 	
+	
+	public UsageArea getUsageArea() {
+		return usageArea;
+	}
+
+	public void setUsageArea(UsageArea usageArea) {
+		this.usageArea = usageArea;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
 
 	public Long getOutwardid() {
 		return outwardid;
@@ -77,14 +98,7 @@ public class OutwardInventory extends ReusableFields
 		this.outwardid = outwardid;
 	}
 
-	public Date getDate() {
-		return Date;
-	}
-
-	public void setDate(Date date) {
-		Date = date;
-	}
-
+	
 	public String getPurpose() {
 		return purpose;
 	}
