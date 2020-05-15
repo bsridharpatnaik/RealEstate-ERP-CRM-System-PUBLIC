@@ -25,7 +25,7 @@ public class InwardInventoryData
 	String ourSlipNo;
 	String additionalComments;
 	
-	@NonNull
+	//@NonNull
 	Boolean invoiceReceived;
 	
 	@NonNull
