@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.lang.NonNull;
 
+import com.ec.application.model.FileInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class OutwardInventoryData 
@@ -35,7 +36,16 @@ public class OutwardInventoryData
 	
 	String additionalInfo;
 
-	
+	@NonNull
+	List<FileInformationDAO> fileInformations;
+
+	public List<FileInformationDAO> getFileInformations() {
+		return fileInformations;
+	}
+
+	public void setFileInformations(List<FileInformationDAO> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
 
 	public Long getUsageAreaId() {
 		return usageAreaId;

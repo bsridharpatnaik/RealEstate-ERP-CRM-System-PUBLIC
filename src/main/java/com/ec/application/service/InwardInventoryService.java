@@ -99,6 +99,7 @@ public class InwardInventoryService
 		inwardInventory.setSupplier(supplierRepo.findById(iiData.getSupplierId()).get());
 		inwardInventory.setWarehouse(warehouseRepo.findById(iiData.getWarehouseId()).get());
 		inwardInventory.setInwardOutwardList(fetchInwardOutwardList(iiData.getProductWithQuantities(),warehouseRepo.findById(iiData.getWarehouseId()).get()));
+		inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
 	}
 
 	public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities, Warehouse warehouse) 

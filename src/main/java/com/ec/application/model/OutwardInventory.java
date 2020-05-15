@@ -2,6 +2,7 @@ package com.ec.application.model;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -49,7 +50,7 @@ public class OutwardInventory extends ReusableFields
 	@JoinTable(name = "outwardinventory_entry", joinColumns = {
 			@JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns = {
 					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
-	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;
+	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="warehouse_id",nullable=false)
@@ -73,7 +74,20 @@ public class OutwardInventory extends ReusableFields
 	
 	String additionalInfo;
 	
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
+	@JoinTable(name = "outward_fileinformation", joinColumns = {
+			@JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns = {
+					@JoinColumn(name = "id", referencedColumnName = "id") })
+	Set<FileInformation> fileInformations = new HashSet<>();
 	
+	public Set<FileInformation> getFileInformations() {
+		return fileInformations;
+	}
+
+	public void setFileInformations(Set<FileInformation> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
+
 	public UsageArea getUsageArea() {
 		return usageArea;
 	}

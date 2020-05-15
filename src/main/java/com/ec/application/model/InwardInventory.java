@@ -2,6 +2,7 @@ package com.ec.application.model;
 
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -71,6 +72,20 @@ public class InwardInventory extends ReusableFields
 	@Column(nullable = false)
 	Boolean invoiceReceived;
 	
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
+	@JoinTable(name = "inward_fileinformation", joinColumns = {
+			@JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns = {
+					@JoinColumn(name = "id", referencedColumnName = "id") })
+	Set<FileInformation> fileInformations = new HashSet<>();
+	
+	
+	
+	public Set<FileInformation> getFileInformations() {
+		return fileInformations;
+	}
+	public void setFileInformations(Set<FileInformation> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
 	public Boolean getInvoiceReceived() {
 		return invoiceReceived;
 	}

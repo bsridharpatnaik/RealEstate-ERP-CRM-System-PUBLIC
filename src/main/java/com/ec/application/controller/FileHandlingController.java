@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ec.application.data.FileUploadSuccessData;
+import com.ec.application.model.FileInformation;
 import com.ec.application.service.FileHandlingSgervice;
 
 @RestController
@@ -25,7 +25,7 @@ public class FileHandlingController
 	
 	@PostMapping(value = "/upload")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public FileUploadSuccessData uploadDoc(@RequestParam("file") MultipartFile file,@RequestParam("type") String type,@RequestParam("id") Long id) throws Exception
+	public FileInformation uploadDoc(@RequestParam("file") MultipartFile file,@RequestParam("type") String type,@RequestParam("id") Long id) throws Exception
 	{
 		return fileHandlingSgervice.uploadDoc(file, type, id);
 	}
