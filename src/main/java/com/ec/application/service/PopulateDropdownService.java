@@ -67,7 +67,7 @@ public class PopulateDropdownService
 			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
 			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
 			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
-			morDropdownDataList.setWarehouse(usageAreaRepo.findIdAndNames());
+			morDropdownDataList.setUsageArea(usageAreaRepo.findIdAndNames());
 			break;
 		case "stock":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());
