@@ -85,7 +85,7 @@ AS
           WHERE  oi.is_deleted = 0 
           UNION ALL 
           SELECT 'lost/damaged'                    AS type, 
-                 id, 
+                 lostdamagedid, 
                  Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
                  ''                                AS contactid, 
                  ldi.warehouse_name                AS warehouseid, 
@@ -101,3 +101,4 @@ AS
                  ON w.warehouse_id = tx.warehouseid 
 		inner join product p on p.product_id = tx.productid
   ORDER  BY id DESC; 
+
