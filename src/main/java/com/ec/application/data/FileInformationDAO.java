@@ -4,9 +4,9 @@ import org.springframework.lang.NonNull;
 
 public class FileInformationDAO 
 {
-	@NonNull
+	//@NonNull
 	String fileUUId;
-	@NonNull
+	//@NonNull
 	String fileName;
 	public String getFileUUId() {
 		return fileUUId;
