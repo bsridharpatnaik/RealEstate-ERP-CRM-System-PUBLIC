@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
 import com.ec.application.data.LostDamagedReturnData;
 import com.ec.application.model.InwardInventory;
@@ -81,6 +82,7 @@ public class LostDamagedInventoryService
 		lostDamagedInventory.setProduct(productService.findSingleProduct(payload.getProductId()));
 		lostDamagedInventory.setDate(payload.getDate());
 		lostDamagedInventory.setWarehouse(warehouseRepo.findById(payload.getWarehouseId()).get());
+		//lostDamagedInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
 	}
 	
 	@Transactional
@@ -105,7 +107,6 @@ public class LostDamagedInventoryService
 			throw new Exception("Invalid warehouse ID");
 		if(payload.getQuantity()<=0)
 			throw new Exception("Quantity should be greater than zero");
-		
 	}
 	
 	public LostDamagedInventory findById(Long id) throws Exception

@@ -47,5 +47,5 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 	List<ProductIdAndStockProjection> getCurrentStockForProductListWarehouse(@Param("productIds")List<Long> productIds,@Param("warehouseId") Long warehouseId);
 
 	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId")
-	Double getCurrentTotalStockForProduct(Long productId);
+	Double getCurrentTotalStockForProduct(@Param("productId") Long productId);
 }

@@ -1,8 +1,12 @@
 package com.ec.application.ReusableClasses;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.ec.application.data.FileInformationDAO;
+import com.ec.application.model.FileInformation;
 
 public final class ReusableMethods 
 {
@@ -25,4 +29,17 @@ public final class ReusableMethods
         // return the list 
         return list; 
     }
+
+	public static Set<FileInformation> convertFilesListToSet(List<FileInformationDAO> fileInformationsDAO) 
+	{
+		Set<FileInformation> fileSet = new HashSet<>();
+		for(FileInformationDAO fileInformationDAO : fileInformationsDAO)
+		{
+			FileInformation fileInformation = new FileInformation();
+			fileInformation.setFileName(fileInformationDAO.getFileName());
+			fileInformation.setFileUUId(fileInformationDAO.getFileUUId());
+			fileSet.add(fileInformation);
+		}
+		return fileSet;
+	}
 }

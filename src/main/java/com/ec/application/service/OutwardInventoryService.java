@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
@@ -113,6 +114,7 @@ public class OutwardInventoryService
 		outwardInventory.setPurpose(oiData.getPurpose());
 		outwardInventory.setSlipNo(oiData.getPurpose());
 		outwardInventory.setInwardOutwardList(iiService.fetchInwardOutwardList(oiData.getProductWithQuantities(),warehouse));	
+		//outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
 	}
 
 	private void validateInputs(OutwardInventoryData oiData) throws Exception 

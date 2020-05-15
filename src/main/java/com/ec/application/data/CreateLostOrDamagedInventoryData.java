@@ -1,9 +1,11 @@
 package com.ec.application.data;
 
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.lang.NonNull;
 
+import com.ec.application.model.FileInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class CreateLostOrDamagedInventoryData 
@@ -23,6 +25,18 @@ public class CreateLostOrDamagedInventoryData
 	
 	@NonNull
 	Long warehouseId;
+
+	@NonNull
+	List<FileInformationDAO> fileInformations;
+
+
+	public List<FileInformationDAO> getFileInformations() {
+		return fileInformations;
+	}
+
+	public void setFileInformations(List<FileInformationDAO> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
 
 	public Date getDate() {
 		return date;

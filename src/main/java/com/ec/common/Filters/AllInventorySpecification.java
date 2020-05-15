@@ -8,11 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.model.AllInventoryTransactions;
 import com.ec.application.model.AllInventoryTransactions_;
-import com.ec.application.model.InwardInventory;
-import com.ec.application.model.InwardInventory_;
-import com.ec.application.model.InwardOutwardList_;
-import com.ec.application.model.Product_;
-import com.ec.application.model.Supplier_;
+
 
 public class AllInventorySpecification 
 {
