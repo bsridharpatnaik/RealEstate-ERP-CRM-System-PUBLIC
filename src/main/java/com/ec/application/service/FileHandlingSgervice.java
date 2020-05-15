@@ -8,7 +8,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import com.ec.application.service.DBFileStorageService;
+
+import com.ec.application.data.FileUploadSuccessData;
 import com.ec.application.model.DBFile;
 
 @Service
@@ -17,11 +18,20 @@ public class FileHandlingSgervice
 	@Autowired
 	DBFileStorageService dbFileStorageService;
 	
-	public void uploadDoc(MultipartFile file,String type,Long id) 
+	public FileUploadSuccessData uploadDoc(MultipartFile file,String type,Long id) throws Exception 
 	{
-
-		DBFile dbFile = dbFileStorageService.storeFile(file);
-		System.out.println(dbFile.getFileName());
+		try
+		{
+			FileUploadSuccessData fileUploadSuccessData = new FileUploadSuccessData();
+			DBFile dbFile = dbFileStorageService.storeFile(file);
+			fileUploadSuccessData.setFileid(dbFile.getId());
+			fileUploadSuccessData.setFileName(dbFile.getFileName());
+			return fileUploadSuccessData;
+		}
+		catch(Exception e)
+		{
+			throw new Exception("Error uploading file.");
+		}
 	}
 
 	public ResponseEntity<Resource> downloadFile(String fileId) throws Exception 

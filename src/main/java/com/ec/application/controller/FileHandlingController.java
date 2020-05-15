@@ -1,11 +1,8 @@
 package com.ec.application.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ec.application.model.DBFile;
+import com.ec.application.data.FileUploadSuccessData;
 import com.ec.application.service.FileHandlingSgervice;
 
 @RestController
@@ -28,9 +25,9 @@ public class FileHandlingController
 	
 	@PostMapping(value = "/upload")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void uploadDoc(@RequestParam("file") MultipartFile file,@RequestParam("type") String type,@RequestParam("id") Long id)
+	public FileUploadSuccessData uploadDoc(@RequestParam("file") MultipartFile file,@RequestParam("type") String type,@RequestParam("id") Long id) throws Exception
 	{
-		fileHandlingSgervice.uploadDoc(file, type, id);
+		return fileHandlingSgervice.uploadDoc(file, type, id);
 	}
 
 	@GetMapping("/download/{fileId}")
