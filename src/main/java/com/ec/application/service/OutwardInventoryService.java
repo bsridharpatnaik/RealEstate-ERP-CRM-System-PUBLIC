@@ -114,7 +114,7 @@ public class OutwardInventoryService
 		outwardInventory.setPurpose(oiData.getPurpose());
 		outwardInventory.setSlipNo(oiData.getPurpose());
 		outwardInventory.setInwardOutwardList(iiService.fetchInwardOutwardList(oiData.getProductWithQuantities(),warehouse));	
-		//outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
+		outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
 	}
 
 	private void validateInputs(OutwardInventoryData oiData) throws Exception 

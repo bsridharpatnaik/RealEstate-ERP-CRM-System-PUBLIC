@@ -82,7 +82,7 @@ public class LostDamagedInventoryService
 		lostDamagedInventory.setProduct(productService.findSingleProduct(payload.getProductId()));
 		lostDamagedInventory.setDate(payload.getDate());
 		lostDamagedInventory.setWarehouse(warehouseRepo.findById(payload.getWarehouseId()).get());
-		//lostDamagedInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
+		lostDamagedInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
 	}
 	
 	@Transactional
