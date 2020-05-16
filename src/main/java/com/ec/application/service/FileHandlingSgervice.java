@@ -18,7 +18,7 @@ public class FileHandlingSgervice
 	@Autowired
 	DBFileStorageService dbFileStorageService;
 	
-	public FileInformation uploadDoc(MultipartFile file,String type,Long id) throws Exception 
+	public FileInformation uploadDoc(MultipartFile file) throws Exception 
 	{
 		try
 		{

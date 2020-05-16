@@ -25,9 +25,9 @@ public class FileHandlingController
 	
 	@PostMapping(value = "/upload")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public FileInformation uploadDoc(@RequestParam("file") MultipartFile file,@RequestParam("type") String type,@RequestParam("id") Long id) throws Exception
+	public FileInformation uploadDoc(@RequestParam("file") MultipartFile file) throws Exception
 	{
-		return fileHandlingSgervice.uploadDoc(file, type, id);
+		return fileHandlingSgervice.uploadDoc(file);
 	}
 
 	@GetMapping("/download/{fileId}")
