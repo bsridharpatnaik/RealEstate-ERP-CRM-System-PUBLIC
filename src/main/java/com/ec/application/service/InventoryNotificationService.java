@@ -1,8 +1,10 @@
 package com.ec.application.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.model.InventoryNotification;
@@ -105,7 +107,21 @@ public class InventoryNotificationService
 	
 	List<InventoryNotification> returnInventoryNotifications()
 	{
-		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo.findAll();
+		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo.findAll(Sort.by(Sort.Direction.DESC, "modified"));
 		return inventoryNotifications;
+	}
+
+	public void deleteNotificationByID(Long id) throws Exception 
+	{
+		Optional<InventoryNotification> inventoryNotificationOpt = inventoryNotificationRepo.findById(id);
+		
+		if(!inventoryNotificationOpt.isPresent())
+			throw new Exception("Notification not found");
+		
+		InventoryNotification inventoryNotification = inventoryNotificationOpt.get();
+		if(inventoryNotification.getType().equals("lowStock"))
+			throw new Exception("Cannot delete lowStock notifications");
+		
+		inventoryNotificationRepo.softDelete(inventoryNotification);
 	}
 }

@@ -90,4 +90,9 @@ public class AllNotificationService
 		returnAllNotification.setType(type);
 	}
 
+	public void deleteNotification(Long id) throws Exception 
+	{
+		inventoryNotificationService.deleteNotificationByID(id);
+	}
+
 }
