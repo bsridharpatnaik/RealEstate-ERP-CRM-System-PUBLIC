@@ -20,7 +20,8 @@ public class DashBoardService
 		DashBoardData dashBoardData = new DashBoardData();
 		dashBoardData.setNotifications(allNotificationService.getAllNotifications().getNotifications());
 		dashBoardData.setOutwardInventory(allInventoryService.fetchInventoryForDashboard("outward"));
-		dashBoardData.setOutwardInventory(allInventoryService.fetchInventoryForDashboard("inward"));
+		dashBoardData.setInwardInventory(allInventoryService.fetchInventoryForDashboard("inward"));
+		dashBoardData.setMachineryOnRent(allInventoryService.fetchMachineryOnRent());
 		return dashBoardData;
 	}
 }

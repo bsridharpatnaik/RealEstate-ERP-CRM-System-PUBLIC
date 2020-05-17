@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
+import com.ec.application.data.DashboardMachineOnRentDAO;
 import com.ec.application.model.AllInventoryTransactions;
 import com.ec.application.repository.AllInventoryRepo;
+import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.common.Filters.AllInventorySpecification;
 import com.ec.common.Filters.FilterDataList;
 
@@ -25,6 +27,9 @@ public class AllInventoryService
 	
 	@Autowired
 	PopulateDropdownService populateDropdownService;
+	
+	@Autowired
+	MachineryOnRentRepo machineryOnRentRepo;
 	
 	
 	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException 
@@ -51,5 +56,11 @@ public class AllInventoryService
 	{
 		Pageable pageable = PageRequest.of(0, 5,Sort.by("created").descending());
 		return allInventoryRepo.findForDashboard(type, pageable);
+	}
+
+	public List<DashboardMachineOnRentDAO> fetchMachineryOnRent() 
+	{
+		Pageable pageable = PageRequest.of(0, 5,Sort.by("created").descending());
+		return machineryOnRentRepo.findForDashboard(pageable);
 	}
 }

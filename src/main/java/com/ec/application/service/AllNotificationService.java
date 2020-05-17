@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.data.DashboardMachineOnRentDAO;
 import com.ec.application.data.ReturnAllNotificationsData;
 import com.ec.application.data.ReturnSingleNotification;
 import com.ec.application.model.InventoryNotification;
