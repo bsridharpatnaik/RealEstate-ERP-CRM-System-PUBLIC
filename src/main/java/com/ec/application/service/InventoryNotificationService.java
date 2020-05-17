@@ -19,8 +19,14 @@ public class InventoryNotificationService
 	@Autowired
 	InventoryNotificationRepo inventoryNotificationRepo;
 	
-	final String lowStock = "lowStock";
+	@Autowired
+	UserDetailsService userDetailsService;
 	
+	final String lowStock = "lowStock";
+	final String inwardModified = "inwardStockModified";
+	final String outwardModified = "outwardStockModified";
+	final String lostDamagedModified = "lostDamagedStockModified";
+	final String lostDamagedAdded = "lostDamagedStockAdded";
 	public void checkStockAndPushLowStockNotification(Product product)
 	{
 		Double currentStock = stockService.findTotalStockForProduct(product.getProductId());
@@ -28,11 +34,42 @@ public class InventoryNotificationService
 		currentStock = currentStock==null?0:currentStock;
 		reorderQuantity = reorderQuantity==null?0:reorderQuantity;
 		if(currentStock<=reorderQuantity && reorderQuantity>0)
-			pushLowStockNotification(product);
+			pushLowStockNotification(product,currentStock);
 		else if(currentStock>reorderQuantity && reorderQuantity>0)
 			removeLowStockNotification(product);
 	}
 
+	public void pushQuantityEditedNotification(Product product, String type, Double currentStock)
+	{
+		
+		type = getTypeFromReadableName(type);
+		InventoryNotification inventoryNotificationNew = new InventoryNotification();
+		inventoryNotificationNew.setProduct(product);
+		inventoryNotificationNew.setType(type);
+		inventoryNotificationNew.setQuantity(currentStock);
+		inventoryNotificationNew.setUpdatedBy(userDetailsService.getCurrentUser().getUsername());
+		inventoryNotificationRepo.save(inventoryNotificationNew);
+	}
+	
+	private String getTypeFromReadableName(String type) 
+	{
+		switch(type)
+		{
+		case "inward":
+			return inwardModified;
+			
+		case "outward":
+			return outwardModified;
+			
+		case "lostdamagedmodified":
+			return lostDamagedModified;
+		
+		case "lostdamagedadded":
+			return lostDamagedAdded;
+		}
+		return "";
+	}
+	
 	private void removeLowStockNotification(Product product) 
 	{
 		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo.findByProductAndType(product.getProductId(),lowStock);
@@ -46,19 +83,23 @@ public class InventoryNotificationService
 		}
 	}
 
-	private void pushLowStockNotification(Product product) 
+	private void pushLowStockNotification(Product product,Double currentStock) 
 	{
-		List<InventoryNotification> inventoryNotification = inventoryNotificationRepo.findByProductAndType(product.getProductId(),lowStock);
-		if(inventoryNotification.size()==0)
+		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo.findByProductAndType(product.getProductId(),lowStock);
+		if(inventoryNotifications.size()==0)
 		{
 			InventoryNotification inventoryNotificationNew = new InventoryNotification();
 			inventoryNotificationNew.setProduct(product);
 			inventoryNotificationNew.setType(lowStock);
+			inventoryNotificationNew.setQuantity(currentStock);
 			inventoryNotificationRepo.save(inventoryNotificationNew);
 		}
 		else
 		{
 			System.out.println("Low stock notification already exists for produt "+product.getProductName());
+			InventoryNotification inventoryNotification= inventoryNotifications.get(0);
+			inventoryNotification.setQuantity(currentStock);
+			inventoryNotificationRepo.save(inventoryNotification);
 		}
 	}
 	

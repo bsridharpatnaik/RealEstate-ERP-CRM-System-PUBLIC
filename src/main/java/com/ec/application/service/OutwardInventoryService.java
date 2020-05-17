@@ -95,9 +95,11 @@ public class OutwardInventoryService
 			throw new Exception("Inventory Entry with ID not found");
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		validateInputs(iiData);
+		Set<InwardOutwardList> ioListBeforeUpdate = outwardInventory.getInwardOutwardList();
 		updateStockBeforeDelete(outwardInventory);
 		setFields(outwardInventory,iiData);
 		updateStockForCreateOutwardInventory(outwardInventory);
+		iiService.checkAndCreateNotification(ioListBeforeUpdate, iiData.getProductWithQuantities(), "outward");
 		return outwardInventoryRepo.save(outwardInventory);
 		
 	}

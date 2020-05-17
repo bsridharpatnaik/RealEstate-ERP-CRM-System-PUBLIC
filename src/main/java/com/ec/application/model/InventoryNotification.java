@@ -31,8 +31,26 @@ public class InventoryNotification extends ReusableFields
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Product product;
 
+	Double quantity;
 	String type;
+	String updatedBy;
 	
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public Double getQuantity() {
+		return quantity;
+	}
+
+	public void setQuantity(Double quantity) {
+		this.quantity = quantity;
+	}
+
 	public String getType() {
 		return type;
 	}

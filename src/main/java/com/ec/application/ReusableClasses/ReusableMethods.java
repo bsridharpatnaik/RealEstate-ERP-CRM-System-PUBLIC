@@ -1,9 +1,14 @@
 package com.ec.application.ReusableClasses;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 
 import com.ec.application.data.FileInformationDAO;
 import com.ec.application.model.FileInformation;
@@ -41,5 +46,12 @@ public final class ReusableMethods
 			fileSet.add(fileInformation);
 		}
 		return fileSet;
+	}
+	
+	public static String convertUTCToIST(Date date)
+	{
+		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+	    sdf.setTimeZone(TimeZone.getTimeZone("IST"));
+	    return sdf.format(date);
 	}
 }

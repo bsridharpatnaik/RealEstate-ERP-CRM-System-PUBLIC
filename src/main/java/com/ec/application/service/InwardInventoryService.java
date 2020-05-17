@@ -63,6 +63,8 @@ public class InwardInventoryService
 	@Autowired
 	WarehouseRepo warehouseRepo;
 	
+	@Autowired
+	InventoryNotificationService inventoryNotificationService;
 	@Transactional
 	public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception
 	{
@@ -90,8 +92,8 @@ public class InwardInventoryService
 
 	private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception 
 	{
-		//inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
-		inwardInventory.setInvoiceReceived(false);
+		inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
+		//inwardInventory.setInvoiceReceived(false);
 		inwardInventory.setDate(iiData.getDate());
 		inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
 		inwardInventory.setVehicleNo(iiData.getVehicleNo());
@@ -193,9 +195,36 @@ public class InwardInventoryService
 		validateInputs(iiData);
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
 		updateStockBeforeDelete(inwardInventory);
+		Set<InwardOutwardList> productWithQuantityBeforeUpdate = inwardInventory.getInwardOutwardList();
 		setFields(inwardInventory,iiData);
 		updateStockForCreateInwardInventory(inwardInventory);
+		checkAndCreateNotification(productWithQuantityBeforeUpdate, iiData.getProductWithQuantities(), "inward");
 		return inwardInventoryRepo.save(inwardInventory);
 		
+	}
+
+	public void checkAndCreateNotification(Set<InwardOutwardList> productWithQuantityBeforeUpdate,
+			List<ProductWithQuantity> productWithQuantities, String type) 
+	{
+		for(ProductWithQuantity pwq : productWithQuantities)
+		{
+			Long newPid = pwq.getProductId();
+			Double newQuantity = pwq.getQuantity();
+			
+			for(InwardOutwardList ioList:productWithQuantityBeforeUpdate)
+			{
+				Long oldPid = ioList.getProduct().getProductId();
+				Double oldQuantity = ioList.getQuantity();
+				
+				if(newPid.equals(oldPid))
+				{
+					if(!newQuantity.equals(oldQuantity))
+					{
+						inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(), type, newQuantity);
+					}
+				}
+			}
+			
+		}
 	}
 }

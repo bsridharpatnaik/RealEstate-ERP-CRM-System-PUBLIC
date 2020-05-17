@@ -48,6 +48,9 @@ public class LostDamagedInventoryService
 	@Autowired
 	PopulateDropdownService populateDropdownService;
 	
+	@Autowired
+	InventoryNotificationService inventoryNotificationService;
+	
 	@Transactional
 	public LostDamagedInventory createData(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
@@ -56,6 +59,7 @@ public class LostDamagedInventoryService
 		populateData(lostDamagedInventory,payload);
 		Double closingStock = adjustStockBeforeCreate(payload);
 		lostDamagedInventory.setClosingStock(closingStock);
+		inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(), "lostdamagedadded", lostDamagedInventory.getQuantity());
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);
 	}
 	
@@ -93,9 +97,13 @@ public class LostDamagedInventoryService
 		if(!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Lost Damaged inventory by ID "+id+" Not found");
 		LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
+		Double oldStock = lostDamagedInventory.getQuantity();
 		AdjustStockBeforeDelete(lostDamagedInventory);
 		populateData(lostDamagedInventory,payload);
 		lostDamagedInventory.setClosingStock(adjustStockBeforeCreate(payload));
+		if(!oldStock.equals(lostDamagedInventory.getQuantity()))
+			inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(), "lostdamagedmodified", lostDamagedInventory.getQuantity());
+		
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);	
 	}
 	

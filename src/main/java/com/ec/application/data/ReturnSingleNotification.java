@@ -17,8 +17,9 @@ public class ReturnSingleNotification
 	String type;
 	String message;
 	String source;
-	
-    @Column(name="is_deleted", columnDefinition="BOOLEAN DEFAULT true")
+	Boolean canBeDeleted;
+
+	@Column(name="is_deleted", columnDefinition="BOOLEAN DEFAULT true")
     public boolean isDeleted;
 
     @CreationTimestamp
@@ -38,8 +39,19 @@ public class ReturnSingleNotification
 		super();
 	}
 
+	
+	public Boolean getCanBeDeleted() {
+		return canBeDeleted;
+	}
+
+
+	public void setCanBeDeleted(Boolean canBeDeleted) {
+		this.canBeDeleted = canBeDeleted;
+	}
+
+
 	public ReturnSingleNotification(Long notificationId,String source,String type, String message,Date created,
-			Date modified) {
+			Date modified, Boolean canBeDeleted) {
 		super();
 		this.notificationId=notificationId;
 		this.type = type;
@@ -48,6 +60,7 @@ public class ReturnSingleNotification
 		this.source=source;
 		this.created = created;
 		this.modified = modified;
+		this.canBeDeleted = canBeDeleted;
 	}
 
 
@@ -124,5 +137,4 @@ public class ReturnSingleNotification
 	public static String getSoftDeletedClause() {
 		return SOFT_DELETED_CLAUSE;
 	}
-	
 }
