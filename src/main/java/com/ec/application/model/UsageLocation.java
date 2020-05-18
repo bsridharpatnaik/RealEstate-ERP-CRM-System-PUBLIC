@@ -27,19 +27,12 @@ public class UsageLocation extends ReusableFields
 	@Column(unique=true,name="location_name")
 	String locationName;
 	String locationDescription;
-	String usageArea;
 	
 	public Long getLocationId() {
 		return locationId;
 	}
 	public void setLocationId(Long locationId) {
 		this.locationId = locationId;
-	}
-	public String getUsageArea() {
-		return usageArea;
-	}
-	public void setUsageArea(String usageArea) {
-		this.usageArea = usageArea;
 	}
 	public Long getLoationId() {
 		return locationId;

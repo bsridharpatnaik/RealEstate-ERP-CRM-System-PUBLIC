@@ -29,6 +29,4 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 	@Query(value="SELECT locationName from UsageLocation m")
 	List<String> getNames();
 
-	@Query(value="SELECT usageArea from UsageLocation m")
-	List<String> getUsageAreas();
 }

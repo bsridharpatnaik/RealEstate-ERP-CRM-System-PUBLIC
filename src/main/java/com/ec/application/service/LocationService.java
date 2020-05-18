@@ -56,13 +56,11 @@ public class LocationService
         {		
         	LocationForUpdate.setLocationName(newLocation.getLocationName());
             LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
-            LocationForUpdate.setUsageArea(newLocation.getUsageArea());
-           
+            
         }
         else if(LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
         {
         	LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
-        	LocationForUpdate.setUsageArea(newLocation.getUsageArea());
         }
         else 
         {
@@ -101,7 +99,6 @@ public class LocationService
 		else allLocationsWithNamesData.setLocations(locationRepo.findAll(pageable));
 		
 		List<String> namesList = locationRepo.getNames();
-		namesList.addAll(locationRepo.getUsageAreas());
 		namesList = ReusableMethods.removeNullsFromStringList(namesList);
 		allLocationsWithNamesData.setNames(namesList);
 		return allLocationsWithNamesData;
