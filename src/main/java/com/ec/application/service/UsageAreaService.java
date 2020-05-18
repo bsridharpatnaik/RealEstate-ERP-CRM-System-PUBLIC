@@ -82,7 +82,7 @@ public class UsageAreaService
 			if(!checkBeforeDeleteService.isUsageAreaUsed(id))
 				usageAreaRepo.softDeleteById(id);
 			else
-				throw new Exception("Cannot delete usageArea. UsageArea already assigned to product");
+				throw new Exception("Cannot delete usageArea. UsageArea already in use.");
 	}
 
 	public List<IdNameProjections> findIdAndNames() 

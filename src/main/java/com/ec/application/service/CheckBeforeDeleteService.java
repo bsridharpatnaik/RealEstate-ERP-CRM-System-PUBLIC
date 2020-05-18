@@ -92,8 +92,9 @@ public class CheckBeforeDeleteService
 			return false;
 	}
 
-	public boolean isUsageAreaUsed(Long id) {
-		if(usageAreaRepo.usageAreaUsageCount(id) > 0)
+	public boolean isUsageAreaUsed(Long id) 
+	{
+		if(outwardInventoryRepo.usageAreaUsageCount(id) >0)
 			return true;
 		else
 			return false;
