@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
+import com.ec.application.data.StockPercentData;
 import com.ec.application.model.Stock;
 
 @Repository
@@ -48,4 +49,8 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 
 	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId")
 	Double getCurrentTotalStockForProduct(@Param("productId") Long productId);
+	
+	@Query(value="SELECT new com.ec.application.data.StockPercentData(m.product.productId,m.product.productName,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
+			+ " group by m.product.productId,m.product.productName")
+	List<StockPercentData> getCurrentStockPercent();
 }

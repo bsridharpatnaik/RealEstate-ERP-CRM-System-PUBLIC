@@ -22,6 +22,7 @@ import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.SingleStockInfo;
 import com.ec.application.data.StockInformation;
+import com.ec.application.data.StockPercentData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.Product;
@@ -183,5 +184,10 @@ public class StockService
 			stockInfo.add(productsWarehouseStockProjection);
 		}
 		return stockInfo;
+	}
+
+	public List<StockPercentData> fetchStockPercent() 
+	{
+		return stockRepo.getCurrentStockPercent();
 	}
 }

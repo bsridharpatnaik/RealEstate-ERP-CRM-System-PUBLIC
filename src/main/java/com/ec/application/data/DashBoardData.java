@@ -10,8 +10,14 @@ public class DashBoardData
 	List<DashboardInwardOutwardInventoryDAO> outwardInventory;
 	List<DashboardInwardOutwardInventoryDAO> inwardInventory;
 	List<DashboardMachineOnRentDAO> machineryOnRent;
+	List<StockPercentData> stockPercent;
 	
-	
+	public List<StockPercentData> getStockPercent() {
+		return stockPercent;
+	}
+	public void setStockPercent(List<StockPercentData> stockPercent) {
+		this.stockPercent = stockPercent;
+	}
 	public List<DashboardMachineOnRentDAO> getMachineryOnRent() {
 		return machineryOnRent;
 	}

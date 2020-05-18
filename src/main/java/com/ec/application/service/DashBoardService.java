@@ -15,6 +15,9 @@ public class DashBoardService
 	@Autowired
 	AllInventoryService allInventoryService;
 	
+	@Autowired
+	StockService stockService;
+	
 	public DashBoardData getContents() 
 	{
 		DashBoardData dashBoardData = new DashBoardData();
@@ -22,6 +25,7 @@ public class DashBoardService
 		dashBoardData.setOutwardInventory(allInventoryService.fetchInventoryForDashboard("outward"));
 		dashBoardData.setInwardInventory(allInventoryService.fetchInventoryForDashboard("inward"));
 		dashBoardData.setMachineryOnRent(allInventoryService.fetchMachineryOnRent());
+		dashBoardData.setStockPercent(stockService.fetchStockPercent());
 		return dashBoardData;
 	}
 }

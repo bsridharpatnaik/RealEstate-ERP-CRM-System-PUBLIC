@@ -94,7 +94,8 @@ AS
                  ldi.closing_stock, 
                  ldi.created_at, 
                  ldi.updated_at 
-          FROM   lost_damaged_inventory ldi) AS tx 
+          FROM   lost_damaged_inventory ldi
+          where ldi.is_deleted = 0) AS tx 
          left join AllContacts c 
                 ON c.contact_id = tx.contactid 
          inner join warehouse w 

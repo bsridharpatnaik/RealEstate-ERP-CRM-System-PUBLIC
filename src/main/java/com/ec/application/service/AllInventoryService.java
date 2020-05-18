@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.DashboardMachineOnRentDAO;
+import com.ec.application.data.StockPercentData;
 import com.ec.application.model.AllInventoryTransactions;
 import com.ec.application.repository.AllInventoryRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
