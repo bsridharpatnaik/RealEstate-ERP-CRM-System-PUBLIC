@@ -1,20 +1,16 @@
 package com.ec.application.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +19,6 @@ import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.SingleStockInfo;
 import com.ec.application.data.StockInformation;
 import com.ec.application.data.StockPercentData;
-import com.ec.application.model.InwardInventory;
-import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.Product;
 import com.ec.application.model.Stock;
 import com.ec.application.model.Warehouse;
@@ -33,8 +27,6 @@ import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
 
 @Service
 public class StockService 
@@ -142,10 +134,54 @@ public class StockService
 	private Page<SingleStockInfo> convertListStockToPages(List<SingleStockInfo> stockInformationsList,
 			Pageable pageable) 
 	{
-		 // int start =  (int) pageable.getOffset();
-	      //int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size() : (start + pageable.getPageSize());
-	    System.out.println();  
-		return new PageImpl<SingleStockInfo>(stockInformationsList, pageable, stockInformationsList.size());
+		 int start =  (int) pageable.getOffset();
+	     int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size() : (start + pageable.getPageSize());
+	     stockInformationsList = sortStockInformationsList(stockInformationsList,pageable.getSort());
+	     return new PageImpl<SingleStockInfo>(stockInformationsList.subList(start, end), pageable, stockInformationsList.size());
+	}
+
+	private List<SingleStockInfo> sortStockInformationsList(List<SingleStockInfo> stockInformationsList, Sort sort) 
+	{
+		try
+		{
+			String[] sortBy = sort.toString().split(":");
+			String field = sortBy[0].trim();
+			String order = sortBy[1].trim();
+			
+			switch(field)
+			{
+				case "productId":
+					if(order.toLowerCase().contains("desc"))
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getProductId, Comparator.nullsFirst(Comparator.naturalOrder())).reversed());
+					else
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getProductId, Comparator.nullsFirst(Comparator.naturalOrder())));
+					break;
+				case "productName":
+					if(order.toLowerCase().contains("desc"))
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getProductName, Comparator.nullsFirst(Comparator.naturalOrder())).reversed());
+					else
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getProductName, Comparator.nullsFirst(Comparator.naturalOrder())));
+					break;
+				case "categoryName":
+					if(order.toLowerCase().contains("desc"))
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getCategoryName, Comparator.nullsFirst(Comparator.naturalOrder())).reversed());
+					else
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getCategoryName, Comparator.nullsFirst(Comparator.naturalOrder())));
+					break;
+				case "totalQuantityInHand":
+					if(order.toLowerCase().contains("desc"))
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getTotalQuantityInHand, Comparator.nullsFirst(Comparator.naturalOrder())).reversed());
+					else
+						stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getTotalQuantityInHand, Comparator.nullsFirst(Comparator.naturalOrder())));
+					break;
+			}
+			return stockInformationsList;
+		}
+		catch(Exception e)
+		{
+			System.out.println("Sorting failed");
+			return stockInformationsList;
+		}
 	}
 
 	private List<Stock> findStockForProductAsList(Long productId, List<Stock> allStocks) 
