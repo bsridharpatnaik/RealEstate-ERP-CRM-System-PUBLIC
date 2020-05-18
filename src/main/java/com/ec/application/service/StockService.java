@@ -142,9 +142,10 @@ public class StockService
 	private Page<SingleStockInfo> convertListStockToPages(List<SingleStockInfo> stockInformationsList,
 			Pageable pageable) 
 	{
-		  int start =  (int) pageable.getOffset();
-	      int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size() : (start + pageable.getPageSize());
-	      return new PageImpl<SingleStockInfo>(stockInformationsList.subList(start, end), pageable, stockInformationsList.size());
+		 // int start =  (int) pageable.getOffset();
+	      //int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size() : (start + pageable.getPageSize());
+	    System.out.println();  
+		return new PageImpl<SingleStockInfo>(stockInformationsList, pageable, stockInformationsList.size());
 	}
 
 	private List<Stock> findStockForProductAsList(Long productId, List<Stock> allStocks) 

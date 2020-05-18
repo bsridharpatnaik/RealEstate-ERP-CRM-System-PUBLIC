@@ -33,8 +33,7 @@ public class StockController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public StockInformation returnAllStock(@RequestBody FilterDataList filterDataList,
-			@RequestParam(name = "fields", required = false,defaultValue="stockInformation{productId}") String fields
-			,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws Exception
+			@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws Exception
 	{
 		return stockService.findStockForAll(filterDataList,pageable);
 	}
