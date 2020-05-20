@@ -1,31 +1,59 @@
--- Supplier
-CREATE OR REPLACE VIEW supplier as 
-SELECT 
-c.contact_id,c.name,c.mobile_no,c.email_id,c.contact_type,ci.contact_person,
-ci.contact_person_mobile_no,ci.gst_number,
-a.addr_line1,a.addr_line2,a.city,a.state,a.zip
-FROM contact c
-LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
-INNER JOIN address a on a.addr_id = c.addr_id
-WHERE 
-c.contact_type='SUPPLIER'
-AND ci.is_deleted=0;
+-- ------------ Supplier  -------------------------------------------
+
+CREATE OR REPLACE view supplier 
+AS 
+  SELECT `c`.`contact_id`                AS `contact_id`, 
+         `c`.`name`                      AS `name`, 
+         `c`.`mobile_no`                 AS `mobile_no`, 
+         `c`.`email_id`                  AS `email_id`, 
+         `c`.`contact_type`              AS `contact_type`, 
+         `ci`.`contact_person`           AS `contact_person`, 
+         `ci`.`contact_person_mobile_no` AS `contact_person_mobile_no`, 
+         `ci`.`gst_number`               AS `gst_number`, 
+         `a`.`addr_line1`                AS `addr_line1`, 
+         `a`.`addr_line2`                AS `addr_line2`, 
+         `a`.`city`                      AS `city`, 
+         `a`.`state`                     AS `state`, 
+         `a`.`zip`                       AS `zip`, 
+         `c`.`created_at`                AS `created_at`, 
+         `c`.`updated_at`                AS `updated_at` 
+  FROM   ((`contact` `c` 
+           LEFT JOIN `contact_info` `ci` 
+                  ON(( `c`.`contact_id` = `ci`.`contact_id` ))) 
+          JOIN `address` `a` 
+            ON(( `a`.`addr_id` = `c`.`addr_id` ))) 
+  WHERE  ( ( `c`.`contact_type` = 'SUPPLIER' ) 
+           AND ( `ci`.`is_deleted` = 0 ) ); 
 
 
--- Contrator
-CREATE OR REPLACE VIEW contractor as 
-SELECT 
-c.contact_id,c.name,c.mobile_no,c.email_id,c.contact_type,ci.contact_person,
-ci.contact_person_mobile_no,ci.gst_number,
-a.addr_line1,a.addr_line2,a.city,a.state,a.zip
-FROM contact c
-LEFT JOIN  contact_info ci on c.contact_id=ci.contact_id
-INNER JOIN address a on a.addr_id = c.addr_id
-WHERE 
-c.contact_type='CONTRACTOR'
-AND ci.is_deleted=0;
+-- ------------ Contractor  -------------------------------------------
+CREATE OR REPLACE view supplier 
+AS 
+  SELECT `c`.`contact_id`                AS `contact_id`, 
+         `c`.`name`                      AS `name`, 
+         `c`.`mobile_no`                 AS `mobile_no`, 
+         `c`.`email_id`                  AS `email_id`, 
+         `c`.`contact_type`              AS `contact_type`, 
+         `ci`.`contact_person`           AS `contact_person`, 
+         `ci`.`contact_person_mobile_no` AS `contact_person_mobile_no`, 
+         `ci`.`gst_number`               AS `gst_number`, 
+         `a`.`addr_line1`                AS `addr_line1`, 
+         `a`.`addr_line2`                AS `addr_line2`, 
+         `a`.`city`                      AS `city`, 
+         `a`.`state`                     AS `state`, 
+         `a`.`zip`                       AS `zip`, 
+         `c`.`created_at`                AS `created_at`, 
+         `c`.`updated_at`                AS `updated_at` 
+  FROM   ((`contact` `c` 
+           LEFT JOIN `contact_info` `ci` 
+                  ON(( `c`.`contact_id` = `ci`.`contact_id` ))) 
+          JOIN `address` `a` 
+            ON(( `a`.`addr_id` = `c`.`addr_id` ))) 
+  WHERE  ( ( `c`.`contact_type` = 'CONTRACTOR' ) 
+           AND ( `ci`.`is_deleted` = 0 ) ); 
 
--- All contacts
+
+-- ------------ All Contacts  -------------------------------------------
 CREATE OR REPLACE VIEW AllContacts as 
 SELECT 
 c.contact_id,c.name,c.mobile_no,c.email_id,c.contact_type,ci.contact_person,
