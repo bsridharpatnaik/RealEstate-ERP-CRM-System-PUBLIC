@@ -1,7 +1,7 @@
 package com.ec.application.ReusableClasses;
 
+import java.io.IOException;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,6 +12,7 @@ import java.util.TimeZone;
 
 import com.ec.application.data.FileInformationDAO;
 import com.ec.application.model.FileInformation;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class ReusableMethods 
 {
@@ -48,6 +49,40 @@ public final class ReusableMethods
 		return fileSet;
 	}
 	
+	public static <T> String convertObjectToJson(T object)
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		try 
+		{
+
+            String jsonString = mapper.writeValueAsString(object);
+            //String jsonInString2 = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+            return jsonString;
+		} 
+		catch (IOException e) 
+		{
+            e.printStackTrace();
+            return null;
+        }
+		
+	}
+	
+	public static <T> T convertJSONtoObject(String json, Class c)
+	{
+		ObjectMapper mapper = new ObjectMapper();
+		T t=null;
+		try 
+		{
+
+			T object = (T) mapper.readValue(json,c );
+			return object;
+        } 
+		catch (IOException e) 
+		{
+            e.printStackTrace();
+            return null;
+        }
+	}
 	public static String convertUTCToIST(Date date)
 	{
 		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");

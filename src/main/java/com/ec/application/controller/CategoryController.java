@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllCategoriesWithNamesData;
 import com.ec.application.model.Category;
 import com.ec.application.service.CategoryService;
@@ -57,8 +58,11 @@ public class CategoryController
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Category createCategory(@RequestBody Category payload) throws Exception{
+	public Category createCategory(@RequestBody Category payload) throws Exception
+	{
 		
+		//String json = ReusableMethods.convertObjectToJson(payload);
+		//Category c = ReusableMethods.convertJSONtoObject(json,Category.class);
 		return categoryService.createCategory(payload);
 	}
 

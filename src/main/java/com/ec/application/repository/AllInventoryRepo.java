@@ -13,7 +13,7 @@ import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.model.AllInventoryTransactions;
 
 @Repository
-public interface AllInventoryRepo extends BaseRepository<AllInventoryTransactions, Long>
+public interface AllInventoryRepo extends BaseRepository<AllInventoryTransactions, String>
 {
 
 	//@Query(value="SELECT new com.ec.application.data.DashboardOutwardInventoryDAO(date,productName,quantity,warehouseName,name)  from AllInventoryTransactions m")

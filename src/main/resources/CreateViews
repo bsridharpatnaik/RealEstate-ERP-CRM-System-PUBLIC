@@ -27,7 +27,7 @@ AS
 
 
 -- ------------ Contractor  -------------------------------------------
-CREATE OR REPLACE view supplier 
+CREATE OR REPLACE view contractor 
 AS 
   SELECT `c`.`contact_id`                AS `contact_id`, 
          `c`.`name`                      AS `name`, 
@@ -69,7 +69,9 @@ WHERE ci.is_deleted=0 OR ci.is_deleted IS NULL;
 CREATE OR replace VIEW all_inventory 
 AS 
 
-  SELECT tx.*, 
+  SELECT
+		UUID() AS id,
+		tx.*, 
 		p.product_name,
         p.measurement_unit,
          c.name, 
@@ -79,7 +81,7 @@ AS
          w.warehouse_id, 
          w.warehouse_name 
   FROM   (SELECT 'inward'                         AS type, 
-                 ii.inwardid               AS id, 
+                 -- ii.inwardid               AS id, 
                  Date_format(ii.DATE, "%Y-%m-%d") AS date, 
                  ii.contact_id                    AS contactid, 
                  ii.warehouse_id                  AS warehouseid, 
@@ -96,7 +98,7 @@ AS
           WHERE  ii.is_deleted = 0 
           UNION ALL 
           SELECT 'outward'                        AS type, 
-                 oi.outwardid, 
+                 -- oi.outwardid, 
                  Date_format(oi.DATE, "%Y-%m-%d") AS date, 
                  oi.contact_id                    AS contactid, 
                  oi.warehouse_id                  AS warehouseid, 
@@ -113,7 +115,7 @@ AS
           WHERE  oi.is_deleted = 0 
           UNION ALL 
           SELECT 'lost/damaged'                    AS type, 
-                 lostdamagedid, 
+               --   lostdamagedid, 
                  Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
                  ''                                AS contactid, 
                  ldi.warehouse_name                AS warehouseid, 
@@ -123,7 +125,7 @@ AS
                  ldi.created_at, 
                  ldi.updated_at 
           FROM   lost_damaged_inventory ldi
-          where ldi.is_deleted = 0) AS tx 
+			where ldi.is_deleted = 0) AS tx 
          left join AllContacts c 
                 ON c.contact_id = tx.contactid 
          inner join warehouse w 

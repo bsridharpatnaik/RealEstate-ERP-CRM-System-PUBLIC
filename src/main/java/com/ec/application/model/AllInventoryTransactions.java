@@ -22,7 +22,7 @@ public class AllInventoryTransactions
 	
 	@Id
 	@Column(name="id")
-	Long id;
+	String id;
 	
 	@Column(name="type")
 	String type;
@@ -75,11 +75,11 @@ public class AllInventoryTransactions
 	@Column(name="updated_at")
 	String updated;
 
-	public Long getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
