@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.model.Machinery;
 import com.ec.application.model.Product;
 
@@ -35,4 +36,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value="SELECT distinct productId from Product m")
 	List<Long> fetchUniqueProductIds();
+
+	@Query(value="SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit) from Product m")
+	List<IdNameAndUnit> getProductMeasurementUnit();
 }

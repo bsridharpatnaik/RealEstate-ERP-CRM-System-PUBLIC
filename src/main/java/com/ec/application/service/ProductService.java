@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllProductsWithNamesData;
+import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Category;
 import com.ec.application.model.Product;
@@ -159,5 +160,11 @@ public class ProductService
 		allProductsWithNamesData.setCategoryNamesForDropdown(categoryRepo.findIdAndNames());
 		allProductsWithNamesData.setProductAndCategoryNames(ReusableMethods.removeNullsFromStringList(names));
 		return allProductsWithNamesData;
+	}
+
+	public List<IdNameAndUnit> productMeasurementUnit() 
+	{
+		// TODO Auto-generated method stub
+		return productRepo.getProductMeasurementUnit();
 	}
 }
