@@ -19,6 +19,9 @@ public class SupplierService
 	@Autowired
 	SupplierRepo supplierRepo;
 	
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
+	
 	public List<IdNameProjections> getSupplierNames()
 	{
 		List<IdNameProjections> supplierNames = new ArrayList<IdNameProjections>();
@@ -30,5 +33,13 @@ public class SupplierService
 	{
 		// TODO Auto-generated method stub
 		return supplierRepo.findAll(pageable);
+	}
+
+	public boolean isContactUsed(Long id) 
+	{
+		boolean isContactUsed = false;
+		if(checkBeforeDeleteService.isSupplierUsed(id))
+			isContactUsed = true;
+		return isContactUsed;
 	}
 }

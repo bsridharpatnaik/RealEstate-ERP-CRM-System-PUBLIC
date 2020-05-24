@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ec.application.model.DBFile;
@@ -27,6 +28,10 @@ public class FileHandlingSgervice
 			fileUploadSuccessData.setFileUUId(dbFile.getId());
 			fileUploadSuccessData.setFileName(dbFile.getFileName());
 			return fileUploadSuccessData;
+		}
+		catch(MaxUploadSizeExceededException e)
+		{
+			throw new Exception("File size too large. Max allowed size - 15 MB");
 		}
 		catch(Exception e)
 		{

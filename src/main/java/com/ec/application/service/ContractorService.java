@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import java.awt.Checkbox;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,9 @@ public class ContractorService
 	@Autowired
 	ContractorRepo contractorRepo;
 	
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
+	
 	public List<IdNameProjections> getContractorNames()
 	{
 		List<IdNameProjections> contractorNames = new ArrayList<IdNameProjections>();
@@ -28,5 +32,13 @@ public class ContractorService
 	public Page<Contractor> findAll(Pageable pageable) 
 	{
 		return contractorRepo.findAll(pageable);
+	}
+	
+	public boolean isContactUsed(Long id) 
+	{
+		boolean isContactUsed = false;
+		if(checkBeforeDeleteService.isContractorUsed(id))
+			isContactUsed = true;
+		return isContactUsed;
 	}
 }

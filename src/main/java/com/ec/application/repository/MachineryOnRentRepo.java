@@ -27,5 +27,8 @@ public interface MachineryOnRentRepo extends BaseRepository<MachineryOnRent, Lon
 
 	@Query(value="SELECT new com.ec.application.data.DashboardMachineOnRentDAO(date,machinery.machineryName,mode) from MachineryOnRent m")
 	List<DashboardMachineOnRentDAO> findForDashboard(Pageable pageable);
+	
+	@Query(value="SELECT count(*) from MachineryOnRent m where m.supplier.contactId=:id")
+	int supplierUsageCount(@Param("id") Long id);
 }
 

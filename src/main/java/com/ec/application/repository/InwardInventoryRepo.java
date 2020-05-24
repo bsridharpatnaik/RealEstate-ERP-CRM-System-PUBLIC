@@ -13,5 +13,8 @@ public interface InwardInventoryRepo extends BaseRepository<InwardInventory, Lon
 {
 	@Query(value="SELECT count(*) from InwardInventory m where m.warehouse.warehouseName=:warehouseName")
 	int warehouseUsageCount(@Param("warehouseName") String warehouseName);
+
+	@Query(value="SELECT count(*) from InwardInventory m where m.supplier.contactId=:id")
+	int supplierUsageCount(@Param("id") Long id);
 	
 }

@@ -15,6 +15,12 @@ public class ContactInfoService
 	@Autowired
 	ContactInfoRepo contactInfoRepo;
 	
+	@Autowired
+	SupplierService supplierService;
+	
+	@Autowired
+	ContractorService contractorService;
+	
 	public ContactInfo createContactInfo(ContactInfo payload) throws Exception 
 	{
 		if(contactInfoRepo.conactUsageCount(payload.getContactId())==0)
@@ -39,5 +45,14 @@ public class ContactInfoService
 		contactInfo.setContactPerson(payload.getContactPerson());
 		contactInfo.setContactPersonMobileNo(payload.getContactPerson());
 		contactInfo.setGstNumber(payload.getGstNumber());;
+	}
+
+	public Boolean checkIfContactIsUsed(Long id) 
+	{
+		Boolean  isUsed = false;
+		
+		if(supplierService.isContactUsed(id) || contractorService.isContactUsed(id))
+			isUsed = true;
+		return isUsed;
 	}
 }

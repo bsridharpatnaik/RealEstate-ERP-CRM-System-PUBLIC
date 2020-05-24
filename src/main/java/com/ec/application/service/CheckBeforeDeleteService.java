@@ -99,5 +99,22 @@ public class CheckBeforeDeleteService
 		else
 			return false;
 	}
+	
+	public boolean isSupplierUsed(Long id) 
+	{
+		if(inwardInventoryRepo.supplierUsageCount(id) >0
+				|| machineryOnRentRepo.supplierUsageCount(id)>0)
+			return true;
+		else
+			return false;
+	}
+	
+	public boolean isContractorUsed(Long id) 
+	{
+		if(outwardInventoryRepo.contractorUsageCount(id) >0)
+			return true;
+		else
+			return false;
+	}
 }
 

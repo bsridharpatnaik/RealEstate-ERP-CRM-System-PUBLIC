@@ -47,7 +47,7 @@ public interface StockRepo  extends BaseRepository<Stock, Long>
 			+ "where m.product.productId IN :productIds and m.warehouse.warehouseId=:warehouseId group by m.product.productId")
 	List<ProductIdAndStockProjection> getCurrentStockForProductListWarehouse(@Param("productIds")List<Long> productIds,@Param("warehouseId") Long warehouseId);
 
-	@Query(value="SELECT SUM(quantityInHand) from Stock m where m.product.productId=:productId")
+	@Query(value="SELECT ROUND(SUM(quantityInHand)) from Stock m where m.product.productId=:productId")
 	Double getCurrentTotalStockForProduct(@Param("productId") Long productId);
 	
 	@Query(value="SELECT new com.ec.application.data.StockPercentData(m.product.productId,m.product.productName,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
