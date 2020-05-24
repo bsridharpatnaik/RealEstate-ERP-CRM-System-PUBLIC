@@ -46,7 +46,7 @@ public class ContactBasicInfo extends ReusableFields
 	String name;
 	
 	@NonNull
-	@Column(nullable=false,unique=true)
+	@Column(nullable=false)
 	String mobileNo;
 	
 	String emailId;

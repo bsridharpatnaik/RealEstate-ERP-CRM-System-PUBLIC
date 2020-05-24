@@ -55,15 +55,8 @@ public class ContactController
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception
 	{
-		//try
-		//{
 			contactService.deleteContact(id);
 			return ResponseEntity.ok("Contact Deleted sucessfully.");
-		//}
-		//catch(Exception e)
-		//{
-		//	throw new Exception("Not able to delete contact");
-		//}
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
