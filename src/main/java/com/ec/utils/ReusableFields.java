@@ -1,4 +1,4 @@
-package com.ec.common.Data;
+package com.ec.utils;
 
 import java.io.Serializable;
 import java.util.Date;

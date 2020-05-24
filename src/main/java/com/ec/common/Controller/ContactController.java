@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.common.Data.ContactsWithTypeAhead;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Model.ContactAllInfo;
+import com.ec.common.Service.CheckBeforeDeleteService;
 import com.ec.common.Service.ContactService;
 
 @RestController
@@ -31,6 +32,7 @@ public class ContactController
 	@Autowired
 	ContactService contactService;
 	
+
 	@GetMapping
 	public ContactsWithTypeAhead returnAllContacts(@RequestParam(name="page",required = false) Integer page,@PageableDefault(page = 0, size = 10, sort = "contactId", direction = Direction.DESC) Pageable pageable) 
 	{
@@ -53,8 +55,15 @@ public class ContactController
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception
 	{
-		//contactService.deleteContact(id);
-		return ResponseEntity.ok("Cannot Delete Contact. Contact Administrator.");
+		//try
+		//{
+			contactService.deleteContact(id);
+			return ResponseEntity.ok("Contact Deleted sucessfully.");
+		//}
+		//catch(Exception e)
+		//{
+		//	throw new Exception("Not able to delete contact");
+		//}
 	}
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)

@@ -1,5 +1,6 @@
 package com.ec.common.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -57,6 +62,9 @@ public class ContactService {
     @Value("${inven.serverurl}")
     private String reqServer;
 
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
+	
     CommonUtils utilObj = new CommonUtils();
     
     @Transactional
@@ -177,7 +185,7 @@ public class ContactService {
 
     private void formatMobileNo(ContactAllInfo payload) 
     {
-    	System.out.println(payload.getContactPersonMobileNo());
+    	//System.out.println(payload.getContactPersonMobileNo());
         if (!(payload.getContactPersonMobileNo() == null) && !payload.getContactPersonMobileNo().equals(""))
             payload.setContactPersonMobileNo(utilObj.normalizePhoneNumber(payload.getContactPersonMobileNo()));
         if(!payload.getMobileNo().equals(""))
@@ -308,5 +316,33 @@ public class ContactService {
 			attrValues.add("CONTRACTOR");
 		}
 		return attrValues;
+	}
+
+	public Boolean checkIfContactUsed(Long id) throws Exception 
+	{
+		HttpHeaders headers = new HttpHeaders();
+		Boolean isUSed = false;
+        headers.set("Authorization", httpRequest.getHeader("Authorization"));
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpEntity request = new HttpEntity(headers);
+        ResponseEntity<Boolean> response = restTemplate.exchange(reqServer + URLRepository.checkContactUsed+id,HttpMethod.GET,request, Boolean.class,1);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            System.out.println("Request Successful.");
+            isUSed = Boolean.valueOf(response.getBody());
+        } else {
+            throw new Exception("Error occured while checking if contact is used");
+        }
+        return isUSed;
+	}
+
+	public void deleteContact(Long id) throws Exception 
+	{
+		if(checkBeforeDeleteService.checkIfContactIsUsed(id))
+			throw new Exception("Cannot delete. Contact already being used in system.");
+		else
+		{
+			contactRepo.softDeleteById(id);
+			//ContactInfoRepo
+		}
 	}
 }

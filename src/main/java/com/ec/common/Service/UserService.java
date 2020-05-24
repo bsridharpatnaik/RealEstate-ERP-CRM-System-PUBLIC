@@ -124,7 +124,8 @@ public class UserService {
 		}
 	}
 
-	public UserReturnData fetchUserDetails() {
+	public UserReturnData fetchUserDetails() 
+	{
 		UserReturnData userReturnData = new UserReturnData();
 		List<String> roles = new ArrayList<String>();
 

@@ -17,17 +17,21 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.common.Data.CustomerTypeEnum;
+import com.ec.utils.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "Contact")
-public class ContactBasicInfo 
+//@Audited
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class ContactBasicInfo extends ReusableFields
 {
 
 	private static final long serialVersionUID = 1L;
@@ -58,21 +62,6 @@ public class ContactBasicInfo
 	Address address;
 	
 	
-	@CreationTimestamp
-	@Column(name = "created_at")
-	@JsonProperty("created_at")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
-	private Date created;
-	
-	
-	@Column(name = "updated_at")
-	@JsonProperty("updated_at")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
-	@UpdateTimestamp
-	private Date modified;
-
-	
-
 	public Address getAddress() {
 		return address;
 	}
@@ -130,27 +119,6 @@ public class ContactBasicInfo
 	public void setContactType(CustomerTypeEnum contactType) {
 		this.contactType = contactType;
 	}
-
-
-	public Date getCreated() {
-		return created;
-	}
-
-
-	public void setCreated(Date created) {
-		this.created = created;
-	}
-
-
-	public Date getModified() {
-		return modified;
-	}
-
-
-	public void setModified(Date modified) {
-		this.modified = modified;
-	}
-
 
 	public static long getSerialversionuid() {
 		return serialVersionUID;

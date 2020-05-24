@@ -9,10 +9,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.envers.Audited;
+
+import com.ec.utils.ReusableFields;
+
 
 @Entity
+//@Audited
 @Table(name = "address")
-public class Address implements Serializable 
+public class Address extends ReusableFields implements Serializable 
 {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
