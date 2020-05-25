@@ -73,6 +73,7 @@ public class ContactService {
     	ContactAllInfo returnContactAllInfo = new ContactAllInfo();
     	ContactNonBasicData contactNonBasicData = new ContactNonBasicData();
     	Address address = new Address();
+    	validatePayload(payload);
     	ContactBasicInfo contact = new ContactBasicInfo();
         formatMobileNo(payload);
         exitIfMobileNoExists(payload);
@@ -90,7 +91,12 @@ public class ContactService {
         return returnContactAllInfo;
     }
 
-    private void populateContactForReturn(ContactAllInfo returnContactAllInfo, ContactBasicInfo contact, ContactNonBasicData contactNonBasicData) 
+    private void validatePayload(ContactAllInfo payload) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void populateContactForReturn(ContactAllInfo returnContactAllInfo, ContactBasicInfo contact, ContactNonBasicData contactNonBasicData) 
     {
     	returnContactAllInfo.setAddr_line1(contact.getAddress().getAddr_line1());
     	returnContactAllInfo.setAddr_line2(contact.getAddress().getAddr_line2());
@@ -220,7 +226,7 @@ public class ContactService {
 	public ContactsWithTypeAhead findFilteredContactsWithTA(FilterDataList contactFilterDataList, Pageable pageable) 
 	{
 		ContactsWithTypeAhead contactsWithTypeAhead = new ContactsWithTypeAhead();
-		Specification<ContactAllInfo> spec = fetchSpecification(contactFilterDataList);
+		Specification<ContactAllInfo> spec = ContactSpecifications.getSpecification(contactFilterDataList);
 		
 		if(spec!=null)
 			contactsWithTypeAhead.setContacts(allContactsRepo.findAll(spec, pageable));
@@ -237,7 +243,7 @@ public class ContactService {
     	namesAndNumbers.addAll(allContactsRepo.findContactNumbers());
     	return namesAndNumbers;
 	}
-	private Specification<ContactAllInfo> fetchSpecification(FilterDataList contactFilterDataList) 
+	/*private Specification<ContactAllInfo> fetchSpecification(FilterDataList contactFilterDataList) 
 	{
 		Specification<ContactAllInfo> specification = null;
 		for(FilterAttributeData attrData:contactFilterDataList.getFilterData())
@@ -305,7 +311,7 @@ public class ContactService {
 			}
 		return specification;
 	}
-
+*/
 	private List<String> checkIfContainsAll(List<String> attrValues) 
 	{
 		if(attrValues.contains("All"))
