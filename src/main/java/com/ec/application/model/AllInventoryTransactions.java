@@ -1,11 +1,13 @@
 package com.ec.application.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
@@ -16,8 +18,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Entity
 @Subselect("select * from all_inventory")
 @Immutable
+//@Table(name = "all_inventory")
 @Audited
-public class AllInventoryTransactions 
+public class AllInventoryTransactions implements Serializable
 {
 	
 	@Id
@@ -56,7 +59,7 @@ public class AllInventoryTransactions
 	String name;
 	
 	@Column(name="mobile_no")
-	Long mobileNo;
+	String mobileNo;
 	
 	@Column(name="email_id")
 	String emailId;
@@ -163,11 +166,11 @@ public class AllInventoryTransactions
 		this.name = name;
 	}
 
-	public Long getMobileNo() {
+	public String getMobileNo() {
 		return mobileNo;
 	}
 
-	public void setMobileNo(Long mobileNo) {
+	public void setMobileNo(String mobileNo) {
 		this.mobileNo = mobileNo;
 	}
 

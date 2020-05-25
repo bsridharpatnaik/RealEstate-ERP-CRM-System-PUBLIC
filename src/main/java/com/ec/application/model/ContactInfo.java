@@ -19,9 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "contact_info")
-@Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-//@NamedQuery(name = "ContactInfo.findAll", query="select u from ContactInfo u order by u.created_at desc")
 public class ContactInfo extends ReusableFields
 {
 	@Id

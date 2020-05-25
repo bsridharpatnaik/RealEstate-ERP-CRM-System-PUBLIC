@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.DashboardMachineOnRentDAO;
-import com.ec.application.data.StockPercentData;
 import com.ec.application.model.AllInventoryTransactions;
 import com.ec.application.repository.AllInventoryRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
@@ -39,9 +39,14 @@ public class AllInventoryService
 		Specification<AllInventoryTransactions> spec = AllInventorySpecification.getSpecification(filterDataList);
 		
 		if(spec!=null)
-			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(spec,pageable));
+		{
+			//Page<AllInventoryTransactions> data = allInventoryRepo.findAll(spec,pageable);
+			List<AllInventoryTransactions> data = allInventoryRepo.findAll(spec);
+			allInventoryReturnData.setTransactions(data);
+		
+		}
 		else
-			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
+			//allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
 		return allInventoryReturnData;
 	}

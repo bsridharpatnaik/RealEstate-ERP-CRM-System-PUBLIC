@@ -6,7 +6,6 @@ import javax.persistence.MappedSuperclass;
 import org.hibernate.envers.Audited;
 
 @MappedSuperclass
-@Audited
 public class Contact 
 {
 	@Column(name="name")
