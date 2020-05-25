@@ -1,0 +1,804 @@
+{
+	"info": {
+		"_postman_id": "b67e4ad0-8ce6-45ff-9743-1a3c11a3cd3d",
+		"name": "Evergreen City Through Gateway",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "46532d2f-82df-4c2a-9c6a-97b7434a90c0",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"token\", \"Bearer \"+jsonData.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userName\":\"sridhar\",\n\t\"password\":\"Test@123\"\n}",
+							"options": {
+								"raw": {}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/ec/login",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"ec",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/me",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Contact",
+			"item": [
+				{
+					"name": "Create Contact - Contractor/Supplier",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\"kumar\",\n\t\"mobileNo\":\"212123\",\n\t\"contactType\":\"SUPPLIER\",\n\t\"emailId\":\"bsp@dd.com\",\n\t\"address\":\"asas asas aSas\",\n\t\"gstNumber\":\"ss23123\",\n\t\"contactPerson\":\"SDSAD\",\n\t\"contactPersonMobileNo\":\"32132132\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Contact - Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\"S PATNAIK\",\n\t\"mobileNo\":\"898985912\",\n\t\"contactType\":\"CUSTOMER\", \n\t\"emailId\":\"bsp@dd.com\",\n\t\"address\":\"asas asas aSas\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact/5",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Contacts",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact?size=2&page=1",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "2"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UPDATE CONTACT",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\"Santhosh ki\",\n\t\"mobileNo\":\"2221016611\",\n\t\"contactType\":\"CUSTOMER\",\n\t\"emailId\":\"bsp@dd.com\",\n\t\"address\":\"asas asas aSas\",\n\t\"gstNumber\":\"ss2312uu3\",\n\t\"contactPerson\":\"SDSAD\",\n\t\"contactPersonMobileNo\":\"32132132\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact/5",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filtered Contacts filter tab",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"name\",\n            \"attrValue\": [\"santhosh\"]\n        },\n        {\n            \"attrName\": \"mobilenumber\",\n            \"attrValue\": [\"32332\"]\n        },\n        {\n            \"attrName\": \"address\",\n            \"attrValue\": [\"sda\"]\n        },\n        {\n            \"attrName\": \"contacttype\",\n            \"attrValue\": [\"CUSTOMER\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact?size=2&page=1",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "2"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filtered Contacts filter tab Copy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"name\",\n            \"attrValue\": [\"santhosh\",\"kumar\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact?size=20&page=0",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter - when press enter on search",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"nameormobile\",\n            \"attrValue\": [\"santhosh\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/contact?size=20&page=0",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"contact"
+							],
+							"query": [
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "User/Role",
+			"item": [
+				{
+					"name": "Fetch All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\":\"sri\",\n\t\"password\":\"Test@123\",\n\t\"role\":[\"admin\",\"clerk\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\":\"clerk\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/role/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"role",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch All Roles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/role",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"role"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\":\"santhosh212\",\n\t\"newPassword\":\"bhagbjsd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/updatepassword",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"updatepassword"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Roles for User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\":\"santhosh212\",\n\t\"roles\":[\"admin\",\"clerk\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/updateroles",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"updateroles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Users",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"username\",\n            \"attrValue\": [\"sri\",\"kumar\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Supplier",
+			"item": [
+				{
+					"name": "All Suppliers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/supplier",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"supplier"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Supplier Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/supplier/names",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"supplier",
+								"names"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Contractor",
+			"item": [
+				{
+					"name": "All Contractors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/contractor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"contractor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Contractors Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/contractor/names",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"contractor",
+								"names"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
