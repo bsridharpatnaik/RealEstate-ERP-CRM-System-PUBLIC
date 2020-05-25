@@ -30,6 +30,7 @@ import com.ec.common.Filters.ContactFilterAttributeEnum;
 import com.ec.common.Filters.ContactSpecifications;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
+import com.ec.common.JWTUtils.ReusableMethods;
 import com.ec.common.Model.Address;
 import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.ContactBasicInfo;
@@ -80,20 +81,49 @@ public class ContactService {
         PopulateBasicFields(payload, contact, address);
         contactRepo.save(contact);
         
-        if (!payload.getContactType().equalsIgnoreCase(CustomerTypeEnum.CUSTOMER.toString())) 
-        	contactNonBasicData = fetchNonBasicData(payload,contact);
-        else
+        try
         {
+        	if (!payload.getContactType().equalsIgnoreCase(CustomerTypeEnum.CUSTOMER.toString())) 
+        		contactNonBasicData = fetchNonBasicData(payload,contact);
+        	else
+        	{
         	
+        	}
+        }
+        catch(Exception e)
+        {
+        	throw new Exception("Error pushing Supplier/Contractor details to  Inventory system"); 
         }
         
         populateContactForReturn(returnContactAllInfo,contact,contactNonBasicData);
         return returnContactAllInfo;
     }
 
-    private void validatePayload(ContactAllInfo payload) {
-		// TODO Auto-generated method stub
+    private void validatePayload(ContactAllInfo payload) throws Exception 
+    {
+    	if(!validateRequiredFields(payload).equals(""))
+    		throw new Exception("Required fields missing - " + validateRequiredFields(payload));
 		
+    	if(!ReusableMethods.isValidMobileNumber(payload.getMobileNo()))
+    		throw new Exception("Please enter valid mobile number.");
+		
+    	if(payload.getEmailId()!=null && payload.getEmailId()!="")
+    		if(!ReusableMethods.isValidEmail(payload.getEmailId()))
+    				throw new Exception("Please enter valid EmailId.");
+	}
+
+	private String validateRequiredFields(ContactAllInfo payload) 
+	{
+		String message = "";
+		if(payload.getMobileNo()==null || payload.getMobileNo().equals(""))
+			message = message==""?"Mobile No.":message+", Mobile No.";
+		
+		if(payload.getContactType()==null || payload.getContactType().equals(""))
+			message = message==""?"Contact Type":message+", Contact Type";
+		
+		if(payload.getName()==null || payload.getName().equals(""))
+			message = message==""?"Contact Name":message+", Contact Name";
+		return message;
 	}
 
 	private void populateContactForReturn(ContactAllInfo returnContactAllInfo, ContactBasicInfo contact, ContactNonBasicData contactNonBasicData) 
@@ -243,75 +273,6 @@ public class ContactService {
     	namesAndNumbers.addAll(allContactsRepo.findContactNumbers());
     	return namesAndNumbers;
 	}
-	/*private Specification<ContactAllInfo> fetchSpecification(FilterDataList contactFilterDataList) 
-	{
-		Specification<ContactAllInfo> specification = null;
-		for(FilterAttributeData attrData:contactFilterDataList.getFilterData())
-		{
-			String attrName = attrData.getAttrName();
-			List<String> attrValues = attrData.getAttrValue();
-			
-			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.NAME.toString()))
-			{
-				Specification<ContactAllInfo> internalSpecification = null;
-				for(String attrValue : attrValues)
-				{
-					internalSpecification= internalSpecification==null?
-							ContactSpecifications.whereNameContains(attrValue)
-							:internalSpecification.or(ContactSpecifications.whereNameContains(attrValue));
-				}
-				specification= specification==null?internalSpecification:specification.and(internalSpecification);
-			}
-			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.MOBILENUMBER.toString()))
-			{
-				Specification<ContactAllInfo> internalSpecification = null;
-				for(String attrValue : attrValues)
-				{
-					internalSpecification= internalSpecification==null?
-							ContactSpecifications.whereMobileNoContains(attrValue):
-							internalSpecification.or(ContactSpecifications.whereMobileNoContains(attrValue));
-				}
-				specification= specification==null?internalSpecification:specification.and(internalSpecification);
-			}
-			
-			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.ADDRESS.toString()))
-			{
-				Specification<ContactAllInfo> internalSpecification = null;
-				for(String attrValue : attrValues)
-				{
-					Specification<ContactAllInfo> childSpecification = ContactSpecifications.whereAddress1Contains(attrValue)
-							.or(ContactSpecifications.whereAddress2Contains(attrValue))
-							.or(ContactSpecifications.whereCityContains(attrValue))
-							.or(ContactSpecifications.whereStateContains(attrValue))
-							.or(ContactSpecifications.whereZipContains(attrValue));
-					internalSpecification= internalSpecification==null?childSpecification
-							:internalSpecification.or(childSpecification);
-				}
-				specification= specification==null?internalSpecification:specification.and(internalSpecification);
-			}
-			
-			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.CONTACTTYPE.toString()))
-			{
-				Specification<ContactAllInfo> internalSpecification = null;
-				attrValues = checkIfContainsAll(attrValues);
-	
-				for(String attrValue : attrValues)
-				{
-					internalSpecification= internalSpecification==null?
-							ContactSpecifications.whereContactTypeEquals(attrValue)
-							:internalSpecification.or(ContactSpecifications.whereContactTypeEquals(attrValue));
-				}
-				specification= specification==null?internalSpecification:specification.and(internalSpecification);
-			}
-			
-			if(attrName.toUpperCase().equals(ContactFilterAttributeEnum.NAMEORMOBILE.toString()))
-				if(specification == null)
-					specification = ContactSpecifications.whereNameContains(attrValues.get(0)).or(ContactSpecifications.whereMobileNoContains(attrValues.get(0)));
-				
-			}
-		return specification;
-	}
-*/
 	private List<String> checkIfContainsAll(List<String> attrValues) 
 	{
 		if(attrValues.contains("All"))

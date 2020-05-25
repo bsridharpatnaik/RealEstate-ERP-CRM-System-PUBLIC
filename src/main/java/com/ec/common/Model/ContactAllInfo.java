@@ -20,12 +20,9 @@ public class ContactAllInfo implements Serializable
 	@Column(name="contact_id")
 	Long contactId;
 	
-	@NonNull
 	@Column(name="name")
 	String name;
 	
-	@NonNull
-	@Pattern(regexp="(^$|[0-9]{10})")
 	@Column(name="mobile_no")
 	String mobileNo;
 	
@@ -48,7 +45,6 @@ public class ContactAllInfo implements Serializable
 	@Column(name="email_id")
 	String emailId;
 	
-	@NonNull
 	@Column(name="contact_type")
 	String contactType;
 	
