@@ -1,0 +1,4 @@
+create database qa;
+INSERT INTO `role` (`name`) VALUES ('admin');
+INSERT INTO `security_user` (`user_id`, `password`, `password_expired`, `status`, `user_name`) VALUES ('10001', '$2a$04$EkXqoj71td10Q0aOPts1yeaAPKJz6DUy0STutLCU0HbeYi2x3RDvm', b'0', b'1', 'sridhar');
+INSERT INTO `user_role` (`user_id`, `role_name`) VALUES ('10001', 'admin');
