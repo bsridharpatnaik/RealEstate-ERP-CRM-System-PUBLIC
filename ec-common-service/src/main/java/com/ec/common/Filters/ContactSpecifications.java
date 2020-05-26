@@ -24,33 +24,33 @@ public final class ContactSpecifications
 		Specification<ContactAllInfo> finalSpec = null;
 		
 		if(names != null && names.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.NAME,names));	
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.name.getName(),names));	
 	
 		if(contacttypes != null && contacttypes.size()>0)
 		{
 			if(contacttypes.contains("All"))
 				feedContactTypes(contacttypes);
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.CONTACT_TYPE,contacttypes));	
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.contactType.getName(),contacttypes));	
 		}
 		
 		if(mobilenumber != null && mobilenumber.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.MOBILE_NO,mobilenumber));	
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.mobileNo.getName(),mobilenumber));	
 	
 		if(address != null && address.size()>0)
 		{
 			Specification<ContactAllInfo> internalSpec = null;
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.ADDR_LINE1,address));	
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.ADDR_LINE2,address));
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.CITY,address));
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.STATE,address));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.addr_line1.getName(),address));	
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.addr_line2.getName(),address));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.city.getName(),address));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.state.getName(),address));
 			finalSpec = specbldr.specAndCondition(finalSpec,internalSpec);
 		}
 		
 		if(nameormobile != null && nameormobile.size()>0)
 		{
 			Specification<ContactAllInfo> internalSpec = null;
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.NAME,nameormobile));	
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.MOBILE_NO,nameormobile));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.name.getName(),nameormobile));	
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(ContactAllInfo_.mobileNo.getName(),nameormobile));
 			finalSpec = specbldr.specAndCondition(finalSpec,internalSpec);
 		}
 		return finalSpec;

@@ -35,7 +35,7 @@ public class SupplierService
 		return supplierRepo.findAll(pageable);
 	}
 
-	public boolean isContactUsed(Long id) 
+	public boolean isContactUsedAsSupplier(Long id) 
 	{
 		boolean isContactUsed = false;
 		if(checkBeforeDeleteService.isSupplierUsed(id))

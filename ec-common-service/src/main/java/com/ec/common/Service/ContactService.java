@@ -110,6 +110,10 @@ public class ContactService {
     	if(payload.getEmailId()!=null && payload.getEmailId()!="")
     		if(!ReusableMethods.isValidEmail(payload.getEmailId()))
     				throw new Exception("Please enter valid EmailId.");
+    	
+    	if(payload.getContactPersonMobileNo()!=null && payload.getContactPersonMobileNo()!="")
+    		if(!ReusableMethods.isValidMobileNumber(payload.getContactPersonMobileNo()))
+    				throw new Exception("Please enter valid Office/Contact Person Mobile Number");
 	}
 
 	private String validateRequiredFields(ContactAllInfo payload) 

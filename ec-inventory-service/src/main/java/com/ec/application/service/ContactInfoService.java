@@ -51,7 +51,7 @@ public class ContactInfoService
 	{
 		Boolean  isUsed = false;
 		
-		if(supplierService.isContactUsed(id) || contractorService.isContactUsed(id))
+		if(supplierService.isContactUsedAsSupplier(id) || contractorService.isContactUsedAsContractor(id))
 			isUsed = true;
 		return isUsed;
 	}

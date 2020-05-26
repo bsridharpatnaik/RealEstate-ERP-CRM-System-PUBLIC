@@ -34,7 +34,7 @@ public class ContractorService
 		return contractorRepo.findAll(pageable);
 	}
 	
-	public boolean isContactUsed(Long id) 
+	public boolean isContactUsedAsContractor(Long id) 
 	{
 		boolean isContactUsed = false;
 		if(checkBeforeDeleteService.isContractorUsed(id))
