@@ -70,4 +70,10 @@ public class ContactController
 	{
 		return contactService.updateContact(id, payload);
 	} 
+	
+	@GetMapping("/iscontactused/{id}")
+	public Boolean checkIfContactUsed(@PathVariable long id) throws Exception 
+	{
+		return contactService.checkIfContactUsed(id);
+	}
 }

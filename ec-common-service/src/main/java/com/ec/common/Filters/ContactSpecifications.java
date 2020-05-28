@@ -5,9 +5,10 @@ import java.util.List;
 
 
 import org.springframework.data.jpa.domain.Specification;
+
+import com.ec.ReusableClasses.SpecificationsBuilder;
 import com.ec.common.Model.ContactAllInfo;
 import com.ec.common.Model.ContactAllInfo_;
-import com.ec.utils.SpecificationsBuilder;
 
 public final class ContactSpecifications 
 {

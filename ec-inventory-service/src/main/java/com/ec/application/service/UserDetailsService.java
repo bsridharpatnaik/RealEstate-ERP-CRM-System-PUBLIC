@@ -23,7 +23,6 @@ public class UserDetailsService
     
 	public UserReturnData getCurrentUser()
     {
-    	System.out.println(request.getHeader("Authorization"));
     	UserReturnData userDetails = webClientBuilder.build()
 					    	.get()
 					    	.uri(reqUrl+"user/me")

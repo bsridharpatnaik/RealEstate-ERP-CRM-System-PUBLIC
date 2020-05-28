@@ -1,4 +1,4 @@
-package com.ec.utils;
+package com.ec.ReusableClasses;
 
 public class CommonUtils 
 {

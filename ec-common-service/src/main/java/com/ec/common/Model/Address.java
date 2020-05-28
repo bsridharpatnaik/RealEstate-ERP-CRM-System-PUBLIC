@@ -11,7 +11,7 @@ import javax.persistence.Table;
 
 import org.hibernate.envers.Audited;
 
-import com.ec.utils.ReusableFields;
+import com.ec.ReusableClasses.ReusableFields;
 
 
 @Entity

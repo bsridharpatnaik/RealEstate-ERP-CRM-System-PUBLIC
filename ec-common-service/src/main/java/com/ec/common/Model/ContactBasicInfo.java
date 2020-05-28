@@ -21,8 +21,8 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
+import com.ec.ReusableClasses.ReusableFields;
 import com.ec.common.Data.CustomerTypeEnum;
-import com.ec.utils.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,4 +1,4 @@
-package com.ec.utils;
+package com.ec.ReusableClasses;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
