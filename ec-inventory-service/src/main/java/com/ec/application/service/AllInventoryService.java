@@ -40,13 +40,12 @@ public class AllInventoryService
 		
 		if(spec!=null)
 		{
-			//Page<AllInventoryTransactions> data = allInventoryRepo.findAll(spec,pageable);
-			List<AllInventoryTransactions> data = allInventoryRepo.findAll(spec);
+			Page<AllInventoryTransactions> data = allInventoryRepo.findAll(spec,pageable);
 			allInventoryReturnData.setTransactions(data);
 		
 		}
 		else
-			//allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
+			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
 		return allInventoryReturnData;
 	}

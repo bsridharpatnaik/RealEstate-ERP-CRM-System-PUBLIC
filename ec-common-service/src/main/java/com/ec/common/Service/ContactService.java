@@ -22,13 +22,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.ec.ReusableClasses.CommonUtils;
+import com.ec.ReusableClasses.URLRepository;
 import com.ec.common.Data.ContactNonBasicData;
 import com.ec.common.Data.ContactsWithTypeAhead;
 import com.ec.common.Data.CustomerTypeEnum;
-import com.ec.common.Data.URLRepository;
-import com.ec.common.Filters.ContactFilterAttributeEnum;
 import com.ec.common.Filters.ContactSpecifications;
-import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.JWTUtils.ReusableMethods;
 import com.ec.common.Model.Address;
@@ -37,7 +36,7 @@ import com.ec.common.Model.ContactBasicInfo;
 import com.ec.common.Repository.AddressRepo;
 import com.ec.common.Repository.ContactAllInfoRepo;
 import com.ec.common.Repository.ContactBasicInfoRepo;
-import com.ec.utils.CommonUtils;
+
 
 @Service
 public class ContactService {
@@ -62,7 +61,7 @@ public class ContactService {
 
     @Value("${inven.serverurl}")
     private String reqServer;
-
+    
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
 	
@@ -156,10 +155,7 @@ public class ContactService {
 		formatMobileNo(payload);
 		if(!contact.getMobileNo().equals(payload.getMobileNo()))
 				exitIfMobileNoExists(payload);
-		if(payload.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER) && 
-				(!contact.getContactType().toString().equals(CustomerTypeEnum.CUSTOMER)))
-			throw new Exception("Cannot convert contact from non-customer to customer");		
-		
+		checkIfContactTypeModified(contact,payload);
 		PopulateBasicFields(payload, contact, address);
 		contactRepo.save(contact);
 		ContactNonBasicData contactNonBasicData  = fetchNonBasicData(payload,contact);
@@ -168,7 +164,27 @@ public class ContactService {
 		return returnContactAllInfo;
     }
     
-    public ContactBasicInfo findContactById(long id) throws Exception 
+    private void checkIfContactTypeModified(ContactBasicInfo contact, ContactAllInfo payload) throws Exception 
+    {
+		String oldType = contact.getContactType().toString();
+		System.out.println("Existing Contact Type - " + oldType);
+		String newType = payload.getContactType();
+		System.out.println("Existing Contact Type - " + newType);
+		
+		if(oldType.equalsIgnoreCase("SUPPLIER") && !newType.equalsIgnoreCase("SUPPLIER"))
+		{
+			if(checkIfSupplierUsed(contact.getContactId()))
+					throw new Exception("Cannot change contact to non-supplier. Supplier already in use in the system");
+		}
+		
+		if(oldType.equalsIgnoreCase("CONTRACTOR") && !newType.equalsIgnoreCase("CONTRACTOR"))
+		{
+			if(checkIfContractorUsed(contact.getContactId()))
+					throw new Exception("Cannot change contact to non-contractor. Contractor already in use in the system");
+		}
+	}
+
+	public ContactBasicInfo findContactById(long id) throws Exception 
     {
         Optional <ContactBasicInfo> ContactOpt = contactRepo.findById(id);
         if (!ContactOpt.isPresent())
@@ -291,19 +307,59 @@ public class ContactService {
 
 	public Boolean checkIfContactUsed(Long id) throws Exception 
 	{
+		
+		Boolean isUsed = false;
+		String url = reqServer + URLRepository.checkContactUsed+id;
 		HttpHeaders headers = new HttpHeaders();
-		Boolean isUSed = false;
         headers.set("Authorization", httpRequest.getHeader("Authorization"));
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity request = new HttpEntity(headers);
-        ResponseEntity<Boolean> response = restTemplate.exchange(reqServer + URLRepository.checkContactUsed+id,HttpMethod.GET,request, Boolean.class,1);
+        ResponseEntity<Boolean> response = restTemplate.exchange(url,HttpMethod.GET,request, Boolean.class,1);
         if (response.getStatusCode() == HttpStatus.OK) {
             System.out.println("Request Successful.");
-            isUSed = Boolean.valueOf(response.getBody());
+            isUsed = Boolean.valueOf(response.getBody());
         } else {
             throw new Exception("Error occured while checking if contact is used");
         }
-        return isUSed;
+        return isUsed;
+	}
+	
+	public Boolean checkIfSupplierUsed(Long id) throws Exception 
+	{
+		
+		Boolean isUsed = false;
+		String url = reqServer + URLRepository.isSupplierUsed+id;
+		ResponseEntity<Boolean> response = restTemplate.exchange(url,HttpMethod.GET,getRequest(), Boolean.class,1);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            System.out.println("Request Successful.");
+            isUsed = Boolean.valueOf(response.getBody());
+        } else {
+            throw new Exception("Error occured while checking if contact is used");
+        }
+        return isUsed;
+	}
+
+	public Boolean checkIfContractorUsed(Long id) throws Exception 
+	{
+		
+		Boolean isUsed = false;
+		String url = reqServer + URLRepository.isContractorUsed+id;
+		ResponseEntity<Boolean> response = restTemplate.exchange(url,HttpMethod.GET,getRequest(), Boolean.class,1);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            System.out.println("Request Successful.");
+            isUsed = Boolean.valueOf(response.getBody());
+        } else {
+            throw new Exception("Error occured while checking if contact is used");
+        }
+        return isUsed;
+	}
+	
+	private HttpEntity getRequest() {
+		HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", httpRequest.getHeader("Authorization"));
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        HttpEntity request  = new HttpEntity(headers);
+        return request;
 	}
 
 	public void deleteContact(Long id) throws Exception 
@@ -311,9 +367,6 @@ public class ContactService {
 		if(checkBeforeDeleteService.checkIfContactIsUsed(id))
 			throw new Exception("Cannot delete. Contact already being used in system.");
 		else
-		{
 			contactRepo.softDeleteById(id);
-			//ContactInfoRepo
-		}
 	}
 }

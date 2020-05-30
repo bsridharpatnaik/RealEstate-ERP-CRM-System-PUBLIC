@@ -10,13 +10,13 @@ import com.ec.application.model.AllInventoryTransactions;
 public class AllInventoryReturnData  implements Serializable
 {
 
-	List<AllInventoryTransactions> transactions;
+	Page<AllInventoryTransactions> transactions;
 	NameAndProjectionDataForDropDown ldDropdown;
 	
-	public List<AllInventoryTransactions> getTransactions() {
+	public Page<AllInventoryTransactions> getTransactions() {
 		return transactions;
 	}
-	public void setTransactions(List<AllInventoryTransactions> data) {
+	public void setTransactions(Page<AllInventoryTransactions> data) {
 		this.transactions = data;
 	}
 	public NameAndProjectionDataForDropDown getLdDropdown() {
