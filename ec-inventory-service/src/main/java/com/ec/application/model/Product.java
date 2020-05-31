@@ -35,7 +35,7 @@ private static final long serialVersionUID = 1L;
 	Long productId;
 	
 	@NonNull
-	@Column(unique=true,name="product_name")
+	@Column(name="product_name")
 	String productName;
 	
 	String productDescription;

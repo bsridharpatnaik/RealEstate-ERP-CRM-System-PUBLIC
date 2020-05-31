@@ -29,7 +29,7 @@ private static final long serialVersionUID = 1L;
 	Long machineryId;
 	
 	@NonNull
-	@Column(unique=true)
+	@Column
 	String machineryName;
 	
 	String machineryDescription;

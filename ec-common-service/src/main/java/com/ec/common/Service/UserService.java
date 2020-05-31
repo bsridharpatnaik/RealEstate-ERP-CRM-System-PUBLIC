@@ -99,7 +99,7 @@ public class UserService {
 			uRepo.save(user);
 			return user;
 		} else {
-			throw new Exception("No or Multiple users found by username!");
+			throw new Exception("None or Multiple users found by username!");
 		}
 	}
 
@@ -120,7 +120,7 @@ public class UserService {
 			uRepo.save(user);
 			return user;
 		} else {
-			throw new Exception("No or Multiple users found by username!");
+			throw new Exception("None or Multiple users found by username!");
 		}
 	}
 
@@ -213,7 +213,7 @@ public class UserService {
 	            roleset.add(roleEntity);
 	    }
 	    if (roleset.size() < 1)
-	        throw new Exception("Role(s) not Found!");
+	        throw new Exception("Please select atleast one role!");
 	    user.setUserName(username);
 	    user.setStatus(true);
 	    user.setRoles(roleset);

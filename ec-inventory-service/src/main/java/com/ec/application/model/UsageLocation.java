@@ -24,7 +24,7 @@ public class UsageLocation extends ReusableFields
 	Long locationId;
 	
 	@NonNull
-	@Column(unique=true,name="location_name")
+	@Column(name="location_name")
 	String locationName;
 	String locationDescription;
 	

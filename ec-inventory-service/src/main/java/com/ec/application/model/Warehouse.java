@@ -31,7 +31,7 @@ public class Warehouse extends ReusableFields
 	
 	@NotNull
 	@Size(max = 50)
-	@Column(length = 50,unique=true)
+	@Column(length = 50)
 	String warehouseName;
 
 	

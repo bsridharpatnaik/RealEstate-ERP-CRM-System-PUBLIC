@@ -29,7 +29,7 @@ public class UsageArea extends ReusableFields
 	Long usageAreaId;
 	
 	@NonNull
-	@Column(unique=true,name="usagearea_name")
+	@Column(name="usagearea_name")
 	String usageAreaName;
 	
 	String usageAreaDescription;
