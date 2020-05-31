@@ -53,7 +53,7 @@ public class AllInventoryTransactions implements Serializable
 	Double quantity;
 	
 	@Column(name="closing_stock")
-	Double ClosingStock;
+	Double closingStock;
 	
 	@Column(name="name")
 	String name;
@@ -151,11 +151,11 @@ public class AllInventoryTransactions implements Serializable
 	}
 
 	public Double getClosingStock() {
-		return ClosingStock;
+		return closingStock;
 	}
 
 	public void setClosingStock(Double closingStock) {
-		ClosingStock = closingStock;
+		closingStock = closingStock;
 	}
 
 	public String getName() {

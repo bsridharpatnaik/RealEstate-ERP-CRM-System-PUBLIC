@@ -113,6 +113,13 @@ public class ContactService {
     	if(payload.getContactPersonMobileNo()!=null && payload.getContactPersonMobileNo()!="")
     		if(!ReusableMethods.isValidMobileNumber(payload.getContactPersonMobileNo()))
     				throw new Exception("Please enter valid Office/Contact Person Mobile Number");
+    	
+    	if(payload.getZip()!=null && payload.getZip()!="")
+    	{	
+    		if(!payload.getZip().matches( "\\d{6}"))
+    			throw new Exception("Enter a valid pin code (6 Digits numeric)");
+    			
+    	}
 	}
 
 	private String validateRequiredFields(ContactAllInfo payload) 
