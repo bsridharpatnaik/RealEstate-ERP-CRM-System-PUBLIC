@@ -159,6 +159,7 @@ public class ContactService {
 		ContactAllInfo returnContactAllInfo = new ContactAllInfo();
 		ContactBasicInfo contact = findContactById(id);
 		Address address = contact.getAddress();
+		validatePayload(payload);
 		formatMobileNo(payload);
 		if(!contact.getMobileNo().equals(payload.getMobileNo()))
 				exitIfMobileNoExists(payload);
@@ -166,7 +167,6 @@ public class ContactService {
 		PopulateBasicFields(payload, contact, address);
 		contactRepo.save(contact);
 		ContactNonBasicData contactNonBasicData  = fetchNonBasicData(payload,contact);
-		
 		populateContactForReturn(returnContactAllInfo,contact,contactNonBasicData);
 		return returnContactAllInfo;
     }
