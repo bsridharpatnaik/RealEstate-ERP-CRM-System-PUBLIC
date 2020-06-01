@@ -16,9 +16,12 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @Table(name = "Category")
@@ -34,9 +37,11 @@ private static final long serialVersionUID = 1L;
 	Long categoryId;
 	
 	@NonNull
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	@Column(name="category_name")
 	String categoryName;
 	
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String categoryDescription;
 	
 	public Long getCategoryId() {

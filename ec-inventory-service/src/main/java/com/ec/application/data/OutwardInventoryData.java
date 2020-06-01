@@ -5,8 +5,10 @@ import java.util.List;
 
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
 import com.ec.application.model.FileInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class OutwardInventoryData 
 {
@@ -26,6 +28,7 @@ public class OutwardInventoryData
 	String slipNo;
 	
 	@NonNull
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String purpose;
 	
 	@NonNull
@@ -34,6 +37,7 @@ public class OutwardInventoryData
 	@NonNull
 	List<ProductWithQuantity> productWithQuantities;
 	
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String additionalInfo;
 
 	@NonNull

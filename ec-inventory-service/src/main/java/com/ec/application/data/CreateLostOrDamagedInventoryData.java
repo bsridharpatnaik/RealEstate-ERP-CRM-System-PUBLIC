@@ -5,8 +5,10 @@ import java.util.List;
 
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
 import com.ec.application.model.FileInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class CreateLostOrDamagedInventoryData 
 {
@@ -21,6 +23,7 @@ public class CreateLostOrDamagedInventoryData
 	Double quantity;
 	
 	@NonNull
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String theftLocation;
 	
 	@NonNull

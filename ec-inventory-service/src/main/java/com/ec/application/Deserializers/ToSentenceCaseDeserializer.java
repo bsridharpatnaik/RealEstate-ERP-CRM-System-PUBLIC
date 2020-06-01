@@ -1,7 +1,8 @@
 package com.ec.application.Deserializers;
 
 import java.io.IOException;
-
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.apache.commons.lang.WordUtils;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -20,9 +21,16 @@ public class ToSentenceCaseDeserializer extends StdDeserializer<String> {
     public String deserialize(JsonParser jsonParser, DeserializationContext ctxt) throws IOException 
     {
     	String text = jsonParser.getText();
-    	text = WordUtils.capitalizeFully(text,". ".toCharArray());
-    	text = WordUtils.capitalizeFully(text,".".toCharArray());
-    	return text;
+    	Pattern pattern = Pattern.compile("^\\W*([a-zA-Z])|\\.\\W*([a-zA-Z])");
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer stringBuffer = new StringBuffer("");
+
+        while (matcher.find()) {
+            matcher.appendReplacement(stringBuffer, matcher.group(0).toUpperCase());
+        }
+
+        matcher.appendTail(stringBuffer);
+        return stringBuffer.toString();
     }
 
 }

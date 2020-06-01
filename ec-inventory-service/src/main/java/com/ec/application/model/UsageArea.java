@@ -15,8 +15,11 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @Table(name = "usage_area")
@@ -30,8 +33,9 @@ public class UsageArea extends ReusableFields
 	
 	@NonNull
 	@Column(name="usagearea_name")
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String usageAreaName;
-	
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String usageAreaDescription;
 
 	public Long getUsageAreaId() {

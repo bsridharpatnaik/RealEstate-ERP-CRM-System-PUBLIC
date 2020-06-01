@@ -4,8 +4,11 @@ import java.util.Date;
 
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.ec.application.Deserializers.ToUpperCaseDeserializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 public class CreateMORentData 
 {
@@ -37,7 +40,9 @@ public class CreateMORentData
 	Double amountCharged;
 	@NonNull
 	String mode;
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String vehicleNo;
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String additionalNotes;
 	
 	

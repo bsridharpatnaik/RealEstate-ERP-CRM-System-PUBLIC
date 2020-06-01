@@ -12,10 +12,13 @@ import javax.validation.constraints.Size;
 
 import org.hibernate.envers.Audited;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @JsonInclude(Include.NON_NULL)
@@ -32,6 +35,7 @@ public class Warehouse extends ReusableFields
 	@NotNull
 	@Size(max = 50)
 	@Column(length = 50)
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String warehouseName;
 
 	

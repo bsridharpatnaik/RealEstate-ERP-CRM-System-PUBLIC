@@ -13,7 +13,10 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @Table(name = "Machinery")
@@ -30,8 +33,10 @@ private static final long serialVersionUID = 1L;
 	
 	@NonNull
 	@Column
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String machineryName;
 	
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String machineryDescription;
 	
 	public Long getMachineryId() {

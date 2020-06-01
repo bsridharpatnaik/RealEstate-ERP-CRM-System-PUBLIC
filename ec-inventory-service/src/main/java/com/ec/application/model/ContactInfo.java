@@ -1,21 +1,16 @@
 package com.ec.application.model;
 
-import java.util.Date;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
-import org.hibernate.envers.Audited;
 
+import com.ec.application.Deserializers.ToTitleCaseDeserializer;
+import com.ec.application.Deserializers.ToUpperCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @Table(name = "contact_info")
@@ -24,9 +19,10 @@ public class ContactInfo extends ReusableFields
 {
 	@Id
 	Long contactId;
-	
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	@Column(name = "gst_number")
 	String gstNumber;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String contactPerson;
 	String contactPersonMobileNo;
 	

@@ -11,7 +11,10 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @Table(name = "Usage_Location")
@@ -24,8 +27,10 @@ public class UsageLocation extends ReusableFields
 	Long locationId;
 	
 	@NonNull
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	@Column(name="location_name")
 	String locationName;
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String locationDescription;
 	
 	public Long getLocationId() {
