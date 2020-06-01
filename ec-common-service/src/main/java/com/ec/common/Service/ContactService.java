@@ -102,7 +102,7 @@ public class ContactService {
     {
     	if(!validateRequiredFields(payload).equals(""))
     		throw new Exception("Required fields missing - " + validateRequiredFields(payload));
-		if(payload.getName().length()>15)
+		if(payload.getName().length()>20)
 			throw new Exception("Contact name should not be more than 15 characters.");
     	if(!ReusableMethods.isValidMobileNumber(payload.getMobileNo()))
     		throw new Exception("Please enter valid mobile number.");
