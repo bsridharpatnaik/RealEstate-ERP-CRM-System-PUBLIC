@@ -1,7 +1,5 @@
 package com.ec.common.Model;
 
-import java.util.Date;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,17 +13,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
-import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.ReusableClasses.ReusableFields;
+import com.ec.common.Configuration.ToLowerCaseDeserializer;
 import com.ec.common.Data.CustomerTypeEnum;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @Table(name = "Contact")
@@ -43,6 +38,7 @@ public class ContactBasicInfo extends ReusableFields
 	
 	@NonNull
 	@Column(nullable=false)
+	@JsonDeserialize(using = ToLowerCaseDeserializer.class)
 	String name;
 	
 	@NonNull

@@ -5,11 +5,14 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.validation.constraints.Pattern;
 
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
-import org.springframework.lang.NonNull;
+
+import com.ec.common.Configuration.ToLowerCaseDeserializer;
+import com.ec.common.Configuration.ToTtileCaseDeserializer;
+import com.ec.common.Configuration.ToUpperCaseDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Entity
 @Subselect("select * from AllContacts")
@@ -20,40 +23,48 @@ public class ContactAllInfo implements Serializable
 	@Column(name="contact_id")
 	Long contactId;
 	
+	@JsonDeserialize(using = ToTtileCaseDeserializer.class)
 	@Column(name="name")
 	String name;
 	
 	@Column(name="mobile_no")
 	String mobileNo;
 	
+	@JsonDeserialize(using = ToTtileCaseDeserializer.class)
 	@Column(name="addr_line1")
 	String addr_line1;
 	
-	
+	@JsonDeserialize(using = ToTtileCaseDeserializer.class)
 	@Column(name="addr_line2")
 	String addr_line2;
 	
+	@JsonDeserialize(using = ToTtileCaseDeserializer.class)
 	@Column(name="city")
 	String city;
 	
+	@JsonDeserialize(using = ToTtileCaseDeserializer.class)
 	@Column(name="state")
 	String state;
 	
 	@Column(name="zip")
 	String zip;
 	
+	@JsonDeserialize(using = ToLowerCaseDeserializer.class)
 	@Column(name="email_id")
 	String emailId;
 	
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	@Column(name="contact_type")
 	String contactType;
 	
+	@JsonDeserialize(using = ToTtileCaseDeserializer.class)
 	@Column(name="contact_person")
 	String contactPerson;
 	
 	@Column(name="contact_person_mobile_no")
 	String contactPersonMobileNo;
 	
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	@Column(name="gst_number")
 	String gstNumber;
 
