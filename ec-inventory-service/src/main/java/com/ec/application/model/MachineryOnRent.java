@@ -1,6 +1,8 @@
 package com.ec.application.model;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -10,6 +12,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -32,7 +36,7 @@ public class MachineryOnRent extends ReusableFields
 
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-	Long Id;
+	Long morid;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(nullable = false)
@@ -68,17 +72,31 @@ public class MachineryOnRent extends ReusableFields
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	Date endDate;
 	
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
+	@JoinTable(name = "mor_fileinformation", joinColumns = {
+			@JoinColumn(name = "morid", referencedColumnName = "morid") }, inverseJoinColumns = {
+					@JoinColumn(name = "id", referencedColumnName = "id") })
+	Set<FileInformation> fileInformations = new HashSet<>();
+	
 	Double initialMeterReading;
 	Double endMeterReading;
 	Double noOfTrips;
 	Double amountCharged;
-	public Long getId() {
-		return Id;
-	}
-	public void setId(Long id) {
-		Id = id;
-	}
 	
+	
+	
+	public Long getMorid() {
+		return morid;
+	}
+	public void setMorid(Long morid) {
+		this.morid = morid;
+	}
+	public Set<FileInformation> getFileInformations() {
+		return fileInformations;
+	}
+	public void setFileInformations(Set<FileInformation> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
 	public Date getDate() {
 		return date;
 	}

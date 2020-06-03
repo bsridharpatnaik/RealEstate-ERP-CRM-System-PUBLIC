@@ -43,7 +43,7 @@ public class ContactInfoService
 	{
 		contactInfo.setContactId(payload.getContactId());
 		contactInfo.setContactPerson(payload.getContactPerson());
-		contactInfo.setContactPersonMobileNo(payload.getContactPerson());
+		contactInfo.setContactPersonMobileNo(payload.getContactPersonMobileNo());
 		contactInfo.setGstNumber(payload.getGstNumber());;
 	}
 
