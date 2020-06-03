@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.Machinery;
@@ -73,7 +74,7 @@ public class MachineryOnRentService
 		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
 		if(!machineryOnRentOpt.isPresent())
 			throw new Exception("Machinery On rent by ID "+id+" Not found");
-		MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
+		//MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
 		morRepo.softDeleteById(id);
 	}
 	
@@ -100,6 +101,7 @@ public class MachineryOnRentService
 		machineryOnRent.setDate(payload.getDate());
 		machineryOnRent.setVehicleNo(payload.getVehicleNo());
 		machineryOnRent.setAdditionalNotes(payload.getAdditionalNotes());
+		machineryOnRent.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
 		return machineryOnRent;
 	}
 

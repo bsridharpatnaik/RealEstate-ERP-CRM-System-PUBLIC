@@ -1,6 +1,7 @@
 package com.ec.application.data;
 
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.lang.NonNull;
 
@@ -44,9 +45,16 @@ public class CreateMORentData
 	String vehicleNo;
 	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String additionalNotes;
+	@NonNull
+	List<FileInformationDAO> fileInformations;
 	
 	
-	
+	public List<FileInformationDAO> getFileInformations() {
+		return fileInformations;
+	}
+	public void setFileInformations(List<FileInformationDAO> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
 	public String getAdditionalNotes() {
 		return additionalNotes;
 	}
