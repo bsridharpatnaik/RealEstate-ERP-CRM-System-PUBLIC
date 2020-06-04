@@ -27,7 +27,7 @@ import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
-
+import java.text.DecimalFormat;
 @Service
 public class StockService 
 {
@@ -117,12 +117,13 @@ public class StockService
 		List<Long> uniqueProductIds = fetchUniqueProductIds(allStocks);
 		for(Long productId : uniqueProductIds)
 		{
+			DecimalFormat df = new DecimalFormat("###.#");
 			Product product = productService.findSingleProduct(productId);
 			SingleStockInfo singleStockInfo = new SingleStockInfo();
 			singleStockInfo.setProductId(productId);
 			singleStockInfo.setProductName(product.getProductName());
 			singleStockInfo.setCategoryName(product.getCategory().getCategoryName());
-			singleStockInfo.setTotalQuantityInHand(stockRepo.getTotalStockForProduct(productId));
+			singleStockInfo.setTotalQuantityInHand(df.format(stockRepo.getTotalStockForProduct(productId).toString())+" - "+product.getMeasurementUnit());
 			singleStockInfo.setDetailedStock(findStockForProductAsList(productId,allStocks));
 			stockInformationsList.add(singleStockInfo);
 		}

@@ -10,7 +10,7 @@ public class SingleStockInfo
 	Long productId;
 	String productName;
 	String categoryName;
-	Double totalQuantityInHand;
+	String totalQuantityInHand;
 	List<Stock> detailedStock;
 	public Long getProductId() {
 		return productId;
@@ -31,10 +31,10 @@ public class SingleStockInfo
 	public void setCategoryName(String categoryName) {
 		this.categoryName = categoryName;
 	}
-	public Double getTotalQuantityInHand() {
+	public String getTotalQuantityInHand() {
 		return totalQuantityInHand;
 	}
-	public void setTotalQuantityInHand(Double totalQuantityInHand) {
+	public void setTotalQuantityInHand(String totalQuantityInHand) {
 		this.totalQuantityInHand = totalQuantityInHand;
 	}
 	public List<Stock> getDetailedStock() {
