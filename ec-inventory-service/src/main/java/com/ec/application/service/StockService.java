@@ -123,7 +123,7 @@ public class StockService
 			singleStockInfo.setProductId(productId);
 			singleStockInfo.setProductName(product.getProductName());
 			singleStockInfo.setCategoryName(product.getCategory().getCategoryName());
-			singleStockInfo.setTotalQuantityInHand(df.format(stockRepo.getTotalStockForProduct(productId).toString())+" - "+product.getMeasurementUnit());
+			singleStockInfo.setTotalQuantityInHand(df.format(stockRepo.getTotalStockForProduct(productId)).toString()+" - "+product.getMeasurementUnit());
 			singleStockInfo.setDetailedStock(findStockForProductAsList(productId,allStocks));
 			stockInformationsList.add(singleStockInfo);
 		}
