@@ -1,0 +1,3184 @@
+{
+	"info": {
+		"_postman_id": "8a54d1e2-705d-4d1a-8208-6debe3ac4803",
+		"name": "EC Inventory Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "46532d2f-82df-4c2a-9c6a-97b7434a90c0",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"token\", \"Bearer \"+jsonData.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userName\":\"sridhar\",\n\t\"password\":\"Test@123\"\n}",
+							"options": {
+								"raw": {}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/ec/login",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"ec",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/me",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Contact",
+			"item": [
+				{
+					"name": "Is Contact Used",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/contact/isused",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"contact",
+								"isused"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Supplier",
+			"item": [
+				{
+					"name": "All Suppliers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/supplier",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"supplier"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Supplier Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/supplier/names",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"supplier",
+								"names"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check if Supplier is used",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/supplier/isused/18361",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"supplier",
+								"isused",
+								"18361"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Contractor Is Used",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/contractor/isused/18361",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"contractor",
+								"isused",
+								"18361"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Contractor",
+			"item": [
+				{
+					"name": "All Contractors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/contractor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"contractor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Contractors Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/contractor/names",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"contractor",
+								"names"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Contractor IS USed",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/contractor/isused/18361",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"contractor",
+								"isused",
+								"18361"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Category",
+			"item": [
+				{
+					"name": "Category Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"categoryName\":\"Building Material\",\n\t\"categoryDescription\":\"Pipsddasd sadsad asdasd\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch Single Category",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category/5",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"categoryName\":\"Plumbing Items\",\n\t\"categoryDescription\":\"Pipsddasd sadsad asdasd\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category/20",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category",
+								"20"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID and Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Category",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category/1",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Category By Name",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"name\",\n            \"attrValue\": [\"Fittings1\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch All Cetagories without filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n     \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Usage Area",
+			"item": [
+				{
+					"name": "Usage Area Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"usageAreaName\":\"bhai thoda sa side\",\n\t\"usageAreaDescription\":\"Pipsddasd sadsad asdasd\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/usagearea/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"usagearea",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch Single Usage Area",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/category/5",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"category",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Usage Area",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"usageAreaName\":\"bhai thoda sa side1\",\n\t\"usageAreaDescription\":\"Pipsddasd sadsad as1dasd\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/usagearea/537",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"usagearea",
+								"537"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID and Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/usagearea/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"usagearea",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Usage Area",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/usagearea/547",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"usagearea",
+								"547"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Usage Area",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"name\",\n            \"attrValue\": [\"nadi\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/usagearea",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"usagearea"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch All Usage Area without filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n     \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/usagearea",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"usagearea"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"categoryId\":\"35\",\n\t\"productName\":\"\",\n\t\"productDescription\":\"\",\n\t\"measurementUnit\":\"KG\",\n\t\"reorderQuantity\":100\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get BY ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product/9",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product",
+								"9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"categoryId\":\"3\",\n\t\"productName\":\"test priduct1\",\n\t\"productDescription\":\"description\",\n\t\"measurementUnit\":\"KG\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product/9",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product",
+								"9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product/9",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product",
+								"9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID and Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter product by name (when user presses enter)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"name\",\n            \"attrValue\": [\"bathroom\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch Products without filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product And Measurement Unit",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/product/measurementunits/all",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"product",
+								"measurementunits",
+								"all"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Machinery",
+			"item": [
+				{
+					"name": "Create Machinery",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"machineryName\":\"Tractor\",\n\t\"machineryDescription\":\"dasdasdasd\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/machinery/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"machinery",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get BY ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/machinery/24",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"machinery",
+								"24"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete BY ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/machinery/1",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"machinery",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update By ID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"machineryName\":\"JCB2\",\n\t\"machineryDescription\":\"dasdasdasd\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/machinery/24",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"machinery",
+								"24"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID and Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/machinery/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"machinery",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter By Name",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"name\",\n            \"attrValue\": [\"JCCC\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/machinery",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"machinery"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Machineries without filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n       \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/machinery",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"machinery"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Usage Location",
+			"item": [
+				{
+					"name": "Create Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"locationName\":\"garden #1\",\n\t\"locationDescription\":\"dsdas\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/location/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"location",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Location",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"locationName\":\"Building 41\",\n\t\"locationDescription\":\"dsdas\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/location/27",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"location",
+								"27"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/location/27",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"location",
+								"27"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/location/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"location",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Location",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/location/27",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"location",
+								"27"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Location By Name",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"name\",\n            \"attrValue\": [\"road\"]\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/location",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"location"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Location Without Filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/location",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"location"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Warehouse",
+			"item": [
+				{
+					"name": "Create Warehouse",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"warehouseName\":\"Sirsa Gate\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/warehouse/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"warehouse",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Warehouse",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"warehouseName\":\"Sirsa Bhilss3wq3\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/warehouse/53",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"warehouse",
+								"53"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ID And Names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/warehouse/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"warehouse",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Machinery On Rent",
+			"item": [
+				{
+					"name": "Create MOR",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-04-21\",\n\t\"machineryId\":62,\n\t\"contactId\":\"18698\",\n\t\"locationId\":\"239\",\n\t\"startDate\":\"2020-04-02\",\n\t\"endDate\":\"2020-01-01\",\n\t\"initialMeterReading\":100,\n\t\"endMeterReading\":12.22,\n\t\"noOfTrips\":221,\n\t\"amountCharged\":\"23.22\",\n\t\"mode\":\"Daily\",\n\t\"vehicleNo\":\"mh31eu5079\",\n\t\"additionalNotes\":\"kuch bhi\"\n\t,\n    \"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t]\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/mor/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"mor",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get MOR by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/mor/60",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"mor",
+								"60"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "MachineryOnRent Get TypeAhead",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/dropdown/mor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"dropdown",
+								"mor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update MOR",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-01-01\",\n\t\"machineryId\":\"24\",\n\t\"contactId\":\"40\",\n\t\"locationId\":\"33\",\n\t\"startDate\":\"2020-01-01\",\n\t\"endDate\":\"2020-01-01\",\n\t\"initialMeterReading\":1001,\n\t\"endMeterReading\":12.22,\n\t\"noOfTrips\":22,\n\t\"amountCharged\":\"23.22\",\n\t\"mode\":\"Daily\"\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/mor/57",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"mor",
+								"57"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete MOR",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/mor/60",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"mor",
+								"60"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch MOR without Filters",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/mor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"mor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "MOR Filter Data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n    \t{\n    \t\t\"attrName\": \"machineryNames\",\n            \"attrValue\": [\"tract\"]\n    \t},\n{\n    \t\t\"attrName\": \"supplierNames\",\n            \"attrValue\": [\"push\"]\n    \t},\n{\n    \t\t\"attrName\": \"vehicleNos\",\n            \"attrValue\": [\"mh31\"]\n    \t},\n\t\t{\n    \t\t\"attrName\": \"startDate\",\n            \"attrValue\": [\"2020/04/01\"]\n    \t},\n    \t{\n    \t\t\"attrName\": \"EndDate\",\n            \"attrValue\": [\"2020/04/01\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/mor",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"mor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Manual Motor PRemium",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "authority",
+								"value": "app.turtlemint.com"
+							},
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-origin"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "referer",
+								"value": "https://app.turtlemint.com/car-insurance/results/MG17MHPZBUT"
+							},
+							{
+								"key": "accept-language",
+								"value": "en-US,en;q=0.9,te;q=0.8"
+							},
+							{
+								"key": "cookie",
+								"value": "_gcl_aw=GCL.1590212984.EAIaIQobChMIgcCpmKTJ6QIVE6yWCh30uAqDEAAYASAAEgK0YfD_BwE; _gcl_au=1.1.1557966727.1590212984; _ga=GA1.2.2045053198.1590212984; _gid=GA1.2.2093646403.1590212984; _hjid=e8780d80-fdee-49d1-ab19-51373f440fc3; __zlcmid=yLj9eqH2LxlEOR; _gac_UA-61873031-7=1.1590212994.EAIaIQobChMIgcCpmKTJ6QIVE6yWCh30uAqDEAAYASAAEgK0YfD_BwE; mp_somethingrandomstring_mixpanel=%7B%22distinct_id%22%3A%20%2217240147da8587-0240e43acc1a15-30667d00-13c680-17240147da95e4%22%2C%22%24device_id%22%3A%20%2217240147da8587-0240e43acc1a15-30667d00-13c680-17240147da95e4%22%2C%22%24search_engine%22%3A%20%22google%22%2C%22utm_source%22%3A%20%22google%22%2C%22utm_medium%22%3A%20%22search-paid%22%2C%22utm_campaign%22%3A%20%222W-GS-Brand_New%22%2C%22utm_term%22%3A%20%22turtlemint%22%2C%22%24initial_referrer%22%3A%20%22https%3A%2F%2Fwww.google.com%2F%22%2C%22%24initial_referring_domain%22%3A%20%22www.google.com%22%7D; mp_94b72fe8fa0b0fbf2984f556ad073226_mixpanel=%7B%22distinct_id%22%3A%20%2217240147dc174c-0b01d83bb5c706-30667d00-13c680-17240147dc25cc%22%2C%22%24device_id%22%3A%20%2217240147dc174c-0b01d83bb5c706-30667d00-13c680-17240147dc25cc%22%2C%22%24search_engine%22%3A%20%22google%22%2C%22utm_source%22%3A%20%22google%22%2C%22utm_medium%22%3A%20%22search-paid%22%2C%22utm_campaign%22%3A%20%222W-GS-Brand_New%22%2C%22utm_term%22%3A%20%22turtlemint%22%2C%22%24initial_referrer%22%3A%20%22https%3A%2F%2Fwww.google.com%2F%22%2C%22%24initial_referring_domain%22%3A%20%22www.google.com%22%7D; adb=0; PLAY_SESSION=140adc03c4d525ddca257ff2a3f6aa0a6283d74a-host=http%3A%2F%2Fapp.turtlemint.com&broker=turtlemint; leadUtm=%7B%22source%22%3A%22https%3A%2F%2Fwww.turtlemint.com%2Fcar-insurance%2F%22%2C%22medium%22%3A%22referral%22%7D; isUtmParamsChange=true; _ga=GA1.3.2045053198.1590212984; _fbp=fb.1.1590213032921.1157832165; _gat=1"
+							}
+						],
+						"url": {
+							"raw": "https://app.turtlemint.com/api/getmanualmotorpremium?requestId=MG17MHPZBUT&vertical=FW",
+							"protocol": "https",
+							"host": [
+								"app",
+								"turtlemint",
+								"com"
+							],
+							"path": [
+								"api",
+								"getmanualmotorpremium"
+							],
+							"query": [
+								{
+									"key": "requestId",
+									"value": "MG17MHPZBUT"
+								},
+								{
+									"key": "vertical",
+									"value": "FW"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Inward Inventory",
+			"item": [
+				{
+					"name": "Inward Inventory Create",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"date\": \"2020-01-03\",\n    \"supplierId\": {{supplier}},\n    \"warehouseId\": {{warehouse}},\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 100\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100\n        }\n    ],\n    \"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t],\n    \"invoiceReceived\":true,\n    \"vehicleNo\":\"MH31EU5079\",\n    \"vendorSlipNo\":\"Le jaa bhai\",\n    \"ourSlipNo\":\"dsd\",\n    \"additionalComments\":\"dasd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inward/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inward",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Inward by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inward/113",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inward",
+								"113"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "InwardInventory Get TypeAhead",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/dropdown/inward",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"dropdown",
+								"inward"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Inward Inventory",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inward/155",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inward",
+								"155"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Inward Inventory without filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inward?page=0&sort=inwardid,desc",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inward"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "sort",
+									"value": "inwardid,desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Inward Inventory with filters",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n    \t\t\"attrName\":\"startDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n{\n    \t\t\"attrName\":\"endDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n    \t\n    \t{\n    \t\t\"attrName\":\"productNames\",\n    \t\t\"attrValue\":[\"test\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"supplierNames\",\n    \t\t\"attrValue\":[\"sdss\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"warehouseNames\",\n    \t\t\"attrValue\":[\"ds\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inward",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inward"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Inward Inventory",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"date\": \"2020-01-03\",\n    \"supplierId\": {{supplier}},\n    \"warehouseId\": {{warehouse}},\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 40\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 50\n        }\n    ],\n    \"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t],\n    \"invoiceReceived\":true,\n    \"vehicleNo\":\"MH31EU5079\",\n    \"vendorSlipNo\":\"Le jaa bhai\",\n    \"ourSlipNo\":\"dsd\",\n    \"additionalComments\":\"dasd\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inward/747",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inward",
+								"747"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Stock",
+			"item": [
+				{
+					"name": "Find Stock for ALL",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n    \t\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/stock?sort=totalQuantityInHand",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"stock"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "totalQuantityInHand"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Stocks",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n    \t{\n    \t\t\"attrName\":\"products\",\n    \t\t\"attrValue\":[\"testing wala\",\"bahut chota brick\"]\n    \t},\n{\n    \t\t\"attrName\":\"warehouses\",\n    \t\t\"attrValue\":[\"santu\",\"fatak\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/stock",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"stock"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Stocks Copy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n    \t{\n    \t\t\"attrName\":\"products\",\n    \t\t\"attrValue\":[\"priduct1\"]\n    \t},\n{\n    \t\t\"attrName\":\"categories\",\n    \t\t\"attrValue\":[\"Bathroom Fittings4\"]\n    \t},\n{\n    \t\t\"attrName\":\"warehouses\",\n    \t\t\"attrValue\":[\"Sirsa\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/stock",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"stock"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current stock (GET call)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/stock/current?productId={{productId1}}&warehouseId={{warehouse}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"stock",
+								"current"
+							],
+							"query": [
+								{
+									"key": "productId",
+									"value": "{{productId1}}"
+								},
+								{
+									"key": "warehouseId",
+									"value": "{{warehouse}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stock Multiple Products",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"warehouseId\":{{warehouse}},\n\t\"productIds\":[{{productId1}},{{productId2}}]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/stock/current?productId={{productId1}}&warehouseId={{warehouse}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"stock",
+								"current"
+							],
+							"query": [
+								{
+									"key": "productId",
+									"value": "{{productId1}}"
+								},
+								{
+									"key": "warehouseId",
+									"value": "{{warehouse}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Outward Inventory",
+			"item": [
+				{
+					"name": "Create outward Inventory",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-01-01\",\n\t\"contractorId\":{{contractor}},\n\t\"usageLocationId\":{{usagelocation}},\n\t\"warehouseId\":{{warehouse}},\n\t\"usageAreaId\":{{usagearea}},\n\t\"slipNo\":\"le BHAG\",\n\t\"purpose\":\"yun hi\",\n\t\"additionalInfo\":\"sdasdas\",\n\t\"productWithQuantities\": [\n\t{\n            \"productId\": {{productId1}},\n            \"quantity\": 11\n        }\n        ],\n    \"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/outward/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"outward",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get outward inventory by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/outward/339",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"outward",
+								"339"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Outward get TypeAhead",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/dropdown/outward",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"dropdown",
+								"outward"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Outward",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/outward/197",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"outward",
+								"197"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Return All Outward Inventory Without Filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/outward?sort=Date",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"outward"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "Date"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Return All Outward Inventory With filters",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n    \t\t\"attrName\":\"startDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n{\n    \t\t\"attrName\":\"endDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n    \t\n    \t{\n    \t\t\"attrName\":\"productNames\",\n    \t\t\"attrValue\":[\"test\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"contractorNames\",\n    \t\t\"attrValue\":[\"sdss\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"warehouseNames\",\n    \t\t\"attrValue\":[\"ds\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"usageLocation\",\n    \t\t\"attrValue\":[\"ds\"]\n    \t}\n    \t,\n    \t{\n    \t\t\"attrName\":\"usageArea\",\n    \t\t\"attrValue\":[\"ds\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/outward",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"outward"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Outward Inventory",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-01-01\",\n\t\"contractorId\":{{contractor}},\n\t\"usageLocationId\":{{usagelocation}},\n\t\"warehouseId\":{{warehouse}},\n\t\"usageAreaId\":{{usagearea}},\n\t\"slipNo\":\"le BHAG\",\n\t\"purpose\":\"yun hi\",\n\t\"additionalInfo\":\"sdasdas\",\n\t\"productWithQuantities\": [\n\t{\n            \"productId\": {{productId1}},\n            \"quantity\": 10\n        }\n        ],\n    \"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/outward/18298",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"outward",
+								"18298"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Inventory Transactions",
+			"item": [
+				{
+					"name": "All Inventory without filters",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n    \t{\n    \t\t\"attrName\":\"type\",\n    \t\t\"attrValue\":[\"outward\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inventory",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inventory"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Inventory Filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": \n    [\n    \t{\n    \t\t\"attrName\":\"startDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n{\n    \t\t\"attrName\":\"endDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n{\n    \t\t\"attrName\":\"type\",\n    \t\t\"attrValue\":[\"inward\",\"outward\",\"lostdamaged\",\"all\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"productNames\",\n    \t\t\"attrValue\":[\"test\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"warehouseNames\",\n    \t\t\"attrValue\":[\"test\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"globalSearch\",\n    \t\t\"attrValue\":[\"test\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/inventory",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"inventory"
+							],
+							"query": [
+								{
+									"key": "Auth",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Lost Damages Inventory",
+			"item": [
+				{
+					"name": "Create Lost Damages",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-03-20\",\n\t\"productId\":{{productId1}},\n\t\"quantity\":12,\n\t\"theftLocation\":\"bhai. Chat se chori hua\",\n\t\"warehouseId\":{{warehouse}},\n\t\"Additional Comments\":\"sdasda\",\n\t\"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/lostdamaged/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"lostdamaged",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get One Lost Damaged Ibventory",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/lostdamaged/347",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"lostdamaged",
+								"347"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Lost Damaged TypeAhead",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/dropdown/lostdamaged",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"dropdown",
+								"lostdamaged"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Lost Damaged",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"date\":\"2020-03-20\",\n\t\"productId\":{{productId1}},\n\t\"quantity\":10,\n\t\"theftLocation\":\"bhai. Chat se chori hua\",\n\t\"warehouseId\":{{warehouse}},\n\t\"Additional Comments\":\"sdasda\",\n\t\"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/lostdamaged/720",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"lostdamaged",
+								"720"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch Unfiltered Lost Damaged Inventory",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/lostdamaged?sort=Date",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"lostdamaged"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "Date"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Filter Lost Damaged Inventory",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        {\n    \t\t\"attrName\":\"startDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n{\n    \t\t\"attrName\":\"endDate\",\n    \t\t\"attrValue\":[\"2020/04/21\"]\n    \t},\n    \t\n    \t{\n    \t\t\"attrName\":\"productNames\",\n    \t\t\"attrValue\":[\"test\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"categoryNames\",\n    \t\t\"attrValue\":[\"sdss\"]\n    \t},\n    \t{\n    \t\t\"attrName\":\"warehouseNames\",\n    \t\t\"attrValue\":[\"ds\"]\n    \t}\n    \t,\n    \t{\n    \t\t\"attrName\":\"globalSearch\",\n    \t\t\"attrValue\":[\"ds\"]\n    \t}\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/lostdamaged",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"lostdamaged"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Lost Damaged inventory",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/lostdamaged/347",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"lostdamaged",
+								"347"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Notification",
+			"item": [
+				{
+					"name": "Inventory Notification - Only for BE verification",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/dashboard/inventory/notification",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"dashboard",
+								"inventory",
+								"notification"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "File Upload",
+			"item": [
+				{
+					"name": "Upload File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "ba4fb10e-9b52-48ca-a8a8-bc0bf2d910df",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"fileid\", jsonData.fileid);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/bsridharpatnaik/Desktop/Screenshot 2020-05-15 at 6.50.53 AM.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/file/upload",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"file",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DownloadFile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/file/download/{{fileid}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"file",
+								"download",
+								"{{fileid}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Inventory Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/dashboard",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"dashboard"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Notification",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/inventory/dashboard/notification/786",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"inventory",
+								"dashboard",
+								"notification",
+								"786"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "QA server ",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://REDACTED_IP:8080/inventory-service/category/idandnames",
+							"protocol": "http",
+							"host": [
+								"103",
+								"146",
+								"176",
+								"51"
+							],
+							"port": "8080",
+							"path": [
+								"inventory-service",
+								"category",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Prod",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "http://REDACTED_IP:8080/inventory-service/category/idandnames",
+							"protocol": "http",
+							"host": [
+								"103",
+								"145",
+								"51",
+								"231"
+							],
+							"port": "8080",
+							"path": [
+								"inventory-service",
+								"category",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
