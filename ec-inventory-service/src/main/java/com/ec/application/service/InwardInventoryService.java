@@ -194,10 +194,8 @@ public class InwardInventoryService
 		validateInputs(iiData);
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
 		InwardInventory oldInwardInventory = (InwardInventory) inwardInventory.clone();
-		Set<InwardOutwardList> productWithQuantityBeforeUpdate = inwardInventory.getInwardOutwardList();
 		setFields(inwardInventory,iiData);
 		modifyStockBeforeUpdate(oldInwardInventory,inwardInventory);
-		checkAndCreateNotification(productWithQuantityBeforeUpdate, iiData.getProductWithQuantities(), "inward");
 		return inwardInventoryRepo.save(inwardInventory);
 		
 	}
@@ -242,6 +240,7 @@ public class InwardInventoryService
 				if(id.equals(ioList.getProduct().getProductId()))
 				{
 					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "inward");
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse(), "inward", closingStock);
 					ioList.setClosingStock(closingStock);
 				}
 			}
@@ -275,6 +274,7 @@ public class InwardInventoryService
 					System.out.println("Element in old list but not in new - " + id );
 					Double quantity = ioList.getQuantity();
 					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantity, "inward");
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse(), "inward", closingStock);
 					ioList.setClosingStock(closingStock);
 				}
 			}
@@ -295,7 +295,8 @@ public class InwardInventoryService
 				{
 					System.out.println("Element in new list but not in old - " + id );
 					Double quantity = ioList.getQuantity();
-					stockService.updateStock(id, oldInwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
+					Double closingStock = stockService.updateStock(id, oldInwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),oldInwardInventory.getWarehouse(), "inward", closingStock);
 				}
 			}
 		}
@@ -316,32 +317,9 @@ public class InwardInventoryService
 		for(InwardOutwardList oiList : ioListset)
 		{
 			Double closingStock = stockService.updateStock(oiList.getProduct().getProductId(), warehouse.getWarehouseName(),oiList.getQuantity() , type);
+			inventoryNotificationService.pushQuantityEditedNotification(oiList.getProduct(),warehouse, "inward", closingStock);
 			oiList.setClosingStock(closingStock);
 		}
 		return ioListset;
-	}
-	public void checkAndCreateNotification(Set<InwardOutwardList> productWithQuantityBeforeUpdate,
-			List<ProductWithQuantity> productWithQuantities, String type) 
-	{
-		for(ProductWithQuantity pwq : productWithQuantities)
-		{
-			Long newPid = pwq.getProductId();
-			Double newQuantity = pwq.getQuantity();
-			
-			for(InwardOutwardList ioList:productWithQuantityBeforeUpdate)
-			{
-				Long oldPid = ioList.getProduct().getProductId();
-				Double oldQuantity = ioList.getQuantity();
-				
-				if(newPid.equals(oldPid))
-				{
-					if(!newQuantity.equals(oldQuantity))
-					{
-						inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(), type, newQuantity);
-					}
-				}
-			}
-			
-		}
 	}
 }

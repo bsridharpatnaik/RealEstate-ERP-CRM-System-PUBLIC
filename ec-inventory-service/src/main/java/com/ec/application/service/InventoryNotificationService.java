@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.model.InventoryNotification;
 import com.ec.application.model.Product;
+import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InventoryNotificationRepo;
 
 @Service
@@ -41,7 +42,7 @@ public class InventoryNotificationService
 			removeLowStockNotification(product);
 	}
 
-	public void pushQuantityEditedNotification(Product product, String type, Double currentStock)
+	public void pushQuantityEditedNotification(Product product, Warehouse warehouse,String type, Double currentStock)
 	{
 		
 		type = getTypeFromReadableName(type);
@@ -50,6 +51,7 @@ public class InventoryNotificationService
 		inventoryNotificationNew.setType(type);
 		inventoryNotificationNew.setQuantity(currentStock);
 		inventoryNotificationNew.setUpdatedBy(userDetailsService.getCurrentUser().getUsername());
+		inventoryNotificationNew.setWarehouse(warehouse);
 		inventoryNotificationRepo.save(inventoryNotificationNew);
 	}
 	

@@ -99,10 +99,9 @@ public class OutwardInventoryService
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		validateInputs(iiData);
 		Set<InwardOutwardList> ioListBeforeUpdate = outwardInventory.getInwardOutwardList();
-		updateStockBeforeDelete(outwardInventory);
 		setFields(outwardInventory,iiData);
 		updateStockForCreateOutwardInventory(outwardInventory);
-		iiService.checkAndCreateNotification(ioListBeforeUpdate, iiData.getProductWithQuantities(), "outward");
+		//iiService.checkAndCreateNotification(ioListBeforeUpdate, iiData.getProductWithQuantities(), "outward");
 		return outwardInventoryRepo.save(outwardInventory);
 		
 	}
