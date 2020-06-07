@@ -79,7 +79,7 @@ public class StockService
 		} 
 		System.out.println("New Stock - "+newStock);
 		if(newStock<0)
-			throw new Exception("Stock cannot be Negative");
+			throw new Exception("stock update failed for product "+currentStock.getProduct().getProductName()+".  Stock will go Negative");
 		else 
 		{
 			currentStock.setQuantityInHand(newStock);

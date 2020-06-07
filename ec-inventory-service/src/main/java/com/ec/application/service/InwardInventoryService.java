@@ -22,6 +22,7 @@ import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
+import com.ec.application.model.InwardOutwardList_;
 import com.ec.application.model.Product;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InwardInventoryRepo;
@@ -135,7 +136,7 @@ public class InwardInventoryService
         	.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream().filter(e -> e.getValue() > 1).count();
 		
 		if(duplicateProductIdCount>0)
-			throw new Exception("Duplicate product IDs found in request");
+			throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
 	}
 
 	public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList,Pageable pageable) throws ParseException 
@@ -203,18 +204,107 @@ public class InwardInventoryService
 
 	private void modifyStockBeforeUpdate(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
 	{
-		System.out.println(oldInwardInventory.getWarehouse().getWarehouseId());
-		System.out.println(inwardInventory.getWarehouse().getWarehouseId());
 		if(!oldInwardInventory.getWarehouse().getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
 			updateWhenWarehouseChanged(oldInwardInventory,inwardInventory);
-		//else
-			//updateWhenWarehouseSame(oldInwardInventory,inwardInventory);
+		else
+			updateWhenWarehouseSame(oldInwardInventory,inwardInventory);
+	}
+
+	private void updateWhenWarehouseSame(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
+	{
+		//Fetch product only in old and only in new and common
+		Set<Long> oldProductSet = new HashSet<>(oldInwardInventory.getInwardOutwardList().size());
+		Set<Long> newProductSet = new HashSet<>(inwardInventory.getInwardOutwardList().size());
+		oldInwardInventory.getInwardOutwardList().stream().filter(p -> oldProductSet.add(p.getProduct().getProductId())).collect(Collectors.toList());
+		inwardInventory.getInwardOutwardList().stream().filter(p -> newProductSet.add(p.getProduct().getProductId())).collect(Collectors.toList());
+		Set<Long> onlyInOld = ReusableMethods.differenceBetweenSets(oldProductSet,newProductSet);
+		Set<Long> onlyInNew = ReusableMethods.differenceBetweenSets(newProductSet,oldProductSet);
+		Set<Long> commonInBoth = ReusableMethods.commonBetweenSets(oldProductSet, newProductSet);
+		updateStockForOnlyInOld(onlyInOld,oldInwardInventory);
+		updateStockForOnlyInNew(onlyInNew,inwardInventory);
+		updateStockForCommonInBoth(commonInBoth,oldInwardInventory,inwardInventory);
+	}
+
+	
+	
+	private void updateStockForCommonInBoth(Set<Long> commonInBoth, InwardInventory oldInwardInventory,
+			InwardInventory inwardInventory) throws Exception 
+	{
+		Set<InwardOutwardList> oldIOListSet = oldInwardInventory.getInwardOutwardList();
+		Set<InwardOutwardList> newIOListSet = inwardInventory.getInwardOutwardList();
+		for(Long id:commonInBoth)
+		{
+			Double oldQuantity = findQuantityForProductInIOList(id,oldIOListSet);
+			Double newQuantity = findQuantityForProductInIOList(id,newIOListSet);
+			Double quantityForUpdate = newQuantity - oldQuantity;
+			for(InwardOutwardList ioList:newIOListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "inward");
+					ioList.setClosingStock(closingStock);
+				}
+			}
+			inwardInventory.setInwardOutwardList(newIOListSet);
+		}
+		
+	}
+
+	private Double findQuantityForProductInIOList(Long productId,Set<InwardOutwardList> ioListSet) 
+	{
+		for(InwardOutwardList ioList:ioListSet)
+		{
+			if(productId.equals(ioList.getProduct().getProductId()))
+			{
+				Double oldQuantity = ioList.getQuantity();
+				return oldQuantity;
+			}
+		}
+		return null;
+	}
+
+	private void updateStockForOnlyInNew(Set<Long> onlyInNew, InwardInventory inwardInventory) throws Exception 
+	{
+		for(Long id:onlyInNew)
+		{
+			Set<InwardOutwardList> ioListSet = inwardInventory.getInwardOutwardList();
+			for(InwardOutwardList ioList:ioListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					System.out.println("Element in old list but not in new - " + id );
+					Double quantity = ioList.getQuantity();
+					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantity, "inward");
+					ioList.setClosingStock(closingStock);
+				}
+			}
+			inwardInventory.setInwardOutwardList(ioListSet);
+		}
+		
+	}
+
+	private void updateStockForOnlyInOld(Set<Long> onlyInOld, InwardInventory oldInwardInventory) throws Exception 
+	{
+		//Delete stock received as part of old inventory
+		for(Long id:onlyInOld)
+		{
+			Set<InwardOutwardList> ioListSet = oldInwardInventory.getInwardOutwardList();
+			for(InwardOutwardList ioList:ioListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					System.out.println("Element in new list but not in old - " + id );
+					Double quantity = ioList.getQuantity();
+					stockService.updateStock(id, oldInwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
+				}
+			}
+		}
 	}
 
 	private void updateWhenWarehouseChanged(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
 	{
 		//Delete all stock added as part of old warehouse
-		Set<InwardOutwardList> oldLIOList = traverseListAndUpdateStock(oldInwardInventory.getInwardOutwardList(),"outward",oldInwardInventory.getWarehouse());
+		traverseListAndUpdateStock(oldInwardInventory.getInwardOutwardList(),"outward",oldInwardInventory.getWarehouse());
 		
 		//Add new stock to new warehouse
 		Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(inwardInventory.getInwardOutwardList(),"inward",inwardInventory.getWarehouse());

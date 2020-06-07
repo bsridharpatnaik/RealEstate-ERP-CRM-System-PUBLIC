@@ -83,6 +83,18 @@ public final class ReusableMethods
             return null;
         }
 	}
+	
+	public static <T> Set<T> differenceBetweenSets(final Set<T> setOne, final Set<T> setTwo) {
+	     Set<T> result = new HashSet<T>(setOne);
+	     result.removeIf(setTwo::contains);
+	     return result;
+	}
+	
+	public static <T> Set<T> commonBetweenSets(final Set<T> setOne, final Set<T> setTwo) {
+	     Set<T> result = new HashSet<T>(setOne);
+	     result.retainAll(setTwo);
+	     return result;
+	}
 	public static String convertUTCToIST(Date date)
 	{
 		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
