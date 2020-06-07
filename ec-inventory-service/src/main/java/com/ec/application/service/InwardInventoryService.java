@@ -3,8 +3,6 @@ package com.ec.application.service;
 import static java.util.stream.Collectors.counting;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +17,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
@@ -195,15 +192,44 @@ public class InwardInventoryService
 			throw new Exception("Inventory Entry with ID not found");
 		validateInputs(iiData);
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
-		updateStockBeforeDelete(inwardInventory);
+		InwardInventory oldInwardInventory = (InwardInventory) inwardInventory.clone();
 		Set<InwardOutwardList> productWithQuantityBeforeUpdate = inwardInventory.getInwardOutwardList();
 		setFields(inwardInventory,iiData);
-		updateStockForCreateInwardInventory(inwardInventory);
+		modifyStockBeforeUpdate(oldInwardInventory,inwardInventory);
 		checkAndCreateNotification(productWithQuantityBeforeUpdate, iiData.getProductWithQuantities(), "inward");
 		return inwardInventoryRepo.save(inwardInventory);
 		
 	}
 
+	private void modifyStockBeforeUpdate(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
+	{
+		System.out.println(oldInwardInventory.getWarehouse().getWarehouseId());
+		System.out.println(inwardInventory.getWarehouse().getWarehouseId());
+		if(!oldInwardInventory.getWarehouse().getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
+			updateWhenWarehouseChanged(oldInwardInventory,inwardInventory);
+		//else
+			//updateWhenWarehouseSame(oldInwardInventory,inwardInventory);
+	}
+
+	private void updateWhenWarehouseChanged(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
+	{
+		//Delete all stock added as part of old warehouse
+		Set<InwardOutwardList> oldLIOList = traverseListAndUpdateStock(oldInwardInventory.getInwardOutwardList(),"outward",oldInwardInventory.getWarehouse());
+		
+		//Add new stock to new warehouse
+		Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(inwardInventory.getInwardOutwardList(),"inward",inwardInventory.getWarehouse());
+		inwardInventory.setInwardOutwardList(newLIOList);
+	}
+
+	private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset,String type,Warehouse warehouse) throws Exception
+	{
+		for(InwardOutwardList oiList : ioListset)
+		{
+			Double closingStock = stockService.updateStock(oiList.getProduct().getProductId(), warehouse.getWarehouseName(),oiList.getQuantity() , type);
+			oiList.setClosingStock(closingStock);
+		}
+		return ioListset;
+	}
 	public void checkAndCreateNotification(Set<InwardOutwardList> productWithQuantityBeforeUpdate,
 			List<ProductWithQuantity> productWithQuantities, String type) 
 	{

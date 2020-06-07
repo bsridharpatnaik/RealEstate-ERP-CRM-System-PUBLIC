@@ -65,17 +65,19 @@ public class StockService
 	public Double updateStock(Long productId,String warehousename, Double quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId,warehousename);
-	
+		System.out.println("Current Stock - "+ currentStock.getQuantityInHand());
+		System.out.println("New Quantity - "+ quantity);
 		Double oldStock = currentStock.getQuantityInHand();
 		Double newStock = (double) 0;
 		switch(operation)
 		{
-		case "inward":
-			newStock = oldStock+quantity;
-			break;
-		case "outward":
-			newStock = oldStock - quantity;
+			case "inward":
+				newStock = oldStock+quantity;
+				break;
+			case "outward":
+				newStock = oldStock - quantity;
 		} 
+		System.out.println("New Stock - "+newStock);
 		if(newStock<0)
 			throw new Exception("Stock cannot be Negative");
 		else 
