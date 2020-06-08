@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Audited
-public class Warehouse extends ReusableFields
+public class Warehouse extends ReusableFields implements Cloneable
 {
 	
 	@Id
@@ -38,7 +38,10 @@ public class Warehouse extends ReusableFields
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String warehouseName;
 
-	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 	public Long getWarehouseId() {
 		return warehouseId;
 	}

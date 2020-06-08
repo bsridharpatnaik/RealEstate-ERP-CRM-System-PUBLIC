@@ -15,7 +15,7 @@ public class CustomDoubleSerializer extends JsonSerializer<Double> {
             //write the word 'null' if there's no value available
             jgen.writeNull();
         } else {
-            final String pattern = ".##";
+            final String pattern = "#.##";
             //final String pattern = "###,###,##0.00";
             final DecimalFormat myFormatter = new DecimalFormat(pattern);
             final String output = myFormatter.format(value);

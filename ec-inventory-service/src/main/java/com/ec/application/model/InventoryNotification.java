@@ -31,9 +31,8 @@ public class InventoryNotification extends ReusableFields
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Product product;
 
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@ManyToOne
 	@JoinColumn(name="warehouseId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Warehouse warehouse;
 	
 	Double quantity;

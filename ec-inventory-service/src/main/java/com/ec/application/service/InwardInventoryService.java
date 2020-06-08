@@ -199,7 +199,7 @@ public class InwardInventoryService
 		return inwardInventoryRepo.save(inwardInventory);
 		
 	}
-
+	@Transactional
 	private void modifyStockBeforeUpdate(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
 	{
 		if(!oldInwardInventory.getWarehouse().getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
@@ -207,7 +207,7 @@ public class InwardInventoryService
 		else
 			updateWhenWarehouseSame(oldInwardInventory,inwardInventory);
 	}
-
+	@Transactional
 	private void updateWhenWarehouseSame(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
 	{
 		//Fetch product only in old and only in new and common
@@ -224,7 +224,7 @@ public class InwardInventoryService
 	}
 
 	
-	
+	@Transactional
 	private void updateStockForCommonInBoth(Set<Long> commonInBoth, InwardInventory oldInwardInventory,
 			InwardInventory inwardInventory) throws Exception 
 	{
@@ -237,7 +237,7 @@ public class InwardInventoryService
 			Double quantityForUpdate = newQuantity - oldQuantity;
 			for(InwardOutwardList ioList:newIOListSet)
 			{
-				if(id.equals(ioList.getProduct().getProductId()))
+				if(id.equals(ioList.getProduct().getProductId()) && quantityForUpdate!=0)
 				{
 					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "inward");
 					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse(), "inward", closingStock);
@@ -248,7 +248,7 @@ public class InwardInventoryService
 		}
 		
 	}
-
+	@Transactional
 	private Double findQuantityForProductInIOList(Long productId,Set<InwardOutwardList> ioListSet) 
 	{
 		for(InwardOutwardList ioList:ioListSet)
@@ -261,7 +261,7 @@ public class InwardInventoryService
 		}
 		return null;
 	}
-
+	@Transactional
 	private void updateStockForOnlyInNew(Set<Long> onlyInNew, InwardInventory inwardInventory) throws Exception 
 	{
 		for(Long id:onlyInNew)
@@ -282,7 +282,7 @@ public class InwardInventoryService
 		}
 		
 	}
-
+	@Transactional
 	private void updateStockForOnlyInOld(Set<Long> onlyInOld, InwardInventory oldInwardInventory) throws Exception 
 	{
 		//Delete stock received as part of old inventory
@@ -293,15 +293,16 @@ public class InwardInventoryService
 			{
 				if(id.equals(ioList.getProduct().getProductId()))
 				{
-					System.out.println("Element in new list but not in old - " + id );
+					System.out.println("Element in old list but not in new - " + id );
 					Double quantity = ioList.getQuantity();
-					Double closingStock = stockService.updateStock(id, oldInwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
-					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),oldInwardInventory.getWarehouse(), "inward", closingStock);
+					Warehouse warehouse = (Warehouse) oldInwardInventory.getWarehouse().clone();
+					Double closingStock = stockService.updateStock(id, warehouse.getWarehouseName(), quantity, "outward");
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),warehouseRepo.findById(warehouse.getWarehouseId()).get(), "inward", closingStock);
 				}
 			}
 		}
 	}
-
+	@Transactional
 	private void updateWhenWarehouseChanged(InwardInventory oldInwardInventory, InwardInventory inwardInventory) throws Exception 
 	{
 		//Delete all stock added as part of old warehouse
@@ -311,7 +312,7 @@ public class InwardInventoryService
 		Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(inwardInventory.getInwardOutwardList(),"inward",inwardInventory.getWarehouse());
 		inwardInventory.setInwardOutwardList(newLIOList);
 	}
-
+	@Transactional
 	private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset,String type,Warehouse warehouse) throws Exception
 	{
 		for(InwardOutwardList oiList : ioListset)
