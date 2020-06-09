@@ -218,7 +218,7 @@ public class InwardInventoryService
 		Set<Long> onlyInOld = ReusableMethods.differenceBetweenSets(oldProductSet,newProductSet);
 		Set<Long> onlyInNew = ReusableMethods.differenceBetweenSets(newProductSet,oldProductSet);
 		Set<Long> commonInBoth = ReusableMethods.commonBetweenSets(oldProductSet, newProductSet);
-		updateStockForOnlyInOld(onlyInOld,oldInwardInventory,inwardInventory);
+		updateStockForOnlyInOld(onlyInOld,oldInwardInventory);
 		updateStockForOnlyInNew(onlyInNew,inwardInventory);
 		updateStockForCommonInBoth(commonInBoth,oldInwardInventory,inwardInventory);
 	}
