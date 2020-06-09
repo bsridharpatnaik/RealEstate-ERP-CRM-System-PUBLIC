@@ -218,7 +218,7 @@ public class InwardInventoryService
 		Set<Long> onlyInOld = ReusableMethods.differenceBetweenSets(oldProductSet,newProductSet);
 		Set<Long> onlyInNew = ReusableMethods.differenceBetweenSets(newProductSet,oldProductSet);
 		Set<Long> commonInBoth = ReusableMethods.commonBetweenSets(oldProductSet, newProductSet);
-		updateStockForOnlyInOld(onlyInOld,oldInwardInventory);
+		updateStockForOnlyInOld(onlyInOld,oldInwardInventory,inwardInventory);
 		updateStockForOnlyInNew(onlyInNew,inwardInventory);
 		updateStockForCommonInBoth(commonInBoth,oldInwardInventory,inwardInventory);
 	}
@@ -240,7 +240,8 @@ public class InwardInventoryService
 				if(id.equals(ioList.getProduct().getProductId()) && quantityForUpdate!=0)
 				{
 					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "inward");
-					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse(), "inward", closingStock);
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
 					ioList.setClosingStock(closingStock);
 				}
 			}
@@ -274,7 +275,8 @@ public class InwardInventoryService
 					System.out.println("Element in old list but not in new - " + id );
 					Double quantity = ioList.getQuantity();
 					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantity, "inward");
-					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse(), "inward", closingStock);
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
 					ioList.setClosingStock(closingStock);
 				}
 			}
@@ -295,9 +297,9 @@ public class InwardInventoryService
 				{
 					System.out.println("Element in old list but not in new - " + id );
 					Double quantity = ioList.getQuantity();
-					Warehouse warehouse = (Warehouse) oldInwardInventory.getWarehouse().clone();
-					Double closingStock = stockService.updateStock(id, warehouse.getWarehouseName(), quantity, "outward");
-					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),warehouseRepo.findById(warehouse.getWarehouseId()).get(), "inward", closingStock);
+					Double closingStock = stockService.updateStock(id, oldInwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),oldInwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
 				}
 			}
 		}
@@ -318,7 +320,7 @@ public class InwardInventoryService
 		for(InwardOutwardList oiList : ioListset)
 		{
 			Double closingStock = stockService.updateStock(oiList.getProduct().getProductId(), warehouse.getWarehouseName(),oiList.getQuantity() , type);
-			inventoryNotificationService.pushQuantityEditedNotification(oiList.getProduct(),warehouse, "inward", closingStock);
+			inventoryNotificationService.pushQuantityEditedNotification(oiList.getProduct(),warehouse.getWarehouseName(), "inward", closingStock);
 			oiList.setClosingStock(closingStock);
 		}
 		return ioListset;

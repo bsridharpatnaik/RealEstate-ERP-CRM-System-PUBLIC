@@ -59,7 +59,7 @@ public class LostDamagedInventoryService
 		populateData(lostDamagedInventory,payload);
 		Double closingStock = adjustStockBeforeCreate(payload);
 		lostDamagedInventory.setClosingStock(closingStock);
-		inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),lostDamagedInventory.getWarehouse(), "lostdamagedadded", lostDamagedInventory.getQuantity());
+		inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),lostDamagedInventory.getWarehouse().getWarehouseName(), "lostdamagedadded", lostDamagedInventory.getQuantity());
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);
 	}
 	
@@ -102,7 +102,7 @@ public class LostDamagedInventoryService
 		populateData(lostDamagedInventory,payload);
 		lostDamagedInventory.setClosingStock(adjustStockBeforeCreate(payload));
 		if(!oldStock.equals(lostDamagedInventory.getQuantity()))
-			inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),lostDamagedInventory.getWarehouse(), "lostdamagedmodified", lostDamagedInventory.getQuantity());
+			inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),lostDamagedInventory.getWarehouse().getWarehouseName(), "lostdamagedmodified", lostDamagedInventory.getQuantity());
 		
 		return lostDamagedInventoryRepo.save(lostDamagedInventory);	
 	}
