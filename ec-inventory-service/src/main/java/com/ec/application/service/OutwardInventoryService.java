@@ -2,9 +2,11 @@ package com.ec.application.service;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -18,6 +20,7 @@ import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
+import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.Warehouse;
@@ -66,6 +69,9 @@ public class OutwardInventoryService
 	@Autowired
 	UsageAreaRepo usageAreaRepo;
 	
+	@Autowired
+	InventoryNotificationService inventoryNotificationService;
+	
 	@Transactional
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
 	{
@@ -96,14 +102,141 @@ public class OutwardInventoryService
 		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
 		if(!outwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
-		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		validateInputs(iiData);
-		Set<InwardOutwardList> ioListBeforeUpdate = outwardInventory.getInwardOutwardList();
+		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
 		setFields(outwardInventory,iiData);
-		updateStockForCreateOutwardInventory(outwardInventory);
-		//iiService.checkAndCreateNotification(ioListBeforeUpdate, iiData.getProductWithQuantities(), "outward");
+		modifyStockBeforeUpdate(oldOutwardInventory,outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
 		
+	}
+	
+	@Transactional
+	private void updateWhenWarehouseSame(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
+	{
+		//Fetch product only in old and only in new and common
+		Set<Long> oldProductSet = new HashSet<>(oldOutwardInventory.getInwardOutwardList().size());
+		Set<Long> newProductSet = new HashSet<>(outwardInventory.getInwardOutwardList().size());
+		oldOutwardInventory.getInwardOutwardList().stream().filter(p -> oldProductSet.add(p.getProduct().getProductId())).collect(Collectors.toList());
+		outwardInventory.getInwardOutwardList().stream().filter(p -> newProductSet.add(p.getProduct().getProductId())).collect(Collectors.toList());
+		Set<Long> onlyInOld = ReusableMethods.differenceBetweenSets(oldProductSet,newProductSet);
+		Set<Long> onlyInNew = ReusableMethods.differenceBetweenSets(newProductSet,oldProductSet);
+		Set<Long> commonInBoth = ReusableMethods.commonBetweenSets(oldProductSet, newProductSet);
+		updateStockForOnlyInOld(onlyInOld,oldOutwardInventory);
+		updateStockForOnlyInNew(onlyInNew,outwardInventory);
+		updateStockForCommonInBoth(commonInBoth,oldOutwardInventory,outwardInventory);
+	}
+	@Transactional
+	private void updateStockForCommonInBoth(Set<Long> commonInBoth, OutwardInventory oldOutwardInventory,
+			OutwardInventory outwardInventory) throws Exception 
+	{
+		Set<InwardOutwardList> oldIOListSet = oldOutwardInventory.getInwardOutwardList();
+		Set<InwardOutwardList> newIOListSet = outwardInventory.getInwardOutwardList();
+		for(Long id:commonInBoth)
+		{
+			Double oldQuantity = findQuantityForProductInIOList(id,oldIOListSet);
+			Double newQuantity = findQuantityForProductInIOList(id,newIOListSet);
+			Double quantityForUpdate = newQuantity - oldQuantity;
+			for(InwardOutwardList ioList:newIOListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()) && quantityForUpdate!=0)
+				{
+					Double closingStock = stockService.updateStock(id, outwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "outward");
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),outwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
+					ioList.setClosingStock(closingStock);
+				}
+			}
+			outwardInventory.setInwardOutwardList(newIOListSet);
+		}
+		
+	}
+	
+	@Transactional
+	private Double findQuantityForProductInIOList(Long productId,Set<InwardOutwardList> ioListSet) 
+	{
+		for(InwardOutwardList ioList:ioListSet)
+		{
+			if(productId.equals(ioList.getProduct().getProductId()))
+			{
+				Double oldQuantity = ioList.getQuantity();
+				return oldQuantity;
+			}
+		}
+		return null;
+	}
+	@Transactional
+	private void updateStockForOnlyInNew(Set<Long> onlyInNew, OutwardInventory outwardInventory) throws Exception 
+	{
+		for(Long id:onlyInNew)
+		{
+			Set<InwardOutwardList> ioListSet = outwardInventory.getInwardOutwardList();
+			for(InwardOutwardList ioList:ioListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					System.out.println("Element in old list but not in new - " + id );
+					Double quantity = ioList.getQuantity();
+					Double closingStock = stockService.updateStock(id, outwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),outwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
+					ioList.setClosingStock(closingStock);
+				}
+			}
+			outwardInventory.setInwardOutwardList(ioListSet);
+		}
+		
+	}
+	@Transactional
+	private void updateStockForOnlyInOld(Set<Long> onlyInOld, OutwardInventory oldOutwardInventory) throws Exception 
+	{
+		//Delete stock received as part of old inventory
+		for(Long id:onlyInOld)
+		{
+			Set<InwardOutwardList> ioListSet = oldOutwardInventory.getInwardOutwardList();
+			for(InwardOutwardList ioList:ioListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					System.out.println("Element in old list but not in new - " + id );
+					Double quantity = ioList.getQuantity();
+					Double closingStock = stockService.updateStock(id, oldOutwardInventory.getWarehouse().getWarehouseName(), quantity, "inward");
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),oldOutwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
+				}
+			}
+		}
+	}
+	@Transactional
+	private void modifyStockBeforeUpdate(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
+	{
+		if(!oldOutwardInventory.getWarehouse().getWarehouseId().equals(outwardInventory.getWarehouse().getWarehouseId()))
+			updateWhenWarehouseChanged(oldOutwardInventory,outwardInventory);
+		else
+			updateWhenWarehouseSame(oldOutwardInventory,outwardInventory);
+	}
+	
+	@Transactional
+	private void updateWhenWarehouseChanged(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
+	{
+		//Delete all stock added as part of old warehouse
+		traverseListAndUpdateStock(oldOutwardInventory.getInwardOutwardList(),"inward",oldOutwardInventory.getWarehouse());
+		
+		//Add new stock to new warehouse
+		Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(outwardInventory.getInwardOutwardList(),"outward",outwardInventory.getWarehouse());
+		outwardInventory.setInwardOutwardList(newLIOList);
+	}
+	
+	@Transactional
+	private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset,String type,Warehouse warehouse) throws Exception
+	{
+		for(InwardOutwardList oiList : ioListset)
+		{
+			Double closingStock = stockService.updateStock(oiList.getProduct().getProductId(), warehouse.getWarehouseName(),oiList.getQuantity() , type);
+			inventoryNotificationService.pushQuantityEditedNotification(oiList.getProduct(),warehouse.getWarehouseName(), "outward", closingStock);
+			oiList.setClosingStock(closingStock);
+		}
+		return ioListset;
 	}
 	
 	private void setFields(OutwardInventory outwardInventory, OutwardInventoryData oiData) 
