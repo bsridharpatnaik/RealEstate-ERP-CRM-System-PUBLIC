@@ -100,6 +100,7 @@ public class InventoryNotificationService
 			inventoryNotificationNew.setProduct(product);
 			inventoryNotificationNew.setType(lowStock);
 			inventoryNotificationNew.setQuantity(currentStock);
+			inventoryNotificationNew.setUpdatedBy("System");
 			inventoryNotificationRepo.save(inventoryNotificationNew);
 		}
 		else
