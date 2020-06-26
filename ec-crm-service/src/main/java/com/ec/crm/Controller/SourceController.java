@@ -15,44 +15,44 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.crm.Model.Broker;
-import com.ec.crm.Service.BrokerService;
+import com.ec.crm.Model.Source;
+import com.ec.crm.Service.SourceService;
 
 @RestController
-@RequestMapping(value="/broker",produces = { "application/json", "text/json" })
-public class BrokerController {
+@RequestMapping(value="/source",produces = { "application/json", "text/json" })
+public class SourceController {
 	@Autowired
-	BrokerService brokerService;
+	SourceService sourceService;
 	
 	@GetMapping
-	public Page<Broker> returnAllBroker(Pageable pageable) 
+	public Page<Source> returnAllBroker(Pageable pageable) 
 	{
-		return brokerService.fetchAll(pageable);
+		return sourceService.fetchAll(pageable);
 	}
 	
 	@GetMapping("/{id}")
-	public Broker findBrokerByID(@PathVariable long id) throws Exception 
+	public Source findAddressByID(@PathVariable long id) throws Exception 
 	{
-		return brokerService.findSingleBroker(id);
+		return sourceService.findSingleSource(id);
 	}
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Broker createBroker(@RequestBody Broker broker) throws Exception{
+	public Source createUser(@RequestBody Source source) throws Exception{
 		
-		return brokerService.createBroker(broker);
+		return sourceService.createSource(source);
 	}
 	
 	@PutMapping("/{id}")
-	public Broker updateBroker(@PathVariable Long id, @RequestBody Broker broker) throws Exception 
+	public Source updateSource(@PathVariable Long id, @RequestBody Source source) throws Exception 
 	{
-		return brokerService.updateBroker(id, broker);
+		return sourceService.updateSource(id, source);
 	} 
 	
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deleteBroker(@PathVariable Long id) throws Exception
+	public ResponseEntity<?> deleteSource(@PathVariable Long id) throws Exception
 	{
-		brokerService.deleteBroker(id);
-			return ResponseEntity.ok("Broker Deleted sucessfully.");
+		sourceService.deleteSource(id);
+			return ResponseEntity.ok("Source Deleted sucessfully.");
 	}
 }

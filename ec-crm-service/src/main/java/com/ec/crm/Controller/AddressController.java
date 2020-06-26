@@ -42,21 +42,21 @@ public class AddressController {
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Address createUser(@RequestBody Address address) throws Exception{
+	public Address createAddress(@RequestBody Address address) throws Exception{
 		
 		return addressService.createAddress(address);
 	}
 	
 	@PutMapping("/{id}")
-	public Address updateUser(@PathVariable Long id, @RequestBody Address address) throws Exception 
+	public Address updateAddress(@PathVariable Long id, @RequestBody Address address) throws Exception 
 	{
 		return addressService.updateAddress(id, address);
 	} 
 	
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception
+	public ResponseEntity<?> deleteAddress(@PathVariable Long id) throws Exception
 	{
 			addressService.deleteAddress(id);
-			return ResponseEntity.ok("Contact Deleted sucessfully.");
+			return ResponseEntity.ok("Address Deleted sucessfully.");
 	}
 }
