@@ -15,44 +15,44 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.crm.Model.Sentiment;
-import com.ec.crm.Service.SentimentService;
+import com.ec.crm.Model.PropertyType;
+import com.ec.crm.Service.PropertyTypeService;
 
 @RestController
-@RequestMapping(value="/sentiment",produces = { "application/json", "text/json" })
-public class SentimentController {
+@RequestMapping(value="/propertytype",produces = { "application/json", "text/json" })
+public class PropertyTypeController {
 	@Autowired
-	SentimentService sentimentService;
+	PropertyTypeService propertyService;
 	
 	@GetMapping
-	public Page<Sentiment> returnAllSentiment(Pageable pageable) 
+	public Page<PropertyType> returnAllPropertyType(Pageable pageable) 
 	{
-		return sentimentService.fetchAll(pageable);
+		return propertyService.fetchAll(pageable);
 	}
 	
 	@GetMapping("/{id}")
-	public Sentiment findSentimentByID(@PathVariable long id) throws Exception 
+	public PropertyType findPropertyTypeByID(@PathVariable long id) throws Exception 
 	{
-		return sentimentService.findSingleSentiment(id);
+		return propertyService.findSinglePropertyType(id);
 	}
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Sentiment createSentiment(@RequestBody Sentiment sentiment) throws Exception{
+	public PropertyType createPropertyType(@RequestBody PropertyType ptype) throws Exception{
 		
-		return sentimentService.createSentiment(sentiment);
+		return propertyService.createPropertyType(ptype);
 	}
 	
 	@PutMapping("/{id}")
-	public Sentiment updateSentiment(@PathVariable Long id, @RequestBody Sentiment sentiment) throws Exception 
+	public PropertyType updatePropertyType(@PathVariable Long id, @RequestBody PropertyType ptype) throws Exception 
 	{
-		return sentimentService.updateSentiment(id, sentiment);
+		return propertyService.updatePropertyType(id, ptype);
 	} 
 	
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deleteSentiment(@PathVariable Long id) throws Exception
+	public ResponseEntity<?> deletePropertyType(@PathVariable Long id) throws Exception
 	{
-		sentimentService.deleteSentiment(id);
+		propertyService.deletePropertyType(id);
 			return ResponseEntity.ok("Source Deleted sucessfully.");
 	}
 }
