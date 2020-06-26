@@ -33,7 +33,7 @@ public class SourceService {
 		if(source.isPresent())
 			return source.get();
 		else
-			throw new Exception("broker ID not found");
+			throw new Exception("source ID not found");
 	}
 	
 	public Source updateSource(Long id, Source source) throws Exception 
