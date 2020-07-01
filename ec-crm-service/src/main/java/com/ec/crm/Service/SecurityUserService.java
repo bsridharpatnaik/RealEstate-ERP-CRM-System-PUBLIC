@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.bcrypt.BCrypt;
+//import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Model.SecurityUser;
@@ -39,8 +39,8 @@ public class SecurityUserService {
 	}
 	public String bCryptPassword(String password) {
 		String bcyptedPassword;
-		bcyptedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-		return bcyptedPassword;
+		//bcyptedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+		return null;
 	}
 	public SecurityUser updateSecurityUser(Long id, SecurityUser securityuser) throws Exception 
 	{
