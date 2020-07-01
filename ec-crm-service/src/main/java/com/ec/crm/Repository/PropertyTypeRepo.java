@@ -6,5 +6,5 @@ import com.ec.ReusableClasses.BaseRepository;
 import com.ec.crm.Model.PropertyType;
 
 public interface PropertyTypeRepo extends BaseRepository<PropertyType, Long>, JpaSpecificationExecutor<PropertyType>{
-
+	boolean existsByName(String name);
 }

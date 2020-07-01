@@ -23,8 +23,15 @@ public class PropertyTypeService {
 	}
 	
 	public PropertyType createPropertyType(PropertyType ptype) throws Exception {
-		pRepo.save(ptype);
-		return ptype;
+		if(!pRepo.existsByName(ptype.getName()))
+		{
+			pRepo.save(ptype);
+			return ptype;
+		}
+		else
+		{
+			throw new Exception("PropertyType already exists!");
+		}
 	}
 	
 	public PropertyType findSinglePropertyType(long id) throws Exception 
