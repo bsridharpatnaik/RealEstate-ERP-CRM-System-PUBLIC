@@ -21,4 +21,7 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
 
 	@Query(value="SELECT DISTINCT userName FROM User c")
 	public List<String> findUserNames();
+	
+	@Query(value="SELECT id FROM User c WHERE c.userName like :userName")
+	public Long findId(@Param("userName") String userName);
 }
