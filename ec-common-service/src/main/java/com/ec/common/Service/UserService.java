@@ -131,7 +131,8 @@ public class UserService {
 
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		userReturnData.setUsername(auth.getName());
-
+		Long id=uRepo.findId(auth.getName());
+		userReturnData.setId(id);
 		Collection<SimpleGrantedAuthority> authorities = (Collection<SimpleGrantedAuthority>) SecurityContextHolder
 				.getContext().getAuthentication().getAuthorities();
 		for (SimpleGrantedAuthority authority : authorities) {

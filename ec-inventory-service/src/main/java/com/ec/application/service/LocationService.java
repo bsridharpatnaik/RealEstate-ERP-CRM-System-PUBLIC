@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,10 +31,16 @@ public class LocationService
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
 	
-	
+	Logger logger = LoggerFactory.getLogger(AllInventoryService.class);
 	
 	public UsageLocation createLocation(UsageLocation payload) throws Exception 
 	{
+		logger.trace("A TRACE Message");
+        logger.debug("A DEBUG Message");
+        logger.info("An INFO Message");
+        logger.warn("A WARN Message");
+        logger.error("An ERROR Message");
+      
 		if(!locationRepo.existsByLocationName(payload.getLocationName()))
 		{
 			locationRepo.save(payload);
