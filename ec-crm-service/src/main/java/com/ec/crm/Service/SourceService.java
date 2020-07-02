@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Model.Source;
 import com.ec.crm.Repository.SourceRepo;
 
@@ -23,8 +24,14 @@ public class SourceService {
 	}
 	
 	public Source createSource(Source sourceData) throws Exception {
-		sRepo.save(sourceData);
-		return sourceData;
+		if(!sRepo.existsBySourceName(sourceData.getSourceName()))
+		{
+			sRepo.save(sourceData);
+			return sourceData;
+		}else
+		{
+			throw new Exception("Source already exists!");
+		}
 	}
 	
 	public Source findSingleSource(long id) throws Exception 
@@ -38,8 +45,29 @@ public class SourceService {
 	
 	public Source updateSource(Long id, Source source) throws Exception 
 	{
-		sRepo.save(source);
-	    return source;
+		Optional<Source> SourceForUpdateOpt = sRepo.findById(id);
+		Source SourceForUpdate = SourceForUpdateOpt.get();
+		
+		if(!SourceForUpdateOpt.isPresent())
+			throw new Exception("Source not found with sourceid");
+		
+		if(!sRepo.existsBySourceName(source.getSourceName()) && !source.getSourceName().equalsIgnoreCase(SourceForUpdate.getSourceName()))
+		{
+			SourceForUpdate.setSourceName(source.getSourceName());
+			SourceForUpdate.setSourceDescription(source.getSourceDescription());
+			
+		}
+        else if(source.getSourceName().equalsIgnoreCase(SourceForUpdate.getSourceName()))
+        {
+  
+        	SourceForUpdate.setSourceDescription(source.getSourceDescription());
+        }
+        else 
+        {
+        	throw new Exception("Source with same Name already exists");
+        }
+		return sRepo.save(SourceForUpdate);
+		
 	}
 	
 	public void deleteSource(Long id) throws Exception 

@@ -6,5 +6,5 @@ import com.ec.ReusableClasses.BaseRepository;
 import com.ec.crm.Model.Source;
 
 public interface SourceRepo  extends BaseRepository<Source, Long>, JpaSpecificationExecutor<Source>{
-
+	boolean existsBySourceName(String sourceName);
 }

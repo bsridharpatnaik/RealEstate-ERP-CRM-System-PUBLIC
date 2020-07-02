@@ -52,7 +52,7 @@ public class PropertyTypeController {
 	}
 	
 	@PutMapping("/{id}")
-	public PropertyType updatePropertyType(@PathVariable Long id, @RequestBody PropertyType ptype) throws Exception 
+	public PropertyType updatePropertyType(@PathVariable Long id,@Valid @RequestBody PropertyType ptype) throws Exception 
 	{
 		return propertyService.updatePropertyType(id, ptype);
 	} 

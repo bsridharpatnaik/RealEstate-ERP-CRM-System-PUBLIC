@@ -45,8 +45,28 @@ public class PropertyTypeService {
 	
 	public PropertyType updatePropertyType(Long id, PropertyType ptype) throws Exception 
 	{
-		pRepo.save(ptype);
-	    return ptype;
+		Optional<PropertyType> PropertyForUpdateOpt = pRepo.findById(id);
+		PropertyType PropertyForUpdate = PropertyForUpdateOpt.get();
+		
+		if(!PropertyForUpdateOpt.isPresent())
+			throw new Exception("Product not found with productid");
+		
+		if(!pRepo.existsByName(ptype.getName()) && !ptype.getName().equalsIgnoreCase(PropertyForUpdate.getName()))
+		{
+			PropertyForUpdate.setName(ptype.getName());
+			PropertyForUpdate.setDescription(ptype.getDescription());
+			
+		}
+        else if(ptype.getName().equalsIgnoreCase(PropertyForUpdate.getName()))
+        {
+  
+			PropertyForUpdate.setDescription(ptype.getDescription());
+        }
+        else 
+        {
+        	throw new Exception("PropertyType with same Name already exists");
+        }
+		return pRepo.save(PropertyForUpdate);
 	}
 	
 	public void deletePropertyType(Long id) throws Exception 

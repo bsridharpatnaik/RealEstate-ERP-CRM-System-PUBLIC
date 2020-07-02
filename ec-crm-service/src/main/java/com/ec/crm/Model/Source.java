@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 
 import com.ec.ReusableClasses.ReusableFields;
 
@@ -18,25 +19,33 @@ public class Source extends ReusableFields implements Serializable{
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "source_id", updatable = false, nullable = false)
 	Long sourceId;
-	String source_name;
-	String source_description;
+	
+	@NotBlank(message = "Name is mandatory")
+	@Column(name="source_name")
+	String sourceName;
+	
+	@NotBlank(message = "Description is mandatory")
+	@Column(name="source_description")
+	String sourceDescription;
+	
 	public Long getSourceId() {
 		return sourceId;
 	}
 	public void setSourceId(Long sourceId) {
 		this.sourceId = sourceId;
 	}
-	public String getSource_name() {
-		return source_name;
+	public String getSourceName() {
+		return sourceName;
 	}
-	public void setSource_name(String source_name) {
-		this.source_name = source_name;
+	public void setSourceName(String sourceName) {
+		this.sourceName = sourceName;
 	}
-	public String getSource_description() {
-		return source_description;
+	public String getSourceDescription() {
+		return sourceDescription;
 	}
-	public void setSource_description(String source_description) {
-		this.source_description = source_description;
+	public void setSourceDescription(String sourceDescription) {
+		this.sourceDescription = sourceDescription;
 	}
+	
 	
 }

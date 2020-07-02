@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 
 import com.ec.ReusableClasses.ReusableFields;
 @Entity
@@ -17,9 +18,16 @@ public class Broker extends ReusableFields implements Serializable{
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "broker_id", updatable = false, nullable = false)
 	Long brokerId;
+	
+	@NotBlank(message = "Name is mandatory")
 	String broker_name;
+	
+	@NotBlank(message = "Address is mandatory")
 	String broker_address;
+	
+	@NotBlank(message = "Phone is mandatory")
 	String broker_phoneno;
+	
 	public Long getBrokerId() {
 		return brokerId;
 	}
