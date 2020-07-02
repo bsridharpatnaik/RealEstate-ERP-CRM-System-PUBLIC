@@ -8,5 +8,5 @@ import com.ec.crm.Model.Broker;
 
 @Repository
 public interface BrokerRepo extends BaseRepository<Broker, Long>, JpaSpecificationExecutor<Broker>{
-
+	boolean existsByBrokerPhoneno(String phone);
 }

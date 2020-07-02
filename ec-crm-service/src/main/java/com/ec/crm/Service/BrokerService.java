@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Model.Broker;
+import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Repository.BrokerRepo;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,16 @@ public class BrokerService {
 	}
 	
 	public Broker createBroker(Broker brokerData) throws Exception {
-		bRepo.save(brokerData);
-		return brokerData;
+		if(!bRepo.existsByBrokerPhoneno(brokerData.getBrokerPhoneno()))
+		{
+			bRepo.save(brokerData);
+			return brokerData;
+		}
+		else
+		{
+			throw new Exception("Broker already exists!");
+		}
+		
 	}
 	
 	public Broker findSingleBroker(long id) throws Exception 
@@ -37,8 +46,30 @@ public class BrokerService {
 	
 	public Broker updateBroker(Long id, Broker broker) throws Exception 
 	{
-		bRepo.save(broker);
-	    return broker;
+		Optional<Broker> BrokerForUpdateOpt = bRepo.findById(id);
+		Broker BrokerForUpdate = BrokerForUpdateOpt.get();
+		
+		if(!BrokerForUpdateOpt.isPresent())
+			throw new Exception("Broker not found with brokerid");
+		
+		if(!bRepo.existsByBrokerPhoneno(broker.getBrokerPhoneno()) && !broker.getBrokerPhoneno().equalsIgnoreCase(BrokerForUpdate.getBrokerPhoneno()))
+		{
+			BrokerForUpdate.setBrokerName(broker.getBrokerName());
+			BrokerForUpdate.setBrokerAddress(broker.getBrokerAddress());
+			
+		}
+        else if(broker.getBrokerPhoneno().equalsIgnoreCase(BrokerForUpdate.getBrokerPhoneno()))
+        {
+  
+        	BrokerForUpdate.setBrokerPhoneno(broker.getBrokerPhoneno());
+        	BrokerForUpdate.setBrokerName(broker.getBrokerName());
+			BrokerForUpdate.setBrokerAddress(broker.getBrokerAddress());
+        }
+        else 
+        {
+        	throw new Exception("Broker with same Phone already exists");
+        }
+		return bRepo.save(BrokerForUpdate);
 	}
 	
 	public void deleteBroker(Long id) throws Exception 

@@ -20,13 +20,16 @@ public class Broker extends ReusableFields implements Serializable{
 	Long brokerId;
 	
 	@NotBlank(message = "Name is mandatory")
-	String broker_name;
+	@Column(name="broker_name")
+	String brokerName;
 	
 	@NotBlank(message = "Address is mandatory")
-	String broker_address;
+	@Column(name="broker_address")
+	String brokerAddress;
 	
 	@NotBlank(message = "Phone is mandatory")
-	String broker_phoneno;
+	@Column(name="broker_phoneno")
+	String brokerPhoneno;
 	
 	public Long getBrokerId() {
 		return brokerId;
@@ -34,23 +37,24 @@ public class Broker extends ReusableFields implements Serializable{
 	public void setBrokerId(Long brokerId) {
 		this.brokerId = brokerId;
 	}
-	public String getBroker_name() {
-		return broker_name;
+	public String getBrokerName() {
+		return brokerName;
 	}
-	public void setBroker_name(String broker_name) {
-		this.broker_name = broker_name;
+	public void setBrokerName(String brokerName) {
+		this.brokerName = brokerName;
 	}
-	public String getBroker_address() {
-		return broker_address;
+	public String getBrokerAddress() {
+		return brokerAddress;
 	}
-	public void setBroker_address(String broker_address) {
-		this.broker_address = broker_address;
+	public void setBrokerAddress(String brokerAddress) {
+		this.brokerAddress = brokerAddress;
 	}
-	public String getBroker_phoneno() {
-		return broker_phoneno;
+	public String getBrokerPhoneno() {
+		return brokerPhoneno;
 	}
-	public void setBroker_phoneno(String broker_phoneno) {
-		this.broker_phoneno = broker_phoneno;
+	public void setBrokerPhoneno(String brokerPhoneno) {
+		this.brokerPhoneno = brokerPhoneno;
 	}
+	
 	
 }
