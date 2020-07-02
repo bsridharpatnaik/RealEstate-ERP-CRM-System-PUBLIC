@@ -10,7 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
-import com.ec.ReusableClasses.ReusableFields;
+import com.ec.crm.ReusableClasses.ReusableFields;
 
 @Entity
 @Table(name = "sentiment")

@@ -13,7 +13,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.lang.NonNull;
 
-import com.ec.ReusableClasses.ReusableFields;
+import com.ec.crm.ReusableClasses.ReusableFields;
 @Entity
 @Table(name = "property_type")
 public class PropertyType extends ReusableFields implements Serializable{

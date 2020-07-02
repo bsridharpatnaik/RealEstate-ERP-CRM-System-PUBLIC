@@ -1,6 +1,7 @@
 package com.ec.crm.Controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.FieldError;
 
 import com.ec.crm.Model.PropertyType;
+import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.Service.PropertyTypeService;
 
 @RestController
@@ -62,6 +64,11 @@ public class PropertyTypeController {
 	{
 		propertyService.deletePropertyType(id);
 			return ResponseEntity.ok("Source Deleted sucessfully.");
+	}
+	@GetMapping("/idandnames")
+	public List<IdNameProjections> returnIdAndNames() 
+	{
+		return propertyService.findIdAndNames();
 	}
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)

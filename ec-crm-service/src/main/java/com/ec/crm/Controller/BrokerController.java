@@ -1,6 +1,7 @@
 package com.ec.crm.Controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Service.BrokerService;
 
@@ -62,6 +64,11 @@ public class BrokerController {
 	{
 		brokerService.deleteBroker(id);
 			return ResponseEntity.ok("Broker Deleted sucessfully.");
+	}
+	@GetMapping("/idandnames")
+	public List<IdNameProjections> returnIdAndNames() 
+	{
+		return brokerService.findIdAndNames();
 	}
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)

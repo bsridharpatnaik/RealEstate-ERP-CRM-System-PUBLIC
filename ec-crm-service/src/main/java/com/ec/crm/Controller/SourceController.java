@@ -1,6 +1,7 @@
 package com.ec.crm.Controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Model.Source;
+import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.Service.SourceService;
 
 @RestController
@@ -63,7 +65,11 @@ public class SourceController {
 		sourceService.deleteSource(id);
 			return ResponseEntity.ok("Source Deleted sucessfully.");
 	}
-	
+	@GetMapping("/idandnames")
+	public List<IdNameProjections> returnIdAndNames() 
+	{
+		return sourceService.findIdAndNames();
+	}
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public Map<String, String> handleValidationExceptions(

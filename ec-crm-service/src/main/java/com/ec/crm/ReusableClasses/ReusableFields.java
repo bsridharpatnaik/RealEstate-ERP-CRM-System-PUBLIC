@@ -1,4 +1,4 @@
-package com.ec.ReusableClasses;
+package com.ec.crm.ReusableClasses;
 
 import java.io.Serializable;
 import java.util.Date;

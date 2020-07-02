@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Repository.BrokerRepo;
+import com.ec.crm.ReusableClasses.IdNameProjections;
 
 import lombok.extern.slf4j.Slf4j;
 @Service
@@ -75,5 +77,10 @@ public class BrokerService {
 	public void deleteBroker(Long id) throws Exception 
 	{
 		bRepo.softDeleteById(id);
+	}
+	public List<IdNameProjections> findIdAndNames() 
+	{
+		// TODO Auto-generated method stub
+		return bRepo.findIdAndNames();
 	}
 }

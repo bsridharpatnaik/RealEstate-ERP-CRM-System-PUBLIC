@@ -1,6 +1,7 @@
 package com.ec.crm.Controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.validation.Valid;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Model.Sentiment;
+import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.Service.SentimentService;
 
 @RestController
@@ -62,6 +64,11 @@ public class SentimentController {
 	{
 		sentimentService.deleteSentiment(id);
 			return ResponseEntity.ok("Sentiment Deleted sucessfully.");
+	}
+	@GetMapping("/idandnames")
+	public List<IdNameProjections> returnIdAndNames() 
+	{
+		return sentimentService.findIdAndNames();
 	}
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)

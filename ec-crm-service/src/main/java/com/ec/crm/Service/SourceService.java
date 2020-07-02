@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Model.Source;
 import com.ec.crm.Repository.SourceRepo;
+import com.ec.crm.ReusableClasses.IdNameProjections;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,5 +75,9 @@ public class SourceService {
 	public void deleteSource(Long id) throws Exception 
 	{
 		sRepo.softDeleteById(id);
+	}
+	public List<IdNameProjections> findIdAndNames() 
+	{
+		return sRepo.findIdAndNames();
 	}
 }

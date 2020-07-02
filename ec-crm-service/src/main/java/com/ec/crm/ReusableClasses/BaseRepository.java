@@ -1,4 +1,4 @@
-package com.ec.ReusableClasses;
+package com.ec.crm.ReusableClasses;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.jpa.repository.JpaRepository;
