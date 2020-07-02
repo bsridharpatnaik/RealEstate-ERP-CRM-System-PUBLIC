@@ -15,3 +15,7 @@ ec-inventory-service/.DS_Store
 ec-inventory-service/target/**
 ec-inventory-service/.DS_Store
 .DS_Store
+
+*.log
+
+ec-common-service/logs/
