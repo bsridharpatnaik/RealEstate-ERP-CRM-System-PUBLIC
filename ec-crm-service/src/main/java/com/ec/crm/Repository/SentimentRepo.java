@@ -6,5 +6,5 @@ import com.ec.ReusableClasses.BaseRepository;
 import com.ec.crm.Model.Sentiment;
 
 public interface SentimentRepo extends BaseRepository<Sentiment, Long>, JpaSpecificationExecutor<Sentiment>{
-
+	boolean existsByName(String name);
 }

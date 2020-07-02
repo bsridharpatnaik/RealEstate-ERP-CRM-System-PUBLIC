@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Repository.SentimentRepo;
 
@@ -23,8 +24,15 @@ public class SentimentService {
 	}
 	
 	public Sentiment createSentiment(Sentiment sentimentData) throws Exception {
-		sRepo.save(sentimentData);
-		return sentimentData;
+		if(!sRepo.existsByName(sentimentData.getName()))
+		{
+			sRepo.save(sentimentData);
+			return sentimentData;
+		}
+		else
+		{
+			throw new Exception("Sentiment already exists!");
+		}
 	}
 	
 	public Sentiment findSingleSentiment(long id) throws Exception 
@@ -38,8 +46,28 @@ public class SentimentService {
 	
 	public Sentiment updateSentiment(Long id, Sentiment sentiment) throws Exception 
 	{
-		sRepo.save(sentiment);
-	    return sentiment;
+		Optional<Sentiment> SentimentForUpdateOpt = sRepo.findById(id);
+		Sentiment SentimentForUpdate = SentimentForUpdateOpt.get();
+		
+		if(!SentimentForUpdateOpt.isPresent())
+			throw new Exception("Sentiment not found with sentimentid");
+		
+		if(!sRepo.existsByName(sentiment.getName()) && !sentiment.getName().equalsIgnoreCase(SentimentForUpdate.getName()))
+		{
+			SentimentForUpdate.setName(sentiment.getName());
+			SentimentForUpdate.setDescription(sentiment.getDescription());
+			
+		}
+        else if(sentiment.getName().equalsIgnoreCase(SentimentForUpdate.getName()))
+        {
+  
+        	SentimentForUpdate.setDescription(sentiment.getDescription());
+        }
+        else 
+        {
+        	throw new Exception("PropertyType with same Name already exists");
+        }
+		return sRepo.save(SentimentForUpdate);
 	}
 	
 	public void deleteSentiment(Long id) throws Exception 

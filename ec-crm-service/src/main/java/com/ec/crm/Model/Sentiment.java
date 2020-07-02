@@ -8,6 +8,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 
 import com.ec.ReusableClasses.ReusableFields;
 
@@ -18,8 +19,14 @@ public class Sentiment extends ReusableFields implements Serializable{
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "sentiment_id", updatable = false, nullable = false)
 	Long sentimentId;
+	
+	
+	@NotBlank(message = "Name is mandatory")
 	String name;
+	
+	@NotBlank(message = "Description is mandatory")
 	String description;
+	
 	public Long getSentimentId() {
 		return sentimentId;
 	}
