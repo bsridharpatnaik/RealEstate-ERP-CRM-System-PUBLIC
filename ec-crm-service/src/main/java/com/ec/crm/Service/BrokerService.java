@@ -80,7 +80,6 @@ public class BrokerService {
 	}
 	public List<IdNameProjections> findIdAndNames() 
 	{
-		// TODO Auto-generated method stub
 		return bRepo.findIdAndNames();
 	}
 }
