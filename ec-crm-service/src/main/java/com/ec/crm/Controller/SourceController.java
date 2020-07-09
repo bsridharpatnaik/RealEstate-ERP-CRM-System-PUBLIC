@@ -9,6 +9,8 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Source;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.Service.SourceService;
@@ -39,7 +43,12 @@ public class SourceController {
 	{
 		return sourceService.fetchAll(pageable);
 	}
-	
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public SourceListWithTypeAheadData returnFilteredSource(@RequestBody FilterDataList sourceFilterDataList,@PageableDefault(page = 0, size = 10, sort = "sourceId", direction = Direction.DESC) Pageable pageable) 
+	{
+		return sourceService.findFilteredSource(sourceFilterDataList,pageable);
+	}
 	@GetMapping("/{id}")
 	public Source findSourceByID(@PathVariable long id) throws Exception 
 	{

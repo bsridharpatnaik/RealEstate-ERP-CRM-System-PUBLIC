@@ -6,10 +6,15 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.crm.Model.PropertyType;
+import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Filters.FilterAttributeData;
+import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.Source;
+import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Repository.SourceRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
@@ -24,7 +29,42 @@ public class SourceService {
 	{
 		return sRepo.findAll(pageable);
 	}
+	public SourceListWithTypeAheadData findFilteredSource(FilterDataList sourceFilterDataList, Pageable pageable) 
+	{
+		SourceListWithTypeAheadData tpData  = new SourceListWithTypeAheadData();
+		
+		tpData.setSourceDetails(getFilteredData(sourceFilterDataList,pageable));
+		return tpData;
+	}
+
+	public Page<Source> getFilteredData(FilterDataList sourceFilterDataList, Pageable pageable)
+	{
+		Specification<Source> spec = fetchSpecification(sourceFilterDataList);
+		if(spec!=null)
+			return sRepo.findAll(spec, pageable);
+		return sRepo.findAll(pageable);
+	}
 	
+	private Specification<Source> fetchSpecification(FilterDataList sourceFilterDataList) 
+	{
+		Specification<Source> specification = null;
+		for(FilterAttributeData attrData:sourceFilterDataList.getFilterData())
+		{
+			String attrName = attrData.getAttrName();
+			List<String> attrValues = attrData.getAttrValue();
+			
+			Specification<Source> internalSpecification = null;
+			for(String attrValue : attrValues)
+			{
+				internalSpecification= internalSpecification==null?
+						SourceSpecifications.whereSourcenameContains(attrValue)
+						:internalSpecification.or(SourceSpecifications.whereSourcenameContains(attrValue));
+			}
+			specification= specification==null?internalSpecification:specification.and(internalSpecification);
+		}
+		return specification;
+	}
+
 	public Source createSource(Source sourceData) throws Exception {
 		if(!sRepo.existsBySourceName(sourceData.getSourceName()))
 		{
