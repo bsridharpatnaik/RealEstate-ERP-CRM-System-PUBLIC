@@ -6,9 +6,17 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Data.PropertyTypeListWithTypeAheadData;
+import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Filters.FilterAttributeData;
+import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Filters.PropertyTypeSpecifications;
+import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.PropertyType;
+import com.ec.crm.Model.Source;
 import com.ec.crm.Repository.PropertyTypeRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
@@ -23,7 +31,42 @@ public class PropertyTypeService {
 	{
 		return pRepo.findAll(pageable);
 	}
+	public PropertyTypeListWithTypeAheadData findFilteredSource(FilterDataList propertyFilterDataList, Pageable pageable) 
+	{
+		PropertyTypeListWithTypeAheadData tpData  = new PropertyTypeListWithTypeAheadData();
+		
+		tpData.setPropertyTypeDetails(getFilteredData(propertyFilterDataList,pageable));
+		return tpData;
+	}
+
+	public Page<PropertyType> getFilteredData(FilterDataList propertyFilterDataList, Pageable pageable)
+	{
+		Specification<PropertyType> spec = fetchSpecification(propertyFilterDataList);
+		if(spec!=null)
+			return pRepo.findAll(spec, pageable);
+		return pRepo.findAll(pageable);
+	}
 	
+	private Specification<PropertyType> fetchSpecification(FilterDataList propertyFilterDataList) 
+	{
+		Specification<PropertyType> specification = null;
+		for(FilterAttributeData attrData:propertyFilterDataList.getFilterData())
+		{
+			String attrName = attrData.getAttrName();
+			List<String> attrValues = attrData.getAttrValue();
+			
+			Specification<PropertyType> internalSpecification = null;
+			for(String attrValue : attrValues)
+			{
+				internalSpecification= internalSpecification==null?
+						PropertyTypeSpecifications.wherePropertynameContains(attrValue)
+						:internalSpecification.or(PropertyTypeSpecifications.wherePropertynameContains(attrValue));
+			}
+			specification= specification==null?internalSpecification:specification.and(internalSpecification);
+		}
+		return specification;
+	}
+
 	public PropertyType createPropertyType(PropertyType ptype) throws Exception {
 		if(!pRepo.existsByName(ptype.getName()))
 		{

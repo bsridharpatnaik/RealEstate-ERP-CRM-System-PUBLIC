@@ -9,6 +9,8 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,6 +26,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.FieldError;
 
+import com.ec.crm.Data.PropertyTypeListWithTypeAheadData;
+import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.Service.PropertyTypeService;
@@ -39,7 +44,12 @@ public class PropertyTypeController {
 	{
 		return propertyService.fetchAll(pageable);
 	}
-	
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public PropertyTypeListWithTypeAheadData returnFilteredSource(@RequestBody FilterDataList sourceFilterDataList,@PageableDefault(page = 0, size = 10, sort = "propertyTypeId", direction = Direction.DESC) Pageable pageable) 
+	{
+		return propertyService.findFilteredSource(sourceFilterDataList,pageable);
+	}
 	@GetMapping("/{id}")
 	public PropertyType findPropertyTypeByID(@PathVariable long id) throws Exception 
 	{
