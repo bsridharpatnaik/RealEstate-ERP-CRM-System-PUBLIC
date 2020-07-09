@@ -9,6 +9,8 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -25,6 +27,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.ReusableClasses.IdNameProjections;
+import com.ec.crm.Data.BrokerListWithTypeAheadData;
+import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Service.BrokerService;
 
@@ -39,7 +44,12 @@ public class BrokerController {
 	{
 		return brokerService.fetchAll(pageable);
 	}
-	
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public BrokerListWithTypeAheadData returnFilteredSource(@RequestBody FilterDataList brokerFilterDataList,@PageableDefault(page = 0, size = 10, sort = "brokerId", direction = Direction.DESC) Pageable pageable) 
+	{
+		return brokerService.findFilteredBroker(brokerFilterDataList,pageable);
+	}
 	@GetMapping("/{id}")
 	public Broker findBrokerByID(@PathVariable long id) throws Exception 
 	{

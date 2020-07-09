@@ -1,11 +1,10 @@
 package com.ec.crm.Data;
 
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 
 import com.ec.crm.Model.Sentiment;
-import com.ec.crm.Model.Source;
+
 
 public class SentimentListWithTypeAheadData 
 {
