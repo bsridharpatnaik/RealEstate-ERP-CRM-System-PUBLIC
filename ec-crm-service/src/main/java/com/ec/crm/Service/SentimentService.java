@@ -6,10 +6,18 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Data.SentimentListWithTypeAheadData;
+import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Filters.FilterAttributeData;
+import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Filters.SentimentSpecifications;
+import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Model.Sentiment;
+import com.ec.crm.Model.Source;
 import com.ec.crm.Repository.SentimentRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
@@ -24,7 +32,41 @@ public class SentimentService {
 	{
 		return sRepo.findAll(pageable);
 	}
+	public SentimentListWithTypeAheadData findFilteredSource(FilterDataList sentimentFilterDataList, Pageable pageable) 
+	{
+		SentimentListWithTypeAheadData tpData  = new SentimentListWithTypeAheadData();
+		
+		tpData.setSentimentDetails(getFilteredData(sentimentFilterDataList,pageable));
+		return tpData;
+	}
+
+	public Page<Sentiment> getFilteredData(FilterDataList sentimentFilterDataList, Pageable pageable)
+	{
+		Specification<Sentiment> spec = fetchSpecification(sentimentFilterDataList);
+		if(spec!=null)
+			return sRepo.findAll(spec, pageable);
+		return sRepo.findAll(pageable);
+	}
 	
+	private Specification<Sentiment> fetchSpecification(FilterDataList sourceFilterDataList) 
+	{
+		Specification<Sentiment> specification = null;
+		for(FilterAttributeData attrData:sourceFilterDataList.getFilterData())
+		{
+			String attrName = attrData.getAttrName();
+			List<String> attrValues = attrData.getAttrValue();
+			
+			Specification<Sentiment> internalSpecification = null;
+			for(String attrValue : attrValues)
+			{
+				internalSpecification= internalSpecification==null?
+						SentimentSpecifications.whereSentimentnameContains(attrValue)
+						:internalSpecification.or(SentimentSpecifications.whereSentimentnameContains(attrValue));
+			}
+			specification= specification==null?internalSpecification:specification.and(internalSpecification);
+		}
+		return specification;
+	}
 	public Sentiment createSentiment(Sentiment sentimentData) throws Exception {
 		if(!sRepo.existsByName(sentimentData.getName()))
 		{

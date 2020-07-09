@@ -9,6 +9,8 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,6 +26,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.crm.Data.SentimentListWithTypeAheadData;
+import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.Service.SentimentService;
@@ -39,7 +44,12 @@ public class SentimentController {
 	{
 		return sentimentService.fetchAll(pageable);
 	}
-	
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public SentimentListWithTypeAheadData returnFilteredSource(@RequestBody FilterDataList sentimentFilterDataList,@PageableDefault(page = 0, size = 10, sort = "sentimentId", direction = Direction.DESC) Pageable pageable) 
+	{
+		return sentimentService.findFilteredSource(sentimentFilterDataList,pageable);
+	}
 	@GetMapping("/{id}")
 	public Sentiment findSentimentByID(@PathVariable long id) throws Exception 
 	{
