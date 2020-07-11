@@ -18,11 +18,11 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.InwardInventoryData;
+import com.ec.application.data.InwardInventoryExportDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
-import com.ec.application.model.InwardOutwardList_;
 import com.ec.application.model.Product;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InwardInventoryRepo;
@@ -142,15 +142,24 @@ public class InwardInventoryService
 	public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList,Pageable pageable) throws ParseException 
 	{
 		ReturnInwardInventoryData returnInwardInventoryData = new ReturnInwardInventoryData();
-		
 		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
-		
 		if(spec!=null) returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(spec,pageable));
 		else returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(pageable));
 		returnInwardInventoryData.setIiDropdown(populateDropdownService.fetchData("inward"));
 		return returnInwardInventoryData;
 	}
 
+	public List<InwardInventoryExportDAO> fetchInwardnventoryForExport(FilterDataList filterDataList) throws Exception 
+	{
+		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
+		long size = spec!=null?inwardInventoryRepo.count(spec):inwardInventoryRepo.count();
+		if(size>5000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+		List<InwardInventory> iiData = spec!=null?inwardInventoryRepo.findAll(spec):inwardInventoryRepo.findAll();
+		List<InwardInventoryExportDAO> clonedData = iiData.parallelStream().map(InwardInventoryExportDAO::new).collect(Collectors.toList());
+		return clonedData;
+	}
+	
 	public InwardInventory findById(long id) throws Exception 
 	{
 		Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);

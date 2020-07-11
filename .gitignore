@@ -26,3 +26,4 @@ ec-crm-service/.settings/org.eclipse.jdt.apt.core.prefs
 ec-crm-service/.settings/org.eclipse.core.resources.prefs
 ec-crm-service/.project
 ec-crm-service/.factorypath
+ec-inventory-service/src/main/java/com/ec/application/data/InwardInventoryExportPartialDAO.java
