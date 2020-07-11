@@ -1,7 +1,6 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -16,11 +15,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.OutwardInventoryData;
+import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
-import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.Warehouse;
@@ -286,15 +284,24 @@ public class OutwardInventoryService
 	public ReturnOutwardInventoryData fetchOutwardnventory(FilterDataList filterDataList, Pageable pageable) throws ParseException 
 	{
 		ReturnOutwardInventoryData returnOutwardInventoryData = new ReturnOutwardInventoryData();
-		
 		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
-		
 		if(spec!=null) returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(spec,pageable));
 		else returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(pageable));
 		returnOutwardInventoryData.setIiDropdown(populateDropdownService.fetchData("outward"));
 		return returnOutwardInventoryData;
 	}
 
+	public List<OutwardInventoryExportDAO> fetchOutwardnventoryForExport(FilterDataList filterDataList) throws Exception 
+	{
+		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
+		long size = spec!=null?outwardInventoryRepo.count(spec):outwardInventoryRepo.count();
+		if(size>5000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+		List<OutwardInventory> iiData = spec!=null?outwardInventoryRepo.findAll(spec):outwardInventoryRepo.findAll();
+		List<OutwardInventoryExportDAO> clonedData = iiData.parallelStream().map(OutwardInventoryExportDAO::new).collect(Collectors.toList());
+		return clonedData;
+	}
+	
 	@Transactional
 	public void deleteOutwardInventoryById(Long id) throws Exception 
 	{
