@@ -1,13 +1,12 @@
 package com.ec.application.Deserializers;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.Set;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 import org.springframework.stereotype.Component;
 
 import com.ec.application.data.InwardInventoryExportDAO;
-import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -32,12 +31,13 @@ public class InwardExportSerializer extends StdSerializer<InwardInventoryExportD
 	@Override
 	public void serialize(InwardInventoryExportDAO value, JsonGenerator gen, SerializerProvider provider) throws IOException 
 	{
+		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 		for(InwardOutwardList ioList:value.getInwardOutwardList())
 		{
 			System.out.println("Serialization starts for inwardid"+value.getInwardid());
 			gen.writeStartObject();
 			gen.writeNumberField("inwardid", value.getInwardid());
-			gen.writeStringField("date",value.getDate().toString());
+			gen.writeStringField("date",df.format(value.getDate()));
 			gen.writeStringField("vehicleNo",value.getVehicleNo()!=null?value.getVehicleNo():"");
 			gen.writeStringField("supplierSlipNo",value.getVehicleNo()!=null?value.getVehicleNo():"");
 			gen.writeStringField("ourSlipNo",value.getOurSlipNo()!=null?value.getOurSlipNo():"");
