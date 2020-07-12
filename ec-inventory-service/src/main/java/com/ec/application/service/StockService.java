@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,6 +20,7 @@ import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.SingleStockInfo;
 import com.ec.application.data.StockInformation;
+import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.data.StockPercentData;
 import com.ec.application.model.Product;
 import com.ec.application.model.Stock;
@@ -27,7 +30,6 @@ import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
-import java.text.DecimalFormat;
 @Service
 public class StockService 
 {
@@ -62,6 +64,33 @@ public class StockService
 		return fetchStockInformation(allStocks,pageable);
 	}
 	
+	public List<StockInformationExportDAO> findStockForAllForExport(FilterDataList filterDataList) throws Exception 
+	{
+		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
+		long size = spec!=null?stockRepo.count(spec):stockRepo.count();
+		if(size>2000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+	
+		List<Stock> allStocks = spec!=null?stockRepo.findAll(spec):stockRepo.findAll();
+		Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+		Page<SingleStockInfo> stockInfoList = fetchStockInformation(allStocks,pageable).getStockInformation();
+		List<StockInformationExportDAO> exportData = transformDataForExport(stockInfoList);
+		return exportData;
+	}
+	
+	private List<StockInformationExportDAO> transformDataForExport(Page<SingleStockInfo> allStocks) 
+	{
+		List<StockInformationExportDAO> stockInformationExportDAO = new ArrayList<StockInformationExportDAO>();
+		for(SingleStockInfo ssi : allStocks)
+		{
+			for(Stock stock : ssi.getDetailedStock())
+			{
+				stockInformationExportDAO.add(new StockInformationExportDAO(ssi,stock));
+			}
+		}
+		return stockInformationExportDAO;
+	}
+
 	public Double updateStock(Long productId,String warehousename, Double quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId,warehousename);
