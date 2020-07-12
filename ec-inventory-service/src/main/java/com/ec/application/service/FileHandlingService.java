@@ -14,7 +14,7 @@ import com.ec.application.model.DBFile;
 import com.ec.application.model.FileInformation;
 
 @Service
-public class FileHandlingSgervice 
+public class FileHandlingService 
 {
 	@Autowired
 	DBFileStorageService dbFileStorageService;

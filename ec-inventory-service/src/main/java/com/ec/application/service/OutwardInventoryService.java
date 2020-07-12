@@ -1,6 +1,7 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -17,8 +18,10 @@ import org.springframework.stereotype.Service;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO;
+import com.ec.application.data.OutwardInventoryExportDAO2;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
+import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.Warehouse;
@@ -300,6 +303,34 @@ public class OutwardInventoryService
 		List<OutwardInventory> iiData = spec!=null?outwardInventoryRepo.findAll(spec):outwardInventoryRepo.findAll();
 		List<OutwardInventoryExportDAO> clonedData = iiData.parallelStream().map(OutwardInventoryExportDAO::new).collect(Collectors.toList());
 		return clonedData;
+	}
+	
+	public List<OutwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws Exception 
+	{
+		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
+		long size = spec!=null?outwardInventoryRepo.count(spec):outwardInventoryRepo.count();
+		System.out.println("Size of inward inventory after filter -"+size);
+		if(size>2000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+		System.out.println("Fetching data from db");
+		List<OutwardInventory> iiData = spec!=null?outwardInventoryRepo.findAll(spec):outwardInventoryRepo.findAll();
+		List<OutwardInventoryExportDAO2> clonedData = transformDataForExport(iiData);
+		System.out.println("Completed - returning to controller");
+		return clonedData;
+	}
+	
+	private List<OutwardInventoryExportDAO2> transformDataForExport(List<OutwardInventory> iiData) 
+	{
+		List<OutwardInventoryExportDAO2> transformedData =  new ArrayList<OutwardInventoryExportDAO2>();
+		for(OutwardInventory ii: iiData)
+		{
+			for(InwardOutwardList ioList:ii.getInwardOutwardList())
+			{
+				OutwardInventoryExportDAO2 ied = new OutwardInventoryExportDAO2(ii,ioList);
+				transformedData.add(ied);
+			}
+		}
+		return transformedData;
 	}
 	
 	@Transactional

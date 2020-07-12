@@ -3,6 +3,7 @@ package com.ec.application.service;
 import static java.util.stream.Collectors.counting;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.InwardInventoryExportDAO;
+import com.ec.application.data.InwardInventoryExportDAO2;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.model.InwardInventory;
@@ -153,13 +155,45 @@ public class InwardInventoryService
 	{
 		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
 		long size = spec!=null?inwardInventoryRepo.count(spec):inwardInventoryRepo.count();
-		if(size>5000)
+		System.out.println("Size of inward inventory after filter -"+size);
+		if(size>3000)
 			throw new Exception("Too many rows to export. Apply some more filters and try again");
+		System.out.println("Fetching data from db");
 		List<InwardInventory> iiData = spec!=null?inwardInventoryRepo.findAll(spec):inwardInventoryRepo.findAll();
+		System.out.println("Cloning data to object");
 		List<InwardInventoryExportDAO> clonedData = iiData.parallelStream().map(InwardInventoryExportDAO::new).collect(Collectors.toList());
+		System.out.println("Completed - returning to controller");
 		return clonedData;
 	}
 	
+	public List<InwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws Exception 
+	{
+		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
+		long size = spec!=null?inwardInventoryRepo.count(spec):inwardInventoryRepo.count();
+		System.out.println("Size of inward inventory after filter -"+size);
+		if(size>2000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+		System.out.println("Fetching data from db");
+		List<InwardInventory> iiData = spec!=null?inwardInventoryRepo.findAll(spec):inwardInventoryRepo.findAll();
+		List<InwardInventoryExportDAO2> clonedData = transformDataForExport(iiData);
+		System.out.println("Completed - returning to controller");
+		return clonedData;
+	}
+	
+	private List<InwardInventoryExportDAO2> transformDataForExport(List<InwardInventory> iiData) 
+	{
+		List<InwardInventoryExportDAO2> transformedData =  new ArrayList<InwardInventoryExportDAO2>();
+		for(InwardInventory ii: iiData)
+		{
+			for(InwardOutwardList ioList:ii.getInwardOutwardList())
+			{
+				InwardInventoryExportDAO2 ied = new InwardInventoryExportDAO2(ii,ioList);
+				transformedData.add(ied);
+			}
+		}
+		return transformedData;
+	}
+
 	public InwardInventory findById(long id) throws Exception 
 	{
 		Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
