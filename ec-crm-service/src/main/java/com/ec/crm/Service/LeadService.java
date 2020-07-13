@@ -9,10 +9,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.ec.crm.Data.UserReturnData;
+import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Filters.LeadSpecifications;
+import com.ec.crm.ReusableClasses.ReusableMethods;
+import com.ec.crm.ReusableClasses.CommonUtils;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Model.Address;
 import com.ec.crm.Model.Broker;
@@ -58,11 +64,24 @@ public class LeadService {
 	@Value("${common.serverurl}")
 	private String reqUrl;
 	
+	CommonUtils utilObj = new CommonUtils();
+	
 	public Page<Lead> fetchAll(Pageable pageable) {
 		// TODO Auto-generated method stub
 		return lRepo.findAll(pageable);
 	}
+	public LeadListWithTypeAheadData findFilteredList(FilterDataList leadFilterDataList, Pageable pageable) 
+	{
+		LeadListWithTypeAheadData leadListWithTypeAheadData = new LeadListWithTypeAheadData();
+		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
+		
+		if(spec!=null)
+			leadListWithTypeAheadData.setLeadDetails(lRepo.findAll(spec, pageable));
+		else 		
+			leadListWithTypeAheadData.setLeadDetails(lRepo.findAll(pageable));
 
+		return leadListWithTypeAheadData;
+	}
 	public Lead findSingleLead(long id) throws Exception {
 		// TODO Auto-generated method stub
 		Optional<Lead> lead = lRepo.findById(id);
@@ -83,16 +102,14 @@ public class LeadService {
 			throw new Exception("Source not found");
 		
 		Optional<Broker> brokerOpt = bRepo.findById(payload.getBrokerId());
-		if(! sentimentOpt.isPresent())
+		if(! brokerOpt.isPresent())
 			throw new Exception("Broker not found");
 		
 		Optional<PropertyType> propertyTypeOpt = pRepo.findById(payload.getPropertyTypeId());
 		if(! sentimentOpt.isPresent())
 			throw new Exception("PropertyType not found");
 		
-		Optional<Address> addressOpt = aRepo.findById(payload.getAddressId());
-		if(! addressOpt.isPresent())
-			throw new Exception("Address not found");
+		
 		
 		Long userId;
 		UserReturnData userDetails = webClientBuilder.build()
@@ -105,6 +122,25 @@ public class LeadService {
 		userId= userDetails.getId();
 
 		
+		
+		formatMobileNo(payload);
+    	validatePayload(payload);
+        exitIfMobileNoExists(payload);
+        
+        Address address = new Address();
+        address.setAddr_line1(payload.getAddressLine1());
+		address.setAddr_line2(payload.getAddressLine2());
+		address.setCity(payload.getCity());
+		address.setDistrict(payload.getDist());
+		address.setPincode(payload.getPincode());
+		address=aRepo.save(address);
+		aRepo.flush();
+		Long id=address.getAddrId();
+//		System.out.println(id);
+		Optional<Address> addressOpt = aRepo.findById(id);
+		if(! addressOpt.isPresent())
+			throw new Exception("Address not found");
+		
 		Lead lead=new Lead();
 		lead.setCustomerName(payload.getCustomerName());
 		lead.setPrimaryMobile(payload.getPrimaryMobile());
@@ -112,7 +148,7 @@ public class LeadService {
 		lead.setDateOfBirth(payload.getDateOfBirth());
 		lead.setEmailId(payload.getEmailId());
 		lead.setOccupation(payload.getOccupation());
-		lead.setPurposeId(payload.getPurposeId());
+		lead.setPurpose(payload.getPurpose());
 		lead.setPropertyType(propertyTypeOpt.get());
 		lead.setSentiment(sentimentOpt.get());
 		lead.setSource(sourceOpt.get());
@@ -122,14 +158,75 @@ public class LeadService {
 		lRepo.save(lead);
 		return lead;
 	}
-
+	private void exitIfMobileNoExists(LeadCreateData payload) throws Exception 
+    {
+		if(lRepo.findCountByPMobileNo(payload.getPrimaryMobile())>0)
+			throw new Exception("Contact already exists by Primary Mobile Number.");
+		
+		if(lRepo.findCountBySMobileNo(payload.getSecondaryMobile())>0)
+			throw new Exception("Contact already exists by Secondary Mobile Number.");
+	}
+	 private void validatePayload(LeadCreateData payload) throws Exception 
+    {
+    	if(!validateRequiredFields(payload).equals(""))
+    		throw new Exception("Required fields missing - " + validateRequiredFields(payload));
+		
+    	if(!ReusableMethods.isValidMobileNumber(payload.getPrimaryMobile()))
+    		throw new Exception("Please enter valid mobile number.");
+		
+    	if(!ReusableMethods.isValidMobileNumber(payload.getSecondaryMobile()))
+    		throw new Exception("Please enter valid mobile number.");
+    	
+    	if(payload.getEmailId()!=null && payload.getEmailId()!="")
+    		if(!ReusableMethods.isValidEmail(payload.getEmailId()))
+    				throw new Exception("Please enter valid EmailId.");
+    	
+    	if(payload.getPincode()!=null && payload.getPincode()!="")
+    	{	
+    		if(!payload.getPincode().matches( "\\d{6}"))
+    			throw new Exception("Enter a valid pin code (6 Digits numeric)");
+    			
+    	}
+	}
+	 private String validateRequiredFields(LeadCreateData payload) 
+	{
+		String message = "";
+		if(payload.getPrimaryMobile()==null || payload.getPrimaryMobile().equals(""))
+			message = message==""?"Primary Mobile No.":message+",Primary Mobile No.";
+		
+		if(payload.getSecondaryMobile()==null || payload.getSecondaryMobile().equals(""))
+			message = message==""?"Secondary Mobile No":message+", Secondary Mobile No";
+		
+		if(payload.getCustomerName()==null || payload.getCustomerName().equals(""))
+			message = message==""?"Customer Name":message+", Customer Name";
+		
+		if(payload.getEmailId()==null || payload.getEmailId().equals(""))
+			message = message==""?"Email ID":message+", Email ID";
+		
+		if(payload.getOccupation()==null || payload.getOccupation().equals(""))
+			message = message==""?"Email ID":message+", Email ID";
+		
+		if(payload.getDateOfBirth()==null || payload.getDateOfBirth().equals(""))
+			message = message==""?"Date Of Birth":message+", Date Of Birth";
+		
+		return message;
+	}
+	 
+	 private void formatMobileNo(LeadCreateData payload) 
+    {
+    	//System.out.println(payload.getContactPersonMobileNo());
+        if (!(payload.getPrimaryMobile() == null) && !payload.getPrimaryMobile().equals(""))
+            payload.setPrimaryMobile(utilObj.normalizePhoneNumber(payload.getPrimaryMobile()));
+        if(!payload.getSecondaryMobile().equals(""))
+        	payload.setSecondaryMobile(utilObj.normalizePhoneNumber(payload.getSecondaryMobile()));
+    }
+	 
 	public void deleteLead(Long id) {
 		// TODO Auto-generated method stub
 		lRepo.softDeleteById(id);
 	}
 
 	public Lead updateLead(Long id, LeadCreateData payload) throws Exception {
-		// TODO Auto-generated method stub
 		// TODO Auto-generated method stub
 		Optional<Lead> leadOpt = lRepo.findById(id);
 		if(! leadOpt.isPresent())
@@ -144,16 +241,12 @@ public class LeadService {
 			throw new Exception("Source not found");
 		
 		Optional<Broker> brokerOpt = bRepo.findById(payload.getBrokerId());
-		if(! sentimentOpt.isPresent())
+		if(! brokerOpt.isPresent())
 			throw new Exception("Broker not found");
 		
 		Optional<PropertyType> propertyTypeOpt = pRepo.findById(payload.getPropertyTypeId());
 		if(! sentimentOpt.isPresent())
 			throw new Exception("PropertyType not found");
-		
-		Optional<Address> addressOpt = aRepo.findById(payload.getAddressId());
-		if(! addressOpt.isPresent())
-			throw new Exception("Address not found");
 		
 		Long userId;
 		UserReturnData userDetails = webClientBuilder.build()
@@ -164,16 +257,39 @@ public class LeadService {
 		    	.bodyToMono(UserReturnData.class)
 		    	.block();
 		userId= userDetails.getId();
-
 		
 		Lead lead=leadOpt.get();
+		
+		validatePayload(payload);
+		formatMobileNo(payload);
+		if(!lead.getPrimaryMobile().equals(payload.getPrimaryMobile()))
+				exitIfMobileNoExists(payload);
+		
+		if(!lead.getSecondaryMobile().equals(payload.getSecondaryMobile()))
+			exitIfMobileNoExists(payload);
+		
+		Address address = lead.getAddress();
+        address.setAddr_line1(payload.getAddressLine1());
+		address.setAddr_line2(payload.getAddressLine2());
+		address.setCity(payload.getCity());
+		address.setDistrict(payload.getDist());
+		address.setPincode(payload.getPincode());
+		address=aRepo.save(address);
+		aRepo.flush();
+		Long aid=address.getAddrId();
+//			System.out.println(id);
+		Optional<Address> addressOpt = aRepo.findById(aid);
+		if(! addressOpt.isPresent())
+			throw new Exception("Address not found");
+			
+		
 		lead.setCustomerName(payload.getCustomerName());
 		lead.setPrimaryMobile(payload.getPrimaryMobile());
 		lead.setSecondaryMobile(payload.getSecondaryMobile());
 		lead.setDateOfBirth(payload.getDateOfBirth());
 		lead.setEmailId(payload.getEmailId());
 		lead.setOccupation(payload.getOccupation());
-		lead.setPurposeId(payload.getPurposeId());
+		lead.setPurpose(payload.getPurpose());
 		lead.setPropertyType(propertyTypeOpt.get());
 		lead.setSentiment(sentimentOpt.get());
 		lead.setSource(sourceOpt.get());

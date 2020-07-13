@@ -30,7 +30,7 @@ public class LeadCreateData {
 		
 	String emailId;
 		
-	Long purposeId;
+	String purpose;
 		
 	String occupation;
 		
@@ -38,7 +38,15 @@ public class LeadCreateData {
 	
 	Long brokerId;
 	
-	Long addressId;
+	String addressLine1;
+	
+	String addressLine2;
+	
+	String city;
+	
+	String dist;
+	
+	String pincode;
 	
 	Long sourceId;
 	
@@ -88,12 +96,14 @@ public class LeadCreateData {
 		this.emailId = emailId;
 	}
 
-	public Long getPurposeId() {
-		return purposeId;
+	
+
+	public String getPurpose() {
+		return purpose;
 	}
 
-	public void setPurposeId(Long purposeId) {
-		this.purposeId = purposeId;
+	public void setPurpose(String purpose) {
+		this.purpose = purpose;
 	}
 
 	public String getOccupation() {
@@ -120,12 +130,45 @@ public class LeadCreateData {
 		this.brokerId = brokerId;
 	}
 
-	public Long getAddressId() {
-		return addressId;
+
+	public String getAddressLine1() {
+		return addressLine1;
 	}
 
-	public void setAddressId(Long addressId) {
-		this.addressId = addressId;
+	public void setAddressLine1(String addressLine1) {
+		this.addressLine1 = addressLine1;
+	}
+
+	public String getAddressLine2() {
+		return addressLine2;
+	}
+
+	public void setAddressLine2(String addressLine2) {
+		this.addressLine2 = addressLine2;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getDist() {
+		return dist;
+	}
+
+	public void setDist(String dist) {
+		this.dist = dist;
+	}
+
+	public String getPincode() {
+		return pincode;
+	}
+
+	public void setPincode(String pincode) {
+		this.pincode = pincode;
 	}
 
 	public Long getSourceId() {

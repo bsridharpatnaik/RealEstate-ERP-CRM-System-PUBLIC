@@ -45,8 +45,8 @@ public class Lead extends ReusableFields implements Serializable{
 	@Column(name="email_id")
 	String emailId;
 	
-	@Column(name="purpose_id")
-	Long purposeId;
+	@Column(name="purpose")
+	String purpose;
 	
 	@Column(name="occupation")
 	String occupation;
@@ -131,13 +131,15 @@ public class Lead extends ReusableFields implements Serializable{
 	public void setEmailId(String emailId) {
 		this.emailId = emailId;
 	}
+	
+	
 
-	public Long getPurposeId() {
-		return purposeId;
+	public String getPurpose() {
+		return purpose;
 	}
 
-	public void setPurposeId(Long purposeId) {
-		this.purposeId = purposeId;
+	public void setPurpose(String purpose) {
+		this.purpose = purpose;
 	}
 
 	public String getOccupation() {

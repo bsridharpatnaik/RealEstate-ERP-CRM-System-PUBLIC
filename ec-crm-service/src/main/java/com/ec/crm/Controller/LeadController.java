@@ -5,6 +5,8 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,11 +19,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Service.LeadService;
+import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Filters.FilterDataList;
 
 @RestController
 @RequestMapping(value="/lead",produces = { "application/json", "text/json" })
@@ -34,7 +37,12 @@ public class LeadController {
 	{
 		return leadService.fetchAll(pageable);
 	}
-	
+	@PostMapping
+	@ResponseStatus(HttpStatus.OK)
+	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) 
+	{
+		return leadService.findFilteredList(leadFilterDataList,pageable);
+	}
 	@GetMapping("/{id}")
 	public Lead findLeadByID(@PathVariable long id) throws Exception 
 	{
