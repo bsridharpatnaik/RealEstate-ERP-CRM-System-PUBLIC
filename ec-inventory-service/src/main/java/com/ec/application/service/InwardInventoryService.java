@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -39,6 +41,8 @@ import com.ec.common.Filters.InwardInventorySpecification;
 public class InwardInventoryService 
 {
 
+	Logger logger = LoggerFactory.getLogger(AllInventoryService.class);
+	
 	@Autowired
 	InwardInventoryRepo inwardInventoryRepo;
 	
@@ -231,6 +235,7 @@ public class InwardInventoryService
 	@Transactional
 	public InwardInventory updateInwardnventory(InwardInventoryData iiData, Long id) throws Exception
 	{
+		logger.info("In undate inward inventory flow");
 		Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
 		if(!inwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
@@ -271,19 +276,26 @@ public class InwardInventoryService
 	private void updateStockForCommonInBoth(Set<Long> commonInBoth, InwardInventory oldInwardInventory,
 			InwardInventory inwardInventory) throws Exception 
 	{
+		logger.info("Updating stock for productid common in both old and new");
 		Set<InwardOutwardList> oldIOListSet = oldInwardInventory.getInwardOutwardList();
 		Set<InwardOutwardList> newIOListSet = inwardInventory.getInwardOutwardList();
 		for(Long id:commonInBoth)
 		{
+			logger.info("Updating stock for productid -"+id);
 			Double oldQuantity = findQuantityForProductInIOList(id,oldIOListSet);
 			Double newQuantity = findQuantityForProductInIOList(id,newIOListSet);
 			Double quantityForUpdate = newQuantity - oldQuantity;
+			logger.info("Difference in quantity -"+quantityForUpdate);
 			for(InwardOutwardList ioList:newIOListSet)
 			{
-				if(id.equals(ioList.getProduct().getProductId()) && quantityForUpdate!=0)
+				logger.info("Processing list item "+ioList.getEntryid()+" from new list");
+				logger.info("Comparing product item from list "+ioList.getProduct().getProductId()+" with common product id -"+id);
+				logger.info("Old Closing stock for product - "+ioList.getProduct().getProductId()+" is - "+ioList.getClosingStock());
+				if(id.equals(ioList.getProduct().getProductId()))
 				{
+					logger.info("Quantity modified for product - "+ioList.getProduct().getProductId());
 					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "inward");
-					System.out.println("Closing stock - "+closingStock);
+					logger.info("Updated Closing stock - "+closingStock+" for product - "+id);
 					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),inwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
 					ioList.setClosingStock(closingStock);
 				}
@@ -308,14 +320,19 @@ public class InwardInventoryService
 	@Transactional
 	private void updateStockForOnlyInNew(Set<Long> onlyInNew, InwardInventory inwardInventory) throws Exception 
 	{
+		logger.info("Processing Update Stock for productids present only in new");
 		for(Long id:onlyInNew)
 		{
+			logger.info("Processing productid -"+id);
 			Set<InwardOutwardList> ioListSet = inwardInventory.getInwardOutwardList();
+			
 			for(InwardOutwardList ioList:ioListSet)
 			{
+				logger.info("Processing entryid -"+ioList.getEntryid());
+				logger.info("old closing stock - "+ioList.getClosingStock());
 				if(id.equals(ioList.getProduct().getProductId()))
 				{
-					System.out.println("Element in old list but not in new - " + id );
+					logger.info("Processing Element in old list but not in new - " + id );
 					Double quantity = ioList.getQuantity();
 					Double closingStock = stockService.updateStock(id, inwardInventory.getWarehouse().getWarehouseName(), quantity, "inward");
 					System.out.println("Closing stock - "+closingStock);
@@ -341,6 +358,7 @@ public class InwardInventoryService
 					System.out.println("Element in old list but not in new - " + id );
 					Double quantity = ioList.getQuantity();
 					Double closingStock = stockService.updateStock(id, oldInwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
+					
 					System.out.println("Closing stock - "+closingStock);
 					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),oldInwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
 				}

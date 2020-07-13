@@ -13,7 +13,9 @@ import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.envers.Audited;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Entity
 @Subselect("select * from all_inventory")
@@ -50,9 +52,11 @@ public class AllInventoryTransactions implements Serializable
 	Long productId;
 	
 	@Column(name="quantity")
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
 	
 	@Column(name="closing_stock")
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
 	
 	@Column(name="name")
@@ -153,9 +157,9 @@ public class AllInventoryTransactions implements Serializable
 	public Double getClosingStock() {
 		return closingStock;
 	}
-
+	
 	public void setClosingStock(Double closingStock) {
-		closingStock = closingStock;
+		this.closingStock = closingStock;
 	}
 
 	public String getName() {

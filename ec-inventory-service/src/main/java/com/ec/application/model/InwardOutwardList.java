@@ -9,15 +9,14 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
-import com.ec.application.service.StockService;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Entity
 @Table(name = "inward_outward_entries")
@@ -33,7 +32,9 @@ public class InwardOutwardList extends ReusableFields
 	@JoinColumn(name="productId",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Product product;
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
 
 	public Long getEntryid() {
@@ -49,7 +50,6 @@ public class InwardOutwardList extends ReusableFields
 	public void setClosingStock(Double closingStock) {
 		this.closingStock = closingStock;
 	}
-
 
 	public Double getClosingStock() {
 		return closingStock;

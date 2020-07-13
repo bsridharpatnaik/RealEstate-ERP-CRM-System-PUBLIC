@@ -140,7 +140,7 @@ public class OutwardInventoryService
 			Double quantityForUpdate = newQuantity - oldQuantity;
 			for(InwardOutwardList ioList:newIOListSet)
 			{
-				if(id.equals(ioList.getProduct().getProductId()) && quantityForUpdate!=0)
+				if(id.equals(ioList.getProduct().getProductId()))
 				{
 					Double closingStock = stockService.updateStock(id, outwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "outward");
 					System.out.println("Closing stock - "+closingStock);

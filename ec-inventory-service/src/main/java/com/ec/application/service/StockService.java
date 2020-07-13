@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -54,6 +56,8 @@ public class StockService
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
 
+	Logger log = LoggerFactory.getLogger(AllInventoryService.class);
+	
 	public StockInformation findStockForAll(FilterDataList filterDataList,Pageable pageable) throws Exception
 	{
 		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
@@ -94,9 +98,10 @@ public class StockService
 	public Double updateStock(Long productId,String warehousename, Double quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId,warehousename);
-		System.out.println("Current Stock - "+ currentStock.getQuantityInHand());
-		System.out.println("New Quantity - "+ quantity);
+		log.info("Current Stock - "+ currentStock.getQuantityInHand()+" for product "+productId);
+		log.info("New Quantity - "+ quantity);
 		Double oldStock = currentStock.getQuantityInHand();
+		log.info("Old Stock - "+ oldStock);
 		Double newStock = (double) 0;
 		switch(operation)
 		{
@@ -106,10 +111,12 @@ public class StockService
 			case "outward":
 				newStock = oldStock - quantity;
 		} 
-		System.out.println("New Stock - "+newStock);
+		log.info("New Stock - "+ newStock);
 		if(newStock<0)
+		{
+			log.info("stock update failed for product "+currentStock.getProduct().getProductName()+".  Stock will go Negative");
 			throw new Exception("stock update failed for product "+currentStock.getProduct().getProductName()+".  Stock will go Negative");
-		else 
+		}else 
 		{
 			currentStock.setQuantityInHand(newStock);
 			stockRepo.save(currentStock);
