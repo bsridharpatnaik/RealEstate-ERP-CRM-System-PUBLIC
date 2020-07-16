@@ -55,6 +55,8 @@ public class LeadCreateData {
 	Long sentimentId;
 	
 	Long UserId;
+	
+	Long StatusId;
 
 	public Long getLeadId() {
 		return leadId;
@@ -202,6 +204,15 @@ public class LeadCreateData {
 	public void setUserId(Long userId) {
 		UserId = userId;
 	}
+
+	public Long getStatusId() {
+		return StatusId;
+	}
+
+	public void setStatusId(Long statusId) {
+		StatusId = statusId;
+	}
+	
 	
 	
 	

@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,12 +24,15 @@ import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Model.Address;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Model.Lead;
+import com.ec.crm.Model.LeadStatus;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Model.Source;
+import com.ec.crm.Model.Status;
 import com.ec.crm.Repository.AddressRepo;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.LeadRepo;
+import com.ec.crm.Repository.LeadStatusRepo;
 import com.ec.crm.Repository.PropertyTypeRepo;
 import com.ec.crm.Repository.SentimentRepo;
 import com.ec.crm.Repository.SourceRepo;
@@ -39,6 +43,9 @@ import lombok.extern.slf4j.Slf4j;
 public class LeadService {
 	@Autowired
 	LeadRepo lRepo;
+	
+	@Autowired
+	LeadStatusRepo lsRepo;	
 	
 	@Autowired
 	SourceRepo soRepo;
@@ -156,6 +163,14 @@ public class LeadService {
 		lead.setAddress(addressOpt.get());
 		lead.setUserId(userId);
 		lRepo.save(lead);
+		lRepo.flush();
+		Long lid=lead.getLeadId();
+		
+		LeadStatus lstatus=new LeadStatus();
+		lstatus.setLeadId(lid);
+		lstatus.setStatusId(payload.getStatusId());
+		lstatus.setUserId(userId);
+		lsRepo.save(lstatus);
 		return lead;
 	}
 	private void exitIfMobileNoExists(LeadCreateData payload) throws Exception 
@@ -297,7 +312,36 @@ public class LeadService {
 		lead.setAddress(addressOpt.get());
 		lead.setUserId(userId);
 		lRepo.save(lead);
-		return lead;
+		
+		
+		//check if leadid and statusid pair exists
+		//if exists is it latest, if yes dont insert
+		//if exists is not latest, insert
+		//else insert
+		int exist=lsRepo.checkexist(id,payload.getStatusId());
+//		System.out.println(exist);
+		if(exist>0) {
+			List<LeadStatus> latest=lsRepo.checklatest(id);
+			Long statusid=latest.get(0).getStatusId();
+			System.out.println(latest.get(0).getStatusId());
+			if(statusid==payload.getStatusId()) {
+			}else {
+				LeadStatus lstatus=new LeadStatus();
+				lstatus.setLeadId(id);
+				lstatus.setStatusId(payload.getStatusId());
+				lstatus.setUserId(userId);
+				lsRepo.save(lstatus);
+			}
+		}else {
+			LeadStatus lstatus=new LeadStatus();
+			lstatus.setLeadId(id);
+			lstatus.setStatusId(payload.getStatusId());
+			lstatus.setUserId(userId);
+			lsRepo.save(lstatus);
+		}
+		return lead;	
+				
+		
 	}
 		
 	
