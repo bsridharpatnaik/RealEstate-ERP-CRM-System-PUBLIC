@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadCreateData;
+import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Service.LeadService;
@@ -47,6 +48,12 @@ public class LeadController {
 	public Lead findLeadByID(@PathVariable long id) throws Exception 
 	{
 		return leadService.findSingleLead(id);
+	}
+	
+	@GetMapping("/getallinfo/{id}")
+	public LeadDetailInfo findLeadDetailInfoByID(@PathVariable long id) throws Exception 
+	{
+		return leadService.findSingleLeadDetailInfo(id);
 	}
 	
 	@PostMapping("/create") 

@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,10 +22,12 @@ import com.ec.crm.Filters.LeadSpecifications;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.ReusableClasses.CommonUtils;
 import com.ec.crm.Data.LeadCreateData;
+import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Model.Address;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadStatus;
+import com.ec.crm.Model.Note;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Model.Source;
@@ -33,9 +36,11 @@ import com.ec.crm.Repository.AddressRepo;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.LeadStatusRepo;
+import com.ec.crm.Repository.NoteRepo;
 import com.ec.crm.Repository.PropertyTypeRepo;
 import com.ec.crm.Repository.SentimentRepo;
 import com.ec.crm.Repository.SourceRepo;
+import com.ec.crm.Repository.StatusRepo;
 
 import lombok.extern.slf4j.Slf4j;
 @Service
@@ -46,6 +51,9 @@ public class LeadService {
 	
 	@Autowired
 	LeadStatusRepo lsRepo;	
+	
+	@Autowired
+	StatusRepo stRepo;
 	
 	@Autowired
 	SourceRepo soRepo;
@@ -61,6 +69,9 @@ public class LeadService {
 	
 	@Autowired
 	AddressRepo aRepo;
+	
+	@Autowired
+	NoteRepo nRepo;
 	
 	@Autowired
 	WebClient.Builder webClientBuilder;
@@ -96,6 +107,43 @@ public class LeadService {
 			return lead.get();
 		else
 			throw new Exception("Lead ID not found");
+	}
+	public LeadDetailInfo findSingleLeadDetailInfo(long id) throws Exception {
+		// TODO Auto-generated method stub
+		LeadDetailInfo l=new LeadDetailInfo();
+		Optional<Lead> lead = lRepo.findById(id);
+		if(lead.isPresent())
+		{
+			l.setLeadDetails(lead.get());
+			List<Note> pinnednotes=nRepo.getpinnednotes(id);
+			List<Note> unpinnednotes=nRepo.getunpinnednotes(id);
+			List<LeadStatus> leadstatus=lsRepo.checklatest(id);
+			if(!leadstatus.isEmpty()) {
+				//set latest status 
+				Long statusid=leadstatus.get(0).getStatusId();
+				Optional<Status> Ostatus=stRepo.findById(statusid);
+				Status status=Ostatus.get();
+				l.setStatusInfo(status);
+				
+				//set historical status
+				List<Status> s=new ArrayList<Status>();
+				for (int i = 0; i < leadstatus.size(); i++) {
+					Long sid = leadstatus.get(i).getStatusId();
+					Optional<Status> Ostatusadd=stRepo.findById(sid);
+					s.add(Ostatusadd.get());
+				}
+				l.setHistoricalStatus(s);
+			}
+			
+			l.setPinnedNotes(pinnednotes);
+			l.setUnpinnedNotes(unpinnednotes);
+			
+			return l;
+		}
+		else {
+			throw new Exception("Lead ID not found");
+		}
+			
 	}
 
 	public Lead createLead(@Valid LeadCreateData payload) throws Exception {

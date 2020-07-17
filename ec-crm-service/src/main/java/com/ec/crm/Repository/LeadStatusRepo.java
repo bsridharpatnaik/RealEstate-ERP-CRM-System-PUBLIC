@@ -17,4 +17,6 @@ public interface LeadStatusRepo extends BaseRepository<LeadStatus, Long>, JpaSpe
 	
 	@Query(value="SELECT l from LeadStatus l where leadId=:id order by leadStatusId DESC")
 	List<LeadStatus> checklatest(@Param("id")Long id);
+	
+	
 }
