@@ -4,12 +4,16 @@ import static java.util.stream.Collectors.counting;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.transaction.Transactional;
 
 import org.slf4j.Logger;
@@ -21,11 +25,12 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.InwardInventoryExportDAO;
 import com.ec.application.data.InwardInventoryExportDAO2;
+import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.model.InwardInventory;
+import com.ec.application.model.InwardInventory_;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.Product;
 import com.ec.application.model.Warehouse;
@@ -69,7 +74,11 @@ public class InwardInventoryService
 	WarehouseRepo warehouseRepo;
 	
 	@Autowired
+	GroupBySpecification groupBySpecification;
+	
+	@Autowired
 	InventoryNotificationService inventoryNotificationService;
+	
 	@Transactional
 	public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception
 	{
@@ -155,21 +164,6 @@ public class InwardInventoryService
 		return returnInwardInventoryData;
 	}
 
-	public List<InwardInventoryExportDAO> fetchInwardnventoryForExport(FilterDataList filterDataList) throws Exception 
-	{
-		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
-		long size = spec!=null?inwardInventoryRepo.count(spec):inwardInventoryRepo.count();
-		System.out.println("Size of inward inventory after filter -"+size);
-		if(size>3000)
-			throw new Exception("Too many rows to export. Apply some more filters and try again");
-		System.out.println("Fetching data from db");
-		List<InwardInventory> iiData = spec!=null?inwardInventoryRepo.findAll(spec):inwardInventoryRepo.findAll();
-		System.out.println("Cloning data to object");
-		List<InwardInventoryExportDAO> clonedData = iiData.parallelStream().map(InwardInventoryExportDAO::new).collect(Collectors.toList());
-		System.out.println("Completed - returning to controller");
-		return clonedData;
-	}
-	
 	public List<InwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws Exception 
 	{
 		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
@@ -184,6 +178,28 @@ public class InwardInventoryService
 		return clonedData;
 	}
 	
+	public List<ProductGroupedDAO> fetchInwardnventoryGroupBy() throws ParseException 
+	{
+		List<ProductGroupedDAO> groupedData = inwardInventoryRepo.findGroupByInfo();
+		return groupedData;
+	}
+	
+	public List<ProductGroupedDAO> fetchInwardnventoryGroupByUsingSpec(FilterDataList filterDataList) throws ParseException 
+	{
+		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
+		List<ProductGroupedDAO> iiData = spec!=null?fetchGroupingForFilteredData(spec,InwardInventory.class):fetchInwardnventoryGroupBy();	
+		return iiData;
+	}
+	
+	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<InwardInventory> spec, Class<InwardInventory> class1) 
+	{
+		List<String> selectColumns = Arrays.asList(InwardInventory_.VEHICLE_NO);
+		List<String> aggregateColumns = Arrays.asList(InwardInventory_.INWARDID);
+		List<String> groupingColumns = Arrays.asList(InwardInventory_.INWARDID);
+		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, selectColumns, aggregateColumns, groupingColumns);
+		return groupedData;
+	}
+
 	private List<InwardInventoryExportDAO2> transformDataForExport(List<InwardInventory> iiData) 
 	{
 		List<InwardInventoryExportDAO2> transformedData =  new ArrayList<InwardInventoryExportDAO2>();
@@ -216,7 +232,6 @@ public class InwardInventoryService
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
 		updateStockBeforeDelete(inwardInventory);
 		inwardInventoryRepo.softDeleteById(id);
-		
 	}
 	@Transactional
 	private void updateStockBeforeDelete(InwardInventory inwardInventory) throws Exception 

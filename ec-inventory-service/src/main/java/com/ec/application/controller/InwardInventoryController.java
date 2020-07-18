@@ -1,5 +1,6 @@
 package com.ec.application.controller;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.InwardInventoryExportDAO;
 import com.ec.application.data.InwardInventoryExportDAO2;
@@ -51,21 +51,20 @@ public class InwardInventoryController
 		return iiService.fetchInwardnventory(filterDataList,pageable);
 	}
 	
-	
-	@PostMapping ("/export2")
-	@ResponseStatus(HttpStatus.OK)
-	public List<InwardInventoryExportDAO> fetchAllInwardInventoryForExport(@RequestBody FilterDataList filterDataList) throws Exception
-	{
-		
-		return iiService.fetchInwardnventoryForExport(filterDataList);
-	}
-	
 	@PostMapping ("/export")
 	@ResponseStatus(HttpStatus.OK)
 	public List<InwardInventoryExportDAO2> fetchAllInwardInventoryForExport2(@RequestBody FilterDataList filterDataList) throws Exception
 	{
 		
 		return iiService.fetchInwardnventoryForExport2(filterDataList);
+	}
+	
+	@PostMapping ("/group")
+	@ResponseStatus(HttpStatus.OK)
+	public List<?> fetchAllInwardInventoryGroupBy(@RequestBody FilterDataList filterDataList) throws Exception
+	{
+		
+		return iiService.fetchInwardnventoryGroupByUsingSpec(filterDataList);
 	}
 	
 	@GetMapping("/{id}")
