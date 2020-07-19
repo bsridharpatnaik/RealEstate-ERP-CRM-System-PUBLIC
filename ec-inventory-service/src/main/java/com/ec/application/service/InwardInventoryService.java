@@ -5,15 +5,14 @@ import static java.util.stream.Collectors.counting;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.transaction.Transactional;
 
 import org.slf4j.Logger;
@@ -32,7 +31,9 @@ import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardInventory_;
 import com.ec.application.model.InwardOutwardList;
+import com.ec.application.model.InwardOutwardList_;
 import com.ec.application.model.Product;
+import com.ec.application.model.Product_;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
@@ -193,10 +194,7 @@ public class InwardInventoryService
 	
 	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<InwardInventory> spec, Class<InwardInventory> class1) 
 	{
-		List<String> selectColumns = Arrays.asList(InwardInventory_.VEHICLE_NO);
-		List<String> aggregateColumns = Arrays.asList(InwardInventory_.INWARDID);
-		List<String> groupingColumns = Arrays.asList(InwardInventory_.INWARDID);
-		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, selectColumns, aggregateColumns, groupingColumns);
+		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, InwardInventory.class,ProductGroupedDAO.class,selectColumns, aggregateColumns, groupingColumns,"","");
 		return groupedData;
 	}
 
