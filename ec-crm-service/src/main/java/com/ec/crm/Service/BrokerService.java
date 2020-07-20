@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,73 +11,42 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.BrokerListWithTypeAheadData;
-import com.ec.crm.Data.SourceListWithTypeAheadData;
 import com.ec.crm.Filters.BrokerSpecifications;
-import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.Broker;
-import com.ec.crm.Model.PropertyType;
-import com.ec.crm.Model.Source;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
 import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
-public class BrokerService {
+public class BrokerService 
+{
 	@Autowired
 	BrokerRepo bRepo;
+	
 	public Page<Broker> fetchAll(Pageable pageable) 
 	{
 		return bRepo.findAll(pageable);
 	}
-	public BrokerListWithTypeAheadData findFilteredBroker(FilterDataList brokerFilterDataList, Pageable pageable) 
-	{
-		BrokerListWithTypeAheadData tpData  = new BrokerListWithTypeAheadData();
-		
-		tpData.setBrokerDetails(getFilteredData(brokerFilterDataList,pageable));
-		return tpData;
-	}
 
-	public Page<Broker> getFilteredData(FilterDataList brokerFilterDataList, Pageable pageable)
+	public BrokerListWithTypeAheadData findFilteredBroker(FilterDataList brokerFilterDataList, Pageable pageable)
 	{
-		Specification<Broker> spec = fetchSpecification(brokerFilterDataList);
-		if(spec!=null)
-			return bRepo.findAll(spec, pageable);
-		return bRepo.findAll(pageable);
+		BrokerListWithTypeAheadData brokerListWithTypeAheadData = new BrokerListWithTypeAheadData();
+		Specification<Broker> spec = BrokerSpecifications.fetchSpecification(brokerFilterDataList);
+		brokerListWithTypeAheadData.setBrokerDetails(spec!=null?bRepo.findAll(spec, pageable):bRepo.findAll(pageable));
+		List<String> typeAheadData = bRepo.getUniqueNames();
+		typeAheadData.addAll(bRepo.getUniqueNumbers());
+		brokerListWithTypeAheadData.setTypeAheadData(typeAheadData);
+		return brokerListWithTypeAheadData;
 	}
 	
-	private Specification<Broker> fetchSpecification(FilterDataList brokerFilterDataList) 
+	public Broker createBroker(Broker brokerData) throws Exception 
 	{
-		Specification<Broker> specification = null;
-		for(FilterAttributeData attrData:brokerFilterDataList.getFilterData())
-		{
-			String attrName = attrData.getAttrName();
-			List<String> attrValues = attrData.getAttrValue();
-			
-			Specification<Broker> internalSpecification = null;
-			for(String attrValue : attrValues)
-			{
-				internalSpecification= internalSpecification==null?
-						BrokerSpecifications.whereBrokernameContains(attrValue)
-						:internalSpecification.or(BrokerSpecifications.whereBrokernameContains(attrValue));
-			}
-			specification= specification==null?internalSpecification:specification.and(internalSpecification);
-		}
-		return specification;
-	}
-	public Broker createBroker(Broker brokerData) throws Exception {
 		if(!bRepo.existsByBrokerPhoneno(brokerData.getBrokerPhoneno()))
-		{
-			bRepo.save(brokerData);
-			return brokerData;
-		}
+			return bRepo.save(brokerData);
 		else
-		{
 			throw new Exception("Broker already exists!");
-		}
-		
 	}
 	
 	public Broker findSingleBroker(long id) throws Exception 
@@ -100,12 +70,10 @@ public class BrokerService {
 		{
 			BrokerForUpdate.setBrokerName(broker.getBrokerName());
 			BrokerForUpdate.setBrokerAddress(broker.getBrokerAddress());
-			
+			BrokerForUpdate.setBrokerPhoneno(broker.getBrokerPhoneno());
 		}
         else if(broker.getBrokerPhoneno().equalsIgnoreCase(BrokerForUpdate.getBrokerPhoneno()))
         {
-  
-        	BrokerForUpdate.setBrokerPhoneno(broker.getBrokerPhoneno());
         	BrokerForUpdate.setBrokerName(broker.getBrokerName());
 			BrokerForUpdate.setBrokerAddress(broker.getBrokerAddress());
         }

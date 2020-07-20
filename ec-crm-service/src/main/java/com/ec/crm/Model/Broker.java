@@ -10,10 +10,16 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
+import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
+
 import com.ec.crm.ReusableClasses.ReusableFields;
 @Entity
 @Table(name = "broker")
-public class Broker extends ReusableFields implements Serializable{
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Audited
+public class Broker extends ReusableFields implements Serializable
+{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "broker_id", updatable = false, nullable = false)
@@ -23,11 +29,9 @@ public class Broker extends ReusableFields implements Serializable{
 	@Column(name="broker_name")
 	String brokerName;
 	
-	@NotBlank(message = "Address is mandatory")
 	@Column(name="broker_address")
 	String brokerAddress;
 	
-	@NotBlank(message = "Phone is mandatory")
 	@Column(name="broker_phoneno")
 	String brokerPhoneno;
 	

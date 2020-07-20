@@ -11,9 +11,16 @@ import com.ec.crm.ReusableClasses.BaseRepository;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
 @Repository
-public interface BrokerRepo extends BaseRepository<Broker, Long>, JpaSpecificationExecutor<Broker>{
+public interface BrokerRepo extends BaseRepository<Broker, Long>, JpaSpecificationExecutor<Broker>
+{
 	boolean existsByBrokerPhoneno(String phone);
 	
 	@Query(value="SELECT brokerId as id,brokerName as name from Broker b")
 	List<IdNameProjections> findIdAndNames();
+	
+	@Query(value="SELECT DISTINCT brokerName from Broker b")
+	List<String> getUniqueNames();
+	
+	@Query(value="SELECT DISTINCT brokerPhoneno from Broker b")
+	List<String> getUniqueNumbers();
 }
