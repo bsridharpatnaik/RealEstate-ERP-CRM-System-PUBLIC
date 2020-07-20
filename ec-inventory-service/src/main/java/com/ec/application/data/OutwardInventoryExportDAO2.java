@@ -1,11 +1,12 @@
 package com.ec.application.data;
 
 import java.util.Date;
-import java.util.Set;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 public class OutwardInventoryExportDAO2 
 {
@@ -17,7 +18,9 @@ public class OutwardInventoryExportDAO2
 	String slipNo;
 	String product;
 	String measurementUnit;
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
 	String warehouse;
 	String usageArea;

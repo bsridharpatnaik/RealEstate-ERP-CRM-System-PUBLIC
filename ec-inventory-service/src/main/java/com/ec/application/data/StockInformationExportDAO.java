@@ -1,6 +1,8 @@
 package com.ec.application.data;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.model.Stock;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 public class StockInformationExportDAO 
 {
@@ -10,6 +12,7 @@ public class StockInformationExportDAO
 	String category;
 	String totalStock;
 	String warehouse;
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double warehouseStock;
 	String measurementUnit;
 	public StockInformationExportDAO(SingleStockInfo ssi, Stock stock) 
