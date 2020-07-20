@@ -19,11 +19,13 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.OutwardInventoryExportDAO2;
+import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
+import com.ec.application.model.OutwardInventory_;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
@@ -72,6 +74,9 @@ public class OutwardInventoryService
 	
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
+	
+	@Autowired
+	GroupBySpecification groupBySpecification;
 	
 	@Transactional
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
@@ -287,13 +292,32 @@ public class OutwardInventoryService
 	public ReturnOutwardInventoryData fetchOutwardnventory(FilterDataList filterDataList, Pageable pageable) throws ParseException 
 	{
 		ReturnOutwardInventoryData returnOutwardInventoryData = new ReturnOutwardInventoryData();
+	
+		// Feed data list
 		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
 		if(spec!=null) returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(spec,pageable));
 		else returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(pageable));
+		
+		//Feed dropdown values
 		returnOutwardInventoryData.setIiDropdown(populateDropdownService.fetchData("outward"));
+		
+		//Feed totals
+		returnOutwardInventoryData.setTotals(spec!=null?fetchGroupingForFilteredData(spec,OutwardInventory.class):fetchOutwardnventoryGroupBy());
 		return returnOutwardInventoryData;
 	}
-
+	
+	public List<ProductGroupedDAO> fetchOutwardnventoryGroupBy() throws ParseException 
+	{
+		List<ProductGroupedDAO> groupedData = outwardInventoryRepo.findGroupByInfo();
+		return groupedData;
+	}
+	
+	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<OutwardInventory> spec, Class<OutwardInventory> class1) 
+	{
+		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, OutwardInventory.class,OutwardInventory_.INWARD_OUTWARD_LIST);
+		return groupedData;
+	}
+	
 	public List<OutwardInventoryExportDAO> fetchOutwardnventoryForExport(FilterDataList filterDataList) throws Exception 
 	{
 		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);

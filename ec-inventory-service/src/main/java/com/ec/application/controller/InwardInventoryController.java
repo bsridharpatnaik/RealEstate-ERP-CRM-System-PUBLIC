@@ -59,14 +59,6 @@ public class InwardInventoryController
 		return iiService.fetchInwardnventoryForExport2(filterDataList);
 	}
 	
-	@PostMapping ("/group")
-	@ResponseStatus(HttpStatus.OK)
-	public List<?> fetchAllInwardInventoryGroupBy(@RequestBody FilterDataList filterDataList) throws Exception
-	{
-		
-		return iiService.fetchInwardnventoryGroupByUsingSpec(filterDataList);
-	}
-	
 	@GetMapping("/{id}")
 	public InwardInventory findInwardInventoryById(@PathVariable long id) throws Exception 
 	{

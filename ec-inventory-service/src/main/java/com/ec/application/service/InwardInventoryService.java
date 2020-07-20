@@ -158,10 +158,18 @@ public class InwardInventoryService
 	public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList,Pageable pageable) throws ParseException 
 	{
 		ReturnInwardInventoryData returnInwardInventoryData = new ReturnInwardInventoryData();
+		//Fetch Specification
 		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
+		
+		//Feed listing
 		if(spec!=null) returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(spec,pageable));
 		else returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(pageable));
+		
+		//Feed dropdowns
 		returnInwardInventoryData.setIiDropdown(populateDropdownService.fetchData("inward"));
+		
+		//Feed totals
+		returnInwardInventoryData.setTotals(spec!=null?fetchGroupingForFilteredData(spec,InwardInventory.class):fetchInwardnventoryGroupBy());	
 		return returnInwardInventoryData;
 	}
 
@@ -185,16 +193,9 @@ public class InwardInventoryService
 		return groupedData;
 	}
 	
-	public List<ProductGroupedDAO> fetchInwardnventoryGroupByUsingSpec(FilterDataList filterDataList) throws ParseException 
-	{
-		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
-		List<ProductGroupedDAO> iiData = spec!=null?fetchGroupingForFilteredData(spec,InwardInventory.class):fetchInwardnventoryGroupBy();	
-		return iiData;
-	}
-	
 	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<InwardInventory> spec, Class<InwardInventory> class1) 
 	{
-		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, InwardInventory.class,ProductGroupedDAO.class,selectColumns, aggregateColumns, groupingColumns,"","");
+		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, InwardInventory.class,InwardInventory_.INWARD_OUTWARD_LIST);
 		return groupedData;
 	}
 
