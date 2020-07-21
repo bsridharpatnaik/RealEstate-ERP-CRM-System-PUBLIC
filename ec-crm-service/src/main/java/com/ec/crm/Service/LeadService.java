@@ -28,19 +28,15 @@ import com.ec.crm.Model.Broker;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadStatus;
 import com.ec.crm.Model.Note;
-import com.ec.crm.Model.PropertyType;
+import com.ec.crm.Model.PropertyTypeEnum;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Model.Source;
-import com.ec.crm.Model.Status;
 import com.ec.crm.Repository.AddressRepo;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.LeadStatusRepo;
 import com.ec.crm.Repository.NoteRepo;
-import com.ec.crm.Repository.PropertyTypeRepo;
 import com.ec.crm.Repository.SentimentRepo;
-import com.ec.crm.Repository.SourceRepo;
-import com.ec.crm.Repository.StatusRepo;
 
 import lombok.extern.slf4j.Slf4j;
 @Service
@@ -53,19 +49,10 @@ public class LeadService {
 	LeadStatusRepo lsRepo;	
 	
 	@Autowired
-	StatusRepo stRepo;
-	
-	@Autowired
-	SourceRepo soRepo;
-	
-	@Autowired
 	SentimentRepo siRepo;
 	
 	@Autowired
 	BrokerRepo bRepo;
-	
-	@Autowired
-	PropertyTypeRepo pRepo;
 	
 	@Autowired
 	AddressRepo aRepo;
@@ -119,7 +106,7 @@ public class LeadService {
 			List<Note> unpinnednotes=nRepo.getunpinnednotes(id);
 			List<LeadStatus> leadstatus=lsRepo.checklatest(id);
 			if(!leadstatus.isEmpty()) {
-				//set latest status 
+				/*set latest status 
 				Long statusid=leadstatus.get(0).getStatusId();
 				Optional<Status> Ostatus=stRepo.findById(statusid);
 				Status status=Ostatus.get();
@@ -131,8 +118,8 @@ public class LeadService {
 					Long sid = leadstatus.get(i).getStatusId();
 					Optional<Status> Ostatusadd=stRepo.findById(sid);
 					s.add(Ostatusadd.get());
-				}
-				l.setHistoricalStatus(s);
+				}*/
+				l.setHistoricalStatus(null);
 			}
 			
 			l.setPinnedNotes(pinnednotes);
@@ -152,17 +139,17 @@ public class LeadService {
 		if(! sentimentOpt.isPresent())
 			throw new Exception("Sentiment not found");
 		
-		Optional<Source> sourceOpt = soRepo.findById(payload.getSourceId());
-		if(! sourceOpt.isPresent())
-			throw new Exception("Source not found");
+		//Optional<Source> sourceOpt = soRepo.findById(payload.getSourceId());
+		//if(! sourceOpt.isPresent())
+		//	throw new Exception("Source not found");
 		
 		Optional<Broker> brokerOpt = bRepo.findById(payload.getBrokerId());
 		if(! brokerOpt.isPresent())
 			throw new Exception("Broker not found");
 		
-		Optional<PropertyType> propertyTypeOpt = pRepo.findById(payload.getPropertyTypeId());
-		if(! sentimentOpt.isPresent())
-			throw new Exception("PropertyType not found");
+		//Optional<PropertyTypeEnum> propertyTypeOpt = pRepo.findById(payload.getPropertyTypeId());
+		//if(! sentimentOpt.isPresent())
+		//	throw new Exception("PropertyType not found");
 		
 		
 		
@@ -204,9 +191,9 @@ public class LeadService {
 		lead.setEmailId(payload.getEmailId());
 		lead.setOccupation(payload.getOccupation());
 		lead.setPurpose(payload.getPurpose());
-		lead.setPropertyType(propertyTypeOpt.get());
+	//	lead.setPropertyType(propertyTypeOpt.get());
 		lead.setSentiment(sentimentOpt.get());
-		lead.setSource(sourceOpt.get());
+	//	lead.setSource(sourceOpt.get());
 		lead.setBroker(brokerOpt.get());
 		lead.setAddress(addressOpt.get());
 		lead.setUserId(userId);
@@ -299,17 +286,20 @@ public class LeadService {
 		if(! sentimentOpt.isPresent())
 			throw new Exception("Sentiment not found");
 		
-		Optional<Source> sourceOpt = soRepo.findById(payload.getSourceId());
-		if(! sourceOpt.isPresent())
-			throw new Exception("Source not found");
+		/*
+		 * Optional<Source> sourceOpt = soRepo.findById(payload.getSourceId()); if(!
+		 * sourceOpt.isPresent()) throw new Exception("Source not found");
+		 */
 		
 		Optional<Broker> brokerOpt = bRepo.findById(payload.getBrokerId());
 		if(! brokerOpt.isPresent())
 			throw new Exception("Broker not found");
 		
-		Optional<PropertyType> propertyTypeOpt = pRepo.findById(payload.getPropertyTypeId());
-		if(! sentimentOpt.isPresent())
-			throw new Exception("PropertyType not found");
+		/*
+		 * Optional<PropertyTypeEnum> propertyTypeOpt =
+		 * pRepo.findById(payload.getPropertyTypeId()); if(! sentimentOpt.isPresent())
+		 * throw new Exception("PropertyType not found");
+		 */
 		
 		Long userId;
 		UserReturnData userDetails = webClientBuilder.build()
@@ -353,9 +343,9 @@ public class LeadService {
 		lead.setEmailId(payload.getEmailId());
 		lead.setOccupation(payload.getOccupation());
 		lead.setPurpose(payload.getPurpose());
-		lead.setPropertyType(propertyTypeOpt.get());
+		//lead.setPropertyType(propertyTypeOpt.get());
 		lead.setSentiment(sentimentOpt.get());
-		lead.setSource(sourceOpt.get());
+		//lead.setSource(sourceOpt.get());
 		lead.setBroker(brokerOpt.get());
 		lead.setAddress(addressOpt.get());
 		lead.setUserId(userId);

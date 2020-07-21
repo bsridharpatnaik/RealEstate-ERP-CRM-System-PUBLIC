@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.hibernate.envers.RevisionListener;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Service.UserDetailsService;
 
 public class AuditRevisionListener implements RevisionListener 
@@ -19,7 +20,10 @@ public class AuditRevisionListener implements RevisionListener
     public void newRevision(Object revisionEntity) 
     {
         AuditRevisionEntity audit = (AuditRevisionEntity) revisionEntity;
-        String username = userDetailsService.getCurrentUser().getUsername();
-        audit.setUsername(username);
+        UserReturnData userReturnData = userDetailsService.getCurrentUser();
+        Long userId = userReturnData.getId();
+        String userName = userReturnData.getUsername();
+        audit.setUserId(userId);
+        audit.setUserName(userName);
     }
 }

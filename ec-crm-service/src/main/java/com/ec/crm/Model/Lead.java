@@ -75,12 +75,7 @@ public class Lead extends ReusableFields implements Serializable{
 	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Source source;
 	
-	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="propertytype_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-	PropertyType propertyType;
+	PropertyTypeEnum propertyType;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="sentiment_id",nullable=false)
@@ -182,11 +177,12 @@ public class Lead extends ReusableFields implements Serializable{
 		this.source = source;
 	}
 
-	public PropertyType getPropertyType() {
+
+	public PropertyTypeEnum getPropertyType() {
 		return propertyType;
 	}
 
-	public void setPropertyType(PropertyType propertyType) {
+	public void setPropertyType(PropertyTypeEnum propertyType) {
 		this.propertyType = propertyType;
 	}
 

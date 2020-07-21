@@ -4,14 +4,14 @@ import java.util.List;
 
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.Note;
-import com.ec.crm.Model.Status;
+import com.ec.crm.Model.StatusEnum;
 
 public class LeadDetailInfo {
 	Lead LeadDetails;
 	List<Note> PinnedNotes;
 	List<Note> UnpinnedNotes;
-	Status StatusInfo;
-	List<Status> HistoricalStatus;
+	StatusEnum StatusInfo;
+	List<StatusEnum> HistoricalStatus;
 	public Lead getLeadDetails() {
 		return LeadDetails;
 	}
@@ -30,20 +30,16 @@ public class LeadDetailInfo {
 	public void setUnpinnedNotes(List<Note> unpinnedNotes) {
 		UnpinnedNotes = unpinnedNotes;
 	}
-	public Status getStatusInfo() {
+	public StatusEnum getStatusInfo() {
 		return StatusInfo;
 	}
-	public void setStatusInfo(Status statusInfo) {
+	public void setStatusInfo(StatusEnum statusInfo) {
 		StatusInfo = statusInfo;
 	}
-	public List<Status> getHistoricalStatus() {
+	public List<StatusEnum> getHistoricalStatus() {
 		return HistoricalStatus;
 	}
-	public void setHistoricalStatus(List<Status> historicalStatus) {
+	public void setHistoricalStatus(List<StatusEnum> historicalStatus) {
 		HistoricalStatus = historicalStatus;
-	}
-	
-	
-	
-	
+	}	
 }

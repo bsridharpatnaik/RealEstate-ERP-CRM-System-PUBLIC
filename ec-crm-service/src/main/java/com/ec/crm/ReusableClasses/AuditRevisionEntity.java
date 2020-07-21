@@ -24,16 +24,26 @@ import lombok.Setter;
 @Setter
 public class AuditRevisionEntity extends DefaultRevisionEntity {
 
+    @Column(name = "USERID", nullable = false)
+    private Long userId;
+
     @Column(name = "USERNAME", nullable = false)
-    private String username;
-
-	public String getUsername() {
-		return username;
-	}
-
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    private String userName;
     
     
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public Long getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
 }

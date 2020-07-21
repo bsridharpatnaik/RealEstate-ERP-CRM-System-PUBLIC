@@ -10,10 +10,15 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
+import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
+
 import com.ec.crm.ReusableClasses.ReusableFields;
 
 @Entity
 @Table(name = "source")
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Audited
 public class Source extends ReusableFields implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)

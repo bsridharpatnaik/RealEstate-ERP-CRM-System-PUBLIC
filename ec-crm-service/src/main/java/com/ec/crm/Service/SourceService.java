@@ -14,7 +14,7 @@ import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.Source;
-import com.ec.crm.Model.PropertyType;
+import com.ec.crm.Model.PropertyTypeEnum;
 import com.ec.crm.Repository.SourceRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 

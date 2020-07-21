@@ -14,7 +14,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
 
 import com.ec.crm.Model.Address;
 import com.ec.crm.Model.Broker;
-import com.ec.crm.Model.PropertyType;
+import com.ec.crm.Model.PropertyTypeEnum;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Model.Source;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
