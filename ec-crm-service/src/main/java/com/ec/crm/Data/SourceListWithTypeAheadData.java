@@ -8,6 +8,15 @@ import com.ec.crm.Model.Source;
 public class SourceListWithTypeAheadData 
 {
 	Page<Source> sourceDetails;
+	List<String> sourceTypeAhead;
+	
+	public List<String> getSourceTypeAhead() {
+		return sourceTypeAhead;
+	}
+
+	public void setSourceTypeAhead(List<String> sourceTypeAhead) {
+		this.sourceTypeAhead = sourceTypeAhead;
+	}
 
 	public Page<Source> getSourceDetails() {
 		return sourceDetails;

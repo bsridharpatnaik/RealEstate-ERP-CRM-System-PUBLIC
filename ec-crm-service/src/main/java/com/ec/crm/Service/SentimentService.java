@@ -39,6 +39,7 @@ public class SentimentService
 	{
 		SentimentListWithTypeAheadData tpData  = new SentimentListWithTypeAheadData();
 		tpData.setSentimentDetails(getFilteredData(sentimentFilterDataList,pageable));
+		tpData.setSentimentTypeAhead(sRepo.findNamesList());
 		return tpData;
 	}
 

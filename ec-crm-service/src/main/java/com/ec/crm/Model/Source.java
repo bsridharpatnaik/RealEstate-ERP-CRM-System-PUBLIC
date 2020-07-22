@@ -29,7 +29,6 @@ public class Source extends ReusableFields implements Serializable{
 	@Column(name="source_name")
 	String sourceName;
 	
-	@NotBlank(message = "Description is mandatory")
 	@Column(name="source_description")
 	String sourceDescription;
 	
@@ -51,6 +50,4 @@ public class Source extends ReusableFields implements Serializable{
 	public void setSourceDescription(String sourceDescription) {
 		this.sourceDescription = sourceDescription;
 	}
-	
-	
 }

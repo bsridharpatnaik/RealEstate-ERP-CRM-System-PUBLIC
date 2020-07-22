@@ -32,8 +32,8 @@ public class SourceService {
 	public SourceListWithTypeAheadData findFilteredSource(FilterDataList sourceFilterDataList, Pageable pageable) 
 	{
 		SourceListWithTypeAheadData tpData  = new SourceListWithTypeAheadData();
-		
 		tpData.setSourceDetails(getFilteredData(sourceFilterDataList,pageable));
+		tpData.setSourceTypeAhead(sRepo.findDistinctNames());
 		return tpData;
 	}
 
@@ -50,7 +50,6 @@ public class SourceService {
 		Specification<Source> specification = null;
 		for(FilterAttributeData attrData:sourceFilterDataList.getFilterData())
 		{
-			String attrName = attrData.getAttrName();
 			List<String> attrValues = attrData.getAttrValue();
 			
 			Specification<Source> internalSpecification = null;
@@ -72,7 +71,7 @@ public class SourceService {
 			return sourceData;
 		}else
 		{
-			throw new Exception("Source already exists!");
+			throw new Exception("Source with same name already exists!");
 		}
 	}
 	

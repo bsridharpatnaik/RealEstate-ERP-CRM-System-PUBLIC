@@ -14,4 +14,7 @@ public interface SentimentRepo extends BaseRepository<Sentiment, Long>, JpaSpeci
 	
 	@Query(value="SELECT sentimentId as id,name as name from Sentiment S")
 	List<IdNameProjections> findIdAndNames();
+	
+	@Query(value="SELECT distinct name from Sentiment S")
+	List<String> findNamesList();
 }

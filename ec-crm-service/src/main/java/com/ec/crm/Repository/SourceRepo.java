@@ -14,4 +14,7 @@ public interface SourceRepo  extends BaseRepository<Source, Long>, JpaSpecificat
 	
 	@Query(value="SELECT sourceId as id,sourceName as name from Source s")
 	List<IdNameProjections> findIdAndNames();
+	
+	@Query(value="SELECT  distinct sourceName as name from Source s")
+	List<String> findDistinctNames();
 }
