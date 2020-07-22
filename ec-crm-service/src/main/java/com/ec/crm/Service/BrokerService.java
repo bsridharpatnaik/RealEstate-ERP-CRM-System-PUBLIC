@@ -56,8 +56,6 @@ public class BrokerService
 	
 	private void validatePayload(Broker brokerData) throws Exception 
 	{
-		if(brokerData.getBrokerName()==null || brokerData.getBrokerName()=="")
-			throw new Exception("Please enter broker name");
 		if(brokerData.getBrokerPhoneno()==null || brokerData.getBrokerPhoneno()=="")
 			throw new Exception("Please enter broker mobile number");
 		if(!ReusableMethods.isValidMobileNumber(brokerData.getBrokerPhoneno()))

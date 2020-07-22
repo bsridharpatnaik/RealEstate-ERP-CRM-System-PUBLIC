@@ -32,6 +32,7 @@ public class Broker extends ReusableFields implements Serializable
 	@Column(name="broker_address")
 	String brokerAddress;
 	
+	@NotBlank(message = "Mobile number is mandatory")
 	@Column(name="broker_phoneno")
 	String brokerPhoneno;
 	
