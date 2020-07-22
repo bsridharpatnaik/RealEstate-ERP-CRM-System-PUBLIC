@@ -1,6 +1,5 @@
 package com.ec.crm.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +14,9 @@ import com.ec.crm.Filters.BrokerSpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Repository.BrokerRepo;
+import com.ec.crm.ReusableClasses.CommonUtils;
 import com.ec.crm.ReusableClasses.IdNameProjections;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.extern.slf4j.Slf4j;
 @Service
@@ -24,6 +25,8 @@ public class BrokerService
 {
 	@Autowired
 	BrokerRepo bRepo;
+	
+	CommonUtils utilObj = new CommonUtils();
 	
 	public Page<Broker> fetchAll(Pageable pageable) 
 	{
@@ -43,12 +46,24 @@ public class BrokerService
 	
 	public Broker createBroker(Broker brokerData) throws Exception 
 	{
+		validatePayload(brokerData);
+		brokerData.setBrokerPhoneno(utilObj.normalizePhoneNumber(brokerData.getBrokerPhoneno()));
 		if(!bRepo.existsByBrokerPhoneno(brokerData.getBrokerPhoneno()))
 			return bRepo.save(brokerData);
 		else
-			throw new Exception("Broker already exists!");
+			throw new Exception("Broker already exists with same mobile number!");
 	}
 	
+	private void validatePayload(Broker brokerData) throws Exception 
+	{
+		if(brokerData.getBrokerName()==null || brokerData.getBrokerName()=="")
+			throw new Exception("Please enter broker name");
+		if(brokerData.getBrokerPhoneno()==null || brokerData.getBrokerPhoneno()=="")
+			throw new Exception("Please enter broker mobile number");
+		if(!ReusableMethods.isValidMobileNumber(brokerData.getBrokerPhoneno()))
+			throw new Exception("Please enter valid Mobile Number");
+	}
+
 	public Broker findSingleBroker(long id) throws Exception 
 	{
 		Optional<Broker> broker = bRepo.findById(id);
