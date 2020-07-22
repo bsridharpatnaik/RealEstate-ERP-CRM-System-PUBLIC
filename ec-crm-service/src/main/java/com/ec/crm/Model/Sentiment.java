@@ -10,11 +10,17 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
+import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
+
 import com.ec.crm.ReusableClasses.ReusableFields;
 
 @Entity
 @Table(name = "sentiment")
-public class Sentiment extends ReusableFields implements Serializable{
+@Audited
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class Sentiment extends ReusableFields implements Serializable
+{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "sentiment_id", updatable = false, nullable = false)
@@ -24,7 +30,6 @@ public class Sentiment extends ReusableFields implements Serializable{
 	@NotBlank(message = "Name is mandatory")
 	String name;
 	
-	@NotBlank(message = "Description is mandatory")
 	String description;
 	
 	public Long getSentimentId() {
@@ -45,5 +50,4 @@ public class Sentiment extends ReusableFields implements Serializable{
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
 }

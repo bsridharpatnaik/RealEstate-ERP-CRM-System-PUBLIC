@@ -25,17 +25,19 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class SentimentService {
+public class SentimentService 
+{
 	@Autowired
 	SentimentRepo sRepo;
+	
 	public Page<Sentiment> fetchAll(Pageable pageable) 
 	{
 		return sRepo.findAll(pageable);
 	}
+	
 	public SentimentListWithTypeAheadData findFilteredSource(FilterDataList sentimentFilterDataList, Pageable pageable) 
 	{
 		SentimentListWithTypeAheadData tpData  = new SentimentListWithTypeAheadData();
-		
 		tpData.setSentimentDetails(getFilteredData(sentimentFilterDataList,pageable));
 		return tpData;
 	}
@@ -109,13 +111,14 @@ public class SentimentService {
         }
         else 
         {
-        	throw new Exception("PropertyType with same Name already exists");
+        	throw new Exception("Sentiment with same name already exists.");
         }
 		return sRepo.save(SentimentForUpdate);
 	}
 	
 	public void deleteSentiment(Long id) throws Exception 
 	{
+		//Add logic to delete only if not used by any lead
 		sRepo.softDeleteById(id);
 	}
 	public List<IdNameProjections> findIdAndNames() 
