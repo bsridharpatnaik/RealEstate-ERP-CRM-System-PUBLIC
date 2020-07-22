@@ -49,28 +49,28 @@ public class AllNotificationService
 			
 			if(inventoryNotification.getType().equals("inwardStockModified"))
 			{
-				message= "Inward Quantity for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +" in Warehouse -"+inventoryNotification.getWarehouse().getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
+				message= "Inward Quantity for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +" in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
 				setFields(returnAllNotification, inventoryNotification.getId(),source,"inwardStockModified",
 						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
 			}
 			
 			if(inventoryNotification.getType().equals("outwardStockModified"))
 			{
-				message= "Outward Quantity for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouse().getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
+				message= "Outward Quantity for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
 				setFields(returnAllNotification, inventoryNotification.getId(),source,"outwardStockModified",
 						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
 			}
 			
 			if(inventoryNotification.getType().equals("lostDamagedStockModified"))
 			{
-				message= "Quantity of Lost/Damaged Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouse().getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
+				message= "Quantity of Lost/Damaged Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
 				setFields(returnAllNotification, inventoryNotification.getId(),source,"lostDamagedStockModified",
 						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
 			}
 			
 			if(inventoryNotification.getType().equals("lostDamagedStockAdded"))
 			{
-				message= "New Lost/Damaged entry added for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouse().getWarehouseName().toUpperCase()+" by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
+				message= "New Lost/Damaged entry added for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
 				setFields(returnAllNotification, inventoryNotification.getId(),source,"lostDamagedStockAdded",
 						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
 			}

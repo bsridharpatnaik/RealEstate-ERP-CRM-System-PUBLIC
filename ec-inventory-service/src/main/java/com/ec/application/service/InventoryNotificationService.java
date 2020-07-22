@@ -11,6 +11,7 @@ import com.ec.application.model.InventoryNotification;
 import com.ec.application.model.Product;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InventoryNotificationRepo;
+import com.ec.application.repository.WarehouseRepo;
 
 @Service
 public class InventoryNotificationService 
@@ -24,6 +25,9 @@ public class InventoryNotificationService
 	
 	@Autowired
 	UserDetailsService userDetailsService;
+	
+	@Autowired
+	WarehouseRepo warehouseRepo;
 	
 	final String lowStock = "lowStock";
 	final String inwardModified = "inwardStockModified";
@@ -42,7 +46,7 @@ public class InventoryNotificationService
 			removeLowStockNotification(product);
 	}
 
-	public void pushQuantityEditedNotification(Product product, Warehouse warehouse,String type, Double currentStock)
+	public void pushQuantityEditedNotification(Product product, String warehouseName,String type, Double currentStock)
 	{
 		
 		type = getTypeFromReadableName(type);
@@ -51,7 +55,7 @@ public class InventoryNotificationService
 		inventoryNotificationNew.setType(type);
 		inventoryNotificationNew.setQuantity(currentStock);
 		inventoryNotificationNew.setUpdatedBy(userDetailsService.getCurrentUser().getUsername());
-		inventoryNotificationNew.setWarehouse(warehouse);
+		inventoryNotificationNew.setWarehouseName(warehouseName);
 		inventoryNotificationRepo.save(inventoryNotificationNew);
 	}
 	
@@ -96,6 +100,7 @@ public class InventoryNotificationService
 			inventoryNotificationNew.setProduct(product);
 			inventoryNotificationNew.setType(lowStock);
 			inventoryNotificationNew.setQuantity(currentStock);
+			inventoryNotificationNew.setUpdatedBy("System");
 			inventoryNotificationRepo.save(inventoryNotificationNew);
 		}
 		else

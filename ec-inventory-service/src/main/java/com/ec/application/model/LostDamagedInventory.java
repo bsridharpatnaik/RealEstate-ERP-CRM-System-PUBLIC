@@ -2,7 +2,6 @@ package com.ec.application.model;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -24,9 +23,11 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Entity
 @Table(name = "lost_damaged_inventory")
@@ -51,6 +52,7 @@ public class LostDamagedInventory extends ReusableFields
 	@NonNull
 	Double quantity;
 	
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
 	
 	@NonNull

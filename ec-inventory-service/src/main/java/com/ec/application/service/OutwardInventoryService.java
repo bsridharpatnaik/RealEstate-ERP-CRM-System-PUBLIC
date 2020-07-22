@@ -2,9 +2,11 @@ package com.ec.application.service;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -14,12 +16,16 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.OutwardInventoryData;
+import com.ec.application.data.OutwardInventoryExportDAO;
+import com.ec.application.data.OutwardInventoryExportDAO2;
+import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
+import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
+import com.ec.application.model.OutwardInventory_;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
@@ -66,6 +72,12 @@ public class OutwardInventoryService
 	@Autowired
 	UsageAreaRepo usageAreaRepo;
 	
+	@Autowired
+	InventoryNotificationService inventoryNotificationService;
+	
+	@Autowired
+	GroupBySpecification groupBySpecification;
+	
 	@Transactional
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
 	{
@@ -96,14 +108,141 @@ public class OutwardInventoryService
 		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
 		if(!outwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
-		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		validateInputs(iiData);
-		Set<InwardOutwardList> ioListBeforeUpdate = outwardInventory.getInwardOutwardList();
+		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
 		setFields(outwardInventory,iiData);
-		updateStockForCreateOutwardInventory(outwardInventory);
-		//iiService.checkAndCreateNotification(ioListBeforeUpdate, iiData.getProductWithQuantities(), "outward");
+		modifyStockBeforeUpdate(oldOutwardInventory,outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
 		
+	}
+	
+	@Transactional
+	private void updateWhenWarehouseSame(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
+	{
+		//Fetch product only in old and only in new and common
+		Set<Long> oldProductSet = new HashSet<>(oldOutwardInventory.getInwardOutwardList().size());
+		Set<Long> newProductSet = new HashSet<>(outwardInventory.getInwardOutwardList().size());
+		oldOutwardInventory.getInwardOutwardList().stream().filter(p -> oldProductSet.add(p.getProduct().getProductId())).collect(Collectors.toList());
+		outwardInventory.getInwardOutwardList().stream().filter(p -> newProductSet.add(p.getProduct().getProductId())).collect(Collectors.toList());
+		Set<Long> onlyInOld = ReusableMethods.differenceBetweenSets(oldProductSet,newProductSet);
+		Set<Long> onlyInNew = ReusableMethods.differenceBetweenSets(newProductSet,oldProductSet);
+		Set<Long> commonInBoth = ReusableMethods.commonBetweenSets(oldProductSet, newProductSet);
+		updateStockForOnlyInOld(onlyInOld,oldOutwardInventory);
+		updateStockForOnlyInNew(onlyInNew,outwardInventory);
+		updateStockForCommonInBoth(commonInBoth,oldOutwardInventory,outwardInventory);
+	}
+	@Transactional
+	private void updateStockForCommonInBoth(Set<Long> commonInBoth, OutwardInventory oldOutwardInventory,
+			OutwardInventory outwardInventory) throws Exception 
+	{
+		Set<InwardOutwardList> oldIOListSet = oldOutwardInventory.getInwardOutwardList();
+		Set<InwardOutwardList> newIOListSet = outwardInventory.getInwardOutwardList();
+		for(Long id:commonInBoth)
+		{
+			Double oldQuantity = findQuantityForProductInIOList(id,oldIOListSet);
+			Double newQuantity = findQuantityForProductInIOList(id,newIOListSet);
+			Double quantityForUpdate = newQuantity - oldQuantity;
+			for(InwardOutwardList ioList:newIOListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					Double closingStock = stockService.updateStock(id, outwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "outward");
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),outwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
+					ioList.setClosingStock(closingStock);
+				}
+			}
+			outwardInventory.setInwardOutwardList(newIOListSet);
+		}
+		
+	}
+	
+	@Transactional
+	private Double findQuantityForProductInIOList(Long productId,Set<InwardOutwardList> ioListSet) 
+	{
+		for(InwardOutwardList ioList:ioListSet)
+		{
+			if(productId.equals(ioList.getProduct().getProductId()))
+			{
+				Double oldQuantity = ioList.getQuantity();
+				return oldQuantity;
+			}
+		}
+		return null;
+	}
+	@Transactional
+	private void updateStockForOnlyInNew(Set<Long> onlyInNew, OutwardInventory outwardInventory) throws Exception 
+	{
+		for(Long id:onlyInNew)
+		{
+			Set<InwardOutwardList> ioListSet = outwardInventory.getInwardOutwardList();
+			for(InwardOutwardList ioList:ioListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					System.out.println("Element in old list but not in new - " + id );
+					Double quantity = ioList.getQuantity();
+					Double closingStock = stockService.updateStock(id, outwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),outwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
+					ioList.setClosingStock(closingStock);
+				}
+			}
+			outwardInventory.setInwardOutwardList(ioListSet);
+		}
+		
+	}
+	@Transactional
+	private void updateStockForOnlyInOld(Set<Long> onlyInOld, OutwardInventory oldOutwardInventory) throws Exception 
+	{
+		//Delete stock received as part of old inventory
+		for(Long id:onlyInOld)
+		{
+			Set<InwardOutwardList> ioListSet = oldOutwardInventory.getInwardOutwardList();
+			for(InwardOutwardList ioList:ioListSet)
+			{
+				if(id.equals(ioList.getProduct().getProductId()))
+				{
+					System.out.println("Element in old list but not in new - " + id );
+					Double quantity = ioList.getQuantity();
+					Double closingStock = stockService.updateStock(id, oldOutwardInventory.getWarehouse().getWarehouseName(), quantity, "inward");
+					System.out.println("Closing stock - "+closingStock);
+					inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),oldOutwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
+				}
+			}
+		}
+	}
+	@Transactional
+	private void modifyStockBeforeUpdate(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
+	{
+		if(!oldOutwardInventory.getWarehouse().getWarehouseId().equals(outwardInventory.getWarehouse().getWarehouseId()))
+			updateWhenWarehouseChanged(oldOutwardInventory,outwardInventory);
+		else
+			updateWhenWarehouseSame(oldOutwardInventory,outwardInventory);
+	}
+	
+	@Transactional
+	private void updateWhenWarehouseChanged(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
+	{
+		//Delete all stock added as part of old warehouse
+		traverseListAndUpdateStock(oldOutwardInventory.getInwardOutwardList(),"inward",oldOutwardInventory.getWarehouse());
+		
+		//Add new stock to new warehouse
+		Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(outwardInventory.getInwardOutwardList(),"outward",outwardInventory.getWarehouse());
+		outwardInventory.setInwardOutwardList(newLIOList);
+	}
+	
+	@Transactional
+	private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset,String type,Warehouse warehouse) throws Exception
+	{
+		for(InwardOutwardList oiList : ioListset)
+		{
+			Double closingStock = stockService.updateStock(oiList.getProduct().getProductId(), warehouse.getWarehouseName(),oiList.getQuantity() , type);
+			inventoryNotificationService.pushQuantityEditedNotification(oiList.getProduct(),warehouse.getWarehouseName(), "outward", closingStock);
+			oiList.setClosingStock(closingStock);
+		}
+		return ioListset;
 	}
 	
 	private void setFields(OutwardInventory outwardInventory, OutwardInventoryData oiData) 
@@ -153,15 +292,71 @@ public class OutwardInventoryService
 	public ReturnOutwardInventoryData fetchOutwardnventory(FilterDataList filterDataList, Pageable pageable) throws ParseException 
 	{
 		ReturnOutwardInventoryData returnOutwardInventoryData = new ReturnOutwardInventoryData();
-		
+	
+		// Feed data list
 		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
-		
 		if(spec!=null) returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(spec,pageable));
 		else returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(pageable));
+		
+		//Feed dropdown values
 		returnOutwardInventoryData.setIiDropdown(populateDropdownService.fetchData("outward"));
+		
+		//Feed totals
+		returnOutwardInventoryData.setTotals(spec!=null?fetchGroupingForFilteredData(spec,OutwardInventory.class):fetchOutwardnventoryGroupBy());
 		return returnOutwardInventoryData;
 	}
-
+	
+	public List<ProductGroupedDAO> fetchOutwardnventoryGroupBy() throws ParseException 
+	{
+		List<ProductGroupedDAO> groupedData = outwardInventoryRepo.findGroupByInfo();
+		return groupedData;
+	}
+	
+	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<OutwardInventory> spec, Class<OutwardInventory> class1) 
+	{
+		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, OutwardInventory.class,OutwardInventory_.INWARD_OUTWARD_LIST);
+		return groupedData;
+	}
+	
+	public List<OutwardInventoryExportDAO> fetchOutwardnventoryForExport(FilterDataList filterDataList) throws Exception 
+	{
+		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
+		long size = spec!=null?outwardInventoryRepo.count(spec):outwardInventoryRepo.count();
+		if(size>5000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+		List<OutwardInventory> iiData = spec!=null?outwardInventoryRepo.findAll(spec):outwardInventoryRepo.findAll();
+		List<OutwardInventoryExportDAO> clonedData = iiData.parallelStream().map(OutwardInventoryExportDAO::new).collect(Collectors.toList());
+		return clonedData;
+	}
+	
+	public List<OutwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws Exception 
+	{
+		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
+		long size = spec!=null?outwardInventoryRepo.count(spec):outwardInventoryRepo.count();
+		System.out.println("Size of inward inventory after filter -"+size);
+		if(size>2000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+		System.out.println("Fetching data from db");
+		List<OutwardInventory> iiData = spec!=null?outwardInventoryRepo.findAll(spec):outwardInventoryRepo.findAll();
+		List<OutwardInventoryExportDAO2> clonedData = transformDataForExport(iiData);
+		System.out.println("Completed - returning to controller");
+		return clonedData;
+	}
+	
+	private List<OutwardInventoryExportDAO2> transformDataForExport(List<OutwardInventory> iiData) 
+	{
+		List<OutwardInventoryExportDAO2> transformedData =  new ArrayList<OutwardInventoryExportDAO2>();
+		for(OutwardInventory ii: iiData)
+		{
+			for(InwardOutwardList ioList:ii.getInwardOutwardList())
+			{
+				OutwardInventoryExportDAO2 ied = new OutwardInventoryExportDAO2(ii,ioList);
+				transformedData.add(ied);
+			}
+		}
+		return transformedData;
+	}
+	
 	@Transactional
 	public void deleteOutwardInventoryById(Long id) throws Exception 
 	{
