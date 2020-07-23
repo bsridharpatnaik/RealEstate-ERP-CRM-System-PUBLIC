@@ -29,6 +29,12 @@ public class ActivityType extends ReusableFields implements Serializable{
 	public void setName(String name) {
 		this.name = name;
 	}
+	public Long getActivityTypeId() {
+		return activityTypeId;
+	}
+	public void setActivityTypeId(Long activityTypeId) {
+		this.activityTypeId = activityTypeId;
+	}
 	
 	
 }

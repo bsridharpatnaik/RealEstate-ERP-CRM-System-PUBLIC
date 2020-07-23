@@ -38,8 +38,7 @@ public class ActivityTypeService {
 	public ActivityType createActivityType(ActivityType atype) throws Exception {
 		if(!aRepo.existsByName(atype.getName()))
 		{
-			aRepo.save(atype);
-			return atype;
+			return aRepo.save(atype);
 		}
 		else
 		{
@@ -63,16 +62,12 @@ public class ActivityTypeService {
 		
 		if(!ActivityForUpdateOpt.isPresent())
 			throw new Exception("ActivityType not found with activityTypeid");
-		
-		if(!aRepo.existsByName(atype.getName()) && !atype.getName().equalsIgnoreCase(ActivityForUpdate.getName()))
+	
+		if(aRepo.existsByName(atype.getName()) && !atype.getName().equalsIgnoreCase(ActivityForUpdate.getName()))
 		{
-			ActivityForUpdate.setName(atype.getName());
-			
-		}
-        else 
-        {
         	throw new Exception("ActivityType with same Name already exists");
         }
+		ActivityForUpdate.setName(atype.getName());
 		return aRepo.save(ActivityForUpdate);
 	}
 	
