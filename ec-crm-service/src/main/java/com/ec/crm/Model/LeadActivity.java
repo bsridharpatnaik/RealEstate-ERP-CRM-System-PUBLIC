@@ -54,6 +54,13 @@ public class LeadActivity extends ReusableFields implements Serializable {
 	Long userId;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="lead_id",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@NotFound(action=NotFoundAction.IGNORE)
+	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+	Lead lead;
+	
+	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="activitytype_id",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@NotFound(action=NotFoundAction.IGNORE)
@@ -138,6 +145,14 @@ public class LeadActivity extends ReusableFields implements Serializable {
 
 	public void setActivityType(ActivityType activityType) {
 		this.activityType = activityType;
+	}
+
+	public Lead getLead() {
+		return lead;
+	}
+
+	public void setLead(Lead lead) {
+		this.lead = lead;
 	}
 	
 	
