@@ -18,6 +18,7 @@ import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Model.Source;
+import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.SentimentRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
@@ -28,6 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 public class SentimentService {
 	@Autowired
 	SentimentRepo sRepo;
+	
+	@Autowired
+	LeadRepo lRepo;
 	public Page<Sentiment> fetchAll(Pageable pageable) 
 	{
 		return sRepo.findAll(pageable);
@@ -116,10 +120,18 @@ public class SentimentService {
 	
 	public void deleteSentiment(Long id) throws Exception 
 	{
-		sRepo.softDeleteById(id);
+		int used=lRepo.checksentimentusedinlead(id);
+//		System.out.println(used);
+		if(used>0) {
+			throw new Exception("Sentiment used in leads");
+		}else {
+			sRepo.softDeleteById(id);
+		}
+		
 	}
 	public List<IdNameProjections> findIdAndNames() 
 	{
+		
 		return sRepo.findIdAndNames();
 	}
 }

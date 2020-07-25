@@ -15,6 +15,7 @@ import com.ec.crm.Filters.BrokerSpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Repository.BrokerRepo;
+import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,11 @@ public class BrokerService
 {
 	@Autowired
 	BrokerRepo bRepo;
+	
+	
+	@Autowired
+	LeadRepo lRepo;
+	
 	
 	public Page<Broker> fetchAll(Pageable pageable) 
 	{
@@ -86,7 +92,13 @@ public class BrokerService
 	
 	public void deleteBroker(Long id) throws Exception 
 	{
-		bRepo.softDeleteById(id);
+		int used=lRepo.checkbrokerusedinlead(id);
+//		System.out.println(used);
+		if(used>0) {
+			throw new Exception("Broker used in leads");
+		}else {
+			bRepo.softDeleteById(id);
+		}
 	}
 	public List<IdNameProjections> findIdAndNames() 
 	{

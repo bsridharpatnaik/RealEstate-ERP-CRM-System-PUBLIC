@@ -15,6 +15,7 @@ import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.Source;
 import com.ec.crm.Model.PropertyType;
+import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.SourceRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
@@ -25,6 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 public class SourceService {
 	@Autowired
 	SourceRepo sRepo;
+	
+	@Autowired
+	LeadRepo lRepo;
+	
 	public Page<Source> fetchAll(Pageable pageable) 
 	{
 		return sRepo.findAll(pageable);
@@ -114,7 +119,13 @@ public class SourceService {
 	
 	public void deleteSource(Long id) throws Exception 
 	{
-		sRepo.softDeleteById(id);
+		int used=lRepo.checksourceusedinlead(id);
+//		System.out.println(used);
+		if(used>0) {
+			throw new Exception("Source used in leads");
+		}else {
+			sRepo.softDeleteById(id);
+		}
 	}
 	public List<IdNameProjections> findIdAndNames() 
 	{
