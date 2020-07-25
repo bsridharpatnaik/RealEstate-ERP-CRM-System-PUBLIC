@@ -26,8 +26,16 @@ import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
-@Table(name = "`Lead`")
-public class Lead extends ReusableFields implements Serializable{
+@Table(name = "Lead")
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Audited
+public class Lead extends ReusableFields implements Serializable
+{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "lead_id", updatable = false, nullable = false)
@@ -55,38 +63,33 @@ public class Lead extends ReusableFields implements Serializable{
 	String dateOfBirth;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="broker_id",nullable=false)
+	@JoinColumn(name="broker_id",nullable=true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Broker broker;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="address_id",nullable=false)
+	@JoinColumn(name="address_id",nullable=true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Address address;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="source_id",nullable=false)
+	@JoinColumn(name="source_id",nullable=true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Source source;
 	
 	PropertyTypeEnum propertyType;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="sentiment_id",nullable=false)
+	@JoinColumn(name="sentiment_id",nullable=true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Sentiment sentiment;
 	
 	@Column(name="user_id")
-	Long UserId;
+	Long asigneeId;
 
+	@Column(name="created_by")
+	Long creatorId;
+	
 	public Long getLeadId() {
 		return leadId;
 	}
@@ -127,8 +130,6 @@ public class Lead extends ReusableFields implements Serializable{
 		this.emailId = emailId;
 	}
 	
-	
-
 	public String getPurpose() {
 		return purpose;
 	}
@@ -194,14 +195,19 @@ public class Lead extends ReusableFields implements Serializable{
 		this.sentiment = sentiment;
 	}
 
-	public Long getUserId() {
-		return UserId;
+	public Long getAsigneeId() {
+		return asigneeId;
 	}
 
-	public void setUserId(Long userId) {
-		UserId = userId;
+	public void setAsigneeId(Long asigneeId) {
+		this.asigneeId = asigneeId;
 	}
-	
-	
 
+	public Long getCreatorId() {
+		return creatorId;
+	}
+
+	public void setCreatorId(Long creatorId) {
+		this.creatorId = creatorId;
+	}
 }

@@ -37,11 +37,13 @@ import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.LeadStatusRepo;
 import com.ec.crm.Repository.NoteRepo;
 import com.ec.crm.Repository.SentimentRepo;
+import com.ec.crm.Repository.SourceRepo;
 
 import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
-public class LeadService {
+public class LeadService 
+{
 	@Autowired
 	LeadRepo lRepo;
 	
@@ -66,6 +68,9 @@ public class LeadService {
 	@Autowired
 	HttpServletRequest request;
 	
+	@Autowired
+	SourceRepo sourceRepo;
+	
 	@Value("${common.serverurl}")
 	private String reqUrl;
 	
@@ -75,6 +80,7 @@ public class LeadService {
 		// TODO Auto-generated method stub
 		return lRepo.findAll(pageable);
 	}
+	
 	public LeadListWithTypeAheadData findFilteredList(FilterDataList leadFilterDataList, Pageable pageable) 
 	{
 		LeadListWithTypeAheadData leadListWithTypeAheadData = new LeadListWithTypeAheadData();
@@ -133,6 +139,48 @@ public class LeadService {
 			
 	}
 
+	public Lead createLead(@Valid LeadCreateData payload) throws Exception 
+	{
+		Lead lead = new Lead();
+		validatePayload(payload);
+		setLeadFields(lead,payload,getCurrentUserId());
+		return lead;
+	}
+	private void setLeadFields(Lead lead, @Valid LeadCreateData payload, Long currentUserId,String type) 
+	{
+		lead.setCustomerName(payload.getCustomerName());
+		lead.setPrimaryMobile(payload.getPrimaryMobile());
+		lead.setSecondaryMobile(payload.getSecondaryMobile());
+		lead.setDateOfBirth(payload.getDateOfBirth());
+		lead.setEmailId(payload.getEmailId());
+		lead.setOccupation(payload.getOccupation());
+		lead.setPurpose(payload.getPurpose());
+		lead.setPropertyType(payload.getPropertyType());
+		lead.setSentiment(siRepo.findById(payload.getSentimentId()).get());
+		lead.setSource(sourceRepo.findById(payload.getSourceId()).get());
+		lead.setBroker(bRepo.findById(payload.getBrokerId()).get());
+		lead.setAddress(setAddress(payload));
+		if(type.equalsIgnoreCase("create"))
+		{
+			lead.setAsigneeId(currentUserId);
+			lead.setCreatorId(currentUserId);
+		}
+		
+		lRepo.save(lead);
+	}
+
+	
+	private Address setAddress(@Valid LeadCreateData payload) 
+	{
+		Address address = new Address();
+        address.setAddr_line1(payload.getAddressLine1());
+		address.setAddr_line2(payload.getAddressLine2());
+		address.setCity(payload.getCity());
+		address.setPincode(payload.getPincode());
+		return aRepo.save(address);
+	}
+
+	/*
 	public Lead createLead(@Valid LeadCreateData payload) throws Exception {
 		// TODO Auto-generated method stub
 		Optional<Sentiment> sentimentOpt = siRepo.findById(payload.getSentimentId());
@@ -152,30 +200,11 @@ public class LeadService {
 		//	throw new Exception("PropertyType not found");
 		
 		
-		
-		Long userId;
-		UserReturnData userDetails = webClientBuilder.build()
-		    	.get()
-		    	.uri(reqUrl+"user/me")
-		    	.header("Authorization", request.getHeader("Authorization"))
-		    	.retrieve()
-		    	.bodyToMono(UserReturnData.class)
-		    	.block();
-		userId= userDetails.getId();
-
-		
-		
 		formatMobileNo(payload);
     	validatePayload(payload);
         exitIfMobileNoExists(payload);
         
-        Address address = new Address();
-        address.setAddr_line1(payload.getAddressLine1());
-		address.setAddr_line2(payload.getAddressLine2());
-		address.setCity(payload.getCity());
-		address.setDistrict(payload.getDist());
-		address.setPincode(payload.getPincode());
-		address=aRepo.save(address);
+        
 		aRepo.flush();
 		Long id=address.getAddrId();
 //		System.out.println(id);
@@ -183,87 +212,73 @@ public class LeadService {
 		if(! addressOpt.isPresent())
 			throw new Exception("Address not found");
 		
-		Lead lead=new Lead();
-		lead.setCustomerName(payload.getCustomerName());
-		lead.setPrimaryMobile(payload.getPrimaryMobile());
-		lead.setSecondaryMobile(payload.getSecondaryMobile());
-		lead.setDateOfBirth(payload.getDateOfBirth());
-		lead.setEmailId(payload.getEmailId());
-		lead.setOccupation(payload.getOccupation());
-		lead.setPurpose(payload.getPurpose());
-	//	lead.setPropertyType(propertyTypeOpt.get());
-		lead.setSentiment(sentimentOpt.get());
-	//	lead.setSource(sourceOpt.get());
-		lead.setBroker(brokerOpt.get());
-		lead.setAddress(addressOpt.get());
-		lead.setUserId(userId);
-		lRepo.save(lead);
-		lRepo.flush();
+		
 		Long lid=lead.getLeadId();
 		
 		LeadStatus lstatus=new LeadStatus();
 		lstatus.setLeadId(lid);
-		lstatus.setStatusId(payload.getStatusId());
+		//lstatus.setStatusId(payload.getStatusId());
 		lstatus.setUserId(userId);
 		lsRepo.save(lstatus);
 		return lead;
 	}
-	private void exitIfMobileNoExists(LeadCreateData payload) throws Exception 
-    {
-		if(lRepo.findCountByPMobileNo(payload.getPrimaryMobile())>0)
-			throw new Exception("Contact already exists by Primary Mobile Number.");
-		
-		if(lRepo.findCountBySMobileNo(payload.getSecondaryMobile())>0)
-			throw new Exception("Contact already exists by Secondary Mobile Number.");
+	*/
+	private Long getCurrentUserId() throws Exception
+	{
+		try
+		{
+			Long userId;
+			UserReturnData userDetails = webClientBuilder.build()
+					.get()
+					.uri(reqUrl+"user/me")
+					.header("Authorization", request.getHeader("Authorization"))
+					.retrieve()
+					.bodyToMono(UserReturnData.class)
+					.block();
+			return userDetails.getId();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			throw new Exception("Not able to fetch currect user details");
+		}
 	}
 	 private void validatePayload(LeadCreateData payload) throws Exception 
-    {
+	 {
     	if(!validateRequiredFields(payload).equals(""))
     		throw new Exception("Required fields missing - " + validateRequiredFields(payload));
 		
     	if(!ReusableMethods.isValidMobileNumber(payload.getPrimaryMobile()))
     		throw new Exception("Please enter valid mobile number.");
 		
-    	if(!ReusableMethods.isValidMobileNumber(payload.getSecondaryMobile()))
-    		throw new Exception("Please enter valid mobile number.");
+    	if(payload.getSecondaryMobile()!=null && payload.getSecondaryMobile()!="")
+    		if(!ReusableMethods.isValidMobileNumber(payload.getSecondaryMobile()))
+    			throw new Exception("Please enter valid mobile number.");
     	
     	if(payload.getEmailId()!=null && payload.getEmailId()!="")
     		if(!ReusableMethods.isValidEmail(payload.getEmailId()))
-    				throw new Exception("Please enter valid EmailId.");
+    					throw new Exception("Please enter valid EmailId.");
     	
     	if(payload.getPincode()!=null && payload.getPincode()!="")
-    	{	
     		if(!payload.getPincode().matches( "\\d{6}"))
     			throw new Exception("Enter a valid pin code (6 Digits numeric)");
-    			
-    	}
-	}
+    	if(lRepo.findCountByPMobileNo(payload.getPrimaryMobile())>0)
+			throw new Exception("Contact already exists by Primary Mobile Number.");
+	 }
 	 private String validateRequiredFields(LeadCreateData payload) 
-	{
+	 {
 		String message = "";
 		if(payload.getPrimaryMobile()==null || payload.getPrimaryMobile().equals(""))
 			message = message==""?"Primary Mobile No.":message+",Primary Mobile No.";
 		
-		if(payload.getSecondaryMobile()==null || payload.getSecondaryMobile().equals(""))
-			message = message==""?"Secondary Mobile No":message+", Secondary Mobile No";
-		
 		if(payload.getCustomerName()==null || payload.getCustomerName().equals(""))
 			message = message==""?"Customer Name":message+", Customer Name";
 		
-		if(payload.getEmailId()==null || payload.getEmailId().equals(""))
-			message = message==""?"Email ID":message+", Email ID";
-		
-		if(payload.getOccupation()==null || payload.getOccupation().equals(""))
-			message = message==""?"Email ID":message+", Email ID";
-		
-		if(payload.getDateOfBirth()==null || payload.getDateOfBirth().equals(""))
-			message = message==""?"Date Of Birth":message+", Date Of Birth";
-		
 		return message;
-	}
+	 }
 	 
 	 private void formatMobileNo(LeadCreateData payload) 
-    {
+	 {
     	//System.out.println(payload.getContactPersonMobileNo());
         if (!(payload.getPrimaryMobile() == null) && !payload.getPrimaryMobile().equals(""))
             payload.setPrimaryMobile(utilObj.normalizePhoneNumber(payload.getPrimaryMobile()));
@@ -356,8 +371,9 @@ public class LeadService {
 		//if exists is it latest, if yes dont insert
 		//if exists is not latest, insert
 		//else insert
-		int exist=lsRepo.checkexist(id,payload.getStatusId());
+		//int exist=lsRepo.checkexist(id,payload.getStatusId());
 //		System.out.println(exist);
+		/*
 		if(exist>0) {
 			List<LeadStatus> latest=lsRepo.checklatest(id);
 			Long statusid=latest.get(0).getStatusId();
@@ -376,7 +392,7 @@ public class LeadService {
 			lstatus.setStatusId(payload.getStatusId());
 			lstatus.setUserId(userId);
 			lsRepo.save(lstatus);
-		}
+		}*/
 		return lead;	
 				
 		

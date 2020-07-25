@@ -9,11 +9,16 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
+
 import com.ec.crm.ReusableClasses.ReusableFields;
 
 
 @Entity
 @Table(name = "address")
+@Audited
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class Address extends ReusableFields implements Serializable 
 {
 	@Id
@@ -23,7 +28,6 @@ public class Address extends ReusableFields implements Serializable
 	String addr_line1;
 	String addr_line2;
 	String city;
-	String district;
 	String pincode;
 	public Long getAddrId() {
 		return addrId;
@@ -49,18 +53,10 @@ public class Address extends ReusableFields implements Serializable
 	public void setCity(String city) {
 		this.city = city;
 	}
-	public String getDistrict() {
-		return district;
-	}
-	public void setDistrict(String district) {
-		this.district = district;
-	}
 	public String getPincode() {
 		return pincode;
 	}
 	public void setPincode(String pincode) {
 		this.pincode = pincode;
 	}
-	
-	
 }

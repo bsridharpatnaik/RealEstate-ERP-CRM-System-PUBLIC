@@ -42,9 +42,6 @@ public final class LeadSpecifications
 		if(emailId != null && emailId.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.emailId.getName(),emailId));	
 	
-		if(emailId != null && emailId.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.emailId.getName(),emailId));	
-	
 		if(occupation != null && occupation.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.occupation.getName(),occupation));	
 	
