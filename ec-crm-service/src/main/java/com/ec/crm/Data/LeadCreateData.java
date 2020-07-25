@@ -1,8 +1,11 @@
 package com.ec.crm.Data;
 
+import java.util.Date;
+
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Model.PropertyTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class LeadCreateData 
 {
@@ -14,7 +17,8 @@ public class LeadCreateData
 	String emailId;	
 	String purpose;	
 	String occupation;	
-	String dateOfBirth;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	private Date dateOfBirth;
 	Long brokerId;
 	String addressLine1;
 	String addressLine2;
@@ -67,10 +71,11 @@ public class LeadCreateData
 	public void setOccupation(String occupation) {
 		this.occupation = occupation;
 	}
-	public String getDateOfBirth() {
+	
+	public Date getDateOfBirth() {
 		return dateOfBirth;
 	}
-	public void setDateOfBirth(String dateOfBirth) {
+	public void setDateOfBirth(Date dateOfBirth) {
 		this.dateOfBirth = dateOfBirth;
 	}
 	public Long getBrokerId() {

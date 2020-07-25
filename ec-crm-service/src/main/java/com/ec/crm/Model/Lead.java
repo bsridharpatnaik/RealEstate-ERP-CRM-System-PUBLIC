@@ -1,7 +1,7 @@
 package com.ec.crm.Model;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.Date;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -12,21 +12,18 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.RelationTargetAuditMode;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
-@Table(name = "Lead")
+@Table(name = "customer_lead")
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @Audited
 public class Lead extends ReusableFields implements Serializable
@@ -60,7 +57,8 @@ public class Lead extends ReusableFields implements Serializable
 	String occupation;
 	
 	@Column(name="dateofbirth")
-	String dateOfBirth;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	Date dateOfBirth;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="broker_id",nullable=true)
@@ -146,12 +144,17 @@ public class Lead extends ReusableFields implements Serializable
 		this.occupation = occupation;
 	}
 
-	public String getDateOfBirth() {
+	
+	public Date getDateOfBirth() {
 		return dateOfBirth;
 	}
 
-	public void setDateOfBirth(String dateOfBirth) {
+	public void setDateOfBirth(Date dateOfBirth) {
 		this.dateOfBirth = dateOfBirth;
+	}
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
 	}
 
 	public Broker getBroker() {

@@ -1,5 +1,7 @@
 package com.ec.common.Controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -66,6 +68,18 @@ public class UserController
 	public User findUserByID(@PathVariable long id) throws Exception 
 	{
 		return userService.findSingleUserFromAll(id);
+	}
+	
+	@GetMapping("/byid/{id}")
+	public UserReturnData findLimitedDetailsForUserByID(@PathVariable long id) throws Exception 
+	{
+		return userService.fetchUserDetailsById(id);
+	}
+	
+	@GetMapping("/list")
+	public List<UserReturnData> findLimitedDetailsForUserByID() throws Exception 
+	{
+		return userService.fetchUserList();
 	}
 	
 	@PostMapping("/updateroles") 

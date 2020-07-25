@@ -1,5 +1,7 @@
 package com.ec.crm.Service;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,4 +35,29 @@ public class UserDetailsService
 					    	.block();
     	return userDetails;
     }
+
+	public UserReturnData getUserFromId(Long assigneeId) 
+	{
+		UserReturnData userDetails = webClientBuilder.build()
+		    	.get()
+		    	.uri(reqUrl+"user/byid/"+assigneeId)
+		    	.header("Authorization", request.getHeader("Authorization"))
+		    	.retrieve()
+		    	.bodyToMono(UserReturnData.class)
+		    	.block();
+		return userDetails;
+	}
+	
+	public UserReturnData[] getUserList() 
+	{
+		UserReturnData[] userDetails = webClientBuilder.build()
+		    	.get()
+		    	.uri(reqUrl+"user/list")
+		    	.header("Authorization", request.getHeader("Authorization"))
+		    	.retrieve()
+		    	.bodyToMono(UserReturnData[].class)
+		    	.block();
+		return userDetails;
+	}
+	
 }

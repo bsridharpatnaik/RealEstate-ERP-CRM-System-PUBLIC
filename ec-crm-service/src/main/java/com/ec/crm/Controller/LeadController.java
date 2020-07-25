@@ -1,5 +1,8 @@
 package com.ec.crm.Controller;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
-import com.ec.crm.Model.Lead;
-import com.ec.crm.Model.Sentiment;
-import com.ec.crm.Service.LeadService;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
 import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Model.Lead;
+import com.ec.crm.Model.LeadStatusEnum;
+import com.ec.crm.Model.PropertyTypeEnum;
+import com.ec.crm.Service.LeadService;
 
 @RestController
 @RequestMapping(value="/lead",produces = { "application/json", "text/json" })
@@ -54,6 +58,18 @@ public class LeadController {
 	public LeadDetailInfo findLeadDetailInfoByID(@PathVariable long id) throws Exception 
 	{
 		return leadService.findSingleLeadDetailInfo(id);
+	}
+	
+	@GetMapping("/validPropertyTypes")
+	public List<String> findValidPropertyTypes() 
+	{
+		return PropertyTypeEnum.getValidPropertyType();
+	}
+	
+	@GetMapping("/validLeadStatus")
+	public List<String> findValidLeadStatus() 
+	{
+		return LeadStatusEnum.getValidLeadStatus();
 	}
 	
 	@PostMapping("/create") 
