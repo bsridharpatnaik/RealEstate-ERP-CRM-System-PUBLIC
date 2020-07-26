@@ -20,12 +20,11 @@ import com.ec.crm.Data.SourceListWithTypeAheadData;
 import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Filters.PropertyTypeSpecifications;
+
 import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.ActivityType;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
-import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Repository.ActivityTypeRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;

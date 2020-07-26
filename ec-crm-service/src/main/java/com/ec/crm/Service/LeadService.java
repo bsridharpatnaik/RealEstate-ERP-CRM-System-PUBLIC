@@ -1,10 +1,9 @@
 package com.ec.crm.Service;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
@@ -19,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Data.ReturnCreatedLead;
 import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
@@ -29,6 +29,7 @@ import com.ec.crm.Model.LeadStatus;
 import com.ec.crm.Model.Note;
 import com.ec.crm.Model.PropertyTypeEnum;
 import com.ec.crm.Model.Sentiment;
+import com.ec.crm.Model.StatusEnum;
 import com.ec.crm.Repository.AddressRepo;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.LeadRepo;
@@ -74,19 +75,24 @@ public class LeadService
 	@Autowired
 	UserDetailsService userDetailsService;
 	
+	private Long currentUserId;
+	
 	@Value("${common.serverurl}")
 	private String reqUrl;
 	
 	CommonUtils utilObj = new CommonUtils();
-	
-	
-	public Lead createLead(@Valid LeadCreateData payload) throws Exception 
+		
+
+
+	public ReturnCreatedLead createLead(@Valid LeadCreateData payload) throws Exception 
 	{
 		Lead lead = new Lead();
 		formatMobileNo(payload);
 		validatePayload(payload);
 		setLeadFields(lead,payload,"create");
-		return lRepo.save(lead);
+		lead = lRepo.save(lead);
+		StatusEnum updatedStatus  = setLeadStatus(lead,payload.getStatus(),"create");
+		return new ReturnCreatedLead(updatedStatus,lead);
 	}
 	
 	private void formatMobileNo(LeadCreateData payload) 
@@ -131,6 +137,9 @@ public class LeadService
 		
 		if(payload.getAssigneeId()==null)
 			message = message==""?"Assignee ":message+", Assignee ";
+		
+		if(payload.getStatus()==null)
+			message = message==""?"Status ":message+", Status ";
 		return message;
 	 }
 	
@@ -143,26 +152,48 @@ public class LeadService
 			lead.setEmailId(payload.getEmailId());
 			lead.setOccupation(payload.getOccupation());
 			lead.setPurpose(payload.getPurpose());
-			lead.setPropertyType(payload.getPropertyType());
+			lead.setPropertyType(PropertyTypeEnum.valueOf(payload.getPropertyType()));
 			lead.setSentiment(siRepo.findById(payload.getSentimentId()).get());
 			lead.setSource(sourceRepo.findById(payload.getSourceId()).get());
 			lead.setBroker(bRepo.findById(payload.getBrokerId()).get());
 			
 			if(type.equalsIgnoreCase("create"))
 			{
-				Long currentUserId = userDetailsService.getCurrentUser().getId();
-				lead.setAsigneeId(currentUserId);
-				lead.setCreatorId(currentUserId);
-				
+				lead.setAsigneeId(userDetailsService.getCurrentUser().getId());
+				lead.setCreatorId(userDetailsService.getCurrentUser().getId());
+				lead.setAddress(setAddress(payload, new Address()));
 			}
-			else
+			else if(type.equalsIgnoreCase("update"))
 			{
 				lead.setAsigneeId(userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
 				lead.setAddress(setAddress(payload,lead.getAddress()));
 			}
+			
 		}
 
 		
+		private StatusEnum setLeadStatus(Lead lead, String string2,String string) 
+		{
+			LeadStatus lstatus=null;
+			switch(string)
+			{
+				
+				case "create":
+					lstatus = new LeadStatus(lead.getLeadId(),string2,userDetailsService.getCurrentUser().getId(),userDetailsService.getCurrentUser().getId());
+					lsRepo.save(lstatus);
+					break;
+				case "udpate":
+					lstatus= lsRepo.FindLeadStatusByLeadID(lead.getLeadId()).get(0);
+					if(!lstatus.getStatus().equals(lstatus))
+					{
+						lstatus = new LeadStatus(lead.getLeadId(),string2,userDetailsService.getCurrentUser().getId(),userDetailsService.getCurrentUser().getId());
+						lsRepo.save(lstatus);
+					}
+					break;
+			}
+			return lstatus.getStatus();
+		}
+
 		private Address setAddress(@Valid LeadCreateData payload,Address address) 
 		{
 			address.setAddr_line1(payload.getAddressLine1());
@@ -197,7 +228,8 @@ public class LeadService
 		else
 			throw new Exception("Lead ID not found");
 	}
-	public LeadDetailInfo findSingleLeadDetailInfo(long id) throws Exception {
+	public LeadDetailInfo findSingleLeadDetailInfo(long id) throws Exception 
+	{/*
 		// TODO Auto-generated method stub
 		LeadDetailInfo l=new LeadDetailInfo();
 		Optional<Lead> lead = lRepo.findById(id);
@@ -220,19 +252,20 @@ public class LeadService
 					Long sid = leadstatus.get(i).getStatusId();
 					Optional<Status> Ostatusadd=stRepo.findById(sid);
 					s.add(Ostatusadd.get());
-				}*/
+				}
 				l.setHistoricalStatus(null);
 			}
 			
 			l.setPinnedNotes(pinnednotes);
 			l.setUnpinnedNotes(unpinnednotes);
 			
-			return l;
+			return null;
 		}
 		else {
 			throw new Exception("Lead ID not found");
 		}
-			
+			*/
+		return null;
 	}
 	
 	

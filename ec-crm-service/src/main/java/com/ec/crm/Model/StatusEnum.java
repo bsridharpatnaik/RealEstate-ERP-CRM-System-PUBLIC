@@ -3,7 +3,7 @@ package com.ec.crm.Model;
 import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+@JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum StatusEnum implements Serializable
 {
 	New_Lead,

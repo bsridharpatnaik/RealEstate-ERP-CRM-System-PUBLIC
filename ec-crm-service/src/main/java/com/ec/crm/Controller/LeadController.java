@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Data.ReturnCreatedLead;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadStatusEnum;
@@ -74,7 +75,7 @@ public class LeadController {
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public Lead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception{
+	public ReturnCreatedLead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception{
 		
 		return leadService.createLead(payload);
 	}

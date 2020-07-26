@@ -6,6 +6,8 @@ import java.util.Date;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -17,6 +19,7 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.springframework.lang.NonNull;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -75,6 +78,9 @@ public class Lead extends ReusableFields implements Serializable
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Source source;
 	
+	@NonNull
+	@Column(nullable=false)
+	@Enumerated(EnumType.STRING)
 	PropertyTypeEnum propertyType;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)

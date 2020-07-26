@@ -5,6 +5,7 @@ import java.util.Date;
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Model.PropertyTypeEnum;
+import com.ec.crm.Model.StatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class LeadCreateData 
@@ -25,16 +26,10 @@ public class LeadCreateData
 	String city;
 	String pincode;
 	Long sourceId;
-	PropertyTypeEnum propertyType;
+	String propertyType;
 	Long sentimentId;
 	Long assigneeId;
-	
-	public Long getAssigneeId() {
-		return assigneeId;
-	}
-	public void setAssigneeId(Long assigneeId) {
-		this.assigneeId = assigneeId;
-	}
+	String status;
 	public String getCustomerName() {
 		return customerName;
 	}
@@ -71,7 +66,6 @@ public class LeadCreateData
 	public void setOccupation(String occupation) {
 		this.occupation = occupation;
 	}
-	
 	public Date getDateOfBirth() {
 		return dateOfBirth;
 	}
@@ -114,19 +108,28 @@ public class LeadCreateData
 	public void setSourceId(Long sourceId) {
 		this.sourceId = sourceId;
 	}
-	
-		public PropertyTypeEnum getPropertyType() {
+	public String getPropertyType() {
 		return propertyType;
 	}
-	public void setPropertyType(PropertyTypeEnum propertyType) {
+	public void setPropertyType(String propertyType) {
 		this.propertyType = propertyType;
 	}
-		public Long getSentimentId() {
+	public Long getSentimentId() {
 		return sentimentId;
 	}
 	public void setSentimentId(Long sentimentId) {
 		this.sentimentId = sentimentId;
 	}
-	
-	
+	public Long getAssigneeId() {
+		return assigneeId;
+	}
+	public void setAssigneeId(Long assigneeId) {
+		this.assigneeId = assigneeId;
+	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
 }

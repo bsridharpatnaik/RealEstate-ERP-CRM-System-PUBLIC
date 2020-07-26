@@ -13,13 +13,13 @@ import com.ec.crm.Data.PropertyTypeListWithTypeAheadData;
 import com.ec.crm.Data.SourceListWithTypeAheadData;
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Filters.PropertyTypeSpecifications;
+
 import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.ActivityType;
-import com.ec.crm.Model.PropertyType;
+
 import com.ec.crm.Model.Source;
 import com.ec.crm.Repository.ActivityTypeRepo;
-import com.ec.crm.Repository.PropertyTypeRepo;
+
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
 import lombok.extern.slf4j.Slf4j;
