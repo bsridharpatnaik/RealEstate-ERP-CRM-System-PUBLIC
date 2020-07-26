@@ -79,6 +79,99 @@ public class LeadService
 	
 	CommonUtils utilObj = new CommonUtils();
 	
+	
+	public Lead createLead(@Valid LeadCreateData payload) throws Exception 
+	{
+		Lead lead = new Lead();
+		formatMobileNo(payload);
+		validatePayload(payload);
+		setLeadFields(lead,payload,"create");
+		return lRepo.save(lead);
+	}
+	
+	private void formatMobileNo(LeadCreateData payload) 
+	 {
+   	//System.out.println(payload.getContactPersonMobileNo());
+       if (!(payload.getPrimaryMobile() == null) && !payload.getPrimaryMobile().equals(""))
+           payload.setPrimaryMobile(utilObj.normalizePhoneNumber(payload.getPrimaryMobile()));
+       if(!payload.getSecondaryMobile().equals(""))
+       	payload.setSecondaryMobile(utilObj.normalizePhoneNumber(payload.getSecondaryMobile()));
+   }
+	
+	private void validatePayload(LeadCreateData payload) throws Exception 
+	 {
+   	if(!validateRequiredFields(payload).equals(""))
+   		throw new Exception("Required fields missing - " + validateRequiredFields(payload));
+		
+   	if(!ReusableMethods.isValidMobileNumber(payload.getPrimaryMobile()))
+   		throw new Exception("Please enter valid mobile number.");
+		
+   	if(payload.getSecondaryMobile()!=null && payload.getSecondaryMobile()!="")
+   		if(!ReusableMethods.isValidMobileNumber(payload.getSecondaryMobile()))
+   			throw new Exception("Please enter valid mobile number.");
+   	
+   	if(payload.getEmailId()!=null && payload.getEmailId()!="")
+   		if(!ReusableMethods.isValidEmail(payload.getEmailId()))
+   					throw new Exception("Please enter valid EmailId.");
+   	
+   	if(payload.getPincode()!=null && payload.getPincode()!="")
+   		if(!payload.getPincode().matches( "\\d{6}"))
+   			throw new Exception("Enter a valid pin code (6 Digits numeric)");
+   	if(lRepo.findCountByPMobileNo(payload.getPrimaryMobile())>0)
+			throw new Exception("Contact already exists by Primary Mobile Number.");
+	 }
+	 private String validateRequiredFields(LeadCreateData payload) 
+	 {
+		String message = "";
+		if(payload.getPrimaryMobile()==null || payload.getPrimaryMobile().equals(""))
+			message = message==""?"Primary Mobile No.":message+",Primary Mobile No.";
+		
+		if(payload.getCustomerName()==null || payload.getCustomerName().equals(""))
+			message = message==""?"Customer Name":message+", Customer Name";
+		
+		if(payload.getAssigneeId()==null)
+			message = message==""?"Assignee ":message+", Assignee ";
+		return message;
+	 }
+	
+	 private void setLeadFields(Lead lead, @Valid LeadCreateData payload,String type) 
+		{
+			lead.setCustomerName(payload.getCustomerName());
+			lead.setPrimaryMobile(payload.getPrimaryMobile());
+			lead.setSecondaryMobile(payload.getSecondaryMobile());
+			lead.setDateOfBirth(payload.getDateOfBirth());
+			lead.setEmailId(payload.getEmailId());
+			lead.setOccupation(payload.getOccupation());
+			lead.setPurpose(payload.getPurpose());
+			lead.setPropertyType(payload.getPropertyType());
+			lead.setSentiment(siRepo.findById(payload.getSentimentId()).get());
+			lead.setSource(sourceRepo.findById(payload.getSourceId()).get());
+			lead.setBroker(bRepo.findById(payload.getBrokerId()).get());
+			
+			if(type.equalsIgnoreCase("create"))
+			{
+				Long currentUserId = userDetailsService.getCurrentUser().getId();
+				lead.setAsigneeId(currentUserId);
+				lead.setCreatorId(currentUserId);
+				
+			}
+			else
+			{
+				lead.setAsigneeId(userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
+				lead.setAddress(setAddress(payload,lead.getAddress()));
+			}
+		}
+
+		
+		private Address setAddress(@Valid LeadCreateData payload,Address address) 
+		{
+			address.setAddr_line1(payload.getAddressLine1());
+			address.setAddr_line2(payload.getAddressLine2());
+			address.setCity(payload.getCity());
+			address.setPincode(payload.getPincode());
+			return aRepo.save(address);
+		}
+		
 	public Page<Lead> fetchAll(Pageable pageable) {
 		// TODO Auto-generated method stub
 		return lRepo.findAll(pageable);
@@ -142,96 +235,12 @@ public class LeadService
 			
 	}
 	
-	public Lead createLead(@Valid LeadCreateData payload) throws Exception 
-	{
-		Lead lead = new Lead();
-		formatMobileNo(payload);
-		validatePayload(payload);
-		setLeadFields(lead,payload,"create");
-		return lRepo.save(lead);
-	}
-	private void setLeadFields(Lead lead, @Valid LeadCreateData payload,String type) 
-	{
-		lead.setCustomerName(payload.getCustomerName());
-		lead.setPrimaryMobile(payload.getPrimaryMobile());
-		lead.setSecondaryMobile(payload.getSecondaryMobile());
-		lead.setDateOfBirth(payload.getDateOfBirth());
-		lead.setEmailId(payload.getEmailId());
-		lead.setOccupation(payload.getOccupation());
-		lead.setPurpose(payload.getPurpose());
-		lead.setPropertyType(payload.getPropertyType());
-		lead.setSentiment(siRepo.findById(payload.getSentimentId()).get());
-		lead.setSource(sourceRepo.findById(payload.getSourceId()).get());
-		lead.setBroker(bRepo.findById(payload.getBrokerId()).get());
-		
-		if(type.equalsIgnoreCase("create"))
-		{
-			Long currentUserId = userDetailsService.getCurrentUser().getId();
-			lead.setAsigneeId(currentUserId);
-			lead.setCreatorId(currentUserId);
-			
-		}
-		else
-		{
-			lead.setAsigneeId(userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
-			lead.setAddress(setAddress(payload,lead.getAddress()));
-		}
-	}
-
 	
-	private Address setAddress(@Valid LeadCreateData payload,Address address) 
-	{
-		address.setAddr_line1(payload.getAddressLine1());
-		address.setAddr_line2(payload.getAddressLine2());
-		address.setCity(payload.getCity());
-		address.setPincode(payload.getPincode());
-		return aRepo.save(address);
-	}
+	
 
-	 private void validatePayload(LeadCreateData payload) throws Exception 
-	 {
-    	if(!validateRequiredFields(payload).equals(""))
-    		throw new Exception("Required fields missing - " + validateRequiredFields(payload));
-		
-    	if(!ReusableMethods.isValidMobileNumber(payload.getPrimaryMobile()))
-    		throw new Exception("Please enter valid mobile number.");
-		
-    	if(payload.getSecondaryMobile()!=null && payload.getSecondaryMobile()!="")
-    		if(!ReusableMethods.isValidMobileNumber(payload.getSecondaryMobile()))
-    			throw new Exception("Please enter valid mobile number.");
-    	
-    	if(payload.getEmailId()!=null && payload.getEmailId()!="")
-    		if(!ReusableMethods.isValidEmail(payload.getEmailId()))
-    					throw new Exception("Please enter valid EmailId.");
-    	
-    	if(payload.getPincode()!=null && payload.getPincode()!="")
-    		if(!payload.getPincode().matches( "\\d{6}"))
-    			throw new Exception("Enter a valid pin code (6 Digits numeric)");
-    	if(lRepo.findCountByPMobileNo(payload.getPrimaryMobile())>0)
-			throw new Exception("Contact already exists by Primary Mobile Number.");
-	 }
-	 private String validateRequiredFields(LeadCreateData payload) 
-	 {
-		String message = "";
-		if(payload.getPrimaryMobile()==null || payload.getPrimaryMobile().equals(""))
-			message = message==""?"Primary Mobile No.":message+",Primary Mobile No.";
-		
-		if(payload.getCustomerName()==null || payload.getCustomerName().equals(""))
-			message = message==""?"Customer Name":message+", Customer Name";
-		
-		if(payload.getAssigneeId()==null)
-			message = message==""?"Assignee ":message+", Assignee ";
-		return message;
-	 }
 	 
-	 private void formatMobileNo(LeadCreateData payload) 
-	 {
-    	//System.out.println(payload.getContactPersonMobileNo());
-        if (!(payload.getPrimaryMobile() == null) && !payload.getPrimaryMobile().equals(""))
-            payload.setPrimaryMobile(utilObj.normalizePhoneNumber(payload.getPrimaryMobile()));
-        if(!payload.getSecondaryMobile().equals(""))
-        	payload.setSecondaryMobile(utilObj.normalizePhoneNumber(payload.getSecondaryMobile()));
-    }
+	 
+	 
 	 
 	public void deleteLead(Long id) {
 		// TODO Auto-generated method stub
