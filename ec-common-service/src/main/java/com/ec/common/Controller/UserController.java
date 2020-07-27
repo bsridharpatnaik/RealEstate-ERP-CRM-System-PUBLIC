@@ -29,7 +29,6 @@ import com.ec.common.Service.UserService;
 
 @RestController
 @RequestMapping(value="/user",produces = { "application/json", "text/json" })
-@PreAuthorize("hasAuthority('admin')")
 public class UserController 
 {
 
@@ -37,6 +36,7 @@ public class UserController
 	UserService userService;
 	
 	@GetMapping
+	@PreAuthorize("hasAuthority('admin')")
 	public UserListWithTypeAheadData returnAllUsers(Pageable pageable) 
 	{
 		
@@ -52,12 +52,14 @@ public class UserController
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasAuthority('admin')")
 	public User createUser(@RequestBody CreateUserData payload) throws Exception{
 		
 		return userService.createUser(payload);
 	}
 	
 	@PostMapping("/updatepassword") 
+	@PreAuthorize("hasAuthority('admin')")
 	@ResponseStatus(HttpStatus.OK)
 	public User updateUser(@RequestBody ResetPasswordData payload) throws Exception{
 		
@@ -83,6 +85,7 @@ public class UserController
 	}
 	
 	@PostMapping("/updateroles") 
+	@PreAuthorize("hasAuthority('admin')")
 	@ResponseStatus(HttpStatus.OK)
 	public User updateRolesForUser(@RequestBody UpdateRolesForUserData payload) throws Exception{
 		
@@ -96,6 +99,7 @@ public class UserController
 	}
 	
 	@PutMapping("/{id}")
+	@PreAuthorize("hasAuthority('admin')")
 	public User updateUser(@PathVariable Long id, @RequestBody CreateUserData payload) throws Exception 
 	{
 		return userService.updateUser(id, payload);
