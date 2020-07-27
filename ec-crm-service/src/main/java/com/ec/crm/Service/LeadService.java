@@ -1,9 +1,7 @@
 package com.ec.crm.Service;
 
-import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
@@ -26,7 +24,6 @@ import com.ec.crm.Model.Address;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadStatus;
-import com.ec.crm.Model.Note;
 import com.ec.crm.Model.PropertyTypeEnum;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Model.StatusEnum;
@@ -75,7 +72,7 @@ public class LeadService
 	@Autowired
 	UserDetailsService userDetailsService;
 	
-	private Long currentUserId;
+	Long currentUserID;
 	
 	@Value("${common.serverurl}")
 	private String reqUrl;
@@ -86,6 +83,7 @@ public class LeadService
 
 	public ReturnCreatedLead createLead(@Valid LeadCreateData payload) throws Exception 
 	{
+		currentUserID = userDetailsService.getCurrentUser().getId();
 		Lead lead = new Lead();
 		formatMobileNo(payload);
 		validatePayload(payload);
@@ -159,8 +157,9 @@ public class LeadService
 			
 			if(type.equalsIgnoreCase("create"))
 			{
-				lead.setAsigneeId(userDetailsService.getCurrentUser().getId());
-				lead.setCreatorId(userDetailsService.getCurrentUser().getId());
+				System.out.println("Current User - "+currentUserID);
+				lead.setAsigneeId(currentUserID);
+				lead.setCreatorId(currentUserID);
 				lead.setAddress(setAddress(payload, new Address()));
 			}
 			else if(type.equalsIgnoreCase("update"))
@@ -179,14 +178,14 @@ public class LeadService
 			{
 				
 				case "create":
-					lstatus = new LeadStatus(lead.getLeadId(),string2,userDetailsService.getCurrentUser().getId(),userDetailsService.getCurrentUser().getId());
+					lstatus = new LeadStatus(lead.getLeadId(),string2,currentUserID,currentUserID);
 					lsRepo.save(lstatus);
 					break;
 				case "udpate":
 					lstatus= lsRepo.FindLeadStatusByLeadID(lead.getLeadId()).get(0);
 					if(!lstatus.getStatus().equals(lstatus))
 					{
-						lstatus = new LeadStatus(lead.getLeadId(),string2,userDetailsService.getCurrentUser().getId(),userDetailsService.getCurrentUser().getId());
+						lstatus = new LeadStatus(lead.getLeadId(),string2,currentUserID,currentUserID);
 						lsRepo.save(lstatus);
 					}
 					break;
