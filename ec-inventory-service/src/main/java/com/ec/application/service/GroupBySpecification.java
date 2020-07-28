@@ -38,8 +38,8 @@ public class GroupBySpecification
 		 Predicate p = spec.toPredicate(root, query, builder);
 		 Join<T, InwardOutwardList> ioList = root.join(joinTable);
 		 Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
-		 query.multiselect(productList.get(Product_.PRODUCT_NAME),builder.sum(ioList.get(InwardOutwardList_.QUANTITY)));
-		 query.groupBy(productList.get(Product_.PRODUCT_NAME));
+		 query.multiselect(productList.get(Product_.PRODUCT_NAME),productList.get(Product_.MEASUREMENT_UNIT),builder.sum(ioList.get(InwardOutwardList_.QUANTITY)));
+		 query.groupBy(productList.get(Product_.PRODUCT_NAME),productList.get(Product_.MEASUREMENT_UNIT));
 		 query.where(p);
 		 List<ProductGroupedDAO> groupedData = fetchData(query);
 		 return groupedData;

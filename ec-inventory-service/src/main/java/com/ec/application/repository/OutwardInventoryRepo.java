@@ -32,7 +32,7 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 	@Query(value="SELECT count(*) from OutwardInventory m where m.contractor.contactId=:id")
 	int contractorUsageCount(@Param("id") Long id);
 
-	@Query(value="SELECT new com.ec.application.data.ProductGroupedDAO(iol.product.productName as productname,sum(iol.quantity) as quantity) from OutwardInventory ii"
-			+ " left join  ii.inwardOutwardList iol group by iol.product.productName")
+	@Query(value="SELECT new com.ec.application.data.ProductGroupedDAO(iol.product.productName as productname,iol.product.measurementUnit as measurementUnit,sum(iol.quantity) as quantity) from OutwardInventory ii"
+			+ " left join  ii.inwardOutwardList iol group by iol.product.productName,iol.product.measurementUnit")
 	List<ProductGroupedDAO> findGroupByInfo();
 }

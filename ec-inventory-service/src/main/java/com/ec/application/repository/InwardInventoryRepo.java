@@ -20,8 +20,8 @@ public interface InwardInventoryRepo extends BaseRepository<InwardInventory, Lon
 	@Query(value="SELECT count(*) from InwardInventory m where m.supplier.contactId=:id")
 	int supplierUsageCount(@Param("id") Long id);
 
-	@Query(value="SELECT new com.ec.application.data.ProductGroupedDAO(iol.product.productName as productname,sum(iol.quantity) as quantity) from InwardInventory ii"
-			+ " left join  ii.inwardOutwardList iol group by iol.product.productName")
+	@Query(value="SELECT new com.ec.application.data.ProductGroupedDAO(iol.product.productName as productname,iol.product.measurementUnit as measurementUnit,sum(iol.quantity) as quantity) from InwardInventory ii"
+			+ " left join  ii.inwardOutwardList iol group by iol.product.productName,iol.product.measurementUnit")
 	List<ProductGroupedDAO> findGroupByInfo();
 	
 }
