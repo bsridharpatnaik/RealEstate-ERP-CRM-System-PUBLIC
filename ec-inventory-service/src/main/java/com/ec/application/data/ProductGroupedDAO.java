@@ -1,9 +1,13 @@
 package com.ec.application.data;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 public class ProductGroupedDAO 
 {
 	String productname;
 	String measurementUnit;
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
 	public ProductGroupedDAO(String productname, String measurementUnit,Long quantity) {
 		super();
