@@ -29,6 +29,15 @@ public class LeadCreateData
 	Long sentimentId;
 	Long assigneeId;
 
+	@Override
+	public String toString() {
+		return "LeadCreateData [customerName=" + customerName + ", primaryMobile=" + primaryMobile
+				+ ", secondaryMobile=" + secondaryMobile + ", emailId=" + emailId + ", purpose=" + purpose
+				+ ", occupation=" + occupation + ", dateOfBirth=" + dateOfBirth + ", brokerId=" + brokerId
+				+ ", addressLine1=" + addressLine1 + ", addressLine2=" + addressLine2 + ", city=" + city + ", pincode="
+				+ pincode + ", sourceId=" + sourceId + ", propertyType=" + propertyType + ", sentimentId=" + sentimentId
+				+ ", assigneeId=" + assigneeId + "]";
+	}
 	public String getCustomerName() {
 		return customerName;
 	}

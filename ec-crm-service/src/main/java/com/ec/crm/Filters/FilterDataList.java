@@ -14,5 +14,11 @@ public class FilterDataList {
 		this.filterData = filterData;
 	}
 
+	@Override
+	public String toString() {
+		return "FilterDataList [filterData=" + filterData + ", getFilterData()=" + getFilterData() + ", getClass()="
+				+ getClass() + ", hashCode()=" + hashCode() + ", toString()=" + super.toString() + "]";
+	}
+
 	
 }
