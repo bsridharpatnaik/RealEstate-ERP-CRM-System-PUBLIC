@@ -38,6 +38,7 @@ public final class LeadSpecifications
 		List<String> createdBy = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"createdBy");
 		List<String> createdStartDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"createdStartDate");
 		List<String> createdEndDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"createdEndDate");
+		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"globalSearch");
 		Specification<Lead> finalSpec = null;
 		
 		if(name != null && name.size()>0)
@@ -58,7 +59,14 @@ public final class LeadSpecifications
 			finalSpec = specbldr.specAndCondition(finalSpec,addressSpec);
 		
 		}
+		if(globalSearch != null && globalSearch.size()>0)
+		{	
+			Specification<Lead> globalSearchSpec = specbldr.whereDirectFieldContains(Lead_.CUSTOMER_NAME, globalSearch)
+					.or(specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE,globalSearch));
+					
+			finalSpec = specbldr.specAndCondition(finalSpec,globalSearchSpec);
 		
+		}
 		
 		if(occupation != null && occupation.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.OCCUPATION,occupation));

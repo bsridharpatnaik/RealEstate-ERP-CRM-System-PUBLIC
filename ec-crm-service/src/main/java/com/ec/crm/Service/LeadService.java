@@ -140,9 +140,9 @@ public class LeadService
 			lead.setOccupation(payload.getOccupation());
 			lead.setPurpose(payload.getPurpose());
 			lead.setPropertyType(PropertyTypeEnum.valueOf(payload.getPropertyType()));
-			lead.setSentiment(siRepo.findById(payload.getSentimentId()).get());
-			lead.setSource(sourceRepo.findById(payload.getSourceId()).get());
-			lead.setBroker(bRepo.findById(payload.getBrokerId()).get());
+			lead.setSentiment(payload.getSentimentId()==null?null:siRepo.findById(payload.getSentimentId()).get());
+			lead.setSource(payload.getSourceId()==null?null:sourceRepo.findById(payload.getSourceId()).get());
+			lead.setBroker(payload.getBrokerId()==null?null:bRepo.findById(payload.getBrokerId()).get());
 			lead.setAsigneeId(lead.getAsigneeId()==null?currentUserID:userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
 			
 			if(type.equalsIgnoreCase("create"))
