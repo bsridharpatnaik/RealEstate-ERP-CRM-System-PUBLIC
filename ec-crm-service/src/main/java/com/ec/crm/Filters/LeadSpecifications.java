@@ -83,14 +83,11 @@ public final class LeadSpecifications
 		if(sentiment != null && sentiment.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(Lead_.SENTIMENT,Sentiment_.NAME,sentiment));
 		
-		if(assignee != null && assignee.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.ASIGNEE_ID,assignee));
-		
 		if(createdBy != null && createdBy.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.CREATOR_ID,createdBy));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectLongFieldContains(Lead_.CREATOR_ID,createdBy));
 		
 		if(assignee != null && assignee.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.ASIGNEE_ID,assignee));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectLongFieldContains(Lead_.ASIGNEE_ID,assignee));
 		
 		if(createdStartDate != null && createdStartDate.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldDateGreaterThan(Lead_.CREATED, createdStartDate));	
