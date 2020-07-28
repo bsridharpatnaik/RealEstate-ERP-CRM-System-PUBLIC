@@ -5,7 +5,6 @@ import java.util.Date;
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Model.PropertyTypeEnum;
-import com.ec.crm.Model.StatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class LeadCreateData 
@@ -29,7 +28,7 @@ public class LeadCreateData
 	String propertyType;
 	Long sentimentId;
 	Long assigneeId;
-	String status;
+
 	public String getCustomerName() {
 		return customerName;
 	}
@@ -125,11 +124,5 @@ public class LeadCreateData
 	}
 	public void setAssigneeId(Long assigneeId) {
 		this.assigneeId = assigneeId;
-	}
-	public String getStatus() {
-		return status;
-	}
-	public void setStatus(String status) {
-		this.status = status;
 	}
 }

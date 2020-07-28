@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
-import com.ec.crm.Data.ReturnCreatedLead;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadStatusEnum;
@@ -43,16 +42,18 @@ public class LeadController {
 	{
 		return leadService.fetchAll(pageable);
 	}
+	
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) 
 	{
 		return leadService.findFilteredList(leadFilterDataList,pageable);
 	}
-	@GetMapping("/{id}")
-	public Lead findLeadByID(@PathVariable long id) throws Exception 
+	
+	@GetMapping("/history/{id}")
+	public List<Lead> findLeadHistory(@PathVariable long id) throws Exception 
 	{
-		return leadService.findSingleLead(id);
+		return leadService.history(id);
 	}
 	
 	@GetMapping("/getallinfo/{id}")
@@ -75,13 +76,13 @@ public class LeadController {
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
-	public ReturnCreatedLead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception{
+	public Lead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception{
 		
 		return leadService.createLead(payload);
 	}
 	
 	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception
+	public ResponseEntity<?> deleteLead(@PathVariable Long id) throws Exception
 	{
 		leadService.deleteLead(id);
 		return ResponseEntity.ok("Entity deleted");
@@ -90,6 +91,6 @@ public class LeadController {
 	@PutMapping("/{id}")
 	public Lead updateLead(@PathVariable Long id, @RequestBody LeadCreateData payload) throws Exception 
 	{
-		return leadService.updateLead(id, payload);
+		return leadService.updateLead(payload, id);
 	} 
 }

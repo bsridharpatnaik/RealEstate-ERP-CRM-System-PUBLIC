@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum LeadStatusEnum 
 {
-	Lead_Generation,
+	New_Lead,
 	Property_Visit,
 	Negotiation,
 	Deal_Closed, 

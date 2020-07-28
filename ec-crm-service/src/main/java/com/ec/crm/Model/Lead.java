@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "customer_lead")
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-@Audited
+@Audited(withModifiedFlag = true)
 public class Lead extends ReusableFields implements Serializable
 {
 	/**
@@ -94,6 +94,19 @@ public class Lead extends ReusableFields implements Serializable
 	@Column(name="created_by")
 	Long creatorId;
 	
+	@NonNull
+	@Column(name="status",nullable=false)
+	@Enumerated(EnumType.STRING)
+	LeadStatusEnum status; 
+	
+	public LeadStatusEnum getStatus() {
+		return status;
+	}
+
+	public void setStatus(LeadStatusEnum status) {
+		this.status = status;
+	}
+
 	public Long getLeadId() {
 		return leadId;
 	}
