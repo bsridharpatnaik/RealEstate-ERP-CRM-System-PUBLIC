@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -168,7 +169,7 @@ public class LeadService
 		return lRepo.findAll(pageable);
 	}
 	
-	public LeadListWithTypeAheadData findFilteredList(FilterDataList leadFilterDataList, Pageable pageable) 
+	public LeadListWithTypeAheadData findFilteredList(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
 	{
 		LeadListWithTypeAheadData leadListWithTypeAheadData = new LeadListWithTypeAheadData();
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);

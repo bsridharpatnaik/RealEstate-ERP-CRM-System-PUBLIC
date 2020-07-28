@@ -1,5 +1,6 @@
 package com.ec.crm.Controller;
 
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class LeadController {
 	
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) 
+	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) throws ParseException 
 	{
 		return leadService.findFilteredList(leadFilterDataList,pageable);
 	}

@@ -23,6 +23,9 @@ public class PopulateDropdownService
 	@Autowired
 	SourceRepo sourceRepo;
 	
+	@Autowired
+	UserDetailsService userDetailsService;
+	
 	public NameAndProjectionDataForDropDown fetchData(String page) 
 	{
 		NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
@@ -34,6 +37,7 @@ public class PopulateDropdownService
 				morDropdownDataList.setSourceDetails(sourceRepo.findIdAndNames());
 				morDropdownDataList.setValidPropertyType(PropertyTypeEnum.getValidPropertyType());
 				morDropdownDataList.setValidStatusType(LeadStatusEnum.getValidLeadStatus());
+				morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
 				break;
 		}
 		return morDropdownDataList;

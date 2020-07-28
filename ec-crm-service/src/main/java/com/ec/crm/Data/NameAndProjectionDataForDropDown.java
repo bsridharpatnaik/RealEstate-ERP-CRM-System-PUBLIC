@@ -3,6 +3,7 @@ package com.ec.crm.Data;
 import java.util.List;
 
 import com.ec.crm.ReusableClasses.IdNameProjections;
+import com.ec.crm.Service.PopulateAssigneeList;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -14,6 +15,15 @@ public class NameAndProjectionDataForDropDown
 	List<IdNameProjections> brokerDetails;
 	List<IdNameProjections> sourceDetails;
 	List<IdNameProjections> sentimentDetails;
+	PopulateAssigneeList assigneeDetails;
+	
+	
+	public PopulateAssigneeList getAssigneeDetails() {
+		return assigneeDetails;
+	}
+	public void setAssigneeDetails(PopulateAssigneeList assigneeDetails) {
+		this.assigneeDetails = assigneeDetails;
+	}
 	public List<String> getValidPropertyType() {
 		return validPropertyType;
 	}
