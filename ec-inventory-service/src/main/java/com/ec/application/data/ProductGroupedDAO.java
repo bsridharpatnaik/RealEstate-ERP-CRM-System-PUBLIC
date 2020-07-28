@@ -3,18 +3,27 @@ package com.ec.application.data;
 public class ProductGroupedDAO 
 {
 	String productname;
+	String measurementUnit;
 	Double quantity;
-	public ProductGroupedDAO(String productname, Long quantity) {
+	public ProductGroupedDAO(String productname, String measurementUnit,Long quantity) {
 		super();
 		this.productname = productname;
 		this.quantity = Double.valueOf(quantity);
+		this.measurementUnit=measurementUnit;
 	}
-	public ProductGroupedDAO(String productname, Double quantity) {
+	public ProductGroupedDAO(String productname,String measurementUnit, Double quantity) {
 		super();
 		this.productname = productname;
 		this.quantity = Double.valueOf(quantity);
+		this.measurementUnit=measurementUnit;
 	}
 	
+	public String getMeasurementUnit() {
+		return measurementUnit;
+	}
+	public void setMeasurementUnit(String measurementUnit) {
+		this.measurementUnit = measurementUnit;
+	}
 	public String getProductname() {
 		return productname;
 	}
