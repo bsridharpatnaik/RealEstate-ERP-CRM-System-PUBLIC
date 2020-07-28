@@ -1,5 +1,8 @@
 package com.ec.crm.Model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,6 +11,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -30,18 +35,33 @@ public class Note extends ReusableFields{
 	@Column(name="content")
 	String content;
 	
-	@Column(name="file_id")
-	String fileId;
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
+	@JoinTable(name = "note_fileinformation", joinColumns = {
+			@JoinColumn(name = "noteId", referencedColumnName = "noteId") }, inverseJoinColumns = {
+					@JoinColumn(name = "id", referencedColumnName = "id") })
+	Set<FileInformation> fileInformations = new HashSet<>();
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
 	@JoinColumn(name="lead_id",nullable=false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Lead lead;
 	
 	@Column(name="pinned")
 	Boolean pinned;
+	
+	@Column(name="creatorId")
+	String creatorId;
+	
+	
+	
+	public Set<FileInformation> getFileInformations() {
+		return fileInformations;
+	}
+
+	public void setFileInformations(Set<FileInformation> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
 
 	public Long getNoteId() {
 		return noteId;
@@ -57,14 +77,6 @@ public class Note extends ReusableFields{
 
 	public void setContent(String content) {
 		this.content = content;
-	}
-
-	public String getFileId() {
-		return fileId;
-	}
-
-	public void setFileId(String fileId) {
-		this.fileId = fileId;
 	}
 
 	public Lead getLead() {

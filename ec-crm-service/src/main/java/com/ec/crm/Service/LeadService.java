@@ -171,6 +171,7 @@ public class LeadService
 				lead.setAddress(setAddress(payload,lead.getAddress()));
 		}
 	 
+	 @Transactional
 		private Address setAddress(@Valid LeadCreateData payload,Address address) 
 		{
 			log.info("Invoked setAddress");

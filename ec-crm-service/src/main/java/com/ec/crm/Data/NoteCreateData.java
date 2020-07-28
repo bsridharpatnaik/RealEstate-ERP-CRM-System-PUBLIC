@@ -1,25 +1,35 @@
 package com.ec.crm.Data;
 
+import java.util.List;
+
+import org.springframework.lang.NonNull;
+
 import com.ec.crm.Model.Broker;
 
 public class NoteCreateData {
 	
-	Long noteId;
-	
 	String content;
 	
-	String fileId;
-	
+	@NonNull
 	Long leadId;
 	
 	Boolean pinned;
-
-	public Long getNoteId() {
-		return noteId;
+	
+	@NonNull
+	List<FileInformationDAO> fileInformations;
+	
+	@Override
+	public String toString() {
+		return "NoteCreateData [content=" + content + ", leadId=" + leadId + ", pinned=" + pinned
+				+ ", fileInformations=" + fileInformations + "]";
 	}
 
-	public void setNoteId(Long noteId) {
-		this.noteId = noteId;
+	public List<FileInformationDAO> getFileInformations() {
+		return fileInformations;
+	}
+
+	public void setFileInformations(List<FileInformationDAO> fileInformations) {
+		this.fileInformations = fileInformations;
 	}
 
 	public String getContent() {
@@ -28,14 +38,6 @@ public class NoteCreateData {
 
 	public void setContent(String content) {
 		this.content = content;
-	}
-
-	public String getFileId() {
-		return fileId;
-	}
-
-	public void setFileId(String fileId) {
-		this.fileId = fileId;
 	}
 
 	public Long getLeadId() {
@@ -53,6 +55,4 @@ public class NoteCreateData {
 	public void setPinned(Boolean pinned) {
 		this.pinned = pinned;
 	}
-	
-	
 }

@@ -5,6 +5,8 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -21,20 +23,38 @@ import com.ec.crm.Repository.NoteRepo;
 import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
-public class NoteService {
+public class NoteService 
+{
 	@Autowired
 	LeadRepo lRepo;
 	
 	@Autowired
 	NoteRepo nRepo;
 	
-	public Page<Note> fetchAll(Pageable pageable) {
-		// TODO Auto-generated method stub
+	Logger log = LoggerFactory.getLogger(NoteService.class);
+	
+	public Note createNote(@Valid NoteCreateData payload) throws Exception 
+	{
+		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
+		if(! leadOpt.isPresent())
+			throw new Exception("Lead not found");
+		
+		Note note=new Note();
+		note.setContent(payload.getContent());
+		note.setLead(leadOpt.get());
+		note.setPinned(payload.getPinned());
+		nRepo.save(note);
+		return note;
+	}
+	
+	public Page<Note> fetchAll(Pageable pageable) 
+	{
+		log.info("Fetching all notes for page - "+pageable.getPageNumber());
 		return nRepo.findAll(pageable);
 	}
 
-	public Note findSingleNote(long id) throws Exception {
-		// TODO Auto-generated method stub
+	public Note findSingleNote(long id) throws Exception 
+	{
 		Optional<Note> note = nRepo.findById(id);
 		if(note.isPresent())
 			return note.get();
@@ -42,20 +62,7 @@ public class NoteService {
 			throw new Exception("Note ID not found");
 	}
 
-	public Note createNote(@Valid NoteCreateData payload) throws Exception {
-		// TODO Auto-generated method stub
-		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
-		if(! leadOpt.isPresent())
-			throw new Exception("Lead not found");
-		
-		Note note=new Note();
-		note.setContent(payload.getContent());
-		note.setFileId(payload.getFileId());
-		note.setLead(leadOpt.get());
-		note.setPinned(payload.getPinned());
-		nRepo.save(note);
-		return note;
-	}
+	
 
 	public void deleteNote(Long id) {
 		// TODO Auto-generated method stub
