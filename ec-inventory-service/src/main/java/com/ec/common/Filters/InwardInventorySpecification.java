@@ -60,7 +60,7 @@ public final class InwardInventorySpecification
 			Specification<InwardInventory> internalSpec = null;
 			internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldContains(InwardInventory_.SUPPLIER, Supplier_.NAME, globalSearch));
 			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereProductContains(
-					productNames,InwardInventory_.INWARD_OUTWARD_LIST));
+					globalSearch,InwardInventory_.INWARD_OUTWARD_LIST));
 			finalSpec = specbldr.specAndCondition(finalSpec,internalSpec);
 		}
 		return finalSpec;
