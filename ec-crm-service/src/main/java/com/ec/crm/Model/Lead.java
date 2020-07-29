@@ -24,6 +24,9 @@ import org.springframework.lang.NonNull;
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import Deserializers.ToUsernameSerializer;
 
 @Entity
 @Table(name = "customer_lead")
@@ -89,9 +92,11 @@ public class Lead extends ReusableFields implements Serializable
 	Sentiment sentiment;
 	
 	@Column(name="user_id")
+	@JsonSerialize(using=ToUsernameSerializer.class)
 	Long asigneeId;
 
 	@Column(name="created_by")
+	@JsonSerialize(using=ToUsernameSerializer.class)
 	Long creatorId;
 	
 	@NonNull

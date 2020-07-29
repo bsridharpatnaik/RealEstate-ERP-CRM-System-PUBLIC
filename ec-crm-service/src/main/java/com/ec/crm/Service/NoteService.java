@@ -83,7 +83,7 @@ public class NoteService
 
 		Note note=noteOpt.get();
 		note.setContent(payload.getContent());
-		note.setFileId(payload.getFileId());
+		//note.setFileId(payload.getFileId());
 		note.setLead(leadOpt.get());
 		note.setPinned(payload.getPinned());
 		nRepo.save(note);

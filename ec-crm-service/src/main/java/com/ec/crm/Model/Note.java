@@ -23,9 +23,12 @@ import org.hibernate.envers.RelationTargetAuditMode;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import Deserializers.ToUsernameSerializer;
 
 @Entity
-@Table(name = "Note")
+@Table(name = "note")
 public class Note extends ReusableFields{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -37,7 +40,7 @@ public class Note extends ReusableFields{
 	
 	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
 	@JoinTable(name = "note_fileinformation", joinColumns = {
-			@JoinColumn(name = "noteId", referencedColumnName = "noteId") }, inverseJoinColumns = {
+			@JoinColumn(name = "note_id", referencedColumnName = "note_id") }, inverseJoinColumns = {
 					@JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
 	
@@ -51,6 +54,7 @@ public class Note extends ReusableFields{
 	Boolean pinned;
 	
 	@Column(name="creatorId")
+	@JsonSerialize(using=ToUsernameSerializer.class)
 	String creatorId;
 	
 	
