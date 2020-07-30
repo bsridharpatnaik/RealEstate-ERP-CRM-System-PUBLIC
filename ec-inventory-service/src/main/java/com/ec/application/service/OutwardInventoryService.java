@@ -270,15 +270,13 @@ public class OutwardInventoryService
 			throw new Exception("Contractor not found.");
 		if(!warehouseRepo.existsById(oiData.getWarehouseId()))
 			throw new Exception("Contractor not found.");
-		
+		if(!usageAreaRepo.existsById(oiData.getUsageAreaId()))
+			throw new Exception("Usage Area not found.");
 		Long duplicateProductIdCount = oiData.getProductWithQuantities().stream()
 	        	.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream().filter(e -> e.getValue() > 1).count();
 			
 			if(duplicateProductIdCount>0)
 				throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
-		
-		if(!usageAreaRepo.existsById(oiData.getUsageAreaId()))
-			throw new Exception("Usage Area not found.");
 		for(ProductWithQuantity productWithQuantity : oiData.getProductWithQuantities())
 		{
 			if(!productRepo.existsById(productWithQuantity.getProductId()))
