@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import static java.util.stream.Collectors.counting;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -268,6 +270,12 @@ public class OutwardInventoryService
 			throw new Exception("Contractor not found.");
 		if(!warehouseRepo.existsById(oiData.getWarehouseId()))
 			throw new Exception("Contractor not found.");
+		
+		Long duplicateProductIdCount = oiData.getProductWithQuantities().stream()
+	        	.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream().filter(e -> e.getValue() > 1).count();
+			
+			if(duplicateProductIdCount>0)
+				throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
 		
 		if(!usageAreaRepo.existsById(oiData.getUsageAreaId()))
 			throw new Exception("Usage Area not found.");
