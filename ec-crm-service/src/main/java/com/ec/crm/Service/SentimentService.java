@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.SentimentListWithTypeAheadData;
 import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.SentimentSpecifications;
 import com.ec.crm.Filters.SourceSpecifications;
-import com.ec.crm.Model.PropertyTypeEnum;
 import com.ec.crm.Model.Sentiment;
 import com.ec.crm.Model.Source;
 import com.ec.crm.Repository.SentimentRepo;

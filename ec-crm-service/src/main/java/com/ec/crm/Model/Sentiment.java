@@ -13,12 +13,16 @@ import javax.validation.constraints.NotBlank;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
+import com.ec.crm.Data.AssigneeDAO;
 import com.ec.crm.ReusableClasses.ReusableFields;
+
+import lombok.Data;
 
 @Entity
 @Table(name = "sentiment")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Data
 public class Sentiment extends ReusableFields implements Serializable
 {
 	@Id
@@ -31,23 +35,4 @@ public class Sentiment extends ReusableFields implements Serializable
 	String name;
 	
 	String description;
-	
-	public Long getSentimentId() {
-		return sentimentId;
-	}
-	public void setSentimentId(Long sentimentId) {
-		this.sentimentId = sentimentId;
-	}
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public String getDescription() {
-		return description;
-	}
-	public void setDescription(String description) {
-		this.description = description;
-	}
 }

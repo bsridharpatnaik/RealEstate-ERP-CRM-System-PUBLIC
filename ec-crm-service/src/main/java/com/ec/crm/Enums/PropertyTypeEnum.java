@@ -1,4 +1,4 @@
-package com.ec.crm.Model;
+package com.ec.crm.Enums;
 
 import java.io.Serializable;
 import java.util.ArrayList;

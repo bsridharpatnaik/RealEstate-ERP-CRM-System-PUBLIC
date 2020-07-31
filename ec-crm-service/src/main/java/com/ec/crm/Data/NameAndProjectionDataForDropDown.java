@@ -7,7 +7,10 @@ import com.ec.crm.Service.PopulateAssigneeList;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import lombok.Data;
+
 @JsonInclude(Include.NON_NULL)
+@Data
 public class NameAndProjectionDataForDropDown 
 {
 	List<String> validPropertyType;
@@ -16,43 +19,4 @@ public class NameAndProjectionDataForDropDown
 	List<IdNameProjections> sourceDetails;
 	List<IdNameProjections> sentimentDetails;
 	PopulateAssigneeList assigneeDetails;
-	
-	
-	public PopulateAssigneeList getAssigneeDetails() {
-		return assigneeDetails;
-	}
-	public void setAssigneeDetails(PopulateAssigneeList assigneeDetails) {
-		this.assigneeDetails = assigneeDetails;
-	}
-	public List<String> getValidPropertyType() {
-		return validPropertyType;
-	}
-	public void setValidPropertyType(List<String> validPropertyType) {
-		this.validPropertyType = validPropertyType;
-	}
-	public List<String> getValidStatusType() {
-		return validStatusType;
-	}
-	public void setValidStatusType(List<String> validStatusType) {
-		this.validStatusType = validStatusType;
-	}
-	public List<IdNameProjections> getBrokerDetails() {
-		return brokerDetails;
-	}
-	public void setBrokerDetails(List<IdNameProjections> brokerDetails) {
-		this.brokerDetails = brokerDetails;
-	}
-	public List<IdNameProjections> getSourceDetails() {
-		return sourceDetails;
-	}
-	public void setSourceDetails(List<IdNameProjections> sourceDetails) {
-		this.sourceDetails = sourceDetails;
-	}
-	public List<IdNameProjections> getSentimentDetails() {
-		return sentimentDetails;
-	}
-	public void setSentimentDetails(List<IdNameProjections> sentimentDetails) {
-		this.sentimentDetails = sentimentDetails;
-	}
-	
 }

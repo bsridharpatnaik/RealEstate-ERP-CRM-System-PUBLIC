@@ -13,12 +13,16 @@ import javax.validation.constraints.NotBlank;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
+import com.ec.crm.Data.AssigneeDAO;
 import com.ec.crm.ReusableClasses.ReusableFields;
+
+import lombok.Data;
 
 @Entity
 @Table(name = "source")
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @Audited
+@Data
 public class Source extends ReusableFields implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -31,23 +35,4 @@ public class Source extends ReusableFields implements Serializable{
 	
 	@Column(name="source_description")
 	String sourceDescription;
-	
-	public Long getSourceId() {
-		return sourceId;
-	}
-	public void setSourceId(Long sourceId) {
-		this.sourceId = sourceId;
-	}
-	public String getSourceName() {
-		return sourceName;
-	}
-	public void setSourceName(String sourceName) {
-		this.sourceName = sourceName;
-	}
-	public String getSourceDescription() {
-		return sourceDescription;
-	}
-	public void setSourceDescription(String sourceDescription) {
-		this.sourceDescription = sourceDescription;
-	}
 }

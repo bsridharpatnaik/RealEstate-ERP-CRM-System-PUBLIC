@@ -18,17 +18,17 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
-import org.hibernate.envers.Audited;
-import org.hibernate.envers.RelationTargetAuditMode;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import Deserializers.ToUsernameSerializer;
+import lombok.Data;
 
 @Entity
 @Table(name = "note")
+@Data
 public class Note extends ReusableFields{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -56,49 +56,5 @@ public class Note extends ReusableFields{
 	@Column(name="creatorId")
 	@JsonSerialize(using=ToUsernameSerializer.class)
 	String creatorId;
-	
-	
-	
-	public Set<FileInformation> getFileInformations() {
-		return fileInformations;
-	}
-
-	public void setFileInformations(Set<FileInformation> fileInformations) {
-		this.fileInformations = fileInformations;
-	}
-
-	public Long getNoteId() {
-		return noteId;
-	}
-
-	public void setNoteId(Long noteId) {
-		this.noteId = noteId;
-	}
-
-	public String getContent() {
-		return content;
-	}
-
-	public void setContent(String content) {
-		this.content = content;
-	}
-
-	public Lead getLead() {
-		return lead;
-	}
-
-	public void setLead(Lead lead) {
-		this.lead = lead;
-	}
-
-	public Boolean getPinned() {
-		return pinned;
-	}
-
-	public void setPinned(Boolean pinned) {
-		this.pinned = pinned;
-	}
-	
-	
 	
 }

@@ -26,10 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Lead;
-import com.ec.crm.Model.LeadStatusEnum;
-import com.ec.crm.Model.PropertyTypeEnum;
 import com.ec.crm.Service.LeadService;
 
 @RestController

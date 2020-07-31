@@ -10,10 +10,14 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
+import com.ec.crm.Data.AssigneeDAO;
 import com.ec.crm.ReusableClasses.ReusableFields;
+
+import lombok.Data;
 
 @Entity
 @Table(name = "ActivityType")
+@Data
 public class ActivityType extends ReusableFields implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -22,19 +26,4 @@ public class ActivityType extends ReusableFields implements Serializable{
 	
 	@NotBlank(message = "Name is mandatory")
 	String name;
-	
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public Long getActivityTypeId() {
-		return activityTypeId;
-	}
-	public void setActivityTypeId(Long activityTypeId) {
-		this.activityTypeId = activityTypeId;
-	}
-	
-	
 }

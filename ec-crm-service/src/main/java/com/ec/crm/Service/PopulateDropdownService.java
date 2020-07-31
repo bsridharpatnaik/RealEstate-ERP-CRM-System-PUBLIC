@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.NameAndProjectionDataForDropDown;
-import com.ec.crm.Model.LeadStatusEnum;
-import com.ec.crm.Model.PropertyTypeEnum;
+import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.SentimentRepo;
 import com.ec.crm.Repository.SourceRepo;

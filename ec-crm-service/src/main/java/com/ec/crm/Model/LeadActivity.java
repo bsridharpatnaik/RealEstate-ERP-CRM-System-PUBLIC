@@ -19,10 +19,14 @@ import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.RelationTargetAuditMode;
 
+import com.ec.crm.Data.AssigneeDAO;
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.Data;
 @Entity
 @Table(name = "`LeadActivity`")
+@Data
 public class LeadActivity extends ReusableFields implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -66,94 +70,4 @@ public class LeadActivity extends ReusableFields implements Serializable {
 	@NotFound(action=NotFoundAction.IGNORE)
 	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	ActivityType activityType;
-
-	public Long getLeadActivityId() {
-		return leadActivityId;
-	}
-
-	public void setLeadActivityId(Long leadActivityId) {
-		this.leadActivityId = leadActivityId;
-	}
-
-	public Date getActivityDate() {
-		return activityDate;
-	}
-
-	public void setActivityDate(Date activityDate) {
-		this.activityDate = activityDate;
-	}
-
-	public Date getCreationDate() {
-		return creationDate;
-	}
-
-	public void setCreationDate(Date creationDate) {
-		this.creationDate = creationDate;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String getTags() {
-		return tags;
-	}
-
-	public void setTags(String tags) {
-		this.tags = tags;
-	}
-
-	public String getStatus() {
-		return status;
-	}
-
-	public void setStatus(String status) {
-		this.status = status;
-	}
-
-	public Date getTime() {
-		return time;
-	}
-
-	public void setTime(Date time) {
-		this.time = time;
-	}
-
-	public Long getUserId() {
-		return userId;
-	}
-
-	public void setUserId(Long userId) {
-		this.userId = userId;
-	}
-
-	public ActivityType getActivityType() {
-		return activityType;
-	}
-
-	public void setActivityType(ActivityType activityType) {
-		this.activityType = activityType;
-	}
-
-	public Lead getLead() {
-		return lead;
-	}
-
-	public void setLead(Lead lead) {
-		this.lead = lead;
-	}
-	
-	
 }
