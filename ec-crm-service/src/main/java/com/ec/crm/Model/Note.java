@@ -44,17 +44,13 @@ public class Note extends ReusableFields{
 					@JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
 	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="lead_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	Lead lead;
+	Long leadId;
 	
 	@Column(name="pinned")
 	Boolean pinned;
 	
 	@Column(name="creatorId")
 	@JsonSerialize(using=ToUsernameSerializer.class)
-	String creatorId;
+	Long creatorId;
 	
 }

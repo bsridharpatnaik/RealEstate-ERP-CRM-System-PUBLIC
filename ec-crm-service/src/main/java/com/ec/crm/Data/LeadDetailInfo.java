@@ -10,9 +10,6 @@ import lombok.Data;
 
 @Data
 public class LeadDetailInfo {
-	Lead LeadDetails;
-	List<Note> PinnedNotes;
-	List<Note> UnpinnedNotes;
-	LeadStatusEnum StatusInfo;
-	List<LeadStatusEnum> HistoricalStatus;
+	
+	AllNotesForLeadDAO allNotes;
 }

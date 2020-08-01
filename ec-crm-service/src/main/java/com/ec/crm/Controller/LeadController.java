@@ -39,9 +39,15 @@ public class LeadController {
 	LeadService leadService;
 	
 	@GetMapping
-	public Page<Lead> returnAllSentiment(Pageable pageable) 
+	public Page<Lead> returnAllLeads(Pageable pageable) 
 	{
 		return leadService.fetchAll(pageable);
+	}
+	
+	@GetMapping("{id}")
+	public Lead returnSingleLead(@PathVariable Long id) throws Exception 
+	{
+		return leadService.getSingleLead(id);
 	}
 	
 	@PostMapping

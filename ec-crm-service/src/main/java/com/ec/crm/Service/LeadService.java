@@ -63,6 +63,9 @@ public class LeadService
 	NoteRepo nRepo;
 	
 	@Autowired
+	NoteService noteService;
+	
+	@Autowired
 	WebClient.Builder webClientBuilder;
 	
 	@Autowired
@@ -132,6 +135,16 @@ public class LeadService
 		setLeadFields(leadForUpdate,payload,"update");
 		log.info("Saving new lead record to database");
 		return lRepo.save(leadForUpdate);
+	}
+	
+	public Lead getSingleLead(Long id) throws Exception 
+	{
+		Optional<Lead> leadOpt = lRepo.findById(id);
+		
+		if(!leadOpt.isPresent())
+			throw new Exception("Lead with ID -"+id+" Not Found");
+		
+		return leadOpt.get();
 	}
 	
 	private void formatMobileNo(LeadCreateData payload) 
@@ -217,43 +230,10 @@ public class LeadService
 	}
 
 	public LeadDetailInfo findSingleLeadDetailInfo(long id) throws Exception 
-	{/*
-		// TODO Auto-generated method stub
-		LeadDetailInfo l=new LeadDetailInfo();
-		Optional<Lead> lead = lRepo.findById(id);
-		if(lead.isPresent())
-		{
-			l.setLeadDetails(lead.get());
-			List<Note> pinnednotes=nRepo.getpinnednotes(id);
-			List<Note> unpinnednotes=nRepo.getunpinnednotes(id);
-			List<LeadStatus> leadstatus=lsRepo.checklatest(id);
-			if(!leadstatus.isEmpty()) {
-				/*set latest status 
-				Long statusid=leadstatus.get(0).getStatusId();
-				Optional<Status> Ostatus=stRepo.findById(statusid);
-				Status status=Ostatus.get();
-				l.setStatusInfo(status);
-				
-				//set historical status
-				List<Status> s=new ArrayList<Status>();
-				for (int i = 0; i < leadstatus.size(); i++) {
-					Long sid = leadstatus.get(i).getStatusId();
-					Optional<Status> Ostatusadd=stRepo.findById(sid);
-					s.add(Ostatusadd.get());
-				}
-				l.setHistoricalStatus(null);
-			}
-			
-			l.setPinnedNotes(pinnednotes);
-			l.setUnpinnedNotes(unpinnednotes);
-			
-			return null;
-		}
-		else {
-			throw new Exception("Lead ID not found");
-		}
-			*/
-		return null;
+	{
+		LeadDetailInfo leadDetails = new LeadDetailInfo();
+		leadDetails.setAllNotes(noteService.getAllNotesForLead(id));
+		return leadDetails;
 	}
 	
  
