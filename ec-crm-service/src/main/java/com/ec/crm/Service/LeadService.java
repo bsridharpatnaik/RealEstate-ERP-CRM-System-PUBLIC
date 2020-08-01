@@ -168,7 +168,7 @@ public class LeadService
 			lead.setEmailId(payload.getEmailId());
 			lead.setOccupation(payload.getOccupation());
 			lead.setPurpose(payload.getPurpose());
-			lead.setPropertyType(PropertyTypeEnum.valueOf(payload.getPropertyType()));
+			lead.setPropertyType(payload.getPropertyType());
 			lead.setSentiment(payload.getSentimentId()==null?null:siRepo.findById(payload.getSentimentId()).get());
 			lead.setSource(payload.getSourceId()==null?null:sourceRepo.findById(payload.getSourceId()).get());
 			lead.setBroker(payload.getBrokerId()==null?null:bRepo.findById(payload.getBrokerId()).get());

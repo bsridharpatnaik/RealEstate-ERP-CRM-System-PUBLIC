@@ -7,11 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.ReusableClasses.BaseRepository;
 
 @Repository
-public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, JpaSpecificationExecutor<LeadActivity> {
+public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, JpaSpecificationExecutor<LeadActivity> 
+{
+	@Query(value="SELECT l from LeadActivity l where l.lead.leadId=:leadId and l.activityType=:activityType and l.isOpen=true")
+	List<LeadActivity> findByLeadActivityTypeOpen(@Param("leadId")Long leadId, @Param("activityType")ActivityTypeEnum activityType);
 	
 	
 	

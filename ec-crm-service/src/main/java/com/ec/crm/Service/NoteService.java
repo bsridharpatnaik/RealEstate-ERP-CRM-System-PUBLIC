@@ -109,7 +109,7 @@ public class NoteService
 		if(type.equals("create"))
 		{
 			note.setCreatorId(currentUserID);
-			note.setLeadId(payload.getLeadId());
+			note.setLead(lRepo.findById(payload.getLeadId()).get());
 		}
 	}
 
@@ -119,8 +119,8 @@ public class NoteService
 		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
 		if(! leadOpt.isPresent())
 			throw new Exception("Lead not found");
-		if(payload.getContent().length()>1000)
-			throw new Exception("Please enter note with length less than 1000 characters");
+		if(payload.getContent().length()>320)
+			throw new Exception("Please enter note with length less than 320 characters");
 	}
 
 	public void deleteNote(Long id) throws Exception 

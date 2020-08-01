@@ -20,6 +20,8 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -38,13 +40,19 @@ public class Note extends ReusableFields{
 	@Column(name="content")
 	String content;
 	
+	
 	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
 	@JoinTable(name = "note_fileinformation", joinColumns = {
 			@JoinColumn(name = "note_id", referencedColumnName = "note_id") }, inverseJoinColumns = {
 					@JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
 	
-	Long leadId;
+	@JsonIgnore
+	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	@JoinColumn(name="lead_id",nullable=false)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@NotFound(action=NotFoundAction.IGNORE)
+	Lead lead;
 	
 	@Column(name="pinned")
 	Boolean pinned;

@@ -28,7 +28,7 @@ public class LeadCreateData
 	String city;
 	String pincode;
 	Long sourceId;
-	String propertyType;
+	PropertyTypeEnum propertyType;
 	Long sentimentId;
 	Long assigneeId;
 

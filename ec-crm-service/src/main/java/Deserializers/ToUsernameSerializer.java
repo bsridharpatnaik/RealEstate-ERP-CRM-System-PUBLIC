@@ -32,11 +32,16 @@ public class ToUsernameSerializer extends JsonSerializer<Long>
         	jgen.writeNull();
         else 
         {
-        	log.info("Getting username for userid - "+value);
-        	String username = userDetailsService.getUserFromId(value).getUsername();
-        	log.info("Username Fetched is -"+username);
-        	jgen.writeString(username);
-    
+        	if(value!=404) //404 will always be system user
+        	{
+        		log.info("Getting username for userid - "+value);
+        		String username = userDetailsService.getUserFromId(value).getUsername();
+        		log.info("Username Fetched is -"+username);
+        		jgen.writeString(username);
+        	}
+        	else 
+        		jgen.writeString("System");
         }
+        
 	}
 }

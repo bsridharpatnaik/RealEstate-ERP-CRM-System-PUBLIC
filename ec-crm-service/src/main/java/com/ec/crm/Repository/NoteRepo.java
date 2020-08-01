@@ -14,7 +14,7 @@ import com.ec.crm.ReusableClasses.BaseRepository;
 @Repository
 public interface NoteRepo extends BaseRepository<Note, Long>, JpaSpecificationExecutor<Note> 
 {
-	@Query(value="SELECT n from Note n where n.leadId=:id and pinned=:pinned order by created desc")
-	List<Note> findNotesForLead(@Param("id")Long id,@Param("pinned")boolean pinned);
 	
+	@Query(value="SELECT n from Note n where n.lead.leadId=:id and pinned=:pinned order by created desc")
+	List<Note> findNotesForLead(@Param("id")Long id,@Param("pinned")boolean pinned);
 }
