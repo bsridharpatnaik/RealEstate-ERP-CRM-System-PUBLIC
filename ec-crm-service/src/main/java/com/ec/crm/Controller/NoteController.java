@@ -50,10 +50,10 @@ public class NoteController {
 	}
 	
 	@PatchMapping("/{id}")
-	public ResponseEntity<?>  moveNoteToUnpinned(@PathVariable Long id) throws Exception 
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void  moveNoteToUnpinned(@PathVariable Long id) throws Exception 
 	{
 		noteService.moveNoteToUnpinned(id);
-		return ResponseEntity.ok("Success");
 	}
 	
 	@PutMapping("/{id}")

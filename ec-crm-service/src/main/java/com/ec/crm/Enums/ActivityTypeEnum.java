@@ -17,7 +17,8 @@ public enum ActivityTypeEnum
 	Reminder,
 	Task,
 	Message,
-	Email;
+	Email,
+	Deal_Lost;
 	
 	public ActivityTypeEnum setFromString(String name)
 	{

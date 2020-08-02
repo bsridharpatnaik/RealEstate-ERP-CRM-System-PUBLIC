@@ -83,6 +83,9 @@ public class LeadService
 	
 	@PersistenceContext
     private EntityManager entityManager;;
+    
+    @Autowired
+    LeadActivityService leadActivityService;
 	
 	@Value("${common.serverurl}")
 	private String reqUrl;
@@ -108,7 +111,11 @@ public class LeadService
 		log.info("Setting lead fields from payload");
 		setLeadFields(lead,payload,"create");
 		log.info("Saving new lead record to database");
-		return lRepo.save(lead);
+		lRepo.save(lead);
+		log.info("Creating default activity for the lead");
+		leadActivityService.createDefaultActivity(lead.getLeadId());
+		log.info("Saving new lead record to database");
+		return lead;
 	}
 	
 	@Transactional
@@ -233,6 +240,7 @@ public class LeadService
 	{
 		LeadDetailInfo leadDetails = new LeadDetailInfo();
 		leadDetails.setAllNotes(noteService.getAllNotesForLead(id));
+		leadDetails.setAllActivities(leadActivityService.getAllActivitiesForLead(id));
 		return leadDetails;
 	}
 	

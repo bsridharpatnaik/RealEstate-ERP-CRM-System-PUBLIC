@@ -1,5 +1,9 @@
 package com.ec.crm.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,8 +18,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
 import com.ec.crm.Data.RescheduleActivityData;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
@@ -57,7 +63,7 @@ public class LeadActivityService {
 		log.info("Fetching current user from gateway");
 		currentUserId = userDetailsService.getCurrentUser().getId();
 		LeadActivity leadActivity=new LeadActivity();
-		setFields(leadActivity,payload,"create");
+		setFields(leadActivity,payload,"create","user");
 		log.info("Closed createLeadActivity");
 		return laRepo.save(leadActivity);
 	}
@@ -71,12 +77,12 @@ public class LeadActivityService {
 		log.info("No open activity found with same type");
 	}
 
-	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String type) 
+	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String type,String creatorType) 
 	{
 		log.info("Invoked setFields");
 		leadActivity.setActivityDateTime(payload.getActivityDateTime());
 		leadActivity.setActivityType(payload.getActivityType());
-		leadActivity.setCreatorId(currentUserId);
+		leadActivity.setCreatorId(creatorType=="user"?currentUserId:404);
 		leadActivity.setDescription(payload.getDescription());
 		leadActivity.setTitle(payload.getTitle());
 		leadActivity.setTags(payload.getTags());
@@ -86,7 +92,7 @@ public class LeadActivityService {
 		switch(type)
 		{
 		case "create":
-			leadActivity.setIsOpen(true);
+			leadActivity.setIsOpen(payload.getActivityType().equals(ActivityTypeEnum.Deal_Lost)?false:true);
 			break;
 		case "update":
 			
@@ -110,12 +116,7 @@ public class LeadActivityService {
 		if(errorMessage!="")
 			throw new Exception("Fields Missing - "+errorMessage);
 		
-		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
-		if(!leadOpt.isPresent())
-		{
-			log.error("Lead with ID not found");
-			throw new Exception("Lead with ID not found");
-		}
+		
 	}
 
 	public Page<LeadActivity> fetchAll(Pageable pageable) 
@@ -152,23 +153,15 @@ public class LeadActivityService {
 	@Transactional
 	public void rescheduleActivity(Long id,RescheduleActivityData rescheduleActivityData) throws Exception
 	{
-		currentUserId = userDetailsService.getCurrentUser().getId();
 		log.info("Invoked rescheduleActivity");
-		if(rescheduleActivityData.getRescheduleDateTime()==null)
-		{
-			log.info("Invalid or Null date and time");
-			throw new Exception("Enter valid date and time for rescheduling");
-		}
-		
-		Optional<LeadActivity> latype = laRepo.findById(id);
-		if(!latype.isPresent())
-			throw new Exception("LeadActivity ID not found");
-		LeadActivity leadActivity =  latype.get();
+		LeadActivity leadActivity = validateReschedulePayloadAndReturnLeadActivity(rescheduleActivityData,id);
+		currentUserId = userDetailsService.getCurrentUser().getId();
 		
 		//Delete old activity
 		log.info("Deleting old Activity");
-		deleteLeadActivity(leadActivity.getLeadActivityId(),"Rescheduled by User - "+userDetailsService.getCurrentUser().getUsername(),currentUserId);
+		deleteLeadActivity(leadActivity.getLeadActivityId(),rescheduleActivityData.getClosingComment(),currentUserId);
 		log.info("Deleted old Activity - success");
+		
 		//Create new Activity
 		log.info("creating new Activity - success");
 		LeadActivity newActivity  = new LeadActivity();
@@ -176,8 +169,38 @@ public class LeadActivityService {
 		laRepo.save(newActivity);
 	}
 
+	private  LeadActivity validateReschedulePayloadAndReturnLeadActivity(RescheduleActivityData rescheduleActivityData,Long id) throws Exception 
+	{
+		log.info("Invoked validateReschedulePayloadAndReturnLeadActivity");
+		if(rescheduleActivityData.getRescheduleDateTime()==null)
+		{
+			log.info("Invalid or Null date and time");
+			throw new Exception("Enter valid date and time for rescheduling");
+		}
+		
+		if(rescheduleActivityData.getClosingComment()==null || rescheduleActivityData.getClosingComment().equals(""))
+		{
+			log.info("Invalid or Null closing comment");
+			throw new Exception("Enter valid closing comment");
+		}
+		
+		Optional<LeadActivity> latype = laRepo.findById(id);
+		if(!latype.isPresent())
+		{
+			log.info("Lead Activity with ID - "+id+" not found");
+			throw new Exception("LeadActivity ID not found");
+		}
+		log.info("Payload validation passed. Returning leacactvity back");
+		return latype.get();
+	}
+
 	private void setFieldsForReschedule(RescheduleActivityData rescheduleActivityData,LeadActivity newActivity, LeadActivity leadActivity) 
 	{
+		log.info("Invoked setFieldsForReschedule");
+		List<String> newTags = new ArrayList<String>();
+		for(String tag : leadActivity.getTags())
+			newTags.add(tag);
+
 		newActivity.setActivityDateTime(rescheduleActivityData.getRescheduleDateTime());
 		newActivity.setActivityType(leadActivity.getActivityType());
 		newActivity.setCreatorId(currentUserId);
@@ -185,7 +208,49 @@ public class LeadActivityService {
 		newActivity.setDuration(leadActivity.getDuration());
 		newActivity.setIsOpen(true);
 		newActivity.setLead(leadActivity.getLead());
-		newActivity.setTags(leadActivity.getTags());
+		newActivity.setTags(newTags);
 		newActivity.setTitle(leadActivity.getTitle());
+	}
+	
+	public AllActivitesForLeadDAO getAllActivitiesForLead(Long leadId) throws Exception
+	{
+		log.info("Invoked getAllActivitiesForLead");
+		Lead lead = getLeadFromLeadId(leadId);
+		AllActivitesForLeadDAO allActivitesForLeadDAO = new AllActivitesForLeadDAO();
+		allActivitesForLeadDAO.setPendingActivities(laRepo.fetchPendingActivitiesForLead(lead.getLeadId()));
+		allActivitesForLeadDAO.setPastActivities(laRepo.fetchPastActivitiesForLead(lead.getLeadId()));
+		return allActivitesForLeadDAO;
+	}
+	
+	public void createDefaultActivity(Long leadId) throws Exception
+	{
+		log.info("Invoked createDefaultActivity for leadId -" +leadId );
+		LocalDate date = LocalDate.now();
+		Lead lead = getLeadFromLeadId(leadId);
+		LeadActivity newActivity = new LeadActivity();
+		newActivity.setActivityDateTime(Date.from(date.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+		newActivity.setActivityDateTime(new Date());
+		newActivity.setActivityType(ActivityTypeEnum.Call);
+		newActivity.setCreatorId((long) 404);
+		newActivity.setDescription("Default activity created for new Lead");
+		newActivity.setDuration((long) 0);
+		newActivity.setIsOpen(true);
+		newActivity.setLead(lead);
+		newActivity.setTitle("New Lead - Call");
+		
+		
+		
+	    laRepo.save(newActivity);
+	}
+	
+	private Lead getLeadFromLeadId(Long id) throws Exception
+	{
+		Optional<Lead> leadOpt = lRepo.findById(id);
+		if(!leadOpt.isPresent())
+		{
+			log.error("Lead with ID not found");
+			throw new Exception("Lead with ID not found");
+		}
+		return leadOpt.get();
 	}
 }
