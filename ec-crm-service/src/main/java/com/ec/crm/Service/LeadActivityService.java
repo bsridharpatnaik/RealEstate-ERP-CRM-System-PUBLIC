@@ -22,6 +22,7 @@ import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
+import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
@@ -65,9 +66,24 @@ public class LeadActivityService {
 		LeadActivity leadActivity=new LeadActivity();
 		setFields(leadActivity,payload,"create","user");
 		log.info("Closed createLeadActivity");
-		return laRepo.save(leadActivity);
+		laRepo.save(leadActivity);
+		ExecuteBusinessLogicWhileCreation(leadActivity);
+		return leadActivity;
+		
 	}
 	
+	private void ExecuteBusinessLogicWhileCreation(LeadActivity leadActivity) 
+	{
+		LeadStatusEnum status = leadActivity.getLead().getStatus();
+		if(leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Close))
+		{
+			leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
+			closeAllOpenActivitiesForLead();
+		}
+				
+		laRepo.save(leadActivity);
+	}
+
 	private void exitIfOpenActivityExists(LeadActivityCreate payload) throws Exception 
 	{
 		log.info("Invoked exitIfOpenActivityExists");
