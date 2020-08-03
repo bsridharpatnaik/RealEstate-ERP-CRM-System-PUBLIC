@@ -72,18 +72,49 @@ public class LeadActivityService {
 		
 	}
 	
+	@Transactional
 	private void ExecuteBusinessLogicWhileCreation(LeadActivity leadActivity) 
 	{
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
-		if(leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Close))
+		switch(leadActivity.getActivityType())
 		{
+		case Deal_Close:
 			leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
-			closeAllOpenActivitiesForLead();
+			closeAllOpenActivitiesForLead(leadActivity.getLead());
+			break;
+		case Deal_Lost:
+			leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+			closeAllOpenActivitiesForLead(leadActivity.getLead());
+			break;
+		case Property_Visit:
+			leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit);
+			break;
 		}
-				
 		laRepo.save(leadActivity);
 	}
-
+	
+	@Transactional
+	private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) 
+	{
+		if(leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+			leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+		laRepo.save(leadActivity);
+	}
+	
+	@Transactional
+	private void closeAllOpenActivitiesForLead(Lead lead) 
+	{
+		Long leadId = lead.getLeadId();
+		List<LeadActivity> activities = laRepo.findAllByOpenActivitiesByLeadId(leadId);
+		for(LeadActivity activity:activities)
+		{
+			activity.setClosedBy((long) 404);
+			activity.setClosingComment("Auto-Closed due to business logic");
+			activity.setIsOpen(false);
+			laRepo.save(activity);
+		}
+	}
+	
 	private void exitIfOpenActivityExists(LeadActivityCreate payload) throws Exception 
 	{
 		log.info("Invoked exitIfOpenActivityExists");
@@ -164,6 +195,7 @@ public class LeadActivityService {
 		leadActivity.setClosingComment(closingComment);
 		leadActivity.setClosedBy(closedBy);
 		laRepo.save(leadActivity);
+		ExecuteBusinessLogicWhileClosure(leadActivity);
 	}
 	
 	@Transactional
@@ -253,10 +285,7 @@ public class LeadActivityService {
 		newActivity.setIsOpen(true);
 		newActivity.setLead(lead);
 		newActivity.setTitle("New Lead - Call");
-		
-		
-		
-	    laRepo.save(newActivity);
+		laRepo.save(newActivity);
 	}
 	
 	private Lead getLeadFromLeadId(Long id) throws Exception

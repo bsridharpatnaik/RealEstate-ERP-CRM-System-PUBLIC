@@ -43,10 +43,10 @@ public class NoteController {
 	}
 	
 	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteNote(@PathVariable Long id) throws Exception
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void deleteNote(@PathVariable Long id) throws Exception
 	{
 		noteService.deleteNote(id);
-		return ResponseEntity.ok("Entity deleted");
 	}
 	
 	@PatchMapping("/{id}")
