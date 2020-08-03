@@ -15,8 +15,8 @@ public class NameAndProjectionDataForDropDown
 {
 	List<String> validPropertyType;
 	List<String> validStatusType;
+	List<String> validSentiments;
 	List<IdNameProjections> brokerDetails;
 	List<IdNameProjections> sourceDetails;
-	List<IdNameProjections> sentimentDetails;
 	PopulateAssigneeList assigneeDetails;
 }

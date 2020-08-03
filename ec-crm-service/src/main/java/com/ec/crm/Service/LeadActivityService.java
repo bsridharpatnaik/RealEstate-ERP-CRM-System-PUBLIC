@@ -64,7 +64,7 @@ public class LeadActivityService {
 		log.info("Fetching current user from gateway");
 		currentUserId = userDetailsService.getCurrentUser().getId();
 		LeadActivity leadActivity=new LeadActivity();
-		setFields(leadActivity,payload,"create","user");
+		setFields(leadActivity,payload,"user");
 		log.info("Closed createLeadActivity");
 		laRepo.save(leadActivity);
 		ExecuteBusinessLogicWhileCreation(leadActivity);
@@ -75,18 +75,22 @@ public class LeadActivityService {
 	@Transactional
 	private void ExecuteBusinessLogicWhileCreation(LeadActivity leadActivity) 
 	{
+		log.info("Invoked ExecuteBusinessLogicWhileCreation");
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
 		switch(leadActivity.getActivityType())
 		{
 		case Deal_Close:
+			log.info("Inside Case - Deal_Close");
 			leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
 			closeAllOpenActivitiesForLead(leadActivity.getLead());
 			break;
 		case Deal_Lost:
+			log.info("Inside Case - Deal_Lost");
 			leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
 			closeAllOpenActivitiesForLead(leadActivity.getLead());
 			break;
 		case Property_Visit:
+			log.info("Inside Case - Property_Visit");
 			leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit);
 			break;
 		}
@@ -96,14 +100,19 @@ public class LeadActivityService {
 	@Transactional
 	private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) 
 	{
+		log.info("Invoked ExecuteBusinessLogicWhileClosure");
 		if(leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+		{
+			log.info("Changing status of lead from Property_Visit - Negotiation");
 			leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+		}
 		laRepo.save(leadActivity);
 	}
 	
 	@Transactional
 	private void closeAllOpenActivitiesForLead(Lead lead) 
 	{
+		log.info("Invoked closeAllOpenActivitiesForLead");
 		Long leadId = lead.getLeadId();
 		List<LeadActivity> activities = laRepo.findAllByOpenActivitiesByLeadId(leadId);
 		for(LeadActivity activity:activities)
@@ -124,7 +133,7 @@ public class LeadActivityService {
 		log.info("No open activity found with same type");
 	}
 
-	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String type,String creatorType) 
+	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String creatorType) 
 	{
 		log.info("Invoked setFields");
 		leadActivity.setActivityDateTime(payload.getActivityDateTime());
@@ -136,15 +145,10 @@ public class LeadActivityService {
 		leadActivity.setLead(lRepo.findById(payload.getLeadId()).get());
 		leadActivity.setDuration(payload.getDuration()==null?0:payload.getDuration());
 		
-		switch(type)
-		{
-		case "create":
-			leadActivity.setIsOpen(payload.getActivityType().equals(ActivityTypeEnum.Deal_Lost)?false:true);
-			break;
-		case "update":
-			
-			break;
-		}
+		if(payload.getActivityType().equals(ActivityTypeEnum.Deal_Lost) || payload.getActivityType().equals(ActivityTypeEnum.Deal_Close))
+			leadActivity.setIsOpen(false);
+		else 
+			leadActivity.setIsOpen(true);
 	}
 
 	private void validatePayload(LeadActivityCreate payload) throws Exception 

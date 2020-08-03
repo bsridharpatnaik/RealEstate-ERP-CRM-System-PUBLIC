@@ -37,7 +37,6 @@ import com.ec.crm.Repository.AddressRepo;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.NoteRepo;
-import com.ec.crm.Repository.SentimentRepo;
 import com.ec.crm.Repository.SourceRepo;
 import com.ec.crm.ReusableClasses.CommonUtils;
 import com.ec.crm.ReusableClasses.ReusableMethods;
@@ -50,8 +49,9 @@ public class LeadService
 	@Autowired
 	LeadRepo lRepo;
 	
-	@Autowired
-	SentimentRepo siRepo;
+	/*
+	 * @Autowired SentimentRepo siRepo;
+	 */
 	
 	@Autowired
 	BrokerRepo bRepo;
@@ -176,7 +176,7 @@ public class LeadService
 			lead.setOccupation(payload.getOccupation());
 			lead.setPurpose(payload.getPurpose());
 			lead.setPropertyType(payload.getPropertyType());
-			lead.setSentiment(payload.getSentimentId()==null?null:siRepo.findById(payload.getSentimentId()).get());
+			lead.setSentiment(payload.getSentiment());
 			lead.setSource(payload.getSourceId()==null?null:sourceRepo.findById(payload.getSourceId()).get());
 			lead.setBroker(payload.getBrokerId()==null?null:bRepo.findById(payload.getBrokerId()).get());
 			lead.setAsigneeId(lead.getAsigneeId()==null?currentUserID:userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
@@ -245,11 +245,10 @@ public class LeadService
 	}
 	
  
-	public void deleteLead(Long id) {
-		// TODO Auto-generated method stub
-		log.info("Invoked deleteLead for ID - "+id);
-		lRepo.softDeleteById(id);
-	}
+	/*
+	 * public void deleteLead(Long id) { // TODO Auto-generated method stub
+	 * log.info("Invoked deleteLead for ID - "+id); lRepo.softDeleteById(id); }
+	 */
 
 	public List<Lead> history(Long id)
 	{

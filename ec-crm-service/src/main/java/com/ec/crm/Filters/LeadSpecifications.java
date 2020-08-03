@@ -14,7 +14,6 @@ import com.ec.crm.Model.Address_;
 import com.ec.crm.Model.Broker_;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.Lead_;
-import com.ec.crm.Model.Sentiment_;
 import com.ec.crm.Model.Source_;
 
 import lombok.NonNull;
@@ -81,7 +80,7 @@ public final class LeadSpecifications
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.PROPERTY_TYPE,propertytype));
 		
 		if(sentiment != null && sentiment.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(Lead_.SENTIMENT,Sentiment_.NAME,sentiment));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.SENTIMENT,sentiment));
 		
 		if(createdBy != null && createdBy.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectLongFieldContains(Lead_.CREATOR_ID,createdBy));

@@ -5,6 +5,7 @@ import java.util.Date;
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Enums.PropertyTypeEnum;
+import com.ec.crm.Enums.SentimentEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.Data;
@@ -29,7 +30,7 @@ public class LeadCreateData
 	String pincode;
 	Long sourceId;
 	PropertyTypeEnum propertyType;
-	Long sentimentId;
+	SentimentEnum sentiment;
 	Long assigneeId;
 
 	@Override
@@ -38,7 +39,7 @@ public class LeadCreateData
 				+ ", secondaryMobile=" + secondaryMobile + ", emailId=" + emailId + ", purpose=" + purpose
 				+ ", occupation=" + occupation + ", dateOfBirth=" + dateOfBirth + ", brokerId=" + brokerId
 				+ ", addressLine1=" + addressLine1 + ", addressLine2=" + addressLine2 + ", city=" + city + ", pincode="
-				+ pincode + ", sourceId=" + sourceId + ", propertyType=" + propertyType + ", sentimentId=" + sentimentId
+				+ pincode + ", sourceId=" + sourceId + ", propertyType=" + propertyType + ", sentiment=" + sentiment
 				+ ", assigneeId=" + assigneeId + "]";
 	}
 }

@@ -23,6 +23,6 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value="SELECT l from LeadActivity l where l.lead.leadId=:leadId and l.isOpen=false order by l.activityDateTime desc")
 	List<LeadActivity> fetchPastActivitiesForLead(Long leadId);
 
-	@Query(value="SELECT l from LeadActivity l where l.lead.leadId=:leadId and l.isOpen=false")
+	@Query(value="SELECT l from LeadActivity l where l.lead.leadId=:leadId and l.isOpen=true")
 	List<LeadActivity> findAllByOpenActivitiesByLeadId(Long leadId);
 }

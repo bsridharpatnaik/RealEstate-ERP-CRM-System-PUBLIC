@@ -24,6 +24,7 @@ import org.springframework.lang.NonNull;
 import com.ec.crm.Data.AssigneeDAO;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
+import com.ec.crm.Enums.SentimentEnum;
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -90,15 +91,23 @@ public class Lead extends ReusableFields implements Serializable
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	Source source;
 	
-	@NonNull
-	@Column(nullable=false)
+	@Column(nullable=true)
 	@Enumerated(EnumType.STRING)
 	PropertyTypeEnum propertyType;
 	
-	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="sentiment_id",nullable=true)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Sentiment sentiment;
+	@Column
+	@Enumerated(EnumType.STRING)
+	SentimentEnum sentiment;
+	
+	/*
+	 * @OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	 * 
+	 * @JoinColumn(name="sentiment_id",nullable=true)
+	 * 
+	 * @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) Sentiment
+	 * sentiment;
+	 */
+	
 	
 	@Column(name="user_id")
 	@JsonSerialize(using=ToUsernameSerializer.class)

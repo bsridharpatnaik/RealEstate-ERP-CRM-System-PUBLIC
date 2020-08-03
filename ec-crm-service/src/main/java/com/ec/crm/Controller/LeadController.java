@@ -88,12 +88,11 @@ public class LeadController {
 		return leadService.createLead(payload);
 	}
 	
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteLead(@PathVariable Long id) throws Exception
-	{
-		leadService.deleteLead(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+	/*
+	 * @DeleteMapping(value = "/{id}") public ResponseEntity<?>
+	 * deleteLead(@PathVariable Long id) throws Exception {
+	 * leadService.deleteLead(id); return ResponseEntity.ok("Entity deleted"); }
+	 */
 	
 	@PutMapping("/{id}")
 	public Lead updateLead(@PathVariable Long id, @RequestBody LeadCreateData payload) throws Exception 
