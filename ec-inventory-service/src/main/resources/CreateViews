@@ -89,13 +89,28 @@ WHERE
    )
 ;
 
+-- Function 
+
+SET @var=0;
+delimiter //
+
+CREATE FUNCTION `func_inc_var_session`() RETURNS int
+    NO SQL
+    NOT DETERMINISTIC
+     begin
+      SET @var := @var + 1;
+      return @var;
+     end
+     //
+
+delimiter ;
+
+
 -- All Inventory
 
-CREATE OR replace VIEW all_inventory 
-AS 
-
-  SELECT
-		UUID() AS id,
+-- CREATE OR replace VIEW all_inventory AS
+SELECT
+		-- convert(func_inc_var_session(),char) AS id,
 		tx.*, 
 		p.product_name,
         p.measurement_unit,
@@ -106,7 +121,7 @@ AS
          w.warehouse_id, 
          w.warehouse_name 
   FROM   (SELECT 'inward'                         AS type, 
-                 -- ii.inwardid               AS id, 
+                 concat(ii.inwardid,ioe.product_id)            AS id, 
                  Date_format(ii.DATE, "%Y-%m-%d") AS date, 
                  ii.contact_id                    AS contactid, 
                  ii.warehouse_id                  AS warehouseid, 
@@ -124,6 +139,7 @@ AS
           UNION ALL 
           SELECT 'outward'                        AS type, 
                  -- oi.outwardid, 
+                 concat(oi.outwardid,ioe.product_id) ,
                  Date_format(oi.DATE, "%Y-%m-%d") AS date, 
                  oi.contact_id                    AS contactid, 
                  oi.warehouse_id                  AS warehouseid, 
@@ -140,7 +156,7 @@ AS
           WHERE  oi.is_deleted = 0 
           UNION ALL 
           SELECT 'lost/damaged'                    AS type, 
-               --   lostdamagedid, 
+                lostdamagedid as id, 
                  Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
                  ''                                AS contactid, 
                  ldi.warehouse_name                AS warehouseid, 
@@ -156,5 +172,4 @@ AS
          inner join warehouse w 
                  ON w.warehouse_id = tx.warehouseid 
 		inner join product p on p.product_id = tx.productid
-  ORDER  BY id DESC; 
-
+  ORDER  BY tx.date DESC;

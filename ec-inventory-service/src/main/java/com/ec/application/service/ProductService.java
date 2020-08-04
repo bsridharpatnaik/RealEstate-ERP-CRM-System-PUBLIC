@@ -54,9 +54,9 @@ public class ProductService
 			{
 				Product product = new Product();
 				product.setCategory(categoryOpt.get());
-				product.setMeasurementUnit(payload.getMeasurementUnit());
-				product.setProductDescription(payload.getProductDescription());
-				product.setProductName(payload.getProductName());
+				product.setMeasurementUnit(payload.getMeasurementUnit().trim());
+				product.setProductDescription(payload.getProductDescription().trim());
+				product.setProductName(payload.getProductName().trim());
 				product.setReorderQuantity(payload.getReorderQuantity());
 				productRepo.save(product);
 				return product;

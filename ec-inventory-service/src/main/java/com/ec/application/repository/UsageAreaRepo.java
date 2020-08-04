@@ -23,7 +23,7 @@ public interface UsageAreaRepo extends BaseRepository<UsageArea, Long>
 	@Query(value="SELECT m from UsageArea m where usageAreaName LIKE %:name%")
 	ArrayList<UsageArea> findByPartialName(@Param("name") String name);
 
-	@Query(value="SELECT usageAreaId as id,usageAreaName as name from UsageArea m")
+	@Query(value="SELECT usageAreaId as id,usageAreaName as name from UsageArea m  order by name")
 	List<IdNameProjections> findIdAndNames();
 
 	@Query(value="SELECT usageAreaName as name from UsageArea m")

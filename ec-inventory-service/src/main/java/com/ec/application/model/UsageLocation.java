@@ -46,16 +46,16 @@ public class UsageLocation extends ReusableFields
 		this.locationId = loationId;
 	}
 	public String getLocationName() {
-		return locationName;
+		return locationName.trim();
 	}
 	public void setLocationName(String locationName) {
-		this.locationName = locationName;
+		this.locationName = locationName.trim();
 	}
 	public String getLocationDescription() {
-		return locationDescription;
+		return locationDescription.trim();
 	}
 	public void setLocationDescription(String locationDescription) {
-		this.locationDescription = locationDescription;
+		this.locationDescription = locationDescription.trim();
 	}
 	
 	

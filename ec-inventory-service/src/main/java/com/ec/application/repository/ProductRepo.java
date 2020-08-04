@@ -25,7 +25,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value="SELECT m from Product m where m.category.categoryId=id")
 	ArrayList<Product> existsByCategoryId(@Param("id")Long id);
 
-	@Query(value="SELECT productId as id,productName as name from Product m")
+	@Query(value="SELECT productId as id,productName as name from Product m  order by name")
 	List<IdNameProjections> findIdAndNames();
 	
 	@Query(value="SELECT count(*) from Product m where m.category.categoryId=:categoryId")
