@@ -26,7 +26,7 @@ public interface CategoryRepo extends BaseRepository<Category, Long>
 	@Query(value="SELECT categoryId as id,categoryName as name from Category m  order by name")
 	List<IdNameProjections> findIdAndNames();
 
-	@Query(value="SELECT categoryName as name from Category m")
+	@Query(value="SELECT categoryName as name from Category m order by categoryName")
 	List<String> getNames();
 
 	

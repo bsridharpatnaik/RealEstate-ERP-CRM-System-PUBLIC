@@ -31,7 +31,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value="SELECT count(*) from Product m where m.category.categoryId=:categoryId")
 	int categoryUsageCount(@Param("categoryId")Long categoryId);
 
-	@Query(value="SELECT productName from Product m")
+	@Query(value="SELECT productName from Product m order by productName")
 	List<String> getNames();
 
 	@Query(value="SELECT distinct productId from Product m")

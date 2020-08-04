@@ -26,7 +26,7 @@ public interface UsageAreaRepo extends BaseRepository<UsageArea, Long>
 	@Query(value="SELECT usageAreaId as id,usageAreaName as name from UsageArea m  order by name")
 	List<IdNameProjections> findIdAndNames();
 
-	@Query(value="SELECT usageAreaName as name from UsageArea m")
+	@Query(value="SELECT usageAreaName as name from UsageArea m order by usageAreaName")
 	List<String> getNames();
 
 	@Query(value="SELECT count(m) from UsageArea m where m.usageAreaId=:id")
