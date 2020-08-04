@@ -25,6 +25,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class AllInventoryTransactions implements Serializable
 {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@Column(name="id")
 	String id;
@@ -81,6 +86,8 @@ public class AllInventoryTransactions implements Serializable
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(name="updated_at")
 	String updated;
+
+	
 
 	public String getId() {
 		return id;
@@ -157,7 +164,7 @@ public class AllInventoryTransactions implements Serializable
 	public Double getClosingStock() {
 		return closingStock;
 	}
-	
+
 	public void setClosingStock(Double closingStock) {
 		this.closingStock = closingStock;
 	}

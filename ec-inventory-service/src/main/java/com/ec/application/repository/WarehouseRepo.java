@@ -18,6 +18,6 @@ public interface WarehouseRepo extends BaseRepository<Warehouse, Long>
 	@Query(value="SELECT count(m) from Warehouse m where warehouseName=:warehouseName")
 	int countByName(@Param("warehouseName")String warehouseName);
 
-	@Query(value="SELECT warehouseId as id,warehouseName as name from Warehouse m")
+	@Query(value="SELECT warehouseId as id,warehouseName as name from Warehouse m  order by name")
 	List<IdNameProjections> findIdAndNames();
 }

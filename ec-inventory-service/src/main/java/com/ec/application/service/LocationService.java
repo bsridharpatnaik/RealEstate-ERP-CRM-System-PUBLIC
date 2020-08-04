@@ -41,7 +41,7 @@ public class LocationService
         logger.warn("A WARN Message");
         logger.error("An ERROR Message");
       
-		if(!locationRepo.existsByLocationName(payload.getLocationName()))
+		if(!locationRepo.existsByLocationName(payload.getLocationName().trim()))
 		{
 			locationRepo.save(payload);
 			return payload;
@@ -62,8 +62,8 @@ public class LocationService
         if(!locationRepo.existsByLocationName(newLocation.getLocationName()) && 
         		!LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
         {		
-        	LocationForUpdate.setLocationName(newLocation.getLocationName());
-            LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+        	LocationForUpdate.setLocationName(newLocation.getLocationName().trim());
+            LocationForUpdate.setLocationDescription(newLocation.getLocationDescription().trim());
             
         }
         else if(LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))

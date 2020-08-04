@@ -23,10 +23,10 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 	@Query(value="SELECT m from UsageLocation m where locationName LIKE %:name%")
 	ArrayList<UsageLocation> findByPartialName(@Param("name") String name);
 
-	@Query(value="SELECT locationId as id,locationName as name from UsageLocation m")
+	@Query(value="SELECT locationId as id,locationName as name from UsageLocation m  order by name")
 	List<IdNameProjections> findIdAndNames();
 
-	@Query(value="SELECT locationName from UsageLocation m")
+	@Query(value="SELECT locationName from UsageLocation m order by locationName")
 	List<String> getNames();
 
 }
