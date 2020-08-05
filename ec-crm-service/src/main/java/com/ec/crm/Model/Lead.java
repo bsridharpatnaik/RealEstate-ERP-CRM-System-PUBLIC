@@ -1,33 +1,54 @@
 package com.ec.crm.Model;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.Date;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.RelationTargetAuditMode;
+import org.springframework.lang.NonNull;
 
+import com.ec.crm.Data.AssigneeDAO;
+import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Enums.PropertyTypeEnum;
+import com.ec.crm.Enums.SentimentEnum;
 import com.ec.crm.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import Deserializers.ToUsernameSerializer;
+import lombok.Data;
 
 @Entity
-@Table(name = "`Lead`")
-public class Lead extends ReusableFields implements Serializable{
+@Table(name = "customer_lead")
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Audited(withModifiedFlag = true)
+@Data
+public class Lead extends ReusableFields implements Serializable
+{
+	public Lead() {
+		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "lead_id", updatable = false, nullable = false)
@@ -52,160 +73,52 @@ public class Lead extends ReusableFields implements Serializable{
 	String occupation;
 	
 	@Column(name="dateofbirth")
-	String dateOfBirth;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	Date dateOfBirth;
 	
 	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="broker_id",nullable=false)
+	@JoinColumn(name="broker_id",nullable=true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Broker broker;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="address_id",nullable=false)
+	@JoinColumn(name="address_id",nullable=true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Address address;
 	
 	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="source_id",nullable=false)
+	@JoinColumn(name="source_id",nullable=true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	Source source;
 	
-	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="propertytype_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-	PropertyType propertyType;
+	@Column(nullable=true)
+	@Enumerated(EnumType.STRING)
+	PropertyTypeEnum propertyType;
 	
-	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="sentiment_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
-	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-	Sentiment sentiment;
+	@Column
+	@Enumerated(EnumType.STRING)
+	SentimentEnum sentiment;
+	
+	/*
+	 * @OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
+	 * 
+	 * @JoinColumn(name="sentiment_id",nullable=true)
+	 * 
+	 * @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) Sentiment
+	 * sentiment;
+	 */
+	
 	
 	@Column(name="user_id")
-	Long UserId;
+	@JsonSerialize(using=ToUsernameSerializer.class)
+	Long asigneeId;
 
-	public Long getLeadId() {
-		return leadId;
-	}
-
-	public void setLeadId(Long leadId) {
-		this.leadId = leadId;
-	}
-
-	public String getCustomerName() {
-		return customerName;
-	}
-
-	public void setCustomerName(String customerName) {
-		this.customerName = customerName;
-	}
-
-	public String getPrimaryMobile() {
-		return primaryMobile;
-	}
-
-	public void setPrimaryMobile(String primaryMobile) {
-		this.primaryMobile = primaryMobile;
-	}
-
-	public String getSecondaryMobile() {
-		return secondaryMobile;
-	}
-
-	public void setSecondaryMobile(String secondaryMobile) {
-		this.secondaryMobile = secondaryMobile;
-	}
-
-	public String getEmailId() {
-		return emailId;
-	}
-
-	public void setEmailId(String emailId) {
-		this.emailId = emailId;
-	}
+	@Column(name="created_by")
+	@JsonSerialize(using=ToUsernameSerializer.class)
+	Long creatorId;
 	
-	
-
-	public String getPurpose() {
-		return purpose;
-	}
-
-	public void setPurpose(String purpose) {
-		this.purpose = purpose;
-	}
-
-	public String getOccupation() {
-		return occupation;
-	}
-
-	public void setOccupation(String occupation) {
-		this.occupation = occupation;
-	}
-
-	public String getDateOfBirth() {
-		return dateOfBirth;
-	}
-
-	public void setDateOfBirth(String dateOfBirth) {
-		this.dateOfBirth = dateOfBirth;
-	}
-
-	public Broker getBroker() {
-		return broker;
-	}
-
-	public void setBroker(Broker broker) {
-		this.broker = broker;
-	}
-
-	public Address getAddress() {
-		return address;
-	}
-
-	public void setAddress(Address address) {
-		this.address = address;
-	}
-
-	public Source getSource() {
-		return source;
-	}
-
-	public void setSource(Source source) {
-		this.source = source;
-	}
-
-	public PropertyType getPropertyType() {
-		return propertyType;
-	}
-
-	public void setPropertyType(PropertyType propertyType) {
-		this.propertyType = propertyType;
-	}
-
-	public Sentiment getSentiment() {
-		return sentiment;
-	}
-
-	public void setSentiment(Sentiment sentiment) {
-		this.sentiment = sentiment;
-	}
-
-	public Long getUserId() {
-		return UserId;
-	}
-
-	public void setUserId(Long userId) {
-		UserId = userId;
-	}
-	
-	
-
+	@NonNull
+	@Column(name="status",nullable=false)
+	@Enumerated(EnumType.STRING)
+	LeadStatusEnum status; 
 }

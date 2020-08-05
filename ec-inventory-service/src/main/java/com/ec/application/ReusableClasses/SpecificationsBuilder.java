@@ -7,14 +7,17 @@ import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.SetAttribute;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
-import com.ec.application.model.MachineryOnRent;
+import com.ec.application.model.InwardOutwardList_;
+import com.ec.application.model.Product;
+import com.ec.application.model.Product_;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 
@@ -141,20 +144,37 @@ public class SpecificationsBuilder<T>
 		return finalSpec;
 	}
 	
+	public Specification<T> whereProductContains(List<String> productNames,String joinTable) 
+	{
+		
+		return (root, query, cb) -> 
+			{
+				
+		        Join<T, InwardOutwardList> ioList = root.join(joinTable);
+		        Join<InwardOutwardList,Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
+		        query.distinct(true);
+		        Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
+		        Predicate parentPredicate = parentExpression.in(productNames);
+		        query.where(parentPredicate);
+		        return query.getRestriction();
+			};
+	}
+	
 	  //#######################################//
 	 //     Reusable Spec Setter for NULLs    //
 	//#######################################//
 	
-    public Specification<T> specAndCondition(Specification<T> finalSpec, Specification<T> internalSpec) 
+
+	public Specification<T> specAndCondition(Specification<T> finalSpec, Specification<T> internalSpec) 
 	{
 		if(finalSpec == null) return internalSpec;
 		else return finalSpec.and(internalSpec);
 	}
     
-    public Specification<T> specOrCondition(Specification<T> finalSpec, Specification<T> internalSpec) 
+    public Specification<T> specOrCondition(Specification<T> finalSpec, Specification<T> interalSpec) 
 	{
-		if(finalSpec == null) return internalSpec;
-		else return finalSpec.or(internalSpec);
+		if(finalSpec == null) return interalSpec;
+		else return finalSpec.or(interalSpec);
 	}
     
     
@@ -172,14 +192,5 @@ public class SpecificationsBuilder<T>
 		}
 		return returnValue;
 	}
-
-	
-	
-
-	
-
-	
-
-    
-   
 }
+    

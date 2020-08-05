@@ -142,6 +142,42 @@ public class UserService {
 		return userReturnData;
 	}
 
+	public UserReturnData fetchUserDetailsById(Long id) throws Exception 
+	{
+		UserReturnData userReturnData = new UserReturnData();
+		Optional<User> userOpt = uRepo.findById(id);
+		if(!userOpt.isPresent())
+			throw new Exception("User not found with ID -"+id);
+		
+		User user = userOpt.get();
+		userReturnData.setUsername(user.getUserName());
+		userReturnData.setId(user.getUserId());
+		userReturnData.setRoles(fetchRolesFromSet(user.getRoles()));
+		return userReturnData;
+	}
+	
+	private List<String> fetchRolesFromSet(Set<Role> roleSet) 
+	{	
+		List<String> roles = new ArrayList<String>();
+		for(Role role:roleSet)
+		{
+			roles.add(role.getName());
+		}
+		return roles;
+	}
+
+	public List<UserReturnData> fetchUserList() 
+	{	
+		List<UserReturnData> userReturnDataList = new ArrayList<UserReturnData>();
+		List<User> userList = uRepo.findAll();
+		for(User user:userList)
+		{
+			UserReturnData userReturnData = new UserReturnData(user.getUserId(),user.getUserName(),fetchRolesFromSet(user.getRoles()));
+			userReturnDataList.add(userReturnData);
+		}
+		return userReturnDataList;
+	}
+	
 	public UserListWithTypeAheadData findFilteredUsers(FilterDataList contactFilterDataList, Pageable pageable) 
 	{
 		UserListWithTypeAheadData tpData  = new UserListWithTypeAheadData();

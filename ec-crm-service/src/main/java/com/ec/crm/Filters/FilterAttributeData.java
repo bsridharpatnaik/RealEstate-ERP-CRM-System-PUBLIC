@@ -18,4 +18,11 @@ public class FilterAttributeData {
 	public void setAttrValue(List<String> attrValue) {
 		this.attrValue = attrValue;
 	}
+	@Override
+	public String toString() {
+		return "FilterAttributeData [attrName=" + attrName + ", attrValue=" + attrValue + ", getAttrName()="
+				+ getAttrName() + ", getAttrValue()=" + getAttrValue() + ", getClass()=" + getClass() + ", hashCode()="
+				+ hashCode() + ", toString()=" + super.toString() + "]";
+	}
+	
 }

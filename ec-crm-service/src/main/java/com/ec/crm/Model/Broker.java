@@ -13,11 +13,15 @@ import javax.validation.constraints.NotBlank;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
+import com.ec.crm.Data.AssigneeDAO;
 import com.ec.crm.ReusableClasses.ReusableFields;
+
+import lombok.Data;
 @Entity
 @Table(name = "broker")
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @Audited
+@Data
 public class Broker extends ReusableFields implements Serializable
 {
 	@Id
@@ -32,33 +36,8 @@ public class Broker extends ReusableFields implements Serializable
 	@Column(name="broker_address")
 	String brokerAddress;
 	
+	@NotBlank(message = "Mobile number is mandatory")
 	@Column(name="broker_phoneno")
 	String brokerPhoneno;
-	
-	public Long getBrokerId() {
-		return brokerId;
-	}
-	public void setBrokerId(Long brokerId) {
-		this.brokerId = brokerId;
-	}
-	public String getBrokerName() {
-		return brokerName;
-	}
-	public void setBrokerName(String brokerName) {
-		this.brokerName = brokerName;
-	}
-	public String getBrokerAddress() {
-		return brokerAddress;
-	}
-	public void setBrokerAddress(String brokerAddress) {
-		this.brokerAddress = brokerAddress;
-	}
-	public String getBrokerPhoneno() {
-		return brokerPhoneno;
-	}
-	public void setBrokerPhoneno(String brokerPhoneno) {
-		this.brokerPhoneno = brokerPhoneno;
-	}
-	
-	
+		
 }

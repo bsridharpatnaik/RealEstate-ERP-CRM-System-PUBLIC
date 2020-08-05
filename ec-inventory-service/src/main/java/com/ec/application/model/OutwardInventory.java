@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Table(name = "outward_inventory")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class OutwardInventory extends ReusableFields
+public class OutwardInventory extends ReusableFields implements Cloneable
 {
 
 	@Id
@@ -80,6 +80,11 @@ public class OutwardInventory extends ReusableFields
 					@JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
 	
+	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 	public Set<FileInformation> getFileInformations() {
 		return fileInformations;
 	}

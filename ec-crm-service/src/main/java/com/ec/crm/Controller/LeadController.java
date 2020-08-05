@@ -1,5 +1,9 @@
 package com.ec.crm.Controller;
 
+import java.text.ParseException;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
-import com.ec.crm.Model.Lead;
-import com.ec.crm.Model.Sentiment;
-import com.ec.crm.Service.LeadService;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Model.Lead;
+import com.ec.crm.Service.LeadService;
 
 @RestController
 @RequestMapping(value="/lead",produces = { "application/json", "text/json" })
@@ -34,26 +39,46 @@ public class LeadController {
 	LeadService leadService;
 	
 	@GetMapping
-	public Page<Lead> returnAllSentiment(Pageable pageable) 
+	public Page<Lead> returnAllLeads(Pageable pageable) 
 	{
 		return leadService.fetchAll(pageable);
 	}
+	
+	@GetMapping("{id}")
+	public Lead returnSingleLead(@PathVariable Long id) throws Exception 
+	{
+		return leadService.getSingleLead(id);
+	}
+	
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) 
+	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) throws ParseException 
 	{
 		return leadService.findFilteredList(leadFilterDataList,pageable);
 	}
-	@GetMapping("/{id}")
-	public Lead findLeadByID(@PathVariable long id) throws Exception 
+	
+	@GetMapping("/history/{id}")
+	public List<Lead> findLeadHistory(@PathVariable long id) throws Exception 
 	{
-		return leadService.findSingleLead(id);
+		return leadService.history(id);
 	}
 	
 	@GetMapping("/getallinfo/{id}")
 	public LeadDetailInfo findLeadDetailInfoByID(@PathVariable long id) throws Exception 
 	{
 		return leadService.findSingleLeadDetailInfo(id);
+	}
+	
+	@GetMapping("/validPropertyTypes")
+	public List<String> findValidPropertyTypes() 
+	{
+		return PropertyTypeEnum.getValidPropertyType();
+	}
+	
+	@GetMapping("/validLeadStatus")
+	public List<String> findValidLeadStatus() 
+	{
+		return LeadStatusEnum.getValidLeadStatus();
 	}
 	
 	@PostMapping("/create") 
@@ -63,16 +88,15 @@ public class LeadController {
 		return leadService.createLead(payload);
 	}
 	
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception
-	{
-		leadService.deleteLead(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+	/*
+	 * @DeleteMapping(value = "/{id}") public ResponseEntity<?>
+	 * deleteLead(@PathVariable Long id) throws Exception {
+	 * leadService.deleteLead(id); return ResponseEntity.ok("Entity deleted"); }
+	 */
 	
 	@PutMapping("/{id}")
 	public Lead updateLead(@PathVariable Long id, @RequestBody LeadCreateData payload) throws Exception 
 	{
-		return leadService.updateLead(id, payload);
+		return leadService.updateLead(payload, id);
 	} 
 }

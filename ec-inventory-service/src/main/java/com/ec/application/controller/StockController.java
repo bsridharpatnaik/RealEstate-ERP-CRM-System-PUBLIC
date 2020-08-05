@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.StockInformation;
+import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.service.StockService;
 import com.ec.common.Filters.FilterDataList;
 
@@ -38,6 +39,12 @@ public class StockController
 		return stockService.findStockForAll(filterDataList,pageable);
 	}
 	
+	@PostMapping("/export")
+	@ResponseStatus(HttpStatus.OK)
+	public List<StockInformationExportDAO> returnAllStockForExport(@RequestBody FilterDataList filterDataList) throws Exception
+	{
+		return stockService.findStockForAllForExport(filterDataList);
+	}
 	@PostMapping("/current")
 	public List<ProductIdAndStockProjection> returnStockForProductWarehouse(@RequestBody CurrentStockRequest currentStockRequest) 
 	{

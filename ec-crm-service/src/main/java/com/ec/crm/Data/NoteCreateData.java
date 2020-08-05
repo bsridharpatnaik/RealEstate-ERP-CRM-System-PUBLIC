@@ -1,58 +1,27 @@
 package com.ec.crm.Data;
 
-import com.ec.crm.Model.Broker;
+import java.util.List;
 
+import org.springframework.lang.NonNull;
+
+import lombok.Data;
+
+@Data
 public class NoteCreateData {
-	
-	Long noteId;
 	
 	String content;
 	
-	String fileId;
-	
+	@NonNull
 	Long leadId;
 	
 	Boolean pinned;
-
-	public Long getNoteId() {
-		return noteId;
-	}
-
-	public void setNoteId(Long noteId) {
-		this.noteId = noteId;
-	}
-
-	public String getContent() {
-		return content;
-	}
-
-	public void setContent(String content) {
-		this.content = content;
-	}
-
-	public String getFileId() {
-		return fileId;
-	}
-
-	public void setFileId(String fileId) {
-		this.fileId = fileId;
-	}
-
-	public Long getLeadId() {
-		return leadId;
-	}
-
-	public void setLeadId(Long leadId) {
-		this.leadId = leadId;
-	}
-
-	public Boolean getPinned() {
-		return pinned;
-	}
-
-	public void setPinned(Boolean pinned) {
-		this.pinned = pinned;
-	}
 	
+	@NonNull
+	List<FileInformationDAO> fileInformations;
 	
+	@Override
+	public String toString() {
+		return "NoteCreateData [content=" + content + ", leadId=" + leadId + ", pinned=" + pinned
+				+ ", fileInformations=" + fileInformations + "]";
+	}
 }

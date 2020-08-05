@@ -6,9 +6,10 @@ import java.util.List;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
-import com.ec.application.model.FileInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import lombok.Data;
 
 public class OutwardInventoryData 
 {
@@ -42,22 +43,6 @@ public class OutwardInventoryData
 
 	@NonNull
 	List<FileInformationDAO> fileInformations;
-
-	public List<FileInformationDAO> getFileInformations() {
-		return fileInformations;
-	}
-
-	public void setFileInformations(List<FileInformationDAO> fileInformations) {
-		this.fileInformations = fileInformations;
-	}
-
-	public Long getUsageAreaId() {
-		return usageAreaId;
-	}
-
-	public void setUsageAreaId(Long usageAreaId) {
-		this.usageAreaId = usageAreaId;
-	}
 
 	public Date getDate() {
 		return date;
@@ -107,6 +92,14 @@ public class OutwardInventoryData
 		this.purpose = purpose;
 	}
 
+	public Long getUsageAreaId() {
+		return usageAreaId;
+	}
+
+	public void setUsageAreaId(Long usageAreaId) {
+		this.usageAreaId = usageAreaId;
+	}
+
 	public List<ProductWithQuantity> getProductWithQuantities() {
 		return productWithQuantities;
 	}
@@ -123,4 +116,12 @@ public class OutwardInventoryData
 		this.additionalInfo = additionalInfo;
 	}
 
+	public List<FileInformationDAO> getFileInformations() {
+		return fileInformations;
+	}
+
+	public void setFileInformations(List<FileInformationDAO> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
+	
 }

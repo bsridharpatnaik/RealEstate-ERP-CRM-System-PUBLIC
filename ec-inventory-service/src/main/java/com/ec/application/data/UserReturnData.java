@@ -5,6 +5,7 @@ import java.util.List;
 public class UserReturnData 
 {
 	String username;
+	Long id;
 	List<String> roles;
 	public String getUsername() {
 		return username;
@@ -17,5 +18,11 @@ public class UserReturnData
 	}
 	public void setRoles(List<String> roles) {
 		this.roles = roles;
+	}
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

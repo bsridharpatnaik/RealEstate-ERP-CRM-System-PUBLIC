@@ -43,8 +43,8 @@ public final class OutwardInventorySpecification
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldDateLessThan(OutwardInventory_.DATE, endDates));
 		
 		if(productNames != null && productNames.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldListContains(
-					OutwardInventory_.INWARD_OUTWARD_LIST,InwardOutwardList_.PRODUCT,Product_.PRODUCT_NAME,productNames));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereProductContains(
+					productNames,OutwardInventory_.INWARD_OUTWARD_LIST));
 		
 		if(contractorNames != null && contractorNames.size()>0)
 				finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, contractorNames));	
@@ -63,8 +63,8 @@ public final class OutwardInventorySpecification
 		{
 			Specification<OutwardInventory> internalSpec = null;
 			internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, globalSearch));
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereChildFieldListContains(
-					OutwardInventory_.INWARD_OUTWARD_LIST,InwardOutwardList_.PRODUCT,Product_.PRODUCT_NAME,globalSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereProductContains(
+					globalSearch,OutwardInventory_.INWARD_OUTWARD_LIST));
 			finalSpec = specbldr.specAndCondition(finalSpec,internalSpec);
 		}
 			

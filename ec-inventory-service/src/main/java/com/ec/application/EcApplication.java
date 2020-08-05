@@ -9,6 +9,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 //import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.CommonsRequestLoggingFilter;
 //import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -32,5 +34,4 @@ public class EcApplication  extends SpringBootServletInitializer{
 	{
 		SpringApplication.run(EcApplication.class, args);
 	}
-	
 }

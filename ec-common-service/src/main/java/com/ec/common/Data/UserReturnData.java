@@ -7,6 +7,15 @@ public class UserReturnData
 	String username;
 	List<String> roles;
 	Long id;
+	public UserReturnData(Long userId, String userName2, List<String> fetchRolesFromSet) 
+	{
+		this.id=userId;
+		this.username=userName2;
+		this.roles=fetchRolesFromSet;
+	}
+	public UserReturnData() {
+		// TODO Auto-generated constructor stub
+	}
 	public String getUsername() {
 		return username;
 	}

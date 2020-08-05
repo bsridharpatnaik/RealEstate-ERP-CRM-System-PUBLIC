@@ -13,7 +13,9 @@ import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.envers.Audited;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Entity
 @Subselect("select * from all_inventory")
@@ -23,6 +25,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class AllInventoryTransactions implements Serializable
 {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@Column(name="id")
 	String id;
@@ -50,9 +57,11 @@ public class AllInventoryTransactions implements Serializable
 	Long productId;
 	
 	@Column(name="quantity")
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
 	
 	@Column(name="closing_stock")
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
 	
 	@Column(name="name")
@@ -77,6 +86,8 @@ public class AllInventoryTransactions implements Serializable
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	@Column(name="updated_at")
 	String updated;
+
+	
 
 	public String getId() {
 		return id;
@@ -155,7 +166,7 @@ public class AllInventoryTransactions implements Serializable
 	}
 
 	public void setClosingStock(Double closingStock) {
-		closingStock = closingStock;
+		this.closingStock = closingStock;
 	}
 
 	public String getName() {

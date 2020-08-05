@@ -13,6 +13,7 @@ import javax.persistence.metamodel.SetAttribute;
 import org.springframework.data.jpa.domain.Specification;
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Model.Lead;
 
 public class SpecificationsBuilder<T>
 {
@@ -74,6 +75,18 @@ public class SpecificationsBuilder<T>
 	            -> cb.lessThanOrEqualTo(root.get(key), startDate);
 	    finalSpec  = specOrCondition(finalSpec,internalSpec);
     	return finalSpec; 
+	}
+    
+    public Specification<T> whereDirectLongFieldContains(String key, List<String> assignees) 
+    {
+    	Specification<T> finalSpec = null;
+    	for(String name:assignees)
+    	{
+    		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+    	            -> cb.equal(root.get(key), Long.parseLong(name));
+    	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	}
+        return finalSpec;
 	}
     
 	  //#######################################//
@@ -167,15 +180,5 @@ public class SpecificationsBuilder<T>
 				returnValue = filterData.getAttrValue();
 		}
 		return returnValue;
-	}
-
-	
-	
-
-	
-
-	
-
-    
-   
+	} 
 }

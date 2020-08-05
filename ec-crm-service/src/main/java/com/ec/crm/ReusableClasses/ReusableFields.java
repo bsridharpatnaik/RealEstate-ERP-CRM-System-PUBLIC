@@ -30,13 +30,11 @@ public class ReusableFields implements Serializable
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss ")
 	private Date created;
 	
-	
 	@Column(name = "updated_at")
 	@JsonProperty("updated")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
 	@UpdateTimestamp
 	private Date modified;
-	
 	
 	public Date getCreated() {
 		return created;

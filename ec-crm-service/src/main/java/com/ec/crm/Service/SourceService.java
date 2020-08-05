@@ -10,12 +10,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.SourceListWithTypeAheadData;
+import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.SourceSpecifications;
 import com.ec.crm.Model.Source;
-import com.ec.crm.Model.PropertyType;
-import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.SourceRepo;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 
@@ -26,10 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 public class SourceService {
 	@Autowired
 	SourceRepo sRepo;
-	
-	@Autowired
-	LeadRepo lRepo;
-	
 	public Page<Source> fetchAll(Pageable pageable) 
 	{
 		return sRepo.findAll(pageable);
@@ -37,8 +32,8 @@ public class SourceService {
 	public SourceListWithTypeAheadData findFilteredSource(FilterDataList sourceFilterDataList, Pageable pageable) 
 	{
 		SourceListWithTypeAheadData tpData  = new SourceListWithTypeAheadData();
-		
 		tpData.setSourceDetails(getFilteredData(sourceFilterDataList,pageable));
+		tpData.setSourceTypeAhead(sRepo.findDistinctNames());
 		return tpData;
 	}
 
@@ -55,7 +50,6 @@ public class SourceService {
 		Specification<Source> specification = null;
 		for(FilterAttributeData attrData:sourceFilterDataList.getFilterData())
 		{
-			String attrName = attrData.getAttrName();
 			List<String> attrValues = attrData.getAttrValue();
 			
 			Specification<Source> internalSpecification = null;
@@ -77,7 +71,7 @@ public class SourceService {
 			return sourceData;
 		}else
 		{
-			throw new Exception("Source already exists!");
+			throw new Exception("Source with same name already exists!");
 		}
 	}
 	
@@ -119,13 +113,7 @@ public class SourceService {
 	
 	public void deleteSource(Long id) throws Exception 
 	{
-		int used=lRepo.checksourceusedinlead(id);
-//		System.out.println(used);
-		if(used>0) {
-			throw new Exception("Source used in leads");
-		}else {
-			sRepo.softDeleteById(id);
-		}
+		sRepo.softDeleteById(id);
 	}
 	public List<IdNameProjections> findIdAndNames() 
 	{

@@ -1,9 +1,9 @@
 package com.ec.application.controller;
 
 import java.text.ParseException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.data.OutwardInventoryData;
+import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
@@ -42,6 +42,8 @@ public class OutwardInventoryController
 		return oiService.createOutwardnventory(payload);
 	}
 	
+	
+	
 	@GetMapping("/{id}")
 	public OutwardInventory getOutwardInventory(@PathVariable Long id) throws Exception
 	{
@@ -54,6 +56,14 @@ public class OutwardInventoryController
 	public ReturnOutwardInventoryData fetchAllOutwardInventory(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws ParseException
 	{
 		return oiService.fetchOutwardnventory(filterDataList,pageable);
+	}
+	
+	@PostMapping ("/export")
+	@ResponseStatus(HttpStatus.OK)
+	public List<OutwardInventoryExportDAO> fetchAllOutwardInventoryForExport(@RequestBody FilterDataList filterDataList) throws Exception
+	{
+		
+		return oiService.fetchOutwardnventoryForExport(filterDataList);
 	}
 	
 	@DeleteMapping(value = "/{id}")

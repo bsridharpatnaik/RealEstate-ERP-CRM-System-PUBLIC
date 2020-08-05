@@ -6,7 +6,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
@@ -15,8 +14,10 @@ import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import lombok.NonNull;
 
@@ -48,6 +49,7 @@ public class Stock extends ReusableFields
 	Warehouse warehouse;
 	
 	@NonNull
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double quantityInHand;
 
 	public Stock(@NonNull Product product, @NonNull Warehouse warehouse, @NonNull Double quantityInHand) {

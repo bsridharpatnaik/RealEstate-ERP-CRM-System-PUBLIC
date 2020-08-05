@@ -1,5 +1,6 @@
 package com.ec.application.data;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.CustomDoubleSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -7,6 +8,7 @@ public class StockPercentData
 {
 	Long productId;
 	String productName;
+	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double stockPercent;
 	
 	

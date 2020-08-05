@@ -1,10 +1,10 @@
 package com.ec.application.controller;
 
-import org.hibernate.criterion.Order;
+import java.util.HashMap;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -18,8 +18,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.ec.application.data.InwardInventoryData;
+import com.ec.application.data.InwardInventoryExportDAO;
+import com.ec.application.data.InwardInventoryExportDAO2;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.service.InwardInventoryService;
@@ -48,6 +49,14 @@ public class InwardInventoryController
 	{
 		
 		return iiService.fetchInwardnventory(filterDataList,pageable);
+	}
+	
+	@PostMapping ("/export")
+	@ResponseStatus(HttpStatus.OK)
+	public List<InwardInventoryExportDAO2> fetchAllInwardInventoryForExport2(@RequestBody FilterDataList filterDataList) throws Exception
+	{
+		
+		return iiService.fetchInwardnventoryForExport2(filterDataList);
 	}
 	
 	@GetMapping("/{id}")
