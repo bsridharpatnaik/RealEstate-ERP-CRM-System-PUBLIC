@@ -61,7 +61,7 @@ public class UsageAreaService
         }
         else if(newUsageArea.getUsageAreaName().equalsIgnoreCase(UsageAreaForUpdate.getUsageAreaName()))
         {
-        	UsageAreaForUpdate.setUsageAreaDescription(newUsageArea.getUsageAreaDescription().trim());
+        	UsageAreaForUpdate.setUsageAreaDescription(newUsageArea.getUsageAreaDescription()==null?"":newUsageArea.getUsageAreaDescription().trim());
         }
         else 
         {
