@@ -1,0 +1,1528 @@
+{
+	"info": {
+		"_postman_id": "8443202b-415e-489b-b7b4-5c51a002ca58",
+		"name": "CRMService",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "902d2261-61b7-4f16-9a66-4db07531f549",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"token\", \"Bearer \"+jsonData.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userName\":\"sridhar\",\n\t\"password\":\"Test@123\"\n}",
+							"options": {
+								"raw": {}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/ec/login",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"ec",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/me",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UserReturnData by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/byid/10001",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"byid",
+								"10001"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User List",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlCommon}}/user/list",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlCommon}}"
+							],
+							"path": [
+								"user",
+								"list"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Broker",
+			"item": [
+				{
+					"name": "create broker",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5f2443e1-13b8-4f16-a2ac-5e550fd833d0",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"broker\", jsonData.brokerId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"brokerPhoneno\": \"9323041333\",\r\n    \"brokerName\": \"Rajat Pathak\",\r\n    \"brokerAddress\": \"Thane\"\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/broker/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"broker",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update broker",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"brokerPhoneno\": \"9323048363\",\r\n    \"brokerName\": \"Ujala jha\",\r\n    \"brokerAddress\": \"Mulund\"\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/broker/19857",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"broker",
+								"19857"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get broker id and names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/broker/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"broker",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get broker by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/broker/19857",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"broker",
+								"19857"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete broker",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/broker/16",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"broker",
+								"16"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search/Filter Broker",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"filterData\": [\r\n        {\r\n            \"attrName\": \"globalSearch\",\r\n            \"attrValue\": [\"s\",\"9323048363\"]\r\n        }\r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/broker",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"broker"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Unfiltered  brokerlist",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"filterData\": [\r\n        \r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/broker",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"broker"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Sentiment - Obselete - No More Used",
+			"item": [
+				{
+					"name": "create sentiment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "aa3c4efd-968c-4d5f-b570-d363e82159e3",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"sentiment\", jsonData.sentimentId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\":\"May Not\",\r\n    \"description\":\"it is a sentiment\"\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/sentiment/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"sentiment",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update sentiment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"sentiment\",\r\n    \"description\": \"it is a not sentiment\"\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/sentiment/19602",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"sentiment",
+								"19602"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get sentiment id and names",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/sentiment/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"sentiment",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get sentiment by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/sentiment/{{sentiment}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"sentiment",
+								"{{sentiment}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete sentiment",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/sentiment/15",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"sentiment",
+								"15"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search/Filter Sentiment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"filterData\": [\r\n        {\r\n            \"attrName\": \"globalSearch\",\r\n            \"attrValue\": [\"c\"]\r\n        }\r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/sentiment",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"sentiment"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all sentiments unfiltered",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"filterData\": [\r\n        \r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/sentiment",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"sentiment"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "4d5ea09b-83ba-498b-b360-4faefaa3cafb",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3e7bc38b-bb09-4654-902a-726df7f3311e",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Source",
+			"item": [
+				{
+					"name": "create source",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"sourceName\":\"Walkin\",\r\n    \"sourceDescription\":\"it is a text\"\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/source/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"source",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update source",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"sourceName\":\"phone\",\r\n    \"sourceDescription\":\"it is a not phone\"\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/source/19604",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"source",
+								"19604"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get source id and name",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/source/idandnames",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"source",
+								"idandnames"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get source by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/source/{{source}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"source",
+								"{{source}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete source",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/source/14",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"source",
+								"14"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search/Filter Source",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"filterData\": [\r\n        {\r\n            \"attrName\": \"globalSearch\",\r\n            \"attrValue\": [\"s\",\"text\"]\r\n        }\r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/source",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"source"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all Source Unfiltered",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"filterData\": [\r\n        \r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/source",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"source"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Lead",
+			"item": [
+				{
+					"name": "create lead",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "098d93ac-ae88-457d-8692-8376d0cfc7df",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"lead\", jsonData.leadId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"customerName\" : \"Patnaik\",\r\n    \"primaryMobile\" : \"9712919578\",\r\n    \"secondaryMobile\" : \"\",\r\n    \"emailId\":\"bsp@gmail.com\",\r\n    \"purpose\" : \"investment\",\r\n    \"addressLine1\":\"604/Polaris\",\r\n    \"addressLine2\":\"dasda Galaxy\",\r\n    \"city\":\"Delhi\",\r\n    \"pincode\":\"490025\",\r\n    \"occupation\" :\"IT\",\r\n    \"dateOfBirth\" : \"1999-01-01\",\r\n    \"brokerId\":null,\r\n    \"sourceId\":null,\r\n    \"propertyType\":null,\r\n    \"sentiment\":{{sentiment}},\r\n    \"assigneeId\":10001\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Info by leadID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead/getallinfo/{{lead}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead",
+								"getallinfo",
+								"{{lead}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update lead",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"customerName\" : \"prakashss\",\r\n    \"primaryMobile\" : \"9323088281\",\r\n    \"secondaryMobile\" : \"\",\r\n    \"emailId\":\"pk@gmail.com\",\r\n    \"purpose\" : \"investment\",\r\n    \"addressLine1\":\"604/Polaris\",\r\n    \"addressLine2\":\"Kabra Galaxy\",\r\n    \"city\":\"Thane\",\r\n    \"pincode\":\"400607\",\r\n    \"occupation\" :\"IT\",\r\n    \"dateOfBirth\" : \"1999-01-01\",\r\n    \"brokerId\":{{broker}},\r\n    \"sourceId\":{{source}},\r\n    \"propertyType\":\"HOUSE_2_BHK\",\r\n    \"sentimentId\":{{sentiment}},\r\n    \"assigneeId\":10001\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead/19740",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead",
+								"19740"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "filter lead",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"filterData\": [\r\n        {\r\n            \"attrName\": \"assignee\",\r\n            \"attrValue\": [\"10001\"]\r\n        }\r\n        \r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Valid Property Types",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead/validPropertyTypes",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead",
+								"validPropertyTypes"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Valid Lead Statuses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead/validLeadStatus",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead",
+								"validLeadStatus"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Lead",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead/{{lead}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead",
+								"{{lead}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "http://{{serverUrlAPI}}/crm/lead/history/19713",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/lead/history/19713",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"lead",
+								"history",
+								"19713"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Activity",
+			"item": [
+				{
+					"name": "Create Activity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "d8cb2633-5479-4583-83a4-a56646135ee7",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"leadActivityId\",jsonData.leadActivityId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"leadId\":{{lead}},\n    \"activityType\":\"Property_Visit\",\n    \"activityDateTime\":\"2020-08-02 12:01\",\n    \"title\":\"Bhai sun le\",\n    \"duration\":10,\n    \"description\":\"mnmn\",\n    \"tags\":[\"meeting\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/activity/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"activity",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Lead Activity",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/activity/{{leadActivityId}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"activity",
+								"{{leadActivityId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "close Activity With comment",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"closingComment\":\"closed bro\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/activity/{{leadActivityId}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"activity",
+								"{{leadActivityId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reschedule Activity",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rescheduleDateTime\":\"2020-08-05 10:05\",\n    \"closingComment\":\"Rescheduling as per client request\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/activity/{{leadActivityId}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"activity",
+								"{{leadActivityId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Valid Activity Types",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/activity/validActivityTypes",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"activity",
+								"validActivityTypes"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Notes",
+			"item": [
+				{
+					"name": "create notes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "efd87603-1a3d-4e5e-ab08-658fe7bd18ee",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"postman.setEnvironmentVariable(\"note\",jsonData.noteId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"pinned\": \"true\",\r\n    \"content\": \"Tdfsderested\",\r\n    \"leadId\": {{lead}},\r\n    \"fileInformations\": [\r\n        {\r\n            \"fileUUId\": \"{{fileid}}\",\r\n            \"fileName\": \"temp.jpg\"\r\n        }\r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/notes/create",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"notes",
+								"create"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get notes by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/notes/{{note}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"notes",
+								"{{note}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update notes",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"pinned\": \"false\",\r\n    \"content\": \"This lead is interested\",\r\n    \"leadId\": {{lead}},\r\n    \"fileInformations\": [\r\n        {\r\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\r\n            \"fileName\": \"temp\"\r\n        },\r\n        {\r\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\r\n            \"fileName\": \"doosrafile.zip\"\r\n        }\r\n    ]\r\n}"
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/notes/{{note}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"notes",
+								"{{note}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unpin Note",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/notes/{{note}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"notes",
+								"{{note}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "1d0cc570-16f9-4155-9a70-f4dcef90ade4",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "af9859fd-ce10-4660-8b69-53fa735f5d43",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "file upload",
+			"item": [
+				{
+					"name": "file Upload",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);\r",
+									"postman.setEnvironmentVariable(\"fileid\", jsonData.fileUUId);"
+								],
+								"id": "b66c8c21-12df-4085-827e-e54d9e6b2c42"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/Ujala Jha/Desktop/pp.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/file/upload",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"file",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "File Download",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/file/download/{{fileid}}",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"file",
+								"download",
+								"{{fileid}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
