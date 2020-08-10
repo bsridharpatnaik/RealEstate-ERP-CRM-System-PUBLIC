@@ -27,6 +27,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
@@ -300,5 +301,7 @@ public class LeadService
 	
 		return message;
 	 }
+	 
+	
 	
 }

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
@@ -301,5 +302,10 @@ public class LeadActivityService {
 			throw new Exception("Lead with ID not found");
 		}
 		return leadOpt.get();
+	}
+	public List<LeadPageData> getLeadActivityPage(Pageable pageable) 
+	{
+		return laRepo.findLeadActivity();
+		
 	}
 }

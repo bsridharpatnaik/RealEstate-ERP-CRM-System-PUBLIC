@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadActivityClosingComment;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Model.LeadActivity;
@@ -68,11 +69,17 @@ public class LeadActivityController
 		laService.deleteLeadActivity(id, payload.getClosingComment(),userDetailsService.getCurrentUser().getId());
 	}
 	
-	@PutMapping("/{id}") 
+	@PutMapping("get/{id}") 
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public void rescheduleActivity(@RequestBody RescheduleActivityData payload,@PathVariable long id) throws Exception
 	{
 		laService.rescheduleActivity(id, payload);
+	}
+	
+	@GetMapping("/getleadactivitypage") 
+	public List<LeadPageData> getLeadActivityPage(Pageable pageable) 
+	{
+		return laService.getLeadActivityPage(pageable);
 	}
 	
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
