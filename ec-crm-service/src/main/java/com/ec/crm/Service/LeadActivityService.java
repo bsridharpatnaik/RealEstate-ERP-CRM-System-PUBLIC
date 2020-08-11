@@ -307,7 +307,7 @@ public class LeadActivityService {
 	}
 	public List<LeadPageData> getLeadActivityPage(Pageable pageable) throws Exception 
 	{
-		Page<Lead> leads=lRepo.findAll(pageable);
+		//Page<Lead> leads=lRepo.findAll(pageable);   change code here to get list of leads based on leads filters selected
 		log.info("Get all the leads");
 		System.out.println(leads);
 		List<LeadPageData> pagedata=new ArrayList<>();
@@ -326,6 +326,7 @@ public class LeadActivityService {
 				pagedata.add(activity);
 			}
 		}
+		//Add filter logic using streams to filter based on activity filter selected
 		return pagedata;
 		
 	}
