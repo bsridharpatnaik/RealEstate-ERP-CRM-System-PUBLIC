@@ -307,7 +307,7 @@ public class LeadActivityService {
 	}
 	public List<LeadPageData> getLeadActivityPage(Pageable pageable) throws Exception 
 	{
-		List<Lead> leads=lRepo.findAll();
+		Page<Lead> leads=lRepo.findAll(pageable);
 		log.info("Get all the leads");
 		System.out.println(leads);
 		List<LeadPageData> pagedata=new ArrayList<>();
