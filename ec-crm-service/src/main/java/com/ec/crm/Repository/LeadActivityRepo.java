@@ -1,5 +1,6 @@
 package com.ec.crm.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -28,6 +29,27 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value="SELECT l from LeadActivity l where l.lead.leadId=:leadId and l.isOpen=true")
 	List<LeadActivity> findAllByOpenActivitiesByLeadId(Long leadId);
 	
-	@Query(value="SELECT new com.ec.crm.Data.LeadPageData(la.lead.customerName as name,la.lead.primaryMobile as mobileNumber, la.activityType as activityType, la.activityDateTime, la.created, la.lead.status as leadStatus,la.isOpen) from LeadActivity la where la.lead.leadId=:leadId ORDER BY la.activityDateTime DESC")
-	List<LeadPageData> findLeadActivity(Long leadId);
+	@Query(value="SELECT la from LeadActivity la where la.lead.leadId=:leadId ORDER BY la.activityDateTime DESC")
+	List<LeadActivity> findAllActivitiesForLead(@Param("leadId")Long leadId);
+
+	
+	@Query(value="SELECT la from LeadActivity la where la.isOpen = true and la.lead.leadId=:leadId "
+			+ "and la.activityDateTime > :todayDate "
+			+ "and la.activityDateTime < :tomorrowDate "
+			+ "ORDER BY la.activityDateTime asc")
+	List<LeadActivity> getRecentPendingActivity(@Param("leadId")Long leadId,@Param("todayDate") Date todayDate,@Param("tomorrowDate") Date tomorrowDate);
+
+	@Query(value="SELECT la from LeadActivity la where la.isOpen = true and la.lead.leadId=:leadId order by la.activityDateTime desc")
+	List<LeadActivity> getRecentClosedActivity(Long leadId);
+
+	@Query(value="SELECT la from LeadActivity la where la.isOpen = false and la.lead.leadId=:leadId order by la.activityDateTime desc")
+	List<LeadActivity> getRecentActivityIrrespectiveOfStatus(Long leadId);
+
+	@Query(value="SELECT la from LeadActivity la where la.isOpen = true and  la.activityDateTime>:todayEndDate "
+			+ "and la.lead.leadId=:leadId order by la.activityDateTime asc ")
+	List<LeadActivity> getRecentUpcomingActivity(Long leadId,@Param("todayEndDate") Date todayEndDate);
+
+	@Query(value="SELECT la from LeadActivity la where la.isOpen = true and  la.activityDateTime<:atStartOfDay "
+			+ "and la.lead.leadId=:leadId order by la.activityDateTime desc ")
+	List<LeadActivity> getRecentPastActivity(Long leadId, Date atStartOfDay);
 }

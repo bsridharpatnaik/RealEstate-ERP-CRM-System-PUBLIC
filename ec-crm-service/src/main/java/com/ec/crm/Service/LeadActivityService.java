@@ -1,6 +1,8 @@
 package com.ec.crm.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
@@ -303,42 +305,143 @@ public class LeadActivityService {
 		}
 		return leadOpt.get();
 	}
-	public List<LeadPageData> getLeadActivityPage(Pageable pageable) 
+	public List<LeadPageData> getLeadActivityPage(Pageable pageable) throws Exception 
 	{
 		List<Lead> leads=lRepo.findAll();
 		log.info("Get all the leads");
 		System.out.println(leads);
 		List<LeadPageData> pagedata=new ArrayList<>();
+
+		//
+		//Change this code - Bad code - hardocded value 
+		//
 		for(Lead lead:leads) {
-			List<LeadPageData> activities=laRepo.findLeadActivity(lead.getLeadId());
-			log.info("Get all the Activity");
-			System.out.println(lead.getCustomerName());
-			System.out.println(activities);
-			LeadPageData activity=getDisplayActivityForLead(activities);
-			pagedata.add(activity);
-			
+			if(lead.getLeadId() == 19900)
+			{
+				List<LeadActivity> activities=laRepo.findAllActivitiesForLead(lead.getLeadId());
+				log.info("Get all the Activity");
+				System.out.println(lead.getCustomerName());
+				System.out.println(activities);
+				LeadPageData activity=getDisplayActivityForLead(activities);
+				pagedata.add(activity);
+			}
 		}
 		return pagedata;
 		
 	}
-	public LeadPageData getDisplayActivityForLead(List<LeadPageData> activities){
-		boolean open=false;
+	public LeadPageData getDisplayActivityForLead(List<LeadActivity> activities) throws Exception
+	{
+		boolean isPendingExists=false;
+		//boolean isClosedExists=false;
+		boolean isUpcomingExists=false;
+		boolean pastExists=false;
 		LeadPageData returndata=new LeadPageData();
-		for(LeadPageData activity:activities) {
+		Long leadId = activities.get(0).getLead().getLeadId();
+		for(LeadActivity activity:activities) 
+		{
 			log.info("check if any activity is open");
-			if(activity.getIsOpen()==true) {
-				log.info("activity is open");
-				open=true;
-			}	
+			System.out.println("Start Of Day - "+atStartOfDay(new Date()));
+			System.out.println("End Of Day - "+atEndOfDay(new Date()));
+			
+			System.out.println(activity.getActivityDateTime().after(atStartOfDay(new Date())));
+			
+			
+			if(activity.getIsOpen()==true && activity.getActivityDateTime().after(atStartOfDay(new Date())) && activity.getActivityDateTime().before(atEndOfDay(new Date()))) // Pass time zone to constructor.) 
+				isPendingExists=true;
+				
+			if(activity.getIsOpen()==true && activity.getActivityDateTime().after(atEndOfDay(new Date()))) // Pass time zone to constructor.) 
+				isUpcomingExists=true;
+			
+			if(activity.getIsOpen()==true && activity.getActivityDateTime().before(atStartOfDay(new Date()))) // Pass time zone to constructor.) 
+				pastExists=true;
 		}
 		
+		System.out.println("isPendingExists - " + isPendingExists);
+		System.out.println("isUpcomingExists - " + isUpcomingExists);
+		System.out.println("pastExists - " + pastExists);
+		/*
+		 * Only Pending Only past Only upcoming
+		 * 
+		 * If pending ignore others
+		 * 
+		 * !past && !up past * up past & !up !past & up
+		 */
+
+		if(isPendingExists)
+		{
+			returndata = transformDataFromActivity(laRepo.getRecentPendingActivity(leadId,atStartOfDay(new Date()),atEndOfDay(new Date())));
+		}
 		
-		if(open==false) {
-			log.info("if no activity open return mostrecentclosedactivity");
-			returndata= activities.get(0);
+		else if(!isUpcomingExists && !isPendingExists && pastExists) 
+		{
+			returndata = transformDataFromActivity(laRepo.getRecentClosedActivity(leadId));
+		}
+		 
+		else if(!pastExists && !isPendingExists && !isUpcomingExists)
+		{
+			returndata = transformDataFromActivity(laRepo.getRecentActivityIrrespectiveOfStatus(leadId));
+		}
+				
+		else if (!isPendingExists)
+		{
+			if(!pastExists)
+			{
+				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,atEndOfDay(new Date())));
+			}
+			
+			else if(isUpcomingExists && !pastExists)
+			{
+				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,atEndOfDay(new Date())));
+			}
+			else if(isUpcomingExists && pastExists)
+			{
+				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,atEndOfDay(new Date())));
+			}
+			else if(!isUpcomingExists && pastExists)
+			{
+				returndata = transformDataFromActivity(laRepo.getRecentPastActivity(leadId,atStartOfDay(new Date())));
+			}
 		}
 		return returndata;
 	}
 	
 
+	private LeadPageData transformDataFromActivity(List<LeadActivity> recentPendingActivity) throws Exception 
+	{
+		if(recentPendingActivity.size()==0)
+			throw new Exception("mar gaye bhai");
+		LeadPageData leadPageData = new LeadPageData(recentPendingActivity.get(0));
+		return leadPageData;
+	}
+
+	/*
+	 * - If no upcoming, past or pending activities open -> show status of most
+	 * recent closed activity - If only past activities open – show most recent past
+	 * activity - If past activity open with pending and upcoming -> Then show
+	 * pending - If only pending activities open -> show most recent pending
+	 * activity - If pending open with upcoming open -> show most recent pending
+	 * activity - If only upcoming activity open -> show most recent upcoming
+	 * activity
+	 */
+	public static Date atStartOfDay(Date date) {
+	    LocalDateTime localDateTime = dateToLocalDateTime(date);
+	    LocalDateTime startOfDay = localDateTime.with(LocalTime.MIN);
+	    return localDateTimeToDate(startOfDay);
+	}
+	
+	public static Date atEndOfDay(Date date) {
+	    LocalDateTime localDateTime = dateToLocalDateTime(date);
+	    LocalDateTime endOfDay = localDateTime.with(LocalTime.MAX);
+	    return localDateTimeToDate(endOfDay);
+	}
+	
+	private static LocalDateTime dateToLocalDateTime(Date date) {
+	    return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+	}
+
+	private static Date localDateTimeToDate(LocalDateTime localDateTime) {
+	    return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+	}
 }
+
+

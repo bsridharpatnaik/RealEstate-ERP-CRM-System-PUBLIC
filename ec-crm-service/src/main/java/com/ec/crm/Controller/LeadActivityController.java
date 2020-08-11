@@ -77,7 +77,7 @@ public class LeadActivityController
 	}
 	
 	@GetMapping("/getleadactivitypage") 
-	public List<LeadPageData> getLeadActivityPage(Pageable pageable) 
+	public List<LeadPageData> getLeadActivityPage(Pageable pageable) throws Exception 
 	{
 		return laService.getLeadActivityPage(pageable);
 	}
