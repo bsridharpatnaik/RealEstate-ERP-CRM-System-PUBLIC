@@ -28,7 +28,6 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value="SELECT l from LeadActivity l where l.lead.leadId=:leadId and l.isOpen=true")
 	List<LeadActivity> findAllByOpenActivitiesByLeadId(Long leadId);
 	
-	@Query(value="SELECT new com.ec.crm.Data.LeadPageData(la.lead.customerName as name,la.lead.primaryMobile as mobileNumber, la.activityType as activityType, la.lead.status as leadStatus) from LeadActivity la"
-			+ " left join  la.lead")
-	List<LeadPageData> findLeadActivity();
+	@Query(value="SELECT new com.ec.crm.Data.LeadPageData(la.lead.customerName as name,la.lead.primaryMobile as mobileNumber, la.activityType as activityType, la.activityDateTime, la.created, la.lead.status as leadStatus,la.isOpen) from LeadActivity la where la.lead.leadId=:leadId ORDER BY la.activityDateTime DESC")
+	List<LeadPageData> findLeadActivity(Long leadId);
 }

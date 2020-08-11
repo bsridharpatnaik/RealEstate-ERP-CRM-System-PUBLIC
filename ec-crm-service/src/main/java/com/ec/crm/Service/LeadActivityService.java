@@ -305,7 +305,40 @@ public class LeadActivityService {
 	}
 	public List<LeadPageData> getLeadActivityPage(Pageable pageable) 
 	{
-		return laRepo.findLeadActivity();
+		List<Lead> leads=lRepo.findAll();
+		log.info("Get all the leads");
+		System.out.println(leads);
+		List<LeadPageData> pagedata=new ArrayList<>();
+		for(Lead lead:leads) {
+			List<LeadPageData> activities=laRepo.findLeadActivity(lead.getLeadId());
+			log.info("Get all the Activity");
+			System.out.println(lead.getCustomerName());
+			System.out.println(activities);
+			LeadPageData activity=getDisplayActivityForLead(activities);
+			pagedata.add(activity);
+			
+		}
+		return pagedata;
 		
 	}
+	public LeadPageData getDisplayActivityForLead(List<LeadPageData> activities){
+		boolean open=false;
+		LeadPageData returndata=new LeadPageData();
+		for(LeadPageData activity:activities) {
+			log.info("check if any activity is open");
+			if(activity.getIsOpen()==true) {
+				log.info("activity is open");
+				open=true;
+			}	
+		}
+		
+		
+		if(open==false) {
+			log.info("if no activity open return mostrecentclosedactivity");
+			returndata= activities.get(0);
+		}
+		return returndata;
+	}
+	
+
 }

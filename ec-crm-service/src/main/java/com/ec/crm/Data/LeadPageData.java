@@ -9,11 +9,13 @@ import javax.persistence.Enumerated;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 @Data
@@ -23,18 +25,21 @@ public class LeadPageData
 	
 	String mobileNumber;
 	
-	@NonNull
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm")
+	Date activityDateTime;
+	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss ")
+	Date created;
+	
 	@Column(nullable=false)
 	@Enumerated(EnumType.STRING)
 	ActivityTypeEnum activityType;
 	
-	@NonNull
 	@Column(nullable=false)
 	@Enumerated(EnumType.STRING)
 	LeadStatusEnum leadStatus;
 	
-	
-	
+	Boolean isOpen;
 	
 	public LeadPageData() {
 		super();
@@ -44,11 +49,15 @@ public class LeadPageData
 
 
 
-	public LeadPageData(String name, String mobileNumber, ActivityTypeEnum activityType, LeadStatusEnum leadStatus) {
+	public LeadPageData(String name, String mobileNumber, ActivityTypeEnum activityType,  Date activityDateTime, Date created , LeadStatusEnum leadStatus, Boolean isOpen) {
 		super();
 		this.name = name;
 		this.mobileNumber = mobileNumber;
-		
+		this.activityType=activityType;
+		this.activityDateTime=activityDateTime;
+		this.created=created;
+		this.leadStatus=leadStatus;
+		this.isOpen=isOpen;
 	}
 	
 }
