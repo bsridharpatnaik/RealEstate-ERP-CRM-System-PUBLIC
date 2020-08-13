@@ -1,5 +1,6 @@
 package com.ec.crm.Data;
 
+import java.util.HashMap;
 import java.util.List;
 
 import com.ec.crm.ReusableClasses.IdNameProjections;
@@ -18,5 +19,7 @@ public class NameAndProjectionDataForDropDown
 	List<String> validSentiments;
 	List<IdNameProjections> brokerDetails;
 	List<IdNameProjections> sourceDetails;
+	List<String> validActivityType;
+	HashMap<String,String> actvityStatus;
 	PopulateAssigneeList assigneeDetails;
 }

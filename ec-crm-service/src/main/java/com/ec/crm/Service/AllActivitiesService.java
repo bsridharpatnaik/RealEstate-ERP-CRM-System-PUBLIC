@@ -31,6 +31,11 @@ public class AllActivitiesService
 	@Autowired
 	LeadActivityRepo laRepo;
 	
+	@Autowired
+	PopulateDropdownService populateDropdownService;
+	
+	@Autowired
+	LeadService leadService;
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
 	public PlannerAllReturnDAO findFilteredData(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
@@ -65,6 +70,9 @@ public class AllActivitiesService
 		activitiesList.setMessage(fetchDataFromList(activities,"Message"));
 		activitiesList.setEmail(fetchDataFromList(activities,"Email"));
 		activitiesList.setDeal_lost(fetchDataFromList(activities,"Deal_Lost"));
+		activitiesList.setDropdownData(populateDropdownService.fetchData("lead"));
+		log.info("Setting tyoeahead data");
+		activitiesList.setTypeAheadDataForGlobalSearch(leadService.fetchTypeAheadForLeadGlobalSearch());
 		return activitiesList;
 	}
 

@@ -8,6 +8,8 @@ import lombok.Data;
 public class PlannerAllReturnDAO 
 {
 
+	NameAndProjectionDataForDropDown dropdownData;
+	List<String> typeAheadDataForGlobalSearch;
 	PlannerWithTotalReturnDAO call;
 	PlannerWithTotalReturnDAO meeting;
 	PlannerWithTotalReturnDAO property_visit;

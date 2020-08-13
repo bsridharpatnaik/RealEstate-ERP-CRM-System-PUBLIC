@@ -1,9 +1,12 @@
 package com.ec.crm.Service;
 
+import java.util.HashMap;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.NameAndProjectionDataForDropDown;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Enums.SentimentEnum;
@@ -33,14 +36,25 @@ public class PopulateDropdownService
 		switch(page)
 		{
 			case "lead":
+				HashMap<String,String> actvityStatus = getValidActivityStatus();
 				morDropdownDataList.setBrokerDetails(brokerRepo.findIdAndNames());
 				morDropdownDataList.setValidSentiments(SentimentEnum.getValidSentiments());
 				morDropdownDataList.setSourceDetails(sourceRepo.findIdAndNames());
 				morDropdownDataList.setValidPropertyType(PropertyTypeEnum.getValidPropertyType());
 				morDropdownDataList.setValidStatusType(LeadStatusEnum.getValidLeadStatus());
 				morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
+				morDropdownDataList.setActvityStatus(actvityStatus);
+				morDropdownDataList.setValidActivityType(ActivityTypeEnum.getValidActivityTypes());
 				break;
 		}
 		return morDropdownDataList;
+	}
+
+	private HashMap<String, String> getValidActivityStatus() 
+	{
+		HashMap<String, String> actvityStatus = new HashMap<String, String>();
+		actvityStatus.put("Open", "true");
+		actvityStatus.put("Closed", "false");
+		return actvityStatus;
 	}
 }

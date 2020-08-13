@@ -228,7 +228,7 @@ public class LeadService
 		return leadListWithTypeAheadData;
 	}
 	
-	private List<String> fetchTypeAheadForLeadGlobalSearch() 
+	List<String> fetchTypeAheadForLeadGlobalSearch() 
 	{
 		log.info("Invoked fetchTypeAheadForLeadGlobalSearch");
 		List<String> typeAhead = new ArrayList<String>();
@@ -301,7 +301,4 @@ public class LeadService
 	
 		return message;
 	 }
-	 
-	
-	
 }
