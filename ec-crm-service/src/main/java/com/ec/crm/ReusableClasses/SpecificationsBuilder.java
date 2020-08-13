@@ -8,12 +8,11 @@ import java.util.List;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.SetAttribute;
 
 import org.springframework.data.jpa.domain.Specification;
+
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Model.Lead;
 
 public class SpecificationsBuilder<T>
 {
@@ -62,17 +61,17 @@ public class SpecificationsBuilder<T>
     	Date startDate=new SimpleDateFormat("yyyy/MM/dd").parse(startDates.get(0));
     	Specification<T> finalSpec = null;
     	Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
-	            -> cb.greaterThanOrEqualTo(root.get(key), startDate);
+	            -> cb.greaterThanOrEqualTo(root.get(key), ReusableMethods.atStartOfDay(startDate));
 	    finalSpec  = specOrCondition(finalSpec,internalSpec);
     	return finalSpec; 
 	}
     
     public Specification<T> whereDirectFieldDateLessThan(String key, List<String> endDates) throws ParseException 
     {
-    	Date startDate=new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
+    	Date endDate=new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
     	Specification<T> finalSpec = null;
     	Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
-	            -> cb.lessThanOrEqualTo(root.get(key), startDate);
+	            -> cb.lessThanOrEqualTo(root.get(key), ReusableMethods.atEndOfDay(endDate));
 	    finalSpec  = specOrCondition(finalSpec,internalSpec);
     	return finalSpec; 
 	}
@@ -119,7 +118,37 @@ public class SpecificationsBuilder<T>
         return finalSpec;
 	}
 
-	
+	public Specification<T> whereChildFieldDateGreaterThan(String childTable, String childFiledName, List<String> startDates) throws ParseException 
+    {
+    	Date startDate=new SimpleDateFormat("yyyy/MM/dd").parse(startDates.get(0));
+    	Specification<T> finalSpec = null;
+    	Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+	            -> cb.greaterThanOrEqualTo(root.get(childTable).get(childFiledName), ReusableMethods.atStartOfDay(startDate));
+	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	return finalSpec; 
+	}
+    
+    public Specification<T> whereChildFieldDateLessThan(String childTable, String childFiledName,List<String> endDates) throws ParseException 
+    {
+    	Date endDate=new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
+    	Specification<T> finalSpec = null;
+    	Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+	            -> cb.lessThanOrEqualTo(root.get(childTable).get(childFiledName), ReusableMethods.atEndOfDay(endDate));
+	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	return finalSpec; 
+	}
+    
+    public Specification<T> whereChildLongFieldContains(String childTable, String childFiledName, List<String> assignees) 
+    {
+    	Specification<T> finalSpec = null;
+    	for(String name:assignees)
+    	{
+    		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+    	            -> cb.equal(root.get(childTable).get(childFiledName), Long.parseLong(name));
+    	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	}
+        return finalSpec;
+	}
 
 	  //#######################################//
 	 //     			Level 2		 	  //

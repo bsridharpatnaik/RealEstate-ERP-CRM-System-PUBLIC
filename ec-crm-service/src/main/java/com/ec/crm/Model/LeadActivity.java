@@ -21,6 +21,7 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
+import org.hibernate.annotations.Where;
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Enums.ActivityTypeEnum;
@@ -34,6 +35,7 @@ import lombok.Data;
 @Entity
 @Table(name = "LeadActivity")
 @Data
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE) 
 public class LeadActivity extends ReusableFields implements Serializable 
 {
 	/**

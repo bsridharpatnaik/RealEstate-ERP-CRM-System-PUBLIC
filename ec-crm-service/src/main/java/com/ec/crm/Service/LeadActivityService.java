@@ -333,9 +333,8 @@ public class LeadActivityService {
 		//
 		//Change this code - Bad code - hardocded value 
 		//
-		for(Lead lead:leads) {
-			if(lead.getLeadId() == 19900)
-			{
+		for(Lead lead:leads) 
+		{
 				List<LeadActivity> activities=laRepo.findAllActivitiesForLead(lead.getLeadId());
 				log.info("Get all the Activity");
 				System.out.println(lead.getCustomerName());
@@ -348,7 +347,6 @@ public class LeadActivityService {
 					e.printStackTrace();
 				}
 				pagedata.add(activity);
-			}
 		}
 		//Add filter logic using streams to filter based on activity filter selected
 		return pagedata;
@@ -434,20 +432,11 @@ public class LeadActivityService {
 	private LeadPageData transformDataFromActivity(List<LeadActivity> recentPendingActivity) throws Exception 
 	{
 		if(recentPendingActivity.size()==0)
-			throw new Exception("mar gaye bhai");
+			throw new Exception("No Pending ");
 		LeadPageData leadPageData = new LeadPageData(recentPendingActivity.get(0));
 		return leadPageData;
 	}
 
-	/*
-	 * - If no upcoming, past or pending activities open -> show status of most
-	 * recent closed activity - If only past activities open – show most recent past
-	 * activity - If past activity open with pending and upcoming -> Then show
-	 * pending - If only pending activities open -> show most recent pending
-	 * activity - If pending open with upcoming open -> show most recent pending
-	 * activity - If only upcoming activity open -> show most recent upcoming
-	 * activity
-	 */
 	public static Date atStartOfDay(Date date) {
 	    LocalDateTime localDateTime = dateToLocalDateTime(date);
 	    LocalDateTime startOfDay = localDateTime.with(LocalTime.MIN);
