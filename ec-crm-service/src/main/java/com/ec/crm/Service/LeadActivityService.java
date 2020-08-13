@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -18,14 +19,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadListWithTypeAheadData;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Filters.LeadSpecifications;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
@@ -305,9 +310,22 @@ public class LeadActivityService {
 		}
 		return leadOpt.get();
 	}
-	public List<LeadPageData> getLeadActivityPage(Pageable pageable) throws Exception 
+	public List<LeadPageData> getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
 	{
 		//Page<Lead> leads=lRepo.findAll(pageable);   change code here to get list of leads based on leads filters selected
+		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
+		LeadListWithTypeAheadData leadListWithTypeAheadData = new LeadListWithTypeAheadData();
+		
+		log.info("Fetching filteration based on filter data received");
+		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
+		
+		log.info("Fetching records based on specification");
+		Page<Lead> leads;
+		if(spec!=null)
+			leads=lRepo.findAll(spec, pageable);
+		else 		
+			leads=lRepo.findAll(pageable);
+		
 		log.info("Get all the leads");
 		System.out.println(leads);
 		List<LeadPageData> pagedata=new ArrayList<>();
@@ -322,7 +340,13 @@ public class LeadActivityService {
 				log.info("Get all the Activity");
 				System.out.println(lead.getCustomerName());
 				System.out.println(activities);
-				LeadPageData activity=getDisplayActivityForLead(activities);
+				LeadPageData activity=new LeadPageData();
+				try {
+					activity = getDisplayActivityForLead(activities);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				pagedata.add(activity);
 			}
 		}

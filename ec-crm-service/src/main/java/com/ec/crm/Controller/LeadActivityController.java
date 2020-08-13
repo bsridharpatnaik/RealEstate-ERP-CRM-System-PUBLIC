@@ -28,6 +28,7 @@ import com.ec.crm.Data.LeadActivityCreate;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
+import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Service.LeadActivityService;
 import com.ec.crm.Service.UserDetailsService;
@@ -79,9 +80,9 @@ public class LeadActivityController
 	}
 	
 	@GetMapping("/getleadactivitypage") 
-	public List<LeadPageData> getLeadActivityPage(@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) throws Exception 
+	public List<LeadPageData> getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) throws Exception 
 	{
-		return laService.getLeadActivityPage(pageable);
+		return laService.getLeadActivityPage(leadFilterDataList,pageable);
 	}
 	
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
