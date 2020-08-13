@@ -2,6 +2,7 @@ package com.ec.crm.Service;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,7 +71,10 @@ public class AllActivitiesService
 	private PlannerWithTotalReturnDAO fetchDataFromList(List<LeadActivity> activities, String acivityType) 
 	{
 		log.info("Invoked PlannerWithTotalReturnDAO");
-		List<LeadActivity> filteredActivities = activities.stream().filter(LeadActivity -> LeadActivity.getActivityType().equals(ActivityTypeEnum.valueOf(acivityType))).collect(Collectors.toList());
+		List<LeadActivity> filteredActivities = activities.stream().filter(
+				LeadActivity -> LeadActivity.getActivityType().equals
+				(ActivityTypeEnum.valueOf(acivityType)))
+				.sorted(Comparator.comparing(LeadActivity::getActivityDateTime)).collect(Collectors.toList());
 		return transformToPlannerWithTotalReturnDAO(filteredActivities);
 	}
 
@@ -92,3 +96,4 @@ public class AllActivitiesService
 		return plannerWithTotalReturnDAO;
 	}
 }
+

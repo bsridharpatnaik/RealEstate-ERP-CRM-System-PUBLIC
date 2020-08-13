@@ -16,7 +16,7 @@ import com.ec.crm.ReusableClasses.SpecificationsBuilder;
 
 public class ActivitySpecifications 
 {
-static SpecificationsBuilder<LeadActivity> specbldr = new SpecificationsBuilder<LeadActivity>();
+	static SpecificationsBuilder<LeadActivity> specbldr = new SpecificationsBuilder<LeadActivity>();
 	
 	public static Specification<LeadActivity> getSpecification(FilterDataList filterDataList) throws ParseException
 	{
