@@ -881,7 +881,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"customerName\" : \"Patnaik\",\r\n    \"primaryMobile\" : \"9712919578\",\r\n    \"secondaryMobile\" : \"\",\r\n    \"emailId\":\"bsp@gmail.com\",\r\n    \"purpose\" : \"investment\",\r\n    \"addressLine1\":\"604/Polaris\",\r\n    \"addressLine2\":\"dasda Galaxy\",\r\n    \"city\":\"Delhi\",\r\n    \"pincode\":\"490025\",\r\n    \"occupation\" :\"IT\",\r\n    \"dateOfBirth\" : \"1999-01-01\",\r\n    \"brokerId\":null,\r\n    \"sourceId\":null,\r\n    \"propertyType\":null,\r\n    \"sentiment\":{{sentiment}},\r\n    \"assigneeId\":10001\r\n}"
+							"raw": "{\r\n    \"customerName\" : \"baba black ship\",\r\n    \"primaryMobile\" : \"9798076889\",\r\n    \"secondaryMobile\" : \"\",\r\n    \"emailId\":\"bsp@gmail.com\",\r\n    \"purpose\" : \"investment\",\r\n    \"addressLine1\":\"604/Polaris\",\r\n    \"addressLine2\":\"dasda Galaxy\",\r\n    \"city\":\"Delhi\",\r\n    \"pincode\":\"490025\",\r\n    \"occupation\" :\"IT\",\r\n    \"dateOfBirth\" : \"1999-01-01\",\r\n    \"brokerId\":null,\r\n    \"sourceId\":null,\r\n    \"propertyType\":null,\r\n    \"sentiment\":\"{{sentiment}}\",\r\n    \"assigneeId\":10001\r\n}"
 						},
 						"url": {
 							"raw": "http://{{serverUrlAPI}}/crm/lead/create",
@@ -1094,6 +1094,32 @@
 								"lead",
 								"history",
 								"19713"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Lead Activity Page",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/activity/getleadactivitypage",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"activity",
+								"getleadactivitypage"
 							]
 						}
 					},
@@ -1515,6 +1541,47 @@
 								"file",
 								"download",
 								"{{fileid}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Planner",
+			"item": [
+				{
+					"name": "Planner Activites Without filter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"filterData\": [\n        \n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{serverUrlAPI}}/crm/planner/activities",
+							"protocol": "http",
+							"host": [
+								"{{serverUrlAPI}}"
+							],
+							"path": [
+								"crm",
+								"planner",
+								"activities"
 							]
 						}
 					},
