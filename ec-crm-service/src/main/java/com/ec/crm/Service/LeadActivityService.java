@@ -18,13 +18,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
-import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
@@ -52,7 +53,14 @@ public class LeadActivityService {
 	UserDetailsService userDetailsService;
 	
 	@Autowired
+	LeadService lService;
+	
+	@Autowired
 	HttpServletRequest request;
+	
+	@Autowired
+	PopulateDropdownService populateDropdownService;
+	
 	
 	@Value("${common.serverurl}")
 	private String reqUrl;
@@ -310,11 +318,11 @@ public class LeadActivityService {
 		}
 		return leadOpt.get();
 	}
-	public List<LeadPageData> getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
+	public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
 	{
 		//Page<Lead> leads=lRepo.findAll(pageable);   change code here to get list of leads based on leads filters selected
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
-		LeadListWithTypeAheadData leadListWithTypeAheadData = new LeadListWithTypeAheadData();
+		LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
 		
 		log.info("Fetching filteration based on filter data received");
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
@@ -348,8 +356,15 @@ public class LeadActivityService {
 				}
 				pagedata.add(activity);
 		}
+		final Page<LeadPageData> page = new PageImpl<>(pagedata);
+		leadActivityListWithTypeAheadData.setLeadPageDetails(page);
+		log.info("Setting dropdown data");
+		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
+		log.info("Setting typeahead data");
+		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
+		return leadActivityListWithTypeAheadData;
 		//Add filter logic using streams to filter based on activity filter selected
-		return pagedata;
+//		return pagedata;
 		
 	}
 	public LeadPageData getDisplayActivityForLead(List<LeadActivity> activities) throws Exception

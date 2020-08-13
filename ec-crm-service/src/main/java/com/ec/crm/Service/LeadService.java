@@ -217,14 +217,10 @@ public class LeadService
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
 		
 		log.info("Fetching records based on specification");
-		Page<Lead> leads;
 		if(spec!=null)
-			leads=lRepo.findAll(spec, pageable);
+			leadListWithTypeAheadData.setLeadDetails(lRepo.findAll(spec, pageable));
 		else 		
-			leads=lRepo.findAll(pageable);
-		
-		
-		leadListWithTypeAheadData.setLeadDetails(leads);
+			leadListWithTypeAheadData.setLeadDetails(lRepo.findAll(pageable));
 		log.info("Setting dropdown data");
 		leadListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
 		log.info("Setting tyoeahead data");
@@ -305,4 +301,7 @@ public class LeadService
 	
 		return message;
 	 }
+	 
+	
+	
 }
