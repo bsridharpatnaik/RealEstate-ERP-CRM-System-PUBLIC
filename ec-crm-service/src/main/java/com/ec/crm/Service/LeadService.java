@@ -4,8 +4,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
@@ -16,6 +15,8 @@ import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -27,9 +28,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
-import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Enums.LeadStatusEnum;
-import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
 import com.ec.crm.Model.Address;
@@ -39,7 +38,6 @@ import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.NoteRepo;
 import com.ec.crm.Repository.SourceRepo;
-import com.ec.crm.ReusableClasses.CommonUtils;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.extern.slf4j.Slf4j;
@@ -91,8 +89,6 @@ public class LeadService
 	@Value("${common.serverurl}")
 	private String reqUrl;
 	
-	CommonUtils utilObj = new CommonUtils();
-		
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
 	@Transactional
@@ -155,13 +151,13 @@ public class LeadService
 		return leadOpt.get();
 	}
 	
-	private void formatMobileNo(LeadCreateData payload) 
+	private void formatMobileNo(LeadCreateData payload) throws Exception 
 	 {
 		log.info("Invoked formatMobileNo");
        if (!(payload.getPrimaryMobile() == null) && !payload.getPrimaryMobile().equals(""))
-           payload.setPrimaryMobile(utilObj.normalizePhoneNumber(payload.getPrimaryMobile()));
+           payload.setPrimaryMobile(ReusableMethods.normalizePhoneNumber(payload.getPrimaryMobile()));
        if(payload.getSecondaryMobile()!= null && payload.getSecondaryMobile()!="")
-       	payload.setSecondaryMobile(utilObj.normalizePhoneNumber(payload.getSecondaryMobile()));
+       	payload.setSecondaryMobile(ReusableMethods.normalizePhoneNumber(payload.getSecondaryMobile()));
    }
 	
 	

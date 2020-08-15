@@ -82,7 +82,7 @@ public class LeadActivityController
 	
 	@PostMapping("/getleadactivitypage") 
 	@ResponseStatus(HttpStatus.OK)
-	public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) throws Exception 
+	public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws Exception 
 	{
 		return laService.getLeadActivityPage(leadFilterDataList,pageable);
 	}

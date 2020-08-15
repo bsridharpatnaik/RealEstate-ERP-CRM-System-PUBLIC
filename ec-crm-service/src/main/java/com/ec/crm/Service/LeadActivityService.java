@@ -36,7 +36,6 @@ import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
-import com.ec.crm.ReusableClasses.CommonUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,8 +63,6 @@ public class LeadActivityService {
 	
 	@Value("${common.serverurl}")
 	private String reqUrl;
-	
-	CommonUtils utilObj = new CommonUtils();
 	
 	Long currentUserId;
 	Logger log = LoggerFactory.getLogger(LeadService.class);
@@ -335,12 +332,8 @@ public class LeadActivityService {
 			leads=lRepo.findAll(pageable);
 		
 		log.info("Get all the leads");
-		System.out.println(leads);
 		List<LeadPageData> pagedata=new ArrayList<>();
 
-		//
-		//Change this code - Bad code - hardocded value 
-		//
 		for(Lead lead:leads) 
 		{
 				List<LeadActivity> activities=laRepo.findAllActivitiesForLead(lead.getLeadId());

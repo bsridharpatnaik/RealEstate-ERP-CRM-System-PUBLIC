@@ -14,7 +14,6 @@ import com.ec.crm.Filters.BrokerSpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Broker;
 import com.ec.crm.Repository.BrokerRepo;
-import com.ec.crm.ReusableClasses.CommonUtils;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 
@@ -25,8 +24,6 @@ public class BrokerService
 {
 	@Autowired
 	BrokerRepo bRepo;
-	
-	CommonUtils utilObj = new CommonUtils();
 	
 	public Page<Broker> fetchAll(Pageable pageable) 
 	{
@@ -47,7 +44,7 @@ public class BrokerService
 	public Broker createBroker(Broker brokerData) throws Exception 
 	{
 		validatePayload(brokerData);
-		brokerData.setBrokerPhoneno(utilObj.normalizePhoneNumber(brokerData.getBrokerPhoneno()));
+		brokerData.setBrokerPhoneno(ReusableMethods.normalizePhoneNumber(brokerData.getBrokerPhoneno()));
 		if(!bRepo.existsByBrokerPhoneno(brokerData.getBrokerPhoneno()))
 			return bRepo.save(brokerData);
 		else

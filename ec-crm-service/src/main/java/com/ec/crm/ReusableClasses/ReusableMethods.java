@@ -108,6 +108,27 @@ public final class ReusableMethods
         }
 	}
 	
+
+	public static String normalizePhoneNumber(String number) throws Exception 
+    {
+			number = number.replaceAll("[^+0-9]", ""); // All weird characters such as /, -, ...
+            number = removeZero(number);
+            if(number.length()<10)
+            	throw new Exception("Please enter atleast 10 digit mobile number");
+            
+            number = number.substring(number.length()-10);
+            return number;	
+     }
+  
+    public static String removeZero(String str) 
+    { 
+        int i = 0; 
+        while (str.charAt(i) == '0') 
+            i++; 
+        StringBuffer sb = new StringBuffer(str); 
+        sb.replace(0, i, ""); 
+        return sb.toString(); 
+    }
 	public static <T> Set<T> differenceBetweenSets(final Set<T> setOne, final Set<T> setTwo) {
 	     Set<T> result = new HashSet<T>(setOne);
 	     result.removeIf(setTwo::contains);

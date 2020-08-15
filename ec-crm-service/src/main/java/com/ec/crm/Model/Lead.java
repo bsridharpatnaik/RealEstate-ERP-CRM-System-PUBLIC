@@ -109,6 +109,7 @@ public class Lead extends ReusableFields implements Serializable
 	 */
 	
 	
+	
 	@Column(name="user_id")
 	@JsonSerialize(using=ToUsernameSerializer.class)
 	Long asigneeId;
