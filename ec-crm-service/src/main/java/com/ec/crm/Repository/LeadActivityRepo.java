@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-
+import com.ec.crm.Data.LeadLastUpdatedDAO;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Model.LeadActivity;
@@ -52,4 +52,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value="SELECT la from LeadActivity la where la.isOpen = true and  la.activityDateTime<:atStartOfDay "
 			+ "and la.lead.leadId=:leadId order by la.activityDateTime desc ")
 	List<LeadActivity> getRecentPastActivity(Long leadId, Date atStartOfDay);
+	
+	@Query(value="SELECT new com.ec.crm.Data.LeadLastUpdatedDAO(l.lead.leadId,max(l.modified)) from LeadActivity l group by l.lead.leadId")
+	List<LeadLastUpdatedDAO> fetchLastUpdatedDetails();
 }

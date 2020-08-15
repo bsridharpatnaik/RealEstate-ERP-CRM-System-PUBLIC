@@ -3,9 +3,11 @@ package com.ec.crm.ReusableClasses;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -166,4 +168,8 @@ public final class ReusableMethods
 	private static Date localDateTimeToDate(LocalDateTime localDateTime) {
 	    return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 	}
+	
+	public static long daysBetweenTwoDates(Date dateFrom, Date dateTo) {
+        return ChronoUnit.DAYS.between(Instant.ofEpochMilli(dateFrom.getTime()), Instant.ofEpochMilli(dateTo.getTime()));
+    }
 }

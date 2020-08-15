@@ -2,12 +2,12 @@ package com.ec.crm.Service;
 
 import java.text.ParseException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
+import com.ec.crm.Data.LeadLastUpdatedDAO;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
@@ -36,6 +37,7 @@ import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -336,18 +338,7 @@ public class LeadActivityService {
 
 		for(Lead lead:leads) 
 		{
-				List<LeadActivity> activities=laRepo.findAllActivitiesForLead(lead.getLeadId());
-				log.info("Get all the Activity");
-				System.out.println(lead.getCustomerName());
-				System.out.println(activities);
-				LeadPageData activity=new LeadPageData();
-				try {
-					activity = getDisplayActivityForLead(activities);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				pagedata.add(activity);
+				pagedata.add(getRecentActivityByLeadID(lead));
 		}
 		final Page<LeadPageData> page = new PageImpl<>(pagedata);
 		leadActivityListWithTypeAheadData.setLeadPageDetails(page);
@@ -360,6 +351,21 @@ public class LeadActivityService {
 //		return pagedata;
 		
 	}
+	public LeadPageData getRecentActivityByLeadID(Lead lead) {
+		List<LeadActivity> activities=laRepo.findAllActivitiesForLead(lead.getLeadId());
+		log.info("Get all the Activity");
+		System.out.println(lead.getCustomerName());
+		System.out.println(activities);
+		LeadPageData activity=new LeadPageData();
+		try {
+			activity = getDisplayActivityForLead(activities);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return activity;
+	}
+
 	public LeadPageData getDisplayActivityForLead(List<LeadActivity> activities) throws Exception
 	{
 		boolean isPendingExists=false;
@@ -371,19 +377,19 @@ public class LeadActivityService {
 		for(LeadActivity activity:activities) 
 		{
 			log.info("check if any activity is open");
-			System.out.println("Start Of Day - "+atStartOfDay(new Date()));
-			System.out.println("End Of Day - "+atEndOfDay(new Date()));
+			System.out.println("Start Of Day - "+ReusableMethods.atStartOfDay(new Date()));
+			System.out.println("End Of Day - "+ReusableMethods.atEndOfDay(new Date()));
 			
-			System.out.println(activity.getActivityDateTime().after(atStartOfDay(new Date())));
+			System.out.println(activity.getActivityDateTime().after(ReusableMethods.atStartOfDay(new Date())));
 			
 			
-			if(activity.getIsOpen()==true && activity.getActivityDateTime().after(atStartOfDay(new Date())) && activity.getActivityDateTime().before(atEndOfDay(new Date()))) // Pass time zone to constructor.) 
+			if(activity.getIsOpen()==true && activity.getActivityDateTime().after(ReusableMethods.atStartOfDay(new Date())) && activity.getActivityDateTime().before(ReusableMethods.atEndOfDay(new Date()))) // Pass time zone to constructor.) 
 				isPendingExists=true;
 				
-			if(activity.getIsOpen()==true && activity.getActivityDateTime().after(atEndOfDay(new Date()))) // Pass time zone to constructor.) 
+			if(activity.getIsOpen()==true && activity.getActivityDateTime().after(ReusableMethods.atEndOfDay(new Date()))) // Pass time zone to constructor.) 
 				isUpcomingExists=true;
 			
-			if(activity.getIsOpen()==true && activity.getActivityDateTime().before(atStartOfDay(new Date()))) // Pass time zone to constructor.) 
+			if(activity.getIsOpen()==true && activity.getActivityDateTime().before(ReusableMethods.atStartOfDay(new Date()))) // Pass time zone to constructor.) 
 				pastExists=true;
 		}
 		
@@ -400,7 +406,7 @@ public class LeadActivityService {
 
 		if(isPendingExists)
 		{
-			returndata = transformDataFromActivity(laRepo.getRecentPendingActivity(leadId,atStartOfDay(new Date()),atEndOfDay(new Date())));
+			returndata = transformDataFromActivity(laRepo.getRecentPendingActivity(leadId,ReusableMethods.atStartOfDay(new Date()),ReusableMethods.atEndOfDay(new Date())));
 		}
 		
 		else if(!isUpcomingExists && !isPendingExists && pastExists) 
@@ -417,20 +423,20 @@ public class LeadActivityService {
 		{
 			if(!pastExists)
 			{
-				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,atEndOfDay(new Date())));
+				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date())));
 			}
 			
 			else if(isUpcomingExists && !pastExists)
 			{
-				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,atEndOfDay(new Date())));
+				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date())));
 			}
 			else if(isUpcomingExists && pastExists)
 			{
-				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,atEndOfDay(new Date())));
+				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date())));
 			}
 			else if(!isUpcomingExists && pastExists)
 			{
-				returndata = transformDataFromActivity(laRepo.getRecentPastActivity(leadId,atStartOfDay(new Date())));
+				returndata = transformDataFromActivity(laRepo.getRecentPastActivity(leadId,ReusableMethods.atStartOfDay(new Date())));
 			}
 		}
 		return returndata;
@@ -445,24 +451,13 @@ public class LeadActivityService {
 		return leadPageData;
 	}
 
-	public static Date atStartOfDay(Date date) {
-	    LocalDateTime localDateTime = dateToLocalDateTime(date);
-	    LocalDateTime startOfDay = localDateTime.with(LocalTime.MIN);
-	    return localDateTimeToDate(startOfDay);
-	}
-	
-	public static Date atEndOfDay(Date date) {
-	    LocalDateTime localDateTime = dateToLocalDateTime(date);
-	    LocalDateTime endOfDay = localDateTime.with(LocalTime.MAX);
-	    return localDateTimeToDate(endOfDay);
-	}
-	
-	private static LocalDateTime dateToLocalDateTime(Date date) {
-	    return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
-	}
-
-	private static Date localDateTimeToDate(LocalDateTime localDateTime) {
-	    return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+	public Map<Long, Date> getStagnantDayCount() 
+	{
+		Map<Long, Date> StagnantDayCount = new HashMap<Long, Date>();
+		List<com.ec.crm.Data.LeadLastUpdatedDAO> stagnantDataList = laRepo.fetchLastUpdatedDetails();
+		for(LeadLastUpdatedDAO l : stagnantDataList)
+			StagnantDayCount.put(l.getId(),l.getLastUpdatedDate());
+		return StagnantDayCount;
 	}
 }
 

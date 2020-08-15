@@ -33,7 +33,7 @@ public class PlannerController
 	@ResponseStatus(HttpStatus.OK)
 	public PlannerAllReturnDAO returnFilteredLeadActivities(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadActivityId", direction = Direction.DESC) Pageable pageable) throws ParseException 
 	{
-		return allActivitiesService.findFilteredData(leadFilterDataList,pageable);
+		return allActivitiesService.findFilteredDataForPlanner(leadFilterDataList,pageable);
 	}
 	
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
