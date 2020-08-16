@@ -88,7 +88,7 @@ public class LeadActivityService {
 	}
 	
 	@Transactional
-	private void ExecuteBusinessLogicWhileCreation(LeadActivity leadActivity) 
+	private void ExecuteBusinessLogicWhileCreation(LeadActivity leadActivity) throws Exception 
 	{
 		log.info("Invoked ExecuteBusinessLogicWhileCreation");
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
@@ -109,6 +109,11 @@ public class LeadActivityService {
 			leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit);
 			break;
 		}
+		
+		//do not allow creation of any activity except meeeting
+		if(leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost) && !leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
+			throw new Exception("Cannot add activity - Deal already lost! Please create a Meeting activity to reopen lead.");
+		
 		laRepo.save(leadActivity);
 	}
 	
@@ -121,6 +126,14 @@ public class LeadActivityService {
 			log.info("Changing status of lead from Property_Visit - Negotiation");
 			leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
 		}
+		
+		if(leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting) 
+				&& leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost))
+		{
+			log.info("Changing status of lead from Deal_Lost - Negotiation");
+			leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+		}
+		
 		laRepo.save(leadActivity);
 	}
 	
@@ -178,11 +191,9 @@ public class LeadActivityService {
 			errorMessage=errorMessage==""?" Activity Date & Time, ":errorMessage+" Activity Date & Time, ";
 		if(payload.getTitle()==null || payload.getTitle()=="")
 			errorMessage=errorMessage==""?" Title, ":errorMessage+" itle, ";
-		
+
 		if(errorMessage!="")
-			throw new Exception("Fields Missing - "+errorMessage);
-		
-		
+			throw new Exception("Fields Missing - "+errorMessage);		
 	}
 
 	public Page<LeadActivity> fetchAll(Pageable pageable) 
@@ -451,7 +462,7 @@ public class LeadActivityService {
 		return leadPageData;
 	}
 
-	public Map<Long, Date> getStagnantDayCount() 
+	public  Map<Long, Date> getStagnantDayCount() 
 	{
 		Map<Long, Date> StagnantDayCount = new HashMap<Long, Date>();
 		List<com.ec.crm.Data.LeadLastUpdatedDAO> stagnantDataList = laRepo.fetchLastUpdatedDetails();

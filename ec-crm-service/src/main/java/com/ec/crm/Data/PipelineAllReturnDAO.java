@@ -13,5 +13,4 @@ public class PipelineAllReturnDAO
 	PipelineWithTotalReturnDAO propertyVisit;
 	PipelineWithTotalReturnDAO negotiation;
 	PipelineWithTotalReturnDAO deal_close;
-	int dealLostCount;
 }

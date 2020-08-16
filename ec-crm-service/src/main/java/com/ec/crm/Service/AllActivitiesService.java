@@ -53,7 +53,8 @@ public class AllActivitiesService
 	
 	@Autowired
 	LeadService leadService;
-	Logger log = LoggerFactory.getLogger(LeadService.class);
+	
+	Logger log = LoggerFactory.getLogger(AllActivitiesService.class);
 	
 	@Autowired
 	LeadActivityService leadActivityService;
@@ -112,7 +113,12 @@ public class AllActivitiesService
 		PlannerWithTotalReturnDAO plannerWithTotalReturnDAO = new PlannerWithTotalReturnDAO();
 		List<PlannerSingleReturnDAO> activities = new ArrayList<PlannerSingleReturnDAO>();
 		for(LeadActivity leadActivity:filteredActivities)
-			activities.add(ObjectMapperUtils.map(leadActivity, new PlannerSingleReturnDAO()));
+			activities.add(new PlannerSingleReturnDAO(
+					leadActivity.getLead().getLeadId(),
+					leadActivity.getLead().getCustomerName(),
+					leadActivity.getLead().getPrimaryMobile(),
+					leadActivity.getIsOpen(),
+					leadActivity.getActivityDateTime()));
 		
 		plannerWithTotalReturnDAO.setActivities(activities);
 		plannerWithTotalReturnDAO.setTotalActivities(activities.size());
@@ -162,6 +168,7 @@ public class AllActivitiesService
 
 		private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads) throws Exception 
 		{
+			log.info("Invoked transformToPipelineWithTotalReturnDAO");
 			PipelineWithTotalReturnDAO PipelineWithTotalReturnDAO = new PipelineWithTotalReturnDAO();
 			List<PipelineSingleReturnDTO> pipelineSingleReturnDTOList = new ArrayList<PipelineSingleReturnDTO>();
 			
