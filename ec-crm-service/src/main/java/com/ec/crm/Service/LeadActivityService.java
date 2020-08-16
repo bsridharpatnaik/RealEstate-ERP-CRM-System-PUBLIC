@@ -77,7 +77,7 @@ public class LeadActivityService {
 		log.info("Checking if open activity exists");
 		exitIfOpenActivityExists(payload);
 		log.info("Fetching current user from gateway");
-		currentUserId = userDetailsService.getCurrentUser().getId();
+		currentUserId = userDetailsService.getCurrentUser().getId();		
 		LeadActivity leadActivity=new LeadActivity();
 		setFields(leadActivity,payload,"user");
 		log.info("Closed createLeadActivity");
@@ -92,6 +92,12 @@ public class LeadActivityService {
 	{
 		log.info("Invoked ExecuteBusinessLogicWhileCreation");
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
+		
+		//do not allow creation of any activity except meeeting
+		if(leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost) && !leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
+			throw new Exception("Cannot add activity - Deal already lost! Please create a Meeting activity to reopen lead.");
+	
+		
 		switch(leadActivity.getActivityType())
 		{
 		case Deal_Close:
@@ -110,9 +116,6 @@ public class LeadActivityService {
 			break;
 		}
 		
-		//do not allow creation of any activity except meeeting
-		if(leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost) && !leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
-			throw new Exception("Cannot add activity - Deal already lost! Please create a Meeting activity to reopen lead.");
 		
 		laRepo.save(leadActivity);
 	}
