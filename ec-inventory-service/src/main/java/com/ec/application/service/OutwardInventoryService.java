@@ -257,7 +257,7 @@ public class OutwardInventoryService
 		outwardInventory.setWarehouse(warehouse);;
 		outwardInventory.setDate(oiData.getDate());
 		outwardInventory.setPurpose(oiData.getPurpose());
-		outwardInventory.setSlipNo(oiData.getPurpose());
+		outwardInventory.setSlipNo(oiData.getSlipNo());
 		outwardInventory.setInwardOutwardList(iiService.fetchInwardOutwardList(oiData.getProductWithQuantities(),warehouse));	
 		outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
 	}
