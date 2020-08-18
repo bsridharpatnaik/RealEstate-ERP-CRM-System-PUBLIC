@@ -1,26 +1,24 @@
 package com.ec.crm.Data;
 
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.lang.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.Service.LeadActivityService;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import Deserializers.ToUsernameSerializer;
 import lombok.Data;
+
 @Data
 public class LeadPageData 
 {
@@ -65,5 +63,4 @@ public class LeadPageData
 		this.isOpen=la.getIsOpen();
 		this.assigneeId = la.getLead().getAsigneeId();
 	}
-	
 }

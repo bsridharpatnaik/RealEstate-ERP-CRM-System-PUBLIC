@@ -179,7 +179,7 @@ public class AllActivitiesService
 				pipelineSingleReturnDTO.setMobileNumber(l.getPrimaryMobile());
 				pipelineSingleReturnDTO.setName(l.getCustomerName());
 				pipelineSingleReturnDTO.setSentiment(l.getSentiment());
-				pipelineSingleReturnDTO.setActivityDateTime(leadActivityService.getRecentActivityByLeadID(l).getActivityDateTime());
+				pipelineSingleReturnDTO.setActivityDateTime(leadActivityService.getRecentActivityByLead(l).getActivityDateTime());
 				pipelineSingleReturnDTO.setStagnantStatus(getStagnantStatus(l.getLeadId()));
 				pipelineSingleReturnDTOList.add(pipelineSingleReturnDTO);
 			}
