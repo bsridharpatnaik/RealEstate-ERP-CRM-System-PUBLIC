@@ -192,12 +192,8 @@ public class AllActivitiesService
 		{
 			log.info("Invoked getStagnantStatus");
 			StagnatedEnum stagnatedStatus = StagnatedEnum.NoColor;
-			Map<Long,Date> stagnantDays=leadActivityService.getStagnantDayCount();
-			Date lastActivityDate = stagnantDays.get(leadId);
-			if(lastActivityDate==null)
-				throw new Exception("last updated tome for lead not found");
 			
-			long noOfDay = ReusableMethods.daysBetweenTwoDates(lastActivityDate, new Date());
+			long noOfDay = leadActivityService.getStagnantDaysByLeadId(leadId);
 			if (noOfDay>=10 && noOfDay<20)
 				stagnatedStatus = StagnatedEnum.GREEN;
 			else if (noOfDay >=20 && noOfDay <30)

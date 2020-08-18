@@ -2,9 +2,7 @@ package com.ec.crm.Service;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import javax.persistence.EntityManager;
@@ -17,6 +15,7 @@ import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.ec.crm.Data.LeadCreateData;
+import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
 import com.ec.crm.Enums.LeadStatusEnum;
@@ -91,6 +91,9 @@ public class LeadService
 	@Value("${common.serverurl}")
 	private String reqUrl;
 	
+	@Autowired
+	ModelMapper leadToLeadDAOModelMapper;
+	
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
 	@Transactional
@@ -143,14 +146,14 @@ public class LeadService
 		return lRepo.save(leadForUpdate);
 	}
 	
-	public Lead getSingleLead(Long id) throws Exception 
+	public LeadDAO getSingleLead(Long id) throws Exception 
 	{
 		Optional<Lead> leadOpt = lRepo.findById(id);
 		
 		if(!leadOpt.isPresent())
 			throw new Exception("Lead with ID -"+id+" Not Found");
-		
-		return leadOpt.get();
+		LeadDAO leadDAO = leadToLeadDAOModelMapper.map(leadOpt.get(), LeadDAO.class);
+		return leadDAO;
 	}
 	
 	private void formatMobileNo(LeadCreateData payload) throws Exception 

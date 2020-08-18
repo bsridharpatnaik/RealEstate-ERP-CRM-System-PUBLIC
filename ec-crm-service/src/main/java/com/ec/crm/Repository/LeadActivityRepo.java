@@ -55,4 +55,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	
 	@Query(value="SELECT new com.ec.crm.Data.LeadLastUpdatedDAO(l.lead.leadId,max(l.modified)) from LeadActivity l group by l.lead.leadId")
 	List<LeadLastUpdatedDAO> fetchLastUpdatedDetails();
+
+	@Query(value="SELECT MAX(modified) FROM LeadActivity la where la.lead.leadId=:leadId")
+	Date fetchLastModified(@Param("leadId")Long leadId);
 }
