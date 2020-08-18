@@ -13,12 +13,12 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -62,6 +62,8 @@ public class LeadActivityService {
 	@Autowired
 	PopulateDropdownService populateDropdownService;
 	
+	@Autowired
+	ModelMapper leadToLeadActivityModelMapper;
 	
 	@Value("${common.serverurl}")
 	private String reqUrl;
@@ -333,46 +335,35 @@ public class LeadActivityService {
 	}
 	public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
 	{
-		//Page<Lead> leads=lRepo.findAll(pageable);   change code here to get list of leads based on leads filters selected
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
 		LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
 		
 		log.info("Fetching filteration based on filter data received");
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
 		
-		log.info("Fetching records based on specification");
-		Page<Lead> leads;
-		if(spec!=null)
-			leads=lRepo.findAll(spec, pageable);
-		else 		
-			leads=lRepo.findAll(pageable);
+		Page<Lead> leadList = spec!=null?lRepo.findAll(spec, pageable):lRepo.findAll(pageable);
 		
-		log.info("Get all the leads");
-		List<LeadPageData> pagedata=new ArrayList<>();
-
-		for(Lead lead:leads) 
-		{
-				pagedata.add(getRecentActivityByLeadID(lead));
-		}
-		final Page<LeadPageData> page = new PageImpl<>(pagedata);
-		leadActivityListWithTypeAheadData.setLeadPageDetails(page);
+		//Page<LeadPageData> pagedata=leadToLeadActivityModelMapper.map(leadList, LeadPageData.class);
+		//Page<LeadPageData> pagedata = ObjectMapperUtils.mapEntityPageIntoDtoPage(leadList, LeadPageData.class);
+		
+		Page<LeadPageData> pagedata = leadList.map(objectEntity -> leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
+				
+		leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
 		log.info("Setting dropdown data");
 		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
 		log.info("Setting typeahead data");
 		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
 		return leadActivityListWithTypeAheadData;
-		//Add filter logic using streams to filter based on activity filter selected
-//		return pagedata;
-		
 	}
-	public LeadPageData getRecentActivityByLeadID(Lead lead) {
+	
+	public LeadActivity getRecentActivityByLead(Lead lead) {
 		List<LeadActivity> activities=laRepo.findAllActivitiesForLead(lead.getLeadId());
 		log.info("Get all the Activity");
 		System.out.println(lead.getCustomerName());
 		System.out.println(activities);
-		LeadPageData activity=new LeadPageData();
+		LeadActivity activity=new LeadActivity();
 		try {
-			activity = getDisplayActivityForLead(activities);
+			activity = getDisplayActivityForLeadFromAllActivities(activities);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -380,13 +371,27 @@ public class LeadActivityService {
 		return activity;
 	}
 
-	public LeadPageData getDisplayActivityForLead(List<LeadActivity> activities) throws Exception
+	public LeadActivity getRecentActivityByLeadId(Long leadId) 
+	{
+		LeadActivity activity=new LeadActivity();
+		List<LeadActivity> activities=laRepo.findAllActivitiesForLead(leadId);
+		log.info("Get all the Activity");
+		
+		try 
+		{activity = getDisplayActivityForLeadFromAllActivities(activities);}
+		 
+		catch (Exception e) {e.printStackTrace();}
+		
+		return activity;
+	}
+	
+	public LeadActivity getDisplayActivityForLeadFromAllActivities(List<LeadActivity> activities) throws Exception
 	{
 		boolean isPendingExists=false;
 		//boolean isClosedExists=false;
 		boolean isUpcomingExists=false;
 		boolean pastExists=false;
-		LeadPageData returndata=new LeadPageData();
+		List<LeadActivity> returndata=new ArrayList<LeadActivity>();
 		Long leadId = activities.get(0).getLead().getLeadId();
 		for(LeadActivity activity:activities) 
 		{
@@ -419,41 +424,32 @@ public class LeadActivityService {
 		 */
 
 		if(isPendingExists)
-		{
-			returndata = transformDataFromActivity(laRepo.getRecentPendingActivity(leadId,ReusableMethods.atStartOfDay(new Date()),ReusableMethods.atEndOfDay(new Date())));
-		}
+			returndata = laRepo.getRecentPendingActivity(leadId,ReusableMethods.atStartOfDay(new Date()),ReusableMethods.atEndOfDay(new Date()));
 		
 		else if(!isUpcomingExists && !isPendingExists && pastExists) 
-		{
-			returndata = transformDataFromActivity(laRepo.getRecentClosedActivity(leadId));
-		}
-		 
+			returndata = laRepo.getRecentClosedActivity(leadId);
+		
 		else if(!pastExists && !isPendingExists && !isUpcomingExists)
-		{
-			returndata = transformDataFromActivity(laRepo.getRecentActivityIrrespectiveOfStatus(leadId));
-		}
-				
+			returndata = laRepo.getRecentActivityIrrespectiveOfStatus(leadId);
+		
 		else if (!isPendingExists)
 		{
 			if(!pastExists)
-			{
-				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date())));
-			}
+				returndata = laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date()));
 			
 			else if(isUpcomingExists && !pastExists)
-			{
-				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date())));
-			}
+				returndata = laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date()));
+			
 			else if(isUpcomingExists && pastExists)
-			{
-				returndata = transformDataFromActivity(laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date())));
-			}
+				returndata = laRepo.getRecentUpcomingActivity(leadId,ReusableMethods.atEndOfDay(new Date()));
+			
 			else if(!isUpcomingExists && pastExists)
-			{
-				returndata = transformDataFromActivity(laRepo.getRecentPastActivity(leadId,ReusableMethods.atStartOfDay(new Date())));
-			}
+				returndata = laRepo.getRecentPastActivity(leadId,ReusableMethods.atStartOfDay(new Date()));
 		}
-		return returndata;
+		if(returndata.size()==0)
+			throw new Exception("No Activity present for lead - "+leadId);
+		
+		return returndata.get(0);
 	}
 	
 

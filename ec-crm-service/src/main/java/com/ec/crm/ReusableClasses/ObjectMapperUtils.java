@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.modelmapper.convention.MatchingStrategies;
+import org.springframework.data.domain.Page;
 
 public class ObjectMapperUtils 
 {
@@ -66,4 +67,8 @@ public class ObjectMapperUtils
         modelMapper.map(source, destination);
         return destination;
     }
+    
+    public static <D, T> Page<D> mapEntityPageIntoDtoPage(Page<T> entities, Class<D> dtoClass) {
+        return entities.map(objectEntity -> modelMapper.map(objectEntity, dtoClass));
+    } 
 }
