@@ -36,4 +36,7 @@ public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationEx
 	@Query(value="SELECT DISTINCT primaryMobile from Lead m")
 	List<String> getLeadMobileNos();
 	
+	@Query(value="SELECT count(*),status from Lead l group by status")
+	List getStatus();
+	
 }
