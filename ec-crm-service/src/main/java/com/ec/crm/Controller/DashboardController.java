@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.crm.Data.PipelineAllReturnDAO;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Lead;
+import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.Service.AllActivitiesService;
 import com.ec.crm.Service.DashboardService;
 
@@ -33,5 +34,12 @@ public class DashboardController {
 	public List returnLeadStatus()
 	{
 		return dashboardService.returnLeadStatus();
+	}
+	
+	@GetMapping("/stagnant")
+	@ResponseStatus(HttpStatus.OK)
+	public List<StagnantStats> returnStagnantStats()
+	{
+		return dashboardService.returnStagnantStats();
 	}
 }

@@ -181,7 +181,7 @@ public class LeadService
 			lead.setSentiment(payload.getSentiment());
 			lead.setSource(payload.getSourceId()==null?null:sourceRepo.findById(payload.getSourceId()).get());
 			lead.setBroker(payload.getBrokerId()==null?null:bRepo.findById(payload.getBrokerId()).get());
-			lead.setAsigneeId(lead.getAsigneeId()==null?currentUserID:userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
+			lead.setAsigneeId(payload.getAssigneeId()==null?currentUserID:userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
 			
 			if(type.equalsIgnoreCase("create"))
 			{
