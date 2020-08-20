@@ -456,8 +456,18 @@ public class LeadActivityService {
 	public Long getStagnantDaysByLeadId(Long leadId) 
 	{
 		Date lastModified = laRepo.fetchLastModified(leadId);
-		long noOfDaysBetween = ReusableMethods.daysBetweenTwoDates(lastModified, new Date());
-		return noOfDaysBetween;
+		try
+		{
+			long noOfDaysBetween = ReusableMethods.daysBetweenTwoDates(lastModified, new Date());
+			return noOfDaysBetween;
+		}
+		catch(Exception ch) 
+		{
+			System.out.println("No modified date found. Lead must be closed");
+			return (long) 0;
+		}
+		
+		
 	}
 }
 
