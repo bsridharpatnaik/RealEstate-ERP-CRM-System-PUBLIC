@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO;
+import com.ec.application.data.ReturnOutwardData;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
@@ -49,6 +51,13 @@ public class OutwardInventoryController
 	{
 		
 		return oiService.findOutwardnventory(id);
+	}
+	
+	@PatchMapping("/{id}")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void setReturnOutwardInventory(@PathVariable Long id,@RequestBody ReturnOutwardData rd) throws Exception
+	{
+		oiService.addReturnEntry(rd, id);
 	}
 	
 	@PostMapping 

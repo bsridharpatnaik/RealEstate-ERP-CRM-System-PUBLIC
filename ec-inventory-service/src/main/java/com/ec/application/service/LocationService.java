@@ -35,12 +35,6 @@ public class LocationService
 	
 	public UsageLocation createLocation(UsageLocation payload) throws Exception 
 	{
-		logger.trace("A TRACE Message");
-        logger.debug("A DEBUG Message");
-        logger.info("An INFO Message");
-        logger.warn("A WARN Message");
-        logger.error("An ERROR Message");
-      
 		if(!locationRepo.existsByLocationName(payload.getLocationName().trim()))
 		{
 			locationRepo.save(payload);
@@ -63,7 +57,7 @@ public class LocationService
         		!LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
         {		
         	LocationForUpdate.setLocationName(newLocation.getLocationName().trim());
-            LocationForUpdate.setLocationDescription(newLocation.getLocationDescription().trim());
+            LocationForUpdate.setLocationDescription(newLocation.getLocationDescription()==null?"":newLocation.getLocationDescription().trim());
             
         }
         else if(LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
