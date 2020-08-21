@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.counting;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,8 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,11 +26,12 @@ import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.OutwardInventoryExportDAO2;
 import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
+import com.ec.application.data.ReturnOutwardData;
 import com.ec.application.data.ReturnOutwardInventoryData;
-import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.OutwardInventory_;
+import com.ec.application.model.ReturnOutwardList;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
@@ -80,6 +84,8 @@ public class OutwardInventoryService
 	@Autowired
 	GroupBySpecification groupBySpecification;
 	
+	Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
+	
 	@Transactional
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
 	{
@@ -102,6 +108,51 @@ public class OutwardInventoryService
 			Double closingStock = stockService.updateStock(productId, warehouseName, quantity, "outward");
 			oiList.setClosingStock(closingStock);
 		}
+	}
+
+	@Transactional
+	public void addReturnEntry(ReturnOutwardData rd,Long outwardId) throws Exception
+	{
+		log.info("Invoked return inventory for outward id -"+outwardId+" With data "+rd.toString());
+		if(!outwardInventoryRepo.existsById(outwardId))
+			throw new Exception("Outward inventory with ID not found");
+		
+		for(ProductWithQuantity productWithQuantity:rd.getProductWithQuantities())
+		{
+			log.info("Processing return for product "+productWithQuantity.getProductId());
+			if(productWithQuantity.getQuantity()==null || productWithQuantity.getProductId()==null || !productRepo.existsById(productWithQuantity.getProductId()))
+				throw new Exception("Error fetching product details");
+			addReturnForOutward(outwardId,productWithQuantity.getProductId(),productWithQuantity.getQuantity());
+		}
+	}
+	
+	private void addReturnForOutward(Long outwardId,Long productId, Double quantity) throws Exception 
+	{
+		
+		OutwardInventory oi = outwardInventoryRepo.getOne(outwardId);
+		Set<ReturnOutwardList> returnOutwardList = oi.getReturnOutwardList();
+		Set<InwardOutwardList> inwardOutwardListSet = oi.getInwardOutwardList();
+		for(InwardOutwardList inwardOutwardList:inwardOutwardListSet)
+		{
+			if(inwardOutwardList.getProduct().getProductId().equals(productId))
+			{
+				log.info("Product found in existing list -"+productId);
+				Double currentQuantity = inwardOutwardList.getQuantity();
+				if(quantity>=currentQuantity)
+					throw new Exception("Return quantity cannot be greater than or equals to existing quantity for product -"+inwardOutwardList.getProduct().getProductName());
+				
+				Double diffInQuantity = currentQuantity - quantity;
+				log.info("Difference in quantity -"+diffInQuantity);
+				Double closingStock = stockService.updateStock(productId, oi.getWarehouse().getWarehouseName(), quantity, "inward");
+				log.info("Updated stock -"+closingStock);
+				returnOutwardList.add(new ReturnOutwardList(new Date(),inwardOutwardList.getProduct(),currentQuantity,quantity,closingStock));
+				inwardOutwardList.setQuantity(diffInQuantity);
+				inwardOutwardList.setClosingStock(closingStock);
+			}
+		}
+		oi.setReturnOutwardList(returnOutwardList);
+		oi.setInwardOutwardList(inwardOutwardListSet);
+		outwardInventoryRepo.save(oi);
 	}
 
 	@Transactional

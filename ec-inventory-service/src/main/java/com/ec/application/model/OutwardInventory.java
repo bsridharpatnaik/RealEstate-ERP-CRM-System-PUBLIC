@@ -33,6 +33,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class OutwardInventory extends ReusableFields implements Cloneable
 {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name="outwardid")
@@ -80,11 +85,25 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 					@JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
 	
+	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
+	@JoinTable(name = "returnOutward_entry", joinColumns = {
+			@JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns = {
+					@JoinColumn(name = "returnentryid", referencedColumnName = "returnentryid") })
+	Set<ReturnOutwardList> returnOutwardList = new HashSet<>();
 	
 	@Override
 	public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
+
+	public Set<ReturnOutwardList> getReturnOutwardList() {
+		return returnOutwardList;
+	}
+
+	public void setReturnOutwardList(Set<ReturnOutwardList> returnOutwardList) {
+		this.returnOutwardList = returnOutwardList;
+	}
+
 	public Set<FileInformation> getFileInformations() {
 		return fileInformations;
 	}
