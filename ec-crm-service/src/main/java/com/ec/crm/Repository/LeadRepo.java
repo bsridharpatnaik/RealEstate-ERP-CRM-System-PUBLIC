@@ -1,5 +1,6 @@
 package com.ec.crm.Repository;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -35,8 +36,9 @@ public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationEx
 	
 	@Query(value="SELECT DISTINCT primaryMobile from Lead m")
 	List<String> getLeadMobileNos();
+
 	
-	@Query(value="SELECT count(*),status from Lead l group by status")
-	List getStatus();
+	
+	
 	
 }
