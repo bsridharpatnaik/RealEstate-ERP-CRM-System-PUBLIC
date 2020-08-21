@@ -3,6 +3,7 @@ package com.ec.crm.Service;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -452,22 +453,21 @@ public class LeadActivityService {
 		return returndata.get(0);
 	}
 	
-
-	private LeadPageData transformDataFromActivity(List<LeadActivity> recentPendingActivity) throws Exception 
+	public Long getStagnantDaysByLeadId(Long leadId) 
 	{
-		if(recentPendingActivity.size()==0)
-			throw new Exception("No Pending ");
-		LeadPageData leadPageData = new LeadPageData(recentPendingActivity.get(0));
-		return leadPageData;
-	}
-
-	public  Map<Long, Date> getStagnantDayCount() 
-	{
-		Map<Long, Date> StagnantDayCount = new HashMap<Long, Date>();
-		List<com.ec.crm.Data.LeadLastUpdatedDAO> stagnantDataList = laRepo.fetchLastUpdatedDetails();
-		for(LeadLastUpdatedDAO l : stagnantDataList)
-			StagnantDayCount.put(l.getId(),l.getLastUpdatedDate());
-		return StagnantDayCount;
+		Date lastModified = laRepo.fetchLastModified(leadId);
+		try
+		{
+			long noOfDaysBetween = ReusableMethods.daysBetweenTwoDates(lastModified, new Date());
+			return noOfDaysBetween;
+		}
+		catch(Exception ch) 
+		{
+			System.out.println("No modified date found. Lead must be closed");
+			return (long) 0;
+		}
+		
+		
 	}
 }
 

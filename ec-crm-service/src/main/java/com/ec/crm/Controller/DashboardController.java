@@ -25,6 +25,7 @@ import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.PipelineAllReturnDAO;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Lead;
+import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.Service.AllActivitiesService;
 import com.ec.crm.Service.DashboardService;
 import com.ec.crm.Model.LeadActivity;
@@ -43,6 +44,13 @@ public class DashboardController {
 	{
 		
 		return dashboardService.customerpipeline(payload);
+	}
+	
+	@GetMapping("/stagnant")
+	@ResponseStatus(HttpStatus.OK)
+	public List<StagnantStats> returnStagnantStats()
+	{
+		return dashboardService.returnStagnantStats();
 	}
 	@GetMapping("/conversionratio")
 	@ResponseStatus(HttpStatus.OK)

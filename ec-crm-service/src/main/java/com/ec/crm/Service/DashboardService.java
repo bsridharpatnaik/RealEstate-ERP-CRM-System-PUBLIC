@@ -12,9 +12,11 @@ import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.DashboardData;
 import com.ec.crm.Model.Lead;
+import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
+import com.ec.crm.Repository.StagnantStatsRepo;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +27,10 @@ public class DashboardService {
 	@Autowired
 	LeadActivityRepo lRepo;
 	
+	@Autowired
+	StagnantStatsRepo stagnantStatsRepo;
+	
+	public List returnLeadStatus() {
 	public Map customerpipeline(DashboardData payload) {
 		// TODO Auto-generated method stub
 		List<LeadActivity> data=new ArrayList<LeadActivity>();
@@ -147,6 +153,11 @@ public class DashboardService {
 				
 		data=lRepo.getConversionRatio();
 		return data;
+	}
+
+	public  List<StagnantStats> returnStagnantStats() 
+	{
+		return stagnantStatsRepo.findAll();
 	}
 
 	public Map topperformer() {
