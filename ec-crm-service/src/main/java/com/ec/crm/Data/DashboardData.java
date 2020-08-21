@@ -13,10 +13,10 @@ import lombok.Data;
 @Data
 public class DashboardData 
 {
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	Date fromDate;
 	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
 	Date toDate;
 	
 }

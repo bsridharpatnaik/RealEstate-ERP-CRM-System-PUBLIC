@@ -62,7 +62,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value="SELECT la from LeadActivity la where la.created BETWEEN :fromdate AND :todate")
 	List<LeadActivity> getActivity(Date fromdate, Date todate);
 	
-	@Query(value="SELECT assigneeId, count(la.lead), count(la) from LeadActivity la where "
+	@Query(value="SELECT la.lead.asigneeId, count(la.lead), count(la) from LeadActivity la where "
 			+"la.activityType='Deal_Close' group by la.lead.asigneeId")
 	List getConversionRatio();
 }

@@ -24,6 +24,7 @@ import com.ec.crm.Data.DashboardData;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.PipelineAllReturnDAO;
 import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Model.ConversionRatio;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.Service.AllActivitiesService;
@@ -54,17 +55,17 @@ public class DashboardController {
 	}
 	@GetMapping("/conversionratio")
 	@ResponseStatus(HttpStatus.OK)
-	public List conversionratio() throws ParseException
-	{
-		
+	public List<ConversionRatio> conversionratio() throws ParseException
+	{	
 		return dashboardService.conversionratio();
 	}
-	@GetMapping("/topperformer")
-	@ResponseStatus(HttpStatus.OK)
-	public Map topperformer() throws ParseException
-	{
-		
-		return dashboardService.topperformer();
-	}
+	/*
+	 * @GetMapping("/topperformer")
+	 * 
+	 * @ResponseStatus(HttpStatus.OK) public Map topperformer() throws
+	 * ParseException {
+	 * 
+	 * return dashboardService.topperformer(); }
+	 */
 	
 }

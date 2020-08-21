@@ -4,18 +4,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.DashboardData;
-import com.ec.crm.Model.Lead;
-import com.ec.crm.Model.StagnantStats;
+import com.ec.crm.Model.ConversionRatio;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.Model.StagnantStats;
+import com.ec.crm.Repository.ConvertionRatioRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
-import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.StagnantStatsRepo;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,12 @@ public class DashboardService {
 	@Autowired
 	StagnantStatsRepo stagnantStatsRepo;
 	
-	public List returnLeadStatus() {
+	@Autowired
+	ConvertionRatioRepo convertionRatioRepo;
+	
+	@Autowired
+	UserDetailsService userDetailsService;
+	
 	public Map customerpipeline(DashboardData payload) {
 		// TODO Auto-generated method stub
 		List<LeadActivity> data=new ArrayList<LeadActivity>();
@@ -53,10 +58,10 @@ public class DashboardService {
 				  .stream()
 				  .filter(c -> c.getCreatorId() !=404 )
 				  .count();
-		Map<Long, Long> ActivitiesCreatedbyAssignee = data
+		Map<Object, Long> ActivitiesCreatedbyAssignee = data
 				.stream()
 				.filter(c -> c.getCreatorId() !=404 )
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
+			    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()));
 		
 		long TotalPropertyVisit = data
 				  .stream()
@@ -147,12 +152,9 @@ public class DashboardService {
 		
 	}
 
-	public List conversionratio() {
-		// TODO Auto-generated method stub
-		List<LeadActivity> data=new ArrayList<LeadActivity>();
-				
-		data=lRepo.getConversionRatio();
-		return data;
+	public List<ConversionRatio> conversionratio() 
+	{
+		return convertionRatioRepo.findAll();
 	}
 
 	public  List<StagnantStats> returnStagnantStats() 
@@ -160,10 +162,10 @@ public class DashboardService {
 		return stagnantStatsRepo.findAll();
 	}
 
-	public Map topperformer() {
-		// TODO Auto-generated method stub
-		data=lRepo.gettopperformer();
-	}
+	/*
+	 * public Map topperformer() { // TODO Auto-generated method stub
+	 * data=lRepo.gettopperformer(); }
+	 */
 
 	
 
