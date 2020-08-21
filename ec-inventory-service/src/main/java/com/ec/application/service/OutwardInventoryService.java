@@ -117,6 +117,12 @@ public class OutwardInventoryService
 		if(!outwardInventoryRepo.existsById(outwardId))
 			throw new Exception("Outward inventory with ID not found");
 		
+		Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
+	        	.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream().filter(e -> e.getValue() > 1).count();
+			
+			if(duplicateProductIdCount>0)
+				throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
+		
 		for(ProductWithQuantity productWithQuantity:rd.getProductWithQuantities())
 		{
 			log.info("Processing return for product "+productWithQuantity.getProductId());
