@@ -32,6 +32,7 @@ import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
 import com.ec.crm.Model.Lead;
@@ -334,7 +335,8 @@ public class LeadActivityService {
 		}
 		return leadOpt.get();
 	}
-	public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
+	
+	/*public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
 	{
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
 		LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
@@ -348,6 +350,26 @@ public class LeadActivityService {
 		//Page<LeadPageData> pagedata = ObjectMapperUtils.mapEntityPageIntoDtoPage(leadList, LeadPageData.class);
 		
 		Page<LeadPageData> pagedata = leadList.map(objectEntity -> leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
+				
+		leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
+		log.info("Setting dropdown data");
+		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
+		log.info("Setting typeahead data");
+		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
+		return leadActivityListWithTypeAheadData;
+	}
+	*/
+	public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
+	{
+		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
+		LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
+		
+		log.info("Fetching filteration based on filter data received");
+		Specification<LeadActivity> spec = ActivitySpecifications.getSpecification(leadFilterDataList);
+		
+		Page<LeadActivity> leadActivityList = spec!=null?laRepo.findAll(spec, pageable):laRepo.findAll(pageable);
+		
+		Page<LeadPageData> pagedata = leadActivityList.map(objectEntity -> leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
 				
 		leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
 		log.info("Setting dropdown data");

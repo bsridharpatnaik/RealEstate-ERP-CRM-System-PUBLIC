@@ -29,20 +29,20 @@ public class CrmApplication extends SpringBootServletInitializer
 	public ModelMapper leadToLeadActivityModelMapper() 
 	{
 		ModelMapper modelMapper = new ModelMapper();
-		Converter<Lead,LeadPageData> leadActivity = new AbstractConverter<Lead, LeadPageData>() {
+		Converter<LeadActivity,LeadPageData> leadActivity = new AbstractConverter<LeadActivity, LeadPageData>() {
 		      @Override
-		      protected LeadPageData convert(Lead lead) 
+		      protected LeadPageData convert(LeadActivity la) 
 		      {
-		    	  LeadActivity leadActivity = leadActivityService.getRecentActivityByLeadId(lead.getLeadId());
+		    	  //LeadActivity leadActivity = leadActivityService.getRecentActivityByLeadId(lead.getLeadId());
 		    	  LeadPageData leadPageData = new LeadPageData();
-		    	  leadPageData.setAssigneeId(lead.getAsigneeId());
-		    	  leadPageData.setLeadId(lead.getLeadId());
-		    	  leadPageData.setLeadStatus(lead.getStatus());
-		    	  leadPageData.setMobileNumber(lead.getPrimaryMobile());
-		    	  leadPageData.setName(lead.getCustomerName());
-		    	  leadPageData.setActivityDateTime(leadActivity.getActivityDateTime());
-		    	  leadPageData.setActivityType(leadActivity.getActivityType());
-		    	  leadPageData.setIsOpen(leadActivity.getIsOpen());
+		    	  leadPageData.setAssigneeId(la.getLead().getAsigneeId());
+		    	  leadPageData.setLeadId(la.getLead().getLeadId());
+		    	  leadPageData.setLeadStatus(la.getLead().getStatus());
+		    	  leadPageData.setMobileNumber(la.getLead().getPrimaryMobile());
+		    	  leadPageData.setName(la.getLead().getCustomerName());
+		    	  leadPageData.setActivityDateTime(la.getActivityDateTime());
+		    	  leadPageData.setActivityType(la.getActivityType());
+		    	  leadPageData.setIsOpen(la.getIsOpen());
 		    	  return leadPageData;
 		      }
 		    };
