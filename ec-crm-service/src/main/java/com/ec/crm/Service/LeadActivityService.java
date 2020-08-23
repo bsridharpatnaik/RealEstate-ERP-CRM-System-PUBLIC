@@ -91,6 +91,42 @@ public class LeadActivityService {
 		
 	}
 	
+	
+	  @Transactional 
+	  public void revertLeadActivity(Long id) throws Exception 
+	  {
+		  	log.info("Invoked revertLeadActivity"); Optional<LeadActivity> latype =
+			laRepo.findById(id); if(!latype.isPresent()) throw new
+			Exception("LeadActivity by ID not found");
+	  
+			LeadActivity leadActivity = latype.get();
+	  
+			if(leadActivity.getIsOpen()==true && leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+			{	
+				leadActivity.getLead().setStatus(LeadStatusEnum.New_Lead);
+				leadActivity.setClosedBy(currentUserId);
+				leadActivity.setClosingComment("Activity reverted");
+				leadActivity.setIsOpen(false);
+			}	
+			else if(leadActivity.getIsOpen()==false && (leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Close) 
+					|| leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)))
+			{
+				leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+				leadActivity.setClosedBy(currentUserId);
+				leadActivity.setClosingComment("Activity reverted");
+				leadActivity.setIsOpen(false);
+			}
+			else if(leadActivity.getIsOpen()==false && leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+			{
+				leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit);
+				leadActivity.setClosedBy(null);
+				leadActivity.setClosingComment("");
+				leadActivity.setIsOpen(true);
+			}
+			else 
+				throw new Exception("Revert operation for activiy not allowed");
+	  }
+	 
 	@Transactional
 	private void ExecuteBusinessLogicWhileCreation(LeadActivity leadActivity) throws Exception 
 	{
@@ -104,20 +140,20 @@ public class LeadActivityService {
 		
 		switch(leadActivity.getActivityType())
 		{
-		case Deal_Close:
-			log.info("Inside Case - Deal_Close");
-			leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
-			closeAllOpenActivitiesForLead(leadActivity.getLead());
-			break;
-		case Deal_Lost:
-			log.info("Inside Case - Deal_Lost");
-			leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
-			closeAllOpenActivitiesForLead(leadActivity.getLead());
-			break;
-		case Property_Visit:
-			log.info("Inside Case - Property_Visit");
-			leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit);
-			break;
+			case Deal_Close:
+				log.info("Inside Case - Deal_Close");
+				leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
+				closeAllOpenActivitiesForLead(leadActivity.getLead());
+				break;
+			case Deal_Lost:
+				log.info("Inside Case - Deal_Lost");
+				leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+				closeAllOpenActivitiesForLead(leadActivity.getLead());
+				break;
+			case Property_Visit:
+				log.info("Inside Case - Property_Visit");
+				leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit);
+				break;
 		}
 		
 		

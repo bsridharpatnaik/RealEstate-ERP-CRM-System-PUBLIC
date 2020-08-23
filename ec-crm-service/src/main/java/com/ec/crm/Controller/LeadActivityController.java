@@ -80,6 +80,13 @@ public class LeadActivityController
 		laService.rescheduleActivity(id, payload);
 	}
 	
+	@PutMapping("revert/{id}") 
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void revertLeadActivity(@PathVariable long id) throws Exception
+	{
+		laService.revertLeadActivity(id);
+	}
+	
 	@PostMapping("/getleadactivitypage") 
 	@ResponseStatus(HttpStatus.OK)
 	public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws Exception 

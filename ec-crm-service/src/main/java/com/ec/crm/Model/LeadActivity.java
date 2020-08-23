@@ -18,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
@@ -97,5 +98,10 @@ public class LeadActivity extends ReusableFields implements Serializable
 	public LeadActivity() {
 		super();
 		// TODO Auto-generated constructor stub
+	}
+
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
 	}
 }

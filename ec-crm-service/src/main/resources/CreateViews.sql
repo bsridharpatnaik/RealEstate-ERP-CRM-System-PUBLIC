@@ -56,3 +56,36 @@ FROM   (SELECT u.user_name       AS assigneeName,
        assigneename, 
        stagnantdays) AS tx 
 GROUP  BY assigneename; 
+
+
+
+-- ----- Conversion Ratio  -------
+
+
+CREATE OR REPLACE view convertion_ratio AS
+SELECT su.user_name AS 'asigneeName', 
+       totalcount, 
+       CASE 
+		WHEN convertedcount IS NULL THEN 0
+         ELSE convertedcount END AS convertedcount,
+       CASE 
+         WHEN convertedcount / totalcount * 100 IS NULL THEN 0 
+         ELSE TRUNCATE(convertedcount / totalcount * 100,2)
+       END          AS ratio 
+FROM   (SELECT cl.user_id, 
+               Count(DISTINCT cl.lead_id) AS totalCount 
+        FROM   lead_activity la 
+               INNER JOIN customer_lead cl 
+                       ON cl.lead_id = la.lead_id  AND cl.is_deleted != 1 AND la.is_deleted !=1
+        GROUP  BY cl.user_id) AS y 
+       LEFT JOIN (SELECT cl.user_id, 
+                         Count(DISTINCT cl.lead_id) AS convertedCount 
+                  FROM   lead_activity la 
+                         INNER JOIN customer_lead cl 
+                                 ON cl.lead_id = la.lead_id AND cl.is_deleted != 1  AND la.is_deleted !=1
+                  WHERE  la.activity_type = 'Deal_Close' AND cl.status='Deal_Closed'
+                  GROUP  BY cl.user_id) AS tx 
+              ON tx.user_id = y.user_id 
+       INNER JOIN security_user su 
+               ON su.user_id = y.user_id; 
+               
