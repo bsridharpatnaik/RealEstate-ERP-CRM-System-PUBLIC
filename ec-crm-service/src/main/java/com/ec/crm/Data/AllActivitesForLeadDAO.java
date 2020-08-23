@@ -9,6 +9,6 @@ import lombok.Data;
 @Data
 public class AllActivitesForLeadDAO 
 {
-	List<LeadActivity> pendingActivities;
-	List<LeadActivity> pastActivities;
+	List<LeadActivityOnLeadInformationDTO> pendingActivities;
+	List<LeadActivityOnLeadInformationDTO> pastActivities;
 }

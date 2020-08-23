@@ -11,7 +11,6 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
-import org.mapstruct.factory.Mappers;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
-import com.ec.crm.Data.LeadActivityDTO;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
@@ -65,6 +63,8 @@ public class LeadActivityService {
 	@Autowired
 	ModelMapper leadToLeadActivityModelMapper;
 	
+	@Autowired
+	LeadActivityMapper laMapper;
 	@Value("${common.serverurl}")
 	private String reqUrl;
 	
@@ -247,12 +247,12 @@ public class LeadActivityService {
 
 	
 	
-	public LeadActivityDTO getSingleLeadActivity(long id) throws Exception 
+	public LeadActivity getSingleLeadActivity(long id) throws Exception 
 	{
 		log.info("Invoked activityType");
 		Optional<LeadActivity> latype = laRepo.findById(id);
 		if(latype.isPresent())
-			return mapper.mapLeadActivityToDTO(latype.get());
+			return latype.get();
 		else
 			throw new Exception("LeadActivity ID not found");
 	}
@@ -339,9 +339,9 @@ public class LeadActivityService {
 		log.info("Invoked getAllActivitiesForLead");
 		Lead lead = getLeadFromLeadId(leadId);
 		AllActivitesForLeadDAO allActivitesForLeadDAO = new AllActivitesForLeadDAO();
-		allActivitesForLeadDAO.setPendingActivities(laRepo.fetchPendingActivitiesForLead(lead.getLeadId()));
-		allActivitesForLeadDAO.setPastActivities(laRepo.fetchPastActivitiesForLead(lead.getLeadId()));
-		return allActivitesForLeadDAO;
+		allActivitesForLeadDAO.setPendingActivities(laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPendingActivitiesForLead(lead.getLeadId())));
+		allActivitesForLeadDAO.setPastActivities(laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPastActivitiesForLead(lead.getLeadId())));
+		return (allActivitesForLeadDAO);
 	}
 	
 	public void createDefaultActivity(Long leadId) throws Exception
