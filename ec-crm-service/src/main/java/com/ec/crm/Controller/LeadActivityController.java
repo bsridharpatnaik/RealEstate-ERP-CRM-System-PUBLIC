@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadActivityClosingComment;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadActivityDTO;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
-import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
@@ -51,7 +51,7 @@ public class LeadActivityController
 		return laService.fetchAll(pageable);
 	}
 	@GetMapping("/{id}")
-	public LeadActivity findLeadActivityByID(@PathVariable long id) throws Exception 
+	public LeadActivityDTO findLeadActivityByID(@PathVariable long id) throws Exception 
 	{
 		return laService.getSingleLeadActivity(id);
 	}

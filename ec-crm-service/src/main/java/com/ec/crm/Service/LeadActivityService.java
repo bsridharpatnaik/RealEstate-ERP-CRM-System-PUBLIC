@@ -3,17 +3,15 @@ package com.ec.crm.Service;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import org.mapstruct.factory.Mappers;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +24,15 @@ import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadActivityDTO;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
-import com.ec.crm.Data.LeadLastUpdatedDAO;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Filters.LeadSpecifications;
+import com.ec.crm.Mapper.LeadActivityMapper;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
@@ -72,6 +70,9 @@ public class LeadActivityService {
 	
 	Long currentUserId;
 	Logger log = LoggerFactory.getLogger(LeadService.class);
+	
+	@Autowired
+	private LeadActivityMapper mapper;
 	
 	@Transactional
 	public LeadActivity createLeadActivity(LeadActivityCreate payload) throws Exception 
@@ -246,12 +247,12 @@ public class LeadActivityService {
 
 	
 	
-	public LeadActivity getSingleLeadActivity(long id) throws Exception 
+	public LeadActivityDTO getSingleLeadActivity(long id) throws Exception 
 	{
 		log.info("Invoked activityType");
 		Optional<LeadActivity> latype = laRepo.findById(id);
 		if(latype.isPresent())
-			return latype.get();
+			return mapper.mapLeadActivityToDTO(latype.get());
 		else
 			throw new Exception("LeadActivity ID not found");
 	}
