@@ -143,6 +143,9 @@ public class LeadActivityService {
 		{
 			case Deal_Close:
 				log.info("Inside Case - Deal_Close");
+				if(leadActivity.getLead().getStatus().equals(LeadStatusEnum.New_Lead) || 
+						leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost))
+						throw new Exception("You cannot close a new lead or a lost lead. Lead should be closed only after property visit");
 				leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
 				closeAllOpenActivitiesForLead(leadActivity.getLead());
 				break;
@@ -527,6 +530,13 @@ public class LeadActivityService {
 		}
 		
 		
+	}
+
+
+	public Boolean getRevertable(Long leadActivityId) 
+	{
+		// TODO Auto-generated method stub
+		return false;
 	}
 }
 
