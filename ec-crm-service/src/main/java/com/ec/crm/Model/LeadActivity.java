@@ -99,9 +99,4 @@ public class LeadActivity extends ReusableFields implements Serializable
 		super();
 		// TODO Auto-generated constructor stub
 	}
-
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
 }

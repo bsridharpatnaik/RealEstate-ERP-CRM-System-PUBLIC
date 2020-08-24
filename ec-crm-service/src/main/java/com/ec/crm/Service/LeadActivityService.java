@@ -3,12 +3,9 @@ package com.ec.crm.Service;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,14 +24,13 @@ import org.springframework.stereotype.Service;
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.LeadActivityCreate;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
-import com.ec.crm.Data.LeadLastUpdatedDAO;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Filters.LeadSpecifications;
+import com.ec.crm.Mapper.LeadActivityMapper;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
@@ -67,11 +63,16 @@ public class LeadActivityService {
 	@Autowired
 	ModelMapper leadToLeadActivityModelMapper;
 	
+	@Autowired
+	LeadActivityMapper laMapper;
 	@Value("${common.serverurl}")
 	private String reqUrl;
 	
 	Long currentUserId;
 	Logger log = LoggerFactory.getLogger(LeadService.class);
+	
+	@Autowired
+	private LeadActivityMapper mapper;
 	
 	@Transactional
 	public LeadActivity createLeadActivity(LeadActivityCreate payload) throws Exception 
@@ -338,9 +339,9 @@ public class LeadActivityService {
 		log.info("Invoked getAllActivitiesForLead");
 		Lead lead = getLeadFromLeadId(leadId);
 		AllActivitesForLeadDAO allActivitesForLeadDAO = new AllActivitesForLeadDAO();
-		allActivitesForLeadDAO.setPendingActivities(laRepo.fetchPendingActivitiesForLead(lead.getLeadId()));
-		allActivitesForLeadDAO.setPastActivities(laRepo.fetchPastActivitiesForLead(lead.getLeadId()));
-		return allActivitesForLeadDAO;
+		allActivitesForLeadDAO.setPendingActivities(laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPendingActivitiesForLead(lead.getLeadId())));
+		allActivitesForLeadDAO.setPastActivities(laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPastActivitiesForLead(lead.getLeadId())));
+		return (allActivitesForLeadDAO);
 	}
 	
 	public void createDefaultActivity(Long leadId) throws Exception
