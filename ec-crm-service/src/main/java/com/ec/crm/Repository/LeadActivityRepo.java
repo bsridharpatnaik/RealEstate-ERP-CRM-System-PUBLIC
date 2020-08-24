@@ -65,4 +65,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value="SELECT la.lead.asigneeId, count(la.lead), count(la) from LeadActivity la where "
 			+"la.activityType='Deal_Close' group by la.lead.asigneeId")
 	List getConversionRatio();
+	
+	@Query(value="SELECT count(distinct la) from LeadActivity la where la.activityType='Property_Visit' and la.creatorId=:id")
+	Long getpropertyvisit(Long id);
 }

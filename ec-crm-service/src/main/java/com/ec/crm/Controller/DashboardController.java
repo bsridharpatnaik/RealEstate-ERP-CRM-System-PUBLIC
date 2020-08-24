@@ -59,13 +59,14 @@ public class DashboardController {
 	{	
 		return dashboardService.conversionratio();
 	}
-	/*
-	 * @GetMapping("/topperformer")
-	 * 
-	 * @ResponseStatus(HttpStatus.OK) public Map topperformer() throws
-	 * ParseException {
-	 * 
-	 * return dashboardService.topperformer(); }
-	 */
 	
+	@GetMapping("/topperformer")
+	@ResponseStatus(HttpStatus.OK) 
+	public Map topperformer() throws ParseException {
+	  
+		return dashboardService.topperformer();
+	
+	}
+		 
+		
 }

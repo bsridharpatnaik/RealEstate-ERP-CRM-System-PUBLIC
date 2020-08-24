@@ -16,10 +16,14 @@ import lombok.Data;
 public class ConversionRatio 
 {
 	@Id
-	@Column(name="assigneename")
+	@Column(name="user_id")
+	Long userId;
+	
+	@Column(name="asigneename")
 	String asigneeName;
 	
 	Long totalcount;
 	Long convertedcount;
 	Double ratio;
+	
 }

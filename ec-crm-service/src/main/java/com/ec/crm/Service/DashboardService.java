@@ -162,10 +162,20 @@ public class DashboardService {
 		return stagnantStatsRepo.findAll();
 	}
 
-	/*
-	 * public Map topperformer() { // TODO Auto-generated method stub
-	 * data=lRepo.gettopperformer(); }
-	 */
+	
+	 public Map topperformer() 
+	 { // TODO Auto-generated method stub
+		 List<ConversionRatio> data = convertionRatioRepo.gettopperformer();
+		 Map returndata=new HashMap<>();
+		 Long id=data.get(0).getUserId();
+		 Long propertyvisit=lRepo.getpropertyvisit(id);
+		 returndata.put("username", data.get(0).getAsigneeName());
+		 returndata.put("lead generated", data.get(0).getTotalcount());
+		 returndata.put("property", propertyvisit);
+		 returndata.put("deal close", data.get(0).getConvertedcount());
+		 return returndata;
+	 }
+	 
 
 	
 

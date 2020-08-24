@@ -63,7 +63,7 @@ GROUP  BY assigneename;
 
 
 CREATE OR REPLACE view convertion_ratio AS
-SELECT su.user_name AS 'asigneeName', 
+SELECT y.user_id AS 'user_id', su.user_name AS 'asigneeName', 
        totalcount, 
        CASE 
 		WHEN convertedcount IS NULL THEN 0
