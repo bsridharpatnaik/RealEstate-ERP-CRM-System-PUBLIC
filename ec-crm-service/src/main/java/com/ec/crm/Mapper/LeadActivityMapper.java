@@ -5,20 +5,25 @@ import java.util.List;
 import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ec.crm.Data.LeadActivityOnLeadInformationDTO;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.Service.LeadActivityService;
 
 @Mapper(componentModel="spring")
 public abstract class LeadActivityMapper 
 {
+	@Autowired
+	LeadActivityService leadActivityService;
+	
 	public abstract LeadActivityOnLeadInformationDTO mapLeadActivityToDTO(LeadActivity leadActivity);
 	public abstract List<LeadActivityOnLeadInformationDTO> mapLeadActivitiesToDTOs(List<LeadActivity> leadActivity);
 	
 	@BeforeMapping
-    public void setRevertable(LeadActivity la, @MappingTarget LeadActivityOnLeadInformationDTO laDto) 
+    public void setRevertable(LeadActivity la, @MappingTarget LeadActivityOnLeadInformationDTO laDto) throws Exception 
 	{
-		laDto.setIsRevertable(true);
+		laDto.setIsRevertable(leadActivityService.getRevertable(la.getLeadActivityId(),la.getLead().getLeadId()));
     }
 	
 }

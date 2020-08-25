@@ -11,9 +11,9 @@ import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.ReusableClasses.BaseRepository;
 
 @Repository
-public interface ConvertionRatioRepo extends BaseRepository<ConversionRatio, String>, JpaSpecificationExecutor<ConversionRatio>
+public interface ConvertionRatioRepo extends BaseRepository<ConversionRatio, Long>, JpaSpecificationExecutor<ConversionRatio>
 {
-	@Query(value="from ConversionRatio where ConversionRatio.ratio = (SELECT max(ratio) from ConversionRatio)")
+	@Query(value="select c from ConversionRatio c where c.ratio = (SELECT max(ratio) from ConversionRatio)")
 	List gettopperformer();
 
 }

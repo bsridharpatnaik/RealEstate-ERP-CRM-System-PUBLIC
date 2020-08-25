@@ -143,15 +143,12 @@ public class LeadActivityService {
 		{
 			case Deal_Close:
 				log.info("Inside Case - Deal_Close");
-				if(leadActivity.getLead().getStatus().equals(LeadStatusEnum.New_Lead) || 
-						leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost))
-						throw new Exception("You cannot close a new lead or a lost lead. Lead should be closed only after property visit");
 				leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
 				closeAllOpenActivitiesForLead(leadActivity.getLead());
 				break;
 			case Deal_Lost:
 				log.info("Inside Case - Deal_Lost");
-				leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+				leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.getLead()));
 				closeAllOpenActivitiesForLead(leadActivity.getLead());
 				break;
 			case Property_Visit:
@@ -165,7 +162,7 @@ public class LeadActivityService {
 	}
 	
 	@Transactional
-	private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) 
+	private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) throws Exception 
 	{
 		log.info("Invoked ExecuteBusinessLogicWhileClosure");
 		if(leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
@@ -178,12 +175,36 @@ public class LeadActivityService {
 				&& leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost))
 		{
 			log.info("Changing status of lead from Deal_Lost - Negotiation");
-			leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+			LeadStatusEnum previousStatus = fetchPreviousStatusFromHistory(leadActivity.getLead());
+			leadActivity.getLead().setStatus(previousStatus);
 		}
 		
 		laRepo.save(leadActivity);
 	}
 	
+	private LeadStatusEnum fetchPreviousStatusFromHistory(Lead lead) throws Exception 
+	{
+		log.info("Fetching previous status for lead -"+lead.getLeadId());
+		List<Lead> leadHistory = lService.history(lead.getLeadId());
+		LeadStatusEnum previousStatus = lead.getStatus();
+		
+		if(leadHistory.size()<1)
+			throw new Exception("No history found for lead");
+		
+		for(int ctr=leadHistory.size()-1;ctr>=0;ctr--)
+		{
+			Lead currentLead = leadHistory.get(ctr);
+			if(currentLead.getStatus().equals(lead.getStatus()) == false)
+			{
+				previousStatus = currentLead.getStatus();
+				log.info("Previous status found for lead - "+currentLead.getLeadId()+" - "+previousStatus);
+				break;
+			}
+		}
+		return previousStatus;
+	}
+
+
 	@Transactional
 	private void closeAllOpenActivitiesForLead(Lead lead) 
 	{
@@ -240,7 +261,14 @@ public class LeadActivityService {
 			errorMessage=errorMessage==""?" Title, ":errorMessage+" itle, ";
 
 		if(errorMessage!="")
-			throw new Exception("Fields Missing - "+errorMessage);		
+			throw new Exception("Fields Missing - "+errorMessage);
+		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
+		
+		if(!leadOpt.isPresent())
+			throw new Exception("Lead not found by lead ID -"+payload.getLeadId());
+		else if((leadOpt.get().getStatus().equals(LeadStatusEnum.New_Lead) || 
+				leadOpt.get().getStatus().equals(LeadStatusEnum.Deal_Lost)) && payload.getActivityType().equals(ActivityTypeEnum.Deal_Close))
+				throw new Exception("You cannot close a new lead or a lost lead. Lead should be closed only after property visit");
 	}
 
 	public Page<LeadActivity> fetchAll(Pageable pageable) 
@@ -533,10 +561,16 @@ public class LeadActivityService {
 	}
 
 
-	public Boolean getRevertable(Long leadActivityId) 
+	public Boolean getRevertable(Long leadActivityId, Long leadId) throws Exception
 	{
-		// TODO Auto-generated method stub
-		return false;
+		List<LeadActivity> activities = laRepo.fetchMostRecentLeadActivity(leadId);
+		if(activities.size()<1)
+			throw new Exception("No activities found for lead");
+		
+		if(leadActivityId.equals(activities.get(0).getLeadActivityId()))
+			return true;
+		else
+			return false;
 	}
 }
 
