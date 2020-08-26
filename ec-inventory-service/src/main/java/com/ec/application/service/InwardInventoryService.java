@@ -44,6 +44,7 @@ import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.InwardInventorySpecification;
 
 @Service
+@Transactional
 public class InwardInventoryService 
 {
 
