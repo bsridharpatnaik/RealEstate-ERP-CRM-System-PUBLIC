@@ -1,25 +1,34 @@
 package com.ec.application.ReusableClasses;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.mail.MessagingException;
-import javax.mail.Multipart;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import com.ec.application.data.EmailConfigData;
+import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.service.EmailService;
+import com.ec.application.service.StockService;
+
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 
 @Service
 public class EmailHelper 
@@ -27,12 +36,24 @@ public class EmailHelper
 	@Autowired 
 	EmailService emailService;
 	
+	@Autowired
+	private Configuration config;
+	
+	@Autowired
+	StockService stockService;
 	Logger log = LoggerFactory.getLogger(EmailHelper.class);
 	
-	public void sendEmail()
+	@Value("#{'${emails}'.split(';')}") 
+	private List<String> emailIds;
+	
+	public void sendEmailForMorningStockNottification(List<StockInformationExportDAO> dataForInsertList) throws Exception
 	{
 		EmailConfigData emailConfigData = emailService.getEmailConfig();
+	
+		log.info("Fetching data from stock service");
 		
+		log.info("Fetching data completed from stock service");
+		log.info(("Number of records fetched - "+dataForInsertList.size()));
 		Properties props = new Properties();
         props.put("mail.host", emailConfigData.mailHost);
         props.put("mail.port", emailConfigData.mailPort);
@@ -51,28 +72,24 @@ public class EmailHelper
             }
         });
         log.info("Creating mimemessage");
-        MimeMessage msg = new MimeMessage(session);
+        MimeMessage message = new MimeMessage(session);
         try {
-            msg.setFrom(new InternetAddress(emailConfigData.mailUsername, false));
-            msg.setRecipients(MimeMessage.RecipientType.TO, InternetAddress.parse("bsridharpatnaik@gmail.com"));
-            msg.setSubject("Test Subject.");
-            msg.setContent("Test Content.", "text/html");
-            msg.setSentDate(new Date());
-
-            MimeBodyPart messageBodyPart = new MimeBodyPart();
-            messageBodyPart.setContent("Test Content.", "text/html");
-
-            Multipart multipart = new MimeMultipart();
-            multipart.addBodyPart(messageBodyPart);
-            //MimeBodyPart attachPart = new MimeBodyPart();
-
-           // attachPart.attachFile("/var/tmp/abc.txt");
-           // multipart.addBodyPart(attachPart);
-            msg.setContent(multipart);
-            log.info("Sending Email");
-            Transport.send(msg);
+        	MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+					StandardCharsets.UTF_8.name());
+        	Map<String, Object> model = new HashMap<String, Object>();
+			model.put("inventory", dataForInsertList);
+			model.put("currentDate", new Date().toString());
+			Template template = config.getTemplate("email-template.ftl");
+			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
+			helper.setFrom(emailConfigData.mailUsername);
+			helper.setTo(InternetAddress.parse("bsridharpatnaik@gmail.com"));
+			helper.setSubject("Latest Stock Information - "+new Date());
+			helper.setText(html, true);
+			Transport.send(message);
             log.info("Email Sent");
-        } catch (MessagingException e) {
+        } 
+        catch (MessagingException e) 
+        {
             // TODO Auto-generated catch block
         	log.error("Error sending email", e);
             e.printStackTrace();

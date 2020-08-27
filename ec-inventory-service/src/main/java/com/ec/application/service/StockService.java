@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.CurrentStockRequest;
 import com.ec.application.data.SingleStockInfo;
@@ -32,6 +33,7 @@ import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;
+import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
 @Service
@@ -57,6 +59,15 @@ public class StockService
 	WarehouseService warehouseService;
 	
 	@Autowired
+	EmailHelper  emailHelper;
+	
+	@Autowired
+	StockService stockService;
+	
+	@Autowired
+	StockHistoryService stockHistoryService;
+	
+	@Autowired
 	InventoryNotificationService inventoryNotificationService;
 
 	Logger log = LoggerFactory.getLogger(AllInventoryService.class);
@@ -79,7 +90,7 @@ public class StockService
 			throw new Exception("Too many rows to export. Apply some more filters and try again");
 	
 		List<Stock> allStocks = spec!=null?stockRepo.findAll(spec):stockRepo.findAll();
-		Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+		Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE,Sort.Direction.ASC,"productName");
 		Page<SingleStockInfo> stockInfoList = fetchStockInformation(allStocks,pageable).getStockInformation();
 		List<StockInformationExportDAO> exportData = transformDataForExport(stockInfoList);
 		return exportData;
@@ -268,5 +279,20 @@ public class StockService
 	public List<StockPercentData> fetchStockPercent() 
 	{
 		return stockRepo.getCurrentStockPercent();
+	}
+	
+	public void sendStockNotificationEmail() throws Exception
+	{
+		
+	    FilterDataList filterDataList = new FilterDataList();
+		List<FilterAttributeData> filterData = new ArrayList<FilterAttributeData>();
+		filterDataList.setFilterData(filterData);
+		log.info("Fetching stock information");
+		List<StockInformationExportDAO>  dataForInsertList = stockService.findStockForAllForExport(filterDataList);
+		
+		log.info("Sending email for stock information");
+		emailHelper.sendEmailForMorningStockNottification(dataForInsertList);
+		log.info("saving stock information to DB");
+		stockHistoryService.insertLatestStockHistory(dataForInsertList);
 	}
 }

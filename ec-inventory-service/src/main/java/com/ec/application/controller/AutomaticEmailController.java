@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.EmailHelper;
+import com.ec.application.service.StockService;
 
 @RestController
 @RequestMapping(value="/email",produces = { "application/json", "text/json" })
@@ -15,9 +16,12 @@ public class AutomaticEmailController
 	@Autowired
 	EmailHelper emailHelper;
 	
+	@Autowired
+	StockService stockService;
+	
 	@GetMapping
-	public void sendEmail()
+	public void sendEmail() throws Exception
 	{
-		emailHelper.sendEmail();
+		stockService.sendStockNotificationEmail();
 	}
 }
