@@ -60,10 +60,10 @@ background-color: white;
 									<th>Product Id</th>
 									<th>Inventory</th>
 									<th>Category</th>
-									<th>TotalStock</th>
+									<th>Total Stock</th>
 									<th>Warehouse</th>
-									<th>WarehouseStock</th>
-									<th>MeasurementUnit</th>
+									<th>WH Stock</th>
+									<th>Unit</th>
 								</tr>
 							</thead>
 							<tbody>
