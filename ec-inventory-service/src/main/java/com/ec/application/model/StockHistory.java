@@ -23,7 +23,6 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name = "stock_history")
-@Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class StockHistory 
 {
