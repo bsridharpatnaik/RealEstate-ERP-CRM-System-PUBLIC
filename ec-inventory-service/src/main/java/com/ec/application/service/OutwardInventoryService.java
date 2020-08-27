@@ -44,6 +44,7 @@ import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.OutwardInventorySpecification;
 
 @Service
+@Transactional
 public class OutwardInventoryService 
 {
 	@Autowired
