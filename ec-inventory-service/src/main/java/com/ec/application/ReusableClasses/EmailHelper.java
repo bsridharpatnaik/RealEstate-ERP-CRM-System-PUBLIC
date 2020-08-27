@@ -43,8 +43,8 @@ public class EmailHelper
 	StockService stockService;
 	Logger log = LoggerFactory.getLogger(EmailHelper.class);
 	
-	@Value("#{'${emails}'.split(';')}") 
-	private List<String> emailIds;
+	@Value("${stock.notification.emailids}") 
+	private String emailIds;
 	
 	public void sendEmailForMorningStockNottification(List<StockInformationExportDAO> dataForInsertList) throws Exception
 	{
@@ -82,7 +82,10 @@ public class EmailHelper
 			Template template = config.getTemplate("email-template.ftl");
 			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 			helper.setFrom(emailConfigData.mailUsername);
-			helper.setTo(InternetAddress.parse("bsridharpatnaik@gmail.com"));
+			
+			InternetAddress[] parse = InternetAddress.parse(emailIds , true);
+			message.setRecipients(javax.mail.Message.RecipientType.TO,  parse);
+			
 			helper.setSubject("Latest Stock Information - "+new Date());
 			helper.setText(html, true);
 			Transport.send(message);
