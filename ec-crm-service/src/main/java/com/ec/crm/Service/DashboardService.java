@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.DashboardData;
+import com.ec.crm.Data.MapForPipelineAndActivities;
+import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Model.ConversionRatio;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Model.StagnantStats;
@@ -36,119 +38,95 @@ public class DashboardService {
 	@Autowired
 	UserDetailsService userDetailsService;
 	
-	public Map customerpipeline(DashboardData payload) {
-		// TODO Auto-generated method stub
+	public PipelineAndActivitiesForDashboard customerpipeline(DashboardData payload) 
+	{
+		PipelineAndActivitiesForDashboard dashboardPipelineReturnData = new PipelineAndActivitiesForDashboard();
 		List<LeadActivity> data=new ArrayList<LeadActivity>();
 		Date fromdate=payload.getFromDate();
 		Date todate=payload.getToDate();
+		
 		System.out.println("fromdate : "+fromdate+" todate: "+todate);
 		data=lRepo.getActivity(fromdate,todate);
 
-		
-		long LeadGenerated = data
+		dashboardPipelineReturnData.setLeadGenerated(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getCreatorId() ==404 )
-				  .count();
-		Map<Long, Long> LeadGeneratedbyAssignee = data
-				.stream()
-				.filter(c -> c.getCreatorId() ==404 )
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
+				  .count(),data
+					.stream()
+					.filter(c -> c.getCreatorId() ==404 )
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
+	
 		
-		long ActivitiesCreated = data
+		dashboardPipelineReturnData.setActivitiesCreated(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getCreatorId() !=404 )
-				  .count();
-		Map<Object, Long> ActivitiesCreatedbyAssignee = data
-				.stream()
-				.filter(c -> c.getCreatorId() !=404 )
-			    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()));
+				  .count(),data
+					.stream()
+					.filter(c -> c.getCreatorId() !=404 )
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
 		
-		long TotalPropertyVisit = data
+		
+		dashboardPipelineReturnData.setTotalPropertyVisit(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getActivityType().name() == "Property_Visit")
-				  .count();
+				  .count(),data
+					.stream()
+					.filter(c -> c.getActivityType().name() == "Property_Visit")
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
 		
-		Map<Long, Long> TotalPropertyVisitbyAssignee = data
-				.stream()
-				.filter(c -> c.getActivityType().name() == "Property_Visit")
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
-		
-		
-		long DealClosed = data
+		dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getActivityType().name() == "Deal_Close")
-				  .count();
+				  .count(),data
+					.stream()
+					.filter(c -> c.getActivityType().name() == "Deal_Close")
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
 		
-		Map<Long, Long> DealClosedbyAssignee = data
-				.stream()
-				.filter(c -> c.getActivityType().name() == "Deal_Close")
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
-		
-		
-		long DealLost = data
+		dashboardPipelineReturnData.setDealLost(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getActivityType().name() == "Deal_Lost")
-				  .count();
+				  .count(),data
+					.stream()
+					.filter(c -> c.getActivityType().name() == "Deal_Lost")
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
 		
-		Map<Long, Long> DealLostbyAssignee = data
-				.stream()
-				.filter(c -> c.getActivityType().name() == "Deal_Lost")
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
-		
-		long TotalActivities = data
+		dashboardPipelineReturnData.setTodaysActivities(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getIsOpen() == true)
-				  .count();
+				  .count(),data
+					.stream()
+					.filter(c -> c.getIsOpen() == true)
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
 		
-		Map<Long, Long> TotalActivitiesbyAssignee = data
-				.stream()
-				.filter(c -> c.getIsOpen() == true)
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
-		
-		
-		long PendingActivities = data
+		dashboardPipelineReturnData.setPendingActivities(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getIsOpen() == true)
 				  .filter(c -> c.getActivityDateTime().compareTo(new Date())<0)
-				  .count();
+				  .count(),data
+					.stream()
+					.filter(c -> c.getIsOpen() == true)
+					.filter(c -> c.getActivityDateTime().compareTo(new Date())<0)
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
 		
-		Map<Long, Long> PendingActivitiesbyAssignee = data
-				.stream()
-				.filter(c -> c.getIsOpen() == true)
-				.filter(c -> c.getActivityDateTime().compareTo(new Date())<0)
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
-		
-		
-		long UpcomingActivities = data
+		dashboardPipelineReturnData.setUpcomingActivities(new MapForPipelineAndActivities(
+				data
 				  .stream()
 				  .filter(c -> c.getIsOpen() == true)
 				  .filter(c -> c.getActivityDateTime().compareTo(new Date())>0)
-				  .count();
+				  .count(),data
+					.stream()
+					.filter(c -> c.getIsOpen() == true)
+					.filter(c -> c.getActivityDateTime().compareTo(new Date())>0)
+				    .collect(Collectors.groupingBy(c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(), Collectors.counting()))));
 		
-		Map<Long, Long> UpcomingActivitiesbyAssignee = data
-				.stream()
-				.filter(c -> c.getIsOpen() == true)
-				.filter(c -> c.getActivityDateTime().compareTo(new Date())>0)
-			    .collect(Collectors.groupingBy(c -> c.getLead().getAsigneeId(), Collectors.counting()));
-		
-		Map returndata=new HashMap<>();
-		returndata.put("Lead Generated", LeadGenerated);
-		returndata.put("Activities Created", ActivitiesCreated);
-		returndata.put("Total Property Visit", TotalPropertyVisit);
-		returndata.put("Deal Closed", DealClosed);
-		returndata.put("Deal Lost", DealLost);
-		returndata.put("Total Activities", TotalActivities);
-		returndata.put("Pending Activities", PendingActivities);
-		returndata.put("Upcoming Activities", UpcomingActivities);
-		returndata.put("Lead Generated by Assignee", LeadGeneratedbyAssignee);
-		returndata.put("Activities Created by Assignee", ActivitiesCreatedbyAssignee);
-		returndata.put("Total Property Visit by Assignee", TotalPropertyVisitbyAssignee);
-		returndata.put("Deal Closed by Assignee", DealClosedbyAssignee);
-		returndata.put("Deal Lost by Assignee", DealLostbyAssignee);
-		returndata.put("Total Activities by Assignee", TotalActivitiesbyAssignee);
-		returndata.put("Pending Activities by Assignee", PendingActivitiesbyAssignee);
-		returndata.put("Upcoming Activities by Assignee", UpcomingActivitiesbyAssignee);
-		return returndata;
+		return dashboardPipelineReturnData;
 		
 	}
 

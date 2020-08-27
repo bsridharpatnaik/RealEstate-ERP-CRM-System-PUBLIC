@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.crm.Data.DashboardData;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.PipelineAllReturnDAO;
+import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ConversionRatio;
 import com.ec.crm.Model.Lead;
@@ -41,7 +42,7 @@ public class DashboardController {
 	
 	@PostMapping("/customerpipeline")
 	@ResponseStatus(HttpStatus.OK)
-	public Map customerpipeline(@RequestBody DashboardData payload) throws ParseException
+	public PipelineAndActivitiesForDashboard customerpipeline(@RequestBody DashboardData payload) throws ParseException
 	{
 		
 		return dashboardService.customerpipeline(payload);
