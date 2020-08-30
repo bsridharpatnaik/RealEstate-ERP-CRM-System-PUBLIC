@@ -16,6 +16,7 @@ public class PipelineSingleReturnDTO
 	String mobileNumber;
 	StagnatedEnum stagnantStatus;
 	SentimentEnum sentiment;
+	Boolean isOpen;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd hh:mm:ss")
 	Date activityDateTime;
 	
@@ -25,7 +26,7 @@ public class PipelineSingleReturnDTO
 	}
 
 	public PipelineSingleReturnDTO(Long leadId, String name, String mobileNumber, StagnatedEnum stagnantStatus,
-			SentimentEnum sentiment, Date activityDateTime) {
+			SentimentEnum sentiment, Date activityDateTime,Boolean isOpen) {
 		super();
 		this.leadId = leadId;
 		this.name = name;
@@ -33,5 +34,6 @@ public class PipelineSingleReturnDTO
 		this.stagnantStatus = stagnantStatus;
 		this.sentiment = sentiment;
 		this.activityDateTime = activityDateTime;
+		this.isOpen=isOpen;
 	}
 }

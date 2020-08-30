@@ -3,12 +3,8 @@ package com.ec.crm.Service;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +29,6 @@ import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
-import com.ec.crm.ReusableClasses.ObjectMapperUtils;
-import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -174,14 +168,17 @@ public class AllActivitiesService
 			
 			for(Lead l : filteredLeads)
 			{
+				LeadActivity recentActivity = leadActivityService.getRecentActivityByLead(l);
 				PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
 				pipelineSingleReturnDTO.setLeadId(l.getLeadId());
 				pipelineSingleReturnDTO.setMobileNumber(l.getPrimaryMobile());
 				pipelineSingleReturnDTO.setName(l.getCustomerName());
 				pipelineSingleReturnDTO.setSentiment(l.getSentiment());
-				pipelineSingleReturnDTO.setActivityDateTime(leadActivityService.getRecentActivityByLead(l).getActivityDateTime());
+				pipelineSingleReturnDTO.setActivityDateTime(recentActivity.getActivityDateTime());
 				pipelineSingleReturnDTO.setStagnantStatus(getStagnantStatus(l.getLeadId()));
+				pipelineSingleReturnDTO.setIsOpen(recentActivity.getIsOpen());
 				pipelineSingleReturnDTOList.add(pipelineSingleReturnDTO);
+				
 			}
 			PipelineWithTotalReturnDAO.setLeads(pipelineSingleReturnDTOList);
 			PipelineWithTotalReturnDAO.setTotalCount(filteredLeads.size());
@@ -194,12 +191,16 @@ public class AllActivitiesService
 			StagnatedEnum stagnatedStatus = StagnatedEnum.NoColor;
 			
 			long noOfDay = leadActivityService.getStagnantDaysByLeadId(leadId);
-			if (noOfDay>=10 && noOfDay<20)
-				stagnatedStatus = StagnatedEnum.GREEN;
-			else if (noOfDay >=20 && noOfDay <30)
-				stagnatedStatus = StagnatedEnum.ORANGE;
-			else if (noOfDay >=30)
-				stagnatedStatus = StagnatedEnum.RED;
+			Lead lead = lRepo.findById(leadId).get();
+			if(lead.getStatus()!=LeadStatusEnum.Deal_Lost && lead.getStatus()!= LeadStatusEnum.Deal_Closed)
+			{
+				if (noOfDay>=10 && noOfDay<20)
+					stagnatedStatus = StagnatedEnum.GREEN;
+				else if (noOfDay >=20 && noOfDay <30)
+					stagnatedStatus = StagnatedEnum.ORANGE;
+				else if (noOfDay >=30)
+					stagnatedStatus = StagnatedEnum.RED;	
+			}
 			return stagnatedStatus;
 		}
 }

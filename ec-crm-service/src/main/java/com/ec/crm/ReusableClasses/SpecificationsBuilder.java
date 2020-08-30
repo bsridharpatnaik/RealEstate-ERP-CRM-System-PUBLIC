@@ -11,6 +11,8 @@ import javax.persistence.criteria.Root;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import com.ec.crm.Enums.PropertyTypeEnum;
+import com.ec.crm.Enums.SentimentEnum;
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
 
@@ -51,6 +53,30 @@ public class SpecificationsBuilder<T>
     	{
     		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
     	            -> cb.equal(root.get(key), name);
+    	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	}
+        return finalSpec;
+    }
+    
+    public Specification<T> whereProperytyEnumFieldEquals(String key,List<String> names)
+    {
+    	Specification<T> finalSpec = null;
+    	for(String name:names)
+    	{
+    		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+    	            -> cb.equal(root.get(key), PropertyTypeEnum.valueOf(name));
+    	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	}
+        return finalSpec;
+    }
+    
+    public Specification<T> whereSentimentEnumFieldEquals(String key,List<String> names)
+    {
+    	Specification<T> finalSpec = null;
+    	for(String name:names)
+    	{
+    		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+    	            -> cb.equal(root.get(key), SentimentEnum.valueOf(name));
     	    finalSpec  = specOrCondition(finalSpec,internalSpec);
     	}
         return finalSpec;

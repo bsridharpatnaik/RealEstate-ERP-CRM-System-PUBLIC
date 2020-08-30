@@ -17,8 +17,8 @@ public abstract class LeadActivityMapper
 	@Autowired
 	LeadActivityService leadActivityService;
 	
-	public abstract LeadActivityOnLeadInformationDTO mapLeadActivityToDTO(LeadActivity leadActivity);
-	public abstract List<LeadActivityOnLeadInformationDTO> mapLeadActivitiesToDTOs(List<LeadActivity> leadActivity);
+	public abstract LeadActivityOnLeadInformationDTO mapLeadActivityToDTO(LeadActivity leadActivity) throws Exception;
+	public abstract List<LeadActivityOnLeadInformationDTO> mapLeadActivitiesToDTOs(List<LeadActivity> leadActivity) throws Exception;
 	
 	@BeforeMapping
     public void setRevertable(LeadActivity la, @MappingTarget LeadActivityOnLeadInformationDTO laDto) throws Exception 

@@ -25,14 +25,7 @@ public class ScheduledTasks
 	
 	Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 	
-	@Scheduled(cron = "0 0 9 * * ?")
-	public void sendStockNotificationEmailInMorning() throws Exception 
-	{
-	    log.info("Sending Stock Notification Email in morning");
-	    stockService.sendStockNotificationEmail();
-	}
-	
-	@Scheduled(cron = "0 0 18 * * ?")
+	@Scheduled(cron = "0 0 9,18 * * *")
 	public void sendStockNotificationEmailInEvening() throws Exception 
 	{
 		log.info("Sending Stock Notification Email in evening");
