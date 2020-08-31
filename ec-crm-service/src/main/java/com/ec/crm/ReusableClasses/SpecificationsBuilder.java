@@ -58,6 +58,19 @@ public class SpecificationsBuilder<T>
         return finalSpec;
     }
     
+    public Specification<T> whereEnumFieldEquals(String key,List<String> names,Class claz)
+    {
+    	Specification<T> finalSpec = null;
+    	for(String name:names)
+    	{
+    		@SuppressWarnings("unchecked")
+			Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb)
+    	            -> cb.equal(root.get(key), getEnum(name, claz));
+    	    finalSpec  = specOrCondition(finalSpec,internalSpec);
+    	}
+        return finalSpec;
+    }
+    
     public Specification<T> whereProperytyEnumFieldEquals(String key,List<String> names)
     {
     	Specification<T> finalSpec = null;
@@ -236,4 +249,8 @@ public class SpecificationsBuilder<T>
 		}
 		return returnValue;
 	} 
+    
+    public static <E extends Enum<E>> E getEnum( String text, Class<E> klass){
+		   return Enum.valueOf(klass, text );
+		}
 }

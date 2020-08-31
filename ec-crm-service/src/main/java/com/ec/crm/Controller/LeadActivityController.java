@@ -73,7 +73,7 @@ public class LeadActivityController
 		laService.deleteLeadActivity(id, payload.getClosingComment(),userDetailsService.getCurrentUser().getId());
 	}
 	
-	@PutMapping("get/{id}") 
+	@PutMapping("reschedule/{id}") 
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public void rescheduleActivity(@RequestBody RescheduleActivityData payload,@PathVariable long id) throws Exception
 	{

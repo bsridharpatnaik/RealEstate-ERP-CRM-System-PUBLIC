@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@Transactional
 public class LeadActivityService {
 	@Autowired
 	LeadActivityRepo laRepo;
@@ -80,7 +81,7 @@ public class LeadActivityService {
 		log.info("Invoked createLeadActivity");
 		validatePayload(payload);
 		log.info("Checking if open activity exists");
-		exitIfOpenActivityExists(payload);
+		exitCreateIfExitConditionsExists(payload);
 		log.info("Fetching current user from gateway");
 		currentUserId = userDetailsService.getCurrentUser().getId();		
 		LeadActivity leadActivity=new LeadActivity();
@@ -161,6 +162,33 @@ public class LeadActivityService {
 		laRepo.save(leadActivity);
 	}
 	
+	/*
+	 * @Transactional private void ExecuteBusinessLogicWhileCreation(LeadActivity
+	 * leadActivity) throws Exception {
+	 * log.info("Invoked ExecuteBusinessLogicWhileCreation"); LeadStatusEnum status
+	 * = leadActivity.getLead().getStatus();
+	 * 
+	 * //do not allow creation of any activity except meeeting
+	 * if(leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost) &&
+	 * !leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting)) throw new
+	 * Exception("Cannot add activity - Deal already lost! Please create a Meeting activity to reopen lead."
+	 * );
+	 * 
+	 * 
+	 * switch(leadActivity.getActivityType()) { case Deal_Close:
+	 * log.info("Inside Case - Deal_Close");
+	 * leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
+	 * closeAllOpenActivitiesForLead(leadActivity.getLead()); break; case Deal_Lost:
+	 * log.info("Inside Case - Deal_Lost");
+	 * leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.
+	 * getLead())); closeAllOpenActivitiesForLead(leadActivity.getLead()); break;
+	 * case Property_Visit: log.info("Inside Case - Property_Visit");
+	 * leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit); break; }
+	 * 
+	 * 
+	 * laRepo.save(leadActivity); }
+	 */
+	
 	@Transactional
 	private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) throws Exception 
 	{
@@ -220,13 +248,21 @@ public class LeadActivityService {
 		}
 	}
 	
-	private void exitIfOpenActivityExists(LeadActivityCreate payload) throws Exception 
+	private void exitCreateIfExitConditionsExists(LeadActivityCreate payload) throws Exception 
 	{
-		log.info("Invoked exitIfOpenActivityExists");
+		log.info("Invoked exitIfExitConditionsExists");
+		
+		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
+		if(!leadOpt.isPresent())
+			throw new Exception("Lead with Lead ID -" + payload.getLeadId()+" not found");
+		Lead lead = leadOpt.get();
+		
+		if(lead.getStatus().equals(LeadStatusEnum.Deal_Lost) && !payload.getActivityType().equals(ActivityTypeEnum.Meeting))
+			throw new Exception("Lead is already lost. Create a meeting type activity to re-activate the lead.");
+		
 		List<LeadActivity> existingActivities = laRepo.findByLeadActivityTypeOpen(payload.getLeadId(),payload.getActivityType());
 		if(existingActivities.size()>0)
 			throw new Exception("Open activity of type "+payload.getActivityType()+" already exist for lead.");
-		log.info("No open activity found with same type");
 	}
 
 	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String creatorType) 
@@ -296,6 +332,10 @@ public class LeadActivityService {
 			throw new Exception("LeadActivity ID not found");
 		
 		LeadActivity leadActivity = latype.get();
+		
+		if(leadActivity.getIsOpen()==false)
+			throw new Exception("Activity alread closed with comment - "+ leadActivity.getClosingComment());
+		
 		leadActivity.setIsOpen(false);
 		leadActivity.setClosingComment(closingComment);
 		leadActivity.setClosedBy(closedBy);
@@ -343,6 +383,9 @@ public class LeadActivityService {
 			log.info("Lead Activity with ID - "+id+" not found");
 			throw new Exception("LeadActivity ID not found");
 		}
+		
+		if(latype.get().getIsOpen()==false)
+			throw new Exception("Lead Activity already closed with comment -"+latype.get().getClosingComment()==null?"":latype.get().getClosingComment());
 		log.info("Payload validation passed. Returning leacactvity back");
 		return latype.get();
 	}

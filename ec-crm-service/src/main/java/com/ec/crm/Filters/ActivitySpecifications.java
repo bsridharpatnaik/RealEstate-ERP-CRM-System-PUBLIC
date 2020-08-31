@@ -5,6 +5,10 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import com.ec.crm.Enums.ActivityTypeEnum;
+import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Enums.PropertyTypeEnum;
+import com.ec.crm.Enums.SentimentEnum;
 import com.ec.crm.Model.Address_;
 import com.ec.crm.Model.Broker_;
 import com.ec.crm.Model.Lead;
@@ -21,7 +25,7 @@ public class ActivitySpecifications
 	public static Specification<LeadActivity> getSpecification(FilterDataList filterDataList) throws ParseException
 	{
 		List<String> name = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"name");
-		List<String> primarymobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"primaryMobile");
+		List<String> mobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"mobile");
 		List<String> purpose = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"purpose");
 		List<String> address = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"address");
 		List<String> occupation = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"occupation");
@@ -43,8 +47,8 @@ public class ActivitySpecifications
 		if(name != null && name.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(LeadActivity_.LEAD,Lead_.customerName.getName(),name));	
 	
-		if(primarymobile != null && primarymobile.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(LeadActivity_.LEAD,Lead_.PRIMARY_MOBILE,primarymobile));
+		if(mobile != null && mobile.size()>0)
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE,mobile).or(specbldr.whereDirectFieldContains(Lead_.SECONDARY_MOBILE,mobile)));
 		
 		if(purpose != null && purpose.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(LeadActivity_.LEAD,Lead_.PURPOSE,purpose));
@@ -78,10 +82,10 @@ public class ActivitySpecifications
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereGrandChildFieldContains(LeadActivity_.LEAD,Lead_.SOURCE,Source_.SOURCE_NAME,source));
 		
 		if(propertytype != null && propertytype.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(LeadActivity_.LEAD,Lead_.PROPERTY_TYPE,propertytype));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereEnumFieldEquals(Lead_.PROPERTY_TYPE,propertytype,PropertyTypeEnum.class));
 		
 		if(sentiment != null && sentiment.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(LeadActivity_.LEAD,Lead_.SENTIMENT,sentiment));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereEnumFieldEquals(Lead_.SENTIMENT,sentiment,SentimentEnum.class));
 		
 		if(assignee != null && assignee.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildLongFieldContains(LeadActivity_.LEAD,Lead_.ASIGNEE_ID,assignee));
@@ -93,10 +97,10 @@ public class ActivitySpecifications
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldDateLessThan(LeadActivity_.LEAD,Lead_.CREATED, createdEndDate));
 		
 		if(leadStatus != null && leadStatus.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereChildFieldContains(LeadActivity_.LEAD,Lead_.STATUS,leadStatus));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereEnumFieldEquals(Lead_.STATUS,leadStatus,LeadStatusEnum.class));
 		
 		if(activityType != null && activityType.size()>0)
-			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(LeadActivity_.ACTIVITY_TYPE,activityType));
+			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereEnumFieldEquals(LeadActivity_.ACTIVITY_TYPE,activityType,ActivityTypeEnum.class));
 		
 		if(activityStatus != null && activityStatus.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(LeadActivity_.IS_OPEN,activityStatus));

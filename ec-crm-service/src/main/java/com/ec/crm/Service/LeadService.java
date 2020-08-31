@@ -45,6 +45,7 @@ import com.ec.crm.ReusableClasses.ReusableMethods;
 import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
+@Transactional
 public class LeadService 
 {
 	@Autowired
