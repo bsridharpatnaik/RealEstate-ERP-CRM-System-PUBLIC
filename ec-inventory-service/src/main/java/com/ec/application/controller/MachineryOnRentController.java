@@ -10,7 +10,9 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.MachineryOnRent;
@@ -67,5 +70,9 @@ public class MachineryOnRentController
 		morService.DeleteData(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	
+	@ExceptionHandler({JpaSystemException.class})
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact admisitrator.");
+		return apiError;
+	}
 }
