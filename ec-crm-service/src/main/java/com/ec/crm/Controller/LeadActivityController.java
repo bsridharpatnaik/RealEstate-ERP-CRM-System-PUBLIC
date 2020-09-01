@@ -33,6 +33,9 @@ import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Service.LeadActivityService;
 import com.ec.crm.Service.UserDetailsService;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+
+import lombok.SneakyThrows;
 
 @RestController
 @RequestMapping(value="/activity",produces = { "application/json", "text/json" })
@@ -58,6 +61,7 @@ public class LeadActivityController
 	
 	@PostMapping("/create") 
 	@ResponseStatus(HttpStatus.CREATED)
+	@SneakyThrows(InvalidFormatException.class)
 	public LeadActivity createLeadActivity(@RequestBody LeadActivityCreate at) throws Exception{
 		
 		return laService.createLeadActivity(at);
@@ -101,7 +105,7 @@ public class LeadActivityController
 	    Map<String, String> errors = new HashMap<>();
 	    ex.getBindingResult().getAllErrors().forEach((error) -> {
 	        String fieldName = ((FieldError) error).getField();
-	        String errorMessage = error.getDefaultMessage();
+	        String errorMessage = "Invalid Data. Please try again.";
 	        errors.put(fieldName, errorMessage);
 	    });
 	    return errors;
