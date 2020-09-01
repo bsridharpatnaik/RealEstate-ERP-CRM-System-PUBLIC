@@ -173,3 +173,43 @@ SELECT
                  ON w.warehouse_id = tx.warehouseid 
 		inner join product p on p.product_id = tx.productid
   ORDER  BY tx.date DESC;
+  
+  
+  -- --------- Stock Verification ------------
+  create or replace view stock_verification as
+SELECT inw.inventory, 
+       ROUND(total_inward,2)                                     AS 'Total Inward (A)', 
+       ROUND(total_outward  ,2)                                  AS 'Total Outward (B)', 
+       ROUND(current_stock ,2)                                   AS 'Current Stock (C)', 
+       ROUND(total_inward - ( total_outward + current_stock ),2) AS 
+       'Diff in Stock (A+(B-C)' 
+FROM   (SELECT p.product_name AS inventory, 
+               Sum(quantity)  AS total_inward 
+        FROM   inward_inventory ii 
+               INNER JOIN inwardinventory_entry iie 
+                       ON iie.inwardid = ii.inwardid 
+               INNER JOIN inward_outward_entries ioe 
+                       ON ioe.entryid = iie.entry_id 
+               INNER JOIN product p 
+                       ON p.product_id = ioe.product_id 
+        WHERE  ii.is_deleted = 0 
+        GROUP  BY p.product_name) AS inw 
+       INNER JOIN (SELECT p.product_name AS inventory, 
+                          Sum(quantity)  AS total_outward 
+                   FROM   outward_inventory oi 
+                          INNER JOIN outwardinventory_entry oie 
+                                  ON oie.outwardid = oi.outwardid 
+                          INNER JOIN inward_outward_entries ioe 
+                                  ON ioe.entryid = oie.entry_id 
+                          INNER JOIN product p 
+                                  ON p.product_id = ioe.product_id 
+                   WHERE  oi.is_deleted = 0 
+                   GROUP  BY p.product_name) AS outw 
+               ON outw.inventory = inw.inventory 
+       INNER JOIN (SELECT p.product_name          AS inventory, 
+                          Sum(s.quantity_in_hand) AS current_stock 
+                   FROM   stock s 
+                          INNER JOIN product p 
+                                  ON p.product_id = s.product_id 
+                   GROUP  BY p.product_name) AS stock 
+               ON inw.inventory = stock.inventory; 
