@@ -52,13 +52,13 @@ public class ReturnOutwardList extends ReusableFields
 	Double closingStock;
 
 	
-	public ReturnOutwardList(Date returnDate, Product product, Double oldQuantity, Double newQuantity,
+	public ReturnOutwardList(Date returnDate, Product product, Double oldQuantity, Double returnQuantity,
 			Double closingStock) {
 		super();
 		this.returnDate = returnDate;
 		this.product = product;
 		this.oldQuantity = oldQuantity;
-		this.returnQuantity = newQuantity;
+		this.returnQuantity = returnQuantity;
 		this.closingStock = closingStock;
 	}
 
@@ -73,47 +73,60 @@ public class ReturnOutwardList extends ReusableFields
 		return returnentryid;
 	}
 
+
 	public void setReturnentryid(Long returnentryid) {
 		this.returnentryid = returnentryid;
 	}
+
 
 	public Date getReturnDate() {
 		return returnDate;
 	}
 
+
 	public void setReturnDate(Date returnDate) {
 		this.returnDate = returnDate;
 	}
+
 
 	public Product getProduct() {
 		return product;
 	}
 
+
 	public void setProduct(Product product) {
 		this.product = product;
 	}
+
 
 	public Double getOldQuantity() {
 		return oldQuantity;
 	}
 
+
 	public void setOldQuantity(Double oldQuantity) {
 		this.oldQuantity = oldQuantity;
 	}
 
-	public Double getNewQuantity() {
+
+	public Double getReturnQuantity() {
 		return returnQuantity;
 	}
 
-	public void setNewQuantity(Double newQuantity) {
-		this.returnQuantity = newQuantity;
+
+	public void setReturnQuantity(Double returnQuantity) {
+		this.returnQuantity = returnQuantity;
 	}
+
 
 	public Double getClosingStock() {
 		return closingStock;
 	}
 
+
 	public void setClosingStock(Double closingStock) {
 		this.closingStock = closingStock;
 	}
+	
+	
 }

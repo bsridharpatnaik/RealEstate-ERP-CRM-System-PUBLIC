@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.model.Warehouse;
 import com.ec.application.service.WarehouseService;
@@ -54,5 +57,11 @@ public class WarehouseController
 	public List<IdNameProjections> returnIdandNames() 
 	{
 		return warehouseService.findIdAndNames();
+	}
+	
+	@ExceptionHandler({JpaSystemException.class})
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact admisitrator.");
+		return apiError;
 	}
 }

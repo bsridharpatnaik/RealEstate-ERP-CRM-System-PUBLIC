@@ -121,7 +121,7 @@ public class OutwardInventoryService
 	}
 
 	@Transactional
-	public void addReturnEntry(ReturnOutwardData rd,Long outwardId) throws Exception
+	public OutwardInventory addReturnEntry(ReturnOutwardData rd,Long outwardId) throws Exception
 	{
 		log.info("Invoked return inventory for outward id -"+outwardId+" With data "+rd.toString());
 		if(!outwardInventoryRepo.existsById(outwardId))
@@ -140,6 +140,7 @@ public class OutwardInventoryService
 				throw new Exception("Error fetching product details");
 			addReturnForOutward(outwardId,productWithQuantity.getProductId(),productWithQuantity.getQuantity());
 		}
+		return outwardInventoryRepo.getOne(outwardId);
 	}
 	
 	private void addReturnForOutward(Long outwardId,Long productId, Double quantity) throws Exception 

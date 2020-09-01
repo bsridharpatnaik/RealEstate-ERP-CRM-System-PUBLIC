@@ -2,12 +2,15 @@ package com.ec.application.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.DashBoardData;
 import com.ec.application.data.ReturnAllNotificationsData;
 import com.ec.application.service.AllNotificationService;
@@ -40,5 +43,11 @@ public class DashboardController
 	{
 		allNotificationService.deleteNotification(id);
 		return ResponseEntity.ok("Entity deleted");
+	}
+	
+	@ExceptionHandler({JpaSystemException.class})
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact admisitrator.");
+		return apiError;
 	}
 }

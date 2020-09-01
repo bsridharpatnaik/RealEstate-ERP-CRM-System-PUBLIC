@@ -9,7 +9,9 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.ReturnOutwardData;
@@ -55,9 +58,9 @@ public class OutwardInventoryController
 	
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void setReturnOutwardInventory(@PathVariable Long id,@RequestBody ReturnOutwardData rd) throws Exception
+	public OutwardInventory setReturnOutwardInventory(@PathVariable Long id,@RequestBody ReturnOutwardData rd) throws Exception
 	{
-		oiService.addReturnEntry(rd, id);
+		return oiService.addReturnEntry(rd, id);
 	}
 	
 	@PostMapping 
@@ -88,6 +91,12 @@ public class OutwardInventoryController
 	{
 		
 		return oiService.updateOutwardnventory(payload, id);
+	}
+	
+	@ExceptionHandler({JpaSystemException.class})
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact admisitrator.");
+		return apiError;
 	}
 	/*
 	
