@@ -99,14 +99,12 @@ public class LeadActivityService {
 	  {
 		
 		 LeadActivity la = getSingleLeadActivity(id);
-		 if(la.getIsOpen() && (!la.getLead().getStatus().equals(LeadStatusEnum.Property_Visit) || !isLatestValidActivity(la)))
-				 throw new Exception("Revert not allowed for this activity.");
-		 
-		 else if(!la.getIsOpen() && !la.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)
-					 && !la.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost)
-					 && !la.getLead().getStatus().equals(LeadStatusEnum.Property_Visit)
-					 && isLatestValidActivity(la))
-					 throw new Exception("Revert not allowed for this activity.");
+		 if ((la.getIsOpen() && (!la.getLead().getStatus().equals(LeadStatusEnum.Property_Visit) || isLatestValidActivity(la))) ||
+				    (!la.getIsOpen() && !la.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed) &&
+				        !la.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost) &&
+				        !la.getLead().getStatus().equals(LeadStatusEnum.Property_Visit) &&
+				        isLatestValidActivity(la)))
+			 	throw new Exception("Revert not allowed for this activity.");
 			 
 		 /*
 		 * log.info("Invoked revertLeadActivity"); Optional<LeadActivity> latype =
