@@ -178,11 +178,11 @@ SELECT
   -- --------- Stock Verification ------------
   create or replace view stock_verification as
 SELECT inw.inventory, 
-       ROUND(total_inward,2)                                     AS 'Total Inward (A)', 
-       ROUND(total_outward  ,2)                                  AS 'Total Outward (B)', 
-       ROUND(current_stock ,2)                                   AS 'Current Stock (C)', 
+       ROUND(total_inward,2)                                     AS 'total_inward', 
+       ROUND(total_outward  ,2)                                  AS 'total_outward', 
+       ROUND(current_stock ,2)                                   AS 'current_stock', 
        ROUND(total_inward - ( total_outward + current_stock ),2) AS 
-       'Diff in Stock (A+(B-C)' 
+       'diff_in_Stock' 
 FROM   (SELECT p.product_name AS inventory, 
                Sum(quantity)  AS total_inward 
         FROM   inward_inventory ii 
