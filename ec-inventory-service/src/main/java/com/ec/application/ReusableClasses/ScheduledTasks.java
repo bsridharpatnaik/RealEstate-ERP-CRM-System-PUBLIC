@@ -39,5 +39,10 @@ public class ScheduledTasks
 		stockService.sendStockNotificationEmail();
 	}
 	
-	
+	@Scheduled(cron = "0 0 18 * * ?")
+	public void sendStockValidationEmail() throws Exception 
+	{
+		log.info("Sending Stock Notification Email in evening");
+		stockService.sendStockValidationEmail();
+	}
 }

@@ -29,9 +29,11 @@ import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.data.StockPercentData;
 import com.ec.application.model.Product;
 import com.ec.application.model.Stock;
+import com.ec.application.model.StockValidation;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
+import com.ec.application.repository.StockValidationRepo;
 import com.ec.application.repository.WarehouseRepo;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
@@ -66,6 +68,9 @@ public class StockService
 	
 	@Autowired
 	StockHistoryService stockHistoryService;
+	
+	@Autowired
+	StockValidationRepo stockValidationRepo;
 	
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
@@ -294,5 +299,10 @@ public class StockService
 		emailHelper.sendEmailForMorningStockNottification(dataForInsertList);
 		log.info("saving stock information to DB");
 		stockHistoryService.insertLatestStockHistory(dataForInsertList);
+	}
+	
+	public void sendStockValidationEmail() throws Exception
+	{
+		emailHelper.sendEmailForStockValidation(stockValidationRepo.findAll(Sort.by(Sort.Direction.ASC, "inventory")));
 	}
 }

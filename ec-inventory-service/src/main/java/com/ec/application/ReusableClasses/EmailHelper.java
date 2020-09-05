@@ -24,6 +24,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import com.ec.application.data.EmailConfigData;
 import com.ec.application.data.StockInformationExportDAO;
+import com.ec.application.model.StockValidation;
 import com.ec.application.service.EmailService;
 import com.ec.application.service.StockService;
 
@@ -49,23 +50,7 @@ public class EmailHelper
 	public void sendEmailForMorningStockNottification(List<StockInformationExportDAO> dataForInsertList) throws Exception
 	{
 		EmailConfigData emailConfigData = emailService.getEmailConfig();
-	
-		log.info("Fetching data from stock service");
-		
-		log.info("Fetching data completed from stock service");
-		log.info(("Number of records fetched - "+dataForInsertList.size()));
-		Properties props = new Properties();
-        props.put("mail.host", emailConfigData.mailHost);
-        props.put("mail.port", emailConfigData.mailPort);
-        props.put("mail.username", emailConfigData.mailUsername);
-        props.put("mail.password", emailConfigData.mailPassword);
-        props.put("mail.protocol", emailConfigData.mailProtocol);
-
-        props.put("mail.smtp.auth", emailConfigData.mailSmtpAuth);
-        props.put("mail.smtp.ssl.enable", emailConfigData.mailSmtpSslEnable);
-        props.put("mail.smtp.ssl.trust", emailConfigData.mailSmtpSslTrust);
-
-        log.info("Fetching Session");
+		Properties props = getProperties();
         Session session = Session.getInstance(props, new javax.mail.Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(emailConfigData.mailUsername, emailConfigData.mailPassword);
@@ -97,5 +82,59 @@ public class EmailHelper
         	log.error("Error sending email", e);
             e.printStackTrace();
         }
+	}
+	
+	public void sendEmailForStockValidation(List<StockValidation> dataForEmail) throws Exception
+	{
+		EmailConfigData emailConfigData = emailService.getEmailConfig();
+		Properties props = getProperties();
+        Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(emailConfigData.mailUsername, emailConfigData.mailPassword);
+            }
+        });
+        log.info("Creating mimemessage");
+        MimeMessage message = new MimeMessage(session);
+        try {
+        	MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+					StandardCharsets.UTF_8.name());
+        	Map<String, Object> model = new HashMap<String, Object>();
+			model.put("inventory", dataForEmail);
+			model.put("currentDate", new Date().toString());
+			Template template = config.getTemplate("email-stockValidation.ftl");
+			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
+			helper.setFrom(emailConfigData.mailUsername);
+			
+			InternetAddress[] parse = InternetAddress.parse(emailIds , true);
+			log.info("Email trigerred for - "+javax.mail.Message.RecipientType.TO);
+			message.setRecipients(javax.mail.Message.RecipientType.TO,  parse);
+			
+			helper.setSubject("Stock Validation - "+new Date());
+			helper.setText(html, true);
+			Transport.send(message);
+            log.info("Email Sent");
+        } 
+        catch (MessagingException e) 
+        {
+            // TODO Auto-generated catch block
+        	log.error("Error sending email", e);
+            e.printStackTrace();
+        }
+	}
+	
+	private Properties getProperties()
+	{
+		EmailConfigData emailConfigData = emailService.getEmailConfig();
+		Properties props = new Properties();
+        props.put("mail.host", emailConfigData.mailHost);
+        props.put("mail.port", emailConfigData.mailPort);
+        props.put("mail.username", emailConfigData.mailUsername);
+        props.put("mail.password", emailConfigData.mailPassword);
+        props.put("mail.protocol", emailConfigData.mailProtocol);
+
+        props.put("mail.smtp.auth", emailConfigData.mailSmtpAuth);
+        props.put("mail.smtp.ssl.enable", emailConfigData.mailSmtpSslEnable);
+        props.put("mail.smtp.ssl.trust", emailConfigData.mailSmtpSslTrust);
+        return props;
 	}
 }
