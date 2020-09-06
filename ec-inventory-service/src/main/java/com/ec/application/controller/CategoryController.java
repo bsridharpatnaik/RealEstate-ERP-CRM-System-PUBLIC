@@ -82,8 +82,9 @@ public class CategoryController
 	}
 	
 	@ExceptionHandler({JpaSystemException.class})
+	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
 	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact admisitrator.");
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 }
