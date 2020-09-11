@@ -18,13 +18,17 @@ import com.ec.application.data.StockInformationExportDAO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @Table(name = "stock_history")
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class StockHistory 
+@NoArgsConstructor
+@AllArgsConstructor
+public class StockHistory extends ReusableFields
 {
 	
 	@Id

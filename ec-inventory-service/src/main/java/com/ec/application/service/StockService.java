@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 
 import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
@@ -29,7 +30,6 @@ import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.data.StockPercentData;
 import com.ec.application.model.Product;
 import com.ec.application.model.Stock;
-import com.ec.application.model.StockValidation;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
@@ -39,7 +39,7 @@ import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
 @Service
-@Transactional
+@Transactional(rollbackOn = Exception.class)
 public class StockService 
 {
 	@Autowired
@@ -114,6 +114,7 @@ public class StockService
 		return stockInformationExportDAO;
 	}
 
+	@Transactional(rollbackOn = Exception.class)
 	public Double updateStock(Long productId,String warehousename, Double quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId,warehousename);
@@ -145,6 +146,7 @@ public class StockService
 		
 	}
 
+	@Transactional(rollbackOn = Exception.class)
 	private Stock findOrInsertStock(Long productId,String warehousename) throws Exception 
 	{
 		Optional<Product> productOpt = productRepo.findById(productId);
