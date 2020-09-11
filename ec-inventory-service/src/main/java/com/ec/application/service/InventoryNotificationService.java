@@ -3,6 +3,8 @@ package com.ec.application.service;
 import java.util.List;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,8 @@ public class InventoryNotificationService
 	final String outwardModified = "outwardStockModified";
 	final String lostDamagedModified = "lostDamagedStockModified";
 	final String lostDamagedAdded = "lostDamagedStockAdded";
+	
+	@Transactional(rollbackOn = Exception.class)
 	public void checkStockAndPushLowStockNotification(Product product)
 	{
 		Double currentStock = stockService.findTotalStockForProduct(product.getProductId());
@@ -46,6 +50,7 @@ public class InventoryNotificationService
 			removeLowStockNotification(product);
 	}
 
+	@Transactional(rollbackOn = Exception.class)
 	public void pushQuantityEditedNotification(Product product, String warehouseName,String type, Double currentStock)
 	{
 		
@@ -78,6 +83,7 @@ public class InventoryNotificationService
 		return "";
 	}
 	
+	@Transactional(rollbackOn = Exception.class)
 	private void removeLowStockNotification(Product product) 
 	{
 		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo.findByProductAndType(product.getProductId(),lowStock);
@@ -91,6 +97,7 @@ public class InventoryNotificationService
 		}
 	}
 
+	@Transactional(rollbackOn = Exception.class)
 	private void pushLowStockNotification(Product product,Double currentStock) 
 	{
 		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo.findByProductAndType(product.getProductId(),lowStock);
@@ -118,6 +125,7 @@ public class InventoryNotificationService
 		return inventoryNotifications;
 	}
 
+	@Transactional(rollbackOn = Exception.class)
 	public void deleteNotificationByID(Long id) throws Exception 
 	{
 		Optional<InventoryNotification> inventoryNotificationOpt = inventoryNotificationRepo.findById(id);
