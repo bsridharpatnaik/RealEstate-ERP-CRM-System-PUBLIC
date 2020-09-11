@@ -173,6 +173,7 @@ public class OutwardInventoryService
 		if(!outwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
 		validateInputs(iiData);
+		exitIfReturnExists(outwardInventoryOpt.get(),iiData);
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
 		setFields(outwardInventory,iiData);
@@ -181,6 +182,13 @@ public class OutwardInventoryService
 		
 	}
 	
+	private void exitIfReturnExists(OutwardInventory outwardInventory, OutwardInventoryData iiData) throws Exception 
+	{
+		if(outwardInventory.getReturnOutwardList().size()>0)
+			throw new Exception("Outward inventory entry cannot be edited after return entry is added.");
+	}
+
+
 	@Transactional(rollbackOn = Exception.class)
 	private void updateWhenWarehouseSame(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
 	{
