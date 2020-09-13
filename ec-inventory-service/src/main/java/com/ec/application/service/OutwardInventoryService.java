@@ -11,14 +11,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.OutwardInventoryData;
@@ -88,7 +88,7 @@ public class OutwardInventoryService
 	
 	Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 	
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
 	{
 		log.info("Invoked createOutwardnventory with payload -" + oiData.toString());
@@ -105,7 +105,7 @@ public class OutwardInventoryService
 	}
 
 
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void updateStockForCreateOutwardInventory(OutwardInventory outwardInventory) throws Exception 
 	{
 		log.info("Invoked updateStockForCreateOutwardInventory");
@@ -122,7 +122,7 @@ public class OutwardInventoryService
 		log.info("Exited updateStockForCreateOutwardInventory");
 	}
 
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	public OutwardInventory addReturnEntry(ReturnOutwardData rd,Long outwardId) throws Exception
 	{
 		log.info("Invoked return inventory for outward id -"+outwardId+" With data "+rd.toString());
@@ -145,7 +145,7 @@ public class OutwardInventoryService
 		return outwardInventoryRepo.getOne(outwardId);
 	}
 	
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void addReturnForOutward(Long outwardId,Long productId, Double quantity) throws Exception 
 	{
 		
@@ -175,7 +175,7 @@ public class OutwardInventoryService
 		outwardInventoryRepo.save(oi);
 	}
 
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception
 	{
 		log.info("Invoked updateOutwardnventory");
@@ -183,6 +183,7 @@ public class OutwardInventoryService
 		if(!outwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
 		validateInputs(iiData);
+		exitIfReturnExists(outwardInventoryOpt.get(),iiData);
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
 		setFields(outwardInventory,iiData);
@@ -192,7 +193,14 @@ public class OutwardInventoryService
 		
 	}
 	
-	@Transactional(rollbackOn = Exception.class)
+	private void exitIfReturnExists(OutwardInventory outwardInventory, OutwardInventoryData iiData) throws Exception 
+	{
+		if(outwardInventory.getReturnOutwardList().size()>0)
+			throw new Exception("Outward inventory entry cannot be edited after return entry is added.");
+	}
+
+
+	@Transactional(rollbackFor = Exception.class)
 	private void updateWhenWarehouseSame(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
 	{
 		log.info("Invoked updateWhenWarehouseSame");
@@ -209,7 +217,7 @@ public class OutwardInventoryService
 		updateStockForCommonInBoth(commonInBoth,oldOutwardInventory,outwardInventory);
 		log.info("Exiting updateWhenWarehouseSame");
 	}
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void updateStockForCommonInBoth(Set<Long> commonInBoth, OutwardInventory oldOutwardInventory,
 			OutwardInventory outwardInventory) throws Exception 
 	{
@@ -236,7 +244,7 @@ public class OutwardInventoryService
 		log.info("Exiting updateWhenWarehouseSame");
 	}
 	
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private Double findQuantityForProductInIOList(Long productId,Set<InwardOutwardList> ioListSet) 
 	{
 		log.info("Invoked findQuantityForProductInIOList");
@@ -253,7 +261,7 @@ public class OutwardInventoryService
 		log.info("Exiting findQuantityForProductInIOList with return as null");
 		return null;
 	}
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void updateStockForOnlyInNew(Set<Long> onlyInNew, OutwardInventory outwardInventory) throws Exception 
 	{
 		log.info("Invoked updateStockForOnlyInNew");
@@ -279,7 +287,7 @@ public class OutwardInventoryService
 		}
 		log.info("Exiting updateStockForOnlyInNew");
 	}
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void updateStockForOnlyInOld(Set<Long> onlyInOld, OutwardInventory oldOutwardInventory) throws Exception 
 	{
 		log.info("Invoked updateStockForOnlyInOld");
@@ -301,7 +309,7 @@ public class OutwardInventoryService
 		}
 		log.info("Exiting updateStockForOnlyInOld");
 	}
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void modifyStockBeforeUpdate(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
 	{
 		log.info("Invoked modifyStockBeforeUpdate");
@@ -312,7 +320,7 @@ public class OutwardInventoryService
 		log.info("Exiting modifyStockBeforeUpdate");
 	}
 	
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void updateWhenWarehouseChanged(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory) throws Exception 
 	{
 		log.info("Invoked updateWhenWarehouseChanged");
@@ -325,7 +333,7 @@ public class OutwardInventoryService
 		log.info("Existing updateWhenWarehouseChanged");
 	}
 	
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset,String type,Warehouse warehouse) throws Exception
 	{
 		log.info("Invoked traverseListAndUpdateStock");
@@ -475,7 +483,7 @@ public class OutwardInventoryService
 		return transformedData;
 	}
 	
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	public void deleteOutwardInventoryById(Long id) throws Exception 
 	{
 		log.info("Invoked deleteOutwardInventoryById");
@@ -488,7 +496,7 @@ public class OutwardInventoryService
 		log.info("Exiting deleteOutwardInventoryById");
 	}
 
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private void updateStockBeforeDelete(OutwardInventory outwardInventory) throws Exception 
 	{
 		log.info("Invoked updateStockBeforeDelete");

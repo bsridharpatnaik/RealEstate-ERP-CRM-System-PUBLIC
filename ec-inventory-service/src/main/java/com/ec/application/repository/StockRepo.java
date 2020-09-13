@@ -2,8 +2,11 @@ package com.ec.application.repository;
 
 import java.util.List;
 
+import javax.persistence.LockModeType;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,12 +19,16 @@ import com.ec.application.model.Stock;
 @Repository
 public interface StockRepo  extends BaseRepository<Stock, Long>
 {
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	Stock save(Stock entity);
+	
 	@Query(value="SELECT m from Stock m where m.product.category.categoryId=:categoryId")
 	Page<Stock> findStockForCategory(Pageable pageable, @Param("categoryId")Long categoryId);
 
 	@Query(value="SELECT m from Stock m where m.product.productId=:productId")
 	Page<Stock> findStockForProduct(Pageable pageable, @Param("productId")Long productId);
 
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query(value="SELECT m from Stock m where m.product.productId=:productId and m.warehouse.warehouseName=:warehousename")
 	List<Stock> findByIdName(@Param("productId")Long productId,@Param("warehousename") String warehousename);
 
