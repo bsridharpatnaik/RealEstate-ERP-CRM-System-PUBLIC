@@ -212,4 +212,4 @@ FROM   (SELECT p.product_name AS inventory,
                           INNER JOIN product p 
                                   ON p.product_id = s.product_id 
                    GROUP  BY p.product_name) AS stock 
-               ON inw.inventory = stock.inventory; 
+               ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0; 
