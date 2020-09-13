@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.transaction.Transactional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
@@ -39,7 +38,7 @@ import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
 @Service
-@Transactional(rollbackOn = Exception.class)
+@Transactional(rollbackFor = Exception.class)
 public class StockService 
 {
 	@Autowired
@@ -114,7 +113,7 @@ public class StockService
 		return stockInformationExportDAO;
 	}
 
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	public Double updateStock(Long productId,String warehousename, Double quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId,warehousename);
@@ -139,6 +138,7 @@ public class StockService
 		}else 
 		{
 			currentStock.setQuantityInHand(newStock);
+			
 			stockRepo.save(currentStock);
 			inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
 			return newStock;
@@ -146,7 +146,7 @@ public class StockService
 		
 	}
 
-	@Transactional(rollbackOn = Exception.class)
+	@Transactional(rollbackFor = Exception.class)
 	private Stock findOrInsertStock(Long productId,String warehousename) throws Exception 
 	{
 		Optional<Product> productOpt = productRepo.findById(productId);

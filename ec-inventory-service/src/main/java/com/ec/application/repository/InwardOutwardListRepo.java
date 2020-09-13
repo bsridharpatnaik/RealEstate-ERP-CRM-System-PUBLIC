@@ -9,6 +9,7 @@ import com.ec.application.model.InwardOutwardList;
 @Repository
 public interface InwardOutwardListRepo extends BaseRepository<InwardOutwardList, Long>
 {
+	
 	@Query(value="SELECT count(*) from InwardOutwardList m where m.product.productId=:productId")
 	int productUsageCount(Long productId);
 	

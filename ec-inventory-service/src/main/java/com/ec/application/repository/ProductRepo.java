@@ -3,7 +3,10 @@ package com.ec.application.repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.LockModeType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,11 +16,15 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.model.Machinery;
 import com.ec.application.model.Product;
+import com.ec.application.model.Warehouse;
 
 @Repository
 public interface ProductRepo extends BaseRepository<Product, Long>
 {
 
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	Product save(Product entity);
+	
 	boolean existsByProductName(String productName);
 
 	ArrayList<Product> findByproductName(String productName);

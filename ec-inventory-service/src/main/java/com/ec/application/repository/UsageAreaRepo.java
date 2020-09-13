@@ -3,6 +3,9 @@ package com.ec.application.repository;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.LockModeType;
+
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
@@ -10,12 +13,16 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.UsageArea;
 
 @Repository
 public interface UsageAreaRepo extends BaseRepository<UsageArea, Long>
 {
 
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	UsageArea save(UsageArea entity);
+	
 	boolean existsByUsageAreaName(String usageAreaName);
 
 	ArrayList<UsageArea> findByusageAreaName(String usageAreaName);
