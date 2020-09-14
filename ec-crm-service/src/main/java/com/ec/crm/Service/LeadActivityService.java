@@ -150,47 +150,20 @@ public class LeadActivityService {@Autowired
     laRepo.save(leadActivity);
   }
 
-  /*
-	 * @Transactional private void ExecuteBusinessLogicWhileCreation(LeadActivity
-	 * leadActivity) throws Exception {
-	 * log.info("Invoked ExecuteBusinessLogicWhileCreation"); LeadStatusEnum status
-	 * = leadActivity.getLead().getStatus();
-	 * 
-	 * //do not allow creation of any activity except meeeting
-	 * if(leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost) &&
-	 * !leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting)) throw new
-	 * Exception("Cannot add activity - Deal already lost! Please create a Meeting activity to reopen lead."
-	 * );
-	 * 
-	 * 
-	 * switch(leadActivity.getActivityType()) { case Deal_Close:
-	 * log.info("Inside Case - Deal_Close");
-	 * leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
-	 * closeAllOpenActivitiesForLead(leadActivity.getLead()); break; case Deal_Lost:
-	 * log.info("Inside Case - Deal_Lost");
-	 * leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.
-	 * getLead())); closeAllOpenActivitiesForLead(leadActivity.getLead()); break;
-	 * case Property_Visit: log.info("Inside Case - Property_Visit");
-	 * leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit); break; }
-	 * 
-	 * 
-	 * laRepo.save(leadActivity); }
-	 */
-
   @Transactional
-  private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) throws Exception {
+  private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) throws Exception 
+  {
     log.info("Invoked ExecuteBusinessLogicWhileClosure");
-    if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit)) {
-      log.info("Changing status of lead from Property_Visit - Negotiation");
-      leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+    LeadStatusEnum status = leadActivity.getLead().getStatus();
+    
+    if(status.equals(LeadStatusEnum.Property_Visit))
+    {
+    	if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit)) 
+    	{
+    	      log.info("Changing status of lead from Property_Visit - Negotiation");
+    	      leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+    	}
     }
-
-    if (leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting) && leadActivity.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost)) {
-      log.info("Changing status of lead from Deal_Lost - Negotiation");
-      LeadStatusEnum previousStatus = fetchPreviousStatusFromHistory(leadActivity.getLead());
-      leadActivity.getLead().setStatus(previousStatus);
-    }
-
     laRepo.save(leadActivity);
   }
 
@@ -225,9 +198,11 @@ public class LeadActivityService {@Autowired
     }
   }
 
-  private void exitCreateIfExitConditionsExists(Lead lead, LeadActivityCreate payload) throws Exception {
+  private void exitCreateIfExitConditionsExists(Lead lead, LeadActivityCreate payload) throws Exception 
+  {
     log.info("Invoked exitIfExitConditionsExists");
-    if (lead.getStatus().equals(LeadStatusEnum.New_Lead) || lead.getStatus().equals(LeadStatusEnum.Property_Visit)) {
+    if (lead.getStatus().equals(LeadStatusEnum.New_Lead) || lead.getStatus().equals(LeadStatusEnum.Property_Visit)) 
+    {
       if (payload.getActivityType().equals(ActivityTypeEnum.Deal_Close)) throw new Exception("Deal close activity not allowed for lead in stage " + lead.getStatus());
     }
     else if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed) || lead.getStatus().equals(LeadStatusEnum.Deal_Lost)) {
