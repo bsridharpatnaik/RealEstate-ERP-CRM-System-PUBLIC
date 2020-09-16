@@ -117,6 +117,8 @@ public class LeadActivityService {@Autowired
 		  else if(leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost))
 		  {	  
 			  leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+			  leadActivity.setClosedBy(currentUserId);
+			  leadActivity.setClosingComment("Deal Lost");
 			  closeAllOpenActivitiesForLead(leadActivity.getLead());
 		  }
 	  }  
@@ -126,6 +128,8 @@ public class LeadActivityService {@Autowired
 		  if(leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost))
 		  {	  
 			  leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+			  leadActivity.setClosedBy(currentUserId);
+			  leadActivity.setClosingComment("Deal Lost");
 			  closeAllOpenActivitiesForLead(leadActivity.getLead());
 		  }
 	  }
@@ -135,11 +139,15 @@ public class LeadActivityService {@Autowired
 		  if(leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost))
 		  {	  
 			  leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+			  leadActivity.setClosedBy(currentUserId);
+			  leadActivity.setClosingComment("Deal Lost");
 			  closeAllOpenActivitiesForLead(leadActivity.getLead());
 		  }
 		  else if(leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Close))
 		  {	  
 			  leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Closed);
+			  leadActivity.setClosedBy(currentUserId);
+			  leadActivity.setClosingComment("Deal Closed");
 			  closeAllOpenActivitiesForLead(leadActivity.getLead());
 		  }
 	  }
@@ -212,6 +220,9 @@ public class LeadActivityService {@Autowired
     List < LeadActivity > existingActivities = laRepo.findByLeadActivityTypeOpen(payload.getLeadId(), payload.getActivityType());
     if (existingActivities.size() > 0) throw new Exception("Open activity of type " + payload.getActivityType() + " already exist for lead.");
 
+    if(payload.getActivityDateTime().before(ReusableMethods.atStartOfDay(new Date())))
+    	throw new Exception("Cannot create activity for past date.");
+    	
   }
 
   private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String creatorType) {
