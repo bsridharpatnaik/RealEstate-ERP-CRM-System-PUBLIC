@@ -62,10 +62,11 @@ public class CrmApplication extends SpringBootServletInitializer
 		      {
 		    	  //LeadActivity leadActivity = leadActivityService.getRecentActivityByLeadId(lead.getLeadId());
 		    	  LeadDAO leadDAO = new LeadDAO();
-		    	  leadDAO.setAddress(
-		    			  l.getAddress().getAddr_line1()==null?"":l.getAddress().getAddr_line1()+", "+
-		    			  l.getAddress().getAddr_line2()==null?"":l.getAddress().getAddr_line2()+", "+
-		    			  l.getAddress().getCity()==null?"":l.getAddress().getCity());
+		    	  leadDAO.setSentiment(l.getSentiment());
+		    	  leadDAO.setAddr_line1(l.getAddress().getAddr_line1());
+		    	  leadDAO.setAddr_line2(l.getAddress().getAddr_line2());
+		    	  leadDAO.setCity(l.getAddress().getCity());
+		    	  leadDAO.setPincode(l.getAddress().getPincode());
 		    	  leadDAO.setAsigneeId(l.getAsigneeId());
 		    	  leadDAO.setBroker(l.getBroker()==null?"":l.getBroker().getBrokerName());
 		    	  leadDAO.setCreatorId(l.getCreatorId());

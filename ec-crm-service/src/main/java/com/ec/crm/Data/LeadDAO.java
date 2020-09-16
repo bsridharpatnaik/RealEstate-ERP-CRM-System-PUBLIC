@@ -48,7 +48,10 @@ public class LeadDAO
 	
 	String broker;
 	
-	String address;
+	String addr_line1;
+	String addr_line2;
+	String city;
+	String pincode; 
 	
 	String source;
 	
