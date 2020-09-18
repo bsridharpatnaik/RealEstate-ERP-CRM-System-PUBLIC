@@ -1,27 +1,31 @@
 package com.ec.crm.Data;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.stream.Collector;
 
-import com.ec.crm.Model.LeadActivity;
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class MapForPipelineAndActivities 
+@AllArgsConstructor
+@NoArgsConstructor
+public class MapForPipelineAndActivities
 {
-	Long total;
-	Map<Object, Long> detailed;
-	
-	public MapForPipelineAndActivities(long count, Map<Object, Long> collect) 
+	public MapForPipelineAndActivities(long count, Map<Object, Long> collect)
 	{
+		ArrayList<MapForDashboardStatsDAO> d = new ArrayList<MapForDashboardStatsDAO>();
+		for (Map.Entry<Object, Long> entry : collect.entrySet())
+		{
+			MapForDashboardStatsDAO mapForDashboardStatsDAO = new MapForDashboardStatsDAO();
+			mapForDashboardStatsDAO.setUserName(entry.getKey().toString());
+			mapForDashboardStatsDAO.setValue(entry.getValue());
+			d.add(mapForDashboardStatsDAO);
+		}
+		this.detailed = d;
 		this.total = count;
-		this.detailed=collect;
 	}
 
-	public MapForPipelineAndActivities(long count, Map<Object, List<LeadActivity>> collect,
-			Collector<Object, ?, Long> counting) {
-		// TODO Auto-generated constructor stub
-	}
+	Long total;
+	ArrayList<MapForDashboardStatsDAO> detailed;
 }
