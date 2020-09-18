@@ -69,7 +69,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value="SELECT count(distinct la) from LeadActivity la where la.activityType='Property_Visit' and la.creatorId=:id")
 	Long getpropertyvisit(Long id);
 
-	@Query(value="SELECT la from LeadActivity la where la.lead.leadId=:leadId ORDER BY la.created")
+	@Query(value="SELECT la from LeadActivity la where la.lead.leadId=:leadId ORDER BY la.created desc")
 	List<LeadActivity> fetchMostRecentLeadActivity(@Param("leadId") Long leadId);
 
 	@Query(value="SELECT la from LeadActivity la where la.created>created and la.activityType IN (com.ec.crm.Enums.ActivityTypeEnum.Deal_Close"
