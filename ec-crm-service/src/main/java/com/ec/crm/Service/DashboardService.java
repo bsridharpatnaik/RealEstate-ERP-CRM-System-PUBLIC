@@ -149,9 +149,10 @@ public class DashboardService
 		Long id = data.get(0).getUserId();
 		Long propertyvisit = lRepo.getpropertyvisit(id);
 		returndata.put("username", data.get(0).getAsigneeName());
-		returndata.put("lead generated", data.get(0).getTotalcount());
-		returndata.put("property", propertyvisit);
-		returndata.put("deal close", data.get(0).getConvertedcount());
+		returndata.put("leadsGenerated", data.get(0).getTotalcount());
+		returndata.put("propertyVisits", propertyvisit);
+		returndata.put("dealsClosed", data.get(0).getConvertedcount());
+		returndata.put("inNegotiation", 2);
 		return returndata;
 	}
 
