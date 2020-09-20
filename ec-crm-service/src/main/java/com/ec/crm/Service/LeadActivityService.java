@@ -99,23 +99,34 @@ public class LeadActivityService
 	{
 
 		LeadActivity la = getSingleLeadActivity(id);
-		if ((la.getIsOpen()
-				&& (!la.getLead().getStatus().equals(LeadStatusEnum.Property_Visit) || isLatestValidActivity(la)))
-				|| (!la.getIsOpen() && !la.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)
-						&& !la.getLead().getStatus().equals(LeadStatusEnum.Deal_Lost)
-						&& !la.getLead().getStatus().equals(LeadStatusEnum.Property_Visit)
-						&& isLatestValidActivity(la)))
-			throw new Exception("Revert not allowed for this activity.");
+		exitIfRevertNotAllowed(la);
 
+		// TO DO - Add logic to revert the activity
 	}
 
-	private boolean isLatestValidActivity(LeadActivity la)
+	private void exitIfRevertNotAllowed(LeadActivity la) throws Exception
 	{
-		List<LeadActivity> activities = laRepo.fetchActivitiesAfter(la.getCreated());
-		if (activities.size() > 0)
-			return false;
+		List<LeadActivity> activities = laRepo.fetchMostRecentLeadActivity(la.getLead().getLeadId());
+		if (activities.size() < 1)
+			throw new Exception("No activities found for lead");
+
+		LeadActivity latestActivity = activities.get(0);
+
+		if (!latestActivity.getLeadActivityId().equals(la.getLeadActivityId()))
+			throw new Exception("Revert not allowed for this activity.");
+
 		else
-			return true;
+		{
+			if (latestActivity.getIsOpen())
+			{
+				if (!latestActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+					throw new Exception("Revert not allowed for this activity.");
+			} else if (!latestActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
+					&& !latestActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
+					&& !latestActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+
+				throw new Exception("Revert not allowed for this activity.");
+		}
 	}
 
 	@Transactional
