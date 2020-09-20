@@ -101,9 +101,40 @@ public class LeadActivityService
 		LeadActivity la = getSingleLeadActivity(id);
 		exitIfRevertNotAllowed(la);
 
+		if (la.getIsOpen())
+		{
+			if (la.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+			{
+				la.getLead().setStatus(LeadStatusEnum.New_Lead);
+				laRepo.save(la);
+				laRepo.softDelete(la);
+			}
+		} else
+		{
+			if (la.getActivityType().equals(ActivityTypeEnum.Property_Visit))
+			{
+				la.getLead().setStatus(LeadStatusEnum.Property_Visit);
+				la.setClosedBy(null);
+				la.setClosingComment(null);
+				la.setIsOpen(true);
+				laRepo.save(la);
+			} else if (la.getActivityType().equals(ActivityTypeEnum.Deal_Close))
+			{
+				la.getLead().setStatus(fetchPreviousStatusFromHistory(la.getLead()));
+				laRepo.save(la);
+				laRepo.softDelete(la);
+
+			} else if (la.getActivityType().equals(ActivityTypeEnum.Deal_Lost))
+			{
+				la.getLead().setStatus(fetchPreviousStatusFromHistory(la.getLead()));
+				laRepo.save(la);
+				laRepo.softDelete(la);
+			}
+		}
 		// TO DO - Add logic to revert the activity
 	}
 
+	@Transactional
 	private void exitIfRevertNotAllowed(LeadActivity la) throws Exception
 	{
 		List<LeadActivity> activities = laRepo.fetchMostRecentLeadActivity(la.getLead().getLeadId());
@@ -122,7 +153,7 @@ public class LeadActivityService
 				if (!latestActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
 					throw new Exception("Revert not allowed for this activity.");
 			} else if (!latestActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
-					&& !latestActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
+					&& !latestActivity.getActivityType().equals(ActivityTypeEnum.Deal_Close)
 					&& !latestActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
 
 				throw new Exception("Revert not allowed for this activity.");
@@ -650,7 +681,7 @@ public class LeadActivityService
 				if (activity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
 					return true;
 			} else if (activity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
-					|| activity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
+					|| activity.getActivityType().equals(ActivityTypeEnum.Deal_Close)
 					|| activity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
 
 				return true;
