@@ -43,62 +43,63 @@ import com.ec.crm.Repository.SourceRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.extern.slf4j.Slf4j;
+
 @Service
 @Slf4j
 @Transactional
-public class LeadService 
+public class LeadService
 {
 	@Autowired
 	LeadRepo lRepo;
-	
+
 	/*
 	 * @Autowired SentimentRepo siRepo;
 	 */
-	
+
 	@Autowired
 	BrokerRepo bRepo;
-	
+
 	@Autowired
 	AddressRepo aRepo;
-	
+
 	@Autowired
 	NoteRepo nRepo;
-	
+
 	@Autowired
 	NoteService noteService;
-	
+
 	@Autowired
 	WebClient.Builder webClientBuilder;
-	
+
 	@Autowired
 	HttpServletRequest request;
-	
+
 	@Autowired
 	SourceRepo sourceRepo;
-	
+
 	@Autowired
 	UserDetailsService userDetailsService;
-	
+
 	@Autowired
 	PopulateDropdownService populateDropdownService;
 	Long currentUserID;
-	
+
 	@PersistenceContext
-    private EntityManager entityManager;;
-    
-    @Autowired
-    LeadActivityService leadActivityService;
-	
+	private EntityManager entityManager;;
+
+	@Autowired
+	LeadActivityService leadActivityService;
+
 	@Value("${common.serverurl}")
 	private String reqUrl;
-	
+
 	@Autowired
 	ModelMapper leadToLeadDAOModelMapper;
-	
+
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
 	@Transactional
-	public Lead createLead(@Valid LeadCreateData payload) throws Exception 
+	public Lead createLead(@Valid LeadCreateData payload) throws Exception
 	{
 		log.info("Create Lead invoked with payload " + payload.toString());
 		currentUserID = userDetailsService.getCurrentUser().getId();
@@ -112,7 +113,7 @@ public class LeadService
 		log.info("Checking if record exists with mobile number");
 		exitIfMobileNoExists(payload);
 		log.info("Setting lead fields from payload");
-		setLeadFields(lead,payload,"create");
+		setLeadFields(lead, payload, "create");
 		log.info("Saving new lead record to database");
 		lRepo.save(lead);
 		log.info("Creating default activity for the lead");
@@ -120,108 +121,106 @@ public class LeadService
 		log.info("Saving new lead record to database");
 		return lead;
 	}
-	
+
 	@Transactional
-	public Lead updateLead(@Valid LeadCreateData payload,Long id) throws Exception 
+	public Lead updateLead(@Valid LeadCreateData payload, Long id) throws Exception
 	{
 		log.info("Update Lead invoked with payload " + payload.toString());
 		currentUserID = userDetailsService.getCurrentUser().getId();
 		log.info("Fetched current user from common-service " + currentUserID.toString());
 		Optional<Lead> leadOpt = lRepo.findById(id);
-		
-		if(!leadOpt.isPresent())
-			throw new Exception("Lead with ID -"+id+" Not Found");
-		
-		
+
+		if (!leadOpt.isPresent())
+			throw new Exception("Lead with ID -" + id + " Not Found");
+
 		Lead leadForUpdate = leadOpt.get();
 		log.info("Formatting mobile number received in payload");
 		formatMobileNo(payload);
 		log.info("Validating payload");
 		validatePayload(payload);
 		log.info("Payload Validated");
-		if(!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
+		if (!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
 			exitIfMobileNoExists(payload);
 		log.info("Setting lead fields from payload");
-		setLeadFields(leadForUpdate,payload,"update");
+		setLeadFields(leadForUpdate, payload, "update");
 		log.info("Saving new lead record to database");
 		return lRepo.save(leadForUpdate);
 	}
-	
-	public LeadDAO getSingleLead(Long id) throws Exception 
+
+	public LeadDAO getSingleLead(Long id) throws Exception
 	{
 		Optional<Lead> leadOpt = lRepo.findById(id);
-		
-		if(!leadOpt.isPresent())
-			throw new Exception("Lead with ID -"+id+" Not Found");
+
+		if (!leadOpt.isPresent())
+			throw new Exception("Lead with ID -" + id + " Not Found");
 		LeadDAO leadDAO = leadToLeadDAOModelMapper.map(leadOpt.get(), LeadDAO.class);
 		return leadDAO;
 	}
-	
-	private void formatMobileNo(LeadCreateData payload) throws Exception 
-	 {
+
+	private void formatMobileNo(LeadCreateData payload) throws Exception
+	{
 		log.info("Invoked formatMobileNo");
-       if (!(payload.getPrimaryMobile() == null) && !payload.getPrimaryMobile().equals(""))
-           payload.setPrimaryMobile(ReusableMethods.normalizePhoneNumber(payload.getPrimaryMobile()));
-       if(payload.getSecondaryMobile()!= null && payload.getSecondaryMobile()!="")
-       	payload.setSecondaryMobile(ReusableMethods.normalizePhoneNumber(payload.getSecondaryMobile()));
-   }
-	
-	
-	
-	 private void setLeadFields(Lead lead, @Valid LeadCreateData payload,String type) 
+		if (!(payload.getPrimaryMobile() == null) && !payload.getPrimaryMobile().equals(""))
+			payload.setPrimaryMobile(ReusableMethods.normalizePhoneNumber(payload.getPrimaryMobile()));
+		if (payload.getSecondaryMobile() != null && payload.getSecondaryMobile() != "")
+			payload.setSecondaryMobile(ReusableMethods.normalizePhoneNumber(payload.getSecondaryMobile()));
+	}
+
+	private void setLeadFields(Lead lead, @Valid LeadCreateData payload, String type)
+	{
+		log.info("Invoked setLeadFields");
+		lead.setCustomerName(payload.getCustomerName());
+		lead.setPrimaryMobile(payload.getPrimaryMobile());
+		lead.setSecondaryMobile(payload.getSecondaryMobile());
+		lead.setDateOfBirth(payload.getDateOfBirth());
+		lead.setEmailId(payload.getEmailId());
+		lead.setOccupation(payload.getOccupation());
+		lead.setPurpose(payload.getPurpose());
+		lead.setPropertyType(payload.getPropertyType());
+		lead.setSentiment(payload.getSentiment());
+		lead.setSource(payload.getSourceId() == null ? null : sourceRepo.findById(payload.getSourceId()).get());
+		lead.setBroker(payload.getBrokerId() == null ? null : bRepo.findById(payload.getBrokerId()).get());
+		lead.setAsigneeId(payload.getAssigneeId() == null ? currentUserID
+				: userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
+
+		if (type.equalsIgnoreCase("create"))
 		{
-		 	log.info("Invoked setLeadFields");
-			lead.setCustomerName(payload.getCustomerName());
-			lead.setPrimaryMobile(payload.getPrimaryMobile());
-			lead.setSecondaryMobile(payload.getSecondaryMobile());
-			lead.setDateOfBirth(payload.getDateOfBirth());
-			lead.setEmailId(payload.getEmailId());
-			lead.setOccupation(payload.getOccupation());
-			lead.setPurpose(payload.getPurpose());
-			lead.setPropertyType(payload.getPropertyType());
-			lead.setSentiment(payload.getSentiment());
-			lead.setSource(payload.getSourceId()==null?null:sourceRepo.findById(payload.getSourceId()).get());
-			lead.setBroker(payload.getBrokerId()==null?null:bRepo.findById(payload.getBrokerId()).get());
-			lead.setAsigneeId(payload.getAssigneeId()==null?currentUserID:userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
-			
-			if(type.equalsIgnoreCase("create"))
-			{
-				lead.setStatus(LeadStatusEnum.New_Lead);
-				lead.setCreatorId(currentUserID);
-				lead.setAddress(setAddress(payload, new Address()));
-			}
-			else if(type.equalsIgnoreCase("update"))
-				lead.setAddress(setAddress(payload,lead.getAddress()));
-		}
-	 
-	 @Transactional
-		private Address setAddress(@Valid LeadCreateData payload,Address address) 
-		{
-			log.info("Invoked setAddress");
-			address.setAddr_line1(payload.getAddressLine1());
-			address.setAddr_line2(payload.getAddressLine2());
-			address.setCity(payload.getCity());
-			address.setPincode(payload.getPincode());
-			return aRepo.save(address);
-		}
-		
-	public Page<Lead> fetchAll(Pageable pageable) 
+			lead.setStatus(LeadStatusEnum.New_Lead);
+			lead.setCreatorId(currentUserID);
+			lead.setAddress(setAddress(payload, new Address()));
+		} else if (type.equalsIgnoreCase("update"))
+			lead.setAddress(setAddress(payload, lead.getAddress()));
+	}
+
+	@Transactional
+	private Address setAddress(@Valid LeadCreateData payload, Address address)
+	{
+		log.info("Invoked setAddress");
+		address.setAddr_line1(payload.getAddressLine1());
+		address.setAddr_line2(payload.getAddressLine2());
+		address.setCity(payload.getCity());
+		address.setPincode(payload.getPincode());
+		return aRepo.save(address);
+	}
+
+	public Page<Lead> fetchAll(Pageable pageable)
 	{
 		return lRepo.findAll(pageable);
 	}
-	
-	public LeadListWithTypeAheadData findFilteredList(FilterDataList leadFilterDataList, Pageable pageable) throws ParseException 
+
+	public LeadListWithTypeAheadData findFilteredList(FilterDataList leadFilterDataList, Pageable pageable)
+			throws ParseException
 	{
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
 		LeadListWithTypeAheadData leadListWithTypeAheadData = new LeadListWithTypeAheadData();
-		
+
 		log.info("Fetching filteration based on filter data received");
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
-		
+
 		log.info("Fetching records based on specification");
-		if(spec!=null)
+		if (spec != null)
 			leadListWithTypeAheadData.setLeadDetails(lRepo.findAll(spec, pageable));
-		else 		
+		else
 			leadListWithTypeAheadData.setLeadDetails(lRepo.findAll(pageable));
 		log.info("Setting dropdown data");
 		leadListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
@@ -229,8 +228,8 @@ public class LeadService
 		leadListWithTypeAheadData.setTypeAheadDataForGlobalSearch(fetchTypeAheadForLeadGlobalSearch());
 		return leadListWithTypeAheadData;
 	}
-	
-	List<String> fetchTypeAheadForLeadGlobalSearch() 
+
+	List<String> fetchTypeAheadForLeadGlobalSearch()
 	{
 		log.info("Invoked fetchTypeAheadForLeadGlobalSearch");
 		List<String> typeAhead = new ArrayList<String>();
@@ -239,15 +238,14 @@ public class LeadService
 		return typeAhead;
 	}
 
-	public LeadDetailInfo findSingleLeadDetailInfo(long id) throws Exception 
+	public LeadDetailInfo findSingleLeadDetailInfo(long id) throws Exception
 	{
 		LeadDetailInfo leadDetails = new LeadDetailInfo();
 		leadDetails.setAllNotes(noteService.getAllNotesForLead(id));
 		leadDetails.setAllActivities(leadActivityService.getAllActivitiesForLead(id));
 		return leadDetails;
 	}
-	
- 
+
 	/*
 	 * public void deleteLead(Long id) { // TODO Auto-generated method stub
 	 * log.info("Invoked deleteLead for ID - "+id); lRepo.softDeleteById(id); }
@@ -261,46 +259,46 @@ public class LeadService
 		List<Lead> audit = q.getResultList();
 		return audit;
 	}
-	
-	private void validatePayload(LeadCreateData payload) throws Exception 
-	 {
+
+	private void validatePayload(LeadCreateData payload) throws Exception
+	{
 		log.info("Invoked validatePayload");
-	  	if(!validateRequiredFields(payload).equals(""))
-	  		throw new Exception("Required fields missing - " + validateRequiredFields(payload));
-			
-	  	if(!ReusableMethods.isValidMobileNumber(payload.getPrimaryMobile()))
-	  		throw new Exception("Please enter valid mobile number.");
-			
-	  	if(payload.getSecondaryMobile()!=null && payload.getSecondaryMobile()!="")
-	  		if(!ReusableMethods.isValidMobileNumber(payload.getSecondaryMobile()))
-	  			throw new Exception("Please enter valid mobile number.");
-	  	
-	  	if(payload.getEmailId()!=null && payload.getEmailId()!="")
-	  		if(!ReusableMethods.isValidEmail(payload.getEmailId()))
-	  					throw new Exception("Please enter valid EmailId.");
-	  	
-	  	if(payload.getPincode()!=null && payload.getPincode()!="")
-	  		if(!payload.getPincode().matches( "\\d{6}"))
-	  			throw new Exception("Enter a valid pin code (6 Digits numeric)");
-	 }
-	
+		if (!validateRequiredFields(payload).equals(""))
+			throw new Exception("Required fields missing - " + validateRequiredFields(payload));
+
+		if (!ReusableMethods.isValidMobileNumber(payload.getPrimaryMobile()))
+			throw new Exception("Please enter valid mobile number.");
+
+		if (payload.getSecondaryMobile() != null && payload.getSecondaryMobile() != "")
+			if (!ReusableMethods.isValidMobileNumber(payload.getSecondaryMobile()))
+				throw new Exception("Please enter valid mobile number.");
+
+		if (payload.getEmailId() != null && payload.getEmailId() != "")
+			if (!ReusableMethods.isValidEmail(payload.getEmailId()))
+				throw new Exception("Please enter valid EmailId.");
+
+		if (payload.getPincode() != null && payload.getPincode() != "")
+			if (!payload.getPincode().matches("\\d{6}"))
+				throw new Exception("Enter a valid pin code (6 Digits numeric)");
+	}
+
 	private void exitIfMobileNoExists(LeadCreateData payload) throws Exception
 	{
 		log.info("Invoked exitIfMobileNoExists");
-		if(lRepo.findCountByPMobileNo(payload.getPrimaryMobile())>0)
+		if (lRepo.findCountByPMobileNo(payload.getPrimaryMobile()) > 0)
 			throw new Exception("Contact already exists by Primary Mobile Number.");
 	}
-	
-	 private String validateRequiredFields(LeadCreateData payload) 
-	 {
-		 log.info("Invoked validateRequiredFields");
+
+	private String validateRequiredFields(LeadCreateData payload)
+	{
+		log.info("Invoked validateRequiredFields");
 		String message = "";
-		if(payload.getPrimaryMobile()==null || payload.getPrimaryMobile().equals(""))
-			message = message==""?"Primary Mobile No.":message+",Primary Mobile No.";
-		
-		if(payload.getCustomerName()==null || payload.getCustomerName().equals(""))
-			message = message==""?"Customer Name":message+", Customer Name";
-	
+		if (payload.getPrimaryMobile() == null || payload.getPrimaryMobile().equals(""))
+			message = message == "" ? "Primary Mobile No." : message + ",Primary Mobile No.";
+
+		if (payload.getCustomerName() == null || payload.getCustomerName().equals(""))
+			message = message == "" ? "Customer Name" : message + ", Customer Name";
+
 		return message;
-	 }
+	}
 }

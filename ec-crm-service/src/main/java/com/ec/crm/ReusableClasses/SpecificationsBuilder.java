@@ -221,6 +221,20 @@ public class SpecificationsBuilder<T>
 		return finalSpec;
 	}
 
+	public Specification<T> whereChildEnumFieldEquals(String childTable, String childFiledName, List<String> names,
+			Class claz)
+	{
+		Specification<T> finalSpec = null;
+		for (String name : names)
+		{
+			@SuppressWarnings("unchecked")
+			Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+					.equal(root.get(childTable).get(childFiledName), getEnum(name, claz));
+			finalSpec = specOrCondition(finalSpec, internalSpec);
+		}
+		return finalSpec;
+	}
+
 	public Specification<T> whereChildAssigneeContains(String childTable, String childFiledName, List<String> assignees)
 	{
 		UserDetailsService userDetailsService = BeanUtil.getBean(UserDetailsService.class);

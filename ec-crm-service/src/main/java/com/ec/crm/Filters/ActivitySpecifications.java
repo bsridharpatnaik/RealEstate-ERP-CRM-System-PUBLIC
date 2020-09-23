@@ -52,8 +52,8 @@ public class ActivitySpecifications
 
 		if (mobile != null && mobile.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE, mobile)
-							.or(specbldr.whereDirectFieldContains(Lead_.SECONDARY_MOBILE, mobile)));
+					specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.PRIMARY_MOBILE, mobile)
+							.or(specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.SECONDARY_MOBILE, mobile)));
 
 		if (purpose != null && purpose.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
@@ -96,12 +96,12 @@ public class ActivitySpecifications
 					Lead_.SOURCE, Source_.SOURCE_NAME, source));
 
 		if (propertytype != null && propertytype.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereEnumFieldEquals(Lead_.PROPERTY_TYPE, propertytype, PropertyTypeEnum.class));
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildEnumFieldEquals(LeadActivity_.LEAD,
+					Lead_.PROPERTY_TYPE, propertytype, PropertyTypeEnum.class));
 
 		if (sentiment != null && sentiment.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereEnumFieldEquals(Lead_.SENTIMENT, sentiment, SentimentEnum.class));
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildEnumFieldEquals(LeadActivity_.LEAD,
+					Lead_.SENTIMENT, sentiment, SentimentEnum.class));
 
 		if (assignee != null && assignee.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
@@ -116,8 +116,8 @@ public class ActivitySpecifications
 					specbldr.whereChildFieldDateLessThan(LeadActivity_.LEAD, Lead_.CREATED, createdEndDate));
 
 		if (leadStatus != null && leadStatus.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereEnumFieldEquals(Lead_.STATUS, leadStatus, LeadStatusEnum.class));
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildEnumFieldEquals(LeadActivity_.LEAD,
+					Lead_.STATUS, leadStatus, LeadStatusEnum.class));
 
 		if (activityType != null && activityType.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
@@ -125,7 +125,7 @@ public class ActivitySpecifications
 
 		if (activityStatus != null && activityStatus.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(LeadActivity_.IS_OPEN, activityStatus));
+					specbldr.whereDirectBoleanFieldEquals(LeadActivity_.IS_OPEN, activityStatus));
 
 		if (activityStartDate != null && activityStartDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
