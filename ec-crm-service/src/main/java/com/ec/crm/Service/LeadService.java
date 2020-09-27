@@ -139,12 +139,24 @@ public class LeadService
 		log.info("Validating payload");
 		validatePayload(payload);
 		log.info("Payload Validated");
+		exitIfUpdateNotAllowed(leadForUpdate, payload);
 		if (!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
 			exitIfMobileNoExists(payload);
 		log.info("Setting lead fields from payload");
 		setLeadFields(leadForUpdate, payload, "update");
 		log.info("Saving new lead record to database");
 		return lRepo.save(leadForUpdate);
+	}
+
+	private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception
+	{
+		if (leadForUpdate.getStatus().equals(LeadStatusEnum.Deal_Lost)
+				|| leadForUpdate.getStatus().equals(LeadStatusEnum.Deal_Closed))
+		{
+			if (!leadForUpdate.getAsigneeId().equals(payload.getAssigneeId()))
+				throw new Exception("Assignee cannot be changed after lead is closed/lost");
+		}
+
 	}
 
 	public LeadDAO getSingleLead(Long id) throws Exception
