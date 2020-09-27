@@ -75,4 +75,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value = "SELECT la from LeadActivity la where la.created>created and la.activityType IN (com.ec.crm.Enums.ActivityTypeEnum.Deal_Close"
 			+ ",com.ec.crm.Enums.ActivityTypeEnum.Deal_Lost,com.ec.crm.Enums.ActivityTypeEnum.Property_Visit)")
 	List<LeadActivity> fetchActivitiesAfter(@Param("created") Date created);
+
+	@Query(value = "SELECT count(la) from LeadActivity la where la.lead.leadId=:leadId")
+	int findLeadUsageCount(@Param("leadId") Long leadId);
 }

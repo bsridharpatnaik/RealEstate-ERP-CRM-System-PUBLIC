@@ -10,7 +10,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.SourceListWithTypeAheadData;
-import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterAttributeData;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.SourceSpecifications;
@@ -22,17 +21,23 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class SourceService {
+public class SourceService
+{
 	@Autowired
 	SourceRepo sRepo;
-	public Page<Source> fetchAll(Pageable pageable) 
+
+	@Autowired
+	CheckBeforeDeleteService checkBeforeDeleteService;
+
+	public Page<Source> fetchAll(Pageable pageable)
 	{
 		return sRepo.findAll(pageable);
 	}
-	public SourceListWithTypeAheadData findFilteredSource(FilterDataList sourceFilterDataList, Pageable pageable) 
+
+	public SourceListWithTypeAheadData findFilteredSource(FilterDataList sourceFilterDataList, Pageable pageable)
 	{
-		SourceListWithTypeAheadData tpData  = new SourceListWithTypeAheadData();
-		tpData.setSourceDetails(getFilteredData(sourceFilterDataList,pageable));
+		SourceListWithTypeAheadData tpData = new SourceListWithTypeAheadData();
+		tpData.setSourceDetails(getFilteredData(sourceFilterDataList, pageable));
 		tpData.setSourceTypeAhead(sRepo.findDistinctNames());
 		return tpData;
 	}
@@ -40,82 +45,86 @@ public class SourceService {
 	public Page<Source> getFilteredData(FilterDataList sourceFilterDataList, Pageable pageable)
 	{
 		Specification<Source> spec = fetchSpecification(sourceFilterDataList);
-		if(spec!=null)
+		if (spec != null)
 			return sRepo.findAll(spec, pageable);
 		return sRepo.findAll(pageable);
 	}
-	
-	private Specification<Source> fetchSpecification(FilterDataList sourceFilterDataList) 
+
+	private Specification<Source> fetchSpecification(FilterDataList sourceFilterDataList)
 	{
 		Specification<Source> specification = null;
-		for(FilterAttributeData attrData:sourceFilterDataList.getFilterData())
+		for (FilterAttributeData attrData : sourceFilterDataList.getFilterData())
 		{
 			List<String> attrValues = attrData.getAttrValue();
-			
+
 			Specification<Source> internalSpecification = null;
-			for(String attrValue : attrValues)
+			for (String attrValue : attrValues)
 			{
-				internalSpecification= internalSpecification==null?
-						SourceSpecifications.whereSourcenameContains(attrValue)
-						:internalSpecification.or(SourceSpecifications.whereSourcenameContains(attrValue));
+				internalSpecification = internalSpecification == null
+						? SourceSpecifications.whereSourcenameContains(attrValue)
+						: internalSpecification.or(SourceSpecifications.whereSourcenameContains(attrValue));
 			}
-			specification= specification==null?internalSpecification:specification.and(internalSpecification);
+			specification = specification == null ? internalSpecification : specification.and(internalSpecification);
 		}
 		return specification;
 	}
 
-	public Source createSource(Source sourceData) throws Exception {
-		if(!sRepo.existsBySourceName(sourceData.getSourceName()))
+	public Source createSource(Source sourceData) throws Exception
+	{
+		if (!sRepo.existsBySourceName(sourceData.getSourceName()))
 		{
 			sRepo.save(sourceData);
 			return sourceData;
-		}else
+		} else
 		{
 			throw new Exception("Source with same name already exists!");
 		}
 	}
-	
-	public Source findSingleSource(long id) throws Exception 
+
+	public Source findSingleSource(long id) throws Exception
 	{
 		Optional<Source> source = sRepo.findById(id);
-		if(source.isPresent())
+		if (source.isPresent())
 			return source.get();
 		else
 			throw new Exception("source ID not found");
 	}
-	
-	public Source updateSource(Long id, Source source) throws Exception 
+
+	public Source updateSource(Long id, Source source) throws Exception
 	{
 		Optional<Source> SourceForUpdateOpt = sRepo.findById(id);
 		Source SourceForUpdate = SourceForUpdateOpt.get();
-		
-		if(!SourceForUpdateOpt.isPresent())
+
+		if (!SourceForUpdateOpt.isPresent())
 			throw new Exception("Source not found with sourceid");
-		
-		if(!sRepo.existsBySourceName(source.getSourceName()) && !source.getSourceName().equalsIgnoreCase(SourceForUpdate.getSourceName()))
+
+		if (!sRepo.existsBySourceName(source.getSourceName())
+				&& !source.getSourceName().equalsIgnoreCase(SourceForUpdate.getSourceName()))
 		{
 			SourceForUpdate.setSourceName(source.getSourceName());
 			SourceForUpdate.setSourceDescription(source.getSourceDescription());
-			
+
+		} else if (source.getSourceName().equalsIgnoreCase(SourceForUpdate.getSourceName()))
+		{
+
+			SourceForUpdate.setSourceDescription(source.getSourceDescription());
+		} else
+		{
+			throw new Exception("Source with same Name already exists");
 		}
-        else if(source.getSourceName().equalsIgnoreCase(SourceForUpdate.getSourceName()))
-        {
-  
-        	SourceForUpdate.setSourceDescription(source.getSourceDescription());
-        }
-        else 
-        {
-        	throw new Exception("Source with same Name already exists");
-        }
 		return sRepo.save(SourceForUpdate);
-		
+
 	}
-	
-	public void deleteSource(Long id) throws Exception 
+
+	public void deleteSource(Long id) throws Exception
 	{
-		sRepo.softDeleteById(id);
+		if (checkBeforeDeleteService.isSourceUsed(id))
+			throw new Exception("Source already in use. Cannot be deleted.");
+		else
+			sRepo.softDeleteById(id);
 	}
-	public List<IdNameProjections> findIdAndNames() 
+
+	public List<IdNameProjections> findIdAndNames()
 	{
 		return sRepo.findIdAndNames();
 	}
