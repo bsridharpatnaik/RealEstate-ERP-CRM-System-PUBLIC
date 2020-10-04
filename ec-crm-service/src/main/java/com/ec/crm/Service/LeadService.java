@@ -2,6 +2,8 @@ package com.ec.crm.Service;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,15 +28,21 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.ec.crm.Data.AllActivitesForLeadDAO;
+import com.ec.crm.Data.AllNotesForLeadDAO;
+import com.ec.crm.Data.LeadActivityOnLeadInformationDTO;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Data.LeadDetailInfo;
+import com.ec.crm.Data.LeadInformationAllTabData;
+import com.ec.crm.Data.LeadInformationAllTabDataList;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
 import com.ec.crm.Model.Address;
 import com.ec.crm.Model.Lead;
+import com.ec.crm.Model.Note;
 import com.ec.crm.Repository.AddressRepo;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.LeadRepo;
@@ -253,15 +261,91 @@ public class LeadService
 	public LeadDetailInfo findSingleLeadDetailInfo(long id) throws Exception
 	{
 		LeadDetailInfo leadDetails = new LeadDetailInfo();
-		leadDetails.setAllNotes(noteService.getAllNotesForLead(id));
-		leadDetails.setAllActivities(leadActivityService.getAllActivitiesForLead(id));
+		AllNotesForLeadDAO allNotes = noteService.getAllNotesForLead(id);
+		AllActivitesForLeadDAO allActivities = leadActivityService.getAllActivitiesForLead(id);
+		leadDetails.setAllNotes(allNotes);
+		leadDetails.setAllActivities(allActivities);
+		leadDetails.setAllNotedAndActivities(transformDataForAllTab(allNotes, allActivities));
 		return leadDetails;
 	}
 
-	/*
-	 * public void deleteLead(Long id) { // TODO Auto-generated method stub
-	 * log.info("Invoked deleteLead for ID - "+id); lRepo.softDeleteById(id); }
-	 */
+	private LeadInformationAllTabDataList transformDataForAllTab(AllNotesForLeadDAO allNotes,
+			AllActivitesForLeadDAO allActivities)
+	{
+		LeadInformationAllTabDataList list = new LeadInformationAllTabDataList();
+		list.setPendingActivities(transformPendingActivitiesForAllTab(allActivities));
+		list.setPinnedNotes(transformPinnedNotesForAllTab(allNotes));
+		list.setPastNotesAndActivities(transformPastNotesAndActivitiesForAllTab(allNotes, allActivities));
+		return list;
+	}
+
+	private ArrayList<LeadInformationAllTabData> transformPastNotesAndActivitiesForAllTab(AllNotesForLeadDAO allNotes,
+			AllActivitesForLeadDAO allActivities)
+	{
+		List<Note> pastNotes = allNotes.getUnPinnedNotes();
+		List<LeadActivityOnLeadInformationDTO> pastActivities = allActivities.getPastActivities();
+		ArrayList<LeadInformationAllTabData> liaDataList = new ArrayList<LeadInformationAllTabData>();
+		for (Note note : pastNotes)
+		{
+			LeadInformationAllTabData liad = new LeadInformationAllTabData();
+			liad.setCreator(note.getCreatorId());
+			liad.setDateTime(note.getCreated());
+			liad.setType("pastNote");
+			liad.setNote(note);
+			liaDataList.add(liad);
+		}
+		for (LeadActivityOnLeadInformationDTO la : pastActivities)
+		{
+			LeadInformationAllTabData liad = new LeadInformationAllTabData();
+			liad.setCreator(la.getCreatorId());
+			liad.setDateTime(la.getActivityDateTime());
+			liad.setLeadActivity(la);
+			liad.setType("pastActivity");
+			liaDataList.add(liad);
+		}
+
+		Collections.sort(liaDataList, new Comparator<LeadInformationAllTabData>()
+		{
+			@Override
+			public int compare(LeadInformationAllTabData u1, LeadInformationAllTabData u2)
+			{
+				return u1.getDateTime().compareTo(u2.getDateTime());
+			}
+		});
+
+		return liaDataList;
+	}
+
+	private ArrayList<LeadInformationAllTabData> transformPinnedNotesForAllTab(AllNotesForLeadDAO allNotes)
+	{
+		ArrayList<LeadInformationAllTabData> liaDataList = new ArrayList<LeadInformationAllTabData>();
+		for (Note pinnedNote : allNotes.getPinnedNotes())
+		{
+			LeadInformationAllTabData liaData = new LeadInformationAllTabData();
+			liaData.setCreator(pinnedNote.getCreatorId());
+			liaData.setDateTime(pinnedNote.getCreated());
+			liaData.setType("note");
+			liaData.setNote(pinnedNote);
+			liaDataList.add(liaData);
+		}
+		return liaDataList;
+	}
+
+	private ArrayList<LeadInformationAllTabData> transformPendingActivitiesForAllTab(
+			AllActivitesForLeadDAO allActivities)
+	{
+		ArrayList<LeadInformationAllTabData> liaDataList = new ArrayList<LeadInformationAllTabData>();
+		for (LeadActivityOnLeadInformationDTO laid : allActivities.getPendingActivities())
+		{
+			LeadInformationAllTabData liaData = new LeadInformationAllTabData();
+			liaData.setCreator(laid.getCreatorId());
+			liaData.setDateTime(laid.getActivityDateTime());
+			liaData.setLeadActivity(laid);
+			liaData.setType("activity");
+			liaDataList.add(liaData);
+		}
+		return liaDataList;
+	}
 
 	public List<Lead> history(Long id)
 	{
