@@ -7,25 +7,37 @@ import org.springframework.lang.NonNull;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Enums.SentimentEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import Deserializers.ToTitleCaseDeserializer;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class LeadCreateData 
+@AllArgsConstructor
+@NoArgsConstructor
+public class LeadCreateData
 {
 	@NonNull
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String customerName;
 	@NonNull
-	String primaryMobile;	
-	String secondaryMobile;	
-	String emailId;	
-	String purpose;	
-	String occupation;	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	String primaryMobile;
+	String secondaryMobile;
+	String emailId;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
+	String purpose;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
+	String occupation;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	private Date dateOfBirth;
 	Long brokerId;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String addressLine1;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String addressLine2;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String city;
 	String pincode;
 	Long sourceId;
@@ -34,7 +46,8 @@ public class LeadCreateData
 	Long assigneeId;
 
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		return "LeadCreateData [customerName=" + customerName + ", primaryMobile=" + primaryMobile
 				+ ", secondaryMobile=" + secondaryMobile + ", emailId=" + emailId + ", purpose=" + purpose
 				+ ", occupation=" + occupation + ", dateOfBirth=" + dateOfBirth + ", brokerId=" + brokerId

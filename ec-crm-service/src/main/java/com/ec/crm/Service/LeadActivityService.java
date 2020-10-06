@@ -438,10 +438,13 @@ public class LeadActivityService
 		newActivity.setActivityDateTime(rescheduleActivityData.getRescheduleDateTime());
 		newActivity.setActivityType(leadActivity.getActivityType());
 		newActivity.setCreatorId(currentUserId);
-		if (leadActivity.getDescription().equals("Default activity created for new Lead"))
-			newActivity.setDescription("Call activity rescheduled from default call activity");
-		else
-			newActivity.setDescription(leadActivity.getDescription());
+		if (leadActivity.getDescription() != null)
+		{
+			if (leadActivity.getDescription().equals("Default activity created for new Lead"))
+				newActivity.setDescription("Call activity rescheduled from default call activity");
+			else
+				newActivity.setDescription(leadActivity.getDescription());
+		}
 		newActivity.setDuration(leadActivity.getDuration());
 		newActivity.setIsOpen(true);
 		newActivity.setLead(leadActivity.getLead());
