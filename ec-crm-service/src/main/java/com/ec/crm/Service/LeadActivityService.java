@@ -406,6 +406,12 @@ public class LeadActivityService
 			throw new Exception("Enter valid date and time for rescheduling");
 		}
 
+		if (rescheduleActivityData.getRescheduleDateTime().before(new Date()))
+		{
+			log.info("Reschedule date is past date and time");
+			throw new Exception("Cannot reschedule activity to past date and time.");
+		}
+
 		if (rescheduleActivityData.getClosingComment() == null || rescheduleActivityData.getClosingComment().equals(""))
 		{
 			log.info("Invalid or Null closing comment");
