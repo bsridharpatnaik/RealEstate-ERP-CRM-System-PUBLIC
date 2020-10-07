@@ -70,7 +70,6 @@ public class LeadActivityService
 	@Value("${common.serverurl}")
 	private String reqUrl;
 
-	Long currentUserId;
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
 	@Autowired
@@ -84,7 +83,6 @@ public class LeadActivityService
 		log.info("Checking ifexit condition exists");
 		exitCreateIfExitConditionsExists(lead, payload);
 		log.info("Fetching current user from gateway");
-		currentUserId = userDetailsService.getCurrentUser().getId();
 		LeadActivity leadActivity = new LeadActivity();
 		setFields(leadActivity, payload, "user");
 		log.info("Closed createLeadActivity");
@@ -166,7 +164,7 @@ public class LeadActivityService
 
 		log.info("Invoked ExecuteBusinessLogicWhileCreation");
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
-
+		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		if (status.equals(LeadStatusEnum.New_Lead))
 		{
 			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
@@ -295,6 +293,7 @@ public class LeadActivityService
 
 	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String creatorType)
 	{
+		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		log.info("Invoked setFields");
 		leadActivity.setActivityDateTime(payload.getActivityDateTime());
 		leadActivity.setActivityType(payload.getActivityType());
@@ -381,6 +380,7 @@ public class LeadActivityService
 	public void rescheduleActivity(Long id, RescheduleActivityData rescheduleActivityData) throws Exception
 	{
 		log.info("Invoked rescheduleActivity");
+		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		LeadActivity leadActivity = validateReschedulePayloadAndReturnLeadActivity(rescheduleActivityData, id);
 		currentUserId = userDetailsService.getCurrentUser().getId();
 
@@ -436,6 +436,7 @@ public class LeadActivityService
 	private void setFieldsForReschedule(RescheduleActivityData rescheduleActivityData, LeadActivity newActivity,
 			LeadActivity leadActivity)
 	{
+		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		log.info("Invoked setFieldsForReschedule");
 		List<String> newTags = new ArrayList<String>();
 		for (String tag : leadActivity.getTags())

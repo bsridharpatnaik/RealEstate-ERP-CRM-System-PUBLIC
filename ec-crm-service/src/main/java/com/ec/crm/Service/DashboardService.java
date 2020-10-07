@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +41,8 @@ public class DashboardService
 	@Autowired
 	UserDetailsService userDetailsService;
 
+	Logger log = LoggerFactory.getLogger(DashboardService.class);
+
 	public PipelineAndActivitiesForDashboard customerpipeline(DashboardData payload)
 	{
 		PipelineAndActivitiesForDashboard dashboardPipelineReturnData = new PipelineAndActivitiesForDashboard();
@@ -46,9 +50,10 @@ public class DashboardService
 		Date fromdate = payload.getFromDate();
 		Date todate = payload.getToDate();
 
-		System.out.println("fromdate : " + fromdate + " todate: " + todate);
+		log.info("fromdate : " + fromdate + " todate: " + todate);
 		data = lRepo.getActivity(fromdate, todate);
 
+		log.info("Fetching Lead Generated Stats");
 		dashboardPipelineReturnData
 				.setLeadGenerated(
 						new MapForPipelineAndActivities(
@@ -58,6 +63,7 @@ public class DashboardService
 										c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(),
 										Collectors.counting()))));
 
+		log.info("Fetching Activities Created Stats");
 		dashboardPipelineReturnData
 				.setActivitiesCreated(
 						new MapForPipelineAndActivities(
@@ -67,6 +73,7 @@ public class DashboardService
 										c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(),
 										Collectors.counting()))));
 
+		log.info("Fetching Property Visit Stats");
 		dashboardPipelineReturnData
 				.setTotalPropertyVisit(
 						new MapForPipelineAndActivities(
@@ -77,6 +84,7 @@ public class DashboardService
 												.getUserFromId(c.getLead().getAsigneeId()).getUsername(),
 												Collectors.counting()))));
 
+		log.info("Fetching Deal close Stats");
 		dashboardPipelineReturnData
 				.setDealClosed(
 						new MapForPipelineAndActivities(
@@ -87,6 +95,7 @@ public class DashboardService
 												.getUserFromId(c.getLead().getAsigneeId()).getUsername(),
 												Collectors.counting()))));
 
+		log.info("Fetching deal lost Stats");
 		dashboardPipelineReturnData
 				.setDealLost(
 						new MapForPipelineAndActivities(
@@ -97,6 +106,7 @@ public class DashboardService
 												.getUserFromId(c.getLead().getAsigneeId()).getUsername(),
 												Collectors.counting()))));
 
+		log.info("Fetching today's activities Stats");
 		dashboardPipelineReturnData
 				.setTodaysActivities(
 						new MapForPipelineAndActivities(
@@ -106,6 +116,7 @@ public class DashboardService
 										c -> userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername(),
 										Collectors.counting()))));
 
+		log.info("Fetching pending activities Stats");
 		dashboardPipelineReturnData
 				.setPendingActivities(
 						new MapForPipelineAndActivities(
@@ -117,6 +128,7 @@ public class DashboardService
 												.getUserFromId(c.getLead().getAsigneeId()).getUsername(),
 												Collectors.counting()))));
 
+		log.info("Fetching upcoming activities Stats");
 		dashboardPipelineReturnData
 				.setUpcomingActivities(
 						new MapForPipelineAndActivities(

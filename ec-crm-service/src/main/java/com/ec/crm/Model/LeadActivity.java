@@ -18,7 +18,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
@@ -33,17 +32,17 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import Deserializers.ToUsernameSerializer;
 import lombok.Data;
+
 @Entity
 @Table(name = "LeadActivity")
 @Data
-@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE) 
-public class LeadActivity extends ReusableFields implements Serializable 
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class LeadActivity extends ReusableFields implements Serializable
 {
 	/**
 	 * 
 	 */
-	
-	
+
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -51,51 +50,53 @@ public class LeadActivity extends ReusableFields implements Serializable
 	@Column(name = "leadactivity_id", updatable = false, nullable = false)
 	Long leadActivityId;
 
-	@Column(name="activity_date_time")
+	@Column(name = "activity_date_time", nullable = false)
 	@NonNull
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
 	Date activityDateTime;
-	
-	@Column(name="title")
+
+	@Column(name = "title")
 	@NonNull
 	String title;
-	
-	@Column(name="duration",columnDefinition = "int default 0")
+
+	@Column(name = "duration", columnDefinition = "int default 0")
 	Long duration;
-	
-	@Column(name="description")
+
+	@Column(name = "description")
 	String description;
-	
+
 	@ElementCollection
-	@CollectionTable(name="lead_activity_tags", joinColumns=@JoinColumn(name="leadActivityId"))
-	@Column(name="tags")
+	@CollectionTable(name = "lead_activity_tags", joinColumns = @JoinColumn(name = "leadActivityId"))
+	@Column(name = "tags")
 	List<String> tags;
-	
-	@Column(name="isOpen",columnDefinition = "boolean default true")
+
+	@Column(name = "isOpen", columnDefinition = "boolean default true")
 	@NonNull
 	Boolean isOpen;
-	
-	@JsonSerialize(using=ToUsernameSerializer.class)
-	@Column(name="creator_id")
+
+	@JsonSerialize(using = ToUsernameSerializer.class)
+	@Column(name = "creator_id", nullable = false)
 	Long creatorId;
-	
-	@JsonSerialize(using=ToUsernameSerializer.class)
-	@Column(name="closed_by")
+
+	@JsonSerialize(using = ToUsernameSerializer.class)
+	@Column(name = "closed_by")
 	Long closedBy;
-	
-	@OneToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="lead_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
+
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "lead_id", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	@NotFound(action = NotFoundAction.IGNORE)
 	Lead lead;
-	
+
 	String closingComment;
 	@NonNull
-	@Column(nullable=false)
+	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	ActivityTypeEnum activityType;
-	
-	public LeadActivity() {
+
+	public LeadActivity()
+	{
 		super();
 		// TODO Auto-generated constructor stub
 	}
