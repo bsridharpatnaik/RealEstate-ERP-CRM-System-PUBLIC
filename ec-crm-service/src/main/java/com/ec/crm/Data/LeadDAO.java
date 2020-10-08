@@ -59,5 +59,7 @@ public class LeadDAO
 
 	LeadStatusEnum status;
 
-	Long stagnantDays;
+	Long stagnantDaysCount;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	Date lastActivityModifiedDate;
 }

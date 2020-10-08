@@ -86,7 +86,8 @@ public class CrmApplication extends SpringBootServletInitializer
 				leadDAO.setSource(l.getSource() == null ? "" : l.getSource().getSourceName());
 				leadDAO.setStatus(l.getStatus());
 				leadDAO.setAssigneeUserId(l.getAsigneeId());
-				leadDAO.setStagnantDays(leadActivityService.getStagnantDaysByLeadId(l.getLeadId()));
+				leadDAO.setStagnantDaysCount(l.getStagnantDaysCount());
+				leadDAO.setLastActivityModifiedDate(l.getLastActivityModifiedDate());
 				return leadDAO;
 			}
 		};
