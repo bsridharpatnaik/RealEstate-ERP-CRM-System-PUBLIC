@@ -22,12 +22,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
+import com.ec.crm.Data.FileInformationDAO;
 import com.ec.crm.Data.LeadActivityCreate;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.LeadPageData;
+import com.ec.crm.Data.NoteCreateData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Enums.StagnantDropdownValues;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Mapper.LeadActivityMapper;
@@ -44,6 +47,9 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class LeadActivityService
 {
+	@Autowired
+	NoteService noteService;
+
 	@Autowired
 	LeadActivityRepo laRepo;
 
@@ -103,6 +109,7 @@ public class LeadActivityService
 		{
 			if (la.getActivityType().equals(ActivityTypeEnum.Property_Visit))
 			{
+				addNoteBeforeRevert(la);
 				la.getLead().setStatus(LeadStatusEnum.New_Lead);
 				laRepo.save(la);
 				laRepo.softDelete(la);
@@ -111,6 +118,7 @@ public class LeadActivityService
 		{
 			if (la.getActivityType().equals(ActivityTypeEnum.Property_Visit))
 			{
+				addNoteBeforeRevert(la);
 				la.getLead().setStatus(LeadStatusEnum.Property_Visit);
 				la.setClosedBy(null);
 				la.setClosingComment(null);
@@ -118,18 +126,36 @@ public class LeadActivityService
 				laRepo.save(la);
 			} else if (la.getActivityType().equals(ActivityTypeEnum.Deal_Close))
 			{
+				addNoteBeforeRevert(la);
 				la.getLead().setStatus(fetchPreviousStatusFromHistory(la.getLead()));
 				laRepo.save(la);
 				laRepo.softDelete(la);
 
 			} else if (la.getActivityType().equals(ActivityTypeEnum.Deal_Lost))
 			{
+				addNoteBeforeRevert(la);
 				la.getLead().setStatus(fetchPreviousStatusFromHistory(la.getLead()));
 				laRepo.save(la);
 				laRepo.softDelete(la);
 			}
 		}
 		// TO DO - Add logic to revert the activity
+	}
+
+	@Transactional
+	private void addNoteBeforeRevert(LeadActivity la) throws Exception
+	{
+		NoteCreateData noteCreateData = new NoteCreateData();
+		List<FileInformationDAO> fileInformations = new ArrayList<FileInformationDAO>();
+		String content;
+		content = "ACTIVITY REVERTED - " + System.lineSeparator() + "Type - " + la.getActivityType()
+				+ System.lineSeparator() + "Reverted By - " + userDetailsService.getCurrentUser().getUsername()
+				+ System.lineSeparator() + "Title - " + la.getTitle();
+		noteCreateData.setLeadId(la.getLead().getLeadId());
+		noteCreateData.setContent(content);
+		noteCreateData.setPinned(false);
+		noteCreateData.setFileInformations(fileInformations);
+		noteService.createNote(noteCreateData);
 	}
 
 	@Transactional
@@ -213,12 +239,12 @@ public class LeadActivityService
 	}
 
 	@Transactional
-	private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity) throws Exception
+	private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity, Boolean isReschedule) throws Exception
 	{
 		log.info("Invoked ExecuteBusinessLogicWhileClosure");
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
 
-		if (status.equals(LeadStatusEnum.Property_Visit))
+		if (status.equals(LeadStatusEnum.Property_Visit) && isReschedule.equals(false))
 		{
 			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
 			{
@@ -357,7 +383,8 @@ public class LeadActivityService
 			throw new Exception("LeadActivity ID not found");
 	}
 
-	public void deleteLeadActivity(Long id, String closingComment, Long closedBy) throws Exception
+	@Transactional
+	public void deleteLeadActivity(Long id, String closingComment, Long closedBy, Boolean isReschedule) throws Exception
 	{
 		log.info("Invoked deleteLeadActivity");
 		Optional<LeadActivity> latype = laRepo.findById(id);
@@ -373,7 +400,7 @@ public class LeadActivityService
 		leadActivity.setClosingComment(closingComment);
 		leadActivity.setClosedBy(closedBy);
 		laRepo.save(leadActivity);
-		ExecuteBusinessLogicWhileClosure(leadActivity);
+		ExecuteBusinessLogicWhileClosure(leadActivity, isReschedule);
 	}
 
 	@Transactional
@@ -386,7 +413,8 @@ public class LeadActivityService
 
 		// Delete old activity
 		log.info("Deleting old Activity");
-		deleteLeadActivity(leadActivity.getLeadActivityId(), rescheduleActivityData.getClosingComment(), currentUserId);
+		deleteLeadActivity(leadActivity.getLeadActivityId(), rescheduleActivityData.getClosingComment(), currentUserId,
+				true);
 		log.info("Deleted old Activity - success");
 
 		// Create new Activity
@@ -548,6 +576,7 @@ public class LeadActivityService
 		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
 		log.info("Setting typeahead data");
 		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
+		leadActivityListWithTypeAheadData.setKeyValueForStagnantDropdown(StagnantDropdownValues.getKeyValue());
 		return leadActivityListWithTypeAheadData;
 	}
 

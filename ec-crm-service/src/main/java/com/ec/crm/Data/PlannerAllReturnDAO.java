@@ -1,15 +1,17 @@
 package com.ec.crm.Data;
 
+import java.util.HashMap;
 import java.util.List;
 
 import lombok.Data;
 
 @Data
-public class PlannerAllReturnDAO 
+public class PlannerAllReturnDAO
 {
 
 	NameAndProjectionDataForDropDown dropdownData;
 	List<String> typeAheadDataForGlobalSearch;
+	HashMap<String, String> keyValueForStagnantDropdown;
 	PlannerWithTotalReturnDAO call;
 	PlannerWithTotalReturnDAO meeting;
 	PlannerWithTotalReturnDAO property_visit;

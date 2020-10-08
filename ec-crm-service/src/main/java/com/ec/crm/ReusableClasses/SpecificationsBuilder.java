@@ -157,6 +157,18 @@ public class SpecificationsBuilder<T>
 		return finalSpec;
 	}
 
+	public Specification<T> whereDirectFieldIntBetween(String key, int i, int j) throws ParseException
+	{
+
+		Specification<T> finalSpec = null;
+		Specification<T> internalSpec1 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+				.lessThanOrEqualTo(root.get(key), i);
+		Specification<T> internalSpec2 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+				.greaterThanOrEqualTo(root.get(key), j);
+		finalSpec = specAndCondition(internalSpec1, internalSpec2);
+		return finalSpec;
+	}
+
 	// #######################################//
 	// Level 1 //
 	// #######################################//
@@ -232,6 +244,19 @@ public class SpecificationsBuilder<T>
 					.equal(root.get(childTable).get(childFiledName), getEnum(name, claz));
 			finalSpec = specOrCondition(finalSpec, internalSpec);
 		}
+		return finalSpec;
+	}
+
+	public Specification<T> whereChildFieldIntBetween(String childTable, String childTableField, int lowerLimit,
+			int upperLimit) throws ParseException
+	{
+
+		Specification<T> finalSpec = null;
+		Specification<T> internalSpec1 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+				.lessThanOrEqualTo(root.get(childTable).get(childTableField), lowerLimit);
+		Specification<T> internalSpec2 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+				.greaterThanOrEqualTo(root.get(childTable).get(childTableField), upperLimit);
+		finalSpec = specAndCondition(internalSpec1, internalSpec2);
 		return finalSpec;
 	}
 

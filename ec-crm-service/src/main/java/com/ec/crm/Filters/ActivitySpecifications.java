@@ -44,6 +44,8 @@ public class ActivitySpecifications
 		List<String> activityEndDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"activityEndDate");
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
+		List<String> stagnantStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stagnantStatus");
+
 		Specification<LeadActivity> finalSpec = null;
 
 		if (name != null && name.size() > 0)
@@ -134,6 +136,27 @@ public class ActivitySpecifications
 		if (activityEndDate != null && activityEndDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereDirectFieldDateLessThan(LeadActivity_.ACTIVITY_DATE_TIME, activityEndDate));
+
+		if (stagnantStatus != null && stagnantStatus.size() > 0)
+		{
+			Specification<LeadActivity> internalSpec = null;
+			for (String str : stagnantStatus)
+			{
+				if (str.equals("NoColour"))
+					internalSpec = specbldr.specOrCondition(internalSpec,
+							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 0, 10));
+				if (str.equals("Green"))
+					internalSpec = specbldr.specOrCondition(internalSpec,
+							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 10, 20));
+				if (str.equals("Orange"))
+					internalSpec = specbldr.specOrCondition(internalSpec,
+							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 20, 30));
+				if (str.equals("Red"))
+					internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldIntBetween(
+							LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 30, Integer.MAX_VALUE));
+			}
+			finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
+		}
 		return finalSpec;
 	}
 }

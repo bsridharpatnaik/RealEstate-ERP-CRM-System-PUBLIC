@@ -25,94 +25,105 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadActivityClosingComment;
 import com.ec.crm.Data.LeadActivityCreate;
-import com.ec.crm.Data.LeadActivityOnLeadInformationDTO;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Service.LeadActivityService;
+import com.ec.crm.Service.NoteService;
 import com.ec.crm.Service.UserDetailsService;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import lombok.SneakyThrows;
 
 @RestController
-@RequestMapping(value="/activity",produces = { "application/json", "text/json" })
-public class LeadActivityController 
+@RequestMapping(value = "/activity", produces =
+{ "application/json", "text/json" })
+public class LeadActivityController
 {
 
 	@Autowired
 	UserDetailsService userDetailsService;
-	
+
 	@Autowired
 	LeadActivityService laService;
-	
+
+	@Autowired
+	NoteService noteService;
+
 	@GetMapping
-	public Page<LeadActivity> returnAllLeadActivity(Pageable pageable) 
+	public Page<LeadActivity> returnAllLeadActivity(Pageable pageable)
 	{
 		return laService.fetchAll(pageable);
 	}
+
 	@GetMapping("/{id}")
-	public LeadActivity findLeadActivityByID(@PathVariable long id) throws Exception 
+	public LeadActivity findLeadActivityByID(@PathVariable long id) throws Exception
 	{
 		return laService.getSingleLeadActivity(id);
 	}
-	
-	@PostMapping("/create") 
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
 	@SneakyThrows(InvalidFormatException.class)
-	public LeadActivity createLeadActivity(@RequestBody LeadActivityCreate at) throws Exception{
-		
+	public LeadActivity createLeadActivity(@RequestBody LeadActivityCreate at) throws Exception
+	{
+
 		return laService.createLeadActivity(at);
 	}
-	
-	@PatchMapping("/{id}") 
+
+	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void closeLeadActivityWithComment(@RequestBody LeadActivityClosingComment payload,@PathVariable long id) throws Exception
+	public void closeLeadActivityWithComment(@RequestBody LeadActivityClosingComment payload, @PathVariable long id)
+			throws Exception
 	{
-		if(payload.getClosingComment()==null)
+		if (payload.getClosingComment() == null)
 			throw new Exception("Please enter closing comments");
-		
-		laService.deleteLeadActivity(id, payload.getClosingComment(),userDetailsService.getCurrentUser().getId());
+
+		laService.deleteLeadActivity(id, payload.getClosingComment(), userDetailsService.getCurrentUser().getId(),
+				false);
 	}
-	
-	@PutMapping("reschedule/{id}") 
+
+	@PutMapping("reschedule/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void rescheduleActivity(@RequestBody RescheduleActivityData payload,@PathVariable long id) throws Exception
+	public void rescheduleActivity(@RequestBody RescheduleActivityData payload, @PathVariable long id) throws Exception
 	{
 		laService.rescheduleActivity(id, payload);
 	}
-	
-	@PutMapping("revert/{id}") 
+
+	@PutMapping("revert/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public void revertLeadActivity(@PathVariable long id) throws Exception
 	{
 		laService.revertLeadActivity(id);
 	}
-	
-	@PostMapping("/getleadactivitypage") 
+
+	@PostMapping("/getleadactivitypage")
 	@ResponseStatus(HttpStatus.OK)
-	public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws Exception 
+	public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
+			throws Exception
 	{
-		return laService.getLeadActivityPage(leadFilterDataList,pageable);
+		return laService.getLeadActivityPage(leadFilterDataList, pageable);
 	}
-	
+
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public Map<String, String> handleValidationExceptions(
-	  MethodArgumentNotValidException ex) {
-	    Map<String, String> errors = new HashMap<>();
-	    ex.getBindingResult().getAllErrors().forEach((error) -> {
-	        String fieldName = ((FieldError) error).getField();
-	        String errorMessage = "Invalid Data. Please try again.";
-	        errors.put(fieldName, errorMessage);
-	    });
-	    return errors;
+	public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex)
+	{
+		Map<String, String> errors = new HashMap<>();
+		ex.getBindingResult().getAllErrors().forEach((error) ->
+		{
+			String fieldName = ((FieldError) error).getField();
+			String errorMessage = "Invalid Data. Please try again.";
+			errors.put(fieldName, errorMessage);
+		});
+		return errors;
 	}
-	
+
 	@GetMapping("/validActivityTypes")
-	public List<String> findValidActivityTypes() 
+	public List<String> findValidActivityTypes()
 	{
 		return ActivityTypeEnum.getValidActivityTypes();
 	}
