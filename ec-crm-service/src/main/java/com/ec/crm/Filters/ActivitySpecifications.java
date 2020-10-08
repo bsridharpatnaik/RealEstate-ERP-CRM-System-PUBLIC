@@ -142,16 +142,16 @@ public class ActivitySpecifications
 			Specification<LeadActivity> internalSpec = null;
 			for (String str : stagnantStatus)
 			{
-				if (str.equals("NoColour"))
+				if (str.equalsIgnoreCase("NoColour"))
 					internalSpec = specbldr.specOrCondition(internalSpec,
 							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 0, 10));
-				if (str.equals("Green"))
+				if (str.equalsIgnoreCase("Green"))
 					internalSpec = specbldr.specOrCondition(internalSpec,
 							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 10, 20));
-				if (str.equals("Orange"))
+				if (str.equalsIgnoreCase("Orange"))
 					internalSpec = specbldr.specOrCondition(internalSpec,
 							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 20, 30));
-				if (str.equals("Red"))
+				if (str.equalsIgnoreCase("Red"))
 					internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldIntBetween(
 							LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 30, Integer.MAX_VALUE));
 			}
