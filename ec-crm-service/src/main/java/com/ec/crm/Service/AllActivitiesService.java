@@ -1,6 +1,5 @@
 package com.ec.crm.Service;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -55,7 +54,7 @@ public class AllActivitiesService
 	LeadActivityService leadActivityService;
 
 	public PlannerAllReturnDAO findFilteredDataForPlanner(FilterDataList leadFilterDataList, Pageable pageable)
-			throws ParseException
+			throws Exception
 	{
 		log.info("Invoked - findFilteredData");
 		List<LeadActivity> activities = new ArrayList<LeadActivity>();

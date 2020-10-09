@@ -1,6 +1,5 @@
 package com.ec.crm.Controller;
 
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,29 +22,33 @@ import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Service.AllActivitiesService;
 
 @RestController
-@RequestMapping(value="/planner/activities",produces = { "application/json", "text/json" })
-public class PlannerController 
+@RequestMapping(value = "/planner/activities", produces =
+{ "application/json", "text/json" })
+public class PlannerController
 {
 	@Autowired
 	AllActivitiesService allActivitiesService;
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public PlannerAllReturnDAO returnFilteredLeadActivities(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadActivityId", direction = Direction.DESC) Pageable pageable) throws ParseException 
+	public PlannerAllReturnDAO returnFilteredLeadActivities(@RequestBody FilterDataList leadFilterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "leadActivityId", direction = Direction.DESC) Pageable pageable)
+			throws Exception
 	{
-		return allActivitiesService.findFilteredDataForPlanner(leadFilterDataList,pageable);
+		return allActivitiesService.findFilteredDataForPlanner(leadFilterDataList, pageable);
 	}
-	
+
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public Map<String, String> handleValidationExceptions(
-	  MethodArgumentNotValidException ex) {
-	    Map<String, String> errors = new HashMap<>();
-	    ex.getBindingResult().getAllErrors().forEach((error) -> {
-	        String fieldName = ((FieldError) error).getField();
-	        String errorMessage = error.getDefaultMessage();
-	        errors.put(fieldName, errorMessage);
-	    });
-	    return errors;
+	public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex)
+	{
+		Map<String, String> errors = new HashMap<>();
+		ex.getBindingResult().getAllErrors().forEach((error) ->
+		{
+			String fieldName = ((FieldError) error).getField();
+			String errorMessage = error.getDefaultMessage();
+			errors.put(fieldName, errorMessage);
+		});
+		return errors;
 	}
 }

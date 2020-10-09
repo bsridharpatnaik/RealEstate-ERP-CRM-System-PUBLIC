@@ -1,6 +1,5 @@
 package com.ec.crm.Filters;
 
-import java.text.ParseException;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -21,7 +20,7 @@ public class ActivitySpecifications
 {
 	static SpecificationsBuilder<LeadActivity> specbldr = new SpecificationsBuilder<LeadActivity>();
 
-	public static Specification<LeadActivity> getSpecification(FilterDataList filterDataList) throws ParseException
+	public static Specification<LeadActivity> getSpecification(FilterDataList filterDataList) throws Exception
 	{
 		List<String> name = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "name");
 		List<String> mobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "mobile");
@@ -45,6 +44,8 @@ public class ActivitySpecifications
 				"activityEndDate");
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
 		List<String> stagnantStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stagnantStatus");
+
+		List<String> showOnlyLatest = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyLatest");
 
 		Specification<LeadActivity> finalSpec = null;
 
@@ -136,6 +137,10 @@ public class ActivitySpecifications
 		if (activityEndDate != null && activityEndDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereDirectFieldDateLessThan(LeadActivity_.ACTIVITY_DATE_TIME, activityEndDate));
+
+		if (showOnlyLatest != null && showOnlyLatest.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereDirectIntFieldEquals(LeadActivity_.IS_LATEST, showOnlyLatest));
 
 		if (stagnantStatus != null && stagnantStatus.size() > 0)
 		{

@@ -1,6 +1,5 @@
 package com.ec.crm.Service;
 
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -558,7 +557,7 @@ public class LeadActivityService
 	 * leadActivityListWithTypeAheadData; }
 	 */
 	public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable)
-			throws ParseException
+			throws Exception
 	{
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
 		LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();

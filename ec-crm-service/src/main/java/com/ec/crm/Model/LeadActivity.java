@@ -91,6 +91,7 @@ public class LeadActivity extends ReusableFields implements Serializable
 	Lead lead;
 
 	String closingComment;
+
 	@NonNull
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
@@ -102,6 +103,7 @@ public class LeadActivity extends ReusableFields implements Serializable
 			+ " (la.created_at = la2.created_at AND la.leadactivity_id<la2.leadactivity_id))) "
 			+ "WHERE la2.leadactivity_id IS NULL AND la.leadactivity_id=leadactivity_id AND cl.is_deleted=false"
 			+ " AND la.is_deleted=false)")
+	@NonNull
 	int isLatest;
 
 	public LeadActivity()

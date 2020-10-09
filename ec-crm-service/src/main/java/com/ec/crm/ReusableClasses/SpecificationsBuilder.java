@@ -135,6 +135,27 @@ public class SpecificationsBuilder<T>
 		return finalSpec;
 	}
 
+	public Specification<T> whereDirectIntFieldEquals(String key, List<String> isLatestFlagList) throws Exception
+	{
+		Specification<T> finalSpec = null;
+		if (isLatestFlagList.size() != 1)
+			throw new Exception("More than one value received for dropdown filter field");
+		try
+		{
+			int isLatestFlag = isLatestFlagList.get(0).equals("true") ? 1 : 0;
+			Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+					.equal(root.get(key), isLatestFlag);
+			finalSpec = specOrCondition(finalSpec, internalSpec);
+		}
+
+		catch (Exception e)
+		{
+			throw new Exception("Not able to parse ");
+		}
+		return finalSpec;
+
+	}
+
 	public Specification<T> whereDirectAssigneeContains(String key, List<String> assignees)
 	{
 		UserDetailsService userDetailsService = BeanUtil.getBean(UserDetailsService.class);
