@@ -19,6 +19,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
@@ -94,6 +95,14 @@ public class LeadActivity extends ReusableFields implements Serializable
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	ActivityTypeEnum activityType;
+
+	@Formula("(SELECT CASE WHEN count(la.leadactivity_id)>0 THEN true ELSE false END from customer_lead cl "
+			+ "INNER  JOIN lead_activity la on la.lead_id=cl.lead_id LEFT OUTER JOIN lead_activity la2 on "
+			+ "	(cl.lead_id=la2.lead_id AND (la.created_at < la2.created_at OR "
+			+ " (la.created_at = la2.created_at AND la.leadactivity_id<la2.leadactivity_id))) "
+			+ "WHERE la2.leadactivity_id IS NULL AND la.leadactivity_id=leadactivity_id AND cl.is_deleted=false"
+			+ " AND la.is_deleted=false)")
+	int isLatest;
 
 	public LeadActivity()
 	{
