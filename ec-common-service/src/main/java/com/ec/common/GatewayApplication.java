@@ -34,5 +34,4 @@ public class GatewayApplication extends SpringBootServletInitializer{
 	    loggingFilter.setMaxPayloadLength(64000);
 	    return loggingFilter;
 	}
-
 }
