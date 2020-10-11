@@ -21,7 +21,6 @@ import com.ec.crm.Data.PlannerWithTotalReturnDAO;
 import com.ec.crm.Data.StagnatedEnum;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
-import com.ec.crm.Enums.StagnantDropdownValues;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
@@ -89,7 +88,6 @@ public class AllActivitiesService
 		activitiesList.setDropdownData(populateDropdownService.fetchData("lead"));
 		log.info("Setting tyoeahead data");
 		activitiesList.setTypeAheadDataForGlobalSearch(leadService.fetchTypeAheadForLeadGlobalSearch());
-		activitiesList.setKeyValueForStagnantDropdown(StagnantDropdownValues.getKeyValue());
 		return activitiesList;
 	}
 
@@ -148,7 +146,6 @@ public class AllActivitiesService
 		pipelineAllReturnDAO.setNegotiation(fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Negotiation));
 		pipelineAllReturnDAO.setPropertyVisit(fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Property_Visit));
 		pipelineAllReturnDAO.setDeal_close(fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Deal_Closed));
-		pipelineAllReturnDAO.setKeyValueForStagnantDropdown(StagnantDropdownValues.getKeyValue());
 		return pipelineAllReturnDAO;
 	}
 

@@ -10,47 +10,49 @@ import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Enums.SentimentEnum;
+import com.ec.crm.Enums.StagnantDropdownValues;
 import com.ec.crm.Repository.BrokerRepo;
 import com.ec.crm.Repository.SourceRepo;
 
 @Service
-public class PopulateDropdownService 
+public class PopulateDropdownService
 {
 
 	/*
 	 * @Autowired SentimentRepo sentimentRepo;
 	 */
-	
+
 	@Autowired
 	BrokerRepo brokerRepo;
-	
+
 	@Autowired
 	SourceRepo sourceRepo;
-	
+
 	@Autowired
 	UserDetailsService userDetailsService;
-	
-	public NameAndProjectionDataForDropDown fetchData(String page) 
+
+	public NameAndProjectionDataForDropDown fetchData(String page)
 	{
 		NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
-		switch(page)
+		switch (page)
 		{
-			case "lead":
-				HashMap<String,String> actvityStatus = getValidActivityStatus();
-				morDropdownDataList.setBrokerDetails(brokerRepo.findIdAndNames());
-				morDropdownDataList.setValidSentiments(SentimentEnum.getValidSentiments());
-				morDropdownDataList.setSourceDetails(sourceRepo.findIdAndNames());
-				morDropdownDataList.setValidPropertyType(PropertyTypeEnum.getValidPropertyType());
-				morDropdownDataList.setValidStatusType(LeadStatusEnum.getValidLeadStatus());
-				morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
-				morDropdownDataList.setActvityStatus(actvityStatus);
-				morDropdownDataList.setValidActivityType(ActivityTypeEnum.getValidActivityTypes());
-				break;
+		case "lead":
+			HashMap<String, String> actvityStatus = getValidActivityStatus();
+			morDropdownDataList.setBrokerDetails(brokerRepo.findIdAndNames());
+			morDropdownDataList.setValidSentiments(SentimentEnum.getValidSentiments());
+			morDropdownDataList.setSourceDetails(sourceRepo.findIdAndNames());
+			morDropdownDataList.setValidPropertyType(PropertyTypeEnum.getValidPropertyType());
+			morDropdownDataList.setValidStatusType(LeadStatusEnum.getValidLeadStatus());
+			morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
+			morDropdownDataList.setActvityStatus(actvityStatus);
+			morDropdownDataList.setValidActivityType(ActivityTypeEnum.getValidActivityTypes());
+			morDropdownDataList.setKeyValueForStagnantDropdown(StagnantDropdownValues.getKeyValue());
+			break;
 		}
 		return morDropdownDataList;
 	}
 
-	private HashMap<String, String> getValidActivityStatus() 
+	private HashMap<String, String> getValidActivityStatus()
 	{
 		HashMap<String, String> actvityStatus = new HashMap<String, String>();
 		actvityStatus.put("Open", "true");

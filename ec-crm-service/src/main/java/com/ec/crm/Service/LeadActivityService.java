@@ -29,7 +29,6 @@ import com.ec.crm.Data.NoteCreateData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
-import com.ec.crm.Enums.StagnantDropdownValues;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Mapper.LeadActivityMapper;
@@ -575,7 +574,6 @@ public class LeadActivityService
 		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
 		log.info("Setting typeahead data");
 		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
-		leadActivityListWithTypeAheadData.setKeyValueForStagnantDropdown(StagnantDropdownValues.getKeyValue());
 		return leadActivityListWithTypeAheadData;
 	}
 

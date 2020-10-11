@@ -12,7 +12,7 @@ import lombok.Data;
 
 @JsonInclude(Include.NON_NULL)
 @Data
-public class NameAndProjectionDataForDropDown 
+public class NameAndProjectionDataForDropDown
 {
 	List<String> validPropertyType;
 	List<String> validStatusType;
@@ -20,6 +20,7 @@ public class NameAndProjectionDataForDropDown
 	List<IdNameProjections> brokerDetails;
 	List<IdNameProjections> sourceDetails;
 	List<String> validActivityType;
-	HashMap<String,String> actvityStatus;
+	HashMap<String, String> actvityStatus;
 	PopulateAssigneeList assigneeDetails;
+	HashMap<String, String> keyValueForStagnantDropdown;
 }
