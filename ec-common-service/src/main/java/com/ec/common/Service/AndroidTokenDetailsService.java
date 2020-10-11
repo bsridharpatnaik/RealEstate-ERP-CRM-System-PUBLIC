@@ -60,4 +60,21 @@ public class AndroidTokenDetailsService
 		}
 		return atdDTOList;
 	}
+
+	public void deleteToken() throws Exception
+	{
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		Long userId = userRepo.findId(auth.getName());
+		int userCount = tokenRepo.findCountByUserId(userId);
+		if (userCount > 1)
+		{
+			throw new Exception("More than one token records found for same user.");
+		} else if (userCount == 1)
+		{
+			List<AndroidTokenDetails> atdList = tokenRepo.findByUserId(userId);
+			AndroidTokenDetails atd = atdList.get(0);
+			atd.setToken("");
+			tokenRepo.save(atd);
+		}
+	}
 }
