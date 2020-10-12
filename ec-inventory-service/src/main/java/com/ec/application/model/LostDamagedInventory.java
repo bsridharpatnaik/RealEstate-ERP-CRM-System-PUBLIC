@@ -36,103 +36,142 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class LostDamagedInventory extends ReusableFields
 {
 	@Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	Long lostdamagedid;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
 	Date date;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="productId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "productId", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
 	Product product;
-	
+
 	@NonNull
 	Double quantity;
-	
-	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
+
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
-	
+
 	@NonNull
 	String locationOfTheft;
 
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="warehouseName",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "warehouseName", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	@NotFound(action = NotFoundAction.IGNORE)
 	@NonNull
 	Warehouse warehouse;
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "lostdamaged_fileinformation", joinColumns = {
-			@JoinColumn(name = "lostdamagedid", referencedColumnName = "lostdamagedid") }, inverseJoinColumns = {
-					@JoinColumn(name = "id", referencedColumnName = "id") })
+
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "lostdamaged_fileinformation", joinColumns =
+	{ @JoinColumn(name = "lostdamagedid", referencedColumnName = "lostdamagedid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
-	
 
-	public Set<FileInformation> getFileInformations() {
-		return fileInformations;
-	}
+	String additionalComment;
 
-	public void setFileInformations(Set<FileInformation> fileInformations) {
-		this.fileInformations = fileInformations;
-	}
-
-	public Date getDate() {
-		return date;
-	}
-
-	public void setDate(Date date) {
-		this.date = date;
-	}
-
-	public Warehouse getWarehouse() {
-		return warehouse;
-	}
-
-	public void setWarehouse(Warehouse warehouse) {
-		this.warehouse = warehouse;
-	}
-
-	public Long getId() {
+	public Long getLostdamagedid()
+	{
 		return lostdamagedid;
 	}
 
-	public void setId(Long id) {
+	public void setLostdamagedid(Long lostdamagedid)
+	{
+		this.lostdamagedid = lostdamagedid;
+	}
+
+	public String getAdditionalComment()
+	{
+		return additionalComment;
+	}
+
+	public void setAdditionalComment(String additionalComment)
+	{
+		this.additionalComment = additionalComment;
+	}
+
+	public Set<FileInformation> getFileInformations()
+	{
+		return fileInformations;
+	}
+
+	public void setFileInformations(Set<FileInformation> fileInformations)
+	{
+		this.fileInformations = fileInformations;
+	}
+
+	public Date getDate()
+	{
+		return date;
+	}
+
+	public void setDate(Date date)
+	{
+		this.date = date;
+	}
+
+	public Warehouse getWarehouse()
+	{
+		return warehouse;
+	}
+
+	public void setWarehouse(Warehouse warehouse)
+	{
+		this.warehouse = warehouse;
+	}
+
+	public Long getId()
+	{
+		return lostdamagedid;
+	}
+
+	public void setId(Long id)
+	{
 		id = id;
 	}
 
-	public Product getProduct() {
+	public Product getProduct()
+	{
 		return product;
 	}
 
-	public void setProduct(Product product) {
+	public void setProduct(Product product)
+	{
 		this.product = product;
 	}
 
-	public Double getQuantity() {
+	public Double getQuantity()
+	{
 		return quantity;
 	}
 
-	public void setQuantity(Double quantity) {
+	public void setQuantity(Double quantity)
+	{
 		this.quantity = quantity;
 	}
 
-	public Double getClosingStock() {
+	public Double getClosingStock()
+	{
 		return closingStock;
 	}
 
-	public void setClosingStock(Double closingStock) {
+	public void setClosingStock(Double closingStock)
+	{
 		this.closingStock = closingStock;
 	}
 
-	public String getLocationOfTheft() {
+	public String getLocationOfTheft()
+	{
 		return locationOfTheft;
 	}
 
-	public void setLocationOfTheft(String locationOfTheft) {
+	public void setLocationOfTheft(String locationOfTheft)
+	{
 		this.locationOfTheft = locationOfTheft;
 	}
 }
