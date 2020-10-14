@@ -1,13 +1,13 @@
 package com.ec.crm.Data;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Data;
 
 @Data
 public class LeadInformationAllTabDataList
 {
-	ArrayList<LeadInformationAllTabData> pendingActivities;
-	ArrayList<LeadInformationAllTabData> pinnedNotes;
-	ArrayList<LeadInformationAllTabData> pastNotesAndActivities;
+	List<LeadInformationAllTabData> pendingActivities;
+	List<LeadInformationAllTabData> pinnedNotes;
+	List<LeadInformationAllTabData> pastNotesAndActivities;
 }

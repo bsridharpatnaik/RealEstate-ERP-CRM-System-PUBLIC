@@ -78,4 +78,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 
 	@Query(value = "SELECT count(la) from LeadActivity la where la.lead.leadId=:leadId")
 	int findLeadUsageCount(@Param("leadId") Long leadId);
+
+	@Query(value = "SELECT la from LeadActivity la where la.activityDateTime>:startTime")
+	List<LeadActivity> findUpcomingActivities(@Param("startTime") Date startTime);
 }

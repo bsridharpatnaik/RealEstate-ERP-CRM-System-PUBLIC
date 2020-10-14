@@ -2,10 +2,10 @@ package com.ec.crm.Service;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -279,12 +279,16 @@ public class LeadService
 		return list;
 	}
 
-	private ArrayList<LeadInformationAllTabData> transformPastNotesAndActivitiesForAllTab(AllNotesForLeadDAO allNotes,
+	private List<LeadInformationAllTabData> transformPastNotesAndActivitiesForAllTab(AllNotesForLeadDAO allNotes,
 			AllActivitesForLeadDAO allActivities)
 	{
-		List<Note> pastNotes = allNotes.getUnPinnedNotes();
-		List<LeadActivityOnLeadInformationDTO> pastActivities = allActivities.getPastActivities();
-		ArrayList<LeadInformationAllTabData> liaDataList = new ArrayList<LeadInformationAllTabData>();
+		List<Note> pastNotes = allNotes.getUnPinnedNotes().stream()
+				.sorted(Comparator.comparing(Note::getCreated).reversed()).collect(Collectors.toList());
+		;
+		List<LeadActivityOnLeadInformationDTO> pastActivities = allActivities.getPastActivities().stream()
+				.sorted(Comparator.comparing(LeadActivityOnLeadInformationDTO::getActivityDateTime).reversed())
+				.collect(Collectors.toList());
+		List<LeadInformationAllTabData> liaDataList = new ArrayList<LeadInformationAllTabData>();
 		for (Note note : pastNotes)
 		{
 			LeadInformationAllTabData liad = new LeadInformationAllTabData();
@@ -303,20 +307,14 @@ public class LeadService
 			liad.setType("pastActivity");
 			liaDataList.add(liad);
 		}
-
-		Collections.sort(liaDataList, new Comparator<LeadInformationAllTabData>()
-		{
-			@Override
-			public int compare(LeadInformationAllTabData u1, LeadInformationAllTabData u2)
-			{
-				return u1.getDateTime().compareTo(u2.getDateTime());
-			}
-		});
-
-		return liaDataList;
+		System.out.println("Before Sorting");
+		for (LeadInformationAllTabData laid : liaDataList)
+			System.out.println(laid.getDateTime());
+		return liaDataList.stream().sorted(Comparator.comparing(LeadInformationAllTabData::getDateTime).reversed())
+				.collect(Collectors.toList());
 	}
 
-	private ArrayList<LeadInformationAllTabData> transformPinnedNotesForAllTab(AllNotesForLeadDAO allNotes)
+	private List<LeadInformationAllTabData> transformPinnedNotesForAllTab(AllNotesForLeadDAO allNotes)
 	{
 		ArrayList<LeadInformationAllTabData> liaDataList = new ArrayList<LeadInformationAllTabData>();
 		for (Note pinnedNote : allNotes.getPinnedNotes())
@@ -328,11 +326,11 @@ public class LeadService
 			liaData.setNote(pinnedNote);
 			liaDataList.add(liaData);
 		}
-		return liaDataList;
+		return liaDataList.stream().sorted(Comparator.comparing(LeadInformationAllTabData::getDateTime).reversed())
+				.collect(Collectors.toList());
 	}
 
-	private ArrayList<LeadInformationAllTabData> transformPendingActivitiesForAllTab(
-			AllActivitesForLeadDAO allActivities)
+	private List<LeadInformationAllTabData> transformPendingActivitiesForAllTab(AllActivitesForLeadDAO allActivities)
 	{
 		ArrayList<LeadInformationAllTabData> liaDataList = new ArrayList<LeadInformationAllTabData>();
 		for (LeadActivityOnLeadInformationDTO laid : allActivities.getPendingActivities())
@@ -344,7 +342,8 @@ public class LeadService
 			liaData.setType("activity");
 			liaDataList.add(liaData);
 		}
-		return liaDataList;
+		return liaDataList.stream().sorted(Comparator.comparing(LeadInformationAllTabData::getDateTime).reversed())
+				.collect(Collectors.toList());
 	}
 
 	public List<Lead> history(Long id)
