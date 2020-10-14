@@ -397,6 +397,8 @@ public class LeadActivityService
 		leadActivity.setIsOpen(false);
 		leadActivity.setClosingComment(closingComment);
 		leadActivity.setClosedBy(closedBy);
+		if (isReschedule)
+			leadActivity.setRescheduled(true);
 		laRepo.save(leadActivity);
 		ExecuteBusinessLogicWhileClosure(leadActivity, isReschedule);
 	}
@@ -407,7 +409,6 @@ public class LeadActivityService
 		log.info("Invoked rescheduleActivity");
 		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		LeadActivity leadActivity = validateReschedulePayloadAndReturnLeadActivity(rescheduleActivityData, id);
-		currentUserId = userDetailsService.getCurrentUser().getId();
 
 		// Delete old activity
 		log.info("Deleting old Activity");
@@ -478,7 +479,7 @@ public class LeadActivityService
 			else
 				newActivity.setDescription(leadActivity.getDescription());
 		}
-		newActivity.setDuration(leadActivity.getDuration());
+		// newActivity.setDuration(leadActivity.getDuration());
 		newActivity.setIsOpen(true);
 		newActivity.setLead(leadActivity.getLead());
 		newActivity.setTags(newTags);

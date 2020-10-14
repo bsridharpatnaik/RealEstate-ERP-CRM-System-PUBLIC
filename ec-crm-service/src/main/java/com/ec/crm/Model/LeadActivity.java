@@ -40,9 +40,6 @@ import lombok.Data;
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class LeadActivity extends ReusableFields implements Serializable
 {
-	/**
-	 * 
-	 */
 
 	private static final long serialVersionUID = 1L;
 
@@ -105,6 +102,9 @@ public class LeadActivity extends ReusableFields implements Serializable
 			+ " AND la.is_deleted=false)")
 	@NonNull
 	int isLatest;
+
+	@Column(name = "isRescheduled", nullable = false)
+	private boolean isRescheduled = false;
 
 	public LeadActivity()
 	{
