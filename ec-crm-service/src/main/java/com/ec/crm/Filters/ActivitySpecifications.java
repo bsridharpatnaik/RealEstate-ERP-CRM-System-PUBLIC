@@ -149,16 +149,16 @@ public class ActivitySpecifications
 			{
 				if (str.equalsIgnoreCase("NoColour"))
 					internalSpec = specbldr.specOrCondition(internalSpec,
-							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 0, 10));
+							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 0, 9));
 				if (str.equalsIgnoreCase("Green"))
 					internalSpec = specbldr.specOrCondition(internalSpec,
-							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 11, 20));
+							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 10, 19));
 				if (str.equalsIgnoreCase("Orange"))
 					internalSpec = specbldr.specOrCondition(internalSpec,
-							specbldr.whereChildFieldIntBetween(LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 21, 30));
+							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 20, 29));
 				if (str.equalsIgnoreCase("Red"))
-					internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldIntBetween(
-							LeadActivity_.LEAD, Lead_.STAGNANT_DAYS_COUNT, 31, Integer.MAX_VALUE));
+					internalSpec = specbldr.specOrCondition(internalSpec,
+							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 30, Integer.MAX_VALUE));
 			}
 			finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
 		}
