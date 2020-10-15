@@ -300,7 +300,8 @@ public class LeadActivityService
 		} else if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed)
 				|| lead.getStatus().equals(LeadStatusEnum.Deal_Lost))
 		{
-			if (!payload.getActivityType().equals(ActivityTypeEnum.Meeting))
+			if (!payload.getActivityType().equals(ActivityTypeEnum.Meeting)
+					&& !payload.getActivityType().equals(ActivityTypeEnum.Call))
 				throw new Exception(
 						"Only activity of type Meeting can be created if a lead is in stage " + lead.getStatus());
 		}
