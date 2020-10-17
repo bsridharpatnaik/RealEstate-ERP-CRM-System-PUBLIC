@@ -109,7 +109,8 @@ public class AllActivitiesService
 		for (LeadActivity leadActivity : filteredActivities)
 			activities.add(new PlannerSingleReturnDAO(leadActivity.getLead().getLeadId(),
 					leadActivity.getLead().getCustomerName(), leadActivity.getLead().getPrimaryMobile(),
-					leadActivity.getIsOpen(), leadActivity.getActivityDateTime()));
+					leadActivity.getIsOpen(), leadActivity.getActivityDateTime(),
+					leadActivity.getLead().getAsigneeId()));
 
 		plannerWithTotalReturnDAO.setActivities(activities);
 		plannerWithTotalReturnDAO.setTotalActivities(activities.size());
@@ -174,6 +175,7 @@ public class AllActivitiesService
 			pipelineSingleReturnDTO.setActivityDateTime(recentActivity.getActivityDateTime());
 			pipelineSingleReturnDTO.setStagnantStatus(getStagnantStatus(l.getStagnantDaysCount()));
 			pipelineSingleReturnDTO.setIsOpen(recentActivity.getIsOpen());
+			pipelineSingleReturnDTO.setAssignee(l.getAsigneeId());
 			pipelineSingleReturnDTOList.add(pipelineSingleReturnDTO);
 
 		}
