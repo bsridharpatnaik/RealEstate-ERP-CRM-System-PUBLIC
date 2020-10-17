@@ -81,4 +81,10 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 
 	@Query(value = "SELECT la from LeadActivity la where la.activityDateTime>:startTime")
 	List<LeadActivity> findUpcomingActivities(@Param("startTime") Date startTime);
+
+	@Query(value = "SELECT count(la) from LeadActivity la where la.lead.leadId=:leadId AND (la.description LIKE '%Default activity created for new Lead%' OR la.description LIKE 'Call activity rescheduled from default call activity') AND la.isOpen=true")
+	int getOpenDefaultActivities(@Param("leadId") Long leadId);
+
+	@Query(value = "SELECT count(la) from LeadActivity la where la.lead.leadId=:leadId AND la.activityType IN (com.ec.crm.Enums.ActivityTypeEnum.Call) AND la.isOpen=true")
+	int getOpenCallActivities(@Param("leadId") Long leadId);
 }

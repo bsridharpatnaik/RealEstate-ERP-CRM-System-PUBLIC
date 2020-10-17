@@ -306,6 +306,12 @@ public class LeadActivityService
 						"Only activity of type Meeting can be created if a lead is in stage " + lead.getStatus());
 		}
 
+		if (laRepo.getOpenCallActivities(lead.getLeadId()) > 0)
+			throw new Exception("Please close CALL activity before creating any new activity");
+
+//		if (lead.getStatus().equals(LeadStatusEnum.New_Lead) && laRepo.getOpenDefaultActivities(lead.getLeadId()) > 0)
+//			throw new Exception("Please close default CALL activity before creating any new activity");
+
 		List<LeadActivity> existingActivities = laRepo.findByLeadActivityTypeOpen(payload.getLeadId(),
 				payload.getActivityType());
 		if (existingActivities.size() > 0)
