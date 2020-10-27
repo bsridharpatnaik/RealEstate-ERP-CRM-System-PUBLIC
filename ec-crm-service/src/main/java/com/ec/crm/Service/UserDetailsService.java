@@ -30,10 +30,14 @@ public class UserDetailsService
 		log.info("Making API Call to fetch current user");
 		try
 		{
+
 			UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
 					.header("Authorization", request.getHeader("Authorization")).retrieve()
 					.bodyToMono(UserReturnData.class).block();
-			return userDetails;
+			if (userDetails != null)
+				return userDetails;
+			else
+				throw new Exception("Unable to fetch current user. Please log out and try again");
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch current user " + e);
@@ -50,7 +54,10 @@ public class UserDetailsService
 			UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/byid/" + assigneeId)
 					.header("Authorization", request.getHeader("Authorization")).retrieve()
 					.bodyToMono(UserReturnData.class).block();
-			return userDetails;
+			if (userDetails != null)
+				return userDetails;
+			else
+				throw new Exception("Unable to fetch user details. Please log out and try again");
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch user from ID " + e);
@@ -67,7 +74,10 @@ public class UserDetailsService
 			UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/byname/" + name)
 					.header("Authorization", request.getHeader("Authorization")).retrieve()
 					.bodyToMono(UserReturnData.class).block();
-			return userDetails;
+			if (userDetails != null)
+				return userDetails;
+			else
+				throw new Exception("Unable to fetch user details. Please log out and try again");
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch user from ID " + e);
@@ -84,7 +94,10 @@ public class UserDetailsService
 			UserReturnData[] userDetails = webClientBuilder.build().get().uri(reqUrl + "user/list")
 					.header("Authorization", request.getHeader("Authorization")).retrieve()
 					.bodyToMono(UserReturnData[].class).block();
-			return userDetails;
+			if (userDetails != null)
+				return userDetails;
+			else
+				throw new Exception("Unable to fetch user details. Please log out and try again");
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch user list " + e);
