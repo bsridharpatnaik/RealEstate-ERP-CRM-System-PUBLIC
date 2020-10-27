@@ -322,7 +322,7 @@ public class LeadActivityService
 
 	}
 
-	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String creatorType)
+	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String creatorType) throws Exception
 	{
 		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		log.info("Invoked setFields");
@@ -468,7 +468,7 @@ public class LeadActivityService
 	}
 
 	private void setFieldsForReschedule(RescheduleActivityData rescheduleActivityData, LeadActivity newActivity,
-			LeadActivity leadActivity)
+			LeadActivity leadActivity) throws Exception
 	{
 		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		log.info("Invoked setFieldsForReschedule");

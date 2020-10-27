@@ -1,6 +1,5 @@
 package com.ec.crm.Controller;
 
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,83 +35,89 @@ import com.ec.crm.Model.Lead;
 import com.ec.crm.Service.LeadService;
 
 @RestController
-@RequestMapping(value="/lead",produces = { "application/json", "text/json" })
-public class LeadController {
+@RequestMapping(value = "/lead", produces =
+{ "application/json", "text/json" })
+public class LeadController
+{
 	@Autowired
 	LeadService leadService;
-	
+
 	@GetMapping
-	public Page<Lead> returnAllLeads(Pageable pageable) 
+	public Page<Lead> returnAllLeads(Pageable pageable)
 	{
 		return leadService.fetchAll(pageable);
 	}
-	
+
 	@GetMapping("{id}")
-	public LeadDAO returnSingleLead(@PathVariable Long id) throws Exception 
+	public LeadDAO returnSingleLead(@PathVariable Long id) throws Exception
 	{
 		return leadService.getSingleLead(id);
 	}
-	
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable) throws ParseException 
+	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable)
+			throws Exception
 	{
-		return leadService.findFilteredList(leadFilterDataList,pageable);
+		return leadService.findFilteredList(leadFilterDataList, pageable);
 	}
-	
+
 	@GetMapping("/history/{id}")
-	public List<Lead> findLeadHistory(@PathVariable long id) throws Exception 
+	public List<Lead> findLeadHistory(@PathVariable long id) throws Exception
 	{
 		return leadService.history(id);
 	}
-	
+
 	@GetMapping("/getallinfo/{id}")
-	public LeadDetailInfo findLeadDetailInfoByID(@PathVariable long id) throws Exception 
+	public LeadDetailInfo findLeadDetailInfoByID(@PathVariable long id) throws Exception
 	{
 		return leadService.findSingleLeadDetailInfo(id);
 	}
-	
+
 	@GetMapping("/validPropertyTypes")
-	public List<String> findValidPropertyTypes() 
+	public List<String> findValidPropertyTypes()
 	{
 		return PropertyTypeEnum.getValidPropertyType();
 	}
-	
+
 	@GetMapping("/validLeadStatus")
-	public List<String> findValidLeadStatus() 
+	public List<String> findValidLeadStatus()
 	{
 		return LeadStatusEnum.getValidLeadStatus();
 	}
-	
-	@PostMapping("/create") 
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Lead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception{
-		
+	public Lead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception
+	{
+
 		return leadService.createLead(payload);
 	}
-	
+
 	/*
 	 * @DeleteMapping(value = "/{id}") public ResponseEntity<?>
 	 * deleteLead(@PathVariable Long id) throws Exception {
 	 * leadService.deleteLead(id); return ResponseEntity.ok("Entity deleted"); }
 	 */
-	
+
 	@PutMapping("/{id}")
-	public Lead updateLead(@PathVariable Long id, @RequestBody LeadCreateData payload) throws Exception 
+	public Lead updateLead(@PathVariable Long id, @RequestBody LeadCreateData payload) throws Exception
 	{
 		return leadService.updateLead(payload, id);
-	} 
-	
+	}
+
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public Map<String, String> handleValidationExceptions(
-	  MethodArgumentNotValidException ex) {
-	    Map<String, String> errors = new HashMap<>();
-	    ex.getBindingResult().getAllErrors().forEach((error) -> {
-	        String fieldName = ((FieldError) error).getField();
-	        String errorMessage = error.getDefaultMessage();
-	        errors.put(fieldName, errorMessage);
-	    });
-	    return errors;
+	public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex)
+	{
+		Map<String, String> errors = new HashMap<>();
+		ex.getBindingResult().getAllErrors().forEach((error) ->
+		{
+			String fieldName = ((FieldError) error).getField();
+			String errorMessage = error.getDefaultMessage();
+			errors.put(fieldName, errorMessage);
+		});
+		return errors;
 	}
 }

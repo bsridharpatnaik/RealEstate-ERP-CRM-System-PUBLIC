@@ -1,6 +1,5 @@
 package com.ec.crm.Service;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -186,7 +185,7 @@ public class LeadService
 			payload.setSecondaryMobile(ReusableMethods.normalizePhoneNumber(payload.getSecondaryMobile()));
 	}
 
-	private void setLeadFields(Lead lead, @Valid LeadCreateData payload, String type)
+	private void setLeadFields(Lead lead, @Valid LeadCreateData payload, String type) throws Exception
 	{
 		log.info("Invoked setLeadFields");
 		lead.setCustomerName(payload.getCustomerName());
@@ -229,7 +228,7 @@ public class LeadService
 	}
 
 	public LeadListWithTypeAheadData findFilteredList(FilterDataList leadFilterDataList, Pageable pageable)
-			throws ParseException
+			throws Exception
 	{
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
 		LeadListWithTypeAheadData leadListWithTypeAheadData = new LeadListWithTypeAheadData();

@@ -72,7 +72,7 @@ public class AllActivitiesService
 		return returnData;
 	}
 
-	private PlannerAllReturnDAO transformDataToPlannerMode(List<LeadActivity> activities)
+	private PlannerAllReturnDAO transformDataToPlannerMode(List<LeadActivity> activities) throws Exception
 	{
 		log.info("Invoked transformDataToPlannerMode");
 		PlannerAllReturnDAO activitiesList = new PlannerAllReturnDAO();

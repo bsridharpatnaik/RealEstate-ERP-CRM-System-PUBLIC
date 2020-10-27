@@ -1,6 +1,5 @@
 package com.ec.crm.Filters;
 
-import java.text.ParseException;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -19,7 +18,7 @@ public final class LeadSpecifications
 {
 	static SpecificationsBuilder<Lead> specbldr = new SpecificationsBuilder<Lead>();
 
-	public static Specification<Lead> getSpecification(FilterDataList filterDataList) throws ParseException
+	public static Specification<Lead> getSpecification(FilterDataList filterDataList) throws Exception
 	{
 		List<String> name = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "name");
 		List<String> mobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "mobile");

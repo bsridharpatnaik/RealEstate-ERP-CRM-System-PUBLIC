@@ -31,7 +31,7 @@ public class PopulateDropdownService
 	@Autowired
 	UserDetailsService userDetailsService;
 
-	public NameAndProjectionDataForDropDown fetchData(String page)
+	public NameAndProjectionDataForDropDown fetchData(String page) throws Exception
 	{
 		NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
 		switch (page)

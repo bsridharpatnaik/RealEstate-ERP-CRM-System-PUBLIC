@@ -156,7 +156,7 @@ public class SpecificationsBuilder<T>
 
 	}
 
-	public Specification<T> whereDirectAssigneeContains(String key, List<String> assignees)
+	public Specification<T> whereDirectAssigneeContains(String key, List<String> assignees) throws Exception
 	{
 		UserDetailsService userDetailsService = BeanUtil.getBean(UserDetailsService.class);
 		Specification<T> finalSpec = null;
@@ -282,6 +282,7 @@ public class SpecificationsBuilder<T>
 	}
 
 	public Specification<T> whereChildAssigneeContains(String childTable, String childFiledName, List<String> assignees)
+			throws Exception
 	{
 		UserDetailsService userDetailsService = BeanUtil.getBean(UserDetailsService.class);
 		Specification<T> finalSpec = null;
