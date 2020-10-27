@@ -25,7 +25,7 @@ public class UserDetailsService
 
 	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
-	public UserReturnData getCurrentUser()
+	public UserReturnData getCurrentUser() throws Exception
 	{
 		log.info("Making API Call to fetch current user");
 		try
@@ -37,11 +37,11 @@ public class UserDetailsService
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch current user " + e);
-			return null;
+			throw new Exception("Unable to fetch current user. Please log out and try again");
 		}
 	}
 
-	public UserReturnData getUserFromId(Long assigneeId)
+	public UserReturnData getUserFromId(Long assigneeId) throws Exception
 	{
 		log.info("Making API Call to fetch user from ID");
 		try
@@ -54,11 +54,11 @@ public class UserDetailsService
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch user from ID " + e);
-			return null;
+			throw new Exception("Unable to fetch user details. Please log out and try again");
 		}
 	}
 
-	public UserReturnData getIdFromUsername(String name)
+	public UserReturnData getIdFromUsername(String name) throws Exception
 	{
 		log.info("Making API Call to fetch userid from name");
 		try
@@ -71,11 +71,11 @@ public class UserDetailsService
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch user from ID " + e);
-			return null;
+			throw new Exception("Unable to fetch user details. Please log out and try again");
 		}
 	}
 
-	public UserReturnData[] getUserList()
+	public UserReturnData[] getUserList() throws Exception
 	{
 		log.info("Making API Call to fetch userlist");
 		try
@@ -88,7 +88,7 @@ public class UserDetailsService
 		} catch (Exception e)
 		{
 			log.info("Error API Call to fetch user list " + e);
-			return null;
+			throw new Exception("Unable to fetch user details. Please log out and try again");
 		}
 
 	}
