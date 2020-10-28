@@ -46,7 +46,8 @@ public class ActivitySpecifications
 		List<String> stagnantStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stagnantStatus");
 
 		List<String> showOnlyLatest = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyLatest");
-
+		List<String> showRescheduled = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
+				"showRescheduled");
 		Specification<LeadActivity> finalSpec = null;
 
 		if (name != null && name.size() > 0)
@@ -141,6 +142,10 @@ public class ActivitySpecifications
 		if (showOnlyLatest != null && showOnlyLatest.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereDirectIntFieldEquals(LeadActivity_.IS_LATEST, showOnlyLatest));
+
+		if (showRescheduled != null && showRescheduled.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereDirectIntFieldEquals(LeadActivity_.IS_RESCHEDULED, showRescheduled));
 
 		if (stagnantStatus != null && stagnantStatus.size() > 0)
 		{
