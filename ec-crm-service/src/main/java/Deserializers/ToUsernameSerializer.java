@@ -1,6 +1,9 @@
 package Deserializers;
 
 import java.io.IOException;
+import java.util.Map;
+
+import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,9 @@ public class ToUsernameSerializer extends JsonSerializer<Long>
 	@Autowired
 	UserDetailsService userDetailsService;
 
+	@Resource
+	private Map<Long, String> userIdNameMap;
+
 	@Override
 	public void serialize(Long value, JsonGenerator jgen, SerializerProvider provider)
 			throws IOException, JsonGenerationException
@@ -34,7 +40,7 @@ public class ToUsernameSerializer extends JsonSerializer<Long>
 				String username;
 				try
 				{
-					username = userDetailsService.getUserFromId(value).getUsername();
+					username = userIdNameMap.get(value);
 					jgen.writeString(username);
 				} catch (Exception e)
 				{

@@ -25,6 +25,13 @@ public class SendCRMNotificationsService
 		 * log.info("Upcoming Activities -" + upcomingActivityList.size()); } catch
 		 * (Exception e) { log.error(e.getMessage()); }
 		 */
+
+		// TO DO
+		// 1. Identify all records having acivitydatetime in 5 mins
+		// 2. Iterate through the records and see if nitification is alreadt sent to
+		// them
+		// 3. If notification is not sent, send the notification and store in history
+		// call gatewat service to send notification
 	}
 
 }
