@@ -54,7 +54,6 @@ public class LeadActivityNotificationService
 
 	public String sendPnsToDevice(LANotificationRequestDto notificationRequestDto)
 	{
-		@SuppressWarnings("deprecation")
 		Message message = Message.builder().setToken(notificationRequestDto.getTarget())
 				.setNotification(new Notification(notificationRequestDto.getTitle(), notificationRequestDto.getBody()))
 				.putData("content", notificationRequestDto.getTitle()).putData("body", notificationRequestDto.getBody())
