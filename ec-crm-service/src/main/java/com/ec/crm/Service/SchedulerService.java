@@ -17,7 +17,8 @@ public class SchedulerService
 
 	Logger log = LoggerFactory.getLogger(SchedulerService.class);
 
-	@Scheduled(cron = "* * * * * *")
+	//@Scheduled(cron = "* * * * * *")
+	@Scheduled(fixedDelay = 60000)   // 1 minute; add another zero to make it 10 minutes
 	public void sendStockNotificationEmailInEvening() throws Exception
 	{
 		sendCRMNotificationsService.sendNotificationForUpcomingActivities();
