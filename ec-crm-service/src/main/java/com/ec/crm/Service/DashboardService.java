@@ -5,7 +5,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.DashboardData;
-import com.ec.crm.Data.MapForPipelineAndActivities;
 import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Model.ConversionRatio;
 import com.ec.crm.Model.LeadActivity;
@@ -21,6 +24,14 @@ import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.Repository.ConvertionRatioRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.StagnantStatsRepo;
+import com.ec.crm.SubClasses.SetActivitiesCreated;
+import com.ec.crm.SubClasses.SetDealClosed;
+import com.ec.crm.SubClasses.SetDealLost;
+import com.ec.crm.SubClasses.SetLeadGenerated;
+import com.ec.crm.SubClasses.SetPendingActivities;
+import com.ec.crm.SubClasses.SetPropertyVisit;
+import com.ec.crm.SubClasses.SetTodaysActivities;
+import com.ec.crm.SubClasses.SetUpcomingActivities;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,8 +49,8 @@ public class DashboardService
 	@Autowired
 	ConvertionRatioRepo convertionRatioRepo;
 
-	@Autowired
-	UserDetailsService userDetailsService;
+	@Resource
+	private Map<Long, String> userIdNameMap;
 
 	Logger log = LoggerFactory.getLogger(DashboardService.class);
 
@@ -54,138 +65,18 @@ public class DashboardService
 		data = lRepo.getActivity(fromdate, todate);
 
 		log.info("Fetching Lead Generated Stats");
-		dashboardPipelineReturnData.setLeadGenerated(
-				new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
-						data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-							} catch (Exception e)
-							{
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
 
-		log.info("Fetching Activities Created Stats");
-		dashboardPipelineReturnData.setActivitiesCreated(
-				new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() != 404).count(),
-						data.stream().filter(c -> c.getCreatorId() != 404).collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-							} catch (Exception e)
-							{
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
+		ExecutorService executors = Executors.newFixedThreadPool(8);
+		CyclicBarrier barrier = new CyclicBarrier(8);
 
-		log.info("Fetching Property Visit Stats");
-		dashboardPipelineReturnData.setTotalPropertyVisit(new MapForPipelineAndActivities(
-				data.stream().filter(c -> c.getActivityType().name() == "Property_Visit").count(), data.stream()
-						.filter(c -> c.getActivityType().name() == "Property_Visit").collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-							} catch (Exception e)
-							{
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
-
-		log.info("Fetching Deal close Stats");
-		dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
-				data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").count(),
-				data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").collect(Collectors.groupingBy(c ->
-				{
-					try
-					{
-						return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-					} catch (Exception e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					return null;
-				}, Collectors.counting()))));
-
-		log.info("Fetching deal lost Stats");
-		dashboardPipelineReturnData.setDealLost(new MapForPipelineAndActivities(
-				data.stream().filter(c -> c.getActivityType().name() == "Deal_Lost").count(),
-				data.stream().filter(c -> c.getActivityType().name() == "Deal_Lost").collect(Collectors.groupingBy(c ->
-				{
-					try
-					{
-						return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-					} catch (Exception e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					return null;
-				}, Collectors.counting()))));
-
-		log.info("Fetching today's activities Stats");
-		dashboardPipelineReturnData.setTodaysActivities(
-				new MapForPipelineAndActivities(data.stream().filter(c -> c.getIsOpen() == true).count(),
-						data.stream().filter(c -> c.getIsOpen() == true).collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-							} catch (Exception e)
-							{
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
-
-		log.info("Fetching pending activities Stats");
-		dashboardPipelineReturnData.setPendingActivities(new MapForPipelineAndActivities(
-				data.stream().filter(c -> c.getIsOpen() == true)
-						.filter(c -> c.getActivityDateTime().compareTo(new Date()) < 0).count(),
-				data.stream().filter(c -> c.getIsOpen() == true)
-						.filter(c -> c.getActivityDateTime().compareTo(new Date()) < 0)
-						.collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-							} catch (Exception e)
-							{
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
-
-		log.info("Fetching upcoming activities Stats");
-		dashboardPipelineReturnData.setUpcomingActivities(new MapForPipelineAndActivities(
-				data.stream().filter(c -> c.getIsOpen() == true)
-						.filter(c -> c.getActivityDateTime().compareTo(new Date()) > 0).count(),
-				data.stream().filter(c -> c.getIsOpen() == true)
-						.filter(c -> c.getActivityDateTime().compareTo(new Date()) > 0)
-						.collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return userDetailsService.getUserFromId(c.getLead().getAsigneeId()).getUsername();
-							} catch (Exception e)
-							{
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
+		executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetPropertyVisit(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetDealLost(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 
 		return dashboardPipelineReturnData;
 
