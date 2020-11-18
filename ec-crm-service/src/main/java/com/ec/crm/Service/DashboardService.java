@@ -64,7 +64,7 @@ public class DashboardService
 		log.info("fromdate : " + fromdate + " todate: " + todate);
 		data = lRepo.getActivity(fromdate, todate);
 
-		log.info("Fetching Lead Generated Stats");
+		log.info("Fetching Stats");
 
 		ExecutorService executors = Executors.newFixedThreadPool(8);
 		CyclicBarrier barrier = new CyclicBarrier(8);

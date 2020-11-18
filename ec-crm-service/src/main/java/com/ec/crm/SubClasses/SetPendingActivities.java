@@ -7,6 +7,9 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ec.crm.Data.MapForPipelineAndActivities;
 import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Model.LeadActivity;
@@ -20,6 +23,8 @@ public class SetPendingActivities implements Runnable
 	private PipelineAndActivitiesForDashboard dashboardPipelineReturnData;
 	private List<LeadActivity> data;
 	Map<Long, String> idNameMap;
+
+	Logger log = LoggerFactory.getLogger(SetPendingActivities.class);
 
 	public SetPendingActivities(CyclicBarrier barrier, PipelineAndActivitiesForDashboard dashboardPipelineReturnData,
 			List<LeadActivity> data, Map<Long, String> idNameMap)
@@ -37,7 +42,7 @@ public class SetPendingActivities implements Runnable
 
 		try
 		{
-			// do your task here
+			log.info("Fetching stats for SetPendingActivities");
 			dashboardPipelineReturnData.setPendingActivities(new MapForPipelineAndActivities(
 					data.stream().filter(c -> c.getIsOpen() == true)
 							.filter(c -> c.getActivityDateTime().compareTo(new Date()) < 0).count(),
@@ -49,7 +54,8 @@ public class SetPendingActivities implements Runnable
 								{
 									return idNameMap.get(c.getLead().getAsigneeId());
 								} catch (Exception e)
-								{ // TODO Auto-generated catch block e.printStackTrace();
+								{ // TODO Auto-generated catch block
+									e.printStackTrace();
 								}
 								return null;
 							}, Collectors.counting()))));

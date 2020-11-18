@@ -6,6 +6,9 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ec.crm.Data.MapForPipelineAndActivities;
 import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Model.LeadActivity;
@@ -19,6 +22,8 @@ public class SetLeadGenerated implements Runnable
 	private PipelineAndActivitiesForDashboard dashboardPipelineReturnData;
 	private List<LeadActivity> data;
 	Map<Long, String> idNameMap;
+
+	Logger log = LoggerFactory.getLogger(SetLeadGenerated.class);
 
 	public SetLeadGenerated(CyclicBarrier barrier, PipelineAndActivitiesForDashboard dashboardPipelineReturnData,
 			List<LeadActivity> data, Map<Long, String> idNameMap)
@@ -36,14 +41,15 @@ public class SetLeadGenerated implements Runnable
 
 		try
 		{
-			// do your task here
+			log.info("Fetching stats for Lead Generated");
 			dashboardPipelineReturnData.setLeadGenerated(
 					new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
 							data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->
 							{
+
 								try
 								{
-									System.out.println(c.getLead().getAsigneeId());
+
 									return idNameMap.get(c.getLead().getAsigneeId());
 								} catch (Exception e)
 								{

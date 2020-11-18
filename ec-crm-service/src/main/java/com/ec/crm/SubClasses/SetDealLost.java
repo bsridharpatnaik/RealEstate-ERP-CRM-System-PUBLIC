@@ -6,6 +6,9 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.ec.crm.Data.MapForPipelineAndActivities;
 import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Model.LeadActivity;
@@ -19,6 +22,8 @@ public class SetDealLost implements Runnable
 	private PipelineAndActivitiesForDashboard dashboardPipelineReturnData;
 	private List<LeadActivity> data;
 	Map<Long, String> idNameMap;
+
+	Logger log = LoggerFactory.getLogger(SetDealLost.class);
 
 	public SetDealLost(CyclicBarrier barrier, PipelineAndActivitiesForDashboard dashboardPipelineReturnData,
 			List<LeadActivity> data, Map<Long, String> idNameMap)
@@ -36,7 +41,7 @@ public class SetDealLost implements Runnable
 
 		try
 		{
-			// do your task here
+			log.info("Fetching stats for SetDealLost");
 			dashboardPipelineReturnData.setDealLost(new MapForPipelineAndActivities(
 					data.stream().filter(c -> c.getActivityType().name() == "Deal_Lost").count(), data.stream()
 							.filter(c -> c.getActivityType().name() == "Deal_Lost").collect(Collectors.groupingBy(c ->
