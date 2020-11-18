@@ -54,11 +54,13 @@ public class SetLeadGenerated implements Runnable
 								} catch (Exception e)
 								{
 									// TODO Auto-generated catch block
+									log.error(e.getMessage());
 									e.printStackTrace();
 									return null;
 								}
 
 							}, Collectors.counting()))));
+			log.info("Completed stats for Lead Generated");
 
 		} finally
 		{
