@@ -100,11 +100,11 @@ public final class LeadSpecifications
 
 		if (createdStartDate != null && createdStartDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldDateGreaterThan(Lead_.CREATED, createdStartDate));
+					specbldr.whereDirectFieldDateGreaterThanOrEqual(Lead_.CREATED, createdStartDate));
 
 		if (createdEndDate != null && createdEndDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldDateLessThan(Lead_.CREATED, createdEndDate));
+					specbldr.whereDirectFieldDateLessThanOrEqual(Lead_.CREATED, createdEndDate));
 
 		if (leadStatus != null && leadStatus.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,

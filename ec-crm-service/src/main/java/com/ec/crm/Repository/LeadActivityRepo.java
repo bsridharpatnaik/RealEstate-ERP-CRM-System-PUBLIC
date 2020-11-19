@@ -59,7 +59,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value = "SELECT MAX(modified) FROM LeadActivity la where la.lead.leadId=:leadId and la.lead.status not in ('Deal_closed','Deal_Lost')")
 	Date fetchLastModified(@Param("leadId") Long leadId);
 
-	@Query(value = "SELECT la from LeadActivity la where la.created BETWEEN :fromdate AND :todate")
+	@Query(value = "SELECT la from LeadActivity la where la.activityDateTime >= :fromdate AND la.activityDateTime<=:todate")
 	List<LeadActivity> getActivity(@Param("fromdate") Date fromdate, @Param("todate") Date todate);
 
 	@Query(value = "SELECT la.lead.asigneeId, count(la.lead), count(la) from LeadActivity la where "

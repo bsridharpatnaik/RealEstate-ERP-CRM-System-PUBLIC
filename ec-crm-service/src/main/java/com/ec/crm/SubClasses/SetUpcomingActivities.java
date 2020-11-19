@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.ec.crm.Data.MapForPipelineAndActivities;
 import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.NoArgsConstructor;
 
@@ -41,23 +42,28 @@ public class SetUpcomingActivities implements Runnable
 	{
 
 		log.info("Fetching stats for SetUpcomingActivities");
-		dashboardPipelineReturnData.setUpcomingActivities(new MapForPipelineAndActivities(
-				data.stream().filter(c -> c.getIsOpen() == true)
-						.filter(c -> c.getActivityDateTime().compareTo(new Date()) > 0).count(),
-				data.stream().filter(c -> c.getIsOpen() == true)
-						.filter(c -> c.getActivityDateTime().compareTo(new Date()) > 0)
-						.collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return idNameMap.get(c.getLead().getAsigneeId());
-							} catch (Exception e)
-							{ // TODO Auto-generated catch block
-								log.error(e.getMessage());
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
+		dashboardPipelineReturnData
+				.setUpcomingActivities(
+						new MapForPipelineAndActivities(
+								data.stream()
+										.filter(c -> c.getIsOpen() == true && c.getActivityDateTime()
+												.after(ReusableMethods.atEndOfDay(new Date())))
+										.count(),
+								data.stream()
+										.filter(c -> c.getIsOpen() == true && c.getActivityDateTime()
+												.after(ReusableMethods.atEndOfDay(new Date())))
+										.collect(Collectors.groupingBy(c ->
+										{
+											try
+											{
+												return idNameMap.get(c.getLead().getAsigneeId());
+											} catch (Exception e)
+											{ // TODO Auto-generated catch block
+												log.error(e.getMessage());
+												e.printStackTrace();
+											}
+											return null;
+										}, Collectors.counting()))));
 		log.info("Completed stats for SetUpcomingActivities");
 		try
 		{

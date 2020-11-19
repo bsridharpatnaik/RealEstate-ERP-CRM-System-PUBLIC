@@ -103,7 +103,8 @@ public class SpecificationsBuilder<T>
 		return finalSpec;
 	}
 
-	public Specification<T> whereDirectFieldDateGreaterThan(String key, List<String> startDates) throws ParseException
+	public Specification<T> whereDirectFieldDateGreaterThanOrEqual(String key, List<String> startDates)
+			throws ParseException
 	{
 		Date startDate = new SimpleDateFormat("yyyy/MM/dd").parse(startDates.get(0));
 		Specification<T> finalSpec = null;
@@ -113,7 +114,7 @@ public class SpecificationsBuilder<T>
 		return finalSpec;
 	}
 
-	public Specification<T> whereDirectFieldDateLessThan(String key, List<String> endDates) throws ParseException
+	public Specification<T> whereDirectFieldDateLessThanOrEqual(String key, List<String> endDates) throws ParseException
 	{
 		Date endDate = new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
 		Specification<T> finalSpec = null;

@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,9 +61,9 @@ public class DashboardService
 		List<LeadActivity> data = new ArrayList<LeadActivity>();
 		Date fromdate = payload.getFromDate();
 		Date todate = payload.getToDate();
-
-		log.info("fromdate : " + fromdate + " todate: " + todate);
-		data = lRepo.getActivity(fromdate, todate);
+		Date nextDate = DateUtils.addDays(todate, 1);
+		log.info("fromdate : " + fromdate + " todate: " + nextDate);
+		data = lRepo.getActivity(fromdate, nextDate);
 
 		log.info("Fetching Stats");
 

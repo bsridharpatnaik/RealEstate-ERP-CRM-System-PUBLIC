@@ -1,5 +1,6 @@
 package com.ec.crm.SubClasses;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.ec.crm.Data.MapForPipelineAndActivities;
 import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.NoArgsConstructor;
 
@@ -40,20 +42,27 @@ public class SetTodaysActivities implements Runnable
 	{
 
 		log.info("Fetching stats for SetTodaysActivities");
-		dashboardPipelineReturnData.setTodaysActivities(
-				new MapForPipelineAndActivities(data.stream().filter(c -> c.getIsOpen() == true).count(),
-						data.stream().filter(c -> c.getIsOpen() == true).collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return idNameMap.get(c.getLead().getAsigneeId());
-							} catch (Exception e)
-							{ // TODO Auto-generated catch block
-								log.error(e.getMessage());
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
+		dashboardPipelineReturnData
+				.setTodaysActivities(new MapForPipelineAndActivities(
+						data.stream()
+								.filter(c -> ReusableMethods.atStartOfDay(c.getActivityDateTime())
+										.equals(ReusableMethods.atStartOfDay(new Date())))
+								.count(),
+						data.stream()
+								.filter(c -> ReusableMethods.atStartOfDay(c.getActivityDateTime())
+										.equals(ReusableMethods.atStartOfDay(new Date())))
+								.collect(Collectors.groupingBy(c ->
+								{
+									try
+									{
+										return idNameMap.get(c.getLead().getAsigneeId());
+									} catch (Exception e)
+									{ // TODO Auto-generated catch block
+										log.error(e.getMessage());
+										e.printStackTrace();
+									}
+									return null;
+								}, Collectors.counting()))));
 		log.info("Completed stats for SetTodaysActivities");
 		try
 		{

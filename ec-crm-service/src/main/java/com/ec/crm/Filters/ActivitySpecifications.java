@@ -133,11 +133,11 @@ public class ActivitySpecifications
 
 		if (activityStartDate != null && activityStartDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldDateGreaterThan(LeadActivity_.ACTIVITY_DATE_TIME, activityStartDate));
+					specbldr.whereDirectFieldDateGreaterThanOrEqual(LeadActivity_.ACTIVITY_DATE_TIME, activityStartDate));
 
 		if (activityEndDate != null && activityEndDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldDateLessThan(LeadActivity_.ACTIVITY_DATE_TIME, activityEndDate));
+					specbldr.whereDirectFieldDateLessThanOrEqual(LeadActivity_.ACTIVITY_DATE_TIME, activityEndDate));
 
 		if (showOnlyLatest != null && showOnlyLatest.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
