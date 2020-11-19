@@ -40,37 +40,36 @@ public class SetPendingActivities implements Runnable
 	public void run()
 	{
 
+		log.info("Fetching stats for SetPendingActivities");
+		dashboardPipelineReturnData.setPendingActivities(new MapForPipelineAndActivities(
+				data.stream().filter(c -> c.getIsOpen() == true)
+						.filter(c -> c.getActivityDateTime().compareTo(new Date()) < 0).count(),
+				data.stream().filter(c -> c.getIsOpen() == true)
+						.filter(c -> c.getActivityDateTime().compareTo(new Date()) < 0)
+						.collect(Collectors.groupingBy(c ->
+						{
+							try
+							{
+								return idNameMap.get(c.getLead().getAsigneeId());
+							} catch (Exception e)
+							{ // TODO Auto-generated catch block
+								log.error(e.getMessage());
+								e.printStackTrace();
+							}
+							return null;
+						}, Collectors.counting()))));
+		log.info("Completed stats for SetPendingActivities");
 		try
 		{
-			log.info("Fetching stats for SetPendingActivities");
-			dashboardPipelineReturnData.setPendingActivities(new MapForPipelineAndActivities(
-					data.stream().filter(c -> c.getIsOpen() == true)
-							.filter(c -> c.getActivityDateTime().compareTo(new Date()) < 0).count(),
-					data.stream().filter(c -> c.getIsOpen() == true)
-							.filter(c -> c.getActivityDateTime().compareTo(new Date()) < 0)
-							.collect(Collectors.groupingBy(c ->
-							{
-								try
-								{
-									return idNameMap.get(c.getLead().getAsigneeId());
-								} catch (Exception e)
-								{ // TODO Auto-generated catch block
-									log.error(e.getMessage());
-									e.printStackTrace();
-								}
-								return null;
-							}, Collectors.counting()))));
-			log.info("Completed stats for SetPendingActivities");
-		} finally
+			barrier.await();
+		} catch (InterruptedException e)
 		{
-			try
-			{
-				barrier.await();
-			} catch (InterruptedException | BrokenBarrierException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BrokenBarrierException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 }

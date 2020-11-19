@@ -39,39 +39,37 @@ public class SetLeadGenerated implements Runnable
 	public void run()
 	{
 
-		try
-		{
-			log.info("Fetching stats for Lead Generated");
-			dashboardPipelineReturnData.setLeadGenerated(
-					new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
-							data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->
+		log.info("Fetching stats for Lead Generated");
+		dashboardPipelineReturnData.setLeadGenerated(
+				new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
+						data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->
+						{
+
+							try
 							{
 
-								try
-								{
+								return idNameMap.get(c.getLead().getAsigneeId());
+							} catch (Exception e)
+							{
+								// TODO Auto-generated catch block
+								log.error(e.getMessage());
+								e.printStackTrace();
+								return null;
+							}
 
-									return idNameMap.get(c.getLead().getAsigneeId());
-								} catch (Exception e)
-								{
-									// TODO Auto-generated catch block
-									log.error(e.getMessage());
-									e.printStackTrace();
-									return null;
-								}
-
-							}, Collectors.counting()))));
-			log.info("Completed stats for Lead Generated");
-
-		} finally
+						}, Collectors.counting()))));
+		log.info("Completed stats for Lead Generated");
+		try
 		{
-			try
-			{
-				barrier.await();
-			} catch (InterruptedException | BrokenBarrierException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			barrier.await();
+		} catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BrokenBarrierException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 }

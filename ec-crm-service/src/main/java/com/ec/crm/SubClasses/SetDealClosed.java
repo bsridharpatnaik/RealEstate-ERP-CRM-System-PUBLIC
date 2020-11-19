@@ -38,35 +38,33 @@ public class SetDealClosed implements Runnable
 	@Override
 	public void run()
 	{
-
+		log.info("Fetching stats for SetDealClosed");
+		dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
+				data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").count(),
+				data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").collect(Collectors.groupingBy(c ->
+				{
+					try
+					{
+						return idNameMap.get(c.getLead().getAsigneeId());
+					} catch (Exception e)
+					{ // TODO Auto-generated catch block
+						log.error(e.getMessage());
+						e.printStackTrace();
+					}
+					return null;
+				}, Collectors.counting()))));
+		log.info("Completed stats for SetDealClosed");
 		try
 		{
-			log.info("Fetching stats for SetDealClosed");
-			dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
-					data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").count(), data.stream()
-							.filter(c -> c.getActivityType().name() == "Deal_Close").collect(Collectors.groupingBy(c ->
-							{
-								try
-								{
-									return idNameMap.get(c.getLead().getAsigneeId());
-								} catch (Exception e)
-								{ // TODO Auto-generated catch block
-									log.error(e.getMessage());
-									e.printStackTrace();
-								}
-								return null;
-							}, Collectors.counting()))));
-			log.info("Completed stats for SetDealClosed");
-		} finally
+			barrier.await();
+		} catch (InterruptedException e)
 		{
-			try
-			{
-				barrier.await();
-			} catch (InterruptedException | BrokenBarrierException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BrokenBarrierException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 }

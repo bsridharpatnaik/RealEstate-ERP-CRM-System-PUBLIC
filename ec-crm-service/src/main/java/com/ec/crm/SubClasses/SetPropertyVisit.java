@@ -39,35 +39,33 @@ public class SetPropertyVisit implements Runnable
 	public void run()
 	{
 
+		log.info("Fetching stats for SetPropertyVisit");
+		dashboardPipelineReturnData.setTotalPropertyVisit(new MapForPipelineAndActivities(
+				data.stream().filter(c -> c.getActivityType().name() == "Property_Visit").count(), data.stream()
+						.filter(c -> c.getActivityType().name() == "Property_Visit").collect(Collectors.groupingBy(c ->
+						{
+							try
+							{
+								return idNameMap.get(c.getLead().getAsigneeId());
+							} catch (Exception e)
+							{ // TODO Auto-generated catch block
+								log.error(e.getMessage());
+								e.printStackTrace();
+							}
+							return null;
+						}, Collectors.counting()))));
+		log.info("Completed stats for SetPropertyVisit");
 		try
 		{
-			log.info("Fetching stats for SetPropertyVisit");
-			dashboardPipelineReturnData.setTotalPropertyVisit(new MapForPipelineAndActivities(
-					data.stream().filter(c -> c.getActivityType().name() == "Property_Visit").count(),
-					data.stream().filter(c -> c.getActivityType().name() == "Property_Visit")
-							.collect(Collectors.groupingBy(c ->
-							{
-								try
-								{
-									return idNameMap.get(c.getLead().getAsigneeId());
-								} catch (Exception e)
-								{ // TODO Auto-generated catch block
-									log.error(e.getMessage());
-									e.printStackTrace();
-								}
-								return null;
-							}, Collectors.counting()))));
-			log.info("Completed stats for SetPropertyVisit");
-		} finally
+			barrier.await();
+		} catch (InterruptedException e)
 		{
-			try
-			{
-				barrier.await();
-			} catch (InterruptedException | BrokenBarrierException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BrokenBarrierException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 }

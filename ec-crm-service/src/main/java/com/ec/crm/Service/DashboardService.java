@@ -78,6 +78,32 @@ public class DashboardService
 		executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 
+		boolean flag = false;
+		Date returnDateTime = new Date();
+		while (flag == false)
+		{
+			if ((dashboardPipelineReturnData.getActivitiesCreated() == null
+					|| dashboardPipelineReturnData.getActivitiesCreated() == null
+					|| dashboardPipelineReturnData.getDealClosed() == null
+					|| dashboardPipelineReturnData.getDealLost() == null
+					|| dashboardPipelineReturnData.getLeadGenerated() == null
+					|| dashboardPipelineReturnData.getPendingActivities() == null
+					|| dashboardPipelineReturnData.getTodaysActivities() == null
+					|| dashboardPipelineReturnData.getTotalPropertyVisit() == null
+					|| dashboardPipelineReturnData.getUpcomingActivities() == null)
+					&& (returnDateTime.getTime() - new Date().getTime()) / 1000 < 3)
+			{
+				log.info("Waiting for flag to be true. Current difference in time - "
+						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);
+				flag = false;
+			} else
+			{
+				log.info("Flag is true. Current difference in time - "
+						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);
+				flag = true;
+			}
+
+		}
 		return dashboardPipelineReturnData;
 
 	}
