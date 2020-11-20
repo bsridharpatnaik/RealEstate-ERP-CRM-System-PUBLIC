@@ -19,6 +19,6 @@ public interface NotificationSentRepository extends CrudRepository<NotificationS
 {
 	
      NotificationSent save(NotificationSent ns);
-     NotificationSent findByLeadActivityId(Long activityId);
+     NotificationSent findByLeadActivityIdAndStatus(Long activityId,String status);
 	
 }
