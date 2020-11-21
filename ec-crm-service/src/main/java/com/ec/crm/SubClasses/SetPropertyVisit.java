@@ -40,20 +40,26 @@ public class SetPropertyVisit implements Runnable
 	{
 
 		log.info("Fetching stats for SetPropertyVisit");
-		dashboardPipelineReturnData.setTotalPropertyVisit(new MapForPipelineAndActivities(
-				data.stream().filter(c -> c.getActivityType().name() == "Property_Visit").count(), data.stream()
-						.filter(c -> c.getActivityType().name() == "Property_Visit").collect(Collectors.groupingBy(c ->
-						{
-							try
-							{
-								return idNameMap.get(c.getLead().getAsigneeId());
-							} catch (Exception e)
-							{ // TODO Auto-generated catch block
-								log.error(e.getMessage());
-								e.printStackTrace();
-							}
-							return null;
-						}, Collectors.counting()))));
+		dashboardPipelineReturnData.setTotalPropertyVisit(
+				new MapForPipelineAndActivities(
+						data.stream()
+								.filter(c -> c.getActivityType().name() == "Property_Visit"
+										&& c.isRescheduled() == false)
+								.count(),
+						data.stream().filter(
+								c -> c.getActivityType().name() == "Property_Visit" && c.isRescheduled() == false)
+								.collect(Collectors.groupingBy(c ->
+								{
+									try
+									{
+										return idNameMap.get(c.getLead().getAsigneeId());
+									} catch (Exception e)
+									{ // TODO Auto-generated catch block
+										log.error(e.getMessage());
+										e.printStackTrace();
+									}
+									return null;
+								}, Collectors.counting()))));
 		log.info("Completed stats for SetPropertyVisit");
 		try
 		{
