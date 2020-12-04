@@ -588,9 +588,6 @@ public class LeadActivityService
 	public LeadActivity getRecentActivityByLead(Lead lead)
 	{
 		List<LeadActivity> activities = laRepo.findAllActivitiesForLead(lead.getLeadId());
-		log.info("Get all the Activity");
-		System.out.println(lead.getCustomerName());
-		System.out.println(activities);
 		LeadActivity activity = new LeadActivity();
 		try
 		{
@@ -632,12 +629,6 @@ public class LeadActivityService
 		Long leadId = activities.get(0).getLead().getLeadId();
 		for (LeadActivity activity : activities)
 		{
-			log.info("check if any activity is open");
-			System.out.println("Start Of Day - " + ReusableMethods.atStartOfDay(new Date()));
-			System.out.println("End Of Day - " + ReusableMethods.atEndOfDay(new Date()));
-
-			System.out.println(activity.getActivityDateTime().after(ReusableMethods.atStartOfDay(new Date())));
-
 			if (activity.getIsOpen() == true
 					&& activity.getActivityDateTime().after(ReusableMethods.atStartOfDay(new Date()))
 					&& activity.getActivityDateTime().before(ReusableMethods.atEndOfDay(new Date()))) // Pass time zone
@@ -658,9 +649,6 @@ public class LeadActivityService
 				pastExists = true;
 		}
 
-		System.out.println("isPendingExists - " + isPendingExists);
-		System.out.println("isUpcomingExists - " + isUpcomingExists);
-		System.out.println("pastExists - " + pastExists);
 		/*
 		 * Only Pending Only past Only upcoming
 		 * 
@@ -708,7 +696,6 @@ public class LeadActivityService
 			return noOfDaysBetween;
 		} catch (Exception ch)
 		{
-			System.out.println("No modified date found. Lead must be closed");
 			return (long) 0;
 
 		}

@@ -2,8 +2,17 @@ package com.ec.crm.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +35,11 @@ import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.Model.Lead_;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
+import com.ec.crm.ReusableClasses.SpecificationsBuilder;
+import com.ec.crm.SubClasses.SetDataForPipeline;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,16 +70,12 @@ public class AllActivitiesService
 		log.info("Invoked - findFilteredData");
 		List<LeadActivity> activities = new ArrayList<LeadActivity>();
 
-		log.info("Fetching filteration based on filter data received");
 		Specification<LeadActivity> spec = ActivitySpecifications.getSpecification(leadFilterDataList);
-
-		log.info("Specification Fetch Complete");
 		if (spec != null)
 			activities = laRepo.findAll(spec);
 		else
 			activities = laRepo.findAll();
 
-		log.info("Transforming Data for return");
 		PlannerAllReturnDAO returnData = transformDataToPlannerMode(activities);
 		return returnData;
 	}
@@ -86,7 +94,6 @@ public class AllActivitiesService
 		activitiesList.setEmail(fetchPlannerDataFromActivityList(activities, "Email"));
 		activitiesList.setDeal_lost(fetchPlannerDataFromActivityList(activities, "Deal_Lost"));
 		activitiesList.setDropdownData(populateDropdownService.fetchData("lead"));
-		log.info("Setting tyoeahead data");
 		activitiesList.setTypeAheadDataForGlobalSearch(leadService.fetchTypeAheadForLeadGlobalSearch());
 		return activitiesList;
 	}
@@ -121,20 +128,23 @@ public class AllActivitiesService
 			throws Exception
 	{
 		log.info("Invoked - findFilteredDataForPlanner");
+		SpecificationsBuilder<Lead> specbldr = new SpecificationsBuilder<Lead>();
 		List<Lead> leads = new ArrayList<Lead>();
 
-		log.info("Fetching filteration based on filter data received");
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
 
-		log.info("Specification Fetch Complete");
+		Specification<Lead> internalSpec = (Root<Lead> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+				.notEqual(root.get(Lead_.STATUS), Enum.valueOf(LeadStatusEnum.class, "Deal_Lost"));
+		Specification<Lead> finalSpec = specbldr.specAndCondition(spec, internalSpec);
 
-		if (spec != null)
-			leads = lRepo.findAll(spec);
+		if (finalSpec != null)
+			leads = lRepo.findAll(finalSpec);
 		else
 			leads = lRepo.findAll();
 
-		log.info("Transforming Data for return");
+		System.out.println("Size ----" + leads.size());
 		PipelineAllReturnDAO returnData = transformDataToPipelineMode(leads);
+
 		return returnData;
 	}
 
@@ -143,22 +153,73 @@ public class AllActivitiesService
 		PipelineAllReturnDAO pipelineAllReturnDAO = new PipelineAllReturnDAO();
 		pipelineAllReturnDAO.setDropdownData(populateDropdownService.fetchData("lead"));
 		pipelineAllReturnDAO.setTypeAheadDataForGlobalSearch(leadService.fetchTypeAheadForLeadGlobalSearch());
-		pipelineAllReturnDAO.setLeadGeneration(fetchPipelineDataFromActivityList(leads, LeadStatusEnum.New_Lead));
-		pipelineAllReturnDAO.setNegotiation(fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Negotiation));
-		pipelineAllReturnDAO.setPropertyVisit(fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Property_Visit));
-		pipelineAllReturnDAO.setDeal_close(fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Deal_Closed));
+
+		HashMap<Long, LeadActivity> leadRecentActivityMapping = fetchRecentActivityForAllLeads(leads);
+		ExecutorService executors = Executors.newFixedThreadPool(4);
+		CyclicBarrier barrier = new CyclicBarrier(4);
+
+		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
+				LeadStatusEnum.New_Lead));
+		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
+				LeadStatusEnum.Negotiation));
+		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
+				LeadStatusEnum.Property_Visit));
+		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
+				LeadStatusEnum.Deal_Closed));
+
+		boolean flag = false;
+		Date returnDateTime = new Date();
+		while (flag == false)
+		{
+			if ((pipelineAllReturnDAO.getLeadGeneration() == null || pipelineAllReturnDAO.getDeal_close() == null
+					|| pipelineAllReturnDAO.getNegotiation() == null || pipelineAllReturnDAO.getPropertyVisit() == null)
+					&& (returnDateTime.getTime() - new Date().getTime()) / 1000 < 3)
+			{
+				log.info("Waiting for flag to be true. Current difference in time - "
+						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);
+				flag = false;
+			} else
+			{
+				log.info("Flag is true. Current difference in time - "
+						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);
+				flag = true;
+			}
+		}
+		/*
+		 * pipelineAllReturnDAO.setLeadGeneration(
+		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.New_Lead,
+		 * leadRecentActivityMapping)); pipelineAllReturnDAO.setNegotiation(
+		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Negotiation,
+		 * leadRecentActivityMapping)); pipelineAllReturnDAO.setPropertyVisit(
+		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Property_Visit,
+		 * leadRecentActivityMapping)); pipelineAllReturnDAO.setDeal_close(
+		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Deal_Closed,
+		 * leadRecentActivityMapping));
+		 */
 		return pipelineAllReturnDAO;
 	}
 
-	private PipelineWithTotalReturnDAO fetchPipelineDataFromActivityList(List<Lead> leads, LeadStatusEnum leadStatus)
-			throws Exception
+	private HashMap<Long, LeadActivity> fetchRecentActivityForAllLeads(List<Lead> leads)
+	{
+		HashMap<Long, LeadActivity> leadRecentActivityMapping = new HashMap<>();
+		for (Lead l : leads)
+		{
+			LeadActivity recentActivity = leadActivityService.getRecentActivityByLead(l);
+			leadRecentActivityMapping.put(l.getLeadId(), recentActivity);
+		}
+		return leadRecentActivityMapping;
+	}
+
+	public PipelineWithTotalReturnDAO fetchPipelineDataFromActivityList(List<Lead> leads, LeadStatusEnum leadStatus,
+			HashMap<Long, LeadActivity> leadRecentActivityMapping) throws Exception
 	{
 		List<Lead> filteredLeads = leads.stream().filter(Lead -> Lead.getStatus().equals(leadStatus))
 				.collect(Collectors.toList());
-		return transformToPipelineWithTotalReturnDAO(filteredLeads);
+		return transformToPipelineWithTotalReturnDAO(filteredLeads, leadRecentActivityMapping);
 	}
 
-	private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads) throws Exception
+	private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads,
+			HashMap<Long, LeadActivity> leadRecentActivityMapping) throws Exception
 	{
 		log.info("Invoked transformToPipelineWithTotalReturnDAO");
 		PipelineWithTotalReturnDAO PipelineWithTotalReturnDAO = new PipelineWithTotalReturnDAO();
@@ -166,7 +227,7 @@ public class AllActivitiesService
 
 		for (Lead l : filteredLeads)
 		{
-			LeadActivity recentActivity = leadActivityService.getRecentActivityByLead(l);
+			LeadActivity recentActivity = leadRecentActivityMapping.get(l.getLeadId());
 			PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
 			pipelineSingleReturnDTO.setLeadId(l.getLeadId());
 			pipelineSingleReturnDTO.setMobileNumber(l.getPrimaryMobile());
