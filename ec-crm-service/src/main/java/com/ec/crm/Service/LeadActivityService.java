@@ -587,15 +587,31 @@ public class LeadActivityService
 
 	public LeadActivity getRecentActivityByLead(Lead lead)
 	{
-		List<LeadActivity> activities = laRepo.findAllActivitiesForLead(lead.getLeadId());
+		/*
+		 * //List<LeadActivity> activities =
+		 * laRepo.findAllActivitiesForLead(lead.getLeadId()); LeadActivity activity =
+		 * new LeadActivity(); try { activity =
+		 * getDisplayActivityForLeadFromAllActivities(activities); } catch (Exception e)
+		 * { // TODO Auto-generated catch block e.printStackTrace(); }
+		 */
 		LeadActivity activity = new LeadActivity();
-		try
+		if (lead.getPastOpenId() != null)
 		{
-			activity = getDisplayActivityForLeadFromAllActivities(activities);
-		} catch (Exception e)
+			activity = laRepo.getOne(lead.getPastOpenId());
+		} else if (lead.getTodayOpenId() != null)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			activity = laRepo.getOne(lead.getTodayOpenId());
+		} else if (lead.getTodayOpenId() == null && lead.getUpcomingOpenId() == null)
+		{
+			if (lead.getUpcomingClosedId() != null)
+				activity = laRepo.getOne(lead.getUpcomingClosedId());
+			else if (lead.getTodayClosedId() != null)
+				activity = laRepo.getOne(lead.getTodayClosedId());
+			else
+				activity = laRepo.getOne(lead.getPastClosedId());
+		} else if (lead.getTodayOpenId() == null && lead.getUpcomingOpenId() != null)
+		{
+			activity = laRepo.getOne(lead.getUpcomingOpenId());
 		}
 		return activity;
 	}

@@ -127,4 +127,46 @@ public class Lead extends ReusableFields implements Serializable
 	@Column(name = "status", nullable = false)
 	@Enumerated(EnumType.STRING)
 	LeadStatusEnum status;
+
+	@Formula("(select la.leadactivity_id from customer_lead cl "
+			+ "inner join lead_activity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
+			+ "and la.is_deleted=false " + "and la.is_open=true " + "and cl.lead_id=lead_id "
+			+ "order by la.activity_date_time desc limit  1)")
+	@NotAudited
+	Long pastOpenId;
+
+	@Formula("(select la.leadactivity_id from customer_lead cl "
+			+ "inner join lead_activity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
+			+ "and la.is_deleted=false " + "and la.is_open=false " + "and cl.lead_id=lead_id "
+			+ "order by la.activity_date_time desc limit  1)")
+	@NotAudited
+	Long pastClosedId;
+
+	@Formula("(select la.leadactivity_id from customer_lead cl "
+			+ "inner join lead_activity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
+			+ "and la.is_deleted=false " + "and la.is_open=false " + "and cl.lead_id=lead_id "
+			+ "order by la.activity_date_time desc limit  1)")
+	@NotAudited
+	Long todayClosedId;
+
+	@Formula("(select la.leadactivity_id from customer_lead cl "
+			+ "inner join lead_activity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
+			+ "and la.is_deleted=false " + "and la.is_open=true " + "and cl.lead_id=lead_id "
+			+ "order by la.activity_date_time desc limit  1)")
+	@NotAudited
+	Long todayOpenId;
+
+	@Formula("(select la.leadactivity_id from customer_lead cl "
+			+ "inner join lead_activity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
+			+ "and la.is_deleted=false " + "and la.is_open=true " + "and cl.lead_id=lead_id "
+			+ "order by la.activity_date_time asc limit  1)")
+	@NotAudited
+	Long upcomingOpenId;
+
+	@Formula("(select la.leadactivity_id from customer_lead cl "
+			+ "inner join lead_activity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
+			+ "and la.is_deleted=false " + "and la.is_open=false " + "and cl.lead_id=lead_id "
+			+ "order by la.activity_date_time desc limit  1)")
+	@NotAudited
+	Long upcomingClosedId;
 }
