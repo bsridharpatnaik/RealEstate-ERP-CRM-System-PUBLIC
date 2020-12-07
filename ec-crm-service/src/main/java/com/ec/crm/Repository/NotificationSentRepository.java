@@ -1,24 +1,16 @@
 package com.ec.crm.Repository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.ec.crm.Model.LeadActivityNotificationHistory;
-import com.ec.crm.Model.NotificationSent;
-import com.ec.crm.ReusableClasses.BaseRepository;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import com.ec.crm.Model.NotificationSent;
 
 @Repository
-public interface NotificationSentRepository extends CrudRepository<NotificationSent, Long> 
-{
-	
-     NotificationSent save(NotificationSent ns);
-     NotificationSent findByLeadActivityIdAndStatus(Long activityId,String status);
-	
+public interface NotificationSentRepository extends CrudRepository<NotificationSent, Long> {
+
+	@SuppressWarnings("unchecked")
+	NotificationSent save(NotificationSent ns);
+
+	NotificationSent findByLeadActivityIdAndStatus(Long activityId, String status);
+
 }
