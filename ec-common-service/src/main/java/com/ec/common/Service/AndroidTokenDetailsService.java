@@ -3,6 +3,8 @@ package com.ec.common.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +24,8 @@ public class AndroidTokenDetailsService
 
 	@Autowired
 	AndroidTokenDetailsRepo tokenRepo;
+
+	Logger log = LoggerFactory.getLogger(AndroidTokenDetailsService.class);
 
 	public void updateTokenForUser(String token) throws Exception
 	{
@@ -80,11 +84,12 @@ public class AndroidTokenDetailsService
 
 	public String findTokenForUser(Long targetUserId) throws Exception
 	{
+		log.info("Fetching token for user - " + targetUserId);
 		List<AndroidTokenDetails> atdList = tokenRepo.findByUserId(targetUserId);
 		if (atdList.size() > 1)
-			throw new Exception("More than one token record found for user.");
+			throw new Exception("More than one token record found for user. - " + targetUserId);
 		else if (atdList.size() < 1)
-			throw new Exception("Noe token record found for user.");
+			throw new Exception("No	 token record found for user. - " + targetUserId);
 		else
 		{
 			AndroidTokenDetails atd = atdList.get(0);

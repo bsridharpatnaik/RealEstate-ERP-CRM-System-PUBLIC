@@ -80,7 +80,7 @@ public class LeadActivity extends ReusableFields implements Serializable
 	@Column(name = "closed_by")
 	Long closedBy;
 
-	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "lead_id", nullable = false)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })

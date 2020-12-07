@@ -17,10 +17,11 @@ import com.ec.crm.ReusableClasses.ReusableFields;
 import lombok.Data;
 
 @Entity
-@Table(name = "NotificationSent")
+@Table(name = "notification_sent")
 @Data
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class NotificationSent extends ReusableFields implements Serializable {
+public class NotificationSent extends ReusableFields implements Serializable
+{
 
 	private static final long serialVersionUID = 1L;
 
@@ -37,7 +38,8 @@ public class NotificationSent extends ReusableFields implements Serializable {
 	@NonNull
 	Long leadActivityId;
 
-	public NotificationSent() {
+	public NotificationSent()
+	{
 		super();
 		// TODO Auto-generated constructor stub
 	}
