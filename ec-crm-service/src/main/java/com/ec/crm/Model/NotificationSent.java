@@ -20,8 +20,7 @@ import lombok.Data;
 @Table(name = "NotificationSent")
 @Data
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class NotificationSent extends ReusableFields implements Serializable
-{
+public class NotificationSent extends ReusableFields implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -30,19 +29,15 @@ public class NotificationSent extends ReusableFields implements Serializable
 	@Column(name = "notification_id", updatable = false, nullable = false)
 	Long notificationId;
 
-
 	@Column(name = "status")
 	@NonNull
 	String status;
-	
-	
+
 	@Column(name = "leadactivity_id")
 	@NonNull
 	Long leadActivityId;
 
-
-		public NotificationSent()
-	{
+	public NotificationSent() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
