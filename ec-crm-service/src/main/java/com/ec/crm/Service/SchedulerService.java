@@ -1,5 +1,8 @@
 package com.ec.crm.Service;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +20,14 @@ public class SchedulerService
 
 	Logger log = LoggerFactory.getLogger(SchedulerService.class);
 
-	@Scheduled(cron = "* * * * * *")
+	// @Scheduled(cron = "* * * * * *")
+
+	@Scheduled(fixedDelay = 60000) // 1 minute; add another zero to make it 10minutes
 	public void sendStockNotificationEmailInEvening() throws Exception
 	{
+		SimpleDateFormat localDateFormat = new SimpleDateFormat("HH:mm");
+		log.info("Check and send notification to mobile. Current Time - " + localDateFormat.format(new Date()));
 		sendCRMNotificationsService.sendNotificationForUpcomingActivities();
 	}
+
 }

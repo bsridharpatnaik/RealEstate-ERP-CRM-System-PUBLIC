@@ -32,6 +32,7 @@ import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Service.LeadActivityService;
 import com.ec.crm.Service.NoteService;
+import com.ec.crm.Service.SendCRMNotificationsService;
 import com.ec.crm.Service.UserDetailsService;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
@@ -45,6 +46,9 @@ public class LeadActivityController
 
 	@Autowired
 	UserDetailsService userDetailsService;
+
+	@Autowired
+	SendCRMNotificationsService sendCRMNotificationsService;
 
 	@Autowired
 	LeadActivityService laService;
@@ -126,5 +130,11 @@ public class LeadActivityController
 	public List<String> findValidActivityTypes()
 	{
 		return ActivityTypeEnum.getValidActivityTypes();
+	}
+
+	@GetMapping("/tn")
+	public void triggerNotifications()
+	{
+		sendCRMNotificationsService.sendNotificationForUpcomingActivities();
 	}
 }
