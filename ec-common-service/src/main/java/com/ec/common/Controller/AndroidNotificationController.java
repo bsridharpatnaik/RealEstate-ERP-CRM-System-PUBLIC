@@ -6,18 +6,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.common.Data.LANotificationRequestDto;
-import com.ec.common.Service.LeadActivityNotificationService;
+import com.ec.common.Data.NotificationRequestDto;
+import com.ec.common.Service.GatewayNotificationService;
 
 @RestController
-@RequestMapping("/lanotification")
-public class LeadActivityNotificationController
+@RequestMapping("/notification")
+public class AndroidNotificationController
 {
 	@Autowired
-	LeadActivityNotificationService laNotificationService;
+	GatewayNotificationService laNotificationService;
 
-	@PostMapping("/token")
-	public String sendPnsToDevice(@RequestBody LANotificationRequestDto notificationRequestDto)
+	@PostMapping("/send")
+	public String sendPnsToDevice(@RequestBody NotificationRequestDto notificationRequestDto) throws Exception
 	{
 		return laNotificationService.sendPnsToDevice(notificationRequestDto);
 	}

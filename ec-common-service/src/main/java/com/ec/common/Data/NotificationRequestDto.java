@@ -3,9 +3,9 @@ package com.ec.common.Data;
 import lombok.Data;
 
 @Data
-public class LANotificationRequestDto
+public class NotificationRequestDto
 {
-	private String target;
+	private Long targetUserId;
 	private String title;
 	private String body;
 }

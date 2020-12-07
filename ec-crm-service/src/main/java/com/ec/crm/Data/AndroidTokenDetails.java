@@ -12,8 +12,8 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.Where;
 
-import com.ec.ReusableClasses.ReusableFields;
 import com.ec.crm.Model.User;
+import com.ec.crm.ReusableClasses.ReusableFields;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

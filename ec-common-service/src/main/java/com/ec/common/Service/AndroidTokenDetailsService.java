@@ -77,4 +77,19 @@ public class AndroidTokenDetailsService
 			tokenRepo.save(atd);
 		}
 	}
+
+	public String findTokenForUser(Long targetUserId) throws Exception
+	{
+		List<AndroidTokenDetails> atdList = tokenRepo.findByUserId(targetUserId);
+		if (atdList.size() > 1)
+			throw new Exception("More than one token record found for user.");
+		else if (atdList.size() < 1)
+			throw new Exception("Noe token record found for user.");
+		else
+		{
+			AndroidTokenDetails atd = atdList.get(0);
+			return atd.getToken();
+		}
+
+	}
 }

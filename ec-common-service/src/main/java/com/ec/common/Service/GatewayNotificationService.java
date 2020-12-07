@@ -4,11 +4,14 @@ import java.io.IOException;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import com.ec.common.Data.LANotificationRequestDto;
+import com.ec.common.Data.NotificationRequestDto;
+import com.ec.common.Model.NotificationHistory;
+import com.ec.common.Repository.NotificationHistoryRepo;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -21,13 +24,19 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-public class LeadActivityNotificationService
+public class GatewayNotificationService
 {
 
 	@Value("${app.firebase-config}")
 	private String firebaseConfig;
 
 	private FirebaseApp firebaseApp;
+
+	@Autowired
+	AndroidTokenDetailsService androidTokenDetailsService;
+
+	@Autowired
+	NotificationHistoryRepo notificationHistoryRepo;
 
 	@PostConstruct
 	private void initialize()
@@ -52,9 +61,10 @@ public class LeadActivityNotificationService
 		}
 	}
 
-	public String sendPnsToDevice(LANotificationRequestDto notificationRequestDto)
+	public String sendPnsToDevice(NotificationRequestDto notificationRequestDto) throws Exception
 	{
-		Message message = Message.builder().setToken(notificationRequestDto.getTarget())
+		String token = androidTokenDetailsService.findTokenForUser(notificationRequestDto.getTargetUserId());
+		Message message = Message.builder().setToken(token)
 				.setNotification(new Notification(notificationRequestDto.getTitle(), notificationRequestDto.getBody()))
 				.putData("content", notificationRequestDto.getTitle()).putData("body", notificationRequestDto.getBody())
 				.build();
@@ -63,11 +73,21 @@ public class LeadActivityNotificationService
 		try
 		{
 			response = FirebaseMessaging.getInstance().send(message);
+			saveNotificationToHistory(notificationRequestDto);
 		} catch (FirebaseMessagingException e)
 		{
 			log.error("Fail to send firebase notification", e);
 		}
 
 		return response;
+	}
+
+	private void saveNotificationToHistory(NotificationRequestDto notificationRequestDto)
+	{
+		NotificationHistory nh = new NotificationHistory();
+		nh.setBody(notificationRequestDto.getBody());
+		nh.setTitle(notificationRequestDto.getTitle());
+		nh.setUserId(notificationRequestDto.getTargetUserId());
+		notificationHistoryRepo.save(nh);
 	}
 }
