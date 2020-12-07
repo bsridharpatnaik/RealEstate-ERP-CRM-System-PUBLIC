@@ -81,15 +81,24 @@ public class SendCRMNotificationsService
 					notificationDTO.setBody("Activity Type - " + leadActivity.getActivityType() + ". Time -"
 							+ localDateFormat.format(leadActivity.getActivityDateTime()));
 					notificationDTO.setTargetUserId(leadActivity.getLead().getAsigneeId());
-					sendNotification(notificationDTO);
-					ns.setLeadActivityId(activityId);
-					ns.setStatus("Sent");
-					nsRepo.save(ns);
+					String response = sendNotification(notificationDTO);
+
+					if (response.toLowerCase().contains("error"))
+					{
+						ns.setLeadActivityId(activityId);
+						ns.setStatus(response);
+						nsRepo.save(ns);
+					} else
+					{
+						ns.setLeadActivityId(activityId);
+						ns.setStatus("Sent");
+						nsRepo.save(ns);
+					}
 
 				} catch (Exception e)
 				{
 					ns.setLeadActivityId(activityId);
-					ns.setStatus("Error");
+					ns.setStatus("Exception while sending notification");
 					nsRepo.save(ns);
 					e.printStackTrace();
 				}
@@ -99,15 +108,18 @@ public class SendCRMNotificationsService
 	}
 
 	@Transactional
-	private void sendNotification(UpComingActivitiesNotifDto notificationDTO)
+	private String sendNotification(UpComingActivitiesNotifDto notificationDTO)
 	{
+		String response;
 		WebClient webClient = WebClient.create(reqUrl + "notification/send");
 		Mono<String> res = webClient.post().bodyValue(notificationDTO).retrieve()
 				.onStatus(HttpStatus::is4xxClientError,
 						error -> Mono.error(new RuntimeException("Exception in sendNotification method.")))
 				.bodyToMono(String.class);
 
-		res.subscribe(val -> log.info("Async firebase response : " + val));
+		response = res.block();
+		log.info("Async firebase response : " + response);
+		return response;
 	}
 
 }

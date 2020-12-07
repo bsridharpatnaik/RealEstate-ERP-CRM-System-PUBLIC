@@ -63,7 +63,12 @@ public class GatewayNotificationService
 
 	public String sendPnsToDevice(NotificationRequestDto notificationRequestDto) throws Exception
 	{
+
 		String token = androidTokenDetailsService.findTokenForUser(notificationRequestDto.getTargetUserId());
+		if (token.toLowerCase().contains("Error"))
+		{
+			return token;
+		}
 		Message message = Message.builder().setToken(token)
 				.setNotification(new Notification(notificationRequestDto.getTitle(), notificationRequestDto.getBody()))
 				.putData("content", notificationRequestDto.getTitle()).putData("body", notificationRequestDto.getBody())
@@ -77,6 +82,7 @@ public class GatewayNotificationService
 		} catch (FirebaseMessagingException e)
 		{
 			log.error("Fail to send firebase notification", e);
+			return ("Error - Fail to send firebase notification");
 		}
 
 		return response;

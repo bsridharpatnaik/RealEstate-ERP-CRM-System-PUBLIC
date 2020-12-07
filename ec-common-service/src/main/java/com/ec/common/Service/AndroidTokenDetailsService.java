@@ -87,9 +87,9 @@ public class AndroidTokenDetailsService
 		log.info("Fetching token for user - " + targetUserId);
 		List<AndroidTokenDetails> atdList = tokenRepo.findByUserId(targetUserId);
 		if (atdList.size() > 1)
-			throw new Exception("More than one token record found for user. - " + targetUserId);
+			return ("Error - More than one token record found for user. - " + targetUserId);
 		else if (atdList.size() < 1)
-			throw new Exception("No	 token record found for user. - " + targetUserId);
+			return ("Error - No token record found for user. - " + targetUserId);
 		else
 		{
 			AndroidTokenDetails atd = atdList.get(0);
