@@ -79,7 +79,7 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value = "SELECT count(la) from LeadActivity la where la.lead.leadId=:leadId")
 	int findLeadUsageCount(@Param("leadId") Long leadId);
 
-	@Query(value = "SELECT la.leadActivityId from LeadActivity la where TIMESTAMPDIFF(MINUTE,now(),activityDateTime) < 10 and TIMESTAMPDIFF(MINUTE,now(),activityDateTime) > 0",nativeQuery = false) 
+	@Query(value = "SELECT la.leadActivityId from LeadActivity la where TIMESTAMPDIFF(MINUTE,now(),activityDateTime) < 10 and TIMESTAMPDIFF(MINUTE,now(),activityDateTime) > 0") 
 	List<Long> findUpcomingActivities();
 	
 	@Query(value = "SELECT la.lead.leadId from LeadActivity la where la.leadActivityId = :leadActivityId") 
