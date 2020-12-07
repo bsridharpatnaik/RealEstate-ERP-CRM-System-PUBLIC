@@ -24,8 +24,12 @@ import lombok.NoArgsConstructor;
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @AllArgsConstructor
 @NoArgsConstructor
-public class AndroidTokenDetails extends ReusableFields
-{
+public class AndroidTokenDetails extends ReusableFields {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4504939781648676045L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -37,33 +41,27 @@ public class AndroidTokenDetails extends ReusableFields
 
 	String token;
 
-	public Long getTokenId()
-	{
+	public Long getTokenId() {
 		return tokenId;
 	}
 
-	public void setTokenId(Long tokenId)
-	{
+	public void setTokenId(Long tokenId) {
 		this.tokenId = tokenId;
 	}
 
-	public User getUser()
-	{
+	public User getUser() {
 		return user;
 	}
 
-	public void setUser(User user)
-	{
+	public void setUser(User user) {
 		this.user = user;
 	}
 
-	public String getToken()
-	{
+	public String getToken() {
 		return token;
 	}
 
-	public void setToken(String token)
-	{
+	public void setToken(String token) {
 		this.token = token;
 	}
 
