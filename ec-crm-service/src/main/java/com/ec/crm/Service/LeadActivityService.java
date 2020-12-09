@@ -325,7 +325,10 @@ public class LeadActivityService
 	private void setFields(LeadActivity leadActivity, LeadActivityCreate payload, String creatorType) throws Exception
 	{
 		Long currentUserId = userDetailsService.getCurrentUser().getId();
+
 		log.info("Invoked setFields");
+		if (currentUserId == null)
+			throw new Exception("Unable to fetch currect user. Please logout-login and try again!");
 		leadActivity.setActivityDateTime(payload.getActivityDateTime());
 		leadActivity.setActivityType(payload.getActivityType());
 		leadActivity.setCreatorId(creatorType == "user" ? currentUserId : 404);
@@ -471,6 +474,9 @@ public class LeadActivityService
 			LeadActivity leadActivity) throws Exception
 	{
 		Long currentUserId = userDetailsService.getCurrentUser().getId();
+		if (currentUserId == null)
+			throw new Exception("Unable to fetch currect user. Please logout-login and try again!");
+
 		log.info("Invoked setFieldsForReschedule");
 		List<String> newTags = new ArrayList<String>();
 		for (String tag : leadActivity.getTags())
