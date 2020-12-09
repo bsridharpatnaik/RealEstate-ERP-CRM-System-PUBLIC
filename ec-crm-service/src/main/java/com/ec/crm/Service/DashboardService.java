@@ -92,7 +92,7 @@ public class DashboardService
 					|| dashboardPipelineReturnData.getTodaysActivities() == null
 					|| dashboardPipelineReturnData.getTotalPropertyVisit() == null
 					|| dashboardPipelineReturnData.getUpcomingActivities() == null)
-					&& (returnDateTime.getTime() - new Date().getTime()) / 1000 < 3)
+					&& (java.lang.Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 3))
 			{
 				log.info("Waiting for flag to be true. Current difference in time - "
 						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);

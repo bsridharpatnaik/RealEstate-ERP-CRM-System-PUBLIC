@@ -1,5 +1,9 @@
 package com.ec.crm.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -10,6 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.ec.crm.Data.UserReturnData;
+import com.ec.crm.Model.Role;
+import com.ec.crm.Model.User;
+import com.ec.crm.Repository.UserRepo;
 
 @Service
 public class UserDetailsService
@@ -22,6 +29,9 @@ public class UserDetailsService
 
 	@Value("${common.serverurl}")
 	private String reqUrl;
+
+	@Autowired
+	UserRepo uRepo;
 
 	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
@@ -85,25 +95,29 @@ public class UserDetailsService
 		}
 	}
 
-	public UserReturnData[] getUserList() throws Exception
+	public List<UserReturnData> getUserList() throws Exception
 	{
-		log.info("Making API Call to fetch userlist");
-		try
+		log.info("Fetching userlist from database");
+		List<UserReturnData> userReturnDataList = new ArrayList<UserReturnData>();
+		List<User> userList = uRepo.findAll();
+		for (User user : userList)
 		{
-
-			UserReturnData[] userDetails = webClientBuilder.build().get().uri(reqUrl + "user/list")
-					.header("Authorization", request.getHeader("Authorization")).retrieve()
-					.bodyToMono(UserReturnData[].class).block();
-			if (userDetails != null)
-				return userDetails;
-			else
-				throw new Exception("Unable to fetch user details. Please log out and try again");
-		} catch (Exception e)
-		{
-			log.info("Error API Call to fetch user list " + e);
-			throw new Exception("Unable to fetch user details. Please log out and try again");
+			UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
+					fetchRolesFromSet(user.getRoles()));
+			userReturnDataList.add(userReturnData);
 		}
+		return userReturnDataList;
 
+	}
+
+	private List<String> fetchRolesFromSet(Set<Role> roleSet)
+	{
+		List<String> roles = new ArrayList<String>();
+		for (Role role : roleSet)
+		{
+			roles.add(role.getName());
+		}
+		return roles;
 	}
 
 }

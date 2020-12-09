@@ -6,23 +6,25 @@ import java.util.List;
 import com.ec.crm.Data.AssigneeDAO;
 import com.ec.crm.Data.UserReturnData;
 
-public class PopulateAssigneeList 
+public class PopulateAssigneeList
 {
 	List<AssigneeDAO> assigneeDetails = new ArrayList<AssigneeDAO>();
 
-	public List<AssigneeDAO> getAssigneeDetails() {
+	public List<AssigneeDAO> getAssigneeDetails()
+	{
 		return assigneeDetails;
 	}
 
-	public void setAssigneeDetails(List<AssigneeDAO> assigneeDetails) {
+	public void setAssigneeDetails(List<AssigneeDAO> assigneeDetails)
+	{
 		this.assigneeDetails = assigneeDetails;
 	}
 
-	public PopulateAssigneeList(UserReturnData[] userReturnDatas) 
+	public PopulateAssigneeList(List<UserReturnData> list)
 	{
-		for(UserReturnData userReturnData:userReturnDatas)
+		for (UserReturnData userReturnData : list)
 		{
-			AssigneeDAO assigneeDAO= new AssigneeDAO(userReturnData.getId(),userReturnData.getUsername());
+			AssigneeDAO assigneeDAO = new AssigneeDAO(userReturnData.getId(), userReturnData.getUsername());
 			this.assigneeDetails.add(assigneeDAO);
 		}
 	}

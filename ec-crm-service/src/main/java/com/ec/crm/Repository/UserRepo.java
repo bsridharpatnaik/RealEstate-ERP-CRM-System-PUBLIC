@@ -22,4 +22,5 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
 
 	@Query(value = "SELECT id FROM User c WHERE c.userName like :userName")
 	public Long findId(@Param("userName") String userName);
+
 }

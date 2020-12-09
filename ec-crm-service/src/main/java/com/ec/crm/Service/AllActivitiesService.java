@@ -2,12 +2,8 @@ package com.ec.crm.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -39,7 +35,6 @@ import com.ec.crm.Model.Lead_;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
-import com.ec.crm.SubClasses.SetDataForPipeline;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -150,52 +145,51 @@ public class AllActivitiesService
 
 	private PipelineAllReturnDAO transformDataToPipelineMode(List<Lead> leads) throws Exception
 	{
+		log.info("Invoked transformDataToPipelineMode");
 		PipelineAllReturnDAO pipelineAllReturnDAO = new PipelineAllReturnDAO();
 		pipelineAllReturnDAO.setDropdownData(populateDropdownService.fetchData("lead"));
 		pipelineAllReturnDAO.setTypeAheadDataForGlobalSearch(leadService.fetchTypeAheadForLeadGlobalSearch());
 
 		HashMap<Long, LeadActivity> leadRecentActivityMapping = fetchRecentActivityForAllLeads(leads);
-		ExecutorService executors = Executors.newFixedThreadPool(4);
-		CyclicBarrier barrier = new CyclicBarrier(4);
 
-		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
-				LeadStatusEnum.New_Lead));
-		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
-				LeadStatusEnum.Negotiation));
-		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
-				LeadStatusEnum.Property_Visit));
-		executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads, leadRecentActivityMapping,
-				LeadStatusEnum.Deal_Closed));
-
-		boolean flag = false;
-		Date returnDateTime = new Date();
-		while (flag == false)
-		{
-			if ((pipelineAllReturnDAO.getLeadGeneration() == null || pipelineAllReturnDAO.getDeal_close() == null
-					|| pipelineAllReturnDAO.getNegotiation() == null || pipelineAllReturnDAO.getPropertyVisit() == null)
-					&& (returnDateTime.getTime() - new Date().getTime()) / 1000 < 3)
-			{
-				log.info("Waiting for flag to be true. Current difference in time - "
-						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);
-				flag = false;
-			} else
-			{
-				log.info("Flag is true. Current difference in time - "
-						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);
-				flag = true;
-			}
-		}
 		/*
-		 * pipelineAllReturnDAO.setLeadGeneration(
-		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.New_Lead,
-		 * leadRecentActivityMapping)); pipelineAllReturnDAO.setNegotiation(
-		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Negotiation,
-		 * leadRecentActivityMapping)); pipelineAllReturnDAO.setPropertyVisit(
-		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Property_Visit,
-		 * leadRecentActivityMapping)); pipelineAllReturnDAO.setDeal_close(
-		 * fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Deal_Closed,
-		 * leadRecentActivityMapping));
+		 * ExecutorService executors = Executors.newFixedThreadPool(4); CyclicBarrier
+		 * barrier = new CyclicBarrier(4);
+		 * 
+		 * executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
+		 * leadRecentActivityMapping, LeadStatusEnum.New_Lead));
+		 * 
+		 * executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
+		 * leadRecentActivityMapping, LeadStatusEnum.Negotiation)); executors.submit(new
+		 * SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
+		 * leadRecentActivityMapping, LeadStatusEnum.Property_Visit));
+		 * executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
+		 * leadRecentActivityMapping, LeadStatusEnum.Deal_Closed));
 		 */
+
+		/*
+		 * boolean flag = false; Date returnDateTime = new Date();
+		 * System.out.println(returnDateTime); while (flag == false) { if
+		 * ((pipelineAllReturnDAO.getLeadGeneration() == null ||
+		 * pipelineAllReturnDAO.getDeal_close() == null ||
+		 * pipelineAllReturnDAO.getNegotiation() == null ||
+		 * pipelineAllReturnDAO.getPropertyVisit() == null) &&
+		 * java.lang.Math.abs((returnDateTime.getTime() - new Date().getTime())) / 1000
+		 * < 3) { log.info("Waiting for flag to be true. Current difference in time - "
+		 * + (returnDateTime.getTime() - new Date().getTime()) / 1000); flag = false; }
+		 * else { log.info("Flag is true. Current difference in time - " +
+		 * (returnDateTime.getTime() - new Date().getTime()) / 1000); flag = true; } }
+		 */
+
+		pipelineAllReturnDAO.setLeadGeneration(
+				fetchPipelineDataFromActivityList(leads, LeadStatusEnum.New_Lead, leadRecentActivityMapping));
+		pipelineAllReturnDAO.setNegotiation(
+				fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Negotiation, leadRecentActivityMapping));
+		pipelineAllReturnDAO.setPropertyVisit(
+				fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Property_Visit, leadRecentActivityMapping));
+		pipelineAllReturnDAO.setDeal_close(
+				fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Deal_Closed, leadRecentActivityMapping));
+
 		return pipelineAllReturnDAO;
 	}
 
