@@ -15,10 +15,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Model.Role;
-import com.ec.crm.Model.User;
-import com.ec.crm.Repository.UserRepo;
+
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Service
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserDetailsService
 {
 	@Autowired
@@ -29,9 +32,6 @@ public class UserDetailsService
 
 	@Value("${common.serverurl}")
 	private String reqUrl;
-
-	@Autowired
-	UserRepo uRepo;
 
 	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
@@ -95,18 +95,16 @@ public class UserDetailsService
 		}
 	}
 
-	public List<UserReturnData> getUserList() throws Exception
+	public UserReturnData[] getUserList() throws Exception
 	{
 		log.info("Fetching userlist from database");
-		List<UserReturnData> userReturnDataList = new ArrayList<UserReturnData>();
-		List<User> userList = uRepo.findAll();
-		for (User user : userList)
-		{
-			UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-					fetchRolesFromSet(user.getRoles()));
-			userReturnDataList.add(userReturnData);
-		}
-		return userReturnDataList;
+		UserReturnData[] userDetails = webClientBuilder.build().get().uri(reqUrl + "user/list")
+				.header("Authorization", request.getHeader("Authorization")).retrieve()
+				.bodyToMono(UserReturnData[].class).block();
+		if (userDetails != null)
+			return userDetails;
+		else
+			throw new Exception("Unable to fetch user details. Please log out and try again");
 
 	}
 
