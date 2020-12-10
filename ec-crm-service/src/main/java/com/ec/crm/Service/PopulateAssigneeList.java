@@ -20,9 +20,9 @@ public class PopulateAssigneeList
 		this.assigneeDetails = assigneeDetails;
 	}
 
-	public PopulateAssigneeList(UserReturnData[] userReturnDatas)
+	public PopulateAssigneeList(List<UserReturnData> list)
 	{
-		for (UserReturnData userReturnData : userReturnDatas)
+		for (UserReturnData userReturnData : list)
 		{
 			AssigneeDAO assigneeDAO = new AssigneeDAO(userReturnData.getId(), userReturnData.getUsername());
 			this.assigneeDetails.add(assigneeDAO);
