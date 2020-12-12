@@ -2,28 +2,33 @@ package com.ec.application.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Subselect;
+import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
+import com.ec.application.ReusableClasses.ReusableFields;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Entity
-@Subselect("select * from contractor")
-@Immutable
+@Table(name = "contacts")
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE + " AND contact_type='contractor'")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Audited
-public class Contractor extends Contact
+public class Contractor extends ContactMappedSuperClass
 {
+	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name="contact_id")
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "contactId", updatable = false, nullable = false)
 	Long contactId;
-	
-	public Long getContact_id() {
-		return contactId;
-	}
-	public void setContact_id(Long contact_id) {
-		this.contactId = contact_id;
-	}
 }

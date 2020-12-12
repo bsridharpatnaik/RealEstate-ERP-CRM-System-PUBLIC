@@ -6,17 +6,16 @@ import javax.persistence.criteria.Root;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ec.common.Model.ContactAllInfo;
-import com.ec.common.Model.ContactAllInfo_;
 import com.ec.common.Model.User;
 import com.ec.common.Model.User_;
 
 import lombok.NonNull;
 
-public final class UserSpecifications 
+public final class UserSpecifications
 {
-	public static Specification<User> whereUsernameContains(@NonNull String username) {
-        return (Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb)
-                -> cb.like(root.get(User_.userName), "%"+username+"%");
-    }
+	public static Specification<User> whereUsernameContains(@NonNull String username)
+	{
+		return (Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb.like(root.get(User_.userName),
+				"%" + username + "%");
+	}
 }

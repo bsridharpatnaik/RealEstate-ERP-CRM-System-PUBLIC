@@ -8,19 +8,17 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.data.DashboardMachineOnRentDAO;
 import com.ec.application.data.ReturnAllNotificationsData;
 import com.ec.application.data.ReturnSingleNotification;
 import com.ec.application.model.InventoryNotification;
 
 @Service
-public class AllNotificationService 
+public class AllNotificationService
 {
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
 
-	public ReturnAllNotificationsData getAllNotifications() 
+	public ReturnAllNotificationsData getAllNotifications()
 	{
 		ReturnAllNotificationsData returnAllNotificationsData = new ReturnAllNotificationsData();
 		List<ReturnSingleNotification> allNotifications = new ArrayList<ReturnSingleNotification>();
@@ -29,50 +27,70 @@ public class AllNotificationService
 		return returnAllNotificationsData;
 	}
 
-	private List<ReturnSingleNotification> getInventoryNotification() 
+	private List<ReturnSingleNotification> getInventoryNotification()
 	{
 		String source = "inventory";
-		List<ReturnSingleNotification> inventoryNormalizedNotifications = new ArrayList<ReturnSingleNotification> ();
-		List<InventoryNotification> inventoryNotifications = inventoryNotificationService.returnInventoryNotifications();
-		
-		for(InventoryNotification inventoryNotification : inventoryNotifications)
+		List<ReturnSingleNotification> inventoryNormalizedNotifications = new ArrayList<ReturnSingleNotification>();
+		List<InventoryNotification> inventoryNotifications = inventoryNotificationService
+				.returnInventoryNotifications();
+
+		for (InventoryNotification inventoryNotification : inventoryNotifications)
 		{
 			DecimalFormat df = new DecimalFormat("###.#");
-			String message ="";
+			String message = "";
 			ReturnSingleNotification returnAllNotification = new ReturnSingleNotification();
-			if(inventoryNotification.getType().equals("lowStock"))
+			if (inventoryNotification.getType().equals("lowStock"))
 			{
-				message= "Product " + inventoryNotification.getProduct().getProductName() +" is low on stock. Current Stock  - "+df.format(inventoryNotification.getQuantity()) ;
-				setFields(returnAllNotification, inventoryNotification.getId(),source,"lowStock",
-						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), false);
+				message = "Product " + inventoryNotification.getProduct().getProductName()
+						+ " is low on stock. Current Stock  - " + df.format(inventoryNotification.getQuantity());
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "lowStock", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), false);
 			}
-			
-			if(inventoryNotification.getType().equals("inwardStockModified"))
+
+			if (inventoryNotification.getType().equals("inwardStockModified"))
 			{
-				message= "Inward Quantity for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +" in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
-				setFields(returnAllNotification, inventoryNotification.getId(),source,"inwardStockModified",
-						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
+				message = "Inward Quantity for Product -"
+						+ inventoryNotification.getProduct().getProductName().toUpperCase() + " in Warehouse -"
+						+ inventoryNotification.getWarehouseName().toUpperCase() + " is modified by User - "
+						+ inventoryNotification.getUpdatedBy() + ". Updated Closing Stock  - "
+						+ df.format(inventoryNotification.getQuantity());
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "inwardStockModified", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
 			}
-			
-			if(inventoryNotification.getType().equals("outwardStockModified"))
+
+			if (inventoryNotification.getType().equals("outwardStockModified"))
 			{
-				message= "Outward Quantity for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
-				setFields(returnAllNotification, inventoryNotification.getId(),source,"outwardStockModified",
-						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
+				message = "Outward Quantity for Product -"
+						+ inventoryNotification.getProduct().getProductName().toUpperCase() + "in Warehouse -"
+						+ inventoryNotification.getWarehouseName().toUpperCase() + " is modified by User - "
+						+ inventoryNotification.getUpdatedBy() + ". Updated Closing Stock  - "
+						+ df.format(inventoryNotification.getQuantity());
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "outwardStockModified", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
 			}
-			
-			if(inventoryNotification.getType().equals("lostDamagedStockModified"))
+
+			if (inventoryNotification.getType().equals("lostDamagedStockModified"))
 			{
-				message= "Quantity of Lost/Damaged Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" is modified by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
-				setFields(returnAllNotification, inventoryNotification.getId(),source,"lostDamagedStockModified",
-						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
+				message = "Quantity of Lost/Damaged Product -"
+						+ inventoryNotification.getProduct().getProductName().toUpperCase() + "in Warehouse -"
+						+ inventoryNotification.getWarehouseName().toUpperCase() + " is modified by User - "
+						+ inventoryNotification.getUpdatedBy() + ". Updated Closing Stock  - "
+						+ df.format(inventoryNotification.getQuantity());
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "lostDamagedStockModified",
+						message, inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(),
+						true);
 			}
-			
-			if(inventoryNotification.getType().equals("lostDamagedStockAdded"))
+
+			if (inventoryNotification.getType().equals("lostDamagedStockAdded"))
 			{
-				message= "New Lost/Damaged entry added for Product -" + inventoryNotification.getProduct().getProductName().toUpperCase() +"in Warehouse -"+inventoryNotification.getWarehouseName().toUpperCase()+" by User - "+inventoryNotification.getUpdatedBy()+". Updated Closing Stock  - "+df.format(inventoryNotification.getQuantity()) ;
-				setFields(returnAllNotification, inventoryNotification.getId(),source,"lostDamagedStockAdded",
-						message,inventoryNotification.getCreated(),inventoryNotification.getModified(), true);
+				message = "New Lost/Damaged entry added for Product -"
+						+ inventoryNotification.getProduct().getProductName().toUpperCase() + "in Warehouse -"
+						+ inventoryNotification.getWarehouseName().toUpperCase() + " by User - "
+						+ inventoryNotification.getUpdatedBy() + ". Updated Closing Stock  - "
+						+ df.format(inventoryNotification.getQuantity());
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "lostDamagedStockAdded",
+						message, inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(),
+						true);
 			}
 			inventoryNormalizedNotifications.add(returnAllNotification);
 		}
@@ -80,7 +98,7 @@ public class AllNotificationService
 	}
 
 	private void setFields(ReturnSingleNotification returnAllNotification, Long id, String source, String type,
-			String message, Date created, Date modified, boolean b) 
+			String message, Date created, Date modified, boolean b)
 	{
 		returnAllNotification.setCanBeDeleted(b);
 		returnAllNotification.setCreated(created);
@@ -92,7 +110,7 @@ public class AllNotificationService
 		returnAllNotification.setType(type);
 	}
 
-	public void deleteNotification(Long id) throws Exception 
+	public void deleteNotification(Long id) throws Exception
 	{
 		inventoryNotificationService.deleteNotificationByID(id);
 	}

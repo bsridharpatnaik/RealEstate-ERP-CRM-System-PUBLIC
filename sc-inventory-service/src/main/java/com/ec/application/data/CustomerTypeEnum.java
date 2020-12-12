@@ -1,4 +1,4 @@
-package com.ec.common.Data;
+package com.ec.application.data;
 
 import java.io.Serializable;
 

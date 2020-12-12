@@ -1,69 +1,102 @@
 package com.ec.application.ReusableClasses;
 
+import static javax.persistence.TemporalType.TIMESTAMP;
+
 import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
+import javax.persistence.EntityListeners;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.Temporal;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.envers.Audited;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @MappedSuperclass
-@Audited
-public class ReusableFields implements Serializable
+@EntityListeners(AuditingEntityListener.class)
+public abstract class ReusableFields implements Serializable
 {
 
 	public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
 
-	
-    @Column(name="is_deleted", columnDefinition="BOOLEAN DEFAULT true")
-    public boolean isDeleted;
+	@Column(name = "is_deleted", columnDefinition = "BOOLEAN DEFAULT true")
+	public boolean isDeleted;
 
-    @CreationTimestamp
-	@Column(name = "created_at")
-	@JsonProperty("created")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss ")
-	private Date created;
-	
-	
-	@Column(name = "updated_at")
-	@JsonProperty("updated")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
-	@UpdateTimestamp
-	private Date modified;
-	
-	
-	public Date getCreated() {
-		return created;
-	}
+	@CreatedBy
+	protected String createdBy;
 
-	public void setCreated(Date created) {
-		this.created = created;
-	}
+	@CreatedDate
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Temporal(TIMESTAMP)
+	protected Date creationDate;
 
-	public Date getModified() {
-		return modified;
-	}
+	@LastModifiedBy
+	protected String lastModifiedBy;
 
-	public void setModified(Date modified) {
-		this.modified = modified;
-	}
+	@LastModifiedDate
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Temporal(TIMESTAMP)
+	protected Date lastModifiedDate;
 
-	public boolean isDeleted() {
+	public boolean isDeleted()
+	{
 		return isDeleted;
 	}
 
-	public void setDeleted(boolean isDeleted) {
+	public void setDeleted(boolean isDeleted)
+	{
 		this.isDeleted = isDeleted;
 	}
 
-	public static String getSoftDeletedClause() {
+	public String getCreatedBy()
+	{
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy)
+	{
+		this.createdBy = createdBy;
+	}
+
+	public Date getCreationDate()
+	{
+		return creationDate;
+	}
+
+	public void setCreationDate(Date creationDate)
+	{
+		this.creationDate = creationDate;
+	}
+
+	public String getLastModifiedBy()
+	{
+		return lastModifiedBy;
+	}
+
+	public void setLastModifiedBy(String lastModifiedBy)
+	{
+		this.lastModifiedBy = lastModifiedBy;
+	}
+
+	public Date getLastModifiedDate()
+	{
+		return lastModifiedDate;
+	}
+
+	public void setLastModifiedDate(Date lastModifiedDate)
+	{
+		this.lastModifiedDate = lastModifiedDate;
+	}
+
+	public static String getSoftDeletedClause()
+	{
 		return SOFT_DELETED_CLAUSE;
 	}
-    
+
 }
