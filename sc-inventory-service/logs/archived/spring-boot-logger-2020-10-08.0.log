@@ -1,0 +1,152 @@
+2020-10-08 05:15:27,175 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=2h15m26s406ms).
+2020-10-08 05:30:39,607 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=15m12s967ms).
+2020-10-08 08:00:22,023 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=2h29m42s418ms).
+2020-10-08 09:57:26,020 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h57m3s997ms).
+2020-10-08 11:04:30,612 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=36m34s417ms).
+2020-10-08 16:11:02,864 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1m59s694ms).
+2020-10-08 16:32:41,403 INFO com.ec.application.ReusableClasses.ScheduledTasks [scheduling-1] Sending Stock Notification Email in evening
+2020-10-08 16:32:42,154 INFO com.ec.application.service.StockService [scheduling-1] Fetching stock information
+2020-10-08 16:32:43,058 INFO com.ec.application.service.StockService [scheduling-1] Sending email for stock information
+2020-10-08 16:32:43,060 INFO com.ec.application.service.EmailService [scheduling-1] Getting email configuration from master
+2020-10-08 16:32:43,062 INFO com.ec.application.service.EmailService [scheduling-1] Getting email configuration from master
+2020-10-08 16:32:43,108 INFO com.ec.application.ReusableClasses.EmailHelper [scheduling-1] Creating mimemessage
+2020-10-08 16:32:55,316 INFO com.ec.application.ReusableClasses.EmailHelper [scheduling-1] Email Sent
+2020-10-08 16:32:55,318 INFO com.ec.application.service.StockService [scheduling-1] saving stock information to DB
+2020-10-08 20:05:55,431 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3h19m22s315ms).
+2020-10-08 20:47:45,119 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [Thread-5] Shutting down ExecutorService 'taskScheduler'
+2020-10-08 20:47:45,124 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [Thread-5] Shutting down ExecutorService 'applicationTaskExecutor'
+2020-10-08 20:47:45,148 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-5] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-10-08 20:47:45,300 INFO com.zaxxer.hikari.HikariDataSource [Thread-5] HikariPool-1 - Shutdown initiated...
+2020-10-08 20:47:45,373 INFO com.zaxxer.hikari.HikariDataSource [Thread-5] HikariPool-1 - Shutdown completed.
+2020-10-08 20:48:02,814 WARN org.springframework.boot.StartupInfoLogger [restartedMain] InetAddress.getLocalHost().getHostName() took 5003 milliseconds to respond. Please verify your network configuration (macOS machines may need to add entries to /etc/hosts).
+2020-10-08 20:48:07,816 INFO org.springframework.boot.StartupInfoLogger [restartedMain] Starting EcApplication on Sridhars-MacBook-Air.local with PID 22214 (/Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-inventory-service/target/classes started by bsridharpatnaik in /Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-inventory-service)
+2020-10-08 20:48:07,816 DEBUG org.springframework.boot.StartupInfoLogger [restartedMain] Running with Spring Boot v2.2.2.RELEASE, Spring v5.2.2.RELEASE
+2020-10-08 20:48:07,817 INFO org.springframework.boot.SpringApplication [restartedMain] No active profile set, falling back to default profiles: default
+2020-10-08 20:48:08,936 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2020-10-08 20:48:09,195 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Finished Spring Data repository scanning in 256ms. Found 20 JPA repository interfaces.
+2020-10-08 20:48:09,407 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$cb025e0d] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-08 20:48:09,411 INFO org.springframework.ws.soap.addressing.server.AbstractAddressingEndpointMapping [restartedMain] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-10-08 20:48:09,423 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-08 20:48:09,511 WARN org.apache.juli.logging.DirectJDKLog [restartedMain] The MBean registry cannot be disabled because it has already been initialised
+2020-10-08 20:48:09,701 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2020-10-08 20:48:09,702 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2020-10-08 20:48:09,703 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting service [Tomcat]
+2020-10-08 20:48:09,704 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting Servlet engine: [Apache Tomcat/9.0.29]
+2020-10-08 20:48:09,744 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Initializing Spring embedded WebApplicationContext
+2020-10-08 20:48:09,744 INFO org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext [restartedMain] Root WebApplicationContext: initialization completed in 1919 ms
+2020-10-08 20:48:09,924 DEBUG org.springframework.web.filter.GenericFilterBean [restartedMain] Filter 'requestLoggingFilter' configured for use
+2020-10-08 20:48:09,925 DEBUG org.springframework.web.filter.GenericFilterBean [restartedMain] Filter 'logFilter' configured for use
+2020-10-08 20:48:10,091 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [name: default]
+2020-10-08 20:48:10,111 INFO com.zaxxer.hikari.HikariDataSource [restartedMain] HikariPool-2 - Starting...
+2020-10-08 20:48:10,111 WARN com.zaxxer.hikari.util.DriverDataSource [restartedMain] Registered driver with driverClassName=com.mysql.jdbc.Driver was not found, trying direct instantiation.
+2020-10-08 20:48:10,119 INFO com.zaxxer.hikari.HikariDataSource [restartedMain] HikariPool-2 - Start completed.
+2020-10-08 20:48:10,120 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-10-08 20:48:10,133 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [restartedMain] Envers integration enabled? : true
+2020-10-08 20:48:10,188 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [warehouse] association in the [com.ec.application.model.LostDamagedInventory] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:48:10,206 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [category] association in the [com.ec.application.model.Product] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:48:10,217 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [product] association in the [com.ec.application.model.Stock] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:48:10,218 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [warehouse] association in the [com.ec.application.model.Stock] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:48:14,341 INFO org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator [restartedMain] HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2020-10-08 20:48:14,342 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-10-08 20:48:14,367 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2020-10-08 20:48:17,196 WARN org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration [restartedMain] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-10-08 20:48:17,344 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [restartedMain] Initializing ExecutorService 'applicationTaskExecutor'
+2020-10-08 20:48:17,524 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [restartedMain] Initializing ExecutorService 'taskScheduler'
+2020-10-08 20:48:17,640 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2020-10-08 20:48:17,643 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [restartedMain] Tomcat started on port(s): 8081 (http) with context path ''
+2020-10-08 20:48:17,644 INFO org.springframework.boot.StartupInfoLogger [restartedMain] Started EcApplication in 29.936 seconds (JVM running for 37068.687)
+2020-10-08 20:48:17,649 INFO org.springframework.boot.devtools.autoconfigure.ConditionEvaluationDeltaLoggingListener [restartedMain] Condition evaluation unchanged
+2020-10-08 20:48:58,523 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [Thread-13] Shutting down ExecutorService 'taskScheduler'
+2020-10-08 20:48:58,524 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [Thread-13] Shutting down ExecutorService 'applicationTaskExecutor'
+2020-10-08 20:48:58,528 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-13] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-10-08 20:48:58,529 INFO com.zaxxer.hikari.HikariDataSource [Thread-13] HikariPool-2 - Shutdown initiated...
+2020-10-08 20:48:58,541 INFO com.zaxxer.hikari.HikariDataSource [Thread-13] HikariPool-2 - Shutdown completed.
+2020-10-08 20:49:14,179 WARN org.springframework.boot.StartupInfoLogger [restartedMain] InetAddress.getLocalHost().getHostName() took 5001 milliseconds to respond. Please verify your network configuration (macOS machines may need to add entries to /etc/hosts).
+2020-10-08 20:49:19,181 INFO org.springframework.boot.StartupInfoLogger [restartedMain] Starting EcApplication on Sridhars-MacBook-Air.local with PID 22214 (/Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-inventory-service/target/classes started by bsridharpatnaik in /Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-inventory-service)
+2020-10-08 20:49:19,182 DEBUG org.springframework.boot.StartupInfoLogger [restartedMain] Running with Spring Boot v2.2.2.RELEASE, Spring v5.2.2.RELEASE
+2020-10-08 20:49:19,182 INFO org.springframework.boot.SpringApplication [restartedMain] No active profile set, falling back to default profiles: default
+2020-10-08 20:49:20,081 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2020-10-08 20:49:20,330 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Finished Spring Data repository scanning in 248ms. Found 20 JPA repository interfaces.
+2020-10-08 20:49:20,551 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$cb025e0d] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-08 20:49:20,554 INFO org.springframework.ws.soap.addressing.server.AbstractAddressingEndpointMapping [restartedMain] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-10-08 20:49:20,566 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-08 20:49:20,649 WARN org.apache.juli.logging.DirectJDKLog [restartedMain] The MBean registry cannot be disabled because it has already been initialised
+2020-10-08 20:49:20,702 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2020-10-08 20:49:20,704 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2020-10-08 20:49:20,705 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting service [Tomcat]
+2020-10-08 20:49:20,705 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting Servlet engine: [Apache Tomcat/9.0.29]
+2020-10-08 20:49:20,721 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Initializing Spring embedded WebApplicationContext
+2020-10-08 20:49:20,722 INFO org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext [restartedMain] Root WebApplicationContext: initialization completed in 1528 ms
+2020-10-08 20:49:20,806 DEBUG org.springframework.web.filter.GenericFilterBean [restartedMain] Filter 'requestLoggingFilter' configured for use
+2020-10-08 20:49:20,806 DEBUG org.springframework.web.filter.GenericFilterBean [restartedMain] Filter 'logFilter' configured for use
+2020-10-08 20:49:20,896 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [name: default]
+2020-10-08 20:49:20,910 INFO com.zaxxer.hikari.HikariDataSource [restartedMain] HikariPool-3 - Starting...
+2020-10-08 20:49:20,910 WARN com.zaxxer.hikari.util.DriverDataSource [restartedMain] Registered driver with driverClassName=com.mysql.jdbc.Driver was not found, trying direct instantiation.
+2020-10-08 20:49:20,916 INFO com.zaxxer.hikari.HikariDataSource [restartedMain] HikariPool-3 - Start completed.
+2020-10-08 20:49:20,919 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-10-08 20:49:20,925 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [restartedMain] Envers integration enabled? : true
+2020-10-08 20:49:20,962 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [warehouse] association in the [com.ec.application.model.LostDamagedInventory] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:49:20,980 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [category] association in the [com.ec.application.model.Product] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:49:20,988 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [product] association in the [com.ec.application.model.Stock] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:49:20,989 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [warehouse] association in the [com.ec.application.model.Stock] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:49:26,033 INFO org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator [restartedMain] HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2020-10-08 20:49:26,033 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-10-08 20:49:26,048 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2020-10-08 20:49:28,354 WARN org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration [restartedMain] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-10-08 20:49:28,422 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [restartedMain] Initializing ExecutorService 'applicationTaskExecutor'
+2020-10-08 20:49:28,642 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [restartedMain] Initializing ExecutorService 'taskScheduler'
+2020-10-08 20:49:28,832 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2020-10-08 20:49:28,871 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [restartedMain] Tomcat started on port(s): 8081 (http) with context path ''
+2020-10-08 20:49:28,872 INFO org.springframework.boot.StartupInfoLogger [restartedMain] Started EcApplication in 29.742 seconds (JVM running for 37139.915)
+2020-10-08 20:49:28,883 INFO org.springframework.boot.devtools.autoconfigure.ConditionEvaluationDeltaLoggingListener [restartedMain] Condition evaluation unchanged
+2020-10-08 20:50:13,793 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [Thread-18] Shutting down ExecutorService 'taskScheduler'
+2020-10-08 20:50:13,810 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [Thread-18] Shutting down ExecutorService 'applicationTaskExecutor'
+2020-10-08 20:50:13,813 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [Thread-18] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-10-08 20:50:13,814 INFO com.zaxxer.hikari.HikariDataSource [Thread-18] HikariPool-3 - Shutdown initiated...
+2020-10-08 20:50:13,828 INFO com.zaxxer.hikari.HikariDataSource [Thread-18] HikariPool-3 - Shutdown completed.
+2020-10-08 20:50:29,368 WARN org.springframework.boot.StartupInfoLogger [restartedMain] InetAddress.getLocalHost().getHostName() took 5001 milliseconds to respond. Please verify your network configuration (macOS machines may need to add entries to /etc/hosts).
+2020-10-08 20:50:34,374 INFO org.springframework.boot.StartupInfoLogger [restartedMain] Starting EcApplication on Sridhars-MacBook-Air.local with PID 22214 (/Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-inventory-service/target/classes started by bsridharpatnaik in /Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-inventory-service)
+2020-10-08 20:50:34,374 DEBUG org.springframework.boot.StartupInfoLogger [restartedMain] Running with Spring Boot v2.2.2.RELEASE, Spring v5.2.2.RELEASE
+2020-10-08 20:50:34,375 INFO org.springframework.boot.SpringApplication [restartedMain] No active profile set, falling back to default profiles: default
+2020-10-08 20:50:35,044 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2020-10-08 20:50:35,201 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [restartedMain] Finished Spring Data repository scanning in 156ms. Found 20 JPA repository interfaces.
+2020-10-08 20:50:35,309 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$cb025e0d] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-08 20:50:35,312 INFO org.springframework.ws.soap.addressing.server.AbstractAddressingEndpointMapping [restartedMain] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-10-08 20:50:35,321 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [restartedMain] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-08 20:50:35,369 WARN org.apache.juli.logging.DirectJDKLog [restartedMain] The MBean registry cannot be disabled because it has already been initialised
+2020-10-08 20:50:35,416 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [restartedMain] Tomcat initialized with port(s): 8081 (http)
+2020-10-08 20:50:35,418 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Initializing ProtocolHandler ["http-nio-8081"]
+2020-10-08 20:50:35,418 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting service [Tomcat]
+2020-10-08 20:50:35,418 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting Servlet engine: [Apache Tomcat/9.0.29]
+2020-10-08 20:50:35,433 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Initializing Spring embedded WebApplicationContext
+2020-10-08 20:50:35,433 INFO org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext [restartedMain] Root WebApplicationContext: initialization completed in 1052 ms
+2020-10-08 20:50:35,525 DEBUG org.springframework.web.filter.GenericFilterBean [restartedMain] Filter 'requestLoggingFilter' configured for use
+2020-10-08 20:50:35,527 DEBUG org.springframework.web.filter.GenericFilterBean [restartedMain] Filter 'logFilter' configured for use
+2020-10-08 20:50:35,640 INFO org.hibernate.jpa.internal.util.LogHelper [restartedMain] HHH000204: Processing PersistenceUnitInfo [name: default]
+2020-10-08 20:50:35,652 INFO com.zaxxer.hikari.HikariDataSource [restartedMain] HikariPool-4 - Starting...
+2020-10-08 20:50:35,653 WARN com.zaxxer.hikari.util.DriverDataSource [restartedMain] Registered driver with driverClassName=com.mysql.jdbc.Driver was not found, trying direct instantiation.
+2020-10-08 20:50:35,658 INFO com.zaxxer.hikari.HikariDataSource [restartedMain] HikariPool-4 - Start completed.
+2020-10-08 20:50:35,659 INFO org.hibernate.dialect.Dialect [restartedMain] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-10-08 20:50:35,664 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [restartedMain] Envers integration enabled? : true
+2020-10-08 20:50:35,696 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [warehouse] association in the [com.ec.application.model.LostDamagedInventory] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:50:35,709 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [category] association in the [com.ec.application.model.Product] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:50:35,715 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [product] association in the [com.ec.application.model.Stock] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:50:35,716 WARN org.hibernate.cfg.AnnotationBinder [restartedMain] HHH000491: The [warehouse] association in the [com.ec.application.model.Stock] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-08 20:50:38,234 INFO org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator [restartedMain] HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2020-10-08 20:50:38,235 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [restartedMain] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-10-08 20:50:38,254 INFO org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer [restartedMain] LiveReload server is running on port 35729
+2020-10-08 20:50:39,623 WARN org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration [restartedMain] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-10-08 20:50:39,673 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [restartedMain] Initializing ExecutorService 'applicationTaskExecutor'
+2020-10-08 20:50:39,805 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [restartedMain] Initializing ExecutorService 'taskScheduler'
+2020-10-08 20:50:39,878 INFO org.apache.juli.logging.DirectJDKLog [restartedMain] Starting ProtocolHandler ["http-nio-8081"]
+2020-10-08 20:50:39,880 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [restartedMain] Tomcat started on port(s): 8081 (http) with context path ''
+2020-10-08 20:50:39,881 INFO org.springframework.boot.StartupInfoLogger [restartedMain] Started EcApplication in 25.57 seconds (JVM running for 37210.924)
+2020-10-08 20:50:39,883 INFO org.springframework.boot.devtools.autoconfigure.ConditionEvaluationDeltaLoggingListener [restartedMain] Condition evaluation unchanged
+2020-10-08 21:44:56,060 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-4 housekeeper] HikariPool-4 - Thread starvation or clock leap detected (housekeeper delta=23m20s91ms).
+2020-10-08 22:28:42,529 INFO org.apache.juli.logging.DirectJDKLog [http-nio-8081-exec-1] Initializing Spring DispatcherServlet 'dispatcherServlet'
+2020-10-08 22:28:42,532 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-8081-exec-1] Initializing Servlet 'dispatcherServlet'
+2020-10-08 22:28:42,600 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-8081-exec-1] Completed initialization in 55 ms
+2020-10-08 22:28:42,710 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8081-exec-1] Before request [GET /dashboard]
+2020-10-08 22:28:42,710 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8081-exec-1] Before request [GET /dashboard, client=127.0.0.1]
+2020-10-08 22:28:43,440 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8081-exec-1] After request [GET /dashboard, client=127.0.0.1]
+2020-10-08 22:28:43,441 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8081-exec-1] REQUEST DATA : GET /dashboard]

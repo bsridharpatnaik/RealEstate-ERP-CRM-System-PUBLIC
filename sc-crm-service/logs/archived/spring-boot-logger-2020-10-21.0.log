@@ -1,0 +1,8 @@
+2020-10-21 02:00:22,959 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=5h30m5s938ms).
+2020-10-21 05:11:29,907 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3h11m6s949ms).
+2020-10-21 05:18:08,115 INFO org.springframework.boot.admin.SpringApplicationAdminMXBeanRegistrar$SpringApplicationAdmin [RMI TCP Connection(58)-127.0.0.1] Application shutdown requested.
+2020-10-21 05:18:08,181 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [RMI TCP Connection(58)-127.0.0.1] Shutting down ExecutorService 'taskScheduler'
+2020-10-21 05:18:08,185 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [RMI TCP Connection(58)-127.0.0.1] Shutting down ExecutorService 'applicationTaskExecutor'
+2020-10-21 05:18:08,208 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [RMI TCP Connection(58)-127.0.0.1] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-10-21 05:18:10,484 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(58)-127.0.0.1] HikariPool-1 - Shutdown initiated...
+2020-10-21 05:18:10,500 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(58)-127.0.0.1] HikariPool-1 - Shutdown completed.

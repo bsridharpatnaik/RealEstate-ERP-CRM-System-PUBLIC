@@ -1,0 +1,69 @@
+2020-11-11 22:25:48,194 WARN org.springframework.boot.StartupInfoLogger [main] InetAddress.getLocalHost().getHostName() took 5005 milliseconds to respond. Please verify your network configuration (macOS machines may need to add entries to /etc/hosts).
+2020-11-11 22:25:53,205 INFO org.springframework.boot.StartupInfoLogger [main] Starting CrmApplication on Sridhars-MacBook-Air.local with PID 16921 (/Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-crm-service/target/classes started by bsridharpatnaik in /Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-crm-service)
+2020-11-11 22:25:53,208 INFO org.springframework.boot.SpringApplication [main] No active profile set, falling back to default profiles: default
+2020-11-11 22:25:55,046 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2020-11-11 22:25:55,312 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 238ms. Found 12 JPA repository interfaces.
+2020-11-11 22:25:55,998 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [main] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$f0cc3da8] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-11 22:25:56,056 INFO org.springframework.ws.soap.addressing.server.AbstractAddressingEndpointMapping [main] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-11-11 22:25:56,080 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [main] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-11 22:25:56,555 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat initialized with port(s): 8083 (http)
+2020-11-11 22:25:56,578 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing ProtocolHandler ["http-nio-8083"]
+2020-11-11 22:25:56,579 INFO org.apache.juli.logging.DirectJDKLog [main] Starting service [Tomcat]
+2020-11-11 22:25:56,579 INFO org.apache.juli.logging.DirectJDKLog [main] Starting Servlet engine: [Apache Tomcat/9.0.29]
+2020-11-11 22:25:56,823 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing Spring embedded WebApplicationContext
+2020-11-11 22:25:56,823 INFO org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext [main] Root WebApplicationContext: initialization completed in 3495 ms
+2020-11-11 22:25:56,893 DEBUG org.springframework.web.filter.GenericFilterBean [main] Filter 'logFilter' configured for use
+2020-11-11 22:25:57,176 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [name: default]
+2020-11-11 22:25:57,587 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.4.9.Final}
+2020-11-11 22:25:58,131 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.1.0.Final}
+2020-11-11 22:25:58,476 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-11-11 22:25:58,480 WARN com.zaxxer.hikari.util.DriverDataSource [main] Registered driver with driverClassName=com.mysql.jdbc.Driver was not found, trying direct instantiation.
+2020-11-11 22:25:58,828 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-11-11 22:25:58,868 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-11-11 22:25:59,278 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [main] Envers integration enabled? : true
+2020-11-11 22:25:59,660 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [lead] association in the [com.ec.crm.Model.LeadActivity] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-11-11 22:25:59,683 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [leadActivity] association in the [com.ec.crm.Model.LeadActivityNotificationHistory] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-11-11 22:25:59,695 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [lead] association in the [com.ec.crm.Model.Note] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-11-11 22:26:04,729 INFO org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator [main] HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2020-11-11 22:26:04,743 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-11-11 22:26:07,482 WARN org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration [main] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-11-11 22:26:07,913 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [main] Initializing ExecutorService 'applicationTaskExecutor'
+2020-11-11 22:26:08,492 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [main] Initializing ExecutorService 'taskScheduler'
+2020-11-11 22:26:08,663 INFO org.apache.juli.logging.DirectJDKLog [main] Starting ProtocolHandler ["http-nio-8083"]
+2020-11-11 22:26:08,706 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat started on port(s): 8083 (http) with context path ''
+2020-11-11 22:26:08,710 INFO org.springframework.boot.StartupInfoLogger [main] Started CrmApplication in 36.47 seconds (JVM running for 43.035)
+2020-11-11 22:29:22,542 INFO org.apache.juli.logging.DirectJDKLog [http-nio-8083-exec-1] Initializing Spring DispatcherServlet 'dispatcherServlet'
+2020-11-11 22:29:22,548 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-8083-exec-1] Initializing Servlet 'dispatcherServlet'
+2020-11-11 22:29:22,616 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-8083-exec-1] Completed initialization in 67 ms
+2020-11-11 22:29:22,831 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-1] Before request [POST /activity/getleadactivitypage]
+2020-11-11 22:29:23,193 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Invoked findFilteredList with payload - FilterDataList [filterData=[], getFilterData()=[], getClass()=class com.ec.crm.Filters.FilterDataList, hashCode()=755331918, toString()=com.ec.crm.Filters.FilterDataList@2d05734e]
+2020-11-11 22:29:23,193 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Fetching filteration based on filter data received
+2020-11-11 22:29:23,438 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Setting dropdown data
+2020-11-11 22:29:23,516 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch userlist
+2020-11-11 22:29:29,619 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Setting typeahead data
+2020-11-11 22:29:29,620 INFO com.ec.crm.Service.LeadService [http-nio-8083-exec-1] Invoked fetchTypeAheadForLeadGlobalSearch
+2020-11-11 22:29:29,807 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,809 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 43
+2020-11-11 22:29:29,810 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,811 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,812 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,812 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,813 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,815 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,816 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,816 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,817 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,822 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,823 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,823 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,824 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,824 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,825 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,826 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,827 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-11-11 22:29:29,828 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-11-11 22:29:29,897 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-1] REQUEST DATA : POST /activity/getleadactivitypage, payload={
+    "filterData": [
+        
+    ]
+}]

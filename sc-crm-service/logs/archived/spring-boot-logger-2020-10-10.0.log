@@ -1,0 +1,15 @@
+2020-10-10 00:24:00,121 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=22m35s802ms).
+2020-10-10 01:26:16,930 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=48m46s610ms).
+2020-10-10 02:37:53,927 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h11m36s994ms).
+2020-10-10 02:52:46,516 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=14m52s27ms).
+2020-10-10 07:45:04,179 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=4h52m18s201ms).
+2020-10-10 10:45:19,832 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3h15s681ms).
+2020-10-10 11:20:18,140 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=34m58s308ms).
+2020-10-10 11:55:19,755 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=34m31s607ms).
+2020-10-10 12:07:56,014 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=6m36s199ms).
+2020-10-10 12:36:31,756 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=28m35s742ms).
+2020-10-10 12:42:16,795 INFO org.springframework.boot.admin.SpringApplicationAdminMXBeanRegistrar$SpringApplicationAdmin [RMI TCP Connection(140)-127.0.0.1] Application shutdown requested.
+2020-10-10 12:42:17,128 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [RMI TCP Connection(140)-127.0.0.1] Shutting down ExecutorService 'applicationTaskExecutor'
+2020-10-10 12:42:17,151 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [RMI TCP Connection(140)-127.0.0.1] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-10-10 12:42:19,394 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(140)-127.0.0.1] HikariPool-1 - Shutdown initiated...
+2020-10-10 12:42:19,420 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(140)-127.0.0.1] HikariPool-1 - Shutdown completed.

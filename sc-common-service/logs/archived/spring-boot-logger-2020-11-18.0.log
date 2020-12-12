@@ -1,0 +1,1085 @@
+2020-11-18 00:01:47,444 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:01:47,601 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:01:50,268 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:01:50,269 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:01:54,310 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:01:54,312 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:01:55,480 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:01:55,481 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:08:03,222 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:08:03,226 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:08:06,071 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:08:06,081 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:15:05,376 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:15:05,378 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:15:08,289 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:15:08,290 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:21:08,105 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:21:08,113 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:21:10,967 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:21:10,968 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:43:18,592 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(332)-127.0.0.1] Application shutdown requested.
+2020-11-18 00:43:18,618 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(332)-127.0.0.1] Closing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@5be46f9d: startup date [Tue Nov 17 07:38:30 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@687e99d8
+2020-11-18 00:43:18,715 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(332)-127.0.0.1] Stopping filter initializer
+2020-11-18 00:43:18,761 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(332)-127.0.0.1] Unregistering JMX-exposed beans on shutdown
+2020-11-18 00:43:18,763 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(332)-127.0.0.1] Unregistering JMX-exposed beans
+2020-11-18 00:43:18,926 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(332)-127.0.0.1] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-11-18 00:43:19,005 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(332)-127.0.0.1] HikariPool-1 - Shutdown initiated...
+2020-11-18 00:43:19,025 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(332)-127.0.0.1] HikariPool-1 - Shutdown completed.
+2020-11-18 00:43:19,040 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(332)-127.0.0.1] Pausing ProtocolHandler ["http-nio-8080"]
+2020-11-18 00:43:19,098 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(332)-127.0.0.1] Stopping service [Tomcat]
+2020-11-18 00:43:19,117 INFO org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] Destroying Spring FrameworkServlet 'dispatcherServlet'
+2020-11-18 00:43:19,151 WARN org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] The web application [ROOT] appears to have started a thread named [RxIoScheduler-1 (Evictor)] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ sun.misc.Unsafe.park(Native Method)
+ java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+ java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+ java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+ java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+ java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+ java.lang.Thread.run(Thread.java:748)
+2020-11-18 00:43:19,153 WARN org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] The web application [ROOT] appears to have started a thread named [expiringMap-0] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ sun.misc.Unsafe.park(Native Method)
+ java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+ java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+ java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+ java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+ java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+ java.lang.Thread.run(Thread.java:748)
+2020-11-18 00:43:19,178 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(332)-127.0.0.1] Stopping ProtocolHandler ["http-nio-8080"]
+2020-11-18 00:43:19,190 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(332)-127.0.0.1] Destroying ProtocolHandler ["http-nio-8080"]
+2020-11-18 00:43:40,602 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@75db5df9: startup date [Wed Nov 18 00:43:40 IST 2020]; root of context hierarchy
+2020-11-18 00:43:41,036 INFO org.apache.commons.logging.impl.Jdk14Logger [main] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2020-11-18 00:43:41,110 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'configurationPropertiesRebinderAutoConfiguration' of type [org.springframework.cloud.autoconfigure.ConfigurationPropertiesRebinderAutoConfiguration$$EnhancerBySpringCGLIB$$13514c0f] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:51,439 INFO org.apache.commons.logging.impl.Jdk14Logger [main] No active profile set, falling back to default profiles: default
+2020-11-18 00:43:51,466 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Refreshing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@1b75c2e3: startup date [Wed Nov 18 00:43:51 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@75db5df9
+2020-11-18 00:43:54,082 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Overriding bean definition for bean 'counterFactory' with a different definition: replacing [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=org.springframework.cloud.netflix.zuul.ZuulServerAutoConfiguration$ZuulMetricsConfiguration; factoryMethodName=counterFactory; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/cloud/netflix/zuul/ZuulServerAutoConfiguration$ZuulMetricsConfiguration.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=org.springframework.cloud.netflix.zuul.ZuulServerAutoConfiguration$ZuulCounterFactoryConfiguration; factoryMethodName=counterFactory; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/cloud/netflix/zuul/ZuulServerAutoConfiguration$ZuulCounterFactoryConfiguration.class]]
+2020-11-18 00:43:54,218 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Overriding bean definition for bean 'dataSource' with a different definition: replacing [Root bean: class [null]; scope=refresh; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=false; primary=false; factoryBeanName=org.springframework.boot.autoconfigure.jdbc.DataSourceConfiguration$Hikari; factoryMethodName=dataSource; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]] with [Root bean: class [org.springframework.aop.scope.ScopedProxyFactoryBean]; scope=; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in BeanDefinition defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]]
+2020-11-18 00:43:54,455 INFO org.apache.commons.logging.impl.Jdk14Logger [main] BeanFactory id=d9584f2f-316a-3d06-a470-48069670a8f9
+2020-11-18 00:43:54,493 INFO org.apache.commons.logging.impl.Jdk14Logger [main] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2020-11-18 00:43:54,639 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$9bcf0e11] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:54,696 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-11-18 00:43:54,837 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$f7374912] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:55,273 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.security.config.annotation.configuration.ObjectPostProcessorConfiguration' of type [org.springframework.security.config.annotation.configuration.ObjectPostProcessorConfiguration$$EnhancerBySpringCGLIB$$8fe5114c] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:55,291 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'objectPostProcessor' of type [org.springframework.security.config.annotation.configuration.AutowireBeanFactoryObjectPostProcessor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:55,296 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler@5e922647' of type [org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:55,321 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration' of type [org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration$$EnhancerBySpringCGLIB$$b4b9b3fe] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:55,367 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'methodSecurityMetadataSource' of type [org.springframework.security.access.method.DelegatingMethodSecurityMetadataSource] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:55,489 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.cloud.autoconfigure.ConfigurationPropertiesRebinderAutoConfiguration' of type [org.springframework.cloud.autoconfigure.ConfigurationPropertiesRebinderAutoConfiguration$$EnhancerBySpringCGLIB$$13514c0f] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 00:43:56,393 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Tomcat initialized with port(s): 8080 (http)
+2020-11-18 00:43:56,433 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing ProtocolHandler ["http-nio-8080"]
+2020-11-18 00:43:56,458 INFO org.apache.juli.logging.DirectJDKLog [main] Starting service [Tomcat]
+2020-11-18 00:43:56,459 INFO org.apache.juli.logging.DirectJDKLog [main] Starting Servlet Engine: Apache Tomcat/8.5.34
+2020-11-18 00:43:56,467 INFO org.apache.juli.logging.DirectJDKLog [localhost-startStop-1] The APR based Apache Tomcat Native library which allows optimal performance in production environments was not found on the java.library.path: [/Users/bsridharpatnaik/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:.]
+2020-11-18 00:43:56,655 INFO org.apache.juli.logging.DirectJDKLog [localhost-startStop-1] Initializing Spring embedded WebApplicationContext
+2020-11-18 00:43:56,656 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Root WebApplicationContext: initialization completed in 5191 ms
+2020-11-18 00:43:56,985 WARN com.netflix.config.sources.URLConfigurationSource [localhost-startStop-1] No URLs will be polled as dynamic configuration sources.
+2020-11-18 00:43:56,986 INFO com.netflix.config.sources.URLConfigurationSource [localhost-startStop-1] To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2020-11-18 00:43:57,018 INFO com.netflix.config.DynamicPropertyFactory [localhost-startStop-1] DynamicPropertyFactory is initialized with configuration sources: com.netflix.config.ConcurrentCompositeConfiguration@dc2e3dc
+2020-11-18 00:43:58,655 INFO com.zaxxer.hikari.HikariDataSource [localhost-startStop-1] HikariPool-1 - Starting...
+2020-11-18 00:43:59,555 INFO com.zaxxer.hikari.HikariDataSource [localhost-startStop-1] HikariPool-1 - Start completed.
+2020-11-18 00:43:59,645 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Building JPA container EntityManagerFactory for persistence unit 'default'
+2020-11-18 00:43:59,674 INFO org.hibernate.jpa.internal.util.LogHelper [localhost-startStop-1] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-11-18 00:43:59,947 INFO org.hibernate.Version [localhost-startStop-1] HHH000412: Hibernate Core {5.2.17.Final}
+2020-11-18 00:43:59,953 INFO org.hibernate.cfg.Environment [localhost-startStop-1] HHH000206: hibernate.properties not found
+2020-11-18 00:44:00,141 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [localhost-startStop-1] HCANN000001: Hibernate Commons Annotations {5.0.1.Final}
+2020-11-18 00:44:00,653 INFO org.hibernate.dialect.Dialect [localhost-startStop-1] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-11-18 00:44:00,772 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [localhost-startStop-1] Envers integration enabled? : true
+2020-11-18 00:44:07,078 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-11-18 00:44:07,868 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'characterEncodingFilter' to: [/*]
+2020-11-18 00:44:07,869 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'webMvcMetricsFilter' to: [/*]
+2020-11-18 00:44:07,870 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'springSecurityFilterChain' to: [/*]
+2020-11-18 00:44:07,871 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'httpTraceFilter' to: [/*]
+2020-11-18 00:44:07,871 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'jwtRequestFilter' to: [/*]
+2020-11-18 00:44:07,872 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'logFilter' to: [/*]
+2020-11-18 00:44:07,872 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'requestLoggingFilter' to: [/*]
+2020-11-18 00:44:07,873 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Servlet dispatcherServlet mapped to [/]
+2020-11-18 00:44:07,876 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Servlet messageDispatcherServlet mapped to [/services/*]
+2020-11-18 00:44:07,877 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Servlet zuulServlet mapped to [/zuul/*]
+2020-11-18 00:44:07,915 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Initializing filter 'requestLoggingFilter'
+2020-11-18 00:44:07,915 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Filter 'requestLoggingFilter' configured successfully
+2020-11-18 00:44:07,916 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Initializing filter 'logFilter'
+2020-11-18 00:44:07,916 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Filter 'logFilter' configured successfully
+2020-11-18 00:44:08,347 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-11-18 00:44:09,502 WARN org.apache.commons.logging.impl.Jdk14Logger [main] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-11-18 00:44:09,610 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.ContactsWithTypeAhead com.ec.common.Controller.ContactController.returnAllContacts(java.lang.Integer,org.springframework.data.domain.Pageable)
+2020-11-18 00:44:09,613 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Data.ContactsWithTypeAhead com.ec.common.Controller.ContactController.returnFilteredContacts(com.ec.common.Filters.FilterDataList,org.springframework.data.domain.Pageable)
+2020-11-18 00:44:09,614 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/{id}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Model.ContactAllInfo com.ec.common.Controller.ContactController.findContactbyvehicleNoContacts(long) throws java.lang.Exception
+2020-11-18 00:44:09,616 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/{id}],methods=[DELETE],produces=[application/json || text/json]}" onto public org.springframework.http.ResponseEntity<?> com.ec.common.Controller.ContactController.deleteContact(java.lang.Long) throws java.lang.Exception
+2020-11-18 00:44:09,617 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/create],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.ContactAllInfo com.ec.common.Controller.ContactController.createContact(com.ec.common.Model.ContactAllInfo) throws java.lang.Exception
+2020-11-18 00:44:09,618 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/{id}],methods=[PUT],produces=[application/json || text/json]}" onto public com.ec.common.Model.ContactAllInfo com.ec.common.Controller.ContactController.updateContact(java.lang.Long,com.ec.common.Model.ContactAllInfo) throws java.lang.Exception
+2020-11-18 00:44:09,619 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/iscontactused/{id}],methods=[GET],produces=[application/json || text/json]}" onto public java.lang.Boolean com.ec.common.Controller.ContactController.checkIfContactUsed(long) throws java.lang.Exception
+2020-11-18 00:44:09,620 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/emailconfig],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.EmailConfigData com.ec.common.Controller.EmailController.returnEmailConfig()
+2020-11-18 00:44:09,621 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/lanotification/token],methods=[POST]}" onto public java.lang.String com.ec.common.Controller.LeadActivityNotificationController.sendPnsToDevice(com.ec.common.Data.LANotificationRequestDto)
+2020-11-18 00:44:09,622 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/ec/login],methods=[POST],produces=[application/json || text/json]}" onto public org.springframework.http.ResponseEntity<?> com.ec.common.Controller.LoginController.login(com.ec.common.Data.UserSignInData) throws java.lang.Exception
+2020-11-18 00:44:09,624 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/role],methods=[GET],produces=[application/json || text/json]}" onto public org.springframework.data.domain.Page<com.ec.common.Model.Role> com.ec.common.Controller.RoleController.returnAllRoles(org.springframework.data.domain.Pageable)
+2020-11-18 00:44:09,625 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/role/create],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.Role com.ec.common.Controller.RoleController.createRole(com.ec.common.Model.Role) throws java.lang.Exception
+2020-11-18 00:44:09,629 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/token],methods=[PUT],produces=[application/json || text/json]}" onto public void com.ec.common.Controller.TokenController.updateTokenForUser(com.ec.common.Data.TokenData) throws java.lang.Exception
+2020-11-18 00:44:09,631 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/token],methods=[GET],produces=[application/json || text/json]}" onto public java.util.List<com.ec.common.Data.AndroidTokenDetailsDTO> com.ec.common.Controller.TokenController.getAllTokens()
+2020-11-18 00:44:09,631 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/token],methods=[DELETE],produces=[application/json || text/json]}" onto public void com.ec.common.Controller.TokenController.DeleteToken() throws java.lang.Exception
+2020-11-18 00:44:09,637 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserListWithTypeAheadData com.ec.common.Controller.UserController.returnFilteredContacts(com.ec.common.Filters.FilterDataList,org.springframework.data.domain.Pageable)
+2020-11-18 00:44:09,637 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserListWithTypeAheadData com.ec.common.Controller.UserController.returnAllUsers(org.springframework.data.domain.Pageable)
+2020-11-18 00:44:09,638 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/create],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.createUser(com.ec.common.Data.CreateUserData) throws java.lang.Exception
+2020-11-18 00:44:09,639 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/{id}],methods=[PUT],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.updateUser(java.lang.Long,com.ec.common.Data.CreateUserData) throws java.lang.Exception
+2020-11-18 00:44:09,641 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/updatepassword],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.updateUser(com.ec.common.Data.ResetPasswordData) throws java.lang.Exception
+2020-11-18 00:44:09,646 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/{id}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.findUserByID(long) throws java.lang.Exception
+2020-11-18 00:44:09,648 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/list],methods=[GET],produces=[application/json || text/json]}" onto public java.util.List<com.ec.common.Data.UserReturnData> com.ec.common.Controller.UserController.findLimitedDetailsForUserByID() throws java.lang.Exception
+2020-11-18 00:44:09,649 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/byid/{id}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserReturnData com.ec.common.Controller.UserController.findLimitedDetailsForUserByID(long) throws java.lang.Exception
+2020-11-18 00:44:09,651 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/byname/{name}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserReturnData com.ec.common.Controller.UserController.findLimitedDetailsForUserByID(java.lang.String) throws java.lang.Exception
+2020-11-18 00:44:09,653 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/updateroles],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.updateRolesForUser(com.ec.common.Data.UpdateRolesForUserData) throws java.lang.Exception
+2020-11-18 00:44:09,654 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/me],methods=[GET],produces=[application/json]}" onto public com.ec.common.Data.UserReturnData com.ec.common.Controller.UserController.returnUserName()
+2020-11-18 00:44:09,660 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+2020-11-18 00:44:09,661 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2020-11-18 00:44:09,797 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped URL path [/eureka/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2020-11-18 00:44:10,145 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Looking for @ControllerAdvice: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@1b75c2e3: startup date [Wed Nov 18 00:43:51 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@75db5df9
+2020-11-18 00:44:10,453 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/*/'], []
+2020-11-18 00:44:10,454 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/eureka/**.**'], []
+2020-11-18 00:44:10,454 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/eureka/**'], []
+2020-11-18 00:44:10,455 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='**/scripts/**.js'], []
+2020-11-18 00:44:10,455 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.jpg'], []
+2020-11-18 00:44:10,455 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.ico'], []
+2020-11-18 00:44:10,455 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.html'], []
+2020-11-18 00:44:10,456 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/header.html'], []
+2020-11-18 00:44:10,456 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='**.html'], []
+2020-11-18 00:44:10,456 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.css'], []
+2020-11-18 00:44:10,456 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.js'], []
+2020-11-18 00:44:10,457 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/eureka/**/**'], []
+2020-11-18 00:44:10,457 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**', OPTIONS], []
+2020-11-18 00:44:10,604 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: org.springframework.security.web.util.matcher.AnyRequestMatcher@1, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@78e68401, org.springframework.security.web.context.SecurityContextPersistenceFilter@374c40ba, org.springframework.security.web.header.HeaderWriterFilter@764a3e5d, org.springframework.web.filter.CorsFilter@391515c7, org.springframework.security.web.authentication.logout.LogoutFilter@34045582, com.ec.common.JWTUtils.JwtRequestFilter@6120c6b2, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@6ef2f7ad, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@26e8ff8c, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@5b0dbfb, org.springframework.security.web.session.SessionManagementFilter@3c7279a5, org.springframework.security.web.access.ExceptionTranslationFilter@2faa55bb, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@31aab981]
+2020-11-18 00:44:10,679 WARN com.netflix.config.sources.URLConfigurationSource [main] No URLs will be polled as dynamic configuration sources.
+2020-11-18 00:44:10,679 INFO com.netflix.config.sources.URLConfigurationSource [main] To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2020-11-18 00:44:11,475 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Exposing 2 endpoint(s) beneath base path '/actuator'
+2020-11-18 00:44:11,496 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/actuator/health],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.web.servlet.AbstractWebMvcEndpointHandlerMapping$OperationHandler.handle(javax.servlet.http.HttpServletRequest,java.util.Map<java.lang.String, java.lang.String>)
+2020-11-18 00:44:11,499 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/actuator/info],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.web.servlet.AbstractWebMvcEndpointHandlerMapping$OperationHandler.handle(javax.servlet.http.HttpServletRequest,java.util.Map<java.lang.String, java.lang.String>)
+2020-11-18 00:44:11,500 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/actuator],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}" onto protected java.util.Map<java.lang.String, java.util.Map<java.lang.String, org.springframework.boot.actuate.endpoint.web.Link>> org.springframework.boot.actuate.endpoint.web.servlet.WebMvcEndpointHandlerMapping.links(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2020-11-18 00:44:12,647 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Starting filter initializer
+2020-11-18 00:44:12,723 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Registering beans for JMX exposure on startup
+2020-11-18 00:44:12,725 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'dataSource' has been autodetected for JMX exposure
+2020-11-18 00:44:12,738 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'environmentManager' has been autodetected for JMX exposure
+2020-11-18 00:44:12,740 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'refreshScope' has been autodetected for JMX exposure
+2020-11-18 00:44:12,743 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'configurationPropertiesRebinder' has been autodetected for JMX exposure
+2020-11-18 00:44:12,748 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located managed bean 'environmentManager': registering with JMX server as MBean [gateway:name=environmentManager,type=EnvironmentManager]
+2020-11-18 00:44:12,763 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located managed bean 'refreshScope': registering with JMX server as MBean [gateway:name=refreshScope,type=RefreshScope]
+2020-11-18 00:44:12,786 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located managed bean 'configurationPropertiesRebinder': registering with JMX server as MBean [gateway:name=configurationPropertiesRebinder,context=1b75c2e3,type=ConfigurationPropertiesRebinder]
+2020-11-18 00:44:12,796 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located MBean 'dataSource': registering with JMX server as MBean [gateway:name=dataSource,type=HikariDataSource]
+2020-11-18 00:44:12,830 INFO org.apache.juli.logging.DirectJDKLog [main] Starting ProtocolHandler ["http-nio-8080"]
+2020-11-18 00:44:12,847 INFO org.apache.juli.logging.DirectJDKLog [main] Using a shared selector for servlet write/read
+2020-11-18 00:44:12,875 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Tomcat started on port(s): 8080 (http) with context path ''
+2020-11-18 00:44:12,879 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Started GatewayApplication in 43.33 seconds (JVM running for 49.298)
+2020-11-18 00:44:28,481 INFO org.apache.juli.logging.DirectJDKLog [http-nio-8080-exec-2] Initializing Spring FrameworkServlet 'dispatcherServlet'
+2020-11-18 00:44:28,488 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] FrameworkServlet 'dispatcherServlet': initialization started
+2020-11-18 00:44:28,600 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] FrameworkServlet 'dispatcherServlet': initialization completed in 106 ms
+2020-11-18 00:44:28,713 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Mapped URL path [/api/inventory/**] onto handler of type [class org.springframework.cloud.netflix.zuul.web.ZuulController]
+2020-11-18 00:44:28,715 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Mapped URL path [/api/crm/**] onto handler of type [class org.springframework.cloud.netflix.zuul.web.ZuulController]
+2020-11-18 00:44:28,824 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] JWT Token does not begin with 	Bearer String
+2020-11-18 00:44:28,873 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/ec/login]
+2020-11-18 00:44:28,875 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/ec/login;client=0:0:0:0:0:0:0:1]
+2020-11-18 00:44:29,835 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] After request [uri=/ec/login;client=0:0:0:0:0:0:0:1;payload={
+	"userName":"sridhar",
+	"password":"Test@123"
+}]
+2020-11-18 00:44:29,844 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] REQUEST DATA : uri=/ec/login;payload={
+	"userName":"sridhar",
+	"password":"Test@123"
+}]
+2020-11-18 00:44:36,351 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] JWT Token does not begin with 	Bearer String
+2020-11-18 00:44:36,354 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/ec/login]
+2020-11-18 00:44:36,355 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/ec/login;client=0:0:0:0:0:0:0:1]
+2020-11-18 00:44:37,364 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/ec/login;client=0:0:0:0:0:0:0:1;payload={
+	"userName":"sridhar",
+	"password":"Anshu!123"
+}]
+2020-11-18 00:44:37,364 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/ec/login;payload={
+	"userName":"sridhar",
+	"password":"Anshu!123"
+}]
+2020-11-18 00:45:18,629 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:45:18,631 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:45:47,384 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:45:47,384 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:45:52,764 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:45:52,766 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:46:23,460 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:46:23,463 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:50:06,792 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:50:06,808 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:50:29,236 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:50:29,239 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:55:23,464 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:55:23,469 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:55:48,802 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:55:48,804 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:59:16,982 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 00:59:16,987 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 00:59:40,932 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 00:59:40,934 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 01:00:56,262 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 01:00:56,264 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 01:01:18,990 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 01:01:18,992 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 01:02:27,670 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 01:02:27,672 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 01:02:48,447 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 01:02:48,449 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 01:03:41,860 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(22)-127.0.0.1] Application shutdown requested.
+2020-11-18 01:03:41,863 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(22)-127.0.0.1] Closing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@1b75c2e3: startup date [Wed Nov 18 00:43:51 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@75db5df9
+2020-11-18 01:03:41,883 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(22)-127.0.0.1] Stopping filter initializer
+2020-11-18 01:03:41,893 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(22)-127.0.0.1] Unregistering JMX-exposed beans on shutdown
+2020-11-18 01:03:41,895 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(22)-127.0.0.1] Unregistering JMX-exposed beans
+2020-11-18 01:03:41,929 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(22)-127.0.0.1] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-11-18 01:03:41,936 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(22)-127.0.0.1] HikariPool-1 - Shutdown initiated...
+2020-11-18 01:03:41,952 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(22)-127.0.0.1] HikariPool-1 - Shutdown completed.
+2020-11-18 01:03:41,954 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(22)-127.0.0.1] Pausing ProtocolHandler ["http-nio-8080"]
+2020-11-18 01:03:42,009 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(22)-127.0.0.1] Stopping service [Tomcat]
+2020-11-18 01:03:42,016 INFO org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] Destroying Spring FrameworkServlet 'dispatcherServlet'
+2020-11-18 01:03:42,027 WARN org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] The web application [ROOT] appears to have started a thread named [RxIoScheduler-1 (Evictor)] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ sun.misc.Unsafe.park(Native Method)
+ java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+ java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+ java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+ java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+ java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+ java.lang.Thread.run(Thread.java:748)
+2020-11-18 01:03:42,029 WARN org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] The web application [ROOT] appears to have started a thread named [expiringMap-0] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ sun.misc.Unsafe.park(Native Method)
+ java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+ java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+ java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+ java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+ java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+ java.lang.Thread.run(Thread.java:748)
+2020-11-18 01:03:42,037 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(22)-127.0.0.1] Stopping ProtocolHandler ["http-nio-8080"]
+2020-11-18 01:03:42,046 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(22)-127.0.0.1] Destroying ProtocolHandler ["http-nio-8080"]
+2020-11-18 10:06:17,800 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@291caca8: startup date [Wed Nov 18 10:06:17 IST 2020]; root of context hierarchy
+2020-11-18 10:06:18,171 INFO org.apache.commons.logging.impl.Jdk14Logger [main] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2020-11-18 10:06:18,236 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'configurationPropertiesRebinderAutoConfiguration' of type [org.springframework.cloud.autoconfigure.ConfigurationPropertiesRebinderAutoConfiguration$$EnhancerBySpringCGLIB$$26f88fa9] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:28,513 INFO org.apache.commons.logging.impl.Jdk14Logger [main] No active profile set, falling back to default profiles: default
+2020-11-18 10:06:28,539 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Refreshing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@3403e2ac: startup date [Wed Nov 18 10:06:28 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@291caca8
+2020-11-18 10:06:30,987 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Overriding bean definition for bean 'counterFactory' with a different definition: replacing [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=org.springframework.cloud.netflix.zuul.ZuulServerAutoConfiguration$ZuulMetricsConfiguration; factoryMethodName=counterFactory; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/cloud/netflix/zuul/ZuulServerAutoConfiguration$ZuulMetricsConfiguration.class]] with [Root bean: class [null]; scope=; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=org.springframework.cloud.netflix.zuul.ZuulServerAutoConfiguration$ZuulCounterFactoryConfiguration; factoryMethodName=counterFactory; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/cloud/netflix/zuul/ZuulServerAutoConfiguration$ZuulCounterFactoryConfiguration.class]]
+2020-11-18 10:06:31,158 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Overriding bean definition for bean 'dataSource' with a different definition: replacing [Root bean: class [null]; scope=refresh; abstract=false; lazyInit=false; autowireMode=3; dependencyCheck=0; autowireCandidate=false; primary=false; factoryBeanName=org.springframework.boot.autoconfigure.jdbc.DataSourceConfiguration$Hikari; factoryMethodName=dataSource; initMethodName=null; destroyMethodName=(inferred); defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]] with [Root bean: class [org.springframework.aop.scope.ScopedProxyFactoryBean]; scope=; abstract=false; lazyInit=false; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null; defined in BeanDefinition defined in class path resource [org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]]
+2020-11-18 10:06:31,530 INFO org.apache.commons.logging.impl.Jdk14Logger [main] BeanFactory id=d9584f2f-316a-3d06-a470-48069670a8f9
+2020-11-18 10:06:31,585 INFO org.apache.commons.logging.impl.Jdk14Logger [main] JSR-330 'javax.inject.Inject' annotation found and supported for autowiring
+2020-11-18 10:06:31,747 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$af7651ab] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:31,867 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-11-18 10:06:32,010 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration$$EnhancerBySpringCGLIB$$ade8cac] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:32,382 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.security.config.annotation.configuration.ObjectPostProcessorConfiguration' of type [org.springframework.security.config.annotation.configuration.ObjectPostProcessorConfiguration$$EnhancerBySpringCGLIB$$a38c54e6] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:32,396 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'objectPostProcessor' of type [org.springframework.security.config.annotation.configuration.AutowireBeanFactoryObjectPostProcessor] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:32,401 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler@3a894088' of type [org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:32,408 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration' of type [org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration$$EnhancerBySpringCGLIB$$c860f798] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:32,427 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'methodSecurityMetadataSource' of type [org.springframework.security.access.method.DelegatingMethodSecurityMetadataSource] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:32,475 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean 'org.springframework.cloud.autoconfigure.ConfigurationPropertiesRebinderAutoConfiguration' of type [org.springframework.cloud.autoconfigure.ConfigurationPropertiesRebinderAutoConfiguration$$EnhancerBySpringCGLIB$$26f88fa9] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-11-18 10:06:33,416 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Tomcat initialized with port(s): 8080 (http)
+2020-11-18 10:06:33,448 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing ProtocolHandler ["http-nio-8080"]
+2020-11-18 10:06:33,471 INFO org.apache.juli.logging.DirectJDKLog [main] Starting service [Tomcat]
+2020-11-18 10:06:33,472 INFO org.apache.juli.logging.DirectJDKLog [main] Starting Servlet Engine: Apache Tomcat/8.5.34
+2020-11-18 10:06:33,484 INFO org.apache.juli.logging.DirectJDKLog [localhost-startStop-1] The APR based Apache Tomcat Native library which allows optimal performance in production environments was not found on the java.library.path: [/Users/bsridharpatnaik/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:.]
+2020-11-18 10:06:33,683 INFO org.apache.juli.logging.DirectJDKLog [localhost-startStop-1] Initializing Spring embedded WebApplicationContext
+2020-11-18 10:06:33,684 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Root WebApplicationContext: initialization completed in 5145 ms
+2020-11-18 10:06:34,042 WARN com.netflix.config.sources.URLConfigurationSource [localhost-startStop-1] No URLs will be polled as dynamic configuration sources.
+2020-11-18 10:06:34,043 INFO com.netflix.config.sources.URLConfigurationSource [localhost-startStop-1] To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2020-11-18 10:06:34,073 INFO com.netflix.config.DynamicPropertyFactory [localhost-startStop-1] DynamicPropertyFactory is initialized with configuration sources: com.netflix.config.ConcurrentCompositeConfiguration@37e19bf5
+2020-11-18 10:06:35,717 INFO com.zaxxer.hikari.HikariDataSource [localhost-startStop-1] HikariPool-1 - Starting...
+2020-11-18 10:06:36,088 INFO com.zaxxer.hikari.HikariDataSource [localhost-startStop-1] HikariPool-1 - Start completed.
+2020-11-18 10:06:36,175 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Building JPA container EntityManagerFactory for persistence unit 'default'
+2020-11-18 10:06:36,209 INFO org.hibernate.jpa.internal.util.LogHelper [localhost-startStop-1] HHH000204: Processing PersistenceUnitInfo [
+	name: default
+	...]
+2020-11-18 10:06:36,479 INFO org.hibernate.Version [localhost-startStop-1] HHH000412: Hibernate Core {5.2.17.Final}
+2020-11-18 10:06:36,483 INFO org.hibernate.cfg.Environment [localhost-startStop-1] HHH000206: hibernate.properties not found
+2020-11-18 10:06:36,620 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [localhost-startStop-1] HCANN000001: Hibernate Commons Annotations {5.0.1.Final}
+2020-11-18 10:06:36,967 INFO org.hibernate.dialect.Dialect [localhost-startStop-1] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-11-18 10:06:37,075 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [localhost-startStop-1] Envers integration enabled? : true
+2020-11-18 10:06:38,668 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-11-18 10:06:39,390 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'characterEncodingFilter' to: [/*]
+2020-11-18 10:06:39,391 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'webMvcMetricsFilter' to: [/*]
+2020-11-18 10:06:39,392 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'springSecurityFilterChain' to: [/*]
+2020-11-18 10:06:39,393 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'httpTraceFilter' to: [/*]
+2020-11-18 10:06:39,393 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'jwtRequestFilter' to: [/*]
+2020-11-18 10:06:39,393 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'logFilter' to: [/*]
+2020-11-18 10:06:39,393 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Mapping filter: 'requestLoggingFilter' to: [/*]
+2020-11-18 10:06:39,394 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Servlet dispatcherServlet mapped to [/]
+2020-11-18 10:06:39,398 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Servlet messageDispatcherServlet mapped to [/services/*]
+2020-11-18 10:06:39,398 INFO org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Servlet zuulServlet mapped to [/zuul/*]
+2020-11-18 10:06:39,436 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Initializing filter 'requestLoggingFilter'
+2020-11-18 10:06:39,436 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Filter 'requestLoggingFilter' configured successfully
+2020-11-18 10:06:39,437 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Initializing filter 'logFilter'
+2020-11-18 10:06:39,438 DEBUG org.apache.commons.logging.impl.Jdk14Logger [localhost-startStop-1] Filter 'logFilter' configured successfully
+2020-11-18 10:06:39,865 INFO org.hibernate.hql.internal.QueryTranslatorFactoryInitiator [main] HHH000397: Using ASTQueryTranslatorFactory
+2020-11-18 10:06:40,991 WARN org.apache.commons.logging.impl.Jdk14Logger [main] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-11-18 10:06:41,097 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.ContactsWithTypeAhead com.ec.common.Controller.ContactController.returnAllContacts(java.lang.Integer,org.springframework.data.domain.Pageable)
+2020-11-18 10:06:41,099 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Data.ContactsWithTypeAhead com.ec.common.Controller.ContactController.returnFilteredContacts(com.ec.common.Filters.FilterDataList,org.springframework.data.domain.Pageable)
+2020-11-18 10:06:41,100 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/{id}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Model.ContactAllInfo com.ec.common.Controller.ContactController.findContactbyvehicleNoContacts(long) throws java.lang.Exception
+2020-11-18 10:06:41,101 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/{id}],methods=[DELETE],produces=[application/json || text/json]}" onto public org.springframework.http.ResponseEntity<?> com.ec.common.Controller.ContactController.deleteContact(java.lang.Long) throws java.lang.Exception
+2020-11-18 10:06:41,102 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/create],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.ContactAllInfo com.ec.common.Controller.ContactController.createContact(com.ec.common.Model.ContactAllInfo) throws java.lang.Exception
+2020-11-18 10:06:41,103 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/{id}],methods=[PUT],produces=[application/json || text/json]}" onto public com.ec.common.Model.ContactAllInfo com.ec.common.Controller.ContactController.updateContact(java.lang.Long,com.ec.common.Model.ContactAllInfo) throws java.lang.Exception
+2020-11-18 10:06:41,104 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/contact/iscontactused/{id}],methods=[GET],produces=[application/json || text/json]}" onto public java.lang.Boolean com.ec.common.Controller.ContactController.checkIfContactUsed(long) throws java.lang.Exception
+2020-11-18 10:06:41,105 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/emailconfig],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.EmailConfigData com.ec.common.Controller.EmailController.returnEmailConfig()
+2020-11-18 10:06:41,106 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/lanotification/token],methods=[POST]}" onto public java.lang.String com.ec.common.Controller.LeadActivityNotificationController.sendPnsToDevice(com.ec.common.Data.LANotificationRequestDto)
+2020-11-18 10:06:41,107 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/ec/login],methods=[POST],produces=[application/json || text/json]}" onto public org.springframework.http.ResponseEntity<?> com.ec.common.Controller.LoginController.login(com.ec.common.Data.UserSignInData) throws java.lang.Exception
+2020-11-18 10:06:41,108 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/role],methods=[GET],produces=[application/json || text/json]}" onto public org.springframework.data.domain.Page<com.ec.common.Model.Role> com.ec.common.Controller.RoleController.returnAllRoles(org.springframework.data.domain.Pageable)
+2020-11-18 10:06:41,109 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/role/create],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.Role com.ec.common.Controller.RoleController.createRole(com.ec.common.Model.Role) throws java.lang.Exception
+2020-11-18 10:06:41,111 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/token],methods=[PUT],produces=[application/json || text/json]}" onto public void com.ec.common.Controller.TokenController.updateTokenForUser(com.ec.common.Data.TokenData) throws java.lang.Exception
+2020-11-18 10:06:41,111 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/token],methods=[GET],produces=[application/json || text/json]}" onto public java.util.List<com.ec.common.Data.AndroidTokenDetailsDTO> com.ec.common.Controller.TokenController.getAllTokens()
+2020-11-18 10:06:41,112 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/token],methods=[DELETE],produces=[application/json || text/json]}" onto public void com.ec.common.Controller.TokenController.DeleteToken() throws java.lang.Exception
+2020-11-18 10:06:41,117 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserListWithTypeAheadData com.ec.common.Controller.UserController.returnFilteredContacts(com.ec.common.Filters.FilterDataList,org.springframework.data.domain.Pageable)
+2020-11-18 10:06:41,118 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserListWithTypeAheadData com.ec.common.Controller.UserController.returnAllUsers(org.springframework.data.domain.Pageable)
+2020-11-18 10:06:41,119 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/create],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.createUser(com.ec.common.Data.CreateUserData) throws java.lang.Exception
+2020-11-18 10:06:41,121 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/{id}],methods=[PUT],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.updateUser(java.lang.Long,com.ec.common.Data.CreateUserData) throws java.lang.Exception
+2020-11-18 10:06:41,122 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/updatepassword],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.updateUser(com.ec.common.Data.ResetPasswordData) throws java.lang.Exception
+2020-11-18 10:06:41,123 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/{id}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.findUserByID(long) throws java.lang.Exception
+2020-11-18 10:06:41,123 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/list],methods=[GET],produces=[application/json || text/json]}" onto public java.util.List<com.ec.common.Data.UserReturnData> com.ec.common.Controller.UserController.findLimitedDetailsForUserByID() throws java.lang.Exception
+2020-11-18 10:06:41,124 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/byid/{id}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserReturnData com.ec.common.Controller.UserController.findLimitedDetailsForUserByID(long) throws java.lang.Exception
+2020-11-18 10:06:41,125 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/byname/{name}],methods=[GET],produces=[application/json || text/json]}" onto public com.ec.common.Data.UserReturnData com.ec.common.Controller.UserController.findLimitedDetailsForUserByID(java.lang.String) throws java.lang.Exception
+2020-11-18 10:06:41,125 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/updateroles],methods=[POST],produces=[application/json || text/json]}" onto public com.ec.common.Model.User com.ec.common.Controller.UserController.updateRolesForUser(com.ec.common.Data.UpdateRolesForUserData) throws java.lang.Exception
+2020-11-18 10:06:41,126 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/user/me],methods=[GET],produces=[application/json]}" onto public com.ec.common.Data.UserReturnData com.ec.common.Controller.UserController.returnUserName()
+2020-11-18 10:06:41,130 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/error]}" onto public org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>> org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController.error(javax.servlet.http.HttpServletRequest)
+2020-11-18 10:06:41,131 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/error],produces=[text/html]}" onto public org.springframework.web.servlet.ModelAndView org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController.errorHtml(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2020-11-18 10:06:41,216 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped URL path [/eureka/**] onto handler of type [class org.springframework.web.servlet.resource.ResourceHttpRequestHandler]
+2020-11-18 10:06:41,578 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Looking for @ControllerAdvice: org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@3403e2ac: startup date [Wed Nov 18 10:06:28 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@291caca8
+2020-11-18 10:06:41,887 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/*/'], []
+2020-11-18 10:06:41,887 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/eureka/**.**'], []
+2020-11-18 10:06:41,888 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/eureka/**'], []
+2020-11-18 10:06:41,889 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='**/scripts/**.js'], []
+2020-11-18 10:06:41,889 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.jpg'], []
+2020-11-18 10:06:41,889 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.ico'], []
+2020-11-18 10:06:41,889 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.html'], []
+2020-11-18 10:06:41,890 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/header.html'], []
+2020-11-18 10:06:41,890 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='**.html'], []
+2020-11-18 10:06:41,891 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.css'], []
+2020-11-18 10:06:41,892 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**.js'], []
+2020-11-18 10:06:41,893 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/eureka/**/**'], []
+2020-11-18 10:06:41,894 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: Ant [pattern='/**', OPTIONS], []
+2020-11-18 10:06:42,028 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Creating filter chain: org.springframework.security.web.util.matcher.AnyRequestMatcher@1, [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@5a4dda2, org.springframework.security.web.context.SecurityContextPersistenceFilter@47044f7d, org.springframework.security.web.header.HeaderWriterFilter@4ed18798, org.springframework.web.filter.CorsFilter@1d2fb82, org.springframework.security.web.authentication.logout.LogoutFilter@5d1d9d73, com.ec.common.JWTUtils.JwtRequestFilter@524431f2, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@3b4086c1, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@13250132, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@34045582, org.springframework.security.web.session.SessionManagementFilter@527a8665, org.springframework.security.web.access.ExceptionTranslationFilter@6af609ea, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@1b52699c]
+2020-11-18 10:06:42,100 WARN com.netflix.config.sources.URLConfigurationSource [main] No URLs will be polled as dynamic configuration sources.
+2020-11-18 10:06:42,100 INFO com.netflix.config.sources.URLConfigurationSource [main] To enable URLs as dynamic configuration sources, define System property archaius.configurationSource.additionalUrls or make config.properties available on classpath.
+2020-11-18 10:06:43,027 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Exposing 2 endpoint(s) beneath base path '/actuator'
+2020-11-18 10:06:43,050 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/actuator/health],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.web.servlet.AbstractWebMvcEndpointHandlerMapping$OperationHandler.handle(javax.servlet.http.HttpServletRequest,java.util.Map<java.lang.String, java.lang.String>)
+2020-11-18 10:06:43,051 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/actuator/info],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}" onto public java.lang.Object org.springframework.boot.actuate.endpoint.web.servlet.AbstractWebMvcEndpointHandlerMapping$OperationHandler.handle(javax.servlet.http.HttpServletRequest,java.util.Map<java.lang.String, java.lang.String>)
+2020-11-18 10:06:43,053 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Mapped "{[/actuator],methods=[GET],produces=[application/vnd.spring-boot.actuator.v2+json || application/json]}" onto protected java.util.Map<java.lang.String, java.util.Map<java.lang.String, org.springframework.boot.actuate.endpoint.web.Link>> org.springframework.boot.actuate.endpoint.web.servlet.WebMvcEndpointHandlerMapping.links(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse)
+2020-11-18 10:06:44,168 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Starting filter initializer
+2020-11-18 10:06:44,254 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Registering beans for JMX exposure on startup
+2020-11-18 10:06:44,257 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'dataSource' has been autodetected for JMX exposure
+2020-11-18 10:06:44,267 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'environmentManager' has been autodetected for JMX exposure
+2020-11-18 10:06:44,269 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'refreshScope' has been autodetected for JMX exposure
+2020-11-18 10:06:44,273 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Bean with name 'configurationPropertiesRebinder' has been autodetected for JMX exposure
+2020-11-18 10:06:44,279 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located managed bean 'environmentManager': registering with JMX server as MBean [gateway:name=environmentManager,type=EnvironmentManager]
+2020-11-18 10:06:44,294 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located managed bean 'refreshScope': registering with JMX server as MBean [gateway:name=refreshScope,type=RefreshScope]
+2020-11-18 10:06:44,310 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located managed bean 'configurationPropertiesRebinder': registering with JMX server as MBean [gateway:name=configurationPropertiesRebinder,context=3403e2ac,type=ConfigurationPropertiesRebinder]
+2020-11-18 10:06:44,316 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Located MBean 'dataSource': registering with JMX server as MBean [gateway:name=dataSource,type=HikariDataSource]
+2020-11-18 10:06:44,346 INFO org.apache.juli.logging.DirectJDKLog [main] Starting ProtocolHandler ["http-nio-8080"]
+2020-11-18 10:06:44,378 INFO org.apache.juli.logging.DirectJDKLog [main] Using a shared selector for servlet write/read
+2020-11-18 10:06:44,401 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Tomcat started on port(s): 8080 (http) with context path ''
+2020-11-18 10:06:44,406 INFO org.apache.commons.logging.impl.Jdk14Logger [main] Started GatewayApplication in 37.754 seconds (JVM running for 43.62)
+2020-11-18 10:10:18,849 INFO org.apache.juli.logging.DirectJDKLog [http-nio-8080-exec-2] Initializing Spring FrameworkServlet 'dispatcherServlet'
+2020-11-18 10:10:18,853 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] FrameworkServlet 'dispatcherServlet': initialization started
+2020-11-18 10:10:18,930 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] FrameworkServlet 'dispatcherServlet': initialization completed in 76 ms
+2020-11-18 10:10:19,098 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Mapped URL path [/api/inventory/**] onto handler of type [class org.springframework.cloud.netflix.zuul.web.ZuulController]
+2020-11-18 10:10:19,102 INFO org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Mapped URL path [/api/crm/**] onto handler of type [class org.springframework.cloud.netflix.zuul.web.ZuulController]
+2020-11-18 10:10:19,175 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] JWT Token does not begin with 	Bearer String
+2020-11-18 10:10:19,232 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/ec/login]
+2020-11-18 10:10:19,247 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/ec/login;client=0:0:0:0:0:0:0:1]
+2020-11-18 10:10:20,352 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] After request [uri=/ec/login;client=0:0:0:0:0:0:0:1;payload={
+	"userName":"sridhar",
+	"password":"Test@123"
+}]
+2020-11-18 10:10:20,353 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] REQUEST DATA : uri=/ec/login;payload={
+	"userName":"sridhar",
+	"password":"Test@123"
+}]
+2020-11-18 10:10:25,775 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:10:25,780 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:10:28,078 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:28,079 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:35,545 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:10:35,545 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:10:36,546 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:36,547 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:41,592 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:10:41,594 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:10:42,500 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:42,502 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:48,337 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:10:48,339 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:10:49,101 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:49,102 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:55,329 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:10:55,330 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:10:56,113 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:10:56,114 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:11:03,760 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:11:03,761 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:11:04,834 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:11:04,835 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:11:13,184 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:11:13,186 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:11:13,987 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:11:13,988 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:11:20,242 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:11:20,243 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar]
+2020-11-18 10:11:20,949 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] After request [uri=/api/crm/dashboard/customerpipeline;client=0:0:0:0:0:0:0:1;user=sridhar;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:11:20,950 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={
+    "fromDate":"2020-11-01",
+    "toDate":"2020-11-30"
+}]
+2020-11-18 10:13:23,585 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:24,653 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:24,656 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/ec/login]
+2020-11-18 10:13:24,657 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/ec/login;client=127.0.0.1]
+2020-11-18 10:13:24,748 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/ec/login;client=127.0.0.1;payload={"userName":"sridhar","password":"Test@123"}]
+2020-11-18 10:13:24,749 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/ec/login;payload={"userName":"sridhar","password":"Test@123"}]
+2020-11-18 10:13:25,242 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/inventory/dashboard]
+2020-11-18 10:13:25,245 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/inventory/dashboard;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:25,300 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Error during filtering
+com.netflix.zuul.exception.ZuulException: Forwarding error
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.handleException(SimpleHostRoutingFilter.java:237)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.run(SimpleHostRoutingFilter.java:217)
+	at com.netflix.zuul.ZuulFilter.runFilter(ZuulFilter.java:117)
+	at com.netflix.zuul.FilterProcessor.processZuulFilter(FilterProcessor.java:193)
+	at com.netflix.zuul.FilterProcessor.runFilters(FilterProcessor.java:157)
+	at com.netflix.zuul.FilterProcessor.route(FilterProcessor.java:118)
+	at com.netflix.zuul.ZuulRunner.route(ZuulRunner.java:96)
+	at com.netflix.zuul.http.ZuulServlet.route(ZuulServlet.java:116)
+	at com.netflix.zuul.http.ZuulServlet.service(ZuulServlet.java:81)
+	at org.springframework.web.servlet.mvc.ServletWrappingController.handleRequestInternal(ServletWrappingController.java:165)
+	at org.springframework.cloud.netflix.zuul.web.ZuulController.handleRequest(ZuulController.java:44)
+	at org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.handle(SimpleControllerHandlerAdapter.java:52)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:991)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:925)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:974)
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:866)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:635)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:851)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:742)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.AbstractRequestLoggingFilter.doFilterInternal(AbstractRequestLoggingFilter.java:246)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.AbstractRequestLoggingFilter.doFilterInternal(AbstractRequestLoggingFilter.java:246)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.boot.actuate.web.trace.servlet.HttpTraceFilter.doFilterInternal(HttpTraceFilter.java:90)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:320)
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.invoke(FilterSecurityInterceptor.java:127)
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.doFilter(FilterSecurityInterceptor.java:91)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:137)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:111)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:170)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at com.ec.common.JWTUtils.JwtRequestFilter.doFilterInternal(JwtRequestFilter.java:60)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:96)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:66)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.context.SecurityContextPersistenceFilter.doFilter(SecurityContextPersistenceFilter.java:105)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:56)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:215)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:178)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:357)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:270)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.filterAndRecordMetrics(WebMvcMetricsFilter.java:155)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.filterAndRecordMetrics(WebMvcMetricsFilter.java:123)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.doFilterInternal(WebMvcMetricsFilter.java:108)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:200)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:198)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:493)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:140)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:81)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:87)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:800)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:66)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:806)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1498)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: org.apache.http.conn.HttpHostConnectException: Connect to localhost:8081 [localhost/127.0.0.1, localhost/0:0:0:0:0:0:0:1] failed: Connection refused (Connection refused)
+	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:159)
+	at org.apache.http.impl.conn.PoolingHttpClientConnectionManager.connect(PoolingHttpClientConnectionManager.java:373)
+	at org.apache.http.impl.execchain.MainClientExec.establishRoute(MainClientExec.java:394)
+	at org.apache.http.impl.execchain.MainClientExec.execute(MainClientExec.java:237)
+	at org.apache.http.impl.execchain.ProtocolExec.execute(ProtocolExec.java:185)
+	at org.apache.http.impl.execchain.RetryExec.execute(RetryExec.java:89)
+	at org.apache.http.impl.client.InternalHttpClient.doExecute(InternalHttpClient.java:185)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:118)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.forwardRequest(SimpleHostRoutingFilter.java:387)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.forward(SimpleHostRoutingFilter.java:306)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.run(SimpleHostRoutingFilter.java:212)
+	... 99 common frames omitted
+Caused by: java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at org.apache.http.conn.socket.PlainConnectionSocketFactory.connectSocket(PlainConnectionSocketFactory.java:75)
+	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:142)
+	... 109 common frames omitted
+2020-11-18 10:13:25,332 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/inventory/dashboard;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:25,334 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/inventory/dashboard]
+2020-11-18 10:13:25,476 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/inventory/dashboard]
+2020-11-18 10:13:25,477 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/inventory/dashboard;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:25,484 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Error during filtering
+com.netflix.zuul.exception.ZuulException: Forwarding error
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.handleException(SimpleHostRoutingFilter.java:237)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.run(SimpleHostRoutingFilter.java:217)
+	at com.netflix.zuul.ZuulFilter.runFilter(ZuulFilter.java:117)
+	at com.netflix.zuul.FilterProcessor.processZuulFilter(FilterProcessor.java:193)
+	at com.netflix.zuul.FilterProcessor.runFilters(FilterProcessor.java:157)
+	at com.netflix.zuul.FilterProcessor.route(FilterProcessor.java:118)
+	at com.netflix.zuul.ZuulRunner.route(ZuulRunner.java:96)
+	at com.netflix.zuul.http.ZuulServlet.route(ZuulServlet.java:116)
+	at com.netflix.zuul.http.ZuulServlet.service(ZuulServlet.java:81)
+	at org.springframework.web.servlet.mvc.ServletWrappingController.handleRequestInternal(ServletWrappingController.java:165)
+	at org.springframework.cloud.netflix.zuul.web.ZuulController.handleRequest(ZuulController.java:44)
+	at org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.handle(SimpleControllerHandlerAdapter.java:52)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:991)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:925)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:974)
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:866)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:635)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:851)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:742)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.AbstractRequestLoggingFilter.doFilterInternal(AbstractRequestLoggingFilter.java:246)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.AbstractRequestLoggingFilter.doFilterInternal(AbstractRequestLoggingFilter.java:246)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:101)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.boot.actuate.web.trace.servlet.HttpTraceFilter.doFilterInternal(HttpTraceFilter.java:90)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:320)
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.invoke(FilterSecurityInterceptor.java:127)
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.doFilter(FilterSecurityInterceptor.java:91)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:137)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:111)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:170)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at com.ec.common.JWTUtils.JwtRequestFilter.doFilterInternal(JwtRequestFilter.java:60)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:96)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:66)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.context.SecurityContextPersistenceFilter.doFilter(SecurityContextPersistenceFilter.java:105)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:56)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:334)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:215)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:178)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:357)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:270)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.filterAndRecordMetrics(WebMvcMetricsFilter.java:155)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.filterAndRecordMetrics(WebMvcMetricsFilter.java:123)
+	at org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.doFilterInternal(WebMvcMetricsFilter.java:108)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:200)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:107)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:198)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:493)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:140)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:81)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:87)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:800)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:66)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:806)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1498)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: org.apache.http.conn.HttpHostConnectException: Connect to localhost:8081 [localhost/127.0.0.1, localhost/0:0:0:0:0:0:0:1] failed: Connection refused (Connection refused)
+	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:159)
+	at org.apache.http.impl.conn.PoolingHttpClientConnectionManager.connect(PoolingHttpClientConnectionManager.java:373)
+	at org.apache.http.impl.execchain.MainClientExec.establishRoute(MainClientExec.java:394)
+	at org.apache.http.impl.execchain.MainClientExec.execute(MainClientExec.java:237)
+	at org.apache.http.impl.execchain.ProtocolExec.execute(ProtocolExec.java:185)
+	at org.apache.http.impl.execchain.RetryExec.execute(RetryExec.java:89)
+	at org.apache.http.impl.client.InternalHttpClient.doExecute(InternalHttpClient.java:185)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:118)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.forwardRequest(SimpleHostRoutingFilter.java:387)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.forward(SimpleHostRoutingFilter.java:306)
+	at org.springframework.cloud.netflix.zuul.filters.route.SimpleHostRoutingFilter.run(SimpleHostRoutingFilter.java:212)
+	... 99 common frames omitted
+Caused by: java.net.ConnectException: Connection refused (Connection refused)
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+	at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+	at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.net.Socket.connect(Socket.java:589)
+	at org.apache.http.conn.socket.PlainConnectionSocketFactory.connectSocket(PlainConnectionSocketFactory.java:75)
+	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:142)
+	... 109 common frames omitted
+2020-11-18 10:13:25,497 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/inventory/dashboard;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:25,499 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/inventory/dashboard]
+2020-11-18 10:13:29,497 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:29,499 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,514 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:29,515 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,555 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:29,557 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,560 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:29,561 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,696 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:29,697 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,781 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,781 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:29,834 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:29,835 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,845 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,846 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:29,870 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:29,871 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,903 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,904 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:29,924 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,924 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:29,925 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:29,925 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:30,020 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:30,021 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:30,168 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:30,169 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:30,729 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:30,730 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:30,764 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:30,765 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:35,426 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:35,426 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:35,427 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:35,427 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:35,433 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:35,433 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:35,434 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:35,434 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:35,479 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:35,480 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:35,482 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:35,483 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:35,518 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:35,519 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:36,020 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:36,409 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:36,410 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:38,764 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:38,765 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:38,776 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:38,776 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:38,779 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:38,780 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:38,798 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:38,799 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:38,829 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:38,843 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:38,844 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:38,875 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:38,876 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:38,970 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:38,971 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:39,572 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:39,573 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:41,721 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:41,722 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:41,758 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:41,759 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:41,764 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:41,765 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:41,771 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:41,772 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:41,814 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:41,815 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:41,857 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:41,887 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:41,888 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:41,912 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:41,914 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:42,589 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:42,590 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:44,807 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:44,808 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:44,834 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:44,835 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:44,856 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:44,856 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:44,871 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:44,872 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:44,876 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:44,877 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:44,929 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:44,929 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:44,982 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:45,111 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:45,112 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:45,623 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:45,624 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:47,839 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:47,841 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:47,842 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:47,843 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:47,872 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:47,873 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:47,883 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:47,884 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:47,895 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:47,898 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:47,923 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:47,924 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:48,029 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:48,031 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:48,120 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:48,735 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:48,736 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:50,959 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:50,963 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:50,964 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:50,965 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:50,968 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:50,969 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:50,972 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:50,973 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:51,008 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:51,010 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:51,008 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:51,011 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:51,050 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:51,050 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:51,242 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:51,794 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:51,795 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:53,969 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:53,970 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:53,972 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:53,973 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:53,980 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:53,983 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:54,010 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:54,011 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:54,015 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:54,016 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:54,021 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:54,022 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:54,054 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:54,055 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:54,225 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:54,793 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:54,794 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:56,909 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:56,910 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:56,912 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:56,913 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:56,932 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:56,933 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:56,957 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:56,958 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:56,976 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:56,977 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:57,014 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:57,015 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:57,055 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:57,057 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:57,187 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] JWT Token does not begin with 	Bearer String
+2020-11-18 10:13:57,833 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:57,834 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:13:59,756 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:59,757 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:59,762 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:59,763 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:59,769 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:59,770 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:59,795 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:59,796 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:13:59,796 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:59,797 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:13:59,822 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:13:59,823 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:13:59,842 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:13:59,843 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:00,073 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] JWT Token does not begin with 	Bearer String
+2020-11-18 10:14:00,671 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:14:00,672 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:14:02,617 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:14:02,618 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:02,622 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:14:02,622 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:02,636 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:14:02,637 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:02,640 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:14:02,641 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:02,729 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:02,731 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:14:02,756 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:02,757 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:14:02,781 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] JWT Token does not begin with 	Bearer String
+2020-11-18 10:14:02,831 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:02,832 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:14:03,306 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:14:03,307 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:14:05,273 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:14:05,274 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:05,285 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:14:05,287 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:05,292 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:14:05,293 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:05,321 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:14:05,322 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:05,357 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:05,359 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-6] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:14:05,402 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:05,403 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-1] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:14:05,491 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-5] JWT Token does not begin with 	Bearer String
+2020-11-18 10:14:05,531 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:05,532 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-4] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:14:05,971 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:14:05,972 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-8] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:14:08,053 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:14:08,054 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] Before request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:08,083 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:14:08,084 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline]
+2020-11-18 10:14:08,084 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] Before request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:08,084 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] Before request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:08,091 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:14:08,092 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] Before request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:08,127 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] After request [uri=/api/crm/dashboard/topperformer;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:08,128 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-7] REQUEST DATA : uri=/api/crm/dashboard/topperformer]
+2020-11-18 10:14:08,157 WARN org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-2] JWT Token does not begin with 	Bearer String
+2020-11-18 10:14:08,159 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] After request [uri=/api/crm/dashboard/conversionratio;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:08,160 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-9] REQUEST DATA : uri=/api/crm/dashboard/conversionratio]
+2020-11-18 10:14:08,259 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] After request [uri=/api/crm/dashboard/stagnant;client=127.0.0.1;user=sridhar]
+2020-11-18 10:14:08,260 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-10] REQUEST DATA : uri=/api/crm/dashboard/stagnant]
+2020-11-18 10:14:08,938 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] After request [uri=/api/crm/dashboard/customerpipeline;client=127.0.0.1;user=sridhar;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 10:14:08,940 DEBUG org.apache.commons.logging.impl.Jdk14Logger [http-nio-8080-exec-3] REQUEST DATA : uri=/api/crm/dashboard/customerpipeline;payload={"fromDate":"2020-11-01","toDate":"2020-11-30"}]
+2020-11-18 14:37:26,012 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=4h3m49s670ms).
+2020-11-18 14:48:28,915 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(44)-127.0.0.1] Application shutdown requested.
+2020-11-18 14:48:28,921 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(44)-127.0.0.1] Closing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@3403e2ac: startup date [Wed Nov 18 10:06:28 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@291caca8
+2020-11-18 14:48:28,945 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(44)-127.0.0.1] Stopping filter initializer
+2020-11-18 14:48:28,955 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(44)-127.0.0.1] Unregistering JMX-exposed beans on shutdown
+2020-11-18 14:48:28,956 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(44)-127.0.0.1] Unregistering JMX-exposed beans
+2020-11-18 14:48:28,988 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(44)-127.0.0.1] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-11-18 14:48:28,998 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(44)-127.0.0.1] HikariPool-1 - Shutdown initiated...
+2020-11-18 14:48:29,012 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(44)-127.0.0.1] HikariPool-1 - Shutdown completed.
+2020-11-18 14:48:29,015 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(44)-127.0.0.1] Pausing ProtocolHandler ["http-nio-8080"]
+2020-11-18 14:48:29,072 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(44)-127.0.0.1] Stopping service [Tomcat]
+2020-11-18 14:48:29,079 INFO org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] Destroying Spring FrameworkServlet 'dispatcherServlet'
+2020-11-18 14:48:29,090 WARN org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] The web application [ROOT] appears to have started a thread named [RxIoScheduler-1 (Evictor)] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ sun.misc.Unsafe.park(Native Method)
+ java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+ java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+ java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+ java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+ java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+ java.lang.Thread.run(Thread.java:748)
+2020-11-18 14:48:29,092 WARN org.apache.juli.logging.DirectJDKLog [localhost-startStop-2] The web application [ROOT] appears to have started a thread named [expiringMap-0] but has failed to stop it. This is very likely to create a memory leak. Stack trace of thread:
+ sun.misc.Unsafe.park(Native Method)
+ java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:215)
+ java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2078)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1093)
+ java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:809)
+ java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1074)
+ java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1134)
+ java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+ java.lang.Thread.run(Thread.java:748)
+2020-11-18 14:48:29,101 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(44)-127.0.0.1] Stopping ProtocolHandler ["http-nio-8080"]
+2020-11-18 14:48:29,112 INFO org.apache.juli.logging.DirectJDKLog [RMI TCP Connection(44)-127.0.0.1] Destroying ProtocolHandler ["http-nio-8080"]

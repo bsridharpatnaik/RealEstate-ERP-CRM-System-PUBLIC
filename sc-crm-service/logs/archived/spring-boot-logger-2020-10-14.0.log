@@ -1,0 +1,639 @@
+2020-10-14 02:59:48,456 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=2h29s694ms).
+2020-10-14 07:30:04,627 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=4h30m16s198ms).
+2020-10-14 08:10:24,727 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=40m20s106ms).
+2020-10-14 08:21:30,759 WARN org.springframework.boot.StartupInfoLogger [main] InetAddress.getLocalHost().getHostName() took 5002 milliseconds to respond. Please verify your network configuration (macOS machines may need to add entries to /etc/hosts).
+2020-10-14 08:21:35,768 INFO org.springframework.boot.StartupInfoLogger [main] Starting CrmApplication on Sridhars-MacBook-Air.local with PID 83117 (/Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-crm-service/target/classes started by bsridharpatnaik in /Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-crm-service)
+2020-10-14 08:21:35,769 INFO org.springframework.boot.SpringApplication [main] No active profile set, falling back to default profiles: default
+2020-10-14 08:21:37,828 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2020-10-14 08:21:38,176 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 323ms. Found 10 JPA repository interfaces.
+2020-10-14 08:21:38,781 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [main] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$f785c219] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-14 08:21:38,928 INFO org.springframework.ws.soap.addressing.server.AbstractAddressingEndpointMapping [main] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-10-14 08:21:38,969 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [main] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-14 08:21:39,565 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat initialized with port(s): 8083 (http)
+2020-10-14 08:21:39,589 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing ProtocolHandler ["http-nio-8083"]
+2020-10-14 08:21:39,590 INFO org.apache.juli.logging.DirectJDKLog [main] Starting service [Tomcat]
+2020-10-14 08:21:39,591 INFO org.apache.juli.logging.DirectJDKLog [main] Starting Servlet engine: [Apache Tomcat/9.0.29]
+2020-10-14 08:21:39,966 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing Spring embedded WebApplicationContext
+2020-10-14 08:21:39,967 INFO org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext [main] Root WebApplicationContext: initialization completed in 4045 ms
+2020-10-14 08:21:40,115 DEBUG org.springframework.web.filter.GenericFilterBean [main] Filter 'logFilter' configured for use
+2020-10-14 08:21:40,364 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [name: default]
+2020-10-14 08:21:40,660 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.4.9.Final}
+2020-10-14 08:21:40,827 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.1.0.Final}
+2020-10-14 08:21:40,970 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-10-14 08:21:40,975 WARN com.zaxxer.hikari.util.DriverDataSource [main] Registered driver with driverClassName=com.mysql.jdbc.Driver was not found, trying direct instantiation.
+2020-10-14 08:21:41,856 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-10-14 08:21:41,898 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-10-14 08:21:42,246 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [main] Envers integration enabled? : true
+2020-10-14 08:21:42,554 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [lead] association in the [com.ec.crm.Model.LeadActivity] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-14 08:21:42,583 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [leadActivity] association in the [com.ec.crm.Model.LeadActivityNotificationHistory] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-14 08:21:42,597 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [lead] association in the [com.ec.crm.Model.Note] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-14 08:21:47,712 INFO org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator [main] HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2020-10-14 08:21:47,723 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-10-14 08:21:49,672 WARN org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration [main] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-10-14 08:21:49,936 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [main] Initializing ExecutorService 'applicationTaskExecutor'
+2020-10-14 08:21:50,873 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [main] Initializing ExecutorService 'taskScheduler'
+2020-10-14 08:21:51,169 INFO org.apache.juli.logging.DirectJDKLog [main] Starting ProtocolHandler ["http-nio-8083"]
+2020-10-14 08:21:51,302 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat started on port(s): 8083 (http) with context path ''
+2020-10-14 08:21:51,317 INFO org.springframework.boot.StartupInfoLogger [main] Started CrmApplication in 36.112 seconds (JVM running for 42.006)
+2020-10-14 08:36:45,797 INFO org.springframework.boot.admin.SpringApplicationAdminMXBeanRegistrar$SpringApplicationAdmin [RMI TCP Connection(18)-127.0.0.1] Application shutdown requested.
+2020-10-14 08:36:45,823 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [RMI TCP Connection(18)-127.0.0.1] Shutting down ExecutorService 'taskScheduler'
+2020-10-14 08:36:45,825 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [RMI TCP Connection(18)-127.0.0.1] Shutting down ExecutorService 'applicationTaskExecutor'
+2020-10-14 08:36:45,831 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [RMI TCP Connection(18)-127.0.0.1] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-10-14 08:36:45,906 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(18)-127.0.0.1] HikariPool-1 - Shutdown initiated...
+2020-10-14 08:36:45,925 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(18)-127.0.0.1] HikariPool-1 - Shutdown completed.
+2020-10-14 08:37:08,412 WARN org.springframework.boot.StartupInfoLogger [main] InetAddress.getLocalHost().getHostName() took 5008 milliseconds to respond. Please verify your network configuration (macOS machines may need to add entries to /etc/hosts).
+2020-10-14 08:37:13,423 INFO org.springframework.boot.StartupInfoLogger [main] Starting CrmApplication on Sridhars-MacBook-Air.local with PID 83446 (/Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-crm-service/target/classes started by bsridharpatnaik in /Users/bsridharpatnaik/Documents/GitHub/Evergreen-City-Management-System/ec-crm-service)
+2020-10-14 08:37:13,426 INFO org.springframework.boot.SpringApplication [main] No active profile set, falling back to default profiles: default
+2020-10-14 08:37:15,520 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2020-10-14 08:37:15,841 INFO org.springframework.data.repository.config.RepositoryConfigurationDelegate [main] Finished Spring Data repository scanning in 301ms. Found 10 JPA repository interfaces.
+2020-10-14 08:37:16,355 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [main] Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$EnhancerBySpringCGLIB$$a7f49a13] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-14 08:37:16,393 INFO org.springframework.ws.soap.addressing.server.AbstractAddressingEndpointMapping [main] Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
+2020-10-14 08:37:16,413 INFO org.springframework.context.support.PostProcessorRegistrationDelegate$BeanPostProcessorChecker [main] Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2020-10-14 08:37:16,846 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat initialized with port(s): 8083 (http)
+2020-10-14 08:37:16,865 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing ProtocolHandler ["http-nio-8083"]
+2020-10-14 08:37:16,866 INFO org.apache.juli.logging.DirectJDKLog [main] Starting service [Tomcat]
+2020-10-14 08:37:16,867 INFO org.apache.juli.logging.DirectJDKLog [main] Starting Servlet engine: [Apache Tomcat/9.0.29]
+2020-10-14 08:37:17,116 INFO org.apache.juli.logging.DirectJDKLog [main] Initializing Spring embedded WebApplicationContext
+2020-10-14 08:37:17,117 INFO org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext [main] Root WebApplicationContext: initialization completed in 3442 ms
+2020-10-14 08:37:17,194 DEBUG org.springframework.web.filter.GenericFilterBean [main] Filter 'logFilter' configured for use
+2020-10-14 08:37:17,489 INFO org.hibernate.jpa.internal.util.LogHelper [main] HHH000204: Processing PersistenceUnitInfo [name: default]
+2020-10-14 08:37:17,769 INFO org.hibernate.Version [main] HHH000412: Hibernate Core {5.4.9.Final}
+2020-10-14 08:37:17,996 INFO org.hibernate.annotations.common.reflection.java.JavaReflectionManager [main] HCANN000001: Hibernate Commons Annotations {5.1.0.Final}
+2020-10-14 08:37:18,250 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Starting...
+2020-10-14 08:37:18,253 WARN com.zaxxer.hikari.util.DriverDataSource [main] Registered driver with driverClassName=com.mysql.jdbc.Driver was not found, trying direct instantiation.
+2020-10-14 08:37:18,463 INFO com.zaxxer.hikari.HikariDataSource [main] HikariPool-1 - Start completed.
+2020-10-14 08:37:18,483 INFO org.hibernate.dialect.Dialect [main] HHH000400: Using dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+2020-10-14 08:37:18,607 INFO org.hibernate.envers.boot.internal.EnversServiceImpl [main] Envers integration enabled? : true
+2020-10-14 08:37:18,806 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [lead] association in the [com.ec.crm.Model.LeadActivity] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-14 08:37:18,822 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [leadActivity] association in the [com.ec.crm.Model.LeadActivityNotificationHistory] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-14 08:37:18,831 WARN org.hibernate.cfg.AnnotationBinder [main] HHH000491: The [lead] association in the [com.ec.crm.Model.Note] entity uses both @NotFound(action = NotFoundAction.IGNORE) and FetchType.LAZY. The NotFoundAction.IGNORE @ManyToOne and @OneToOne associations are always fetched eagerly.
+2020-10-14 08:37:22,471 INFO org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator [main] HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2020-10-14 08:37:22,479 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [main] Initialized JPA EntityManagerFactory for persistence unit 'default'
+2020-10-14 08:37:24,182 WARN org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration$JpaWebConfiguration [main] spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2020-10-14 08:37:24,402 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [main] Initializing ExecutorService 'applicationTaskExecutor'
+2020-10-14 08:37:24,825 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [main] Initializing ExecutorService 'taskScheduler'
+2020-10-14 08:37:24,927 INFO org.apache.juli.logging.DirectJDKLog [main] Starting ProtocolHandler ["http-nio-8083"]
+2020-10-14 08:37:24,968 INFO org.springframework.boot.web.embedded.tomcat.TomcatWebServer [main] Tomcat started on port(s): 8083 (http) with context path ''
+2020-10-14 08:37:24,971 INFO org.springframework.boot.StartupInfoLogger [main] Started CrmApplication in 32.112 seconds (JVM running for 37.914)
+2020-10-14 08:38:14,678 INFO org.apache.juli.logging.DirectJDKLog [http-nio-8083-exec-1] Initializing Spring DispatcherServlet 'dispatcherServlet'
+2020-10-14 08:38:14,680 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-8083-exec-1] Initializing Servlet 'dispatcherServlet'
+2020-10-14 08:38:14,698 INFO org.springframework.web.servlet.FrameworkServlet [http-nio-8083-exec-1] Completed initialization in 18 ms
+2020-10-14 08:38:14,722 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-1] Before request [POST /activity/getleadactivitypage?size=12&page=0]
+2020-10-14 08:38:14,944 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Invoked findFilteredList with payload - FilterDataList [filterData=[FilterAttributeData [attrName=globalSearch, attrValue=[], getAttrName()=globalSearch, getAttrValue()=[], getClass()=class com.ec.crm.Filters.FilterAttributeData, hashCode()=1074117294, toString()=com.ec.crm.Filters.FilterAttributeData@4005baae]], getFilterData()=[FilterAttributeData [attrName=globalSearch, attrValue=[], getAttrName()=globalSearch, getAttrValue()=[], getClass()=class com.ec.crm.Filters.FilterAttributeData, hashCode()=1074117294, toString()=com.ec.crm.Filters.FilterAttributeData@4005baae]], getClass()=class com.ec.crm.Filters.FilterDataList, hashCode()=959576317, toString()=com.ec.crm.Filters.FilterDataList@3931f8fd]
+2020-10-14 08:38:14,945 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Fetching filteration based on filter data received
+2020-10-14 08:38:15,259 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Setting dropdown data
+2020-10-14 08:38:15,331 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch userlist
+2020-10-14 08:38:21,306 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-1] Setting typeahead data
+2020-10-14 08:38:21,309 INFO com.ec.crm.Service.LeadService [http-nio-8083-exec-1] Invoked fetchTypeAheadForLeadGlobalSearch
+2020-10-14 08:38:21,482 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,483 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 19
+2020-10-14 08:38:21,484 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,535 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -jjakkam
+2020-10-14 08:38:21,536 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,536 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-10-14 08:38:21,537 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,565 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -kp
+2020-10-14 08:38:21,566 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,567 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-10-14 08:38:21,567 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,621 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -kp
+2020-10-14 08:38:21,622 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,622 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-10-14 08:38:21,627 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,668 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -kp
+2020-10-14 08:38:21,669 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,670 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-10-14 08:38:21,670 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,704 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -kp
+2020-10-14 08:38:21,705 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,709 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-10-14 08:38:21,711 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,744 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -kp
+2020-10-14 08:38:21,747 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,748 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 252
+2020-10-14 08:38:21,749 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,775 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -kp
+2020-10-14 08:38:21,776 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,777 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 19
+2020-10-14 08:38:21,779 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,805 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -jjakkam
+2020-10-14 08:38:21,806 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,809 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 19
+2020-10-14 08:38:21,809 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,842 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -jjakkam
+2020-10-14 08:38:21,843 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,844 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 19
+2020-10-14 08:38:21,844 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,870 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -jjakkam
+2020-10-14 08:38:21,871 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,871 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 19
+2020-10-14 08:38:21,872 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,903 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -jjakkam
+2020-10-14 08:38:21,904 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Invoked username serialization
+2020-10-14 08:38:21,904 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Getting username for userid - 19520
+2020-10-14 08:38:21,904 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-1] Making API Call to fetch user from ID
+2020-10-14 08:38:21,943 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-1] Username Fetched is -sri
+2020-10-14 08:38:21,990 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-1] REQUEST DATA : POST /activity/getleadactivitypage?size=12&page=0, payload={"filterData":[{"attrName":"globalSearch","attrValue":[]}]}]
+2020-10-14 08:38:24,623 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-2] Before request [GET /lead/validLeadStatus]
+2020-10-14 08:38:24,631 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-2] REQUEST DATA : GET /lead/validLeadStatus]
+2020-10-14 08:38:24,675 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-3] Before request [GET /lead/getallinfo/21869]
+2020-10-14 08:38:24,704 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-4] Before request [GET /lead/21869]
+2020-10-14 08:38:24,807 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Invoked username serialization
+2020-10-14 08:38:24,807 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Getting username for userid - 19
+2020-10-14 08:38:24,808 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-4] Making API Call to fetch user from ID
+2020-10-14 08:38:24,817 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Invoked getAllActivitiesForLead
+2020-10-14 08:38:24,888 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Username Fetched is -jjakkam
+2020-10-14 08:38:24,889 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Invoked username serialization
+2020-10-14 08:38:24,890 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Getting username for userid - 10001
+2020-10-14 08:38:24,891 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-4] Making API Call to fetch user from ID
+2020-10-14 08:38:24,911 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:24,917 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:24,918 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:24,925 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Username Fetched is -sridhar
+2020-10-14 08:38:24,927 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-4] REQUEST DATA : GET /lead/21869]
+2020-10-14 08:38:25,011 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,013 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,013 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,014 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,056 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,057 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,057 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,058 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,120 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,129 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,129 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,135 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,136 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,136 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,178 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,179 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,179 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,180 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,209 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,209 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,210 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,210 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,244 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,244 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,245 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,245 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,278 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,279 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,279 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,280 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,319 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,320 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,320 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Getting username for userid - 10001
+2020-10-14 08:38:25,320 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch user from ID
+2020-10-14 08:38:25,348 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Username Fetched is -sridhar
+2020-10-14 08:38:25,349 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,350 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,350 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-3] Invoked username serialization
+2020-10-14 08:38:25,352 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-3] REQUEST DATA : GET /lead/getallinfo/21869]
+2020-10-14 08:38:29,514 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-5] Before request [GET /activity/validActivityTypes]
+2020-10-14 08:38:29,517 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-5] REQUEST DATA : GET /activity/validActivityTypes]
+2020-10-14 08:38:39,362 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-6] Before request [POST /activity/create]
+2020-10-14 08:38:39,383 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked createLeadActivity
+2020-10-14 08:38:39,383 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Validating LeadId from payload - 21869
+2020-10-14 08:38:39,386 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Checking ifexit condition exists
+2020-10-14 08:38:39,387 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked exitIfExitConditionsExists
+2020-10-14 08:38:39,399 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Fetching current user from gateway
+2020-10-14 08:38:39,399 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch current user
+2020-10-14 08:38:39,646 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked setFields
+2020-10-14 08:38:39,647 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Closed createLeadActivity
+2020-10-14 08:38:39,706 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked ExecuteBusinessLogicWhileCreation
+2020-10-14 08:38:39,706 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch current user
+2020-10-14 08:38:39,823 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Invoked username serialization
+2020-10-14 08:38:39,824 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Getting username for userid - 10001
+2020-10-14 08:38:39,825 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch user from ID
+2020-10-14 08:38:39,878 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Username Fetched is -sridhar
+2020-10-14 08:38:39,900 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Invoked username serialization
+2020-10-14 08:38:39,901 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Getting username for userid - 19
+2020-10-14 08:38:39,901 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch user from ID
+2020-10-14 08:38:39,925 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Username Fetched is -jjakkam
+2020-10-14 08:38:39,925 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Invoked username serialization
+2020-10-14 08:38:39,926 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Getting username for userid - 10001
+2020-10-14 08:38:39,926 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch user from ID
+2020-10-14 08:38:39,960 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-6] Username Fetched is -sridhar
+2020-10-14 08:38:39,964 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-6] REQUEST DATA : POST /activity/create, payload={"title":"ass","activityDateTime":"2020-10-14 11:00","activityType":"Meeting","tags":["asas"],"leadId":"21869"}]
+2020-10-14 08:38:41,124 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-7] Before request [GET /lead/validLeadStatus]
+2020-10-14 08:38:41,130 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-7] REQUEST DATA : GET /lead/validLeadStatus]
+2020-10-14 08:38:41,236 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-8] Before request [GET /lead/getallinfo/21869]
+2020-10-14 08:38:41,273 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-9] Before request [GET /lead/21869]
+2020-10-14 08:38:41,283 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-8] Invoked getAllActivitiesForLead
+2020-10-14 08:38:41,299 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Invoked username serialization
+2020-10-14 08:38:41,299 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Getting username for userid - 19
+2020-10-14 08:38:41,299 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-9] Making API Call to fetch user from ID
+2020-10-14 08:38:41,358 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Username Fetched is -jjakkam
+2020-10-14 08:38:41,359 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Invoked username serialization
+2020-10-14 08:38:41,360 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Getting username for userid - 10001
+2020-10-14 08:38:41,361 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-9] Making API Call to fetch user from ID
+2020-10-14 08:38:41,367 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,367 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,368 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,401 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Username Fetched is -sridhar
+2020-10-14 08:38:41,402 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-9] REQUEST DATA : GET /lead/21869]
+2020-10-14 08:38:41,435 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,437 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,438 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,439 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,486 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,488 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,488 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,489 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,521 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,522 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,522 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,523 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,572 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,576 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,576 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,579 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,582 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,582 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,615 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,619 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,624 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,625 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,657 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,658 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,659 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,660 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,728 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,730 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,731 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,731 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,770 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,770 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,771 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,772 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,819 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,820 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,821 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,821 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,882 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,883 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,883 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,884 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,907 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,908 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,909 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:38:41,909 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:38:41,950 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:38:41,951 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,952 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,952 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:38:41,956 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-8] REQUEST DATA : GET /lead/getallinfo/21869]
+2020-10-14 08:38:58,572 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-10] Before request [PUT /activity/reschedule/21970]
+2020-10-14 08:38:58,581 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Invoked rescheduleActivity
+2020-10-14 08:38:58,582 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-10] Making API Call to fetch current user
+2020-10-14 08:38:58,604 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Invoked validateReschedulePayloadAndReturnLeadActivity
+2020-10-14 08:38:58,610 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Payload validation passed. Returning leacactvity back
+2020-10-14 08:38:58,611 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-10] Making API Call to fetch current user
+2020-10-14 08:38:58,641 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Deleting old Activity
+2020-10-14 08:38:58,642 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Invoked deleteLeadActivity
+2020-10-14 08:38:58,644 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Invoked ExecuteBusinessLogicWhileClosure
+2020-10-14 08:38:58,645 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Deleted old Activity - success
+2020-10-14 08:38:58,647 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] creating new Activity - success
+2020-10-14 08:38:58,648 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-10] Making API Call to fetch current user
+2020-10-14 08:38:58,689 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-10] Invoked setFieldsForReschedule
+2020-10-14 08:38:58,788 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-10] REQUEST DATA : PUT /activity/reschedule/21970, payload={"closingComment":"ss","rescheduleDateTime":"2020-10-15 11:00"}]
+2020-10-14 08:38:59,394 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-1] Before request [GET /lead/validLeadStatus]
+2020-10-14 08:38:59,398 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-1] REQUEST DATA : GET /lead/validLeadStatus]
+2020-10-14 08:38:59,477 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-2] Before request [GET /lead/getallinfo/21869]
+2020-10-14 08:38:59,482 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-4] Before request [GET /lead/21869]
+2020-10-14 08:38:59,493 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Invoked username serialization
+2020-10-14 08:38:59,494 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Getting username for userid - 19
+2020-10-14 08:38:59,495 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-4] Making API Call to fetch user from ID
+2020-10-14 08:38:59,498 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-2] Invoked getAllActivitiesForLead
+2020-10-14 08:38:59,549 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,550 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:38:59,550 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:38:59,570 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Username Fetched is -jjakkam
+2020-10-14 08:38:59,570 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Invoked username serialization
+2020-10-14 08:38:59,571 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Getting username for userid - 10001
+2020-10-14 08:38:59,571 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-4] Making API Call to fetch user from ID
+2020-10-14 08:38:59,593 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:38:59,594 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,595 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:38:59,596 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:38:59,680 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:38:59,682 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,683 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:38:59,684 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:38:59,685 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Username Fetched is -sridhar
+2020-10-14 08:38:59,687 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-4] REQUEST DATA : GET /lead/21869]
+2020-10-14 08:38:59,772 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:38:59,773 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,774 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:38:59,774 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:38:59,814 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:38:59,817 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,818 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:38:59,819 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:38:59,856 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:38:59,857 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,857 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:38:59,873 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:38:59,952 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:38:59,953 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,953 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,954 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:38:59,955 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:38:59,955 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,021 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,021 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,021 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,022 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,052 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,052 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,053 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,053 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,098 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,099 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,100 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,100 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,372 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,373 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,373 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,374 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,415 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,415 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,416 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,416 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,466 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,468 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,468 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,469 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,493 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,494 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,494 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,494 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,512 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,512 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,513 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,514 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,558 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,559 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,560 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,560 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,595 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,596 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,596 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Getting username for userid - 10001
+2020-10-14 08:39:00,596 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-2] Making API Call to fetch user from ID
+2020-10-14 08:39:00,618 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Username Fetched is -sridhar
+2020-10-14 08:39:00,619 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,619 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,619 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-2] Invoked username serialization
+2020-10-14 08:39:00,620 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-2] REQUEST DATA : GET /lead/getallinfo/21869]
+2020-10-14 08:39:36,702 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-3] Before request [PUT /activity/reschedule/21971]
+2020-10-14 08:39:36,708 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Invoked rescheduleActivity
+2020-10-14 08:39:36,708 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch current user
+2020-10-14 08:39:36,751 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Invoked validateReschedulePayloadAndReturnLeadActivity
+2020-10-14 08:39:36,757 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Payload validation passed. Returning leacactvity back
+2020-10-14 08:39:36,758 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch current user
+2020-10-14 08:39:36,804 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Deleting old Activity
+2020-10-14 08:39:36,804 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Invoked deleteLeadActivity
+2020-10-14 08:39:36,805 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Invoked ExecuteBusinessLogicWhileClosure
+2020-10-14 08:39:36,806 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Deleted old Activity - success
+2020-10-14 08:39:36,806 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] creating new Activity - success
+2020-10-14 08:39:36,806 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-3] Making API Call to fetch current user
+2020-10-14 08:39:36,856 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-3] Invoked setFieldsForReschedule
+2020-10-14 08:39:36,926 WARN org.hibernate.engine.jdbc.spi.SqlExceptionHelper [http-nio-8083-exec-3] SQL Error: 1406, SQLState: 22001
+2020-10-14 08:39:36,930 ERROR org.hibernate.engine.jdbc.spi.SqlExceptionHelper [http-nio-8083-exec-3] Data truncation: Data too long for column 'closing_comment' at row 1
+2020-10-14 08:39:36,991 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-3] REQUEST DATA : PUT /activity/reschedule/21971, payload={"closingComment":" asSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSADasSAD","rescheduleDateTime":"2020-10-15 10:39"}]
+2020-10-14 08:39:37,005 ERROR org.apache.juli.logging.DirectJDKLog [http-nio-8083-exec-3] Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed; nested exception is org.springframework.dao.DataIntegrityViolationException: could not execute statement; SQL [n/a]; nested exception is org.hibernate.exception.DataException: could not execute statement] with root cause
+com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Data too long for column 'closing_comment' at row 1
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:104)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:953)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1092)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1040)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1347)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1025)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeUpdate(ProxyPreparedStatement.java:61)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeUpdate(HikariProxyPreparedStatement.java)
+	at org.hibernate.engine.jdbc.internal.ResultSetReturnImpl.executeUpdate(ResultSetReturnImpl.java:197)
+	at org.hibernate.persister.entity.AbstractEntityPersister.update(AbstractEntityPersister.java:3392)
+	at org.hibernate.persister.entity.AbstractEntityPersister.updateOrInsert(AbstractEntityPersister.java:3265)
+	at org.hibernate.persister.entity.AbstractEntityPersister.update(AbstractEntityPersister.java:3666)
+	at org.hibernate.action.internal.EntityUpdateAction.execute(EntityUpdateAction.java:149)
+	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:604)
+	at org.hibernate.engine.spi.ActionQueue.lambda$executeActions$1(ActionQueue.java:478)
+	at java.util.LinkedHashMap.forEach(LinkedHashMap.java:684)
+	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:475)
+	at org.hibernate.event.internal.AbstractFlushingEventListener.performExecutions(AbstractFlushingEventListener.java:348)
+	at org.hibernate.event.internal.DefaultFlushEventListener.onFlush(DefaultFlushEventListener.java:40)
+	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:108)
+	at org.hibernate.internal.SessionImpl.doFlush(SessionImpl.java:1344)
+	at org.hibernate.internal.SessionImpl.managedFlush(SessionImpl.java:435)
+	at org.hibernate.internal.SessionImpl.flushBeforeTransactionCompletion(SessionImpl.java:3221)
+	at org.hibernate.internal.SessionImpl.beforeTransactionCompletion(SessionImpl.java:2389)
+	at org.hibernate.engine.jdbc.internal.JdbcCoordinatorImpl.beforeTransactionCompletion(JdbcCoordinatorImpl.java:447)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl.beforeCompletionCallback(JdbcResourceLocalTransactionCoordinatorImpl.java:183)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl.access$300(JdbcResourceLocalTransactionCoordinatorImpl.java:40)
+	at org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLocalTransactionCoordinatorImpl$TransactionDriverControlImpl.commit(JdbcResourceLocalTransactionCoordinatorImpl.java:281)
+	at org.hibernate.engine.transaction.internal.TransactionImpl.commit(TransactionImpl.java:101)
+	at org.springframework.orm.jpa.JpaTransactionManager.doCommit(JpaTransactionManager.java:534)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processCommit(AbstractPlatformTransactionManager.java:744)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:712)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.commitTransactionAfterReturning(TransactionAspectSupport.java:631)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:385)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:99)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:186)
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:747)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:689)
+	at com.ec.crm.Service.LeadActivityService$$EnhancerBySpringCGLIB$$79c75891.rescheduleActivity(<generated>)
+	at com.ec.crm.Controller.LeadActivityController.rescheduleActivity(LeadActivityController.java:92)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:190)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:138)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:106)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:888)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:793)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1040)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:943)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	at org.springframework.web.servlet.FrameworkServlet.doPut(FrameworkServlet.java:920)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:663)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:741)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.AbstractRequestLoggingFilter.doFilterInternal(AbstractRequestLoggingFilter.java:289)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:119)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:202)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:526)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:139)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:367)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:65)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:860)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1591)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.lang.Thread.run(Thread.java:748)
+2020-10-14 08:42:34,157 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-6] Before request [PUT /activity/reschedule/21971]
+2020-10-14 08:42:34,177 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked rescheduleActivity
+2020-10-14 08:42:34,179 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch current user
+2020-10-14 08:42:34,265 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked validateReschedulePayloadAndReturnLeadActivity
+2020-10-14 08:42:34,284 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Payload validation passed. Returning leacactvity back
+2020-10-14 08:42:34,285 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch current user
+2020-10-14 08:42:34,340 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Deleting old Activity
+2020-10-14 08:42:34,340 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked deleteLeadActivity
+2020-10-14 08:42:34,345 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked ExecuteBusinessLogicWhileClosure
+2020-10-14 08:42:34,346 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Deleted old Activity - success
+2020-10-14 08:42:34,347 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] creating new Activity - success
+2020-10-14 08:42:34,347 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-6] Making API Call to fetch current user
+2020-10-14 08:42:34,386 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-6] Invoked setFieldsForReschedule
+2020-10-14 08:42:34,456 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-6] REQUEST DATA : PUT /activity/reschedule/21971, payload={"closingComment":"dsdas","rescheduleDateTime":"2020-10-15 10:39"}]
+2020-10-14 08:42:35,050 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-7] Before request [GET /lead/validLeadStatus]
+2020-10-14 08:42:35,060 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-7] REQUEST DATA : GET /lead/validLeadStatus]
+2020-10-14 08:42:35,198 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-9] Before request [GET /lead/21869]
+2020-10-14 08:42:35,225 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-8] Before request [GET /lead/getallinfo/21869]
+2020-10-14 08:42:35,235 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Invoked username serialization
+2020-10-14 08:42:35,236 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Getting username for userid - 19
+2020-10-14 08:42:35,236 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-9] Making API Call to fetch user from ID
+2020-10-14 08:42:35,253 INFO com.ec.crm.Service.LeadActivityService [http-nio-8083-exec-8] Invoked getAllActivitiesForLead
+2020-10-14 08:42:35,297 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,298 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,299 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,308 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Username Fetched is -jjakkam
+2020-10-14 08:42:35,308 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Invoked username serialization
+2020-10-14 08:42:35,309 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Getting username for userid - 10001
+2020-10-14 08:42:35,310 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-9] Making API Call to fetch user from ID
+2020-10-14 08:42:35,350 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-9] Username Fetched is -sridhar
+2020-10-14 08:42:35,353 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-9] REQUEST DATA : GET /lead/21869]
+2020-10-14 08:42:35,372 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,378 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,379 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,379 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,441 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,442 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,442 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,443 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,473 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,474 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,475 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,475 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,536 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,537 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,538 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,538 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,578 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,578 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,579 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,579 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,649 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,650 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,651 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,652 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,723 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,725 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,728 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,729 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,780 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,783 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,784 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,786 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,787 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,787 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,836 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,837 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,837 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,838 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,889 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,889 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,890 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,890 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,930 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,931 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,931 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,931 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:35,980 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:35,980 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:35,981 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:35,982 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,044 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,045 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,046 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,046 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,113 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,114 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,114 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,115 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,206 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,207 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,208 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,208 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,308 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,314 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,316 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,316 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,351 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,351 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,352 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,352 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,386 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,387 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,388 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,388 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,436 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,437 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,438 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,438 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,469 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,470 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,470 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,471 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,525 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,526 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,526 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Getting username for userid - 10001
+2020-10-14 08:42:36,527 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-8] Making API Call to fetch user from ID
+2020-10-14 08:42:36,555 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Username Fetched is -sridhar
+2020-10-14 08:42:36,555 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,556 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,556 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-8] Invoked username serialization
+2020-10-14 08:42:36,558 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-8] REQUEST DATA : GET /lead/getallinfo/21869]
+2020-10-14 08:48:48,856 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-4] Before request [GET /lead/19820]
+2020-10-14 08:48:49,048 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Invoked username serialization
+2020-10-14 08:48:49,051 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Getting username for userid - 10001
+2020-10-14 08:48:49,051 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-4] Making API Call to fetch user from ID
+2020-10-14 08:48:49,155 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Username Fetched is -sridhar
+2020-10-14 08:48:49,156 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Invoked username serialization
+2020-10-14 08:48:49,161 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Getting username for userid - 10001
+2020-10-14 08:48:49,161 INFO com.ec.crm.Service.UserDetailsService [http-nio-8083-exec-4] Making API Call to fetch user from ID
+2020-10-14 08:48:49,242 INFO Deserializers.ToUsernameSerializer [http-nio-8083-exec-4] Username Fetched is -sridhar
+2020-10-14 08:48:49,249 DEBUG org.springframework.web.filter.CommonsRequestLoggingFilter [http-nio-8083-exec-4] REQUEST DATA : GET /lead/19820]
+2020-10-14 10:35:44,275 INFO org.springframework.boot.admin.SpringApplicationAdminMXBeanRegistrar$SpringApplicationAdmin [RMI TCP Connection(122)-127.0.0.1] Application shutdown requested.
+2020-10-14 10:35:44,275 INFO org.springframework.boot.admin.SpringApplicationAdminMXBeanRegistrar$SpringApplicationAdmin [RMI TCP Connection(121)-127.0.0.1] Application shutdown requested.
+2020-10-14 10:35:44,572 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [RMI TCP Connection(122)-127.0.0.1] Shutting down ExecutorService 'taskScheduler'
+2020-10-14 10:35:44,585 INFO org.springframework.scheduling.concurrent.ExecutorConfigurationSupport [RMI TCP Connection(122)-127.0.0.1] Shutting down ExecutorService 'applicationTaskExecutor'
+2020-10-14 10:35:44,616 INFO org.springframework.orm.jpa.AbstractEntityManagerFactoryBean [RMI TCP Connection(122)-127.0.0.1] Closing JPA EntityManagerFactory for persistence unit 'default'
+2020-10-14 10:35:47,012 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(122)-127.0.0.1] HikariPool-1 - Shutdown initiated...
+2020-10-14 10:35:47,041 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(122)-127.0.0.1] HikariPool-1 - Shutdown completed.
