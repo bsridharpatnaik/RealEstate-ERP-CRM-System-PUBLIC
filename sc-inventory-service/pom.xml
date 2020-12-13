@@ -193,7 +193,7 @@
 -->
     </dependencies>
     <build>
-        <finalName>inventory-service</finalName>
+        <finalName>sc-inventory-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
