@@ -189,7 +189,7 @@
         </dependencies>
     </dependencyManagement>
     <build>
-        <finalName>common-service</finalName>
+        <finalName>sc-common-service</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
