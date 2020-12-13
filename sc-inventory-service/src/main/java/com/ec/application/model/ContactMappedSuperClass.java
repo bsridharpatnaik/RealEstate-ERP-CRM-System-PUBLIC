@@ -10,6 +10,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Temporal;
 
+import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -23,8 +24,14 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @MappedSuperclass
+@Audited
 public class ContactMappedSuperClass
 {
+	public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
+
+	@Column(name = "is_deleted", columnDefinition = "BOOLEAN DEFAULT true")
+	public boolean isDeleted;
+
 	@NonNull
 	@Column(nullable = false)
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
@@ -54,11 +61,6 @@ public class ContactMappedSuperClass
 	String state;
 	String zip;
 
-	public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
-
-	@Column(name = "is_deleted", columnDefinition = "BOOLEAN DEFAULT true")
-	public boolean isDeleted;
-
 	@CreatedBy
 	protected String createdBy;
 
@@ -75,11 +77,6 @@ public class ContactMappedSuperClass
 	@Temporal(TIMESTAMP)
 	protected Date lastModifiedDate;
 
-	public String getName()
-	{
-		return name;
-	}
-
 	public boolean isDeleted()
 	{
 		return isDeleted;
@@ -88,6 +85,16 @@ public class ContactMappedSuperClass
 	public void setDeleted(boolean isDeleted)
 	{
 		this.isDeleted = isDeleted;
+	}
+
+	public static String getSoftDeletedClause()
+	{
+		return SOFT_DELETED_CLAUSE;
+	}
+
+	public String getName()
+	{
+		return name;
 	}
 
 	public String getCreatedBy()
@@ -128,11 +135,6 @@ public class ContactMappedSuperClass
 	public void setLastModifiedDate(Date lastModifiedDate)
 	{
 		this.lastModifiedDate = lastModifiedDate;
-	}
-
-	public static String getSoftDeletedClause()
-	{
-		return SOFT_DELETED_CLAUSE;
 	}
 
 	public void setName(String name)
