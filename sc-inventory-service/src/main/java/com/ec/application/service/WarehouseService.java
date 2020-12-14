@@ -13,42 +13,49 @@ import com.ec.application.model.Warehouse;
 import com.ec.application.repository.WarehouseRepo;
 
 @Service
-public class WarehouseService 
+public class WarehouseService
 {
 	@Autowired
 	WarehouseRepo warehouseRepo;
-	
+
 	public Page<Warehouse> findAll(Pageable pageable)
 	{
 		return warehouseRepo.findAll(pageable);
-    }
-	
-	public Warehouse createWarehouse(Warehouse payload) throws Exception 
+	}
+
+	public Warehouse createWarehouse(Warehouse payload) throws Exception
 	{
-		if(warehouseRepo.countByName(payload.getWarehouseName())>0)
+		if (payload.getWarehouseName() == null || payload.getWarehouseName().trim() == "")
+			throw new Exception("Warehouse Name cannot be empty.");
+		payload.setWarehouseName(payload.getWarehouseName().trim());
+		if (warehouseRepo.countByName(payload.getWarehouseName()) > 0)
 			throw new Exception("Warehouse already exists!");
 		else
 			return warehouseRepo.save(payload);
-    }
-	
-	public Warehouse updateWarehouse(Long id,Warehouse payload) throws Exception 
+	}
+
+	public Warehouse updateWarehouse(Long id, Warehouse payload) throws Exception
 	{
+		if (payload.getWarehouseName() == null || payload.getWarehouseName().trim() == "")
+			throw new Exception("Warehouse Name cannot be empty.");
+		payload.setWarehouseName(payload.getWarehouseName().trim());
 		Optional<Warehouse> warehouseOpt = warehouseRepo.findById(id);
-		if(!warehouseOpt.isPresent())
+		if (!warehouseOpt.isPresent())
 			throw new Exception("Warehouse with name not found");
-		
+
 		Warehouse warehouse = warehouseOpt.get();
-		
-		if(warehouse.getWarehouseName() != payload.getWarehouseName() && warehouseRepo.countByName(payload.getWarehouseName())>0)
+
+		if (warehouse.getWarehouseName() != payload.getWarehouseName()
+				&& warehouseRepo.countByName(payload.getWarehouseName()) > 0)
 			throw new Exception("Warehouse already exists!");
-		
+
 		warehouse.setWarehouseName(payload.getWarehouseName());
 		return warehouseRepo.save(warehouse);
-    }
-	
-	public List<IdNameProjections> findIdAndNames() 
+	}
+
+	public List<IdNameProjections> findIdAndNames()
 	{
 		// TODO Auto-generated method stub
 		return warehouseRepo.findIdAndNames();
-	} 
+	}
 }
