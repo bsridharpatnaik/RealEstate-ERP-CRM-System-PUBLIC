@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
-import com.ec.application.data.AllProductsWithNamesData;
 import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Product;
@@ -39,7 +39,7 @@ public class ProductController
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public AllProductsWithNamesData returnFilteredProducts(@RequestBody FilterDataList filterDataList,
+	public Page<Product> returnFilteredProducts(@RequestBody FilterDataList filterDataList,
 			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
 			throws ParseException
 	{
@@ -83,6 +83,18 @@ public class ProductController
 	public List<IdNameAndUnit> returnIdAndMU()
 	{
 		return productService.productMeasurementUnit();
+	}
+
+	@GetMapping("/typeahead/{name}")
+	public List<String> getTypeAhead(@PathVariable String name)
+	{
+		return productService.typeAheadDataList(name);
+	}
+
+	@GetMapping("/categorynames")
+	public List<IdNameProjections> getCategoryNamesforDropdown()
+	{
+		return productService.getIdAndNamesForCategoryDropdown();
 	}
 
 	@ExceptionHandler(

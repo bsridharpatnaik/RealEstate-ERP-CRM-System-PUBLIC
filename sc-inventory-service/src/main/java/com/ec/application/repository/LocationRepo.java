@@ -1,7 +1,6 @@
 package com.ec.application.repository;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.persistence.LockModeType;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.ReusableClasses.IdNameProjections;
-import com.ec.application.model.InwardInventory;
 import com.ec.application.model.UsageLocation;
 
 @Repository
@@ -26,13 +24,16 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 
 	ArrayList<UsageLocation> findByLocationName(String locationName);
 
-	@Query(value="SELECT m from UsageLocation m where locationName LIKE %:name%")
+	@Query(value = "SELECT m from UsageLocation m where locationName LIKE %:name%")
 	ArrayList<UsageLocation> findByPartialName(@Param("name") String name);
 
-	@Query(value="SELECT locationId as id,locationName as name from UsageLocation m  order by name")
+	@Query(value = "SELECT locationId as id,locationName as name from UsageLocation m  order by name")
 	List<IdNameProjections> findIdAndNames();
 
-	@Query(value="SELECT locationName from UsageLocation m order by locationName")
+	@Query(value = "SELECT locationName from UsageLocation m order by locationName")
 	List<String> getNames();
+
+	@Query(value = "SELECT locationName from UsageLocation m where locationName like %:name% order by locationName")
+	List<String> getNamesForTypeAhead(@Param("name") String name);
 
 }

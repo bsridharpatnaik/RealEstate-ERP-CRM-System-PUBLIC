@@ -11,158 +11,178 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
-import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.data.AllProductsWithNamesData;
 import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Category;
 import com.ec.application.model.Product;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ProductRepo;
-import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.ProductSpecifications;
 
-
 @Service
-public class ProductService 
+public class ProductService
 {
 
 	@Autowired
 	ProductRepo productRepo;
-	
+
 	@Autowired
 	CategoryRepo categoryRepo;
-	
+
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
-	
+
 	@Autowired
 	UserDetailsService userDetailsService;
-	
+
 	public Page<Product> findAll(Pageable pageable)
 	{
 		return productRepo.findAll(pageable);
-    }
-	
-	public Product createProduct(ProductCreateData payload) throws Exception 
+	}
+
+	public Product createProduct(ProductCreateData payload) throws Exception
 	{
-		if(!productRepo.existsByProductName(payload.getProductName()))
+		validatePayload(payload);
+		if (!productRepo.existsByProductName(payload.getProductName()))
 		{
 			Optional<Category> categoryOpt = categoryRepo.findById(payload.getCategoryId());
-			if(categoryOpt.isPresent())
+			if (categoryOpt.isPresent())
 			{
 				Product product = new Product();
 				product.setCategory(categoryOpt.get());
 				product.setMeasurementUnit(payload.getMeasurementUnit().trim());
-				product.setProductDescription(payload.getProductDescription()==null?"":payload.getProductDescription().trim());
+				product.setProductDescription(
+						payload.getProductDescription() == null ? "" : payload.getProductDescription().trim());
 				product.setProductName(payload.getProductName().trim());
 				product.setReorderQuantity(payload.getReorderQuantity());
 				productRepo.save(product);
 				return product;
-			}
-			else
+			} else
 			{
 				throw new Exception("Category with categoryid not found");
 			}
-		}
-		else
+		} else
 		{
 			throw new Exception("Product already exists!");
 		}
-    }
+	}
 
-	public Product updateProduct(Long id, ProductCreateData payload) throws Exception 
+	private void validatePayload(ProductCreateData payload) throws Exception
+	{
+		if (payload.getCategoryId() == null)
+			throw new Exception("CategoryID cannot be empty. Please select a category");
+
+		if (payload.getMeasurementUnit() == null)
+			throw new Exception("Measurement Unit cannot be empty. Please Enter Measurement Unit");
+
+		if (payload.getProductName() == null)
+			throw new Exception("Product Name cannot be empty. Please Enter Product Name");
+
+		if (payload.getReorderQuantity() == null || payload.getReorderQuantity() == 0)
+			throw new Exception("Reorder Quantity cannot be zero or empty. Please Enter Reorder Quantity");
+
+	}
+
+	public Product updateProduct(Long id, ProductCreateData payload) throws Exception
 	{
 		Optional<Product> ProductForUpdateOpt = productRepo.findById(id);
-		if(!ProductForUpdateOpt.isPresent())
+		if (!ProductForUpdateOpt.isPresent())
 			throw new Exception("Product not found with productid");
 		Optional<Category> categoryOpt = categoryRepo.findById(payload.getCategoryId());
-		if(!categoryOpt.isPresent())
+		if (!categoryOpt.isPresent())
 			throw new Exception("Category with ID not found");
-		
-        Product ProductForUpdate = ProductForUpdateOpt.get();
-        
-        if(!productRepo.existsByProductName(payload.getProductName())
-        		&& !payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
-        {		
-        		ProductForUpdate.setProductName(payload.getProductName());
-            ProductForUpdate.setProductDescription(payload.getProductDescription());
-            ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
-            ProductForUpdate.setCategory(categoryOpt.get());
-            ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
-        }
-        else if(payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
-        {
-        		ProductForUpdate.setProductDescription(payload.getProductDescription());
-        		ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
-        		ProductForUpdate.setCategory(categoryOpt.get());
-        		ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
-        }
-        else 
-        {
-        	throw new Exception("Product with same Name already exists");
-        }
-        	
-        return productRepo.save(ProductForUpdate);
-        
-    }
 
-	public Product findSingleProduct(Long id) throws Exception 
+		Product ProductForUpdate = ProductForUpdateOpt.get();
+
+		if (!productRepo.existsByProductName(payload.getProductName())
+				&& !payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
+		{
+			ProductForUpdate.setProductName(payload.getProductName());
+			ProductForUpdate.setProductDescription(payload.getProductDescription());
+			ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
+			ProductForUpdate.setCategory(categoryOpt.get());
+			ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
+		} else if (payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName()))
+		{
+			ProductForUpdate.setProductDescription(payload.getProductDescription());
+			ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
+			ProductForUpdate.setCategory(categoryOpt.get());
+			ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
+		} else
+		{
+			throw new Exception("Product with same Name already exists");
+		}
+
+		return productRepo.save(ProductForUpdate);
+
+	}
+
+	public Product findSingleProduct(Long id) throws Exception
 	{
 		Product product = new Product();
 		Optional<Product> productOpt = productRepo.findById(id);
-		if(!productOpt.isPresent())
+		if (!productOpt.isPresent())
 			throw new Exception("Product Not Found With product ID");
 		else
 			product = productOpt.get();
 		return product;
 	}
-	public void deleteProduct(Long id) throws Exception 
+
+	public void deleteProduct(Long id) throws Exception
 	{
-		if(!checkBeforeDeleteService.isProductUsed(id))
-				productRepo.softDeleteById(id);
-			else
-				throw new Exception("Cannot Delete. Product already in use");
+		if (!checkBeforeDeleteService.isProductUsed(id))
+			productRepo.softDeleteById(id);
+		else
+			throw new Exception("Cannot Delete. Product already in use");
 	}
 
-	public ArrayList<Product> findProductsByName(String name) 
+	public ArrayList<Product> findProductsByName(String name)
 	{
 		ArrayList<Product> productList = new ArrayList<Product>();
 		productList = productRepo.findByproductName(name);
 		return productList;
 	}
 
-
-	public List<IdNameProjections> findIdAndNames() 
+	public List<IdNameProjections> findIdAndNames()
 	{
 		// TODO Auto-generated method stub
 		return productRepo.findIdAndNames();
 	}
-	
+
 	public boolean checkIfProductExists(Long id)
 	{
 		Optional<Product> Products = productRepo.findById(id);
-		if(Products.isPresent())
+		if (Products.isPresent())
 			return true;
 		else
 			return false;
 	}
 
-	public AllProductsWithNamesData findFilteredProductsWithTA(FilterDataList filterDataList, Pageable pageable) 
+	public Page<Product> findFilteredProductsWithTA(FilterDataList filterDataList, Pageable pageable)
 	{
-		AllProductsWithNamesData allProductsWithNamesData = new AllProductsWithNamesData();
+
 		Specification<Product> spec = ProductSpecifications.getSpecification(filterDataList);
-		if(spec!=null) allProductsWithNamesData.setProducts(productRepo.findAll(spec, pageable));
-		else allProductsWithNamesData.setProducts(productRepo.findAll(pageable));
-		List<String> names = productRepo.getNames();
-		names.addAll(categoryRepo.getNames());
-		allProductsWithNamesData.setCategoryNamesForDropdown(categoryRepo.findIdAndNames());
-		allProductsWithNamesData.setProductAndCategoryNames(ReusableMethods.removeNullsFromStringList(names));
-		return allProductsWithNamesData;
+		if (spec != null)
+			return productRepo.findAll(spec, pageable);
+		else
+			return productRepo.findAll(pageable);
 	}
 
-	public List<IdNameAndUnit> productMeasurementUnit() 
+	public List<String> typeAheadDataList(String name)
+	{
+		List<String> names = productRepo.getNames(name);
+		names.addAll(categoryRepo.getNames(name));
+		return names;
+	}
+
+	public List<IdNameProjections> getIdAndNamesForCategoryDropdown()
+	{
+		List<IdNameProjections> categoryNamesForDropdown = categoryRepo.findIdAndNames();
+		return categoryNamesForDropdown;
+	}
+
+	public List<IdNameAndUnit> productMeasurementUnit()
 	{
 		// TODO Auto-generated method stub
 		return productRepo.getProductMeasurementUnit();

@@ -3,6 +3,7 @@ package com.ec.application.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
-import com.ec.application.data.AllLocationWithNamesData;
 import com.ec.application.model.UsageLocation;
 import com.ec.application.service.LocationService;
 import com.ec.common.Filters.FilterDataList;
@@ -37,7 +37,7 @@ public class LocationController
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public AllLocationWithNamesData returnFilteredLocations(@RequestBody FilterDataList filterDataList,
+	public Page<UsageLocation> returnFilteredLocations(@RequestBody FilterDataList filterDataList,
 			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
 	{
 		return locationService.findFilteredLocationsWithTA(filterDataList, pageable);
@@ -47,6 +47,12 @@ public class LocationController
 	public UsageLocation findLocationbyvehicleNoLocations(@PathVariable long id)
 	{
 		return locationService.findSingleLocation(id);
+	}
+
+	@GetMapping("/typeahead/{name}")
+	public List<String> findLocationforTypeAhead(@PathVariable String name)
+	{
+		return locationService.getTypeAheadForGlobalSearch(name);
 	}
 
 	@DeleteMapping(value = "/{id}")
