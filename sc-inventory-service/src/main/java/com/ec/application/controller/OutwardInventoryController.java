@@ -33,81 +33,83 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/outward")
-public class OutwardInventoryController 
+public class OutwardInventoryController
 {
 	@Autowired
-	OutwardInventoryService oiService ;
-	
-	
-	
-	@PostMapping("/create") 
+	OutwardInventoryService oiService;
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
 	public OutwardInventory createOutwardInventory(@RequestBody OutwardInventoryData payload) throws Exception
 	{
 		return oiService.createOutwardnventory(payload);
 	}
-	
-	
-	
+
 	@GetMapping("/{id}")
 	public OutwardInventory getOutwardInventory(@PathVariable Long id) throws Exception
 	{
-		
+
 		return oiService.findOutwardnventory(id);
 	}
-	
+
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public OutwardInventory setReturnOutwardInventory(@PathVariable Long id,@RequestBody ReturnOutwardData rd) throws Exception
+	public OutwardInventory setReturnOutwardInventory(@PathVariable Long id, @RequestBody ReturnOutwardData rd)
+			throws Exception
 	{
 		return oiService.addReturnEntry(rd, id);
 	}
-	
-	@PostMapping 
+
+	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public ReturnOutwardInventoryData fetchAllOutwardInventory(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws ParseException
+	public ReturnOutwardInventoryData fetchAllOutwardInventory(@RequestBody FilterDataList filterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			throws ParseException
 	{
-		return oiService.fetchOutwardnventory(filterDataList,pageable);
+		return oiService.fetchOutwardnventory(filterDataList, pageable);
 	}
-	
-	@PostMapping ("/export")
+
+	@PostMapping("/export")
 	@ResponseStatus(HttpStatus.OK)
-	public List<OutwardInventoryExportDAO> fetchAllOutwardInventoryForExport(@RequestBody FilterDataList filterDataList) throws Exception
+	public List<OutwardInventoryExportDAO> fetchAllOutwardInventoryForExport(@RequestBody FilterDataList filterDataList)
+			throws Exception
 	{
-		
+
 		return oiService.fetchOutwardnventoryForExport(filterDataList);
 	}
-	
+
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteOutwardInventoryById(@PathVariable Long id) throws Exception
 	{
-		
+
 		oiService.deleteOutwardInventoryById(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	
+
 	@PutMapping("/{id}")
-	public OutwardInventory updateOutwardInventory(@RequestBody OutwardInventoryData payload,@PathVariable Long id) throws Exception
+	public OutwardInventory updateOutwardInventory(@RequestBody OutwardInventoryData payload, @PathVariable Long id)
+			throws Exception
 	{
-		
+
 		return oiService.updateOutwardnventory(payload, id);
 	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 	/*
-	
-	
-	
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteOutwardInventory(@PathVariable Long id) throws Exception
-	{
-		outwardInventoryService.deleteOutwardnventory(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
-	*/
+	 * 
+	 * 
+	 * 
+	 * @DeleteMapping(value = "/{id}") public ResponseEntity<?>
+	 * deleteOutwardInventory(@PathVariable Long id) throws Exception {
+	 * outwardInventoryService.deleteOutwardnventory(id); return
+	 * ResponseEntity.ok("Entity deleted"); }
+	 */
 }

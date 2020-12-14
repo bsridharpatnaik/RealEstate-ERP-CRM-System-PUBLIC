@@ -32,20 +32,22 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/product")
-public class ProductController 
+public class ProductController
 {
 	@Autowired
 	ProductService productService;
-	
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public AllProductsWithNamesData returnFilteredProducts(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws ParseException
+	public AllProductsWithNamesData returnFilteredProducts(@RequestBody FilterDataList filterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			throws ParseException
 	{
-		return productService.findFilteredProductsWithTA(filterDataList,pageable);
+		return productService.findFilteredProductsWithTA(filterDataList, pageable);
 	}
-	
+
 	@GetMapping("/{id}")
-	public Product findProductbyvehicleNoProducts(@PathVariable long id) throws Exception 
+	public Product findProductbyvehicleNoProducts(@PathVariable long id) throws Exception
 	{
 		return productService.findSingleProduct(id);
 	}
@@ -56,35 +58,40 @@ public class ProductController
 		productService.deleteProduct(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	@PostMapping("/create") 
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Product createProduct(@RequestBody ProductCreateData payload) throws Exception{
-		
+	public Product createProduct(@RequestBody ProductCreateData payload) throws Exception
+	{
+
 		return productService.createProduct(payload);
 	}
 
 	@PutMapping("/{id}")
-	public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception 
+	public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception
 	{
 		return productService.updateProduct(id, Product);
-	} 
-	
+	}
+
 	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIdAndNames() 
+	public List<IdNameProjections> returnIdAndNames()
 	{
 		return productService.findIdAndNames();
 	}
-	
+
 	@GetMapping("/measurementunits/all")
-	public List<IdNameAndUnit> returnIdAndMU() 
+	public List<IdNameAndUnit> returnIdAndMU()
 	{
 		return productService.productMeasurementUnit();
 	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 }

@@ -26,43 +26,51 @@ import com.ec.application.model.Warehouse;
 import com.ec.application.service.WarehouseService;
 
 @RestController
-@RequestMapping(value="/warehouse",produces = { "application/json", "text/json" })
-public class WarehouseController 
+@RequestMapping(value = "/warehouse", produces =
+{ "application/json", "text/json" })
+public class WarehouseController
 {
 	@Autowired
 	WarehouseService warehouseService;
-	
+
 	@GetMapping
-	public Page<Warehouse> returnAllWarehouses(@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws ParseException
+	public Page<Warehouse> returnAllWarehouses(
+			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			throws ParseException
 	{
-		
+
 		return warehouseService.findAll(pageable);
 	}
-	
-	@PostMapping("/create") 
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Warehouse createWarehouse(@RequestBody Warehouse payload) throws Exception{
-		
+	public Warehouse createWarehouse(@RequestBody Warehouse payload) throws Exception
+	{
+
 		return warehouseService.createWarehouse(payload);
 	}
 
-	@PutMapping("/{id}") 
+	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public Warehouse updateWarehouses(@PathVariable Long id,@RequestBody Warehouse payload) throws Exception{
-		
+	public Warehouse updateWarehouses(@PathVariable Long id, @RequestBody Warehouse payload) throws Exception
+	{
+
 		return warehouseService.updateWarehouse(id, payload);
 	}
-	
+
 	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIdandNames() 
+	public List<IdNameProjections> returnIdandNames()
 	{
 		return warehouseService.findIdAndNames();
 	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 }

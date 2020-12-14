@@ -3,7 +3,6 @@ package com.ec.application.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,21 +29,22 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/location")
-public class LocationController 
+public class LocationController
 {
 
 	@Autowired
 	LocationService locationService;
-	
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public AllLocationWithNamesData returnFilteredLocations(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
+	public AllLocationWithNamesData returnFilteredLocations(@RequestBody FilterDataList filterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
 	{
-		return locationService.findFilteredLocationsWithTA(filterDataList,pageable);
+		return locationService.findFilteredLocationsWithTA(filterDataList, pageable);
 	}
-	
+
 	@GetMapping("/{id}")
-	public UsageLocation findLocationbyvehicleNoLocations(@PathVariable long id) 
+	public UsageLocation findLocationbyvehicleNoLocations(@PathVariable long id)
 	{
 		return locationService.findSingleLocation(id);
 	}
@@ -56,30 +55,34 @@ public class LocationController
 		locationService.deleteLocation(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	@PostMapping("/create") 
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
-	public UsageLocation createLocation(@RequestBody UsageLocation payload) throws Exception{
-		
+	public UsageLocation createLocation(@RequestBody UsageLocation payload) throws Exception
+	{
+
 		return locationService.createLocation(payload);
 	}
 
 	@PutMapping("/{id}")
-	public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocation Location) throws Exception 
+	public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocation Location) throws Exception
 	{
 		return locationService.updateLocation(id, Location);
-	} 
-	
-	
+	}
+
 	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIdAndNames() 
+	public List<IdNameProjections> returnIdAndNames()
 	{
 		return locationService.findIdAndNames();
 	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 }

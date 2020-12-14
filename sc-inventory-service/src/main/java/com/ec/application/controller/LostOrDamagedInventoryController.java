@@ -30,52 +30,59 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/lostdamaged")
-public class LostOrDamagedInventoryController 
+public class LostOrDamagedInventoryController
 {
 	@Autowired
 	LostDamagedInventoryService lostDamagedInventoryService;
 
 	@Autowired
 	PopulateDropdownService populateDropdownService;
-	
-	@PostMapping 
+
+	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public LostDamagedReturnData returnAllLostDamaged(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws ParseException
-	{	
+	public LostDamagedReturnData returnAllLostDamaged(@RequestBody FilterDataList filterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			throws ParseException
+	{
 		return lostDamagedInventoryService.findFiilteredostDamagedList(filterDataList, pageable);
 	}
-	
-	@PostMapping("/create") 
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
-	public LostDamagedInventory createLDInventory(@RequestBody CreateLostOrDamagedInventoryData payload) throws Exception
+	public LostDamagedInventory createLDInventory(@RequestBody CreateLostOrDamagedInventoryData payload)
+			throws Exception
 	{
-		
+
 		return lostDamagedInventoryService.createData(payload);
 	}
-	
+
 	@GetMapping("/{id}")
-	public LostDamagedInventory findLDInventoryByID(@PathVariable long id) throws Exception 
+	public LostDamagedInventory findLDInventoryByID(@PathVariable long id) throws Exception
 	{
 		return lostDamagedInventoryService.findById(id);
 	}
-	
+
 	@PutMapping("/{id}")
-	public LostDamagedInventory updateLDInventoryByID(@PathVariable long id, @RequestBody CreateLostOrDamagedInventoryData payload) throws Exception 
+	public LostDamagedInventory updateLDInventoryByID(@PathVariable long id,
+			@RequestBody CreateLostOrDamagedInventoryData payload) throws Exception
 	{
 		return lostDamagedInventoryService.UpdateData(payload, id);
 	}
-	
+
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> deleteLDInventoryByID(@PathVariable long id) throws Exception 
+	public ResponseEntity<?> deleteLDInventoryByID(@PathVariable long id) throws Exception
 	{
 		lostDamagedInventoryService.DeleteData(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 }

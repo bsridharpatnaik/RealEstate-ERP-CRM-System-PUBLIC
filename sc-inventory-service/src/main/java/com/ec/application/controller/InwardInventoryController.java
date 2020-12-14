@@ -1,6 +1,5 @@
 package com.ec.application.controller;
 
-import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.InwardInventoryExportDAO;
 import com.ec.application.data.InwardInventoryExportDAO2;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.model.InwardInventory;
@@ -32,61 +30,66 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/inward")
-public class InwardInventoryController 
+public class InwardInventoryController
 {
 	@Autowired
 	InwardInventoryService iiService;
-	
-	@PostMapping("/create") 
+
+	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
 	public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception
 	{
-		
+
 		return iiService.createInwardnventory(payload);
 	}
-	
-	
-	@PostMapping 
+
+	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public ReturnInwardInventoryData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable) throws Exception
+			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			throws Exception
 	{
-		
-		return iiService.fetchInwardnventory(filterDataList,pageable);
+
+		return iiService.fetchInwardnventory(filterDataList, pageable);
 	}
-	
-	@PostMapping ("/export")
+
+	@PostMapping("/export")
 	@ResponseStatus(HttpStatus.OK)
-	public List<InwardInventoryExportDAO2> fetchAllInwardInventoryForExport2(@RequestBody FilterDataList filterDataList) throws Exception
+	public List<InwardInventoryExportDAO2> fetchAllInwardInventoryForExport2(@RequestBody FilterDataList filterDataList)
+			throws Exception
 	{
-		
+
 		return iiService.fetchInwardnventoryForExport2(filterDataList);
 	}
-	
+
 	@GetMapping("/{id}")
-	public InwardInventory findInwardInventoryById(@PathVariable long id) throws Exception 
+	public InwardInventory findInwardInventoryById(@PathVariable long id) throws Exception
 	{
 		return iiService.findById(id);
 	}
-	
+
 	@PutMapping("/{id}")
-	public InwardInventory updateInwardInventoryById(@PathVariable long id,@RequestBody InwardInventoryData payload) throws Exception 
+	public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
+			throws Exception
 	{
 		return iiService.updateInwardnventory(payload, id);
 	}
-	
+
 	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<?> deleteInwardInventoryById(@PathVariable Long id) throws Exception
 	{
-		
+
 		iiService.deleteInwardInventoryById(id);
 		return ResponseEntity.ok("Entity deleted");
 	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 }
