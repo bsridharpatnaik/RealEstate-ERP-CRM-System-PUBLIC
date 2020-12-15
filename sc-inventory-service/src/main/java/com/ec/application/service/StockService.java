@@ -23,6 +23,7 @@ import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.data.CurrentStockRequest;
+import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.data.SingleStockInfo;
 import com.ec.application.data.StockInformation;
 import com.ec.application.data.StockInformationExportDAO;
@@ -99,6 +100,11 @@ public class StockService
 			else if (stockStatus.get(0).toLowerCase().equals("low"))
 				showLowOrHIgh = "Low";
 		return showLowOrHIgh;
+	}
+
+	public NameAndProjectionDataForDropDown getStockDropdownValues()
+	{
+		return populateDropdownService.fetchData("stock");
 	}
 
 	public List<StockInformationExportDAO> findStockForAllForExport(FilterDataList filterDataList) throws Exception
@@ -215,7 +221,6 @@ public class StockService
 		List<SingleStockInfo> filteredStockInformationsList = filterStockForLowStock(stockInformationsList,
 				showLowOrHIgh);
 		stockInformation.setStockInformation(convertListStockToPages(filteredStockInformationsList, pageable));
-		stockInformation.setStockDropdownValues(populateDropdownService.fetchData("stock"));
 		return stockInformation;
 	}
 

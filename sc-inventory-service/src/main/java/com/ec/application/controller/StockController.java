@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.CurrentStockRequest;
+import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.data.StockInformation;
 import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.service.StockService;
@@ -62,6 +63,13 @@ public class StockController
 		Double currentStock;
 		currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
 		return currentStock == null ? 0 : currentStock;
+	}
+
+	@GetMapping("/getfilterdropdown")
+	public NameAndProjectionDataForDropDown getDropdownValuesForFilter()
+	{
+
+		return stockService.getStockDropdownValues();
 	}
 
 	@ExceptionHandler(
