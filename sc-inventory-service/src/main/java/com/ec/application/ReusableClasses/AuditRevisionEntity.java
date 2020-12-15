@@ -1,7 +1,5 @@
 package com.ec.application.ReusableClasses;
 
-
-
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
@@ -16,34 +14,38 @@ import lombok.Setter;
 
 @Entity
 @RevisionEntity(AuditRevisionListener.class)
-@Table(name = "REVINFO", schema = "audit")
-@AttributeOverrides({
-        @AttributeOverride(name = "timestamp", column = @Column(name = "REVTSTMP")),
-        @AttributeOverride(name = "id", column = @Column(name = "REV"))})
+@Table(name = "REVINFO")
+@AttributeOverrides(
+{ @AttributeOverride(name = "timestamp", column = @Column(name = "REVTSTMP")),
+		@AttributeOverride(name = "id", column = @Column(name = "REV")) })
 @Getter
 @Setter
-public class AuditRevisionEntity extends DefaultRevisionEntity {
+public class AuditRevisionEntity extends DefaultRevisionEntity
+{
 
-	 @Column(name = "USERID", nullable = false)
-	    private Long userId;
+	@Column(name = "USERID", nullable = false)
+	private Long userId;
 
-	    @Column(name = "USERNAME", nullable = false)
-	    private String userName;
-	    
-	    
-		public String getUserName() {
-			return userName;
-		}
+	@Column(name = "USERNAME", nullable = false)
+	private String userName;
 
-		public void setUserName(String userName) {
-			this.userName = userName;
-		}
+	public String getUserName()
+	{
+		return userName;
+	}
 
-		public Long getUserId() {
-			return userId;
-		}
+	public void setUserName(String userName)
+	{
+		this.userName = userName;
+	}
 
-		public void setUserId(Long userId) {
-			this.userId=userId==null?0:userId;
-		}
+	public Long getUserId()
+	{
+		return userId;
+	}
+
+	public void setUserId(Long userId)
+	{
+		this.userId = userId == null ? 0 : userId;
+	}
 }
