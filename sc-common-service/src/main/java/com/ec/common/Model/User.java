@@ -17,77 +17,109 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Where;
 import org.springframework.lang.NonNull;
 
-
 @Entity
-@Table(name = "security_user",uniqueConstraints={@UniqueConstraint(columnNames={"user_name"})})
+@Table(name = "security_user", uniqueConstraints =
+{ @UniqueConstraint(columnNames =
+		{ "user_name" }) })
 public class User
 {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long userId;
-	
+
 	@NonNull
-	@Column(unique = true, name= "user_name")
+	@Column(unique = true, name = "user_name")
 	private String userName;
-	
+
 	@NonNull
 	private String password;
-	
+
 	@NonNull
 	private boolean status;
-	
+
 	@NonNull
 	private boolean passwordExpired;
-	
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "user_role", joinColumns = {
-			@JoinColumn(name = "userId", referencedColumnName = "userId") }, inverseJoinColumns = {
-					@JoinColumn(name = "role_name", referencedColumnName = "name") })
+
+	private String tenants;
+
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "user_role", joinColumns =
+	{ @JoinColumn(name = "userId", referencedColumnName = "userId") }, inverseJoinColumns =
+	{ @JoinColumn(name = "role_name", referencedColumnName = "name") })
 
 	@BatchSize(size = 20)
 	private Set<Role> roles = new HashSet<>();
-	
-	
-	
-	public String getUserName() {
+
+	public String getTenants()
+	{
+		return tenants;
+	}
+
+	public void setTenants(String tenants)
+	{
+		this.tenants = tenants;
+	}
+
+	public String getUserName()
+	{
 		return userName;
 	}
-	public void setUserName(String userName) {
+
+	public void setUserName(String userName)
+	{
 		this.userName = userName;
 	}
-	public String getPassword() {
+
+	public String getPassword()
+	{
 		return password;
 	}
-	public void setPassword(String password) {
+
+	public void setPassword(String password)
+	{
 		this.password = password;
 	}
-	public Long getUserId() {
+
+	public Long getUserId()
+	{
 		return userId;
 	}
-	public void setUserId(Long userId) {
+
+	public void setUserId(Long userId)
+	{
 		this.userId = userId;
 	}
-	public boolean isStatus() {
+
+	public boolean isStatus()
+	{
 		return status;
 	}
-	public void setStatus(boolean status) {
+
+	public void setStatus(boolean status)
+	{
 		this.status = status;
 	}
-	public boolean isPasswordExpired() {
+
+	public boolean isPasswordExpired()
+	{
 		return passwordExpired;
 	}
-	public void setPasswordExpired(boolean passwordExpired) {
+
+	public void setPasswordExpired(boolean passwordExpired)
+	{
 		this.passwordExpired = passwordExpired;
 	}
-	public Set<Role> getRoles() {
+
+	public Set<Role> getRoles()
+	{
 		return roles;
 	}
-	public void setRoles(Set<Role> roles) {
+
+	public void setRoles(Set<Role> roles)
+	{
 		this.roles = roles;
 	}
 }

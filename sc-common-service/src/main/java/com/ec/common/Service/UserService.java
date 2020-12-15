@@ -67,6 +67,7 @@ public class UserService
 			user.setRoles(roleset);
 			user.setPassword(bCryptPassword(password));
 			user.setPasswordExpired(false);
+			user.setTenants(userData.getTenats());
 			uRepo.save(user);
 			return user;
 
@@ -267,6 +268,7 @@ public class UserService
 		user.setUserName(username);
 		user.setStatus(true);
 		user.setRoles(roleset);
+		user.setTenants(payload.getTenats());
 		if (payload.getPassword() != null && payload.getPassword() != "")
 			user.setPassword(bCryptPassword(payload.getPassword()));
 		user.setPasswordExpired(false);
