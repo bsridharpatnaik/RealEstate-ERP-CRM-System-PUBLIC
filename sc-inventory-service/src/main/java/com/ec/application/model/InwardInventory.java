@@ -2,7 +2,6 @@ package com.ec.application.model;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -34,126 +33,202 @@ public class InwardInventory extends ReusableFields implements Cloneable
 {
 
 	@Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name="inwardid")
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "inwardid")
 	Long inwardid;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
 	Date date;
-	
+
 	@NonNull
 	String vehicleNo;
-	
+
 	String supplierSlipNo;
-	
+
 	String ourSlipNo;
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "inwardinventory_entry", joinColumns = {
-			@JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns = {
-					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
+
+	String purchaseOrder;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Column(nullable = true)
+	Date purchaseOrderdate;
+
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "inwardinventory_entry", joinColumns =
+	{ @JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "entryId", referencedColumnName = "entryId") })
 	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="warehouse_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "warehouse_id", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
 	Warehouse warehouse;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="contactId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "contactId", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
 	Supplier supplier;
-	
+
 	String additionalInfo;
-	
+
 	@NonNull
 	@Column(nullable = false)
 	Boolean invoiceReceived;
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "inward_fileinformation", joinColumns = {
-			@JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns = {
-					@JoinColumn(name = "id", referencedColumnName = "id") })
-	Set<FileInformation> fileInformations = new HashSet<>();
-	
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
 
-	public Set<FileInformation> getFileInformations() {
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "inward_fileinformation", joinColumns =
+	{ @JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "id", referencedColumnName = "id") })
+	Set<FileInformation> fileInformations = new HashSet<>();
+
+	@Override
+	public Object clone() throws CloneNotSupportedException
+	{
+		return super.clone();
+	}
+
+	public String getPurchaseOrder()
+	{
+		return purchaseOrder;
+	}
+
+	public void setPurchaseOrder(String purchaseOrder)
+	{
+		this.purchaseOrder = purchaseOrder;
+	}
+
+	public Date getPurchaseOrderdate()
+	{
+		return purchaseOrderdate;
+	}
+
+	public void setPurchaseOrderdate(Date purchaseOrderdate)
+	{
+		this.purchaseOrderdate = purchaseOrderdate;
+	}
+
+	public Set<FileInformation> getFileInformations()
+	{
 		return fileInformations;
 	}
-	public void setFileInformations(Set<FileInformation> fileInformations) {
+
+	public void setFileInformations(Set<FileInformation> fileInformations)
+	{
 		this.fileInformations = fileInformations;
 	}
-	public Boolean getInvoiceReceived() {
+
+	public Boolean getInvoiceReceived()
+	{
 		return invoiceReceived;
 	}
-	public void setInvoiceReceived(Boolean invoiceReceived) {
+
+	public void setInvoiceReceived(Boolean invoiceReceived)
+	{
 		this.invoiceReceived = invoiceReceived;
 	}
-	public Long getInwardid() {
+
+	public Long getInwardid()
+	{
 		return inwardid;
 	}
-	public void setInwardid(Long inwardid) {
+
+	public void setInwardid(Long inwardid)
+	{
 		this.inwardid = inwardid;
 	}
-	public String getSupplierSlipNo() {
+
+	public String getSupplierSlipNo()
+	{
 		return supplierSlipNo;
 	}
-	public void setSupplierSlipNo(String supplierSlipNo) {
+
+	public void setSupplierSlipNo(String supplierSlipNo)
+	{
 		this.supplierSlipNo = supplierSlipNo;
 	}
-	public Set<InwardOutwardList> getInwardOutwardList() {
+
+	public Set<InwardOutwardList> getInwardOutwardList()
+	{
 		return inwardOutwardList;
 	}
-	public void setInwardOutwardList(Set<InwardOutwardList> inwardOutwardList) {
+
+	public void setInwardOutwardList(Set<InwardOutwardList> inwardOutwardList)
+	{
 		this.inwardOutwardList = inwardOutwardList;
 	}
-	public Supplier getSupplier() {
+
+	public Supplier getSupplier()
+	{
 		return supplier;
 	}
-	public void setSupplier(Supplier supplier) {
+
+	public void setSupplier(Supplier supplier)
+	{
 		this.supplier = supplier;
 	}
-	public String getAdditionalInfo() {
+
+	public String getAdditionalInfo()
+	{
 		return additionalInfo;
 	}
-	public void setAdditionalInfo(String additionalInfo) {
+
+	public void setAdditionalInfo(String additionalInfo)
+	{
 		this.additionalInfo = additionalInfo;
 	}
-	public Date getDate() {
+
+	public Date getDate()
+	{
 		return date;
 	}
-	public void setDate(Date date) {
+
+	public void setDate(Date date)
+	{
 		this.date = date;
 	}
-	public String getVehicleNo() {
+
+	public String getVehicleNo()
+	{
 		return vehicleNo;
 	}
-	public void setVehicleNo(String vehicleNo) {
+
+	public void setVehicleNo(String vehicleNo)
+	{
 		this.vehicleNo = vehicleNo;
 	}
-	public String getVendorSlipNo() {
+
+	public String getVendorSlipNo()
+	{
 		return supplierSlipNo;
 	}
-	public void setVendorSlipNo(String vendorSlipNo) {
+
+	public void setVendorSlipNo(String vendorSlipNo)
+	{
 		this.supplierSlipNo = vendorSlipNo;
 	}
-	public String getOurSlipNo() {
+
+	public String getOurSlipNo()
+	{
 		return ourSlipNo;
 	}
-	public void setOurSlipNo(String ourSlipNo) {
+
+	public void setOurSlipNo(String ourSlipNo)
+	{
 		this.ourSlipNo = ourSlipNo;
 	}
-	public Warehouse getWarehouse() {
+
+	public Warehouse getWarehouse()
+	{
 		return warehouse;
 	}
-	public void setWarehouse(Warehouse warehouse) {
+
+	public void setWarehouse(Warehouse warehouse)
+	{
 		this.warehouse = warehouse;
 	}
-	
+
 }

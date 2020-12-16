@@ -32,7 +32,7 @@ public abstract class ReusableFields implements Serializable
 	protected String createdBy;
 
 	@CreatedDate
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
 	@Temporal(TIMESTAMP)
 	protected Date creationDate;
 
@@ -40,7 +40,7 @@ public abstract class ReusableFields implements Serializable
 	protected String lastModifiedBy;
 
 	@LastModifiedDate
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
 	@Temporal(TIMESTAMP)
 	protected Date lastModifiedDate;
 
