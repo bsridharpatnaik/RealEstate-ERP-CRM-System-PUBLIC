@@ -26,19 +26,17 @@ public class UserDetailsService
 	public UserReturnData getCurrentUser() throws Exception
 	{
 
-		UserReturnData us = new UserReturnData();
-		us.setUsername("sridhar");
-		us.setId((long) 10001);
-		return us;
-
 		/*
-		 * UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl +
-		 * "user/me") .header("Authorization",
-		 * request.getHeader("Authorization")).retrieve().bodyToMono(UserReturnData.
-		 * class) .block(); if (userDetails == null) throw new
-		 * Exception("Unable to fetch loggedin user details. Please try again."); return
-		 * userDetails;
+		 * UserReturnData us = new UserReturnData(); us.setUsername("sridhar");
+		 * us.setId((long) 10001); return us;
 		 */
+
+		UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
+				.header("Authorization", request.getHeader("Authorization")).retrieve().bodyToMono(UserReturnData.class)
+				.block();
+		if (userDetails == null)
+			throw new Exception("Unable to fetch loggedin user details. Please try again.");
+		return userDetails;
 
 	}
 }
