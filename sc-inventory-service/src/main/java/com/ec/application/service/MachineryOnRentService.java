@@ -45,14 +45,24 @@ public class MachineryOnRentService
 
 	public MachineryOnRent createData(CreateMORentData payload) throws Exception
 	{
+		valiatePayload(payload);
 		MachineryOnRent machineryOnRent = new MachineryOnRent();
 		populateData(machineryOnRent, payload);
 		return morRepo.save(machineryOnRent);
 
 	}
 
+	private void valiatePayload(CreateMORentData payload) throws Exception
+	{
+		if (payload.getMachineryId() == null)
+			throw new Exception("Machinery cannot be empty");
+		if (payload.getContactId() == null)
+			throw new Exception("Contact cannot be empty");
+	}
+
 	public MachineryOnRent UpdateData(CreateMORentData payload, Long id) throws Exception
 	{
+		valiatePayload(payload);
 		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
 		if (!machineryOnRentOpt.isPresent())
 			throw new Exception("Machinery On rent by ID " + id + " Not found");

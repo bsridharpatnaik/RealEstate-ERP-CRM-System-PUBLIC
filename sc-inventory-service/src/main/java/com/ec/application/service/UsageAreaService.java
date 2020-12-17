@@ -37,18 +37,27 @@ public class UsageAreaService
 
 	public UsageArea createUsageArea(UsageArea payload) throws Exception
 	{
-		if (!usageAreaRepo.existsByUsageAreaName(payload.getUsageAreaName()))
+		validatePayload(payload);
+		if (!usageAreaRepo.existsByUsageAreaName(payload.getUsageAreaName().trim()))
 		{
 			usageAreaRepo.save(payload);
 			return payload;
 		} else
 		{
-			throw new Exception("UsageArea already exists!");
+			throw new Exception("Final Location already exists!");
 		}
+	}
+
+	private void validatePayload(UsageArea payload) throws Exception
+	{
+		if (payload.getUsageAreaName() == null || payload.getUsageAreaName().trim() == "")
+			throw new Exception("Final Location name cannot be empty!");
+
 	}
 
 	public UsageArea updateUsageArea(Long id, UsageArea payload) throws Exception
 	{
+		validatePayload(payload);
 		Optional<UsageArea> UsageAreaForUpdateOpt = usageAreaRepo.findById(id);
 		UsageArea UsageAreaForUpdate = UsageAreaForUpdateOpt.get();
 

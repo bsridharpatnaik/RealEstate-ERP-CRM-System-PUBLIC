@@ -31,7 +31,8 @@ public class MachineryService
 
 	public Machinery createMachinery(Machinery payload) throws Exception
 	{
-		if (!machineryRepo.existsByMachineryName(payload.getMachineryName()))
+		validatePayload(payload);
+		if (!machineryRepo.existsByMachineryName(payload.getMachineryName().trim()))
 		{
 			machineryRepo.save(payload);
 			return payload;
@@ -41,8 +42,16 @@ public class MachineryService
 		}
 	}
 
+	private void validatePayload(Machinery payload) throws Exception
+	{
+		if (payload.getMachineryName() == null || payload.getMachineryName().trim() == "")
+			throw new Exception("Mahcinery Name cannot be empty!");
+
+	}
+
 	public Machinery updateMachinery(Long id, Machinery payload) throws Exception
 	{
+		validatePayload(payload);
 		Optional<Machinery> MachineryForUpdateOpt = machineryRepo.findById(id);
 		Machinery MachineryForUpdate = MachineryForUpdateOpt.get();
 
