@@ -1,8 +1,9 @@
 package com.ec.application.service;
 
-import java.awt.Checkbox;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,14 +15,15 @@ import com.ec.application.model.Contractor;
 import com.ec.application.repository.ContractorRepo;
 
 @Service
-public class ContractorService 
+@Transactional
+public class ContractorService
 {
 	@Autowired
 	ContractorRepo contractorRepo;
-	
+
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
-	
+
 	public List<IdNameProjections> getContractorNames()
 	{
 		List<IdNameProjections> contractorNames = new ArrayList<IdNameProjections>();
@@ -29,15 +31,15 @@ public class ContractorService
 		return contractorNames;
 	}
 
-	public Page<Contractor> findAll(Pageable pageable) 
+	public Page<Contractor> findAll(Pageable pageable)
 	{
 		return contractorRepo.findAll(pageable);
 	}
-	
-	public boolean isContactUsedAsContractor(Long id) 
+
+	public boolean isContactUsedAsContractor(Long id)
 	{
 		boolean isContactUsed = false;
-		if(checkBeforeDeleteService.isContractorUsed(id))
+		if (checkBeforeDeleteService.isContractorUsed(id))
 			isContactUsed = true;
 		return isContactUsed;
 	}

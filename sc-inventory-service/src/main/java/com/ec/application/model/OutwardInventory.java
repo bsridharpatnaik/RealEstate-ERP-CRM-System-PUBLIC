@@ -2,7 +2,6 @@ package com.ec.application.model;
 
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -39,157 +38,185 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	private static final long serialVersionUID = 1L;
 
 	@Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name="outwardid")
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "outwardid")
 	Long outwardid;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
 	Date date;
-	
+
 	String purpose;
 	String slipNo;
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "outwardinventory_entry", joinColumns = {
-			@JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns = {
-					@JoinColumn(name = "entryId", referencedColumnName = "entryId") })
-	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="warehouse_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Warehouse warehouse;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="usageAreaId",nullable=true)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	UsageArea usageArea;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="contactId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	Contractor contractor;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="locationId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	UsageLocation usageLocation;
-	
-	String additionalInfo;
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "outward_fileinformation", joinColumns = {
-			@JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns = {
-					@JoinColumn(name = "id", referencedColumnName = "id") })
-	Set<FileInformation> fileInformations = new HashSet<>();
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "returnOutward_entry", joinColumns = {
-			@JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns = {
-					@JoinColumn(name = "returnentryid", referencedColumnName = "returnentryid") })
-	Set<ReturnOutwardList> returnOutwardList = new HashSet<>();
-	
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-        return super.clone();
-    }
 
-	public Set<ReturnOutwardList> getReturnOutwardList() {
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "outwardinventory_entry", joinColumns =
+	{ @JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "entryId", referencedColumnName = "entryId") })
+	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();
+
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "warehouse_id", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	Warehouse warehouse;
+
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "usageAreaId", nullable = true)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	UsageArea usageArea;
+
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "contactId", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	Contractor contractor;
+
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "locationId", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	UsageLocation usageLocation;
+
+	String additionalInfo;
+
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "outward_fileinformation", joinColumns =
+	{ @JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "id", referencedColumnName = "id") })
+	Set<FileInformation> fileInformations = new HashSet<>();
+
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "returnOutward_entry", joinColumns =
+	{ @JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "returnentryid", referencedColumnName = "returnentryid") })
+	Set<ReturnOutwardList> returnOutwardList = new HashSet<>();
+
+	@Override
+	public Object clone() throws CloneNotSupportedException
+	{
+		return super.clone();
+	}
+
+	public Set<ReturnOutwardList> getReturnOutwardList()
+	{
 		return returnOutwardList;
 	}
 
-	public void setReturnOutwardList(Set<ReturnOutwardList> returnOutwardList) {
+	public void setReturnOutwardList(Set<ReturnOutwardList> returnOutwardList)
+	{
 		this.returnOutwardList = returnOutwardList;
 	}
 
-	public Set<FileInformation> getFileInformations() {
+	public Set<FileInformation> getFileInformations()
+	{
 		return fileInformations;
 	}
 
-	public void setFileInformations(Set<FileInformation> fileInformations) {
+	public void setFileInformations(Set<FileInformation> fileInformations)
+	{
 		this.fileInformations = fileInformations;
 	}
 
-	public UsageArea getUsageArea() {
+	public UsageArea getUsageArea()
+	{
 		return usageArea;
 	}
 
-	public void setUsageArea(UsageArea usageArea) {
+	public void setUsageArea(UsageArea usageArea)
+	{
 		this.usageArea = usageArea;
 	}
 
-	public Date getDate() {
+	public Date getDate()
+	{
 		return date;
 	}
 
-	public void setDate(Date date) {
+	public void setDate(Date date)
+	{
 		this.date = date;
 	}
 
-	public Long getOutwardid() {
+	public Long getOutwardid()
+	{
 		return outwardid;
 	}
 
-	public void setOutwardid(Long outwardid) {
+	public void setOutwardid(Long outwardid)
+	{
 		this.outwardid = outwardid;
 	}
 
-	
-	public String getPurpose() {
+	public String getPurpose()
+	{
 		return purpose;
 	}
 
-	public void setPurpose(String purpose) {
+	public void setPurpose(String purpose)
+	{
 		this.purpose = purpose;
 	}
 
-	public String getSlipNo() {
+	public String getSlipNo()
+	{
 		return slipNo;
 	}
 
-	public void setSlipNo(String slipNo) {
+	public void setSlipNo(String slipNo)
+	{
 		this.slipNo = slipNo;
 	}
 
-	public Set<InwardOutwardList> getInwardOutwardList() {
+	public Set<InwardOutwardList> getInwardOutwardList()
+	{
 		return inwardOutwardList;
 	}
 
-	public void setInwardOutwardList(Set<InwardOutwardList> inwardOutwardList) {
+	public void setInwardOutwardList(Set<InwardOutwardList> inwardOutwardList)
+	{
 		this.inwardOutwardList = inwardOutwardList;
 	}
 
-	public Warehouse getWarehouse() {
+	public Warehouse getWarehouse()
+	{
 		return warehouse;
 	}
 
-	public void setWarehouse(Warehouse warehouse) {
+	public void setWarehouse(Warehouse warehouse)
+	{
 		this.warehouse = warehouse;
 	}
 
-	public Contractor getContractor() {
+	public Contractor getContractor()
+	{
 		return contractor;
 	}
 
-	public void setContractor(Contractor contractor) {
+	public void setContractor(Contractor contractor)
+	{
 		this.contractor = contractor;
 	}
 
-	public UsageLocation getUsageLocation() {
+	public UsageLocation getUsageLocation()
+	{
 		return usageLocation;
 	}
 
-	public void setUsageLocation(UsageLocation usageLocation) {
+	public void setUsageLocation(UsageLocation usageLocation)
+	{
 		this.usageLocation = usageLocation;
 	}
 
-	public String getAdditionalInfo() {
+	public String getAdditionalInfo()
+	{
 		return additionalInfo;
 	}
 
-	public void setAdditionalInfo(String additionalInfo) {
+	public void setAdditionalInfo(String additionalInfo)
+	{
 		this.additionalInfo = additionalInfo;
 	}
 }

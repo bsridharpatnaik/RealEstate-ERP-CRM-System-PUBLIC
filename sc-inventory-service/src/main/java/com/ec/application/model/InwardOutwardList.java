@@ -25,48 +25,57 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class InwardOutwardList extends ReusableFields
 {
 	@Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	Long entryid;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="productId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "productId", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
 	Product product;
-	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
-	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
 
-	public Long getEntryid() {
+	public Long getEntryid()
+	{
 		return entryid;
 	}
 
-
-	public void setEntryid(Long entryid) {
+	public void setEntryid(Long entryid)
+	{
 		this.entryid = entryid;
 	}
 
-
-	public void setClosingStock(Double closingStock) {
+	public void setClosingStock(Double closingStock)
+	{
 		this.closingStock = closingStock;
 	}
 
-	public Double getClosingStock() {
+	public Double getClosingStock()
+	{
 		return closingStock;
 	}
 
-	public Product getProduct() {
+	public Product getProduct()
+	{
 		return product;
 	}
-	public void setProduct(Product product) {
+
+	public void setProduct(Product product)
+	{
 		this.product = product;
 	}
-	public Double getQuantity() {
+
+	public Double getQuantity()
+	{
 		return quantity;
 	}
-	public void setQuantity(Double quantity) {
+
+	public void setQuantity(Double quantity)
+	{
 		this.quantity = quantity;
 	}
-	
-	
+
 }

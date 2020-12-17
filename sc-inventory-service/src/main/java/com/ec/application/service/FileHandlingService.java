@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -14,12 +16,13 @@ import com.ec.application.model.DBFile;
 import com.ec.application.model.FileInformation;
 
 @Service
-public class FileHandlingService 
+@Transactional
+public class FileHandlingService
 {
 	@Autowired
 	DBFileStorageService dbFileStorageService;
-	
-	public FileInformation uploadDoc(MultipartFile file) throws Exception 
+
+	public FileInformation uploadDoc(MultipartFile file) throws Exception
 	{
 		try
 		{
@@ -28,28 +31,24 @@ public class FileHandlingService
 			fileUploadSuccessData.setFileUUId(dbFile.getId());
 			fileUploadSuccessData.setFileName(dbFile.getFileName());
 			return fileUploadSuccessData;
-		}
-		catch(MaxUploadSizeExceededException e)
+		} catch (MaxUploadSizeExceededException e)
 		{
 			throw new Exception("File size too large. Max allowed size - 15 MB");
-		}
-		catch(Exception e)
+		} catch (Exception e)
 		{
 			throw new Exception("Error uploading file.");
 		}
 	}
 
-	public ResponseEntity<Resource> downloadFile(String fileId) throws Exception 
+	public ResponseEntity<Resource> downloadFile(String fileId) throws Exception
 	{
 		try
 		{
 			DBFile dbFile = dbFileStorageService.getFile(fileId);
-			return ResponseEntity.ok()
-				.contentType(MediaType.parseMediaType(dbFile.getFileType()))
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dbFile.getFileName() + "\"")
-				.body(new ByteArrayResource(dbFile.getData()));
-		}	
-		catch(Exception e)
+			return ResponseEntity.ok().contentType(MediaType.parseMediaType(dbFile.getFileType()))
+					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dbFile.getFileName() + "\"")
+					.body(new ByteArrayResource(dbFile.getData()));
+		} catch (Exception e)
 		{
 			throw new Exception("Error downloading file");
 		}

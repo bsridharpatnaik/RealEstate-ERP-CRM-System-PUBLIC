@@ -1,6 +1,5 @@
 package com.ec.application.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,28 +11,28 @@ import org.springframework.stereotype.Service;
 import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.model.StockHistory;
 import com.ec.application.repository.StockHistoryRepo;
-import com.ec.common.Filters.FilterDataList;
 
 @Service
-public class StockHistoryService 
+@Transactional
+public class StockHistoryService
 {
 	@Autowired
 	StockHistoryRepo stockHistoryRepo;
-	
+
 	@Autowired
 	StockService stockService;
-	
+
 	@Transactional
 	public void insertLatestStockHistory(List<StockInformationExportDAO> dataForInsertList) throws Exception
 	{
 		UUID uuid = UUID.randomUUID();
 
-		for(StockInformationExportDAO dataForInsert:dataForInsertList)
+		for (StockInformationExportDAO dataForInsert : dataForInsertList)
 		{
-			StockHistory stockHistory = new StockHistory(dataForInsert,uuid);
+			StockHistory stockHistory = new StockHistory(dataForInsert, uuid);
 			stockHistoryRepo.save(stockHistory);
 		}
-		
+
 	}
-	
+
 }

@@ -49,7 +49,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter
 				// dont authenticate this particular request
 				.authorizeRequests()
 				.antMatchers("/notification/send", "/eureka", "**/eureka", "api/ec/login", "**/ec/login", "/ec/login",
-						"/ec/partnerlogin", "/**.html", "/styles/**", "/*.jpg", "/assets/pages/scripts/**")
+						"api/ec/user/me", "**/ec/user/me", "/ec/user/me", "/ec/partnerlogin", "/**.html", "/styles/**",
+						"/*.jpg", "/assets/pages/scripts/**")
 				.permitAll()
 				// all other requests need to be authenticated
 				.anyRequest().authenticated().and()

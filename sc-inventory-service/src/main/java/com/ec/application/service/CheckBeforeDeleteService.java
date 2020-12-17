@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,7 @@ import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
 
 @Service
+@Transactional
 public class CheckBeforeDeleteService
 {
 

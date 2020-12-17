@@ -25,6 +25,7 @@ import com.ec.common.Filters.ContactSpecifications;
 import com.ec.common.Filters.FilterDataList;
 
 @Service
+@Transactional
 public class ContactService
 {
 

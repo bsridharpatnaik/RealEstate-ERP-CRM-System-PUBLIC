@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,49 +14,51 @@ import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.SupplierRepo;
 import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
+
 @Service
-public class PopulateDropdownService 
+@Transactional
+public class PopulateDropdownService
 {
 
 	@Autowired
 	LocationRepo locRepo;
-	
+
 	@Autowired
 	MachineryRepo machineryRepo;
-	
+
 	@Autowired
 	WarehouseRepo warehouseRepo;
-	
+
 	@Autowired
 	ProductRepo productRepo;
-	
+
 	@Autowired
 	CategoryRepo categoryRepo;
-	
+
 	@Autowired
 	LocationRepo locationRepo;
-	
+
 	@Autowired
 	SupplierRepo supplierRepo;
-	
+
 	@Autowired
 	ContractorRepo contractorRepo;
-	
+
 	@Autowired
 	UsageAreaRepo usageAreaRepo;
 
-	public NameAndProjectionDataForDropDown fetchData(String page) 
+	public NameAndProjectionDataForDropDown fetchData(String page)
 	{
 		NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
-		switch(page)
+		switch (page)
 		{
-		//Case machinery on rent
+		// Case machinery on rent
 		case "mor":
 			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
 			morDropdownDataList.setMachinery(machineryRepo.findIdAndNames());
 			morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
 			break;
-		//case inward inventory
+		// case inward inventory
 		case "inward":
 			morDropdownDataList.setProduct(productRepo.findIdAndNames());
 			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
