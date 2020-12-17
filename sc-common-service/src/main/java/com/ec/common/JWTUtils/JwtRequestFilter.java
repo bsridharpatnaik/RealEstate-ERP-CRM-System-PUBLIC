@@ -17,8 +17,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ec.common.Service.JwtUserDetailsService;
+import com.google.gson.Gson;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter
@@ -29,6 +33,8 @@ public class JwtRequestFilter extends OncePerRequestFilter
 
 	@Autowired
 	private JWTTokenUtils jwtTokenUtil;
+	
+	private Gson gson = new Gson();
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -60,7 +66,16 @@ public class JwtRequestFilter extends OncePerRequestFilter
 		{
 			final String tenantId = request.getHeader("tenant-id");
 			username = username + "#" + tenantId;
-			UserDetails userDetails = this.jwtUserDetailsService.loadUserByUsername(username);
+			UserDetails userDetails = null;
+			try {
+				userDetails = this.jwtUserDetailsService.loadUserByUsername(username);
+			} catch (JwtUserDetailsService.UserDataAccessException e) {
+				response.setContentType("application/json");
+	        	response.setCharacterEncoding("UTF-8");
+	            response.getWriter().write(gson.toJson(new Error("User not allowed to access data")));
+	            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+	            return;
+			}
 			// if token is valid configure Spring Security to manually set // authentication
 			if (jwtTokenUtil.validateToken(jwtToken, userDetails))
 			{
@@ -77,4 +92,11 @@ public class JwtRequestFilter extends OncePerRequestFilter
 		chain.doFilter(request, response);
 
 	}
+	
+	@Setter
+    @Getter
+    @AllArgsConstructor
+    public static class Error {
+    	private String message;
+    }
 }

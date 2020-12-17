@@ -1,5 +1,6 @@
 package com.ec.application.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
@@ -13,6 +14,9 @@ import com.ec.application.multitenant.TenantNameInterceptor;
 public class WebMvcConfig extends WebMvcConfigurerAdapter implements WebMvcConfigurer
 {
 
+	@Autowired
+	private TenantNameInterceptor tenantNameInterceptor;
+	
 	@Override
 	public void configurePathMatch(PathMatchConfigurer configurer)
 	{
@@ -22,7 +26,7 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter implements WebMvcConfi
 	@Override
 	public void addInterceptors(InterceptorRegistry registry)
 	{
-		registry.addInterceptor(new TenantNameInterceptor());
+		registry.addInterceptor(tenantNameInterceptor);
 	}
 
 }

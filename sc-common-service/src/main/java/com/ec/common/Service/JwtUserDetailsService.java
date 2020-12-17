@@ -52,11 +52,11 @@ public class JwtUserDetailsService implements UserDetailsService
 			{
 				if (StringUtils.isBlank(user.getTenants()))
 				{
-					throw new AuthenticationServiceException("User not assigned to any tenant: " + userName);
+					throw new UserDataAccessException();
 				}
 				if (!user.getTenants().contains(tenant) && !user.getTenants().equals("all"))
 				{
-					throw new AuthenticationServiceException("User not assigned to any tenant: " + userName);
+					throw new UserDataAccessException();
 				}
 			}
 			List<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toList());
@@ -85,6 +85,11 @@ public class JwtUserDetailsService implements UserDetailsService
 		 * //break; } } return isAdmin;
 		 */
 		return "";
+	}
+	
+	@SuppressWarnings("serial")
+	public static class UserDataAccessException extends RuntimeException {
+		
 	}
 
 }

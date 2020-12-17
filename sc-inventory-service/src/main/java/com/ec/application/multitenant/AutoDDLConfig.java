@@ -29,6 +29,9 @@ public class AutoDDLConfig
 
 	@Value("${schemas.list}")
 	private String schemasList;
+	
+	@Value("${db.host}")
+	private String dbHost;
 
 	@Bean
 	public DataSource dataSource()
@@ -47,7 +50,7 @@ public class AutoDDLConfig
 			DriverManagerDataSource dataSource = new DriverManagerDataSource();
 			dataSource.setDriverClassName("com.mysql.jdbc.Driver"); // Change here to MySql Driver
 			dataSource.setSchema(tenant);
-			dataSource.setUrl("jdbc:mysql://localhost/" + tenant
+			dataSource.setUrl("jdbc:mysql://"+dbHost+"/" + tenant
 					+ "?autoReconnect=true&characterEncoding=utf8&useSSL=false&useTimezone=true&serverTimezone=Asia/Kolkata&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true");
 			dataSource.setUsername(username);
 			dataSource.setPassword(password);
