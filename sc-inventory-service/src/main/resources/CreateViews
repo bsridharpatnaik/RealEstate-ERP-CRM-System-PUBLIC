@@ -6,7 +6,7 @@ CREATE OR replace VIEW all_inventory AS
 SELECT
 		-- convert(func_inc_var_session(),char) AS id,
 		tx.*, 
-		p.product_name,
+		p.Product_name,
         p.measurementunit,
          c.name, 
          c.mobileno, 
@@ -15,11 +15,11 @@ SELECT
          w.warehouse_id, 
          w.warehousename 
   FROM   (SELECT 'inward'                         AS type, 
-                 concat(ii.inwardid,ioe.productid)            AS id, 
+                 concat(ii.inwardid,ioe.Productid)            AS id, 
                  Date_format(ii.DATE, "%Y-%m-%d") AS date, 
                  ii.contactid                    AS contactid, 
                  ii.warehouse_id                  AS warehouseid, 
-                 ioe.productid                   AS productid, 
+                 ioe.Productid                   AS Productid, 
                  ioe.quantity, 
                  ioe.closingstock, 
                  ioe.creationDate, 
@@ -33,11 +33,11 @@ SELECT
           UNION ALL 
           SELECT 'outward'                        AS type, 
                  -- oi.outwardid, 
-                 concat(oi.outwardid,ioe.productid) ,
+                 concat(oi.outwardid,ioe.Productid) ,
                  Date_format(oi.DATE, "%Y-%m-%d") AS date, 
                  oi.contactid                    AS contactid, 
                  oi.warehouse_id                  AS warehouseid, 
-                 ioe.productid                   AS productid, 
+                 ioe.Productid                   AS Productid, 
                  ioe.quantity, 
                  ioe.closingstock, 
                  ioe.creationDate, 
@@ -54,7 +54,7 @@ SELECT
                  Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
                  ''                                AS contactid, 
                  ldi.warehousename                AS warehouseid, 
-                 ldi.productid                    AS productid, 
+                 ldi.Productid                    AS Productid, 
                  ldi.quantity, 
                  ldi.closingstock, 
                  ldi.creationDate, 
@@ -63,11 +63,10 @@ SELECT
 			where ldi.is_deleted = 0) AS tx 
          left join contacts c 
                 ON c.contactid = tx.contactid 
-         inner join warehouse w 
+         inner join Warehouse w 
                  ON w.warehouse_id = tx.warehouseid 
-		inner join product p on p.productid = tx.productid
+		inner join Product p on p.Productid = tx.Productid
   ORDER  BY tx.date DESC;
-  
   
   -- --------- Stock Verification ------------
   create or replace view stock_verification as

@@ -61,13 +61,13 @@ public class AllInventoryService
 
 	public List<DashboardInwardOutwardInventoryDAO> fetchInventoryForDashboard(String type)
 	{
-		Pageable pageable = PageRequest.of(0, 5, Sort.by("created").descending());
+		Pageable pageable = PageRequest.of(0, 5, Sort.by("creationDate").descending());
 		return allInventoryRepo.findForDashboard(type, pageable);
 	}
 
 	public List<DashboardMachineOnRentDAO> fetchMachineryOnRent()
 	{
-		Pageable pageable = PageRequest.of(0, 5, Sort.by("created").descending());
+		Pageable pageable = PageRequest.of(0, 5, Sort.by("creationDate").descending());
 		return machineryOnRentRepo.findForDashboard(pageable);
 	}
 }
