@@ -20,7 +20,6 @@ import com.ec.common.Service.JwtUserDetailsService;
 import com.google.gson.Gson;
 
 import io.jsonwebtoken.ExpiredJwtException;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,7 +32,7 @@ public class JwtRequestFilter extends OncePerRequestFilter
 
 	@Autowired
 	private JWTTokenUtils jwtTokenUtil;
-	
+
 	private Gson gson = new Gson();
 
 	@Override
@@ -67,14 +66,16 @@ public class JwtRequestFilter extends OncePerRequestFilter
 			final String tenantId = request.getHeader("tenant-id");
 			username = username + "#" + tenantId;
 			UserDetails userDetails = null;
-			try {
+			try
+			{
 				userDetails = this.jwtUserDetailsService.loadUserByUsername(username);
-			} catch (JwtUserDetailsService.UserDataAccessException e) {
+			} catch (JwtUserDetailsService.UserDataAccessException e)
+			{
 				response.setContentType("application/json");
-	        	response.setCharacterEncoding("UTF-8");
-	            response.getWriter().write(gson.toJson(new Error("User not allowed to access data")));
-	            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-	            return;
+				response.setCharacterEncoding("UTF-8");
+				response.getWriter().write(gson.toJson(new Error("User not allowed to access data")));
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				return;
 			}
 			// if token is valid configure Spring Security to manually set // authentication
 			if (jwtTokenUtil.validateToken(jwtToken, userDetails))
@@ -92,11 +93,18 @@ public class JwtRequestFilter extends OncePerRequestFilter
 		chain.doFilter(request, response);
 
 	}
-	
+
 	@Setter
-    @Getter
-    @AllArgsConstructor
-    public static class Error {
-    	private String message;
-    }
+	@Getter
+	public static class Error
+	{
+		private String message;
+
+		public Error(String message)
+		{
+			super();
+			this.message = message;
+		}
+
+	}
 }

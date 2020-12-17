@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "contacts")
-@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE + " AND contact_type='supplier'")
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE + " AND contacttype='supplier'")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
