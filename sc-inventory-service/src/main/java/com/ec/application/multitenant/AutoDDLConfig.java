@@ -15,8 +15,6 @@ import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
-import com.ec.application.multitenant.TenantAwareRoutingSource;
-
 @Configuration
 public class AutoDDLConfig
 {
@@ -29,7 +27,7 @@ public class AutoDDLConfig
 
 	@Value("${schemas.list}")
 	private String schemasList;
-	
+
 	@Value("${db.host}")
 	private String dbHost;
 
@@ -50,7 +48,7 @@ public class AutoDDLConfig
 			DriverManagerDataSource dataSource = new DriverManagerDataSource();
 			dataSource.setDriverClassName("com.mysql.jdbc.Driver"); // Change here to MySql Driver
 			dataSource.setSchema(tenant);
-			dataSource.setUrl("jdbc:mysql://"+dbHost+"/" + tenant
+			dataSource.setUrl("jdbc:mysql://" + dbHost + "/" + tenant
 					+ "?autoReconnect=true&characterEncoding=utf8&useSSL=false&useTimezone=true&serverTimezone=Asia/Kolkata&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true");
 			dataSource.setUsername(username);
 			dataSource.setPassword(password);
@@ -64,7 +62,7 @@ public class AutoDDLConfig
 
 			properties.put("hibernate.hbm2ddl.auto", "update");
 			properties.put("hibernate.default_schema", tenant);
-
+			properties.put("hibernate.dialect", "org.hibernate.dialect.MySQL5InnoDBDialect");
 			emfBean.setJpaPropertyMap(properties);
 			emfBean.setPersistenceUnitName(dataSource.toString());
 			emfBean.afterPropertiesSet();
