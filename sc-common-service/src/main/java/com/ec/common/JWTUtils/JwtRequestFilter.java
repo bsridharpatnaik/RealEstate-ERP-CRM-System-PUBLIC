@@ -8,6 +8,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UrlPathHelper;
 
 import com.ec.common.Service.JwtUserDetailsService;
 import com.google.gson.Gson;
@@ -64,7 +66,13 @@ public class JwtRequestFilter extends OncePerRequestFilter
 		if (username != null && SecurityContextHolder.getContext().getAuthentication() == null)
 		{
 			final String tenantId = request.getHeader("tenant-id");
-			username = username + "#" + tenantId;
+			String path = new UrlPathHelper().getPathWithinApplication(request);
+			if(StringUtils.isNotBlank(path) && !path.contains("/user")) {
+				username = username + "#" + tenantId;
+			} else if(StringUtils.isBlank(path)) {
+				username = username + "#" + tenantId;
+			}
+			
 			UserDetails userDetails = null;
 			try
 			{
