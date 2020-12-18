@@ -1,6 +1,7 @@
 package com.ec.common.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -45,12 +46,14 @@ public class UserService
 	// private static final Logger log = LoggerFactory.getLogger(UserService.class);
 	public User createUser(CreateUserData userData) throws Exception
 	{
+		validatePayload(userData);
 		String username = userData.getUsername();
 		String password = userData.getPassword();
 		ArrayList<String> roles = userData.getRole();
 
 		if (uRepo.findUserByUsername(username).size() == 0)
 		{
+
 			User user = new User();
 			Set<Role> roleset = new HashSet<Role>();
 
@@ -67,7 +70,7 @@ public class UserService
 			user.setRoles(roleset);
 			user.setPassword(bCryptPassword(password));
 			user.setPasswordExpired(false);
-			user.setTenants(userData.getTenats());
+			user.setTenants(convertListTocsv(userData.getTenants()));
 			uRepo.save(user);
 			return user;
 
@@ -76,6 +79,26 @@ public class UserService
 			// log.info("User already exists");
 			throw new Exception("User already exists");
 		}
+	}
+
+	private void validatePayload(CreateUserData userData) throws Exception
+	{
+		if (userData.getTenants() == null)
+			throw new Exception("Required field tenants missing from request!");
+		if (userData.getRoles() == null)
+			throw new Exception("Required field roles missing from request!");
+		if (userData.getTenants().size() == 0)
+			throw new Exception("Access to minimum one tenant is required!");
+		if (userData.getRoles().size() == 0)
+			throw new Exception("Please add atleast one role!");
+
+	}
+
+	private String convertListTocsv(ArrayList<String> tenants)
+	{
+		for (String tenant : tenants)
+			tenant = tenant.trim();
+		return String.join(",", tenants);
 	}
 
 	public String bCryptPassword(String password)
@@ -241,6 +264,7 @@ public class UserService
 
 	public User updateUser(Long id, CreateUserData payload) throws Exception
 	{
+		validatePayload(payload);
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
 		if (payload.getUsername().equalsIgnoreCase(auth.getName()))
@@ -268,7 +292,7 @@ public class UserService
 		user.setUserName(username);
 		user.setStatus(true);
 		user.setRoles(roleset);
-		user.setTenants(payload.getTenats());
+		user.setTenants(convertListTocsv(payload.getTenants()));
 		if (payload.getPassword() != null && payload.getPassword() != "")
 			user.setPassword(bCryptPassword(payload.getPassword()));
 		user.setPasswordExpired(false);
@@ -288,6 +312,18 @@ public class UserService
 		userReturnData.setId(user.getUserId());
 		userReturnData.setRoles(fetchRolesFromSet(user.getRoles()));
 		return userReturnData;
+	}
+
+	public List<String> findTenantsForUser() throws Exception
+	{
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String username = auth.getName();
+		String tenants = uRepo.fetchTenantsForUser(username);
+		if (tenants == null || tenants == "")
+			throw new Exception("Tenant information not found for user -" + username);
+
+		List<String> tenantList = Arrays.asList(tenants.split("\\s*,\\s*"));
+		return tenantList;
 	}
 
 }

@@ -7,7 +7,17 @@ public class CreateUserData
 	String username;
 	String password;
 	ArrayList<String> roles;
-	String tenants;
+	ArrayList<String> tenants;
+
+	public ArrayList<String> getTenants()
+	{
+		return tenants;
+	}
+
+	public void setTenants(ArrayList<String> tenants)
+	{
+		this.tenants = tenants;
+	}
 
 	public ArrayList<String> getRoles()
 	{
@@ -17,16 +27,6 @@ public class CreateUserData
 	public void setRoles(ArrayList<String> roles)
 	{
 		this.roles = roles;
-	}
-
-	public String getTenats()
-	{
-		return tenants;
-	}
-
-	public void setTenats(String tenats)
-	{
-		this.tenants = tenats;
 	}
 
 	public String getUsername()

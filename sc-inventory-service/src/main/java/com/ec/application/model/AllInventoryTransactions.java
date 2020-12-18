@@ -78,12 +78,12 @@ public class AllInventoryTransactions implements Serializable
 	String warehouseName;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-	@Column(name = "created_at")
-	String created;
+	@Column(name = "creationDate")
+	String creationDate;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-	@Column(name = "updated_at")
-	String updated;
+	@Column(name = "lastModifiedDate")
+	String lastModifiedDate;
 
 	public String getId()
 	{
@@ -237,21 +237,21 @@ public class AllInventoryTransactions implements Serializable
 
 	public String getCreated()
 	{
-		return created;
+		return creationDate;
 	}
 
 	public void setCreated(String created)
 	{
-		this.created = created;
+		this.creationDate = created;
 	}
 
 	public String getUpdated()
 	{
-		return updated;
+		return lastModifiedDate;
 	}
 
 	public void setUpdated(String updated)
 	{
-		this.updated = updated;
+		this.lastModifiedDate = updated;
 	}
 }
