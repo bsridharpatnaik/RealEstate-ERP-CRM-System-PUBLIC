@@ -49,25 +49,19 @@ public class InwardInventory extends ReusableFields implements Cloneable
 
 	String ourSlipNo;
 
-	String purchaseOrder;
-
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-	@Column(nullable = true)
-	Date purchaseOrderdate;
-
 	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinTable(name = "inwardinventory_entry", joinColumns =
 	{ @JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns =
 	{ @JoinColumn(name = "entryId", referencedColumnName = "entryId") })
 	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();;
 
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "warehouse_id", nullable = false)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
 	Warehouse warehouse;
 
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "contactId", nullable = false)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
@@ -89,26 +83,6 @@ public class InwardInventory extends ReusableFields implements Cloneable
 	public Object clone() throws CloneNotSupportedException
 	{
 		return super.clone();
-	}
-
-	public String getPurchaseOrder()
-	{
-		return purchaseOrder;
-	}
-
-	public void setPurchaseOrder(String purchaseOrder)
-	{
-		this.purchaseOrder = purchaseOrder;
-	}
-
-	public Date getPurchaseOrderdate()
-	{
-		return purchaseOrderdate;
-	}
-
-	public void setPurchaseOrderdate(Date purchaseOrderdate)
-	{
-		this.purchaseOrderdate = purchaseOrderdate;
 	}
 
 	public Set<FileInformation> getFileInformations()

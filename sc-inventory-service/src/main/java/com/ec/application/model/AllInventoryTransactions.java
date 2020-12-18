@@ -6,8 +6,6 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
 
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
@@ -24,204 +22,236 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Audited
 public class AllInventoryTransactions implements Serializable
 {
-	
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name="id")
+	@Column(name = "id")
 	String id;
-	
-	@Column(name="type")
+
+	@Column(name = "type")
 	String type;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
-	@Column(name="date")
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Column(name = "date")
 	Date date;
-	
-	@Column(name="contactid")
+
+	@Column(name = "contactid")
 	Long contactId;
-	
-	@Column(name="product_name")
+
+	@Column(name = "product_name")
 	String productName;
-	
-	@Column(name="measurement_unit")
+
+	@Column(name = "measurementunit")
 	String measurementUnit;
-	
-	@Column(name="warehouseid")
+
+	@Column(name = "warehouseid")
 	Long warehouseId;
-	
-	@Column(name="productid")
+
+	@Column(name = "productid")
 	Long productId;
-	
-	@Column(name="quantity")
-	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
+
+	@Column(name = "quantity")
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
-	
-	@Column(name="closing_stock")
-	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
+
+	@Column(name = "closingstock")
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
-	
-	@Column(name="name")
+
+	@Column(name = "name")
 	String name;
-	
-	@Column(name="mobile_no")
+
+	@Column(name = "mobileno")
 	String mobileNo;
-	
-	@Column(name="email_id")
+
+	@Column(name = "emailid")
 	String emailId;
-	
-	@Column(name="contact_type")
+
+	@Column(name = "contacttype")
 	String contactType;
-	
-	@Column(name="warehouse_name")
+
+	@Column(name = "warehousename")
 	String warehouseName;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
-	@Column(name="created_at")
-	String created;
-	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
-	@Column(name="updated_at")
-	String updated;
 
-	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Column(name = "creationDate")
+	String creationDate;
 
-	public String getId() {
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Column(name = "lastModifiedDate")
+	String lastModifiedDate;
+
+	public String getId()
+	{
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(String id)
+	{
 		this.id = id;
 	}
 
-	public String getType() {
+	public String getType()
+	{
 		return type;
 	}
 
-	public void setType(String type) {
+	public void setType(String type)
+	{
 		this.type = type;
 	}
 
-	public Date getDate() {
+	public Date getDate()
+	{
 		return date;
 	}
 
-	public void setDate(Date date) {
+	public void setDate(Date date)
+	{
 		this.date = date;
 	}
 
-	public Long getContactId() {
+	public Long getContactId()
+	{
 		return contactId;
 	}
 
-	public void setContactId(Long contactId) {
+	public void setContactId(Long contactId)
+	{
 		this.contactId = contactId;
 	}
 
-	public String getProductName() {
+	public String getProductName()
+	{
 		return productName;
 	}
 
-	public void setProductName(String productName) {
+	public void setProductName(String productName)
+	{
 		this.productName = productName;
 	}
 
-	public String getMeasurementUnit() {
+	public String getMeasurementUnit()
+	{
 		return measurementUnit;
 	}
 
-	public void setMeasurementUnit(String measurementUnit) {
+	public void setMeasurementUnit(String measurementUnit)
+	{
 		this.measurementUnit = measurementUnit;
 	}
 
-	public Long getWarehouseId() {
+	public Long getWarehouseId()
+	{
 		return warehouseId;
 	}
 
-	public void setWarehouseId(Long warehouseId) {
+	public void setWarehouseId(Long warehouseId)
+	{
 		this.warehouseId = warehouseId;
 	}
 
-	public Long getProductId() {
+	public Long getProductId()
+	{
 		return productId;
 	}
 
-	public void setProductId(Long productId) {
+	public void setProductId(Long productId)
+	{
 		this.productId = productId;
 	}
 
-	public Double getQuantity() {
+	public Double getQuantity()
+	{
 		return quantity;
 	}
 
-	public void setQuantity(Double quantity) {
+	public void setQuantity(Double quantity)
+	{
 		this.quantity = quantity;
 	}
 
-	public Double getClosingStock() {
+	public Double getClosingStock()
+	{
 		return closingStock;
 	}
 
-	public void setClosingStock(Double closingStock) {
+	public void setClosingStock(Double closingStock)
+	{
 		this.closingStock = closingStock;
 	}
 
-	public String getName() {
+	public String getName()
+	{
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(String name)
+	{
 		this.name = name;
 	}
 
-	public String getMobileNo() {
+	public String getMobileNo()
+	{
 		return mobileNo;
 	}
 
-	public void setMobileNo(String mobileNo) {
+	public void setMobileNo(String mobileNo)
+	{
 		this.mobileNo = mobileNo;
 	}
 
-	public String getEmailId() {
+	public String getEmailId()
+	{
 		return emailId;
 	}
 
-	public void setEmailId(String emailId) {
+	public void setEmailId(String emailId)
+	{
 		this.emailId = emailId;
 	}
 
-	public String getContactType() {
+	public String getContactType()
+	{
 		return contactType;
 	}
 
-	public void setContactType(String contactType) {
+	public void setContactType(String contactType)
+	{
 		this.contactType = contactType;
 	}
 
-	public String getWarehouseName() {
+	public String getWarehouseName()
+	{
 		return warehouseName;
 	}
 
-	public void setWarehouseName(String warehouseName) {
+	public void setWarehouseName(String warehouseName)
+	{
 		this.warehouseName = warehouseName;
 	}
 
-	public String getCreated() {
-		return created;
+	public String getCreated()
+	{
+		return creationDate;
 	}
 
-	public void setCreated(String created) {
-		this.created = created;
+	public void setCreated(String created)
+	{
+		this.creationDate = created;
 	}
 
-	public String getUpdated() {
-		return updated;
+	public String getUpdated()
+	{
+		return lastModifiedDate;
 	}
 
-	public void setUpdated(String updated) {
-		this.updated = updated;
+	public void setUpdated(String updated)
+	{
+		this.lastModifiedDate = updated;
 	}
 }

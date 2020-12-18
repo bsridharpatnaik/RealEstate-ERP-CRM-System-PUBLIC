@@ -23,6 +23,7 @@ import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.LostDamagedInventorySpecification;
 
 @Service
+@Transactional
 public class LostDamagedInventoryService
 {
 	@Autowired

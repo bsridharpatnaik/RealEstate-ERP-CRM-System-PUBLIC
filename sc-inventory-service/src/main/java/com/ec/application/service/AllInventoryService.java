@@ -3,6 +3,8 @@ package com.ec.application.service;
 import java.text.ParseException;
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,51 +23,51 @@ import com.ec.common.Filters.AllInventorySpecification;
 import com.ec.common.Filters.FilterDataList;
 
 @Service
-public class AllInventoryService 
+@Transactional
+public class AllInventoryService
 {
 	@Autowired
 	AllInventoryRepo allInventoryRepo;
-	
+
 	@Autowired
 	PopulateDropdownService populateDropdownService;
-	
+
 	@Autowired
 	MachineryOnRentRepo machineryOnRentRepo;
-	
-	
-	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException 
+
+	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable)
+			throws ParseException
 	{
 		AllInventoryReturnData allInventoryReturnData = new AllInventoryReturnData();
 		Specification<AllInventoryTransactions> spec = AllInventorySpecification.getSpecification(filterDataList);
-		
-		if(spec!=null)
+
+		if (spec != null)
 		{
-			Page<AllInventoryTransactions> data = allInventoryRepo.findAll(spec,pageable);
+			Page<AllInventoryTransactions> data = allInventoryRepo.findAll(spec, pageable);
 			allInventoryReturnData.setTransactions(data);
-		
-		}
-		else
+
+		} else
 			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
 		return allInventoryReturnData;
 	}
-	
-	/*public List<DashboardInwardOutwardInventoryDAO> fetchOutwardForDashboard() 
-	{
-		List<DashboardInwardOutwardInventoryDAO> outwardList = new ArrayList<DashboardInwardOutwardInventoryDAO>();
-		outwardList = allInventoryRepo.findForDashboard();
-		return outwardList;
-	}*/
 
-	public List<DashboardInwardOutwardInventoryDAO> fetchInventoryForDashboard(String type) 
+	/*
+	 * public List<DashboardInwardOutwardInventoryDAO> fetchOutwardForDashboard() {
+	 * List<DashboardInwardOutwardInventoryDAO> outwardList = new
+	 * ArrayList<DashboardInwardOutwardInventoryDAO>(); outwardList =
+	 * allInventoryRepo.findForDashboard(); return outwardList; }
+	 */
+
+	public List<DashboardInwardOutwardInventoryDAO> fetchInventoryForDashboard(String type)
 	{
-		Pageable pageable = PageRequest.of(0, 5,Sort.by("created").descending());
+		Pageable pageable = PageRequest.of(0, 5, Sort.by("creationDate").descending());
 		return allInventoryRepo.findForDashboard(type, pageable);
 	}
 
-	public List<DashboardMachineOnRentDAO> fetchMachineryOnRent() 
+	public List<DashboardMachineOnRentDAO> fetchMachineryOnRent()
 	{
-		Pageable pageable = PageRequest.of(0, 5,Sort.by("created").descending());
+		Pageable pageable = PageRequest.of(0, 5, Sort.by("creationDate").descending());
 		return machineryOnRentRepo.findForDashboard(pageable);
 	}
 }

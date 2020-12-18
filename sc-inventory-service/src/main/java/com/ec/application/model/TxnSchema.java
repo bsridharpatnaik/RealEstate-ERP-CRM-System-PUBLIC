@@ -7,28 +7,26 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Where;
-import org.hibernate.envers.Audited;
 
-import com.ec.application.ReusableClasses.ReusableFields;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "contacts")
-@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE + " AND contacttype='contractor'")
+@Table(name = "txn")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Audited
-public class Contractor extends ContactMappedSuperClass
+public class TxnSchema
 {
 	private static final long serialVersionUID = 1L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "contactId", updatable = false, nullable = false)
-	Long contactId;
+	Long id;
+	
+	Integer count;
+
 }

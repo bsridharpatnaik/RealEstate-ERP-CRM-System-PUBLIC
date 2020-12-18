@@ -10,20 +10,34 @@ import com.ec.common.Data.TenantInformation;
 @Service
 public class TenantService
 {
-	public List<TenantInformation> getTenantInformation()
+
+	public List<TenantInformation> fetchTenantList()
 	{
-		List<TenantInformation> tenantInformation = new ArrayList<TenantInformation>();
-		TenantInformation ti1 = new TenantInformation("MAHAVIR SUNCITY NX", "suncitynx");
-		TenantInformation ti2 = new TenantInformation("MAHAVIR KALPAVRISH", "kalpavrish");
-		TenantInformation ti3 = new TenantInformation("RIDDHI SIDDHI L AND M SERIES", "riddhisiddhi");
-		TenantInformation ti4 = new TenantInformation("MAHAVIR SMART CITY", "smartcity");
-		TenantInformation ti5 = new TenantInformation("GALAXY HEIGHTS", "galaxyheights");
-		tenantInformation.add(ti1);
-		tenantInformation.add(ti2);
-		tenantInformation.add(ti3);
-		tenantInformation.add(ti4);
-		tenantInformation.add(ti5);
-		return tenantInformation;
+		List<TenantInformation> tenants = new ArrayList<TenantInformation>();
+
+		TenantInformation t1 = new TenantInformation("MAHAVIR SUNCITY NX", "suncitynx");
+		TenantInformation t2 = new TenantInformation("MAHAVIR KALPAVRISH", "kalpavrish");
+		TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI L AND M SERIES", "riddhisiddhi");
+		TenantInformation t4 = new TenantInformation("MAHAVIR SMART CITY", "smartcity");
+		TenantInformation t5 = new TenantInformation("GALAXY HEIGHTS", "galaxyheights");
+		tenants.add(t1);
+		tenants.add(t2);
+		tenants.add(t3);
+		tenants.add(t4);
+		tenants.add(t5);
+		return tenants;
+
+		// suncitynx,kalpavrish,riddhisiddhi,smartcity,galaxyheights
 	}
 
+	public List<String> getValidTenantKeys()
+	{
+		List<String> validTenants = new ArrayList<String>();
+		validTenants.add("suncitynx");
+		validTenants.add("kalpavrish");
+		validTenants.add("riddhisiddhi");
+		validTenants.add("smartcity");
+		validTenants.add("galaxyheights");
+		return validTenants;
+	}
 }

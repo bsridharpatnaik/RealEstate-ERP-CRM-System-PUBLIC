@@ -3,6 +3,8 @@ package com.ec.application.service;
 import java.util.List;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ import com.ec.common.Filters.CategorySpecifications;
 import com.ec.common.Filters.FilterDataList;
 
 @Service
+@Transactional
 public class CategoryService
 {
 
@@ -38,7 +41,8 @@ public class CategoryService
 
 	public Category createCategory(Category payload) throws Exception
 	{
-		if (!categoryRepo.existsByCategoryName(payload.getCategoryName()))
+		validatePayload(payload);
+		if (!categoryRepo.existsByCategoryName(payload.getCategoryName().trim()))
 		{
 			categoryRepo.save(payload);
 			return payload;
@@ -48,8 +52,16 @@ public class CategoryService
 		}
 	}
 
+	private void validatePayload(Category payload) throws Exception
+	{
+		if (payload.getCategoryName().trim() == null || payload.getCategoryName().trim() == "")
+			throw new Exception("Category name cannot be null or empty");
+
+	}
+
 	public Category updateCategory(Long id, Category payload) throws Exception
 	{
+		validatePayload(payload);
 		Optional<Category> CategoryForUpdateOpt = categoryRepo.findById(id);
 		Category CategoryForUpdate = CategoryForUpdateOpt.get();
 

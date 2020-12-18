@@ -21,48 +21,50 @@ import com.ec.common.Data.UserSignInData;
 import com.ec.common.JWTUtils.JWTTokenUtils;
 import com.ec.common.Service.JwtUserDetailsService;
 
-
-
 @RestController
-public class LoginController {
+public class LoginController
+{
 
 	public static String role = "";
 	@Autowired
 	private AuthenticationManager authenticationManager;
 
-
 	@Autowired
 	private JWTTokenUtils jwtTokenUtil;
-
 
 	@Autowired
 	private JwtUserDetailsService userDetailsService;
 
-	@PostMapping(value="/ec/login",produces = { "application/json", "text/json" })
-	public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception {
+	@PostMapping(value = "/ec/login", produces =
+	{ "application/json", "text/json" })
+	public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception
+	{
 		LoginData loginData = new LoginData();
 
 		authenticate(userData.getUserName(), userData.getPassword());
 		final UserDetails userDetails = userDetailsService.loadUserByUsername(userData.getUserName());
 		final String token = jwtTokenUtil.generateToken(userDetails);
-		
-		
-		  Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities(); 
-		  ArrayList<String> roles = new ArrayList<String>();
-		  for(GrantedAuthority grantedAuthority : authorities) 
-		  { 
-			  roles.add(grantedAuthority.getAuthority());
-		  }
-		  String name = userDetails.getUsername();
-		  return ResponseEntity.ok(new JwtResponse(name,token,roles));
+
+		Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+		ArrayList<String> roles = new ArrayList<String>();
+		for (GrantedAuthority grantedAuthority : authorities)
+		{
+			roles.add(grantedAuthority.getAuthority());
+		}
+		String name = userDetails.getUsername();
+		return ResponseEntity.ok(new JwtResponse(name, token, roles));
 	}
 
-	private void authenticate(String username, String password) throws Exception {
-		try {
+	private void authenticate(String username, String password) throws Exception
+	{
+		try
+		{
 			authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-		} catch (DisabledException e) {
+		} catch (DisabledException e)
+		{
 			throw new Exception("USER_DISABLED", e);
-		} catch (BadCredentialsException e) {
+		} catch (BadCredentialsException e)
+		{
 			throw new Exception("INVALID_CREDENTIALS", e);
 		}
 	}

@@ -15,6 +15,7 @@ import com.ec.application.repository.InventoryNotificationRepo;
 import com.ec.application.repository.WarehouseRepo;
 
 @Service
+@Transactional
 public class InventoryNotificationService
 {
 

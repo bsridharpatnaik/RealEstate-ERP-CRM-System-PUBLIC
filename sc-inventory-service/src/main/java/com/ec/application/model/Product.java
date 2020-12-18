@@ -20,7 +20,6 @@ import org.springframework.lang.NonNull;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-
 @Entity
 @Table(name = "Product")
 @Audited
@@ -28,69 +27,93 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class Product extends ReusableFields
 {
 
-private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = 1L;
+
 	@Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	Long productId;
-	
+
 	@NonNull
-	@Column(name="product_name")
+	@Column(name = "product_name")
 	String productName;
-	
+
 	String productDescription;
-	
+
 	String measurementUnit;
-	
+
 	Double reorderQuantity;
-	
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="categoryId",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
+
+	@ManyToOne(fetch = FetchType.EAGER, cascade =
+	{ CascadeType.MERGE, CascadeType.REFRESH })
+	@JoinColumn(name = "categoryId", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	@NotFound(action = NotFoundAction.IGNORE)
 	Category category;
-	
-	public Long getProductId() {
+
+	public Long getProductId()
+	{
 		return productId;
 	}
-	public void setProductId(Long productId) {
+
+	public void setProductId(Long productId)
+	{
 		this.productId = productId;
 	}
-	
-	public Double getReorderQuantity() {
+
+	public Double getReorderQuantity()
+	{
 		return reorderQuantity;
 	}
-	public void setReorderQuantity(Double reorderQuantity) {
+
+	public void setReorderQuantity(Double reorderQuantity)
+	{
 		this.reorderQuantity = reorderQuantity;
 	}
-	public Category getCategory() {
+
+	public Category getCategory()
+	{
 		return category;
 	}
-	public void setCategory(Category category) {
+
+	public void setCategory(Category category)
+	{
 		this.category = category;
 	}
-	public String getProductName() {
+
+	public String getProductName()
+	{
 		return productName;
 	}
-	public void setProductName(String productName) {
+
+	public void setProductName(String productName)
+	{
 		this.productName = productName;
 	}
-	public String getProductDescription() {
+
+	public String getProductDescription()
+	{
 		return productDescription;
 	}
-	public void setProductDescription(String productDescription) {
+
+	public void setProductDescription(String productDescription)
+	{
 		this.productDescription = productDescription;
 	}
-	public static long getSerialversionuid() {
+
+	public static long getSerialversionuid()
+	{
 		return serialVersionUID;
 	}
-	public String getMeasurementUnit() {
+
+	public String getMeasurementUnit()
+	{
 		return measurementUnit;
 	}
-	public void setMeasurementUnit(String measurementUnit) {
+
+	public void setMeasurementUnit(String measurementUnit)
+	{
 		this.measurementUnit = measurementUnit;
 	}
-	
-	
-	
+
 }

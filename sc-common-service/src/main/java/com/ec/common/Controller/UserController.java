@@ -75,6 +75,12 @@ public class UserController
 		return userService.findSingleUserFromAll(id);
 	}
 
+	@GetMapping("/allowedtenants")
+	public List<String> findTenantsForUser() throws Exception
+	{
+		return userService.findTenantsForUser();
+	}
+
 	@GetMapping("/byid/{id}")
 	public UserReturnData findLimitedDetailsForUserByID(@PathVariable long id) throws Exception
 	{
