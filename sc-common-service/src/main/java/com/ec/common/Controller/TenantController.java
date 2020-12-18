@@ -24,4 +24,10 @@ public class TenantController
 
 		return tenantService.fetchTenantList();
 	}
+
+	@GetMapping("/validtenantkeys")
+	public List<String> getValidtTenantKeys()
+	{
+		return tenantService.getValidTenantKeys();
+	}
 }

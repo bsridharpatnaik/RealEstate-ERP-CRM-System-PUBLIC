@@ -43,6 +43,9 @@ public class UserService
 	@Autowired
 	RoleRepo rRepo;
 
+	@Autowired
+	TenantService tenantService;
+
 	// private static final Logger log = LoggerFactory.getLogger(UserService.class);
 	public User createUser(CreateUserData userData) throws Exception
 	{
@@ -91,6 +94,16 @@ public class UserService
 			throw new Exception("Access to minimum one tenant is required!");
 		if (userData.getRoles().size() == 0)
 			throw new Exception("Please add atleast one role!");
+		List<String> validTenants = tenantService.getValidTenantKeys();
+		boolean validTeant = true;
+		for (String str : userData.getTenants())
+		{
+			if (!validTenants.contains(str))
+				validTeant = false;
+
+		}
+		if (!validTeant)
+			throw new Exception("Invalid tenant name found in request!");
 
 	}
 

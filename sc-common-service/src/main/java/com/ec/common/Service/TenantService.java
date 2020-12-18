@@ -10,6 +10,7 @@ import com.ec.common.Data.TenantInformation;
 @Service
 public class TenantService
 {
+
 	public List<TenantInformation> fetchTenantList()
 	{
 		List<TenantInformation> tenants = new ArrayList<TenantInformation>();
@@ -25,5 +26,18 @@ public class TenantService
 		tenants.add(t4);
 		tenants.add(t5);
 		return tenants;
+
+		// suncitynx,kalpavrish,riddhisiddhi,smartcity,galaxyheights
+	}
+
+	public List<String> getValidTenantKeys()
+	{
+		List<String> validTenants = new ArrayList<String>();
+		validTenants.add("suncitynx");
+		validTenants.add("kalpavrish");
+		validTenants.add("riddhisiddhi");
+		validTenants.add("smartcity");
+		validTenants.add("galaxyheights");
+		return validTenants;
 	}
 }
