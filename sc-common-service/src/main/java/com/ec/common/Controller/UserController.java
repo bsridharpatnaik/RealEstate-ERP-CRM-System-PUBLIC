@@ -19,11 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.common.Data.CreateUserData;
 import com.ec.common.Data.ResetPasswordData;
+import com.ec.common.Data.TenantInformation;
 import com.ec.common.Data.UpdateRolesForUserData;
 import com.ec.common.Data.UserListWithTypeAheadData;
 import com.ec.common.Data.UserReturnData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Model.User;
+import com.ec.common.Service.TenantService;
 import com.ec.common.Service.UserService;
 
 @RestController
@@ -34,6 +36,9 @@ public class UserController
 
 	@Autowired
 	UserService userService;
+
+	@Autowired
+	TenantService tenantService;
 
 	@GetMapping
 	@PreAuthorize("hasAuthority('admin')")
@@ -76,9 +81,9 @@ public class UserController
 	}
 
 	@GetMapping("/allowedtenants")
-	public List<String> findTenantsForUser() throws Exception
+	public List<TenantInformation> findTenantsForUser() throws Exception
 	{
-		return userService.findTenantsForUser();
+		return tenantService.getAllowedTenants();
 	}
 
 	@GetMapping("/byid/{id}")

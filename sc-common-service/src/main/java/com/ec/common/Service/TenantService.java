@@ -3,6 +3,7 @@ package com.ec.common.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.common.Data.TenantInformation;
@@ -10,6 +11,9 @@ import com.ec.common.Data.TenantInformation;
 @Service
 public class TenantService
 {
+
+	@Autowired
+	UserService userService;
 
 	public List<TenantInformation> fetchTenantList()
 	{
@@ -39,5 +43,20 @@ public class TenantService
 		validTenants.add("smartcity");
 		validTenants.add("galaxyheights");
 		return validTenants;
+	}
+
+	public List<TenantInformation> getAllowedTenants() throws Exception
+	{
+		List<String> allowedTenantKeys = userService.findTenantsForUser();
+		List<TenantInformation> allTenants = fetchTenantList();
+		List<TenantInformation> allowedTenants = new ArrayList<TenantInformation>();
+		for (TenantInformation ti : allTenants)
+		{
+			if (allowedTenantKeys.contains(ti.getTenantCode()))
+			{
+				allowedTenants.add(ti);
+			}
+		}
+		return allowedTenants;
 	}
 }
