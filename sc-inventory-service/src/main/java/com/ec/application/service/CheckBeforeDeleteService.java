@@ -127,4 +127,10 @@ public class CheckBeforeDeleteService
 		else
 			return false;
 	}
+
+	public boolean isBuildingTypeUsed(Long id)
+	{
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

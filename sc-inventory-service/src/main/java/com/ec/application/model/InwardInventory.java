@@ -79,10 +79,36 @@ public class InwardInventory extends ReusableFields implements Cloneable
 	{ @JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
 
+	String purchaseOrder;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Column(nullable = true)
+	Date purchaseOrderdate;
+
 	@Override
 	public Object clone() throws CloneNotSupportedException
 	{
 		return super.clone();
+	}
+
+	public String getPurchaseOrder()
+	{
+		return purchaseOrder;
+	}
+
+	public void setPurchaseOrder(String purchaseOrder)
+	{
+		this.purchaseOrder = purchaseOrder;
+	}
+
+	public Date getPurchaseOrderdate()
+	{
+		return purchaseOrderdate;
+	}
+
+	public void setPurchaseOrderdate(Date purchaseOrderdate)
+	{
+		this.purchaseOrderdate = purchaseOrderdate;
 	}
 
 	public Set<FileInformation> getFileInformations()
