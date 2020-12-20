@@ -3,6 +3,8 @@ package com.ec.application.service;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ public class UserDetailsService
 
 	@Value("${common.serverurl}")
 	private String reqUrl;
+
+	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
 	public UserReturnData getCurrentUser() throws Exception
 	{

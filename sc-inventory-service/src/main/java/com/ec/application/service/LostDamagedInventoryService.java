@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,9 +52,12 @@ public class LostDamagedInventoryService
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
 
+	Logger log = LoggerFactory.getLogger(LostDamagedInventoryService.class);
+
 	@Transactional
 	public LostDamagedInventory createData(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		LostDamagedInventory lostDamagedInventory = new LostDamagedInventory();
 		validatePayload(payload);
 		populateData(lostDamagedInventory, payload);
@@ -67,6 +72,7 @@ public class LostDamagedInventoryService
 	public LostDamagedReturnData findFiilteredostDamagedList(FilterDataList filterDataList, Pageable pageable)
 			throws ParseException
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Specification<LostDamagedInventory> spec = LostDamagedInventorySpecification.getSpecification(filterDataList);
 
 		LostDamagedReturnData lostDamagedReturnData = new LostDamagedReturnData();
@@ -80,6 +86,7 @@ public class LostDamagedInventoryService
 
 	private Double adjustStockBeforeCreate(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		String warehouseName = warehouseRepo.findById(payload.getWarehouseId()).get().getWarehouseName();
 		return stockService.updateStock(payload.getProductId(), warehouseName, payload.getQuantity(), "outward");
 	}
@@ -87,6 +94,7 @@ public class LostDamagedInventoryService
 	private void populateData(LostDamagedInventory lostDamagedInventory, CreateLostOrDamagedInventoryData payload)
 			throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		lostDamagedInventory.setLocationOfTheft(payload.getTheftLocation());
 		lostDamagedInventory.setQuantity(payload.getQuantity());
 		lostDamagedInventory.setProduct(productService.findSingleProduct(payload.getProductId()));
@@ -99,6 +107,7 @@ public class LostDamagedInventoryService
 	@Transactional
 	public LostDamagedInventory UpdateData(CreateLostOrDamagedInventoryData payload, Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
 		validatePayload(payload);
 		if (!lostDamagedInventoryOpt.isPresent())
@@ -118,6 +127,7 @@ public class LostDamagedInventoryService
 
 	private void validatePayload(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!productRepo.findById(payload.getProductId()).isPresent())
 			throw new Exception("Invalid Product ID");
 		if (!warehouseRepo.findById(payload.getWarehouseId()).isPresent())
@@ -128,6 +138,7 @@ public class LostDamagedInventoryService
 
 	public LostDamagedInventory findById(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
 		if (!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Lost Damaged Inventory by ID " + id + " Not found");
@@ -138,6 +149,7 @@ public class LostDamagedInventoryService
 	@Transactional
 	public void DeleteData(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<LostDamagedInventory> lostDamagedInventoryOpt = lostDamagedInventoryRepo.findById(id);
 		if (!lostDamagedInventoryOpt.isPresent())
 			throw new Exception("Machinery On rent by ID " + id + " Not found");
@@ -148,12 +160,14 @@ public class LostDamagedInventoryService
 
 	private void AdjustStockBeforeDelete(LostDamagedInventory lostDamagedInventory) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		stockService.updateStock(lostDamagedInventory.getProduct().getProductId(),
 				lostDamagedInventory.getWarehouse().getWarehouseName(), lostDamagedInventory.getQuantity(), "inward");
 	}
 
 	public Page<LostDamagedInventory> findAll(Pageable pageable)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Page<LostDamagedInventory> allLODInv = lostDamagedInventoryRepo.findAll(pageable);
 		return allLODInv;
 	}

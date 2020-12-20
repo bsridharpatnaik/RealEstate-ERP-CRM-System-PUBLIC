@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,13 +41,17 @@ public class ProductService
 	@Autowired
 	UserDetailsService userDetailsService;
 
+	Logger log = LoggerFactory.getLogger(ProductService.class);
+
 	public Page<Product> findAll(Pageable pageable)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return productRepo.findAll(pageable);
 	}
 
 	public Product createProduct(ProductCreateData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		if (!productRepo.existsByProductName(payload.getProductName()))
 		{
@@ -73,6 +79,7 @@ public class ProductService
 
 	private void validatePayload(ProductCreateData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getCategoryId() == null)
 			throw new Exception("CategoryID cannot be empty. Please select a category");
 
@@ -89,6 +96,7 @@ public class ProductService
 
 	public Product updateProduct(Long id, ProductCreateData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		Optional<Product> ProductForUpdateOpt = productRepo.findById(id);
 		if (!ProductForUpdateOpt.isPresent())
@@ -124,6 +132,7 @@ public class ProductService
 
 	public Product findSingleProduct(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Product product = new Product();
 		Optional<Product> productOpt = productRepo.findById(id);
 		if (!productOpt.isPresent())
@@ -135,6 +144,7 @@ public class ProductService
 
 	public void deleteProduct(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!checkBeforeDeleteService.isProductUsed(id))
 			productRepo.softDeleteById(id);
 		else
@@ -143,6 +153,7 @@ public class ProductService
 
 	public ArrayList<Product> findProductsByName(String name)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		ArrayList<Product> productList = new ArrayList<Product>();
 		productList = productRepo.findByproductName(name);
 		return productList;
@@ -150,12 +161,13 @@ public class ProductService
 
 	public List<IdNameProjections> findIdAndNames()
 	{
-		// TODO Auto-generated method stub
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return productRepo.findIdAndNames();
 	}
 
 	public boolean checkIfProductExists(Long id)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<Product> Products = productRepo.findById(id);
 		if (Products.isPresent())
 			return true;
@@ -165,7 +177,7 @@ public class ProductService
 
 	public Page<Product> findFilteredProductsWithTA(FilterDataList filterDataList, Pageable pageable)
 	{
-
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Specification<Product> spec = ProductSpecifications.getSpecification(filterDataList);
 		if (spec != null)
 			return productRepo.findAll(spec, pageable);
@@ -175,6 +187,7 @@ public class ProductService
 
 	public List<String> typeAheadDataList(String name)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		List<String> names = productRepo.getNames(name);
 		names.addAll(categoryRepo.getNames(name));
 		return names;
@@ -182,13 +195,14 @@ public class ProductService
 
 	public List<IdNameProjections> getIdAndNamesForCategoryDropdown()
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		List<IdNameProjections> categoryNamesForDropdown = categoryRepo.findIdAndNames();
 		return categoryNamesForDropdown;
 	}
 
 	public List<IdNameAndUnit> productMeasurementUnit()
 	{
-		// TODO Auto-generated method stub
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return productRepo.getProductMeasurementUnit();
 	}
 }

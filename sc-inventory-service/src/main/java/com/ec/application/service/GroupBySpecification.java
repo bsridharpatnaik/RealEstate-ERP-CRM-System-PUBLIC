@@ -11,6 +11,8 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,8 @@ public class GroupBySpecification
 {
 	@Autowired
 	EntityManager entityManager;
+
+	Logger log = LoggerFactory.getLogger(GroupBySpecification.class);
 
 	public <T> List<ProductGroupedDAO> findDataByConfiguration(Specification<T> spec, Class entityClazz,
 			String joinTable)

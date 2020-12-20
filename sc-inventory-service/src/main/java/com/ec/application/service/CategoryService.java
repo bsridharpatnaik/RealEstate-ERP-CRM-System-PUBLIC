@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,13 +36,17 @@ public class CategoryService
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
 
+	Logger log = LoggerFactory.getLogger(CategoryService.class);
+
 	public Page<Category> findAll(Pageable pageable)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return categoryRepo.findAll(pageable);
 	}
 
 	public Category createCategory(Category payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		if (!categoryRepo.existsByCategoryName(payload.getCategoryName().trim()))
 		{
@@ -54,6 +60,7 @@ public class CategoryService
 
 	private void validatePayload(Category payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getCategoryName().trim() == null || payload.getCategoryName().trim() == "")
 			throw new Exception("Category name cannot be null or empty");
 
@@ -61,6 +68,7 @@ public class CategoryService
 
 	public Category updateCategory(Long id, Category payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		Optional<Category> CategoryForUpdateOpt = categoryRepo.findById(id);
 		Category CategoryForUpdate = CategoryForUpdateOpt.get();
@@ -86,12 +94,14 @@ public class CategoryService
 
 	public Category findSingleCategory(Long id)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<Category> Categorys = categoryRepo.findById(id);
 		return Categorys.get();
 	}
 
 	public void deleteCategory(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!checkBeforeDeleteService.isCategoryUsed(id))
 			categoryRepo.softDeleteById(id);
 		else
@@ -100,12 +110,14 @@ public class CategoryService
 
 	public List<IdNameProjections> findIdAndNames()
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		// TODO Auto-generated method stub
 		return categoryRepo.findIdAndNames();
 	}
 
 	public AllCategoriesWithNamesData findFilteredCategoriesWithTA(FilterDataList filterDataList, Pageable pageable)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		AllCategoriesWithNamesData allCategoriesWithNamesData = new AllCategoriesWithNamesData();
 		Specification<Category> spec = CategorySpecifications.getSpecification(filterDataList);
 

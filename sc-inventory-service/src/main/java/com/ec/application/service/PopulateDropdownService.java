@@ -2,6 +2,8 @@ package com.ec.application.service;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +48,8 @@ public class PopulateDropdownService
 
 	@Autowired
 	UsageAreaRepo usageAreaRepo;
+
+	Logger log = LoggerFactory.getLogger(PopulateDropdownService.class);
 
 	public NameAndProjectionDataForDropDown fetchData(String page)
 	{

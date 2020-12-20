@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -43,8 +45,11 @@ public class MachineryOnRentService
 	@Autowired
 	PopulateDropdownService populateDropdownService;
 
+	Logger log = LoggerFactory.getLogger(MachineryOnRentService.class);
+
 	public MachineryOnRent createData(CreateMORentData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		valiatePayload(payload);
 		MachineryOnRent machineryOnRent = new MachineryOnRent();
 		populateData(machineryOnRent, payload);
@@ -54,6 +59,7 @@ public class MachineryOnRentService
 
 	private void valiatePayload(CreateMORentData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getMachineryId() == null)
 			throw new Exception("Machinery cannot be empty");
 		if (payload.getContactId() == null)
@@ -62,6 +68,7 @@ public class MachineryOnRentService
 
 	public MachineryOnRent UpdateData(CreateMORentData payload, Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		valiatePayload(payload);
 		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
 		if (!machineryOnRentOpt.isPresent())
@@ -74,6 +81,7 @@ public class MachineryOnRentService
 
 	public MachineryOnRent findById(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
 		if (!machineryOnRentOpt.isPresent())
 			throw new Exception("Machinery On rent by ID " + id + " Not found");
@@ -84,6 +92,7 @@ public class MachineryOnRentService
 
 	public void DeleteData(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<MachineryOnRent> machineryOnRentOpt = morRepo.findById(id);
 		if (!machineryOnRentOpt.isPresent())
 			throw new Exception("Machinery On rent by ID " + id + " Not found");
@@ -93,6 +102,7 @@ public class MachineryOnRentService
 
 	private MachineryOnRent populateData(MachineryOnRent machineryOnRent, CreateMORentData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<UsageLocation> locationOpt = locationRepo.findById(payload.getLocationId());
 		Optional<Supplier> supplierOpt = supplierRepo.findById(payload.getContactId());
 		Optional<Machinery> machineryOpt = machineryRepo.findById(payload.getMachineryId());
@@ -120,6 +130,7 @@ public class MachineryOnRentService
 	public MachineryOnRentWithDropdownData findAllWithDropdown(FilterDataList filterDataList, Pageable pageable)
 			throws ParseException
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		MachineryOnRentWithDropdownData morWithDDData = new MachineryOnRentWithDropdownData();
 		Specification<MachineryOnRent> spec = MachineryOnRentSpecifications.getSpecification(filterDataList);
 

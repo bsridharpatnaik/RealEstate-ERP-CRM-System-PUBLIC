@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -19,6 +21,8 @@ public class DBFileStorageService
 
 	@Autowired
 	private DBFileRepository dbFileRepository;
+
+	Logger log = LoggerFactory.getLogger(DBFileStorageService.class);
 
 	public DBFile storeFile(MultipartFile file)
 	{

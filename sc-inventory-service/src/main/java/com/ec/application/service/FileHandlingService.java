@@ -2,6 +2,8 @@ package com.ec.application.service;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -21,6 +23,8 @@ public class FileHandlingService
 {
 	@Autowired
 	DBFileStorageService dbFileStorageService;
+
+	Logger log = LoggerFactory.getLogger(FileHandlingService.class);
 
 	public FileInformation uploadDoc(MultipartFile file) throws Exception
 	{

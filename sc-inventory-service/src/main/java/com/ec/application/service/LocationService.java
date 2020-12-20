@@ -34,11 +34,12 @@ public class LocationService
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
 
-	Logger logger = LoggerFactory.getLogger(AllInventoryService.class);
+	Logger log = LoggerFactory.getLogger(LocationService.class);
 
 	@Transactional
 	public UsageLocation createLocation(UsageLocationData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		UsageLocation usageLocation = new UsageLocation();
 		setFields(payload, usageLocation);
@@ -50,6 +51,8 @@ public class LocationService
 
 	private void setFields(UsageLocationData payload, UsageLocation usageLocation)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
 		if (payload.getTypeId() != null)
 			usageLocation.setBuildingType(buildingTypeRepo.findById(payload.getTypeId()).get());
 		usageLocation.setLocationName(payload.getLocationName());
@@ -58,6 +61,7 @@ public class LocationService
 
 	private void validatePayload(UsageLocationData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getLocationName().trim() == "" || payload.getLocationName() == null)
 			throw new Exception("Building Unit name cannot be empty");
 
@@ -70,6 +74,7 @@ public class LocationService
 
 	public UsageLocation updateLocation(Long id, UsageLocationData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		Optional<UsageLocation> LocationForUpdateOpt = locationRepo.findById(id);
 
@@ -113,12 +118,14 @@ public class LocationService
 
 	public UsageLocation findSingleLocation(Long id)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<UsageLocation> Locations = locationRepo.findById(id);
 		return Locations.get();
 	}
 
 	public void deleteLocation(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!checkBeforeDeleteService.isLocationUsed(id))
 			locationRepo.softDeleteById(id);
 		else
@@ -128,11 +135,13 @@ public class LocationService
 
 	public List<IdNameProjections> findIdAndNames()
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return locationRepo.findIdAndNames();
 	}
 
 	public Page<UsageLocation> findFilteredLocationsWithTA(FilterDataList filterDataList, Pageable pageable)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Specification<UsageLocation> spec = LocationSpecifications.getSpecification(filterDataList);
 		if (spec != null)
 			return locationRepo.findAll(spec, pageable);
@@ -142,6 +151,7 @@ public class LocationService
 
 	public List<String> getTypeAheadForGlobalSearch(String str)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return locationRepo.getNamesForTypeAhead(str);
 	}
 

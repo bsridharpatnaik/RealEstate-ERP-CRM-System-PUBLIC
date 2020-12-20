@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,8 @@ public class ContractorService
 
 	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
+
+	Logger log = LoggerFactory.getLogger(ContractorService.class);
 
 	public List<IdNameProjections> getContractorNames()
 	{

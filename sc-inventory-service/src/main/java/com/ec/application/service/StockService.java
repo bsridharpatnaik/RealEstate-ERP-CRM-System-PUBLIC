@@ -76,10 +76,11 @@ public class StockService
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
 
-	Logger log = LoggerFactory.getLogger(AllInventoryService.class);
+	Logger log = LoggerFactory.getLogger(StockService.class);
 
 	public StockInformation findStockForAll(FilterDataList filterDataList, Pageable pageable) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
 		List<Stock> allStocks = new ArrayList<Stock>();
 		if (spec != null)
@@ -92,6 +93,7 @@ public class StockService
 
 	private String fetchFilterForStockStatus(FilterDataList filterDataList)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		String showLowOrHIgh = "All";
 		List<String> stockStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stockStatus");
 		if (stockStatus != null)
@@ -104,11 +106,13 @@ public class StockService
 
 	public NameAndProjectionDataForDropDown getStockDropdownValues()
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return populateDropdownService.fetchData("stock");
 	}
 
 	public List<StockInformationExportDAO> findStockForAllForExport(FilterDataList filterDataList) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
 		long size = spec != null ? stockRepo.count(spec) : stockRepo.count();
 		if (size > 2000)
@@ -125,6 +129,7 @@ public class StockService
 
 	private List<StockInformationExportDAO> transformDataForExport(Page<SingleStockInfo> allStocks)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		List<StockInformationExportDAO> stockInformationExportDAO = new ArrayList<StockInformationExportDAO>();
 		for (SingleStockInfo ssi : allStocks)
 		{
@@ -140,10 +145,7 @@ public class StockService
 	public Double updateStock(Long productId, String warehousename, Double quantity, String operation) throws Exception
 	{
 		Stock currentStock = findOrInsertStock(productId, warehousename);
-		log.info("Current Stock - " + currentStock.getQuantityInHand() + " for product " + productId);
-		log.info("New Quantity - " + quantity);
 		Double oldStock = currentStock.getQuantityInHand();
-		log.info("Old Stock - " + oldStock);
 		Double newStock = (double) 0;
 		switch (operation)
 		{
@@ -153,7 +155,6 @@ public class StockService
 		case "outward":
 			newStock = oldStock - quantity;
 		}
-		log.info("New Stock - " + newStock);
 		if (newStock < 0)
 		{
 			log.info("stock update failed for product " + currentStock.getProduct().getProductName()
@@ -174,6 +175,8 @@ public class StockService
 	@Transactional(rollbackFor = Exception.class)
 	private Stock findOrInsertStock(Long productId, String warehousename) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
 		Optional<Product> productOpt = productRepo.findById(productId);
 		List<Warehouse> warehouseOpt = warehouseRepo.findByName(warehousename);
 
@@ -196,6 +199,8 @@ public class StockService
 	public StockInformation fetchStockInformation(List<Stock> allStocks, Pageable pageable, String showLowOrHIgh)
 			throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
 		StockInformation stockInformation = new StockInformation();
 		List<SingleStockInfo> stockInformationsList = new ArrayList<SingleStockInfo>();
 		List<Long> uniqueProductIds = fetchUniqueProductIds(allStocks);
@@ -227,6 +232,8 @@ public class StockService
 	private List<SingleStockInfo> filterStockForLowStock(List<SingleStockInfo> stockInformationsList,
 			String showLowOrHIgh)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
 		List<SingleStockInfo> filteredStockListForLowStock = new ArrayList<SingleStockInfo>();
 		if (showLowOrHIgh != null)
 		{
@@ -248,6 +255,8 @@ public class StockService
 	private Page<SingleStockInfo> convertListStockToPages(List<SingleStockInfo> stockInformationsList,
 			Pageable pageable)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
 		int start = (int) pageable.getOffset();
 		int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size()
 				: (start + pageable.getPageSize());
@@ -258,6 +267,8 @@ public class StockService
 
 	private List<SingleStockInfo> sortStockInformationsList(List<SingleStockInfo> stockInformationsList, Sort sort)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
 		try
 		{
 			String[] sortBy = sort.toString().split(":");
@@ -310,6 +321,8 @@ public class StockService
 
 	private List<Stock> findStockForProductAsList(Long productId, List<Stock> allStocks)
 	{
+
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		List<Stock> stocks = allStocks.stream().filter(p -> p.getProduct().getProductId() == productId)
 				.collect(Collectors.toList());
 		return stocks;
@@ -317,23 +330,27 @@ public class StockService
 
 	private List<Long> fetchUniqueProductIds(List<Stock> allStocks)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return allStocks.stream().map(p -> p.getProduct().getProductId()).distinct().collect(Collectors.toList());
 	}
 
 	public Double findStockForProductWarehouse(Long productId, Long warehouseId)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Double currentStock = stockRepo.getCurrentStockForProductWarehouse(productId, warehouseId);
 		return currentStock;
 	}
 
 	public Double findTotalStockForProduct(Long productId)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Double currentStock = stockRepo.getCurrentTotalStockForProduct(productId);
 		return currentStock;
 	}
 
 	public List<ProductIdAndStockProjection> findStockForProductListWarehouse(CurrentStockRequest currentStockRequest)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		List<Long> productIds = currentStockRequest.getProductIds();
 		Long warehouseId = currentStockRequest.getWarehouseId();
 		List<ProductIdAndStockProjection> stockInfo = stockRepo.getCurrentStockForProductListWarehouse(productIds,
@@ -352,12 +369,14 @@ public class StockService
 
 	public List<StockPercentData> fetchStockPercent()
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return stockRepo.getCurrentStockPercent();
 	}
 
 	public void sendStockNotificationEmail() throws Exception
 	{
 
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		FilterDataList filterDataList = new FilterDataList();
 		List<FilterAttributeData> filterData = new ArrayList<FilterAttributeData>();
 		filterDataList.setFilterData(filterData);
@@ -372,6 +391,7 @@ public class StockService
 
 	public void sendStockValidationEmail() throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		emailHelper.sendEmailForStockValidation(stockValidationRepo.findAll(Sort.by(Sort.Direction.ASC, "inventory")));
 	}
 }
