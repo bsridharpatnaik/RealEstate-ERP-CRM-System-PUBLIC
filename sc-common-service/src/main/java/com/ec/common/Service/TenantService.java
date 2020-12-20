@@ -19,10 +19,10 @@ public class TenantService
 	{
 		List<TenantInformation> tenants = new ArrayList<TenantInformation>();
 
-		TenantInformation t1 = new TenantInformation("MAHAVIR SUNCITY NX", "suncitynx");
-		TenantInformation t2 = new TenantInformation("MAHAVIR KALPAVRISH", "kalpavrish");
-		TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI L AND M SERIES", "riddhisiddhi");
-		TenantInformation t4 = new TenantInformation("MAHAVIR SMART CITY", "smartcity");
+		TenantInformation t1 = new TenantInformation("SUNCITY NX", "suncitynx");
+		TenantInformation t2 = new TenantInformation("KALPAVRISH", "kalpavrish");
+		TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI", "riddhisiddhi");
+		TenantInformation t4 = new TenantInformation("SMART CITY", "smartcity");
 		TenantInformation t5 = new TenantInformation("GALAXY HEIGHTS", "galaxyheights");
 		tenants.add(t1);
 		tenants.add(t2);

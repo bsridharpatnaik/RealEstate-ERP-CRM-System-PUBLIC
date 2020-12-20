@@ -36,4 +36,7 @@ public interface BuildingTypeRepo extends BaseRepository<BuildingType, Long>
 
 	@Query(value = "SELECT typeName as name from BuildingType m order by typeName")
 	List<String> getBuildingTypeNames();
+
+	ArrayList<BuildingType> findBytypeId(@Param("typeId") Long typeId);
+
 }

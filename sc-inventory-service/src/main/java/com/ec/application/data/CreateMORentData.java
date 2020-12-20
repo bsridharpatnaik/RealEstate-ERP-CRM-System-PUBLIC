@@ -49,5 +49,6 @@ public class CreateMORentData
 	String additionalNotes;
 	@NonNull
 	List<FileInformationDAO> fileInformations;
+	Double rate;
 
 }

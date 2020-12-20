@@ -16,20 +16,12 @@ import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import lombok.Data;
-
 @Entity
 @Table(name = "building_type")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-@Data
 public class BuildingType extends ReusableFields
 {
-	public BuildingType()
-	{
-		// TODO Auto-generated constructor stub
-	}
-
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -38,9 +30,45 @@ public class BuildingType extends ReusableFields
 
 	@NonNull
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	@Column(name = "category_name")
+	@Column(name = "building_type")
 	String typeName;
 
 	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String typeDescription;
+
+	public Long getTypeId()
+	{
+		return typeId;
+	}
+
+	public void setTypeId(Long typeId)
+	{
+		this.typeId = typeId;
+	}
+
+	public String getTypeName()
+	{
+		return typeName;
+	}
+
+	public void setTypeName(String typeName)
+	{
+		this.typeName = typeName;
+	}
+
+	public String getTypeDescription()
+	{
+		return typeDescription;
+	}
+
+	public void setTypeDescription(String typeDescription)
+	{
+		this.typeDescription = typeDescription;
+	}
+
+	public static long getSerialversionuid()
+	{
+		return serialVersionUID;
+	}
+
 }

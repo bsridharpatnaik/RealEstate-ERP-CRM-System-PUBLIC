@@ -55,7 +55,7 @@ public class MachineryOnRent extends ReusableFields
 	Supplier supplier;
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "locationId", nullable = false)
+	@JoinColumn(name = "locationId", nullable = true)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
 	UsageLocation usageLocation;
@@ -83,7 +83,18 @@ public class MachineryOnRent extends ReusableFields
 	Double initialMeterReading;
 	Double endMeterReading;
 	Double noOfTrips;
+	Double rate;
 	Double amountCharged;
+
+	public Double getRate()
+	{
+		return rate;
+	}
+
+	public void setRate(Double rate)
+	{
+		this.rate = rate;
+	}
 
 	public Long getMorid()
 	{

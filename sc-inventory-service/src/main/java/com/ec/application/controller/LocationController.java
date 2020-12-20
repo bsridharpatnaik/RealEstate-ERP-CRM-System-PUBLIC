@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.UsageLocationData;
 import com.ec.application.model.UsageLocation;
 import com.ec.application.service.LocationService;
 import com.ec.common.Filters.FilterDataList;
@@ -64,14 +65,14 @@ public class LocationController
 
 	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
-	public UsageLocation createLocation(@RequestBody UsageLocation payload) throws Exception
+	public UsageLocation createLocation(@RequestBody UsageLocationData payload) throws Exception
 	{
 
 		return locationService.createLocation(payload);
 	}
 
 	@PutMapping("/{id}")
-	public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocation Location) throws Exception
+	public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocationData Location) throws Exception
 	{
 		return locationService.updateLocation(id, Location);
 	}

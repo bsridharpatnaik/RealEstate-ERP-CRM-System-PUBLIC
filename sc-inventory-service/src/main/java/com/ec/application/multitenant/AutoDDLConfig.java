@@ -44,6 +44,7 @@ public class AutoDDLConfig
 		Map<Object, Object> targetDataSources = new HashMap<>();
 		for (String tenant : tenants)
 		{
+			System.out.println("####" + tenant);
 			tenant = tenant.trim();
 			DriverManagerDataSource dataSource = new DriverManagerDataSource();
 			dataSource.setDriverClassName("com.mysql.jdbc.Driver"); // Change here to MySql Driver

@@ -14,7 +14,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.UsageLocationData;
 import com.ec.application.model.UsageLocation;
+import com.ec.application.repository.BuildingTypeRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.LocationSpecifications;
@@ -27,42 +29,79 @@ public class LocationService
 	LocationRepo locationRepo;
 
 	@Autowired
+	BuildingTypeRepo buildingTypeRepo;
+
+	@Autowired
 	CheckBeforeDeleteService checkBeforeDeleteService;
 
 	Logger logger = LoggerFactory.getLogger(AllInventoryService.class);
 
-	public UsageLocation createLocation(UsageLocation payload) throws Exception
+	@Transactional
+	public UsageLocation createLocation(UsageLocationData payload) throws Exception
 	{
-		if (payload.getLocationName() == "" || payload.getLocationName() == null)
+		validatePayload(payload);
+		UsageLocation usageLocation = new UsageLocation();
+		setFields(payload, usageLocation);
+		if (!locationRepo.existsByLocationName(payload.getLocationName().trim()))
+			return locationRepo.save(usageLocation);
+		else
+			throw new Exception("Location already exists!");
+	}
+
+	private void setFields(UsageLocationData payload, UsageLocation usageLocation)
+	{
+		if (payload.getTypeId() != null)
+			usageLocation.setBuildingType(buildingTypeRepo.findById(payload.getTypeId()).get());
+		usageLocation.setLocationName(payload.getLocationName());
+		usageLocation.setLocationDescription(payload.getLocationDescription());
+	}
+
+	private void validatePayload(UsageLocationData payload) throws Exception
+	{
+		if (payload.getLocationName().trim() == "" || payload.getLocationName() == null)
 			throw new Exception("Building Unit name cannot be empty");
 
-		if (!locationRepo.existsByLocationName(payload.getLocationName().trim()))
+		if (payload.getTypeId() != null)
 		{
-			locationRepo.save(payload);
-			return payload;
-		} else
-		{
-			throw new Exception("Location already exists!");
+			if (!buildingTypeRepo.existsById(payload.getTypeId()))
+				throw new Exception("Building Type not found with building type ID");
 		}
 	}
 
-	public UsageLocation updateLocation(Long id, UsageLocation payload) throws Exception
+	public UsageLocation updateLocation(Long id, UsageLocationData payload) throws Exception
 	{
+		validatePayload(payload);
 		Optional<UsageLocation> LocationForUpdateOpt = locationRepo.findById(id);
-		UsageLocation LocationForUpdate = LocationForUpdateOpt.get();
 
+		if (!LocationForUpdateOpt.isPresent())
+			throw new Exception("Usage location with ID not found.");
+
+		UsageLocation LocationForUpdate = LocationForUpdateOpt.get();
 		UsageLocation newLocation = new UsageLocation();
-		newLocation = payload;
+		setFields(payload, newLocation);
+
 		if (!locationRepo.existsByLocationName(newLocation.getLocationName())
 				&& !LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
 		{
 			LocationForUpdate.setLocationName(newLocation.getLocationName().trim());
 			LocationForUpdate.setLocationDescription(
 					newLocation.getLocationDescription() == null ? "" : newLocation.getLocationDescription().trim());
+			if (payload.getTypeId() != null)
+				LocationForUpdate.setBuildingType(buildingTypeRepo.getOne(payload.getTypeId()));
+			else
+				LocationForUpdate.setBuildingType(null);
 
 		} else if (LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName()))
 		{
-			LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+			if (payload.getTypeId() != null)
+			{
+				LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+				LocationForUpdate.setBuildingType(buildingTypeRepo.getOne(payload.getTypeId()));
+			} else
+			{
+				LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+				LocationForUpdate.setBuildingType(null);
+			}
 		} else
 		{
 			throw new Exception("Location with same Name already exists");

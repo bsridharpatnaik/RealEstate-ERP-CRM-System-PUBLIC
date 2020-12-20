@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.InwardOutwardListRepo;
+import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
@@ -46,6 +47,9 @@ public class CheckBeforeDeleteService
 
 	@Autowired
 	InwardOutwardListRepo inwardOutwardListRepo;
+
+	@Autowired
+	LocationRepo locationRepo;
 
 	public boolean isContactUsed(Long contactId) throws Exception
 	{
@@ -130,7 +134,9 @@ public class CheckBeforeDeleteService
 
 	public boolean isBuildingTypeUsed(Long id)
 	{
-		// TODO Auto-generated method stub
-		return false;
+		if (locationRepo.getBuildingTypeUsageCount(id) > 0)
+			return true;
+		else
+			return false;
 	}
 }

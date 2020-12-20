@@ -113,6 +113,7 @@ public class MachineryOnRentService
 		machineryOnRent.setVehicleNo(payload.getVehicleNo());
 		machineryOnRent.setAdditionalNotes(payload.getAdditionalNotes());
 		machineryOnRent.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
+		machineryOnRent.setRate(payload.getRate());
 		return machineryOnRent;
 	}
 
