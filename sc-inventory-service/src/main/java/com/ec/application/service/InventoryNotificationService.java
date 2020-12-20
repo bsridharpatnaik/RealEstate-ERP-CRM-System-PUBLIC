@@ -124,7 +124,7 @@ public class InventoryNotificationService
 	List<InventoryNotification> returnInventoryNotifications()
 	{
 		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
-				.findAll(Sort.by(Sort.Direction.DESC, "modified"));
+				.findAll(Sort.by(Sort.Direction.DESC, "lastModifiedDate"));
 		return inventoryNotifications;
 	}
 
