@@ -12,6 +12,7 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,6 +25,7 @@ import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.InwardInventoryExportDAO2;
 import com.ec.application.data.ReturnInwardInventoryData;
+import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.service.InwardInventoryService;
 import com.ec.common.Filters.FilterDataList;
@@ -60,6 +62,14 @@ public class InwardInventoryController
 	{
 
 		return iiService.fetchInwardnventoryForExport2(filterDataList);
+	}
+
+	@PatchMapping("/{id}")
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public InwardInventory setRejectInwardInventory(@PathVariable Long id,
+			@RequestBody ReturnRejectInwardOutwardData rd) throws Exception
+	{
+		return iiService.addRejectInwardEntry(rd, id);
 	}
 
 	@GetMapping("/{id}")

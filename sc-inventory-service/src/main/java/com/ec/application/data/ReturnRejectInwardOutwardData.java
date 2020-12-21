@@ -7,15 +7,17 @@ import org.springframework.lang.NonNull;
 import lombok.Data;
 
 @Data
-public class ReturnOutwardData 
+public class ReturnRejectInwardOutwardData
 {
 	@NonNull
 	List<ProductWithQuantity> productWithQuantities;
 
-	public ReturnOutwardData() {
+	String remarks;
+
+	public ReturnRejectInwardOutwardData()
+	{
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	
-	
+
 }

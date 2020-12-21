@@ -19,13 +19,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO;
-import com.ec.application.data.ReturnOutwardData;
+import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
@@ -54,10 +55,12 @@ public class OutwardInventoryController
 
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public OutwardInventory setReturnOutwardInventory(@PathVariable Long id, @RequestBody ReturnOutwardData rd)
-			throws Exception
+	public OutwardInventory setReturnOutwardInventory(@PathVariable Long id, @RequestBody ReturnRejectInwardOutwardData rd,
+			@RequestParam String type) throws Exception
 	{
-		return oiService.addReturnEntry(rd, id);
+		if (type == null)
+			throw new Exception("Please provide type (Return/Reject)");
+		return oiService.addReturnEntry(rd, id, type);
 	}
 
 	@PostMapping

@@ -85,6 +85,22 @@ public class InwardInventory extends ReusableFields implements Cloneable
 	@Column(nullable = true)
 	Date purchaseOrderdate;
 
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "rejectInward_entry", joinColumns =
+	{ @JoinColumn(name = "inwardid", referencedColumnName = "inwardid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "rejectentryid", referencedColumnName = "rejectentryid") })
+	Set<RejectInwardList> rejectInwardList = new HashSet<>();
+
+	public Set<RejectInwardList> getRejectInwardList()
+	{
+		return rejectInwardList;
+	}
+
+	public void setRejectInwardList(Set<RejectInwardList> rejectInwardList)
+	{
+		this.rejectInwardList = rejectInwardList;
+	}
+
 	@Override
 	public Object clone() throws CloneNotSupportedException
 	{

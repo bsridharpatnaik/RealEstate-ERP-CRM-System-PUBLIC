@@ -94,10 +94,31 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	{ @JoinColumn(name = "returnentryid", referencedColumnName = "returnentryid") })
 	Set<ReturnOutwardList> returnOutwardList = new HashSet<>();
 
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "rejectOutward_entry", joinColumns =
+	{ @JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns =
+	{ @JoinColumn(name = "rejectentryid", referencedColumnName = "rejectentryid") })
+	Set<RejectOutwardList> rejectOutwardList = new HashSet<>();
+
 	@Override
 	public Object clone() throws CloneNotSupportedException
 	{
 		return super.clone();
+	}
+
+	public Set<RejectOutwardList> getRejectOutwardList()
+	{
+		return rejectOutwardList;
+	}
+
+	public void setRejectOutwardList(Set<RejectOutwardList> rejectOutwardList)
+	{
+		this.rejectOutwardList = rejectOutwardList;
+	}
+
+	public static long getSerialversionuid()
+	{
+		return serialVersionUID;
 	}
 
 	public Set<ReturnOutwardList> getReturnOutwardList()

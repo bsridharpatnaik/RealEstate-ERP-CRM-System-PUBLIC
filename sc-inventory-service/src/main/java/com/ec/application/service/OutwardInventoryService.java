@@ -25,11 +25,12 @@ import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.OutwardInventoryExportDAO2;
 import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
-import com.ec.application.data.ReturnOutwardData;
 import com.ec.application.data.ReturnOutwardInventoryData;
+import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.OutwardInventory_;
+import com.ec.application.model.RejectOutwardList;
 import com.ec.application.model.ReturnOutwardList;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ContractorRepo;
@@ -117,12 +118,24 @@ public class OutwardInventoryService
 	}
 
 	@Transactional(rollbackFor = Exception.class)
-	public OutwardInventory addReturnEntry(ReturnOutwardData rd, Long outwardId) throws Exception
+	public OutwardInventory addReturnEntry(ReturnRejectInwardOutwardData rd, Long outwardId, String type)
+			throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!outwardInventoryRepo.existsById(outwardId))
 			throw new Exception("Outward inventory with ID not found");
 
+		if (rd.getProductWithQuantities().size() == 0)
+			throw new Exception("Minimum of one product is required to save data.");
+
+		if (type.equals("return"))
+		{
+			if (rd.getRemarks() == null)
+				throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+
+			if (rd.getRemarks().trim().equals(""))
+				throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+		}
 		Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
 				.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
 				.filter(e -> e.getValue() > 1).count();
@@ -135,16 +148,21 @@ public class OutwardInventoryService
 			if (productWithQuantity.getQuantity() == null || productWithQuantity.getProductId() == null
 					|| !productRepo.existsById(productWithQuantity.getProductId()))
 				throw new Exception("Error fetching product details");
-			addReturnForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity());
+			if (type.equals("return"))
+				addReturnForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity());
+			else
+				addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
+						rd.getRemarks());
 		}
-		return outwardInventoryRepo.getOne(outwardId);
+		return outwardInventoryRepo.findById(outwardId).get();
 	}
 
 	@Transactional(rollbackFor = Exception.class)
 	private void addReturnForOutward(Long outwardId, Long productId, Double quantity) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		OutwardInventory oi = outwardInventoryRepo.getOne(outwardId);
+
+		OutwardInventory oi = outwardInventoryRepo.findById(outwardId).get();
 		Set<ReturnOutwardList> returnOutwardList = oi.getReturnOutwardList();
 		Set<InwardOutwardList> inwardOutwardListSet = oi.getInwardOutwardList();
 		for (InwardOutwardList inwardOutwardList : inwardOutwardListSet)
@@ -167,6 +185,32 @@ public class OutwardInventoryService
 			}
 		}
 		oi.setReturnOutwardList(returnOutwardList);
+		oi.setInwardOutwardList(inwardOutwardListSet);
+		outwardInventoryRepo.save(oi);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	private void addRejectForOutward(Long outwardId, Long productId, Double quantity, String remarks) throws Exception
+	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+		OutwardInventory oi = outwardInventoryRepo.findById(outwardId).get();
+		Set<RejectOutwardList> rejectOutwardList = oi.getRejectOutwardList();
+		Set<InwardOutwardList> inwardOutwardListSet = oi.getInwardOutwardList();
+		for (InwardOutwardList inwardOutwardList : inwardOutwardListSet)
+		{
+			if (inwardOutwardList.getProduct().getProductId().equals(productId))
+			{
+				Double currentQuantity = inwardOutwardList.getQuantity();
+				if (quantity >= currentQuantity)
+					throw new Exception(
+							"Reject quantity cannot be greater than or equals to existing quantity for product -"
+									+ inwardOutwardList.getProduct().getProductName());
+
+				rejectOutwardList.add(new RejectOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
+						quantity, remarks));
+			}
+		}
+		oi.setRejectOutwardList(rejectOutwardList);
 		oi.setInwardOutwardList(inwardOutwardListSet);
 		outwardInventoryRepo.save(oi);
 	}

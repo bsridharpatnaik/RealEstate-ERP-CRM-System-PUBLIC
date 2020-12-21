@@ -4,13 +4,12 @@ import static java.util.stream.Collectors.counting;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.transaction.Transactional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.InwardInventoryData;
@@ -25,10 +25,12 @@ import com.ec.application.data.InwardInventoryExportDAO2;
 import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
+import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardInventory_;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.Product;
+import com.ec.application.model.RejectInwardList;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
@@ -104,6 +106,74 @@ public class InwardInventoryService
 		}
 	}
 
+	@Transactional(rollbackFor = Exception.class)
+	public InwardInventory addRejectInwardEntry(ReturnRejectInwardOutwardData rd, Long inwardId) throws Exception
+	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+		if (!inwardInventoryRepo.existsById(inwardId))
+			throw new Exception("Inward inventory with ID not found");
+
+		if (rd.getRemarks() == null)
+			throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+
+		if (rd.getRemarks().trim().equals(""))
+			throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+
+		if (rd.getProductWithQuantities().size() == 0)
+			throw new Exception("Minimum of one product is required to save data.");
+
+		Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
+				.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
+				.filter(e -> e.getValue() > 1).count();
+
+		if (duplicateProductIdCount > 0)
+			throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
+
+		for (ProductWithQuantity productWithQuantity : rd.getProductWithQuantities())
+		{
+			if (productWithQuantity.getQuantity() == null || productWithQuantity.getProductId() == null
+					|| !productRepo.existsById(productWithQuantity.getProductId()))
+				throw new Exception("Error fetching product details");
+			addReturnForInward(inwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
+					rd.getRemarks());
+			/*
+			 * else addRejectForOutward(inwardId, productWithQuantity.getProductId(),
+			 * productWithQuantity.getQuantity());
+			 */
+		}
+		return inwardInventoryRepo.findById(inwardId).get();
+	}
+
+	private void addReturnForInward(Long inwardId, Long productId, Double quantity, String remarks) throws Exception
+	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+		InwardInventory ii = inwardInventoryRepo.findById(inwardId).get();
+		Set<RejectInwardList> rejectInwardList = ii.getRejectInwardList();
+		Set<InwardOutwardList> inwardOutwardListSet = ii.getInwardOutwardList();
+		for (InwardOutwardList inwardOutwardList : inwardOutwardListSet)
+		{
+			if (inwardOutwardList.getProduct().getProductId().equals(productId))
+			{
+				Double currentQuantity = inwardOutwardList.getQuantity();
+				if (quantity >= currentQuantity)
+					throw new Exception(
+							"Reject quantity cannot be greater than or equals to existing quantity for product -"
+									+ inwardOutwardList.getProduct().getProductName());
+
+				Double diffInQuantity = currentQuantity - quantity;
+				Double closingStock = stockService.updateStock(productId, ii.getWarehouse().getWarehouseName(),
+						quantity, "outward");
+				rejectInwardList.add(new RejectInwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
+						quantity, closingStock, remarks));
+				inwardOutwardList.setQuantity(diffInQuantity);
+				inwardOutwardList.setClosingStock(closingStock);
+			}
+		}
+		ii.setRejectInwardList(rejectInwardList);
+		ii.setInwardOutwardList(inwardOutwardListSet);
+		inwardInventoryRepo.save(ii);
+	}
+
 	private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -142,6 +212,8 @@ public class InwardInventoryService
 	private void validateInputs(InwardInventoryData iiData) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+		if (iiData.getPurchaseOrderDate() == null)
+			throw new Exception("Purchase Order Date is a mandatory field");
 		for (ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities())
 		{
 			if (!productRepo.existsById(productWithQuantity.getProductId()))

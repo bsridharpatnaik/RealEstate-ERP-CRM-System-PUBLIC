@@ -23,22 +23,29 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Entity
-@Table(name = "return_outward_entries")
+@Table(name = "reject_inward_entries")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class ReturnOutwardList extends ReusableFields
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RejectInwardList extends ReusableFields
 {
 	private static final long serialVersionUID = 1L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	Long returnentryid;
+	Long rejectentryid;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@Column(nullable = false)
 	@NonNull
-	Date returnDate;
+	Date rejectDate;
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "productId", nullable = false)
@@ -50,85 +57,21 @@ public class ReturnOutwardList extends ReusableFields
 	Double oldQuantity;
 
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double returnQuantity;
+	Double rejectQuantity;
 
 	Double closingStock;
 
-	public ReturnOutwardList(Date returnDate, Product product, Double oldQuantity, Double returnQuantity,
-			Double closingStock)
+	String remarks;
+
+	public RejectInwardList(Date returnDate, Product product, Double oldQuantity, Double returnQuantity,
+			Double closingStock, String remarks)
 	{
 		super();
-		this.returnDate = returnDate;
+		this.rejectDate = returnDate;
 		this.product = product;
 		this.oldQuantity = oldQuantity;
-		this.returnQuantity = returnQuantity;
+		this.rejectQuantity = returnQuantity;
 		this.closingStock = closingStock;
+		this.remarks = remarks;
 	}
-
-	public ReturnOutwardList()
-	{
-		super();
-		// TODO Auto-generated constructor stub
-	}
-
-	public Long getReturnentryid()
-	{
-		return returnentryid;
-	}
-
-	public void setReturnentryid(Long returnentryid)
-	{
-		this.returnentryid = returnentryid;
-	}
-
-	public Date getReturnDate()
-	{
-		return returnDate;
-	}
-
-	public void setReturnDate(Date returnDate)
-	{
-		this.returnDate = returnDate;
-	}
-
-	public Product getProduct()
-	{
-		return product;
-	}
-
-	public void setProduct(Product product)
-	{
-		this.product = product;
-	}
-
-	public Double getOldQuantity()
-	{
-		return oldQuantity;
-	}
-
-	public void setOldQuantity(Double oldQuantity)
-	{
-		this.oldQuantity = oldQuantity;
-	}
-
-	public Double getReturnQuantity()
-	{
-		return returnQuantity;
-	}
-
-	public void setReturnQuantity(Double returnQuantity)
-	{
-		this.returnQuantity = returnQuantity;
-	}
-
-	public Double getClosingStock()
-	{
-		return closingStock;
-	}
-
-	public void setClosingStock(Double closingStock)
-	{
-		this.closingStock = closingStock;
-	}
-
 }
