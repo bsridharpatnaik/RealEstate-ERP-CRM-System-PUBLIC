@@ -128,13 +128,17 @@ public class OutwardInventoryService
 		if (rd.getProductWithQuantities().size() == 0)
 			throw new Exception("Minimum of one product is required to save data.");
 
-		if (type.equals("return"))
+		if (type.equals("reject"))
 		{
-			if (rd.getRemarks() == null)
-				throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+			for (ProductWithQuantity pwq : rd.getProductWithQuantities())
+			{
+				if (pwq.getRemarks() == null)
+					throw new Exception(
+							"Remarks is a mandatory field. Please provide remarks for all products before saving data");
 
-			if (rd.getRemarks().trim().equals(""))
-				throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+				if (pwq.getRemarks().trim().equals(""))
+					throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+			}
 		}
 		Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
 				.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
@@ -152,7 +156,7 @@ public class OutwardInventoryService
 				addReturnForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity());
 			else
 				addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
-						rd.getRemarks());
+						productWithQuantity.getRemarks());
 		}
 		return outwardInventoryRepo.findById(outwardId).get();
 	}

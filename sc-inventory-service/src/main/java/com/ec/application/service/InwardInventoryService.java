@@ -113,14 +113,18 @@ public class InwardInventoryService
 		if (!inwardInventoryRepo.existsById(inwardId))
 			throw new Exception("Inward inventory with ID not found");
 
-		if (rd.getRemarks() == null)
-			throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
-
-		if (rd.getRemarks().trim().equals(""))
-			throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
-
 		if (rd.getProductWithQuantities().size() == 0)
 			throw new Exception("Minimum of one product is required to save data.");
+
+		for (ProductWithQuantity pwq : rd.getProductWithQuantities())
+		{
+			if (pwq.getRemarks() == null)
+				throw new Exception(
+						"Remarks is a mandatory field. Please provide remarks for all products before saving data");
+
+			if (pwq.getRemarks().trim().equals(""))
+				throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+		}
 
 		Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
 				.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
@@ -135,7 +139,7 @@ public class InwardInventoryService
 					|| !productRepo.existsById(productWithQuantity.getProductId()))
 				throw new Exception("Error fetching product details");
 			addReturnForInward(inwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
-					rd.getRemarks());
+					productWithQuantity.getRemarks());
 			/*
 			 * else addRejectForOutward(inwardId, productWithQuantity.getProductId(),
 			 * productWithQuantity.getQuantity());

@@ -12,8 +12,6 @@ public class ReturnRejectInwardOutwardData
 	@NonNull
 	List<ProductWithQuantity> productWithQuantities;
 
-	String remarks;
-
 	public ReturnRejectInwardOutwardData()
 	{
 		super();
