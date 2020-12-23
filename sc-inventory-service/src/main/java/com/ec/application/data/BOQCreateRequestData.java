@@ -5,7 +5,7 @@ import com.ec.application.model.BOQLocationTypeEnum;
 import lombok.Data;
 
 @Data
-public class BOQRequestData
+public class BOQCreateRequestData
 {
 	BOQLocationTypeEnum boqType;
 	Long productId;

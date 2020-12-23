@@ -1,13 +1,17 @@
 package com.ec.application.service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.data.BOQRequestData;
+import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.data.BOQCreateRequestData;
+import com.ec.application.data.BOQUpdateRequestData;
 import com.ec.application.model.BOQInventoryMapping;
 import com.ec.application.model.BOQLocationTypeEnum;
 import com.ec.application.model.BuildingType;
@@ -34,7 +38,7 @@ public class BOQInventoryMappingService
 	@Autowired
 	ProductRepo pRepo;
 
-	public void createNewBOQ(BOQRequestData payload) throws Exception
+	public void createNewBOQ(BOQCreateRequestData payload) throws Exception
 	{
 		validatePayload(payload);
 		exitIfCombinationExists(payload);
@@ -43,7 +47,71 @@ public class BOQInventoryMappingService
 		bimRepo.save(bim);
 	}
 
-	private void setFields(BOQInventoryMapping bim, BOQRequestData payload)
+	public BOQInventoryMapping updateBOQ(BOQUpdateRequestData payload, Long id) throws Exception
+	{
+		validateUpdatePayload(payload, id);
+		BOQInventoryMapping bim = bimRepo.findById(id).get();
+		bim.setQuantity(payload.getQuantity());
+		bimRepo.save(bim);
+		return bim;
+	}
+
+	public void deleteBOQEntry(Long id) throws Exception
+	{
+		if (!bimRepo.existsById(id))
+			throw new Exception("BOQ Record not found with ID - " + id);
+		bimRepo.softDeleteById(id);
+	}
+
+	public List<BOQInventoryMapping> getBOQByType(Long id) throws Exception
+	{
+		if (!btRepo.existsById(id))
+			throw new Exception("Building Type record not found with ID - " + id);
+
+		List<BOQInventoryMapping> bimList = bimRepo.getBIMbyType(id);
+		return bimList;
+	}
+
+	public List<BOQInventoryMapping> getBOQByLocation(Long id) throws Exception
+	{
+		if (!lRepo.existsById(id))
+			throw new Exception("Building Unit record not found with ID - " + id);
+
+		List<BOQInventoryMapping> bimList = bimRepo.getBIMbyLocation(id);
+		return bimList;
+	}
+
+	public BOQInventoryMapping getOne(Long id) throws Exception
+	{
+		if (id == null)
+			throw new Exception("BOQ ID cannot be null or empty");
+
+		Optional<BOQInventoryMapping> bimOptional = bimRepo.findById(id);
+
+		if (!bimOptional.isPresent())
+			throw new Exception("BOQ Record not found by ID - " + id);
+		return bimOptional.get();
+	}
+
+	private void validateUpdatePayload(BOQUpdateRequestData payload, Long id) throws Exception
+	{
+		if (id == null)
+			throw new Exception("BOQ ID cannot be null or empty for updating");
+
+		if (!bimRepo.existsById(id))
+			throw new Exception("BOQ Record not found with ID - " + id);
+
+		if (bimRepo.findById(id).get().getProduct().getProductId().equals(payload.getProductId()) == false)
+		{
+			throw new Exception(
+					"Inventory cannot be modified while updating BOQ record. Please delete and add new if required");
+		}
+
+		if (payload.getQuantity() == 0)
+			throw new Exception("Quantity cannot be zero or empty. Please input valid quantity");
+	}
+
+	private void setFields(BOQInventoryMapping bim, BOQCreateRequestData payload)
 	{
 		if (payload.getBoqType().equals(BOQLocationTypeEnum.BuildingType))
 		{
@@ -59,7 +127,7 @@ public class BOQInventoryMappingService
 		bim.setQuantity(payload.getQuantity());
 	}
 
-	private void exitIfCombinationExists(BOQRequestData payload) throws Exception
+	private void exitIfCombinationExists(BOQCreateRequestData payload) throws Exception
 	{
 		if (payload.getBoqType().equals(BOQLocationTypeEnum.BuildingType))
 		{
@@ -76,7 +144,7 @@ public class BOQInventoryMappingService
 		}
 	}
 
-	private void validatePayload(BOQRequestData payload) throws Exception
+	private void validatePayload(BOQCreateRequestData payload) throws Exception
 	{
 		if (payload.getBoqType() == null)
 			throw new Exception("BOQ Type cannot be null or empty");
@@ -99,6 +167,47 @@ public class BOQInventoryMappingService
 		{
 			if (!lRepo.existsById(payload.getId()))
 				throw new Exception("Building Unit not found with ID -" + payload.getId());
+		} else
+		{
+			throw new Exception("Unknown type for field boqtype");
 		}
+		if (payload.getQuantity() == 0)
+			throw new Exception("Quantity cannot be zero or empty. Please input valid quantity");
+	}
+
+	public List<IdNameProjections> getProductListForDropdown(BOQLocationTypeEnum boqType, Long id) throws Exception
+	{
+		List<IdNameProjections> masterProductList = pRepo.findIdAndNames();
+		List<IdNameProjections> usedProductList = new ArrayList<IdNameProjections>();
+		List<IdNameProjections> finalList = new ArrayList<IdNameProjections>();
+		if (boqType.equals(BOQLocationTypeEnum.BuildingType))
+		{
+			if (!btRepo.existsById(id))
+				throw new Exception("Building Type not found with ID - " + id);
+			usedProductList = bimRepo.findUsedProductListForType(id);
+		} else if (boqType.equals(BOQLocationTypeEnum.BuildingUnit))
+		{
+			if (!lRepo.existsById(id))
+				throw new Exception("Building Unit not found with ID - " + id);
+			usedProductList = bimRepo.findUsedProductListForUnit(id);
+		}
+		if (usedProductList == null)
+			throw new Exception("Not able to fetch used product list");
+
+		for (IdNameProjections i : masterProductList)
+		{
+			boolean isPresent = false;
+			for (IdNameProjections j : usedProductList)
+			{
+				if (i.getId().equals(j.getId()))
+				{
+					isPresent = true;
+					break;
+				}
+			}
+			if (!isPresent)
+				finalList.add(i);
+		}
+		return finalList;
 	}
 }

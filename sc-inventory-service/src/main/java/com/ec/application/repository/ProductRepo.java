@@ -43,4 +43,5 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit) from Product m")
 	List<IdNameAndUnit> getProductMeasurementUnit();
+
 }
