@@ -155,4 +155,12 @@ public class LocationService
 		return locationRepo.getNamesForTypeAhead(str);
 	}
 
+	public List<IdNameProjections> getLocationsUnderType(Long id) throws Exception
+	{
+		if (id == null)
+			throw new Exception("Please provide valid TypeID");
+		List<IdNameProjections> locations = locationRepo.getByBuildingType(id);
+		return locations;
+	}
+
 }

@@ -39,4 +39,7 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 	@Query(value = "SELECT count(m) from UsageLocation m where m.buildingType.typeId=:typeId")
 	int getBuildingTypeUsageCount(@Param("typeId") Long typeId);
 
+	@Query(value = "SELECT locationId as id,locationName as name from UsageLocation m where m.buildingType.typeId=:typeId order by name")
+	List<IdNameProjections> getByBuildingType(@Param("typeId") Long typeId);
+
 }
