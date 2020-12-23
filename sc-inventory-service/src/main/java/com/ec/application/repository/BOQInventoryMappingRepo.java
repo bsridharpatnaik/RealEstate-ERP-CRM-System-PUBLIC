@@ -28,10 +28,10 @@ public interface BOQInventoryMappingRepo extends BaseRepository<BOQInventoryMapp
 	@Query(value = "SELECT m from BOQInventoryMapping m where m.location=:ul AND m.product.productId=:productId")
 	List<BOQInventoryMapping> findByLocationProduct(@Param("ul") UsageLocation ul, @Param("productId") Long productId);
 
-	@Query(value = "SELECT m from BOQInventoryMapping m where m.buildingType.typeId=:typeId order by m.product.productName")
+	@Query(value = "SELECT m from BOQInventoryMapping m where m.buildingType.typeId=:typeId order by m.lastModifiedDate")
 	List<BOQInventoryMapping> getBIMbyType(@Param("typeId") Long typeId);
 
-	@Query(value = "SELECT m from BOQInventoryMapping m where m.location.locationId=:locationId order by m.product.productName")
+	@Query(value = "SELECT m from BOQInventoryMapping m where m.location.locationId=:locationId order by m.lastModifiedDate")
 	List<BOQInventoryMapping> getBIMbyLocation(@Param("locationId") Long locationId);
 
 	@Query(value = "SELECT bim.product.productId as id,bim.product.productName as name from BOQInventoryMapping bim WHERE bim.buildingType.typeId=:typeId")
