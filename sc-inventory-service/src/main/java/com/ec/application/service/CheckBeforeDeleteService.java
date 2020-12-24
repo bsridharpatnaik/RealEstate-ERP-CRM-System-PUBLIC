@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.repository.BOQInventoryMappingRepo;
 import com.ec.application.repository.InwardInventoryRepo;
 import com.ec.application.repository.InwardOutwardListRepo;
 import com.ec.application.repository.LocationRepo;
@@ -53,7 +54,10 @@ public class CheckBeforeDeleteService
 	@Autowired
 	LocationRepo locationRepo;
 
-	Logger log = LoggerFactory.getLogger(CheckBeforeDeleteService.class);
+	@Autowired
+	BOQInventoryMappingRepo bimRepo;
+
+	Logger log = LoggerFactory.getLogger(ContactService.class);
 
 	public boolean isContactUsed(Long contactId) throws Exception
 	{
@@ -69,7 +73,7 @@ public class CheckBeforeDeleteService
 	public boolean isProductUsed(Long productId) throws Exception
 	{
 		if (stockRepo.productUsageCount(productId) > 0 || lostDamagedInventoryRepo.productUsageCount(productId) > 0
-				|| inwardOutwardListRepo.productUsageCount(productId) > 0)
+				|| inwardOutwardListRepo.productUsageCount(productId) > 0 || bimRepo.productUsageCount(productId) > 0)
 			return true;
 		else
 			return false;
@@ -95,7 +99,8 @@ public class CheckBeforeDeleteService
 	public boolean isLocationUsed(Long locationId) throws Exception
 	{
 		if (machineryOnRentRepo.locationUsageCount(locationId) > 0
-				|| outwardInventoryRepo.locationUsageCount(locationId) > 0)
+				|| outwardInventoryRepo.locationUsageCount(locationId) > 0
+				|| bimRepo.locationUsageCount(locationId) > 0)
 			return true;
 		else
 			return false;
@@ -138,7 +143,7 @@ public class CheckBeforeDeleteService
 
 	public boolean isBuildingTypeUsed(Long id)
 	{
-		if (locationRepo.getBuildingTypeUsageCount(id) > 0)
+		if (locationRepo.getBuildingTypeUsageCount(id) > 0 || bimRepo.buildingTypeUsageCount(id) > 0)
 			return true;
 		else
 			return false;

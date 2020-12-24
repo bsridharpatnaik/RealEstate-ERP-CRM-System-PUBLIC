@@ -7,6 +7,8 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -63,21 +65,21 @@ public class BOQInventoryMappingService
 		bimRepo.softDeleteById(id);
 	}
 
-	public List<BOQInventoryMapping> getBOQByType(Long id) throws Exception
+	public Page<BOQInventoryMapping> getBOQByType(Long id, Pageable pageable) throws Exception
 	{
 		if (!btRepo.existsById(id))
 			throw new Exception("Building Type record not found with ID - " + id);
 
-		List<BOQInventoryMapping> bimList = bimRepo.getBIMbyType(id);
+		Page<BOQInventoryMapping> bimList = bimRepo.getBIMbyType(id, pageable);
 		return bimList;
 	}
 
-	public List<BOQInventoryMapping> getBOQByLocation(Long id) throws Exception
+	public Page<BOQInventoryMapping> getBOQByLocation(Long id, Pageable pageable) throws Exception
 	{
 		if (!lRepo.existsById(id))
 			throw new Exception("Building Unit record not found with ID - " + id);
 
-		List<BOQInventoryMapping> bimList = bimRepo.getBIMbyLocation(id);
+		Page<BOQInventoryMapping> bimList = bimRepo.getBIMbyLocation(id, pageable);
 		return bimList;
 	}
 

@@ -3,6 +3,10 @@ package com.ec.application.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -79,16 +83,20 @@ public class BOQInventoryController
 
 	@GetMapping("/bytype/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public List<BOQInventoryMapping> getBOQByType(@PathVariable Long id) throws Exception
+	public Page<BOQInventoryMapping> getBOQByType(@PathVariable Long id,
+			@PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Direction.DESC) Pageable pageable)
+			throws Exception
 	{
-		return bimService.getBOQByType(id);
+		return bimService.getBOQByType(id, pageable);
 	}
 
 	@GetMapping("/byunit/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public List<BOQInventoryMapping> getBOQByLocation(@PathVariable Long id) throws Exception
+	public Page<BOQInventoryMapping> getBOQByLocation(@PathVariable Long id,
+			@PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Direction.DESC) Pageable pageable)
+			throws Exception
 	{
-		return bimService.getBOQByLocation(id);
+		return bimService.getBOQByLocation(id, pageable);
 	}
 
 	@GetMapping("/getproductlist/{id}")
