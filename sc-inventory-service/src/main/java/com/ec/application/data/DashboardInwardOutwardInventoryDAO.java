@@ -2,16 +2,20 @@ package com.ec.application.data;
 
 import java.util.Date;
 
-public class DashboardInwardOutwardInventoryDAO 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+public class DashboardInwardOutwardInventoryDAO
 {
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date date;
 	Double quantity;
 	String productName;
 	String warehouseName;
 	String name;
-	
-	public DashboardInwardOutwardInventoryDAO(Date date, String productName,Double quantity, String warehouseName,
-			String name) {
+
+	public DashboardInwardOutwardInventoryDAO(Date date, String productName, Double quantity, String warehouseName,
+			String name)
+	{
 		super();
 		this.date = date;
 		this.quantity = quantity;
@@ -19,36 +23,55 @@ public class DashboardInwardOutwardInventoryDAO
 		this.warehouseName = warehouseName;
 		this.name = name;
 	}
-	
-	public Date getDate() {
+
+	public Date getDate()
+	{
 		return date;
 	}
-	public void setDate(Date date) {
+
+	public void setDate(Date date)
+	{
 		this.date = date;
 	}
-	public Double getQuantity() {
+
+	public Double getQuantity()
+	{
 		return quantity;
 	}
-	public void setQuantity(Double quantity) {
+
+	public void setQuantity(Double quantity)
+	{
 		this.quantity = quantity;
 	}
-	public String getProductName() {
+
+	public String getProductName()
+	{
 		return productName;
 	}
-	public void setProductName(String productName) {
+
+	public void setProductName(String productName)
+	{
 		this.productName = productName;
 	}
-	public String getWarehouseName() {
+
+	public String getWarehouseName()
+	{
 		return warehouseName;
 	}
-	public void setWarehouseName(String warehouseName) {
+
+	public void setWarehouseName(String warehouseName)
+	{
 		this.warehouseName = warehouseName;
 	}
-	public String getName() {
+
+	public String getName()
+	{
 		return name;
 	}
-	public void setName(String name) {
+
+	public void setName(String name)
+	{
 		this.name = name;
 	}
-	
+
 }
