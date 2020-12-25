@@ -61,6 +61,7 @@ public class PopulateDropdownService
 			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
 			morDropdownDataList.setMachinery(machineryRepo.findIdAndNames());
 			morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
 			break;
 		// case inward inventory
 		case "inward":

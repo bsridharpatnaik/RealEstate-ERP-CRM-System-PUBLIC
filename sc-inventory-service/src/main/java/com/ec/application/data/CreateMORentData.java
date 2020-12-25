@@ -7,6 +7,7 @@ import org.springframework.lang.NonNull;
 
 import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
 import com.ec.application.Deserializers.ToUpperCaseDeserializer;
+import com.ec.application.model.MORRentModeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -25,8 +26,9 @@ public class CreateMORentData
 	@NonNull
 	private Long machineryId;
 
-	@NonNull
-	private Long contactId;
+	private Long supplierId;
+
+	private Long contractorId;
 
 	@NonNull
 	private Long locationId;
@@ -37,12 +39,18 @@ public class CreateMORentData
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	private Date endDate;
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	private Date startDateTime;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	private Date endDateTime;
+
 	Double initialMeterReading;
 	Double endMeterReading;
 	Double noOfTrips;
 	Double amountCharged;
 	@NonNull
-	String mode;
+	MORRentModeEnum mode;
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String vehicleNo;
 	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)

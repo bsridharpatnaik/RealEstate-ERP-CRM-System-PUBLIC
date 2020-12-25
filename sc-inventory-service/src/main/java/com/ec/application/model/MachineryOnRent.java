@@ -26,10 +26,15 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Entity
-@Table(name = "machinery_on_rent")
+@Table(name = "machineryonrent")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Data
+@NoArgsConstructor
 public class MachineryOnRent extends ReusableFields
 {
 
@@ -49,10 +54,16 @@ public class MachineryOnRent extends ReusableFields
 	Machinery machinery;
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "contact_id", nullable = false)
+	@JoinColumn(name = "supplierId", referencedColumnName = "contactId", nullable = true)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
 	Supplier supplier;
+
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "contractorId", referencedColumnName = "contactId", nullable = true)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	Contractor contractor;
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "locationId", nullable = true)
@@ -64,7 +75,15 @@ public class MachineryOnRent extends ReusableFields
 
 	String additionalNotes;
 
-	String mode;
+	MORRentModeEnum mode;
+
+	@JsonProperty("startDateTime")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	Date startDateTime;
+
+	@JsonProperty("endDateTime")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	Date endDateTime;
 
 	@JsonProperty("startDate")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -85,165 +104,4 @@ public class MachineryOnRent extends ReusableFields
 	Double noOfTrips;
 	Double rate;
 	Double amountCharged;
-
-	public Double getRate()
-	{
-		return rate;
-	}
-
-	public void setRate(Double rate)
-	{
-		this.rate = rate;
-	}
-
-	public Long getMorid()
-	{
-		return morid;
-	}
-
-	public void setMorid(Long morid)
-	{
-		this.morid = morid;
-	}
-
-	public Set<FileInformation> getFileInformations()
-	{
-		return fileInformations;
-	}
-
-	public void setFileInformations(Set<FileInformation> fileInformations)
-	{
-		this.fileInformations = fileInformations;
-	}
-
-	public Date getDate()
-	{
-		return date;
-	}
-
-	public void setDate(Date date)
-	{
-		this.date = date;
-	}
-
-	public Machinery getMachinery()
-	{
-		return machinery;
-	}
-
-	public void setMachinery(Machinery machinery)
-	{
-		this.machinery = machinery;
-	}
-
-	public Supplier getSupplier()
-	{
-		return supplier;
-	}
-
-	public void setSupplier(Supplier supplier)
-	{
-		this.supplier = supplier;
-	}
-
-	public UsageLocation getUsageLocation()
-	{
-		return usageLocation;
-	}
-
-	public void setUsageLocation(UsageLocation usageLocation)
-	{
-		this.usageLocation = usageLocation;
-	}
-
-	public String getVehicleNo()
-	{
-		return vehicleNo;
-	}
-
-	public void setVehicleNo(String vehicleNo)
-	{
-		this.vehicleNo = vehicleNo;
-	}
-
-	public String getAdditionalNotes()
-	{
-		return additionalNotes;
-	}
-
-	public void setAdditionalNotes(String additionalNotes)
-	{
-		this.additionalNotes = additionalNotes;
-	}
-
-	public String getMode()
-	{
-		return mode;
-	}
-
-	public void setMode(String mode)
-	{
-		this.mode = mode;
-	}
-
-	public Date getStartDate()
-	{
-		return startDate;
-	}
-
-	public void setStartDate(Date startDate)
-	{
-		this.startDate = startDate;
-	}
-
-	public Date getEndDate()
-	{
-		return endDate;
-	}
-
-	public void setEndDate(Date endDate)
-	{
-		this.endDate = endDate;
-	}
-
-	public Double getInitialMeterReading()
-	{
-		return initialMeterReading;
-	}
-
-	public void setInitialMeterReading(Double initialMeterReading)
-	{
-		this.initialMeterReading = initialMeterReading;
-	}
-
-	public Double getEndMeterReading()
-	{
-		return endMeterReading;
-	}
-
-	public void setEndMeterReading(Double endMeterReading)
-	{
-		this.endMeterReading = endMeterReading;
-	}
-
-	public Double getNoOfTrips()
-	{
-		return noOfTrips;
-	}
-
-	public void setNoOfTrips(Double noOfTrips)
-	{
-		this.noOfTrips = noOfTrips;
-	}
-
-	public Double getAmountCharged()
-	{
-		return amountCharged;
-	}
-
-	public void setAmountCharged(Double amountCharged)
-	{
-		this.amountCharged = amountCharged;
-	}
-
 }
