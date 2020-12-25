@@ -48,7 +48,7 @@ public class InwardInventoryController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public ReturnInwardInventoryData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
 			throws Exception
 	{
 

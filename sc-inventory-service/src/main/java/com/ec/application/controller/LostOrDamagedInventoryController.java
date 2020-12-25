@@ -41,7 +41,7 @@ public class LostOrDamagedInventoryController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public LostDamagedReturnData returnAllLostDamaged(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
 			throws ParseException
 	{
 		return lostDamagedInventoryService.findFiilteredostDamagedList(filterDataList, pageable);

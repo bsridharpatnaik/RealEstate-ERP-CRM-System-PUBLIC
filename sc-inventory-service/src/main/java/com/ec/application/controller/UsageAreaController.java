@@ -37,7 +37,7 @@ public class UsageAreaController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public AllUsageAreasWithNamesData returnFilteredCategories(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
 	{
 		return usageAreaService.findFilteredUsageAreasWithTA(filterDataList, pageable);
 	}

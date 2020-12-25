@@ -40,7 +40,7 @@ public class ProductController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public Page<Product> returnFilteredProducts(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
 			throws ParseException
 	{
 		return productService.findFilteredProductsWithTA(filterDataList, pageable);

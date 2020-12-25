@@ -39,7 +39,7 @@ public class LocationController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public Page<UsageLocation> returnFilteredLocations(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
 	{
 		return locationService.findFilteredLocationsWithTA(filterDataList, pageable);
 	}

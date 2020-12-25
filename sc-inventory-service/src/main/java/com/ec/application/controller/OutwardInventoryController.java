@@ -26,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO;
-import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.data.ReturnOutwardInventoryData;
+import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
 import com.ec.common.Filters.FilterDataList;
@@ -55,8 +55,8 @@ public class OutwardInventoryController
 
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.ACCEPTED)
-	public OutwardInventory setReturnOutwardInventory(@PathVariable Long id, @RequestBody ReturnRejectInwardOutwardData rd,
-			@RequestParam String type) throws Exception
+	public OutwardInventory setReturnOutwardInventory(@PathVariable Long id,
+			@RequestBody ReturnRejectInwardOutwardData rd, @RequestParam String type) throws Exception
 	{
 		if (type == null)
 			throw new Exception("Please provide type (Return/Reject)");
@@ -66,7 +66,7 @@ public class OutwardInventoryController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public ReturnOutwardInventoryData fetchAllOutwardInventory(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
 			throws ParseException
 	{
 		return oiService.fetchOutwardnventory(filterDataList, pageable);

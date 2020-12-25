@@ -37,7 +37,7 @@ public class MachineryController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public AllMachineriesWithNamesData returnFilteredMachineries(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "createdBy", direction = Direction.DESC) Pageable pageable)
+			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
 	{
 		return machineryService.findFilteredMachineriesWithTA(filterDataList, pageable);
 	}
