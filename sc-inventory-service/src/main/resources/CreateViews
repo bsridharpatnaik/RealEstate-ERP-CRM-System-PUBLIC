@@ -1,4 +1,4 @@
-use suncitynx;-- ,kalpavrish,riddhisiddhi,smartcity,galaxyheights;
+use galaxyheights; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,galaxyheights;
 
 -- All Inventory
 
@@ -68,6 +68,7 @@ SELECT
 		inner join Product p on p.Productid = tx.Productid
   ORDER  BY tx.date DESC;
   
+  
   -- --------- Stock Verification ------------
   create or replace view stock_verification as
 SELECT inw.inventory, 
@@ -83,7 +84,7 @@ FROM   (SELECT p.product_name AS inventory,
                        ON iie.inwardid = ii.inwardid 
                INNER JOIN inward_outward_entries ioe 
                        ON ioe.entryid = iie.entryid 
-               INNER JOIN product p 
+               INNER JOIN Product p 
                        ON p.productid = ioe.productid 
         WHERE  ii.is_deleted = 0 
         GROUP  BY p.product_name) AS inw 
@@ -94,15 +95,15 @@ FROM   (SELECT p.product_name AS inventory,
                                   ON oie.outwardid = oi.outwardid 
                           INNER JOIN inward_outward_entries ioe 
                                   ON ioe.entryid = oie.entryid 
-                          INNER JOIN product p 
+                          INNER JOIN Product p 
                                   ON p.productid = ioe.productid 
                    WHERE  oi.is_deleted = 0 
                    GROUP  BY p.product_name) AS outw 
                ON outw.inventory = inw.inventory 
        INNER JOIN (SELECT p.product_name          AS inventory, 
                           Sum(s.quantityinhand) AS current_stock 
-                   FROM   stock s 
-                          INNER JOIN product p 
+                   FROM   Stock s 
+                          INNER JOIN Product p 
                                   ON p.productid = s.productid 
                    GROUP  BY p.product_name) AS stock 
                ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0; 
