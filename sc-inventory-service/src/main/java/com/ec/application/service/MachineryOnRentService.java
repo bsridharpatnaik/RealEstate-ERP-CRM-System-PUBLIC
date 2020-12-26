@@ -17,7 +17,6 @@ import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.MORRentModeEnum;
 import com.ec.application.model.MachineryOnRent;
-import com.ec.application.model.UsageLocation;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
@@ -199,7 +198,6 @@ public class MachineryOnRentService
 	private MachineryOnRent populateData(MachineryOnRent machineryOnRent, CreateMORentData payload) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		Optional<UsageLocation> locationOpt = locationRepo.findById(payload.getLocationId());
 
 		if (payload.getSupplierId() != null)
 			machineryOnRent.setSupplier(supplierRepo.findById(payload.getSupplierId()).get());

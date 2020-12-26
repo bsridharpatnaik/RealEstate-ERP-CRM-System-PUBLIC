@@ -30,7 +30,6 @@ public class CreateMORentData
 
 	private Long contractorId;
 
-	@NonNull
 	private Long locationId;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
