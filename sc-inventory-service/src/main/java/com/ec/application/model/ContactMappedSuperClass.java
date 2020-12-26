@@ -55,9 +55,13 @@ public class ContactMappedSuperClass
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String contactPerson;
 	String contactPersonMobileNo;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String addr_line1;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String addr_line2;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String city;
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String state;
 	String zip;
 
