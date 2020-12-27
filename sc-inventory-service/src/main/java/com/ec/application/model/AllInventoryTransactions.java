@@ -12,7 +12,9 @@ import org.hibernate.annotations.Subselect;
 import org.hibernate.envers.Audited;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
+import com.ec.application.Deserializers.ToUpperCaseDeserializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Entity
@@ -33,6 +35,7 @@ public class AllInventoryTransactions implements Serializable
 	String id;
 
 	@Column(name = "type")
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String type;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -46,6 +49,7 @@ public class AllInventoryTransactions implements Serializable
 	String productName;
 
 	@Column(name = "measurementunit")
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String measurementUnit;
 
 	@Column(name = "warehouseid")

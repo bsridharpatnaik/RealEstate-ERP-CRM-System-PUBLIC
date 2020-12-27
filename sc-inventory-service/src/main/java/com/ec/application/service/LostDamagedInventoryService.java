@@ -3,8 +3,6 @@ package com.ec.application.service;
 import java.text.ParseException;
 import java.util.Optional;
 
-import javax.transaction.Transactional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
@@ -54,7 +53,7 @@ public class LostDamagedInventoryService
 
 	Logger log = LoggerFactory.getLogger(LostDamagedInventoryService.class);
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public LostDamagedInventory createData(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -84,6 +83,7 @@ public class LostDamagedInventoryService
 		return lostDamagedReturnData;
 	}
 
+	@Transactional(rollbackFor = Exception.class)
 	private Double adjustStockBeforeCreate(CreateLostOrDamagedInventoryData payload) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -104,7 +104,7 @@ public class LostDamagedInventoryService
 		lostDamagedInventory.setAdditionalComment(payload.getAdditionalComment());
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public LostDamagedInventory UpdateData(CreateLostOrDamagedInventoryData payload, Long id) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -146,7 +146,7 @@ public class LostDamagedInventoryService
 		return lostDamagedInventory;
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public void DeleteData(Long id) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -158,6 +158,7 @@ public class LostDamagedInventoryService
 		lostDamagedInventoryRepo.softDeleteById(id);
 	}
 
+	@Transactional(rollbackFor = Exception.class)
 	private void AdjustStockBeforeDelete(LostDamagedInventory lostDamagedInventory) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
