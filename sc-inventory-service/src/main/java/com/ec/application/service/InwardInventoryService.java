@@ -79,18 +79,24 @@ public class InwardInventoryService
 
 	Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
-	@Transactional
+	public static Long editAllowedDays = (long) 0;
+	public static Long createAllowedDays = (long) 2;
+	public static String createCode = "create";
+	public static String updateCode = "update";
+
+	@Transactional(rollbackFor = Exception.class)
 	public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		InwardInventory inwardInventory = new InwardInventory();
-		validateInputs(iiData);
+		validateInputs(iiData, createCode);
 		setFields(inwardInventory, iiData);
 		updateStockForCreateInwardInventory(inwardInventory);
+		updateOldClosingStockBeforeCreation(iiData);
 		return inwardInventoryRepo.save(inwardInventory);
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	private void updateStockForCreateInwardInventory(InwardInventory inwardInventory) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -104,6 +110,16 @@ public class InwardInventoryService
 			Double closingStock = stockService.updateStock(productId, warehouseName, quantity, "inward");
 			oiList.setClosingStock(closingStock);
 		}
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	private void updateOldClosingStockBeforeCreation(InwardInventoryData iiData)
+	{
+		if (iiData.getDate().before(ReusableMethods.atStartOfDay(new Date())))
+		{
+			log.info("II Date is an old date. Triggering closing stock update logic");
+		} else
+			log.info("II Date is an current  date. Skippping closing stock update logic");
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -213,11 +229,12 @@ public class InwardInventoryService
 		return inwardOutwardListSet;
 	}
 
-	private void validateInputs(InwardInventoryData iiData) throws Exception
+	private void validateInputs(InwardInventoryData iiData, String actionType) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (iiData.getPurchaseOrderDate() == null)
 			throw new Exception("Purchase Order Date is a mandatory field");
+
 		for (ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities())
 		{
 			if (!productRepo.existsById(productWithQuantity.getProductId()))
@@ -227,6 +244,7 @@ public class InwardInventoryService
 		}
 		if (!supplierRepo.existsById(iiData.getSupplierId()))
 			throw new Exception("Supplier not found with ID");
+
 		if (!warehouseRepo.existsById(iiData.getWarehouseId()))
 			throw new Exception("Warehouse not found");
 
@@ -236,6 +254,15 @@ public class InwardInventoryService
 
 		if (duplicateProductIdCount > 0)
 			throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
+
+		if (actionType.equals(updateCode))
+		{
+			if (ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date()) > editAllowedDays)
+				throw new Exception("Cannot edit records which are greater than " + editAllowedDays + " days old.");
+		} else if (actionType.equals(createCode))
+			if (ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date()) > createAllowedDays)
+				throw new Exception("Cannot create records which are greater than " + createAllowedDays + " days old.");
+
 	}
 
 	public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList, Pageable pageable)
@@ -353,13 +380,39 @@ public class InwardInventoryService
 		Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
 		if (!inwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
-		validateInputs(iiData);
+		validateInputs(iiData, updateCode);
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
 		InwardInventory oldInwardInventory = (InwardInventory) inwardInventory.clone();
+		exitIfFixedFieldsAreModified(inwardInventory, iiData);
 		setFields(inwardInventory, iiData);
 		modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
 		return inwardInventoryRepo.save(inwardInventory);
 
+	}
+
+	@Transactional
+	private void exitIfFixedFieldsAreModified(InwardInventory inwardInventory, InwardInventoryData iiData)
+			throws Exception
+	{
+		// do not allow edit if record is 2 days ago
+
+		if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > 2)
+			throw new Exception("Cannot modify record that is created greater than 2 days ago.");
+		// Exit if date is modified
+		if (!iiData.getDate().equals(inwardInventory.getDate()))
+			throw new Exception("Date should not be modified while updating inward inventory record");
+
+		if (!iiData.getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
+			throw new Exception("Warehouse should not be modified while updating inward inventory record");
+
+		List<Long> productsInPayload = iiData.getProductWithQuantities().stream().map(ProductWithQuantity::getProductId)
+				.collect(Collectors.toList());
+
+		List<Long> productsInExistingRecord = inwardInventory.getInwardOutwardList().stream()
+				.map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
+		if (!(productsInPayload.containsAll(productsInExistingRecord)
+				&& productsInPayload.size() == productsInExistingRecord.size()))
+			throw new Exception("Inventory List should not be modified while updating an inward inventory record");
 	}
 
 	@Transactional

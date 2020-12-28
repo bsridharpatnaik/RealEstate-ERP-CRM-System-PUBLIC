@@ -30,6 +30,7 @@ import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.OutwardInventory_;
+import com.ec.application.model.Product;
 import com.ec.application.model.RejectOutwardList;
 import com.ec.application.model.ReturnOutwardList;
 import com.ec.application.model.Warehouse;
@@ -88,12 +89,17 @@ public class OutwardInventoryService
 
 	Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
+	public static Long editAllowedDays = (long) 0;
+	public static Long createAllowedDays = (long) 2;
+	public static String createCode = "create";
+	public static String updateCode = "update";
+
 	@Transactional(rollbackFor = Exception.class)
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
 	{
 		log.info("Invoked createOutwardnventory with payload -" + oiData.toString());
 		OutwardInventory outwardInventory = new OutwardInventory();
-		validateInputs(oiData);
+		validateInputs(oiData, createCode);
 		setFields(outwardInventory, oiData);
 		updateStockForCreateOutwardInventory(outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
@@ -226,14 +232,40 @@ public class OutwardInventoryService
 		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
 		if (!outwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
-		validateInputs(iiData);
+		validateInputs(iiData, updateCode);
 		exitIfReturnExists(outwardInventoryOpt.get(), iiData);
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
+		exitIfFixedFieldsAreModified(outwardInventory, iiData);
 		setFields(outwardInventory, iiData);
 		modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
 
+	}
+
+	@Transactional
+	private void exitIfFixedFieldsAreModified(OutwardInventory outwardInventory, OutwardInventoryData oiData)
+			throws Exception
+	{
+		if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > 2)
+			throw new Exception("Cannot edit record that is created greater than 2 days ago.");
+
+		// Exit if date is modified
+		if (!oiData.getDate().equals(outwardInventory.getDate()))
+			throw new Exception("Date should not be modified while updating outward inventory");
+
+		// Exit if Warehouse is modified
+		if (!oiData.getWarehouseId().equals(outwardInventory.getWarehouse().getWarehouseId()))
+			throw new Exception("Warehouse should not be modified while updating outward inventory");
+
+		List<Long> productsInPayload = oiData.getProductWithQuantities().stream().map(ProductWithQuantity::getProductId)
+				.collect(Collectors.toList());
+
+		List<Long> productsInExistingRecord = outwardInventory.getInwardOutwardList().stream()
+				.map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
+		if (!(productsInPayload.containsAll(productsInExistingRecord)
+				&& productsInPayload.size() == productsInExistingRecord.size()))
+			throw new Exception("Inventory List should not be modified while updating an outward inventory record");
 	}
 
 	private void exitIfReturnExists(OutwardInventory outwardInventory, OutwardInventoryData iiData) throws Exception
@@ -425,7 +457,7 @@ public class OutwardInventoryService
 		log.info("Exited setFields");
 	}
 
-	private void validateInputs(OutwardInventoryData oiData) throws Exception
+	private void validateInputs(OutwardInventoryData oiData, String code) throws Exception
 	{
 		log.info("Invoked validateInputs");
 		if (!locationRepo.existsById(oiData.getUsageLocationId()))
@@ -436,6 +468,7 @@ public class OutwardInventoryService
 			throw new Exception("Contractor not found.");
 		if (!usageAreaRepo.existsById(oiData.getUsageAreaId()))
 			throw new Exception("Usage Area not found.");
+
 		Long duplicateProductIdCount = oiData.getProductWithQuantities().stream()
 				.collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
 				.filter(e -> e.getValue() > 1).count();
@@ -449,6 +482,14 @@ public class OutwardInventoryService
 			if (productWithQuantity.getQuantity() <= 0)
 				throw new Exception("Quantity should be greater than zero");
 		}
+
+		if (code.equals(updateCode))
+		{
+			if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > editAllowedDays)
+				throw new Exception("Cannot edit records which are greater than " + editAllowedDays + " days old.");
+		} else if (code.equals(createCode))
+			if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > createAllowedDays)
+				throw new Exception("Cannot create records on past greater greater than " + createAllowedDays + " old");
 		log.info("Exited validateInputs");
 	}
 

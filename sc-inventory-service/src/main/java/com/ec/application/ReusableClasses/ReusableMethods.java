@@ -3,6 +3,11 @@ package com.ec.application.ReusableClasses;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -124,5 +129,35 @@ public final class ReusableMethods
 		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 		sdf.setTimeZone(TimeZone.getTimeZone("IST"));
 		return sdf.format(date);
+	}
+
+	public static Date atStartOfDay(Date date)
+	{
+		LocalDateTime localDateTime = dateToLocalDateTime(date);
+		LocalDateTime startOfDay = localDateTime.with(LocalTime.MIN);
+		return localDateTimeToDate(startOfDay);
+	}
+
+	public static Date atEndOfDay(Date date)
+	{
+		LocalDateTime localDateTime = dateToLocalDateTime(date);
+		LocalDateTime endOfDay = localDateTime.with(LocalTime.MAX);
+		return localDateTimeToDate(endOfDay);
+	}
+
+	private static LocalDateTime dateToLocalDateTime(Date date)
+	{
+		return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+	}
+
+	private static Date localDateTimeToDate(LocalDateTime localDateTime)
+	{
+		return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+	}
+
+	public static long daysBetweenTwoDates(Date dateFrom, Date dateTo)
+	{
+		return ChronoUnit.DAYS.between(Instant.ofEpochMilli(dateFrom.getTime()),
+				Instant.ofEpochMilli(dateTo.getTime()));
 	}
 }

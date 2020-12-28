@@ -224,8 +224,8 @@ public class MachineryOnRentService
 			machineryOnRent.setNoOfTrips(null);
 			break;
 		case Hourly:
-			machineryOnRent.setStartDateTime(payload.getStartDate());
-			machineryOnRent.setEndDateTime(payload.getEndDate());
+			machineryOnRent.setStartDateTime(payload.getStartDateTime());
+			machineryOnRent.setEndDateTime(payload.getEndDateTime());
 			machineryOnRent.setEndDate(null);
 			machineryOnRent.setStartDate(null);
 			machineryOnRent.setInitialMeterReading(null);
