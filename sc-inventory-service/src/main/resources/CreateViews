@@ -1,6 +1,6 @@
 use galaxyheights; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,galaxyheights;
 
--- -------- All Inventory -------
+-- All Inventory --
 CREATE OR replace VIEW all_inventory AS
 SELECT
 		-- convert(func_inc_var_session(),char) AS id,
@@ -14,7 +14,7 @@ SELECT
          c.contacttype, 
          w.warehouse_id, 
          w.warehousename 
-  FROM   (SELECT 'inward'                         AS type, 
+  FROM   (SELECT 'Inward'                         AS type, 
 				ii.inwardid as keyid ,
 				ioe.entryid as entryid,
                  Date_format(ii.DATE, "%Y-%m-%d") AS date, 
@@ -32,7 +32,7 @@ SELECT
                          ON iie.entryid = ioe.entryid 
           WHERE  ii.is_deleted = 0 
           UNION ALL 
-          SELECT 'outward'                        AS type, 
+          SELECT 'Outward'                        AS type, 
                   oi.outwardid as keyid, 
                   ioe.entryid as entryid,
                  Date_format(oi.DATE, "%Y-%m-%d") AS date, 
@@ -50,7 +50,7 @@ SELECT
                          ON oie.entryid = ioe.entryid 
           WHERE  oi.is_deleted = 0 
           UNION ALL 
-          SELECT 'lost-damaged'                    AS type, 
+          SELECT 'Lost-Damaged'                    AS type, 
                 lostdamagedid as keyid, 
                 lostdamagedid as entryid,
                  Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
@@ -69,7 +69,6 @@ SELECT
                  ON w.warehouse_id = tx.warehouseid 
 		inner join Product p on p.Productid = tx.Productid
  ORDER  BY tx.date desc,tx.type desc,tx.keyid desc;
-  
   
   -- --------- Stock Verification ------------
   create or replace view stock_verification as
