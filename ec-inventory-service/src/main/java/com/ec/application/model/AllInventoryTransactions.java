@@ -96,20 +96,11 @@ public class AllInventoryTransactions implements Serializable
 	String updated;
 
 	@NotAudited
-	@Formula("(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='outward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)")
-	Double totalOutward;
-
-	@NotAudited
-	@Formula("(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='inward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)")
-	Double totalInward;
-
-	@NotAudited
-	@Formula("(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='lost/damaged' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)")
-	Double totalLostDamaged;
-
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	public double getClosingStock()
-	{
-		return this.totalInward - (this.totalOutward + this.totalLostDamaged);
-	}
+	@Formula("(select "
+			+ "(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='inward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)"
+			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai "
+			+ "where ai.type='outward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id) "
+			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='lost/damaged' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id))")
+	Double closingStock;
 }

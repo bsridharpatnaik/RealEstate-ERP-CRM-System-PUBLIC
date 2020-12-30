@@ -68,7 +68,7 @@ public class AllInventoryService
 		return machineryOnRentRepo.findForDashboard(pageable);
 	}
 
-	public AllInventoryTransactions getRecordByEntryId(Double value)
+	public AllInventoryTransactions getRecordByEntryId(Long value)
 	{
 		List<AllInventoryTransactions> list = allInventoryRepo.findByEntryId(value);
 		if (list.size() != 1)
