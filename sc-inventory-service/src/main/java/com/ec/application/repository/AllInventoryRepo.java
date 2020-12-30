@@ -2,7 +2,6 @@ package com.ec.application.repository;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,11 +15,15 @@ import com.ec.application.model.AllInventoryTransactions;
 public interface AllInventoryRepo extends BaseRepository<AllInventoryTransactions, String>
 {
 
-	//@Query(value="SELECT new com.ec.application.data.DashboardOutwardInventoryDAO(date,productName,quantity,warehouseName,name)  from AllInventoryTransactions m")
-	//List<DashboardInwardOutwardInventoryDAO> findForDashboard();
+	// @Query(value="SELECT new
+	// com.ec.application.data.DashboardOutwardInventoryDAO(date,productName,quantity,warehouseName,name)
+	// from AllInventoryTransactions m")
+	// List<DashboardInwardOutwardInventoryDAO> findForDashboard();
 
-	@Query(value="SELECT new com.ec.application.data.DashboardInwardOutwardInventoryDAO(date,productName,quantity,warehouseName,name)  "
+	@Query(value = "SELECT new com.ec.application.data.DashboardInwardOutwardInventoryDAO(date,productName,quantity,warehouseName,name)  "
 			+ "from AllInventoryTransactions m where m.type=:type")
-	List<DashboardInwardOutwardInventoryDAO> findForDashboard(@Param("type")String type, Pageable pageable);
+	List<DashboardInwardOutwardInventoryDAO> findForDashboard(@Param("type") String type, Pageable pageable);
 
+	@Query("select m from AllInventoryTransactions m where m.entryid=:entryId")
+	List<AllInventoryTransactions> findByEntryId(@Param("entryId") Long entryId);
 }

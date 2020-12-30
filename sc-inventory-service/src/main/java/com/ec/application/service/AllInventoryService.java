@@ -77,4 +77,13 @@ public class AllInventoryService
 		Pageable pageable = PageRequest.of(0, 5, Sort.by("creationDate").descending());
 		return machineryOnRentRepo.findForDashboard(pageable);
 	}
+
+	public AllInventoryTransactions getRecordByEntryId(Long value)
+	{
+		List<AllInventoryTransactions> list = allInventoryRepo.findByEntryId(value);
+		if (list.size() != 1)
+			return null;
+		else
+			return list.get(0);
+	}
 }

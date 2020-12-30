@@ -7,9 +7,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.Deserializers.ToUpperCaseDeserializer;
@@ -17,17 +19,17 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import lombok.Data;
+
 @Entity
 @Subselect("select * from all_inventory")
 @Immutable
 //@Table(name = "all_inventory")
 @Audited
+@Data
 public class AllInventoryTransactions implements Serializable
 {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -37,6 +39,12 @@ public class AllInventoryTransactions implements Serializable
 	@Column(name = "type")
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String type;
+
+	@Column(name = "keyid")
+	Long keyid;
+
+	@Column(name = "entryid")
+	Long entryid;
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@Column(name = "date")
@@ -62,10 +70,6 @@ public class AllInventoryTransactions implements Serializable
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
 
-	@Column(name = "closingstock")
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double closingStock;
-
 	@Column(name = "name")
 	String name;
 
@@ -89,173 +93,12 @@ public class AllInventoryTransactions implements Serializable
 	@Column(name = "lastModifiedDate")
 	String lastModifiedDate;
 
-	public String getId()
-	{
-		return id;
-	}
+	@NotAudited
+	@Formula("(select "
+			+ "(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='inward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)"
+			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai "
+			+ "where ai.type='outward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id) "
+			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='lost/damaged' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id))")
+	Double closingStock;
 
-	public void setId(String id)
-	{
-		this.id = id;
-	}
-
-	public String getType()
-	{
-		return type;
-	}
-
-	public void setType(String type)
-	{
-		this.type = type;
-	}
-
-	public Date getDate()
-	{
-		return date;
-	}
-
-	public void setDate(Date date)
-	{
-		this.date = date;
-	}
-
-	public Long getContactId()
-	{
-		return contactId;
-	}
-
-	public void setContactId(Long contactId)
-	{
-		this.contactId = contactId;
-	}
-
-	public String getProductName()
-	{
-		return productName;
-	}
-
-	public void setProductName(String productName)
-	{
-		this.productName = productName;
-	}
-
-	public String getMeasurementUnit()
-	{
-		return measurementUnit;
-	}
-
-	public void setMeasurementUnit(String measurementUnit)
-	{
-		this.measurementUnit = measurementUnit;
-	}
-
-	public Long getWarehouseId()
-	{
-		return warehouseId;
-	}
-
-	public void setWarehouseId(Long warehouseId)
-	{
-		this.warehouseId = warehouseId;
-	}
-
-	public Long getProductId()
-	{
-		return productId;
-	}
-
-	public void setProductId(Long productId)
-	{
-		this.productId = productId;
-	}
-
-	public Double getQuantity()
-	{
-		return quantity;
-	}
-
-	public void setQuantity(Double quantity)
-	{
-		this.quantity = quantity;
-	}
-
-	public Double getClosingStock()
-	{
-		return closingStock;
-	}
-
-	public void setClosingStock(Double closingStock)
-	{
-		this.closingStock = closingStock;
-	}
-
-	public String getName()
-	{
-		return name;
-	}
-
-	public void setName(String name)
-	{
-		this.name = name;
-	}
-
-	public String getMobileNo()
-	{
-		return mobileNo;
-	}
-
-	public void setMobileNo(String mobileNo)
-	{
-		this.mobileNo = mobileNo;
-	}
-
-	public String getEmailId()
-	{
-		return emailId;
-	}
-
-	public void setEmailId(String emailId)
-	{
-		this.emailId = emailId;
-	}
-
-	public String getContactType()
-	{
-		return contactType;
-	}
-
-	public void setContactType(String contactType)
-	{
-		this.contactType = contactType;
-	}
-
-	public String getWarehouseName()
-	{
-		return warehouseName;
-	}
-
-	public void setWarehouseName(String warehouseName)
-	{
-		this.warehouseName = warehouseName;
-	}
-
-	public String getCreated()
-	{
-		return creationDate;
-	}
-
-	public void setCreated(String created)
-	{
-		this.creationDate = created;
-	}
-
-	public String getUpdated()
-	{
-		return lastModifiedDate;
-	}
-
-	public void setUpdated(String updated)
-	{
-		this.lastModifiedDate = updated;
-	}
 }
