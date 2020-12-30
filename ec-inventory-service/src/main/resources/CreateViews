@@ -108,9 +108,10 @@ delimiter ;
 
 -- All Inventory
 
--- CREATE OR replace VIEW all_inventory AS
+CREATE OR replace VIEW all_inventory AS
 SELECT
 		-- convert(func_inc_var_session(),char) AS id,
+        row_number() over (ORDER BY tx.date desc,tx.type desc,tx.keyid desc) as id,
 		tx.*, 
 		p.product_name,
         p.measurement_unit,
@@ -121,7 +122,8 @@ SELECT
          w.warehouse_id, 
          w.warehouse_name 
   FROM   (SELECT 'inward'                         AS type, 
-                 concat(ii.inwardid,ioe.product_id)            AS id, 
+                ii.inwardid as keyid ,
+                ioe.entryid as entryid,
                  Date_format(ii.DATE, "%Y-%m-%d") AS date, 
                  ii.contact_id                    AS contactid, 
                  ii.warehouse_id                  AS warehouseid, 
@@ -138,8 +140,9 @@ SELECT
           WHERE  ii.is_deleted = 0 
           UNION ALL 
           SELECT 'outward'                        AS type, 
-                 -- oi.outwardid, 
-                 concat(oi.outwardid,ioe.product_id) ,
+                  oi.outwardid as keyid, 
+                 -- concat(oi.outwardid,ioe.product_id) ,
+                 ioe.entryid as entryid,
                  Date_format(oi.DATE, "%Y-%m-%d") AS date, 
                  oi.contact_id                    AS contactid, 
                  oi.warehouse_id                  AS warehouseid, 
@@ -155,8 +158,9 @@ SELECT
                          ON oie.entry_id = ioe.entryid 
           WHERE  oi.is_deleted = 0 
           UNION ALL 
-          SELECT 'lost/damaged'                    AS type, 
-                lostdamagedid as id, 
+          SELECT 'lost-damaged'                    AS type, 
+                lostdamagedid as keyid, 
+                lostdamagedid as entryid,
                  Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
                  ''                                AS contactid, 
                  ldi.warehouse_name                AS warehouseid, 
@@ -172,7 +176,8 @@ SELECT
          inner join warehouse w 
                  ON w.warehouse_id = tx.warehouseid 
 		inner join product p on p.product_id = tx.productid
-  ORDER  BY tx.date DESC;
+	
+  ORDER  BY tx.date desc,tx.type desc,tx.keyid desc;
   
   
   -- --------- Stock Verification ------------
