@@ -42,8 +42,10 @@ public class BuildingTypeService
 	{
 		validatePayload(payload);
 		long currentSize = buildingTypeRepo.count();
-		if (currentSize == 10)
-			throw new Exception("Limit reached. Cannot add more than 10 building types");
+		/*
+		 * if (currentSize == 10) throw new
+		 * Exception("Limit reached. Cannot add more than 10 building types");
+		 */
 		if (!buildingTypeRepo.existsBytypeName(payload.getTypeName().trim()))
 		{
 			buildingTypeRepo.save(payload);
