@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,8 +42,11 @@ public class BOQInventoryMappingService
 	@Autowired
 	ProductRepo pRepo;
 
+	Logger log = LoggerFactory.getLogger(BOQInventoryMappingService.class);
+
 	public void createNewBOQ(BOQCreateRequestData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		exitIfCombinationExists(payload);
 		BOQInventoryMapping bim = new BOQInventoryMapping();
@@ -51,6 +56,7 @@ public class BOQInventoryMappingService
 
 	public BOQInventoryMapping updateBOQ(BOQUpdateRequestData payload, Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validateUpdatePayload(payload, id);
 		BOQInventoryMapping bim = bimRepo.findById(id).get();
 		bim.setQuantity(payload.getQuantity());
@@ -60,6 +66,7 @@ public class BOQInventoryMappingService
 
 	public void deleteBOQEntry(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!bimRepo.existsById(id))
 			throw new Exception("BOQ Record not found with ID - " + id);
 		bimRepo.softDeleteById(id);
@@ -67,6 +74,7 @@ public class BOQInventoryMappingService
 
 	public Page<BOQInventoryMapping> getBOQByType(Long id, Pageable pageable) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!btRepo.existsById(id))
 			throw new Exception("Building Type record not found with ID - " + id);
 
@@ -76,6 +84,7 @@ public class BOQInventoryMappingService
 
 	public Page<BOQInventoryMapping> getBOQByLocation(Long id, Pageable pageable) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!lRepo.existsById(id))
 			throw new Exception("Building Unit record not found with ID - " + id);
 
@@ -85,6 +94,7 @@ public class BOQInventoryMappingService
 
 	public BOQInventoryMapping getOne(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (id == null)
 			throw new Exception("BOQ ID cannot be null or empty");
 
@@ -97,6 +107,7 @@ public class BOQInventoryMappingService
 
 	private void validateUpdatePayload(BOQUpdateRequestData payload, Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (id == null)
 			throw new Exception("BOQ ID cannot be null or empty for updating");
 
@@ -115,6 +126,7 @@ public class BOQInventoryMappingService
 
 	private void setFields(BOQInventoryMapping bim, BOQCreateRequestData payload)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getBoqType().equals(BOQLocationTypeEnum.BuildingType))
 		{
 			bim.setBuildingType(btRepo.findById(payload.getId()).get());
@@ -131,6 +143,7 @@ public class BOQInventoryMappingService
 
 	private void exitIfCombinationExists(BOQCreateRequestData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getBoqType().equals(BOQLocationTypeEnum.BuildingType))
 		{
 			BuildingType bt = btRepo.findById(payload.getId()).get();
@@ -148,6 +161,7 @@ public class BOQInventoryMappingService
 
 	private void validatePayload(BOQCreateRequestData payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getBoqType() == null)
 			throw new Exception("BOQ Type cannot be null or empty");
 
@@ -179,6 +193,7 @@ public class BOQInventoryMappingService
 
 	public List<IdNameProjections> getProductListForDropdown(BOQLocationTypeEnum boqType, Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		List<IdNameProjections> masterProductList = pRepo.findIdAndNames();
 		List<IdNameProjections> usedProductList = new ArrayList<IdNameProjections>();
 		List<IdNameProjections> finalList = new ArrayList<IdNameProjections>();

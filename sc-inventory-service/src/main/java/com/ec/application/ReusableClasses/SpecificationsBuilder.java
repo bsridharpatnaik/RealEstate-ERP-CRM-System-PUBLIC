@@ -97,6 +97,25 @@ public class SpecificationsBuilder<T>
 		return finalSpec;
 	}
 
+	public Specification<T> whereDirectFieldDoubleGreaterThan(String key, Double value)
+	{
+		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+				.greaterThan(root.get(key), value);
+		return internalSpec;
+	}
+
+	public Specification<T> whereDirectFieldLongFieldContains(String key, List<String> names)
+	{
+		Specification<T> finalSpec = null;
+		for (String name : names)
+		{
+			Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+					.equal(root.get(key), Long.parseLong(name));
+			finalSpec = specOrCondition(finalSpec, internalSpec);
+		}
+		return finalSpec;
+	}
+
 	// #######################################//
 	// Level 1 //
 	// #######################################//
@@ -205,4 +224,5 @@ public class SpecificationsBuilder<T>
 		}
 		return returnValue;
 	}
+
 }

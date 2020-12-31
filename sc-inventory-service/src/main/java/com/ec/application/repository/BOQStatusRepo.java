@@ -18,9 +18,21 @@ public interface BOQStatusRepo extends BaseRepository<BOQStatus, String>
 	Long getBOQCrossedCountForBT(@Param("typeId") Long typeId);
 
 	@Query(value = "SELECT COUNT(DISTINCT locationId) from BOQStatus m  where m.typeId=:typeId AND m.locationId IS NOT NULL")
-	Long getBOQTotalCountForBT(Long typeId);
+	Long getBOQTotalCountForBT(@Param("typeId") Long typeId);
 
 	@Query(value = "SELECT new com.ec.application.data.BOQStatusLocationsForType(m.locationId,m.locationName,case WHEN max(consumedPercent)>100 THEN true else false end) "
 			+ "from BOQStatus m  where m.typeId=:typeId AND m.locationId IS NOT NULL GROUP BY m.locationId,m.locationName")
-	List<BOQStatusLocationsForType> getLocationWiseStatusForType(Long typeId);
+	List<BOQStatusLocationsForType> getLocationWiseStatusForType(@Param("typeId") Long typeId);
+
+	@Query(value = "SELECT DISTINCT m.productName from BOQStatus m  where m.locationId=:locationId")
+	List<String> fetchInventoryNamesForLocation(@Param("locationId") Long locationId);
+
+	/*
+	 * @Query(value =
+	 * "SELECT DISTINCT m.productName from BOQStatus m  where m.locationId=:locationId OR m.typeId=:typeId"
+	 * ) List<String> fetchInventoryNamesForLocationOrType(@Param("locationId") Long
+	 * locationId,
+	 * 
+	 * @Param("typeId") Long typeId);
+	 */
 }

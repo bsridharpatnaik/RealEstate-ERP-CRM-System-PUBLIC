@@ -40,6 +40,7 @@ public class BuildingTypeService
 
 	public BuildingType createBuildingType(BuildingType payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		long currentSize = buildingTypeRepo.count();
 		/*
@@ -58,6 +59,7 @@ public class BuildingTypeService
 
 	private void validatePayload(BuildingType payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (payload.getTypeName() == null)
 			throw new Exception("Building Type name cannot be null or empty");
 		if (payload.getTypeName().trim() == null || payload.getTypeName().trim() == "")
@@ -67,6 +69,7 @@ public class BuildingTypeService
 
 	public BuildingType updateBuildingType(Long id, BuildingType payload) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		validatePayload(payload);
 		Optional<BuildingType> BuildingTypeForUpdateOpt = buildingTypeRepo.findById(id);
 		if (!BuildingTypeForUpdateOpt.isPresent())
@@ -93,12 +96,14 @@ public class BuildingTypeService
 
 	public BuildingType findSingleBuildingType(Long id)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Optional<BuildingType> types = buildingTypeRepo.findById(id);
 		return types.get();
 	}
 
 	public void deleteBuildingType(Long id) throws Exception
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!checkBeforeDeleteService.isBuildingTypeUsed(id))
 			buildingTypeRepo.softDeleteById(id);
 		else
@@ -107,12 +112,13 @@ public class BuildingTypeService
 
 	public List<IdNameProjections> findIdAndNames()
 	{
-		// TODO Auto-generated method stub
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		return buildingTypeRepo.findIdAndNames();
 	}
 
 	public AllBuildingTypesWithNames findFilteredBuildingTypesWithTA(FilterDataList filterDataList, Pageable pageable)
 	{
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		AllBuildingTypesWithNames allBuildingTypesWithNamesData = new AllBuildingTypesWithNames();
 		Specification<BuildingType> spec = BuildingTypeSpecifications.getSpecification(filterDataList);
 
