@@ -1,6 +1,7 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
+import java.util.Date;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
+import com.ec.application.data.UserReturnData;
+import com.ec.application.model.APICallTypeForAuthorization;
 import com.ec.application.model.MORRentModeEnum;
 import com.ec.application.model.MachineryOnRent;
 import com.ec.application.repository.ContractorRepo;
@@ -45,14 +48,21 @@ public class MachineryOnRentService
 	SupplierRepo supplierRepo;
 
 	@Autowired
+	UserDetailsService userDetailsService;
+
+	@Autowired
 	PopulateDropdownService populateDropdownService;
 
 	Logger log = LoggerFactory.getLogger(MachineryOnRentService.class);
+
+	public static Long allowedDaysAdmin = (long) 30;
+	public static Long allowedDaysExecutive = (long) 2;
 
 	public MachineryOnRent createData(CreateMORentData payload) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		valiatePayload(payload);
+		exitIfNotAuthorized(null, payload, APICallTypeForAuthorization.Create);
 		nullifyNonRequiredFields(payload);
 		MachineryOnRent machineryOnRent = new MachineryOnRent();
 		populateData(machineryOnRent, payload);
@@ -169,6 +179,7 @@ public class MachineryOnRentService
 		if (!machineryOnRentOpt.isPresent())
 			throw new Exception("Machinery On rent by ID " + id + " Not found");
 		MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
+		exitIfNotAuthorized(machineryOnRent, payload, APICallTypeForAuthorization.Update);
 		populateData(machineryOnRent, payload);
 		return morRepo.save(machineryOnRent);
 
@@ -192,6 +203,7 @@ public class MachineryOnRentService
 		if (!machineryOnRentOpt.isPresent())
 			throw new Exception("Machinery On rent by ID " + id + " Not found");
 		// MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
+		exitIfNotAuthorized(machineryOnRentOpt.get(), null, APICallTypeForAuthorization.Delete);
 		morRepo.softDeleteById(id);
 	}
 
@@ -260,6 +272,102 @@ public class MachineryOnRentService
 		machineryOnRent.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
 		machineryOnRent.setRate(payload.getRate());
 		return machineryOnRent;
+	}
+
+	@Transactional
+	private void exitIfNotAuthorized(MachineryOnRent mor, CreateMORentData morData, APICallTypeForAuthorization action)
+			throws Exception
+	{
+
+		UserReturnData currentUserData = userDetailsService.getCurrentUser();
+
+		if (action.equals(APICallTypeForAuthorization.Update))
+		{
+			if (currentUserData.getRoles().contains("admin")
+					|| currentUserData.getRoles().contains("inventory-manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date()) > allowedDaysAdmin)
+					throw new Exception(
+							"Cannot modify record that is created greater than " + allowedDaysAdmin + " days ago.");
+
+			} else if (currentUserData.getRoles().contains("inventory-executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date()) > allowedDaysExecutive)
+					throw new Exception(
+							"Cannot modify record that is created greater than " + allowedDaysExecutive + " days ago.");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+			System.out.println(mor.getDate());
+			System.out.println(morData.getDate());
+			if (mor.getDate().before(morData.getDate()) || mor.getDate().after(morData.getDate()))
+				throw new Exception("Date should not be modified while updating Machinery On Rent record");
+
+			if (morData.getContractorId() != null && mor.getContractor() != null)
+			{
+				if (!morData.getContractorId().equals(mor.getContractor().getContactId()))
+					throw new Exception("Contractor should not be modified while updating Machinery On Rent record");
+			} else if ((morData.getContractorId() != null && mor.getContractor() == null)
+					|| (morData.getContractorId() == null && mor.getContractor() != null))
+				throw new Exception("Contractor should not be modified while updating Machinery On Rent record");
+
+			if (morData.getMachineryId() != null && mor.getMachinery() != null)
+			{
+				if (!morData.getMachineryId().equals(mor.getMachinery().getMachineryId()))
+					throw new Exception("Machinery should not be modified while updating Machinery On Rent record");
+			} else if ((morData.getMachineryId() != null && mor.getMachinery() == null)
+					|| (morData.getMachineryId() == null && mor.getMachinery() != null))
+				throw new Exception("Machinery should not be modified while updating Machinery On Rent record");
+
+			if (morData.getSupplierId() != null && mor.getSupplier() != null)
+			{
+				if (!morData.getSupplierId().equals(mor.getSupplier().getContactId()))
+					throw new Exception("Supplier should not be modified while updating Machinery On Rent record");
+			} else if ((morData.getSupplierId() != null && mor.getSupplier() == null)
+					|| (morData.getSupplierId() == null && mor.getSupplier() != null))
+				throw new Exception("Supplier should not be modified while updating Machinery On Rent record");
+		}
+		if (action.equals(APICallTypeForAuthorization.Create))
+		{
+			if (currentUserData.getRoles().contains("admin")
+					|| currentUserData.getRoles().contains("inventory-manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date()) > allowedDaysAdmin)
+					throw new Exception("Cannot create Machinery On Rent with date more than " + allowedDaysAdmin
+							+ " Days in past. ");
+			}
+
+			else if (currentUserData.getRoles().contains("inventory-executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date()) > allowedDaysExecutive)
+					throw new Exception("Cannot create Machinery On Rent with date more than " + allowedDaysExecutive
+							+ " Days in past. ");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+		}
+		if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject))
+		{
+			if (currentUserData.getRoles().contains("admin")
+					|| currentUserData.getRoles().contains("inventory-manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date()) > allowedDaysAdmin)
+					throw new Exception(
+							"Cannot DELETE Machinery On Rent created more than " + allowedDaysAdmin + " Days ago. ");
+			}
+
+			else if (currentUserData.getRoles().contains("inventory-executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date()) > allowedDaysExecutive)
+					throw new Exception("Cannot DELETE Machinery On Rent created more than " + allowedDaysExecutive
+							+ " Days ago. ");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+		}
 	}
 
 	public MachineryOnRentWithDropdownData findAllWithDropdown(FilterDataList filterDataList, Pageable pageable)

@@ -27,6 +27,8 @@ import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.data.ReturnRejectInwardOutwardData;
+import com.ec.application.data.UserReturnData;
+import com.ec.application.model.APICallTypeForAuthorization;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.model.OutwardInventory_;
@@ -87,19 +89,21 @@ public class OutwardInventoryService
 	@Autowired
 	GroupBySpecification groupBySpecification;
 
+	@Autowired
+	UserDetailsService userDetailService;
+
 	Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
-	public static Long editAllowedDays = (long) 0;
-	public static Long createAllowedDays = (long) 2;
-	public static String createCode = "create";
-	public static String updateCode = "update";
+	public static Long allowedDaysAdmin = (long) 30;
+	public static Long allowedDaysExecutive = (long) 2;
 
 	@Transactional(rollbackFor = Exception.class)
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
 	{
 		log.info("Invoked createOutwardnventory with payload -" + oiData.toString());
 		OutwardInventory outwardInventory = new OutwardInventory();
-		validateInputs(oiData, createCode);
+		validateInputs(oiData);
+		exitIfNotAuthorized(outwardInventory, oiData, APICallTypeForAuthorization.Create);
 		setFields(outwardInventory, oiData);
 		updateStockForCreateOutwardInventory(outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
@@ -173,6 +177,8 @@ public class OutwardInventoryService
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 
 		OutwardInventory oi = outwardInventoryRepo.findById(outwardId).get();
+		exitIfNotAuthorized(oi, null, APICallTypeForAuthorization.Reject);
+
 		Set<ReturnOutwardList> returnOutwardList = oi.getReturnOutwardList();
 		Set<InwardOutwardList> inwardOutwardListSet = oi.getInwardOutwardList();
 		for (InwardOutwardList inwardOutwardList : inwardOutwardListSet)
@@ -204,6 +210,7 @@ public class OutwardInventoryService
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		OutwardInventory oi = outwardInventoryRepo.findById(outwardId).get();
+		exitIfNotAuthorized(oi, null, APICallTypeForAuthorization.Reject);
 		Set<RejectOutwardList> rejectOutwardList = oi.getRejectOutwardList();
 		Set<InwardOutwardList> inwardOutwardListSet = oi.getInwardOutwardList();
 		for (InwardOutwardList inwardOutwardList : inwardOutwardListSet)
@@ -232,40 +239,15 @@ public class OutwardInventoryService
 		Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
 		if (!outwardInventoryOpt.isPresent())
 			throw new Exception("Inventory Entry with ID not found");
-		validateInputs(iiData, updateCode);
-		exitIfReturnExists(outwardInventoryOpt.get(), iiData);
+		validateInputs(iiData);
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		exitIfNotAuthorized(outwardInventory, iiData, APICallTypeForAuthorization.Update);
+		exitIfReturnExists(outwardInventory, iiData);
 		OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
-		exitIfFixedFieldsAreModified(outwardInventory, iiData);
 		setFields(outwardInventory, iiData);
 		modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
 
-	}
-
-	@Transactional
-	private void exitIfFixedFieldsAreModified(OutwardInventory outwardInventory, OutwardInventoryData oiData)
-			throws Exception
-	{
-		if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > 2)
-			throw new Exception("Cannot edit record that is created greater than 2 days ago.");
-
-		// Exit if date is modified
-		if (!oiData.getDate().equals(outwardInventory.getDate()))
-			throw new Exception("Date should not be modified while updating outward inventory");
-
-		// Exit if Warehouse is modified
-		if (!oiData.getWarehouseId().equals(outwardInventory.getWarehouse().getWarehouseId()))
-			throw new Exception("Warehouse should not be modified while updating outward inventory");
-
-		List<Long> productsInPayload = oiData.getProductWithQuantities().stream().map(ProductWithQuantity::getProductId)
-				.collect(Collectors.toList());
-
-		List<Long> productsInExistingRecord = outwardInventory.getInwardOutwardList().stream()
-				.map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
-		if (!(productsInPayload.containsAll(productsInExistingRecord)
-				&& productsInPayload.size() == productsInExistingRecord.size()))
-			throw new Exception("Inventory List should not be modified while updating an outward inventory record");
 	}
 
 	private void exitIfReturnExists(OutwardInventory outwardInventory, OutwardInventoryData iiData) throws Exception
@@ -457,7 +439,7 @@ public class OutwardInventoryService
 		log.info("Exited setFields");
 	}
 
-	private void validateInputs(OutwardInventoryData oiData, String code) throws Exception
+	private void validateInputs(OutwardInventoryData oiData) throws Exception
 	{
 		log.info("Invoked validateInputs");
 		if (!locationRepo.existsById(oiData.getUsageLocationId()))
@@ -482,15 +464,6 @@ public class OutwardInventoryService
 			if (productWithQuantity.getQuantity() <= 0)
 				throw new Exception("Quantity should be greater than zero");
 		}
-
-		if (code.equals(updateCode))
-		{
-			if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > editAllowedDays)
-				throw new Exception("Cannot edit records which are greater than " + editAllowedDays + " days old.");
-		} else if (code.equals(createCode))
-			if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > createAllowedDays)
-				throw new Exception("Cannot create records on past greater greater than " + createAllowedDays + " old");
-		log.info("Exited validateInputs");
 	}
 
 	public OutwardInventory findOutwardnventory(Long id) throws Exception
@@ -602,6 +575,7 @@ public class OutwardInventoryService
 		if (!outwardInventoryOpt.isPresent())
 			throw new Exception("Outward Inventory with ID not found");
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
+		exitIfNotAuthorized(outwardInventory, null, APICallTypeForAuthorization.Delete);
 		updateStockBeforeDelete(outwardInventory);
 		outwardInventoryRepo.softDeleteById(id);
 		log.info("Exiting deleteOutwardInventoryById");
@@ -624,4 +598,87 @@ public class OutwardInventoryService
 		}
 		log.info("Exiting updateStockBeforeDelete");
 	}
+
+	@Transactional
+	private void exitIfNotAuthorized(OutwardInventory outwardInventory, OutwardInventoryData oiData,
+			APICallTypeForAuthorization action) throws Exception
+	{
+
+		UserReturnData currentUserData = userDetailService.getCurrentUser();
+
+		if (action.equals(APICallTypeForAuthorization.Update))
+		{
+			if (currentUserData.getRoles().contains("admin")
+					|| currentUserData.getRoles().contains("inventory-manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysAdmin)
+					throw new Exception(
+							"Cannot modify record that is created greater than " + allowedDaysAdmin + " days ago.");
+
+			} else if (currentUserData.getRoles().contains("inventory-executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysExecutive)
+					throw new Exception(
+							"Cannot modify record that is created greater than " + allowedDaysExecutive + " days ago.");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+			if (!oiData.getDate().equals(outwardInventory.getDate()))
+				throw new Exception("Date should not be modified while updating outward inventory record");
+
+			if (!oiData.getWarehouseId().equals(outwardInventory.getWarehouse().getWarehouseId()))
+				throw new Exception("Warehouse should not be modified while updating outward inventory record");
+
+			List<Long> productsInPayload = oiData.getProductWithQuantities().stream()
+					.map(ProductWithQuantity::getProductId).collect(Collectors.toList());
+
+			List<Long> productsInExistingRecord = outwardInventory.getInwardOutwardList().stream()
+					.map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
+			if (!(productsInPayload.containsAll(productsInExistingRecord)
+					&& productsInPayload.size() == productsInExistingRecord.size()))
+				throw new Exception("Inventory List should not be modified while updating an outward inventory record");
+		}
+		if (action.equals(APICallTypeForAuthorization.Create))
+		{
+			if (currentUserData.getRoles().contains("admin")
+					|| currentUserData.getRoles().contains("inventory-manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > allowedDaysAdmin)
+					throw new Exception("Cannot create outward inventory with date more than " + allowedDaysAdmin
+							+ " Days in past. ");
+			}
+
+			else if (currentUserData.getRoles().contains("inventory-executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > allowedDaysExecutive)
+					throw new Exception("Cannot create outward inventory with date more than " + allowedDaysExecutive
+							+ " Days in past. ");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+		}
+		if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject))
+		{
+			if (currentUserData.getRoles().contains("admin")
+					|| currentUserData.getRoles().contains("inventory-manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysAdmin)
+					throw new Exception(
+							"Cannot DELETE outward inventory created more than " + allowedDaysAdmin + " Days ago. ");
+			}
+
+			else if (currentUserData.getRoles().contains("inventory-executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysExecutive)
+					throw new Exception("Cannot DELETE outward inventory created more than " + allowedDaysExecutive
+							+ " Days ago. ");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+		}
+	}
+
 }
