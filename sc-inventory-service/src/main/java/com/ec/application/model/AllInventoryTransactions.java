@@ -98,7 +98,7 @@ public class AllInventoryTransactions implements Serializable
 			+ "(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='inward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)"
 			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai "
 			+ "where ai.type='outward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id) "
-			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='lost/damaged' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id))")
+			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='lost-damaged' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id))")
 	Double closingStock;
 
 }
