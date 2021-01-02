@@ -26,6 +26,8 @@ import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnInwardInventoryData;
 import com.ec.application.data.ReturnRejectInwardOutwardData;
+import com.ec.application.data.UserReturnData;
+import com.ec.application.model.APICallTypeForAuthorization;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.model.InwardInventory_;
 import com.ec.application.model.InwardOutwardList;
@@ -77,6 +79,9 @@ public class InwardInventoryService
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
 
+	@Autowired
+	UserDetailsService userDetailService;
+
 	Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
 	public static Long editAllowedDays = (long) 0;
@@ -90,6 +95,7 @@ public class InwardInventoryService
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		InwardInventory inwardInventory = new InwardInventory();
 		validateInputs(iiData, createCode);
+		exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Create);
 		setFields(inwardInventory, iiData);
 		updateStockForCreateInwardInventory(inwardInventory);
 		updateOldClosingStockBeforeCreation(iiData);
@@ -168,6 +174,7 @@ public class InwardInventoryService
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		InwardInventory ii = inwardInventoryRepo.findById(inwardId).get();
+		exitIfNotAuthorized(ii, null, APICallTypeForAuthorization.Reject);
 		Set<RejectInwardList> rejectInwardList = ii.getRejectInwardList();
 		Set<InwardOutwardList> inwardOutwardListSet = ii.getInwardOutwardList();
 		for (InwardOutwardList inwardOutwardList : inwardOutwardListSet)
@@ -352,6 +359,7 @@ public class InwardInventoryService
 		if (!inwardInventoryOpt.isPresent())
 			throw new Exception("Inward Inventory with ID not found");
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
+		exitIfNotAuthorized(inwardInventory, null, APICallTypeForAuthorization.Delete);
 		updateStockBeforeDelete(inwardInventory);
 		inwardInventoryRepo.softDeleteById(id);
 	}
@@ -383,7 +391,7 @@ public class InwardInventoryService
 		validateInputs(iiData, updateCode);
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
 		InwardInventory oldInwardInventory = (InwardInventory) inwardInventory.clone();
-		exitIfFixedFieldsAreModified(inwardInventory, iiData);
+		exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Update);
 		setFields(inwardInventory, iiData);
 		modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
 		return inwardInventoryRepo.save(inwardInventory);
@@ -391,28 +399,76 @@ public class InwardInventoryService
 	}
 
 	@Transactional
-	private void exitIfFixedFieldsAreModified(InwardInventory inwardInventory, InwardInventoryData iiData)
-			throws Exception
+	private void exitIfNotAuthorized(InwardInventory inwardInventory, InwardInventoryData iiData,
+			APICallTypeForAuthorization action) throws Exception
 	{
-		// do not allow edit if record is 2 days ago
 
-		if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > 2)
-			throw new Exception("Cannot modify record that is created greater than 2 days ago.");
-		// Exit if date is modified
-		if (!iiData.getDate().equals(inwardInventory.getDate()))
-			throw new Exception("Date should not be modified while updating inward inventory record");
+		UserReturnData currentUserData = userDetailService.getCurrentUser();
 
-		if (!iiData.getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
-			throw new Exception("Warehouse should not be modified while updating inward inventory record");
+		if (action.equals(APICallTypeForAuthorization.Update))
+		{
+			if (currentUserData.getRoles().contains("admin") || currentUserData.getRoles().contains("manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > 30)
+					throw new Exception("Cannot modify record that is created greater than 30 days ago.");
 
-		List<Long> productsInPayload = iiData.getProductWithQuantities().stream().map(ProductWithQuantity::getProductId)
-				.collect(Collectors.toList());
+			} else if (currentUserData.getRoles().contains("executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > 2)
+					throw new Exception("Cannot modify record that is created greater than 2 days ago.");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+			if (!iiData.getDate().equals(inwardInventory.getDate()))
+				throw new Exception("Date should not be modified while updating inward inventory record");
 
-		List<Long> productsInExistingRecord = inwardInventory.getInwardOutwardList().stream()
-				.map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
-		if (!(productsInPayload.containsAll(productsInExistingRecord)
-				&& productsInPayload.size() == productsInExistingRecord.size()))
-			throw new Exception("Inventory List should not be modified while updating an inward inventory record");
+			if (!iiData.getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
+				throw new Exception("Warehouse should not be modified while updating inward inventory record");
+
+			List<Long> productsInPayload = iiData.getProductWithQuantities().stream()
+					.map(ProductWithQuantity::getProductId).collect(Collectors.toList());
+
+			List<Long> productsInExistingRecord = inwardInventory.getInwardOutwardList().stream()
+					.map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
+			if (!(productsInPayload.containsAll(productsInExistingRecord)
+					&& productsInPayload.size() == productsInExistingRecord.size()))
+				throw new Exception("Inventory List should not be modified while updating an inward inventory record");
+		}
+		if (action.equals(APICallTypeForAuthorization.Create))
+		{
+			if (currentUserData.getRoles().contains("admin") || currentUserData.getRoles().contains("manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date()) > 30)
+					throw new Exception("Cannot create inward inventory with date more than 30 Days in past. ");
+			}
+
+			if (currentUserData.getRoles().contains("executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date()) > 2)
+					throw new Exception("Cannot create inward inventory with date more than 2 Days in past. ");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+		}
+		if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject))
+		{
+			if (currentUserData.getRoles().contains("admin") || currentUserData.getRoles().contains("manager"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > 30)
+					throw new Exception("Cannot DELETE inward inventory created more than 30 Days ago. ");
+			}
+
+			if (currentUserData.getRoles().contains("executive"))
+			{
+				if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > 2)
+					throw new Exception("Cannot DELETE inward inventory created more than 2 Days ago. ");
+			} else
+			{
+				throw new Exception("No User role found for user!. Please contact administration to get roles added");
+			}
+		}
 	}
 
 	@Transactional
