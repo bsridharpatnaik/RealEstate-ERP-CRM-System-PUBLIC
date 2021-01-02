@@ -55,6 +55,8 @@ public class DashboardService
 
 	Logger log = LoggerFactory.getLogger(DashboardService.class);
 
+	ExecutorService executors = Executors.newFixedThreadPool(8);
+
 	public PipelineAndActivitiesForDashboard customerpipeline(DashboardData payload) throws Exception
 	{
 		PipelineAndActivitiesForDashboard dashboardPipelineReturnData = new PipelineAndActivitiesForDashboard();
@@ -67,9 +69,9 @@ public class DashboardService
 
 		log.info("Fetching Stats");
 
-		ExecutorService executors = Executors.newFixedThreadPool(8);
 		CyclicBarrier barrier = new CyclicBarrier(8);
 
+		// executors.
 		executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetPropertyVisit(barrier, dashboardPipelineReturnData, data, userIdNameMap));
