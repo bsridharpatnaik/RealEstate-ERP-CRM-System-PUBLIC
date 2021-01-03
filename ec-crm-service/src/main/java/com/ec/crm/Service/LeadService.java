@@ -36,6 +36,7 @@ import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadInformationAllTabData;
 import com.ec.crm.Data.LeadInformationAllTabDataList;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
@@ -268,7 +269,7 @@ public class LeadService
 		return leadDetails;
 	}
 
-	private LeadInformationAllTabDataList transformDataForAllTab(AllNotesForLeadDAO allNotes,
+	public LeadInformationAllTabDataList transformDataForAllTab(AllNotesForLeadDAO allNotes,
 			AllActivitesForLeadDAO allActivities)
 	{
 		LeadInformationAllTabDataList list = new LeadInformationAllTabDataList();
@@ -394,5 +395,20 @@ public class LeadService
 			message = message == "" ? "Customer Name" : message + ", Customer Name";
 
 		return message;
+	}
+
+	public List<ActivityTypeEnum> getAllowedActivities(Long id)
+	{
+		List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
+		allowedActivities.add(ActivityTypeEnum.Call);
+		allowedActivities.add(ActivityTypeEnum.Meeting);
+		allowedActivities.add(ActivityTypeEnum.Property_Visit);
+		allowedActivities.add(ActivityTypeEnum.Task);
+		allowedActivities.add(ActivityTypeEnum.Reminder);
+		allowedActivities.add(ActivityTypeEnum.Message);
+		allowedActivities.add(ActivityTypeEnum.Email);
+		allowedActivities.add(ActivityTypeEnum.Deal_Close);
+		allowedActivities.add(ActivityTypeEnum.Deal_Lost);
+		return allowedActivities;
 	}
 }

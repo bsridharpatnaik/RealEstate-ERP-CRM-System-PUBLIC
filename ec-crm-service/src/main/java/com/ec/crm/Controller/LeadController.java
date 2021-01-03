@@ -30,6 +30,7 @@ import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
@@ -75,6 +76,12 @@ public class LeadController
 	public LeadDetailInfo findLeadDetailInfoByID(@PathVariable long id) throws Exception
 	{
 		return leadService.findSingleLeadDetailInfo(id);
+	}
+
+	@GetMapping("/allowedactivitytype/{id}")
+	public List<ActivityTypeEnum> getAllowedActivities(@PathVariable Long id) throws Exception
+	{
+		return leadService.getAllowedActivities(id);
 	}
 
 	@GetMapping("/validPropertyTypes")

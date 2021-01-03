@@ -1,6 +1,7 @@
 package com.ec.crm.Controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
 import com.ec.crm.Data.ClosedLeadsListDTO;
+import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Model.ClosedLeads;
 import com.ec.crm.Service.ClosedLeadService;
 
 @RestController
@@ -46,6 +51,24 @@ public class ClosedLeadsController
 	public DropdownForClosedLeads getDropdownValues() throws Exception
 	{
 		return clService.getDropDownValues();
+	}
+
+	@GetMapping("/customerdetails/{id}")
+	public ClosedLeads getCustomerDetailedInfo(@PathVariable Long id) throws Exception
+	{
+		return clService.getCustomerDetails(id);
+	}
+
+	@GetMapping("/activities/{id}")
+	public CustomerDetailInfo getCustomerActivities(@PathVariable Long id) throws Exception
+	{
+		return clService.getCustomerDetailedInfo(id);
+	}
+
+	@GetMapping("/allowedactivitytype/{id}")
+	public List<ActivityTypeEnum> getAllowedActivities(@PathVariable Long id) throws Exception
+	{
+		return clService.getAllowedActivities(id);
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

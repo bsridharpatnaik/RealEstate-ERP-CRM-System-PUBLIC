@@ -11,8 +11,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Data.AllActivitesForLeadDAO;
+import com.ec.crm.Data.AllNotesForLeadDAO;
 import com.ec.crm.Data.ClosedLeadsListDTO;
+import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.ClosedLeadsSpecification;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ClosedLeads;
@@ -29,6 +33,15 @@ public class ClosedLeadService
 	PopulateDropdownService populateDropdownService;
 
 	Logger log = LoggerFactory.getLogger(ClosedLeadService.class);
+
+	@Autowired
+	LeadService leadService;
+
+	@Autowired
+	LeadActivityService leadActivityService;
+
+	@Autowired
+	NoteService noteService;
 
 	public Page<ClosedLeadsListDTO> fetchAllClosedLeads(Pageable pageable, FilterDataList filterDataList)
 			throws Exception
@@ -69,5 +82,36 @@ public class ClosedLeadService
 		typeAhead.addAll(clRepo.getLeadNames());
 		typeAhead.addAll(clRepo.getLeadMobileNos());
 		return typeAhead;
+	}
+
+	public CustomerDetailInfo getCustomerDetailedInfo(Long id) throws Exception
+	{
+
+		CustomerDetailInfo customerDetailedInfo = new CustomerDetailInfo();
+		AllNotesForLeadDAO allNotes = noteService.getAllNotesForLead(id);
+		AllActivitesForLeadDAO allActivities = leadActivityService.getAllActivitiesForLead(id);
+		customerDetailedInfo.setAllActivities(allActivities);
+		customerDetailedInfo.setAllNotedAndActivities(leadService.transformDataForAllTab(allNotes, allActivities));
+		customerDetailedInfo.setAllNotes(allNotes);
+		return customerDetailedInfo;
+	}
+
+	public ClosedLeads getCustomerDetails(Long id) throws Exception
+	{
+		if (!clRepo.existsById(id))
+			throw new Exception("Customer not found with ID -" + id);
+
+		return clRepo.findById(id).get();
+	}
+
+	public List<ActivityTypeEnum> getAllowedActivities(Long id)
+	{
+		List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
+		allowedActivities.add(ActivityTypeEnum.Call);
+		allowedActivities.add(ActivityTypeEnum.Meeting);
+		allowedActivities.add(ActivityTypeEnum.Task);
+		allowedActivities.add(ActivityTypeEnum.Reminder);
+		allowedActivities.add(ActivityTypeEnum.Message);
+		return allowedActivities;
 	}
 }
