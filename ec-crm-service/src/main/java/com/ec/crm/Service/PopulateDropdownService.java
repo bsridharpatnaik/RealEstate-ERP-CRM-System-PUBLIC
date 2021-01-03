@@ -48,6 +48,12 @@ public class PopulateDropdownService
 			morDropdownDataList.setValidActivityType(ActivityTypeEnum.getValidActivityTypes());
 			morDropdownDataList.setKeyValueForStagnantDropdown(StagnantDropdownValues.getKeyValue());
 			break;
+		case "customer":
+			morDropdownDataList.setBrokerDetails(brokerRepo.findIdAndNames());
+			morDropdownDataList.setSourceDetails(sourceRepo.findIdAndNames());
+			morDropdownDataList.setValidPropertyType(PropertyTypeEnum.getValidPropertyType());
+			morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
+			break;
 		}
 		return morDropdownDataList;
 	}

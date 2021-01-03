@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
 import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Data.LeadDetailInfo;
@@ -119,5 +121,15 @@ public class LeadController
 			errors.put(fieldName, errorMessage);
 		});
 		return errors;
+	}
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
+		return apiError;
 	}
 }
