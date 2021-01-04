@@ -16,8 +16,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ec.common.Data.ChangePasswordData;
 import com.ec.common.Data.CreateUserData;
 import com.ec.common.Data.ResetPasswordData;
 import com.ec.common.Data.UpdateRolesForUserData;
@@ -81,6 +83,31 @@ public class UserService
 		{
 			// log.info("User already exists");
 			throw new Exception("User already exists");
+		}
+	}
+
+	public void changePassword(ChangePasswordData payload) throws Exception
+	{
+		BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		ArrayList<User> users = uRepo.findUserByUsername(auth.getName());
+		if (users.size() == 1)
+		{
+			String currentPassword = bCryptPassword(payload.getOldPassword());
+
+			User user = users.get(0);
+
+			boolean isPasswordMatch = passwordEncoder.matches(payload.getOldPassword(), user.getPassword());
+			if (isPasswordMatch)
+			{
+				user.setPassword(bCryptPassword(bCryptPassword(payload.getNewPassword())));
+				uRepo.save(user);
+			} else
+				throw new Exception("Current password in system does not match with current password entered");
+
+		} else
+		{
+			throw new Exception("None or Multiple users found by username!");
 		}
 	}
 

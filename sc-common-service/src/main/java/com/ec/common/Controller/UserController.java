@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.common.Data.ChangePasswordData;
 import com.ec.common.Data.CreateUserData;
 import com.ec.common.Data.ResetPasswordData;
 import com.ec.common.Data.TenantInformation;
@@ -63,6 +64,13 @@ public class UserController
 	{
 
 		return userService.createUser(payload);
+	}
+
+	@PostMapping("/changepassword")
+	@ResponseStatus(HttpStatus.OK)
+	public void changepassword(@RequestBody ChangePasswordData payload) throws Exception
+	{
+		userService.changePassword(payload);
 	}
 
 	@PostMapping("/updatepassword")
