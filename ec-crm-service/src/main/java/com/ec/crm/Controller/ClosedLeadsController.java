@@ -24,12 +24,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
 import com.ec.crm.Data.ClosedLeadsListDTO;
+import com.ec.crm.Data.CreateDealStructureDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ClosedLeads;
+import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Service.ClosedLeadService;
+import com.ec.crm.Service.DealStructureService;
 
 @RestController
 @RequestMapping(value = "/customer", produces =
@@ -38,6 +41,9 @@ public class ClosedLeadsController
 {
 	@Autowired
 	ClosedLeadService clService;
+
+	@Autowired
+	DealStructureService dsService;
 
 	@PostMapping
 	public Page<ClosedLeadsListDTO> returnAllCustomer(
@@ -69,6 +75,12 @@ public class ClosedLeadsController
 	public List<ActivityTypeEnum> getAllowedActivities(@PathVariable Long id) throws Exception
 	{
 		return clService.getAllowedActivities(id);
+	}
+
+	@PostMapping("/dealstructure")
+	public DealStructure createDealStructure(CreateDealStructureDTO payload) throws Exception
+	{
+		return dsService.updateDealStructure(payload);
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
