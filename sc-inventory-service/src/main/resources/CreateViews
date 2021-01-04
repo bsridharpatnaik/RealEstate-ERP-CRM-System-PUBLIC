@@ -1,4 +1,4 @@
-use galaxyheights; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,galaxyheights;
+use galaxyheights; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 
 -- All Inventory --
 CREATE OR replace VIEW all_inventory AS

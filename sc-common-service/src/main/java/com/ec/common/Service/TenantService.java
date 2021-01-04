@@ -23,7 +23,7 @@ public class TenantService
 		TenantInformation t2 = new TenantInformation("KALPAVRISH", "kalpavrish");
 		TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI", "riddhisiddhi");
 		TenantInformation t4 = new TenantInformation("SMART CITY", "smartcity");
-		TenantInformation t5 = new TenantInformation("BUSINESS PARK", "galaxyheights");
+		TenantInformation t5 = new TenantInformation("BUSINESS PARK", "businesspark");
 		tenants.add(t1);
 		tenants.add(t2);
 		tenants.add(t3);
@@ -41,7 +41,7 @@ public class TenantService
 		validTenants.add("kalpavrish");
 		validTenants.add("riddhisiddhi");
 		validTenants.add("smartcity");
-		validTenants.add("galaxyheights");
+		validTenants.add("businesspark");
 		return validTenants;
 	}
 

@@ -3,7 +3,7 @@ create database suncitynx;
 create database kalpavrish;
 create database riddhisiddhi;
 create database smartcity;
-create database galaxyheights;
+create database businesspark;
 INSERT INTO common.`role` (`name`) VALUES ('admin');
 INSERT INTO common.`role` (`name`) VALUES ('inventory-manager');
 INSERT INTO common.`role` (`name`) VALUES ('inventory-executive');

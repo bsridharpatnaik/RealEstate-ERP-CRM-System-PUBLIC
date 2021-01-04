@@ -100,7 +100,7 @@ public class UserService
 			boolean isPasswordMatch = passwordEncoder.matches(payload.getOldPassword(), user.getPassword());
 			if (isPasswordMatch)
 			{
-				user.setPassword(bCryptPassword(bCryptPassword(payload.getNewPassword())));
+				user.setPassword(bCryptPassword(payload.getNewPassword()));
 				uRepo.save(user);
 			} else
 				throw new Exception("Current password in system does not match with current password entered");
