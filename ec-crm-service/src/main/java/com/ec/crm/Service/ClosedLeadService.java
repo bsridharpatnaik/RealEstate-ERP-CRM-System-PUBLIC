@@ -16,7 +16,6 @@ import com.ec.crm.Data.AllNotesForLeadDAO;
 import com.ec.crm.Data.ClosedLeadsListDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
-import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.ClosedLeadsSpecification;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ClosedLeads;
@@ -104,14 +103,4 @@ public class ClosedLeadService
 		return clRepo.findById(id).get();
 	}
 
-	public List<ActivityTypeEnum> getAllowedActivities(Long id)
-	{
-		List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
-		allowedActivities.add(ActivityTypeEnum.Call);
-		allowedActivities.add(ActivityTypeEnum.Meeting);
-		allowedActivities.add(ActivityTypeEnum.Task);
-		allowedActivities.add(ActivityTypeEnum.Reminder);
-		allowedActivities.add(ActivityTypeEnum.Message);
-		return allowedActivities;
-	}
 }

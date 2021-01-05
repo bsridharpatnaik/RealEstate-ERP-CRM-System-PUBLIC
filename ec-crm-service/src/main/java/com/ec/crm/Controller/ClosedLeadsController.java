@@ -29,7 +29,6 @@ import com.ec.crm.Data.CreateCustomerDocumentDTO;
 import com.ec.crm.Data.CreateDealStructureDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
-import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ClosedLeads;
 import com.ec.crm.Model.CustomerDocument;
@@ -76,12 +75,6 @@ public class ClosedLeadsController
 	public CustomerDetailInfo getCustomerActivities(@PathVariable Long id) throws Exception
 	{
 		return clService.getCustomerDetailedInfo(id);
-	}
-
-	@GetMapping("/allowedactivitytype/{id}")
-	public List<ActivityTypeEnum> getAllowedActivities(@PathVariable Long id) throws Exception
-	{
-		return clService.getAllowedActivities(id);
 	}
 
 	@PostMapping("/dealstructure")

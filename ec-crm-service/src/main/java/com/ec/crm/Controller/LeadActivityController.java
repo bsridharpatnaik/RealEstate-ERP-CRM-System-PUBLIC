@@ -68,6 +68,12 @@ public class LeadActivityController
 		return laService.getSingleLeadActivity(id);
 	}
 
+	@GetMapping("/allowedactivitytype/{id}")
+	public List<ActivityTypeEnum> getValidActivityType(@PathVariable long id) throws Exception
+	{
+		return laService.getAllowedActiviType(id);
+	}
+
 	@PostMapping("/create")
 	@ResponseStatus(HttpStatus.CREATED)
 	@SneakyThrows(InvalidFormatException.class)

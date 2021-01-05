@@ -789,4 +789,40 @@ public class LeadActivityService
 		}
 		return false;
 	}
+
+	public List<ActivityTypeEnum> getAllowedActiviType(long id) throws Exception
+	{
+		Optional<Lead> leadOpt = lRepo.findById(id);
+		if (!leadOpt.isPresent())
+		{
+			log.error("Lead with ID not found");
+			throw new Exception("Lead with ID not found");
+		} else
+		{
+			if (leadOpt.get().getStatus().equals(LeadStatusEnum.Deal_Closed))
+			{
+				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
+				allowedActivities.add(ActivityTypeEnum.Call);
+				allowedActivities.add(ActivityTypeEnum.Meeting);
+				allowedActivities.add(ActivityTypeEnum.Task);
+				allowedActivities.add(ActivityTypeEnum.Reminder);
+				allowedActivities.add(ActivityTypeEnum.Email);
+				allowedActivities.add(ActivityTypeEnum.Message);
+				return allowedActivities;
+			} else
+			{
+				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
+				allowedActivities.add(ActivityTypeEnum.Call);
+				allowedActivities.add(ActivityTypeEnum.Meeting);
+				allowedActivities.add(ActivityTypeEnum.Task);
+				allowedActivities.add(ActivityTypeEnum.Reminder);
+				allowedActivities.add(ActivityTypeEnum.Message);
+				allowedActivities.add(ActivityTypeEnum.Deal_Close);
+				allowedActivities.add(ActivityTypeEnum.Deal_Lost);
+				allowedActivities.add(ActivityTypeEnum.Property_Visit);
+				allowedActivities.add(ActivityTypeEnum.Email);
+				return allowedActivities;
+			}
+		}
+	}
 }
