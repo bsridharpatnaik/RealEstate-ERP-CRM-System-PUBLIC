@@ -32,8 +32,12 @@ import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Mapper.LeadActivityMapper;
+import com.ec.crm.Model.ClosedLeads;
+import com.ec.crm.Model.CustomerDocument;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.Repository.ClosedLeadsRepo;
+import com.ec.crm.Repository.CustomerDocumentRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
@@ -68,6 +72,12 @@ public class LeadActivityService
 
 	@Autowired
 	ModelMapper leadToLeadActivityModelMapper;
+
+	@Autowired
+	ClosedLeadsRepo clRepo;
+
+	@Autowired
+	CustomerDocumentRepo cdRepo;
 
 	@Autowired
 	LeadActivityMapper laMapper;
@@ -187,6 +197,7 @@ public class LeadActivityService
 	{
 
 		log.info("Invoked ExecuteBusinessLogicWhileCreation");
+		Boolean isDealClosed = false;
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
 		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		if (status.equals(LeadStatusEnum.New_Lead))
@@ -207,6 +218,7 @@ public class LeadActivityService
 			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost))
 			{
 				leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+
 				leadActivity.setClosedBy(currentUserId);
 				leadActivity.setClosingComment("Deal Lost");
 				closeAllOpenActivitiesForLead(leadActivity.getLead());
@@ -227,13 +239,46 @@ public class LeadActivityService
 				leadActivity.setClosedBy(currentUserId);
 				leadActivity.setClosingComment("Deal Closed");
 				closeAllOpenActivitiesForLead(leadActivity.getLead());
+				isDealClosed = true;
 			}
 		}
 
 		if (status.equals(LeadStatusEnum.Deal_Closed) || status.equals(LeadStatusEnum.Deal_Lost))
 			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
 				leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.getLead()));
+
 		laRepo.save(leadActivity);
+		if (isDealClosed)
+			createDefaultDocumentsForClosedLead(leadActivity.getLead());
+	}
+
+	private void createDefaultDocumentsForClosedLead(Lead lead)
+	{
+		try
+		{
+			Optional<ClosedLeads> clOpt = clRepo.findById(lead.getLeadId());
+			if (clOpt.isPresent())
+			{
+				List<String> documents = ReusableMethods.getDefaultDocumentsForCustomer();
+				for (String document : documents)
+				{
+					int cdListCount = cdRepo.getCountByDocumentNameAndLead(document, clOpt.get().getLeadId());
+					if (cdListCount == 0)
+					{
+						CustomerDocument cd = new CustomerDocument();
+						cd.setDocumentName(document);
+						cd.setFileInformation(null);
+						cd.setLead(clOpt.get());
+						cd.setReceivedStatus(false);
+						cdRepo.save(cd);
+					}
+				}
+			}
+		} catch (Exception e)
+		{
+			// ignore exception
+		}
+
 	}
 
 	@Transactional

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -24,14 +25,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
 import com.ec.crm.Data.ClosedLeadsListDTO;
+import com.ec.crm.Data.CreateCustomerDocumentDTO;
 import com.ec.crm.Data.CreateDealStructureDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ClosedLeads;
+import com.ec.crm.Model.CustomerDocument;
 import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Service.ClosedLeadService;
+import com.ec.crm.Service.CustomerDocumentsService;
 import com.ec.crm.Service.DealStructureService;
 
 @RestController
@@ -44,6 +48,9 @@ public class ClosedLeadsController
 
 	@Autowired
 	DealStructureService dsService;
+
+	@Autowired
+	CustomerDocumentsService cdService;
 
 	@PostMapping
 	public Page<ClosedLeadsListDTO> returnAllCustomer(
@@ -81,6 +88,31 @@ public class ClosedLeadsController
 	public DealStructure createDealStructure(CreateDealStructureDTO payload) throws Exception
 	{
 		return dsService.updateDealStructure(payload);
+	}
+
+	@PostMapping("/document/create")
+	public CustomerDocument createDocument(@RequestBody CreateCustomerDocumentDTO payload) throws Exception
+	{
+		return cdService.createDocument(payload);
+	}
+
+	@GetMapping("/{id}/documents")
+	public List<CustomerDocument> fetchDocuments(@PathVariable Long id) throws Exception
+	{
+		return cdService.fetchDocumentsForLead(id);
+	}
+
+	@PutMapping("/documents/{id}")
+	public CustomerDocument updateCustomerDocument(@PathVariable Long id,
+			@RequestBody CreateCustomerDocumentDTO payload) throws Exception
+	{
+		return cdService.updateDocument(id, payload);
+	}
+
+	@GetMapping("/documents/{id}")
+	public CustomerDocument getCustomerDocument(@PathVariable Long id) throws Exception
+	{
+		return cdService.getById(id);
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

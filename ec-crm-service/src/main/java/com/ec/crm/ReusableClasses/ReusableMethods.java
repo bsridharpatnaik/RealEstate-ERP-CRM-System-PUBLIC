@@ -109,6 +109,19 @@ public final class ReusableMethods
 		}
 	}
 
+	public static List<String> getDefaultDocumentsForCustomer()
+	{
+		List<String> documents = new ArrayList<String>();
+		documents.add("Pan Card");
+		documents.add("Aadhar Card");
+		documents.add("ITR 1");
+		documents.add("ITR 2");
+		documents.add("ITR 3");
+		documents.add("Building Plan");
+		documents.add("Layout");
+		return documents;
+	}
+
 	public static String normalizePhoneNumber(String number) throws Exception
 	{
 		number = number.replaceAll("[^+0-9]", ""); // All weird characters such as /, -, ...
