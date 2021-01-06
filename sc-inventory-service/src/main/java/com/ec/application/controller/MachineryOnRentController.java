@@ -1,6 +1,7 @@
 package com.ec.application.controller;
 
 import java.text.ParseException;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.CreateMORentData;
+import com.ec.application.data.MORExportDAO;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.MachineryOnRent;
 import com.ec.application.service.MachineryOnRentService;
@@ -42,6 +44,13 @@ public class MachineryOnRentController
 			throws ParseException
 	{
 		return morService.findAllWithDropdown(filterDataList, pageable);
+	}
+
+	@PostMapping("/export")
+	@ResponseStatus(HttpStatus.OK)
+	public List<MORExportDAO> ExportreturnAllMor(@RequestBody FilterDataList filterDataList) throws Exception
+	{
+		return morService.exportData(filterDataList);
 	}
 
 	@PostMapping("/create")

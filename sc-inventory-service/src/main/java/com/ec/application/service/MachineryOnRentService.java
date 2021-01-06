@@ -1,7 +1,9 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.CreateMORentData;
+import com.ec.application.data.MORExportDAO;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.data.UserReturnData;
 import com.ec.application.model.APICallTypeForAuthorization;
@@ -384,6 +387,49 @@ public class MachineryOnRentService
 
 		morWithDDData.setMorDropdown(populateDropdownService.fetchData("mor"));
 		return morWithDDData;
+	}
+
+	public List<MORExportDAO> exportData(FilterDataList filterDataList) throws Exception
+	{
+		Specification<MachineryOnRent> spec = MachineryOnRentSpecifications.getSpecification(filterDataList);
+
+		if (spec != null)
+		{
+			if (morRepo.count(spec) > 2000)
+				throw new Exception("Too many rows to export. Apply some more filters and try again");
+		} else if (morRepo.count() > 2000)
+			throw new Exception("Too many rows to export. Apply some more filters and try again");
+
+		List<MachineryOnRent> morList = spec == null ? morRepo.findAll() : morRepo.findAll(spec);
+		return transformForExport(morList);
+	}
+
+	private List<MORExportDAO> transformForExport(List<MachineryOnRent> morList)
+	{
+		List<MORExportDAO> exportList = new ArrayList<MORExportDAO>();
+		for (MachineryOnRent mor : morList)
+		{
+			MORExportDAO dao = new MORExportDAO();
+			dao.setMorid(mor.getMorid());
+			dao.setDate(mor.getDate());
+			dao.setMachinery(mor.getMachinery().getMachineryName());
+			dao.setSupplier(mor.getSupplier() == null ? "" : mor.getSupplier().getName());
+			dao.setContractor(mor.getContractor() == null ? "" : mor.getContractor().getName());
+			dao.setBuildingUnit(mor.getUsageLocation() == null ? "" : mor.getUsageLocation().getLocationName());
+			dao.setMode(mor.getMode());
+			dao.setStartDate(mor.getStartDate());
+			dao.setEndDate(mor.getEndDate());
+			dao.setStartDateTime(mor.getStartDateTime());
+			dao.setInitialMeterReading(mor.getInitialMeterReading());
+			dao.setEndMeterReading(mor.getEndMeterReading());
+			dao.setNoOfTrips(mor.getNoOfTrips());
+			dao.setRate(mor.getRate());
+			dao.setAmountCharged(mor.getAmountCharged());
+			dao.setVehicleNo(mor.getVehicleNo());
+			dao.setAdditionalNotes(mor.getAdditionalNotes());
+			exportList.add(dao);
+		}
+		return exportList;
 	}
 
 }

@@ -523,7 +523,7 @@ public class OutwardInventoryService
 		log.info("Invoked fetchOutwardnventoryForExport");
 		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
 		long size = spec != null ? outwardInventoryRepo.count(spec) : outwardInventoryRepo.count();
-		if (size > 5000)
+		if (size > 2000)
 			throw new Exception("Too many rows to export. Apply some more filters and try again");
 		List<OutwardInventory> iiData = spec != null ? outwardInventoryRepo.findAll(spec)
 				: outwardInventoryRepo.findAll();
