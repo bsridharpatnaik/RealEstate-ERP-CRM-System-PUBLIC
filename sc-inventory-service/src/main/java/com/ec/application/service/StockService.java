@@ -370,7 +370,12 @@ public class StockService
 	public List<StockPercentData> fetchStockPercent()
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		return stockRepo.getCurrentStockPercent();
+		List<StockPercentData> all = stockRepo.getCurrentStockPercent();
+		Comparator<StockPercentData> NameCommparator = Comparator.comparing(StockPercentData::getUpdated);
+		List<StockPercentData> sorted = all.stream().sorted(NameCommparator).filter(c -> c.getStockPercent() < 120)
+				.limit(10).collect(Collectors.toList());
+
+		return sorted;
 	}
 
 	public void sendStockNotificationEmail() throws Exception
