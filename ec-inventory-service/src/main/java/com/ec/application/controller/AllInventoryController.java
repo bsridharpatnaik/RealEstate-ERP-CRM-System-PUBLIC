@@ -28,8 +28,8 @@ public class AllInventoryController
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public AllInventoryReturnData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "date,type,keyid", direction = Direction.DESC) Pageable pageable)
-			throws Exception
+			@PageableDefault(page = 0, size = 10, sort =
+			{ "date", "type", "keyid" }, direction = Direction.DESC) Pageable pageable) throws Exception
 	{
 		return allInventoryService.fetchAllInventory(filterDataList, pageable);
 	}
