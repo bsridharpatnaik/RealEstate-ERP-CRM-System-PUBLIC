@@ -14,29 +14,33 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
-import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.service.AllInventoryService;
 import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/inventory")
-public class AllInventoryController 
+public class AllInventoryController
 {
 	@Autowired
 	AllInventoryService allInventoryService;
 
-	@PostMapping 
+	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
-	public AllInventoryReturnData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,@PageableDefault(page = 0, size = 10, sort = "date", direction = Direction.DESC) Pageable pageable) throws Exception
+	public AllInventoryReturnData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
+			@PageableDefault(page = 0, size = 10, sort = "date,type,keyid", direction = Direction.DESC) Pageable pageable)
+			throws Exception
 	{
-		return allInventoryService.fetchAllInventory(filterDataList,pageable);
+		return allInventoryService.fetchAllInventory(filterDataList, pageable);
 	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
 		return apiError;
 	}
 }
