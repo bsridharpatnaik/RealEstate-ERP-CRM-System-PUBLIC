@@ -60,7 +60,7 @@ public interface StockRepo extends BaseRepository<Stock, Long>
 	@Query(value = "SELECT ROUND(SUM(quantityInHand)) from Stock m where m.product.productId=:productId")
 	Double getCurrentTotalStockForProduct(@Param("productId") Long productId);
 
-	@Query(value = "SELECT new com.ec.application.data.StockPercentData(m.product.productId,m.product.productName,m.lastModifiedDate,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
-			+ " group by m.product.productId,m.product.productName,m.lastModifiedDate")
+	@Query(value = "SELECT new com.ec.application.data.StockPercentData(m.product.productId,m.product.productName,m.modified,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
+			+ " group by m.product.productId,m.product.productName,m.modified")
 	List<StockPercentData> getCurrentStockPercent();
 }
