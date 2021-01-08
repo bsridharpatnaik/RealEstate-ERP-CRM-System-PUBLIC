@@ -92,6 +92,9 @@ public class ProductService
 		if (payload.getReorderQuantity() == null || payload.getReorderQuantity() == 0)
 			throw new Exception("Reorder Quantity cannot be zero or empty. Please Enter Reorder Quantity");
 
+		if (payload.getProductName().length() > 25)
+			throw new Exception("Product Name should not exceed 25 characters. Please provide valid product name.");
+
 	}
 
 	public Product updateProduct(Long id, ProductCreateData payload) throws Exception
