@@ -55,8 +55,6 @@ public class DashboardService
 
 	Logger log = LoggerFactory.getLogger(DashboardService.class);
 
-	ExecutorService executors = Executors.newFixedThreadPool(8);
-
 	public PipelineAndActivitiesForDashboard customerpipeline(DashboardData payload) throws Exception
 	{
 		PipelineAndActivitiesForDashboard dashboardPipelineReturnData = new PipelineAndActivitiesForDashboard();
@@ -68,7 +66,7 @@ public class DashboardService
 		data = lRepo.getActivity(fromdate, nextDate);
 
 		log.info("Fetching Stats");
-
+		ExecutorService executors = Executors.newFixedThreadPool(8);
 		CyclicBarrier barrier = new CyclicBarrier(8);
 
 		// executors.

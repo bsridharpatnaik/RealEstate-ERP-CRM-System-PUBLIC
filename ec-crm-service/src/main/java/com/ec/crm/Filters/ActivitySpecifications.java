@@ -14,6 +14,7 @@ import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Model.LeadActivity_;
 import com.ec.crm.Model.Lead_;
 import com.ec.crm.Model.Source_;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
 
 public class ActivitySpecifications
@@ -92,17 +93,32 @@ public class ActivitySpecifications
 					specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.OCCUPATION, occupation));
 
 		if (broker != null && broker.size() > 0)
+		{
+			if (ReusableMethods.isNumeric(broker.get(0)))
+				finalSpec = specbldr.specAndCondition(finalSpec, specbldr
+						.whereGrandChildLongFieldContains(LeadActivity_.LEAD, Lead_.BROKER, Broker_.BROKER_ID, broker));
+			else
+				finalSpec = specbldr.specAndCondition(finalSpec, specbldr
+						.whereGrandChildFieldContains(LeadActivity_.LEAD, Lead_.BROKER, Broker_.BROKER_NAME, broker));
+		}
+		if (broker != null && broker.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereGrandChildFieldContains(LeadActivity_.LEAD, Lead_.BROKER, Broker_.BROKER_NAME, broker)
 							.or(specbldr.whereGrandChildLongFieldContains(LeadActivity_.LEAD, Lead_.BROKER,
 									Broker_.BROKER_ID, broker)));
 
 		if (source != null && source.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereGrandChildFieldContains(LeadActivity_.LEAD, Lead_.SOURCE, Source_.SOURCE_NAME, source)
-							.or(specbldr.whereGrandChildLongFieldContains(LeadActivity_.LEAD, Lead_.SOURCE,
-									Source_.SOURCE_ID, source)));
-
+		{
+			if (ReusableMethods.isNumeric(source.get(0)))
+			{
+				finalSpec = specbldr.specAndCondition(finalSpec, specbldr
+						.whereGrandChildLongFieldContains(LeadActivity_.LEAD, Lead_.SOURCE, Source_.SOURCE_ID, source));
+			} else
+			{
+				finalSpec = specbldr.specAndCondition(finalSpec, specbldr
+						.whereGrandChildFieldContains(LeadActivity_.LEAD, Lead_.SOURCE, Source_.SOURCE_NAME, source));
+			}
+		}
 		if (propertytype != null && propertytype.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildEnumFieldEquals(LeadActivity_.LEAD,
 					Lead_.PROPERTY_TYPE, propertytype, PropertyTypeEnum.class));

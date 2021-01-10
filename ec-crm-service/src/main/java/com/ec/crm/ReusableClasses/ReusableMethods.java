@@ -30,6 +30,18 @@ public final class ReusableMethods
 		return (m.find() && m.group().equals(s));
 	}
 
+	public static boolean isNumeric(String str)
+	{
+		try
+		{
+			Double.parseDouble(str);
+			return true;
+		} catch (NumberFormatException e)
+		{
+			return false;
+		}
+	}
+
 	public static boolean isValidEmail(String email)
 	{
 		String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\." + "[a-zA-Z0-9_+&*-]+)*@" + "(?:[a-zA-Z0-9-]+\\.)+[a-z"
