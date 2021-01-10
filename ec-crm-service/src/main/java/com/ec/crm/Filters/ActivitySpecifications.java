@@ -92,12 +92,16 @@ public class ActivitySpecifications
 					specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.OCCUPATION, occupation));
 
 		if (broker != null && broker.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereGrandChildFieldContains(LeadActivity_.LEAD,
-					Lead_.BROKER, Broker_.BROKER_NAME, broker));
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereGrandChildFieldContains(LeadActivity_.LEAD, Lead_.BROKER, Broker_.BROKER_NAME, broker)
+							.or(specbldr.whereGrandChildLongFieldContains(LeadActivity_.LEAD, Lead_.BROKER,
+									Broker_.BROKER_ID, broker)));
 
 		if (source != null && source.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereGrandChildFieldContains(LeadActivity_.LEAD,
-					Lead_.SOURCE, Source_.SOURCE_NAME, source));
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereGrandChildFieldContains(LeadActivity_.LEAD, Lead_.SOURCE, Source_.SOURCE_NAME, source)
+							.or(specbldr.whereGrandChildLongFieldContains(LeadActivity_.LEAD, Lead_.SOURCE,
+									Source_.SOURCE_ID, source)));
 
 		if (propertytype != null && propertytype.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildEnumFieldEquals(LeadActivity_.LEAD,
@@ -132,8 +136,8 @@ public class ActivitySpecifications
 					specbldr.whereDirectBoleanFieldEquals(LeadActivity_.IS_OPEN, activityStatus));
 
 		if (activityStartDate != null && activityStartDate.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldDateGreaterThanOrEqual(LeadActivity_.ACTIVITY_DATE_TIME, activityStartDate));
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr
+					.whereDirectFieldDateGreaterThanOrEqual(LeadActivity_.ACTIVITY_DATE_TIME, activityStartDate));
 
 		if (activityEndDate != null && activityEndDate.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,

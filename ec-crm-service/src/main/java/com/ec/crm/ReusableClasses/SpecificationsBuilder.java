@@ -309,6 +309,19 @@ public class SpecificationsBuilder<T>
 	// Level 2 //
 	// #######################################//
 
+	public Specification<T> whereGrandChildLongFieldContains(String childTable, String grandChildTable,
+			String grandChildFiledName, List<String> ids)
+	{
+		Specification<T> finalSpec = null;
+		for (String name : ids)
+		{
+			Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+					.equal(root.get(childTable).get(grandChildTable).get(grandChildFiledName), Long.parseLong(name));
+			finalSpec = specOrCondition(finalSpec, internalSpec);
+		}
+		return finalSpec;
+	}
+
 	public Specification<T> whereGrandChildFieldContains(String childTable, String grandChildTable,
 			String grandChildFiledName, List<String> names)
 	{

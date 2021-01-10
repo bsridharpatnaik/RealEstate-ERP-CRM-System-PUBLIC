@@ -18,9 +18,9 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
+import org.hibernate.annotations.Where;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
-import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -31,34 +31,36 @@ import lombok.Data;
 @Entity
 @Table(name = "note")
 @Data
-public class Note extends ReusableFields{
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class Note extends ReusableFields
+{
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "note_id", updatable = false, nullable = false)
 	Long noteId;
-	
-	@Column(name="content")
+
+	@Column(name = "content")
 	String content;
-	
-	
-	@ManyToMany(fetch=FetchType.EAGER,cascade = CascadeType.ALL)
-	@JoinTable(name = "note_fileinformation", joinColumns = {
-			@JoinColumn(name = "note_id", referencedColumnName = "note_id") }, inverseJoinColumns = {
-					@JoinColumn(name = "id", referencedColumnName = "id") })
+
+	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinTable(name = "note_fileinformation", joinColumns =
+	{ @JoinColumn(name = "note_id", referencedColumnName = "note_id") }, inverseJoinColumns =
+	{ @JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
-	
+
 	@JsonIgnore
-	@ManyToOne(fetch=FetchType.LAZY,cascade = CascadeType.ALL)
-	@JoinColumn(name="lead_id",nullable=false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@NotFound(action=NotFoundAction.IGNORE)
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "lead_id", nullable = false)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	@NotFound(action = NotFoundAction.IGNORE)
 	Lead lead;
-	
-	@Column(name="pinned")
+
+	@Column(name = "pinned")
 	Boolean pinned;
-	
-	@Column(name="creatorId")
-	@JsonSerialize(using=ToUsernameSerializer.class)
+
+	@Column(name = "creatorId")
+	@JsonSerialize(using = ToUsernameSerializer.class)
 	Long creatorId;
-	
+
 }
