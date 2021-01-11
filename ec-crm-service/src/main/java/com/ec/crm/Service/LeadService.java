@@ -36,6 +36,7 @@ import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadInformationAllTabData;
 import com.ec.crm.Data.LeadInformationAllTabDataList;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.FilterDataList;
@@ -173,8 +174,45 @@ public class LeadService
 
 		if (!leadOpt.isPresent())
 			throw new Exception("Lead with ID -" + id + " Not Found");
-		LeadDAO leadDAO = leadToLeadDAOModelMapper.map(leadOpt.get(), LeadDAO.class);
-		return leadDAO;
+		LeadDAO l = new LeadDAO();
+		convertLeadToLeadDAO(leadOpt.get(), l);
+		return l;
+	}
+
+	private void convertLeadToLeadDAO(Lead lead, LeadDAO l)
+	{
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
+		l.setAddr_line1(lead.getAddress().getAddr_line1() == null ? null : lead.getAddress().getAddr_line1());
+		l.setAddr_line2(lead.getAddress().getAddr_line2() == null ? null : lead.getAddress().getAddr_line2());
+		l.setAsigneeId(lead.getAsigneeId());
+		l.setAssigneeUserId(lead.getAsigneeId());
+		l.setBroker(lead.getBroker() == null ? null : lead.getBroker().getBrokerName());
+		l.setCity(lead.getAddress().getCity() == null ? null : lead.getAddress().getCity());
+		l.setCreatorId(lead.getCreatorId() == null ? null : lead.getCreatorId());
+		l.setCustomerName(lead.getCustomerName());
+		l.setDateOfBirth(lead.getDateOfBirth() == null ? null : lead.getDateOfBirth());
+		l.setEmailId(lead.getEmailId() == null ? null : lead.getEmailId());
+		l.setLastActivityModifiedDate(
+				lead.getLastActivityModifiedDate() == null ? null : lead.getLastActivityModifiedDate());
+		l.setLeadId(lead.getLeadId());
+		l.setOccupation(lead.getOccupation() == null ? null : lead.getOccupation());
+		l.setPincode(lead.getAddress().getPincode() == null ? null : lead.getAddress().getPincode());
+		if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+				|| currentUser.getRoles().contains("admin"))
+			l.setPrimaryMobile((lead.getPrimaryMobile()));
+		else
+			l.setPrimaryMobile("******" + lead.getPrimaryMobile().substring(7));
+		l.setPropertyType(lead.getPropertyType() == null ? null : lead.getPropertyType());
+		l.setPurpose(lead.getPurpose() == null ? null : lead.getPurpose());
+		if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+				|| currentUser.getRoles().contains("admin"))
+			l.setSecondaryMobile(lead.getSecondaryMobile());
+		else
+			l.setSecondaryMobile("******" + lead.getPrimaryMobile().substring(7));
+		l.setSentiment(lead.getSentiment() == null ? null : lead.getSentiment());
+		l.setSource(lead.getSource() == null ? null : lead.getSource().getSourceName());
+		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? null : lead.getStagnantDaysCount());
+		l.setStatus(lead.getStatus());
 	}
 
 	private void formatMobileNo(LeadCreateData payload) throws Exception
@@ -251,10 +289,15 @@ public class LeadService
 
 	List<String> fetchTypeAheadForLeadGlobalSearch()
 	{
+
 		log.info("Invoked fetchTypeAheadForLeadGlobalSearch");
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
 		List<String> typeAhead = new ArrayList<String>();
 		typeAhead.addAll(lRepo.getLeadNames());
-		typeAhead.addAll(lRepo.getLeadMobileNos());
+		if (currentUser.getRoles().contains("CRM-Manager") || currentUser.getRoles().contains("admin"))
+			typeAhead.addAll(lRepo.getLeadMobileNos());
+		else
+			typeAhead.addAll(lRepo.getAssignedLeadMobileNos(currentUser.getId()));
 		return typeAhead;
 	}
 

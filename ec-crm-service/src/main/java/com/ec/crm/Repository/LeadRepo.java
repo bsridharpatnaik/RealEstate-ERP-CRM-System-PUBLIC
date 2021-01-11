@@ -30,7 +30,10 @@ public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationEx
 
 	@Query(value = "SELECT count(m) from Lead m where m.broker.brokerId=:brokerId")
 	int findBrokerUsageCount(@Param("brokerId") Long brokerId);
-	
+
 	@Query(value = "SELECT asigneeId from Lead m where leadId = :leadId")
 	Long findUserIdByLeadId(@Param(value = "leadId") Long leadId);
+
+	@Query(value = "SELECT DISTINCT primaryMobile from Lead m where m.asigneeId =:leadId ")
+	List<String> getAssignedLeadMobileNos(@Param("leadId") Long leadId);
 }

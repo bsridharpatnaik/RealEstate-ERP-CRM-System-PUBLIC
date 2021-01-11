@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +31,14 @@ import com.ec.crm.Data.LeadCreateData;
 import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Service.LeadService;
+import com.ec.crm.Service.UserDetailsService;
 
 @RestController
 @RequestMapping(value = "/lead", produces =
@@ -44,6 +47,12 @@ public class LeadController
 {
 	@Autowired
 	LeadService leadService;
+
+	@Autowired
+	HttpServletRequest request;
+
+	@Autowired
+	UserDetailsService userDetailsService;
 
 	@GetMapping
 	public Page<Lead> returnAllLeads(Pageable pageable)
@@ -54,6 +63,8 @@ public class LeadController
 	@GetMapping("{id}")
 	public LeadDAO returnSingleLead(@PathVariable Long id) throws Exception
 	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		request.setAttribute("currentUser", currentUser);
 		return leadService.getSingleLead(id);
 	}
 

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ import com.ec.crm.Data.LeadActivityClosingComment;
 import com.ec.crm.Data.LeadActivityCreate;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.RescheduleActivityData;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.LeadActivity;
@@ -55,6 +58,9 @@ public class LeadActivityController
 
 	@Autowired
 	NoteService noteService;
+
+	@Autowired
+	HttpServletRequest request;
 
 	@GetMapping
 	public Page<LeadActivity> returnAllLeadActivity(Pageable pageable)
@@ -115,6 +121,8 @@ public class LeadActivityController
 			@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
 			throws Exception
 	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		request.setAttribute("currentUser", currentUser);
 		return laService.getLeadActivityPage(leadFilterDataList, pageable);
 	}
 

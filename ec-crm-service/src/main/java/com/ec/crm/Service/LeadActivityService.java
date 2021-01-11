@@ -27,6 +27,7 @@ import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.NoteCreateData;
 import com.ec.crm.Data.RescheduleActivityData;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
@@ -625,15 +626,37 @@ public class LeadActivityService
 
 		Page<LeadActivity> leadActivityList = spec != null ? laRepo.findAll(spec, pageable) : laRepo.findAll(pageable);
 
-		Page<LeadPageData> pagedata = leadActivityList
-				.map(objectEntity -> leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
+		/*
+		 * Page<LeadPageData> pagedata = leadActivityList .map(objectEntity ->
+		 * leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
+		 */
 
+		Page<LeadPageData> pagedata = leadActivityList.map(this::mapLeadActivityPage);
 		leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
 		log.info("Setting dropdown data");
 		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
 		log.info("Setting typeahead data");
 		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
 		return leadActivityListWithTypeAheadData;
+	}
+
+	private LeadPageData mapLeadActivityPage(LeadActivity la)
+	{
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
+		LeadPageData l = new LeadPageData();
+		l.setActivityDateTime(la.getActivityDateTime());
+		l.setActivityType(la.getActivityType());
+		l.setAssigneeId(la.getLead().getAsigneeId());
+		l.setIsOpen(la.getIsOpen());
+		l.setLeadId(la.getLead().getLeadId());
+		l.setLeadStatus(la.getLead().getStatus());
+		l.setName(la.getLead().getCustomerName());
+		if (currentUser.getId().equals(la.getLead().getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+				|| currentUser.getRoles().contains("admin"))
+			l.setMobileNumber(la.getLead().getPrimaryMobile());
+		else
+			l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
+		return l;
 	}
 
 	public LeadActivity getRecentActivityByLead(Lead lead)

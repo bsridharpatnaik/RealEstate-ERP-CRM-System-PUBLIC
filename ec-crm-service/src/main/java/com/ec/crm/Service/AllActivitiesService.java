@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import com.ec.crm.Data.PlannerAllReturnDAO;
 import com.ec.crm.Data.PlannerSingleReturnDAO;
 import com.ec.crm.Data.PlannerWithTotalReturnDAO;
 import com.ec.crm.Data.StagnatedEnum;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
@@ -55,6 +57,9 @@ public class AllActivitiesService
 	LeadService leadService;
 
 	Logger log = LoggerFactory.getLogger(AllActivitiesService.class);
+
+	@Autowired
+	HttpServletRequest request;
 
 	@Autowired
 	LeadActivityService leadActivityService;
@@ -106,14 +111,21 @@ public class AllActivitiesService
 	private PlannerWithTotalReturnDAO transformToPlannerWithTotalReturnDAO(List<LeadActivity> filteredActivities)
 	{
 		log.info("Invoked transformToPlannerWithTotalReturnDAO");
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
 		PlannerWithTotalReturnDAO plannerWithTotalReturnDAO = new PlannerWithTotalReturnDAO();
 		List<PlannerSingleReturnDAO> activities = new ArrayList<PlannerSingleReturnDAO>();
 		for (LeadActivity leadActivity : filteredActivities)
+		{
+			String mobileNo = "";
+			if (currentUser.getId().equals(leadActivity.getLead().getAsigneeId())
+					|| currentUser.getRoles().contains("CRM-Manager") || currentUser.getRoles().contains("admin"))
+				mobileNo = leadActivity.getLead().getPrimaryMobile();
+			else
+				mobileNo = "******" + leadActivity.getLead().getPrimaryMobile().substring(7);
 			activities.add(new PlannerSingleReturnDAO(leadActivity.getLead().getLeadId(),
-					leadActivity.getLead().getCustomerName(), leadActivity.getLead().getPrimaryMobile(),
-					leadActivity.getIsOpen(), leadActivity.getActivityDateTime(),
-					leadActivity.getLead().getAsigneeId()));
-
+					leadActivity.getLead().getCustomerName(), mobileNo, leadActivity.getIsOpen(),
+					leadActivity.getActivityDateTime(), leadActivity.getLead().getAsigneeId()));
+		}
 		plannerWithTotalReturnDAO.setActivities(activities);
 		plannerWithTotalReturnDAO.setTotalActivities(activities.size());
 		return plannerWithTotalReturnDAO;
@@ -215,7 +227,9 @@ public class AllActivitiesService
 	private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads,
 			HashMap<Long, LeadActivity> leadRecentActivityMapping) throws Exception
 	{
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
 		log.info("Invoked transformToPipelineWithTotalReturnDAO");
+
 		PipelineWithTotalReturnDAO PipelineWithTotalReturnDAO = new PipelineWithTotalReturnDAO();
 		List<PipelineSingleReturnDTO> pipelineSingleReturnDTOList = new ArrayList<PipelineSingleReturnDTO>();
 
@@ -224,7 +238,13 @@ public class AllActivitiesService
 			LeadActivity recentActivity = leadRecentActivityMapping.get(l.getLeadId());
 			PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
 			pipelineSingleReturnDTO.setLeadId(l.getLeadId());
-			pipelineSingleReturnDTO.setMobileNumber(l.getPrimaryMobile());
+
+			if (currentUser.getId().equals(l.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+					|| currentUser.getRoles().contains("admin"))
+				pipelineSingleReturnDTO.setMobileNumber((l.getPrimaryMobile()));
+			else
+				pipelineSingleReturnDTO.setMobileNumber("******" + l.getPrimaryMobile().substring(7));
+
 			pipelineSingleReturnDTO.setName(l.getCustomerName());
 			pipelineSingleReturnDTO.setSentiment(l.getSentiment());
 			pipelineSingleReturnDTO.setActivityDateTime(recentActivity.getActivityDateTime());
