@@ -2,7 +2,6 @@ package com.ec.crm.Data;
 
 import java.util.Date;
 
-import com.ec.crm.Enums.PropertyTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
@@ -15,8 +14,8 @@ import lombok.NoArgsConstructor;
 public class CreateDealStructureDTO
 {
 	Long leadId;
-	String PropertyName;
-	PropertyTypeEnum propertyType;
+	Long PropertyId;
+	Long propertyTypeId;
 	String PropertyNumber;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date bookingDate;
