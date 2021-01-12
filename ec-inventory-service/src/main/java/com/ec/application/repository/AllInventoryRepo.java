@@ -27,4 +27,7 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 	@Query("select m from AllInventoryTransactions m where m.entryid=:entryId")
 	List<AllInventoryTransactions> findByEntryId(@Param("entryId") Long entryId);
 
+	@Query("select m from AllInventoryTransactions m where m.entryid IN entryIds")
+	List<AllInventoryTransactions> findByEntryIdList(@Param("entryIds") List<Long> entryIds);
+
 }
