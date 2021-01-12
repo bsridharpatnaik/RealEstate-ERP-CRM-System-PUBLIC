@@ -373,7 +373,7 @@ public class StockService
 		List<StockPercentData> all = stockRepo.getCurrentStockPercent();
 		Comparator<StockPercentData> NameCommparator = Comparator.comparing(StockPercentData::getUpdated);
 		List<StockPercentData> sorted = all.stream().sorted(NameCommparator).filter(c -> c.getStockPercent() < 120)
-				.limit(10).collect(Collectors.toList());
+				.limit(20).collect(Collectors.toList());
 
 		return sorted;
 	}
