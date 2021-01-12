@@ -74,6 +74,8 @@ public class LeadController
 			@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable)
 			throws Exception
 	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		request.setAttribute("currentUser", currentUser);
 		return leadService.findFilteredList(leadFilterDataList, pageable);
 	}
 
