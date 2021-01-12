@@ -208,7 +208,7 @@ public class LeadService
 				|| currentUser.getRoles().contains("admin"))
 			l.setSecondaryMobile(lead.getSecondaryMobile());
 		else
-			l.setSecondaryMobile("******" + lead.getPrimaryMobile().substring(7));
+			l.setSecondaryMobile("******" + lead.getSecondaryMobile().substring(7));
 		l.setSentiment(lead.getSentiment() == null ? null : lead.getSentiment());
 		l.setSource(lead.getSource() == null ? null : lead.getSource().getSourceName());
 		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? null : lead.getStagnantDaysCount());
