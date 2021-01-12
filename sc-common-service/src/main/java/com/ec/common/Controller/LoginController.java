@@ -40,9 +40,10 @@ public class LoginController
 	public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception
 	{
 		LoginData loginData = new LoginData();
-
-		authenticate(userData.getUserName(), userData.getPassword());
-		final UserDetails userDetails = userDetailsService.loadUserByUsername(userData.getUserName());
+		String username = userData.getUserName().trim();
+		String password = userData.getPassword();
+		authenticate(username, password);
+		final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 		final String token = jwtTokenUtil.generateToken(userDetails);
 
 		Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
@@ -51,7 +52,7 @@ public class LoginController
 		{
 			roles.add(grantedAuthority.getAuthority());
 		}
-		String name = userDetails.getUsername();
+		String name = userDetails.getUsername().trim();
 		return ResponseEntity.ok(new JwtResponse(name, token, roles));
 	}
 
