@@ -16,6 +16,7 @@ import com.ec.crm.Data.AllNotesForLeadDAO;
 import com.ec.crm.Data.ClosedLeadsListDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
+import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Filters.ClosedLeadsSpecification;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ClosedLeads;
@@ -95,12 +96,43 @@ public class ClosedLeadService
 		return customerDetailedInfo;
 	}
 
-	public ClosedLeads getCustomerDetails(Long id) throws Exception
+	public LeadDAO getCustomerDetails(Long id) throws Exception
 	{
 		if (!clRepo.existsById(id))
 			throw new Exception("Customer not found with ID -" + id);
 
-		return clRepo.findById(id).get();
+		// return ;
+
+		LeadDAO l = new LeadDAO();
+		convertLeadToLeadDAO(clRepo.findById(id).get(), l);
+		return l;
+	}
+
+	private void convertLeadToLeadDAO(ClosedLeads lead, LeadDAO l)
+	{
+		l.setAddr_line1(lead.getAddress().getAddr_line1() == null ? null : lead.getAddress().getAddr_line1());
+		l.setAddr_line2(lead.getAddress().getAddr_line2() == null ? null : lead.getAddress().getAddr_line2());
+		l.setAsigneeId(lead.getAsigneeId());
+		l.setAssigneeUserId(lead.getAsigneeId());
+		l.setBroker(lead.getBroker() == null ? null : lead.getBroker().getBrokerName());
+		l.setCity(lead.getAddress().getCity() == null ? null : lead.getAddress().getCity());
+		l.setCreatorId(lead.getCreatorId() == null ? null : lead.getCreatorId());
+		l.setCustomerName(lead.getCustomerName());
+		l.setDateOfBirth(lead.getDateOfBirth() == null ? null : lead.getDateOfBirth());
+		l.setEmailId(lead.getEmailId() == null ? null : lead.getEmailId());
+		l.setLastActivityModifiedDate(
+				lead.getLastActivityModifiedDate() == null ? null : lead.getLastActivityModifiedDate());
+		l.setLeadId(lead.getLeadId());
+		l.setOccupation(lead.getOccupation() == null ? null : lead.getOccupation());
+		l.setPincode(lead.getAddress().getPincode() == null ? null : lead.getAddress().getPincode());
+		l.setPrimaryMobile((lead.getPrimaryMobile()));
+		l.setPropertyType(lead.getPropertyType() == null ? null : lead.getPropertyType());
+		l.setPurpose(lead.getPurpose() == null ? null : lead.getPurpose());
+		l.setSecondaryMobile(lead.getSecondaryMobile());
+		l.setSentiment(lead.getSentiment() == null ? null : lead.getSentiment());
+		l.setSource(lead.getSource() == null ? null : lead.getSource().getSourceName());
+		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? null : lead.getStagnantDaysCount());
+		l.setStatus(lead.getStatus());
 	}
 
 }

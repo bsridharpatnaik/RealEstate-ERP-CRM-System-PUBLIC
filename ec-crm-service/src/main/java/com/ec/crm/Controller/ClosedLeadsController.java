@@ -28,8 +28,8 @@ import com.ec.crm.Data.ClosedLeadsListDTO;
 import com.ec.crm.Data.CreateCustomerDocumentDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
+import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Model.ClosedLeads;
 import com.ec.crm.Model.CustomerDocument;
 //import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Service.ClosedLeadService;
@@ -63,7 +63,7 @@ public class ClosedLeadsController
 	}
 
 	@GetMapping("/customerdetails/{id}")
-	public ClosedLeads getCustomerDetailedInfo(@PathVariable Long id) throws Exception
+	public LeadDAO getCustomerDetailedInfo(@PathVariable Long id) throws Exception
 	{
 		return clService.getCustomerDetails(id);
 	}

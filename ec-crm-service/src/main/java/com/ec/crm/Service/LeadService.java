@@ -179,7 +179,7 @@ public class LeadService
 		return l;
 	}
 
-	private void convertLeadToLeadDAO(Lead lead, LeadDAO l)
+	public void convertLeadToLeadDAO(Lead lead, LeadDAO l)
 	{
 		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
 		l.setAddr_line1(lead.getAddress().getAddr_line1() == null ? null : lead.getAddress().getAddr_line1());
