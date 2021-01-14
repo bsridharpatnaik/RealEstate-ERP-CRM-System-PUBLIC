@@ -76,16 +76,22 @@ FROM   (SELECT cl.user_id,
                Count(DISTINCT cl.lead_id) AS totalCount 
         FROM   lead_activity la 
                INNER JOIN customer_lead cl 
-                       ON cl.lead_id = la.lead_id  AND cl.is_deleted != 1 AND la.is_deleted !=1
+                       ON cl.lead_id = la.lead_id  AND cl.created_at>=DATE_SUB(LAST_DAY(NOW()),INTERVAL DAY(LAST_DAY(NOW()))-
+1 DAY) AND cl.is_deleted != 1 AND la.is_deleted !=1 and la.created_at>=DATE_SUB(LAST_DAY(NOW()),INTERVAL DAY(LAST_DAY(NOW()))-
+1 DAY)
         GROUP  BY cl.user_id) AS y 
        LEFT JOIN (SELECT cl.user_id, 
                          Count(DISTINCT cl.lead_id) AS convertedCount 
                   FROM   lead_activity la 
                          INNER JOIN customer_lead cl 
                                  ON cl.lead_id = la.lead_id AND cl.is_deleted != 1  AND la.is_deleted !=1
-                  WHERE  la.activity_type = 'Deal_Close' AND cl.status='Deal_Closed'
+                  WHERE  la.activity_type = 'Deal_Close' AND cl.status='Deal_Closed' AND la.created_at>=DATE_SUB(LAST_DAY(NOW()),INTERVAL DAY(LAST_DAY(NOW()))-
+1 DAY)
                   GROUP  BY cl.user_id) AS tx 
               ON tx.user_id = y.user_id 
        INNER JOIN security_user su 
                ON su.user_id = y.user_id; 
+               
+               
+               
                

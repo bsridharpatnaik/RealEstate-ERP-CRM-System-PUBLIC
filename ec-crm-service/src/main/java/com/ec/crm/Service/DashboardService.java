@@ -25,6 +25,7 @@ import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.Repository.ConvertionRatioRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.StagnantStatsRepo;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.SubClasses.SetActivitiesCreated;
 import com.ec.crm.SubClasses.SetDealClosed;
 import com.ec.crm.SubClasses.SetDealLost;
@@ -124,7 +125,7 @@ public class DashboardService
 		List<ConversionRatio> data = convertionRatioRepo.gettopperformer();
 		Map returndata = new HashMap<>();
 		Long id = data.get(0).getUserId();
-		Long propertyvisit = lRepo.getpropertyvisit(id);
+		Long propertyvisit = lRepo.getpropertyvisit(id, ReusableMethods.getStartOfMonth());
 		returndata.put("username", data.get(0).getAsigneeName());
 		returndata.put("leadsGenerated", data.get(0).getTotalcount());
 		returndata.put("propertyVisits", propertyvisit);

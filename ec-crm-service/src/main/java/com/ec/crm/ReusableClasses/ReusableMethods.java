@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
@@ -188,6 +190,12 @@ public final class ReusableMethods
 		LocalDateTime localDateTime = dateToLocalDateTime(date);
 		LocalDateTime endOfDay = localDateTime.with(LocalTime.MAX);
 		return localDateTimeToDate(endOfDay);
+	}
+
+	public static Date getStartOfMonth()
+	{
+		Date startOfMonth = Date.from(LocalDate.now().withDayOfMonth(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+		return startOfMonth;
 	}
 
 	private static LocalDateTime dateToLocalDateTime(Date date)

@@ -149,8 +149,10 @@ public class LeadService
 		validatePayload(payload);
 		log.info("Payload Validated");
 		exitIfUpdateNotAllowed(leadForUpdate, payload);
+
 		if (!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
 			exitIfMobileNoExists(payload);
+
 		log.info("Setting lead fields from payload");
 		setLeadFields(leadForUpdate, payload, "update");
 		log.info("Saving new lead record to database");
@@ -164,6 +166,13 @@ public class LeadService
 		{
 			if (!leadForUpdate.getAsigneeId().equals(payload.getAssigneeId()))
 				throw new Exception("Assignee cannot be changed after lead is closed/lost");
+		}
+
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		if (!currentUser.getRoles().contains("admin") && !currentUser.getRoles().contains("CRM-Manager"))
+		{
+			if (!leadForUpdate.getAsigneeId().equals(payload.getAssigneeId()))
+				throw new Exception("User not allowed to change Assignee for lead");
 		}
 
 	}
