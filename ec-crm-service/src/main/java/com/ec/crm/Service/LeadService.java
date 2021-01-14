@@ -161,18 +161,17 @@ public class LeadService
 
 	private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception
 	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		if (!currentUser.getRoles().contains("admin") && !currentUser.getRoles().contains("CRM-Manager"))
+		{
+			throw new Exception("User not allowed to edit lead. Please contact manager");
+		}
+
 		if (leadForUpdate.getStatus().equals(LeadStatusEnum.Deal_Lost)
 				|| leadForUpdate.getStatus().equals(LeadStatusEnum.Deal_Closed))
 		{
 			if (!leadForUpdate.getAsigneeId().equals(payload.getAssigneeId()))
 				throw new Exception("Assignee cannot be changed after lead is closed/lost");
-		}
-
-		UserReturnData currentUser = userDetailsService.getCurrentUser();
-		if (!currentUser.getRoles().contains("admin") && !currentUser.getRoles().contains("CRM-Manager"))
-		{
-			if (!leadForUpdate.getAsigneeId().equals(payload.getAssigneeId()))
-				throw new Exception("User not allowed to change Assignee for lead");
 		}
 
 	}
@@ -191,12 +190,12 @@ public class LeadService
 	public void convertLeadToLeadDAO(Lead lead, LeadDAO l)
 	{
 		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
-		l.setAddr_line1(lead.getAddress().getAddr_line1() == null ? null : lead.getAddress().getAddr_line1());
-		l.setAddr_line2(lead.getAddress().getAddr_line2() == null ? null : lead.getAddress().getAddr_line2());
+		l.setAddr_line1(lead.getAddress().getAddr_line1() == null ? "" : lead.getAddress().getAddr_line1());
+		l.setAddr_line2(lead.getAddress().getAddr_line2() == null ? "" : lead.getAddress().getAddr_line2());
 		l.setAsigneeId(lead.getAsigneeId());
 		l.setAssigneeUserId(lead.getAsigneeId());
-		l.setBroker(lead.getBroker() == null ? null : lead.getBroker().getBrokerName());
-		l.setCity(lead.getAddress().getCity() == null ? null : lead.getAddress().getCity());
+		l.setBroker(lead.getBroker() == null ? "" : lead.getBroker().getBrokerName());
+		l.setCity(lead.getAddress().getCity() == null ? "" : lead.getAddress().getCity());
 		l.setCreatorId(lead.getCreatorId() == null ? null : lead.getCreatorId());
 		l.setCustomerName(lead.getCustomerName());
 		l.setDateOfBirth(lead.getDateOfBirth() == null ? null : lead.getDateOfBirth());
@@ -204,8 +203,8 @@ public class LeadService
 		l.setLastActivityModifiedDate(
 				lead.getLastActivityModifiedDate() == null ? null : lead.getLastActivityModifiedDate());
 		l.setLeadId(lead.getLeadId());
-		l.setOccupation(lead.getOccupation() == null ? null : lead.getOccupation());
-		l.setPincode(lead.getAddress().getPincode() == null ? null : lead.getAddress().getPincode());
+		l.setOccupation(lead.getOccupation() == null ? "" : lead.getOccupation());
+		l.setPincode(lead.getAddress().getPincode() == null ? "" : lead.getAddress().getPincode());
 		if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
 				|| currentUser.getRoles().contains("admin"))
 			l.setPrimaryMobile((lead.getPrimaryMobile()));
@@ -220,7 +219,7 @@ public class LeadService
 			l.setSecondaryMobile("******" + lead.getSecondaryMobile().substring(7));
 		l.setSentiment(lead.getSentiment() == null ? null : lead.getSentiment());
 		l.setSource(lead.getSource() == null ? null : lead.getSource().getSourceName());
-		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? null : lead.getStagnantDaysCount());
+		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? 0 : lead.getStagnantDaysCount());
 		l.setStatus(lead.getStatus());
 	}
 
