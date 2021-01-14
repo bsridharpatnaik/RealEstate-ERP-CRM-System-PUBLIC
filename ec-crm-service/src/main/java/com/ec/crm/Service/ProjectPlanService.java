@@ -1,10 +1,13 @@
 package com.ec.crm.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -61,7 +64,34 @@ public class ProjectPlanService
 
 	public List<PropertyType> getAllPropertyTypes()
 	{
-		return ptRepo.findAll();
+
+		// return ptRepo.findAll();
+		List<PropertyType> ptList = ptRepo.findAll();
+		for (PropertyType pt : ptList)
+		{
+			Set<PropertyName> pnList = pt.getPropertyNames();
+			Set<PropertyName> pnSortedList = pnList.stream().sorted(Comparator.comparing(PropertyName::getName))
+					.collect(Collectors.toSet());
+			pt.setPropertyNames(pnSortedList);
+		}
+		return populateFields(ptList.stream().sorted(Comparator.comparing(PropertyType::getPropertyType))
+				.collect(Collectors.toList()));
+	}
+
+	private List<PropertyType> populateFields(List<PropertyType> propertyTypes)
+	{
+		for (PropertyType pt : propertyTypes)
+		{
+			Set<PropertyName> pnList = pt.getPropertyNames();
+			for (PropertyName pn : pnList)
+			{
+				Random rd = new Random();
+				pn.setIsBooked(rd.nextBoolean());
+			}
+			pt.setBookedProperties(pt.getPropertyNames().stream().filter(c -> c.getIsBooked() == true).count());
+			pt.setTotalProperties((long) pt.getPropertyNames().size());
+		}
+		return propertyTypes;
 	}
 
 	public PropertyType getSingle(Long id) throws Exception

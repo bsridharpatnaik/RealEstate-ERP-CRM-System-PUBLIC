@@ -57,4 +57,8 @@ public class PropertyType extends ReusableFields implements Serializable
 	{ @JoinColumn(name = "property_name_id", referencedColumnName = "property_name_id") })
 
 	private Set<PropertyName> propertyNames = new HashSet<>();
+
+	Long totalProperties;
+	Long bookedProperties;
+
 }

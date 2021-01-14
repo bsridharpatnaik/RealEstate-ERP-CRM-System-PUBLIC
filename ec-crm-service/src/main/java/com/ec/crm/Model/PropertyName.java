@@ -31,6 +31,18 @@ public class PropertyName extends ReusableFields
 
 	private String name;
 
+	Boolean isBooked;
+
+	public Boolean getIsBooked()
+	{
+		return isBooked;
+	}
+
+	public void setIsBooked(Boolean isBooked)
+	{
+		this.isBooked = isBooked;
+	}
+
 	public PropertyName(String name2)
 	{
 		this.name = name2;
