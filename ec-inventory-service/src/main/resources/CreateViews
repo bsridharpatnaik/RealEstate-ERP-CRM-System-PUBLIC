@@ -218,3 +218,13 @@ FROM   (SELECT p.product_name AS inventory,
                                   ON p.product_id = s.product_id 
                    GROUP  BY p.product_name) AS stock 
                ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0; 
+               
+-- --------- AI Inventory 2 ------------------
+CREATE OR REPLACE VIEW all_inventory2 as 
+select id,ai.date,ai.type, ai.entryid,ai.keyid,ai.contactid,ai.product_name,ai.measurement_unit,ai.warehouseid,productid,ai.quantity,ai.name,ai.mobile_no,ai.email_id,
+ai.contact_type,ai.warehouse_name,ai.created_at,ai.updated_at,
+((select case when sum(quantity) IS NULL THEN 0 ELSE sum(quantity) END from all_inventory ai1 where ai1.id>=ai.id and ai1.type='inward' and ai1.productid=ai.productid and ai1.warehouseid=ai.warehouseid)
+-(select case when sum(quantity) IS NULL THEN 0 ELSE sum(quantity) END  from all_inventory ai1 where ai1.id>=ai.id and ai1.type='outward' and ai1.productid=ai.productid and ai1.warehouseid=ai.warehouseid)
+-(select case when sum(quantity) IS NULL THEN 0 ELSE sum(quantity) END from all_inventory ai1 where ai1.id>=ai.id and ai1.type='lost-damaged' and ai1.productid=ai.productid and ai1.warehouseid=ai.warehouseid) 
+) as closing_stock from all_inventory ai
+;
