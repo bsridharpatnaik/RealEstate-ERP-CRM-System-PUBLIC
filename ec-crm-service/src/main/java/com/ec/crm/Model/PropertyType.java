@@ -17,6 +17,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 
@@ -26,6 +27,7 @@ import lombok.Data;
 @Data
 @Table(name = "property_type")
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Audited
 public class PropertyType extends ReusableFields implements Serializable
 {
 

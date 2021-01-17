@@ -8,12 +8,14 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 
 @Entity
 @Table(name = "property_name")
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Audited
 public class PropertyName extends ReusableFields
 {
 	public PropertyName()

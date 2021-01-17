@@ -26,14 +26,18 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
 import com.ec.crm.Data.ClosedLeadsListDTO;
 import com.ec.crm.Data.CreateCustomerDocumentDTO;
+import com.ec.crm.Data.CreateDealStructureDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
 import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.CustomerDocument;
+import com.ec.crm.Model.DealStructure;
+import com.ec.crm.ReusableClasses.IdNameProjections;
 //import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Service.ClosedLeadService;
 import com.ec.crm.Service.CustomerDocumentsService;
+import com.ec.crm.Service.DealStructureService;
 
 @RestController
 @RequestMapping(value = "/customer", produces =
@@ -42,9 +46,10 @@ public class ClosedLeadsController
 {
 	@Autowired
 	ClosedLeadService clService;
-	/*
-	 * @Autowired DealStructureService dsService;
-	 */
+
+	@Autowired
+	DealStructureService dsService;
+
 	@Autowired
 	CustomerDocumentsService cdService;
 
@@ -103,6 +108,24 @@ public class ClosedLeadsController
 	public CustomerDocument getCustomerDocument(@PathVariable Long id) throws Exception
 	{
 		return cdService.getById(id);
+	}
+
+	@GetMapping("/dealstructure/propertytypes")
+	public List<IdNameProjections> getPropertyTypeList() throws Exception
+	{
+		return dsService.getPropertyTypes();
+	}
+
+	@GetMapping("/dealstructure/{id}/properties")
+	public List<IdNameProjections> getPropertyList(@PathVariable Long id) throws Exception
+	{
+		return dsService.getPropertiesList(id);
+	}
+
+	@PostMapping("/dealstructure/create")
+	public DealStructure createDealStructure(@RequestBody CreateDealStructureDTO payload) throws Exception
+	{
+		return dsService.createDealStructure(payload);
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
