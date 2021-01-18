@@ -199,26 +199,26 @@ public class LeadService
 		l.setCreatorId(lead.getCreatorId() == null ? null : lead.getCreatorId());
 		l.setCustomerName(lead.getCustomerName());
 		l.setDateOfBirth(lead.getDateOfBirth() == null ? null : lead.getDateOfBirth());
-		l.setEmailId(lead.getEmailId() == null ? null : lead.getEmailId());
+		l.setEmailId(lead.getEmailId() == null ? "" : lead.getEmailId());
 		l.setLastActivityModifiedDate(
 				lead.getLastActivityModifiedDate() == null ? null : lead.getLastActivityModifiedDate());
 		l.setLeadId(lead.getLeadId());
 		l.setOccupation(lead.getOccupation() == null ? "" : lead.getOccupation());
-		l.setPincode(lead.getAddress().getPincode() == null ? "" : lead.getAddress().getPincode());
+		l.setPincode(lead.getAddress().getPincode() == "" ? "" : lead.getAddress().getPincode());
 		if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
 				|| currentUser.getRoles().contains("admin"))
 			l.setPrimaryMobile((lead.getPrimaryMobile()));
 		else
 			l.setPrimaryMobile("******" + lead.getPrimaryMobile().substring(7));
 		l.setPropertyType(lead.getPropertyType() == null ? null : lead.getPropertyType());
-		l.setPurpose(lead.getPurpose() == null ? null : lead.getPurpose());
+		l.setPurpose(lead.getPurpose() == null ? "" : lead.getPurpose());
 		if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
 				|| currentUser.getRoles().contains("admin"))
 			l.setSecondaryMobile(lead.getSecondaryMobile());
 		else
 			l.setSecondaryMobile("******" + lead.getSecondaryMobile().substring(7));
 		l.setSentiment(lead.getSentiment() == null ? null : lead.getSentiment());
-		l.setSource(lead.getSource() == null ? null : lead.getSource().getSourceName());
+		l.setSource(lead.getSource() == null ? "" : lead.getSource().getSourceName());
 		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? 0 : lead.getStagnantDaysCount());
 		l.setStatus(lead.getStatus());
 	}
