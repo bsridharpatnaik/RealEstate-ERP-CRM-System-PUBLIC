@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.config.AsyncService;
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.DashboardMachineOnRentDAO;
@@ -27,10 +28,16 @@ public class AllInventoryService
 	AllInventoryRepo allInventoryRepo;
 
 	@Autowired
+	AsyncServiceInventory asyncServiceInventory;
+
+	@Autowired
 	PopulateDropdownService populateDropdownService;
 
 	@Autowired
 	MachineryOnRentRepo machineryOnRentRepo;
+
+	@Autowired
+	private AsyncService asyncService;
 
 	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable)
 			throws ParseException
@@ -46,6 +53,22 @@ public class AllInventoryService
 		} else
 			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
+		asyncService.run(() ->
+		{
+			for (int i = 0; i < 10; i++)
+			{
+				try
+				{
+					Thread.sleep(1000);
+					asyncServiceInventory.sample();
+				} catch (InterruptedException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		});
 		return allInventoryReturnData;
 	}
 
