@@ -162,7 +162,8 @@ public class LeadService
 	private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception
 	{
 		UserReturnData currentUser = userDetailsService.getCurrentUser();
-		if (!currentUser.getRoles().contains("admin") && !currentUser.getRoles().contains("CRM-Manager"))
+		if (!leadForUpdate.getAsigneeId().equals(currentUser.getId()) && currentUser.getRoles().contains("admin")
+				&& currentUser.getRoles().contains("CRM-Manager"))
 		{
 			throw new Exception("User not allowed to edit lead. Please contact manager");
 		}
@@ -216,7 +217,10 @@ public class LeadService
 				|| currentUser.getRoles().contains("admin"))
 			l.setSecondaryMobile(lead.getSecondaryMobile());
 		else
-			l.setSecondaryMobile("******" + lead.getSecondaryMobile().substring(7));
+		{
+			if (lead.getSecondaryMobile() != null)
+				l.setSecondaryMobile("******" + lead.getSecondaryMobile().substring(7));
+		}
 		l.setSentiment(lead.getSentiment() == null ? null : lead.getSentiment());
 		l.setSource(lead.getSource() == null ? "" : lead.getSource().getSourceName());
 		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? 0 : lead.getStagnantDaysCount());
