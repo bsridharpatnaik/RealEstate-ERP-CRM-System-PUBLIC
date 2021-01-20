@@ -162,8 +162,8 @@ public class LeadService
 	private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception
 	{
 		UserReturnData currentUser = userDetailsService.getCurrentUser();
-		if (!leadForUpdate.getAsigneeId().equals(currentUser.getId()) && currentUser.getRoles().contains("admin")
-				&& currentUser.getRoles().contains("CRM-Manager"))
+		if (!leadForUpdate.getAsigneeId().equals(currentUser.getId()) && !currentUser.getRoles().contains("admin")
+				&& !currentUser.getRoles().contains("CRM-Manager"))
 		{
 			throw new Exception("User not allowed to edit lead. Please contact manager");
 		}
