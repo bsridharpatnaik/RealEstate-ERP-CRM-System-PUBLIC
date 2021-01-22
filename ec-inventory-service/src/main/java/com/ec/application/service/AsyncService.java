@@ -1,4 +1,4 @@
-package com.ec.application.config;
+package com.ec.application.service;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;

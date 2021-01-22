@@ -10,26 +10,31 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.ec.application.data.UserReturnData;
 
 @Service
-public class UserDetailsService 
+public class UserDetailsService
 {
 	@Autowired
 	WebClient.Builder webClientBuilder;
-	
+
 	@Autowired
 	HttpServletRequest request;
-	
+
 	@Value("${common.serverurl}")
 	private String reqUrl;
-    
+
 	public UserReturnData getCurrentUser()
-    {
-    	UserReturnData userDetails = webClientBuilder.build()
-					    	.get()
-					    	.uri(reqUrl+"user/me")
-					    	.header("Authorization", request.getHeader("Authorization"))
-					    	.retrieve()
-					    	.bodyToMono(UserReturnData.class)
-					    	.block();
-    	return userDetails;
-    }
+	{
+		if (request == null)
+		{
+			UserReturnData userDetails = new UserReturnData();
+			userDetails.setId((long) 404);
+			userDetails.setUsername("system");
+			return userDetails;
+		} else
+		{
+			UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
+					.header("Authorization", request.getHeader("Authorization")).retrieve()
+					.bodyToMono(UserReturnData.class).block();
+			return userDetails;
+		}
+	}
 }

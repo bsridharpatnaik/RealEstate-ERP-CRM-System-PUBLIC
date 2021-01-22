@@ -11,7 +11,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.config.AsyncService;
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.data.DashboardMachineOnRentDAO;
@@ -55,21 +54,10 @@ public class AllInventoryService
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
 		asyncService.run(() ->
 		{
-			for (int i = 0; i < 10; i++)
-			{
-				try
-				{
-					Thread.sleep(1000);
-					asyncServiceInventory.sample();
-				} catch (InterruptedException e)
-				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
+			asyncServiceInventory.sample();
 		});
 		return allInventoryReturnData;
+
 	}
 
 	/*
