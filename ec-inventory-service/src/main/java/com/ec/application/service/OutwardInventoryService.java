@@ -441,26 +441,23 @@ public class OutwardInventoryService
 			throws ParseException
 	{
 		log.info("Invoked fetchOutwardnventory");
-		System.out.println("1  - " + new Date());
+
 		ReturnOutwardInventoryData returnOutwardInventoryData = new ReturnOutwardInventoryData();
 
 		// Feed data list
 		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
-		System.out.println("2  - " + new Date());
+
 		if (spec != null)
 			returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(spec, pageable));
 		else
 			returnOutwardInventoryData.setOutwardInventory(outwardInventoryRepo.findAll(pageable));
 
-		System.out.println("3  - " + new Date());
 		// Feed dropdown values
 		returnOutwardInventoryData.setIiDropdown(populateDropdownService.fetchData("outward"));
 
-		System.out.println("4  - " + new Date());
 		// Feed totals
 		returnOutwardInventoryData.setTotals(spec != null ? fetchGroupingForFilteredData(spec, OutwardInventory.class)
 				: fetchOutwardnventoryGroupBy());
-		System.out.println("5  - " + new Date());
 		log.info("Exited fetchOutwardnventory");
 		iiService.backFillClosingStock();
 		return returnOutwardInventoryData;
