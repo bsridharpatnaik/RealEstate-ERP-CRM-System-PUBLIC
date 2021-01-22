@@ -20,24 +20,33 @@ public class AsyncServiceInventory
 	@Autowired
 	InwardOutwardListRepo iolRepo;
 
-	public void sample()
+	public void sample() throws Exception
 	{
-		System.out.println("Before");
-		List<AllInventoryAndInwardOutwardListProjection> list = allRepo.findClosingStockNotMatched();
-
-		System.out.println("After - " + list.size());
-		for (AllInventoryAndInwardOutwardListProjection iop : list)
+		try
 		{
-			System.out.println("##### - " + iop.getEntryid() + " AI CS -  " + iop.getAiClosingStock() + "IOL CS - "
-					+ iop.getIolClosingStock());
+			System.out.println("Before");
+			List<AllInventoryAndInwardOutwardListProjection> list = allRepo.findClosingStockNotMatched();
 
-			Optional<InwardOutwardList> iolOpt = iolRepo.findById(iop.getEntryid());
-			if (iolOpt.isPresent())
+			System.out.println("After - " + list.size());
+			for (AllInventoryAndInwardOutwardListProjection iop : list)
 			{
-				InwardOutwardList iol = iolOpt.get();
-				iol.setClosingStock(iop.getAiClosingStock());
-				iolRepo.save(iol);
+				System.out.println("##### - " + iop.getEntryid() + " AI CS -  " + iop.getAiClosingStock() + "IOL CS - "
+						+ iop.getIolClosingStock());
+
+				Optional<InwardOutwardList> iolOpt = iolRepo.findById(iop.getEntryid());
+				if (iolOpt.isPresent())
+				{
+					InwardOutwardList iol = iolOpt.get();
+					iol.setClosingStock(iop.getAiClosingStock());
+					iolRepo.save(iol);
+
+				}
 			}
+			System.out.println("Completed backfilling closing stock");
+		} catch (Exception e)
+		{
+			throw new Exception("something went wrong!");
+
 		}
 	}
 

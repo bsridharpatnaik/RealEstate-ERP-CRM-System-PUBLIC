@@ -54,7 +54,14 @@ public class AllInventoryService
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
 		asyncService.run(() ->
 		{
-			asyncServiceInventory.sample();
+			try
+			{
+				asyncServiceInventory.sample();
+			} catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		});
 		return allInventoryReturnData;
 
