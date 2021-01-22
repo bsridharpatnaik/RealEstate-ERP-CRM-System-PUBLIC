@@ -52,6 +52,9 @@ public class InwardInventoryService
 	InwardOutwardListRepo iolRepo;
 
 	@Autowired
+	private AsyncService asyncService;
+
+	@Autowired
 	ProductRepo productRepo;
 
 	@Autowired
@@ -78,6 +81,9 @@ public class InwardInventoryService
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
 
+	@Autowired
+	AsyncServiceInventory asyncServiceInventory;
+
 	@Transactional
 	public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception
 	{
@@ -85,7 +91,8 @@ public class InwardInventoryService
 		validateInputs(iiData);
 		setFields(inwardInventory, iiData);
 		updateStockForCreateInwardInventory(inwardInventory);
-		return inwardInventoryRepo.save(inwardInventory);
+		inwardInventoryRepo.save(inwardInventory);
+		return inwardInventory;
 	}
 
 	@Transactional
@@ -134,6 +141,21 @@ public class InwardInventoryService
 		return inwardOutwardListSet;
 	}
 
+	public void backFillClosingStock()
+	{
+		asyncService.run(() ->
+		{
+			try
+			{
+				asyncServiceInventory.backFillClosingStock();
+			} catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+	}
+
 	private void validateInputs(InwardInventoryData iiData) throws Exception
 	{
 		for (ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities())
@@ -159,6 +181,7 @@ public class InwardInventoryService
 	public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList, Pageable pageable)
 			throws ParseException
 	{
+		backFillClosingStock();
 		ReturnInwardInventoryData returnInwardInventoryData = new ReturnInwardInventoryData();
 		// Fetch Specification
 		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
@@ -281,7 +304,8 @@ public class InwardInventoryService
 		setFields(inwardInventory, iiData);
 		modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
 		removeOrphans(oldInwardInventory);
-		return inwardInventoryRepo.save(inwardInventory);
+		inwardInventoryRepo.save(inwardInventory);
+		return inwardInventory;
 
 	}
 

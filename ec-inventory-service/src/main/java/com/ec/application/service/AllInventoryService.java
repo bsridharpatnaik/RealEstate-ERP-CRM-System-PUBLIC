@@ -56,7 +56,7 @@ public class AllInventoryService
 		{
 			try
 			{
-				asyncServiceInventory.sample();
+				asyncServiceInventory.backFillClosingStock();
 			} catch (Exception e)
 			{
 				// TODO Auto-generated catch block

@@ -30,25 +30,28 @@ public class UserDetailsService
 		{
 			HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
 					.getRequest();
-			if (request == null)
-			{
-				UserReturnData userDetails = new UserReturnData();
-				userDetails.setId((long) 404);
-				userDetails.setUsername("system");
-				return userDetails;
-			}
-
-			else
+			try
 			{
 				UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
 						.header("Authorization", request.getHeader("Authorization")).retrieve()
 						.bodyToMono(UserReturnData.class).block();
 				return userDetails;
+			} catch (Exception e)
+			{
+				throw new Exception("Unable to fetch current user. Please contact system administrator.");
 			}
+		} catch (NullPointerException npe)
+		{
+			UserReturnData userDetails = new UserReturnData();
+			userDetails.setId((long) 404);
+			userDetails.setUsername("system");
+			return userDetails;
 
 		} catch (Exception e)
 		{
-			throw new Exception("Something Went Wrong !");
+
+			e.printStackTrace();
+			throw new Exception("Unable to fetch current user. Please contact system administrator.");
 		}
 	}
 }

@@ -3,6 +3,8 @@ package com.ec.application.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,19 +22,19 @@ public class AsyncServiceInventory
 	@Autowired
 	InwardOutwardListRepo iolRepo;
 
-	public void sample() throws Exception
+	Logger log = LoggerFactory.getLogger(AsyncServiceInventory.class);
+
+	public void backFillClosingStock() throws Exception
 	{
 		try
 		{
-			System.out.println("Before");
+			log.info("Starting backfilling closing stock");
 			List<AllInventoryAndInwardOutwardListProjection> list = allRepo.findClosingStockNotMatched();
 
-			System.out.println("After - " + list.size());
+			log.info("No of records to be backfilled - " + list.size());
+
 			for (AllInventoryAndInwardOutwardListProjection iop : list)
 			{
-				System.out.println("##### - " + iop.getEntryid() + " AI CS -  " + iop.getAiClosingStock() + "IOL CS - "
-						+ iop.getIolClosingStock());
-
 				Optional<InwardOutwardList> iolOpt = iolRepo.findById(iop.getEntryid());
 				if (iolOpt.isPresent())
 				{
@@ -42,7 +44,7 @@ public class AsyncServiceInventory
 
 				}
 			}
-			System.out.println("Completed backfilling closing stock");
+			log.info("Completed backfilling closing stock");
 		} catch (Exception e)
 		{
 			throw new Exception("something went wrong!");
