@@ -38,6 +38,9 @@ public class AllInventoryService
 	@Autowired
 	private AsyncService asyncService;
 
+	@Autowired
+	InwardInventoryService iiService;
+
 	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable)
 			throws ParseException
 	{
@@ -52,17 +55,7 @@ public class AllInventoryService
 		} else
 			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
-		asyncService.run(() ->
-		{
-			try
-			{
-				asyncServiceInventory.backFillClosingStock();
-			} catch (Exception e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
+		iiService.backFillClosingStock();
 		return allInventoryReturnData;
 
 	}

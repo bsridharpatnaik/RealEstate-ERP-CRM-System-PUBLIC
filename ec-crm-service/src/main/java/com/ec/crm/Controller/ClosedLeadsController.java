@@ -10,9 +10,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,17 +29,20 @@ import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
 import com.ec.crm.Data.ClosedLeadsListDTO;
 import com.ec.crm.Data.CreateCustomerDocumentDTO;
 import com.ec.crm.Data.CreateDealStructureDTO;
+import com.ec.crm.Data.CreateScheduleData;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
 import com.ec.crm.Data.LeadDAO;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.CustomerDocument;
 import com.ec.crm.Model.DealStructure;
+import com.ec.crm.Model.PaymentSchedule;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 //import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Service.ClosedLeadService;
 import com.ec.crm.Service.CustomerDocumentsService;
 import com.ec.crm.Service.DealStructureService;
+import com.ec.crm.Service.PaymentScheduleService;
 
 @RestController
 @RequestMapping(value = "/customer", produces =
@@ -52,6 +57,9 @@ public class ClosedLeadsController
 
 	@Autowired
 	CustomerDocumentsService cdService;
+
+	@Autowired
+	PaymentScheduleService psService;
 
 	@PostMapping
 	public Page<ClosedLeadsListDTO> returnAllCustomer(
@@ -110,10 +118,17 @@ public class ClosedLeadsController
 		return cdService.getById(id);
 	}
 
+	// Deal Structure
 	@GetMapping("/dealstructure/propertytypes")
 	public List<IdNameProjections> getPropertyTypeList() throws Exception
 	{
 		return dsService.getPropertyTypes();
+	}
+
+	@GetMapping("/dealstructure/bycustomer/{id}")
+	public List<DealStructure> getDealStructresForLead(@PathVariable Long id) throws Exception
+	{
+		return dsService.getDealStructuresForLead(id);
 	}
 
 	@GetMapping("/dealstructure/{id}/properties")
@@ -126,6 +141,28 @@ public class ClosedLeadsController
 	public DealStructure createDealStructure(@RequestBody CreateDealStructureDTO payload) throws Exception
 	{
 		return dsService.createDealStructure(payload);
+	}
+
+	@PutMapping("/dealstructure/{id}")
+	public DealStructure updateDealStructure(@RequestBody CreateDealStructureDTO payload, @PathVariable Long id)
+			throws Exception
+	{
+		return dsService.updateDealStructure(payload, id);
+	}
+
+	@DeleteMapping("/dealstructure/{id}")
+	public ResponseEntity<?> deleteDealStructure(@PathVariable Long id) throws Exception
+	{
+		dsService.deleteDealStructure(id);
+		return ResponseEntity.ok("Deal Struture Deleted sucessfully.");
+	}
+
+	// Payment Structure
+
+	@PostMapping("/paymentschedule/create")
+	public PaymentSchedule createPaymentSchedule(@RequestBody CreateScheduleData payload) throws Exception
+	{
+		return psService.createSchedule(payload);
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

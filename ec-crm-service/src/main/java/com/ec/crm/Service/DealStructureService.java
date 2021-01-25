@@ -93,8 +93,12 @@ public class DealStructureService
 		if (payload.getDetails().length() > 149)
 			throw new Exception("Details should be less than 150 characters");
 
-		if (dealStructureRepo.countByPropertyName(payload.getPropertyId()) > 0 && !operation.equals("update"))
-			throw new Exception("Deal structure already added for property.");
+		if (operation.equals("create"))
+		{
+			if (dealStructureRepo.countByPropertyName(payload.getPropertyId()) > 0)
+				throw new Exception("Deal structure already added for property.");
+		}
+
 	}
 
 	public List<IdNameProjections> getPropertiesList(Long id)
@@ -102,4 +106,43 @@ public class DealStructureService
 		List<IdNameProjections> list = ptRepo.fetchAvailableProperties(id);
 		return list;
 	}
+
+	public List<DealStructure> getDealStructuresForLead(Long id) throws Exception
+	{
+		if (!clRepo.existsById(id))
+			throw new Exception("Customer not found with ID -" + id);
+		List<DealStructure> dsList = dealStructureRepo.getDealStructureByLeadID(id);
+		return dsList;
+	}
+
+	public DealStructure updateDealStructure(CreateDealStructureDTO payload, Long id) throws Exception
+	{
+		if (!dealStructureRepo.existsById(id))
+			throw new Exception("Deal structure not found by ID - " + id);
+
+		DealStructure ds = dealStructureRepo.findById(id).get();
+		validatePayloadBeforeEdit(payload, ds);
+		setFields(ds, payload);
+		return dealStructureRepo.save(ds);
+
+	}
+
+	private void validatePayloadBeforeEdit(CreateDealStructureDTO payload, DealStructure ds) throws Exception
+	{
+
+		if (!payload.getLeadId().equals(ds.getLead().getLeadId()))
+			throw new Exception("Lead cannot be updated while updating deal structure");
+
+		if (dealStructureRepo.countByPropertyName(payload.getPropertyId()) > 0
+				&& !payload.getPropertyId().equals(ds.getPropertyName().getPropertyNameId()))
+			throw new Exception("Deal structure already added for property - " + payload.getPropertyId());
+	}
+
+	public void deleteDealStructure(Long id) throws Exception
+	{
+		if (!dealStructureRepo.existsById(id))
+			throw new Exception("Deal structure not found by ID - " + id);
+		dealStructureRepo.softDeleteById(id);
+	}
+
 }
