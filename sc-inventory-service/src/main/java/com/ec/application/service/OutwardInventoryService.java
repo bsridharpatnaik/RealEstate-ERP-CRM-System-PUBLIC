@@ -37,6 +37,7 @@ import com.ec.application.model.RejectOutwardList;
 import com.ec.application.model.ReturnOutwardList;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ContractorRepo;
+import com.ec.application.repository.InwardOutwardListRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
@@ -52,6 +53,9 @@ public class OutwardInventoryService
 {
 	@Autowired
 	ProductService productService;
+
+	@Autowired
+	InwardOutwardListRepo iolRepo;
 
 	@Autowired
 	ProductRepo productRepo;
@@ -246,6 +250,7 @@ public class OutwardInventoryService
 		OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
 		setFields(outwardInventory, iiData);
 		modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
+		removeOrphans(oldOutwardInventory);
 		return outwardInventoryRepo.save(outwardInventory);
 
 	}
@@ -481,6 +486,7 @@ public class OutwardInventoryService
 			throws ParseException
 	{
 		log.info("Invoked fetchOutwardnventory");
+		iiService.backFillClosingStock();
 		ReturnOutwardInventoryData returnOutwardInventoryData = new ReturnOutwardInventoryData();
 
 		// Feed data list
@@ -577,8 +583,20 @@ public class OutwardInventoryService
 		OutwardInventory outwardInventory = outwardInventoryOpt.get();
 		exitIfNotAuthorized(outwardInventory, null, APICallTypeForAuthorization.Delete);
 		updateStockBeforeDelete(outwardInventory);
+		removeOrphans(outwardInventory);
 		outwardInventoryRepo.softDeleteById(id);
 		log.info("Exiting deleteOutwardInventoryById");
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	private void removeOrphans(OutwardInventory outwardInventory)
+	{
+		Set<InwardOutwardList> iolList = outwardInventory.getInwardOutwardList();
+		for (InwardOutwardList iol : iolList)
+		{
+			iol.setDeleted(true);
+			iolRepo.save(iol);
+		}
 	}
 
 	@Transactional(rollbackFor = Exception.class)

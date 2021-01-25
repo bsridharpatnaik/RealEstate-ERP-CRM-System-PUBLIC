@@ -14,7 +14,6 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
-import com.ec.application.Deserializers.InwardOutwardListClosingStockSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -22,7 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Entity
 @Table(name = "inward_outward_entries")
 @Audited
-@JsonSerialize(using = InwardOutwardListClosingStockSerializer.class)
+//@JsonSerialize(using = InwardOutwardListClosingStockSerializer.class)
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class InwardOutwardList extends ReusableFields
 {

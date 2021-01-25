@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
+import com.ec.application.data.AllInventoryAndInwardOutwardListProjection;
 import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
 import com.ec.application.model.AllInventoryTransactions;
 
@@ -26,4 +27,7 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 
 	@Query("select m from AllInventoryTransactions m where m.entryid=:entryId")
 	List<AllInventoryTransactions> findByEntryId(@Param("entryId") Long entryId);
+
+	@Query("select ai.entryid as entryid, ai.closingStock as aiClosingStock,iol.closingStock as iolClosingStock from AllInventoryTransactions ai  JOIN InwardOutwardList iol on iol.entryid=ai.entryid and iol.closingStock!=ai.closingStock")
+	List<AllInventoryAndInwardOutwardListProjection> findClosingStockNotMatched();
 }

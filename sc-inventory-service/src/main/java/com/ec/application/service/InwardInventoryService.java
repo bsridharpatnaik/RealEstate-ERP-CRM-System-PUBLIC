@@ -35,6 +35,7 @@ import com.ec.application.model.Product;
 import com.ec.application.model.RejectInwardList;
 import com.ec.application.model.Warehouse;
 import com.ec.application.repository.InwardInventoryRepo;
+import com.ec.application.repository.InwardOutwardListRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.SupplierRepo;
@@ -51,6 +52,12 @@ public class InwardInventoryService
 
 	@Autowired
 	InwardInventoryRepo inwardInventoryRepo;
+
+	@Autowired
+	private AsyncService asyncService;
+
+	@Autowired
+	InwardOutwardListRepo iolRepo;
 
 	@Autowired
 	ProductRepo productRepo;
@@ -82,6 +89,9 @@ public class InwardInventoryService
 	@Autowired
 	UserDetailsService userDetailService;
 
+	@Autowired
+	AsyncServiceInventory asyncServiceInventory;
+
 	Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
 	public static Long editAllowedDaysAdmin = (long) 30;
@@ -96,7 +106,6 @@ public class InwardInventoryService
 		exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Create);
 		setFields(inwardInventory, iiData);
 		updateStockForCreateInwardInventory(inwardInventory);
-		updateOldClosingStockBeforeCreation(iiData);
 		return inwardInventoryRepo.save(inwardInventory);
 	}
 
@@ -116,14 +125,19 @@ public class InwardInventoryService
 		}
 	}
 
-	@Transactional(rollbackFor = Exception.class)
-	private void updateOldClosingStockBeforeCreation(InwardInventoryData iiData)
+	public void backFillClosingStock()
 	{
-		if (iiData.getDate().before(ReusableMethods.atStartOfDay(new Date())))
+		asyncService.run(() ->
 		{
-			log.info("II Date is an old date. Triggering closing stock update logic");
-		} else
-			log.info("II Date is an current  date. Skippping closing stock update logic");
+			try
+			{
+				asyncServiceInventory.backFillClosingStock();
+			} catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -266,6 +280,7 @@ public class InwardInventoryService
 			throws ParseException
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+		backFillClosingStock();
 		ReturnInwardInventoryData returnInwardInventoryData = new ReturnInwardInventoryData();
 		// Fetch Specification
 		Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
@@ -341,7 +356,7 @@ public class InwardInventoryService
 			throw new Exception("Inward inventory not found");
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public void deleteInwardInventoryById(Long id) throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -351,7 +366,19 @@ public class InwardInventoryService
 		InwardInventory inwardInventory = inwardInventoryOpt.get();
 		exitIfNotAuthorized(inwardInventory, null, APICallTypeForAuthorization.Delete);
 		updateStockBeforeDelete(inwardInventory);
+		removeOrphans(inwardInventory);
 		inwardInventoryRepo.softDeleteById(id);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	private void removeOrphans(InwardInventory inwardInventory)
+	{
+		Set<InwardOutwardList> iolList = inwardInventory.getInwardOutwardList();
+		for (InwardOutwardList iol : iolList)
+		{
+			iol.setDeleted(true);
+			iolRepo.save(iol);
+		}
 	}
 
 	@Transactional
@@ -384,6 +411,7 @@ public class InwardInventoryService
 		exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Update);
 		setFields(inwardInventory, iiData);
 		modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
+		removeOrphans(oldInwardInventory);
 		return inwardInventoryRepo.save(inwardInventory);
 
 	}

@@ -37,6 +37,9 @@ public class AllInventoryService
 	@Autowired
 	MachineryOnRentRepo machineryOnRentRepo;
 
+	@Autowired
+	InwardInventoryService iiService;
+
 	Logger log = LoggerFactory.getLogger(AllInventoryService.class);
 
 	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable)
@@ -54,6 +57,7 @@ public class AllInventoryService
 		} else
 			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
+		iiService.backFillClosingStock();
 		return allInventoryReturnData;
 	}
 
