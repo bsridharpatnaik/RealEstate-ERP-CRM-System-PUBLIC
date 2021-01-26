@@ -21,6 +21,7 @@ public class CreateDealStructureDTO
 	Long propertyTypeId;
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String phase;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date bookingDate;
 

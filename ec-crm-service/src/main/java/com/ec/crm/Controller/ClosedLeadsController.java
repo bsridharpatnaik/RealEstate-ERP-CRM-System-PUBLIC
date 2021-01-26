@@ -165,6 +165,27 @@ public class ClosedLeadsController
 		return psService.createSchedule(payload);
 	}
 
+	@PutMapping("/paymentschedule/{id}")
+	public PaymentSchedule updateDPaymentSchedule(@RequestBody CreateScheduleData payload, @PathVariable Long id)
+			throws Exception
+	{
+		return psService.updateSchedule(payload, id);
+	}
+
+	@DeleteMapping("/paymentschedule/{id}")
+	public ResponseEntity<?> deletePaymentSchedule(@PathVariable Long id) throws Exception
+	{
+		psService.deletePaymentSchedule(id);
+		return ResponseEntity.ok("Payment Schedule Deleted sucessfully.");
+	}
+
+	@GetMapping("/paymentschedule/bydealid/{id}")
+	public List<PaymentSchedule> getPaymentScheduleForDeal(@PathVariable Long id) throws Exception
+	{
+
+		return psService.getSchedulesForDeal(id);
+	}
+
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex)

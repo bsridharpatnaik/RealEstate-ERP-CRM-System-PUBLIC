@@ -7,23 +7,27 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import Deserializers.ToTitleCaseDeserializer;
 import Deserializers.ToUpperCaseDeserializer;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateScheduleData
 {
 
 	Long dealStructureId;
-	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date paymentDate;
 
-	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String mode;
 
 	Double amount;
 
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String details;
 
 	Boolean isReceived;

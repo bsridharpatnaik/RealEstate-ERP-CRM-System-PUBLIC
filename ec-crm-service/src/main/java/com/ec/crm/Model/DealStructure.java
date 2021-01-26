@@ -16,10 +16,12 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
 
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -81,4 +83,12 @@ public class DealStructure extends ReusableFields implements Serializable
 	{ "hibernateLazyInitializer", "handler" })
 	@NotFound(action = NotFoundAction.IGNORE)
 	ClosedLeads lead;
+
+	@NotAudited
+	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.is_received=true)")
+	Double totalReceived;
+
+	@NotAudited
+	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.is_received=false)")
+	Double totalPending;
 }

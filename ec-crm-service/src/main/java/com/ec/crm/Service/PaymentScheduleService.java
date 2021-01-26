@@ -23,11 +23,37 @@ public class PaymentScheduleService
 
 	public PaymentSchedule createSchedule(CreateScheduleData payload) throws Exception
 	{
-		validatePayload(payload);
+		validatePayload(payload, "create");
 		PaymentSchedule ps = new PaymentSchedule();
 		setFields(ps, payload);
 		psRepo.save(ps);
 		return ps;
+	}
+
+	public void deletePaymentSchedule(Long id) throws Exception
+	{
+		if (!psRepo.existsById(id))
+			throw new Exception("Payment Schedule not found with ID - " + id);
+		psRepo.softDeleteById(id);
+
+	}
+
+	public PaymentSchedule updateSchedule(CreateScheduleData payload, Long id) throws Exception
+	{
+		validatePayload(payload, "update");
+		if (!psRepo.existsById(id))
+			throw new Exception("Payment Schedule not found with ID - " + id);
+		PaymentSchedule ps = psRepo.findById(id).get();
+		validateBeforeUpdate(ps, payload);
+		setFields(ps, payload);
+		psRepo.save(ps);
+		return ps;
+	}
+
+	private void validateBeforeUpdate(PaymentSchedule ps, CreateScheduleData payload) throws Exception
+	{
+		if (!ps.getDs().getDealId().equals(payload.getDealStructureId()))
+			throw new Exception("Cannot modify Deal Structure while updating schedule");
 	}
 
 	private void setFields(PaymentSchedule ps, CreateScheduleData payload)
@@ -41,7 +67,7 @@ public class PaymentScheduleService
 		ps.setPaymentDate(payload.getPaymentDate());
 	}
 
-	private void validatePayload(CreateScheduleData payload) throws Exception
+	private void validatePayload(CreateScheduleData payload, String operation) throws Exception
 	{
 		List<String> missingFields = new ArrayList<String>();
 		if (payload.getDealStructureId() == null)
@@ -66,5 +92,14 @@ public class PaymentScheduleService
 		if (payload.getDetails().length() > 150)
 			throw new Exception("Details should be less than 150 chracters");
 
+	}
+
+	public List<PaymentSchedule> getSchedulesForDeal(Long id) throws Exception
+	{
+		if (!dsRepo.existsById(id))
+			throw new Exception("Deal Structure Not found with ID - " + id);
+
+		List<PaymentSchedule> psList = psRepo.getSchedulesForDeal(id);
+		return psList;
 	}
 }
