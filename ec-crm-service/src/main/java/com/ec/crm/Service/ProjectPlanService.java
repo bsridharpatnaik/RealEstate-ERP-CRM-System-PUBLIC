@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -88,12 +87,10 @@ public class ProjectPlanService
 	{
 		for (PropertyType pt : propertyTypes)
 		{
-			Set<PropertyName> pnList = pt.getPropertyNames();
-			for (PropertyName pn : pnList)
-			{
-				Random rd = new Random();
-				pn.setIsBooked(rd.nextBoolean());
-			}
+			/*
+			 * Set<PropertyName> pnList = pt.getPropertyNames(); for (PropertyName pn :
+			 * pnList) { Random rd = new Random(); pn.setIsBooked(rd.nextBoolean()); }
+			 */
 			pt.setBookedProperties(pt.getPropertyNames().stream().filter(c -> c.getIsBooked() == true).count());
 			pt.setTotalProperties((long) pt.getPropertyNames().size());
 		}
