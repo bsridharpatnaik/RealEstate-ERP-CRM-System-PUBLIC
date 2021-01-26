@@ -124,7 +124,8 @@ public class AllActivitiesService
 				mobileNo = "******" + leadActivity.getLead().getPrimaryMobile().substring(7);
 			activities.add(new PlannerSingleReturnDAO(leadActivity.getLead().getLeadId(),
 					leadActivity.getLead().getCustomerName(), mobileNo, leadActivity.getIsOpen(),
-					leadActivity.getActivityDateTime(), leadActivity.getLead().getAsigneeId()));
+					leadActivity.getActivityDateTime(), leadActivity.getLead().getAsigneeId(),
+					leadActivity.getLead().getStatus()));
 		}
 		plannerWithTotalReturnDAO.setActivities(activities);
 		plannerWithTotalReturnDAO.setTotalActivities(activities.size());

@@ -2,6 +2,7 @@ package com.ec.crm.Data;
 
 import java.util.Date;
 
+import com.ec.crm.Enums.LeadStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -19,6 +20,7 @@ public class PlannerSingleReturnDAO
 	Date activityDateTime;
 	@JsonSerialize(using = ToUsernameSerializer.class)
 	Long assignee;
+	LeadStatusEnum leadStatus;
 
 	public PlannerSingleReturnDAO()
 	{
@@ -26,7 +28,7 @@ public class PlannerSingleReturnDAO
 	}
 
 	public PlannerSingleReturnDAO(Long leadId, String name, String mobileNumber, boolean activityStatus,
-			Date activityDateTime, Long assignee)
+			Date activityDateTime, Long assignee, LeadStatusEnum leadStatus)
 	{
 		super();
 		this.leadId = leadId;
@@ -35,5 +37,6 @@ public class PlannerSingleReturnDAO
 		this.activityStatus = activityStatus;
 		this.activityDateTime = activityDateTime;
 		this.assignee = assignee;
+		this.leadStatus = leadStatus;
 	}
 }
