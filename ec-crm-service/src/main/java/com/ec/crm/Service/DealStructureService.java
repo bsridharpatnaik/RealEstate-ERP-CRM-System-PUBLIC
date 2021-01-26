@@ -3,6 +3,7 @@ package com.ec.crm.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -143,6 +144,14 @@ public class DealStructureService
 		if (!dealStructureRepo.existsById(id))
 			throw new Exception("Deal structure not found by ID - " + id);
 		dealStructureRepo.softDeleteById(id);
+	}
+
+	public DealStructure getDealStructure(Long id) throws Exception
+	{
+		Optional<DealStructure> dsOpt = dealStructureRepo.findById(id);
+		if (!dsOpt.isPresent())
+			throw new Exception("Deal structure not found by ID - " + id);
+		return dsOpt.get();
 	}
 
 }

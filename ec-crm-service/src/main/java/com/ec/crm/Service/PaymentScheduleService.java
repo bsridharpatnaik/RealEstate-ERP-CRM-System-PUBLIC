@@ -2,6 +2,7 @@ package com.ec.crm.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -101,5 +102,13 @@ public class PaymentScheduleService
 
 		List<PaymentSchedule> psList = psRepo.getSchedulesForDeal(id);
 		return psList;
+	}
+
+	public PaymentSchedule getPaymentSchedule(Long id) throws Exception
+	{
+		Optional<PaymentSchedule> psOpt = psRepo.findById(id);
+		if (!psOpt.isPresent())
+			throw new Exception("Payment Schedule not found with ID - " + id);
+		return psOpt.get();
 	}
 }

@@ -150,6 +150,12 @@ public class ClosedLeadsController
 		return dsService.updateDealStructure(payload, id);
 	}
 
+	@GetMapping("/dealstructure/{id}")
+	public DealStructure getDealStructure(@PathVariable Long id) throws Exception
+	{
+		return dsService.getDealStructure(id);
+	}
+
 	@DeleteMapping("/dealstructure/{id}")
 	public ResponseEntity<?> deleteDealStructure(@PathVariable Long id) throws Exception
 	{
@@ -170,6 +176,13 @@ public class ClosedLeadsController
 			throws Exception
 	{
 		return psService.updateSchedule(payload, id);
+	}
+
+	@GetMapping("/paymentschedule/{id}")
+	public PaymentSchedule getPaymentSchedule(@PathVariable Long id) throws Exception
+	{
+
+		return psService.getPaymentSchedule(id);
 	}
 
 	@DeleteMapping("/paymentschedule/{id}")
