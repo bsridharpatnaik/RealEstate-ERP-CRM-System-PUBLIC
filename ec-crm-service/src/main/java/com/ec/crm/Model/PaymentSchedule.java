@@ -58,7 +58,7 @@ public class PaymentSchedule extends ReusableFields implements Serializable
 	@Column(name = "isReceived")
 	Boolean isReceived;
 
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "deal_id", nullable = false)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })

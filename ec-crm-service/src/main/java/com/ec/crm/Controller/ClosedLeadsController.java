@@ -31,12 +31,12 @@ import com.ec.crm.Data.CreateCustomerDocumentDTO;
 import com.ec.crm.Data.CreateDealStructureDTO;
 import com.ec.crm.Data.CreateScheduleData;
 import com.ec.crm.Data.CustomerDetailInfo;
+import com.ec.crm.Data.DealStructureDAO;
 import com.ec.crm.Data.DropdownForClosedLeads;
 import com.ec.crm.Data.LeadDAO;
+import com.ec.crm.Data.ScheduleReturnDAO;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.CustomerDocument;
-import com.ec.crm.Model.DealStructure;
-import com.ec.crm.Model.PaymentSchedule;
 import com.ec.crm.ReusableClasses.IdNameProjections;
 //import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Service.ClosedLeadService;
@@ -126,7 +126,7 @@ public class ClosedLeadsController
 	}
 
 	@GetMapping("/dealstructure/bycustomer/{id}")
-	public List<DealStructure> getDealStructresForLead(@PathVariable Long id) throws Exception
+	public List<DealStructureDAO> getDealStructresForLead(@PathVariable Long id) throws Exception
 	{
 		return dsService.getDealStructuresForLead(id);
 	}
@@ -138,20 +138,20 @@ public class ClosedLeadsController
 	}
 
 	@PostMapping("/dealstructure/create")
-	public DealStructure createDealStructure(@RequestBody CreateDealStructureDTO payload) throws Exception
+	public DealStructureDAO createDealStructure(@RequestBody CreateDealStructureDTO payload) throws Exception
 	{
 		return dsService.createDealStructure(payload);
 	}
 
 	@PutMapping("/dealstructure/{id}")
-	public DealStructure updateDealStructure(@RequestBody CreateDealStructureDTO payload, @PathVariable Long id)
+	public DealStructureDAO updateDealStructure(@RequestBody CreateDealStructureDTO payload, @PathVariable Long id)
 			throws Exception
 	{
 		return dsService.updateDealStructure(payload, id);
 	}
 
 	@GetMapping("/dealstructure/{id}")
-	public DealStructure getDealStructure(@PathVariable Long id) throws Exception
+	public DealStructureDAO getDealStructure(@PathVariable Long id) throws Exception
 	{
 		return dsService.getDealStructure(id);
 	}
@@ -166,20 +166,20 @@ public class ClosedLeadsController
 	// Payment Structure
 
 	@PostMapping("/paymentschedule/create")
-	public PaymentSchedule createPaymentSchedule(@RequestBody CreateScheduleData payload) throws Exception
+	public ScheduleReturnDAO createPaymentSchedule(@RequestBody CreateScheduleData payload) throws Exception
 	{
 		return psService.createSchedule(payload);
 	}
 
 	@PutMapping("/paymentschedule/{id}")
-	public PaymentSchedule updateDPaymentSchedule(@RequestBody CreateScheduleData payload, @PathVariable Long id)
+	public ScheduleReturnDAO updateDPaymentSchedule(@RequestBody CreateScheduleData payload, @PathVariable Long id)
 			throws Exception
 	{
 		return psService.updateSchedule(payload, id);
 	}
 
 	@GetMapping("/paymentschedule/{id}")
-	public PaymentSchedule getPaymentSchedule(@PathVariable Long id) throws Exception
+	public ScheduleReturnDAO getPaymentSchedule(@PathVariable Long id) throws Exception
 	{
 
 		return psService.getPaymentSchedule(id);
@@ -193,7 +193,7 @@ public class ClosedLeadsController
 	}
 
 	@GetMapping("/paymentschedule/bydealid/{id}")
-	public List<PaymentSchedule> getPaymentScheduleForDeal(@PathVariable Long id) throws Exception
+	public List<ScheduleReturnDAO> getPaymentScheduleForDeal(@PathVariable Long id) throws Exception
 	{
 
 		return psService.getSchedulesForDeal(id);

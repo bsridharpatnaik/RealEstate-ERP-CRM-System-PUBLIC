@@ -1,13 +1,16 @@
 package com.ec.crm.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.CreateScheduleData;
+import com.ec.crm.Data.ScheduleReturnDAO;
 import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Model.PaymentSchedule;
 import com.ec.crm.Repository.DealStructureRepo;
@@ -22,13 +25,13 @@ public class PaymentScheduleService
 	@Autowired
 	PaymentScheduleRepo psRepo;
 
-	public PaymentSchedule createSchedule(CreateScheduleData payload) throws Exception
+	public ScheduleReturnDAO createSchedule(CreateScheduleData payload) throws Exception
 	{
 		validatePayload(payload, "create");
 		PaymentSchedule ps = new PaymentSchedule();
 		setFields(ps, payload);
 		psRepo.save(ps);
-		return ps;
+		return convertPStoPSDAO(ps);
 	}
 
 	public void deletePaymentSchedule(Long id) throws Exception
@@ -39,7 +42,7 @@ public class PaymentScheduleService
 
 	}
 
-	public PaymentSchedule updateSchedule(CreateScheduleData payload, Long id) throws Exception
+	public ScheduleReturnDAO updateSchedule(CreateScheduleData payload, Long id) throws Exception
 	{
 		validatePayload(payload, "update");
 		if (!psRepo.existsById(id))
@@ -48,7 +51,7 @@ public class PaymentScheduleService
 		validateBeforeUpdate(ps, payload);
 		setFields(ps, payload);
 		psRepo.save(ps);
-		return ps;
+		return convertPStoPSDAO(ps);
 	}
 
 	private void validateBeforeUpdate(PaymentSchedule ps, CreateScheduleData payload) throws Exception
@@ -95,20 +98,46 @@ public class PaymentScheduleService
 
 	}
 
-	public List<PaymentSchedule> getSchedulesForDeal(Long id) throws Exception
+	public List<ScheduleReturnDAO> getSchedulesForDeal(Long id) throws Exception
 	{
 		if (!dsRepo.existsById(id))
 			throw new Exception("Deal Structure Not found with ID - " + id);
 
 		List<PaymentSchedule> psList = psRepo.getSchedulesForDeal(id);
-		return psList;
+		return convertPSListtoPSDAOList(psList);
 	}
 
-	public PaymentSchedule getPaymentSchedule(Long id) throws Exception
+	public ScheduleReturnDAO getPaymentSchedule(Long id) throws Exception
 	{
 		Optional<PaymentSchedule> psOpt = psRepo.findById(id);
 		if (!psOpt.isPresent())
 			throw new Exception("Payment Schedule not found with ID - " + id);
-		return psOpt.get();
+		return convertPStoPSDAO(psOpt.get());
+	}
+
+	private List<ScheduleReturnDAO> convertPSListtoPSDAOList(List<PaymentSchedule> psList)
+	{
+		List<ScheduleReturnDAO> returnList = new ArrayList<ScheduleReturnDAO>();
+		for (PaymentSchedule ps : psList)
+		{
+			ScheduleReturnDAO dao = new ScheduleReturnDAO();
+			dao = convertPStoPSDAO(ps);
+			returnList.add(dao);
+		}
+		return returnList.stream().sorted(Comparator.comparing(ScheduleReturnDAO::getPaymentDate))
+				.collect(Collectors.toList());
+	}
+
+	private ScheduleReturnDAO convertPStoPSDAO(PaymentSchedule ps)
+	{
+		ScheduleReturnDAO sDAO = new ScheduleReturnDAO();
+		sDAO.setAmount(ps.getAmount() == null ? null : ps.getAmount());
+		sDAO.setDealStructureId(ps.getDs() == null ? null : ps.getDs().getDealId());
+		sDAO.setDetails(ps.getDetails() == null ? null : ps.getDetails());
+		sDAO.setIsReceived(ps.getIsReceived() == null ? null : ps.getIsReceived());
+		sDAO.setMode(ps.getMode() == null ? null : ps.getMode());
+		sDAO.setPaymentDate(ps.getPaymentDate() == null ? null : ps.getPaymentDate());
+		sDAO.setScheduleId(ps.getScheduleId() == null ? null : ps.getScheduleId());
+		return sDAO;
 	}
 }

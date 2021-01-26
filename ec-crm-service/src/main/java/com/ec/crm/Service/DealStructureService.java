@@ -2,13 +2,16 @@
 package com.ec.crm.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.CreateDealStructureDTO;
+import com.ec.crm.Data.DealStructureDAO;
 import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Repository.ClosedLeadsRepo;
 import com.ec.crm.Repository.DealStructureRepo;
@@ -32,17 +35,20 @@ public class DealStructureService
 	@Autowired
 	PropertyNameRepo pnRepo;
 
+	@Autowired
+	PaymentScheduleService psService;
+
 	public List<IdNameProjections> getPropertyTypes()
 	{
 		return ptRepo.findIdAndNames();
 	}
 
-	public DealStructure createDealStructure(CreateDealStructureDTO payload) throws Exception
+	public DealStructureDAO createDealStructure(CreateDealStructureDTO payload) throws Exception
 	{
 		validatePayload(payload, "create");
 		DealStructure ds = new DealStructure();
 		setFields(ds, payload);
-		return dealStructureRepo.save(ds);
+		return convertDStoDSDAO(dealStructureRepo.save(ds));
 	}
 
 	private void setFields(DealStructure ds, CreateDealStructureDTO payload)
@@ -108,15 +114,15 @@ public class DealStructureService
 		return list;
 	}
 
-	public List<DealStructure> getDealStructuresForLead(Long id) throws Exception
+	public List<DealStructureDAO> getDealStructuresForLead(Long id) throws Exception
 	{
 		if (!clRepo.existsById(id))
 			throw new Exception("Customer not found with ID -" + id);
 		List<DealStructure> dsList = dealStructureRepo.getDealStructureByLeadID(id);
-		return dsList;
+		return convertDSListToDAOList(dsList);
 	}
 
-	public DealStructure updateDealStructure(CreateDealStructureDTO payload, Long id) throws Exception
+	public DealStructureDAO updateDealStructure(CreateDealStructureDTO payload, Long id) throws Exception
 	{
 		if (!dealStructureRepo.existsById(id))
 			throw new Exception("Deal structure not found by ID - " + id);
@@ -124,7 +130,7 @@ public class DealStructureService
 		DealStructure ds = dealStructureRepo.findById(id).get();
 		validatePayloadBeforeEdit(payload, ds);
 		setFields(ds, payload);
-		return dealStructureRepo.save(ds);
+		return convertDStoDSDAO(dealStructureRepo.save(ds));
 
 	}
 
@@ -146,12 +152,40 @@ public class DealStructureService
 		dealStructureRepo.softDeleteById(id);
 	}
 
-	public DealStructure getDealStructure(Long id) throws Exception
+	public DealStructureDAO getDealStructure(Long id) throws Exception
 	{
 		Optional<DealStructure> dsOpt = dealStructureRepo.findById(id);
 		if (!dsOpt.isPresent())
 			throw new Exception("Deal structure not found by ID - " + id);
-		return dsOpt.get();
+		return convertDStoDSDAO(dsOpt.get());
 	}
 
+	private List<DealStructureDAO> convertDSListToDAOList(List<DealStructure> dsList) throws Exception
+	{
+		List<DealStructureDAO> daoList = new ArrayList<DealStructureDAO>();
+		for (DealStructure ds : dsList)
+		{
+			daoList.add(convertDStoDSDAO(ds));
+		}
+		return daoList.stream().sorted(Comparator.comparing(DealStructureDAO::getBookingDate))
+				.collect(Collectors.toList());
+	}
+
+	private DealStructureDAO convertDStoDSDAO(DealStructure ds) throws Exception
+	{
+		DealStructureDAO dao = new DealStructureDAO();
+		dao.setAmount(ds.getAmount() == null ? null : ds.getAmount());
+		dao.setBookingDate(ds.getBookingDate());
+		dao.setDealId(ds.getDealId());
+		dao.setDetails(ds.getDetails());
+		dao.setLeadId(ds.getLead().getLeadId());
+		dao.setMode(ds.getMode());
+		dao.setPhase(ds.getPhase());
+		dao.setPropertyName(ds.getPropertyName().getName());
+		dao.setPropertyType(ds.getPropertyType().getPropertyType());
+		dao.setTotalPending(ds.getTotalPending());
+		dao.setTotalReceived(ds.getTotalReceived());
+		dao.setSchedules(psService.getSchedulesForDeal(ds.getDealId()));
+		return dao;
+	}
 }
