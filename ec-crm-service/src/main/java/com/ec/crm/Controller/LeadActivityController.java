@@ -98,7 +98,7 @@ public class LeadActivityController
 			throw new Exception("Please enter closing comments");
 
 		laService.deleteLeadActivity(id, payload.getClosingComment(), userDetailsService.getCurrentUser().getId(),
-				false);
+				false, "non-system");
 	}
 
 	@PutMapping("reschedule/{id}")

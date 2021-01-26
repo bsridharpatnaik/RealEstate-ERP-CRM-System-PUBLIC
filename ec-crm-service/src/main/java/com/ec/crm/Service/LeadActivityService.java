@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.FileInformationDAO;
@@ -37,6 +37,7 @@ import com.ec.crm.Model.ClosedLeads;
 import com.ec.crm.Model.CustomerDocument;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.Model.PaymentSchedule;
 import com.ec.crm.Repository.ClosedLeadsRepo;
 import com.ec.crm.Repository.CustomerDocumentRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
@@ -47,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-@Transactional
+@Transactional(rollbackFor = Exception.class)
 public class LeadActivityService
 {
 	@Autowired
@@ -85,6 +86,9 @@ public class LeadActivityService
 	@Value("${common.serverurl}")
 	private String reqUrl;
 
+	@Autowired
+	PaymentScheduleService psService;
+
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
 	@Autowired
@@ -105,6 +109,11 @@ public class LeadActivityService
 		ExecuteBusinessLogicWhileCreation(leadActivity);
 		return leadActivity;
 
+	}
+
+	public void softDeleteLeadActivity(Long id)
+	{
+		laRepo.softDeleteById(id);
 	}
 
 	@Transactional
@@ -409,6 +418,10 @@ public class LeadActivityService
 
 		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
 
+		if (payload.getActivityType().equals(ActivityTypeEnum.Payment))
+			throw new Exception(
+					"Activity of type Payment cannot be generated from UI. It will be auto-created on adding new payment schedule");
+
 		if (!leadOpt.isPresent())
 			throw new Exception("Lead not found by lead ID -" + payload.getLeadId());
 		else
@@ -437,8 +450,9 @@ public class LeadActivityService
 			throw new Exception("LeadActivity ID not found");
 	}
 
-	@Transactional
-	public void deleteLeadActivity(Long id, String closingComment, Long closedBy, Boolean isReschedule) throws Exception
+	@Transactional(rollbackFor = Exception.class)
+	public void deleteLeadActivity(Long id, String closingComment, Long closedBy, Boolean isReschedule, String caller)
+			throws Exception
 	{
 		log.info("Invoked deleteLeadActivity");
 		Optional<LeadActivity> latype = laRepo.findById(id);
@@ -446,6 +460,10 @@ public class LeadActivityService
 			throw new Exception("LeadActivity ID not found");
 
 		LeadActivity leadActivity = latype.get();
+
+		if (!caller.equals("system"))
+			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Payment) && isReschedule == false)
+				throw new Exception("Cannot close activity of type Payment. It can only be rescheduled.");
 
 		if (leadActivity.getIsOpen() == false)
 			throw new Exception("Activity alread closed with comment - " + leadActivity.getClosingComment());
@@ -469,7 +487,7 @@ public class LeadActivityService
 		// Delete old activity
 		log.info("Deleting old Activity");
 		deleteLeadActivity(leadActivity.getLeadActivityId(), rescheduleActivityData.getClosingComment(), currentUserId,
-				true);
+				true, "non-system");
 		log.info("Deleted old Activity - success");
 
 		// Create new Activity
@@ -477,6 +495,11 @@ public class LeadActivityService
 		LeadActivity newActivity = new LeadActivity();
 		setFieldsForReschedule(rescheduleActivityData, newActivity, leadActivity);
 		laRepo.save(newActivity);
+		if (newActivity.getActivityType().equals(ActivityTypeEnum.Payment))
+		{
+			psService.updateActivityForPaymentSchedule(leadActivity.getLeadActivityId(),
+					newActivity.getLeadActivityId());
+		}
 	}
 
 	private LeadActivity validateReschedulePayloadAndReturnLeadActivity(RescheduleActivityData rescheduleActivityData,
@@ -827,7 +850,6 @@ public class LeadActivityService
 				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
 				allowedActivities.add(ActivityTypeEnum.Call);
 				allowedActivities.add(ActivityTypeEnum.Meeting);
-				allowedActivities.add(ActivityTypeEnum.Task);
 				allowedActivities.add(ActivityTypeEnum.Reminder);
 				allowedActivities.add(ActivityTypeEnum.Email);
 				allowedActivities.add(ActivityTypeEnum.Message);
@@ -837,7 +859,6 @@ public class LeadActivityService
 				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
 				allowedActivities.add(ActivityTypeEnum.Call);
 				allowedActivities.add(ActivityTypeEnum.Meeting);
-				allowedActivities.add(ActivityTypeEnum.Task);
 				allowedActivities.add(ActivityTypeEnum.Reminder);
 				allowedActivities.add(ActivityTypeEnum.Message);
 				allowedActivities.add(ActivityTypeEnum.Deal_Close);
@@ -847,5 +868,22 @@ public class LeadActivityService
 				return allowedActivities;
 			}
 		}
+	}
+
+	public LeadActivity createPaymentActivity(PaymentSchedule ps)
+	{
+		LeadActivity la = new LeadActivity();
+		Date paymentDate = ps.getPaymentDate();
+		paymentDate = ReusableMethods.setTimeTo11AM(paymentDate);
+		la.setActivityDateTime(paymentDate);
+		la.setActivityType(ActivityTypeEnum.Payment);
+		la.setCreatorId((long) 404);
+		la.setDescription("Payment Reminder - Scheduled Payment. Payment Amount - " + ps.getAmount());
+		la.setIsOpen(true);
+		la.setLead(lRepo.findById(ps.getDs().getLead().getLeadId()).get());
+		la.setRescheduled(false);
+		la.setTitle("Payment Reminder - Scheduled Payment");
+		laRepo.save(la);
+		return la;
 	}
 }

@@ -89,7 +89,7 @@ public class AllActivitiesService
 		activitiesList.setProperty_visit(fetchPlannerDataFromActivityList(activities, "Property_Visit"));
 		activitiesList.setDeal_close(fetchPlannerDataFromActivityList(activities, "Deal_Close"));
 		activitiesList.setReminder(fetchPlannerDataFromActivityList(activities, "Reminder"));
-		activitiesList.setTask(fetchPlannerDataFromActivityList(activities, "Task"));
+		activitiesList.setPayment(fetchPlannerDataFromActivityList(activities, "Payment"));
 		activitiesList.setMessage(fetchPlannerDataFromActivityList(activities, "Message"));
 		activitiesList.setEmail(fetchPlannerDataFromActivityList(activities, "Email"));
 		activitiesList.setDeal_lost(fetchPlannerDataFromActivityList(activities, "Deal_Lost"));

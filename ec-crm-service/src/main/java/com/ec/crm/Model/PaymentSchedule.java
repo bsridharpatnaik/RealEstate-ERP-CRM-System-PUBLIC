@@ -12,6 +12,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.Size;
 
@@ -19,6 +20,7 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -58,10 +60,18 @@ public class PaymentSchedule extends ReusableFields implements Serializable
 	@Column(name = "isReceived")
 	Boolean isReceived;
 
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "deal_id", nullable = false)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
 	@NotFound(action = NotFoundAction.IGNORE)
 	DealStructure ds;
+
+	@NotAudited
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "leadactivity_id", nullable = true)
+	@JsonIgnoreProperties(
+	{ "hibernateLazyInitializer", "handler" })
+	@NotFound(action = NotFoundAction.IGNORE)
+	LeadActivity la;
 }

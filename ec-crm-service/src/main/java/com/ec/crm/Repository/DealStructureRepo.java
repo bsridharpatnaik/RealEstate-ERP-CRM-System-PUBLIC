@@ -19,4 +19,7 @@ public interface DealStructureRepo extends BaseRepository<DealStructure, Long>
 
 	@Query("select count(d) from DealStructure d where d.propertyName.propertyNameId=:propertyId")
 	int countByPropertyName(@Param("propertyId") Long propertyId);
+
+	@Query("select count(d) from DealStructure d where d.propertyType.propertyTypeId=:propertyTypeID")
+	int findPropertyTypeUsageCount(@Param("propertyTypeID") Long propertyTypeID);
 }

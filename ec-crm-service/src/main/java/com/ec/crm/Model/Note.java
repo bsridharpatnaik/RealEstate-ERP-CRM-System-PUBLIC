@@ -49,7 +49,7 @@ public class Note extends ReusableFields
 	Set<FileInformation> fileInformations = new HashSet<>();
 
 	@JsonIgnore
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "lead_id", nullable = false)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })

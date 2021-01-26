@@ -94,6 +94,7 @@ public class ClosedLeadsController
 	 */
 
 	@PostMapping("/document/create")
+	@ResponseStatus(HttpStatus.CREATED)
 	public CustomerDocument createDocument(@RequestBody CreateCustomerDocumentDTO payload) throws Exception
 	{
 		return cdService.createDocument(payload);
@@ -138,6 +139,7 @@ public class ClosedLeadsController
 	}
 
 	@PostMapping("/dealstructure/create")
+	@ResponseStatus(HttpStatus.CREATED)
 	public DealStructureDAO createDealStructure(@RequestBody CreateDealStructureDTO payload) throws Exception
 	{
 		return dsService.createDealStructure(payload);

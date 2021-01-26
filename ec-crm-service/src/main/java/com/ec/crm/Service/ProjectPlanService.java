@@ -30,6 +30,9 @@ public class ProjectPlanService
 	@Autowired
 	PropertyNameRepo pnRepo;
 
+	@Autowired
+	CheckBeforeDeleteService cbdService;
+
 	public PropertyType createNew(StringNameDAO payload) throws Exception
 	{
 		if (ptRepo.existsByPropertyType(payload.getName()))
@@ -58,6 +61,9 @@ public class ProjectPlanService
 	{
 		if (!ptRepo.existsById(id))
 			throw new Exception("Property Type dosen't exists with ID - " + id);
+
+		if (cbdService.isPropertyTypeUsed(id))
+			throw new Exception("Cannot delete property type. Already tagged to Deal Structure");
 
 		ptRepo.softDeleteById(id);
 	}
@@ -138,6 +144,8 @@ public class ProjectPlanService
 				PropertyName pn = it.next();
 				if (pn.getPropertyNameId().equals(id))
 				{
+					if (cbdService.isPropertyNameUsed(id))
+						throw new Exception("Cannot delete property. Property already tagged to Deal Structure.");
 					pnList.add(pn);
 				}
 			}

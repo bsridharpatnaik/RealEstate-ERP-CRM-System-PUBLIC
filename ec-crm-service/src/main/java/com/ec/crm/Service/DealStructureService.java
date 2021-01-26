@@ -183,8 +183,8 @@ public class DealStructureService
 		dao.setPhase(ds.getPhase());
 		dao.setPropertyName(ds.getPropertyName().getName());
 		dao.setPropertyType(ds.getPropertyType().getPropertyType());
-		dao.setTotalPending(ds.getTotalPending());
-		dao.setTotalReceived(ds.getTotalReceived());
+		dao.setTotalPending(ds.getTotalPending() == null ? 0 : ds.getTotalPending());
+		dao.setTotalReceived(ds.getTotalReceived() == null ? 0 : ds.getTotalReceived());
 		dao.setSchedules(psService.getSchedulesForDeal(ds.getDealId()));
 		return dao;
 	}

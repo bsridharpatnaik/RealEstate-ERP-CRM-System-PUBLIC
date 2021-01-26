@@ -17,4 +17,5 @@ public class ScheduleReturnDAO
 	String details;
 	Boolean isReceived;
 	Long dealStructureId;
+	Long leadActivityId;
 }

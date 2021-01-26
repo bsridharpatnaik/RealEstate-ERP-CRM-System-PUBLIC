@@ -362,9 +362,6 @@ public class LeadService
 			liad.setType("pastActivity");
 			liaDataList.add(liad);
 		}
-		System.out.println("Before Sorting");
-		for (LeadInformationAllTabData laid : liaDataList)
-			System.out.println(laid.getDateTime());
 		return liaDataList.stream().sorted(Comparator.comparing(LeadInformationAllTabData::getDateTime).reversed())
 				.collect(Collectors.toList());
 	}
@@ -458,7 +455,7 @@ public class LeadService
 		allowedActivities.add(ActivityTypeEnum.Call);
 		allowedActivities.add(ActivityTypeEnum.Meeting);
 		allowedActivities.add(ActivityTypeEnum.Property_Visit);
-		allowedActivities.add(ActivityTypeEnum.Task);
+		// allowedActivities.add(ActivityTypeEnum.Task);
 		allowedActivities.add(ActivityTypeEnum.Reminder);
 		allowedActivities.add(ActivityTypeEnum.Message);
 		allowedActivities.add(ActivityTypeEnum.Email);
