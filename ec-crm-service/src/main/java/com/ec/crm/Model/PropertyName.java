@@ -7,8 +7,10 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import com.ec.crm.ReusableClasses.ReusableFields;
 
@@ -33,6 +35,8 @@ public class PropertyName extends ReusableFields
 
 	private String name;
 
+	@NotAudited
+	@Formula("(select case when count(*)>0 then true else false end from   customer_deal_structure cds where cds.property_name_id=property_name_id and is_deleted=0)")
 	Boolean isBooked;
 
 	public Boolean getIsBooked()

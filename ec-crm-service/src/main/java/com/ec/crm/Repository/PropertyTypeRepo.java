@@ -19,11 +19,11 @@ public interface PropertyTypeRepo extends BaseRepository<PropertyType, Long>
 	@Query("Select pt from PropertyType pt join pt.propertyNames pn where pn.propertyNameId=:id")
 	List<PropertyType> getPTbyPNID(@Param("id") Long id);
 
-	@Query(value = "SELECT propertyTypeId as id,propertyType as name from PropertyType s")
+	@Query(value = "SELECT propertyTypeId as id,propertyType as name from PropertyType pt")
 	List<IdNameProjections> findIdAndNames();
 
 	@Query(value = "SELECT pn.propertyNameId as id,pn.name as name "
-			+ "from PropertyType pt JOIN pt.propertyNames pn WHERE pt.propertyTypeId=:id") // and pn.isBooked=false")
+			+ "from PropertyType pt JOIN pt.propertyNames pn WHERE pt.propertyTypeId=:id and pn.isBooked=false")
 	List<IdNameProjections> fetchAvailableProperties(@Param("id") Long id);
 
 }
