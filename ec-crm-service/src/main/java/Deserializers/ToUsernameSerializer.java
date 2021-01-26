@@ -29,14 +29,12 @@ public class ToUsernameSerializer extends JsonSerializer<Long>
 	public void serialize(Long value, JsonGenerator jgen, SerializerProvider provider)
 			throws IOException, JsonGenerationException
 	{
-		log.info("Invoked username serialization");
 		if (null == value)
 			jgen.writeNull();
 		else
 		{
 			if (value != 404) // 404 will always be system user
 			{
-				log.info("Getting username for userid - " + value);
 				String username;
 				try
 				{

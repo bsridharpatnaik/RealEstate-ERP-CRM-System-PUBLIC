@@ -261,7 +261,6 @@ public class AllActivitiesService
 
 	private StagnatedEnum getStagnantStatus(Long noOfDay) throws Exception
 	{
-		log.info("Invoked getStagnantStatus");
 		StagnatedEnum stagnatedStatus = StagnatedEnum.NoColor;
 
 		if (noOfDay >= 10 && noOfDay < 20)
