@@ -26,4 +26,7 @@ public interface PropertyTypeRepo extends BaseRepository<PropertyType, Long>
 			+ "from PropertyType pt JOIN pt.propertyNames pn WHERE pt.propertyTypeId=:id and pn.isBooked=false")
 	List<IdNameProjections> fetchAvailableProperties(@Param("id") Long id);
 
+	@Query(value = "SELECT DISTINCT propertyType from PropertyType b")
+	List<String> getUniqueNames();
+
 }

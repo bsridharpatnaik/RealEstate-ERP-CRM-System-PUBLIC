@@ -12,6 +12,8 @@ import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Enums.SentimentEnum;
 import com.ec.crm.Enums.StagnantDropdownValues;
 import com.ec.crm.Repository.BrokerRepo;
+import com.ec.crm.Repository.PropertyNameRepo;
+import com.ec.crm.Repository.PropertyTypeRepo;
 import com.ec.crm.Repository.SourceRepo;
 
 @Service
@@ -30,6 +32,12 @@ public class PopulateDropdownService
 
 	@Autowired
 	UserDetailsService userDetailsService;
+
+	@Autowired
+	PropertyNameRepo pnRepo;
+
+	@Autowired
+	PropertyTypeRepo ptRepo;
 
 	public NameAndProjectionDataForDropDown fetchData(String page) throws Exception
 	{
@@ -53,6 +61,12 @@ public class PopulateDropdownService
 			morDropdownDataList.setSourceDetails(sourceRepo.findIdAndNames());
 			morDropdownDataList.setValidPropertyType(PropertyTypeEnum.getValidPropertyType());
 			morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
+			break;
+		case "payment":
+			morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
+			morDropdownDataList.setValidPropertyNames(pnRepo.getUniqueNames());
+			morDropdownDataList.setValidPropertyTypes(ptRepo.getUniqueNames());
+
 			break;
 		}
 		return morDropdownDataList;

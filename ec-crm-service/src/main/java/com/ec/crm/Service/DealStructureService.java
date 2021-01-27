@@ -105,7 +105,6 @@ public class DealStructureService
 			if (dealStructureRepo.countByPropertyName(payload.getPropertyId()) > 0)
 				throw new Exception("Deal structure already added for property.");
 		}
-
 	}
 
 	public List<IdNameProjections> getPropertiesList(Long id)
@@ -136,7 +135,6 @@ public class DealStructureService
 
 	private void validatePayloadBeforeEdit(CreateDealStructureDTO payload, DealStructure ds) throws Exception
 	{
-
 		if (!payload.getLeadId().equals(ds.getLead().getLeadId()))
 			throw new Exception("Lead cannot be updated while updating deal structure");
 

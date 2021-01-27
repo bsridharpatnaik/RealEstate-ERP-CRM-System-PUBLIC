@@ -7,15 +7,25 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.crm.Data.CreateScheduleData;
+import com.ec.crm.Data.DropdownForClosedLeads;
+import com.ec.crm.Data.PaymentScheduleListingDTO;
 import com.ec.crm.Data.ScheduleReturnDAO;
+import com.ec.crm.Filters.FilterDataList;
+import com.ec.crm.Filters.PaymentScheduleSpecification;
 import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Model.PaymentSchedule;
+import com.ec.crm.Repository.ClosedLeadsRepo;
 import com.ec.crm.Repository.DealStructureRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.PaymentScheduleRepo;
@@ -36,6 +46,14 @@ public class PaymentScheduleService
 
 	@Autowired
 	LeadActivityRepo laRepo;
+
+	@Autowired
+	PopulateDropdownService populateDropdownService;
+
+	@Autowired
+	ClosedLeadsRepo clRepo;
+
+	Logger log = LoggerFactory.getLogger(ClosedLeadService.class);
 
 	public ScheduleReturnDAO createSchedule(CreateScheduleData payload) throws Exception
 	{
@@ -198,5 +216,53 @@ public class PaymentScheduleService
 		{
 			throw new Exception("Something went wrong while rescheduling activity");
 		}
+	}
+
+	public Page<PaymentScheduleListingDTO> findFilteredDataForPayments(FilterDataList filterDataList, Pageable pageable)
+			throws Exception
+	{
+		Page<PaymentScheduleListingDTO> payments = null;
+		Specification<PaymentSchedule> spec = PaymentScheduleSpecification.getSpecification(filterDataList);
+
+		if (spec == null)
+			payments = psRepo.findAll(pageable).map(this::convertToDto);
+		else
+			payments = psRepo.findAll(spec, pageable).map(this::convertToDto);
+		return payments;
+	}
+
+	private PaymentScheduleListingDTO convertToDto(PaymentSchedule o)
+	{
+		PaymentScheduleListingDTO dto = new PaymentScheduleListingDTO();
+		dto.setAmount(o.getAmount() == null ? null : o.getAmount());
+		dto.setDealStructureId(o.getDs().getDealId());
+		dto.setDetails(o.getDetails() == null ? null : o.getDetails());
+		dto.setIsReceived(o.getIsReceived());
+		dto.setLeadActivityId(o.getLa() == null ? null : o.getLa().getLeadActivityId());
+		dto.setMode(o.getMode() == null ? null : o.getMode());
+		dto.setPaymentDate(o.getPaymentDate());
+		dto.setScheduleId(o.getScheduleId());
+		dto.setAssignee(o.getDs().getLead().getAsigneeId());
+		dto.setCustomerId(o.getDs().getLead().getLeadId());
+		dto.setCustomerName(o.getDs().getLead().getCustomerName());
+		dto.setPropertyName(o.getDs().getPropertyName().getName());
+		return dto;
+	}
+
+	public DropdownForClosedLeads getDropDownValues() throws Exception
+	{
+		DropdownForClosedLeads dropdownValues = new DropdownForClosedLeads();
+		dropdownValues.setDropdownData(populateDropdownService.fetchData("payment"));
+		dropdownValues.setTypeAheadDataForGlobalSearch(fetchTypeAheadForLeadGlobalSearch());
+		return dropdownValues;
+	}
+
+	private List<String> fetchTypeAheadForLeadGlobalSearch()
+	{
+		log.info("Invoked fetchTypeAheadForLeadGlobalSearch");
+		List<String> typeAhead = new ArrayList<String>();
+		typeAhead.addAll(clRepo.getLeadNames());
+		typeAhead.addAll(clRepo.getLeadMobileNos());
+		return typeAhead;
 	}
 }

@@ -296,7 +296,7 @@ public class SpecificationsBuilder<T>
 				finalSpec = specOrCondition(finalSpec, internalSpec);
 			} else
 			{
-				Long userid = userDetailsService.getIdFromUsername(name).getId();
+				Long userid = userDetailsService.getIdFromUsername(name.trim()).getId();
 				Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 						.equal(root.get(childTable).get(childFiledName), userid);
 				finalSpec = specOrCondition(finalSpec, internalSpec);
@@ -308,6 +308,29 @@ public class SpecificationsBuilder<T>
 	// #######################################//
 	// Level 2 //
 	// #######################################//
+
+	public Specification<T> whereGrandChildAssigneeContains(String childTable, String grandChildTable,
+			String grandChildFiledName, List<String> assignees) throws Exception
+	{
+		UserDetailsService userDetailsService = BeanUtil.getBean(UserDetailsService.class);
+		Specification<T> finalSpec = null;
+		for (String name : assignees)
+		{
+			if (name.matches("\\d*"))
+			{
+				Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb.equal(
+						root.get(childTable).get(grandChildTable).get(grandChildFiledName), Long.parseLong(name));
+				finalSpec = specOrCondition(finalSpec, internalSpec);
+			} else
+			{
+				Long userid = userDetailsService.getIdFromUsername(name.trim()).getId();
+				Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+						.equal(root.get(childTable).get(grandChildTable).get(grandChildFiledName), userid);
+				finalSpec = specOrCondition(finalSpec, internalSpec);
+			}
+		}
+		return finalSpec;
+	}
 
 	public Specification<T> whereGrandChildLongFieldContains(String childTable, String grandChildTable,
 			String grandChildFiledName, List<String> ids)
@@ -330,6 +353,19 @@ public class SpecificationsBuilder<T>
 		{
 			Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 					.like(root.get(childTable).get(grandChildTable).get(grandChildFiledName), "%" + name + "%");
+			finalSpec = specOrCondition(finalSpec, internalSpec);
+		}
+		return finalSpec;
+	}
+
+	public Specification<T> whereGrandChildFieldEquals(String childTable, String grandChildTable,
+			String grandChildFiledName, List<String> names)
+	{
+		Specification<T> finalSpec = null;
+		for (String name : names)
+		{
+			Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+					.equal(root.get(childTable).get(grandChildTable).get(grandChildFiledName), name);
 			finalSpec = specOrCondition(finalSpec, internalSpec);
 		}
 		return finalSpec;

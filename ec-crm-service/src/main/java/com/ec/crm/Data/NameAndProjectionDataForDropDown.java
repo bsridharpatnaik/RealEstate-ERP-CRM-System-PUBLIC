@@ -22,5 +22,7 @@ public class NameAndProjectionDataForDropDown
 	List<String> validActivityType;
 	HashMap<String, String> actvityStatus;
 	PopulateAssigneeList assigneeDetails;
+	List<String> validPropertyNames;
+	List<String> validPropertyTypes;
 	HashMap<String, String> keyValueForStagnantDropdown;
 }
