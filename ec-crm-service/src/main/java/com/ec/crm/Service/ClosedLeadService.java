@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.AllNotesForLeadDAO;
+import com.ec.crm.Data.ClosedLeadStatusDAO;
 import com.ec.crm.Data.ClosedLeadsListDTO;
 import com.ec.crm.Data.CustomerDetailInfo;
 import com.ec.crm.Data.DropdownForClosedLeads;
@@ -42,6 +43,12 @@ public class ClosedLeadService
 
 	@Autowired
 	NoteService noteService;
+
+	@Autowired
+	CustomerDocumentsService cdService;
+
+	@Autowired
+	DealStructureService dsService;
 
 	public Page<ClosedLeadsListDTO> fetchAllClosedLeads(Pageable pageable, FilterDataList filterDataList)
 			throws Exception
@@ -101,8 +108,6 @@ public class ClosedLeadService
 		if (!clRepo.existsById(id))
 			throw new Exception("Customer not found with ID -" + id);
 
-		// return ;
-
 		LeadDAO l = new LeadDAO();
 		convertLeadToLeadDAO(clRepo.findById(id).get(), l);
 		return l;
@@ -133,6 +138,17 @@ public class ClosedLeadService
 		l.setSource(lead.getSource() == null ? null : lead.getSource().getSourceName());
 		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? null : lead.getStagnantDaysCount());
 		l.setStatus(lead.getStatus());
+	}
+
+	public ClosedLeadStatusDAO getStatusForStepper(Long id) throws Exception
+	{
+		ClosedLeadStatusDAO returnData = new ClosedLeadStatusDAO();
+		returnData.setActivities(true);
+		returnData.setHandover(false);
+		returnData.setLoanDetails(false);
+		returnData.setDealStructure(dsService.getDealStructureStatusForLead(id));
+		returnData.setDocuments(cdService.getDocumentStatusByLead(id));
+		return returnData;
 	}
 
 }

@@ -77,4 +77,15 @@ public class CustomerDocumentsService
 		return cdRepo.save(cd);
 	}
 
+	public Boolean getDocumentStatusByLead(Long id) throws Exception
+	{
+		if (!clRepo.existsById(id))
+			throw new Exception("Customer not found with ID - " + id);
+		List<CustomerDocument> documents = cdRepo.findDocumentsForLead(id);
+		if (documents.size() > 0)
+			return true;
+		else
+			return false;
+	}
+
 }

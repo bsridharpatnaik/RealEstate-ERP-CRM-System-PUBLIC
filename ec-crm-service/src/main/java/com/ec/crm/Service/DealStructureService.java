@@ -188,4 +188,13 @@ public class DealStructureService
 		dao.setSchedules(psService.getSchedulesForDeal(ds.getDealId()));
 		return dao;
 	}
+
+	public Boolean getDealStructureStatusForLead(Long id)
+	{
+		List<DealStructure> dsList = dealStructureRepo.getDealStructureByLeadID(id);
+		if (dsList.size() > 0)
+			return true;
+		else
+			return false;
+	}
 }

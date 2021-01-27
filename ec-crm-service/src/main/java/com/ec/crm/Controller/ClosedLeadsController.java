@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
+import com.ec.crm.Data.ClosedLeadStatusDAO;
 import com.ec.crm.Data.ClosedLeadsListDTO;
 import com.ec.crm.Data.CreateCustomerDocumentDTO;
 import com.ec.crm.Data.CreateDealStructureDTO;
@@ -73,6 +74,12 @@ public class ClosedLeadsController
 	public DropdownForClosedLeads getDropdownValues() throws Exception
 	{
 		return clService.getDropDownValues();
+	}
+
+	@GetMapping("/status/{id}")
+	public ClosedLeadStatusDAO getStatusForStepper(@PathVariable Long id) throws Exception
+	{
+		return clService.getStatusForStepper(id);
 	}
 
 	@GetMapping("/customerdetails/{id}")
