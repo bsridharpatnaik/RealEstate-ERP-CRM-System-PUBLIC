@@ -55,6 +55,12 @@ public class LeadActivityService
 	NoteService noteService;
 
 	@Autowired
+	private AsyncService asyncService;
+
+	@Autowired
+	DeletePostSalesRecordsService dpsService;
+
+	@Autowired
 	LeadActivityRepo laRepo;
 
 	@Autowired
@@ -116,7 +122,7 @@ public class LeadActivityService
 		laRepo.softDeleteById(id);
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public void revertLeadActivity(Long id) throws Exception
 	{
 
@@ -145,6 +151,7 @@ public class LeadActivityService
 			} else if (la.getActivityType().equals(ActivityTypeEnum.Deal_Close))
 			{
 				addNoteBeforeRevert(la);
+				deletePostSalesRecordsBeforeConversion(la.getLead().getLeadId());
 				la.getLead().setStatus(fetchPreviousStatusFromHistory(la.getLead()));
 				laRepo.save(la);
 				laRepo.softDelete(la);
@@ -254,9 +261,13 @@ public class LeadActivityService
 		}
 
 		if (status.equals(LeadStatusEnum.Deal_Closed) || status.equals(LeadStatusEnum.Deal_Lost))
+		{
+			if (status.equals(LeadStatusEnum.Deal_Closed))
+				deletePostSalesRecordsBeforeConversion(leadActivity.getLead().getLeadId());
 			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
 				leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.getLead()));
 
+		}
 		laRepo.save(leadActivity);
 		if (isDealClosed)
 			createDefaultDocumentsForClosedLead(leadActivity.getLead());
@@ -885,5 +896,20 @@ public class LeadActivityService
 		la.setTitle("Payment Reminder - Scheduled Payment");
 		laRepo.save(la);
 		return la;
+	}
+
+	public void deletePostSalesRecordsBeforeConversion(Long customerId)
+	{
+		asyncService.run(() ->
+		{
+			try
+			{
+				dpsService.deleteAllForCustomer(customerId);
+			} catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 	}
 }
