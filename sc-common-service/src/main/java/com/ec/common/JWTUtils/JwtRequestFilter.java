@@ -67,8 +67,9 @@ public class JwtRequestFilter extends OncePerRequestFilter
 		{
 			final String tenantId = request.getHeader("tenant-id");
 			String path = new UrlPathHelper().getPathWithinApplication(request);
-			if (StringUtils.isNotBlank(path) && !path.contains("/user") && !path.contains("tenant")
-					&& !path.contains("/notification") && !path.contains("/role") && !path.contains("/token"))
+			if (StringUtils.isNotBlank(path) && !path.contains("/ism") && !path.contains("/user")
+					&& !path.contains("tenant") && !path.contains("/notification") && !path.contains("/role")
+					&& !path.contains("/token"))
 			{
 				username = username + "#" + tenantId;
 			} else if (StringUtils.isBlank(path))
