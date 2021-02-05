@@ -8,7 +8,9 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.InwardInventoryData;
 import com.ec.application.data.InwardInventoryExportDAO2;
 import com.ec.application.data.ReturnInwardInventoryData;
@@ -88,5 +91,15 @@ public class InwardInventoryController
 
 		iiService.deleteInwardInventoryById(id);
 		return ResponseEntity.ok("Entity deleted");
+	}
+
+	@ExceptionHandler(
+	{ JpaSystemException.class })
+	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
+	{
+		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+				"Something went wrong while handling data. Contact Administrator.");
+		return apiError;
 	}
 }
