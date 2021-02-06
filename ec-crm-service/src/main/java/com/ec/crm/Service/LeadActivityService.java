@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.FileInformationDAO;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadActivityDropdownData;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.NoteCreateData;
@@ -91,6 +92,9 @@ public class LeadActivityService
 	LeadActivityMapper laMapper;
 	@Value("${common.serverurl}")
 	private String reqUrl;
+
+	@Autowired
+	UtilService utilService;
 
 	@Autowired
 	PaymentScheduleService psService;
@@ -649,10 +653,21 @@ public class LeadActivityService
 	 * fetchTypeAheadForLeadGlobalSearch()); return
 	 * leadActivityListWithTypeAheadData; }
 	 */
+	public LeadActivityDropdownData getDropdownForLead() throws Exception
+	{
+		LeadActivityDropdownData data = new LeadActivityDropdownData();
+		data.setDropdownData(populateDropdownService.fetchData("lead"));
+		data.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
+		return data;
+	}
+
 	public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable)
 			throws Exception
 	{
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
+
+		// check user. if not admin, apply default filters
+		leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
 		LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
 
 		log.info("Fetching filteration based on filter data received");

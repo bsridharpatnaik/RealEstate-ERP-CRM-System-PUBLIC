@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Data.LeadActivityDropdownData;
 import com.ec.crm.Data.PipelineAllReturnDAO;
 import com.ec.crm.Data.PipelineSingleReturnDTO;
 import com.ec.crm.Data.PipelineWithTotalReturnDAO;
@@ -64,10 +65,17 @@ public class AllActivitiesService
 	@Autowired
 	LeadActivityService leadActivityService;
 
+	@Autowired
+	UtilService utilService;
+
 	public PlannerAllReturnDAO findFilteredDataForPlanner(FilterDataList leadFilterDataList, Pageable pageable)
 			throws Exception
 	{
 		log.info("Invoked - findFilteredData");
+
+		// check user. if not admin, apply default filters
+		leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
+
 		List<LeadActivity> activities = new ArrayList<LeadActivity>();
 
 		Specification<LeadActivity> spec = ActivitySpecifications.getSpecification(leadFilterDataList);
@@ -132,12 +140,23 @@ public class AllActivitiesService
 		return plannerWithTotalReturnDAO;
 	}
 
+	public LeadActivityDropdownData getDropdownValues() throws Exception
+	{
+		LeadActivityDropdownData data = new LeadActivityDropdownData();
+		data.setDropdownData(populateDropdownService.fetchData("lead"));
+		data.setTypeAheadDataForGlobalSearch(leadService.fetchTypeAheadForLeadGlobalSearch());
+		return data;
+	}
+
 	public PipelineAllReturnDAO findFilteredDataForPipeline(FilterDataList leadFilterDataList, Pageable pageable)
 			throws Exception
 	{
 		log.info("Invoked - findFilteredDataForPlanner");
 		SpecificationsBuilder<Lead> specbldr = new SpecificationsBuilder<Lead>();
 		List<Lead> leads = new ArrayList<Lead>();
+
+		// check user. if not admin, apply default filters
+		leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
 
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
 

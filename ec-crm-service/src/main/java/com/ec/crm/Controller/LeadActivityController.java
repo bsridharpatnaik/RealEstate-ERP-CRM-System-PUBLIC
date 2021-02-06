@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadActivityClosingComment;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadActivityDropdownData;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.RescheduleActivityData;
 import com.ec.crm.Data.UserReturnData;
@@ -124,6 +125,14 @@ public class LeadActivityController
 		UserReturnData currentUser = userDetailsService.getCurrentUser();
 		request.setAttribute("currentUser", currentUser);
 		return laService.getLeadActivityPage(leadFilterDataList, pageable);
+	}
+
+	@GetMapping("/getleadactivitypage/dropdown")
+	public LeadActivityDropdownData getDropDownValues() throws Exception
+	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		request.setAttribute("currentUser", currentUser);
+		return laService.getDropdownForLead();
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

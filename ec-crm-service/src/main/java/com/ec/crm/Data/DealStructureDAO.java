@@ -17,6 +17,8 @@ public class DealStructureDAO
 	String propertyType;
 	String propertyName;
 
+	Long propertytypeId;
+	Long PropertyNameId;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date bookingDate;
 	String mode;
