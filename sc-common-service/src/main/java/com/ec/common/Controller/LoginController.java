@@ -19,6 +19,7 @@ import com.ec.common.Data.JwtResponse;
 import com.ec.common.Data.LoginData;
 import com.ec.common.Data.UserSignInData;
 import com.ec.common.JWTUtils.JWTTokenUtils;
+import com.ec.common.Repository.UserRepo;
 import com.ec.common.Service.JwtUserDetailsService;
 
 @RestController
@@ -31,6 +32,9 @@ public class LoginController
 
 	@Autowired
 	private JWTTokenUtils jwtTokenUtil;
+
+	@Autowired
+	UserRepo uRepo;
 
 	@Autowired
 	private JwtUserDetailsService userDetailsService;
@@ -53,7 +57,8 @@ public class LoginController
 			roles.add(grantedAuthority.getAuthority());
 		}
 		String name = userDetails.getUsername().trim();
-		return ResponseEntity.ok(new JwtResponse(name, token, roles));
+		Long userid = uRepo.findId(name.trim());
+		return ResponseEntity.ok(new JwtResponse(name, token, userid, roles));
 	}
 
 	private void authenticate(String username, String password) throws Exception

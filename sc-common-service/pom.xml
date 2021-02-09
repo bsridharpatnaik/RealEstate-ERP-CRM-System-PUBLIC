@@ -23,7 +23,7 @@
       <!--  <java.version>15</java.version> -->
         <hibernate.version>5.4.22.Final</hibernate.version>
         <lombok.version>1.18.16</lombok.version>
-        <spring-cloud.version>Hoxton.SR4</spring-cloud.version>
+        <spring-cloud.version>Hoxton.RELEASE</spring-cloud.version>
     </properties>
     <dependencies>
     <dependency>

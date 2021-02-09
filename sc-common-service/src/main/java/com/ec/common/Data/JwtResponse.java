@@ -9,13 +9,25 @@ public class JwtResponse implements Serializable
 	private static final long serialVersionUID = -8091879091924046844L;
 	private String token;
 	private String name;
+	private Long userid;
 	private ArrayList<String> roles;
 
-	public JwtResponse(String name, String token, ArrayList<String> roles)
+	public JwtResponse(String name, String token, Long userid, ArrayList<String> roles)
 	{
 		this.name = name;
 		this.token = token;
 		this.roles = roles;
+		this.userid = userid;
+	}
+
+	public Long getUserid()
+	{
+		return userid;
+	}
+
+	public void setUserid(Long userid)
+	{
+		this.userid = userid;
 	}
 
 	public String getName()
