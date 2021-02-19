@@ -94,6 +94,7 @@ public class AllInventoryTransactions implements Serializable
 	String lastModifiedDate;
 
 	@NotAudited
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	@Formula("(select "
 			+ "(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='inward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)"
 			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai "

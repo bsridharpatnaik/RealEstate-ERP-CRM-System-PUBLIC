@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.config.ProjectConstants;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.OutwardInventoryExportDAO2;
@@ -97,9 +98,6 @@ public class OutwardInventoryService
 	UserDetailsService userDetailService;
 
 	Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
-
-	public static Long allowedDaysAdmin = (long) 30;
-	public static Long allowedDaysExecutive = (long) 2;
 
 	@Transactional(rollbackFor = Exception.class)
 	public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception
@@ -629,15 +627,17 @@ public class OutwardInventoryService
 			if (currentUserData.getRoles().contains("admin")
 					|| currentUserData.getRoles().contains("inventory-manager"))
 			{
-				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysAdmin)
-					throw new Exception(
-							"Cannot modify record that is created greater than " + allowedDaysAdmin + " days ago.");
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(),
+						new Date()) > ProjectConstants.editAllowedDaysAdmin)
+					throw new Exception("Cannot modify record that is created greater than "
+							+ ProjectConstants.editAllowedDaysAdmin + " days ago.");
 
 			} else if (currentUserData.getRoles().contains("inventory-executive"))
 			{
-				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysExecutive)
-					throw new Exception(
-							"Cannot modify record that is created greater than " + allowedDaysExecutive + " days ago.");
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(),
+						new Date()) > ProjectConstants.editAllowedDaysExecutive)
+					throw new Exception("Cannot modify record that is created greater than "
+							+ ProjectConstants.editAllowedDaysExecutive + " days ago.");
 			} else
 			{
 				throw new Exception("No User role found for user!. Please contact administration to get roles added");
@@ -662,16 +662,18 @@ public class OutwardInventoryService
 			if (currentUserData.getRoles().contains("admin")
 					|| currentUserData.getRoles().contains("inventory-manager"))
 			{
-				if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > allowedDaysAdmin)
-					throw new Exception("Cannot create outward inventory with date more than " + allowedDaysAdmin
-							+ " Days in past. ");
+				if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(),
+						new Date()) > ProjectConstants.editAllowedDaysAdmin)
+					throw new Exception("Cannot create outward inventory with date more than "
+							+ ProjectConstants.editAllowedDaysAdmin + " Days in past. ");
 			}
 
 			else if (currentUserData.getRoles().contains("inventory-executive"))
 			{
-				if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date()) > allowedDaysExecutive)
-					throw new Exception("Cannot create outward inventory with date more than " + allowedDaysExecutive
-							+ " Days in past. ");
+				if (ReusableMethods.daysBetweenTwoDates(oiData.getDate(),
+						new Date()) > ProjectConstants.editAllowedDaysExecutive)
+					throw new Exception("Cannot create outward inventory with date more than "
+							+ ProjectConstants.editAllowedDaysExecutive + " Days in past. ");
 			} else
 			{
 				throw new Exception("No User role found for user!. Please contact administration to get roles added");
@@ -682,16 +684,18 @@ public class OutwardInventoryService
 			if (currentUserData.getRoles().contains("admin")
 					|| currentUserData.getRoles().contains("inventory-manager"))
 			{
-				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysAdmin)
-					throw new Exception(
-							"Cannot DELETE outward inventory created more than " + allowedDaysAdmin + " Days ago. ");
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(),
+						new Date()) > ProjectConstants.editAllowedDaysAdmin)
+					throw new Exception("Cannot DELETE outward inventory created more than "
+							+ ProjectConstants.editAllowedDaysAdmin + " Days ago. ");
 			}
 
 			else if (currentUserData.getRoles().contains("inventory-executive"))
 			{
-				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date()) > allowedDaysExecutive)
-					throw new Exception("Cannot DELETE outward inventory created more than " + allowedDaysExecutive
-							+ " Days ago. ");
+				if (ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(),
+						new Date()) > ProjectConstants.editAllowedDaysExecutive)
+					throw new Exception("Cannot DELETE outward inventory created more than "
+							+ ProjectConstants.editAllowedDaysExecutive + " Days ago. ");
 			} else
 			{
 				throw new Exception("No User role found for user!. Please contact administration to get roles added");
