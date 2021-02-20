@@ -43,7 +43,7 @@ public class PaymentScheduleSpecification
 
 		if (propertyType != null && propertyType.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereGrandChildFieldEquals(PaymentSchedule_.DS,
-					DealStructure_.PROPERTY_TYPE, PropertyType_.PROPERTY_NAMES, propertyType));
+					DealStructure_.PROPERTY_TYPE, PropertyType_.PROPERTY_TYPE, propertyType));
 
 		if (propertyName != null && propertyName.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereGrandChildFieldEquals(PaymentSchedule_.DS,

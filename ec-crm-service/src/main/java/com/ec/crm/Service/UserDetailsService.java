@@ -108,9 +108,13 @@ public class UserDetailsService
 		List<User> userList = uRepo.findAll(Sort.by(Sort.Direction.ASC, "userName"));
 		for (User user : userList)
 		{
-			UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-					fetchRolesFromSet(user.getRoles()));
-			userReturnDataList.add(userReturnData);
+			if (user.isStatus() == true)
+			{
+				UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
+						fetchRolesFromSet(user.getRoles()));
+				if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
+					userReturnDataList.add(userReturnData);
+			}
 		}
 		return userReturnDataList;
 
