@@ -18,7 +18,7 @@ public class OutwardInventoryExportDAO
 
 	Long outwardid;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date date;
 	String warehouse;
 	String contractor;

@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.config.ProjectConstants;
 import com.ec.application.data.OutwardInventoryData;
-import com.ec.application.data.OutwardInventoryExportDAO;
 import com.ec.application.data.OutwardInventoryExportDAO2;
 import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
@@ -522,20 +521,22 @@ public class OutwardInventoryService
 		return groupedData;
 	}
 
-	public List<OutwardInventoryExportDAO> fetchOutwardnventoryForExport(FilterDataList filterDataList) throws Exception
-	{
-		log.info("Invoked fetchOutwardnventoryForExport");
-		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
-		long size = spec != null ? outwardInventoryRepo.count(spec) : outwardInventoryRepo.count();
-		if (size > 2000)
-			throw new Exception("Too many rows to export. Apply some more filters and try again");
-		List<OutwardInventory> iiData = spec != null ? outwardInventoryRepo.findAll(spec)
-				: outwardInventoryRepo.findAll();
-		List<OutwardInventoryExportDAO> clonedData = iiData.parallelStream().map(OutwardInventoryExportDAO::new)
-				.collect(Collectors.toList());
-		log.info("Exited fetchOutwardnventoryForExport");
-		return clonedData;
-	}
+	/*
+	 * public List<OutwardInventoryExportDAO>
+	 * fetchOutwardnventoryForExport(FilterDataList filterDataList) throws Exception
+	 * { log.info("Invoked fetchOutwardnventoryForExport");
+	 * Specification<OutwardInventory> spec =
+	 * OutwardInventorySpecification.getSpecification(filterDataList); long size =
+	 * spec != null ? outwardInventoryRepo.count(spec) :
+	 * outwardInventoryRepo.count(); if (size > 2000) throw new
+	 * Exception("Too many rows to export. Apply some more filters and try again");
+	 * List<OutwardInventory> iiData = spec != null ?
+	 * outwardInventoryRepo.findAll(spec) : outwardInventoryRepo.findAll();
+	 * List<OutwardInventoryExportDAO> clonedData =
+	 * iiData.parallelStream().map(OutwardInventoryExportDAO::new)
+	 * .collect(Collectors.toList());
+	 * log.info("Exited fetchOutwardnventoryForExport"); return clonedData; }
+	 */
 
 	public List<OutwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList)
 			throws Exception

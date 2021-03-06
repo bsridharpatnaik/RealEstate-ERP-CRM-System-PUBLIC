@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.OutwardInventoryData;
-import com.ec.application.data.OutwardInventoryExportDAO;
+import com.ec.application.data.OutwardInventoryExportDAO2;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.OutwardInventory;
@@ -74,11 +74,11 @@ public class OutwardInventoryController
 
 	@PostMapping("/export")
 	@ResponseStatus(HttpStatus.OK)
-	public List<OutwardInventoryExportDAO> fetchAllOutwardInventoryForExport(@RequestBody FilterDataList filterDataList)
-			throws Exception
+	public List<OutwardInventoryExportDAO2> fetchAllOutwardInventoryForExport(
+			@RequestBody FilterDataList filterDataList) throws Exception
 	{
 
-		return oiService.fetchOutwardnventoryForExport(filterDataList);
+		return oiService.fetchInwardnventoryForExport2(filterDataList);
 	}
 
 	@DeleteMapping(value = "/{id}")
