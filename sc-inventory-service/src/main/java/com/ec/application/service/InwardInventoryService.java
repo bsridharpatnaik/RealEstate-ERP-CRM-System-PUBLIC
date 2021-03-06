@@ -228,6 +228,10 @@ public class InwardInventoryService
 		inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
 		inwardInventory.setPurchaseOrder(iiData.getPurchaseOrder());
 		inwardInventory.setPurchaseOrderdate(iiData.getPurchaseOrderDate());
+		inwardInventory.setChallanDate(iiData.getChallanDate() == null ? null : iiData.getChallanDate());
+		inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
+		inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
+		inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
 	}
 
 	public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities,

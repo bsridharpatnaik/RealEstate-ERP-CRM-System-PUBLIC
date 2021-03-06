@@ -91,6 +91,57 @@ public class InwardInventory extends ReusableFields implements Cloneable
 	{ @JoinColumn(name = "rejectentryid", referencedColumnName = "rejectentryid") })
 	Set<RejectInwardList> rejectInwardList = new HashSet<>();
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Column(nullable = true)
+	Date challanDate;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@Column(nullable = true)
+	Date billDate;
+
+	String billNo;
+	String challanNo;
+
+	public Date getChallanDate()
+	{
+		return challanDate;
+	}
+
+	public void setChallanDate(Date challanDate)
+	{
+		this.challanDate = challanDate;
+	}
+
+	public Date getBillDate()
+	{
+		return billDate;
+	}
+
+	public void setBillDate(Date billDate)
+	{
+		this.billDate = billDate;
+	}
+
+	public String getBillNo()
+	{
+		return billNo;
+	}
+
+	public void setBillNo(String billNo)
+	{
+		this.billNo = billNo;
+	}
+
+	public String getChallanNo()
+	{
+		return challanNo;
+	}
+
+	public void setChallanNo(String challanNo)
+	{
+		this.challanNo = challanNo;
+	}
+
 	public Set<RejectInwardList> getRejectInwardList()
 	{
 		return rejectInwardList;

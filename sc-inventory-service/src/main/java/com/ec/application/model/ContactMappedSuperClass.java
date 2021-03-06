@@ -37,8 +37,7 @@ public class ContactMappedSuperClass
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String name;
 
-	@NonNull
-	@Column(nullable = false)
+	@Column(nullable = true)
 	String mobileNo;
 
 	String emailId;

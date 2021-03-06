@@ -143,7 +143,7 @@ public class ContactService
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!(payload.getContactPersonMobileNo() == null) && !payload.getContactPersonMobileNo().equals(""))
 			payload.setContactPersonMobileNo(utilObj.normalizePhoneNumber(payload.getContactPersonMobileNo()));
-		if (!payload.getMobileNo().equals(""))
+		if (payload.getMobileNo() != "" && payload.getMobileNo() != null)
 			payload.setMobileNo(utilObj.normalizePhoneNumber(payload.getMobileNo()));
 	}
 
@@ -159,10 +159,13 @@ public class ContactService
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		if (!validateRequiredFields(payload).equals(""))
 			throw new Exception("Required fields missing - " + validateRequiredFields(payload));
+
 		if (payload.getName().length() > 20)
 			throw new Exception("Contact name should not be more than 20 characters.");
-		if (!ReusableMethods.isValidMobileNumber(payload.getMobileNo()))
-			throw new Exception("Please enter valid mobile number.");
+
+		if (payload.getMobileNo() != null && payload.getMobileNo() != "")
+			if (!ReusableMethods.isValidMobileNumber(payload.getMobileNo()))
+				throw new Exception("Please enter valid mobile number.");
 
 		if (payload.getEmailId() != null && payload.getEmailId() != "")
 			if (!ReusableMethods.isValidEmail(payload.getEmailId()))
@@ -200,8 +203,6 @@ public class ContactService
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		String message = "";
-		if (payload.getMobileNo() == null || payload.getMobileNo().equals(""))
-			message = message == "" ? "Mobile No." : message + ", Mobile No.";
 
 		if (payload.getContactType() == null || payload.getContactType().equals(""))
 			message = message == "" ? "Contact Type" : message + ", Contact Type";

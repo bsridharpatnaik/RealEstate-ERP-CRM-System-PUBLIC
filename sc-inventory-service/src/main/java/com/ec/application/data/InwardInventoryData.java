@@ -35,6 +35,53 @@ public class InwardInventoryData
 	// @NonNull
 	Boolean invoiceReceived;
 
+	String challanNo;
+	String billNo;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	Date challanDate;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	Date billDate;
+
+	public String getChallanNo()
+	{
+		return challanNo;
+	}
+
+	public void setChallanNo(String challanNo)
+	{
+		this.challanNo = challanNo;
+	}
+
+	public String getBillNo()
+	{
+		return billNo;
+	}
+
+	public void setBillNo(String billNo)
+	{
+		this.billNo = billNo;
+	}
+
+	public Date getChallanDate()
+	{
+		return challanDate;
+	}
+
+	public void setChallanDate(Date challanDate)
+	{
+		this.challanDate = challanDate;
+	}
+
+	public Date getBillDate()
+	{
+		return billDate;
+	}
+
+	public void setBillDate(Date billDate)
+	{
+		this.billDate = billDate;
+	}
+
 	@NonNull
 	List<FileInformationDAO> fileInformations;
 
