@@ -24,6 +24,7 @@ import com.ec.common.Filters.FilterDataList;
 public class SpecificationsBuilder<T>
 {
 
+	String dateFormat = "dd-MM-yyyy";
 	// #######################################//
 	// Level 0 //
 	// #######################################//
@@ -66,7 +67,7 @@ public class SpecificationsBuilder<T>
 
 	public Specification<T> whereDirectFieldDateGreaterThan(String key, List<String> startDates) throws ParseException
 	{
-		Date startDate = new SimpleDateFormat("yyyy/MM/dd").parse(startDates.get(0));
+		Date startDate = new SimpleDateFormat(dateFormat).parse(startDates.get(0));
 		Specification<T> finalSpec = null;
 		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 				.greaterThanOrEqualTo(root.get(key), startDate);
@@ -89,7 +90,7 @@ public class SpecificationsBuilder<T>
 
 	public Specification<T> whereDirectFieldDateLessThan(String key, List<String> endDates) throws ParseException
 	{
-		Date startDate = new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
+		Date startDate = new SimpleDateFormat(dateFormat).parse(endDates.get(0));
 		Specification<T> finalSpec = null;
 		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 				.lessThanOrEqualTo(root.get(key), startDate);

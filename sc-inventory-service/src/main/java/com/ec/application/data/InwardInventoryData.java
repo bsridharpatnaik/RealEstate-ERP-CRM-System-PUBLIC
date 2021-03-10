@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 public class InwardInventoryData
 {
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@NonNull
 	Date date;
 	@NonNull
@@ -29,7 +29,7 @@ public class InwardInventoryData
 	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String additionalComments;
 	String purchaseOrder;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@NonNull
 	Date purchaseOrderDate;
 	// @NonNull
@@ -37,9 +37,9 @@ public class InwardInventoryData
 
 	String challanNo;
 	String billNo;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date challanDate;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date billDate;
 
 	public String getChallanNo()

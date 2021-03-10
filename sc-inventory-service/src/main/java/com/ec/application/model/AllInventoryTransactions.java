@@ -46,7 +46,7 @@ public class AllInventoryTransactions implements Serializable
 	@Column(name = "entryid")
 	Long entryid;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name = "date")
 	Date date;
 
@@ -85,11 +85,11 @@ public class AllInventoryTransactions implements Serializable
 	@Column(name = "warehousename")
 	String warehouseName;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name = "creationDate")
 	String creationDate;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name = "lastModifiedDate")
 	String lastModifiedDate;
 

@@ -52,11 +52,11 @@ static SpecificationsBuilder<MachineryOnRent> specbldr = new SpecificationsBuild
 		
 		if(startDates != null && startDates.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldDateGreaterThan
-					(MachineryOnRent_.START_DATE, startDates));
+					(MachineryOnRent_.DATE, startDates));
 		
 		if(endDates != null && endDates.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldDateLessThan
-					(MachineryOnRent_.END_DATE, endDates));
+					(MachineryOnRent_.DATE, endDates));
 		
 		if(globalSearch != null && globalSearch.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildFieldContains

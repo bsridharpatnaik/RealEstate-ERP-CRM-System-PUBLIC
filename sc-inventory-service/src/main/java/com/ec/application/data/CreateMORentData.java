@@ -14,14 +14,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import lombok.Data;
 
-@Data
 public class CreateMORentData
 {
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(pattern = "dd-MM-yyyy")
 	@NonNull
-	@JsonProperty("date")
-	private Date date;
+	Date date;
 
 	@NonNull
 	private Long machineryId;
@@ -32,16 +30,16 @@ public class CreateMORentData
 
 	private Long locationId;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	private Date startDate;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	private Date endDate;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
 	private Date startDateTime;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
 	private Date endDateTime;
 
 	Double initialMeterReading;
@@ -57,5 +55,113 @@ public class CreateMORentData
 	@NonNull
 	List<FileInformationDAO> fileInformations;
 	Double rate;
+	public Date getDate() {
+		return date;
+	}
+	public void setDate(Date date) {
+		this.date = date;
+	}
+	public Long getMachineryId() {
+		return machineryId;
+	}
+	public void setMachineryId(Long machineryId) {
+		this.machineryId = machineryId;
+	}
+	public Long getSupplierId() {
+		return supplierId;
+	}
+	public void setSupplierId(Long supplierId) {
+		this.supplierId = supplierId;
+	}
+	public Long getContractorId() {
+		return contractorId;
+	}
+	public void setContractorId(Long contractorId) {
+		this.contractorId = contractorId;
+	}
+	public Long getLocationId() {
+		return locationId;
+	}
+	public void setLocationId(Long locationId) {
+		this.locationId = locationId;
+	}
+	public Date getStartDate() {
+		return startDate;
+	}
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+	public Date getEndDate() {
+		return endDate;
+	}
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
+	public Date getStartDateTime() {
+		return startDateTime;
+	}
+	public void setStartDateTime(Date startDateTime) {
+		this.startDateTime = startDateTime;
+	}
+	public Date getEndDateTime() {
+		return endDateTime;
+	}
+	public void setEndDateTime(Date endDateTime) {
+		this.endDateTime = endDateTime;
+	}
+	public Double getInitialMeterReading() {
+		return initialMeterReading;
+	}
+	public void setInitialMeterReading(Double initialMeterReading) {
+		this.initialMeterReading = initialMeterReading;
+	}
+	public Double getEndMeterReading() {
+		return endMeterReading;
+	}
+	public void setEndMeterReading(Double endMeterReading) {
+		this.endMeterReading = endMeterReading;
+	}
+	public Double getNoOfTrips() {
+		return noOfTrips;
+	}
+	public void setNoOfTrips(Double noOfTrips) {
+		this.noOfTrips = noOfTrips;
+	}
+	public Double getAmountCharged() {
+		return amountCharged;
+	}
+	public void setAmountCharged(Double amountCharged) {
+		this.amountCharged = amountCharged;
+	}
+	public MORRentModeEnum getMode() {
+		return mode;
+	}
+	public void setMode(MORRentModeEnum mode) {
+		this.mode = mode;
+	}
+	public String getVehicleNo() {
+		return vehicleNo;
+	}
+	public void setVehicleNo(String vehicleNo) {
+		this.vehicleNo = vehicleNo;
+	}
+	public String getAdditionalNotes() {
+		return additionalNotes;
+	}
+	public void setAdditionalNotes(String additionalNotes) {
+		this.additionalNotes = additionalNotes;
+	}
+	public List<FileInformationDAO> getFileInformations() {
+		return fileInformations;
+	}
+	public void setFileInformations(List<FileInformationDAO> fileInformations) {
+		this.fileInformations = fileInformations;
+	}
+	public Double getRate() {
+		return rate;
+	}
+	public void setRate(Double rate) {
+		this.rate = rate;
+	}
 
 }

@@ -14,7 +14,7 @@ public class InwardInventoryExportDAO
 {
 	Long inwardid;
 	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy")
 	Date date;
 	String vehicleNo;
 	String supplierSlipNo;

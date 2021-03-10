@@ -39,7 +39,7 @@ public class LostDamagedInventory extends ReusableFields
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	Long lostdamagedid;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(nullable = false)
 	@NonNull
 	Date date;

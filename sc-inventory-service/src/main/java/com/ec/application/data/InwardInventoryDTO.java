@@ -15,7 +15,7 @@ public class InwardInventoryDTO
 {
 	Long inwardid;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date date;
 
 	String vehicleNo;
@@ -38,15 +38,15 @@ public class InwardInventoryDTO
 
 	String purchaseOrder;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date purchaseOrderdate;
 
 	Set<RejectInwardListDTO> rejectInwardList = new HashSet<>();
 	boolean isDeleted;
 	String createdBy;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
 	Date creationDate;
 	String lastModifiedBy;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
 	protected Date lastModifiedDate;
 }

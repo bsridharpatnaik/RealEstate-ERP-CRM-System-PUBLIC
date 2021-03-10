@@ -42,7 +42,7 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	@Column(name = "outwardid")
 	Long outwardid;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(nullable = false)
 	@NonNull
 	Date date;

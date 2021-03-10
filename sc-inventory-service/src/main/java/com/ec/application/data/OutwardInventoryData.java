@@ -13,7 +13,7 @@ import lombok.Data;
 
 public class OutwardInventoryData 
 {
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy")
 	@NonNull
 	Date date;
 	

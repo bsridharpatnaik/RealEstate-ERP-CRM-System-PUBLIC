@@ -13,7 +13,7 @@ import lombok.Data;
 @Data
 public class DashboardMachineOnRentDAO
 {
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date date;
 	String machineryName;
 	@Enumerated(EnumType.STRING)

@@ -37,7 +37,7 @@ public class InwardInventory extends ReusableFields implements Cloneable
 	@Column(name = "inwardid")
 	Long inwardid;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(nullable = false)
 	@NonNull
 	Date date;
@@ -81,7 +81,7 @@ public class InwardInventory extends ReusableFields implements Cloneable
 
 	String purchaseOrder;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(nullable = true)
 	Date purchaseOrderdate;
 
@@ -91,11 +91,11 @@ public class InwardInventory extends ReusableFields implements Cloneable
 	{ @JoinColumn(name = "rejectentryid", referencedColumnName = "rejectentryid") })
 	Set<RejectInwardList> rejectInwardList = new HashSet<>();
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(nullable = true)
 	Date challanDate;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(nullable = true)
 	Date billDate;
 

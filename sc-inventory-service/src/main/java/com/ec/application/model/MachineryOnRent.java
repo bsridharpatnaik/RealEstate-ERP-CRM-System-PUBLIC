@@ -42,7 +42,7 @@ public class MachineryOnRent extends ReusableFields
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	Long morid;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(nullable = false)
 	@NonNull
 	Date date;
@@ -78,19 +78,19 @@ public class MachineryOnRent extends ReusableFields
 	MORRentModeEnum mode;
 
 	@JsonProperty("startDateTime")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
 	Date startDateTime;
 
 	@JsonProperty("endDateTime")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
 	Date endDateTime;
 
 	@JsonProperty("startDate")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date startDate;
 
 	@JsonProperty("endDate")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date endDate;
 
 	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

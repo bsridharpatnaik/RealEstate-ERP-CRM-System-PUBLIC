@@ -25,13 +25,13 @@ public class ReturnSingleNotification
     @CreationTimestamp
 	@Column(name = "created_at")
 	@JsonProperty("created")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm:ss")
 	private Date created;
 	
 	
 	@Column(name = "updated_at")
 	@JsonProperty("updated")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm:ss")
 	@UpdateTimestamp
 	private Date modified;
 
