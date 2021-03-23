@@ -14,7 +14,7 @@ import com.ec.crm.Model.DBFile;
 import com.ec.crm.Model.FileInformation;
 
 @Service
-public class FileHandlingSgervice 
+public class FileHandlingService 
 {
 	@Autowired
 	DBFileStorageService dbFileStorageService;
