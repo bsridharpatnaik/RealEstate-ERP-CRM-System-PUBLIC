@@ -109,6 +109,12 @@ public class ProjectPlanService
 		validatePayload(typeId, name.getName());
 		PropertyType pt = ptRepo.findById(typeId).get();
 		Set<PropertyName> names = pt.getPropertyNames();
+		for(PropertyName nam : names)
+		{
+			if(nam.getName().equals(name.getName()))
+				throw new Exception("Property with name - "+name.getName()+" already exists");
+		}
+			
 		names.add(new PropertyName(name.getName()));
 		pt.setPropertyNames(names);
 		return ptRepo.save(pt);
@@ -123,6 +129,23 @@ public class ProjectPlanService
 			throw new Exception("Name should be less than 10 characters");
 
 		PropertyName pn = pnRepo.findById(id).get();
+		List<PropertyType> ptList = ptRepo.getPTbyPNID(pn.getPropertyNameId());
+		
+		if(!pn.getName().equals(name.getName()))
+		{
+			for (PropertyType pt : ptList)
+			{
+				Set<PropertyName> pnList = pt.getPropertyNames();
+				for(PropertyName pn1:pnList)
+				{
+					if(pn1.getName().equals(name.getName()))
+					{
+						throw new Exception("Property Type already exists with name - " + name.getName());
+					}
+				}
+			}		
+		}
+			
 		pn.setName(name.getName());
 		return pnRepo.save(pn);
 	}
