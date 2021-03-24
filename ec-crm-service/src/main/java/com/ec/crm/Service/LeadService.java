@@ -432,8 +432,12 @@ public class LeadService
 	private void exitIfMobileNoExists(LeadCreateData payload) throws Exception
 	{
 		log.info("Invoked exitIfMobileNoExists");
-		if (lRepo.findCountByPMobileNo(payload.getPrimaryMobile()) > 0)
-			throw new Exception("Contact already exists by Primary Mobile Number.");
+		List<Lead> lList = lRepo.findLeadsByPMobileNo(payload.getPrimaryMobile());
+		if (lList.size() > 0)
+		{
+			throw new Exception("Contact already exists by Primary Mobile Number. Contact Name - "+lList.get(0).getCustomerName() +
+					". Assignee - "+userDetailsService.getUserFromId(lList.get(0).getAsigneeId()).getUsername());
+		}
 	}
 
 	private String validateRequiredFields(LeadCreateData payload)
