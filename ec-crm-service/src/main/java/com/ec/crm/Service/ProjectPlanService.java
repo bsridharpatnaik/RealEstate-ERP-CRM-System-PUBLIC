@@ -13,11 +13,13 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Data.PropertyTypeReturnDAO;
 import com.ec.crm.Data.StringNameDAO;
 import com.ec.crm.Model.PropertyName;
 import com.ec.crm.Model.PropertyType;
 import com.ec.crm.Repository.PropertyNameRepo;
 import com.ec.crm.Repository.PropertyTypeRepo;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 
 @Service
 @Transactional
@@ -67,7 +69,7 @@ public class ProjectPlanService
 		ptRepo.softDeleteById(id);
 	}
 
-	public List<PropertyType> getAllPropertyTypes()
+	public List<PropertyTypeReturnDAO> getAllPropertyTypes()
 	{
 
 		// return ptRepo.findAll();
@@ -83,18 +85,29 @@ public class ProjectPlanService
 				.collect(Collectors.toList()));
 	}
 
-	private List<PropertyType> populateFields(List<PropertyType> propertyTypes)
+	private List<PropertyTypeReturnDAO> populateFields(List<PropertyType> propertyTypes)
 	{
+		List<PropertyTypeReturnDAO> returnData = new ArrayList<PropertyTypeReturnDAO>();
 		for (PropertyType pt : propertyTypes)
 		{
-			/*
-			 * Set<PropertyName> pnList = pt.getPropertyNames(); for (PropertyName pn :
-			 * pnList) { Random rd = new Random(); pn.setIsBooked(rd.nextBoolean()); }
-			 */
-			pt.setBookedProperties(pt.getPropertyNames().stream().filter(c -> c.getIsBooked() == true).count());
-			pt.setTotalProperties((long) pt.getPropertyNames().size());
+			PropertyTypeReturnDAO obj = new PropertyTypeReturnDAO();
+			
+			List<PropertyName> propNamesList = ReusableMethods.convertSetToList(pt.getPropertyNames());
+			propNamesList.sort(
+					(o1,o2)->{
+			            if(o1.getName().length() > o2.getName().length())      return 1;
+			            else if(o1.getName().length() < o2.getName().length()) return -1;
+			            else return o1.getName().compareTo(o2.getName());
+			        }
+					);
+			obj.setBookedProperties(pt.getPropertyNames().stream().filter(c -> c.getIsBooked() == true).count());
+			obj.setTotalProperties((long) pt.getPropertyNames().size());
+			obj.setPropertyNames(propNamesList);
+			obj.setPropertyType(pt.getPropertyType());
+			obj.setPropertyTypeId(pt.getPropertyTypeId());
+			returnData.add(obj);
 		}
-		return propertyTypes;
+		return returnData;
 	}
 
 	public PropertyType getSingle(Long id) throws Exception

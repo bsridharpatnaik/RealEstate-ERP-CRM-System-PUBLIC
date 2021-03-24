@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ec.crm.Data.PropertyTypeReturnDAO;
 import com.ec.crm.Data.StringNameDAO;
 import com.ec.crm.Model.PropertyName;
 import com.ec.crm.Model.PropertyType;
@@ -29,7 +30,7 @@ public class ProjectPlanController
 	ProjectPlanService ppService;
 
 	@GetMapping("/type")
-	public List<PropertyType> getAllValues() throws Exception
+	public List<PropertyTypeReturnDAO> getAllValues() throws Exception
 	{
 		return ppService.getAllPropertyTypes();
 	}

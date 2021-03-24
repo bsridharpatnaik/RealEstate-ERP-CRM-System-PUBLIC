@@ -88,6 +88,18 @@ public final class ReusableMethods
 		return list;
 	}
 
+	public static <T> Set<T> convertListToSet(List<T> list)
+	{
+		// create an empty list
+		Set<T> set = new HashSet<>();
+
+		// push each element in the set into the list
+		for (T t : list)
+			set.add(t);
+
+		// return the list
+		return set;
+	}
 	public static Set<FileInformation> convertFilesListToSet(List<FileInformationDAO> fileInformationsDAO)
 	{
 		Set<FileInformation> fileSet = new HashSet<>();
