@@ -24,8 +24,16 @@ public class CustomerDocumentsService
 	{
 		CustomerDocument cd = new CustomerDocument();
 		validatePayload(payload);
+		exitIfDocumentNameExists(payload);
 		setFields(cd, payload);
 		return cdRepo.save(cd);
+	}
+
+	private void exitIfDocumentNameExists(CreateCustomerDocumentDTO payload) throws Exception 
+	{
+		int count = cdRepo.getCountByDocumentNameAndLead(payload.getDocumentName(), payload.getLeadId());
+		if(count>0)
+			throw new Exception("Document - "+payload.getDocumentName() +" already exists for customer");
 	}
 
 	public List<CustomerDocument> fetchDocumentsForLead(Long id) throws Exception
@@ -43,6 +51,8 @@ public class CustomerDocumentsService
 			throw new Exception("Customer Document not found with ID - " + id);
 		CustomerDocument cd = cdRepo.findById(id).get();
 		validatePayload(payload);
+		if(!cd.getDocumentName().equals(payload.getDocumentName()))
+			exitIfDocumentNameExists(payload);
 		setFields(cd, payload);
 		return cdRepo.save(cd);
 	}
