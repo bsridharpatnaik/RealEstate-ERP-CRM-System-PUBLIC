@@ -15,6 +15,9 @@ public interface CustomerDocumentRepo extends BaseRepository<CustomerDocument, L
 
 	@Query("select cd from CustomerDocument cd where cd.lead.leadId=:leadId order by cd.documentName")
 	List<CustomerDocument> findDocumentsForLead(@Param("leadId") Long leadId);
+	
+	@Query("select cd from CustomerDocument cd where cd.lead.leadId=:leadId and cd.documentName=:documentName order by cd.documentName")
+	List<CustomerDocument> findDocumentsForLeadAndName(@Param("leadId") Long leadId,@Param("documentName")String documentName);
 
 	@Query("select count(cd) from CustomerDocument cd where cd.lead.leadId=:leadId And cd.documentName=:document")
 	int getCountByDocumentNameAndLead(@Param("document") String document, @Param("leadId") Long leadId);
