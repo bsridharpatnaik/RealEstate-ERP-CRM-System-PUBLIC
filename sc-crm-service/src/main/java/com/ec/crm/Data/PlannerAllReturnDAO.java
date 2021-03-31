@@ -15,7 +15,7 @@ public class PlannerAllReturnDAO
 	PlannerWithTotalReturnDAO property_visit;
 	PlannerWithTotalReturnDAO deal_close;
 	PlannerWithTotalReturnDAO reminder;
-	PlannerWithTotalReturnDAO task;
+	PlannerWithTotalReturnDAO payment;
 	PlannerWithTotalReturnDAO message;
 	PlannerWithTotalReturnDAO email;
 	PlannerWithTotalReturnDAO deal_lost;

@@ -20,48 +20,54 @@ public class ReusableFields implements Serializable
 
 	public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
 
-	
-    @Column(name="is_deleted", columnDefinition="BOOLEAN DEFAULT true")
-    public boolean isDeleted;
+	@Column(name = "is_deleted", columnDefinition = "BOOLEAN DEFAULT true")
+	public boolean isDeleted;
 
-    @CreationTimestamp
+	@CreationTimestamp
 	@Column(name = "created_at")
 	@JsonProperty("created")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss ")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	private Date created;
-	
+
 	@Column(name = "updated_at")
 	@JsonProperty("updated")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
 	@UpdateTimestamp
 	private Date modified;
-	
-	public Date getCreated() {
+
+	public Date getCreated()
+	{
 		return created;
 	}
 
-	public void setCreated(Date created) {
+	public void setCreated(Date created)
+	{
 		this.created = created;
 	}
 
-	public Date getModified() {
+	public Date getModified()
+	{
 		return modified;
 	}
 
-	public void setModified(Date modified) {
+	public void setModified(Date modified)
+	{
 		this.modified = modified;
 	}
 
-	public boolean isDeleted() {
+	public boolean isDeleted()
+	{
 		return isDeleted;
 	}
 
-	public void setDeleted(boolean isDeleted) {
+	public void setDeleted(boolean isDeleted)
+	{
 		this.isDeleted = isDeleted;
 	}
 
-	public static String getSoftDeletedClause() {
+	public static String getSoftDeletedClause()
+	{
 		return SOFT_DELETED_CLAUSE;
 	}
-    
+
 }

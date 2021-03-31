@@ -9,9 +9,11 @@ import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Enums.SentimentEnum;
 import com.ec.crm.Model.Address_;
 import com.ec.crm.Model.Broker_;
+import com.ec.crm.Model.ClosedLeads_;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.Lead_;
 import com.ec.crm.Model.Source_;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
 
 public final class LeadSpecifications
@@ -75,13 +77,23 @@ public final class LeadSpecifications
 					specbldr.whereDirectFieldContains(Lead_.OCCUPATION, occupation));
 
 		if (broker != null && broker.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereChildFieldContains(Lead_.BROKER, Broker_.BROKER_NAME, broker));
-
+		{
+			if (ReusableMethods.isNumeric(broker.get(0)))
+				finalSpec = specbldr.specAndCondition(finalSpec,
+						specbldr.whereChildLongFieldContains(ClosedLeads_.BROKER, Broker_.BROKER_ID, broker));
+			else
+				finalSpec = specbldr.specAndCondition(finalSpec,
+						specbldr.whereChildFieldContains(ClosedLeads_.BROKER, Broker_.BROKER_NAME, broker));
+		}
 		if (source != null && source.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereChildFieldContains(Lead_.SOURCE, Source_.SOURCE_NAME, source));
-
+		{
+			if (ReusableMethods.isNumeric(source.get(0)))
+				finalSpec = specbldr.specAndCondition(finalSpec,
+						specbldr.whereChildLongFieldContains(ClosedLeads_.SOURCE, Source_.SOURCE_ID, source));
+			else
+				finalSpec = specbldr.specAndCondition(finalSpec,
+						specbldr.whereChildFieldContains(ClosedLeads_.SOURCE, Source_.SOURCE_NAME, source));
+		}
 		if (propertytype != null && propertytype.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereEnumFieldEquals(Lead_.PROPERTY_TYPE, propertytype, PropertyTypeEnum.class));

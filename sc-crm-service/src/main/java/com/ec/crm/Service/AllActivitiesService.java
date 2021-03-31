@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Data.LeadActivityDropdownData;
 import com.ec.crm.Data.PipelineAllReturnDAO;
 import com.ec.crm.Data.PipelineSingleReturnDTO;
 import com.ec.crm.Data.PipelineWithTotalReturnDAO;
@@ -24,6 +26,7 @@ import com.ec.crm.Data.PlannerAllReturnDAO;
 import com.ec.crm.Data.PlannerSingleReturnDAO;
 import com.ec.crm.Data.PlannerWithTotalReturnDAO;
 import com.ec.crm.Data.StagnatedEnum;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
@@ -57,12 +60,22 @@ public class AllActivitiesService
 	Logger log = LoggerFactory.getLogger(AllActivitiesService.class);
 
 	@Autowired
+	HttpServletRequest request;
+
+	@Autowired
 	LeadActivityService leadActivityService;
+
+	@Autowired
+	UtilService utilService;
 
 	public PlannerAllReturnDAO findFilteredDataForPlanner(FilterDataList leadFilterDataList, Pageable pageable)
 			throws Exception
 	{
 		log.info("Invoked - findFilteredData");
+
+		// check user. if not admin, apply default filters
+		leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
+
 		List<LeadActivity> activities = new ArrayList<LeadActivity>();
 
 		Specification<LeadActivity> spec = ActivitySpecifications.getSpecification(leadFilterDataList);
@@ -84,7 +97,7 @@ public class AllActivitiesService
 		activitiesList.setProperty_visit(fetchPlannerDataFromActivityList(activities, "Property_Visit"));
 		activitiesList.setDeal_close(fetchPlannerDataFromActivityList(activities, "Deal_Close"));
 		activitiesList.setReminder(fetchPlannerDataFromActivityList(activities, "Reminder"));
-		activitiesList.setTask(fetchPlannerDataFromActivityList(activities, "Task"));
+		activitiesList.setPayment(fetchPlannerDataFromActivityList(activities, "Payment"));
 		activitiesList.setMessage(fetchPlannerDataFromActivityList(activities, "Message"));
 		activitiesList.setEmail(fetchPlannerDataFromActivityList(activities, "Email"));
 		activitiesList.setDeal_lost(fetchPlannerDataFromActivityList(activities, "Deal_Lost"));
@@ -106,17 +119,33 @@ public class AllActivitiesService
 	private PlannerWithTotalReturnDAO transformToPlannerWithTotalReturnDAO(List<LeadActivity> filteredActivities)
 	{
 		log.info("Invoked transformToPlannerWithTotalReturnDAO");
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
 		PlannerWithTotalReturnDAO plannerWithTotalReturnDAO = new PlannerWithTotalReturnDAO();
 		List<PlannerSingleReturnDAO> activities = new ArrayList<PlannerSingleReturnDAO>();
 		for (LeadActivity leadActivity : filteredActivities)
+		{
+			String mobileNo = "";
+			if (currentUser.getId().equals(leadActivity.getLead().getAsigneeId())
+					|| currentUser.getRoles().contains("CRM-Manager") || currentUser.getRoles().contains("admin"))
+				mobileNo = leadActivity.getLead().getPrimaryMobile();
+			else
+				mobileNo = "******" + leadActivity.getLead().getPrimaryMobile().substring(7);
 			activities.add(new PlannerSingleReturnDAO(leadActivity.getLead().getLeadId(),
-					leadActivity.getLead().getCustomerName(), leadActivity.getLead().getPrimaryMobile(),
-					leadActivity.getIsOpen(), leadActivity.getActivityDateTime(),
-					leadActivity.getLead().getAsigneeId()));
-
+					leadActivity.getLead().getCustomerName(), mobileNo, leadActivity.getIsOpen(),
+					leadActivity.getActivityDateTime(), leadActivity.getLead().getAsigneeId(),
+					leadActivity.getLead().getStatus()));
+		}
 		plannerWithTotalReturnDAO.setActivities(activities);
 		plannerWithTotalReturnDAO.setTotalActivities(activities.size());
 		return plannerWithTotalReturnDAO;
+	}
+
+	public LeadActivityDropdownData getDropdownValues() throws Exception
+	{
+		LeadActivityDropdownData data = new LeadActivityDropdownData();
+		data.setDropdownData(populateDropdownService.fetchData("lead"));
+		data.setTypeAheadDataForGlobalSearch(leadService.fetchTypeAheadForLeadGlobalSearch());
+		return data;
 	}
 
 	public PipelineAllReturnDAO findFilteredDataForPipeline(FilterDataList leadFilterDataList, Pageable pageable)
@@ -125,6 +154,9 @@ public class AllActivitiesService
 		log.info("Invoked - findFilteredDataForPlanner");
 		SpecificationsBuilder<Lead> specbldr = new SpecificationsBuilder<Lead>();
 		List<Lead> leads = new ArrayList<Lead>();
+
+		// check user. if not admin, apply default filters
+		leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
 
 		Specification<Lead> spec = LeadSpecifications.getSpecification(leadFilterDataList);
 
@@ -215,7 +247,9 @@ public class AllActivitiesService
 	private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads,
 			HashMap<Long, LeadActivity> leadRecentActivityMapping) throws Exception
 	{
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
 		log.info("Invoked transformToPipelineWithTotalReturnDAO");
+
 		PipelineWithTotalReturnDAO PipelineWithTotalReturnDAO = new PipelineWithTotalReturnDAO();
 		List<PipelineSingleReturnDTO> pipelineSingleReturnDTOList = new ArrayList<PipelineSingleReturnDTO>();
 
@@ -224,7 +258,13 @@ public class AllActivitiesService
 			LeadActivity recentActivity = leadRecentActivityMapping.get(l.getLeadId());
 			PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
 			pipelineSingleReturnDTO.setLeadId(l.getLeadId());
-			pipelineSingleReturnDTO.setMobileNumber(l.getPrimaryMobile());
+
+			if (currentUser.getId().equals(l.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+					|| currentUser.getRoles().contains("admin"))
+				pipelineSingleReturnDTO.setMobileNumber((l.getPrimaryMobile()));
+			else
+				pipelineSingleReturnDTO.setMobileNumber("******" + l.getPrimaryMobile().substring(7));
+
 			pipelineSingleReturnDTO.setName(l.getCustomerName());
 			pipelineSingleReturnDTO.setSentiment(l.getSentiment());
 			pipelineSingleReturnDTO.setActivityDateTime(recentActivity.getActivityDateTime());
@@ -241,7 +281,6 @@ public class AllActivitiesService
 
 	private StagnatedEnum getStagnantStatus(Long noOfDay) throws Exception
 	{
-		log.info("Invoked getStagnantStatus");
 		StagnatedEnum stagnatedStatus = StagnatedEnum.NoColor;
 
 		if (noOfDay >= 10 && noOfDay < 20)

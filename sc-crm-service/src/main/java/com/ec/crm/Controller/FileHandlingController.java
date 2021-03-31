@@ -20,14 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ec.crm.Model.FileInformation;
-import com.ec.crm.Service.FileHandlingSgervice;
+import com.ec.crm.Service.FileHandlingService;
 
 @RestController
 @RequestMapping("/file")
 public class FileHandlingController 
 {
 	@Autowired
-	FileHandlingSgervice fileHandlingSgervice;
+	FileHandlingService fileHandlingSgervice;
 	
 	@PostMapping(value = "/upload")
 	@ResponseStatus(HttpStatus.ACCEPTED)

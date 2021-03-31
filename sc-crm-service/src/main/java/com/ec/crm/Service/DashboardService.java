@@ -25,6 +25,7 @@ import com.ec.crm.Model.StagnantStats;
 import com.ec.crm.Repository.ConvertionRatioRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.StagnantStatsRepo;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.SubClasses.SetActivitiesCreated;
 import com.ec.crm.SubClasses.SetDealClosed;
 import com.ec.crm.SubClasses.SetDealLost;
@@ -66,10 +67,10 @@ public class DashboardService
 		data = lRepo.getActivity(fromdate, nextDate);
 
 		log.info("Fetching Stats");
-
 		ExecutorService executors = Executors.newFixedThreadPool(8);
 		CyclicBarrier barrier = new CyclicBarrier(8);
 
+		// executors.
 		executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetPropertyVisit(barrier, dashboardPipelineReturnData, data, userIdNameMap));
@@ -92,7 +93,7 @@ public class DashboardService
 					|| dashboardPipelineReturnData.getTodaysActivities() == null
 					|| dashboardPipelineReturnData.getTotalPropertyVisit() == null
 					|| dashboardPipelineReturnData.getUpcomingActivities() == null)
-					&& (java.lang.Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 3))
+					&& (java.lang.Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30))
 			{
 				log.info("Waiting for flag to be true. Current difference in time - "
 						+ (returnDateTime.getTime() - new Date().getTime()) / 1000);
@@ -124,7 +125,7 @@ public class DashboardService
 		List<ConversionRatio> data = convertionRatioRepo.gettopperformer();
 		Map returndata = new HashMap<>();
 		Long id = data.get(0).getUserId();
-		Long propertyvisit = lRepo.getpropertyvisit(id);
+		Long propertyvisit = lRepo.getpropertyvisit(id, ReusableMethods.getStartOfMonth());
 		returndata.put("username", data.get(0).getAsigneeName());
 		returndata.put("leadsGenerated", data.get(0).getTotalcount());
 		returndata.put("propertyVisits", propertyvisit);

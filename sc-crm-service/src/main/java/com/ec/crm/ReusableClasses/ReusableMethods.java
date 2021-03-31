@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +31,29 @@ public final class ReusableMethods
 		Pattern p = Pattern.compile("^[0][1-9]\\d{9}$|^[1-9]\\d{9}$");
 		Matcher m = p.matcher(s);
 		return (m.find() && m.group().equals(s));
+	}
+
+	public static boolean isNumeric(String str)
+	{
+		try
+		{
+			Double.parseDouble(str);
+			return true;
+		} catch (NumberFormatException e)
+		{
+			return false;
+		}
+	}
+
+	public static Date setTimeTo11AM(Date date)
+	{
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		cal.set(Calendar.HOUR_OF_DAY, 11);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTime();
 	}
 
 	public static boolean isValidEmail(String email)
@@ -62,6 +88,18 @@ public final class ReusableMethods
 		return list;
 	}
 
+	public static <T> Set<T> convertListToSet(List<T> list)
+	{
+		// create an empty list
+		Set<T> set = new HashSet<>();
+
+		// push each element in the set into the list
+		for (T t : list)
+			set.add(t);
+
+		// return the list
+		return set;
+	}
 	public static Set<FileInformation> convertFilesListToSet(List<FileInformationDAO> fileInformationsDAO)
 	{
 		Set<FileInformation> fileSet = new HashSet<>();
@@ -107,6 +145,19 @@ public final class ReusableMethods
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public static List<String> getDefaultDocumentsForCustomer()
+	{
+		List<String> documents = new ArrayList<String>();
+		documents.add("Pan Card");
+		documents.add("Aadhar Card");
+		documents.add("ITR 1");
+		documents.add("ITR 2");
+		documents.add("ITR 3");
+		documents.add("Building Plan");
+		documents.add("Layout");
+		return documents;
 	}
 
 	public static String normalizePhoneNumber(String number) throws Exception
@@ -163,6 +214,12 @@ public final class ReusableMethods
 		LocalDateTime localDateTime = dateToLocalDateTime(date);
 		LocalDateTime endOfDay = localDateTime.with(LocalTime.MAX);
 		return localDateTimeToDate(endOfDay);
+	}
+
+	public static Date getStartOfMonth()
+	{
+		Date startOfMonth = Date.from(LocalDate.now().withDayOfMonth(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+		return startOfMonth;
 	}
 
 	private static LocalDateTime dateToLocalDateTime(Date date)

@@ -1,3 +1,4 @@
+
 package com.ec.crm.Data;
 
 import java.util.Date;
@@ -60,6 +61,7 @@ public class LeadDAO
 	LeadStatusEnum status;
 
 	Long stagnantDaysCount;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date lastActivityModifiedDate;
 }

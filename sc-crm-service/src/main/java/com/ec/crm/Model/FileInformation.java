@@ -7,26 +7,32 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
-import com.ec.crm.Data.AssigneeDAO;
-import com.ec.crm.ReusableClasses.ReusableFields;
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "file_information")
 @Audited
 @Data
-public class FileInformation 
+@AllArgsConstructor
+@NoArgsConstructor
+public class FileInformation
 {
-
 	@Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	Long id;
-	@Column(name="fileuuid")
+	@Column(name = "fileuuid")
 	String fileUUId;
-	@Column(name="filename")
+	@Column(name = "filename")
 	String fileName;
+
+	public FileInformation(String fileUUId, String fileName)
+	{
+		super();
+		this.fileUUId = fileUUId;
+		this.fileName = fileName;
+	}
 }

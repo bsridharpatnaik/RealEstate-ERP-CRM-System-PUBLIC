@@ -36,6 +36,8 @@ import com.ec.crm.Data.LeadDetailInfo;
 import com.ec.crm.Data.LeadInformationAllTabData;
 import com.ec.crm.Data.LeadInformationAllTabDataList;
 import com.ec.crm.Data.LeadListWithTypeAheadData;
+import com.ec.crm.Data.UserReturnData;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.LeadSpecifications;
@@ -147,8 +149,10 @@ public class LeadService
 		validatePayload(payload);
 		log.info("Payload Validated");
 		exitIfUpdateNotAllowed(leadForUpdate, payload);
+
 		if (!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
 			exitIfMobileNoExists(payload);
+
 		log.info("Setting lead fields from payload");
 		setLeadFields(leadForUpdate, payload, "update");
 		log.info("Saving new lead record to database");
@@ -157,6 +161,13 @@ public class LeadService
 
 	private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception
 	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		if (!leadForUpdate.getAsigneeId().equals(currentUser.getId()) && !currentUser.getRoles().contains("admin")
+				&& !currentUser.getRoles().contains("CRM-Manager"))
+		{
+			throw new Exception("User not allowed to edit lead. Please contact manager");
+		}
+
 		if (leadForUpdate.getStatus().equals(LeadStatusEnum.Deal_Lost)
 				|| leadForUpdate.getStatus().equals(LeadStatusEnum.Deal_Closed))
 		{
@@ -172,8 +183,48 @@ public class LeadService
 
 		if (!leadOpt.isPresent())
 			throw new Exception("Lead with ID -" + id + " Not Found");
-		LeadDAO leadDAO = leadToLeadDAOModelMapper.map(leadOpt.get(), LeadDAO.class);
-		return leadDAO;
+		LeadDAO l = new LeadDAO();
+		convertLeadToLeadDAO(leadOpt.get(), l);
+		return l;
+	}
+
+	public void convertLeadToLeadDAO(Lead lead, LeadDAO l)
+	{
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
+		l.setAddr_line1(lead.getAddress().getAddr_line1() == null ? "" : lead.getAddress().getAddr_line1());
+		l.setAddr_line2(lead.getAddress().getAddr_line2() == null ? "" : lead.getAddress().getAddr_line2());
+		l.setAsigneeId(lead.getAsigneeId());
+		l.setAssigneeUserId(lead.getAsigneeId());
+		l.setBroker(lead.getBroker() == null ? "" : lead.getBroker().getBrokerName());
+		l.setCity(lead.getAddress().getCity() == null ? "" : lead.getAddress().getCity());
+		l.setCreatorId(lead.getCreatorId() == null ? null : lead.getCreatorId());
+		l.setCustomerName(lead.getCustomerName());
+		l.setDateOfBirth(lead.getDateOfBirth() == null ? null : lead.getDateOfBirth());
+		l.setEmailId(lead.getEmailId() == null ? "" : lead.getEmailId());
+		l.setLastActivityModifiedDate(
+				lead.getLastActivityModifiedDate() == null ? null : lead.getLastActivityModifiedDate());
+		l.setLeadId(lead.getLeadId());
+		l.setOccupation(lead.getOccupation() == null ? "" : lead.getOccupation());
+		l.setPincode(lead.getAddress().getPincode() == "" ? "" : lead.getAddress().getPincode());
+		if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+				|| currentUser.getRoles().contains("admin"))
+			l.setPrimaryMobile((lead.getPrimaryMobile()));
+		else
+			l.setPrimaryMobile("******" + lead.getPrimaryMobile().substring(7));
+		l.setPropertyType(lead.getPropertyType() == null ? null : lead.getPropertyType());
+		l.setPurpose(lead.getPurpose() == null ? "" : lead.getPurpose());
+		if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+				|| currentUser.getRoles().contains("admin"))
+			l.setSecondaryMobile(lead.getSecondaryMobile());
+		else
+		{
+			if (lead.getSecondaryMobile() != null)
+				l.setSecondaryMobile("******" + lead.getSecondaryMobile().substring(7));
+		}
+		l.setSentiment(lead.getSentiment() == null ? null : lead.getSentiment());
+		l.setSource(lead.getSource() == null ? "" : lead.getSource().getSourceName());
+		l.setStagnantDaysCount(lead.getStagnantDaysCount() == null ? 0 : lead.getStagnantDaysCount());
+		l.setStatus(lead.getStatus());
 	}
 
 	private void formatMobileNo(LeadCreateData payload) throws Exception
@@ -250,10 +301,15 @@ public class LeadService
 
 	List<String> fetchTypeAheadForLeadGlobalSearch()
 	{
+
 		log.info("Invoked fetchTypeAheadForLeadGlobalSearch");
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
 		List<String> typeAhead = new ArrayList<String>();
 		typeAhead.addAll(lRepo.getLeadNames());
-		typeAhead.addAll(lRepo.getLeadMobileNos());
+		if (currentUser.getRoles().contains("CRM-Manager") || currentUser.getRoles().contains("admin"))
+			typeAhead.addAll(lRepo.getLeadMobileNos());
+		else
+			typeAhead.addAll(lRepo.getAssignedLeadMobileNos(currentUser.getId()));
 		return typeAhead;
 	}
 
@@ -268,7 +324,7 @@ public class LeadService
 		return leadDetails;
 	}
 
-	private LeadInformationAllTabDataList transformDataForAllTab(AllNotesForLeadDAO allNotes,
+	public LeadInformationAllTabDataList transformDataForAllTab(AllNotesForLeadDAO allNotes,
 			AllActivitesForLeadDAO allActivities)
 	{
 		LeadInformationAllTabDataList list = new LeadInformationAllTabDataList();
@@ -306,9 +362,6 @@ public class LeadService
 			liad.setType("pastActivity");
 			liaDataList.add(liad);
 		}
-		System.out.println("Before Sorting");
-		for (LeadInformationAllTabData laid : liaDataList)
-			System.out.println(laid.getDateTime());
 		return liaDataList.stream().sorted(Comparator.comparing(LeadInformationAllTabData::getDateTime).reversed())
 				.collect(Collectors.toList());
 	}
@@ -379,8 +432,12 @@ public class LeadService
 	private void exitIfMobileNoExists(LeadCreateData payload) throws Exception
 	{
 		log.info("Invoked exitIfMobileNoExists");
-		if (lRepo.findCountByPMobileNo(payload.getPrimaryMobile()) > 0)
-			throw new Exception("Contact already exists by Primary Mobile Number.");
+		List<Lead> lList = lRepo.findLeadsByPMobileNo(payload.getPrimaryMobile());
+		if (lList.size() > 0)
+		{
+			throw new Exception("Contact already exists by Primary Mobile Number. Contact Name - "+lList.get(0).getCustomerName() +
+					". Assignee - "+userDetailsService.getUserFromId(lList.get(0).getAsigneeId()).getUsername());
+		}
 	}
 
 	private String validateRequiredFields(LeadCreateData payload)
@@ -394,5 +451,20 @@ public class LeadService
 			message = message == "" ? "Customer Name" : message + ", Customer Name";
 
 		return message;
+	}
+
+	public List<ActivityTypeEnum> getAllowedActivities(Long id)
+	{
+		List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
+		allowedActivities.add(ActivityTypeEnum.Call);
+		allowedActivities.add(ActivityTypeEnum.Meeting);
+		allowedActivities.add(ActivityTypeEnum.Property_Visit);
+		// allowedActivities.add(ActivityTypeEnum.Task);
+		allowedActivities.add(ActivityTypeEnum.Reminder);
+		allowedActivities.add(ActivityTypeEnum.Message);
+		allowedActivities.add(ActivityTypeEnum.Email);
+		allowedActivities.add(ActivityTypeEnum.Deal_Close);
+		allowedActivities.add(ActivityTypeEnum.Deal_Lost);
+		return allowedActivities;
 	}
 }

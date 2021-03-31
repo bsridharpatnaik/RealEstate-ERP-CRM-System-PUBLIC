@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,8 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.crm.Data.LeadActivityClosingComment;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadActivityDropdownData;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.RescheduleActivityData;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.LeadActivity;
@@ -56,6 +60,9 @@ public class LeadActivityController
 	@Autowired
 	NoteService noteService;
 
+	@Autowired
+	HttpServletRequest request;
+
 	@GetMapping
 	public Page<LeadActivity> returnAllLeadActivity(Pageable pageable)
 	{
@@ -66,6 +73,12 @@ public class LeadActivityController
 	public LeadActivity findLeadActivityByID(@PathVariable long id) throws Exception
 	{
 		return laService.getSingleLeadActivity(id);
+	}
+
+	@GetMapping("/allowedactivitytype/{id}")
+	public List<ActivityTypeEnum> getValidActivityType(@PathVariable long id) throws Exception
+	{
+		return laService.getAllowedActiviType(id);
 	}
 
 	@PostMapping("/create")
@@ -86,7 +99,7 @@ public class LeadActivityController
 			throw new Exception("Please enter closing comments");
 
 		laService.deleteLeadActivity(id, payload.getClosingComment(), userDetailsService.getCurrentUser().getId(),
-				false);
+				false, "non-system");
 	}
 
 	@PutMapping("reschedule/{id}")
@@ -109,7 +122,17 @@ public class LeadActivityController
 			@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
 			throws Exception
 	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		request.setAttribute("currentUser", currentUser);
 		return laService.getLeadActivityPage(leadFilterDataList, pageable);
+	}
+
+	@GetMapping("/getleadactivitypage/dropdown")
+	public LeadActivityDropdownData getDropDownValues() throws Exception
+	{
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		request.setAttribute("currentUser", currentUser);
+		return laService.getDropdownForLead();
 	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

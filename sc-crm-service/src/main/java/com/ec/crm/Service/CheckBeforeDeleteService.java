@@ -3,6 +3,7 @@ package com.ec.crm.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ec.crm.Repository.DealStructureRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.NoteRepo;
@@ -19,6 +20,9 @@ public class CheckBeforeDeleteService
 
 	@Autowired
 	NoteRepo noteRepo;
+
+	@Autowired
+	DealStructureRepo dsRepo;
 
 	public boolean isBrokerUsed(Long brokerId)
 	{
@@ -44,4 +48,19 @@ public class CheckBeforeDeleteService
 			return false;
 	}
 
+	public boolean isPropertyTypeUsed(Long propertyTypeID)
+	{
+		if (dsRepo.findPropertyTypeUsageCount(propertyTypeID) > 0)
+			return true;
+		else
+			return false;
+	}
+
+	public boolean isPropertyNameUsed(Long propertyNameID)
+	{
+		if (dsRepo.countByPropertyName(propertyNameID) > 0)
+			return true;
+		else
+			return false;
+	}
 }

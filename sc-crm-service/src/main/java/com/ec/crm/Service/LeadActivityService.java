@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -19,21 +18,29 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.crm.Data.AllActivitesForLeadDAO;
 import com.ec.crm.Data.FileInformationDAO;
 import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Data.LeadActivityDropdownData;
 import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
 import com.ec.crm.Data.LeadPageData;
 import com.ec.crm.Data.NoteCreateData;
 import com.ec.crm.Data.RescheduleActivityData;
+import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Mapper.LeadActivityMapper;
+import com.ec.crm.Model.ClosedLeads;
+import com.ec.crm.Model.CustomerDocument;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
+import com.ec.crm.Model.PaymentSchedule;
+import com.ec.crm.Repository.ClosedLeadsRepo;
+import com.ec.crm.Repository.CustomerDocumentRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
@@ -42,11 +49,17 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-@Transactional
+@Transactional(rollbackFor = Exception.class)
 public class LeadActivityService
 {
 	@Autowired
 	NoteService noteService;
+
+	@Autowired
+	private AsyncService asyncService;
+
+	@Autowired
+	DeletePostSalesRecordsService dpsService;
 
 	@Autowired
 	LeadActivityRepo laRepo;
@@ -70,9 +83,21 @@ public class LeadActivityService
 	ModelMapper leadToLeadActivityModelMapper;
 
 	@Autowired
+	ClosedLeadsRepo clRepo;
+
+	@Autowired
+	CustomerDocumentRepo cdRepo;
+
+	@Autowired
 	LeadActivityMapper laMapper;
 	@Value("${common.serverurl}")
 	private String reqUrl;
+
+	@Autowired
+	UtilService utilService;
+
+	@Autowired
+	PaymentScheduleService psService;
 
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
@@ -96,7 +121,12 @@ public class LeadActivityService
 
 	}
 
-	@Transactional
+	public void softDeleteLeadActivity(Long id)
+	{
+		laRepo.softDeleteById(id);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
 	public void revertLeadActivity(Long id) throws Exception
 	{
 
@@ -125,6 +155,7 @@ public class LeadActivityService
 			} else if (la.getActivityType().equals(ActivityTypeEnum.Deal_Close))
 			{
 				addNoteBeforeRevert(la);
+				deletePostSalesRecordsBeforeConversion(la.getLead().getLeadId());
 				la.getLead().setStatus(fetchPreviousStatusFromHistory(la.getLead()));
 				laRepo.save(la);
 				laRepo.softDelete(la);
@@ -187,6 +218,7 @@ public class LeadActivityService
 	{
 
 		log.info("Invoked ExecuteBusinessLogicWhileCreation");
+		Boolean isDealClosed = false;
 		LeadStatusEnum status = leadActivity.getLead().getStatus();
 		Long currentUserId = userDetailsService.getCurrentUser().getId();
 		if (status.equals(LeadStatusEnum.New_Lead))
@@ -207,6 +239,7 @@ public class LeadActivityService
 			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost))
 			{
 				leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+
 				leadActivity.setClosedBy(currentUserId);
 				leadActivity.setClosingComment("Deal Lost");
 				closeAllOpenActivitiesForLead(leadActivity.getLead());
@@ -227,13 +260,50 @@ public class LeadActivityService
 				leadActivity.setClosedBy(currentUserId);
 				leadActivity.setClosingComment("Deal Closed");
 				closeAllOpenActivitiesForLead(leadActivity.getLead());
+				isDealClosed = true;
 			}
 		}
 
 		if (status.equals(LeadStatusEnum.Deal_Closed) || status.equals(LeadStatusEnum.Deal_Lost))
+		{
+			if (status.equals(LeadStatusEnum.Deal_Closed))
+				deletePostSalesRecordsBeforeConversion(leadActivity.getLead().getLeadId());
 			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
 				leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.getLead()));
+
+		}
 		laRepo.save(leadActivity);
+		if (isDealClosed)
+			createDefaultDocumentsForClosedLead(leadActivity.getLead());
+	}
+
+	private void createDefaultDocumentsForClosedLead(Lead lead)
+	{
+		try
+		{
+			Optional<ClosedLeads> clOpt = clRepo.findById(lead.getLeadId());
+			if (clOpt.isPresent())
+			{
+				List<String> documents = ReusableMethods.getDefaultDocumentsForCustomer();
+				for (String document : documents)
+				{
+					int cdListCount = cdRepo.getCountByDocumentNameAndLead(document, clOpt.get().getLeadId());
+					if (cdListCount == 0)
+					{
+						CustomerDocument cd = new CustomerDocument();
+						cd.setDocumentName(document);
+						cd.setFileInformation(null);
+						cd.setLead(clOpt.get());
+						cd.setReceivedStatus(false);
+						cdRepo.save(cd);
+					}
+				}
+			}
+		} catch (Exception e)
+		{
+			// ignore exception
+		}
+
 	}
 
 	@Transactional
@@ -363,6 +433,10 @@ public class LeadActivityService
 
 		Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
 
+		if (payload.getActivityType().equals(ActivityTypeEnum.Payment))
+			throw new Exception(
+					"Activity of type Payment cannot be generated from UI. It will be auto-created on adding new payment schedule");
+
 		if (!leadOpt.isPresent())
 			throw new Exception("Lead not found by lead ID -" + payload.getLeadId());
 		else
@@ -391,8 +465,9 @@ public class LeadActivityService
 			throw new Exception("LeadActivity ID not found");
 	}
 
-	@Transactional
-	public void deleteLeadActivity(Long id, String closingComment, Long closedBy, Boolean isReschedule) throws Exception
+	@Transactional(rollbackFor = Exception.class)
+	public void deleteLeadActivity(Long id, String closingComment, Long closedBy, Boolean isReschedule, String caller)
+			throws Exception
 	{
 		log.info("Invoked deleteLeadActivity");
 		Optional<LeadActivity> latype = laRepo.findById(id);
@@ -400,6 +475,10 @@ public class LeadActivityService
 			throw new Exception("LeadActivity ID not found");
 
 		LeadActivity leadActivity = latype.get();
+
+		if (!caller.equals("system"))
+			if (leadActivity.getActivityType().equals(ActivityTypeEnum.Payment) && isReschedule == false)
+				throw new Exception("Cannot close activity of type Payment. It can only be rescheduled.");
 
 		if (leadActivity.getIsOpen() == false)
 			throw new Exception("Activity alread closed with comment - " + leadActivity.getClosingComment());
@@ -423,7 +502,7 @@ public class LeadActivityService
 		// Delete old activity
 		log.info("Deleting old Activity");
 		deleteLeadActivity(leadActivity.getLeadActivityId(), rescheduleActivityData.getClosingComment(), currentUserId,
-				true);
+				true, "non-system");
 		log.info("Deleted old Activity - success");
 
 		// Create new Activity
@@ -431,6 +510,11 @@ public class LeadActivityService
 		LeadActivity newActivity = new LeadActivity();
 		setFieldsForReschedule(rescheduleActivityData, newActivity, leadActivity);
 		laRepo.save(newActivity);
+		if (newActivity.getActivityType().equals(ActivityTypeEnum.Payment))
+		{
+			psService.updateActivityForPaymentSchedule(leadActivity.getLeadActivityId(),
+					newActivity.getLeadActivityId());
+		}
 	}
 
 	private LeadActivity validateReschedulePayloadAndReturnLeadActivity(RescheduleActivityData rescheduleActivityData,
@@ -569,10 +653,21 @@ public class LeadActivityService
 	 * fetchTypeAheadForLeadGlobalSearch()); return
 	 * leadActivityListWithTypeAheadData; }
 	 */
+	public LeadActivityDropdownData getDropdownForLead() throws Exception
+	{
+		LeadActivityDropdownData data = new LeadActivityDropdownData();
+		data.setDropdownData(populateDropdownService.fetchData("lead"));
+		data.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
+		return data;
+	}
+
 	public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList leadFilterDataList, Pageable pageable)
 			throws Exception
 	{
 		log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
+
+		// check user. if not admin, apply default filters
+		leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
 		LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
 
 		log.info("Fetching filteration based on filter data received");
@@ -580,15 +675,37 @@ public class LeadActivityService
 
 		Page<LeadActivity> leadActivityList = spec != null ? laRepo.findAll(spec, pageable) : laRepo.findAll(pageable);
 
-		Page<LeadPageData> pagedata = leadActivityList
-				.map(objectEntity -> leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
+		/*
+		 * Page<LeadPageData> pagedata = leadActivityList .map(objectEntity ->
+		 * leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
+		 */
 
+		Page<LeadPageData> pagedata = leadActivityList.map(this::mapLeadActivityPage);
 		leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
 		log.info("Setting dropdown data");
 		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
 		log.info("Setting typeahead data");
 		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
 		return leadActivityListWithTypeAheadData;
+	}
+
+	private LeadPageData mapLeadActivityPage(LeadActivity la)
+	{
+		UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
+		LeadPageData l = new LeadPageData();
+		l.setActivityDateTime(la.getActivityDateTime());
+		l.setActivityType(la.getActivityType());
+		l.setAssigneeId(la.getLead().getAsigneeId());
+		l.setIsOpen(la.getIsOpen());
+		l.setLeadId(la.getLead().getLeadId());
+		l.setLeadStatus(la.getLead().getStatus());
+		l.setName(la.getLead().getCustomerName());
+		if (currentUser.getId().equals(la.getLead().getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+				|| currentUser.getRoles().contains("admin"))
+			l.setMobileNumber(la.getLead().getPrimaryMobile());
+		else
+			l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
+		return l;
 	}
 
 	public LeadActivity getRecentActivityByLead(Lead lead)
@@ -743,5 +860,71 @@ public class LeadActivityService
 				return true;
 		}
 		return false;
+	}
+
+	public List<ActivityTypeEnum> getAllowedActiviType(long id) throws Exception
+	{
+		Optional<Lead> leadOpt = lRepo.findById(id);
+		if (!leadOpt.isPresent())
+		{
+			log.error("Lead with ID not found");
+			throw new Exception("Lead with ID not found");
+		} else
+		{
+			if (leadOpt.get().getStatus().equals(LeadStatusEnum.Deal_Closed))
+			{
+				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
+				allowedActivities.add(ActivityTypeEnum.Call);
+				allowedActivities.add(ActivityTypeEnum.Meeting);
+				allowedActivities.add(ActivityTypeEnum.Reminder);
+				allowedActivities.add(ActivityTypeEnum.Email);
+				allowedActivities.add(ActivityTypeEnum.Message);
+				return allowedActivities;
+			} else
+			{
+				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
+				allowedActivities.add(ActivityTypeEnum.Call);
+				allowedActivities.add(ActivityTypeEnum.Meeting);
+				allowedActivities.add(ActivityTypeEnum.Reminder);
+				allowedActivities.add(ActivityTypeEnum.Message);
+				allowedActivities.add(ActivityTypeEnum.Deal_Close);
+				allowedActivities.add(ActivityTypeEnum.Deal_Lost);
+				allowedActivities.add(ActivityTypeEnum.Property_Visit);
+				allowedActivities.add(ActivityTypeEnum.Email);
+				return allowedActivities;
+			}
+		}
+	}
+
+	public LeadActivity createPaymentActivity(PaymentSchedule ps)
+	{
+		LeadActivity la = new LeadActivity();
+		Date paymentDate = ps.getPaymentDate();
+		paymentDate = ReusableMethods.setTimeTo11AM(paymentDate);
+		la.setActivityDateTime(paymentDate);
+		la.setActivityType(ActivityTypeEnum.Payment);
+		la.setCreatorId((long) 404);
+		la.setDescription("Payment Reminder - Scheduled Payment. Payment Amount - " + ps.getAmount());
+		la.setIsOpen(true);
+		la.setLead(lRepo.findById(ps.getDs().getLead().getLeadId()).get());
+		la.setRescheduled(false);
+		la.setTitle("Payment Reminder - Scheduled Payment");
+		laRepo.save(la);
+		return la;
+	}
+
+	public void deletePostSalesRecordsBeforeConversion(Long customerId)
+	{
+		asyncService.run(() ->
+		{
+			try
+			{
+				dpsService.deleteAllForCustomer(customerId);
+			} catch (Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 	}
 }
