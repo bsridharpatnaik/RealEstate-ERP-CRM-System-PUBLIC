@@ -17,7 +17,6 @@ import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Service.LeadActivityService;
 import com.ec.crm.Service.UserDetailsService;
-import com.ec.crm.Service.UserService;
 
 @SpringBootApplication
 public class CrmApplication extends SpringBootServletInitializer
@@ -27,9 +26,6 @@ public class CrmApplication extends SpringBootServletInitializer
 
 	@Autowired
 	UserDetailsService udService;
-
-	@Autowired
-	UserService userService;
 
 	public static void main(String[] args)
 	{
@@ -113,8 +109,7 @@ public class CrmApplication extends SpringBootServletInitializer
 	}
 
 	@Bean("userIdNameMap")
-	public Map<Long, String> initializeUserIdNameMap()
-	{
-		return userService.fetchUserListAsMap();
+	public Map<Long, String> initializeUserIdNameMap() throws Exception {
+		return udService.fetchUserListAsMap();
 	}
 }

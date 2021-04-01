@@ -1,8 +1,6 @@
 package com.ec.crm.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -15,9 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.ec.crm.Data.UserReturnData;
-import com.ec.crm.Model.Role;
-import com.ec.crm.Model.User;
-import com.ec.crm.Repository.UserRepo;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -35,9 +30,6 @@ public class UserDetailsService
 
 	@Value("${common.serverurl}")
 	private String reqUrl;
-
-	@Autowired
-	UserRepo uRepo;
 
 	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
@@ -103,31 +95,32 @@ public class UserDetailsService
 
 	public List<UserReturnData> getUserList() throws Exception
 	{
-		log.info("Fetching userlist from database");
-		List<UserReturnData> userReturnDataList = new ArrayList<UserReturnData>();
-		List<User> userList = uRepo.findAll(Sort.by(Sort.Direction.ASC, "userName"));
-		for (User user : userList)
+		log.info("Making API Call to fetch userid from name");
+		try
 		{
-			if (user.isStatus() == true)
-			{
-				UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-						fetchRolesFromSet(user.getRoles()));
-				if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
-					userReturnDataList.add(userReturnData);
-			}
+			log.info("Fetching userlist from database");
+			UserReturnData[] userDetails = webClientBuilder.build().get().uri(reqUrl + "user/list")
+					//.header("Authorization", request.getHeader("Authorization"))
+					.retrieve()
+					.bodyToMono(UserReturnData[].class).block();
+			if (userDetails != null)
+				return Arrays.asList(userDetails.clone());
+			else
+				throw new Exception("Unable to fetch user details. Please log out and try again");
+		} catch (Exception e)
+		{
+			log.info("Error API Call to fetch user from ID " + e);
+			throw new Exception("Unable to fetch user details. Please log out and try again");
 		}
-		return userReturnDataList;
-
 	}
 
-	private List<String> fetchRolesFromSet(Set<Role> roleSet)
-	{
-		List<String> roles = new ArrayList<String>();
-		for (Role role : roleSet)
+	public Map<Long, String> fetchUserListAsMap() throws Exception {
+		List<UserReturnData> userList = getUserList();
+		Map<Long, String> userIdMap = new HashMap<>();
+		for(UserReturnData ud :userList)
 		{
-			roles.add(role.getName());
+			userIdMap.put(ud.getId(),ud.getUsername());
 		}
-		return roles;
+		return userIdMap;
 	}
-
 }

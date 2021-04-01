@@ -1,7 +1,7 @@
 package com.ec.common.Configuration;
 
-import java.util.Arrays;
-
+import com.ec.common.JWTUtils.JwtAuthenticationEntryPoint;
+import com.ec.common.JWTUtils.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,8 +22,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.ec.common.JWTUtils.JwtAuthenticationEntryPoint;
-import com.ec.common.JWTUtils.JwtRequestFilter;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -49,7 +48,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter
 				// dont authenticate this particular request
 				.authorizeRequests()
 				.antMatchers("/notification/send", "/eureka", "**/eureka", "api/ec/login", "**/ec/login", "/ec/login",
-						"api/ec/user/me", "**/ec/user/me", "/ec/user/me", "/ec/partnerlogin", "/**.html", "/styles/**",
+						"api/ec/user/me", "**/ec/user/me", "/ec/user/me","**/user/list", "/user/list", "/ec/partnerlogin", "/**.html", "/styles/**",
 						"/*.jpg", "/assets/pages/scripts/**")
 				.permitAll()
 				// all other requests need to be authenticated
