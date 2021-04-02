@@ -25,6 +25,7 @@ public class TenantService
 		if(profile.contains("ec-"))
 		{
 			TenantInformation t1 = new TenantInformation("Evergreen City", "egcity");
+			tenants.add(t1);
 		}
 		else if(profile.contains("sc-")) {
 			TenantInformation t1 = new TenantInformation("SUNCITY NX", "suncitynx");
