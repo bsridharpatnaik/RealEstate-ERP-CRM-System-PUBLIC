@@ -22,6 +22,7 @@ public class TenantService
 	{
 		List<TenantInformation> tenants = new ArrayList<TenantInformation>();
 
+		System.out.println("Profile - " + profile);
 		if(profile.contains("ec-"))
 		{
 			TenantInformation t1 = new TenantInformation("Evergreen City", "egcity");
