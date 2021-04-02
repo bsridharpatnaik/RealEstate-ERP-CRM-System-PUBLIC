@@ -72,7 +72,7 @@ SELECT
   
   
  -- BOQ STATUS -------
- CREATE OR REPLACE view boq_status AS
+CREATE OR REPLACE view boq_status AS
 SELECT 
 	b.*,
 	CASE WHEN SUM(ioe.quantity) IS NULL THEN 0 ELSE SUM(ioe.quantity) END as totalConsumedQuantity,
