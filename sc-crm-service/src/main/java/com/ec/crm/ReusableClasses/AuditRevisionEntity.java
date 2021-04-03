@@ -16,7 +16,7 @@ import lombok.Setter;
 
 @Entity
 @RevisionEntity(AuditRevisionListener.class)
-@Table(name = "REVINFO", schema = "audit")
+@Table(name = "REVINFO")
 @AttributeOverrides({
         @AttributeOverride(name = "timestamp", column = @Column(name = "REVTSTMP")),
         @AttributeOverride(name = "id", column = @Column(name = "REV"))})
