@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,6 +12,7 @@ import com.ec.crm.Model.DBFile;
 import com.ec.crm.Repository.DBFileRepository;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class DBFileStorageService {
 
     @Autowired

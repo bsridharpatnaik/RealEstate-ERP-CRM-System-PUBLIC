@@ -7,8 +7,10 @@ import com.ec.crm.Repository.DealStructureRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.Repository.NoteRepo;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class CheckBeforeDeleteService
 {
 

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import com.ec.crm.Data.PropertyNameEditDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -133,39 +134,45 @@ public class ProjectPlanService
 		return ptRepo.save(pt);
 	}
 
-	public PropertyName aEditBuilding(Long id, StringNameDAO name) throws Exception
+	public PropertyName aEditBuilding(Long id, PropertyNameEditDTO payload) throws Exception
 	{
 		if (!pnRepo.existsById(id))
 			throw new Exception("Property Name dosen't exists with ID - " + id);
 
-		if (name.getName().length() > 10)
+		if (payload.getName().length() > 10)
 			throw new Exception("Name should be less than 10 characters");
 
 		PropertyName pn = pnRepo.findById(id).get();
 		List<PropertyType> ptList = ptRepo.getPTbyPNID(pn.getPropertyNameId());
 		
-		if(!pn.getName().equals(name.getName()))
+		if(!pn.getName().equals(payload.getName()))
 		{
 			for (PropertyType pt : ptList)
 			{
 				Set<PropertyName> pnList = pt.getPropertyNames();
 				for(PropertyName pn1:pnList)
 				{
-					if(pn1.getName().equals(name.getName()))
+					if(pn1.getName().equals(payload.getName()))
 					{
-						throw new Exception("Property Type already exists with name - " + name.getName());
+						throw new Exception("Property Type already exists with name - " + payload.getName());
 					}
 				}
 			}		
 		}
-			
-		pn.setName(name.getName());
+		setFields(pn,payload);
 		return pnRepo.save(pn);
+	}
+
+	private void setFields(PropertyName pn, PropertyNameEditDTO payload) {
+		pn.setName(payload.getName()==null?null:payload.getName());
+		pn.setPhase(payload.getPhase()==null?null:payload.getPhase());
+		pn.setPlotSize(payload.getPlotSize()==null?null:payload.getPlotSize());
+		pn.setSuperBuiltupArea(payload.getSuperBuiltUpArea()==null?null:payload.getSuperBuiltUpArea());
+		pn.setUnitDetail(payload.getUnitDetail()==null?null:payload.getUnitDetail());
 	}
 
 	public void deleteBuilding(Long id) throws Exception
 	{
-
 		List<PropertyType> ptList = ptRepo.getPTbyPNID(id);
 		for (PropertyType pt : ptList)
 		{

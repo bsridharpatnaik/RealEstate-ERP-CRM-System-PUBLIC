@@ -15,8 +15,11 @@ import com.ec.crm.Repository.AddressRepo;
 import lombok.extern.slf4j.Slf4j;
 
 import com.ec.crm.Model.Address;
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
 @Slf4j
+@Transactional(rollbackFor = Exception.class)
 public class AddressService {
 	@Autowired
 	AddressRepo aRepo;

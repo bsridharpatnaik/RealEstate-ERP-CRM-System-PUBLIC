@@ -20,8 +20,10 @@ import com.ec.crm.Repository.NoteRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
-@Slf4j
+@Transactional(rollbackFor = Exception.class)
 public class NoteService 
 {
 	@Autowired
@@ -36,13 +38,13 @@ public class NoteService
 	Logger log = LoggerFactory.getLogger(NoteService.class);
 	
 	Long currentUserID;
-	
+
 	public Note createNote(@Valid NoteCreateData payload) throws Exception 
 	{
 		log.info("Invoked createNote");
 		log.info("Validating Payload");
 		validatePayload(payload);
-		log.info("Checing if lead exist with leadId");
+		log.info("Checking if lead exist with leadId");
 		log.info("Getting current user");
 		currentUserID = userDetailsService.getCurrentUser().getId();
 		Note note=new Note();

@@ -10,8 +10,10 @@ import com.ec.crm.Model.CustomerDocument;
 import com.ec.crm.Model.FileInformation;
 import com.ec.crm.Repository.ClosedLeadsRepo;
 import com.ec.crm.Repository.CustomerDocumentRepo;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class CustomerDocumentsService
 {
 	@Autowired

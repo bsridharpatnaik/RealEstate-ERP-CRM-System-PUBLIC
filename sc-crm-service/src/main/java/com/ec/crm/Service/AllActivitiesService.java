@@ -40,9 +40,10 @@ import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Slf4j
+@Transactional(rollbackFor = Exception.class)
 public class AllActivitiesService
 {
 	@Autowired

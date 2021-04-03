@@ -22,8 +22,10 @@ import com.ec.crm.Filters.ClosedLeadsSpecification;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.ClosedLeads;
 import com.ec.crm.Repository.ClosedLeadsRepo;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class ClosedLeadService
 {
 

@@ -20,10 +20,8 @@ import com.ec.crm.ReusableClasses.ReusableFields;
 @Audited
 public class PropertyName extends ReusableFields
 {
-	public PropertyName()
-	{
+	public PropertyName() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -38,6 +36,11 @@ public class PropertyName extends ReusableFields
 	@NotAudited
 	@Formula("(select case when count(*)>0 then true else false end from   customer_deal_structure cds where cds.property_name_id=property_name_id and cds.is_deleted=0)")
 	Boolean isBooked;
+
+	String unitDetail;
+	String phase;
+	String plotSize;
+	String superBuiltupArea;
 
 	public Boolean getIsBooked()
 	{
@@ -79,4 +82,47 @@ public class PropertyName extends ReusableFields
 		this.name = name;
 	}
 
+	public static long getSerialVersionUID() {
+		return serialVersionUID;
+	}
+
+	public Boolean getBooked() {
+		return isBooked;
+	}
+
+	public void setBooked(Boolean booked) {
+		isBooked = booked;
+	}
+
+	public String getUnitDetail() {
+		return unitDetail;
+	}
+
+	public void setUnitDetail(String unitDetail) {
+		this.unitDetail = unitDetail;
+	}
+
+	public String getPhase() {
+		return phase;
+	}
+
+	public void setPhase(String phase) {
+		this.phase = phase;
+	}
+
+	public String getPlotSize() {
+		return plotSize;
+	}
+
+	public void setPlotSize(String plotSize) {
+		this.plotSize = plotSize;
+	}
+
+	public String getSuperBuiltupArea() {
+		return superBuiltupArea;
+	}
+
+	public void setSuperBuiltupArea(String superBuiltupArea) {
+		this.superBuiltupArea = superBuiltupArea;
+	}
 }

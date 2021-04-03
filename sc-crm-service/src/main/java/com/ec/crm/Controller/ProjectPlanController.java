@@ -2,6 +2,7 @@ package com.ec.crm.Controller;
 
 import java.util.List;
 
+import com.ec.crm.Data.PropertyNameEditDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,7 +58,7 @@ public class ProjectPlanController
 
 	@PutMapping("property/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public PropertyName ceditBuilding(@PathVariable Long id, @RequestBody StringNameDAO payload) throws Exception
+	public PropertyName ceditBuilding(@PathVariable Long id, @RequestBody PropertyNameEditDTO payload) throws Exception
 	{
 		return ppService.aEditBuilding(id, payload);
 	}

@@ -36,9 +36,10 @@ import com.ec.crm.SubClasses.SetTodaysActivities;
 import com.ec.crm.SubClasses.SetUpcomingActivities;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Slf4j
+@Transactional(rollbackFor = Exception.class)
 public class DashboardService
 {
 

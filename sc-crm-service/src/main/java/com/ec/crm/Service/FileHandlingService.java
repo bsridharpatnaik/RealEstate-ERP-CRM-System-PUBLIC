@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +15,7 @@ import com.ec.crm.Model.DBFile;
 import com.ec.crm.Model.FileInformation;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class FileHandlingService 
 {
 	@Autowired
