@@ -77,19 +77,19 @@ public class ClosedLeads extends ReusableFields implements Serializable
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date dateOfBirth;
 
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "broker_id", nullable = true)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
 	Broker broker;
 
-	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "address_id", nullable = true)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
 	Address address;
 
-	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "source_id", nullable = true)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
@@ -104,13 +104,13 @@ public class ClosedLeads extends ReusableFields implements Serializable
 	SentimentEnum sentiment;
 
 	@NotAudited
-	@Formula("(Select max(la.updated_at) from lead_activity la Where la.lead_id=lead_id)")
+	@Formula("(Select max(la.updated_at) from leadActivity la Where la.lead_id=lead_id)")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date lastActivityModifiedDate;
 
 	@NotAudited
 	@Formula("(SELECT CASE WHEN l.status in ('Deal_closed','Deal_Lost') "
-			+ "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM lead_activity la "
+			+ "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM leadActivity la "
 			+ "INNER JOIN customer_lead l on l.lead_id=la.lead_id WHERE la.lead_id=lead_id AND la.is_deleted=0)")
 	Long stagnantDaysCount;
 

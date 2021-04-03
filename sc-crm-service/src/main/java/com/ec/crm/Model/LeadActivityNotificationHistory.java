@@ -28,7 +28,7 @@ public class LeadActivityNotificationHistory
 	@Column(name = "id", updatable = false, nullable = false)
 	Long entryId;
 
-	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "lead_id", nullable = false)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })

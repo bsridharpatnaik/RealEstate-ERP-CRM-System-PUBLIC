@@ -63,7 +63,7 @@ public class LeadActivity extends ReusableFields implements Serializable
 	@Column(name = "description")
 	String description;
 
-	@ElementCollection
+	@ElementCollection(fetch=FetchType.EAGER)
 	@CollectionTable(name = "lead_activity_tags", joinColumns = @JoinColumn(name = "leadActivityId"))
 	@Column(name = "tags")
 	List<String> tags;
@@ -95,7 +95,7 @@ public class LeadActivity extends ReusableFields implements Serializable
 	ActivityTypeEnum activityType;
 
 	@Formula("(SELECT CASE WHEN count(la.leadactivity_id)>0 THEN true ELSE false END from customer_lead cl "
-			+ "INNER  JOIN lead_activity la on la.lead_id=cl.lead_id LEFT OUTER JOIN lead_activity la2 on "
+			+ "INNER  JOIN leadActivity la on la.lead_id=cl.lead_id LEFT OUTER JOIN leadActivity la2 on "
 			+ "	(cl.lead_id=la2.lead_id AND (la.created_at < la2.created_at OR "
 			+ " (la.created_at = la2.created_at AND la.leadactivity_id<la2.leadactivity_id))) "
 			+ "WHERE la2.leadactivity_id IS NULL AND la.leadactivity_id=leadactivity_id AND cl.is_deleted=false"
