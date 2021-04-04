@@ -4,6 +4,7 @@ import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
 
+import com.ec.application.multitenant.TenantAwareTaskDecorator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
@@ -58,6 +59,8 @@ public class EcApplication  extends SpringBootServletInitializer{
 		threadPoolTaskExecutor.setMaxPoolSize(3);
 		threadPoolTaskExecutor.setQueueCapacity(600);
 		threadPoolTaskExecutor.afterPropertiesSet();
+		threadPoolTaskExecutor.setTaskDecorator(new TenantAwareTaskDecorator());
+		threadPoolTaskExecutor.initialize();
 		return threadPoolTaskExecutor;
 	}
 }
