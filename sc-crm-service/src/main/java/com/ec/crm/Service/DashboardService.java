@@ -125,13 +125,15 @@ public class DashboardService
 	{ // TODO Auto-generated method stub
 		List<ConversionRatio> data = convertionRatioRepo.gettopperformer();
 		Map returndata = new HashMap<>();
-		Long id = data.get(0).getUserId();
-		Long propertyvisit = lRepo.getpropertyvisit(id, ReusableMethods.getStartOfMonth());
-		returndata.put("username", data.get(0).getAsigneeName());
-		returndata.put("leadsGenerated", data.get(0).getTotalcount());
-		returndata.put("propertyVisits", propertyvisit);
-		returndata.put("dealsClosed", data.get(0).getConvertedcount());
-		returndata.put("inNegotiation", 2);
+		if(data.size()>0) {
+			Long id = data.get(0).getUserId();
+			Long propertyvisit = lRepo.getpropertyvisit(id, ReusableMethods.getStartOfMonth());
+			returndata.put("username", data.get(0).getAsigneeName());
+			returndata.put("leadsGenerated", data.get(0).getTotalcount());
+			returndata.put("propertyVisits", propertyvisit);
+			returndata.put("dealsClosed", data.get(0).getConvertedcount());
+			returndata.put("inNegotiation", 2);
+		}
 		return returndata;
 	}
 

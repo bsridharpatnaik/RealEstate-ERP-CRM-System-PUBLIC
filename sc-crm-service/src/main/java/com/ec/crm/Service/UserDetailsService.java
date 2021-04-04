@@ -4,6 +4,10 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.ec.crm.Model.Role;
+import com.ec.crm.Model.User;
+import com.ec.crm.Repository.UserRepo;
+import com.ec.crm.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,17 +35,63 @@ public class UserDetailsService
 	@Value("${common.serverurl}")
 	private String reqUrl;
 
+	@Value("${spring.profiles.active}")
+	private String profile;
+
+	@Autowired
+	UserRepo uRepo;
+
 	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
+
+	private List<String> fetchRolesFromSet(Set<Role> roleSet) {
+		List<String> roles = new ArrayList<String>();
+		for (Role role : roleSet)
+			roles.add(role.getName());
+		return roles;
+	}
+	public List<UserReturnData> getUserList() throws Exception
+	{
+		log.info("Making API Call to fetch userid from name");
+		try
+		{
+			log.info("Fetching userlist from database");
+			String dbName = "";
+			List<UserReturnData> userDetails = new ArrayList<UserReturnData>();
+			if(profile.contains("ec-"))
+				dbName = "egcity";
+			else if (profile.contains("sc-"))
+				dbName = "common";
+			ThreadLocalStorage.setTenantName(dbName);
+			List<User> userList =uRepo.findAll();
+			for(User user:userList) {
+				if (user.isStatus() == true)
+				{
+					UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
+							fetchRolesFromSet(user.getRoles()));
+					if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
+						userDetails.add(userReturnData);
+				}
+			}
+			ThreadLocalStorage.setTenantName(null);
+			if (userDetails != null)
+				return userDetails;
+			else
+				throw new Exception("Unable to fetch user details. Please log out and try again");
+		} catch (Exception e)
+		{
+			log.info("Error API Call to fetch user from ID " + e);
+			throw new Exception("Unable to fetch user details. Please log out and try again");
+		}
+	}
 
 	public UserReturnData getCurrentUser() throws Exception
 	{
 		log.info("Making API Call to fetch current user");
 		try
 		{
-
-			UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
-					.header("Authorization", request.getHeader("Authorization")).retrieve()
-					.bodyToMono(UserReturnData.class).block();
+				UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
+						.header("Authorization", request.getHeader("Authorization")).retrieve()
+						.bodyToMono(UserReturnData.class).block();
 			if (userDetails != null)
 				return userDetails;
 			else
@@ -93,26 +143,7 @@ public class UserDetailsService
 		}
 	}
 
-	public List<UserReturnData> getUserList() throws Exception
-	{
-		log.info("Making API Call to fetch userid from name");
-		try
-		{
-			log.info("Fetching userlist from database");
-			UserReturnData[] userDetails = webClientBuilder.build().get().uri(reqUrl + "user/list")
-					//.header("Authorization", request.getHeader("Authorization"))
-					.retrieve()
-					.bodyToMono(UserReturnData[].class).block();
-			if (userDetails != null)
-				return Arrays.asList(userDetails.clone());
-			else
-				throw new Exception("Unable to fetch user details. Please log out and try again");
-		} catch (Exception e)
-		{
-			log.info("Error API Call to fetch user from ID " + e);
-			throw new Exception("Unable to fetch user details. Please log out and try again");
-		}
-	}
+
 
 	public Map<Long, String> fetchUserListAsMap() throws Exception {
 		List<UserReturnData> userList = getUserList();

@@ -3,6 +3,7 @@ package com.ec.application.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.ec.application.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +25,11 @@ public class AsyncServiceInventory
 
 	Logger log = LoggerFactory.getLogger(AsyncServiceInventory.class);
 
-	public void backFillClosingStock() throws Exception
+	public void backFillClosingStock(String dbName) throws Exception
 	{
 		try
 		{
+			ThreadLocalStorage.setTenantName(dbName);
 			log.info("Starting backfilling closing stock");
 			List<AllInventoryAndInwardOutwardListProjection> list = allRepo.findClosingStockNotMatched();
 
@@ -44,6 +46,7 @@ public class AsyncServiceInventory
 
 				}
 			}
+			ThreadLocalStorage.setTenantName(null);
 			log.info("Completed backfilling closing stock");
 		} catch (Exception e)
 		{

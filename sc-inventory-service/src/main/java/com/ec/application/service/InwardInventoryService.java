@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.ec.application.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,7 +130,7 @@ public class InwardInventoryService
 		{
 			try
 			{
-				asyncServiceInventory.backFillClosingStock();
+				asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName());
 			} catch (Exception e)
 			{
 				// TODO Auto-generated catch block
