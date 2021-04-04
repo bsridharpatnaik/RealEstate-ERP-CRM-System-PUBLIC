@@ -64,7 +64,7 @@ public class DealStructure extends ReusableFields implements Serializable
 	PropertyName propertyName;
 
 	@Column(name = "booking_date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date bookingDate;
 
 	@Column(name = "mode")

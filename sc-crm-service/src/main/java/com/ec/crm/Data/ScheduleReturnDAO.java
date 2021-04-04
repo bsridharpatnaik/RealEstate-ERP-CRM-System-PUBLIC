@@ -10,7 +10,7 @@ import lombok.Data;
 public class ScheduleReturnDAO
 {
 	Long scheduleId;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date paymentDate;
 	String mode;
 	Double amount;

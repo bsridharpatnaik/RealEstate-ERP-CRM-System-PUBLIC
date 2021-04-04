@@ -19,7 +19,7 @@ public class DealStructureDAO
 
 	Long propertytypeId;
 	Long PropertyNameId;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date bookingDate;
 	String mode;
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)

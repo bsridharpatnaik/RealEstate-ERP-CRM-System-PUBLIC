@@ -113,7 +113,6 @@ public class LeadController
 	@ResponseStatus(HttpStatus.CREATED)
 	public Lead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception
 	{
-
 		return leadService.createLead(payload);
 	}
 

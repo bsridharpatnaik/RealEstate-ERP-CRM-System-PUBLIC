@@ -44,7 +44,7 @@ public class PaymentSchedule extends ReusableFields implements Serializable
 	Long scheduleId;
 
 	@Column(name = "payment_date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date paymentDate;
 
 	@Column(name = "mode")

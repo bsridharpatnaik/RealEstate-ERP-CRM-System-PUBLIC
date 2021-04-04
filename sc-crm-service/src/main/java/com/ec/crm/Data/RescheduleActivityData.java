@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 public class RescheduleActivityData 
 {
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
 	Date rescheduleDateTime;
 	
 	String closingComment;

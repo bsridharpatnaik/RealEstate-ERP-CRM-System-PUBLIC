@@ -74,7 +74,7 @@ public class ClosedLeads extends ReusableFields implements Serializable
 	String occupation;
 
 	@Column(name = "dateofbirth")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date dateOfBirth;
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -105,7 +105,7 @@ public class ClosedLeads extends ReusableFields implements Serializable
 
 	@NotAudited
 	@Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id)")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date lastActivityModifiedDate;
 
 	@NotAudited

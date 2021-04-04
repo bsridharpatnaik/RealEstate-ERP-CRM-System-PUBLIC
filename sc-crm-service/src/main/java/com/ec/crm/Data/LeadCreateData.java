@@ -30,7 +30,7 @@ public class LeadCreateData
 	String purpose;
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String occupation;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	private Date dateOfBirth;
 	Long brokerId;
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)

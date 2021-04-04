@@ -43,8 +43,8 @@ public class SetActivitiesCreated implements Runnable
 		{
 			log.info("Fetching stats for SetActivitiesCreated");
 			dashboardPipelineReturnData.setActivitiesCreated(
-					new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() != 405).count(),
-							data.stream().filter(c -> c.getCreatorId() != 405).collect(Collectors.groupingBy(c ->
+					new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() != 404).count(),
+							data.stream().filter(c -> c.getCreatorId() != 404).collect(Collectors.groupingBy(c ->
 							{
 								try
 								{

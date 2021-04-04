@@ -50,7 +50,7 @@ public class LeadActivity extends ReusableFields implements Serializable
 
 	@Column(name = "activity_date_time", nullable = false)
 	@NonNull
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
 	Date activityDateTime;
 
 	@Column(name = "title")

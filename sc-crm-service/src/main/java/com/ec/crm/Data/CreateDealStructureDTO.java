@@ -22,7 +22,7 @@ public class CreateDealStructureDTO
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String phase;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date bookingDate;
 
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)

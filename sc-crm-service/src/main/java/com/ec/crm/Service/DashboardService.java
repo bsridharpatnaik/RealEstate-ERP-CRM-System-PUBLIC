@@ -73,27 +73,27 @@ public class DashboardService
 
 		// executors.
 		executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		/*executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetPropertyVisit(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetDealLost(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
 		executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));*/
 
 		boolean flag = false;
 		Date returnDateTime = new Date();
 		while (flag == false)
 		{
 			if ((dashboardPipelineReturnData.getActivitiesCreated() == null
-					|| dashboardPipelineReturnData.getActivitiesCreated() == null
+					/*|| dashboardPipelineReturnData.getActivitiesCreated() == null
 					|| dashboardPipelineReturnData.getDealClosed() == null
 					|| dashboardPipelineReturnData.getDealLost() == null
 					|| dashboardPipelineReturnData.getLeadGenerated() == null
 					|| dashboardPipelineReturnData.getPendingActivities() == null
 					|| dashboardPipelineReturnData.getTodaysActivities() == null
 					|| dashboardPipelineReturnData.getTotalPropertyVisit() == null
-					|| dashboardPipelineReturnData.getUpcomingActivities() == null)
+					|| dashboardPipelineReturnData.getUpcomingActivities() == null*/)
 					&& (java.lang.Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30))
 			{
 				log.info("Waiting for flag to be true. Current difference in time - "

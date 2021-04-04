@@ -18,7 +18,7 @@ public class PipelineSingleReturnDTO
 	StagnatedEnum stagnantStatus;
 	SentimentEnum sentiment;
 	Boolean isOpen;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
 	Date activityDateTime;
 	@JsonSerialize(using = ToUsernameSerializer.class)
 	Long assignee;

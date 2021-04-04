@@ -16,7 +16,7 @@ public class PlannerSingleReturnDAO
 	String name;
 	String mobileNumber;
 	boolean activityStatus;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd hh:mm:ss a")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss a")
 	Date activityDateTime;
 	@JsonSerialize(using = ToUsernameSerializer.class)
 	Long assignee;

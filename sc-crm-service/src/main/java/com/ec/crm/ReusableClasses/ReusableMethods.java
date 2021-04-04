@@ -197,7 +197,7 @@ public final class ReusableMethods
 
 	public static String convertUTCToIST(Date date)
 	{
-		DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+		DateFormat sdf = new SimpleDateFormat("dd-MM-yyyy'T'HH:mm:ss.SSSXXX");
 		sdf.setTimeZone(TimeZone.getTimeZone("IST"));
 		return sdf.format(date);
 	}

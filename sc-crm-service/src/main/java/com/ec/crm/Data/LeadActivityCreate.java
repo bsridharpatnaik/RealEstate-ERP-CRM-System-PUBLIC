@@ -26,7 +26,7 @@ public class LeadActivityCreate
 	@Enumerated(EnumType.STRING)
 	ActivityTypeEnum activityType;
 	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
 	@NotNull
 	Date activityDateTime;
 	

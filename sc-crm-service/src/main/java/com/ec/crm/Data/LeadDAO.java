@@ -32,7 +32,7 @@ public class LeadDAO
 
 	String occupation;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date dateOfBirth;
 
 	String broker;
@@ -62,6 +62,6 @@ public class LeadDAO
 
 	Long stagnantDaysCount;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date lastActivityModifiedDate;
 }

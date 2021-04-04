@@ -15,7 +15,7 @@ public class PaymentScheduleListingDTO
 
 	Long scheduleId;
 	Long customerId;
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date paymentDate;
 	String customerName;
 	String mode;

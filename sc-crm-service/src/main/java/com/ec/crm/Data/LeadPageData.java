@@ -28,12 +28,9 @@ public class LeadPageData
 	
 	String mobileNumber;
 	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
 	Date activityDateTime;
-	
-	//@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="yyyy-MM-dd HH:mm:ss ")
-	//Date created;
-	
+
 	@Column(nullable=false)
 	@Enumerated(EnumType.STRING)
 	ActivityTypeEnum activityType;
