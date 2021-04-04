@@ -1,8 +1,11 @@
 package com.ec.common.Controller;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
+import com.ec.common.Data.JwtResponse;
+import com.ec.common.Data.LoginData;
+import com.ec.common.Data.UserSignInData;
+import com.ec.common.JWTUtils.JWTTokenUtils;
+import com.ec.common.Repository.UserRepo;
+import com.ec.common.Service.JwtUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,16 +14,13 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.common.Data.JwtResponse;
-import com.ec.common.Data.LoginData;
-import com.ec.common.Data.UserSignInData;
-import com.ec.common.JWTUtils.JWTTokenUtils;
-import com.ec.common.Repository.UserRepo;
-import com.ec.common.Service.JwtUserDetailsService;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @RestController
 public class LoginController
@@ -39,6 +39,11 @@ public class LoginController
 	@Autowired
 	private JwtUserDetailsService userDetailsService;
 
+	@GetMapping("/ec//login")
+	public String getMessage()
+	{
+		return "Login";
+	}
 	@PostMapping(value = "/ec/login", produces =
 	{ "application/json", "text/json" })
 	public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception

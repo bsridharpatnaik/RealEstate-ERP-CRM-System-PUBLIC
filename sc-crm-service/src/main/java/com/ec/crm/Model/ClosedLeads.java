@@ -104,13 +104,13 @@ public class ClosedLeads extends ReusableFields implements Serializable
 	SentimentEnum sentiment;
 
 	@NotAudited
-	@Formula("(Select max(la.updated_at) from leadActivity la Where la.lead_id=lead_id)")
+	@Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id)")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date lastActivityModifiedDate;
 
 	@NotAudited
 	@Formula("(SELECT CASE WHEN l.status in ('Deal_closed','Deal_Lost') "
-			+ "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM leadActivity la "
+			+ "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM LeadActivity la "
 			+ "INNER JOIN customer_lead l on l.lead_id=la.lead_id WHERE la.lead_id=lead_id AND la.is_deleted=0)")
 	Long stagnantDaysCount;
 

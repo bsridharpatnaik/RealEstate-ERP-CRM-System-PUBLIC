@@ -105,13 +105,13 @@ public class Lead extends ReusableFields implements Serializable
 	SentimentEnum sentiment;
 
 	@NotAudited
-	@Formula("(Select max(la.updated_at) from leadActivity la Where la.lead_id=lead_id)")
+	@Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id)")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date lastActivityModifiedDate;
 
 	@NotAudited
 	@Formula("(SELECT CASE WHEN l.status in ('Deal_closed','Deal_Lost') "
-			+ "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM leadActivity la "
+			+ "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM LeadActivity la "
 			+ "INNER JOIN customer_lead l on l.lead_id=la.lead_id WHERE la.lead_id=lead_id AND la.is_deleted=0)")
 	Long stagnantDaysCount;
 
@@ -129,42 +129,42 @@ public class Lead extends ReusableFields implements Serializable
 	LeadStatusEnum status;
 
 	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join leadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
+			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
 			+ "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
 			+ "order by la.activity_date_time desc limit  1)")
 	@NotAudited
 	Long pastOpenId;
 
 	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join leadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
+			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
 			+ "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
 			+ "order by la.activity_date_time desc limit  1)")
 	@NotAudited
 	Long pastClosedId;
 
 	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join leadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
+			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
 			+ "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
 			+ "order by la.activity_date_time desc limit  1)")
 	@NotAudited
 	Long todayClosedId;
 
 	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join leadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
+			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
 			+ "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
 			+ "order by la.activity_date_time desc limit  1)")
 	@NotAudited
 	Long todayOpenId;
 
 	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join leadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
+			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
 			+ "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
 			+ "order by la.activity_date_time asc limit  1)")
 	@NotAudited
 	Long upcomingOpenId;
 
 	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join leadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
+			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
 			+ "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
 			+ "order by la.activity_date_time desc limit  1)")
 	@NotAudited
