@@ -21,9 +21,14 @@ public class AuditRevisionListener implements RevisionListener
 	@Autowired
 	UserDetailsService userDetailsService;
 
+	@Autowired
+	ApplicationContext ctx;
+
 	@Override
 	public void newRevision(Object revisionEntity)
 	{
+		UserDetailsService userDetailsService = ctx.getBean(UserDetailsService.class);
+
 		AuditRevisionEntity audit = (AuditRevisionEntity) revisionEntity;
 		UserReturnData userReturnData;
 		try

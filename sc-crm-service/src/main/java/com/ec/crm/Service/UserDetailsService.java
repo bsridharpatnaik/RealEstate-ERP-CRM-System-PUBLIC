@@ -4,9 +4,8 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.ec.crm.Model.Role;
-import com.ec.crm.Model.User;
-import com.ec.crm.Repository.UserRepo;
+import com.ec.crm.Model.UserDetails;
+import com.ec.crm.Repository.UserDetailsRepo;
 import com.ec.crm.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,16 +38,10 @@ public class UserDetailsService
 	private String profile;
 
 	@Autowired
-	UserRepo uRepo;
+	UserDetailsRepo udRepo;
 
 	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
-	private List<String> fetchRolesFromSet(Set<Role> roleSet) {
-		List<String> roles = new ArrayList<String>();
-		for (Role role : roleSet)
-			roles.add(role.getName());
-		return roles;
-	}
 	public List<UserReturnData> getUserList() throws Exception
 	{
 		log.info("Making API Call to fetch userid from name");
@@ -62,15 +55,12 @@ public class UserDetailsService
 			else if (profile.contains("sc-"))
 				dbName = "common";
 			ThreadLocalStorage.setTenantName(dbName);
-			List<User> userList =uRepo.findAll();
-			for(User user:userList) {
-				if (user.isStatus() == true)
-				{
-					UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-							fetchRolesFromSet(user.getRoles()));
-					if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
+			List<UserDetails> userList =udRepo.findAll();
+			for(UserDetails user:userList) {
+				UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
+							Arrays.asList(user.getRoles().split(",").clone()));
+				if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
 						userDetails.add(userReturnData);
-				}
 			}
 			ThreadLocalStorage.setTenantName(null);
 			if (userDetails != null)

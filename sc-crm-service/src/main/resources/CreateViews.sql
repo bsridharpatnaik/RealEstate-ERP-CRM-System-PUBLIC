@@ -1,5 +1,5 @@
 use businesspark; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
-set @dbname='common';
+set @dbname='egcity';
 
 -- Fetch lead with latest activity by date --
 
@@ -12,6 +12,15 @@ LEFT OUTER JOIN LeadActivity la2 on
 WHERE la2.leadactivity_id IS NULL
 AND cl.is_deleted=false;
 
+-- User Information
+set @dbname='egcity';
+set @q=concat('CREATE OR REPLACE view userdetails AS SELECT su.user_id,su.user_name,group_concat(ur.role_name SEPARATOR \',\') as roles FROM ',@dbname,'.security_user su
+INNER JOIN ',@dbname,'.user_role ur on ur.user_id = su.user_id
+INNER JOIN ',@dbname,'.role r on r.name = ur.role_name WHERE su.status=true
+GROUP BY su.user_id,su.user_name;');
+PREPARE stmt FROM @q;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 --       FETCH Stagnant Leads --
 set @q=concat('CREATE OR REPLACE VIEW stangnantdetails AS
