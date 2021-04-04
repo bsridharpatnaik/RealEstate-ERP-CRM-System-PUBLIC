@@ -19,9 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 public class AuditRevisionListener implements RevisionListener
 {
 	@Autowired
-	UserDetailsService userDetailsService;
-
-	@Autowired
 	ApplicationContext ctx;
 
 	@Override
@@ -40,7 +37,6 @@ public class AuditRevisionListener implements RevisionListener
 			audit.setUserName(userName);
 		} catch (Exception e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

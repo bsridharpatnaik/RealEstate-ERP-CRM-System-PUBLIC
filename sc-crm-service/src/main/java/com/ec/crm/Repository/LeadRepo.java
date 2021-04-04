@@ -3,6 +3,7 @@ package com.ec.crm.Repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -10,10 +11,16 @@ import org.springframework.stereotype.Repository;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.ReusableClasses.BaseRepository;
 
+import javax.persistence.LockModeType;
+
 @Repository
 public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationExecutor<Lead>
 {
-	@Query(value = "SELECT m from Lead m where primaryMobile=:mobileNo")
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	Lead save(Lead lead);
+
+ 	@Query(value = "SELECT m from Lead m where primaryMobile=:mobileNo")
 	List<Lead> findLeadsByPMobileNo(@Param("mobileNo") String mobileNo);
 
 	@Query(value = "SELECT count(*) from Lead m where secondaryMobile=:mobileNo")
