@@ -59,7 +59,7 @@ public class UserDetailsService
 			for(UserDetails user:userList) {
 				UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
 							Arrays.asList(user.getRoles().split(",").clone()));
-				if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
+				//if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
 						userDetails.add(userReturnData);
 			}
 			ThreadLocalStorage.setTenantName(null);

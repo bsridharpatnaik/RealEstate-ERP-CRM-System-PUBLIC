@@ -106,7 +106,7 @@ public class SpecificationsBuilder<T>
 	public Specification<T> whereDirectFieldDateGreaterThanOrEqual(String key, List<String> startDates)
 			throws ParseException
 	{
-		Date startDate = new SimpleDateFormat("yyyy/MM/dd").parse(startDates.get(0));
+		Date startDate = new SimpleDateFormat("dd-MM-yyyy").parse(startDates.get(0));
 		Specification<T> finalSpec = null;
 		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 				.greaterThanOrEqualTo(root.get(key), ReusableMethods.atStartOfDay(startDate));
@@ -116,7 +116,7 @@ public class SpecificationsBuilder<T>
 
 	public Specification<T> whereDirectFieldDateLessThanOrEqual(String key, List<String> endDates) throws ParseException
 	{
-		Date endDate = new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
+		Date endDate = new SimpleDateFormat("dd-MM-yyyy").parse(endDates.get(0));
 		Specification<T> finalSpec = null;
 		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 				.lessThanOrEqualTo(root.get(key), ReusableMethods.atEndOfDay(endDate));
@@ -222,7 +222,7 @@ public class SpecificationsBuilder<T>
 	public Specification<T> whereChildFieldDateGreaterThan(String childTable, String childFiledName,
 			List<String> startDates) throws ParseException
 	{
-		Date startDate = new SimpleDateFormat("yyyy/MM/dd").parse(startDates.get(0));
+		Date startDate = new SimpleDateFormat("dd-MM-yyyy").parse(startDates.get(0));
 		Specification<T> finalSpec = null;
 		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 				.greaterThanOrEqualTo(root.get(childTable).get(childFiledName),
@@ -234,7 +234,7 @@ public class SpecificationsBuilder<T>
 	public Specification<T> whereChildFieldDateLessThan(String childTable, String childFiledName, List<String> endDates)
 			throws ParseException
 	{
-		Date endDate = new SimpleDateFormat("yyyy/MM/dd").parse(endDates.get(0));
+		Date endDate = new SimpleDateFormat("dd-MM-yyyy").parse(endDates.get(0));
 		Specification<T> finalSpec = null;
 		Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
 				.lessThanOrEqualTo(root.get(childTable).get(childFiledName), ReusableMethods.atEndOfDay(endDate));

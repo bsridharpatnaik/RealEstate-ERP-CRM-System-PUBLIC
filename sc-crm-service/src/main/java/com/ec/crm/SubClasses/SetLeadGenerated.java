@@ -1,11 +1,14 @@
 package com.ec.crm.SubClasses;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
+import com.ec.crm.Data.MapForDashboardStatsDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,18 @@ public class SetLeadGenerated implements Runnable
 	{
 
 		log.info("Fetching stats for Lead Generated");
+		/*MapForPipelineAndActivities obj = new MapForPipelineAndActivities();
+		Long total;
+		ArrayList<MapForDashboardStatsDAO> detailed;
+		HashMap<Long, Integer> idCountMapping = new HashMap<Long, int>();
+		for(LeadActivity la : data)
+		{
+			if(idCountMapping.containsKey(la.getLead().getAsigneeId()))
+			{
+				Map.Entry<idCountMapping.get(la.getLead().getAsigneeId())
+			}
+
+		}*/
 		dashboardPipelineReturnData.setLeadGenerated(
 				new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
 						data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->

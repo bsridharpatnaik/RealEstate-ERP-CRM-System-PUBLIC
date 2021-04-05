@@ -391,7 +391,7 @@ public class StockService
 		log.info("Sending email for stock information");
 		emailHelper.sendEmailForMorningStockNottification(dataForInsertList);
 		log.info("saving stock information to DB");
-		stockHistoryService.insertLatestStockHistory(dataForInsertList);
+		//stockHistoryService.insertLatestStockHistory(dataForInsertList);
 	}
 
 	public void sendStockValidationEmail() throws Exception
