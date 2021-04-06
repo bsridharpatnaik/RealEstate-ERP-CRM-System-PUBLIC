@@ -137,7 +137,7 @@ public class ProjectPlanService
 	public PropertyName aEditBuilding(Long id, PropertyNameEditDTO payload) throws Exception
 	{
 		if (!pnRepo.existsById(id))
-			throw new Exception("Property Name dosen't exists with ID - " + id);
+			throw new Exception("Property Name doesn't exists with ID - " + id);
 
 		if (payload.getName().length() > 10)
 			throw new Exception("Name should be less than 10 characters");
@@ -168,7 +168,7 @@ public class ProjectPlanService
 		pn.setPhase(payload.getPhase()==null?null:payload.getPhase());
 		pn.setPlotSize(payload.getPlotSize()==null?null:payload.getPlotSize());
 		pn.setSuperBuiltupArea(payload.getSuperBuiltUpArea()==null?null:payload.getSuperBuiltUpArea());
-		pn.setUnitDetail(payload.getUnitDetail()==null?null:payload.getUnitDetail());
+		pn.setUnitDetails(payload.getUnitDetails()==null?null:payload.getUnitDetails());
 	}
 
 	public void deleteBuilding(Long id) throws Exception
@@ -176,7 +176,6 @@ public class ProjectPlanService
 		List<PropertyType> ptList = ptRepo.getPTbyPNID(id);
 		for (PropertyType pt : ptList)
 		{
-
 			Iterator<PropertyName> it = pt.getPropertyNames().iterator();
 			List<PropertyName> pnList = new ArrayList<PropertyName>();
 			while (it.hasNext())
@@ -198,6 +197,5 @@ public class ProjectPlanService
 	{
 		if (!ptRepo.existsById(typeId))
 			throw new Exception("Property Type dosen't exists with ID - " + typeId);
-
 	}
 }

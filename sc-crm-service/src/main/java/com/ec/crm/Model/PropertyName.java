@@ -37,10 +37,34 @@ public class PropertyName extends ReusableFields
 	@Formula("(select case when count(*)>0 then true else false end from   customer_deal_structure cds where cds.property_name_id=property_name_id and cds.is_deleted=0)")
 	Boolean isBooked;
 
-	String unitDetail;
+	String unitDetails;
 	String phase;
 	String plotSize;
 	String superBuiltupArea;
+
+	@NotAudited
+	@Formula("(select cl.Lead_id from property_name pn INNER JOIN customer_deal_structure cds on cds.property_name_id = pn.property_name_id INNER JOIN customer_lead cl on cl.lead_id=cds.lead_id where pn.property_name_id=property_name_id)")
+	Long customerId;
+
+	@NotAudited
+	@Formula("(select cl.name from property_name pn INNER JOIN customer_deal_structure cds on cds.property_name_id = pn.property_name_id INNER JOIN customer_lead cl on cl.lead_id=cds.lead_id where pn.property_name_id=property_name_id)")
+	String customerName;
+
+	public Long getCustomerId() {
+		return customerId;
+	}
+
+	public void setCustomerId(Long customerId) {
+		this.customerId = customerId;
+	}
+
+	public String getCustomerName() {
+		return customerName;
+	}
+
+	public void setCustomerName(String customerName) {
+		this.customerName = customerName;
+	}
 
 	public Boolean getIsBooked()
 	{
@@ -94,12 +118,12 @@ public class PropertyName extends ReusableFields
 		isBooked = booked;
 	}
 
-	public String getUnitDetail() {
-		return unitDetail;
+	public String getUnitDetails() {
+		return unitDetails;
 	}
 
-	public void setUnitDetail(String unitDetail) {
-		this.unitDetail = unitDetail;
+	public void setUnitDetails(String unitDetails) {
+		this.unitDetails = unitDetails;
 	}
 
 	public String getPhase() {

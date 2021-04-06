@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class PropertyNameEditDTO {
     String name;
-    String unitDetail;
+    String unitDetails;
     String phase;
     String plotSize;
     String superBuiltUpArea;
