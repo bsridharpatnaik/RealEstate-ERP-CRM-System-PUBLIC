@@ -54,6 +54,8 @@ public class ContactService
 		validatePayload(payload);
 		formatMobileNo(payload);
 		exitIfMobileNoExists(payload);
+		if(payload.getMobileNo()==null)
+			exitIfNameExists(payload);
 		PopulateFields(payload, contact);
 		contactRepo.save(contact);
 		return contact;
@@ -68,8 +70,10 @@ public class ContactService
 			throw new Exception("Contact not found with id -" + id);
 		validatePayload(payload);
 		formatMobileNo(payload);
-		if (!contact.getMobileNo().equals(payload.getMobileNo()))
+		if (contact.getMobileNo()!=null && !contact.getMobileNo().equals(payload.getMobileNo()))
 			exitIfMobileNoExists(payload);
+		else if(contact.getMobileNo()==null && !contact.getName().equals(payload.getName()))
+			exitIfNameExists(payload);
 		checkIfContactTypeModified(contact, payload);
 		PopulateFields(payload, contact);
 		contactRepo.save(contact);
@@ -145,6 +149,11 @@ public class ContactService
 			payload.setContactPersonMobileNo(utilObj.normalizePhoneNumber(payload.getContactPersonMobileNo()));
 		if (payload.getMobileNo() != "" && payload.getMobileNo() != null)
 			payload.setMobileNo(utilObj.normalizePhoneNumber(payload.getMobileNo()));
+	}
+
+	private void exitIfNameExists(Contact payload) throws Exception {
+		if (contactRepo.getCountByName(payload.getName()) > 0)
+			throw new Exception("Contact already exists by Same name and without mobile no");
 	}
 
 	private void exitIfMobileNoExists(Contact payload) throws Exception

@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
@@ -52,4 +53,6 @@ public interface ContactInfoRepo extends JpaRepository<Contact, Long>, JpaSpecif
 	@Query(value = "SELECT distinct mobileNo from Contact m where mobileNo like %:str%")
 	List<String> getAllNamesMatchingMobile(String str);
 
+	@Query(value = "SELECT count(*) from Contact m where name=:name")
+	int getCountByName(@Param("name") String name);
 }
