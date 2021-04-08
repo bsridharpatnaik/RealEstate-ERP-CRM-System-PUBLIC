@@ -81,3 +81,6 @@ ALTER TABLE `property_type`
 ALTER TABLE `property_type`
   CHANGE COLUMN  `property_type`  `propertyType` varchar(255) DEFAULT NULL AFTER `bookedProperties`;
 
+insert into egcity.address_AUD select * from prod.address_aud;
+insert into egcity.source_AUD select * from prod.source_aud;
+
