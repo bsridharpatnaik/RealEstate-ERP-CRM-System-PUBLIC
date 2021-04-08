@@ -33,7 +33,7 @@ public class ToUsernameSerializer extends JsonSerializer<Long>
 			jgen.writeNull();
 		else
 		{
-			if (value != 404) // 404 will always be system user
+			if (!value.equals(404)) // 404 will always be system user
 			{
 				String username;
 				try
