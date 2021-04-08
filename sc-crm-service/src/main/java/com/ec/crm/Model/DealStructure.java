@@ -4,18 +4,10 @@ package com.ec.crm.Model;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import com.ec.crm.Enums.LoanStatusEnum;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
@@ -46,8 +38,9 @@ public class DealStructure extends ReusableFields implements Serializable
 	@Column(name = "deal_id", updatable = false, nullable = false)
 	Long dealId;
 
-	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	String phase;
+	@Column(name = "booking_date")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+	Date bookingDate;
 
 	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "property_type_id", nullable = false)
@@ -63,15 +56,22 @@ public class DealStructure extends ReusableFields implements Serializable
 	@NotFound(action = NotFoundAction.IGNORE)
 	PropertyName propertyName;
 
-	@Column(name = "booking_date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date bookingDate;
+	@Column(name = "deal_amount")
+	Double dealAmount;
 
-	@Column(name = "mode")
-	String mode;
+	@Column(name = "loan_required")
+	Boolean loanRequired;
 
-	@Column(name = "amount")
-	Double amount;
+	Double loanAmount;
+
+	Double customerAmount;
+
+	String bankName;
+
+	@Enumerated(EnumType.STRING)
+	LoanStatusEnum loanStatus;
+
+	Double supplementAmount;
 
 	@Column(name = "details", length = 150)
 	@Size(max = 150)
@@ -86,9 +86,15 @@ public class DealStructure extends ReusableFields implements Serializable
 
 	@NotAudited
 	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true)")
-	Double totalReceived;
+	Double totalReceivedCustomer;
 
 	@NotAudited
 	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=false)")
-	Double totalPending;
+	Double totalPendingCustomer;
+
+	@NotAudited
+	Double totalPendingBank;
+
+	@NotAudited
+	Double totalReceivedBank;
 }

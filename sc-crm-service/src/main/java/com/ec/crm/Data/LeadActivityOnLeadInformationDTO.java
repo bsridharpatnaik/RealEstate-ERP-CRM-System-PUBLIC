@@ -27,7 +27,7 @@ public class LeadActivityOnLeadInformationDTO
 	
 	Long leadActivityId;
 	
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="MM-dd-yyyy HH:mm")
 	Date activityDateTime;
 	
 	@NonNull

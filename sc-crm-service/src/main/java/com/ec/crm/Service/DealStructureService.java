@@ -55,12 +55,26 @@ public class DealStructureService
 
 	private void setFields(DealStructure ds, CreateDealStructureDTO payload)
 	{
-		ds.setAmount(payload.getAmount());
-		ds.setBookingDate(payload.getBookingDate());
-		ds.setDetails(payload.getDetails());
+		ds.setDealAmount(payload.getDealAmount());
 		ds.setLead(clRepo.findById(payload.getLeadId()).get());
-		ds.setMode(payload.getMode());
-		ds.setPhase(payload.getPhase());
+		ds.setDetails(payload.getDetails());
+		ds.setBookingDate(payload.getBookingDate());
+		ds.setLoanRequired(payload.getLoanRequired());
+		ds.setSupplementAmount(payload.getSupplementAmount());
+		if(payload.getLoanRequired())
+		{
+			ds.setBankName(payload.getBankName());
+			ds.setLoanAmount(payload.getLoanAmount());
+			ds.setLoanStatus(payload.getLoanStatus());
+			ds.setCustomerAmount(payload.getDealAmount() + payload.getSupplementAmount() - payload.getLoanAmount());
+		}
+		else
+		{
+			ds.setBankName(null);
+			ds.setLoanAmount(null);
+			ds.setLoanStatus(null);
+			ds.setCustomerAmount(payload.getDealAmount() + payload.getSupplementAmount());
+		}
 		ds.setPropertyName(pnRepo.findById(payload.getPropertyId()).get());
 		ds.setPropertyType(ptRepo.findById(payload.getPropertyTypeId()).get());
 	}
@@ -81,11 +95,25 @@ public class DealStructureService
 		if (payload.getPropertyTypeId() == null)
 			missingFields.add("Property Type");
 
-		if (payload.getMode() == null)
-			missingFields.add("Payment Mode");
+		if(payload.getDealAmount()== null)
+			missingFields.add("Deal Amount");
 
-		if (payload.getAmount() == null)
-			missingFields.add("Booking Amount");
+		if(payload.getSupplementAmount()== null)
+			payload.setSupplementAmount((double) 0);
+
+		if(payload.getLoanRequired()== null)
+			missingFields.add("Loan Required");
+
+		if(payload.getLoanRequired()) {
+			if(payload.getLoanAmount()== null)
+				missingFields.add("Loan Amount");
+			if(payload.getBankName()== null)
+				missingFields.add("Bank Name");
+			if(payload.getLoanStatus()== null)
+				missingFields.add("Loan Status");
+			if(payload.getLoanAmount()>payload.getDealAmount())
+				throw new Exception("Loan amount cannot be greater than Deal Amount");
+		}
 
 		if (missingFields.size() > 0)
 			throw new Exception("Required fields missing - " + String.join(",", missingFields));
@@ -174,20 +202,26 @@ public class DealStructureService
 	private DealStructureDAO convertDStoDSDAO(DealStructure ds) throws Exception
 	{
 		DealStructureDAO dao = new DealStructureDAO();
-		dao.setAmount(ds.getAmount() == null ? null : ds.getAmount());
+		dao.setBankName(ds.getBankName()==null?"":ds.getBankName());
 		dao.setBookingDate(ds.getBookingDate());
+		dao.setCustomerAmount(ds.getCustomerAmount()==null?0:ds.getCustomerAmount());
+		dao.setDealAmount(ds.getDealAmount());
 		dao.setDealId(ds.getDealId());
 		dao.setDetails(ds.getDetails());
 		dao.setLeadId(ds.getLead().getLeadId());
-		dao.setMode(ds.getMode());
-		dao.setPhase(ds.getPhase());
+		dao.setLoanAmount(ds.getLoanAmount()==null?0:ds.getLoanAmount());
+		dao.setLoanRequired(ds.getLoanRequired());
+		dao.setLoanStatus(ds.getLoanStatus()==null?null:ds.getLoanStatus());
 		dao.setPropertyName(ds.getPropertyName().getName());
-		dao.setPropertyType(ds.getPropertyType().getPropertyType());
-		dao.setTotalPending(ds.getTotalPending() == null ? 0 : ds.getTotalPending());
-		dao.setTotalReceived(ds.getTotalReceived() == null ? 0 : ds.getTotalReceived());
-		dao.setSchedules(psService.getSchedulesForDeal(ds.getDealId()));
 		dao.setPropertyNameId(ds.getPropertyName().getPropertyNameId());
+		dao.setPropertyType(ds.getPropertyType().getPropertyType());
 		dao.setPropertytypeId(ds.getPropertyType().getPropertyTypeId());
+		dao.setSchedules(psService.getSchedulesForDeal(ds.getDealId()));
+		dao.setSupplementAmount(ds.getSupplementAmount()==null?0:ds.getSupplementAmount());
+		dao.setTotalPendingBank(ds.getTotalPendingBank()==null?0:ds.getTotalPendingBank());
+		dao.setTotalPendingCustomer(ds.getTotalPendingCustomer()==null?0:ds.getTotalPendingCustomer());
+		dao.setTotalReceivedBank(ds.getTotalReceivedBank()==null?0:ds.getTotalReceivedBank());
+		dao.setTotalReceivedCustomer(ds.getTotalReceivedCustomer()==null?0:ds.getTotalReceivedCustomer());
 		return dao;
 	}
 
