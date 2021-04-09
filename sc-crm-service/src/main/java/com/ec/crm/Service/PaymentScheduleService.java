@@ -126,6 +126,7 @@ public class PaymentScheduleService
 		ps.setIsReceived(payload.getIsReceived());
 		ps.setMode(payload.getMode());
 		ps.setPaymentDate(payload.getPaymentDate());
+		ps.setIsCustomerPayment(payload.getIsCustomerPayment());
 	}
 
 	private void validatePayload(CreateScheduleData payload, String operation) throws Exception
@@ -143,6 +144,8 @@ public class PaymentScheduleService
 			missingFields.add("Payment Date");
 		if (payload.getIsReceived() == null)
 			missingFields.add("Received Status");
+		if (payload.getIsCustomerPayment() == null)
+			missingFields.add("Customer Payment");
 
 		if (missingFields.size() > 0)
 			throw new Exception("Required fields missing - " + String.join(",", missingFields));

@@ -31,4 +31,6 @@ public class CreateScheduleData
 	String details;
 
 	Boolean isReceived;
+
+	Boolean isCustomerPayment;
 }

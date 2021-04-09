@@ -74,4 +74,7 @@ public class PaymentSchedule extends ReusableFields implements Serializable
 	{ "hibernateLazyInitializer", "handler" })
 	@NotFound(action = NotFoundAction.IGNORE)
 	LeadActivity la;
+
+	@Column(nullable = false)
+	Boolean isCustomerPayment;
 }
