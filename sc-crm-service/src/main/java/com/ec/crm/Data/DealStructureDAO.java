@@ -53,4 +53,9 @@ public class DealStructureDAO
 	LoanStatusEnum loanStatus;
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double supplementAmount;
+
+	public Double getTotalAmount()
+	{
+		return supplementAmount+dealAmount;
+	}
 }

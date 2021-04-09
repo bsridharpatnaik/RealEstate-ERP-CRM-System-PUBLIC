@@ -62,7 +62,7 @@ public class DealStructure extends ReusableFields implements Serializable
 	@Column(name = "loan_required")
 	Boolean loanRequired;
 
-	Double loanAmount;
+	Double loanAmount= Double.valueOf(0);
 
 	Double customerAmount;
 
@@ -71,7 +71,7 @@ public class DealStructure extends ReusableFields implements Serializable
 	@Enumerated(EnumType.STRING)
 	LoanStatusEnum loanStatus;
 
-	Double supplementAmount;
+	Double supplementAmount=Double.valueOf(0);
 
 	@Column(name = "details", length = 150)
 	@Size(max = 150)
@@ -85,16 +85,18 @@ public class DealStructure extends ReusableFields implements Serializable
 	ClosedLeads lead;
 
 	@NotAudited
-	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true)")
+	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true and cps.isCustomerPayment=true)")
 	Double totalReceivedCustomer;
 
 	@NotAudited
-	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=false)")
+	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=false and cps.isCustomerPayment=true)")
 	Double totalPendingCustomer;
 
 	@NotAudited
+	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=false and cps.isCustomerPayment=false)")
 	Double totalPendingBank;
 
 	@NotAudited
+	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true and cps.isCustomerPayment=false)")
 	Double totalReceivedBank;
 }
