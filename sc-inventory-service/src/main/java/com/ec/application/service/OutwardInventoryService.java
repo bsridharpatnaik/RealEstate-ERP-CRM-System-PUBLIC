@@ -187,9 +187,9 @@ public class OutwardInventoryService
 			if (inwardOutwardList.getProduct().getProductId().equals(productId))
 			{
 				Double currentQuantity = inwardOutwardList.getQuantity();
-				if (quantity >= currentQuantity)
+				if (quantity > currentQuantity)
 					throw new Exception(
-							"Return quantity cannot be greater than or equals to existing quantity for product -"
+							"Return quantity cannot be greater than existing quantity for product -"
 									+ inwardOutwardList.getProduct().getProductName());
 
 				Double diffInQuantity = currentQuantity - quantity;
@@ -219,9 +219,9 @@ public class OutwardInventoryService
 			if (inwardOutwardList.getProduct().getProductId().equals(productId))
 			{
 				Double currentQuantity = inwardOutwardList.getQuantity();
-				if (quantity >= currentQuantity)
+				if (quantity > currentQuantity)
 					throw new Exception(
-							"Reject quantity cannot be greater than or equals to existing quantity for product -"
+							"Reject quantity cannot be greater than existing quantity for product -"
 									+ inwardOutwardList.getProduct().getProductName());
 
 				rejectOutwardList.add(new RejectOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,

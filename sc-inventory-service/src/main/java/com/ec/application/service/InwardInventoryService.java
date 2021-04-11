@@ -193,9 +193,9 @@ public class InwardInventoryService
 			if (inwardOutwardList.getProduct().getProductId().equals(productId))
 			{
 				Double currentQuantity = inwardOutwardList.getQuantity();
-				if (quantity >= currentQuantity)
+				if (quantity > currentQuantity)
 					throw new Exception(
-							"Reject quantity cannot be greater than or equals to existing quantity for product -"
+							"Reject quantity cannot be greater than existing quantity for product -"
 									+ inwardOutwardList.getProduct().getProductName());
 
 				Double diffInQuantity = currentQuantity - quantity;
