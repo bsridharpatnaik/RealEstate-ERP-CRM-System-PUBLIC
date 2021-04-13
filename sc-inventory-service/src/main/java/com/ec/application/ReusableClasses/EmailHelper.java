@@ -14,6 +14,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import com.ec.application.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,7 @@ public class EmailHelper
         	Map<String, Object> model = new HashMap<String, Object>();
 			model.put("inventory", dataForInsertList);
 			model.put("currentDate", new Date().toString());
+			model.put("tenantName",com.ec.application.multitenant.ThreadLocalStorage.getTenantName());
 			Template template = config.getTemplate("email-template.ftl");
 			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 			helper.setFrom(emailConfigData.mailUsername);
@@ -71,7 +73,7 @@ public class EmailHelper
 			InternetAddress[] parse = InternetAddress.parse(emailIds , true);
 			message.setRecipients(javax.mail.Message.RecipientType.TO,  parse);
 			
-			helper.setSubject("Latest Stock Information - "+new Date());
+			helper.setSubject(ThreadLocalStorage.getTenantName()+" - Latest Stock Information - "+new Date());
 			helper.setText(html, true);
 			Transport.send(message);
             log.info("Email Sent");

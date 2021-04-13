@@ -38,7 +38,7 @@ background-color: white;
 	<tr>
     <td>
         <label id="welcome" style="padding-left: 20px;">Hi User,</label><br><br>
-    <label id="msg" style="padding: 40px;">Find the Inventory details as of today - ${currentDate} </label><br><br>    
+    <label id="msg" style="padding: 40px;">Find the Inventory details as of today - ${currentDate} </label><br><br>
     </td>
 </tr>
 		<tr>
