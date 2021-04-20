@@ -27,7 +27,8 @@ public class InwardInventoryData
 	String vendorSlipNo;
 	String ourSlipNo;
 	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
-	String additionalComments;
+	String additionalInfo;
+
 	String purchaseOrder;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@NonNull
@@ -195,13 +196,11 @@ public class InwardInventoryData
 		this.ourSlipNo = ourSlipNo;
 	}
 
-	public String getAdditionalComments()
-	{
-		return additionalComments;
+	public String getAdditionalInfo() {
+		return additionalInfo;
 	}
 
-	public void setAdditionalComments(String additionalComments)
-	{
-		this.additionalComments = additionalComments;
+	public void setAdditionalInfo(String additionalInfo) {
+		this.additionalInfo = additionalInfo;
 	}
 }

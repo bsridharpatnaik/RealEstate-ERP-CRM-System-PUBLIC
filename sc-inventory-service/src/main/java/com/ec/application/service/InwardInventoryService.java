@@ -221,7 +221,7 @@ public class InwardInventoryService
 		inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
 		inwardInventory.setVehicleNo(iiData.getVehicleNo());
 		inwardInventory.setVendorSlipNo(iiData.getVendorSlipNo());
-		inwardInventory.setAdditionalInfo(iiData.getAdditionalComments());
+		inwardInventory.setAdditionalInfo(iiData.getAdditionalInfo());
 		inwardInventory.setSupplier(supplierRepo.findById(iiData.getSupplierId()).get());
 		inwardInventory.setWarehouse(warehouseRepo.findById(iiData.getWarehouseId()).get());
 		inwardInventory.setInwardOutwardList(fetchInwardOutwardList(iiData.getProductWithQuantities(),
