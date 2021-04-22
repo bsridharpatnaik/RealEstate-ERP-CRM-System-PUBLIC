@@ -3,7 +3,9 @@ package com.ec.application.data;
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.model.Stock;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public class StockInformationExportDAO 
 {
 
@@ -25,6 +27,7 @@ public class StockInformationExportDAO
 		this.warehouseStock=stock.getQuantityInHand();
 		this.measurementUnit=stock.getProduct().getMeasurementUnit();
 	}
+
 	public Long getProductId() {
 		return productId;
 	}

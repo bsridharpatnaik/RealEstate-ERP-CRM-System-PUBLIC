@@ -7,15 +7,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.Contractor_;
-import com.ec.application.model.OutwardInventory;
-import com.ec.application.model.OutwardInventory_;
-import com.ec.application.model.UsageArea_;
-import com.ec.application.model.UsageLocation_;
-import com.ec.application.model.Warehouse_;
 
 public final class OutwardInventorySpecification
 {
@@ -27,6 +22,7 @@ public final class OutwardInventorySpecification
 		List<String> startDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "startDate");
 		List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "endDate");
 		List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productNames");
+		List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
 		List<String> contractorNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"contractorNames");
 		List<String> warehouseNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "warehouseNames");
@@ -50,7 +46,9 @@ public final class OutwardInventorySpecification
 		if (productNames != null && productNames.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereProductContains(productNames, OutwardInventory_.INWARD_OUTWARD_LIST));
-
+		if (categoryNames != null && categoryNames.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereCategoryContains(categoryNames, OutwardInventory_.INWARD_OUTWARD_LIST));
 		if (contractorNames != null && contractorNames.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, contractorNames));

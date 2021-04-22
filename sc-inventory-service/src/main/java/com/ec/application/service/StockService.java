@@ -118,7 +118,28 @@ public class StockService
 
 	public List<StockInformationExportDAO> findStockForAllForExport(FilterDataList filterDataList) throws Exception
 	{
-		return null;
+		List<StockInformationExportDAO> exportData = new ArrayList<StockInformationExportDAO>();
+		Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
+		final List<StockInformationDTO> data;
+		if (spec == null)
+			data = siRepo.findAll().stream().map(this::convertToDTO).collect(Collectors.toList());
+		else
+			data = siRepo.findAll(spec).stream().map(this::convertToDTO).collect(Collectors.toList());
+
+		for(StockInformationDTO si : data) {
+			for (SingleStockInformationDTO ssi : si.getDetailedStock()) {
+				StockInformationExportDAO exDAO = new StockInformationExportDAO();
+				exDAO.setCategory(si.getCategoryName());
+				exDAO.setInventory(si.getProductName());
+				exDAO.setTotalStock(si.getTotalQuantityInHand().toString());
+				exDAO.setMeasurementUnit(si.getMeasurementUnit());
+				exDAO.setProductId(si.getProductId());
+				exDAO.setWarehouse(ssi.getWarehouseName());
+				exDAO.setWarehouseStock(ssi.getQuantityInHand());
+				exportData.add(exDAO);
+			}
+		}
+		return exportData;
 	}
 
 	private List<StockInformationExportDAO> transformDataForExport(Page<SingleStockInfo> allStocks)

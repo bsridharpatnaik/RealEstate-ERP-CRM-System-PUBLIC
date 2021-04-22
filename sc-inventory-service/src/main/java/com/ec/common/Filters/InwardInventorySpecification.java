@@ -31,7 +31,7 @@ public final class InwardInventorySpecification
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
 		List<String> showOnlyRejected = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"showOnlyRejected");
-
+		List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
 		Specification<InwardInventory> finalSpec = null;
 
 		if (startDates != null && startDates.size() > 0)
@@ -45,6 +45,10 @@ public final class InwardInventorySpecification
 		if (productNames != null && productNames.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereProductContains(productNames, InwardInventory_.INWARD_OUTWARD_LIST));
+
+		if (categoryNames != null && categoryNames.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereCategoryContains(categoryNames, InwardInventory_.INWARD_OUTWARD_LIST));
 
 		if (supplierNames != null && supplierNames.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,

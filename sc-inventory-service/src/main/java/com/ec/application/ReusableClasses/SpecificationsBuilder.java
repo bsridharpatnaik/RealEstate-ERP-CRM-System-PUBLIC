@@ -12,12 +12,9 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ec.application.model.InwardOutwardList;
-import com.ec.application.model.InwardOutwardList_;
-import com.ec.application.model.Product;
-import com.ec.application.model.Product_;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 
@@ -173,6 +170,23 @@ public class SpecificationsBuilder<T>
 			finalSpec = specOrCondition(finalSpec, internalSpec);
 		}
 		return finalSpec;
+	}
+
+	public Specification<T> whereCategoryContains(List<String> categoryNames, String joinTable)
+	{
+
+		return (root, query, cb) ->
+		{
+
+			Join<T, InwardOutwardList> ioList = root.join(joinTable);
+			Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
+			Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
+			query.distinct(true);
+			Expression<String> parentExpression = categoryList.get(Category_.categoryName);
+			Predicate parentPredicate = parentExpression.in(categoryNames);
+			query.where(parentPredicate);
+			return query.getRestriction();
+		};
 	}
 
 	public Specification<T> whereProductContains(List<String> productNames, String joinTable)
