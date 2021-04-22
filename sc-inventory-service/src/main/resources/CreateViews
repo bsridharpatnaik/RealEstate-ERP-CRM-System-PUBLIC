@@ -153,39 +153,24 @@ FROM   (SELECT p.product_name AS inventory,
                ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0;
 
 ###################  STOCk STATUS #############
-use egcity;
-SELECT * FROM
-(
-	SELECT
-		p.productId,
-        p.product_name,
-        p.reorderQuantity,
-        p.measurementUnit,
-        c.category_name,
-        ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
-        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END
-	FROM stock s
-	INNER JOIN Product p on p.productId=s.productId
-	INNER JOIN Category c on p.categoryId=c.categoryId
-	WHERE s.is_deleted=0
-	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name
-) as st
-INNER JOIN Stock s on s.productId=st.productId;
 
-Version 2 #####
 CREATE OR REPLACE VIEW stockInformation as
 	SELECT
-		p.productId as stockId,
+		p.productId as productId,
         p.product_name,
         p.reorderQuantity,
         p.measurementUnit,
         c.category_name,
         ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
-        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END,
-        JSON_ARRAYAGG(JSON_OBJECT('warehouseName',w.warehouseName,'quantity_in_hand',s.quantityInHand)) as detailedStock
-	FROM stock s
+        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
+        JSON_ARRAYAGG(JSON_OBJECT(
+			'warehouseName',w.warehouseName,
+            'quantityInHand',s.quantityInHand,
+            'measurementUnit',p.measurementUnit
+            )) as detailedStock
+	FROM Stock s
 	INNER JOIN Product p on p.productId=s.productId
 	INNER JOIN Category c on p.categoryId=c.categoryId
     INNER JOIN Warehouse w on w.warehouse_id = s.warehouseName
 	WHERE s.is_deleted=0
-	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name
+	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;

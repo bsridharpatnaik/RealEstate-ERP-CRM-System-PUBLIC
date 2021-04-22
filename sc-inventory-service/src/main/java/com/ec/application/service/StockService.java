@@ -7,6 +7,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.ec.application.data.*;
+import com.ec.application.model.StockInformationFromView;
+import com.ec.application.repository.*;
+import com.ec.common.Filters.StockInformationSpecification;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,19 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.data.CurrentStockRequest;
-import com.ec.application.data.NameAndProjectionDataForDropDown;
-import com.ec.application.data.SingleStockInfo;
-import com.ec.application.data.StockInformation;
-import com.ec.application.data.StockInformationExportDAO;
-import com.ec.application.data.StockPercentData;
 import com.ec.application.model.Product;
 import com.ec.application.model.Stock;
 import com.ec.application.model.Warehouse;
-import com.ec.application.repository.ProductRepo;
-import com.ec.application.repository.StockRepo;
-import com.ec.application.repository.StockValidationRepo;
-import com.ec.application.repository.WarehouseRepo;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
@@ -78,30 +74,40 @@ public class StockService
 
 	Logger log = LoggerFactory.getLogger(StockService.class);
 
-	public StockInformation findStockForAll(FilterDataList filterDataList, Pageable pageable) throws Exception
-	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
-		List<Stock> allStocks = new ArrayList<Stock>();
-		if (spec != null)
-			allStocks = stockRepo.findAll(spec);
+	@Autowired
+	StockInformationRepo siRepo;
+
+	public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) {
+		StockInformationV2 stockInformation = new StockInformationV2();
+
+		Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
+		final Page<StockInformationDTO> map;
+		if (spec == null)
+			map = siRepo.findAll(page).map(this::convertToDTO);
 		else
-			allStocks = stockRepo.findAll();
-		String showLowOrHIgh = fetchFilterForStockStatus(filterDataList);
-		return fetchStockInformation(allStocks, pageable, showLowOrHIgh);
+			map = siRepo.findAll(spec, page).map(this::convertToDTO);
+
+		stockInformation.setStockInformation(map);
+		return stockInformation;
 	}
 
-	private String fetchFilterForStockStatus(FilterDataList filterDataList)
-	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		String showLowOrHIgh = "All";
-		List<String> stockStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stockStatus");
-		if (stockStatus != null)
-			if (stockStatus.get(0).toLowerCase().equals("high"))
-				showLowOrHIgh = "High";
-			else if (stockStatus.get(0).toLowerCase().equals("low"))
-				showLowOrHIgh = "Low";
-		return showLowOrHIgh;
+	private StockInformationDTO convertToDTO(StockInformationFromView si) {
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			StockInformationDTO dto = new StockInformationDTO();
+			dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
+			}));
+			dto.setCategoryName(si.getCategoryName());
+			dto.setProductId(si.getProductId());
+			dto.setStockStatus(si.getStockStatus());
+			dto.setMeasurementUnit(si.getMeasurementUnit());
+			dto.setProductName(si.getProductName());
+			dto.setReorderQuantity(si.getReorderQuantity());
+			dto.setTotalQuantityInHand(si.getTotalQuantityInHand());
+			return dto;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	public NameAndProjectionDataForDropDown getStockDropdownValues()
@@ -112,19 +118,7 @@ public class StockService
 
 	public List<StockInformationExportDAO> findStockForAllForExport(FilterDataList filterDataList) throws Exception
 	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		Specification<Stock> spec = StockSpecification.getSpecification(filterDataList);
-		long size = spec != null ? stockRepo.count(spec) : stockRepo.count();
-		if (size > 2000)
-			throw new Exception("Too many rows to export. Apply some more filters and try again");
-
-		List<Stock> allStocks = spec != null ? stockRepo.findAll(spec) : stockRepo.findAll();
-		Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.Direction.ASC, "productName");
-		String showLowOrHIgh = fetchFilterForStockStatus(filterDataList);
-		Page<SingleStockInfo> stockInfoList = fetchStockInformation(allStocks, pageable, showLowOrHIgh)
-				.getStockInformation();
-		List<StockInformationExportDAO> exportData = transformDataForExport(stockInfoList);
-		return exportData;
+		return null;
 	}
 
 	private List<StockInformationExportDAO> transformDataForExport(Page<SingleStockInfo> allStocks)
@@ -196,143 +190,8 @@ public class StockService
 		}
 	}
 
-	public StockInformation fetchStockInformation(List<Stock> allStocks, Pageable pageable, String showLowOrHIgh)
-			throws Exception
-	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 
-		StockInformation stockInformation = new StockInformation();
-		List<SingleStockInfo> stockInformationsList = new ArrayList<SingleStockInfo>();
-		List<Long> uniqueProductIds = fetchUniqueProductIds(allStocks);
-		for (Long productId : uniqueProductIds)
-		{
-			Double currentStock = stockRepo.getTotalStockForProduct(productId);
-			DecimalFormat df = new DecimalFormat("###.#");
-			Product product = productService.findSingleProduct(productId);
-			SingleStockInfo singleStockInfo = new SingleStockInfo();
-			singleStockInfo.setProductId(productId);
-			singleStockInfo.setProductName(product.getProductName());
-			singleStockInfo.setCategoryName(product.getCategory().getCategoryName());
-			singleStockInfo.setTotalQuantityInHand(df.format(currentStock));
-			singleStockInfo.setDetailedStock(findStockForProductAsList(productId, allStocks));
-			singleStockInfo.setReorderQuantity(product.getReorderQuantity());
-			if (currentStock < product.getReorderQuantity())
-				singleStockInfo.setStockStatus("Low");
-			else
-				singleStockInfo.setStockStatus("High");
-			stockInformationsList.add(singleStockInfo);
-		}
 
-		List<SingleStockInfo> filteredStockInformationsList = filterStockForLowStock(stockInformationsList,
-				showLowOrHIgh);
-		stockInformation.setStockInformation(convertListStockToPages(filteredStockInformationsList, pageable));
-		return stockInformation;
-	}
-
-	private List<SingleStockInfo> filterStockForLowStock(List<SingleStockInfo> stockInformationsList,
-			String showLowOrHIgh)
-	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-
-		List<SingleStockInfo> filteredStockListForLowStock = new ArrayList<SingleStockInfo>();
-		if (showLowOrHIgh != null)
-		{
-			if (showLowOrHIgh.equals("Low"))
-			{
-				filteredStockListForLowStock = stockInformationsList.stream().filter(c -> c.getStockStatus() == "Low")
-						.collect(Collectors.toList());
-			} else if (showLowOrHIgh.equals("High"))
-			{
-				filteredStockListForLowStock = stockInformationsList.stream().filter(c -> c.getStockStatus() == "High")
-						.collect(Collectors.toList());
-			} else
-				filteredStockListForLowStock = stockInformationsList;
-		} else
-			filteredStockListForLowStock = stockInformationsList;
-		return filteredStockListForLowStock;
-	}
-
-	private Page<SingleStockInfo> convertListStockToPages(List<SingleStockInfo> stockInformationsList,
-			Pageable pageable)
-	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-
-		int start = (int) pageable.getOffset();
-		int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size()
-				: (start + pageable.getPageSize());
-		stockInformationsList = sortStockInformationsList(stockInformationsList, pageable.getSort());
-		return new PageImpl<SingleStockInfo>(stockInformationsList.subList(start, end), pageable,
-				stockInformationsList.size());
-	}
-
-	private List<SingleStockInfo> sortStockInformationsList(List<SingleStockInfo> stockInformationsList, Sort sort)
-	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-
-		try
-		{
-			String[] sortBy = sort.toString().split(":");
-			String field = sortBy[0].trim();
-			String order = sortBy[1].trim();
-
-			switch (field)
-			{
-			case "productId":
-				if (order.toLowerCase().contains("desc"))
-					stockInformationsList.sort(Comparator
-							.comparing(SingleStockInfo::getProductId, Comparator.nullsFirst(Comparator.naturalOrder()))
-							.reversed());
-				else
-					stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getProductId,
-							Comparator.nullsFirst(Comparator.naturalOrder())));
-				break;
-			case "productName":
-				if (order.toLowerCase().contains("desc"))
-					stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getProductName,
-							Comparator.nullsFirst(Comparator.naturalOrder())).reversed());
-				else
-					stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getProductName,
-							Comparator.nullsFirst(Comparator.naturalOrder())));
-				break;
-			case "categoryName":
-				if (order.toLowerCase().contains("desc"))
-					stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getCategoryName,
-							Comparator.nullsFirst(Comparator.naturalOrder())).reversed());
-				else
-					stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getCategoryName,
-							Comparator.nullsFirst(Comparator.naturalOrder())));
-				break;
-			case "totalQuantityInHand":
-				if (order.toLowerCase().contains("desc"))
-					stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getTotalQuantityInHand,
-							Comparator.nullsFirst(Comparator.naturalOrder())).reversed());
-				else
-					stockInformationsList.sort(Comparator.comparing(SingleStockInfo::getTotalQuantityInHand,
-							Comparator.nullsFirst(Comparator.naturalOrder())));
-				break;
-			}
-			return stockInformationsList;
-		} catch (Exception e)
-		{
-			System.out.println("Sorting failed");
-			return stockInformationsList;
-		}
-	}
-
-	private List<Stock> findStockForProductAsList(Long productId, List<Stock> allStocks)
-	{
-
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		List<Stock> stocks = allStocks.stream().filter(p -> p.getProduct().getProductId() == productId)
-				.collect(Collectors.toList());
-		return stocks;
-	}
-
-	private List<Long> fetchUniqueProductIds(List<Stock> allStocks)
-	{
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		return allStocks.stream().map(p -> p.getProduct().getProductId()).distinct().collect(Collectors.toList());
-	}
 
 	public Double findStockForProductWarehouse(Long productId, Long warehouseId)
 	{
