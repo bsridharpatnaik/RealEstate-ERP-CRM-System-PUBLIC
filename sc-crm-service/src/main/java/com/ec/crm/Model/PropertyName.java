@@ -43,11 +43,15 @@ public class PropertyName extends ReusableFields
 	String superBuiltupArea;
 
 	@NotAudited
-	@Formula("(select cl.Lead_id from property_name pn INNER JOIN customer_deal_structure cds on cds.property_name_id = pn.property_name_id INNER JOIN customer_lead cl on cl.lead_id=cds.lead_id where pn.property_name_id=property_name_id)")
+	@Formula("(select cl.Lead_id from property_name pn INNER JOIN customer_deal_structure cds on cds.property_name_id = pn.property_name_id " +
+			"INNER JOIN customer_lead cl on cl.lead_id=cds.lead_id where pn.property_name_id=property_name_id AND " +
+			"cds.is_deleted=false AND cl.is_deleted=false)")
 	Long customerId;
 
 	@NotAudited
-	@Formula("(select cl.name from property_name pn INNER JOIN customer_deal_structure cds on cds.property_name_id = pn.property_name_id INNER JOIN customer_lead cl on cl.lead_id=cds.lead_id where pn.property_name_id=property_name_id)")
+	@Formula("(select cl.name from property_name pn INNER JOIN customer_deal_structure cds on cds.property_name_id = pn.property_name_id " +
+			"INNER JOIN customer_lead cl on cl.lead_id=cds.lead_id where pn.property_name_id=property_name_id AND " +
+			"cds.is_deleted=false AND cl.is_deleted=false)")
 	String customerName;
 
 	public Long getCustomerId() {
