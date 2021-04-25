@@ -8,5 +8,5 @@ public class PropertyNameEditDTO {
     String unitDetails;
     String phase;
     String plotSize;
-    String superBuiltUpArea;
+    String superBuiltupArea;
 }

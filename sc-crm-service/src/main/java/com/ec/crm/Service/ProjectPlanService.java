@@ -167,7 +167,7 @@ public class ProjectPlanService
 		pn.setName(payload.getName()==null?null:payload.getName());
 		pn.setPhase(payload.getPhase()==null?null:payload.getPhase());
 		pn.setPlotSize(payload.getPlotSize()==null?null:payload.getPlotSize());
-		pn.setSuperBuiltupArea(payload.getSuperBuiltUpArea()==null?null:payload.getSuperBuiltUpArea());
+		pn.setSuperBuiltupArea(payload.getSuperBuiltupArea()==null?null:payload.getSuperBuiltupArea());
 		pn.setUnitDetails(payload.getUnitDetails()==null?null:payload.getUnitDetails());
 	}
 
