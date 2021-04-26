@@ -27,6 +27,7 @@ public class PaymentScheduleSpecification
 		List<String> propertyType = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "propertyType");
 		List<String> propertyName = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "propertyName");
 		List<String> assignee = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "assignee");
+		List<String> IsCustomerPayment = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "IsCustomerPayment");
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
 
 		if (startDate != null && startDate.size() > 0)
@@ -40,6 +41,10 @@ public class PaymentScheduleSpecification
 		if (isReceived != null && isReceived.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereDirectBoleanFieldEquals(PaymentSchedule_.IS_RECEIVED, isReceived));
+
+		if (IsCustomerPayment != null && IsCustomerPayment.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereDirectBoleanFieldEquals(PaymentSchedule_.IS_CUSTOMER_PAYMENT, IsCustomerPayment));
 
 		if (propertyType != null && propertyType.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereGrandChildFieldEquals(PaymentSchedule_.DS,
