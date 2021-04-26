@@ -199,6 +199,7 @@ public class PaymentScheduleService
 		sDAO.setPaymentDate(ps.getPaymentDate() == null ? null : ps.getPaymentDate());
 		sDAO.setScheduleId(ps.getScheduleId() == null ? null : ps.getScheduleId());
 		sDAO.setLeadActivityId(ps.getLa() == null ? null : ps.getLa().getLeadActivityId());
+		sDAO.setIsCustomerPayment(ps.getIsCustomerPayment());
 		return sDAO;
 	}
 
@@ -249,6 +250,7 @@ public class PaymentScheduleService
 		dto.setCustomerId(o.getDs().getLead().getLeadId());
 		dto.setCustomerName(o.getDs().getLead().getCustomerName());
 		dto.setPropertyName(o.getDs().getPropertyName().getName());
+		dto.setIsCustomerPayment(o.getIsCustomerPayment());
 		return dto;
 	}
 

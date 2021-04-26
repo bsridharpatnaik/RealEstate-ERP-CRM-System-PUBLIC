@@ -32,5 +32,6 @@ public class PaymentScheduleListingDTO
 	Long dealStructureId;
 
 	Long leadActivityId;
+	Boolean isCustomerPayment;
 
 }

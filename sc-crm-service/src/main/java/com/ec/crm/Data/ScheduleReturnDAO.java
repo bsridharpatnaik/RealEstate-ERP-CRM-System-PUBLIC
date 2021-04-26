@@ -18,4 +18,5 @@ public class ScheduleReturnDAO
 	Boolean isReceived;
 	Long dealStructureId;
 	Long leadActivityId;
+	Boolean isCustomerPayment;
 }
