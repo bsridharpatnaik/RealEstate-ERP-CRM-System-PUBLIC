@@ -330,7 +330,7 @@ public class LeadActivityService
 		LeadStatusEnum previousStatus = lead.getStatus();
 
 		if (leadHistory.size() < 1)
-			throw new Exception("No history found for lead");
+			previousStatus = LeadStatusEnum.Negotiation;
 
 		for (int ctr = leadHistory.size() - 1; ctr >= 0; ctr--)
 		{
