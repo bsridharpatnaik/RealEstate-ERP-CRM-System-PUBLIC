@@ -105,7 +105,7 @@ public class Lead extends ReusableFields implements Serializable
 	SentimentEnum sentiment;
 
 	@NotAudited
-	@Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id)")
+	@Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id and la.is_deleted=false)")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date lastActivityModifiedDate;
 
