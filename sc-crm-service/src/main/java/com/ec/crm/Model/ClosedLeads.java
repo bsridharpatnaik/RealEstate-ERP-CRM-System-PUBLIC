@@ -126,4 +126,15 @@ public class ClosedLeads extends ReusableFields implements Serializable
 	@Column(name = "status", nullable = false)
 	@Enumerated(EnumType.STRING)
 	LeadStatusEnum status;
+
+    @NotAudited
+    @Formula("(select cds.loanStatus from customer_deal_structure cds " +
+            "INNER JOIN customer_lead cl on cl.lead_id = cds.lead_id " +
+            "WHERE " +
+            "cds.is_deleted=false " +
+            "AND cl.is_deleted=false " +
+            "AND cl.lead_id=lead_id " +
+            "AND cds.loanStatus IS NOT NULL " +
+            "LIMIT 1)")
+    String loanStatus;
 }

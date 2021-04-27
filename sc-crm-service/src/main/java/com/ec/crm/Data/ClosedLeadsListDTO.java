@@ -29,4 +29,5 @@ public class ClosedLeadsListDTO
 	Long asigneeId;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date nextPaymentDate;
+	String loanStatus;
 }

@@ -73,6 +73,7 @@ public class ClosedLeadService
 		dto.setNextPaymentDate(null);
 		dto.setPrimaryMobile(o.getPrimaryMobile());
 		dto.setPropertyType(o.getPropertyType());
+		dto.setLoanStatus(o.getLoanStatus());
 		return dto;
 	}
 

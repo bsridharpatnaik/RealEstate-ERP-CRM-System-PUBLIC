@@ -23,6 +23,7 @@ public final class ClosedLeadsSpecification
 		List<String> mobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "mobile");
 		List<String> broker = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "broker");
 		List<String> source = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "source");
+		List<String> loanStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "loanStatus");
 		List<String> propertytype = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "propertyType");
 		List<String> assignee = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "assignee");
 		List<String> createdBy = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "createdBy");
@@ -35,6 +36,10 @@ public final class ClosedLeadsSpecification
 		if (name != null && name.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereDirectFieldContains(ClosedLeads_.customerName.getName(), name));
+
+		if (loanStatus != null && loanStatus.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereDirectFieldContains(ClosedLeads_.loanStatus.getName(), name));
 
 		if (mobile != null && mobile.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
