@@ -1,6 +1,6 @@
 package com.ec.crm.Data;
 
-public enum InstanceList {
+public enum StrategyEnum {
     egcity,
     suncity;
 }

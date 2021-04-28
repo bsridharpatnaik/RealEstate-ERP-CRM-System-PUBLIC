@@ -1,6 +1,6 @@
 package com.ec.crm.Service;
 
-import com.ec.crm.Data.InstanceList;
+import com.ec.crm.Data.StrategyEnum;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -10,12 +10,12 @@ public class InstanceService {
     @Value("${spring.profiles.active}")
     private String profile;
 
-    public InstanceList getInstance()
+    public StrategyEnum getInstance()
     {
         if(profile.contains("ec-"))
-            return InstanceList.egcity;
+            return StrategyEnum.egcity;
         else if(profile.contains("sc-"))
-            return InstanceList.suncity;
+            return StrategyEnum.suncity;
         return null;
     }
 }
