@@ -704,7 +704,9 @@ public class LeadActivityService
 			l.setMobileNumber(la.getLead().getPrimaryMobile());
 		else
 			l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
+		l.setLoanStatus(la.getLead().getLoanStatus()==null?null:la.getLead().getLoanStatus());
 		return l;
+
 	}
 
 	public LeadActivity getRecentActivityByLead(Lead lead)

@@ -60,10 +60,6 @@ public class LeadService
 	@Autowired
 	LeadRepo lRepo;
 
-	/*
-	 * @Autowired SentimentRepo siRepo;
-	 */
-
 	@Autowired
 	BrokerRepo bRepo;
 
