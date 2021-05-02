@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonPropertyOrder(
-{ "Outward ID", "Outward Date", "Slip No", "Inventory", "Measurement Unit", "Opening Stock", "Quantity",
+{ "Outward ID", "Outward Date", "Slip No","Category", "Inventory", "Measurement Unit", "Opening Stock", "Quantity",
 		"Closing Stock", "Warehouse", "Contractor", "Building Unit", "Final Location" })
 public class OutwardInventoryExportDAO2
 {
@@ -33,6 +33,9 @@ public class OutwardInventoryExportDAO2
 
 	@JsonProperty("Measurement Unit")
 	String measurementUnit;
+
+	@JsonProperty("Category")
+	String category;
 
 	@JsonProperty("Opening Stock")
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
@@ -74,6 +77,15 @@ public class OutwardInventoryExportDAO2
 		this.contractor = oi.getContractor().getName();
 		this.usageLocation = oi.getUsageLocation().getLocationName();
 		this.openingStock = iol.getQuantity() + iol.getClosingStock();
+		this.category=iol.getProduct().getCategory().getCategoryName();
+	}
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
 	}
 
 	public Double getOpeningStock()

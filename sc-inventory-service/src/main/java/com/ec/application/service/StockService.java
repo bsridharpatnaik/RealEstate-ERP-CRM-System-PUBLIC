@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ec.application.data.*;
-import com.ec.application.model.StockInformationFromView;
+import com.ec.application.model.*;
 import com.ec.application.repository.*;
 import com.ec.common.Filters.StockInformationSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -28,9 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.Product;
-import com.ec.application.model.Stock;
-import com.ec.application.model.Warehouse;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 import com.ec.common.Filters.StockSpecification;
@@ -277,6 +274,10 @@ public class StockService
 	public void sendStockValidationEmail() throws Exception
 	{
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		emailHelper.sendEmailForStockValidation(stockValidationRepo.findAll(Sort.by(Sort.Direction.ASC, "inventory")));
+		List<StockValidation> data = stockValidationRepo.findAll(Sort.by(Sort.Direction.ASC, "inventory"));
+		if(data.size()>0)
+			emailHelper.sendEmailForStockValidation(data);
+		else
+			log.info("Stock Validation Successful. Skipping email.");
 	}
 }

@@ -14,7 +14,7 @@ import lombok.Data;
 
 @Data
 @JsonPropertyOrder(
-{ "Inward ID", "Date", "MRN/GRN", "Warehouse", "Supplier", "Purchase Order Date", "Purchase Order NO", "Inventory",
+{ "Inward ID", "Date", "MRN/GRN", "Warehouse", "Supplier", "Purchase Order Date", "Purchase Order NO","Category", "Inventory",
 		"Quantity", "Measurement Unit", "Closing Stock", "Vehicle No" })
 public class InwardInventoryExportDAO2
 {
@@ -27,6 +27,9 @@ public class InwardInventoryExportDAO2
 
 	@JsonProperty("MRN/GRN")
 	String MRN_GRN;
+
+	@JsonProperty("Category")
+	String category;
 
 	@JsonProperty("Warehouse")
 	String warehouse;
@@ -72,5 +75,6 @@ public class InwardInventoryExportDAO2
 		this.purchaseOrderDate = ii.getPurchaseOrderdate() == null ? null : ii.getPurchaseOrderdate();
 		this.purchaseOrderNO = ii.getPurchaseOrder() == null ? "" : ii.getPurchaseOrder();
 		this.inventory = iol.getProduct().getProductName();
+		this.category=iol.getProduct().getCategory().getCategoryName();
 	}
 }
