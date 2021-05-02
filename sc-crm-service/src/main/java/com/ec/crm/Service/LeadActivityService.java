@@ -9,6 +9,10 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.ec.crm.Data.*;
+import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Strategy.IStrategy;
+import com.ec.crm.Strategy.StrategyFactory;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,15 +24,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.crm.Data.AllActivitesForLeadDAO;
-import com.ec.crm.Data.FileInformationDAO;
-import com.ec.crm.Data.LeadActivityCreate;
-import com.ec.crm.Data.LeadActivityDropdownData;
-import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
-import com.ec.crm.Data.LeadPageData;
-import com.ec.crm.Data.NoteCreateData;
-import com.ec.crm.Data.RescheduleActivityData;
-import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
@@ -98,6 +93,12 @@ public class LeadActivityService
 
 	@Autowired
 	PaymentScheduleService psService;
+
+	@Autowired
+	InstanceService iService;
+
+	@Autowired
+	StrategyFactory strategyFactory;
 
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
@@ -871,28 +872,10 @@ public class LeadActivityService
 			throw new Exception("Lead with ID not found");
 		} else
 		{
-			if (leadOpt.get().getStatus().equals(LeadStatusEnum.Deal_Closed))
-			{
-				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
-				allowedActivities.add(ActivityTypeEnum.Call);
-				allowedActivities.add(ActivityTypeEnum.Meeting);
-				allowedActivities.add(ActivityTypeEnum.Reminder);
-				allowedActivities.add(ActivityTypeEnum.Email);
-				allowedActivities.add(ActivityTypeEnum.Message);
-				return allowedActivities;
-			} else
-			{
-				List<ActivityTypeEnum> allowedActivities = new ArrayList<ActivityTypeEnum>();
-				allowedActivities.add(ActivityTypeEnum.Call);
-				allowedActivities.add(ActivityTypeEnum.Meeting);
-				allowedActivities.add(ActivityTypeEnum.Reminder);
-				allowedActivities.add(ActivityTypeEnum.Message);
-				allowedActivities.add(ActivityTypeEnum.Deal_Close);
-				allowedActivities.add(ActivityTypeEnum.Deal_Lost);
-				allowedActivities.add(ActivityTypeEnum.Property_Visit);
-				allowedActivities.add(ActivityTypeEnum.Email);
-				return allowedActivities;
-			}
+			LeadStatusEnum leadStatus = leadOpt.get().getStatus();
+			InstanceEnum instance = iService.getInstance();
+			IStrategy strategy = strategyFactory.findStrategy(instance);
+			return strategy.fetchAllowedActivities(leadStatus);
 		}
 	}
 

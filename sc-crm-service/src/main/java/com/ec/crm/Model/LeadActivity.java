@@ -19,6 +19,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.ec.crm.Enums.DealLostReasonEnum;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
@@ -93,6 +94,9 @@ public class LeadActivity extends ReusableFields implements Serializable
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	ActivityTypeEnum activityType;
+
+	@Enumerated(EnumType.STRING)
+	DealLostReasonEnum dealLostReason;
 
 	@Formula("(SELECT CASE WHEN count(la.leadactivity_id)>0 THEN true ELSE false END from customer_lead cl "
 			+ "INNER  JOIN LeadActivity la on la.lead_id=cl.lead_id LEFT OUTER JOIN LeadActivity la2 on "

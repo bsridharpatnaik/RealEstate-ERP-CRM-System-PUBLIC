@@ -1,4 +1,4 @@
-package com.ec.crm.Data;
+package com.ec.crm.Enums;
 
 import java.util.ArrayList;
 import java.util.EnumSet;

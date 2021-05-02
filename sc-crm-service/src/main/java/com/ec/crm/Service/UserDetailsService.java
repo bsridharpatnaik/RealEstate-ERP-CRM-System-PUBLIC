@@ -4,6 +4,7 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Model.UserDetails;
 import com.ec.crm.Repository.UserDetailsRepo;
 import com.ec.crm.multitenant.ThreadLocalStorage;
@@ -11,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -38,6 +38,9 @@ public class UserDetailsService
 	private String profile;
 
 	@Autowired
+	InstanceService iService;
+
+	@Autowired
 	UserDetailsRepo udRepo;
 
 	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
@@ -50,10 +53,12 @@ public class UserDetailsService
 			log.info("Fetching userlist from database");
 			String dbName = "";
 			List<UserReturnData> userDetails = new ArrayList<UserReturnData>();
-			if(profile.contains("ec-"))
-				dbName = "egcity";
-			else if (profile.contains("sc-"))
-				dbName = "common";
+			InstanceEnum instance = iService.getInstance();
+			if (instance.equals(InstanceEnum.egcity))
+					dbName = "egcity";
+			else if (instance.equals(InstanceEnum.suncity))
+					dbName = "suncitynx";
+
 			ThreadLocalStorage.setTenantName(dbName);
 			List<UserDetails> userList =udRepo.findAll();
 			for(UserDetails user:userList) {
