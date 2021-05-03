@@ -10,6 +10,7 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 
 import com.ec.crm.Data.*;
+import com.ec.crm.Enums.DealLostReasonEnum;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
@@ -39,8 +40,6 @@ import com.ec.crm.Repository.CustomerDocumentRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -427,7 +426,7 @@ public class LeadActivityService
 		if (payload.getActivityDateTime() == null)
 			errorMessage = errorMessage == "" ? " Activity Date & Time, " : errorMessage + " Activity Date & Time, ";
 		if (payload.getTitle() == null || payload.getTitle() == "")
-			errorMessage = errorMessage == "" ? " Title, " : errorMessage + " itle, ";
+			errorMessage = errorMessage == "" ? " Title, " : errorMessage + " Title, ";
 
 		if (errorMessage != "")
 			throw new Exception("Fields Missing - " + errorMessage);
@@ -916,5 +915,9 @@ public class LeadActivityService
 				e.printStackTrace();
 			}
 		});
+	}
+
+	public DealLostReasonEnum[] getDealLostReasons() {
+		return DealLostReasonEnum.values();
 	}
 }
