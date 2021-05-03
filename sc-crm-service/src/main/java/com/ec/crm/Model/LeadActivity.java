@@ -110,6 +110,8 @@ public class LeadActivity extends ReusableFields implements Serializable
 	@Column(name = "isRescheduled", nullable = false)
 	private boolean isRescheduled = false;
 
+	Integer followUpCount;
+	
 	public LeadActivity()
 	{
 		super();

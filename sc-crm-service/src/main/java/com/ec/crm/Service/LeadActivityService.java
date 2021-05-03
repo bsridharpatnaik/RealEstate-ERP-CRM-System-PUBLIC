@@ -583,7 +583,7 @@ public class LeadActivityService
 			else
 				newActivity.setDescription(leadActivity.getDescription());
 		}
-		// newActivity.setDuration(leadActivity.getDuration());
+		newActivity.setFollowUpCount(leadActivity.getFollowUpCount()==null?1:leadActivity.getFollowUpCount()+1);
 		newActivity.setIsOpen(true);
 		newActivity.setLead(leadActivity.getLead());
 		newActivity.setTags(newTags);
