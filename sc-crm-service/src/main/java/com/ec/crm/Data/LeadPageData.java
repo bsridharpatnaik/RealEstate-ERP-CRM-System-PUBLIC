@@ -43,7 +43,9 @@ public class LeadPageData
 	
 	@JsonSerialize(using=ToUsernameSerializer.class)
 	Long assigneeId;
-	
+
+	Integer followUpCount;
+
 	public LeadPageData() {
 		super();
 		// TODO Auto-generated constructor stub
@@ -59,5 +61,6 @@ public class LeadPageData
 		this.leadStatus=la.getLead().getStatus();
 		this.isOpen=la.getIsOpen();
 		this.assigneeId = la.getLead().getAsigneeId();
+		this.followUpCount = la.getFollowUpCount()==null?null:la.getFollowUpCount();
 	}
 }

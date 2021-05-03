@@ -690,9 +690,9 @@ public class LeadActivityService
 		Page<LeadPageData> pagedata = leadActivityList.map(this::mapLeadActivityPage);
 		leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
 		log.info("Setting dropdown data");
-		leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.fetchData("lead"));
+		leadActivityListWithTypeAheadData.setDropdownData(null);
 		log.info("Setting typeahead data");
-		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.fetchTypeAheadForLeadGlobalSearch());
+		leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(null);
 		return leadActivityListWithTypeAheadData;
 	}
 
@@ -712,6 +712,7 @@ public class LeadActivityService
 			l.setMobileNumber(la.getLead().getPrimaryMobile());
 		else
 			l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
+		l.setFollowUpCount(la.getFollowUpCount()==null?null:la.getFollowUpCount());
 		return l;
 	}
 
