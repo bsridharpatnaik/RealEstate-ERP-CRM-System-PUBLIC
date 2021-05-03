@@ -9,6 +9,7 @@ import javax.persistence.Enumerated;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import com.ec.crm.Enums.DealLostReasonEnum;
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Enums.ActivityTypeEnum;
@@ -36,6 +37,8 @@ public class LeadActivityCreate
 	Long duration;
 	String description;
 	List<String> tags;
+	@Enumerated(EnumType.STRING)
+	DealLostReasonEnum dealLostReason;
 	public LeadActivityCreate() {
 		super();
 		// TODO Auto-generated constructor stub

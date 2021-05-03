@@ -43,7 +43,6 @@ import com.ec.crm.ReusableClasses.ReusableMethods;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@Slf4j
 @Transactional(rollbackFor = Exception.class)
 public class LeadActivityService
 {
@@ -408,6 +407,7 @@ public class LeadActivityService
 		leadActivity.setTags(payload.getTags());
 		leadActivity.setLead(lRepo.findById(payload.getLeadId()).get());
 		leadActivity.setDuration(payload.getDuration() == null ? 0 : payload.getDuration());
+		leadActivity.setDealLostReason(payload.getDealLostReason()==null?null:payload.getDealLostReason());
 
 		if (payload.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
 				|| payload.getActivityType().equals(ActivityTypeEnum.Deal_Close))
@@ -438,10 +438,16 @@ public class LeadActivityService
 			throw new Exception(
 					"Activity of type Payment cannot be generated from UI. It will be auto-created on adding new payment schedule");
 
+		if(payload.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
+				&& (payload.getDealLostReason()==null || payload.getDealLostReason().equals("")))
+			throw new Exception("Deal Lost Reason cannot be null for deal lost activity");
+
 		if (!leadOpt.isPresent())
 			throw new Exception("Lead not found by lead ID -" + payload.getLeadId());
 		else
 			return leadOpt.get();
+
+
 		/*
 		 * else if((leadOpt.get().getStatus().equals(LeadStatusEnum.New_Lead) ||
 		 * leadOpt.get().getStatus().equals(LeadStatusEnum.Deal_Lost)) &&
