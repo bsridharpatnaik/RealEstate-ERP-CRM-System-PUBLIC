@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 import com.ec.crm.Data.*;
@@ -97,6 +98,9 @@ public class LeadActivityService
 
 	@Autowired
 	StrategyFactory strategyFactory;
+
+	@Resource
+	InstanceEnum currentInstance;
 
 	Logger log = LoggerFactory.getLogger(LeadService.class);
 
@@ -879,8 +883,7 @@ public class LeadActivityService
 		} else
 		{
 			LeadStatusEnum leadStatus = leadOpt.get().getStatus();
-			InstanceEnum instance = iService.getInstance();
-			IStrategy strategy = strategyFactory.findStrategy(instance);
+			IStrategy strategy = strategyFactory.findStrategy(currentInstance);
 			return strategy.fetchAllowedActivities(leadStatus);
 		}
 	}

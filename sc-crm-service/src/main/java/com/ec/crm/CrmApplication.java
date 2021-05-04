@@ -2,6 +2,8 @@ package com.ec.crm;
 
 import java.util.Map;
 
+import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Service.InstanceService;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
@@ -26,6 +28,9 @@ public class CrmApplication extends SpringBootServletInitializer
 
 	@Autowired
 	UserDetailsService udService;
+
+	@Autowired
+	InstanceService iService;
 
 	public static void main(String[] args)
 	{

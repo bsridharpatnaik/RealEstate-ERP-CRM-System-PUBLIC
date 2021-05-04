@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 
 import javax.annotation.Resource;
 
+import com.ec.crm.Enums.InstanceEnum;
 import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,9 @@ public class DashboardService
 	ConvertionRatioRepo convertionRatioRepo;
 
 	@Resource
+	InstanceEnum currentInstance;
+
+	@Resource
 	private Map<Long, String> userIdNameMap;
 
 	Logger log = LoggerFactory.getLogger(DashboardService.class);
@@ -71,14 +75,14 @@ public class DashboardService
 		ExecutorService executors = Executors.newFixedThreadPool(8);
 		CyclicBarrier barrier = new CyclicBarrier(8);
 
-		executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetPropertyVisit(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetDealLost(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
-		executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap));
+		executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
+		executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
+		executors.submit(new SetPropertyVisit(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
+		executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
+		executors.submit(new SetDealLost(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
+		executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
+		executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
+		executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
 
 		boolean flag = false;
 		Date returnDateTime = new Date();
@@ -132,6 +136,14 @@ public class DashboardService
 			returndata.put("propertyVisits", propertyvisit);
 			returndata.put("dealsClosed", data.get(0).getConvertedcount());
 			returndata.put("inNegotiation", 2);
+		}
+		else
+		{
+			returndata.put("username", "NA");
+			returndata.put("leadsGenerated", 0);
+			returndata.put("propertyVisits", 0);
+			returndata.put("dealsClosed", 0);
+			returndata.put("inNegotiation", 0);
 		}
 		return returndata;
 	}

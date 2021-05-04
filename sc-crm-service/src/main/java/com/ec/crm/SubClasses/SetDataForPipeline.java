@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
+import com.ec.crm.Enums.InstanceEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +27,16 @@ public class SetDataForPipeline implements Runnable
 	Logger log = LoggerFactory.getLogger(SetLeadGenerated.class);
 	private HashMap<Long, LeadActivity> leadRecentActivityMapping;
 	LeadStatusEnum status;
-
+	InstanceEnum instance;
 	public SetDataForPipeline(CyclicBarrier barrier, PipelineAllReturnDAO pipelineAllReturnDAO, List<Lead> leads,
-			HashMap<Long, LeadActivity> leadRecentActivityMapping, LeadStatusEnum status)
+			HashMap<Long, LeadActivity> leadRecentActivityMapping, LeadStatusEnum status,InstanceEnum instance1)
 	{
 		this.status = status;
 		this.pipelineAllReturnDAO = pipelineAllReturnDAO;
 		this.barrier = barrier;
 		this.leads = leads;
 		this.leadRecentActivityMapping = leadRecentActivityMapping;
+		this.instance=instance1;
 	}
 
 	@Override

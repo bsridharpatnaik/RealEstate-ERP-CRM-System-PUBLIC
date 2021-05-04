@@ -3,10 +3,12 @@ package com.ec.crm.Strategy;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class StrategySuncity implements IStrategy {
     @Override
     public List<ActivityTypeEnum> fetchAllowedActivities(LeadStatusEnum status) {

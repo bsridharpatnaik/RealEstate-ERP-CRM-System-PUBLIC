@@ -1,5 +1,12 @@
-use businesspark; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
+use egcity; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 set @dbname='egcity';
+
+INSERT INTO `source`
+(
+`source_id`,
+`source_name`)
+VALUES
+(111,'Broker');
 
 -- Fetch lead with latest activity by date --
 

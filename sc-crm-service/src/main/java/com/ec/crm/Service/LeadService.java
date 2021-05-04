@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 
+import com.ec.crm.Enums.InstanceEnum;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
@@ -105,6 +107,9 @@ public class LeadService
 	ModelMapper leadToLeadDAOModelMapper;
 
 	Logger log = LoggerFactory.getLogger(LeadService.class);
+
+	@Resource
+	InstanceEnum currentInstance;
 
 	@Transactional
 	public Lead createLead(@Valid LeadCreateData payload) throws Exception
@@ -449,6 +454,11 @@ public class LeadService
 		if (payload.getCustomerName() == null || payload.getCustomerName().equals(""))
 			message = message == "" ? "Customer Name" : message + ", Customer Name";
 
+		if(currentInstance.equals(InstanceEnum.suncity))
+		{
+			if(payload.getPropertyType()==null)
+				message = message == "" ? "Property Type" : message + ", Property Type";
+		}
 		return message;
 	}
 
