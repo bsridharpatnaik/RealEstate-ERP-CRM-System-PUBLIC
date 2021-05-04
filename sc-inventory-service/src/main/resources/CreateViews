@@ -174,3 +174,52 @@ CREATE OR REPLACE VIEW stockInformation as
     INNER JOIN Warehouse w on w.warehouse_id = s.warehouseName
 	WHERE s.is_deleted=0
 	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
+
+
+##########
+USE kalpavrish;
+CREATE OR REPLACE view boq_status AS
+SELECT
+	ex.*,
+    ow.totalConsumedQuantity,
+    FORMAT(CASE WHEN ow.totalConsumedQuantity /totalExpectedQuantity*100 IS NULL THEN 0 ELSE  ow.totalConsumedQuantity /totalExpectedQuantity*100 END,2)+0 as consumedPercent
+FROM
+(
+SELECT
+	row_number() over (ORDER BY bt.typeId) as id,
+	bt.typeId,
+    bt.building_type,
+    ul.locationId,
+    ul.location_name,
+    p.productId,
+	p.product_name,
+    CASE WHEN SUM(bi.quantity) IS NULL THEN 0 ELSE SUM(bi.quantity) END as totalExpectedQuantity
+FROM
+	building_type bt
+INNER JOIN Usage_Location ul ON ul.typeId=bt.typeId AND ul.typeId IS NOT NULL AND ul.is_deleted=0
+INNER JOIN boq_inventory bi  ON ((ul.locationId = bi.locationId OR ul.typeId = bi.typeId) AND bi.is_deleted = 0)
+INNER JOIN Product p on p.productId = bi.productId AND p.is_deleted = 0
+WHERE bt.is_deleted = 0
+GROUP BY
+    bt.typeId,
+    bt.building_type,
+    ul.locationId,
+    ul.location_name,
+    p.productId,
+	p.product_name
+    ) as ex
+    INNER JOIN
+    (SELECT
+	ul.locationId,
+    ul.location_name,
+    p.productId,
+	p.product_name,
+	CASE WHEN SUM(ioe.quantity) IS NULL THEN 0 ELSE SUM(ioe.quantity) END as totalConsumedQuantity
+FROM
+	outward_inventory oi
+INNER JOIN outwardinventory_entry oie on oie.outwardid=oi.outwardid
+INNER JOIN inward_outward_entries ioe on ioe.entryid = oie.entryId AND ioe.is_deleted=0
+INNER JOIN Usage_Location ul ON oi.locationId=ul.locationId and ul.is_deleted=0
+INNER JOIN Product p on p.productId = ioe.productId AND p.is_deleted = 0
+GROUP BY locationId,location_name,productId,product_name) as ow
+ON ex.locationId=ow.locationId AND ex.productId=ow.productId;
