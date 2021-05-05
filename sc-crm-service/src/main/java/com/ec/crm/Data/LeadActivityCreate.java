@@ -41,7 +41,6 @@ public class LeadActivityCreate
 	DealLostReasonEnum dealLostReason;
 	public LeadActivityCreate() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 	
 }

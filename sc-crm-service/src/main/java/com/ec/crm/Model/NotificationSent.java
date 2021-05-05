@@ -41,6 +41,6 @@ public class NotificationSent extends ReusableFields implements Serializable
 	public NotificationSent()
 	{
 		super();
-		// TODO Auto-generated constructor stub
+		
 	}
 }

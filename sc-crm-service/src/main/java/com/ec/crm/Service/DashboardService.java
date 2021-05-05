@@ -12,6 +12,9 @@ import java.util.concurrent.Executors;
 import javax.annotation.Resource;
 
 import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Strategy.IStrategy;
+import com.ec.crm.Strategy.StrategyFactory;
+import com.ec.crm.SubClasses.*;
 import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +30,6 @@ import com.ec.crm.Repository.ConvertionRatioRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.StagnantStatsRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
-import com.ec.crm.SubClasses.SetActivitiesCreated;
-import com.ec.crm.SubClasses.SetDealClosed;
-import com.ec.crm.SubClasses.SetDealLost;
-import com.ec.crm.SubClasses.SetLeadGenerated;
-import com.ec.crm.SubClasses.SetPendingActivities;
-import com.ec.crm.SubClasses.SetPropertyVisit;
-import com.ec.crm.SubClasses.SetTodaysActivities;
-import com.ec.crm.SubClasses.SetUpcomingActivities;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +50,9 @@ public class DashboardService
 
 	@Resource
 	InstanceEnum currentInstance;
+
+	@Autowired
+	StrategyFactory strategyFactory;
 
 	@Resource
 	private Map<Long, String> userIdNameMap;
@@ -83,7 +81,7 @@ public class DashboardService
 		executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
 		executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
 		executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
-
+		executors.submit(new SetDealLostReasons(barrier, dashboardPipelineReturnData, data, userIdNameMap,currentInstance));
 		boolean flag = false;
 		Date returnDateTime = new Date();
 		while (flag == false)
@@ -116,16 +114,18 @@ public class DashboardService
 
 	public List<ConversionRatio> conversionratio()
 	{
-		return convertionRatioRepo.findAll();
+		IStrategy strategy = strategyFactory.findStrategy(currentInstance);
+		return strategy.fetchConversionRatio();
 	}
 
 	public List<StagnantStats> returnStagnantStats()
 	{
-		return stagnantStatsRepo.findAll();
+		IStrategy strategy = strategyFactory.findStrategy(currentInstance);
+		return strategy.returnStagnantStats();
 	}
 
 	public Map topperformer()
-	{ // TODO Auto-generated method stub
+	{
 		List<ConversionRatio> data = convertionRatioRepo.gettopperformer();
 		Map returndata = new HashMap<>();
 		if(data.size()>0) {

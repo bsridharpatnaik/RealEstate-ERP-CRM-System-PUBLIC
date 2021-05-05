@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Subselect;
 import org.hibernate.envers.Audited;
@@ -16,6 +17,7 @@ import lombok.Data;
 @Subselect("select * from stangnantdetails")
 @Immutable
 @Data
+@NoArgsConstructor
 public class StagnantStats 
 {
 	private static final long serialVersionUID = 1L;
@@ -35,4 +37,12 @@ public class StagnantStats
 	
 	@Column(name="greaterthan30days")
 	Integer greaterThan30Days;
+
+	public StagnantStats(StagnantStatsPropertyType st) {
+		this.assigneename = st.getProperty_type();
+		this.greaterThan30Days = st.getGreaterThan30Days();
+		this.lessThan10Days = st.getLessThan10Days();
+		this.tenTo20Days = st.getTenTo20Days();
+		this.twentyTo30Days = st.getTwentyTo30Days();
+	}
 }

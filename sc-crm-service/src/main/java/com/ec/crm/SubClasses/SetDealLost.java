@@ -46,7 +46,7 @@ public class SetDealLost implements Runnable {
                     {
                         try {
                             return idNameMap.get(c.getLead().getAsigneeId());
-                        } catch (Exception e) { // TODO Auto-generated catch block
+                        } catch (Exception e) { 
                             log.error(e.getMessage());
                             e.printStackTrace();
                         }
@@ -59,7 +59,7 @@ public class SetDealLost implements Runnable {
                     {
                         try {
                             return c.getLead().getPropertyType();
-                        } catch (Exception e) { // TODO Auto-generated catch block
+                        } catch (Exception e) { 
                             log.error(e.getMessage());
                             e.printStackTrace();
                         }
@@ -69,10 +69,10 @@ public class SetDealLost implements Runnable {
         try {
             barrier.await();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+            
             e.printStackTrace();
         } catch (BrokenBarrierException e) {
-            // TODO Auto-generated catch block
+            
             e.printStackTrace();
         }
     }

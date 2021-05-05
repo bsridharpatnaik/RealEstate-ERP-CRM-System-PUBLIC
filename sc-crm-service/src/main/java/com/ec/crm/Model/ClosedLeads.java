@@ -45,7 +45,6 @@ public class ClosedLeads extends ReusableFields implements Serializable
 	public ClosedLeads()
 	{
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	private static final long serialVersionUID = 1L;

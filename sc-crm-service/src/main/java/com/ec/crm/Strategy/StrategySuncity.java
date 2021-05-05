@@ -3,13 +3,28 @@ package com.ec.crm.Strategy;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Model.ConversionRatio;
+import com.ec.crm.Model.ConversionRatioPropertyType;
+import com.ec.crm.Model.StagnantStats;
+import com.ec.crm.Repository.ConvertionRatioPropertyTypeRepo;
+import com.ec.crm.Repository.StagnantStatsPropertyTypeRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
+
 @Component
 public class StrategySuncity implements IStrategy {
+
+    @Autowired
+    ConvertionRatioPropertyTypeRepo convertionRatioRepo;
+
+    @Autowired
+    StagnantStatsPropertyTypeRepo stagnantStatsRepo;
+
     @Override
     public List<ActivityTypeEnum> fetchAllowedActivities(LeadStatusEnum status) {
 
@@ -40,5 +55,21 @@ public class StrategySuncity implements IStrategy {
     @Override
     public InstanceEnum getStrategyName() {
         return InstanceEnum.suncity;
+    }
+
+    @Override
+    public List<ConversionRatio> fetchConversionRatio() {
+        List<ConversionRatio> cr = convertionRatioRepo.findAll().stream()
+                                                                .map(c -> new ConversionRatio(c))
+                                                                .collect(toList());
+        return cr;
+    }
+
+    @Override
+    public List<StagnantStats> returnStagnantStats() {
+        List<StagnantStats> ss = stagnantStatsRepo.findAll().stream()
+                                                            .map(c -> new StagnantStats(c))
+                                                            .collect(toList());
+        return ss;
     }
 }

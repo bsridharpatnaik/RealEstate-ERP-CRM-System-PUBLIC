@@ -41,7 +41,7 @@ public class PropertyType extends ReusableFields implements Serializable
 	public PropertyType()
 	{
 		super();
-		// TODO Auto-generated constructor stub
+		
 	}
 
 	private static final long serialVersionUID = 1L;

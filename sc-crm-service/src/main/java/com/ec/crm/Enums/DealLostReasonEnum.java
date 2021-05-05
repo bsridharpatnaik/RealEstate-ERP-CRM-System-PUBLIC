@@ -6,5 +6,7 @@ public enum DealLostReasonEnum {
     Plot_Area_Small,
     Price_High,
     Budget_Issue,
-    Not_Interested;
+    Not_Interested,
+    Empty;
+
 }

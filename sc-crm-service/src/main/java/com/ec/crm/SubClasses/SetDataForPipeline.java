@@ -62,7 +62,7 @@ public class SetDataForPipeline implements Runnable
 						LeadStatusEnum.Deal_Closed, leadRecentActivityMapping));
 		} catch (Exception e1)
 		{
-			// TODO Auto-generated catch block
+			
 			e1.printStackTrace();
 		}
 		log.info("Completed stats for Lead Generated");
@@ -71,11 +71,11 @@ public class SetDataForPipeline implements Runnable
 			barrier.await();
 		} catch (InterruptedException e)
 		{
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		} catch (BrokenBarrierException e)
 		{
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 	}

@@ -42,7 +42,7 @@ public class ToUsernameSerializer extends JsonSerializer<Long>
 					jgen.writeString(username);
 				} catch (Exception e)
 				{
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
 			} else

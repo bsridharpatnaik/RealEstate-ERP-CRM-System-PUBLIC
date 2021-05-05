@@ -3,6 +3,11 @@ package com.ec.crm.Strategy;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
+import com.ec.crm.Model.ConversionRatio;
+import com.ec.crm.Model.StagnantStats;
+import com.ec.crm.Repository.ConvertionRatioRepo;
+import com.ec.crm.Repository.StagnantStatsRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -10,6 +15,13 @@ import java.util.List;
 
 @Component
 public class StarategyEgcity implements IStrategy {
+
+    @Autowired
+    StagnantStatsRepo stagnantStatsRepo;
+
+    @Autowired
+    ConvertionRatioRepo convertionRatioRepo;
+
     @Override
     public List<ActivityTypeEnum> fetchAllowedActivities(LeadStatusEnum status) {
 
@@ -40,5 +52,15 @@ public class StarategyEgcity implements IStrategy {
     @Override
     public InstanceEnum getStrategyName() {
         return InstanceEnum.egcity;
+    }
+
+    @Override
+    public List<ConversionRatio> fetchConversionRatio() {
+       return convertionRatioRepo.findAll();
+    }
+
+    @Override
+    public List<StagnantStats> returnStagnantStats() {
+         return stagnantStatsRepo.findAll();
     }
 }
