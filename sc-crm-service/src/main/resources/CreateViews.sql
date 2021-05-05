@@ -119,7 +119,7 @@ DEALLOCATE PREPARE stmt;
 
 --       FETCH Stagnant Leads BY Property Type--
 CREATE OR REPLACE VIEW stangnant_details_proptype AS
-SELECT CASE WHEN assigneename IS NULL THEN 'OTHERS' ELSE assigneename END,
+SELECT CASE WHEN propertyType IS NULL THEN 'OTHERS' ELSE propertyType END as 'property_type',
        Sum(CASE
              WHEN stagnantdays = '<10 Days' THEN c
              ELSE 0
@@ -136,7 +136,7 @@ SELECT CASE WHEN assigneename IS NULL THEN 'OTHERS' ELSE assigneename END,
              WHEN stagnantdays = '>30 Days' THEN c
              ELSE 0
            END) AS 'greaterThan30Days'
-FROM   (SELECT cl.propertytype   AS assigneeName,
+FROM   (SELECT cl.propertytype   AS propertyType,
                Count(cl.lead_id) AS c,
                CASE WHEN Datediff(Now(), la1.updated_at)>=10
        AND Datediff(Now(), la1.updated_at)<20 THEN '10-20 Days' WHEN Datediff(
@@ -158,12 +158,13 @@ FROM   (SELECT cl.propertytype   AS assigneeName,
                                )
         WHERE  cl.is_deleted=0 AND cl.status NOT IN ('Deal_Lost', 'Deal_Closed')
        AND
-       la2.leadactivity_id IS NULL GROUP BY assigneename, stagnantdays) AS tx
-GROUP  BY assigneename;
-               
-               
--- CREATE OR REPLACE view convertion_ratio_prop_type AS
-SELECT y.propertyType AS 'propertyType',
+       la2.leadactivity_id IS NULL GROUP BY propertyType, stagnantdays) AS tx
+GROUP  BY propertyType;
+
+
+CREATE OR REPLACE view convertion_ratio_prop_type AS
+SELECT
+		y.propertyType AS 'propertyType',
        totalcount,
        CASE
 		WHEN convertedcount IS NULL THEN 0
