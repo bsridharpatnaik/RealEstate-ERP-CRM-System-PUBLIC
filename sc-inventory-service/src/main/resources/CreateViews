@@ -223,3 +223,32 @@ INNER JOIN Usage_Location ul ON oi.locationId=ul.locationId and ul.is_deleted=0
 INNER JOIN Product p on p.productId = ioe.productId AND p.is_deleted = 0
 GROUP BY locationId,location_name,productId,product_name) as ow
 ON ex.locationId=ow.locationId AND ex.productId=ow.productId;
+
+-- Historical Closing Stock #################
+use egcity;
+select
+		ai1.ProductId as productId,
+        ai1.Product_name as product_name,
+        p.reorderQuantity,
+        p.measurementUnit,
+        c.category_name,
+        ROUND(SUM(ai1.closingstock),2) as totalQuantityInHand,
+        CASE WHEN ROUND(SUM(ai1.closingstock),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
+        JSON_ARRAYAGG(JSON_OBJECT(
+			'warehouseName',ai1.warehousename,
+            'quantityInHand',ai1.closingstock,
+            'measurementUnit',p.measurementUnit
+            )) as detailedStock
+FROM all_inventory ai1
+INNER JOIN
+	(SELECT
+		Productid,
+        warehouseid,
+        MIN(id) as id
+	FROM all_inventory ai
+    WHERE ai.date<='2021-03-01'
+    GROUP BY Productid,warehouseid
+    ) AS ai2  ON ai1.id=ai2.id
+INNER JOIN Product p on p.productId=ai1.ProductId
+INNER JOIN Category c on p.categoryId=c.categoryId
+GROUP BY ai1.ProductId,ai1.Product_name,p.reorderQuantity,p.measurementUnit,c.category_name;

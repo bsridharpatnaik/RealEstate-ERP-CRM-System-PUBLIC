@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.ec.crm.Data.MapForDashboardStatsDAO;
 import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Enums.PropertyTypeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,7 @@ public class SetLeadGenerated implements Runnable {
                             {
 
                                 try {
-                                    return c.getLead().getPropertyType();
+                                    return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
                                 } catch (Exception e) {
                                     log.error(e.getMessage());
                                     e.printStackTrace();

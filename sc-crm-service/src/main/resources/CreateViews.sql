@@ -1,7 +1,7 @@
-use egcity; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
-set @dbname='egcity';
+use businesspark; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
+set @dbname='common';
 
-INSERT INTO `source`
+INSERT IGNORE INTO `source`
 (
 `source_id`,
 `source_name`)
@@ -147,9 +147,9 @@ FROM   (SELECT cl.propertytype   AS propertyType,
        Now(),
        la1.updated_at) <10 THEN '<10 Days' END AS 'StagnantDays'
         FROM   customer_lead cl
-               INNER JOIN leadactivity la1
+               INNER JOIN LeadActivity la1
                        ON cl.lead_id = la1.lead_id
-               LEFT OUTER JOIN leadactivity la2
+               LEFT OUTER JOIN LeadActivity la2
                             ON ( cl.lead_id = la2.lead_id
                                  AND ( la1.updated_at < la2.updated_at
                                         OR ( la1.updated_at = la2.updated_at
@@ -161,6 +161,7 @@ FROM   (SELECT cl.propertytype   AS propertyType,
        la2.leadactivity_id IS NULL GROUP BY propertyType, stagnantdays) AS tx
 GROUP  BY propertyType;
 
+--    Fetch Conversion Ratio Property Type
 
 CREATE OR REPLACE view convertion_ratio_prop_type AS
 SELECT

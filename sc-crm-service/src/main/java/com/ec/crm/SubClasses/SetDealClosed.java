@@ -7,6 +7,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
 import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Enums.PropertyTypeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +58,7 @@ public class SetDealClosed implements Runnable {
                     data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").collect(Collectors.groupingBy(c ->
                     {
                         try {
-                            return c.getLead().getPropertyType();
+                            return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
                         } catch (Exception e) { 
                             log.error(e.getMessage());
                             e.printStackTrace();
