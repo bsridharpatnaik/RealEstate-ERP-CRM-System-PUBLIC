@@ -1,8 +1,14 @@
 package com.ec.application.controller;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.*;
+import com.ec.application.model.StockInformationFromView;
+import com.ec.application.repository.StockInformationRepo;
 import com.ec.application.service.StockInformationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -28,56 +34,51 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/stock")
-public class StockController
-{
-	@Autowired
-	StockService stockService;
+public class StockController {
+    @Autowired
+    StockService stockService;
 
-	@PostMapping(produces= MediaType.APPLICATION_JSON_VALUE)
-	public StockInformationV2 getAllStocks(
-			@PageableDefault(page = 0, size = 10, sort = "productName", direction = Direction.ASC) Pageable pageable,
-			@RequestBody FilterDataList filterDataList)
-	{
-		return stockService.fetchStockInformation(pageable,filterDataList);
-	}
+    @Autowired
+    StockInformationRepo sRepo;
 
-	@PostMapping("/export")
-	@ResponseStatus(HttpStatus.OK)
-	public List<StockInformationExportDAO> returnAllStockForExport(@RequestBody FilterDataList filterDataList)
-			throws Exception
-	{
-		return stockService.findStockForAllForExport(filterDataList);
-	}
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public StockInformationV2 getAllStocks(
+            @PageableDefault(page = 0, size = 10, sort = "productName", direction = Direction.ASC) Pageable pageable,
+            @RequestBody FilterDataList filterDataList) throws ParseException {
+        return stockService.fetchStockInformation(pageable, filterDataList);
+    }
 
-	@PostMapping("/current")
-	public List<ProductIdAndStockProjection> returnStockForProductWarehouse(
-			@RequestBody CurrentStockRequest currentStockRequest)
-	{
-		return stockService.findStockForProductListWarehouse(currentStockRequest);
-	}
+    @PostMapping("/export")
+    @ResponseStatus(HttpStatus.OK)
+    public List<StockInformationExportDAO> returnAllStockForExport(@RequestBody FilterDataList filterDataList)
+            throws Exception {
+        return stockService.findStockForAllForExport(filterDataList);
+    }
 
-	@GetMapping("/current")
-	public double getStockForProductWarehouse(@RequestParam Long productId, @RequestParam Long warehouseId)
-	{
-		Double currentStock;
-		currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
-		return currentStock == null ? 0 : currentStock;
-	}
+    @PostMapping("/current")
+    public List<ProductIdAndStockProjection> returnStockForProductWarehouse(
+            @RequestBody CurrentStockRequest currentStockRequest) {
+        return stockService.findStockForProductListWarehouse(currentStockRequest);
+    }
 
-	@GetMapping("/getfilterdropdown")
-	public NameAndProjectionDataForDropDown getDropdownValuesForFilter()
-	{
+    @GetMapping("/current")
+    public double getStockForProductWarehouse(@RequestParam Long productId, @RequestParam Long warehouseId) {
+        Double currentStock;
+        currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
+        return currentStock == null ? 0 : currentStock;
+    }
 
-		return stockService.getStockDropdownValues();
-	}
+    @GetMapping("/getfilterdropdown")
+    public NameAndProjectionDataForDropDown getDropdownValuesForFilter() throws ParseException {
+        return stockService.getStockDropdownValues();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

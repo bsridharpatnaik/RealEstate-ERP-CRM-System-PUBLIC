@@ -1,5 +1,6 @@
 package com.ec.application.repository;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.LockModeType;
