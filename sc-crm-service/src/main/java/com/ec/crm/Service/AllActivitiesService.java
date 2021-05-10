@@ -25,7 +25,7 @@ import com.ec.crm.Data.PipelineWithTotalReturnDAO;
 import com.ec.crm.Data.PlannerAllReturnDAO;
 import com.ec.crm.Data.PlannerSingleReturnDAO;
 import com.ec.crm.Data.PlannerWithTotalReturnDAO;
-import com.ec.crm.Data.StagnatedEnum;
+import com.ec.crm.Enums.StagnatedEnum;
 import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
@@ -39,7 +39,6 @@ import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service

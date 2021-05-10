@@ -13,4 +13,5 @@ public class PipelineAndActivitiesForDashboard
 	MapForPipelineAndActivities todaysActivities;
 	MapForPipelineAndActivities pendingActivities;
 	MapForPipelineAndActivities upcomingActivities;
+	MapForPipelineAndActivities dealLostReasons;
 }

@@ -2,12 +2,9 @@ package com.ec.crm.Filters;
 
 import java.util.List;
 
+import com.ec.crm.Enums.*;
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ec.crm.Enums.ActivityTypeEnum;
-import com.ec.crm.Enums.LeadStatusEnum;
-import com.ec.crm.Enums.PropertyTypeEnum;
-import com.ec.crm.Enums.SentimentEnum;
 import com.ec.crm.Model.Address_;
 import com.ec.crm.Model.Broker_;
 import com.ec.crm.Model.LeadActivity;
@@ -46,6 +43,8 @@ public class ActivitySpecifications
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
 		List<String> stagnantStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stagnantStatus");
 		List<String> loanStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "loanStatus");
+		List<String> dealLostReason = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "dealLostReason");
+
 		List<String> showOnlyLatest = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyLatest");
 		List<String> showRescheduled = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"showRescheduled");
@@ -146,6 +145,10 @@ public class ActivitySpecifications
 		if (leadStatus != null && leadStatus.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildEnumFieldEquals(LeadActivity_.LEAD,
 					Lead_.STATUS, leadStatus, LeadStatusEnum.class));
+
+		if (dealLostReason != null && dealLostReason.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereEnumFieldEquals(LeadActivity_.dealLostReason.getName(),
+					dealLostReason, DealLostReasonEnum.class));
 
 		if (activityType != null && activityType.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ec.crm.Data.SalesFunnelDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -40,10 +41,14 @@ public class DashboardController
 		return dashboardService.customerpipeline(payload);
 	}
 
+	@GetMapping("/salesfunnel")
+	public List<SalesFunnelDTO> getSalesFunnel() {
+		return dashboardService.getSalesFunnel();
+	}
+
 	@GetMapping("/stagnant")
 	@ResponseStatus(HttpStatus.OK)
-	public List<StagnantStats> returnStagnantStats()
-	{
+	public List<StagnantStats> returnStagnantStats() {
 		return dashboardService.returnStagnantStats();
 	}
 

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.ec.crm.Enums.DealLostReasonEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -79,6 +80,12 @@ public class LeadActivityController
 	public List<ActivityTypeEnum> getValidActivityType(@PathVariable long id) throws Exception
 	{
 		return laService.getAllowedActiviType(id);
+	}
+
+	@GetMapping("/deallostreasons")
+	public DealLostReasonEnum[] getDealLostReasons() throws Exception
+	{
+		return laService.getDealLostReasons();
 	}
 
 	@PostMapping("/create")

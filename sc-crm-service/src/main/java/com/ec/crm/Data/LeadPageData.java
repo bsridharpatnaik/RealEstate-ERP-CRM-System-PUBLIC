@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,8 @@ import Deserializers.ToUsernameSerializer;
 import lombok.Data;
 
 @Data
-public class LeadPageData 
+@NoArgsConstructor
+public class LeadPageData
 {
 	Long leadId;
 	
@@ -44,14 +46,9 @@ public class LeadPageData
 	@JsonSerialize(using=ToUsernameSerializer.class)
 	Long assigneeId;
 
-	String loanStatus;
-	
-	public LeadPageData() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
+	Integer followUpCount;
 
-	public LeadPageData(LeadActivity la) 
+	public void LeadPageData(LeadActivity la)
 	{
 		this.leadId = la.getLead().getLeadId();
 		this.name = la.getLead().getCustomerName();
@@ -61,6 +58,7 @@ public class LeadPageData
 		this.leadStatus=la.getLead().getStatus();
 		this.isOpen=la.getIsOpen();
 		this.assigneeId = la.getLead().getAsigneeId();
+		this.followUpCount = la.getFollowUpCount()==null?null:la.getFollowUpCount();
 		this.loanStatus=la.getLead().getLoanStatus();
 	}
 }

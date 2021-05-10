@@ -6,6 +6,7 @@ import java.util.List;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
+import com.ec.crm.Enums.DealLostReasonEnum;
 import org.mapstruct.Mapping;
 import org.springframework.lang.NonNull;
 
@@ -52,6 +53,11 @@ public class LeadActivityOnLeadInformationDTO
 	
 	@Enumerated(EnumType.STRING)
 	ActivityTypeEnum activityType;
-	
+
+	@Enumerated(EnumType.STRING)
+	DealLostReasonEnum dealLostReason;
+
+	Integer followUpCount;
+
 	Boolean isRevertable;
 }

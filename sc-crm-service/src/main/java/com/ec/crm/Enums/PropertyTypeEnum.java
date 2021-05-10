@@ -12,7 +12,9 @@ public enum PropertyTypeEnum implements Serializable
 { 
 	HOUSE_2_BHK,
 	HOUSE_3_BHK,
-	PLOT;
+	PLOT,
+	Multiple,
+	Empty;
 	
 	public PropertyTypeEnum setFromString(String name)
 	{

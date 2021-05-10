@@ -13,7 +13,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class PropertyTypeReturnDAO {
 	public PropertyTypeReturnDAO() {
-		// TODO Auto-generated constructor stub
 	}
 	Long propertyTypeId;
 

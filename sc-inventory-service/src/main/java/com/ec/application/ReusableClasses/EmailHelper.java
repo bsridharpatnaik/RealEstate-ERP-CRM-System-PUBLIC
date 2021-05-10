@@ -111,7 +111,7 @@ public class EmailHelper
 			log.info("Email trigerred for - "+javax.mail.Message.RecipientType.TO);
 			message.setRecipients(javax.mail.Message.RecipientType.TO,  parse);
 			
-			helper.setSubject("Stock Validation - "+new Date());
+			helper.setSubject(ThreadLocalStorage.getTenantName()+" - Stock Validation - "+new Date());
 			helper.setText(html, true);
 			Transport.send(message);
             log.info("Email Sent");

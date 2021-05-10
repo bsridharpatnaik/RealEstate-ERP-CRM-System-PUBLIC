@@ -3,6 +3,7 @@ package com.ec.crm.Data;
 import java.util.Date;
 
 import com.ec.crm.Enums.SentimentEnum;
+import com.ec.crm.Enums.StagnatedEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 

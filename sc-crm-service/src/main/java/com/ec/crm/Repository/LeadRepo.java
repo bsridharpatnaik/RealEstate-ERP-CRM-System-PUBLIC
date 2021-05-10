@@ -43,4 +43,7 @@ public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationEx
 
 	@Query(value = "SELECT DISTINCT primaryMobile from Lead m where m.asigneeId =:leadId ")
 	List<String> getAssignedLeadMobileNos(@Param("leadId") Long leadId);
+
+	@Query(value = "SELECT m from Lead m where m.status<>'Deal_Lost'")
+	List<Lead> getOpenLeads();
 }
