@@ -1,0 +1,16 @@
+create database common;
+create database suncitynx;
+create database kalpavrish;
+create database riddhisiddhi;
+create database smartcity;
+create database businesspark;
+INSERT INTO `role` (`name`) VALUES ('admin');
+INSERT INTO `role` (`name`) VALUES ('inventory-manager');
+INSERT INTO `role` (`name`) VALUES ('inventory-executive');
+INSERT INTO `role` (`name`) VALUES ('inventory');
+INSERT INTO `role` (`name`) VALUES ('CRM-Manager');
+INSERT INTO `role` (`name`) VALUES ('CRM');
+INSERT INTO `security_user` (`user_id`, `password`, `password_expired`, `status`, `user_name`) VALUES ('10001', '$2a$04$EkXqoj71td10Q0aOPts1yeaAPKJz6DUy0STutLCU0HbeYi2x3RDvm', b'0', b'1', 'sridhar');
+INSERT INTO `security_user` (`user_id`, `password`, `password_expired`, `status`, `user_name`) VALUES ('10002', '$2a$04$EkXqoj71td10Q0aOPts1yeaAPKJz6DUy0STutLCU0HbeYi2x3RDvm', b'0', b'1', 'system');
+INSERT INTO `user_role` (`user_id`, `role_name`) VALUES ('10002', 'admin');
+INSERT INTO `user_role` (`user_id`, `role_name`) VALUES ('10001', 'admin');
