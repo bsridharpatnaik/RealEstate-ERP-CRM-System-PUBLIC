@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
+import com.ec.crm.Enums.LoanStatusEnum;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -48,6 +49,8 @@ public class LeadPageData
 
 	Integer followUpCount;
 
+	LoanStatusEnum loanStatus;
+
 	public void LeadPageData(LeadActivity la)
 	{
 		this.leadId = la.getLead().getLeadId();
@@ -59,6 +62,6 @@ public class LeadPageData
 		this.isOpen=la.getIsOpen();
 		this.assigneeId = la.getLead().getAsigneeId();
 		this.followUpCount = la.getFollowUpCount()==null?null:la.getFollowUpCount();
-		this.loanStatus=la.getLead().getLoanStatus();
+		this.loanStatus=LoanStatusEnum.valueOf(la.getLead().getLoanStatus());
 	}
 }

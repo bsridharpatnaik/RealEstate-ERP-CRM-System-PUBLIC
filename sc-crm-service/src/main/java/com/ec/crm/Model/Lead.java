@@ -17,6 +17,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.ec.crm.Enums.LoanStatusEnum;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;

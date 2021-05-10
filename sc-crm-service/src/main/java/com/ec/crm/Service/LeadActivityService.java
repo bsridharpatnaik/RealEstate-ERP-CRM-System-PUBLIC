@@ -11,8 +11,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 import com.ec.crm.Data.*;
-import com.ec.crm.Enums.DealLostReasonEnum;
-import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Enums.*;
 import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
 import org.modelmapper.ModelMapper;
@@ -26,8 +25,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.crm.Enums.ActivityTypeEnum;
-import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Mapper.LeadActivityMapper;
@@ -655,7 +652,7 @@ public class LeadActivityService {
         else
             l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
         l.setFollowUpCount(la.getFollowUpCount() == null ? null : la.getFollowUpCount());
-		l.setLoanStatus(la.getLead().getLoanStatus()==null?null:la.getLead().getLoanStatus());
+		l.setLoanStatus(la.getLead().getLoanStatus()==null?null: LoanStatusEnum.valueOf(la.getLead().getLoanStatus()));
         return l;
     }
 
