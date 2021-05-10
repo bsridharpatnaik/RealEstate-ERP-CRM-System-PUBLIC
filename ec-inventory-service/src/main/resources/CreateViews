@@ -1,0 +1,230 @@
+-- ------------ Supplier  -------------------------------------------
+
+CREATE OR REPLACE view supplier 
+AS 
+  SELECT `c`.`contact_id`                AS `contact_id`, 
+         `c`.`name`                      AS `name`, 
+         `c`.`mobile_no`                 AS `mobile_no`, 
+         `c`.`email_id`                  AS `email_id`, 
+         `c`.`contact_type`              AS `contact_type`, 
+         `ci`.`contact_person`           AS `contact_person`, 
+         `ci`.`contact_person_mobile_no` AS `contact_person_mobile_no`, 
+         `ci`.`gst_number`               AS `gst_number`, 
+         `a`.`addr_line1`                AS `addr_line1`, 
+         `a`.`addr_line2`                AS `addr_line2`, 
+         `a`.`city`                      AS `city`, 
+         `a`.`state`                     AS `state`, 
+         `a`.`zip`                       AS `zip`, 
+         `c`.`created_at`                AS `created_at`, 
+         `c`.`updated_at`                AS `updated_at` 
+  FROM   ((`contact` `c` 
+           LEFT JOIN `contact_info` `ci` 
+                  ON(( `c`.`contact_id` = `ci`.`contact_id` ))) 
+          JOIN `address` `a` 
+            ON(( `a`.`addr_id` = `c`.`addr_id` ))) 
+  WHERE  ( ( `c`.`contact_type` = 'SUPPLIER' ) 
+           AND ( `ci`.`is_deleted` = 0 AND c.is_deleted=0) ); 
+
+
+-- ------------ Contractor  -------------------------------------------
+CREATE OR REPLACE view contractor 
+AS 
+  SELECT `c`.`contact_id`                AS `contact_id`, 
+         `c`.`name`                      AS `name`, 
+         `c`.`mobile_no`                 AS `mobile_no`, 
+         `c`.`email_id`                  AS `email_id`, 
+         `c`.`contact_type`              AS `contact_type`, 
+         `ci`.`contact_person`           AS `contact_person`, 
+         `ci`.`contact_person_mobile_no` AS `contact_person_mobile_no`, 
+         `ci`.`gst_number`               AS `gst_number`, 
+         `a`.`addr_line1`                AS `addr_line1`, 
+         `a`.`addr_line2`                AS `addr_line2`, 
+         `a`.`city`                      AS `city`, 
+         `a`.`state`                     AS `state`, 
+         `a`.`zip`                       AS `zip`, 
+         `c`.`created_at`                AS `created_at`, 
+         `c`.`updated_at`                AS `updated_at` 
+  FROM   ((`contact` `c` 
+           LEFT JOIN `contact_info` `ci` 
+                  ON(( `c`.`contact_id` = `ci`.`contact_id` ))) 
+          JOIN `address` `a` 
+            ON(( `a`.`addr_id` = `c`.`addr_id` ))) 
+  WHERE  ( ( `c`.`contact_type` = 'CONTRACTOR' ) 
+           AND ( `ci`.`is_deleted` = 0 AND c.is_deleted=0) ); 
+
+
+-- ------------ All Contacts  -------------------------------------------
+CREATE OR REPLACE VIEW AllContacts as 
+SELECT
+   c.contact_id,
+   c.name,
+   c.mobile_no,
+   c.email_id,
+   c.contact_type,
+   ci.contact_person,
+   ci.contact_person_mobile_no,
+   ci.gst_number,
+   a.addr_line1,
+   a.addr_line2,
+   a.city,
+   a.state,
+   a.zip 
+FROM
+   contact c 
+   LEFT JOIN
+      contact_info ci 
+      on c.contact_id = ci.contact_id 
+   INNER JOIN
+      address a 
+      on a.addr_id = c.addr_id 
+WHERE
+   (
+      ci.is_deleted = 0 
+      OR ci.is_deleted IS NULL
+   )
+   AND 
+   (
+      c.is_deleted = 0 
+      OR c.is_deleted IS NULL
+   )
+;
+
+-- Function 
+
+SET @var=0;
+delimiter //
+
+CREATE FUNCTION `func_inc_var_session`() RETURNS int
+    NO SQL
+    NOT DETERMINISTIC
+     begin
+      SET @var := @var + 1;
+      return @var;
+     end
+     //
+
+delimiter ;
+
+
+-- All Inventory
+
+CREATE OR replace VIEW all_inventory AS
+SELECT
+		-- convert(func_inc_var_session(),char) AS id,
+        row_number() over (ORDER BY tx.date desc,tx.type desc,tx.keyid desc) as id,
+		tx.*, 
+		p.product_name,
+        p.measurement_unit,
+         c.name, 
+         c.mobile_no, 
+         c.email_id, 
+         c.contact_type, 
+         w.warehouse_id, 
+         w.warehouse_name 
+  FROM   (SELECT 'inward'                         AS type, 
+                ii.inwardid as keyid ,
+                ioe.entryid as entryid,
+                 Date_format(ii.DATE, "%Y-%m-%d") AS date, 
+                 ii.contact_id                    AS contactid, 
+                 ii.warehouse_id                  AS warehouseid, 
+                 ioe.product_id                   AS productid, 
+                 ioe.quantity, 
+                 ioe.closing_stock, 
+                 ioe.created_at, 
+                 ioe.updated_at 
+          FROM   inward_inventory ii 
+                 inner join inwardinventory_entry iie 
+                         ON ii.inwardid = iie.inwardid 
+                 inner join inward_outward_entries ioe 
+                         ON iie.entry_id = ioe.entryid 
+          WHERE  ii.is_deleted = 0 
+          UNION ALL 
+          SELECT 'outward'                        AS type, 
+                  oi.outwardid as keyid, 
+                 -- concat(oi.outwardid,ioe.product_id) ,
+                 ioe.entryid as entryid,
+                 Date_format(oi.DATE, "%Y-%m-%d") AS date, 
+                 oi.contact_id                    AS contactid, 
+                 oi.warehouse_id                  AS warehouseid, 
+                 ioe.product_id                   AS productid, 
+                 ioe.quantity, 
+                 ioe.closing_stock, 
+                 ioe.created_at, 
+                 ioe.updated_at 
+          FROM   outward_inventory oi 
+                 inner join outwardinventory_entry oie 
+                         ON oi.outwardid = oie.outwardid 
+                 inner join inward_outward_entries ioe 
+                         ON oie.entry_id = ioe.entryid 
+          WHERE  oi.is_deleted = 0 
+          UNION ALL 
+          SELECT 'lost-damaged'                    AS type, 
+                lostdamagedid as keyid, 
+                lostdamagedid as entryid,
+                 Date_format(ldi.DATE, "%Y-%m-%d") AS date, 
+                 ''                                AS contactid, 
+                 ldi.warehouse_name                AS warehouseid, 
+                 ldi.product_id                    AS productid, 
+                 ldi.quantity, 
+                 ldi.closing_stock, 
+                 ldi.created_at, 
+                 ldi.updated_at 
+          FROM   lost_damaged_inventory ldi
+			where ldi.is_deleted = 0) AS tx 
+         left join AllContacts c 
+                ON c.contact_id = tx.contactid 
+         inner join warehouse w 
+                 ON w.warehouse_id = tx.warehouseid 
+		inner join product p on p.product_id = tx.productid
+	
+  ORDER  BY tx.date desc,tx.type desc,tx.keyid desc;
+  
+  
+  -- --------- Stock Verification ------------
+  create or replace view stock_verification as
+SELECT inw.inventory, 
+       ROUND(total_inward,2)                                     AS 'total_inward', 
+       ROUND(total_outward  ,2)                                  AS 'total_outward', 
+       ROUND(current_stock ,2)                                   AS 'current_stock', 
+       ROUND(total_inward - ( total_outward + current_stock ),2) AS 
+       'diff_in_Stock' 
+FROM   (SELECT p.product_name AS inventory, 
+               Sum(quantity)  AS total_inward 
+        FROM   inward_inventory ii 
+               INNER JOIN inwardinventory_entry iie 
+                       ON iie.inwardid = ii.inwardid 
+               INNER JOIN inward_outward_entries ioe 
+                       ON ioe.entryid = iie.entry_id 
+               INNER JOIN product p 
+                       ON p.product_id = ioe.product_id 
+        WHERE  ii.is_deleted = 0 
+        GROUP  BY p.product_name) AS inw 
+       INNER JOIN (SELECT p.product_name AS inventory, 
+                          Sum(quantity)  AS total_outward 
+                   FROM   outward_inventory oi 
+                          INNER JOIN outwardinventory_entry oie 
+                                  ON oie.outwardid = oi.outwardid 
+                          INNER JOIN inward_outward_entries ioe 
+                                  ON ioe.entryid = oie.entry_id 
+                          INNER JOIN product p 
+                                  ON p.product_id = ioe.product_id 
+                   WHERE  oi.is_deleted = 0 
+                   GROUP  BY p.product_name) AS outw 
+               ON outw.inventory = inw.inventory 
+       INNER JOIN (SELECT p.product_name          AS inventory, 
+                          Sum(s.quantity_in_hand) AS current_stock 
+                   FROM   stock s 
+                          INNER JOIN product p 
+                                  ON p.product_id = s.product_id 
+                   GROUP  BY p.product_name) AS stock 
+               ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0; 
+               
+-- --------- AI Inventory 2 ------------------
+CREATE OR REPLACE VIEW all_inventory2 as 
+select id,ai.date,ai.type, ai.entryid,ai.keyid,ai.contactid,ai.product_name,ai.measurement_unit,ai.warehouseid,productid,ai.quantity,ai.name,ai.mobile_no,ai.email_id,
+ai.contact_type,ai.warehouse_name,ai.created_at,ai.updated_at,
+((select case when sum(quantity) IS NULL THEN 0 ELSE sum(quantity) END from all_inventory ai1 where ai1.id>=ai.id and ai1.type='inward' and ai1.productid=ai.productid and ai1.warehouseid=ai.warehouseid)
+-(select case when sum(quantity) IS NULL THEN 0 ELSE sum(quantity) END  from all_inventory ai1 where ai1.id>=ai.id and ai1.type='outward' and ai1.productid=ai.productid and ai1.warehouseid=ai.warehouseid)
+-(select case when sum(quantity) IS NULL THEN 0 ELSE sum(quantity) END from all_inventory ai1 where ai1.id>=ai.id and ai1.type='lost-damaged' and ai1.productid=ai.productid and ai1.warehouseid=ai.warehouseid) 
+) as closing_stock from all_inventory ai
+;
