@@ -29,59 +29,51 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/machinery")
-public class MachineryController
-{
-	@Autowired
-	MachineryService machineryService;
+public class MachineryController {
+    @Autowired
+    MachineryService machineryService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public AllMachineriesWithNamesData returnFilteredMachineries(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-	{
-		return machineryService.findFilteredMachineriesWithTA(filterDataList, pageable);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public AllMachineriesWithNamesData returnFilteredMachineries(@RequestBody FilterDataList filterDataList,
+                                                                 @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable) {
+        return machineryService.findFilteredMachineriesWithTA(filterDataList, pageable);
+    }
 
-	@GetMapping("/{id}")
-	public Machinery findMachinerybyvehicleNoMachinerys(@PathVariable long id)
-	{
-		return machineryService.findSingleMachinery(id);
-	}
+    @GetMapping("/{id}")
+    public Machinery findMachinerybyvehicleNoMachinerys(@PathVariable long id) {
+        return machineryService.findSingleMachinery(id);
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteMachinery(@PathVariable Long id) throws Exception
-	{
-		machineryService.deleteMachinery(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteMachinery(@PathVariable Long id) throws Exception {
+        machineryService.deleteMachinery(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public Machinery createMachinery(@RequestBody Machinery payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Machinery createMachinery(@RequestBody Machinery payload) throws Exception {
 
-		return machineryService.createMachinery(payload);
-	}
+        return machineryService.createMachinery(payload);
+    }
 
-	@PutMapping("/{id}")
-	public Machinery updateMachinery(@PathVariable Long id, @RequestBody Machinery Machinery) throws Exception
-	{
-		return machineryService.updateMachinery(id, Machinery);
-	}
+    @PutMapping("/{id}")
+    public Machinery updateMachinery(@PathVariable Long id, @RequestBody Machinery Machinery) throws Exception {
+        return machineryService.updateMachinery(id, Machinery);
+    }
 
-	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIdAndNames()
-	{
-		return machineryService.findIdAndNames();
-	}
+    @GetMapping("/idandnames")
+    public List<IdNameProjections> returnIdAndNames() {
+        return machineryService.findIdAndNames();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

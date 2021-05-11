@@ -18,51 +18,46 @@ import com.ec.application.repository.WarehouseRepo;
 
 @Service
 @Transactional
-public class WarehouseService
-{
-	@Autowired
-	WarehouseRepo warehouseRepo;
+public class WarehouseService {
+    @Autowired
+    WarehouseRepo warehouseRepo;
 
-	Logger log = LoggerFactory.getLogger(WarehouseService.class);
+    Logger log = LoggerFactory.getLogger(WarehouseService.class);
 
-	public Page<Warehouse> findAll(Pageable pageable)
-	{
-		return warehouseRepo.findAll(pageable);
-	}
+    public Page<Warehouse> findAll(Pageable pageable) {
+        return warehouseRepo.findAll(pageable);
+    }
 
-	public Warehouse createWarehouse(Warehouse payload) throws Exception
-	{
-		if (payload.getWarehouseName() == null || payload.getWarehouseName().trim() == "")
-			throw new Exception("Warehouse Name cannot be empty.");
-		payload.setWarehouseName(payload.getWarehouseName().trim());
-		if (warehouseRepo.countByName(payload.getWarehouseName()) > 0)
-			throw new Exception("Warehouse already exists!");
-		else
-			return warehouseRepo.save(payload);
-	}
+    public Warehouse createWarehouse(Warehouse payload) throws Exception {
+        if (payload.getWarehouseName() == null || payload.getWarehouseName().trim() == "")
+            throw new Exception("Warehouse Name cannot be empty.");
+        payload.setWarehouseName(payload.getWarehouseName().trim());
+        if (warehouseRepo.countByName(payload.getWarehouseName()) > 0)
+            throw new Exception("Warehouse already exists!");
+        else
+            return warehouseRepo.save(payload);
+    }
 
-	public Warehouse updateWarehouse(Long id, Warehouse payload) throws Exception
-	{
-		if (payload.getWarehouseName() == null || payload.getWarehouseName().trim() == "")
-			throw new Exception("Warehouse Name cannot be empty.");
-		payload.setWarehouseName(payload.getWarehouseName().trim());
-		Optional<Warehouse> warehouseOpt = warehouseRepo.findById(id);
-		if (!warehouseOpt.isPresent())
-			throw new Exception("Warehouse with name not found");
+    public Warehouse updateWarehouse(Long id, Warehouse payload) throws Exception {
+        if (payload.getWarehouseName() == null || payload.getWarehouseName().trim() == "")
+            throw new Exception("Warehouse Name cannot be empty.");
+        payload.setWarehouseName(payload.getWarehouseName().trim());
+        Optional<Warehouse> warehouseOpt = warehouseRepo.findById(id);
+        if (!warehouseOpt.isPresent())
+            throw new Exception("Warehouse with name not found");
 
-		Warehouse warehouse = warehouseOpt.get();
+        Warehouse warehouse = warehouseOpt.get();
 
-		if (warehouse.getWarehouseName() != payload.getWarehouseName()
-				&& warehouseRepo.countByName(payload.getWarehouseName()) > 0)
-			throw new Exception("Warehouse already exists!");
+        if (warehouse.getWarehouseName() != payload.getWarehouseName()
+                && warehouseRepo.countByName(payload.getWarehouseName()) > 0)
+            throw new Exception("Warehouse already exists!");
 
-		warehouse.setWarehouseName(payload.getWarehouseName());
-		return warehouseRepo.save(warehouse);
-	}
+        warehouse.setWarehouseName(payload.getWarehouseName());
+        return warehouseRepo.save(warehouse);
+    }
 
-	public List<IdNameProjections> findIdAndNames()
-	{
-		// TODO Auto-generated method stub
-		return warehouseRepo.findIdAndNames();
-	}
+    public List<IdNameProjections> findIdAndNames() {
+        // TODO Auto-generated method stub
+        return warehouseRepo.findIdAndNames();
+    }
 }

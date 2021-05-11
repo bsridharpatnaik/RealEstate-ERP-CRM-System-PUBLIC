@@ -19,84 +19,81 @@ import com.ec.application.repository.WarehouseRepo;
 
 @Service
 @Transactional
-public class PopulateDropdownService
-{
+public class PopulateDropdownService {
 
-	@Autowired
-	LocationRepo locRepo;
+    @Autowired
+    LocationRepo locRepo;
 
-	@Autowired
-	MachineryRepo machineryRepo;
+    @Autowired
+    MachineryRepo machineryRepo;
 
-	@Autowired
-	WarehouseRepo warehouseRepo;
+    @Autowired
+    WarehouseRepo warehouseRepo;
 
-	@Autowired
-	ProductRepo productRepo;
+    @Autowired
+    ProductRepo productRepo;
 
-	@Autowired
-	CategoryRepo categoryRepo;
+    @Autowired
+    CategoryRepo categoryRepo;
 
-	@Autowired
-	LocationRepo locationRepo;
+    @Autowired
+    LocationRepo locationRepo;
 
-	@Autowired
-	SupplierRepo supplierRepo;
+    @Autowired
+    SupplierRepo supplierRepo;
 
-	@Autowired
-	ContractorRepo contractorRepo;
+    @Autowired
+    ContractorRepo contractorRepo;
 
-	@Autowired
-	UsageAreaRepo usageAreaRepo;
+    @Autowired
+    UsageAreaRepo usageAreaRepo;
 
-	Logger log = LoggerFactory.getLogger(PopulateDropdownService.class);
+    Logger log = LoggerFactory.getLogger(PopulateDropdownService.class);
 
-	public NameAndProjectionDataForDropDown fetchData(String page)
-	{
-		NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
-		switch (page)
-		{
-		// Case machinery on rent
-		case "mor":
-			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
-			morDropdownDataList.setMachinery(machineryRepo.findIdAndNames());
-			morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
-			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
-			break;
-		// case inward inventory
-		case "inward":
-			morDropdownDataList.setProduct(productRepo.findIdAndNames());
-			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
-			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
-			morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
-			break;
-		case "outward":
-			morDropdownDataList.setProduct(productRepo.findIdAndNames());
-			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
-			morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
-			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
-			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
-			morDropdownDataList.setUsageArea(usageAreaRepo.findIdAndNames());
-			break;
-		case "stock":
-			morDropdownDataList.setProduct(productRepo.findIdAndNames());
-			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
-			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
-			break;
-		case "lostdamaged":
-			morDropdownDataList.setProduct(productRepo.findIdAndNames());
-			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
-			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
-			break;
-		case "allinventory":
-			morDropdownDataList.setProduct(productRepo.findIdAndNames());
-			morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
-			morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
-			morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
-			morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
-			break;
-		}
-		return morDropdownDataList;
-	}
+    public NameAndProjectionDataForDropDown fetchData(String page) {
+        NameAndProjectionDataForDropDown morDropdownDataList = new NameAndProjectionDataForDropDown();
+        switch (page) {
+            // Case machinery on rent
+            case "mor":
+                morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
+                morDropdownDataList.setMachinery(machineryRepo.findIdAndNames());
+                morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+                morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
+                break;
+            // case inward inventory
+            case "inward":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+                break;
+            case "outward":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
+                morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
+                morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+                morDropdownDataList.setUsageArea(usageAreaRepo.findIdAndNames());
+                break;
+            case "stock":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+                break;
+            case "lostdamaged":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                break;
+            case "allinventory":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
+                morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+                break;
+        }
+        return morDropdownDataList;
+    }
 
 }

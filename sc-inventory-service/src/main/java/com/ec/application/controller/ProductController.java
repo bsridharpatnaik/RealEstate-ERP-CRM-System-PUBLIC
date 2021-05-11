@@ -32,78 +32,67 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/product")
-public class ProductController
-{
-	@Autowired
-	ProductService productService;
+public class ProductController {
+    @Autowired
+    ProductService productService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public Page<Product> returnFilteredProducts(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-			throws ParseException
-	{
-		return productService.findFilteredProductsWithTA(filterDataList, pageable);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public Page<Product> returnFilteredProducts(@RequestBody FilterDataList filterDataList,
+                                                @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
+            throws ParseException {
+        return productService.findFilteredProductsWithTA(filterDataList, pageable);
+    }
 
-	@GetMapping("/{id}")
-	public Product findProductbyvehicleNoProducts(@PathVariable long id) throws Exception
-	{
-		return productService.findSingleProduct(id);
-	}
+    @GetMapping("/{id}")
+    public Product findProductbyvehicleNoProducts(@PathVariable long id) throws Exception {
+        return productService.findSingleProduct(id);
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception
-	{
-		productService.deleteProduct(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public Product createProduct(@RequestBody ProductCreateData payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Product createProduct(@RequestBody ProductCreateData payload) throws Exception {
 
-		return productService.createProduct(payload);
-	}
+        return productService.createProduct(payload);
+    }
 
-	@PutMapping("/{id}")
-	public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception
-	{
-		return productService.updateProduct(id, Product);
-	}
+    @PutMapping("/{id}")
+    public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception {
+        return productService.updateProduct(id, Product);
+    }
 
-	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIdAndNames()
-	{
-		return productService.findIdAndNames();
-	}
+    @GetMapping("/idandnames")
+    public List<IdNameProjections> returnIdAndNames() {
+        return productService.findIdAndNames();
+    }
 
-	@GetMapping("/measurementunits/all")
-	public List<IdNameAndUnit> returnIdAndMU()
-	{
-		return productService.productMeasurementUnit();
-	}
+    @GetMapping("/measurementunits/all")
+    public List<IdNameAndUnit> returnIdAndMU() {
+        return productService.productMeasurementUnit();
+    }
 
-	@GetMapping("/typeahead/{name}")
-	public List<String> getTypeAhead(@PathVariable String name)
-	{
-		return productService.typeAheadDataList(name);
-	}
+    @GetMapping("/typeahead/{name}")
+    public List<String> getTypeAhead(@PathVariable String name) {
+        return productService.typeAheadDataList(name);
+    }
 
-	@GetMapping("/categorynames")
-	public List<IdNameProjections> getCategoryNamesforDropdown()
-	{
-		return productService.getIdAndNamesForCategoryDropdown();
-	}
+    @GetMapping("/categorynames")
+    public List<IdNameProjections> getCategoryNamesforDropdown() {
+        return productService.getIdAndNamesForCategoryDropdown();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

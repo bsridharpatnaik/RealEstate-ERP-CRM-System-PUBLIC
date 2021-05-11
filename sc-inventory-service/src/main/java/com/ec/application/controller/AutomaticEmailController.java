@@ -13,24 +13,21 @@ import com.ec.application.model.StockValidation;
 import com.ec.application.service.StockService;
 
 @RestController
-@RequestMapping(value="/email",produces = { "application/json", "text/json" })
-public class AutomaticEmailController 
-{
-	@Autowired
-	EmailHelper emailHelper;
-	
-	@Autowired
-	StockService stockService;
-	
-	@GetMapping("/stockupdate")
-	public void sendEmail() throws Exception
-	{
-		stockService.sendStockNotificationEmail();
-	}
-	
-	@GetMapping("/stockvalidation")
-	public void sendStockValidationEmail() throws Exception
-	{
-		stockService.sendStockValidationEmail();
-	}
+@RequestMapping(value = "/email", produces = {"application/json", "text/json"})
+public class AutomaticEmailController {
+    @Autowired
+    EmailHelper emailHelper;
+
+    @Autowired
+    StockService stockService;
+
+    @GetMapping("/stockupdate")
+    public void sendEmail() throws Exception {
+        stockService.sendStockNotificationEmail();
+    }
+
+    @GetMapping("/stockvalidation")
+    public void sendStockValidationEmail() throws Exception {
+        stockService.sendStockValidationEmail();
+    }
 }

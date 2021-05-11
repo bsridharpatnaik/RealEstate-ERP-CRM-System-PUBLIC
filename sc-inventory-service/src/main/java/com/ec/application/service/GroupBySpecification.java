@@ -25,34 +25,31 @@ import com.ec.application.model.Product_;
 
 @Service
 @Transactional
-public class GroupBySpecification
-{
-	@Autowired
-	EntityManager entityManager;
+public class GroupBySpecification {
+    @Autowired
+    EntityManager entityManager;
 
-	Logger log = LoggerFactory.getLogger(GroupBySpecification.class);
+    Logger log = LoggerFactory.getLogger(GroupBySpecification.class);
 
-	public <T> List<ProductGroupedDAO> findDataByConfiguration(Specification<T> spec, Class entityClazz,
-			String joinTable)
-	{
-		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<ProductGroupedDAO> query = builder.createQuery(ProductGroupedDAO.class);
-		Root<T> root = query.from(entityClazz);
-		Predicate p = spec.toPredicate(root, query, builder);
-		Join<T, InwardOutwardList> ioList = root.join(joinTable);
-		Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
-		query.multiselect(productList.get(Product_.PRODUCT_NAME), productList.get(Product_.MEASUREMENT_UNIT),
-				builder.sum(ioList.get(InwardOutwardList_.QUANTITY)));
-		query.groupBy(productList.get(Product_.PRODUCT_NAME), productList.get(Product_.MEASUREMENT_UNIT));
-		query.where(p);
-		List<ProductGroupedDAO> groupedData = fetchData(query);
-		return groupedData;
-	}
+    public <T> List<ProductGroupedDAO> findDataByConfiguration(Specification<T> spec, Class entityClazz,
+                                                               String joinTable) {
+        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<ProductGroupedDAO> query = builder.createQuery(ProductGroupedDAO.class);
+        Root<T> root = query.from(entityClazz);
+        Predicate p = spec.toPredicate(root, query, builder);
+        Join<T, InwardOutwardList> ioList = root.join(joinTable);
+        Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
+        query.multiselect(productList.get(Product_.PRODUCT_NAME), productList.get(Product_.MEASUREMENT_UNIT),
+                builder.sum(ioList.get(InwardOutwardList_.QUANTITY)));
+        query.groupBy(productList.get(Product_.PRODUCT_NAME), productList.get(Product_.MEASUREMENT_UNIT));
+        query.where(p);
+        List<ProductGroupedDAO> groupedData = fetchData(query);
+        return groupedData;
+    }
 
-	public <E> List<E> fetchData(CriteriaQuery<E> criteria)
-	{
-		TypedQuery<E> typedQuery = entityManager.createQuery(criteria);
-		List<E> resultList = typedQuery.getResultList();
-		return resultList;
-	}
+    public <E> List<E> fetchData(CriteriaQuery<E> criteria) {
+        TypedQuery<E> typedQuery = entityManager.createQuery(criteria);
+        List<E> resultList = typedQuery.getResultList();
+        return resultList;
+    }
 }

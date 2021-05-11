@@ -11,15 +11,13 @@ import com.ec.application.service.PopulateDropdownService;
 
 @RestController
 @RequestMapping("/dropdown")
-public class PopulateDropdownController 
-{
+public class PopulateDropdownController {
 
-	@Autowired
-	PopulateDropdownService pdService;
-	
-	@GetMapping("/{page}")
-	public NameAndProjectionDataForDropDown findDropdownValuesForMOR(@PathVariable String page) 
-	{
-		return pdService.fetchData(page);
-	}
+    @Autowired
+    PopulateDropdownService pdService;
+
+    @GetMapping("/{page}")
+    public NameAndProjectionDataForDropDown findDropdownValuesForMOR(@PathVariable String page) {
+        return pdService.fetchData(page);
+    }
 }

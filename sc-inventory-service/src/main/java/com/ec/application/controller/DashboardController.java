@@ -20,37 +20,33 @@ import com.ec.application.service.DashBoardService;
 
 @RestController
 @RequestMapping("/dashboard")
-public class DashboardController 
-{
-	@Autowired 
-	AllNotificationService allNotificationService;
-	
-	@Autowired
-	DashBoardService dashBoardService;
-	
-	@GetMapping
-	public DashBoardData fetchInventoryDashboard()
-	{
-		return dashBoardService.getContents();
-	}
-	
-	@GetMapping("/notification")
-	public ReturnAllNotificationsData fetchAllNotifications()
-	{
-		return allNotificationService.getAllNotifications();
-	}
-	
-	@DeleteMapping(value = "/notification/{id}")
-	public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception
-	{
-		allNotificationService.deleteNotification(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+public class DashboardController {
+    @Autowired
+    AllNotificationService allNotificationService;
+
+    @Autowired
+    DashBoardService dashBoardService;
+
+    @GetMapping
+    public DashBoardData fetchInventoryDashboard() {
+        return dashBoardService.getContents();
+    }
+
+    @GetMapping("/notification")
+    public ReturnAllNotificationsData fetchAllNotifications() {
+        return allNotificationService.getAllNotifications();
+    }
+
+    @DeleteMapping(value = "/notification/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception {
+        allNotificationService.deleteNotification(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
+
+    @ExceptionHandler({JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

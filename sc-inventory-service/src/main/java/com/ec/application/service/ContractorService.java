@@ -18,33 +18,29 @@ import com.ec.application.repository.ContractorRepo;
 
 @Service
 @Transactional
-public class ContractorService
-{
-	@Autowired
-	ContractorRepo contractorRepo;
+public class ContractorService {
+    @Autowired
+    ContractorRepo contractorRepo;
 
-	@Autowired
-	CheckBeforeDeleteService checkBeforeDeleteService;
+    @Autowired
+    CheckBeforeDeleteService checkBeforeDeleteService;
 
-	Logger log = LoggerFactory.getLogger(ContractorService.class);
+    Logger log = LoggerFactory.getLogger(ContractorService.class);
 
-	public List<IdNameProjections> getContractorNames()
-	{
-		List<IdNameProjections> contractorNames = new ArrayList<IdNameProjections>();
-		contractorNames = contractorRepo.findIdAndNames();
-		return contractorNames;
-	}
+    public List<IdNameProjections> getContractorNames() {
+        List<IdNameProjections> contractorNames = new ArrayList<IdNameProjections>();
+        contractorNames = contractorRepo.findIdAndNames();
+        return contractorNames;
+    }
 
-	public Page<Contractor> findAll(Pageable pageable)
-	{
-		return contractorRepo.findAll(pageable);
-	}
+    public Page<Contractor> findAll(Pageable pageable) {
+        return contractorRepo.findAll(pageable);
+    }
 
-	public boolean isContactUsedAsContractor(Long id)
-	{
-		boolean isContactUsed = false;
-		if (checkBeforeDeleteService.isContractorUsed(id))
-			isContactUsed = true;
-		return isContactUsed;
-	}
+    public boolean isContactUsedAsContractor(Long id) {
+        boolean isContactUsed = false;
+        if (checkBeforeDeleteService.isContractorUsed(id))
+            isContactUsed = true;
+        return isContactUsed;
+    }
 }

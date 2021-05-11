@@ -24,4 +24,6 @@ public interface InventoryNotificationRepo extends BaseRepository<InventoryNotif
 	@Query(value="SELECT m from InventoryNotification m where m.product.productId=:productId and m.type=:type")
 	List<InventoryNotification> findByProductAndType(@Param("productId")Long productId,@Param("type") String type);
 
+	@Query(value="SELECT m from InventoryNotification m where m.product.productId=:productId")
+    List<InventoryNotification> findByProductId(@Param("productId")Long productId);
 }

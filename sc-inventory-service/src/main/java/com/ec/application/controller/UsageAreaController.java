@@ -29,60 +29,52 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/usagearea")
-public class UsageAreaController
-{
-	@Autowired
-	UsageAreaService usageAreaService;
+public class UsageAreaController {
+    @Autowired
+    UsageAreaService usageAreaService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public AllUsageAreasWithNamesData returnFilteredCategories(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-	{
-		return usageAreaService.findFilteredUsageAreasWithTA(filterDataList, pageable);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public AllUsageAreasWithNamesData returnFilteredCategories(@RequestBody FilterDataList filterDataList,
+                                                               @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable) {
+        return usageAreaService.findFilteredUsageAreasWithTA(filterDataList, pageable);
+    }
 
-	@GetMapping("/{id}")
-	public UsageArea findUsageAreabyvehicleNoUsageAreas(@PathVariable long id)
-	{
-		return usageAreaService.findSingleUsageArea(id);
-	}
+    @GetMapping("/{id}")
+    public UsageArea findUsageAreabyvehicleNoUsageAreas(@PathVariable long id) {
+        return usageAreaService.findSingleUsageArea(id);
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteUsageArea(@PathVariable Long id) throws Exception
-	{
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteUsageArea(@PathVariable Long id) throws Exception {
 
-		usageAreaService.deleteUsageArea(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+        usageAreaService.deleteUsageArea(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public UsageArea createUsageArea(@RequestBody UsageArea payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UsageArea createUsageArea(@RequestBody UsageArea payload) throws Exception {
 
-		return usageAreaService.createUsageArea(payload);
-	}
+        return usageAreaService.createUsageArea(payload);
+    }
 
-	@PutMapping("/{id}")
-	public UsageArea updateUsageArea(@PathVariable Long id, @RequestBody UsageArea UsageArea) throws Exception
-	{
-		return usageAreaService.updateUsageArea(id, UsageArea);
-	}
+    @PutMapping("/{id}")
+    public UsageArea updateUsageArea(@PathVariable Long id, @RequestBody UsageArea UsageArea) throws Exception {
+        return usageAreaService.updateUsageArea(id, UsageArea);
+    }
 
-	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIDandNames()
-	{
-		return usageAreaService.findIdAndNames();
-	}
+    @GetMapping("/idandnames")
+    public List<IdNameProjections> returnIDandNames() {
+        return usageAreaService.findIdAndNames();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

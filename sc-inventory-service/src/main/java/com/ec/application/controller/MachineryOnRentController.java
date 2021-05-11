@@ -31,62 +31,54 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/mor")
-public class MachineryOnRentController
-{
+public class MachineryOnRentController {
 
-	@Autowired
-	MachineryOnRentService morService;
+    @Autowired
+    MachineryOnRentService morService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public MachineryOnRentWithDropdownData returnAllMor(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-			throws ParseException
-	{
-		return morService.findAllWithDropdown(filterDataList, pageable);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public MachineryOnRentWithDropdownData returnAllMor(@RequestBody FilterDataList filterDataList,
+                                                        @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
+            throws ParseException {
+        return morService.findAllWithDropdown(filterDataList, pageable);
+    }
 
-	@PostMapping("/export")
-	@ResponseStatus(HttpStatus.OK)
-	public List<MORExportDAO> ExportreturnAllMor(@RequestBody FilterDataList filterDataList) throws Exception
-	{
-		return morService.exportData(filterDataList);
-	}
+    @PostMapping("/export")
+    @ResponseStatus(HttpStatus.OK)
+    public List<MORExportDAO> ExportreturnAllMor(@RequestBody FilterDataList filterDataList) throws Exception {
+        return morService.exportData(filterDataList);
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public MachineryOnRent createMachineryOnRent(@RequestBody CreateMORentData payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public MachineryOnRent createMachineryOnRent(@RequestBody CreateMORentData payload) throws Exception {
 
-		return morService.createData(payload);
-	}
+        return morService.createData(payload);
+    }
 
-	@PutMapping("/{id}")
-	public MachineryOnRent updateMOR(@PathVariable Long id, @RequestBody CreateMORentData payload) throws Exception
-	{
-		return morService.UpdateData(payload, id);
-	}
+    @PutMapping("/{id}")
+    public MachineryOnRent updateMOR(@PathVariable Long id, @RequestBody CreateMORentData payload) throws Exception {
+        return morService.UpdateData(payload, id);
+    }
 
-	@GetMapping("/{id}")
-	public MachineryOnRent findMORbyvehicleNoMORs(@PathVariable long id) throws Exception
-	{
-		return morService.findById(id);
-	}
+    @GetMapping("/{id}")
+    public MachineryOnRent findMORbyvehicleNoMORs(@PathVariable long id) throws Exception {
+        return morService.findById(id);
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteMOR(@PathVariable Long id) throws Exception
-	{
-		morService.DeleteData(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteMOR(@PathVariable Long id) throws Exception {
+        morService.DeleteData(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

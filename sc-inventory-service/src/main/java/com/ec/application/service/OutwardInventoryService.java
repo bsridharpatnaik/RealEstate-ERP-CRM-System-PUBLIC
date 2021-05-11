@@ -609,8 +609,8 @@ public class OutwardInventoryService
 			Double currentStock = stockRepo
 					.findStockForProductAndWarehouse(ioList.getProduct().getProductId(), warehouseName).get(0)
 					.getQuantityInHand();
-			if (currentStock < stock)
-				throw new Exception("Cannot Delete. Stock will go negative if deleted");
+			//if (currentStock < stock)
+			//	throw new Exception("Cannot Delete. Stock will go negative if deleted");
 			stockService.updateStock(ioList.getProduct().getProductId(), warehouseName, stock, "inward");
 		}
 		log.info("Exiting updateStockBeforeDelete");

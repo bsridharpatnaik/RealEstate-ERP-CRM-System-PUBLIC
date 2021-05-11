@@ -18,35 +18,31 @@ import com.ec.application.repository.SupplierRepo;
 
 @Service
 @Transactional
-public class SupplierService
-{
+public class SupplierService {
 
-	@Autowired
-	SupplierRepo supplierRepo;
+    @Autowired
+    SupplierRepo supplierRepo;
 
-	@Autowired
-	CheckBeforeDeleteService checkBeforeDeleteService;
+    @Autowired
+    CheckBeforeDeleteService checkBeforeDeleteService;
 
-	Logger log = LoggerFactory.getLogger(SupplierService.class);
+    Logger log = LoggerFactory.getLogger(SupplierService.class);
 
-	public List<IdNameProjections> getSupplierNames()
-	{
-		List<IdNameProjections> supplierNames = new ArrayList<IdNameProjections>();
-		supplierNames = supplierRepo.findIdAndNames();
-		return supplierNames;
-	}
+    public List<IdNameProjections> getSupplierNames() {
+        List<IdNameProjections> supplierNames = new ArrayList<IdNameProjections>();
+        supplierNames = supplierRepo.findIdAndNames();
+        return supplierNames;
+    }
 
-	public Page<Supplier> findAll(Pageable pageable)
-	{
-		// TODO Auto-generated method stub
-		return supplierRepo.findAll(pageable);
-	}
+    public Page<Supplier> findAll(Pageable pageable) {
+        // TODO Auto-generated method stub
+        return supplierRepo.findAll(pageable);
+    }
 
-	public boolean isContactUsedAsSupplier(Long id)
-	{
-		boolean isContactUsed = false;
-		if (checkBeforeDeleteService.isSupplierUsed(id))
-			isContactUsed = true;
-		return isContactUsed;
-	}
+    public boolean isContactUsedAsSupplier(Long id) {
+        boolean isContactUsed = false;
+        if (checkBeforeDeleteService.isSupplierUsed(id))
+            isContactUsed = true;
+        return isContactUsed;
+    }
 }

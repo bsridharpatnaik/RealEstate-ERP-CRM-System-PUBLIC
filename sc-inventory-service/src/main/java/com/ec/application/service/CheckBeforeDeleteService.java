@@ -80,6 +80,18 @@ public class CheckBeforeDeleteService
 
 	}
 
+	public boolean isProductNotUsedButStockExists(Long productId) throws Exception
+	{
+		if (stockRepo.productUsageCount(productId) > 0 &&
+				lostDamagedInventoryRepo.productUsageCount(productId) == 0 &&
+				inwardOutwardListRepo.productUsageCount(productId) == 0 &&
+				bimRepo.productUsageCount(productId) == 0)
+			return true;
+		else
+			return false;
+
+	}
+
 	public boolean isCategoryUsed(Long categoryId) throws Exception
 	{
 		if (productRepo.categoryUsageCount(categoryId) > 0)

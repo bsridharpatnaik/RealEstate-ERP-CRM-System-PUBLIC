@@ -16,44 +16,37 @@ import com.ec.application.data.UserReturnData;
 
 @Service
 @Transactional
-public class UserDetailsService
-{
-	@Autowired
-	WebClient.Builder webClientBuilder;
+public class UserDetailsService {
+    @Autowired
+    WebClient.Builder webClientBuilder;
 
-	@Value("${common.serverurl}")
-	private String reqUrl;
+    @Value("${common.serverurl}")
+    private String reqUrl;
 
-	Logger log = LoggerFactory.getLogger(UserDetailsService.class);
+    Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
-	public UserReturnData getCurrentUser() throws Exception
-	{
-		try
-		{
-			HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-					.getRequest();
-			try
-			{
-				UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
-						.header("Authorization", request.getHeader("Authorization")).retrieve()
-						.bodyToMono(UserReturnData.class).block();
-				return userDetails;
-			} catch (Exception e)
-			{
-				throw new Exception("Unable to fetch current user. Please contact system administrator.");
-			}
-		} catch (NullPointerException npe)
-		{
-			UserReturnData userDetails = new UserReturnData();
-			userDetails.setId((long) 404);
-			userDetails.setUsername("system");
-			return userDetails;
+    public UserReturnData getCurrentUser() throws Exception {
+        try {
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                    .getRequest();
+            try {
+                UserReturnData userDetails = webClientBuilder.build().get().uri(reqUrl + "user/me")
+                        .header("Authorization", request.getHeader("Authorization")).retrieve()
+                        .bodyToMono(UserReturnData.class).block();
+                return userDetails;
+            } catch (Exception e) {
+                throw new Exception("Unable to fetch current user. Please contact system administrator.");
+            }
+        } catch (NullPointerException npe) {
+            UserReturnData userDetails = new UserReturnData();
+            userDetails.setId((long) 404);
+            userDetails.setUsername("system");
+            return userDetails;
 
-		} catch (Exception e)
-		{
+        } catch (Exception e) {
 
-			e.printStackTrace();
-			throw new Exception("Unable to fetch current user. Please contact system administrator.");
-		}
-	}
+            e.printStackTrace();
+            throw new Exception("Unable to fetch current user. Please contact system administrator.");
+        }
+    }
 }

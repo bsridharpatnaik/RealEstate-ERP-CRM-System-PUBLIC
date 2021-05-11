@@ -16,17 +16,15 @@ import com.ec.application.service.IntersiteMovementService;
 
 @RestController
 @RequestMapping("/ism")
-public class IntersiteMovementController
-{
+public class IntersiteMovementController {
 
-	@Autowired
-	IntersiteMovementService ismService;
+    @Autowired
+    IntersiteMovementService ismService;
 
-	@PostMapping("/warehouses")
-	@ResponseStatus(HttpStatus.OK)
-	public List<Warehouse> getAllWarehouses(@RequestBody SingleStringData data) throws Exception
-	{
-		return ismService.getAllWarehouses(data);
-	}
+    @PostMapping("/warehouses")
+    @ResponseStatus(HttpStatus.OK)
+    public List<Warehouse> getAllWarehouses(@RequestBody SingleStringData data) throws Exception {
+        return ismService.getAllWarehouses(data);
+    }
 
 }

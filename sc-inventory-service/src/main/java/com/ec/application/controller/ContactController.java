@@ -28,67 +28,58 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/contact")
-public class ContactController
-{
-	@Autowired
-	ContactService contactInfoService;
+public class ContactController {
+    @Autowired
+    ContactService contactInfoService;
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public Contact createCategory(@RequestBody Contact payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Contact createCategory(@RequestBody Contact payload) throws Exception {
 
-		return contactInfoService.createContact(payload);
-	}
+        return contactInfoService.createContact(payload);
+    }
 
-	@GetMapping("/{id}")
-	public Contact findContactbyvehicleNoContacts(@PathVariable long id) throws Exception
-	{
-		return contactInfoService.findContactById(id);
-	}
+    @GetMapping("/{id}")
+    public Contact findContactbyvehicleNoContacts(@PathVariable long id) throws Exception {
+        return contactInfoService.findContactById(id);
+    }
 
-	@GetMapping("typeahead/globalsearch/{nameorno}")
-	public List<String> findTypeAhead(@PathVariable String nameorno) throws Exception
-	{
-		return contactInfoService.typeAheadForSearch(nameorno);
-	}
+    @GetMapping("typeahead/globalsearch/{nameorno}")
+    public List<String> findTypeAhead(@PathVariable String nameorno) throws Exception {
+        return contactInfoService.typeAheadForSearch(nameorno);
+    }
 
-	@GetMapping("typeahead/namesearch/{name}")
-	public List<String> findTypeAheadForName(@PathVariable String name) throws Exception
-	{
-		return contactInfoService.typeAheadForName(name);
-	}
+    @GetMapping("typeahead/namesearch/{name}")
+    public List<String> findTypeAheadForName(@PathVariable String name) throws Exception {
+        return contactInfoService.typeAheadForName(name);
+    }
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public Page<Contact> returnFilteredContacts(@RequestBody FilterDataList contactFilterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "contactId", direction = Direction.DESC) Pageable pageable)
-	{
-		return contactInfoService.findFilteredContactsWithTA(contactFilterDataList, pageable);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public Page<Contact> returnFilteredContacts(@RequestBody FilterDataList contactFilterDataList,
+                                                @PageableDefault(page = 0, size = 10, sort = "contactId", direction = Direction.DESC) Pageable pageable) {
+        return contactInfoService.findFilteredContactsWithTA(contactFilterDataList, pageable);
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
+    @ExceptionHandler(
+            {JpaSystemException.class})
 
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception
-	{
-		contactInfoService.deleteContact(id);
-		return ResponseEntity.ok("Contact Deleted sucessfully.");
-	}
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception {
+        contactInfoService.deleteContact(id);
+        return ResponseEntity.ok("Contact Deleted sucessfully.");
+    }
 
-	@PutMapping("/{id}")
-	public Contact updateContact(@PathVariable Long id, @RequestBody Contact payload) throws Exception
-	{
-		return contactInfoService.updateContact(id, payload);
-	}
+    @PutMapping("/{id}")
+    public Contact updateContact(@PathVariable Long id, @RequestBody Contact payload) throws Exception {
+        return contactInfoService.updateContact(id, payload);
+    }
 
 }

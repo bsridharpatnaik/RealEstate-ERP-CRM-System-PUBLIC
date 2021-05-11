@@ -241,12 +241,10 @@ public class StockService {
     }
 
     public List<StockInformationExportDAO> findStockForAllForExport(FilterDataList filterDataList) throws Exception {
-        StockInformationV2 fetchStockInformation = fetchStockInformation(PageRequest.of(0, Integer.MAX_VALUE),filterDataList);
+        StockInformationV2 fetchStockInformation = fetchStockInformation(PageRequest.of(0, Integer.MAX_VALUE), filterDataList);
         List<StockInformationExportDAO> exportData = new ArrayList<StockInformationExportDAO>();
-        for(StockInformationDTO dto:fetchStockInformation.getStockInformation())
-        {
-            for(SingleStockInformationDTO sInfo : dto.getDetailedStock())
-            {
+        for (StockInformationDTO dto : fetchStockInformation.getStockInformation()) {
+            for (SingleStockInformationDTO sInfo : dto.getDetailedStock()) {
                 StockInformationExportDAO si = new StockInformationExportDAO();
                 si.setWarehouseStock(sInfo.getQuantityInHand());
                 si.setTotalStock(dto.getTotalQuantityInHand().toString());
@@ -383,5 +381,16 @@ public class StockService {
             emailHelper.sendEmailForStockValidation(data);
         else
             log.info("Stock Validation Successful. Skipping email.");
+    }
+
+    public void deleteStockForProduct(Long id) throws Exception {
+        Page<Stock> stockList = stockRepo.findStockForProduct(PageRequest.of(0, Integer.MAX_VALUE),id);
+        List<Stock> stocksToBeDeleted = new ArrayList<>();
+        for (Stock stock : stockList)
+        {
+            if(stock.getQuantityInHand()>0)
+                throw new Exception("Cannot delete Stock/Product. Contact Administrator");
+            stockRepo.softDelete(stock);
+        }
     }
 }

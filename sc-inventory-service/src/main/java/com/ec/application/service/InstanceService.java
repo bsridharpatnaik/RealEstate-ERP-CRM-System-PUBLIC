@@ -9,11 +9,10 @@ public class InstanceService {
     @Value("${spring.profiles.active}")
     private String profile;
 
-    public InstanceList getInstance()
-    {
-        if(profile.contains("ec-"))
+    public InstanceList getInstance() {
+        if (profile.contains("ec-"))
             return InstanceList.egcity;
-        else if(profile.contains("sc-"))
+        else if (profile.contains("sc-"))
             return InstanceList.suncity;
         return null;
     }

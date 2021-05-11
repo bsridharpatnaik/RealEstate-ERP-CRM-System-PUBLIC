@@ -18,132 +18,125 @@ import com.ec.application.repository.WarehouseRepo;
 
 @Service
 @Transactional
-public class InventoryNotificationService
-{
+public class InventoryNotificationService {
 
-	@Autowired
-	StockService stockService;
+    @Autowired
+    StockService stockService;
 
-	@Autowired
-	InventoryNotificationRepo inventoryNotificationRepo;
+    @Autowired
+    InventoryNotificationRepo inventoryNotificationRepo;
 
-	@Autowired
-	UserDetailsService userDetailsService;
+    @Autowired
+    UserDetailsService userDetailsService;
 
-	@Autowired
-	WarehouseRepo warehouseRepo;
+    @Autowired
+    WarehouseRepo warehouseRepo;
 
-	Logger log = LoggerFactory.getLogger(InventoryNotificationService.class);
+    Logger log = LoggerFactory.getLogger(InventoryNotificationService.class);
 
-	final String lowStock = "lowStock";
-	final String inwardModified = "inwardStockModified";
-	final String outwardModified = "outwardStockModified";
-	final String lostDamagedModified = "lostDamagedStockModified";
-	final String lostDamagedAdded = "lostDamagedStockAdded";
+    final String lowStock = "lowStock";
+    final String inwardModified = "inwardStockModified";
+    final String outwardModified = "outwardStockModified";
+    final String lostDamagedModified = "lostDamagedStockModified";
+    final String lostDamagedAdded = "lostDamagedStockAdded";
 
-	@Transactional(rollbackOn = Exception.class)
-	public void checkStockAndPushLowStockNotification(Product product)
-	{
-		Double currentStock = stockService.findTotalStockForProduct(product.getProductId());
-		Double reorderQuantity = product.getReorderQuantity();
-		currentStock = currentStock == null ? 0 : currentStock;
-		reorderQuantity = reorderQuantity == null ? 0 : reorderQuantity;
-		if (currentStock <= reorderQuantity && reorderQuantity > 0)
-			pushLowStockNotification(product, currentStock);
-		else if (currentStock > reorderQuantity && reorderQuantity > 0)
-			removeLowStockNotification(product);
-	}
+    @Transactional(rollbackOn = Exception.class)
+    public void checkStockAndPushLowStockNotification(Product product) {
+        Double currentStock = stockService.findTotalStockForProduct(product.getProductId());
+        Double reorderQuantity = product.getReorderQuantity();
+        currentStock = currentStock == null ? 0 : currentStock;
+        reorderQuantity = reorderQuantity == null ? 0 : reorderQuantity;
+        if (currentStock <= reorderQuantity && reorderQuantity > 0)
+            pushLowStockNotification(product, currentStock);
+        else if (currentStock > reorderQuantity && reorderQuantity > 0)
+            removeLowStockNotification(product);
+    }
 
-	@Transactional(rollbackOn = Exception.class)
-	public void pushQuantityEditedNotification(Product product, String warehouseName, String type, Double currentStock)
-			throws Exception
-	{
+    @Transactional(rollbackOn = Exception.class)
+    public void pushQuantityEditedNotification(Product product, String warehouseName, String type, Double currentStock)
+            throws Exception {
 
-		type = getTypeFromReadableName(type);
-		InventoryNotification inventoryNotificationNew = new InventoryNotification();
-		inventoryNotificationNew.setProduct(product);
-		inventoryNotificationNew.setType(type);
-		inventoryNotificationNew.setQuantity(currentStock);
-		inventoryNotificationNew.setUpdatedBy(userDetailsService.getCurrentUser().getUsername());
-		inventoryNotificationNew.setWarehouseName(warehouseName);
-		inventoryNotificationRepo.save(inventoryNotificationNew);
-	}
+        type = getTypeFromReadableName(type);
+        InventoryNotification inventoryNotificationNew = new InventoryNotification();
+        inventoryNotificationNew.setProduct(product);
+        inventoryNotificationNew.setType(type);
+        inventoryNotificationNew.setQuantity(currentStock);
+        inventoryNotificationNew.setUpdatedBy(userDetailsService.getCurrentUser().getUsername());
+        inventoryNotificationNew.setWarehouseName(warehouseName);
+        inventoryNotificationRepo.save(inventoryNotificationNew);
+    }
 
-	private String getTypeFromReadableName(String type)
-	{
-		switch (type)
-		{
-		case "inward":
-			return inwardModified;
+    private String getTypeFromReadableName(String type) {
+        switch (type) {
+            case "inward":
+                return inwardModified;
 
-		case "outward":
-			return outwardModified;
+            case "outward":
+                return outwardModified;
 
-		case "lostdamagedmodified":
-			return lostDamagedModified;
+            case "lostdamagedmodified":
+                return lostDamagedModified;
 
-		case "lostdamagedadded":
-			return lostDamagedAdded;
-		}
-		return "";
-	}
+            case "lostdamagedadded":
+                return lostDamagedAdded;
+        }
+        return "";
+    }
 
-	@Transactional(rollbackOn = Exception.class)
-	private void removeLowStockNotification(Product product)
-	{
-		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
-				.findByProductAndType(product.getProductId(), lowStock);
-		if (inventoryNotifications.size() > 0)
-		{
-			for (InventoryNotification inventoryNotification : inventoryNotifications)
-			{
-				inventoryNotificationRepo.softDelete(inventoryNotification);
-			}
-			System.out.println("Deleted all low stock notification for product " + product.getProductName());
-		}
-	}
+    @Transactional(rollbackOn = Exception.class)
+    private void removeLowStockNotification(Product product) {
+        List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
+                .findByProductAndType(product.getProductId(), lowStock);
+        if (inventoryNotifications.size() > 0) {
+            for (InventoryNotification inventoryNotification : inventoryNotifications) {
+                inventoryNotificationRepo.softDelete(inventoryNotification);
+            }
+            System.out.println("Deleted all low stock notification for product " + product.getProductName());
+        }
+    }
 
-	@Transactional(rollbackOn = Exception.class)
-	private void pushLowStockNotification(Product product, Double currentStock)
-	{
-		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
-				.findByProductAndType(product.getProductId(), lowStock);
-		if (inventoryNotifications.size() == 0)
-		{
-			InventoryNotification inventoryNotificationNew = new InventoryNotification();
-			inventoryNotificationNew.setProduct(product);
-			inventoryNotificationNew.setType(lowStock);
-			inventoryNotificationNew.setQuantity(currentStock);
-			inventoryNotificationNew.setUpdatedBy("System");
-			inventoryNotificationRepo.save(inventoryNotificationNew);
-		} else
-		{
-			System.out.println("Low stock notification already exists for produt " + product.getProductName());
-			InventoryNotification inventoryNotification = inventoryNotifications.get(0);
-			inventoryNotification.setQuantity(currentStock);
-			inventoryNotificationRepo.save(inventoryNotification);
-		}
-	}
+    @Transactional(rollbackOn = Exception.class)
+    private void pushLowStockNotification(Product product, Double currentStock) {
+        List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
+                .findByProductAndType(product.getProductId(), lowStock);
+        if (inventoryNotifications.size() == 0) {
+            InventoryNotification inventoryNotificationNew = new InventoryNotification();
+            inventoryNotificationNew.setProduct(product);
+            inventoryNotificationNew.setType(lowStock);
+            inventoryNotificationNew.setQuantity(currentStock);
+            inventoryNotificationNew.setUpdatedBy("System");
+            inventoryNotificationRepo.save(inventoryNotificationNew);
+        } else {
+            System.out.println("Low stock notification already exists for produt " + product.getProductName());
+            InventoryNotification inventoryNotification = inventoryNotifications.get(0);
+            inventoryNotification.setQuantity(currentStock);
+            inventoryNotificationRepo.save(inventoryNotification);
+        }
+    }
 
-	List<InventoryNotification> returnInventoryNotifications()
-	{
-		List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
-				.findAll(Sort.by(Sort.Direction.DESC, "lastModifiedDate"));
-		return inventoryNotifications;
-	}
+    List<InventoryNotification> returnInventoryNotifications() {
+        List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
+                .findAll(Sort.by(Sort.Direction.DESC, "lastModifiedDate"));
+        return inventoryNotifications;
+    }
 
-	@Transactional(rollbackOn = Exception.class)
-	public void deleteNotificationByID(Long id) throws Exception
-	{
-		Optional<InventoryNotification> inventoryNotificationOpt = inventoryNotificationRepo.findById(id);
+    @Transactional(rollbackOn = Exception.class)
+    public void deleteNotificationByID(Long id) throws Exception {
+        Optional<InventoryNotification> inventoryNotificationOpt = inventoryNotificationRepo.findById(id);
 
-		if (!inventoryNotificationOpt.isPresent())
-			throw new Exception("Notification not found");
+        if (!inventoryNotificationOpt.isPresent())
+            throw new Exception("Notification not found");
 
-		InventoryNotification inventoryNotification = inventoryNotificationOpt.get();
-		if (inventoryNotification.getType().equals("lowStock"))
-			throw new Exception("Cannot delete lowStock notifications");
+        InventoryNotification inventoryNotification = inventoryNotificationOpt.get();
+        if (inventoryNotification.getType().equals("lowStock"))
+            throw new Exception("Cannot delete lowStock notifications");
 
-		inventoryNotificationRepo.softDelete(inventoryNotification);
-	}
+        inventoryNotificationRepo.softDelete(inventoryNotification);
+    }
+
+    public void deleteNotificationForProduct(Long id) {
+        List<InventoryNotification> notList = inventoryNotificationRepo.findByProductId(id);
+        for (InventoryNotification in : notList)
+            inventoryNotificationRepo.softDelete(in);
+    }
 }

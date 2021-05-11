@@ -30,66 +30,57 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/location")
-public class LocationController
-{
+public class LocationController {
 
-	@Autowired
-	LocationService locationService;
+    @Autowired
+    LocationService locationService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public Page<UsageLocation> returnFilteredLocations(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-	{
-		return locationService.findFilteredLocationsWithTA(filterDataList, pageable);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public Page<UsageLocation> returnFilteredLocations(@RequestBody FilterDataList filterDataList,
+                                                       @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable) {
+        return locationService.findFilteredLocationsWithTA(filterDataList, pageable);
+    }
 
-	@GetMapping("/{id}")
-	public UsageLocation findLocationbyvehicleNoLocations(@PathVariable long id)
-	{
-		return locationService.findSingleLocation(id);
-	}
+    @GetMapping("/{id}")
+    public UsageLocation findLocationbyvehicleNoLocations(@PathVariable long id) {
+        return locationService.findSingleLocation(id);
+    }
 
-	@GetMapping("/typeahead/{name}")
-	public List<String> findLocationforTypeAhead(@PathVariable String name)
-	{
-		return locationService.getTypeAheadForGlobalSearch(name);
-	}
+    @GetMapping("/typeahead/{name}")
+    public List<String> findLocationforTypeAhead(@PathVariable String name) {
+        return locationService.getTypeAheadForGlobalSearch(name);
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteLocation(@PathVariable Long id) throws Exception
-	{
-		locationService.deleteLocation(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteLocation(@PathVariable Long id) throws Exception {
+        locationService.deleteLocation(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public UsageLocation createLocation(@RequestBody UsageLocationData payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public UsageLocation createLocation(@RequestBody UsageLocationData payload) throws Exception {
 
-		return locationService.createLocation(payload);
-	}
+        return locationService.createLocation(payload);
+    }
 
-	@PutMapping("/{id}")
-	public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocationData Location) throws Exception
-	{
-		return locationService.updateLocation(id, Location);
-	}
+    @PutMapping("/{id}")
+    public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocationData Location) throws Exception {
+        return locationService.updateLocation(id, Location);
+    }
 
-	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIdAndNames()
-	{
-		return locationService.findIdAndNames();
-	}
+    @GetMapping("/idandnames")
+    public List<IdNameProjections> returnIdAndNames() {
+        return locationService.findIdAndNames();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

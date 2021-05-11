@@ -16,27 +16,24 @@ import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.WarehouseRepo;
 
 @Service
-public class IntersiteMovementService
-{
-	@Autowired
-	WarehouseRepo whRepo;
+public class IntersiteMovementService {
+    @Autowired
+    WarehouseRepo whRepo;
 
-	public List<Warehouse> getAllWarehouses(SingleStringData data) throws Exception
-	{
-		if (data.getName() == null)
-			throw new Exception("Please provide valid name for tenant");
-		ThreadLocalStorage.setTenantName(data.getName());
-		return whRepo.findAll();
-	}
+    public List<Warehouse> getAllWarehouses(SingleStringData data) throws Exception {
+        if (data.getName() == null)
+            throw new Exception("Please provide valid name for tenant");
+        ThreadLocalStorage.setTenantName(data.getName());
+        return whRepo.findAll();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 
 }

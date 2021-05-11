@@ -27,50 +27,44 @@ import com.ec.application.service.WarehouseService;
 
 @RestController
 @RequestMapping(value = "/warehouse", produces =
-{ "application/json", "text/json" })
-public class WarehouseController
-{
-	@Autowired
-	WarehouseService warehouseService;
+        {"application/json", "text/json"})
+public class WarehouseController {
+    @Autowired
+    WarehouseService warehouseService;
 
-	@GetMapping
-	public Page<Warehouse> returnAllWarehouses(
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-			throws ParseException
-	{
+    @GetMapping
+    public Page<Warehouse> returnAllWarehouses(
+            @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
+            throws ParseException {
 
-		return warehouseService.findAll(pageable);
-	}
+        return warehouseService.findAll(pageable);
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public Warehouse createWarehouse(@RequestBody Warehouse payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Warehouse createWarehouse(@RequestBody Warehouse payload) throws Exception {
 
-		return warehouseService.createWarehouse(payload);
-	}
+        return warehouseService.createWarehouse(payload);
+    }
 
-	@PutMapping("/{id}")
-	@ResponseStatus(HttpStatus.OK)
-	public Warehouse updateWarehouses(@PathVariable Long id, @RequestBody Warehouse payload) throws Exception
-	{
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public Warehouse updateWarehouses(@PathVariable Long id, @RequestBody Warehouse payload) throws Exception {
 
-		return warehouseService.updateWarehouse(id, payload);
-	}
+        return warehouseService.updateWarehouse(id, payload);
+    }
 
-	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIdandNames()
-	{
-		return warehouseService.findIdAndNames();
-	}
+    @GetMapping("/idandnames")
+    public List<IdNameProjections> returnIdandNames() {
+        return warehouseService.findIdAndNames();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

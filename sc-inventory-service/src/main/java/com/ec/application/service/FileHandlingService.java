@@ -19,43 +19,35 @@ import com.ec.application.model.FileInformation;
 
 @Service
 @Transactional
-public class FileHandlingService
-{
-	@Autowired
-	DBFileStorageService dbFileStorageService;
+public class FileHandlingService {
+    @Autowired
+    DBFileStorageService dbFileStorageService;
 
-	Logger log = LoggerFactory.getLogger(FileHandlingService.class);
+    Logger log = LoggerFactory.getLogger(FileHandlingService.class);
 
-	public FileInformation uploadDoc(MultipartFile file) throws Exception
-	{
-		try
-		{
-			FileInformation fileUploadSuccessData = new FileInformation();
-			DBFile dbFile = dbFileStorageService.storeFile(file);
-			fileUploadSuccessData.setFileUUId(dbFile.getId());
-			fileUploadSuccessData.setFileName(dbFile.getFileName());
-			return fileUploadSuccessData;
-		} catch (MaxUploadSizeExceededException e)
-		{
-			throw new Exception("File size too large. Max allowed size - 15 MB");
-		} catch (Exception e)
-		{
-			throw new Exception("Error uploading file.");
-		}
-	}
+    public FileInformation uploadDoc(MultipartFile file) throws Exception {
+        try {
+            FileInformation fileUploadSuccessData = new FileInformation();
+            DBFile dbFile = dbFileStorageService.storeFile(file);
+            fileUploadSuccessData.setFileUUId(dbFile.getId());
+            fileUploadSuccessData.setFileName(dbFile.getFileName());
+            return fileUploadSuccessData;
+        } catch (MaxUploadSizeExceededException e) {
+            throw new Exception("File size too large. Max allowed size - 15 MB");
+        } catch (Exception e) {
+            throw new Exception("Error uploading file.");
+        }
+    }
 
-	public ResponseEntity<Resource> downloadFile(String fileId) throws Exception
-	{
-		try
-		{
-			DBFile dbFile = dbFileStorageService.getFile(fileId);
-			return ResponseEntity.ok().contentType(MediaType.parseMediaType(dbFile.getFileType()))
-					.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dbFile.getFileName() + "\"")
-					.body(new ByteArrayResource(dbFile.getData()));
-		} catch (Exception e)
-		{
-			throw new Exception("Error downloading file");
-		}
-	}
+    public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
+        try {
+            DBFile dbFile = dbFileStorageService.getFile(fileId);
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType(dbFile.getFileType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dbFile.getFileName() + "\"")
+                    .body(new ByteArrayResource(dbFile.getData()));
+        } catch (Exception e) {
+            throw new Exception("Error downloading file");
+        }
+    }
 
 }

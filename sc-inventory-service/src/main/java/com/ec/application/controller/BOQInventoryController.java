@@ -34,98 +34,87 @@ import com.ec.application.service.LocationService;
 
 @RestController
 @RequestMapping("/boq")
-public class BOQInventoryController
-{
-	@Autowired
-	BOQInventoryMappingService bimService;
+public class BOQInventoryController {
+    @Autowired
+    BOQInventoryMappingService bimService;
 
-	@Autowired
-	BuildingTypeService btService;
+    @Autowired
+    BuildingTypeService btService;
 
-	@Autowired
-	LocationService lService;
+    @Autowired
+    LocationService lService;
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public void createBuildingType(@RequestBody BOQCreateRequestData payload) throws Exception
-	{
-		bimService.createNewBOQ(payload);
-	}
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createBuildingType(@RequestBody BOQCreateRequestData payload) throws Exception {
+        bimService.createNewBOQ(payload);
+    }
 
-	@GetMapping("/alltypes")
-	@ResponseStatus(HttpStatus.OK)
-	public List<IdNameProjections> getAllValidBuildingTypes()
-	{
-		return btService.findIdAndNames();
-	}
+    @GetMapping("/alltypes")
+    @ResponseStatus(HttpStatus.OK)
+    public List<IdNameProjections> getAllValidBuildingTypes() {
+        return btService.findIdAndNames();
+    }
 
-	@GetMapping("/type/{id}")
-	@ResponseStatus(HttpStatus.OK)
-	public List<IdNameProjections> getAllUnitsUnderType(@PathVariable Long id) throws Exception
-	{
-		return lService.getLocationsUnderType(id);
-	}
+    @GetMapping("/type/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<IdNameProjections> getAllUnitsUnderType(@PathVariable Long id) throws Exception {
+        return lService.getLocationsUnderType(id);
+    }
 
-	@GetMapping("/{id}")
-	@ResponseStatus(HttpStatus.OK)
-	public BOQInventoryMapping getSingleBOQ(@PathVariable Long id) throws Exception
-	{
-		return bimService.getOne(id);
-	}
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public BOQInventoryMapping getSingleBOQ(@PathVariable Long id) throws Exception {
+        return bimService.getOne(id);
+    }
 
-	@PutMapping("/{id}")
-	@ResponseStatus(HttpStatus.OK)
-	public BOQInventoryMapping updateBOQ(@PathVariable Long id, @RequestBody BOQUpdateRequestData payload)
-			throws Exception
-	{
-		return bimService.updateBOQ(payload, id);
-	}
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public BOQInventoryMapping updateBOQ(@PathVariable Long id, @RequestBody BOQUpdateRequestData payload)
+            throws Exception {
+        return bimService.updateBOQ(payload, id);
+    }
 
-	@GetMapping("/bytype/{id}")
-	@ResponseStatus(HttpStatus.OK)
-	public Page<BOQInventoryMapping> getBOQByType(@PathVariable Long id,
-			@PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Direction.DESC) Pageable pageable)
-			throws Exception
-	{
-		return bimService.getBOQByType(id, pageable);
-	}
+    @GetMapping("/bytype/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<BOQInventoryMapping> getBOQByType(@PathVariable Long id,
+                                                  @PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Direction.DESC) Pageable pageable)
+            throws Exception {
+        return bimService.getBOQByType(id, pageable);
+    }
 
-	@GetMapping("/byunit/{id}")
-	@ResponseStatus(HttpStatus.OK)
-	public Page<BOQInventoryMapping> getBOQByLocation(@PathVariable Long id,
-			@PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Direction.DESC) Pageable pageable)
-			throws Exception
-	{
-		return bimService.getBOQByLocation(id, pageable);
-	}
+    @GetMapping("/byunit/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<BOQInventoryMapping> getBOQByLocation(@PathVariable Long id,
+                                                      @PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Direction.DESC) Pageable pageable)
+            throws Exception {
+        return bimService.getBOQByLocation(id, pageable);
+    }
 
-	@GetMapping("/getproductlist/{id}")
-	public List<IdNameProjections> getProductList(@PathVariable Long id, @RequestParam BOQLocationTypeEnum boqtype)
-			throws Exception
-	{
-		if (boqtype == null)
-			throw new Exception("Required Parameter boqtype not found");
+    @GetMapping("/getproductlist/{id}")
+    public List<IdNameProjections> getProductList(@PathVariable Long id, @RequestParam BOQLocationTypeEnum boqtype)
+            throws Exception {
+        if (boqtype == null)
+            throw new Exception("Required Parameter boqtype not found");
 
-		if (id == null)
-			throw new Exception("ID cannot be null");
+        if (id == null)
+            throw new Exception("ID cannot be null");
 
-		return bimService.getProductListForDropdown(boqtype, id);
-	}
+        return bimService.getProductListForDropdown(boqtype, id);
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteBOQ(@PathVariable Long id) throws Exception
-	{
-		bimService.deleteBOQEntry(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteBOQ(@PathVariable Long id) throws Exception {
+        bimService.deleteBOQEntry(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

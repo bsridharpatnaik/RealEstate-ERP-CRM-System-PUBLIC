@@ -11,27 +11,25 @@ import com.ec.application.data.DashBoardData;
 
 @Service
 @Transactional
-public class DashBoardService
-{
-	@Autowired
-	AllNotificationService allNotificationService;
+public class DashBoardService {
+    @Autowired
+    AllNotificationService allNotificationService;
 
-	@Autowired
-	AllInventoryService allInventoryService;
+    @Autowired
+    AllInventoryService allInventoryService;
 
-	@Autowired
-	StockService stockService;
+    @Autowired
+    StockService stockService;
 
-	Logger log = LoggerFactory.getLogger(DashBoardService.class);
+    Logger log = LoggerFactory.getLogger(DashBoardService.class);
 
-	public DashBoardData getContents()
-	{
-		DashBoardData dashBoardData = new DashBoardData();
-		dashBoardData.setNotifications(allNotificationService.getAllNotifications().getNotifications());
-		dashBoardData.setOutwardInventory(allInventoryService.fetchInventoryForDashboard("outward"));
-		dashBoardData.setInwardInventory(allInventoryService.fetchInventoryForDashboard("inward"));
-		dashBoardData.setMachineryOnRent(allInventoryService.fetchMachineryOnRent());
-		dashBoardData.setStockPercent(stockService.fetchStockPercent());
-		return dashBoardData;
-	}
+    public DashBoardData getContents() {
+        DashBoardData dashBoardData = new DashBoardData();
+        dashBoardData.setNotifications(allNotificationService.getAllNotifications().getNotifications());
+        dashBoardData.setOutwardInventory(allInventoryService.fetchInventoryForDashboard("outward"));
+        dashBoardData.setInwardInventory(allInventoryService.fetchInventoryForDashboard("inward"));
+        dashBoardData.setMachineryOnRent(allInventoryService.fetchMachineryOnRent());
+        dashBoardData.setStockPercent(stockService.fetchStockPercent());
+        return dashBoardData;
+    }
 }

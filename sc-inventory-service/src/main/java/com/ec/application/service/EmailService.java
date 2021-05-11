@@ -15,34 +15,32 @@ import com.ec.application.data.EmailConfigData;
 
 @Service
 @Transactional
-public class EmailService
-{
+public class EmailService {
 
-	@Autowired
-	WebClient.Builder webClientBuilder;
+    @Autowired
+    WebClient.Builder webClientBuilder;
 
-	@Autowired
-	HttpServletRequest request;
+    @Autowired
+    HttpServletRequest request;
 
-	@Value("${common.serverurl}")
-	private String reqUrl;
+    @Value("${common.serverurl}")
+    private String reqUrl;
 
-	Logger log = LoggerFactory.getLogger(EmailService.class);
+    Logger log = LoggerFactory.getLogger(EmailService.class);
 
-	public EmailConfigData getEmailConfig()
-	{
-		log.info("Getting email configuration from master");
-		EmailConfigData emailConfigData = new EmailConfigData(EmailConstants.mailHost, EmailConstants.mailPort,
-				EmailConstants.mailUsername, EmailConstants.mailPassword, EmailConstants.mailProtocol,
-				EmailConstants.mailSmtpAuth, EmailConstants.mailSmtpSslEnable, EmailConstants.mailSmtpSslTrust);
+    public EmailConfigData getEmailConfig() {
+        log.info("Getting email configuration from master");
+        EmailConfigData emailConfigData = new EmailConfigData(EmailConstants.mailHost, EmailConstants.mailPort,
+                EmailConstants.mailUsername, EmailConstants.mailPassword, EmailConstants.mailProtocol,
+                EmailConstants.mailSmtpAuth, EmailConstants.mailSmtpSslEnable, EmailConstants.mailSmtpSslTrust);
 
-		/*
-		 * webClientBuilder.build() .get() .uri(reqUrl+"/emailconfig")
-		 * .header("Authorization", request.getHeader("Authorization")) .retrieve()
-		 * .bodyToMono(EmailConfigData.class) .block();
-		 * log.info("Fetched email configuration from master "+emailConfigData.toString(
-		 * ));
-		 */
-		return emailConfigData;
-	}
+        /*
+         * webClientBuilder.build() .get() .uri(reqUrl+"/emailconfig")
+         * .header("Authorization", request.getHeader("Authorization")) .retrieve()
+         * .bodyToMono(EmailConfigData.class) .block();
+         * log.info("Fetched email configuration from master "+emailConfigData.toString(
+         * ));
+         */
+        return emailConfigData;
+    }
 }

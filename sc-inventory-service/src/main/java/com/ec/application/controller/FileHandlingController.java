@@ -21,28 +21,25 @@ import com.ec.application.service.FileHandlingService;
 
 @RestController
 @RequestMapping("/file")
-public class FileHandlingController 
-{
-	@Autowired
-	FileHandlingService fileHandlingSgervice;
-	
-	@PostMapping(value = "/upload")
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	public FileInformation uploadDoc(@RequestParam("file") MultipartFile file) throws Exception
-	{
-		return fileHandlingSgervice.uploadDoc(file);
-	}
+public class FileHandlingController {
+    @Autowired
+    FileHandlingService fileHandlingSgervice;
 
-	@GetMapping("/download/{fileId}")
-	public ResponseEntity<Resource> downloadFile(@PathVariable String fileId) throws Exception 
-	{
-		return fileHandlingSgervice.downloadFile(fileId);
-	}
-	
-	@ExceptionHandler({JpaSystemException.class})
-	@ResponseStatus(value=HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @PostMapping(value = "/upload")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public FileInformation uploadDoc(@RequestParam("file") MultipartFile file) throws Exception {
+        return fileHandlingSgervice.uploadDoc(file);
+    }
+
+    @GetMapping("/download/{fileId}")
+    public ResponseEntity<Resource> downloadFile(@PathVariable String fileId) throws Exception {
+        return fileHandlingSgervice.downloadFile(fileId);
+    }
+
+    @ExceptionHandler({JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

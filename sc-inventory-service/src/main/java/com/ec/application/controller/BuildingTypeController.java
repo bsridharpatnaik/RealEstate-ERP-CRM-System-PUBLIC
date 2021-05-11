@@ -29,64 +29,56 @@ import com.ec.common.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/buildingtype")
-public class BuildingTypeController
-{
-	@Autowired
-	BuildingTypeService buildingTypeService;
+public class BuildingTypeController {
+    @Autowired
+    BuildingTypeService buildingTypeService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public AllBuildingTypesWithNames returnFilteredCategories(@RequestBody FilterDataList filterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-	{
-		return buildingTypeService.findFilteredBuildingTypesWithTA(filterDataList, pageable);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public AllBuildingTypesWithNames returnFilteredCategories(@RequestBody FilterDataList filterDataList,
+                                                              @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable) {
+        return buildingTypeService.findFilteredBuildingTypesWithTA(filterDataList, pageable);
+    }
 
-	@GetMapping("/{id}")
-	public BuildingType findBuildingTypebyvehicleNoBuildingTypes(@PathVariable long id)
-	{
-		return buildingTypeService.findSingleBuildingType(id);
-	}
+    @GetMapping("/{id}")
+    public BuildingType findBuildingTypebyvehicleNoBuildingTypes(@PathVariable long id) {
+        return buildingTypeService.findSingleBuildingType(id);
+    }
 
-	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<?> deleteBuildingType(@PathVariable Long id) throws Exception
-	{
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteBuildingType(@PathVariable Long id) throws Exception {
 
-		buildingTypeService.deleteBuildingType(id);
-		return ResponseEntity.ok("Entity deleted");
-	}
+        buildingTypeService.deleteBuildingType(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	public BuildingType createBuildingType(@RequestBody BuildingType payload) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public BuildingType createBuildingType(@RequestBody BuildingType payload) throws Exception {
 
-		// String json = ReusableMethods.convertObjectToJson(payload);
-		// BuildingType c =
-		// ReusableMethods.convertJSONtoObject(json,BuildingType.class);
-		return buildingTypeService.createBuildingType(payload);
-	}
+        // String json = ReusableMethods.convertObjectToJson(payload);
+        // BuildingType c =
+        // ReusableMethods.convertJSONtoObject(json,BuildingType.class);
+        return buildingTypeService.createBuildingType(payload);
+    }
 
-	@PutMapping("/{id}")
-	public BuildingType updateBuildingType(@PathVariable Long id, @RequestBody BuildingType BuildingType)
-			throws Exception
-	{
-		return buildingTypeService.updateBuildingType(id, BuildingType);
-	}
+    @PutMapping("/{id}")
+    public BuildingType updateBuildingType(@PathVariable Long id, @RequestBody BuildingType BuildingType)
+            throws Exception {
+        return buildingTypeService.updateBuildingType(id, BuildingType);
+    }
 
-	@GetMapping("/idandnames")
-	public List<IdNameProjections> returnIDandNames()
-	{
-		return buildingTypeService.findIdAndNames();
-	}
+    @GetMapping("/idandnames")
+    public List<IdNameProjections> returnIDandNames() {
+        return buildingTypeService.findIdAndNames();
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }

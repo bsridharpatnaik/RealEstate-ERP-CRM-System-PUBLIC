@@ -9,18 +9,18 @@ import com.ec.application.repository.TxnRepo;
 @Service
 public class TxnService {
 
-	@Autowired
-	private TxnRepo txnRepo;
-	
-	public void txn1() {
-		TxnSchema txn = new TxnSchema();
-		txn.setCount(1);
-		txnRepo.save(txn);
-	}
-	
-	public void txn2() {
-		TxnSchema txn = new TxnSchema();
-		txn.setCount(1);
-		txnRepo.save(txn);
-	}
+    @Autowired
+    private TxnRepo txnRepo;
+
+    public void txn1() {
+        TxnSchema txn = new TxnSchema();
+        txn.setCount(1);
+        txnRepo.save(txn);
+    }
+
+    public void txn2() {
+        TxnSchema txn = new TxnSchema();
+        txn.setCount(1);
+        txnRepo.save(txn);
+    }
 }

@@ -14,25 +14,22 @@ import com.ec.application.repository.StockHistoryRepo;
 
 @Service
 @Transactional
-public class StockHistoryService
-{
-	@Autowired
-	StockHistoryRepo stockHistoryRepo;
+public class StockHistoryService {
+    @Autowired
+    StockHistoryRepo stockHistoryRepo;
 
-	@Autowired
-	StockService stockService;
+    @Autowired
+    StockService stockService;
 
-	@Transactional
-	public void insertLatestStockHistory(List<StockInformationExportDAO> dataForInsertList) throws Exception
-	{
-		UUID uuid = UUID.randomUUID();
+    @Transactional
+    public void insertLatestStockHistory(List<StockInformationExportDAO> dataForInsertList) throws Exception {
+        UUID uuid = UUID.randomUUID();
 
-		for (StockInformationExportDAO dataForInsert : dataForInsertList)
-		{
-			StockHistory stockHistory = new StockHistory(dataForInsert, uuid);
-			stockHistoryRepo.save(stockHistory);
-		}
+        for (StockInformationExportDAO dataForInsert : dataForInsertList) {
+            StockHistory stockHistory = new StockHistory(dataForInsert, uuid);
+            stockHistoryRepo.save(stockHistory);
+        }
 
-	}
+    }
 
 }

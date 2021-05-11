@@ -24,38 +24,33 @@ import com.ec.application.service.SupplierService;
 
 @RestController
 @RequestMapping("/supplier")
-public class SupplierController
-{
-	@Autowired
-	SupplierService supplierService;
+public class SupplierController {
+    @Autowired
+    SupplierService supplierService;
 
-	@GetMapping
-	public Page<Supplier> returnAllSuppliers(
-			@PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-			throws ParseException
-	{
-		return supplierService.findAll(pageable);
-	}
+    @GetMapping
+    public Page<Supplier> returnAllSuppliers(
+            @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
+            throws ParseException {
+        return supplierService.findAll(pageable);
+    }
 
-	@GetMapping("/names")
-	public List<IdNameProjections> returnSupplierNames()
-	{
-		return supplierService.getSupplierNames();
-	}
+    @GetMapping("/names")
+    public List<IdNameProjections> returnSupplierNames() {
+        return supplierService.getSupplierNames();
+    }
 
-	@GetMapping("/isused/{id}")
-	public Boolean returnSupplierIsUsed(@PathVariable Long id)
-	{
-		return supplierService.isContactUsedAsSupplier(id);
-	}
+    @GetMapping("/isused/{id}")
+    public Boolean returnSupplierIsUsed(@PathVariable Long id) {
+        return supplierService.isContactUsedAsSupplier(id);
+    }
 
-	@ExceptionHandler(
-	{ JpaSystemException.class })
-	@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiOnlyMessageAndCodeError sqlError(Exception ex)
-	{
-		ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
-				"Something went wrong while handling data. Contact Administrator.");
-		return apiError;
-	}
+    @ExceptionHandler(
+            {JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
+                "Something went wrong while handling data. Contact Administrator.");
+        return apiError;
+    }
 }
