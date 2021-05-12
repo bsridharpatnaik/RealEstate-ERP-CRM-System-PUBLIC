@@ -1,4 +1,5 @@
 /.*
+**/.idea/**
 ec-common-service/.*
 ec-common-service/target/**
 ec-inventory-service/.classpath
