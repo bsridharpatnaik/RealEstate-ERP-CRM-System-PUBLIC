@@ -17,6 +17,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.crm.Enums.LoanStatusEnum;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Where;
@@ -40,145 +41,156 @@ import lombok.Data;
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @Audited(withModifiedFlag = true)
 @Data
-public class Lead extends ReusableFields implements Serializable
-{
-	public Lead()
-	{
-		
-	}
+public class Lead extends ReusableFields implements Serializable {
+    public Lead() {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    }
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "lead_id", updatable = false, nullable = false)
-	Long leadId;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-	@Column(name = "name")
-	String customerName;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "lead_id", updatable = false, nullable = false)
+    Long leadId;
 
-	@Column(name = "primary_mobile")
-	String primaryMobile;
+    @Column(name = "name")
+    String customerName;
 
-	@Column(name = "secondary_mobile")
-	String secondaryMobile;
+    @Column(name = "primary_mobile")
+    String primaryMobile;
 
-	@Column(name = "email_id")
-	String emailId;
+    @Column(name = "secondary_mobile")
+    String secondaryMobile;
 
-	@Column(name = "purpose")
-	String purpose;
+    @Column(name = "email_id")
+    String emailId;
 
-	@Column(name = "occupation")
-	String occupation;
+    @Column(name = "purpose")
+    String purpose;
 
-	@Column(name = "dateofbirth")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date dateOfBirth;
+    @Column(name = "occupation")
+    String occupation;
 
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "broker_id", nullable = true)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Broker broker;
+    @Column(name = "dateofbirth")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date dateOfBirth;
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "address_id", nullable = true)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Address address;
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "broker_id", nullable = true)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    Broker broker;
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "source_id", nullable = true)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Source source;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", nullable = true)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    Address address;
 
-	@Column(nullable = true)
-	@Enumerated(EnumType.STRING)
-	PropertyTypeEnum propertyType;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "source_id", nullable = true)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    Source source;
 
-	@Column
-	@Enumerated(EnumType.STRING)
-	SentimentEnum sentiment;
+    @Column(nullable = true)
+    @Enumerated(EnumType.STRING)
+    PropertyTypeEnum propertyType;
 
-	@NotAudited
-	@Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id and la.is_deleted=false)")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date lastActivityModifiedDate;
+    @Column
+    @Enumerated(EnumType.STRING)
+    SentimentEnum sentiment;
 
-	@NotAudited
-	@Formula("(SELECT CASE WHEN l.status in ('Deal_closed','Deal_Lost') "
-			+ "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM LeadActivity la "
-			+ "INNER JOIN customer_lead l on l.lead_id=la.lead_id WHERE la.lead_id=lead_id AND la.is_deleted=0)")
-	Long stagnantDaysCount;
+    @NotAudited
+    @Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id and la.is_deleted=false)")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date lastActivityModifiedDate;
 
-	@Column(name = "user_id")
-	@JsonSerialize(using = ToUsernameSerializer.class)
-	Long asigneeId;
+    @NotAudited
+    @Formula("(SELECT CASE WHEN l.status in ('Deal_closed','Deal_Lost') "
+            + "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM LeadActivity la "
+            + "INNER JOIN customer_lead l on l.lead_id=la.lead_id WHERE la.lead_id=lead_id AND la.is_deleted=0)")
+    Long stagnantDaysCount;
 
-	@Column(name = "created_by")
-	@JsonSerialize(using = ToUsernameSerializer.class)
-	Long creatorId;
+    @Column(name = "user_id")
+    @JsonSerialize(using = ToUsernameSerializer.class)
+    Long asigneeId;
 
-	@NonNull
-	@Column(name = "status", nullable = false)
-	@Enumerated(EnumType.STRING)
-	LeadStatusEnum status;
+    @Column(name = "created_by")
+    @JsonSerialize(using = ToUsernameSerializer.class)
+    Long creatorId;
 
-	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
-			+ "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
-			+ "order by la.activity_date_time desc limit  1)")
-	@NotAudited
-	Long pastOpenId;
+    @NonNull
+    @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    LeadStatusEnum status;
 
-	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
-			+ "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
-			+ "order by la.activity_date_time desc limit  1)")
-	@NotAudited
-	Long pastClosedId;
+    @Formula("(select la.leadactivity_id from customer_lead cl "
+            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
+            + "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
+            + "order by la.activity_date_time desc limit  1)")
+    @NotAudited
+    Long pastOpenId;
 
-	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
-			+ "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
-			+ "order by la.activity_date_time desc limit  1)")
-	@NotAudited
-	Long todayClosedId;
+    @Formula("(select la.leadactivity_id from customer_lead cl "
+            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
+            + "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
+            + "order by la.activity_date_time desc limit  1)")
+    @NotAudited
+    Long pastClosedId;
 
-	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
-			+ "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
-			+ "order by la.activity_date_time desc limit  1)")
-	@NotAudited
-	Long todayOpenId;
+    @Formula("(select la.leadactivity_id from customer_lead cl "
+            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
+            + "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
+            + "order by la.activity_date_time desc limit  1)")
+    @NotAudited
+    Long todayClosedId;
 
-	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
-			+ "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
-			+ "order by la.activity_date_time asc limit  1)")
-	@NotAudited
-	Long upcomingOpenId;
+    @Formula("(select la.leadactivity_id from customer_lead cl "
+            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
+            + "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
+            + "order by la.activity_date_time desc limit  1)")
+    @NotAudited
+    Long todayOpenId;
 
-	@Formula("(select la.leadactivity_id from customer_lead cl "
-			+ "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
-			+ "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
-			+ "order by la.activity_date_time desc limit  1)")
-	@NotAudited
-	Long upcomingClosedId;
+    @Formula("(select la.leadactivity_id from customer_lead cl "
+            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
+            + "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
+            + "order by la.activity_date_time asc limit  1)")
+    @NotAudited
+    Long upcomingOpenId;
 
-	@NotAudited
-	@Formula("(select cds.loanStatus from customer_deal_structure cds " +
-			"INNER JOIN customer_lead cl on cl.lead_id = cds.lead_id " +
-			"WHERE " +
-			"cds.is_deleted=false " +
-			"AND cl.is_deleted=false " +
-			"AND cl.lead_id=lead_id " +
-			"AND cds.loanStatus IS NOT NULL " +
-			"LIMIT 1)")
-	String loanStatus;
+    @Formula("(select la.leadactivity_id from customer_lead cl "
+            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
+            + "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
+            + "order by la.activity_date_time desc limit  1)")
+    @NotAudited
+    Long upcomingClosedId;
+
+    @NotAudited
+    @Formula("(select cds.loanStatus from customer_deal_structure cds " +
+            "INNER JOIN customer_lead cl on cl.lead_id = cds.lead_id " +
+            "WHERE " +
+            "cds.is_deleted=false " +
+            "AND cl.is_deleted=false " +
+            "AND cl.lead_id=lead_id " +
+            "AND cds.loanStatus IS NOT NULL " +
+            "LIMIT 1)")
+    String loanStatus;
+
+    @NotAudited
+    @Formula("(SELECT MIN(cps.payment_date) from customer_payment_schedule cps " +
+            "INNER JOIN customer_deal_structure cds on cps.deal_id=cds.deal_id " +
+            "WHERE cps.is_deleted=0 AND cds.is_deleted=0 AND cps.isReceived=false AND cds.lead_id = lead_id)")
+    Date nextPaymentDate;
+
+    @NotAudited
+    @Formula("(SELECT SUM(cps.amount) from customer_payment_schedule cps " +
+            "INNER JOIN customer_deal_structure cds on cps.deal_id=cds.deal_id " +
+            "WHERE cps.is_deleted=0 AND cds.is_deleted=0 AND cps.isReceived=false AND cds.lead_id = lead_id)")
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    Double totalPending;
 }

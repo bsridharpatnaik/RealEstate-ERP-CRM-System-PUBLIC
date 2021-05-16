@@ -6,15 +6,13 @@ import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
+import Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.crm.Enums.LoanStatusEnum;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Model.LeadActivity;
-import com.ec.crm.Service.LeadActivityService;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -51,6 +49,12 @@ public class LeadPageData
 
 	LoanStatusEnum loanStatus;
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy")
+	Date nextPaymentDate;
+
+	@JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+	Double totalPending;
+
 	public void LeadPageData(LeadActivity la)
 	{
 		this.leadId = la.getLead().getLeadId();
@@ -63,5 +67,8 @@ public class LeadPageData
 		this.assigneeId = la.getLead().getAsigneeId();
 		this.followUpCount = la.getFollowUpCount()==null?null:la.getFollowUpCount();
 		this.loanStatus=LoanStatusEnum.valueOf(la.getLead().getLoanStatus());
+		this.nextPaymentDate=la.getLead().getNextPaymentDate();
+		this.totalPending = la.getLead().getTotalPending();
+
 	}
 }
