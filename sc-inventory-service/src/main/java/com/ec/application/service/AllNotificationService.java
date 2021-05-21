@@ -25,7 +25,7 @@ public class AllNotificationService
 	Logger log = LoggerFactory.getLogger(AllNotificationService.class);
 
 	public ReturnAllNotificationsData getAllNotifications()
-//	{
+	{
 		ReturnAllNotificationsData returnAllNotificationsData = new ReturnAllNotificationsData();
 		List<ReturnSingleNotification> allNotifications = new ArrayList<ReturnSingleNotification>();
 		allNotifications.addAll(getInventoryNotification());
