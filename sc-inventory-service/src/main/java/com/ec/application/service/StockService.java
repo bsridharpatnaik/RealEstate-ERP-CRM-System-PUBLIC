@@ -253,6 +253,8 @@ public class StockService {
                 si.setCategory(dto.getCategoryName());
                 si.setProductId(dto.getProductId());
                 si.setMeasurementUnit(dto.getMeasurementUnit());
+                si.setStockStatus(dto.getStockStatus());
+                si.setReorderQuantity(dto.getReorderQuantity());
                 exportData.add(si);
             }
         }

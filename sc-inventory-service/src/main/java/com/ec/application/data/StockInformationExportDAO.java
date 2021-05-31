@@ -5,6 +5,8 @@ import com.ec.application.model.Stock;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @NoArgsConstructor
 public class StockInformationExportDAO 
 {
@@ -17,6 +19,8 @@ public class StockInformationExportDAO
 	@JsonSerialize(using=DoubleTwoDigitDecimalSerializer.class)
 	Double warehouseStock;
 	String measurementUnit;
+	Double reorderQuantity;
+	String stockStatus;
 	public StockInformationExportDAO(SingleStockInfo ssi, Stock stock) 
 	{
 		this.productId=ssi.getProductId();
@@ -26,6 +30,24 @@ public class StockInformationExportDAO
 		this.warehouse=stock.getWarehouse().getWarehouseName();
 		this.warehouseStock=stock.getQuantityInHand();
 		this.measurementUnit=stock.getProduct().getMeasurementUnit();
+		this.reorderQuantity = stock.getProduct().getReorderQuantity();
+		this.stockStatus = stock.getQuantityInHand()>stock.getProduct().getReorderQuantity()?"High":"Low";
+	}
+
+	public Double getReorderQuantity() {
+		return reorderQuantity;
+	}
+
+	public void setReorderQuantity(Double reorderQuantity) {
+		this.reorderQuantity = reorderQuantity;
+	}
+
+	public String getStockStatus() {
+		return stockStatus;
+	}
+
+	public void setStockStatus(String stockStatus) {
+		this.stockStatus = stockStatus;
 	}
 
 	public Long getProductId() {
