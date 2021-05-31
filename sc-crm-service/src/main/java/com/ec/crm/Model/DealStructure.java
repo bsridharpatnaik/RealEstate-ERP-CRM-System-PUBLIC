@@ -7,6 +7,7 @@ import java.util.Date;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import com.ec.crm.Enums.CustomerStatusEnum;
 import com.ec.crm.Enums.LoanStatusEnum;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
@@ -70,6 +71,9 @@ public class DealStructure extends ReusableFields implements Serializable
 
 	@Enumerated(EnumType.STRING)
 	LoanStatusEnum loanStatus;
+
+	@Enumerated(EnumType.STRING)
+	CustomerStatusEnum customerStatus;
 
 	Double supplementAmount=Double.valueOf(0);
 

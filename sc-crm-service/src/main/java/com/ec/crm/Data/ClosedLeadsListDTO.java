@@ -30,4 +30,5 @@ public class ClosedLeadsListDTO
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date nextPaymentDate;
 	String loanStatus;
+	String customerStatus;
 }

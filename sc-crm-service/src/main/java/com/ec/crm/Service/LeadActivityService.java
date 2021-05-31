@@ -653,7 +653,8 @@ public class LeadActivityService {
             l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
         l.setFollowUpCount(la.getFollowUpCount() == null ? null : la.getFollowUpCount());
 		l.setLoanStatus(la.getLead().getLoanStatus()==null?null: LoanStatusEnum.valueOf(la.getLead().getLoanStatus()));
-        l.setNextPaymentDate(la.getLead().getNextPaymentDate());
+        l.setCustomerStatus(la.getLead().getCustomerStatus()==null?null:CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus()));
+		l.setNextPaymentDate(la.getLead().getNextPaymentDate());
         l.setTotalPending(la.getLead().getTotalPending());
 		return l;
     }

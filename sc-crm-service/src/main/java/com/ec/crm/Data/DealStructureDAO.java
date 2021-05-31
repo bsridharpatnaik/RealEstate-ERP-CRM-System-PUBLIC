@@ -3,6 +3,7 @@ package com.ec.crm.Data;
 import java.util.Date;
 import java.util.List;
 
+import com.ec.crm.Enums.CustomerStatusEnum;
 import com.ec.crm.Enums.LoanStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -51,6 +52,8 @@ public class DealStructureDAO
 	String bankName;
 	@Enumerated(EnumType.STRING)
 	LoanStatusEnum loanStatus;
+	@Enumerated(EnumType.STRING)
+	CustomerStatusEnum customerStatus;
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double supplementAmount;
 

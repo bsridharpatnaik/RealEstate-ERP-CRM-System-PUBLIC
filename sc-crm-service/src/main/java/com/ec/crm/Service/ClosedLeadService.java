@@ -74,6 +74,7 @@ public class ClosedLeadService
 		dto.setPrimaryMobile(o.getPrimaryMobile());
 		dto.setPropertyType(o.getPropertyType());
 		dto.setLoanStatus(o.getLoanStatus());
+		dto.setCustomerStatus(o.getCustomerStatus());
 		return dto;
 	}
 

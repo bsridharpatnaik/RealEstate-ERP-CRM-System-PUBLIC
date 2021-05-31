@@ -2,6 +2,7 @@ package com.ec.crm.Data;
 
 import java.util.Date;
 
+import com.ec.crm.Enums.CustomerStatusEnum;
 import com.ec.crm.Enums.LoanStatusEnum;
 import com.ec.crm.Model.ClosedLeads;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -38,6 +39,8 @@ public class CreateDealStructureDTO
 	String bankName;
 	@Enumerated(EnumType.STRING)
 	LoanStatusEnum loanStatus;
+	@Enumerated(EnumType.STRING)
+	CustomerStatusEnum customerStatus;
 	Double supplementAmount;
 	String details;
 }

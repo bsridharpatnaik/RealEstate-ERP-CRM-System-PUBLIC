@@ -61,6 +61,7 @@ public class DealStructureService
 		ds.setBookingDate(payload.getBookingDate());
 		ds.setLoanRequired(payload.getLoanRequired());
 		ds.setSupplementAmount(payload.getSupplementAmount());
+		ds.setCustomerStatus(payload.getCustomerStatus());
 		if(payload.getLoanRequired())
 		{
 			ds.setBankName(payload.getBankName());
@@ -111,6 +112,8 @@ public class DealStructureService
 				missingFields.add("Bank Name");
 			if(payload.getLoanStatus()== null)
 				missingFields.add("Loan Status");
+			if(payload.getCustomerStatus()== null)
+				missingFields.add("Customer Status");
 			if(payload.getLoanAmount()>payload.getDealAmount())
 				throw new Exception("Loan amount cannot be greater than Deal Amount");
 		}
@@ -212,6 +215,7 @@ public class DealStructureService
 		dao.setLoanAmount(ds.getLoanAmount()==null?0:ds.getLoanAmount());
 		dao.setLoanRequired(ds.getLoanRequired());
 		dao.setLoanStatus(ds.getLoanStatus()==null?null:ds.getLoanStatus());
+		dao.setCustomerStatus(ds.getCustomerStatus()==null?null:ds.getCustomerStatus());
 		dao.setPropertyName(ds.getPropertyName().getName());
 		dao.setPropertyNameId(ds.getPropertyName().getPropertyNameId());
 		dao.setPropertyType(ds.getPropertyType().getPropertyType());

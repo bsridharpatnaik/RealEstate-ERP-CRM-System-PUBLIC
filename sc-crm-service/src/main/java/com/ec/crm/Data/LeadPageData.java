@@ -7,6 +7,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
 import Deserializers.DoubleTwoDigitDecimalSerializer;
+import com.ec.crm.Enums.CustomerStatusEnum;
 import com.ec.crm.Enums.LoanStatusEnum;
 import lombok.NoArgsConstructor;
 
@@ -49,6 +50,8 @@ public class LeadPageData
 
 	LoanStatusEnum loanStatus;
 
+	CustomerStatusEnum customerStatus;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy")
 	Date nextPaymentDate;
 
@@ -69,6 +72,7 @@ public class LeadPageData
 		this.loanStatus=LoanStatusEnum.valueOf(la.getLead().getLoanStatus());
 		this.nextPaymentDate=la.getLead().getNextPaymentDate();
 		this.totalPending = la.getLead().getTotalPending();
+		this.customerStatus = CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus());
 
 	}
 }

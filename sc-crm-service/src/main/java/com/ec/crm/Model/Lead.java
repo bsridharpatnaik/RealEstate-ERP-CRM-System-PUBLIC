@@ -182,6 +182,17 @@ public class Lead extends ReusableFields implements Serializable {
     String loanStatus;
 
     @NotAudited
+    @Formula("(select cds.customerStatus from customer_deal_structure cds " +
+            "INNER JOIN customer_lead cl on cl.lead_id = cds.lead_id " +
+            "WHERE " +
+            "cds.is_deleted=false " +
+            "AND cl.is_deleted=false " +
+            "AND cl.lead_id=lead_id " +
+            "AND cds.customerStatus IS NOT NULL " +
+            "LIMIT 1)")
+    String customerStatus;
+
+    @NotAudited
     @Formula("(SELECT MIN(cps.payment_date) from customer_payment_schedule cps " +
             "INNER JOIN customer_deal_structure cds on cps.deal_id=cds.deal_id " +
             "WHERE cps.is_deleted=0 AND cds.is_deleted=0 AND cps.isReceived=false AND cds.lead_id = lead_id)")
