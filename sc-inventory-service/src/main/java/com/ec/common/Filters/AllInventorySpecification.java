@@ -22,6 +22,7 @@ static SpecificationsBuilder<AllInventoryTransactions> specbldr = new Specificat
 		List<String> warehouseNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"warehouses");
 		List<String> startDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"startDate");
 		List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"EndDate");
+		List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"categories");
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,"globalSearch");
 		
 		Specification<AllInventoryTransactions> finalSpec = null;
@@ -31,7 +32,10 @@ static SpecificationsBuilder<AllInventoryTransactions> specbldr = new Specificat
 		
 		if(productNames != null && productNames.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(AllInventoryTransactions_.PRODUCT_NAME, productNames));
-		
+
+		if(categoryNames != null && categoryNames.size()>0)
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(AllInventoryTransactions_.CATEGORY_NAME, categoryNames));
+
 		if(warehouseNames != null && warehouseNames.size()>0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(AllInventoryTransactions_.WAREHOUSE_NAME, warehouseNames));
 		

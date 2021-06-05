@@ -88,9 +88,9 @@ public class PopulateDropdownService {
             case "allinventory":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
                 morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
-                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
                 morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
                 morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
                 break;
         }
         return morDropdownDataList;

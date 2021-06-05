@@ -46,6 +46,9 @@ public class AllInventoryTransactions implements Serializable
 	@Column(name = "entryid")
 	Long entryid;
 
+	@Column(name="category_name")
+	String categoryName;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name = "date")
 	Date date;
