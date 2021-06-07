@@ -25,15 +25,15 @@ public class TenantService
 		System.out.println("Profile - " + profile);
 		if(profile.contains("ec-"))
 		{
-			TenantInformation t1 = new TenantInformation("Evergreen City", "egcity");
+			TenantInformation t1 = new TenantInformation("Evergreen City", "egcity", true, true);
 			tenants.add(t1);
 		}
 		else if(profile.contains("sc-")) {
-			TenantInformation t1 = new TenantInformation("SUNCITY NX", "suncitynx");
-			TenantInformation t2 = new TenantInformation("KALPAVRISH", "kalpavrish");
-			TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI", "riddhisiddhi");
-			TenantInformation t4 = new TenantInformation("SMART CITY", "smartcity");
-			TenantInformation t5 = new TenantInformation("BUSINESS PARK", "businesspark");
+			TenantInformation t1 = new TenantInformation("SUNCITY NX", "suncitynx", true, true);
+			TenantInformation t2 = new TenantInformation("KALPAVRISH", "kalpavrish", true, false);
+			TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI", "riddhisiddhi", true, false);
+			TenantInformation t4 = new TenantInformation("SMART CITY", "smartcity", true, false);
+			TenantInformation t5 = new TenantInformation("BUSINESS PARK", "businesspark", true, false);
 			tenants.add(t1);
 			tenants.add(t2);
 			tenants.add(t3);
