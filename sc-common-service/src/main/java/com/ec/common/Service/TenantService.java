@@ -29,7 +29,7 @@ public class TenantService
 			tenants.add(t1);
 		}
 		else if(profile.contains("sc-")) {
-			TenantInformation t1 = new TenantInformation("SUNCITY NX", "suncitynx", true, false);
+			TenantInformation t1 = new TenantInformation("SUNCITY NX", "suncitynx", true, true);
 			TenantInformation t2 = new TenantInformation("KALPAVRISH", "kalpavrish", true, false);
 			TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI", "riddhisiddhi", true, false);
 			TenantInformation t4 = new TenantInformation("SMART CITY", "smartcity", true, false);
