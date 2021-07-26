@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
-import com.ec.application.repository.InventoryNotificationRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +56,7 @@ public class ProductService {
     public Product createProduct(ProductCreateData payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
+        checkIfDashboardProductLimitReached(null, payload, "create");
         if (!productRepo.existsByProductName(payload.getProductName())) {
             Optional<Category> categoryOpt = categoryRepo.findById(payload.getCategoryId());
             if (categoryOpt.isPresent()) {
@@ -67,6 +67,7 @@ public class ProductService {
                         payload.getProductDescription() == null ? "" : payload.getProductDescription().trim());
                 product.setProductName(payload.getProductName().trim());
                 product.setReorderQuantity(payload.getReorderQuantity());
+                product.setShowOnDashboard(payload.getShowOnDashboard()==null?false:payload.getShowOnDashboard());
                 productRepo.save(product);
                 return product;
             } else {
@@ -74,6 +75,19 @@ public class ProductService {
             }
         } else {
             throw new Exception("Product already exists!");
+        }
+    }
+
+    private void checkIfDashboardProductLimitReached(Product productForUpdate, ProductCreateData payload, String action) throws Exception {
+
+        if (action.equals("create") && payload.getShowOnDashboard()) {
+            List<Product> existingDashboardProducts = productRepo.getDashboardProducts();
+            if(existingDashboardProducts.size()>=10)
+                throw new Exception("Only 10 products can be shown in dashboard. Please uncheck flag Show In Dashboard");
+        } else if (action.equals("update")) {
+            List<Product> existingDashboardProducts = productRepo.getDashboardProducts();
+            if(payload.getShowOnDashboard() && !existingDashboardProducts.contains(productForUpdate) && existingDashboardProducts.size()>=10)
+                throw new Exception("Only 10 products can be shown in dashboard. Please uncheck flag Show In Dashboard");
         }
     }
 
@@ -93,7 +107,6 @@ public class ProductService {
 
         if (payload.getProductName().length() > 50)
             throw new Exception("Product Name should not exceed 50 characters. Please provide valid product name.");
-
     }
 
     public Product updateProduct(Long id, ProductCreateData payload) throws Exception {
@@ -108,6 +121,7 @@ public class ProductService {
 
         Product ProductForUpdate = ProductForUpdateOpt.get();
 
+        checkIfDashboardProductLimitReached(ProductForUpdate, payload, "update");
         if (!productRepo.existsByProductName(payload.getProductName())
                 && !payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName())) {
             ProductForUpdate.setProductName(payload.getProductName());
@@ -115,11 +129,13 @@ public class ProductService {
             ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
             ProductForUpdate.setCategory(categoryOpt.get());
             ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
+            ProductForUpdate.setShowOnDashboard(payload.getShowOnDashboard()==null?false:payload.getShowOnDashboard());
         } else if (payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName())) {
             ProductForUpdate.setProductDescription(payload.getProductDescription());
             ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
             ProductForUpdate.setCategory(categoryOpt.get());
             ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
+            ProductForUpdate.setShowOnDashboard(payload.getShowOnDashboard()==null?false:payload.getShowOnDashboard());
         } else {
             throw new Exception("Product with same Name already exists");
         }

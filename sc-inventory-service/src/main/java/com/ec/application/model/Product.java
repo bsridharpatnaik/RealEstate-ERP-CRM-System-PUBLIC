@@ -51,6 +51,21 @@ public class Product extends ReusableFields
 	@NotFound(action = NotFoundAction.IGNORE)
 	Category category;
 
+	@Column(name="show_on_dashboard")
+	Boolean showOnDashboard;
+
+	public static long getSerialVersionUID() {
+		return serialVersionUID;
+	}
+
+	public Boolean getShowOnDashboard() {
+		return showOnDashboard;
+	}
+
+	public void setShowOnDashboard(Boolean showOnDashboard) {
+		this.showOnDashboard = showOnDashboard;
+	}
+
 	public Long getProductId()
 	{
 		return productId;
