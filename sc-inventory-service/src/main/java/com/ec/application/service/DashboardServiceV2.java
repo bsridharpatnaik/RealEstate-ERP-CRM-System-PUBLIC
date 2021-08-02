@@ -1,14 +1,10 @@
 package com.ec.application.service;
 
 import com.ec.application.data.InventoryHistoricalStats;
+import com.ec.application.data.StockPercentageForDashboard;
 import com.ec.application.data.TimelyProductStatsForDashboard;
-import com.ec.application.model.InwardInventory;
-import com.ec.application.model.InwardOutwardList;
-import com.ec.application.model.OutwardInventory;
-import com.ec.application.model.Product;
-import com.ec.application.repository.InwardInventoryRepo;
-import com.ec.application.repository.OutwardInventoryRepo;
-import com.ec.application.repository.ProductRepo;
+import com.ec.application.model.*;
+import com.ec.application.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -29,6 +25,12 @@ public class DashboardServiceV2 {
 
     @Autowired
     OutwardInventoryRepo oiRepo;
+
+    @Autowired
+    StockRepo stockRepo;
+
+    @Autowired
+    InwardOutwardTrendRepo inwardOutwardTrendRepo;
 
     public List<InventoryHistoricalStats> getInventoryHistoricalStats() {
         List<Product> productsForDashboard = getDashboardProducts();
@@ -126,5 +128,27 @@ public class DashboardServiceV2 {
             }
             return productsForDashboard;
         }
+    }
+
+    public List<StockPercentageForDashboard> getStockPercentForDashboard() {
+        List<Product> productsForDashboard = getDashboardProducts();
+        List<StockPercentageForDashboard> returnData = new ArrayList<StockPercentageForDashboard>();
+        List<StockPercentageForDashboard> existingStock = stockRepo.getCurrentStockPercentForDashboardProducts(productsForDashboard);
+        for(Product p:productsForDashboard){
+            Double stock = null;
+            for(StockPercentageForDashboard sp:existingStock){
+                if(p.getProductName().equals(sp.getProductName())){
+                    stock = sp.getStockPercent();
+                }
+            }
+            if(stock==null)
+                stock=(double)0;
+            returnData.add(new StockPercentageForDashboard(p.getProductName(),stock));
+        }
+        return returnData;
+    }
+
+    public List<InwardOutwardTrend> getInwardOutwardTrend(){
+        return inwardOutwardTrendRepo.findAll();
     }
 }

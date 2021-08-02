@@ -255,3 +255,44 @@ INNER JOIN
 INNER JOIN Product p on p.productId=ai1.ProductId
 INNER JOIN Category c on p.categoryId=c.categoryId
 GROUP BY ai1.ProductId,ai1.Product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
+
+
+-- Inward outward trend
+CREATE OR REPLACE VIEW inwardoutwardtrend AS
+SELECT
+	t.date,
+    CASE WHEN ii.count IS NULL THEN 0 ELSE ii.count END as inward_count ,
+    CASE WHEN oi.count IS NULL THEN 0 ELSE oi.count END as outward_count
+    FROM
+(
+	SELECT
+		DATE_FORMAT(curdate(),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 1 day),'%d-%m-%Y') as date     union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 2 day),'%d-%m-%Y') as date     union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 3 day),'%d-%m-%Y') as date     union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 4 day),'%d-%m-%Y') as date     union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 5 day),'%d-%m-%Y') as date     union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 6 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 7 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 8 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 9 day),'%d-%m-%Y') as date
+) as t
+LEFT JOIN
+(
+	SELECT ii.date as fulldate,DATE_FORMAT(ii.date,'%d-%m-%Y') as date,COUNT(ii.inwardid) as count
+		FROM inward_inventory ii
+		WHERE ii.is_deleted=0
+		AND ii.date >= ( CURDATE() - INTERVAL 10 DAY )
+	GROUP BY ii.date,DATE_FORMAT(ii.date,'%d-%m-%Y')
+	ORDER BY ii.date DESC
+) as ii on ii.date=t.date
+
+LEFT JOIN
+(
+	SELECT oi.date as fulldate,DATE_FORMAT(oi.date,'%d-%m-%Y') as date,COUNT(oi.outwardid) as count
+		FROM outward_inventory oi
+		WHERE oi.is_deleted=0
+		AND oi.date >= ( CURDATE() - INTERVAL 10 DAY )
+	GROUP BY oi.date,DATE_FORMAT(oi.date,'%d-%m-%Y')
+	ORDER BY oi.date DESC
+) as oi on oi.date=t.date

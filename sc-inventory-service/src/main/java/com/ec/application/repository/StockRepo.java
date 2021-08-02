@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.persistence.LockModeType;
 
+import com.ec.application.data.StockPercentageForDashboard;
+import com.ec.application.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
@@ -64,4 +66,9 @@ public interface StockRepo extends BaseRepository<Stock, Long>
 	@Query(value = "SELECT new com.ec.application.data.StockPercentData(m.product.productId,m.product.productName,m.lastModifiedDate,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
 			+ " group by m.product.productId,m.product.productName,m.lastModifiedDate")
 	List<StockPercentData> getCurrentStockPercent();
+
+	@Query(value = "SELECT new com.ec.application.data.StockPercentageForDashboard(m.product.productName,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
+			+ " WHERE m.product IN :dashboardProducts"
+			+ " group by m.product.productId,m.product.productName,m.lastModifiedDate")
+	List<StockPercentageForDashboard> getCurrentStockPercentForDashboardProducts(List<Product> dashboardProducts);
 }
