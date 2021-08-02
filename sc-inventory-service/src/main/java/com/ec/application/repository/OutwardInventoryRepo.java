@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.persistence.LockModeType;
 
+import com.ec.application.model.InwardInventory;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +35,7 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 	@Query(value="SELECT new com.ec.application.data.ProductGroupedDAO(iol.product.productName as productname,iol.product.measurementUnit as measurementUnit,sum(iol.quantity) as quantity) from OutwardInventory ii"
 			+ " left join  ii.inwardOutwardList iol group by iol.product.productName,iol.product.measurementUnit")
 	List<ProductGroupedDAO> findGroupByInfo();
+
+	@Query(value="SELECT i from OutwardInventory i WHERE year(i.date)=year(current_date) AND month(date)=month(current_date)")
+	List<OutwardInventory> getCurrentMonthData();
 }

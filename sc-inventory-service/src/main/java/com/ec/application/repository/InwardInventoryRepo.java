@@ -30,5 +30,8 @@ public interface InwardInventoryRepo extends BaseRepository<InwardInventory, Lon
 	@Query(value="SELECT new com.ec.application.data.ProductGroupedDAO(iol.product.productName as productname,iol.product.measurementUnit as measurementUnit,sum(iol.quantity) as quantity) from InwardInventory ii"
 			+ " left join  ii.inwardOutwardList iol group by iol.product.productName,iol.product.measurementUnit")
 	List<ProductGroupedDAO> findGroupByInfo();
-	
+
+	//year(e.eventDate) = ?1 and month(e.eventDate) = ?2"
+	@Query(value="SELECT i from InwardInventory i WHERE year(i.date)=year(current_date) AND month(date)=month(current_date)")
+    List<InwardInventory> getCurrentMonthData();
 }
