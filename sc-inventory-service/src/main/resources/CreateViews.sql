@@ -299,7 +299,7 @@ LEFT JOIN
 		AND oi.date >= ( CURDATE() - INTERVAL 10 DAY )
 	GROUP BY oi.date,DATE_FORMAT(oi.date,'%d-%m-%Y')
 	ORDER BY oi.date DESC
-) as oi on oi.date=t.date
+) as oi on oi.date=t.date;
 
 -- inward stats for dashboard
 CREATE OR REPLACE VIEW inward_stats AS
