@@ -300,3 +300,69 @@ LEFT JOIN
 	GROUP BY oi.date,DATE_FORMAT(oi.date,'%d-%m-%Y')
 	ORDER BY oi.date DESC
 ) as oi on oi.date=t.date
+
+-- inward stats for dashboard
+CREATE OR REPLACE VIEW inward_stats AS
+SELECT
+	totalInward.name as supplier_name,
+    totalInward.count as inward_count,
+    CASE WHEN leadTime.lead_time IS NULL THEN 0 ELSE leadTime.lead_time END as avg_lead_time,
+    CASE WHEN rejectCount.reject_count IS NULL THEN 0 ELSE rejectCount.reject_count END as rejectCount
+FROM
+
+(
+SELECT c.name,count(inwardid) as count FROM inward_inventory ii
+	INNER JOIN contacts c on c.contactid=ii.contactid
+    WHERE ii.is_deleted=0
+GROUP BY c.name
+) as totalInward
+
+LEFT JOIN
+(
+SELECT c.name,
+	ROUND(AVG(DATEDIFF(ii.date,ii.purchaseOrderdate)),2) as lead_time
+FROM inward_inventory ii
+	INNER JOIN contacts c on c.contactid=ii.contactid
+WHERE ii.is_deleted=0
+    AND ii.purchaseOrderdate IS NOT NULL
+	AND ii.purchaseOrderdate <= ii.date
+GROUP BY c.name
+) AS leadTime on totalInward.name=leadTime.name
+LEFT JOIN
+(
+SELECT c.name,COUNT(DISTINCT ii.inwardid) as reject_count FROM inward_inventory ii
+	INNER JOIN contacts c on c.contactid=ii.contactid
+	INNER JOIN rejectInward_entry rie on rie.inwardid=ii.inwardid
+    INNER JOIN reject_inward_entries re on re.rejectentryid=rie.rejectentryid
+WHERE ii.is_deleted=0
+GROUP BY c.name
+) as rejectCount on leadTime.name=rejectCount.name;
+
+
+-- Outward Stats
+CREATE OR REPLACE VIEW outward_stats AS
+SELECT
+	totalOutward.name as contractor_name,
+    totalOutward.total_count as total_count,
+    CASE WHEN rejectCount.reject_count IS NULL THEN 0 ELSE rejectCount.reject_count END  as reject_count
+
+FROM
+
+(
+	SELECT
+		c.name,
+		COUNT(oi.outwardid) as total_count
+	FROM outward_inventory oi
+	INNER JOIN contacts c on c.contactId=oi.contactId
+	WHERE oi.is_deleted=0
+	GROUP BY c.name
+) as totalOutward
+LEFT JOIN
+(
+	SELECT c.name,COUNT(DISTINCT oi.outwardid) as reject_count FROM outward_inventory oi
+    INNER JOIN contacts c on c.contactId=oi.contactId
+	INNER JOIN rejectOutward_entry roe on roe.outwardid=oi.outwardid
+	INNER JOIN reject_outward_entries rie ON rie.rejectentryid=roe.rejectentryid
+	WHERE oi.is_deleted=0
+    GROUP BY c.name
+) as rejectCount on rejectCount.name=totalOutward.name;

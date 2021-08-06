@@ -6,13 +6,12 @@ import com.ec.application.data.TimelyProductStatsForDashboard;
 import com.ec.application.model.*;
 import com.ec.application.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class DashboardServiceV2 {
@@ -31,6 +30,12 @@ public class DashboardServiceV2 {
 
     @Autowired
     InwardOutwardTrendRepo inwardOutwardTrendRepo;
+
+    @Autowired
+    InwardInventoryStatsForDashboardRepo inwardInventoryStatsForDashboardRepo;
+
+    @Autowired
+    OutwardInventoryStatsForDashboardRepo outwardInventoryStatsForDashboardRepo;
 
     public List<InventoryHistoricalStats> getInventoryHistoricalStats() {
         List<Product> productsForDashboard = getDashboardProducts();
@@ -150,5 +155,13 @@ public class DashboardServiceV2 {
 
     public List<InwardOutwardTrend> getInwardOutwardTrend(){
         return inwardOutwardTrendRepo.findAll();
+    }
+
+    public Page<InwardInventoryStatsForDashboardV2> getInwardStats(Pageable pageable){
+        return inwardInventoryStatsForDashboardRepo.findAll(pageable);
+    }
+
+    public Page<OutwardInventoryStatsForDashboardV2> getOutwardStats(Pageable pageable){
+        return outwardInventoryStatsForDashboardRepo.findAll(pageable);
     }
 }
