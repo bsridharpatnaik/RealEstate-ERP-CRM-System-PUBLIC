@@ -1,5 +1,6 @@
 package com.ec.application.repository;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.LockModeType;
@@ -26,4 +27,7 @@ public interface InventoryNotificationRepo extends BaseRepository<InventoryNotif
 
 	@Query(value="SELECT m from InventoryNotification m where m.product.productId=:productId")
     List<InventoryNotification> findByProductId(@Param("productId")Long productId);
+
+	@Query(value="SELECT m from InventoryNotification m where m.creationDate<:startDate AND m.isDeleted=false")
+    List<InventoryNotification> getExpiredNotifications(@Param("startDate") Date startDate);
 }

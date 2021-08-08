@@ -22,15 +22,35 @@ public class AllNotificationService
 {
 	@Autowired
 	InventoryNotificationService inventoryNotificationService;
+
+	@Autowired
+	AsyncService asyncService;
+
+	@Autowired
+	ClearNotificationAsyncService clearNotificationAsyncService;
+
 	Logger log = LoggerFactory.getLogger(AllNotificationService.class);
 
 	public ReturnAllNotificationsData getAllNotifications()
 	{
 		ReturnAllNotificationsData returnAllNotificationsData = new ReturnAllNotificationsData();
 		List<ReturnSingleNotification> allNotifications = new ArrayList<ReturnSingleNotification>();
+		clearOldNotifications();
 		allNotifications.addAll(getInventoryNotification());
 		returnAllNotificationsData.setNotifications(allNotifications);
 		return returnAllNotificationsData;
+	}
+
+	private void clearOldNotifications() {
+		asyncService.run(() ->
+		{
+			try {
+				clearNotificationAsyncService.clearNotifications();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 	}
 
 	private List<ReturnSingleNotification> getInventoryNotification()
