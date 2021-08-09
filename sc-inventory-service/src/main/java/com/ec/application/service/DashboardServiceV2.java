@@ -97,6 +97,7 @@ public class DashboardServiceV2 {
             InventoryHistoricalStats ihs = set.getValue();
             ihs.setProductName(set.getKey().getProductName());
             ihs.setMeasurementUnit(set.getKey().getMeasurementUnit());
+            ihs.setCurrentStock(stockRepo.getCurrentTotalStockForProduct(set.getKey().getProductId()));
             returnData.add(ihs);
         }
         return returnData;
@@ -148,7 +149,7 @@ public class DashboardServiceV2 {
             }
             if(stock==null)
                 stock=(double)0;
-            returnData.add(new StockPercentageForDashboard(p.getProductName(),stock));
+            returnData.add(new StockPercentageForDashboard(p.getProductName(),stockRepo.getCurrentTotalStockForProduct(p.getProductId()),stock));
         }
         return returnData;
     }

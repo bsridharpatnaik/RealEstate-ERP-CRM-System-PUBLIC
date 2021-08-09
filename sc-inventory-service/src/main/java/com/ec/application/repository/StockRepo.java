@@ -60,14 +60,14 @@ public interface StockRepo extends BaseRepository<Stock, Long>
 	List<ProductIdAndStockProjection> getCurrentStockForProductListWarehouse(@Param("productIds") List<Long> productIds,
 			@Param("warehouseId") Long warehouseId);
 
-	@Query(value = "SELECT ROUND(SUM(quantityInHand)) from Stock m where m.product.productId=:productId")
+	@Query(value = "SELECT CASE WHEN ROUND(SUM(quantityInHand)) IS NULL THEN 0 ELSE ROUND(SUM(quantityInHand)) END from Stock m where m.product.productId=:productId")
 	Double getCurrentTotalStockForProduct(@Param("productId") Long productId);
 
 	@Query(value = "SELECT new com.ec.application.data.StockPercentData(m.product.productId,m.product.productName,m.lastModifiedDate,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
 			+ " group by m.product.productId,m.product.productName,m.lastModifiedDate")
 	List<StockPercentData> getCurrentStockPercent();
 
-	@Query(value = "SELECT new com.ec.application.data.StockPercentageForDashboard(m.product.productName,SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
+	@Query(value = "SELECT new com.ec.application.data.StockPercentageForDashboard(m.product.productName,SUM(m.quantityInHand),SUM(m.quantityInHand)/m.product.reorderQuantity*100) from Stock m"
 			+ " WHERE m.product IN :dashboardProducts"
 			+ " group by m.product.productId,m.product.productName,m.lastModifiedDate")
 	List<StockPercentageForDashboard> getCurrentStockPercentForDashboardProducts(List<Product> dashboardProducts);
