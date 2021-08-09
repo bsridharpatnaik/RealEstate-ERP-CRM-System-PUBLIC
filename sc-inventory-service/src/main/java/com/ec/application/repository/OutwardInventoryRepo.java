@@ -36,6 +36,6 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 			+ " left join  ii.inwardOutwardList iol group by iol.product.productName,iol.product.measurementUnit")
 	List<ProductGroupedDAO> findGroupByInfo();
 
-	@Query(value="SELECT i from OutwardInventory i WHERE year(i.date)=year(current_date) AND month(date)=month(current_date)")
+	@Query(value="SELECT i from OutwardInventory i WHERE year(i.date)=year(current_date) AND month(i.date)=month(current_date)")
 	List<OutwardInventory> getCurrentMonthData();
 }

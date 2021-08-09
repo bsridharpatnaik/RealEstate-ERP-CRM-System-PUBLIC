@@ -71,7 +71,7 @@ public class DashboardServiceV2 {
 
             for(OutwardInventory ii:outwardsInOneMonth){
                 for(InwardOutwardList iol:ii.getInwardOutwardList()){
-                    if(iol.getProduct().equals(p)){
+                    if(iol.getProduct().getProductId().equals(p.getProductId())){
                         InventoryHistoricalStats ihs = map.get(p);
                         cal1.setTime(ii.getDate());
                         cal2.setTime(new Date());
