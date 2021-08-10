@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.config.ProjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,12 +83,12 @@ public class ProductService {
 
         if (action.equals("create") && payload.getShowOnDashboard()) {
             List<Product> existingDashboardProducts = productRepo.getDashboardProducts();
-            if(existingDashboardProducts.size()>=10)
-                throw new Exception("Only 10 products can be shown in dashboard. Please uncheck flag Show In Dashboard");
+            if(existingDashboardProducts.size()>= ProjectConstants.noOfProductsForDashboard)
+                throw new Exception("Only "+ProjectConstants.noOfProductsForDashboard+" products can be shown in dashboard. Please uncheck flag Show In Dashboard");
         } else if (action.equals("update")) {
             List<Product> existingDashboardProducts = productRepo.getDashboardProducts();
-            if(payload.getShowOnDashboard() && !existingDashboardProducts.contains(productForUpdate) && existingDashboardProducts.size()>=10)
-                throw new Exception("Only 10 products can be shown in dashboard. Please uncheck flag Show In Dashboard");
+            if(payload.getShowOnDashboard() && !existingDashboardProducts.contains(productForUpdate) && existingDashboardProducts.size()>=ProjectConstants.noOfProductsForDashboard)
+                throw new Exception("Only "+ProjectConstants.noOfProductsForDashboard+" products can be shown in dashboard. Please uncheck flag Show In Dashboard");
         }
     }
 

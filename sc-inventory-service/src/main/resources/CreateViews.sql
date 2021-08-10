@@ -275,7 +275,13 @@ SELECT
 		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 6 day),'%d-%m-%Y') as date    union
 		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 7 day),'%d-%m-%Y') as date    union
 		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 8 day),'%d-%m-%Y') as date    union
-		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 9 day),'%d-%m-%Y') as date
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 9 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 10 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 11 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 12 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 13 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 14 day),'%d-%m-%Y') as date    union
+		select DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 15 day),'%d-%m-%Y') as date
 ) as t
 LEFT JOIN
 (
@@ -284,7 +290,7 @@ LEFT JOIN
         INNER JOIN inwardinventory_entry iie on iie.inwardid = ii.inwardid
         INNER JOIN inward_outward_entries ioe on ioe.entryid=iie.entryid
 		WHERE ii.is_deleted=0 AND ioe.is_deleted=0
-		AND ii.date >= ( CURDATE() - INTERVAL 10 DAY )
+		AND ii.date >= ( CURDATE() - INTERVAL 15 DAY )
 	GROUP BY ii.date,DATE_FORMAT(ii.date,'%d-%m-%Y')
 	ORDER BY ii.date DESC
 ) as ii on ii.date=t.date
@@ -296,7 +302,7 @@ LEFT JOIN
         INNER JOIN outwardinventory_entry oie on oie.outwardid = oi.outwardid
         INNER JOIN inward_outward_entries ioe on ioe.entryid=oie.entryid
 		WHERE oi.is_deleted=0  AND ioe.is_deleted=0
-		AND oi.date >= ( CURDATE() - INTERVAL 10 DAY )
+		AND oi.date >= ( CURDATE() - INTERVAL 15 DAY )
 	GROUP BY oi.date,DATE_FORMAT(oi.date,'%d-%m-%Y')
 	ORDER BY oi.date DESC
 ) as oi on oi.date=t.date;
