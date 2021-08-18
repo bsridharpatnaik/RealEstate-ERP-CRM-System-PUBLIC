@@ -9,6 +9,8 @@ import org.hibernate.envers.Audited;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Entity
@@ -25,4 +27,9 @@ public class InwardOutwardTrend {
 
     @Column(name="outward_count")
     Double outwardCount;
+
+    public Date getDateFromString() throws ParseException {
+        SimpleDateFormat f = new SimpleDateFormat("dd-MM-yyyy");
+        return f.parse(this.date);
+    }
 }

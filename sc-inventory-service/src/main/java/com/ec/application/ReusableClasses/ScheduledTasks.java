@@ -3,6 +3,7 @@ package com.ec.application.ReusableClasses;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ec.application.service.SMSService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,10 @@ public class ScheduledTasks
 	private String schemasList;
 
 	Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
-	
+
+	@Autowired
+	SMSService smsService;
+
 	@Scheduled(cron = "0 0 9,18 * * *")
 	public void sendStockNotificationEmailInEvening() throws Exception 
 	{
@@ -52,5 +56,10 @@ public class ScheduledTasks
 			stockService.sendStockValidationEmail();
 			com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
 		}
+	}
+
+	@Scheduled(cron = "0 44 9 * * ?")
+	public void sendIOStats() throws Exception {
+		smsService.sendIOStats();
 	}
 }
