@@ -68,13 +68,48 @@ public class SMSService {
         log.info("Selected Instance - " + instance.toString());
         if (instance.equals(InstanceList.egcity))
             return fetchIOStatsAndSendSMSforEGCity();
+        else if (instance.equals(InstanceList.suncity))
+            return fetchIOStatsAndSendSMSforSunCity();
         return null;
+    }
+
+    private SMSGatewayResponse fetchIOStatsAndSendSMSforSunCity() throws Exception {
+        String flowId = ProjectConstants.flowIdForSuncityIOStats;
+        com.ec.application.multitenant.ThreadLocalStorage.setTenantName(ProjectConstants.sunCityTenantName);
+        Optional<SMSDeliveryList> deliveryList = smsDeliveryListRepo.findById(ProjectConstants.IODeliveryListForSuncity);
+
+        if (!deliveryList.isPresent())
+            throw new Exception("Delivery List not found for " + ProjectConstants.IODeliveryListForSuncity);
+
+        List<String> numbers = Arrays.asList(deliveryList.get().getNumbers().split(","));
+        SMSExternalPayloadData smsPayload = formPayloadDataForSuncity(numbers);
+        return sendSMStoGateway(smsPayload);
+    }
+
+    private SMSExternalPayloadData formPayloadDataForSuncity(List<String> numbers) throws Exception {
+        List<HashMap<String, String>> body = new ArrayList<HashMap<String, String>>();
+        InwardOutwardTrend scLatestTrend = fetchLatestDataFromTRend("suncitynx");
+        InwardOutwardTrend kpLatestTrend = fetchLatestDataFromTRend("kalpavrish");
+        InwardOutwardTrend rsLatestTrend = fetchLatestDataFromTRend("riddhisiddhi");
+        InwardOutwardTrend smcLatestTrend = fetchLatestDataFromTRend("smartcity");
+        InwardOutwardTrend bpLatestTrend = fetchLatestDataFromTRend("businesspark");
+
+        for (String number : numbers) {
+            HashMap<String, String> childBody = new HashMap<>();
+            childBody.put("mobiles", number);
+            childBody.put("sc", scLatestTrend.getInwardCount().toString() + "/" + scLatestTrend.getOutwardCount().toString());
+            childBody.put("kp", kpLatestTrend.getInwardCount().toString() + "/" + kpLatestTrend.getOutwardCount().toString());
+            childBody.put("rs", rsLatestTrend.getInwardCount().toString() + "/" + rsLatestTrend.getOutwardCount().toString());
+            childBody.put("smc", smcLatestTrend.getInwardCount().toString() + "/" + smcLatestTrend.getOutwardCount().toString());
+            childBody.put("bp", bpLatestTrend.getInwardCount().toString() + "/" + bpLatestTrend.getOutwardCount().toString());
+            body.add(childBody);
+        }
+        return new SMSExternalPayloadData(ProjectConstants.flowIdForSuncityIOStats, body);
     }
 
     private SMSGatewayResponse fetchIOStatsAndSendSMSforEGCity() throws Exception {
         String flowId = ProjectConstants.flowIdForEGCityIOStats;
-        com.ec.application.multitenant.ThreadLocalStorage.setTenantName(ProjectConstants.egCityTenantName);
-        InwardOutwardTrend latestTrend = fetchLatestDataFromTRend();
+        InwardOutwardTrend latestTrend = fetchLatestDataFromTRend(ProjectConstants.egCityTenantName);
         Optional<SMSDeliveryList> deliveryList = smsDeliveryListRepo.findById(ProjectConstants.IODeliveryListForEgcity);
 
         if (!deliveryList.isPresent())
@@ -98,7 +133,8 @@ public class SMSService {
         return new SMSExternalPayloadData(ProjectConstants.flowIdForEGCityIOStats, body);
     }
 
-    public InwardOutwardTrend fetchLatestDataFromTRend() throws Exception {
+    public InwardOutwardTrend fetchLatestDataFromTRend(String tenantName) throws Exception {
+        com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
         DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         String strDate = dateFormat.format(new Date());
         log.info("Searching for Trend for date - " + strDate);
