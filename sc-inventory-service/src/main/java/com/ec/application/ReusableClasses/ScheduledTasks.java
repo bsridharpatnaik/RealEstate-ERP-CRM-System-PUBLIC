@@ -58,7 +58,7 @@ public class ScheduledTasks
 		}
 	}
 
-	@Scheduled(cron = "0 0/2 * * * ?")
+	@Scheduled(cron = "0 0 18 * * ?")
 	public void sendIOStats() throws Exception {
 		smsService.sendIOStats();
 	}
