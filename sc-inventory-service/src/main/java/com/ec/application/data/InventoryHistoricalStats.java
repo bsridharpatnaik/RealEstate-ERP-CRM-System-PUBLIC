@@ -11,9 +11,7 @@ public class InventoryHistoricalStats {
     String productName;
     String measurementUnit;
     Double currentStock;
-    @JsonSerialize(using= com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
     TimelyProductStatsForDashboard inward;
-    @JsonSerialize(using= com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
     TimelyProductStatsForDashboard outward;
 
     public String getProductName() {
