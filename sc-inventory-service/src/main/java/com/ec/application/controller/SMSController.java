@@ -1,5 +1,6 @@
 package com.ec.application.controller;
 
+import com.ec.application.data.SMSGatewayResponse;
 import com.ec.application.service.SMSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +15,7 @@ public class SMSController {
     SMSService smsService;
 
     @GetMapping("/iostats")
-    public void sendIOStats() throws Exception {
-        smsService.sendIOStats();
+    public SMSGatewayResponse sendIOStats() throws Exception {
+       return smsService.sendIOStats();
     }
 }
