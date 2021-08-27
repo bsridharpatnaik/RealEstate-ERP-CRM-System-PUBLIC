@@ -83,7 +83,7 @@ public class LeadActivityController
 	}
 
 	@GetMapping("/deallostreasons")
-	public DealLostReasonEnum[] getDealLostReasons() throws Exception
+	public List<DealLostReasonEnum> getDealLostReasons() throws Exception
 	{
 		return laService.getDealLostReasons();
 	}

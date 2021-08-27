@@ -68,6 +68,12 @@ public class LeadController
 		return leadService.getSingleLead(id);
 	}
 
+	@GetMapping("/purpose")
+	public List<String> returnPurposeList() throws Exception
+	{
+		return leadService.getPurposeList();
+	}
+
 	@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,

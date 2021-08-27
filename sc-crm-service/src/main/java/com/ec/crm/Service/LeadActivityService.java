@@ -826,7 +826,7 @@ public class LeadActivityService {
         });
     }
 
-    public DealLostReasonEnum[] getDealLostReasons() {
-        return DealLostReasonEnum.values();
+    public List<DealLostReasonEnum> getDealLostReasons() {
+        return DealLostReasonEnum.getValidDealLostReasons();
     }
 }

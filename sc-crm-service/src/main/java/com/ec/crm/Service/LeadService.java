@@ -472,4 +472,14 @@ public class LeadService
 		allowedActivities.add(ActivityTypeEnum.Deal_Lost);
 		return allowedActivities;
 	}
+
+    public List<String> getPurposeList() {
+		List<String> finalList=new ArrayList<>();
+		finalList.add("Project Enquiry");
+		finalList.add("Project Details");
+		finalList.add("Property Visit");
+		finalList.add("Enquiry for Plot");
+		finalList.add("Enquiry for Bungalow");
+		return finalList;
+    }
 }
