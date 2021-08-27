@@ -97,6 +97,7 @@ public class SMSService {
         for (String number : numbers) {
             HashMap<String, String> childBody = new HashMap<>();
             childBody.put("mobiles", number);
+            childBody.put("date", scLatestTrend.getDate());
             childBody.put("sc", scLatestTrend.getInwardCount().toString() + "/" + scLatestTrend.getOutwardCount().toString());
             childBody.put("kp", kpLatestTrend.getInwardCount().toString() + "/" + kpLatestTrend.getOutwardCount().toString());
             childBody.put("rs", rsLatestTrend.getInwardCount().toString() + "/" + rsLatestTrend.getOutwardCount().toString());
