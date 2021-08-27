@@ -18,7 +18,7 @@ import com.ec.application.service.StockService;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 
-@Component
+//@Component
 @EnableScheduling
 public class ScheduledTasks 
 {
@@ -58,7 +58,7 @@ public class ScheduledTasks
 		}
 	}
 
-	@Scheduled(cron = "0 0 18 * * ?")
+	@Scheduled(cron = "0 0/2 * * * ?")
 	public void sendIOStats() throws Exception {
 		smsService.sendIOStats();
 	}

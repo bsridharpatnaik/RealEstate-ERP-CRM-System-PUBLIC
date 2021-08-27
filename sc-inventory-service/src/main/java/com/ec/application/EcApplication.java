@@ -4,9 +4,11 @@ import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
 
+import com.ec.application.ReusableClasses.ScheduledTasks;
 import com.ec.application.multitenant.TenantAwareTaskDecorator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 //import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +25,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 //@EnableWebSecurity
 @EnableAsync
 public class EcApplication  extends SpringBootServletInitializer{
-	
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		// The Scheduler Class needs to be added manually, because it dont have to be defined as Bean
+		return application.sources(EcApplication.class, ScheduledTasks.class);
+	}
+
 	@PostConstruct
 	public void started() {
 		 TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));

@@ -57,6 +57,7 @@ public class SMSService {
             return res;
         } else {
             SMSGatewayResponse res = new SMSGatewayResponse("message", "SMS Service Disabled");
+            log.info("SMS Gateway Response - " + res.toString());
             return res;
         }
     }
@@ -89,12 +90,12 @@ public class SMSService {
         for (String number : numbers) {
             HashMap<String, String> childBody = new HashMap<>();
             childBody.put("mobiles", number);
-            childBody.put("date",latestTrend.getDate());
+            childBody.put("date", latestTrend.getDate());
             childBody.put("inward", latestTrend.getInwardCount().toString());
             childBody.put("outward", latestTrend.getOutwardCount().toString());
             body.add(childBody);
         }
-        return new SMSExternalPayloadData(ProjectConstants.flowIdForEGCityIOStats,body);
+        return new SMSExternalPayloadData(ProjectConstants.flowIdForEGCityIOStats, body);
     }
 
     public InwardOutwardTrend fetchLatestDataFromTRend() throws Exception {
