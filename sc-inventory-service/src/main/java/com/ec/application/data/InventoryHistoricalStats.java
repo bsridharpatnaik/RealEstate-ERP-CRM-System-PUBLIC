@@ -1,5 +1,6 @@
 package com.ec.application.data;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,9 @@ public class InventoryHistoricalStats {
     String productName;
     String measurementUnit;
     Double currentStock;
+    @JsonSerialize(using= com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
     TimelyProductStatsForDashboard inward;
+    @JsonSerialize(using= com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
     TimelyProductStatsForDashboard outward;
 
     public String getProductName() {
