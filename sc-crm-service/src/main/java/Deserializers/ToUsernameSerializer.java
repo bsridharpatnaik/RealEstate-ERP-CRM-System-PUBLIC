@@ -15,39 +15,34 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
-public class ToUsernameSerializer extends JsonSerializer<Long>
-{
-	Logger log = LoggerFactory.getLogger(ToUsernameSerializer.class);
+public class ToUsernameSerializer extends JsonSerializer<Long> {
+    Logger log = LoggerFactory.getLogger(ToUsernameSerializer.class);
 
-	@Autowired
-	UserDetailsService userDetailsService;
+    @Autowired
+    UserDetailsService userDetailsService;
 
-	@Resource
-	private Map<Long, String> userIdNameMap;
+    @Resource
+    private Map<Long, String> userIdNameMap;
 
-	@Override
-	public void serialize(Long value, JsonGenerator jgen, SerializerProvider provider)
-			throws IOException, JsonGenerationException
-	{
-		if (null == value)
-			jgen.writeNull();
-		else
-		{
-			if (!value.equals(404)) // 404 will always be system user
-			{
-				String username;
-				try
-				{
-					username = userIdNameMap.get(value);
-					jgen.writeString(username);
-				} catch (Exception e)
-				{
-					
-					e.printStackTrace();
-				}
-			} else
-				jgen.writeString("System");
-		}
+    @Override
+    public void serialize(Long value, JsonGenerator jgen, SerializerProvider provider)
+            throws IOException, JsonGenerationException {
+        if (null == value)
+            jgen.writeNull();
+        else {
+            if (value != 404) // 404 will always be system user
+            {
+                String username;
+                try {
+                    username = userIdNameMap.get(value);
+                    jgen.writeString(username);
+                } catch (Exception e) {
 
-	}
+                    e.printStackTrace();
+                }
+            } else
+                jgen.writeString("System");
+        }
+
+    }
 }
