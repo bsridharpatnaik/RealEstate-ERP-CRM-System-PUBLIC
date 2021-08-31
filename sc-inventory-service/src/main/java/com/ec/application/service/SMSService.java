@@ -98,11 +98,11 @@ public class SMSService {
             HashMap<String, String> childBody = new HashMap<>();
             childBody.put("mobiles", number);
             childBody.put("date", scLatestTrend.getDate());
-            childBody.put("sc", scLatestTrend.getInwardCount().toString() + "/" + scLatestTrend.getOutwardCount().toString());
-            childBody.put("kp", kpLatestTrend.getInwardCount().toString() + "/" + kpLatestTrend.getOutwardCount().toString());
-            childBody.put("rs", rsLatestTrend.getInwardCount().toString() + "/" + rsLatestTrend.getOutwardCount().toString());
-            childBody.put("smc", smcLatestTrend.getInwardCount().toString() + "/" + smcLatestTrend.getOutwardCount().toString());
-            childBody.put("bp", bpLatestTrend.getInwardCount().toString() + "/" + bpLatestTrend.getOutwardCount().toString());
+            childBody.put("sc", (int) Math.round(scLatestTrend.getInwardCount()) + "/" + (int) Math.round(scLatestTrend.getOutwardCount()));
+            childBody.put("kp", (int) Math.round(kpLatestTrend.getInwardCount()) + "/" + (int) Math.round(kpLatestTrend.getOutwardCount()));
+            childBody.put("rs", (int) Math.round(rsLatestTrend.getInwardCount()) + "/" + (int) Math.round(rsLatestTrend.getOutwardCount()));
+            childBody.put("smc", (int) Math.round(smcLatestTrend.getInwardCount()) + "/" + (int) Math.round(smcLatestTrend.getOutwardCount()));
+            childBody.put("bp", (int) Math.round(bpLatestTrend.getInwardCount()) + "/" + (int) Math.round(bpLatestTrend.getOutwardCount()));
             body.add(childBody);
         }
         return new SMSExternalPayloadData(ProjectConstants.flowIdForSuncityIOStats, body);
@@ -127,8 +127,8 @@ public class SMSService {
             HashMap<String, String> childBody = new HashMap<>();
             childBody.put("mobiles", number);
             childBody.put("date", latestTrend.getDate());
-            childBody.put("inward", latestTrend.getInwardCount().toString());
-            childBody.put("outward", latestTrend.getOutwardCount().toString());
+            childBody.put("inward", String.valueOf((int) Math.round(latestTrend.getInwardCount())));
+            childBody.put("outward", String.valueOf((int) Math.round(latestTrend.getOutwardCount())));
             body.add(childBody);
         }
         return new SMSExternalPayloadData(ProjectConstants.flowIdForEGCityIOStats, body);
