@@ -79,7 +79,7 @@ public class OutwardInventoryExportDAO2 {
         this.usageLocation = oi.getUsageLocation().getLocationName();
         this.openingStock = iol.getQuantity() + iol.getClosingStock();
         this.category = iol.getProduct().getCategory().getCategoryName();
-        this.comment = oi.getAdditionalInfo();
+        this.comment = oi.getAdditionalInfo()==null?"": oi.getAdditionalInfo();
     }
 
     public String getCategory() {
