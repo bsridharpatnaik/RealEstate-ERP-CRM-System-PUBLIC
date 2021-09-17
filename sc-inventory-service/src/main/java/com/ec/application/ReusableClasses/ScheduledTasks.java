@@ -1,6 +1,8 @@
 package com.ec.application.ReusableClasses;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.ec.application.service.SMSService;
@@ -32,6 +34,12 @@ public class ScheduledTasks
 
 	@Autowired
 	SMSService smsService;
+
+	@Scheduled(fixedDelay = 6000) // 1 minute; add another zero to make it 10minutes
+	public void senddummy() throws Exception {
+		SimpleDateFormat localDateFormat = new SimpleDateFormat("HH:mm");
+		log.info("Current Time - " + localDateFormat.format(new Date()));
+	}
 
 	@Scheduled(cron = "0 0 9,18 * * *")
 	public void sendStockNotificationEmailInEvening() throws Exception 
