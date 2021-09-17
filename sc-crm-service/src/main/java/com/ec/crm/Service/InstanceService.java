@@ -17,4 +17,14 @@ public class InstanceService {
             return InstanceEnum.suncity;
         return null;
     }
+
+    public String getEnvironment(){
+        if(profile.toLowerCase().contains("local"))
+            return "local";
+        else if(profile.toLowerCase().contains("qa"))
+            return "qa";
+        else if(profile.toLowerCase().contains("prod"))
+            return "prod";
+        else return null;
+    }
 }

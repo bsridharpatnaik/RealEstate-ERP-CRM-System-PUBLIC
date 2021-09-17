@@ -7,6 +7,7 @@ import com.ec.crm.ReusableClasses.ReusableMethods;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.mashape.unirest.http.HttpResponse;
@@ -17,14 +18,16 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 @Service
 public class SMSService {
 
-   @Value("${sendsms}")
+    @Value("${sendsms}")
     private Boolean sendSms;
 
+    @Autowired
+    InstanceService instanceService;
     Logger log = LoggerFactory.getLogger(SMSService.class);
 
     public SMSGatewayResponse sendSMStoGateway(SMSExternalPayloadDataForSingle payloadData) throws UnirestException {
 
-        if (sendSms) {
+        if (sendSms && instanceService.getEnvironment().equals("prod")) {
             HttpResponse<JsonNode> response = Unirest.post(ProjectConstants.smsGatewayURL)
                     .header("authkey", ProjectConstants.authKey)
                     .header("content-type", "application/JSON")

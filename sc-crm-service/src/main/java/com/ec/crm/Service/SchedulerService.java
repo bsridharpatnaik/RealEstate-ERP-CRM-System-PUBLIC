@@ -25,7 +25,7 @@ public class SchedulerService
 
 	// @Scheduled(cron = "* * * * * *")
 
-	@Scheduled(fixedDelay = 60000) // 1 minute; add another zero to make it 10minutes
+	@Scheduled(fixedDelay = 600000) // 10 minute;
 	public void sendStockNotificationEmailInEvening() throws Exception
 	{
 		SimpleDateFormat localDateFormat = new SimpleDateFormat("HH:mm");
