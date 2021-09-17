@@ -4,12 +4,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
-import com.ec.crm.Data.SMSExternalPayloadDataForSingle;
 import com.ec.crm.Data.SMSGatewayResponse;
+import com.ec.crm.Model.UserMobileNoMapping;
+import com.ec.crm.Repository.UserMobileNoMappingRepo;
 import com.ec.crm.ReusableClasses.ProjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,9 @@ public class SendCRMNotificationsService {
 
     @Autowired
     LeadRepo leadRepo;
+
+    @Autowired
+    UserMobileNoMappingRepo userMobileNoMappingRepo;
 
     @Autowired
     UserDetailsService userDetailsService;
@@ -152,7 +157,7 @@ public class SendCRMNotificationsService {
                         payload.put("type",leadActivity.getActivityType().toString());
                         payload.put("time",localDateFormat.format(leadActivity.getActivityDateTime()));
                         payload.put("custmobile",leadActivity.getLead().getPrimaryMobile());
-                        SMSGatewayResponse response = smsService.sendSMStoGateway(new SMSExternalPayloadDataForSingle(payload));
+                        SMSGatewayResponse response = smsService.sendSMStoGateway(payload);
                         log.info("SMS Sent - " + payload.toString());
                         if (response.getMessage().toLowerCase().contains("success")) {
                             ns.setLeadActivityId(activityId);
@@ -175,17 +180,10 @@ public class SendCRMNotificationsService {
     }
 
     private String getMobileForAssignee(Long assigneeId) {
-        if (assigneeId == 46882) {
-            return "917222986007";
-        } else if (assigneeId == 46885) {
-            return "917222909007";
-        } else if (assigneeId == 53338) {
-            return "919584547876";
-        } else if (assigneeId == 313857) {
-            return "917222909005";
-        } else if (assigneeId == 10001) {
-            return "918600033031";
-        }
-        return null;
+        Optional<UserMobileNoMapping> userDetailOpt = userMobileNoMappingRepo.findById(assigneeId);
+        if(!userDetailOpt.isPresent())
+            return null;
+        else
+            return userDetailOpt.get().getMobileNumber();
     }
 }

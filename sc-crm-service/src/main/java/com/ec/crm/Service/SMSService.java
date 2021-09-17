@@ -1,6 +1,5 @@
 package com.ec.crm.Service;
 
-import com.ec.crm.Data.SMSExternalPayloadDataForSingle;
 import com.ec.crm.Data.SMSGatewayResponse;
 import com.ec.crm.ReusableClasses.ProjectConstants;
 import com.ec.crm.ReusableClasses.ReusableMethods;
@@ -15,6 +14,8 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 
+import java.util.HashMap;
+
 @Service
 public class SMSService {
 
@@ -25,7 +26,7 @@ public class SMSService {
     InstanceService instanceService;
     Logger log = LoggerFactory.getLogger(SMSService.class);
 
-    public SMSGatewayResponse sendSMStoGateway(SMSExternalPayloadDataForSingle payloadData) throws UnirestException {
+    public SMSGatewayResponse sendSMStoGateway(HashMap<String,String> payloadData) throws UnirestException {
 
         if (sendSms && instanceService.getEnvironment().equals("prod")) {
             HttpResponse<JsonNode> response = Unirest.post(ProjectConstants.smsGatewayURL)
@@ -35,6 +36,7 @@ public class SMSService {
                     .asJson();
             JSONObject myObj = response.getBody().getObject();
             SMSGatewayResponse res = new SMSGatewayResponse(myObj.getString("message"), myObj.getString("type"));
+            log.info("SMS Gateway Response - " + res.toString());
             return res;
         } else {
             SMSGatewayResponse res = new SMSGatewayResponse("message", "SMS Service Disabled");
