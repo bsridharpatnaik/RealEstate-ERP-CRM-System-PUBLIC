@@ -150,13 +150,14 @@ public class SendCRMNotificationsService {
                     if (mobileNo != null) {
                         log.info("Valid mobile number found for assignee - " + leadActivity.getLead().getAsigneeId());
                         HashMap<String, String> payload = new HashMap<>();
-                        payload.put("flow_id", ProjectConstants.flowIdForActivityNotification);
+                        payload.put("flow_id", flow_id);
                         payload.put("sender", "GBCONS");
                         payload.put("mobiles", mobileNo);
                         payload.put("name",leadActivity.getLead().getCustomerName());
                         payload.put("type",leadActivity.getActivityType().toString());
                         payload.put("time",localDateFormat.format(leadActivity.getActivityDateTime()));
                         payload.put("custmobile",leadActivity.getLead().getPrimaryMobile());
+                        log.info("Payload to be sent - "+payload.toString());
                         SMSGatewayResponse response = smsService.sendSMStoGateway(payload);
                         log.info("SMS Sent - " + payload.toString());
                         if (response.getMessage().toLowerCase().contains("success")) {
@@ -168,6 +169,9 @@ public class SendCRMNotificationsService {
                             ns.setStatus("SmsSent");
                             nsRepo.save(ns);
                         }
+                    }
+                    else{
+                        log.info("Valid mobile number not found for user");
                     }
                 } catch (Exception e) {
                     ns.setLeadActivityId(activityId);

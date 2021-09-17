@@ -28,6 +28,7 @@ public class SMSService {
 
     public SMSGatewayResponse sendSMStoGateway(HashMap<String,String> payloadData) throws UnirestException {
 
+        log.info("Body - "+ReusableMethods.convertObjectToJson(payloadData));
         if (sendSms && instanceService.getEnvironment().equals("prod")) {
             HttpResponse<JsonNode> response = Unirest.post(ProjectConstants.smsGatewayURL)
                     .header("authkey", ProjectConstants.authKey)
