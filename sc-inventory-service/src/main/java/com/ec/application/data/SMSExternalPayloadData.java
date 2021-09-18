@@ -28,4 +28,12 @@ public class SMSExternalPayloadData {
     public void setRecipients(List<HashMap<String, String>> recipients) {
         this.recipients = recipients;
     }
+
+    @Override
+    public String toString() {
+        return "SMSExternalPayloadData{" +
+                "flow_id='" + flow_id + '\'' +
+                ", recipients=" + recipients +
+                '}';
+    }
 }

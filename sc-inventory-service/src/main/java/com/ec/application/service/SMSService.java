@@ -46,6 +46,7 @@ public class SMSService {
 
     public SMSGatewayResponse sendSMStoGateway(SMSExternalPayloadData payloadData) throws UnirestException {
 
+        log.info("SMS Flag - "+sendSms.toString());
         if (sendSms) {
             HttpResponse<JsonNode> response = Unirest.post(ProjectConstants.smsGatewayURL)
                     .header("authkey", ProjectConstants.authKey)
@@ -54,7 +55,9 @@ public class SMSService {
                     .asJson();
             JSONObject myObj = response.getBody().getObject();
             SMSGatewayResponse res = new SMSGatewayResponse(myObj.getString("message"), myObj.getString("type"));
+            log.info("SMS Response Recieved - "+res.toString());
             return res;
+
         } else {
             SMSGatewayResponse res = new SMSGatewayResponse("message", "SMS Service Disabled");
             log.info("SMS Gateway Response - " + res.toString());
@@ -81,8 +84,10 @@ public class SMSService {
         if (!deliveryList.isPresent())
             throw new Exception("Delivery List not found for " + ProjectConstants.IODeliveryListForSuncity);
 
+        log.info("Delivery List found.");
         List<String> numbers = Arrays.asList(deliveryList.get().getNumbers().split(","));
         SMSExternalPayloadData smsPayload = formPayloadDataForSuncity(numbers);
+        log.info("Sending payload to SMS gateway - "+smsPayload.toString());
         return sendSMStoGateway(smsPayload);
     }
 
