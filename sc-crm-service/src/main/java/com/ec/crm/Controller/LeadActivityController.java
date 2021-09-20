@@ -165,6 +165,6 @@ public class LeadActivityController
 	@GetMapping("/tn")
 	public void triggerNotifications()
 	{
-		sendCRMNotificationsService.sendNotificationForUpcomingActivities();
+		sendCRMNotificationsService.sendSMSNotificationForUpcomingActivities();
 	}
 }

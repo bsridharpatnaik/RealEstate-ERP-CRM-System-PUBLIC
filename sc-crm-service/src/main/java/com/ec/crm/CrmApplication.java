@@ -4,12 +4,14 @@ import java.util.Map;
 
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Service.InstanceService;
+import com.ec.crm.Service.SchedulerService;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 
@@ -32,6 +34,12 @@ public class CrmApplication extends SpringBootServletInitializer
 	public static void main(String[] args)
 	{
 		SpringApplication.run(CrmApplication.class, args);
+	}
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		// The Scheduler Class needs to be added manually, because it dont have to be defined as Bean
+		return application.sources(CrmApplication.class, SchedulerService.class);
 	}
 
 	@Bean
