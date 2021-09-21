@@ -14,7 +14,8 @@ public enum DealLostReasonEnum {
     Long_Possession_Period,
     FlyAsh_Brick_Issue,
     Costly_Society_Electrification,
-    Empty;
+    Empty,
+    Other;
 
     public static List<DealLostReasonEnum> getValidDealLostReasons()
     {
