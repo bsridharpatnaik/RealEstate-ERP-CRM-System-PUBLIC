@@ -36,13 +36,15 @@ public class GroupBySpecification {
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<ProductGroupedDAO> query = builder.createQuery(ProductGroupedDAO.class);
         Root<T> root = query.from(entityClazz);
+
         Predicate p = spec.toPredicate(root, query, builder);
+        query.where(p);
         Join<T, InwardOutwardList> ioList = root.join(joinTable);
         Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
         query.multiselect(productList.get(Product_.PRODUCT_NAME), productList.get(Product_.MEASUREMENT_UNIT),
                 builder.sum(ioList.get(InwardOutwardList_.QUANTITY)));
         query.groupBy(productList.get(Product_.PRODUCT_NAME), productList.get(Product_.MEASUREMENT_UNIT));
-        query.where(p);
+
         List<ProductGroupedDAO> groupedData = fetchData(query);
         return groupedData;
     }
