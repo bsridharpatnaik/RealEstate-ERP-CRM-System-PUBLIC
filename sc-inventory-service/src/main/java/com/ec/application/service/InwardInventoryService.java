@@ -3,12 +3,7 @@ package com.ec.application.service;
 import static java.util.stream.Collectors.counting;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -17,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +27,6 @@ import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.data.UserReturnData;
 import com.ec.application.model.APICallTypeForAuthorization;
 import com.ec.application.model.InwardInventory;
-import com.ec.application.model.InwardInventory_;
 import com.ec.application.model.InwardOutwardList;
 import com.ec.application.model.Product;
 import com.ec.application.model.RejectInwardList;
@@ -307,9 +302,21 @@ public class InwardInventoryService {
     private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<InwardInventory> spec,
                                                                  Class<InwardInventory> class1) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, InwardInventory.class,
-                InwardInventory_.INWARD_OUTWARD_LIST);
-        return groupedData;
+        Map<Pair<String, String>, Double> map = inwardInventoryRepo.findAll(spec).stream()
+                .flatMap(i -> i.getInwardOutwardList().stream())
+                .collect(Collectors.toMap(l -> Pair.of(l.getProduct().getProductName(), l.getProduct().getMeasurementUnit()),
+                        InwardOutwardList::getQuantity,
+                        Double::sum));
+        List<ProductGroupedDAO> returnData = new ArrayList<>();
+        for(Map.Entry< Pair<String, String>, Double> e: map.entrySet()){
+            ProductGroupedDAO rd = new ProductGroupedDAO(
+                    e.getKey().getFirst(),
+                    e.getKey().getSecond(),
+                    e.getValue()
+            );
+            returnData.add(rd);
+        }
+        return returnData;
     }
 
     private List<InwardInventoryExportDAO2> transformDataForExport(List<InwardInventory> iiData) {
