@@ -307,6 +307,7 @@ public class InwardInventoryService {
                 .collect(Collectors.toMap(l -> Pair.of(l.getProduct().getProductName(), l.getProduct().getMeasurementUnit()),
                         InwardOutwardList::getQuantity,
                         Double::sum));
+
         List<ProductGroupedDAO> returnData = new ArrayList<>();
         for(Map.Entry< Pair<String, String>, Double> e: map.entrySet()){
             ProductGroupedDAO rd = new ProductGroupedDAO(

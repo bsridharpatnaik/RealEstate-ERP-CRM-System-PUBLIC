@@ -3,19 +3,16 @@ package com.ec.application.service;
 import static java.util.stream.Collectors.counting;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.ec.application.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,14 +25,6 @@ import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.data.UserReturnData;
-import com.ec.application.model.APICallTypeForAuthorization;
-import com.ec.application.model.InwardOutwardList;
-import com.ec.application.model.OutwardInventory;
-import com.ec.application.model.OutwardInventory_;
-import com.ec.application.model.Product;
-import com.ec.application.model.RejectOutwardList;
-import com.ec.application.model.ReturnOutwardList;
-import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.InwardOutwardListRepo;
 import com.ec.application.repository.LocationRepo;
@@ -512,13 +501,24 @@ public class OutwardInventoryService
 	}
 
 	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<OutwardInventory> spec,
-			Class<OutwardInventory> class1)
-	{
-		log.info("Invoked fetchGroupingForFilteredData");
-		List<ProductGroupedDAO> groupedData = groupBySpecification.findDataByConfiguration(spec, OutwardInventory.class,
-				OutwardInventory_.INWARD_OUTWARD_LIST);
-		log.info("Exiting fetchGroupingForFilteredData");
-		return groupedData;
+																 Class<InwardInventory> class1) {
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+		Map<Pair<String, String>, Double> map = outwardInventoryRepo.findAll(spec).stream()
+				.flatMap(i -> i.getInwardOutwardList().stream())
+				.collect(Collectors.toMap(l -> Pair.of(l.getProduct().getProductName(), l.getProduct().getMeasurementUnit()),
+						InwardOutwardList::getQuantity,
+						Double::sum));
+		
+		List<ProductGroupedDAO> returnData = new ArrayList<>();
+		for(Map.Entry< Pair<String, String>, Double> e: map.entrySet()){
+			ProductGroupedDAO rd = new ProductGroupedDAO(
+					e.getKey().getFirst(),
+					e.getKey().getSecond(),
+					e.getValue()
+			);
+			returnData.add(rd);
+		}
+		return returnData;
 	}
 
 	/*
