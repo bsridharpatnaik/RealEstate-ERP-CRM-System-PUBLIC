@@ -486,7 +486,7 @@ public class OutwardInventoryService
 		returnOutwardInventoryData.setIiDropdown(populateDropdownService.fetchData("outward"));
 
 		// Feed totals
-		returnOutwardInventoryData.setTotals(spec != null ? fetchGroupingForFilteredData(spec, OutwardInventory.class)
+		returnOutwardInventoryData.setTotals(spec != null ? fetchGroupingForFilteredData(spec)
 				: fetchOutwardnventoryGroupBy());
 		log.info("Exited fetchOutwardnventory");
 		return returnOutwardInventoryData;
@@ -500,15 +500,14 @@ public class OutwardInventoryService
 		return groupedData;
 	}
 
-	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<OutwardInventory> spec,
-																 Class<InwardInventory> class1) {
+	private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<OutwardInventory> spec) {
 		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		Map<Pair<String, String>, Double> map = outwardInventoryRepo.findAll(spec).stream()
 				.flatMap(i -> i.getInwardOutwardList().stream())
 				.collect(Collectors.toMap(l -> Pair.of(l.getProduct().getProductName(), l.getProduct().getMeasurementUnit()),
 						InwardOutwardList::getQuantity,
 						Double::sum));
-		
+
 		List<ProductGroupedDAO> returnData = new ArrayList<>();
 		for(Map.Entry< Pair<String, String>, Double> e: map.entrySet()){
 			ProductGroupedDAO rd = new ProductGroupedDAO(

@@ -274,7 +274,7 @@ public class InwardInventoryService {
         returnInwardInventoryData.setIiDropdown(populateDropdownService.fetchData("inward"));
 
         // Feed totals
-        returnInwardInventoryData.setTotals(spec != null ? fetchGroupingForFilteredData(spec, InwardInventory.class)
+        returnInwardInventoryData.setTotals(spec != null ? fetchGroupingForFilteredData(spec)
                 : fetchInwardnventoryGroupBy());
         return returnInwardInventoryData;
     }
@@ -299,8 +299,7 @@ public class InwardInventoryService {
         return groupedData;
     }
 
-    private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<InwardInventory> spec,
-                                                                 Class<InwardInventory> class1) {
+    private List<ProductGroupedDAO> fetchGroupingForFilteredData(Specification<InwardInventory> spec) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Map<Pair<String, String>, Double> map = inwardInventoryRepo.findAll(spec).stream()
                 .flatMap(i -> i.getInwardOutwardList().stream())
