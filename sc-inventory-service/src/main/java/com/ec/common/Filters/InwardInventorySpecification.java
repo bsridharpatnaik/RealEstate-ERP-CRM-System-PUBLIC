@@ -31,6 +31,7 @@ public final class InwardInventorySpecification
 		List<String> showOnlyRejected = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"showOnlyRejected");
 		List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
+		List<String> textSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "textSearch");
 		Specification<InwardInventory> finalSpec = null;
 
 		if (startDates != null && startDates.size() > 0)
@@ -60,6 +61,18 @@ public final class InwardInventorySpecification
 		if (invoiceReceived != null && invoiceReceived.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereDirectBoleanFieldEquals(InwardInventory_.INVOICE_RECEIVED, invoiceReceived));
+
+		if (textSearch != null && textSearch.size() > 0) {
+			Specification<InwardInventory> internalSpec = null;
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.BILL_NO,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.CHALLAN_NO,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.ADDITIONAL_INFO,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.PURCHASE_ORDER,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.OUR_SLIP_NO,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.VEHICLE_NO,textSearch));
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					internalSpec);
+		}
 
 		if (globalSearch != null && globalSearch.size() > 0)
 		{

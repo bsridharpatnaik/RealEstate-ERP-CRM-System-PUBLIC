@@ -34,6 +34,7 @@ public final class OutwardInventorySpecification
 		List<String> showOnlyRejected = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"showOnlyRejected");
 		Specification<OutwardInventory> finalSpec = null;
+		List<String> textSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "textSearch");
 
 		if (startDates != null && startDates.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
@@ -97,6 +98,16 @@ public final class OutwardInventorySpecification
 				finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
 			}
 		}
+
+		if (textSearch != null && textSearch.size() > 0) {
+			Specification<OutwardInventory> internalSpec = null;
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(OutwardInventory_.SLIP_NO,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(OutwardInventory_.ADDITIONAL_INFO,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(OutwardInventory_.PURPOSE,textSearch));
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					internalSpec);
+		}
+
 		return finalSpec;
 	}
 }
