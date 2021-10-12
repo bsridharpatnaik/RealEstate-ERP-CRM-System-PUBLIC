@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -22,10 +23,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
-import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.InwardInventoryExportDAO2;
-import com.ec.application.data.ReturnInwardInventoryData;
-import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.service.InwardInventoryService;
 import com.ec.common.Filters.FilterDataList;
@@ -50,6 +47,14 @@ public class InwardInventoryController {
             throws Exception {
 
         return iiService.fetchInwardnventory(filterDataList, pageable);
+    }
+
+    @PostMapping("/totals")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ProductGroupedDAO> fetchAllInwardInventoryTotals(@RequestBody FilterDataList filterDataList)
+            throws Exception {
+
+        return iiService.getTotalsForInward(filterDataList);
     }
 
     @PostMapping("/export")

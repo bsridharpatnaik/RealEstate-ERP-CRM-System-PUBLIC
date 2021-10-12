@@ -3,6 +3,7 @@ package com.ec.application.controller;
 import java.text.ParseException;
 import java.util.List;
 
+import com.ec.application.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -24,10 +25,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
-import com.ec.application.data.OutwardInventoryData;
-import com.ec.application.data.OutwardInventoryExportDAO2;
-import com.ec.application.data.ReturnOutwardInventoryData;
-import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
 import com.ec.common.Filters.FilterDataList;
@@ -65,6 +62,14 @@ public class OutwardInventoryController {
                                                                @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
             throws ParseException {
         return oiService.fetchOutwardnventory(filterDataList, pageable);
+    }
+
+    @PostMapping("/totals")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ProductGroupedDAO> fetchAllOutwardInventoryTotals(@RequestBody FilterDataList filterDataList)
+            throws Exception {
+
+        return oiService.getTotalsForOutward(filterDataList);
     }
 
     @PostMapping("/export")

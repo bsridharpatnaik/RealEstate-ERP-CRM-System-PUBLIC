@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.application.model.*;
+import com.ec.common.Filters.InwardInventorySpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -492,6 +493,14 @@ public class OutwardInventoryService
 		return returnOutwardInventoryData;
 	}
 
+	public List<ProductGroupedDAO> getTotalsForOutward(FilterDataList filterDataList) throws ParseException {
+		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+		Specification<OutwardInventory> spec = OutwardInventorySpecification.getSpecification(filterDataList);
+		if (spec != null)
+			return fetchGroupingForFilteredData(spec);
+		else
+			return fetchOutwardnventoryGroupBy();
+	}
 	public List<ProductGroupedDAO> fetchOutwardnventoryGroupBy() throws ParseException
 	{
 		log.info("Invoked fetchOutwardnventoryGroupBy");

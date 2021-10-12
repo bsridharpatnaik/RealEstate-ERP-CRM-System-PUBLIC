@@ -19,8 +19,7 @@ public final class InwardInventorySpecification
 {
 	static SpecificationsBuilder<InwardInventory> specbldr = new SpecificationsBuilder<InwardInventory>();
 
-	public static Specification<InwardInventory> getSpecification(FilterDataList filterDataList) throws ParseException
-	{
+	public static Specification<InwardInventory> getSpecification(FilterDataList filterDataList) throws ParseException {
 		List<String> startDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "startDate");
 		List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "endDate");
 		List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productNames");

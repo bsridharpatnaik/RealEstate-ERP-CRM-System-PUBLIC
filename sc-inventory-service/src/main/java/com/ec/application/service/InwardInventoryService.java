@@ -279,6 +279,14 @@ public class InwardInventoryService {
         return returnInwardInventoryData;
     }
 
+    public List<ProductGroupedDAO> getTotalsForInward(FilterDataList filterDataList) throws Exception{
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
+        if (spec != null)
+            return fetchGroupingForFilteredData(spec);
+        else
+            return fetchInwardnventoryGroupBy();
+    }
     public List<InwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
