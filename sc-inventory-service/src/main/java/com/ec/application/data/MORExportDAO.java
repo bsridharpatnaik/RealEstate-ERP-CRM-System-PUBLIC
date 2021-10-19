@@ -25,6 +25,8 @@ public class MORExportDAO
 
 	String additionalNotes;
 
+	String mrnGrn;
+
 	@JsonFormat(shape = JsonFormat.Shape.STRING)
 	MORRentModeEnum mode;
 
@@ -49,6 +51,14 @@ public class MORExportDAO
 	Double noOfTrips;
 	Double rate;
 	Double amountCharged;
+
+	public String getMrnGrn() {
+		return mrnGrn;
+	}
+
+	public void setMrnGrn(String mrnGrn) {
+		this.mrnGrn = mrnGrn;
+	}
 
 	public Long getMorid()
 	{

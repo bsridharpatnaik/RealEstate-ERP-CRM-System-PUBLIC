@@ -55,6 +55,16 @@ public class CreateMORentData
 	@NonNull
 	List<FileInformationDAO> fileInformations;
 	Double rate;
+	String mrnGrn;
+
+	public String getMrnGrn() {
+		return mrnGrn;
+	}
+
+	public void setMrnGrn(String mrnGrn) {
+		this.mrnGrn = mrnGrn;
+	}
+
 	public Date getDate() {
 		return date;
 	}

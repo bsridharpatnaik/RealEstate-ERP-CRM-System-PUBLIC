@@ -77,6 +77,8 @@ public class MachineryOnRent extends ReusableFields
 
 	MORRentModeEnum mode;
 
+	String mrnGrn;
+
 	@JsonProperty("startDateTime")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
 	Date startDateTime;

@@ -262,6 +262,7 @@ public class MachineryOnRentService {
         machineryOnRent.setAdditionalNotes(payload.getAdditionalNotes());
         machineryOnRent.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
         machineryOnRent.setRate(payload.getRate());
+        machineryOnRent.setMrnGrn(payload.getMrnGrn()==null?null:payload.getMrnGrn());
         return machineryOnRent;
     }
 
@@ -332,7 +333,7 @@ public class MachineryOnRentService {
         if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
             if (currentUserData.getRoles().contains("admin")
                     || currentUserData.getRoles().contains("inventory-manager")) {
-                if (ReusableMethods.daysBetweenTwoDates(morData.getDate(),
+                if (ReusableMethods.daysBetweenTwoDates(mor.getDate(),
                         new Date()) > ProjectConstants.editAllowedDaysAdmin)
                     throw new Exception("Cannot DELETE Machinery On Rent created more than "
                             + ProjectConstants.editAllowedDaysAdmin + " Days ago. ");
@@ -396,6 +397,7 @@ public class MachineryOnRentService {
             dao.setAmountCharged(mor.getAmountCharged());
             dao.setVehicleNo(mor.getVehicleNo());
             dao.setAdditionalNotes(mor.getAdditionalNotes());
+            dao.setMrnGrn(mor.getMrnGrn()==null?"":mor.getMrnGrn());
             exportList.add(dao);
         }
         return exportList;
