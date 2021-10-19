@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum SentimentEnum 
 {
-	RED,
-	GREEN,
-	ORANGE;
+	HOT,
+	COLD,
+	WARM;
 	public SentimentEnum setFromString(String name)
 	{
 		return SentimentEnum.valueOf(name);
