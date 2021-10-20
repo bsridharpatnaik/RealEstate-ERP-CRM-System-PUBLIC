@@ -485,10 +485,7 @@ public class OutwardInventoryService
 
 		// Feed dropdown values
 		returnOutwardInventoryData.setIiDropdown(populateDropdownService.fetchData("outward"));
-
-		// Feed totals
-		returnOutwardInventoryData.setTotals(spec != null ? fetchGroupingForFilteredData(spec)
-				: fetchOutwardnventoryGroupBy());
+		
 		log.info("Exited fetchOutwardnventory");
 		return returnOutwardInventoryData;
 	}

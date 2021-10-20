@@ -272,10 +272,6 @@ public class InwardInventoryService {
 
         // Feed dropdowns
         returnInwardInventoryData.setIiDropdown(populateDropdownService.fetchData("inward"));
-
-        // Feed totals
-        returnInwardInventoryData.setTotals(spec != null ? fetchGroupingForFilteredData(spec)
-                : fetchInwardnventoryGroupBy());
         return returnInwardInventoryData;
     }
 
