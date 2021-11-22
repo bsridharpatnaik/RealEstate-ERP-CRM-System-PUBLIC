@@ -238,8 +238,8 @@ public class InwardInventoryService {
         for (ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities()) {
             if (!productRepo.existsById(productWithQuantity.getProductId()))
                 throw new Exception("Product not found with ID " + productWithQuantity.getProductId());
-            if (productWithQuantity.getQuantity() <= 0)
-                throw new Exception("Quantity cannot be less that or equals zero");
+            //if (productWithQuantity.getQuantity() <= 0)
+              //  throw new Exception("Quantity cannot be less that or equals zero");
         }
         if (!supplierRepo.existsById(iiData.getSupplierId()))
             throw new Exception("Supplier not found with ID");
@@ -366,7 +366,7 @@ public class InwardInventoryService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void updateStockBeforeDelete(InwardInventory inwardInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         String warehouseName = inwardInventory.getWarehouse().getWarehouseName();
@@ -381,7 +381,7 @@ public class InwardInventoryService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public InwardInventory updateInwardnventory(InwardInventoryData iiData, Long id) throws Exception {
         logger.info("In undate inward inventory flow");
         Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
@@ -398,7 +398,7 @@ public class InwardInventoryService {
 
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void exitIfNotAuthorized(InwardInventory inwardInventory, InwardInventoryData iiData,
                                      APICallTypeForAuthorization action) throws Exception {
 
@@ -468,7 +468,7 @@ public class InwardInventoryService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void modifyStockBeforeUpdate(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
             throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -478,7 +478,7 @@ public class InwardInventoryService {
             updateWhenWarehouseSame(oldInwardInventory, inwardInventory);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void updateWhenWarehouseSame(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
             throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -497,7 +497,7 @@ public class InwardInventoryService {
         updateStockForCommonInBoth(commonInBoth, oldInwardInventory, inwardInventory);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void updateStockForCommonInBoth(Set<Long> commonInBoth, InwardInventory oldInwardInventory,
                                             InwardInventory inwardInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -525,7 +525,7 @@ public class InwardInventoryService {
 
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private Double findQuantityForProductInIOList(Long productId, Set<InwardOutwardList> ioListSet) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         for (InwardOutwardList ioList : ioListSet) {
@@ -537,7 +537,7 @@ public class InwardInventoryService {
         return null;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void updateStockForOnlyInNew(Set<Long> onlyInNew, InwardInventory inwardInventory) throws Exception {
         logger.info("Processing Update Stock for productids present only in new");
         for (Long id : onlyInNew) {
@@ -558,7 +558,7 @@ public class InwardInventoryService {
 
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void updateStockForOnlyInOld(Set<Long> onlyInOld, InwardInventory oldInwardInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         // Delete stock received as part of old inventory
@@ -577,7 +577,7 @@ public class InwardInventoryService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private void updateWhenWarehouseChanged(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
             throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -591,7 +591,7 @@ public class InwardInventoryService {
         inwardInventory.setInwardOutwardList(newLIOList);
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset, String type,
                                                               Warehouse warehouse) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());

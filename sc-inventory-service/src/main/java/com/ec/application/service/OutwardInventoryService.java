@@ -453,8 +453,8 @@ public class OutwardInventoryService
 		{
 			if (!productRepo.existsById(productWithQuantity.getProductId()))
 				throw new Exception("Product not found.");
-			if (productWithQuantity.getQuantity() <= 0)
-				throw new Exception("Quantity should be greater than zero");
+			//if (productWithQuantity.getQuantity() <= 0)
+			//	throw new Exception("Quantity should be greater than zero");
 		}
 	}
 
@@ -621,7 +621,7 @@ public class OutwardInventoryService
 		log.info("Exiting updateStockBeforeDelete");
 	}
 
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	private void exitIfNotAuthorized(OutwardInventory outwardInventory, OutwardInventoryData oiData,
 			APICallTypeForAuthorization action) throws Exception
 	{
