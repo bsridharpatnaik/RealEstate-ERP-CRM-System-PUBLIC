@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.ec.crm.Data.*;
 import com.ec.crm.Enums.DealLostReasonEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,12 +27,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ec.crm.Data.LeadActivityClosingComment;
-import com.ec.crm.Data.LeadActivityCreate;
-import com.ec.crm.Data.LeadActivityDropdownData;
-import com.ec.crm.Data.LeadActivityListWithTypeAheadData;
-import com.ec.crm.Data.RescheduleActivityData;
-import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.LeadActivity;
@@ -126,12 +121,22 @@ public class LeadActivityController
 	@PostMapping("/getleadactivitypage")
 	@ResponseStatus(HttpStatus.OK)
 	public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
+																 @PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
+			throws Exception {
+		UserReturnData currentUser = userDetailsService.getCurrentUser();
+		request.setAttribute("currentUser", currentUser);
+		return laService.getLeadActivityPage(leadFilterDataList, pageable);
+	}
+
+	@PostMapping("/getleadactivitypage/export")
+	@ResponseStatus(HttpStatus.OK)
+	public Page<LeadActivityExportDTO> getLeadActivityPageExport(@RequestBody FilterDataList leadFilterDataList,
+														   @PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
 			throws Exception
 	{
 		UserReturnData currentUser = userDetailsService.getCurrentUser();
 		request.setAttribute("currentUser", currentUser);
-		return laService.getLeadActivityPage(leadFilterDataList, pageable);
+		return laService.getLeadActivityPageExport(leadFilterDataList, pageable);
 	}
 
 	@GetMapping("/getleadactivitypage/dropdown")

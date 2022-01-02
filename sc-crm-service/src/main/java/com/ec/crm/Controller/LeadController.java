@@ -74,7 +74,7 @@ public class LeadController
 		return leadService.getPurposeList();
 	}
 
-	@PostMapping
+	/*@PostMapping
 	@ResponseStatus(HttpStatus.OK)
 	public LeadListWithTypeAheadData returnFilteredLeads(@RequestBody FilterDataList leadFilterDataList,
 			@PageableDefault(page = 0, size = 10, sort = "leadId", direction = Direction.DESC) Pageable pageable)
@@ -83,7 +83,7 @@ public class LeadController
 		UserReturnData currentUser = userDetailsService.getCurrentUser();
 		request.setAttribute("currentUser", currentUser);
 		return leadService.findFilteredList(leadFilterDataList, pageable);
-	}
+	}*/
 
 	@GetMapping("/history/{id}")
 	public List<Lead> findLeadHistory(@PathVariable long id) throws Exception

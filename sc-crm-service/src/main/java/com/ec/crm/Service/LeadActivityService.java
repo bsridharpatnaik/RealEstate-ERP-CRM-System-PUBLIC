@@ -12,8 +12,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.ec.crm.Data.*;
 import com.ec.crm.Enums.*;
+import com.ec.crm.Model.*;
 import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Mapper.LeadActivityMapper;
-import com.ec.crm.Model.ClosedLeads;
-import com.ec.crm.Model.CustomerDocument;
-import com.ec.crm.Model.Lead;
-import com.ec.crm.Model.LeadActivity;
-import com.ec.crm.Model.PaymentSchedule;
 import com.ec.crm.Repository.ClosedLeadsRepo;
 import com.ec.crm.Repository.CustomerDocumentRepo;
 import com.ec.crm.Repository.LeadActivityRepo;
@@ -296,8 +294,8 @@ public class LeadActivityService {
         List<Lead> leadHistory = lService.history(lead.getLeadId());
         LeadStatusEnum previousStatus = lead.getStatus();
 
-		if (leadHistory.size() < 1)
-			previousStatus = LeadStatusEnum.Negotiation;
+        if (leadHistory.size() < 1)
+            previousStatus = LeadStatusEnum.Negotiation;
 
         for (int ctr = leadHistory.size() - 1; ctr >= 0; ctr--) {
             Lead currentLead = leadHistory.get(ctr);
@@ -636,6 +634,26 @@ public class LeadActivityService {
         return leadActivityListWithTypeAheadData;
     }
 
+    public Page<LeadActivityExportDTO> getLeadActivityPageExport(FilterDataList leadFilterDataList, Pageable pageable) throws Exception {
+
+        log.info("Invoked findFilteredList with payload - " + leadFilterDataList.toString());
+
+        // check user. if not admin, apply default filters
+        leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
+
+        Specification<LeadActivity> spec = ActivitySpecifications.getSpecification(leadFilterDataList);
+        if (spec == null ? laRepo.count() > 2000 : laRepo.count(spec) > 2000)
+            throw new Exception("Too many rows (>2000) to export. Apply some more filters and try again");
+
+        Page<LeadActivity> leadActivityList = spec != null ? laRepo.findAll(spec, pageable) : laRepo.findAll(pageable);
+        Page<LeadActivityExportDTO> pagedata = leadActivityList.map(this::mapLeadActivityForExport);
+        return pagedata;
+    }
+
+    private LeadActivityExportDTO mapLeadActivityForExport(LeadActivity leadActivity) {
+        return new LeadActivityExportDTO(leadActivity);
+    }
+
     private LeadPageData mapLeadActivityPage(LeadActivity la) {
         UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
         LeadPageData l = new LeadPageData();
@@ -652,11 +670,11 @@ public class LeadActivityService {
         else
             l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
         l.setFollowUpCount(la.getFollowUpCount() == null ? null : la.getFollowUpCount());
-		l.setLoanStatus(la.getLead().getLoanStatus()==null?null: LoanStatusEnum.valueOf(la.getLead().getLoanStatus()));
-        l.setCustomerStatus(la.getLead().getCustomerStatus()==null?null:CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus()));
-		l.setNextPaymentDate(la.getLead().getNextPaymentDate());
+        l.setLoanStatus(la.getLead().getLoanStatus() == null ? null : LoanStatusEnum.valueOf(la.getLead().getLoanStatus()));
+        l.setCustomerStatus(la.getLead().getCustomerStatus() == null ? null : CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus()));
+        l.setNextPaymentDate(la.getLead().getNextPaymentDate());
         l.setTotalPending(la.getLead().getTotalPending());
-		return l;
+        return l;
     }
 
     public LeadActivity getRecentActivityByLead(Lead lead) {
@@ -829,4 +847,6 @@ public class LeadActivityService {
     public List<DealLostReasonEnum> getDealLostReasons() {
         return DealLostReasonEnum.getValidDealLostReasons();
     }
+
+
 }
