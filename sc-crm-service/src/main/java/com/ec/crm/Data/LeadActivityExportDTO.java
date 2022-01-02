@@ -123,10 +123,10 @@ public class LeadActivityExportDTO {
     String isLatest;
 
     @JsonProperty("Follow Up Count")
-    Integer followUpCount;
+    String followUpCount;
 
     public LeadActivityExportDTO(LeadActivity la) {
-        this.followUpCount = la.getFollowUpCount();
+        this.followUpCount = la.getFollowUpCount()==null?"":la.getFollowUpCount().toString();
         this.isLatest = la.getIsLatest() == 1 ? "true" : "false";
         this.dealLostReason = la.getDealLostReason() == null ? "" : la.getDealLostReason().name();
         this.activityType = la.getActivityType().name();
@@ -140,6 +140,7 @@ public class LeadActivityExportDTO {
         this.leadActivityId = la.getLeadActivityId();
         this.customerName = la.getLead().getCustomerName();
         this.loanStatus = la.getLead().getLoanStatus() == null ? "" : la.getLead().getLoanStatus();
+        this.customerStatus = la.getLead().getCustomerStatus()==null?"":la.getLead().getCustomerStatus();
         this.leadStatus = la.getLead().getStatus().toString();
         this.leadCreator = la.getLead().getCreatorId();
         this.assignee = la.getLead().getAsigneeId();
@@ -147,6 +148,7 @@ public class LeadActivityExportDTO {
         this.sentiment = la.getLead().getSentiment() == null ? "" : la.getLead().getSentiment().name();
         this.propertyType = la.getLead().getPropertyType() == null ? "" : la.getLead().getPropertyType().name();
         this.address = concatAddress(la.getLead().getAddress());
+        this.emailId = la.getLead().getEmailId()==null?"":la.getLead().getEmailId();
         this.source = la.getLead().getSource() == null ? "" : la.getLead().getSource().getSourceName();
         this.broker = la.getLead().getBroker() == null ? "" : la.getLead().getBroker().getBrokerName();
         this.occupation = la.getLead().getOccupation() == null ? "" : la.getLead().getOccupation();
@@ -154,7 +156,6 @@ public class LeadActivityExportDTO {
         this.purpose = la.getLead().getPurpose() == null ? "" : la.getLead().getPurpose();
         this.secondaryMobile = la.getLead().getSecondaryMobile()==null?"":la.getLead().getSecondaryMobile();
         this.primaryMobile = la.getLead().getPrimaryMobile()==null?"":la.getLead().getPrimaryMobile();
-        this.customerName = la.getLead().getCustomerName();
         this.leadId = la.getLead().getLeadId();
     }
 
