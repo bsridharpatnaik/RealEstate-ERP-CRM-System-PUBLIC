@@ -1,7 +1,6 @@
 use egcity; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 
 -- All Inventory --
-use egcity;
 CREATE OR replace VIEW all_inventory AS
 SELECT
 		-- convert(func_inc_var_session(),char) AS id,
