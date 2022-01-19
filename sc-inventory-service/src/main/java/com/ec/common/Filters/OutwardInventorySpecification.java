@@ -59,12 +59,12 @@ public final class OutwardInventorySpecification
 					.whereChildFieldContains(OutwardInventory_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, warehouseNames));
 
 		if (usageLocations != null && usageLocations.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildFieldContains(
+			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildFieldEquals(
 					OutwardInventory_.USAGE_LOCATION, UsageLocation_.LOCATION_NAME, usageLocations));
 
 		if (usageAreas != null && usageAreas.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr
-					.whereChildFieldContains(OutwardInventory_.USAGE_AREA, UsageArea_.USAGE_AREA_NAME, usageAreas));
+					.whereChildFieldEquals(OutwardInventory_.USAGE_AREA, UsageArea_.USAGE_AREA_NAME, usageAreas));
 
 		if (globalSearch != null && globalSearch.size() > 0)
 		{
