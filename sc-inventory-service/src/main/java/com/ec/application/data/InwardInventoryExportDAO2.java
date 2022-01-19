@@ -14,7 +14,7 @@ import lombok.Data;
 
 @Data
 @JsonPropertyOrder(
-{ "Inward ID", "Date", "MRN/GRN", "Warehouse", "Supplier", "Purchase Order Date", "Purchase Order NO","Category", "Inventory",
+{ "Inward ID", "Date", "MRN/GRN", "Warehouse", "Supplier", "Purchase Order Date", "Purchase Order NO","Bill No","Category", "Inventory",
 		"Quantity", "Measurement Unit", "Closing Stock", "Vehicle No" })
 public class InwardInventoryExportDAO2
 {
@@ -26,7 +26,7 @@ public class InwardInventoryExportDAO2
 	Date date;
 
 	@JsonProperty("MRN/GRN")
-	String MRN_GRN;
+	String mrngrn;
 
 	@JsonProperty("Category")
 	String category;
@@ -43,6 +43,9 @@ public class InwardInventoryExportDAO2
 
 	@JsonProperty("Purchase Order NO")
 	String purchaseOrderNO;
+
+	@JsonProperty("Bill No")
+	String billNo;
 
 	@JsonProperty("Inventory")
 	String inventory;
@@ -71,10 +74,11 @@ public class InwardInventoryExportDAO2
 		this.measurementUnit = iol.getProduct().getMeasurementUnit();
 		this.warehouse = ii.getWarehouse().getWarehouseName();
 		this.supplier = ii.getSupplier().getName();
-		this.MRN_GRN = ii.getOurSlipNo() == null ? "" : ii.getOurSlipNo();
+		this.mrngrn = ii.getOurSlipNo() == null ? "" : ii.getOurSlipNo();
 		this.purchaseOrderDate = ii.getPurchaseOrderdate() == null ? null : ii.getPurchaseOrderdate();
 		this.purchaseOrderNO = ii.getPurchaseOrder() == null ? "" : ii.getPurchaseOrder();
 		this.inventory = iol.getProduct().getProductName();
 		this.category=iol.getProduct().getCategory().getCategoryName();
+		this.billNo = ii.getBillNo()==null?"":ii.getBillNo();
 	}
 }
