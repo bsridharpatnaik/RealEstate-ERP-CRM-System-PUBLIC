@@ -1,77 +1,115 @@
 use egcity; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 
 -- All Inventory --
-CREATE OR replace VIEW all_inventory AS
-SELECT
-		-- convert(func_inc_var_session(),char) AS id,
-        row_number() over (ORDER BY tx.date desc,tx.type desc,tx.keyid desc) as id,
-		tx.*,
-		p.Product_name,
-        cat.category_name,
-        p.measurementunit,
+CREATE OR replace VIEW all_inventory
+AS
+  SELECT row_number()
+           over (
+             ORDER BY tx.date desc, tx.type desc, tx.keyid desc) as id,
+         tx.type,
+         tx.keyid,
+         tx.entryid,
+         tx.date,
+         tx.contactid,
+         tx.warehouseid,
+         tx.Productid,
+         tx.quantity,
+         tx.closingstock,
+         tx.creationDate,
+         tx.lastModifiedDate,
+         tx.Product_name,
+         tx.category_name,
+         tx.measurementunit,
          c.name,
          c.mobileno,
          c.emailid,
          c.contacttype,
-         w.warehouse_id,
-         w.warehousename
+         tx.warehouse_id,
+         tx.warehousename
   FROM   (SELECT 'Inward'                         AS type,
-				ii.inwardid as keyid ,
-				ioe.entryid as entryid,
+                 ii.inwardid                      as keyid,
+                 ioe.entryid                      as entryid,
                  Date_format(ii.DATE, "%Y-%m-%d") AS date,
-                 ii.contactid                    AS contactid,
+                 ii.contactid                     AS contactid,
                  ii.warehouse_id                  AS warehouseid,
-                 ioe.Productid                   AS Productid,
+                 ioe.Productid                    AS Productid,
                  ioe.quantity,
                  ioe.closingstock,
                  ioe.creationDate,
-                 ioe.lastModifiedDate
+                 ioe.lastModifiedDate,
+                 p.Product_name,
+                 cat.category_name,
+                 p.measurementunit,
+                 w.warehouse_id,
+                 w.warehousename
           FROM   inward_inventory ii
                  inner join inwardinventory_entry iie
                          ON ii.inwardid = iie.inwardid
                  inner join inward_outward_entries ioe
                          ON iie.entryid = ioe.entryid
+                 inner join Product p
+                         on p.Productid = ioe.Productid
+                 INNER JOIN Category cat
+                         on p.categoryId = cat.categoryId
+                 inner join Warehouse w
+                         ON w.warehouse_id = ii.warehouse_id
           WHERE  ii.is_deleted = 0
           UNION ALL
           SELECT 'Outward'                        AS type,
-                  oi.outwardid as keyid,
-                  ioe.entryid as entryid,
+                 oi.outwardid                     as keyid,
+                 ioe.entryid                      as entryid,
                  Date_format(oi.DATE, "%Y-%m-%d") AS date,
-                 oi.contactid                    AS contactid,
+                 oi.contactid                     AS contactid,
                  oi.warehouse_id                  AS warehouseid,
-                 ioe.Productid                   AS Productid,
+                 ioe.Productid                    AS Productid,
                  ioe.quantity,
                  ioe.closingstock,
                  ioe.creationDate,
-                 ioe.lastModifiedDate
+                 ioe.lastModifiedDate,
+                 p.Product_name,
+                 cat.category_name,
+                 p.measurementunit,
+                 w.warehouse_id,
+                 w.warehousename
           FROM   outward_inventory oi
                  inner join outwardinventory_entry oie
                          ON oi.outwardid = oie.outwardid
                  inner join inward_outward_entries ioe
                          ON oie.entryid = ioe.entryid
+                 inner join Product p
+                         on p.Productid = ioe.Productid
+                 INNER JOIN Category cat
+                         on p.categoryId = cat.categoryId
+                 inner join Warehouse w
+                         ON w.warehouse_id = oi.warehouse_id
           WHERE  oi.is_deleted = 0
           UNION ALL
           SELECT 'Lost-Damaged'                    AS type,
-                lostdamagedid as keyid,
-                lostdamagedid as entryid,
+                 lostdamagedid                     as keyid,
+                 lostdamagedid                     as entryid,
                  Date_format(ldi.DATE, "%Y-%m-%d") AS date,
                  ''                                AS contactid,
-                 ldi.warehousename                AS warehouseid,
-                 ldi.Productid                    AS Productid,
+                 ldi.warehousename                 AS warehouseid,
+                 ldi.Productid                     AS Productid,
                  ldi.quantity,
                  ldi.closingstock,
                  ldi.creationDate,
-                 ldi.lastModifiedDate
+                 ldi.lastModifiedDate,
+                 p.Product_name,
+                 cat.category_name,
+                 p.measurementunit,
+                 w.warehouse_id,
+                 w.warehousename
           FROM   lost_damaged_inventory ldi
-			where ldi.is_deleted = 0) AS tx
+                 inner join Product p
+                         on p.Productid = ldi.Productid
+                 INNER JOIN Category cat
+                         on p.categoryId = cat.categoryId
+                 inner join Warehouse w
+                         ON w.warehouse_id = ldi.warehousename
+          where  ldi.is_deleted = 0) AS tx
          left join contacts c
-                ON c.contactid = tx.contactid
-         inner join Warehouse w
-                 ON w.warehouse_id = tx.warehouseid
-		inner join Product p on p.Productid = tx.Productid
-        INNER JOIN Category cat on p.categoryId=cat.categoryId
- ORDER  BY tx.date desc,tx.type desc,tx.keyid desc;
-  
+                ON c.contactid = tx.contactid;
   
  -- BOQ STATUS -------
 CREATE OR REPLACE view boq_status AS
