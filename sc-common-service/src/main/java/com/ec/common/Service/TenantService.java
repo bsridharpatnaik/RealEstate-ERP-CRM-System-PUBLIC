@@ -34,11 +34,13 @@ public class TenantService
 			TenantInformation t3 = new TenantInformation("RIDDHI SIDDHI", "riddhisiddhi", true, false);
 			TenantInformation t4 = new TenantInformation("SMART CITY", "smartcity", true, false);
 			TenantInformation t5 = new TenantInformation("BUSINESS PARK", "businesspark", true, false);
+			TenantInformation t6 = new TenantInformation("DURG TRADE CENTER", "drgtrdcntr", true, false);
 			tenants.add(t1);
 			tenants.add(t2);
 			tenants.add(t3);
 			tenants.add(t4);
 			tenants.add(t5);
+			tenants.add(t6);
 		}
 		return tenants;
 
@@ -54,6 +56,7 @@ public class TenantService
 			validTenants.add("riddhisiddhi");
 			validTenants.add("smartcity");
 			validTenants.add("businesspark");
+			validTenants.add("drgtrdcntr");
 		}
 		else if(profile.contains("ec-"))
 			validTenants.add("egcity");
