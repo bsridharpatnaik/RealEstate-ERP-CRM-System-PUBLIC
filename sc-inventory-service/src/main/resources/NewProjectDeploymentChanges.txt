@@ -5,4 +5,4 @@ create database drgtrdcntr;
 set sql_safe_updates=0;
 update security_user set tenants='suncitynx,kalpavrish,riddhisiddhi,businesspark,smartcity,drgtrdcntr'
  where user_name IN('Narendra','Dhiraj','glalwani','Sridhar');
- 4. Deploy UI code
+ 4. Deploy UI & backend code

@@ -217,7 +217,6 @@ CREATE OR REPLACE VIEW stockInformation as
 
 
 ##########
-USE kalpavrish;
 CREATE OR REPLACE view boq_status AS
 SELECT
 	ex.*,
@@ -265,7 +264,6 @@ GROUP BY locationId,location_name,productId,product_name) as ow
 ON ex.locationId=ow.locationId AND ex.productId=ow.productId;
 
 -- Historical Closing Stock #################
-use egcity;
 select
 		ai1.ProductId as productId,
         ai1.Product_name as product_name,
