@@ -9,7 +9,7 @@ AS
          tx.type,
          tx.keyid,
          tx.entryid,
-         tx.date,
+         tx.date, -- index
          tx.contactid,
          tx.warehouseid,
          tx.Productid,
@@ -17,15 +17,15 @@ AS
          tx.closingstock,
          tx.creationDate,
          tx.lastModifiedDate,
-         tx.Product_name,
-         tx.category_name,
+         tx.Product_name, -- index
+         tx.category_name, -- index
          tx.measurementunit,
          c.name,
          c.mobileno,
          c.emailid,
          c.contacttype,
          tx.warehouse_id,
-         tx.warehousename
+         tx.warehousename -- index
   FROM   (SELECT 'Inward'                         AS type,
                  ii.inwardid                      as keyid,
                  ioe.entryid                      as entryid,
@@ -110,7 +110,83 @@ AS
           where  ldi.is_deleted = 0) AS tx
          left join contacts c
                 ON c.contactid = tx.contactid;
-  
+
+
+  -- Backfill Closing Stock
+  CREATE OR REPLACE VIEW backfill_closing_stock AS
+  SELECT row_number()
+             over (
+               ORDER BY tx.date desc, tx.type desc, tx.keyid desc) as id,
+           tx.type,
+           tx.keyid,
+           tx.entryid,
+           tx.date,
+           tx.warehouseid,
+           tx.Productid,
+           tx.quantity,
+           tx.closingstock
+    FROM   (SELECT 'Inward'                         AS type,
+                   ii.inwardid                      as keyid,
+                   ioe.entryid                      as entryid,
+                   Date_format(ii.DATE, "%Y-%m-%d") AS date,
+                   ii.warehouse_id                  AS warehouseid,
+                   ioe.Productid                    AS Productid,
+                   ioe.quantity,
+                   ioe.closingstock
+            FROM   inward_inventory ii
+                   inner join inwardinventory_entry iie
+                           ON ii.inwardid = iie.inwardid
+                   inner join inward_outward_entries ioe
+                           ON iie.entryid = ioe.entryid
+            WHERE  ii.is_deleted = 0
+            UNION ALL
+            SELECT 'Outward'                        AS type,
+                   oi.outwardid                     as keyid,
+                   ioe.entryid                      as entryid,
+                   Date_format(oi.DATE, "%Y-%m-%d") AS date,
+                   oi.warehouse_id                  AS warehouseid,
+                   ioe.Productid,
+                   ioe.quantity,
+                   ioe.closingstock
+            FROM   outward_inventory oi
+                   inner join outwardinventory_entry oie
+                           ON oi.outwardid = oie.outwardid
+                   inner join inward_outward_entries ioe
+                           ON oie.entryid = ioe.entryid
+            WHERE  oi.is_deleted = 0
+            UNION ALL
+            SELECT 'Lost-Damaged'                    AS type,
+                   lostdamagedid                     as keyid,
+                   lostdamagedid                     as entryid,
+                   Date_format(ldi.DATE, "%Y-%m-%d") AS date,
+                   ldi.warehousename                 AS warehouseid,
+                   ldi.Productid                     AS Productid,
+                   ldi.quantity,
+                   ldi.closingstock
+            FROM   lost_damaged_inventory ldi
+            where  ldi.is_deleted = 0) AS tx;
+
+-- NEW CLOSING STOCK
+SELECT id,type,keyid,entryid,date,warehouseid,productid,bs1.closingstock as oldStock,
+	CASE WHEN bs1.type='Inward' THEN
+		(
+			(SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END FROM backfill_closing_stock bs2
+            WHERE bs2.id>=bs1.id AND bs2.type='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
+            -
+            (SELECT CASE WHEN SUM(bs2.quantity)IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
+            WHERE bs2.id>bs1.id AND bs2.type!='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
+		)
+    ELSE
+    (
+			(SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
+            WHERE bs2.id>bs1.id AND bs2.type='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
+            -
+            (SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
+            WHERE bs2.id>=bs1.id AND bs2.type!='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
+		)
+    END AS closingStock
+ FROM backfill_closing_stock bs1
+
  -- BOQ STATUS -------
 CREATE OR REPLACE view boq_status AS
 SELECT 
