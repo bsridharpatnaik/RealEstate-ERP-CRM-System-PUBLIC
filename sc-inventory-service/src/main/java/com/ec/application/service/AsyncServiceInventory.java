@@ -35,6 +35,9 @@ public class AsyncServiceInventory {
             ThreadLocalStorage.setTenantName(dbName);
             log.info("Starting backfilling closing stock");
 
+            // Intentionally added sleep so that database data is saved before triggering Backfilling
+            Thread.sleep((20000));
+
             StoredProcedureQuery storedProcedure = entityManager.createStoredProcedureQuery("update_closing_stock");
             storedProcedure.registerStoredProcedureParameter("id_list", String.class, ParameterMode.IN);
             storedProcedure.setParameter("id_list", id_list );

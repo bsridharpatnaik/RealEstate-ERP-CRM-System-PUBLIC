@@ -24,7 +24,8 @@ import lombok.Data;
 
 @Entity
 @Immutable
-@Table(name = "all_inventory_table")
+@Subselect("Select * from all_inventory")
+//@Table(name = "all_inventory_table")
 @Audited
 @Data
 public class AllInventoryTransactions implements Serializable

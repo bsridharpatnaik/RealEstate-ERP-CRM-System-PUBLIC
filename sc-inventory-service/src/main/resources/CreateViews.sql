@@ -167,7 +167,6 @@ AS
             where  ldi.is_deleted = 0) AS tx;
 	
 -- Store Procedure to backfill stock
-use suncitynx;
 DELIMITER //
 DROP PROCEDURE IF EXISTS update_closing_stock//
 CREATE PROCEDURE update_closing_stock(id_list TEXT)
@@ -184,7 +183,6 @@ CREATE PROCEDURE update_closing_stock(id_list TEXT)
             OPEN cur;
 			ins_loop: LOOP
             FETCH cur INTO entryid1;
-            DO SLEEP(0.2);
             IF done THEN
                 LEAVE ins_loop;
             END IF;
@@ -214,8 +212,8 @@ CREATE PROCEDURE update_closing_stock(id_list TEXT)
 			END IF;
          END LOOP;
 		 CLOSE cur;
-			TRUNCATE all_inventory_table;
-            INSERT INTO all_inventory_table SELECT * FROM all_inventory;
+			-- TRUNCATE all_inventory_table;
+            -- INSERT INTO all_inventory_table SELECT * FROM all_inventory;
         SET autocommit=1;
 END;
 
