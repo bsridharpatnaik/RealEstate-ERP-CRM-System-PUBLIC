@@ -6,17 +6,14 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.service.AllInventoryService;
 import com.ec.common.Filters.FilterDataList;
+
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/inventory")
@@ -30,6 +27,15 @@ public class AllInventoryController {
                                                           @PageableDefault(page = 0, size = 10, sort =
                                                                   {"date", "type", "keyid"}, direction = Direction.DESC) Pageable pageable) throws Exception {
         return allInventoryService.fetchAllInventory(filterDataList, pageable);
+    }
+
+    @GetMapping("/refresh")
+    @ResponseStatus(HttpStatus.OK)
+    public HashMap<String,String> refreshAllInventoryData(){
+        HashMap<String,String> result = new HashMap<>();
+        allInventoryService.refreshAllInventoryData();
+        result.put("Message","Data refresh triggered. Please check back after sometime.");
+        return result;
     }
 
     @ExceptionHandler(

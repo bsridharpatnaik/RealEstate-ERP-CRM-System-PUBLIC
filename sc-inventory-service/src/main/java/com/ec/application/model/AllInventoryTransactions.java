@@ -6,6 +6,7 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Immutable;
@@ -22,9 +23,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 
 @Entity
-@Subselect("select * from all_inventory")
 @Immutable
-//@Table(name = "all_inventory")
+@Table(name = "all_inventory_table")
 @Audited
 @Data
 public class AllInventoryTransactions implements Serializable
@@ -96,13 +96,7 @@ public class AllInventoryTransactions implements Serializable
 	@Column(name = "lastModifiedDate")
 	String lastModifiedDate;
 
-	@NotAudited
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	@Formula("(select "
-			+ "(select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='inward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id)"
-			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai "
-			+ "where ai.type='outward' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id) "
-			+ "- (select (case when sum(ai.quantity) is null then 0 else sum(ai.quantity) end) from all_inventory ai where ai.type='lost-damaged' and ai.warehouseid=warehouseid and ai.productid=productid and ai.id>=id))")
+	@Column(name = "closingStock")
 	Double closingStock;
-
 }

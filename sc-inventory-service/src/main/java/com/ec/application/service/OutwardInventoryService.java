@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.application.model.*;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.common.Filters.InwardInventorySpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +87,12 @@ public class OutwardInventoryService
 	@Autowired
 	UserDetailsService userDetailService;
 
+	@Autowired
+	private AsyncService asyncService;
+
+	@Autowired
+	AsyncServiceInventory asyncServiceInventory;
+
 	Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
 	@Transactional(rollbackFor = Exception.class)
@@ -97,7 +104,9 @@ public class OutwardInventoryService
 		exitIfNotAuthorized(outwardInventory, oiData, APICallTypeForAuthorization.Create);
 		setFields(outwardInventory, oiData);
 		updateStockForCreateOutwardInventory(outwardInventory);
-		return outwardInventoryRepo.save(outwardInventory);
+		outwardInventoryRepo.save(outwardInventory);
+		backFillClosingStock(outwardInventory.getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
+		return outwardInventory;
 
 	}
 
@@ -159,6 +168,7 @@ public class OutwardInventoryService
 				addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
 						productWithQuantity.getRemarks());
 		}
+		backFillClosingStock(outwardInventoryRepo.findById(outwardId).get().getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
 		return outwardInventoryRepo.findById(outwardId).get();
 	}
 
@@ -194,6 +204,7 @@ public class OutwardInventoryService
 		oi.setReturnOutwardList(returnOutwardList);
 		oi.setInwardOutwardList(inwardOutwardListSet);
 		outwardInventoryRepo.save(oi);
+
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -238,7 +249,9 @@ public class OutwardInventoryService
 		setFields(outwardInventory, iiData);
 		modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
 		removeOrphans(oldOutwardInventory);
-		return outwardInventoryRepo.save(outwardInventory);
+		outwardInventoryRepo.save(outwardInventory);
+		backFillClosingStock(outwardInventory.getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
+		return outwardInventory;
 
 	}
 
@@ -315,6 +328,18 @@ public class OutwardInventoryService
 		}
 		log.info("Exiting findQuantityForProductInIOList with return as null");
 		return null;
+	}
+
+	public void backFillClosingStock(String id_list) {
+		asyncService.run(() ->
+		{
+			try {
+				asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(),id_list);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -473,7 +498,6 @@ public class OutwardInventoryService
 			throws ParseException
 	{
 		log.info("Invoked fetchOutwardnventory");
-		iiService.backFillClosingStock();
 		ReturnOutwardInventoryData returnOutwardInventoryData = new ReturnOutwardInventoryData();
 
 		// Feed data list
@@ -589,6 +613,7 @@ public class OutwardInventoryService
 		updateStockBeforeDelete(outwardInventory);
 		removeOrphans(outwardInventory);
 		outwardInventoryRepo.softDeleteById(id);
+		backFillClosingStock(outwardInventory.getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
 		log.info("Exiting deleteOutwardInventoryById");
 	}
 

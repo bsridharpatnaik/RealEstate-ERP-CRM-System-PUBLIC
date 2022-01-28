@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,33 +15,32 @@ import com.ec.application.model.InwardOutwardList;
 import com.ec.application.repository.AllInventoryRepo;
 import com.ec.application.repository.InwardOutwardListRepo;
 
+import javax.persistence.EntityManager;
+import javax.persistence.ParameterMode;
+import javax.persistence.PersistenceContext;
+import javax.persistence.StoredProcedureQuery;
+import javax.transaction.Transactional;
+
 @Service
 public class AsyncServiceInventory {
-    @Autowired
-    AllInventoryRepo allRepo;
 
-    @Autowired
-    InwardOutwardListRepo iolRepo;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     Logger log = LoggerFactory.getLogger(AsyncServiceInventory.class);
 
-    public void backFillClosingStock(String dbName) throws Exception {
+    @Transactional
+    public void backFillClosingStock(String dbName, String id_list) throws Exception {
         try {
             ThreadLocalStorage.setTenantName(dbName);
             log.info("Starting backfilling closing stock");
-            List<AllInventoryAndInwardOutwardListProjection> list = allRepo.findClosingStockNotMatched();
 
-            log.info("No of records to be backfilled - " + list.size());
-
-            for (AllInventoryAndInwardOutwardListProjection iop : list) {
-                Optional<InwardOutwardList> iolOpt = iolRepo.findById(iop.getEntryid());
-                if (iolOpt.isPresent()) {
-                    InwardOutwardList iol = iolOpt.get();
-                    iol.setClosingStock(iop.getAiClosingStock());
-                    iolRepo.save(iol);
-
-                }
-            }
+            StoredProcedureQuery storedProcedure = entityManager.createStoredProcedureQuery("update_closing_stock");
+            storedProcedure.registerStoredProcedureParameter("id_list", String.class, ParameterMode.IN);
+            storedProcedure.setParameter("id_list", id_list );
+            log.info("Before Procedure Start -" + LocalDateTime.now().toString());
+            storedProcedure.execute();
+            log.info("AFter Procedure End -" + LocalDateTime.now().toString());
             ThreadLocalStorage.setTenantName(null);
             log.info("Completed backfilling closing stock");
         } catch (Exception e) {

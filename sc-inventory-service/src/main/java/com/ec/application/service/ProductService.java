@@ -103,6 +103,9 @@ public class ProductService {
         if (payload.getProductName() == null)
             throw new Exception("Product Name cannot be empty. Please Enter Product Name");
 
+        if(payload.getProductName().contains(","))
+            throw new Exception("Comma(,) not allowed in product name. Please enter valid product name.");
+
         if (payload.getReorderQuantity() == null || payload.getReorderQuantity() == 0)
             throw new Exception("Reorder Quantity cannot be zero or empty. Please Enter Reorder Quantity");
 

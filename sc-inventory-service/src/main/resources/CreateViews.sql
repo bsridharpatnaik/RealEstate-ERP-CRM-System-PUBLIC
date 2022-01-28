@@ -165,72 +165,65 @@ AS
                    ldi.closingstock
             FROM   lost_damaged_inventory ldi
             where  ldi.is_deleted = 0) AS tx;
-
--- NEW CLOSING STOCK
-SELECT id,type,keyid,entryid,date,warehouseid,productid,bs1.closingstock as oldStock,
-	CASE WHEN bs1.type='Inward' THEN
-		(
+	
+-- Store Procedure to backfill stock
+use suncitynx;
+DELIMITER //
+DROP PROCEDURE IF EXISTS update_closing_stock//
+CREATE PROCEDURE update_closing_stock(id_list TEXT)
+         BEGIN
+			DECLARE done INT DEFAULT FALSE;
+			DECLARE entryid1 decimal;
+            DECLARE oldClosingStock decimal;
+            DECLARE newClosingStock decimal;
+            DECLARE isValueChanged INT DEFAULT 0;
+            DECLARE cur CURSOR FOR SELECT entryid FROM inward_outward_entries WHERE FIND_IN_SET(productId,id_list)>0 AND is_deleted=0;
+            DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+            SET autocommit=1;
+            SET autocommit=0;
+            OPEN cur;
+			ins_loop: LOOP
+            FETCH cur INTO entryid1;
+            DO SLEEP(0.2);
+            IF done THEN
+                LEAVE ins_loop;
+            END IF;
+            SELECT
+            bs1.closingStock as oldClosingStock,
+			CASE WHEN bs1.type='Inward' THEN(
 			(SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END FROM backfill_closing_stock bs2
             WHERE bs2.id>=bs1.id AND bs2.type='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
             -
             (SELECT CASE WHEN SUM(bs2.quantity)IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
             WHERE bs2.id>bs1.id AND bs2.type!='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
-		)
-    ELSE
-    (
+			)
+			ELSE (
 			(SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
             WHERE bs2.id>bs1.id AND bs2.type='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
             -
             (SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
             WHERE bs2.id>=bs1.id AND bs2.type!='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
-		)
-    END AS closingStock
- FROM backfill_closing_stock bs1
+			)
+			END AS closingStock
+            INTO oldClosingStock,newClosingStock
+			FROM backfill_closing_stock bs1 WHERE bs1.entryid=entryid1;
 
- -- BOQ STATUS -------
-CREATE OR REPLACE view boq_status AS
-SELECT 
-	b.*,
-	CASE WHEN SUM(ioe.quantity) IS NULL THEN 0 ELSE SUM(ioe.quantity) END as totalConsumedQuantity,
-    FORMAT(CASE WHEN SUM(ioe.quantity) /totalExpectedQuantity*100 IS NULL THEN 0 ELSE SUM(ioe.quantity) /totalExpectedQuantity*100 END,2)+0 as consumedPercent
-FROM 
-(SELECT 
-	row_number() over (ORDER BY bt.typeId) as id,
-	bt.typeId,
-    bt.building_type,
-    ul.locationId,
-    ul.location_name,
-    p.productId,
-	p.product_name,
-	CASE WHEN SUM(bi.quantity) IS NULL THEN 0 ELSE SUM(bi.quantity) END as totalExpectedQuantity
-FROM
-	building_type bt 
-LEFT JOIN Usage_Location ul ON ul.typeId=bt.typeId AND ul.typeId IS NOT NULL AND ul.is_deleted=0
-LEFT JOIN boq_inventory bi  ON ((ul.locationId = bi.locationId
-  OR ul.typeId = bi.typeId) AND bi.is_deleted=0)
-LEFT JOIN Product p on p.productId=bi.productId AND p.is_deleted=0
-WHERE bt.is_deleted=0
-GROUP BY 
-    bt.typeId,
-    bt.building_type,
-    ul.locationId,
-    ul.location_name,
-    p.productId,
-	p.product_name) as b
-LEFT JOIN outward_inventory oi on oi.locationId=b.locationId AND oi.is_deleted=0
-LEFT JOIN outwardinventory_entry oie on oie.outwardid=oi.outwardid
-LEFT JOIN inward_outward_entries ioe on ioe.entryId=oie.entryId AND ioe.is_deleted=0
-GROUP BY typeId,
-		building_type,
-		locationId,
-		location_name,
-		productId,
-		product_name,
-        totalExpectedQuantity;
-	
-	
+            IF newClosingStock>=0 AND newClosingStock<>oldClosingStock THEN
+				UPDATE inward_outward_entries SET closingStock = newClosingStock WHERE entryid=entryid1;
+                SET isValueChanged = 1;
+			END IF;
+         END LOOP;
+		 CLOSE cur;
+			TRUNCATE all_inventory_table;
+            INSERT INTO all_inventory_table SELECT * FROM all_inventory;
+        SET autocommit=1;
+END;
+
+
+
+
   -- --------- Stock Verification ------------
-  create or replace view stock_verification as
+ create or replace view stock_verification as
 SELECT inw.inventory, 
        ROUND(total_inward,2)                                     AS 'total_inward', 
        ROUND(total_outward  ,2)                                  AS 'total_outward', 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,12 @@ public class AllInventoryService
 	@Autowired
 	InwardInventoryService iiService;
 
+	@Autowired
+	private AsyncService asyncService;
+
+	@Autowired
+	AsyncServiceInventory asyncServiceInventory;
+
 	Logger log = LoggerFactory.getLogger(AllInventoryService.class);
 
 	public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable)
@@ -57,7 +64,6 @@ public class AllInventoryService
 		} else
 			allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
 		allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
-		iiService.backFillClosingStock();
 		return allInventoryReturnData;
 	}
 
@@ -89,5 +95,21 @@ public class AllInventoryService
 			return null;
 		else
 			return list.get(0);
+	}
+
+	public void refreshAllInventoryData() {
+
+	}
+
+	public void backFillClosingStock(String id_list) {
+		asyncService.run(() ->
+		{
+			try {
+				asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(),id_list);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 	}
 }

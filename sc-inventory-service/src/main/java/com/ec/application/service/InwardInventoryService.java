@@ -98,7 +98,9 @@ public class InwardInventoryService {
         exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Create);
         setFields(inwardInventory, iiData);
         updateStockForCreateInwardInventory(inwardInventory);
-        return inwardInventoryRepo.save(inwardInventory);
+        inwardInventoryRepo.save(inwardInventory);
+        backFillClosingStock(inwardInventory.getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
+        return inwardInventory;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -115,11 +117,11 @@ public class InwardInventoryService {
         }
     }
 
-    public void backFillClosingStock() {
+    public void backFillClosingStock(String id_list) {
         asyncService.run(() ->
         {
             try {
-                asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName());
+                asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(),id_list);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -163,6 +165,7 @@ public class InwardInventoryService {
              * productWithQuantity.getQuantity());
              */
         }
+        backFillClosingStock(inwardInventoryRepo.findById(inwardId).get().getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
         return inwardInventoryRepo.findById(inwardId).get();
     }
 
@@ -259,7 +262,6 @@ public class InwardInventoryService {
     public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList, Pageable pageable)
             throws ParseException {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        backFillClosingStock();
         ReturnInwardInventoryData returnInwardInventoryData = new ReturnInwardInventoryData();
         // Fetch Specification
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
@@ -355,6 +357,8 @@ public class InwardInventoryService {
         updateStockBeforeDelete(inwardInventory);
         removeOrphans(inwardInventory);
         inwardInventoryRepo.softDeleteById(id);
+        backFillClosingStock(inwardInventory.getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
+
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -394,7 +398,9 @@ public class InwardInventoryService {
         setFields(inwardInventory, iiData);
         modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
         removeOrphans(oldInwardInventory);
-        return inwardInventoryRepo.save(inwardInventory);
+        inwardInventoryRepo.save(inwardInventory);
+        backFillClosingStock(inwardInventory.getInwardOutwardList().stream().map(e->e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")));
+        return inwardInventory;
 
     }
 
