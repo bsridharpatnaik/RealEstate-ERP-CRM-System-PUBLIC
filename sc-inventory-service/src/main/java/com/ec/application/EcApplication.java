@@ -63,8 +63,8 @@ public class EcApplication  extends SpringBootServletInitializer{
 	{
 		ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
 		threadPoolTaskExecutor.setThreadNamePrefix("Async-");
-		threadPoolTaskExecutor.setCorePoolSize(3);
-		threadPoolTaskExecutor.setMaxPoolSize(3);
+		threadPoolTaskExecutor.setCorePoolSize(8);
+		threadPoolTaskExecutor.setMaxPoolSize(8);
 		threadPoolTaskExecutor.setQueueCapacity(600);
 		threadPoolTaskExecutor.afterPropertiesSet();
 		threadPoolTaskExecutor.setTaskDecorator(new TenantAwareTaskDecorator());

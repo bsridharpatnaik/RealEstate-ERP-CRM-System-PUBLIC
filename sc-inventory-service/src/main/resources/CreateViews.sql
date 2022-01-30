@@ -169,25 +169,30 @@ AS
 -- Store Procedure to backfill stock
 DELIMITER //
 DROP PROCEDURE IF EXISTS update_closing_stock//
-CREATE PROCEDURE update_closing_stock(id_list TEXT, date1 TEXT)
+CREATE PROCEDURE update_closing_stock(id_list TEXT, editDate TEXT,triggerSource TEXT )
          BEGIN
 			DECLARE done INT DEFAULT FALSE;
 			DECLARE entryid1 decimal;
             DECLARE oldClosingStock decimal;
             DECLARE newClosingStock decimal;
-            DECLARE isValueChanged INT DEFAULT 0;
             DECLARE cur CURSOR FOR SELECT ioe.entryid FROM suncitynx.inward_outward_entries ioe
 					LEFT JOIN inwardinventory_entry iie on ioe.entryid=iie.entryid
 					LEFT JOIN inward_inventory ii on ii.inwardid=iie.inwardid
 					LEFT JOIN outwardinventory_entry oie on ioe.entryid=oie.entryid
 					LEFT JOIN outward_inventory oi on oi.outwardid=oie.outwardid
-					where FIND_IN_SET(ioe.productId,id_list)>0 AND ioe.is_deleted=0 AND (ii.date>=date1 OR oi.date>=date1);
+					WHERE
+                    CASE WHEN triggerSource='scheduler' THEN
+						ioe.is_deleted=0 AND (ii.date>=editDate OR oi.date>=editDate)
+					ELSE
+						FIND_IN_SET(ioe.productId,id_list)>0 AND ioe.is_deleted=0 AND (ii.date>=editDate OR oi.date>=editDate)
+					END;
             DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
 --            START TRANSACTION;
 --            TRUNCATE temp;
 --            INSERT INTO temp VALUES(CONCAT('Procedure Started ',SYSDATE()));
 --            INSERT INTO temp VALUES(CONCAT('Product List - ', id_list));
+--            INSERT INTO temp VALUES(CONCAT('Date - ', editDate));
 --            COMMIT;
 
             OPEN cur;

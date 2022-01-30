@@ -336,7 +336,7 @@ public class OutwardInventoryService
 		asyncService.run(() ->
 		{
 			try {
-				asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(),id_list,date);
+				asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(), id_list, date,"event");
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
