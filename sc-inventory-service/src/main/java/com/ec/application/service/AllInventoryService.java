@@ -1,6 +1,7 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -99,17 +100,5 @@ public class AllInventoryService
 
 	public void refreshAllInventoryData() {
 
-	}
-
-	public void backFillClosingStock(String id_list) {
-		asyncService.run(() ->
-		{
-			try {
-				asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(),id_list);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
 	}
 }

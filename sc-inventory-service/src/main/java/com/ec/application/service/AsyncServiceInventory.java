@@ -1,6 +1,7 @@
 package com.ec.application.service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +31,7 @@ public class AsyncServiceInventory {
     Logger log = LoggerFactory.getLogger(AsyncServiceInventory.class);
 
     @Transactional
-    public void backFillClosingStock(String dbName, String id_list) throws Exception {
+    public void backFillClosingStock(String dbName, String id_list, Date date) throws Exception {
         try {
             ThreadLocalStorage.setTenantName(dbName);
             log.info("Starting backfilling closing stock");

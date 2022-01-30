@@ -169,23 +169,39 @@ AS
 -- Store Procedure to backfill stock
 DELIMITER //
 DROP PROCEDURE IF EXISTS update_closing_stock//
-CREATE PROCEDURE update_closing_stock(id_list TEXT)
+CREATE PROCEDURE update_closing_stock(id_list TEXT, date1 TEXT)
          BEGIN
 			DECLARE done INT DEFAULT FALSE;
 			DECLARE entryid1 decimal;
             DECLARE oldClosingStock decimal;
             DECLARE newClosingStock decimal;
             DECLARE isValueChanged INT DEFAULT 0;
-            DECLARE cur CURSOR FOR SELECT entryid FROM inward_outward_entries WHERE FIND_IN_SET(productId,id_list)>0 AND is_deleted=0;
+            DECLARE cur CURSOR FOR SELECT ioe.entryid FROM suncitynx.inward_outward_entries ioe
+					LEFT JOIN inwardinventory_entry iie on ioe.entryid=iie.entryid
+					LEFT JOIN inward_inventory ii on ii.inwardid=iie.inwardid
+					LEFT JOIN outwardinventory_entry oie on ioe.entryid=oie.entryid
+					LEFT JOIN outward_inventory oi on oi.outwardid=oie.outwardid
+					where FIND_IN_SET(ioe.productId,id_list)>0 AND ioe.is_deleted=0 AND (ii.date>=date1 OR oi.date>=date1);
             DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-            SET autocommit=1;
-            SET autocommit=0;
+
+--            START TRANSACTION;
+--            TRUNCATE temp;
+--            INSERT INTO temp VALUES(CONCAT('Procedure Started ',SYSDATE()));
+--            INSERT INTO temp VALUES(CONCAT('Product List - ', id_list));
+--            COMMIT;
+
             OPEN cur;
 			ins_loop: LOOP
             FETCH cur INTO entryid1;
+
             IF done THEN
                 LEAVE ins_loop;
             END IF;
+
+--            START TRANSACTION;
+--            INSERT INTO temp VALUES(CONCAT('ENTRY ID - ', entryid1 ,' ',SYSDATE()));
+--            COMMIT;
+
             SELECT
             bs1.closingStock as oldClosingStock,
 			CASE WHEN bs1.type='Inward' THEN(
@@ -206,18 +222,15 @@ CREATE PROCEDURE update_closing_stock(id_list TEXT)
             INTO oldClosingStock,newClosingStock
 			FROM backfill_closing_stock bs1 WHERE bs1.entryid=entryid1;
 
+
             IF newClosingStock>=0 AND newClosingStock<>oldClosingStock THEN
+            START TRANSACTION;
 				UPDATE inward_outward_entries SET closingStock = newClosingStock WHERE entryid=entryid1;
-                SET isValueChanged = 1;
+            COMMIT;
 			END IF;
          END LOOP;
 		 CLOSE cur;
-			-- TRUNCATE all_inventory_table;
-            -- INSERT INTO all_inventory_table SELECT * FROM all_inventory;
-        SET autocommit=1;
 END;
-
-
 
 
   -- --------- Stock Verification ------------
