@@ -175,7 +175,7 @@ CREATE PROCEDURE update_closing_stock(id_list TEXT, editDate TEXT,triggerSource 
 			DECLARE entryid1 decimal;
             DECLARE oldClosingStock decimal;
             DECLARE newClosingStock decimal;
-            DECLARE cur CURSOR FOR SELECT ioe.entryid FROM suncitynx.inward_outward_entries ioe
+            DECLARE cur CURSOR FOR SELECT ioe.entryid FROM inward_outward_entries ioe
 					LEFT JOIN inwardinventory_entry iie on ioe.entryid=iie.entryid
 					LEFT JOIN inward_inventory ii on ii.inwardid=iie.inwardid
 					LEFT JOIN outwardinventory_entry oie on ioe.entryid=oie.entryid
