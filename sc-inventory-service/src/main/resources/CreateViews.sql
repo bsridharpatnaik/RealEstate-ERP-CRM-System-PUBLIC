@@ -492,3 +492,57 @@ LEFT JOIN
 	WHERE oi.is_deleted=0
     GROUP BY c.name
 ) as rejectCount on rejectCount.name=totalOutward.name;
+
+
+-- Inventory Report
+
+CREATE OR REPLACE VIEW inventoryreport AS
+SELECT
+	t2.id,
+    t1.month,
+	t1.product_name,
+    t1.measurementunit,
+    t1.category_name,
+    t1.warehousename,
+    IF(total_inward-total_outward-total_lost_damaged=closing_stock,0,(t2.closing_stock+total_outward+total_lost_damaged-total_inward)) as opening_stock,
+    t1.total_inward,
+    total_outward,
+    total_lost_damaged,
+    t2.closing_stock
+FROM
+(
+	SELECT
+		DATE_FORMAT(date,'%Y-%m') as month,
+		category_name,
+		product_name,
+        measurementunit,
+        ai1.warehousename,
+		SUM(IF(type='Inward',quantity,0)) as total_inward,
+		SUM(IF(type='Outward',quantity,0)) as total_outward,
+		SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged
+	FROM all_inventory ai1
+	GROUP BY month,category_name,product_name,measurementunit,ai1.warehousename
+	ORDER BY month,category_name,product_name,measurementunit, ai1.warehousename
+) AS t1
+INNER JOIN
+(
+	SELECT
+    DATE_FORMAT(date,'%Y-%m') as month,
+	ai.id,
+	ai.closingStock AS closing_stock,
+    ai.product_name,
+	ai.category_name,
+	ai.warehousename
+FROM all_inventory ai
+INNER JOIN (
+		SELECT
+			DATE_FORMAT(date,'%Y-%m') as month,
+			product_name,
+			category_name,
+			warehousename,
+			MIN(id) AS id
+		FROM all_inventory
+        GROUP BY month,product_name,category_name,warehousename
+) latest ON latest.id = ai.id
+) as t2 ON t1.month=t2.month AND t1.category_name=t2.category_name AND t1.product_name=t2.product_name AND t1.warehousename=t2.warehousename
+ORDER BY t1.month desc,product_name,warehousename;

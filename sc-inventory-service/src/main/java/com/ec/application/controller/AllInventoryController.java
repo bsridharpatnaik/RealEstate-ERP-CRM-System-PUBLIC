@@ -1,5 +1,6 @@
 package com.ec.application.controller;
 
+import com.ec.application.model.InventoryReport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -14,6 +15,7 @@ import com.ec.application.service.AllInventoryService;
 import com.ec.common.Filters.FilterDataList;
 
 import java.util.HashMap;
+import java.util.List;
 
 @RestController
 @RequestMapping("/inventory")
@@ -31,11 +33,17 @@ public class AllInventoryController {
 
     @GetMapping("/refresh")
     @ResponseStatus(HttpStatus.OK)
-    public HashMap<String,String> refreshAllInventoryData(){
-        HashMap<String,String> result = new HashMap<>();
+    public HashMap<String, String> refreshAllInventoryData() {
+        HashMap<String, String> result = new HashMap<>();
         allInventoryService.refreshAllInventoryData();
-        result.put("Message","Data refresh triggered. Please check back after sometime.");
+        result.put("Message", "Data refresh triggered. Please check back after sometime.");
         return result;
+    }
+
+    @PostMapping("/report")
+    @ResponseStatus(HttpStatus.OK)
+    public List<InventoryReport> getInventoryReport(@RequestBody FilterDataList filterDataList) throws Exception {
+        return allInventoryService.getInventoryReport(filterDataList);
     }
 
     @ExceptionHandler(
