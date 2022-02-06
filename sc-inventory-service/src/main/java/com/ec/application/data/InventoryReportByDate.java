@@ -29,6 +29,7 @@ public interface InventoryReportByDate {
     String getWarehousename();
 
     @JsonProperty("Opening Stock")
+    @JsonSerialize(using = com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
     Double getOpening_stock();
 
     @JsonProperty("Inward Qty")
