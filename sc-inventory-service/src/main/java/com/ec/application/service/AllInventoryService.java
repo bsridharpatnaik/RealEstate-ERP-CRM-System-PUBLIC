@@ -1,17 +1,20 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
-import java.util.Date;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.comparators.MonthlyReportComparator;
+import com.ec.application.data.*;
 import com.ec.application.model.InventoryReport;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.InventoryReportRepo;
-import com.ec.common.Filters.InventoryReportSpecification;
-import com.ec.common.Filters.InwardInventorySpecification;
+import com.ec.common.Filters.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +25,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.ec.application.data.AllInventoryReturnData;
-import com.ec.application.data.DashboardInwardOutwardInventoryDAO;
-import com.ec.application.data.DashboardMachineOnRentDAO;
 import com.ec.application.model.AllInventoryTransactions;
 import com.ec.application.repository.AllInventoryRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
-import com.ec.common.Filters.AllInventorySpecification;
-import com.ec.common.Filters.FilterDataList;
 
 @Service
 @Transactional
@@ -95,19 +93,75 @@ public class AllInventoryService {
 
     }
 
-    public List<InventoryReport> getInventoryReport(FilterDataList filterDataList) throws Exception {
-        Specification<InventoryReport> spec = InventoryReportSpecification.getSpecification(filterDataList);
+    public List<InventoryReportByDate> getInventoryReport(FilterDataList filterDataList) throws Exception {
+        FilterAttrValueListForAllInventory fiList = new FilterAttrValueListForAllInventory();
+        getValueFromPayload(fiList, filterDataList);
 
-        // Feed listing
-        if (spec != null) {
-            if (inventoryReportRepo.count(spec) > 4000)
-                throw new Exception("Too many rows to download. Apply some filters and try again.");
-            return inventoryReportRepo.findAll(spec);
+        if (fiList.getStartDate() == null || fiList.getEndDate() == null)
+            throw new Exception("Start Date or End Date cannot be Empty");
+
+        List<InventoryReportByDate> allData = allInventoryRepo.getFilteredTransactionReport(fiList.getStartDate(), fiList.getEndDate());
+        List<InventoryReportByDate> returnData = filterData(allData, fiList);
+        Collections.sort(returnData,new MonthlyReportComparator());
+        return returnData;
+    }
+
+    private List<InventoryReportByDate> filterData(List<InventoryReportByDate> allData, FilterAttrValueListForAllInventory fiList) {
+
+        if (fiList.getProductNames() != null && fiList.getProductNames().size() > 0) {
+            allData = allData.stream().filter(e -> fiList.getProductNames()
+                    .contains(e.getProduct_name())).collect(Collectors.toList());
         }
-		else {
-            if (inventoryReportRepo.count() > 4000)
-                throw new Exception("Too many rows to download. Apply some filters and try again.");
-            return inventoryReportRepo.findAll();
+        if (fiList.getCategoryNames() != null && fiList.getCategoryNames().size() > 0) {
+            allData = allData.stream().filter(e -> fiList.getCategoryNames()
+                    .contains(e.getCategory_name())).collect(Collectors.toList());
         }
+        if (fiList.getWarehouseNames() != null && fiList.getWarehouseNames().size()>0) {
+            allData = allData.stream().filter(e -> fiList.getWarehouseNames()
+                    .contains(e.getWarehousename())).collect(Collectors.toList());
+        }
+        return allData;
+    }
+
+    private FilterAttrValueListForAllInventory getValueFromPayload(FilterAttrValueListForAllInventory returnData,
+                                                                   FilterDataList filterDataList) throws Exception {
+        for (FilterAttributeData fData : filterDataList.getFilterData()) {
+            if (fData.getAttrName().equalsIgnoreCase("startDate")) {
+                try {
+                    returnData.setStartDate(new SimpleDateFormat("dd-MM-yyyy").parse(fData.getAttrValue().get(0)));
+                } catch (Exception e) {
+                    throw new Exception("Unable to parse value for key startDate");
+                }
+            }
+            if (fData.getAttrName().equalsIgnoreCase("EndDate")) {
+                try {
+                    returnData.setEndDate(new SimpleDateFormat("dd-MM-yyyy").parse(fData.getAttrValue().get(0)));
+                } catch (Exception e) {
+                    throw new Exception("Unable to parse value for key EndDate");
+                }
+            }
+            if (fData.getAttrName().equalsIgnoreCase("products")) {
+                try {
+                    returnData.setProductNames(new HashSet<String>(fData.getAttrValue()));
+                } catch (Exception e) {
+                    throw new Exception("Unable to parse value for key Products");
+                }
+            }
+            if (fData.getAttrName().equalsIgnoreCase("categories")) {
+                try {
+                    returnData.setCategoryNames(new HashSet<String>(fData.getAttrValue()));
+                } catch (Exception e) {
+                    throw new Exception("Unable to parse value for key categories");
+                }
+            }
+            if (fData.getAttrName().equalsIgnoreCase("warehouses")) {
+                try {
+                    returnData.setWarehouseNames(new HashSet<String>(fData.getAttrValue()));
+                } catch (Exception e) {
+                    throw new Exception("Unable to parse value for key warehouses");
+                }
+            }
+        }
+        return returnData;
     }
 }

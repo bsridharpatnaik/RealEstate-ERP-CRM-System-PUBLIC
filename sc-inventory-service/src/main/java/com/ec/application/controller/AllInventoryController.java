@@ -1,6 +1,6 @@
 package com.ec.application.controller;
 
-import com.ec.application.model.InventoryReport;
+import com.ec.application.data.InventoryReportByDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -42,7 +42,7 @@ public class AllInventoryController {
 
     @PostMapping("/report")
     @ResponseStatus(HttpStatus.OK)
-    public List<InventoryReport> getInventoryReport(@RequestBody FilterDataList filterDataList) throws Exception {
+    public List<InventoryReportByDate> getInventoryReport(@RequestBody FilterDataList filterDataList) throws Exception {
         return allInventoryService.getInventoryReport(filterDataList);
     }
 
