@@ -47,6 +47,7 @@ public class ActivitySpecifications
 		List<String> dealLostReason = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "dealLostReason");
 
 		List<String> showOnlyLatest = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyLatest");
+		List<String> prospectLeads = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "prospectLead");
 		List<String> showRescheduled = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"showRescheduled");
 		Specification<LeadActivity> finalSpec = null;
@@ -58,6 +59,10 @@ public class ActivitySpecifications
 		if (loanStatus != null && loanStatus.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.loanStatus.getName(), loanStatus));
+
+		if (prospectLeads != null && prospectLeads.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereChildBoleanFieldEquals(LeadActivity_.LEAD, Lead_.IS_PROSPECT_LEAD, prospectLeads));
 
 		if (customerStatus != null && customerStatus.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,

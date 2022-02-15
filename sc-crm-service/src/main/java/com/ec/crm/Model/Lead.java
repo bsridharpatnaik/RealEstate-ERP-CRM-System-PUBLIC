@@ -19,6 +19,7 @@ import javax.persistence.Table;
 
 import Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.crm.Enums.LoanStatusEnum;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
@@ -43,12 +44,8 @@ import lombok.Data;
 @Data
 public class Lead extends ReusableFields implements Serializable {
     public Lead() {
-
     }
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -127,6 +124,10 @@ public class Lead extends ReusableFields implements Serializable {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     LeadStatusEnum status;
+
+    @Column(name = "is_prospect_lead")
+    @ColumnDefault("false")
+    Boolean isProspectLead;
 
     @Formula("(select la.leadactivity_id from customer_lead cl "
             + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "

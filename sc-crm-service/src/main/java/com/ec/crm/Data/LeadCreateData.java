@@ -45,6 +45,8 @@ public class LeadCreateData
 	SentimentEnum sentiment;
 	Long assigneeId;
 
+	Boolean isProspectLead;
+
 	@Override
 	public String toString()
 	{
