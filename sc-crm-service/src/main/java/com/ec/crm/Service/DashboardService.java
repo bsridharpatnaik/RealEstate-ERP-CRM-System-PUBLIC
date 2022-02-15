@@ -149,7 +149,8 @@ public class DashboardService {
         List<SalesFunnelDTO> salesFunnelData = new ArrayList<>();
         List<Lead> leadData = leadRepo.getOpenLeads();
         salesFunnelData.add(new SalesFunnelDTO(LeadStatusEnum.New_Lead, getLeadCountByStatus(leadData, LeadStatusEnum.New_Lead)));
-        salesFunnelData.add(new SalesFunnelDTO(LeadStatusEnum.Property_Visit, getLeadCountByStatus(leadData, LeadStatusEnum.Property_Visit)));
+        salesFunnelData.add(new SalesFunnelDTO(LeadStatusEnum.Visit_Scheduled, getLeadCountByStatus(leadData, LeadStatusEnum.Visit_Scheduled)));
+        salesFunnelData.add(new SalesFunnelDTO(LeadStatusEnum.Visit_Completed, getLeadCountByStatus(leadData, LeadStatusEnum.Visit_Completed)));
         salesFunnelData.add(new SalesFunnelDTO(LeadStatusEnum.Negotiation, getLeadCountByStatus(leadData, LeadStatusEnum.Negotiation)));
         salesFunnelData.add(new SalesFunnelDTO(LeadStatusEnum.Deal_Closed, getLeadCountByStatus(leadData, LeadStatusEnum.Deal_Closed)));
         return salesFunnelData;

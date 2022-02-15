@@ -175,41 +175,14 @@ public class AllActivitiesService {
 
         HashMap<Long, LeadActivity> leadRecentActivityMapping = fetchRecentActivityForAllLeads(leads);
 
-        /*
-         * ExecutorService executors = Executors.newFixedThreadPool(4); CyclicBarrier
-         * barrier = new CyclicBarrier(4);
-         *
-         * executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
-         * leadRecentActivityMapping, LeadStatusEnum.New_Lead));
-         *
-         * executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
-         * leadRecentActivityMapping, LeadStatusEnum.Negotiation)); executors.submit(new
-         * SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
-         * leadRecentActivityMapping, LeadStatusEnum.Property_Visit));
-         * executors.submit(new SetDataForPipeline(barrier, pipelineAllReturnDAO, leads,
-         * leadRecentActivityMapping, LeadStatusEnum.Deal_Closed));
-         */
-
-        /*
-         * boolean flag = false; Date returnDateTime = new Date();
-         * System.out.println(returnDateTime); while (flag == false) { if
-         * ((pipelineAllReturnDAO.getLeadGeneration() == null ||
-         * pipelineAllReturnDAO.getDeal_close() == null ||
-         * pipelineAllReturnDAO.getNegotiation() == null ||
-         * pipelineAllReturnDAO.getPropertyVisit() == null) &&
-         * java.lang.Math.abs((returnDateTime.getTime() - new Date().getTime())) / 1000
-         * < 3) { log.info("Waiting for flag to be true. Current difference in time - "
-         * + (returnDateTime.getTime() - new Date().getTime()) / 1000); flag = false; }
-         * else { log.info("Flag is true. Current difference in time - " +
-         * (returnDateTime.getTime() - new Date().getTime()) / 1000); flag = true; } }
-         */
-
         pipelineAllReturnDAO.setLeadGeneration(
                 fetchPipelineDataFromActivityList(leads, LeadStatusEnum.New_Lead, leadRecentActivityMapping));
         pipelineAllReturnDAO.setNegotiation(
                 fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Negotiation, leadRecentActivityMapping));
-        pipelineAllReturnDAO.setPropertyVisit(
-                fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Property_Visit, leadRecentActivityMapping));
+        pipelineAllReturnDAO.setPropertyVisitScheduled(
+                fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Visit_Scheduled, leadRecentActivityMapping));
+        pipelineAllReturnDAO.setPropertyVisitCompleted(
+                fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Visit_Completed, leadRecentActivityMapping));
         pipelineAllReturnDAO.setDeal_close(
                 fetchPipelineDataFromActivityList(leads, LeadStatusEnum.Deal_Closed, leadRecentActivityMapping));
 

@@ -90,7 +90,7 @@ public class PaymentScheduleService {
             if (!ps.getIsReceived().equals(payload.getIsReceived())) {
                 if (payload.getIsReceived().equals(true))
                     laService.deleteLeadActivity(ps.getLa().getLeadActivityId(), "Payment Received", (long) 404, false,
-                            "system");
+                            "system",null);
                 else {
                     LeadActivity la = laService.createPaymentActivity(ps);
                     ps.setLa(la);
