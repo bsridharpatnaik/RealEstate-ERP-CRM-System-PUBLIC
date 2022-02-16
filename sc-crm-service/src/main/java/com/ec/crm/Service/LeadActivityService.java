@@ -854,7 +854,7 @@ public class LeadActivityService {
 
     public Boolean getMoveToNegotiation(LeadActivity la) {
         if (la.getIsOpen() && (
-                la.getActivityType().equals(ActivityTypeEnum.Property_Visit)e &&
+                la.getActivityType().equals(ActivityTypeEnum.Property_Visit) &&
                         (la.getLead().getStatus().equals(LeadStatusEnum.Visit_Completed) || la.getLead().getStatus().equals(LeadStatusEnum.Visit_Scheduled))))
             return true;
         return false;
