@@ -285,7 +285,8 @@ public class LeadActivityService {
             if (status.equals(LeadStatusEnum.Visit_Scheduled)) {
                 leadActivity.getLead().setStatus(LeadStatusEnum.Visit_Completed);
                 laRepo.save(leadActivity);
-            } else if (status.equals(LeadStatusEnum.Visit_Completed) && moveToNegotiation!=null && moveToNegotiation!=false) {
+            } else if ((status.equals(LeadStatusEnum.Visit_Completed) || status.equals(LeadStatusEnum.Visit_Scheduled))
+                    && moveToNegotiation!=null && moveToNegotiation!=false) {
                 leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
                 leadActivity.setClosingComment(leadActivity.getClosingComment()+". Moved Lead Stage to Negotiation.");
                 laRepo.save(leadActivity);
@@ -852,7 +853,9 @@ public class LeadActivityService {
 
 
     public Boolean getMoveToNegotiation(LeadActivity la) {
-        if (la.getIsOpen() && la.getActivityType().equals(ActivityTypeEnum.Property_Visit) && la.getLead().getStatus().equals(LeadStatusEnum.Visit_Completed))
+        if (la.getIsOpen() && (
+                la.getActivityType().equals(ActivityTypeEnum.Property_Visit) &&
+                        (la.getLead().getStatus().equals(LeadStatusEnum.Visit_Completed) || la.getLead().getStatus().equals(LeadStatusEnum.Visit_Scheduled))))
             return true;
         return false;
     }
