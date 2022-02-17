@@ -2,6 +2,7 @@ package com.ec.crm.SubClasses;
 
 import com.ec.crm.Data.MapForPipelineAndActivities;
 import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
+import com.ec.crm.Data.PipelineForDashboard;
 import com.ec.crm.Enums.*;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.ReusableClasses.ReusableMethods;
@@ -19,13 +20,13 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class SetDealLostReasons implements Runnable {
     private CyclicBarrier barrier;
-    private PipelineAndActivitiesForDashboard dashboardPipelineReturnData;
+    private PipelineForDashboard dashboardPipelineReturnData;
     private List<LeadActivity> data;
     Map<Long, String> idNameMap;
     InstanceEnum instance;
     Logger log = LoggerFactory.getLogger(SetDealLostReasons.class);
 
-    public SetDealLostReasons(CyclicBarrier barrier, PipelineAndActivitiesForDashboard dashboardPipelineReturnData,
+    public SetDealLostReasons(CyclicBarrier barrier, PipelineForDashboard dashboardPipelineReturnData,
                               List<LeadActivity> data, Map<Long, String> idNameMap, InstanceEnum instance1) {
 
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
