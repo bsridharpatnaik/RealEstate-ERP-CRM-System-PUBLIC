@@ -15,24 +15,23 @@ import lombok.Data;
 @Immutable
 @Data
 @NoArgsConstructor
-public class ConversionRatio 
-{
-	@Id
-	@Column(name="user_id")
-	Long userId;
-	
-	@Column(name="asigneename")
-	String asigneeName;
-	
-	Long totalcount;
-	Long convertedcount;
-	Double ratio;
+public class ConversionRatio {
+    @Id
+    @Column(name = "user_id")
+    Long userId;
 
-	public ConversionRatio(ConversionRatioPropertyType ct) {
-		this.userId = null;
-		this.asigneeName=ct.getPropertyType();
-		this.totalcount=ct.getTotalcount();
-		this.convertedcount = ct.getConvertedcount();
-		this.ratio = ct.getRatio();
-	}
+    @Column(name = "asigneename")
+    String asigneeName;
+
+    Long totalcount;
+    Long convertedcount;
+    Double ratio;
+
+    public ConversionRatio(ConversionRatioPropertyType ct) {
+        this.userId = null;
+        this.asigneeName = ct.getPropertyType();
+        this.totalcount = ct.getTotalcount();
+        this.convertedcount = ct.getConvertedcount();
+        this.ratio = ct.getRatio();
+    }
 }

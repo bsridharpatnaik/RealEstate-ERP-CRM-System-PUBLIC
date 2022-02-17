@@ -6,6 +6,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
+import com.ec.crm.Data.PipelineForDashboard;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import org.slf4j.Logger;
@@ -20,13 +21,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SetActivitiesCreated implements Runnable {
     private CyclicBarrier barrier;
-    private PipelineAndActivitiesForDashboard dashboardPipelineReturnData;
+    private PipelineForDashboard dashboardPipelineReturnData;
     private List<LeadActivity> data;
     Map<Long, String> idNameMap;
     InstanceEnum instance;
     Logger log = LoggerFactory.getLogger(SetActivitiesCreated.class);
 
-    public SetActivitiesCreated(CyclicBarrier barrier, PipelineAndActivitiesForDashboard dashboardPipelineReturnData,
+    public SetActivitiesCreated(CyclicBarrier barrier, PipelineForDashboard dashboardPipelineReturnData,
                                 List<LeadActivity> data, Map<Long, String> idNameMap, InstanceEnum instance1) {
 
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;

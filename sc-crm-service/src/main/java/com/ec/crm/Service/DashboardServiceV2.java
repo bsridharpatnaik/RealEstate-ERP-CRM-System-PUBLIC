@@ -1,19 +1,10 @@
 package com.ec.crm.Service;
 
-import com.ec.crm.Data.DashboardData;
-import com.ec.crm.Data.PipelineAndActivitiesForDashboard;
-import com.ec.crm.Data.PipelineForDashboard;
-import com.ec.crm.Data.SalesFunnelDTO;
+import com.ec.crm.Data.*;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
-import com.ec.crm.Model.ConversionRatio;
-import com.ec.crm.Model.Lead;
-import com.ec.crm.Model.LeadActivity;
-import com.ec.crm.Model.StagnantStats;
-import com.ec.crm.Repository.ConvertionRatioRepo;
-import com.ec.crm.Repository.LeadActivityRepo;
-import com.ec.crm.Repository.LeadRepo;
-import com.ec.crm.Repository.StagnantStatsRepo;
+import com.ec.crm.Model.*;
+import com.ec.crm.Repository.*;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
@@ -53,6 +44,9 @@ public class DashboardServiceV2 {
     @Resource
     private Map<Long, String> userIdNameMap;
 
+    @Autowired
+    ActivitiesStatsForDashboardRepo activitiesStatsForDashboardRepo;
+
     Logger log = LoggerFactory.getLogger(DashboardServiceV2.class);
 
     public PipelineForDashboard getPipelineForDashboard(DashboardData payload) throws Exception {
@@ -66,9 +60,9 @@ public class DashboardServiceV2 {
         data = lRepo.getActivity(fromdate, nextDate);
 
         log.info("Fetching Stats");
-        ExecutorService executors = Executors.newFixedThreadPool(5);
-        CyclicBarrier barrier = new CyclicBarrier(5);
-
+        ExecutorService executors = Executors.newFixedThreadPool(8);
+        CyclicBarrier barrier = new CyclicBarrier(8);
+        executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetProspectLeads(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
@@ -79,13 +73,11 @@ public class DashboardServiceV2 {
         while (flag == false) {
             if ((
                     dashboardPipelineReturnData.getDealClosed() == null
-                    || dashboardPipelineReturnData.getDealLost() == null
-                    || dashboardPipelineReturnData.getLeadGenerated() == null
-                    || dashboardPipelineReturnData.getProspectiveLeads() == null
-                    || dashboardPipelineReturnData.getDealLostReasons() == null)
+                            || dashboardPipelineReturnData.getDealLost() == null
+                            || dashboardPipelineReturnData.getLeadGenerated() == null
+                            || dashboardPipelineReturnData.getProspectiveLeads() == null
+                            || dashboardPipelineReturnData.getDealLostReasons() == null)
                     && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30)) {
-                log.info("Waiting for flag to be true. Current difference in time - "
-                        + (returnDateTime.getTime() - new Date().getTime()) / 1000);
                 flag = false;
             } else {
                 log.info("Flag is true. Current difference in time - "
@@ -95,7 +87,35 @@ public class DashboardServiceV2 {
 
         }
         return dashboardPipelineReturnData;
+    }
 
+    public ActivitiesForDashboard getActivitesForDashboard() throws Exception {
+        ActivitiesForDashboard dashboardPipelineReturnData = new ActivitiesForDashboard();
+        List<ActivitiesStatsForDashboard> data = activitiesStatsForDashboardRepo.findAll();
+
+        log.info("Fetching Activity Stats");
+        ExecutorService executors = Executors.newFixedThreadPool(8);
+        CyclicBarrier barrier = new CyclicBarrier(8);
+        executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data));
+        executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data));
+        executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data));
+        executors.submit(new SetLiveLeads(barrier, dashboardPipelineReturnData, data));
+        executors.submit(new SetTomorrowActivities(barrier, dashboardPipelineReturnData, data));
+        boolean flag = false;
+        Date returnDateTime = new Date();
+        while (flag == false) {
+            if ((dashboardPipelineReturnData.getTodaysActivities() == null
+                    || dashboardPipelineReturnData.getPendingActivities() == null
+                    || dashboardPipelineReturnData.getUpcomingActivities() == null)
+                    && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30)) {
+                flag = false;
+            } else {
+                log.info("Flag is true. Current difference in time - "
+                        + (returnDateTime.getTime() - new Date().getTime()) / 1000);
+                flag = true;
+            }
+        }
+        return dashboardPipelineReturnData;
     }
 
     public List<ConversionRatio> conversionratio() {

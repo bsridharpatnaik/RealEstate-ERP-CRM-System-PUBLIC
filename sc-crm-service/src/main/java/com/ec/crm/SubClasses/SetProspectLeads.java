@@ -37,11 +37,11 @@ public class SetProspectLeads implements Runnable {
     @Override
     public void run() {
 
-        log.info("Fetching stats for Lead Generated");
+        log.info("Fetching stats for Prospect Lead");
         if (instance.equals(InstanceEnum.egcity))
-            dashboardPipelineReturnData.setLeadGenerated(
-                    new MapForPipelineAndActivities(data.stream().filter(c -> c.getLead().getIsProspectLead() == true).count(),
-                            data.stream().filter(c -> c.getLead().getIsProspectLead() == true).collect(Collectors.groupingBy(c ->
+            dashboardPipelineReturnData.setProspectiveLeads(
+                    new MapForPipelineAndActivities(data.stream().filter(c -> c.getLead().getIsProspectLead().equals(true)).count(),
+                            data.stream().filter(c -> c.getLead().getIsProspectLead().equals(true)).collect(Collectors.groupingBy(c ->
                             {
 
                                 try {
@@ -56,7 +56,7 @@ public class SetProspectLeads implements Runnable {
 
                             }, Collectors.counting()))));
         if (instance.equals(InstanceEnum.suncity))
-            dashboardPipelineReturnData.setLeadGenerated(
+            dashboardPipelineReturnData.setProspectiveLeads(
                     new MapForPipelineAndActivities(data.stream().filter(c -> c.getLead().getIsProspectLead() == true).count(),
                             data.stream().filter(c -> c.getLead().getIsProspectLead() == true).collect(Collectors.groupingBy(c ->
                             {

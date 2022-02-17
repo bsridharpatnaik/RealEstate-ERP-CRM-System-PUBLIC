@@ -7,7 +7,9 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
+import com.ec.crm.Data.ActivitiesForDashboard;
 import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Model.ActivitiesStatsForDashboard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,76 +23,30 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SetUpcomingActivities implements Runnable {
     private CyclicBarrier barrier;
-    private PipelineAndActivitiesForDashboard dashboardPipelineReturnData;
-    private List<LeadActivity> data;
-    Map<Long, String> idNameMap;
-    InstanceEnum instance;
+    private ActivitiesForDashboard dashboardPipelineReturnData;
+    private List<ActivitiesStatsForDashboard> data;
     Logger log = LoggerFactory.getLogger(SetUpcomingActivities.class);
 
-    public SetUpcomingActivities(CyclicBarrier barrier, PipelineAndActivitiesForDashboard dashboardPipelineReturnData,
-                                 List<LeadActivity> data, Map<Long, String> idNameMap, InstanceEnum instance1) {
-
+    public SetUpcomingActivities(CyclicBarrier barrier, ActivitiesForDashboard dashboardPipelineReturnData,
+                                 List<ActivitiesStatsForDashboard> data) {
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
         this.barrier = barrier;
         this.data = data;
-        this.idNameMap = idNameMap;
-        this.instance = instance1;
     }
 
     @Override
     public void run() {
 
         log.info("Fetching stats for SetUpcomingActivities");
-        if (instance.equals(InstanceEnum.egcity))
-            dashboardPipelineReturnData
-                    .setUpcomingActivities(
-                            new MapForPipelineAndActivities(
-                                    data.stream()
-                                            .filter(c -> c.getIsOpen() == true && c.getActivityDateTime()
-                                                    .after(ReusableMethods.atEndOfDay(new Date())))
-                                            .count(),
-                                    data.stream()
-                                            .filter(c -> c.getIsOpen() == true && c.getActivityDateTime()
-                                                    .after(ReusableMethods.atEndOfDay(new Date())))
-                                            .collect(Collectors.groupingBy(c ->
-                                            {
-                                                try {
-                                                    return idNameMap.get(c.getLead().getAsigneeId());
-                                                } catch (Exception e) { 
-                                                    log.error(e.getMessage());
-                                                    e.printStackTrace();
-                                                }
-                                                return null;
-                                            }, Collectors.counting()))));
-        if (instance.equals(InstanceEnum.suncity))
-            dashboardPipelineReturnData
-                    .setUpcomingActivities(
-                            new MapForPipelineAndActivities(
-                                    data.stream()
-                                            .filter(c -> c.getIsOpen() == true && c.getActivityDateTime()
-                                                    .after(ReusableMethods.atEndOfDay(new Date())))
-                                            .count(),
-                                    data.stream()
-                                            .filter(c -> c.getIsOpen() == true && c.getActivityDateTime()
-                                                    .after(ReusableMethods.atEndOfDay(new Date())))
-                                            .collect(Collectors.groupingBy(c ->
-                                            {
-                                                try {
-                                                    return c.getLead().getPropertyType();
-                                                } catch (Exception e) {
-                                                    log.error(e.getMessage());
-                                                    e.printStackTrace();
-                                                }
-                                                return null;
-                                            }, Collectors.counting()))));
+        dashboardPipelineReturnData
+                .setUpcomingActivities(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("upcoming")).mapToLong(i -> i.getCount()).sum()
+                        , data.stream().filter(e -> e.getType().equals("upcoming")).collect(Collectors.toList())));
         log.info("Completed stats for SetUpcomingActivities");
         try {
             barrier.await();
         } catch (InterruptedException e) {
-            
             e.printStackTrace();
         } catch (BrokenBarrierException e) {
-            
             e.printStackTrace();
         }
     }

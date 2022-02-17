@@ -1,8 +1,10 @@
 package com.ec.crm.Data;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import com.ec.crm.Model.ActivitiesStatsForDashboard;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,4 +30,16 @@ public class MapForPipelineAndActivities
 
 	Long total;
 	ArrayList<MapForDashboardStatsDAO> detailed;
+
+	public MapForPipelineAndActivities(long count, List<ActivitiesStatsForDashboard> data) {
+		ArrayList<MapForDashboardStatsDAO> d = new ArrayList<MapForDashboardStatsDAO>();
+		for(ActivitiesStatsForDashboard ad : data){
+			MapForDashboardStatsDAO mapForDashboardStatsDAO = new MapForDashboardStatsDAO();
+			mapForDashboardStatsDAO.setUserName(ad.getUserName());
+			mapForDashboardStatsDAO.setValue(ad.getCount());
+			d.add(mapForDashboardStatsDAO);
+		}
+		this.detailed = d;
+		this.total = count;
+	}
 }

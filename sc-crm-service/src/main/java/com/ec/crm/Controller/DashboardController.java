@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ec.crm.Data.ActivitiesForDashboard;
 import com.ec.crm.Data.PipelineForDashboard;
 import com.ec.crm.Data.SalesFunnelDTO;
 import com.ec.crm.Service.DashboardServiceV2;
@@ -36,6 +37,12 @@ public class DashboardController {
     @ResponseStatus(HttpStatus.OK)
     public PipelineForDashboard getCustomerPipeline(@RequestBody DashboardData payload) throws Exception {
         return dashboardService.getPipelineForDashboard(payload);
+    }
+
+    @PostMapping("/activitystats")
+    @ResponseStatus(HttpStatus.OK)
+    public ActivitiesForDashboard getCustomerPipeline() throws Exception {
+        return dashboardService.getActivitesForDashboard();
     }
 
     @GetMapping("/salesfunnel")
