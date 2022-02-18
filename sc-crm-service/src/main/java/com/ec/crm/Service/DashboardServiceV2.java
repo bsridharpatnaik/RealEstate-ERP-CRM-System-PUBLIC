@@ -60,8 +60,8 @@ public class DashboardServiceV2 {
         data = lRepo.getActivity(fromdate, nextDate);
 
         log.info("Fetching Stats");
-        ExecutorService executors = Executors.newFixedThreadPool(8);
-        CyclicBarrier barrier = new CyclicBarrier(8);
+        ExecutorService executors = Executors.newFixedThreadPool(5);
+        CyclicBarrier barrier = new CyclicBarrier(5);
         executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
@@ -75,7 +75,7 @@ public class DashboardServiceV2 {
                             || dashboardPipelineReturnData.getDealLost() == null
                             || dashboardPipelineReturnData.getLeadGenerated() == null
                             || dashboardPipelineReturnData.getDealLostReasons() == null)
-                    && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30)) {
+                    && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 5)) {
                 flag = false;
             } else {
                 log.info("Flag is true. Current difference in time - "
@@ -92,8 +92,8 @@ public class DashboardServiceV2 {
         List<ActivitiesStatsForDashboard> data = activitiesStatsForDashboardRepo.findAll();
 
         log.info("Fetching Activity Stats");
-        ExecutorService executors = Executors.newFixedThreadPool(8);
-        CyclicBarrier barrier = new CyclicBarrier(8);
+        ExecutorService executors = Executors.newFixedThreadPool(6);
+        CyclicBarrier barrier = new CyclicBarrier(6);
         executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data));
@@ -110,7 +110,7 @@ public class DashboardServiceV2 {
                     || dashboardPipelineReturnData.getLiveLeads() == null
                     || dashboardPipelineReturnData.getTomorrowsActivities() == null
             )
-                    && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30)) {
+                    && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 5)) {
                 flag = false;
             } else {
                 log.info("Flag is true. Current difference in time - "
