@@ -39,7 +39,7 @@ public class DashboardController {
         return dashboardService.getPipelineForDashboard(payload);
     }
 
-    @PostMapping("/activitystats")
+    @GetMapping("/activitystats")
     @ResponseStatus(HttpStatus.OK)
     public ActivitiesForDashboard getCustomerPipeline() throws Exception {
         return dashboardService.getActivitesForDashboard();

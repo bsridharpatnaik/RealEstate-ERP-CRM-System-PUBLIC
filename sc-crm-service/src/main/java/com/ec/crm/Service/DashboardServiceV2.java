@@ -64,7 +64,6 @@ public class DashboardServiceV2 {
         CyclicBarrier barrier = new CyclicBarrier(8);
         executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
-        executors.submit(new SetProspectLeads(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealLost(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealLostReasons(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
@@ -75,7 +74,6 @@ public class DashboardServiceV2 {
                     dashboardPipelineReturnData.getDealClosed() == null
                             || dashboardPipelineReturnData.getDealLost() == null
                             || dashboardPipelineReturnData.getLeadGenerated() == null
-                            || dashboardPipelineReturnData.getProspectiveLeads() == null
                             || dashboardPipelineReturnData.getDealLostReasons() == null)
                     && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30)) {
                 flag = false;
@@ -100,13 +98,18 @@ public class DashboardServiceV2 {
         executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetLiveLeads(barrier, dashboardPipelineReturnData, data));
+        executors.submit(new SetProspectLeads(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetTomorrowActivities(barrier, dashboardPipelineReturnData, data));
         boolean flag = false;
         Date returnDateTime = new Date();
         while (flag == false) {
             if ((dashboardPipelineReturnData.getTodaysActivities() == null
                     || dashboardPipelineReturnData.getPendingActivities() == null
-                    || dashboardPipelineReturnData.getUpcomingActivities() == null)
+                    || dashboardPipelineReturnData.getUpcomingActivities() == null
+                    || dashboardPipelineReturnData.getProspectiveLeads() == null
+                    || dashboardPipelineReturnData.getLiveLeads() == null
+                    || dashboardPipelineReturnData.getTomorrowsActivities() == null
+            )
                     && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 30)) {
                 flag = false;
             } else {
