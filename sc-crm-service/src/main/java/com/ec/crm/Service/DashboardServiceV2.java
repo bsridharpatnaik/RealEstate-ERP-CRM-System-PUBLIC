@@ -47,10 +47,12 @@ public class DashboardServiceV2 {
     @Autowired
     ActivitiesStatsForDashboardRepo activitiesStatsForDashboardRepo;
 
+    @Autowired
+    LeadStageAgentMappingRepo leadStageAgentMappingRepo;
+
     Logger log = LoggerFactory.getLogger(DashboardServiceV2.class);
 
     public PipelineForDashboard getPipelineForDashboard(DashboardData payload) throws Exception {
-
         PipelineForDashboard dashboardPipelineReturnData = new PipelineForDashboard();
         List<LeadActivity> data = new ArrayList<LeadActivity>();
         Date fromdate = payload.getFromDate();
@@ -168,4 +170,7 @@ public class DashboardServiceV2 {
         return count;
     }
 
+    public List<LeadStageAgentMapping> getLeadStageAgentMapping(){
+        return leadStageAgentMappingRepo.findAll();
+    }
 }

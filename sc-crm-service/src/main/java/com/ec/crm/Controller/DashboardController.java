@@ -8,6 +8,7 @@ import java.util.Map;
 import com.ec.crm.Data.ActivitiesForDashboard;
 import com.ec.crm.Data.PipelineForDashboard;
 import com.ec.crm.Data.SalesFunnelDTO;
+import com.ec.crm.Model.LeadStageAgentMapping;
 import com.ec.crm.Service.DashboardServiceV2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -65,9 +66,13 @@ public class DashboardController {
     @GetMapping("/topperformer")
     @ResponseStatus(HttpStatus.OK)
     public Map topperformer() throws ParseException {
-
         return dashboardService.topperformer();
+    }
 
+    @GetMapping("/leadstagemapping")
+    @ResponseStatus(HttpStatus.OK)
+    public List<LeadStageAgentMapping> getLeadStageAgentMapping() throws ParseException {
+        return dashboardService.getLeadStageAgentMapping();
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
