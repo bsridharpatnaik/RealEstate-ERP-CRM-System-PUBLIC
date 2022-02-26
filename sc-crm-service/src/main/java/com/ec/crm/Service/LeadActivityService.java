@@ -282,17 +282,21 @@ public class LeadActivityService {
         LeadStatusEnum status = leadActivity.getLead().getStatus();
 
         if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit) && isReschedule.equals(false)) {
-            if (status.equals(LeadStatusEnum.Visit_Scheduled)) {
+            if (moveToNegotiation != null && moveToNegotiation.equals(true)) {
+                leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+                laRepo.save(leadActivity);
+            } else {
                 leadActivity.getLead().setStatus(LeadStatusEnum.Visit_Completed);
                 laRepo.save(leadActivity);
-            } else if ((status.equals(LeadStatusEnum.Visit_Completed) || status.equals(LeadStatusEnum.Visit_Scheduled))
-                    && moveToNegotiation!=null && moveToNegotiation!=false) {
-                leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
-                leadActivity.setClosingComment(leadActivity.getClosingComment()+". Moved Lead Stage to Negotiation.");
-                laRepo.save(leadActivity);
             }
+        } else if ((status.equals(LeadStatusEnum.Visit_Completed) || status.equals(LeadStatusEnum.Visit_Scheduled))
+                && moveToNegotiation != null && moveToNegotiation != false) {
+            leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+            leadActivity.setClosingComment(leadActivity.getClosingComment() + ". Moved Lead Stage to Negotiation.");
+            laRepo.save(leadActivity);
         }
     }
+    
 
     private LeadStatusEnum fetchPreviousStatusFromHistory(Lead lead) throws Exception {
         log.info("Fetching previous status for lead -" + lead.getLeadId());
