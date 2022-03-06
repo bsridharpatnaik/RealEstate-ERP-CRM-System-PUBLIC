@@ -37,7 +37,7 @@ SELECT UUID() as id,'upcoming', su.user_name,COUNT(leadactivity_id) as count FRO
 INNER JOIN customer_lead l on l.lead_id=la.lead_id
 INNER JOIN security_user su on su.user_id=l.user_id
 WHERE la.is_deleted=0
-	AND DATE(la.activity_date_time)>DATE(sysdate())
+	AND DATE(la.activity_date_time)>DATE(sysdate()) AND DATE(la.activity_date_time)<=LAST_DAY(DATE(sysdate())) AND la.isOpen=true
 GROUP BY su.user_name
 UNION ALL
 -- Live Leads
