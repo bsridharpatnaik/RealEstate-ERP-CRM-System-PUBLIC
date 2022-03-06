@@ -52,3 +52,18 @@ INNER JOIN security_user su on su.user_id=l.user_id
 WHERE l.is_deleted=0
 	AND l.status NOT IN ('Deal_Closed','Deal_Lost') AND l.is_prospect_lead=true
 GROUP BY su.user_name;
+
+
+CREATE OR REPLACE VIEW lead_stage_agent_mapping AS
+SELECT
+	user_name,
+    SUM(CASE WHEN l.status='New_Lead' THEN 1 ELSE 0 END) as new_lead ,
+    SUM(CASE WHEN l.status='Visit_Scheduled' THEN 1 ELSE 0 END) as visit_scheduled,
+    SUM(CASE WHEN l.status='Visit_Completed' THEN 1 ELSE 0 END) as visit_completed,
+    SUM(CASE WHEN l.status='Negotiation' THEN 1 ELSE 0 END) as negotiation,
+    SUM(CASE WHEN l.status='Deal_Lost' THEN 1 ELSE 0 END) as deal_lost,
+    SUM(CASE WHEN l.status='Deal_Closed' THEN 1 ELSE 0 END) as deal_closed
+FROM customer_lead l
+INNER JOIN security_user su on su.user_id=l.user_id
+WHERE l.is_deleted=0
+GROUP BY su.user_name;
