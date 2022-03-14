@@ -10,7 +10,8 @@ public class PipelineAllReturnDAO
 	NameAndProjectionDataForDropDown dropdownData;
 	List<String> typeAheadDataForGlobalSearch;
 	PipelineWithTotalReturnDAO leadGeneration;
-	PipelineWithTotalReturnDAO propertyVisit;
+	PipelineWithTotalReturnDAO propertyVisitScheduled;
+	PipelineWithTotalReturnDAO propertyVisitCompleted;
 	PipelineWithTotalReturnDAO negotiation;
 	PipelineWithTotalReturnDAO deal_close;
 }

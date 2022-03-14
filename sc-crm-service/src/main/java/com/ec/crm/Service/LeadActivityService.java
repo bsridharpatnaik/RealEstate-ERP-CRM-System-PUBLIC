@@ -17,6 +17,7 @@ import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,7 +138,7 @@ public class LeadActivityService {
         } else {
             if (la.getActivityType().equals(ActivityTypeEnum.Property_Visit)) {
                 addNoteBeforeRevert(la);
-                la.getLead().setStatus(LeadStatusEnum.Property_Visit);
+                la.getLead().setStatus(LeadStatusEnum.Visit_Scheduled);
                 la.setClosedBy(null);
                 la.setClosingComment(null);
                 la.setIsOpen(true);
@@ -206,7 +207,7 @@ public class LeadActivityService {
         Long currentUserId = userDetailsService.getCurrentUser().getId();
         if (status.equals(LeadStatusEnum.New_Lead)) {
             if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
-                leadActivity.getLead().setStatus(LeadStatusEnum.Property_Visit);
+                leadActivity.getLead().setStatus(LeadStatusEnum.Visit_Scheduled);
             else if (leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)) {
                 leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
                 leadActivity.setClosedBy(currentUserId);
@@ -215,7 +216,7 @@ public class LeadActivityService {
             }
         }
 
-        if (status.equals(LeadStatusEnum.Property_Visit)) {
+        if (status.equals(LeadStatusEnum.Visit_Scheduled) || status.equals(LeadStatusEnum.Visit_Completed)) {
             if (leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)) {
                 leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
 
@@ -276,18 +277,26 @@ public class LeadActivityService {
     }
 
     @Transactional
-    private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity, Boolean isReschedule) throws Exception {
+    private void ExecuteBusinessLogicWhileClosure(LeadActivity leadActivity, Boolean isReschedule, Boolean moveToNegotiation) throws Exception {
         log.info("Invoked ExecuteBusinessLogicWhileClosure");
         LeadStatusEnum status = leadActivity.getLead().getStatus();
 
-        if (status.equals(LeadStatusEnum.Property_Visit) && isReschedule.equals(false)) {
-            if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit)) {
-                log.info("Changing status of lead from Property_Visit - Negotiation");
+        if (leadActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit) && isReschedule.equals(false)) {
+            if (moveToNegotiation != null && moveToNegotiation.equals(true)) {
                 leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+                laRepo.save(leadActivity);
+            } else {
+                leadActivity.getLead().setStatus(LeadStatusEnum.Visit_Completed);
+                laRepo.save(leadActivity);
             }
+        } else if ((status.equals(LeadStatusEnum.Visit_Completed) || status.equals(LeadStatusEnum.Visit_Scheduled))
+                && moveToNegotiation != null && moveToNegotiation != false) {
+            leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
+            leadActivity.setClosingComment(leadActivity.getClosingComment() + ". Moved Lead Stage to Negotiation.");
+            laRepo.save(leadActivity);
         }
-        laRepo.save(leadActivity);
     }
+    
 
     private LeadStatusEnum fetchPreviousStatusFromHistory(Lead lead) throws Exception {
         log.info("Fetching previous status for lead -" + lead.getLeadId());
@@ -323,7 +332,9 @@ public class LeadActivityService {
 
     private void exitCreateIfExitConditionsExists(Lead lead, LeadActivityCreate payload) throws Exception {
         log.info("Invoked exitIfExitConditionsExists");
-        if (lead.getStatus().equals(LeadStatusEnum.New_Lead) || lead.getStatus().equals(LeadStatusEnum.Property_Visit)) {
+        if (lead.getStatus().equals(LeadStatusEnum.New_Lead)
+                || lead.getStatus().equals(LeadStatusEnum.Visit_Scheduled)
+                || lead.getStatus().equals(LeadStatusEnum.Visit_Completed)) {
             if (payload.getActivityType().equals(ActivityTypeEnum.Deal_Close))
                 throw new Exception("Deal close activity not allowed for lead in stage " + lead.getStatus());
         } else if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed)
@@ -336,9 +347,6 @@ public class LeadActivityService {
 
         if (laRepo.getOpenCallActivities(lead.getLeadId()) > 0)
             throw new Exception("Please close CALL activity before creating any new activity");
-
-//		if (lead.getStatus().equals(LeadStatusEnum.New_Lead) && laRepo.getOpenDefaultActivities(lead.getLeadId()) > 0)
-//			throw new Exception("Please close default CALL activity before creating any new activity");
 
         List<LeadActivity> existingActivities = laRepo.findByLeadActivityTypeOpen(payload.getLeadId(),
                 payload.getActivityType());
@@ -427,9 +435,10 @@ public class LeadActivityService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void deleteLeadActivity(Long id, String closingComment, Long closedBy, Boolean isReschedule, String caller)
+    public void deleteLeadActivity(Long id, String closingComment, Long closedBy, Boolean isReschedule, String caller, Boolean moveToNegotiation)
             throws Exception {
         log.info("Invoked deleteLeadActivity");
+
         Optional<LeadActivity> latype = laRepo.findById(id);
         if (!latype.isPresent())
             throw new Exception("LeadActivity ID not found");
@@ -449,7 +458,7 @@ public class LeadActivityService {
         if (isReschedule)
             leadActivity.setRescheduled(true);
         laRepo.save(leadActivity);
-        ExecuteBusinessLogicWhileClosure(leadActivity, isReschedule);
+        ExecuteBusinessLogicWhileClosure(leadActivity, isReschedule, moveToNegotiation);
     }
 
     @Transactional
@@ -461,7 +470,7 @@ public class LeadActivityService {
         // Delete old activity
         log.info("Deleting old Activity");
         deleteLeadActivity(leadActivity.getLeadActivityId(), rescheduleActivityData.getClosingComment(), currentUserId,
-                true, "non-system");
+                true, "non-system", null);
         log.info("Deleted old Activity - success");
 
         // Create new Activity
@@ -538,10 +547,8 @@ public class LeadActivityService {
         log.info("Invoked getAllActivitiesForLead");
         Lead lead = getLeadFromLeadId(leadId);
         AllActivitesForLeadDAO allActivitesForLeadDAO = new AllActivitesForLeadDAO();
-        allActivitesForLeadDAO.setPendingActivities(
-                laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPendingActivitiesForLead(lead.getLeadId())));
-        allActivitesForLeadDAO.setPastActivities(
-                laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPastActivitiesForLead(lead.getLeadId())));
+        allActivitesForLeadDAO.setPendingActivities(laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPendingActivitiesForLead(lead.getLeadId())));
+        allActivitesForLeadDAO.setPastActivities(laMapper.mapLeadActivitiesToDTOs(laRepo.fetchPastActivitiesForLead(lead.getLeadId())));
         return (allActivitesForLeadDAO);
     }
 
@@ -849,4 +856,11 @@ public class LeadActivityService {
     }
 
 
+    public Boolean getMoveToNegotiation(LeadActivity la) {
+        if (la.getIsOpen() && (
+                la.getActivityType().equals(ActivityTypeEnum.Property_Visit) &&
+                        (la.getLead().getStatus().equals(LeadStatusEnum.Visit_Completed) || la.getLead().getStatus().equals(LeadStatusEnum.Visit_Scheduled))))
+            return true;
+        return false;
+    }
 }

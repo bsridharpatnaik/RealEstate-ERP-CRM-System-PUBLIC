@@ -54,9 +54,12 @@ public class SetDataForPipeline implements Runnable
 			else if (status.equals(LeadStatusEnum.Negotiation))
 				pipelineAllReturnDAO.setNegotiation(allActivitiesService.fetchPipelineDataFromActivityList(leads,
 						LeadStatusEnum.Negotiation, leadRecentActivityMapping));
-			else if (status.equals(LeadStatusEnum.Property_Visit))
-				pipelineAllReturnDAO.setPropertyVisit(allActivitiesService.fetchPipelineDataFromActivityList(leads,
-						LeadStatusEnum.Property_Visit, leadRecentActivityMapping));
+			else if (status.equals(LeadStatusEnum.Visit_Scheduled))
+				pipelineAllReturnDAO.setPropertyVisitScheduled(allActivitiesService.fetchPipelineDataFromActivityList(leads,
+						LeadStatusEnum.Visit_Scheduled, leadRecentActivityMapping));
+			else if (status.equals(LeadStatusEnum.Visit_Completed))
+				pipelineAllReturnDAO.setPropertyVisitCompleted(allActivitiesService.fetchPipelineDataFromActivityList(leads,
+						LeadStatusEnum.Visit_Completed, leadRecentActivityMapping));
 			else if (status.equals(LeadStatusEnum.Deal_Closed))
 				pipelineAllReturnDAO.setDeal_close(allActivitiesService.fetchPipelineDataFromActivityList(leads,
 						LeadStatusEnum.Deal_Closed, leadRecentActivityMapping));

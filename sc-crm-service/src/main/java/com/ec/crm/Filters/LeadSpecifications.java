@@ -39,6 +39,7 @@ public final class LeadSpecifications
 		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
 		List<String> leadStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "leadStatus");
 		List<String> stagnantStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stagnantStatus");
+		List<String> prospectLeads = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "prospectLead");
 		Specification<Lead> finalSpec = null;
 
 		if (name != null && name.size() > 0)
@@ -49,6 +50,10 @@ public final class LeadSpecifications
 			finalSpec = specbldr.specAndCondition(finalSpec,
 					specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE, mobile)
 							.or(specbldr.whereDirectFieldContains(Lead_.SECONDARY_MOBILE, mobile)));
+
+		if (prospectLeads != null && prospectLeads.size() > 0)
+			finalSpec = specbldr.specAndCondition(finalSpec,
+					specbldr.whereDirectBoleanFieldEquals(Lead_.IS_PROSPECT_LEAD, prospectLeads));
 
 		if (purpose != null && purpose.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(Lead_.PURPOSE, purpose));

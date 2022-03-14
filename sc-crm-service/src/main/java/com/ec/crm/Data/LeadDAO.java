@@ -44,6 +44,8 @@ public class LeadDAO
 
 	String source;
 
+	Boolean isProspectLead;
+
 	@Enumerated(EnumType.STRING)
 	PropertyTypeEnum propertyType;
 

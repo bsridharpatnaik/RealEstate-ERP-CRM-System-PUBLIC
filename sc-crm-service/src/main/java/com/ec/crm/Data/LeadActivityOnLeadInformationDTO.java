@@ -60,4 +60,5 @@ public class LeadActivityOnLeadInformationDTO
 	Integer followUpCount;
 
 	Boolean isRevertable;
+	Boolean showMoveToNegotiation;
 }

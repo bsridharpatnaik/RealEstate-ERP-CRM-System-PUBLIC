@@ -10,7 +10,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public enum LeadStatusEnum 
 {
 	New_Lead,
-	Property_Visit,
+	Visit_Scheduled,
+	Visit_Completed,
 	Negotiation,
 	Deal_Closed, 
 	Deal_Lost;

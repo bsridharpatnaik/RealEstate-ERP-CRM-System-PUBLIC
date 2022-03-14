@@ -40,136 +40,122 @@ import lombok.SneakyThrows;
 
 @RestController
 @RequestMapping(value = "/activity", produces =
-{ "application/json", "text/json" })
-public class LeadActivityController
-{
+        {"application/json", "text/json"})
+public class LeadActivityController {
 
-	@Autowired
-	UserDetailsService userDetailsService;
+    @Autowired
+    UserDetailsService userDetailsService;
 
-	@Autowired
-	SendCRMNotificationsService sendCRMNotificationsService;
+    @Autowired
+    SendCRMNotificationsService sendCRMNotificationsService;
 
-	@Autowired
-	LeadActivityService laService;
+    @Autowired
+    LeadActivityService laService;
 
-	@Autowired
-	NoteService noteService;
+    @Autowired
+    NoteService noteService;
 
-	@Autowired
-	HttpServletRequest request;
+    @Autowired
+    HttpServletRequest request;
 
-	@GetMapping
-	public Page<LeadActivity> returnAllLeadActivity(Pageable pageable)
-	{
-		return laService.fetchAll(pageable);
-	}
+    @GetMapping
+    public Page<LeadActivity> returnAllLeadActivity(Pageable pageable) {
+        return laService.fetchAll(pageable);
+    }
 
-	@GetMapping("/{id}")
-	public LeadActivity findLeadActivityByID(@PathVariable long id) throws Exception
-	{
-		return laService.getSingleLeadActivity(id);
-	}
+    @GetMapping("/{id}")
+    public LeadActivity findLeadActivityByID(@PathVariable long id) throws Exception {
+        return laService.getSingleLeadActivity(id);
+    }
 
-	@GetMapping("/allowedactivitytype/{id}")
-	public List<ActivityTypeEnum> getValidActivityType(@PathVariable long id) throws Exception
-	{
-		return laService.getAllowedActiviType(id);
-	}
+    @GetMapping("/allowedactivitytype/{id}")
+    public List<ActivityTypeEnum> getValidActivityType(@PathVariable long id) throws Exception {
+        return laService.getAllowedActiviType(id);
+    }
 
-	@GetMapping("/deallostreasons")
-	public List<DealLostReasonEnum> getDealLostReasons() throws Exception
-	{
-		return laService.getDealLostReasons();
-	}
+    @GetMapping("/deallostreasons")
+    public List<DealLostReasonEnum> getDealLostReasons() throws Exception {
+        return laService.getDealLostReasons();
+    }
 
-	@PostMapping("/create")
-	@ResponseStatus(HttpStatus.CREATED)
-	@SneakyThrows(InvalidFormatException.class)
-	public LeadActivity createLeadActivity(@RequestBody LeadActivityCreate at) throws Exception
-	{
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    @SneakyThrows(InvalidFormatException.class)
+    public LeadActivity createLeadActivity(@RequestBody LeadActivityCreate at) throws Exception {
 
-		return laService.createLeadActivity(at);
-	}
+        return laService.createLeadActivity(at);
+    }
 
-	@PatchMapping("/{id}")
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void closeLeadActivityWithComment(@RequestBody LeadActivityClosingComment payload, @PathVariable long id)
-			throws Exception
-	{
-		if (payload.getClosingComment() == null)
-			throw new Exception("Please enter closing comments");
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void closeLeadActivityWithComment(@RequestBody LeadActivityClosingComment payload, @PathVariable long id)
+            throws Exception {
+        if (payload.getClosingComment() == null)
+            throw new Exception("Please enter closing comments");
 
-		laService.deleteLeadActivity(id, payload.getClosingComment(), userDetailsService.getCurrentUser().getId(),
-				false, "non-system");
-	}
+        laService.deleteLeadActivity(id, payload.getClosingComment(), userDetailsService.getCurrentUser().getId(),
+                false, "non-system",payload.getMoveToNegotiation());
+    }
 
-	@PutMapping("reschedule/{id}")
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void rescheduleActivity(@RequestBody RescheduleActivityData payload, @PathVariable long id) throws Exception
-	{
-		laService.rescheduleActivity(id, payload);
-	}
+    @PutMapping("reschedule/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void rescheduleActivity(@RequestBody RescheduleActivityData payload, @PathVariable long id) throws Exception {
+        laService.rescheduleActivity(id, payload);
+    }
 
-	@PutMapping("revert/{id}")
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void revertLeadActivity(@PathVariable long id) throws Exception
-	{
-		laService.revertLeadActivity(id);
-	}
+    @PutMapping("revert/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void revertLeadActivity(@PathVariable long id) throws Exception {
+        laService.revertLeadActivity(id);
+    }
 
-	@PostMapping("/getleadactivitypage")
-	@ResponseStatus(HttpStatus.OK)
-	public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,
-																 @PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
-			throws Exception {
-		UserReturnData currentUser = userDetailsService.getCurrentUser();
-		request.setAttribute("currentUser", currentUser);
-		return laService.getLeadActivityPage(leadFilterDataList, pageable);
-	}
+    @PostMapping("/getleadactivitypage")
+    @ResponseStatus(HttpStatus.OK)
+    public LeadActivityListWithTypeAheadData getLeadActivityPage(@RequestBody FilterDataList leadFilterDataList,
+                                                                 @PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
+            throws Exception {
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+        request.setAttribute("currentUser", currentUser);
+        return laService.getLeadActivityPage(leadFilterDataList, pageable);
+    }
 
-	@PostMapping("/getleadactivitypage/export")
-	@ResponseStatus(HttpStatus.OK)
-	public Page<LeadActivityExportDTO> getLeadActivityPageExport(@RequestBody FilterDataList leadFilterDataList,
-														   @PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
-			throws Exception
-	{
-		UserReturnData currentUser = userDetailsService.getCurrentUser();
-		request.setAttribute("currentUser", currentUser);
-		return laService.getLeadActivityPageExport(leadFilterDataList, pageable);
-	}
+    @PostMapping("/getleadactivitypage/export")
+    @ResponseStatus(HttpStatus.OK)
+    public Page<LeadActivityExportDTO> getLeadActivityPageExport(@RequestBody FilterDataList leadFilterDataList,
+                                                                 @PageableDefault(page = 0, size = 10, sort = "created", direction = Direction.DESC) Pageable pageable)
+            throws Exception {
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+        request.setAttribute("currentUser", currentUser);
+        return laService.getLeadActivityPageExport(leadFilterDataList, pageable);
+    }
 
-	@GetMapping("/getleadactivitypage/dropdown")
-	public LeadActivityDropdownData getDropDownValues() throws Exception
-	{
-		UserReturnData currentUser = userDetailsService.getCurrentUser();
-		request.setAttribute("currentUser", currentUser);
-		return laService.getDropdownForLead();
-	}
+    @GetMapping("/getleadactivitypage/dropdown")
+    public LeadActivityDropdownData getDropDownValues() throws Exception {
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+        request.setAttribute("currentUser", currentUser);
+        return laService.getDropdownForLead();
+    }
 
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex)
-	{
-		Map<String, String> errors = new HashMap<>();
-		ex.getBindingResult().getAllErrors().forEach((error) ->
-		{
-			String fieldName = ((FieldError) error).getField();
-			String errorMessage = "Invalid Data. Please try again.";
-			errors.put(fieldName, errorMessage);
-		});
-		return errors;
-	}
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) ->
+        {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = "Invalid Data. Please try again.";
+            errors.put(fieldName, errorMessage);
+        });
+        return errors;
+    }
 
-	@GetMapping("/validActivityTypes")
-	public List<String> findValidActivityTypes()
-	{
-		return ActivityTypeEnum.getValidActivityTypes();
-	}
+    @GetMapping("/validActivityTypes")
+    public List<String> findValidActivityTypes() {
+        return ActivityTypeEnum.getValidActivityTypes();
+    }
 
-	@GetMapping("/tn")
-	public void triggerNotifications()
-	{
-		sendCRMNotificationsService.sendSMSNotificationForUpcomingActivities();
-	}
+    @GetMapping("/tn")
+    public void triggerNotifications() {
+        sendCRMNotificationsService.sendSMSNotificationForUpcomingActivities();
+    }
 }

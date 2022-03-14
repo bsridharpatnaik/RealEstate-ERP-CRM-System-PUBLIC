@@ -9,6 +9,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
 import com.ec.crm.Data.MapForDashboardStatsDAO;
+import com.ec.crm.Data.PipelineForDashboard;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import org.slf4j.Logger;
@@ -23,13 +24,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SetLeadGenerated implements Runnable {
     private CyclicBarrier barrier;
-    private PipelineAndActivitiesForDashboard dashboardPipelineReturnData;
+    private PipelineForDashboard dashboardPipelineReturnData;
     private List<LeadActivity> data;
     Map<Long, String> idNameMap;
     InstanceEnum instance;
     Logger log = LoggerFactory.getLogger(SetLeadGenerated.class);
 
-    public SetLeadGenerated(CyclicBarrier barrier, PipelineAndActivitiesForDashboard dashboardPipelineReturnData,
+    public SetLeadGenerated(CyclicBarrier barrier, PipelineForDashboard dashboardPipelineReturnData,
                             List<LeadActivity> data, Map<Long, String> idNameMap, InstanceEnum instance1) {
 
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
