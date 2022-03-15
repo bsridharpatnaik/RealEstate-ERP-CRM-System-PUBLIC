@@ -269,27 +269,13 @@ public class MachineryOnRentService {
     @Transactional
     private void exitIfNotAuthorized(MachineryOnRent mor, CreateMORentData morData, APICallTypeForAuthorization action)
             throws Exception {
-
-        UserReturnData currentUserData = userDetailsService.getCurrentUser();
-
         if (action.equals(APICallTypeForAuthorization.Update)) {
-            if (currentUserData.getRoles().contains("admin")
-                    || currentUserData.getRoles().contains("inventory-manager")) {
-                if (ReusableMethods.daysBetweenTwoDates(mor.getDate(),
-                        new Date()) > ProjectConstants.editAllowedDaysAdmin)
-                    throw new Exception("Cannot modify record that is created greater than "
-                            + ProjectConstants.editAllowedDaysAdmin + " days ago.");
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date());
+            Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
 
-            } else if (currentUserData.getRoles().contains("inventory-executive")) {
-                if (ReusableMethods.daysBetweenTwoDates(mor.getDate(),
-                        new Date()) > ProjectConstants.editAllowedDaysExecutive)
-                    throw new Exception("Cannot modify record that is created greater than "
-                            + ProjectConstants.editAllowedDaysExecutive + " days ago.");
-            } else {
-                throw new Exception("No User role found for user!. Please contact administration to get roles added");
-            }
-            System.out.println(mor.getDate());
-            System.out.println(morData.getDate());
+            if (daysDifference > daysEditAllowed)
+                throw new Exception("Cannot update MOR record with date older than " + daysDifference + " days.");
+
             if (mor.getDate().before(morData.getDate()) || mor.getDate().after(morData.getDate()))
                 throw new Exception("Date should not be modified while updating Machinery On Rent record");
 
@@ -315,36 +301,18 @@ public class MachineryOnRentService {
                 throw new Exception("Supplier should not be modified while updating Machinery On Rent record");
         }
         if (action.equals(APICallTypeForAuthorization.Create)) {
-            if (currentUserData.getRoles().contains("admin")
-                    || currentUserData.getRoles().contains("inventory-manager")) {
-                if (ReusableMethods.daysBetweenTwoDates(morData.getDate(),
-                        new Date()) > ProjectConstants.editAllowedDaysAdmin)
-                    throw new Exception("Cannot create Machinery On Rent with date more than "
-                            + ProjectConstants.editAllowedDaysAdmin + " Days in past. ");
-            } else if (currentUserData.getRoles().contains("inventory-executive")) {
-                if (ReusableMethods.daysBetweenTwoDates(morData.getDate(),
-                        new Date()) > ProjectConstants.editAllowedDaysExecutive)
-                    throw new Exception("Cannot create Machinery On Rent with date more than "
-                            + ProjectConstants.editAllowedDaysExecutive + " Days in past. ");
-            } else {
-                throw new Exception("No User role found for user!. Please contact administration to get roles added");
-            }
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date());
+            Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
+
+            if (daysDifference > daysEditAllowed)
+                throw new Exception("Cannot create MOR record with date older than " + daysDifference + " days.");
         }
         if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
-            if (currentUserData.getRoles().contains("admin")
-                    || currentUserData.getRoles().contains("inventory-manager")) {
-                if (ReusableMethods.daysBetweenTwoDates(mor.getDate(),
-                        new Date()) > ProjectConstants.editAllowedDaysAdmin)
-                    throw new Exception("Cannot DELETE Machinery On Rent created more than "
-                            + ProjectConstants.editAllowedDaysAdmin + " Days ago. ");
-            } else if (currentUserData.getRoles().contains("inventory-executive")) {
-                if (ReusableMethods.daysBetweenTwoDates(morData.getDate(),
-                        new Date()) > ProjectConstants.editAllowedDaysExecutive)
-                    throw new Exception("Cannot DELETE Machinery On Rent created more than "
-                            + ProjectConstants.editAllowedDaysExecutive + " Days ago. ");
-            } else {
-                throw new Exception("No User role found for user!. Please contact administration to get roles added");
-            }
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date());
+            Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
+
+            if (daysDifference > daysEditAllowed)
+                throw new Exception("Cannot delete MOR record with date older than " + daysDifference + " days.");
         }
     }
 

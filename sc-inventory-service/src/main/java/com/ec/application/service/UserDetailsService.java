@@ -3,6 +3,7 @@ package com.ec.application.service;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import com.ec.application.config.ProjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,5 +49,18 @@ public class UserDetailsService {
             e.printStackTrace();
             throw new Exception("Unable to fetch current user. Please contact system administrator.");
         }
+    }
+
+    public Long getInventoryEditDaysForCurrentUser() throws Exception {
+        UserReturnData userReturnData = getCurrentUser();
+        for (String role : userReturnData.getRoles()) {
+            if (role.toLowerCase().contains("admin"))
+                return ProjectConstants.editAllowedDaysAdmin;
+            else if (role.toLowerCase().contains("inventory-manager"))
+                return ProjectConstants.editAllowedDaysManager;
+            else if (role.toLowerCase().contains("inventory-executive"))
+                return ProjectConstants.editAllowedDaysExecutive;
+        }
+        return (long) 30;
     }
 }

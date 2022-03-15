@@ -414,22 +414,15 @@ public class InwardInventoryService {
     private void exitIfNotAuthorized(InwardInventory inwardInventory, InwardInventoryData iiData,
                                      APICallTypeForAuthorization action) throws Exception {
 
-        UserReturnData currentUserData = userDetailService.getCurrentUser();
+        //UserReturnData currentUserData = userDetailService.getCurrentUser();
 
         if (action.equals(APICallTypeForAuthorization.Update)) {
 
-            if (currentUserData.getRoles().contains("admin"))
-                return;
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date());
+            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
 
-            if (currentUserData.getRoles().contains("inventory-manager")) {
-                if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > ProjectConstants.editAllowedDaysAdmin)
-                    throw new Exception("Cannot modify record that is created greater than " + ProjectConstants.editAllowedDaysAdmin + " days ago.");
-            } else if (currentUserData.getRoles().contains("inventory-executive")) {
-                if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > ProjectConstants.editAllowedDaysExecutive)
-                    throw new Exception("Cannot modify record that is created greater than " + ProjectConstants.editAllowedDaysExecutive + " days ago.");
-            } else {
-                throw new Exception("No User role found for user!. Please contact administration to get roles added");
-            }
+            if (daysDifference > daysEditAllowed)
+                throw new Exception("Cannot modify record that is created greater than " + daysDifference + " days ago.");
 
             if (!iiData.getDate().equals(inwardInventory.getDate()))
                 throw new Exception("Date should not be modified while updating inward inventory record");
@@ -447,33 +440,19 @@ public class InwardInventoryService {
                 throw new Exception("Inventory List should not be modified while updating an inward inventory record");
         }
         if (action.equals(APICallTypeForAuthorization.Create)) {
-            if (currentUserData.getRoles().contains("admin"))
-                return;
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date());
+            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
 
-            if (currentUserData.getRoles().contains("inventory-manager")) {
-                if (ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date()) > ProjectConstants.editAllowedDaysAdmin)
-                    throw new Exception("Cannot create inward inventory with date more than " + ProjectConstants.editAllowedDaysAdmin + " Days in past. ");
-            } else if (currentUserData.getRoles().contains("inventory-executive")) {
-                if (ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date()) > ProjectConstants.editAllowedDaysExecutive)
-                    throw new Exception("Cannot create inward inventory with date more than " + ProjectConstants.editAllowedDaysExecutive + " Days in past. ");
-            } else {
-                throw new Exception("No User role found for user!. Please contact administration to get roles added");
-            }
+            if (daysDifference > daysEditAllowed)
+                throw new Exception("Cannot add inventory record with date older than " + daysDifference + " days.");
         }
 
         if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
-            if (currentUserData.getRoles().contains("admin"))
-                return;
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date());
+            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
 
-            if (currentUserData.getRoles().contains("inventory-manager")) {
-                if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date()) > ProjectConstants.editAllowedDaysAdmin)
-                    throw new Exception("Cannot DELETE inward inventory created more than " + ProjectConstants.editAllowedDaysAdmin + " Days ago. ");
-            } else if (currentUserData.getRoles().contains("inventory-executive")) {
-                if (ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(),  new Date()) > ProjectConstants.editAllowedDaysExecutive)
-                    throw new Exception("Cannot DELETE inward inventory created more than "  + ProjectConstants.editAllowedDaysExecutive + " Days ago. ");
-            } else {
-                throw new Exception("No User role found for user!. Please contact administration to get roles added");
-            }
+            if (daysDifference > daysEditAllowed)
+                throw new Exception("Cannot DELETE inward inventory created more than " + daysDifference + " Days ago. ");
         }
     }
 
