@@ -219,7 +219,6 @@ public class LeadActivityService {
         if (status.equals(LeadStatusEnum.Visit_Scheduled) || status.equals(LeadStatusEnum.Visit_Completed)) {
             if (leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Lost)) {
                 leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
-
                 leadActivity.setClosedBy(currentUserId);
                 leadActivity.setClosingComment("Deal Lost");
                 closeAllOpenActivitiesForLead(leadActivity.getLead());

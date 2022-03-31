@@ -180,6 +180,9 @@ public class DealStructureService
 	{
 		if (!dealStructureRepo.existsById(id))
 			throw new Exception("Deal structure not found by ID - " + id);
+
+		psService.deletePaymentSchedulesForDealStructure(id);
+		//TODO deletePaymentForDealStructure();
 		dealStructureRepo.softDeleteById(id);
 	}
 

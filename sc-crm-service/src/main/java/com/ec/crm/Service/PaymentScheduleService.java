@@ -250,4 +250,11 @@ public class PaymentScheduleService {
         typeAhead.addAll(clRepo.getLeadMobileNos());
         return typeAhead;
     }
+
+    public void deletePaymentSchedulesForDealStructure(Long id) {
+        List<PaymentSchedule> psList = psRepo.getSchedulesForDeal(id);
+        for(PaymentSchedule ps : psList) {
+            psRepo.softDelete(ps);
+        }
+    }
 }
