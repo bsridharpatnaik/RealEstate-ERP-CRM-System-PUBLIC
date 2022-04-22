@@ -50,14 +50,15 @@ public class JwtUserDetailsService implements UserDetailsService
 			com.ec.common.Model.User user = findByUserName.get(0);
 			if (validateTenant)
 			{
-				if (StringUtils.isBlank(user.getTenants()))
+				//TODO tenant get logic
+				/*if (StringUtils.isBlank(user.getTenants()))
 				{
 					throw new UserDataAccessException();
 				}
 				if (!user.getTenants().contains(tenant) && !user.getTenants().equals("all"))
 				{
 					throw new UserDataAccessException();
-				}
+				}*/
 			}
 			List<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toList());
 

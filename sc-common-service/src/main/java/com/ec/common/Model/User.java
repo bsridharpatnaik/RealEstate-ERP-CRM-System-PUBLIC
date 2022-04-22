@@ -20,106 +20,94 @@ import org.hibernate.annotations.BatchSize;
 import org.springframework.lang.NonNull;
 
 @Entity
-@Table(name = "security_user", uniqueConstraints =
-{ @UniqueConstraint(columnNames =
-		{ "user_name" }) })
-public class User
-{
+@Table(name = "security_user", uniqueConstraints = {@UniqueConstraint(columnNames = {"user_name"})})
+public class User {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long userId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long userId;
 
-	@NonNull
-	@Column(unique = true, name = "user_name")
-	private String userName;
+    @NonNull
+    @Column(unique = true, name = "user_name")
+    private String userName;
 
-	@NonNull
-	private String password;
+    @NonNull
+    private String password;
 
-	@NonNull
-	private boolean status;
+    @NonNull
+    private boolean status;
 
-	@NonNull
-	private boolean passwordExpired;
+    @NonNull
+    private boolean passwordExpired;
 
-	private String tenants;
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "user_role", joinColumns =
+            {@JoinColumn(name = "userId", referencedColumnName = "userId")}, inverseJoinColumns =
+            {@JoinColumn(name = "role_name", referencedColumnName = "name")})
+    @BatchSize(size = 20)
+    private Set<Role> roles = new HashSet<>();
 
-	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinTable(name = "user_role", joinColumns =
-	{ @JoinColumn(name = "userId", referencedColumnName = "userId") }, inverseJoinColumns =
-	{ @JoinColumn(name = "role_name", referencedColumnName = "name") })
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "user_tenant_mapping", joinColumns =
+            {@JoinColumn(name = "userId", referencedColumnName = "userId")}, inverseJoinColumns =
+            {@JoinColumn(name = "mapping_id", referencedColumnName = "mapping_id")})
+    Set<UserTenantMapping> tenantList = new HashSet<>();
 
-	@BatchSize(size = 20)
-	private Set<Role> roles = new HashSet<>();
+    public Long getUserId() {
+        return userId;
+    }
 
-	public String getTenants()
-	{
-		return tenants;
-	}
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-	public void setTenants(String tenants)
-	{
-		this.tenants = tenants;
-	}
+    @NonNull
+    public String getUserName() {
+        return userName;
+    }
 
-	public String getUserName()
-	{
-		return userName;
-	}
+    public void setUserName(@NonNull String userName) {
+        this.userName = userName;
+    }
 
-	public void setUserName(String userName)
-	{
-		this.userName = userName;
-	}
+    @NonNull
+    public String getPassword() {
+        return password;
+    }
 
-	public String getPassword()
-	{
-		return password;
-	}
+    public void setPassword(@NonNull String password) {
+        this.password = password;
+    }
 
-	public void setPassword(String password)
-	{
-		this.password = password;
-	}
+    public boolean isStatus() {
+        return status;
+    }
 
-	public Long getUserId()
-	{
-		return userId;
-	}
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
 
-	public void setUserId(Long userId)
-	{
-		this.userId = userId;
-	}
+    public boolean isPasswordExpired() {
+        return passwordExpired;
+    }
 
-	public boolean isStatus()
-	{
-		return status;
-	}
+    public void setPasswordExpired(boolean passwordExpired) {
+        this.passwordExpired = passwordExpired;
+    }
 
-	public void setStatus(boolean status)
-	{
-		this.status = status;
-	}
+    public Set<Role> getRoles() {
+        return roles;
+    }
 
-	public boolean isPasswordExpired()
-	{
-		return passwordExpired;
-	}
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
 
-	public void setPasswordExpired(boolean passwordExpired)
-	{
-		this.passwordExpired = passwordExpired;
-	}
+    public Set<UserTenantMapping> getTenantList() {
+        return tenantList;
+    }
 
-	public Set<Role> getRoles()
-	{
-		return roles;
-	}
-
-	public void setRoles(Set<Role> roles)
-	{
-		this.roles = roles;
-	}
+    public void setTenantList(Set<UserTenantMapping> tenantList) {
+        this.tenantList = tenantList;
+    }
 }

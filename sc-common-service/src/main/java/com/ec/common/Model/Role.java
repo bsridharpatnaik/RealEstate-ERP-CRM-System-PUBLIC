@@ -9,24 +9,21 @@ import javax.validation.constraints.Size;
 
 @Entity
 @Table(name = "role")
-public class Role  {
+public class Role {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@NotNull
-	@Size(max = 50)
-	@Id
-	@Column(length = 50,unique=true)
-	private String name;
+    @NotNull
+    @Size(max = 50)
+    @Id
+    @Column(length = 50, unique = true)
+    private String name;
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	
-	
+    public void setName(String name) {
+        this.name = name;
+    }
 }

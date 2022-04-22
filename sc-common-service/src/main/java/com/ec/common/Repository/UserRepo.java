@@ -23,6 +23,6 @@ public interface UserRepo extends JpaRepository<User, Long>, JpaSpecificationExe
 	@Query(value = "SELECT id FROM User c WHERE c.userName like :userName")
 	public Long findId(@Param("userName") String userName);
 
-	@Query(value = "SELECT tenants FROM User c WHERE c.userName like :username")
-	public String fetchTenantsForUser(@Param("username") String username);
+	//@Query(value = "SELECT tenants FROM User c WHERE c.userName like :username")
+	//public String fetchTenantsForUser(@Param("username") String username);
 }

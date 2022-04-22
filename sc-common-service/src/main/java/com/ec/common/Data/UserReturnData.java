@@ -7,12 +7,23 @@ public class UserReturnData
 	String username;
 	List<String> roles;
 	Long id;
-	public UserReturnData(Long userId, String userName2, List<String> fetchRolesFromSet) 
+	List<String> allowedTenants;
+
+	public UserReturnData(Long userId, String userName2, List<String> fetchRolesFromSet, List<String> allowedTenants)
 	{
 		this.id=userId;
 		this.username=userName2;
 		this.roles=fetchRolesFromSet;
 	}
+
+	public List<String> getAllowedTenants() {
+		return allowedTenants;
+	}
+
+	public void setAllowedTenants(List<String> allowedTenants) {
+		this.allowedTenants = allowedTenants;
+	}
+
 	public UserReturnData() {
 		// TODO Auto-generated constructor stub
 	}
