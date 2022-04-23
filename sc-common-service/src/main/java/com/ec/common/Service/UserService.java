@@ -74,12 +74,13 @@ public class UserService {
             user.setPasswordExpired(false);
 
             Set<UserTenantMapping> tenantList = new HashSet<>();
-            for(TenantUserDTO td : userData.getTenants()){
+            for (TenantUserDTO td : userData.getTenants()) {
                 UserTenantMapping data = new UserTenantMapping();
                 data.setAuthorization(td.getAuthorization());
                 data.setTenant(tenantRepo.findById(td.getTenantName()).get());
                 tenantList.add(data);
             }
+            user.setTenantList(tenantList);
             uRepo.save(user);
             return user;
         } else {
@@ -121,7 +122,7 @@ public class UserService {
         List<String> validTenants = tenantService.getValidTenantKeys();
         boolean validTeant = true;
         for (TenantUserDTO str : userData.getTenants()) {
-            if(str.getTenantName() == null || str.getAuthorization()==null){
+            if (str.getTenantName() == null || str.getAuthorization() == null) {
                 throw new Exception("Tenant Name or Authorization cannot be null.");
             }
             if (!validTenants.contains(str.getTenantName()))
@@ -186,7 +187,7 @@ public class UserService {
         }
     }
 
-    public UserReturnData fetchUserDetails() {
+    public UserReturnData fetchUserDetails() throws Exception {
         UserReturnData userReturnData = new UserReturnData();
         List<String> roles = new ArrayList<String>();
 
@@ -200,6 +201,7 @@ public class UserService {
             roles.add(authority.getAuthority());
         }
         userReturnData.setRoles(roles);
+        userReturnData.setAllowedTenants(findTenantsForUser(auth.getName()));
         return userReturnData;
     }
 
@@ -213,6 +215,7 @@ public class UserService {
         userReturnData.setUsername(user.getUserName());
         userReturnData.setId(user.getUserId());
         userReturnData.setRoles(fetchRolesFromSet(user.getRoles()));
+        userReturnData.setAllowedTenants(findTenantsForUser(user.getUserName()));
         return userReturnData;
     }
 
@@ -229,7 +232,7 @@ public class UserService {
         List<User> userList = uRepo.findAll();
         for (User user : userList) {
             UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-                    fetchRolesFromSet(user.getRoles()),fetchTenantFromSet(user.getTenantList()));
+                    fetchRolesFromSet(user.getRoles()), fetchTenantFromSet(user.getTenantList()));
             userReturnDataList.add(userReturnData);
         }
         return userReturnDataList;
@@ -237,7 +240,7 @@ public class UserService {
 
     private List<String> fetchTenantFromSet(Set<UserTenantMapping> tenantList) {
         List<String> allowedTenants = new ArrayList<>();
-        for(UserTenantMapping ut:tenantList){
+        for (UserTenantMapping ut : tenantList) {
             allowedTenants.add(ut.getTenant().getName());
         }
         return allowedTenants;
@@ -311,7 +314,16 @@ public class UserService {
         user.setUserName(username);
         user.setStatus(true);
         user.setRoles(roleset);
-        //TODO user.setTenants(convertListTocsv(payload.getTenants()));
+
+        Set<UserTenantMapping> tenantList = new HashSet<>();
+        for (TenantUserDTO td : payload.getTenants()) {
+            UserTenantMapping data = new UserTenantMapping();
+            data.setAuthorization(td.getAuthorization());
+            data.setTenant(tenantRepo.findById(td.getTenantName()).get());
+            tenantList.add(data);
+        }
+        user.setTenantList(tenantList);
+
         if (payload.getPassword() != null && payload.getPassword() != "")
             user.setPassword(bCryptPassword(payload.getPassword()));
         user.setPasswordExpired(false);
@@ -329,21 +341,35 @@ public class UserService {
         userReturnData.setUsername(user.getUserName());
         userReturnData.setId(user.getUserId());
         userReturnData.setRoles(fetchRolesFromSet(user.getRoles()));
+        userReturnData.setAllowedTenants(findTenantsForUser(user.getUserName()));
         return userReturnData;
     }
 
-    public List<String> findTenantsForUser() throws Exception {
-        List<String> tenantList = new ArrayList<>();
+    public List<Tenant> findTenantsForCurrentUser() throws Exception {
+        List<Tenant> tenantList = new ArrayList<>();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         ArrayList<User> userList = uRepo.findUserByUsername(username);
 
-        if(userList.size()!=1)
-            throw new Exception("Zero or more than one users found with username "+username);
+        if (userList.size() != 1)
+            throw new Exception("Zero or more than one users found with username " + username);
 
         User user = userList.get(0);
-        Set<UserTenantMapping> tenants = user.getTenantList();
-        for(UserTenantMapping ut : user.getTenantList()){
+        for (UserTenantMapping ut : user.getTenantList()) {
+            tenantList.add(ut.getTenant());
+        }
+        return tenantList;
+    }
+
+    public List<String> findTenantsForUser(String username) throws Exception {
+        List<String> tenantList = new ArrayList<>();
+        ArrayList<User> userList = uRepo.findUserByUsername(username);
+
+        if (userList.size() != 1)
+            throw new Exception("Zero or more than one users found with username " + username);
+
+        User user = userList.get(0);
+        for (UserTenantMapping ut : user.getTenantList()) {
             tenantList.add(ut.getTenant().getName());
         }
         return tenantList;

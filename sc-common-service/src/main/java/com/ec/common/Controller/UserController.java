@@ -109,7 +109,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/me", produces = "application/json")
-    public UserReturnData returnUserName() {
+    public UserReturnData returnUserName() throws Exception {
         return userService.fetchUserDetails();
     }
 

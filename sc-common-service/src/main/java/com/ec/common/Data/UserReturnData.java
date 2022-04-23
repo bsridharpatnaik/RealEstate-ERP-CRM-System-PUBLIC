@@ -14,6 +14,7 @@ public class UserReturnData
 		this.id=userId;
 		this.username=userName2;
 		this.roles=fetchRolesFromSet;
+		this.allowedTenants=allowedTenants;
 	}
 
 	public List<String> getAllowedTenants() {

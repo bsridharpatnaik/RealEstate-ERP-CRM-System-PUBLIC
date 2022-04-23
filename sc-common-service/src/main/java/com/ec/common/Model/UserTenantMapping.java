@@ -19,7 +19,10 @@ public class UserTenantMapping {
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     Tenant tenant;
 
+    @Enumerated(EnumType.STRING)
     AuthorizationEnum authorization;
+
+
 
     public Long getMappingId() {
         return mappingId;

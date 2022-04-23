@@ -39,13 +39,14 @@ public class TenantService {
     }
 
     public List<TenantInformation> getAllowedTenants() throws Exception {
-        List<String> allowedTenantKeys = userService.findTenantsForUser();
-        List<TenantInformation> allTenants = fetchTenantList();
+        List<Tenant> allowedTenantKeys = userService.findTenantsForCurrentUser();
         List<TenantInformation> allowedTenants = new ArrayList<TenantInformation>();
-        for (TenantInformation ti : allTenants) {
-            if (allowedTenantKeys.contains(ti.getTenantCode())) {
-                allowedTenants.add(ti);
-            }
+        for (Tenant ti : allowedTenantKeys) {
+                allowedTenants.add(new TenantInformation(
+                        ti.getTenantLongName(),
+                        ti.getName(),
+                        ti.getInventory(),
+                        ti.getCrm()));
         }
         return allowedTenants;
     }
