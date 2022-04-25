@@ -35,6 +35,9 @@ public class CategoryService {
     @Autowired
     CheckBeforeDeleteService checkBeforeDeleteService;
 
+    @Autowired
+    AuthorizationService authorizationService;
+
     Logger log = LoggerFactory.getLogger(CategoryService.class);
 
     public Page<Category> findAll(Pageable pageable) {
@@ -44,6 +47,7 @@ public class CategoryService {
 
     public Category createCategory(Category payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        authorizationService.exitIfReadOnly();
         validatePayload(payload);
         if (!categoryRepo.existsByCategoryName(payload.getCategoryName().trim())) {
             categoryRepo.save(payload);

@@ -188,21 +188,10 @@ public class UserService {
     }
 
     public UserReturnData fetchUserDetails() throws Exception {
-        UserReturnData userReturnData = new UserReturnData();
-        List<String> roles = new ArrayList<String>();
-
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        userReturnData.setUsername(auth.getName());
-        Long id = uRepo.findId(auth.getName());
-        userReturnData.setId(id);
-        Collection<SimpleGrantedAuthority> authorities = (Collection<SimpleGrantedAuthority>) SecurityContextHolder
-                .getContext().getAuthentication().getAuthorities();
-        for (SimpleGrantedAuthority authority : authorities) {
-            roles.add(authority.getAuthority());
-        }
-        userReturnData.setRoles(roles);
-        userReturnData.setAllowedTenants(findTenantsForUser(auth.getName()));
-        return userReturnData;
+        User user = uRepo.findUserByUsername(auth.getName()).get(0);
+        return new UserReturnData(user.getUserId(), user.getUserName(), fetchRolesFromSet(user.getRoles())
+                ,fetchTenantFromSet(user.getTenantList()), user.getTenantList());
     }
 
     public UserReturnData fetchUserDetailsById(Long id) throws Exception {
@@ -232,7 +221,7 @@ public class UserService {
         List<User> userList = uRepo.findAll();
         for (User user : userList) {
             UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-                    fetchRolesFromSet(user.getRoles()), fetchTenantFromSet(user.getTenantList()));
+                    fetchRolesFromSet(user.getRoles()), fetchTenantFromSet(user.getTenantList()), user.getTenantList());
             userReturnDataList.add(userReturnData);
         }
         return userReturnDataList;
