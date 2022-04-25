@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,13 +30,14 @@ import com.ec.common.Filters.FilterDataList;
 @RestController
 @RequestMapping("/contact")
 public class ContactController {
+
     @Autowired
     ContactService contactInfoService;
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public Contact createCategory(@RequestBody Contact payload) throws Exception {
-
         return contactInfoService.createContact(payload);
     }
 
@@ -72,12 +74,14 @@ public class ContactController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception {
         contactInfoService.deleteContact(id);
         return ResponseEntity.ok("Contact Deleted sucessfully.");
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public Contact updateContact(@PathVariable Long id, @RequestBody Contact payload) throws Exception {
         return contactInfoService.updateContact(id, payload);
     }

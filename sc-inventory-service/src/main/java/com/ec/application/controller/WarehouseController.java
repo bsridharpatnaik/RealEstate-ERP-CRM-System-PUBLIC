@@ -3,6 +3,7 @@ package com.ec.application.controller;
 import java.text.ParseException;
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ import com.ec.application.service.WarehouseService;
 @RequestMapping(value = "/warehouse", produces =
         {"application/json", "text/json"})
 public class WarehouseController {
+
     @Autowired
     WarehouseService warehouseService;
 
@@ -42,6 +44,7 @@ public class WarehouseController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public Warehouse createWarehouse(@RequestBody Warehouse payload) throws Exception {
 
         return warehouseService.createWarehouse(payload);
@@ -49,6 +52,7 @@ public class WarehouseController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @CheckAuthority
     public Warehouse updateWarehouses(@PathVariable Long id, @RequestBody Warehouse payload) throws Exception {
 
         return warehouseService.updateWarehouse(id, payload);

@@ -3,6 +3,7 @@ package com.ec.application.controller;
 import java.text.ParseException;
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -37,18 +38,19 @@ public class OutwardInventoryController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public OutwardInventory createOutwardInventory(@RequestBody OutwardInventoryData payload) throws Exception {
         return oiService.createOutwardnventory(payload);
     }
 
     @GetMapping("/{id}")
     public OutwardInventory getOutwardInventory(@PathVariable Long id) throws Exception {
-
         return oiService.findOutwardnventory(id);
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
+    @CheckAuthority
     public OutwardInventory setReturnOutwardInventory(@PathVariable Long id,
                                                       @RequestBody ReturnRejectInwardOutwardData rd, @RequestParam String type) throws Exception {
         if (type == null)
@@ -81,6 +83,7 @@ public class OutwardInventoryController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteOutwardInventoryById(@PathVariable Long id) throws Exception {
 
         oiService.deleteOutwardInventoryById(id);
@@ -88,6 +91,7 @@ public class OutwardInventoryController {
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public OutwardInventory updateOutwardInventory(@RequestBody OutwardInventoryData payload, @PathVariable Long id)
             throws Exception {
 
@@ -102,13 +106,4 @@ public class OutwardInventoryController {
                 "Something went wrong while handling data. Contact Administrator.");
         return apiError;
     }
-    /*
-     *
-     *
-     *
-     * @DeleteMapping(value = "/{id}") public ResponseEntity<?>
-     * deleteOutwardInventory(@PathVariable Long id) throws Exception {
-     * outwardInventoryService.deleteOutwardnventory(id); return
-     * ResponseEntity.ok("Entity deleted"); }
-     */
 }

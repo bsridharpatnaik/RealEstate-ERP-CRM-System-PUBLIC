@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +46,7 @@ public class BOQInventoryController {
     LocationService lService;
 
     @PostMapping("/create")
+    @CheckAuthority
     @ResponseStatus(HttpStatus.CREATED)
     public void createBuildingType(@RequestBody BOQCreateRequestData payload) throws Exception {
         bimService.createNewBOQ(payload);
@@ -70,6 +72,7 @@ public class BOQInventoryController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @CheckAuthority
     public BOQInventoryMapping updateBOQ(@PathVariable Long id, @RequestBody BOQUpdateRequestData payload)
             throws Exception {
         return bimService.updateBOQ(payload, id);
@@ -104,6 +107,7 @@ public class BOQInventoryController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteBOQ(@PathVariable Long id) throws Exception {
         bimService.deleteBOQEntry(id);
         return ResponseEntity.ok("Entity deleted");

@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.text.ParseException;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -46,6 +47,7 @@ public class LostOrDamagedInventoryController {
     }
 
     @PostMapping("/create")
+    @CheckAuthority
     @ResponseStatus(HttpStatus.CREATED)
     public LostDamagedInventory createLDInventory(@RequestBody CreateLostOrDamagedInventoryData payload)
             throws Exception {
@@ -59,12 +61,14 @@ public class LostOrDamagedInventoryController {
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public LostDamagedInventory updateLDInventoryByID(@PathVariable long id,
                                                       @RequestBody CreateLostOrDamagedInventoryData payload) throws Exception {
         return lostDamagedInventoryService.UpdateData(payload, id);
     }
 
     @DeleteMapping("/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteLDInventoryByID(@PathVariable long id) throws Exception {
         lostDamagedInventoryService.DeleteData(id);
         return ResponseEntity.ok("Entity deleted");

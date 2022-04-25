@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -46,6 +47,7 @@ public class UsageAreaController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteUsageArea(@PathVariable Long id) throws Exception {
 
         usageAreaService.deleteUsageArea(id);
@@ -53,6 +55,7 @@ public class UsageAreaController {
     }
 
     @PostMapping("/create")
+    @CheckAuthority
     @ResponseStatus(HttpStatus.CREATED)
     public UsageArea createUsageArea(@RequestBody UsageArea payload) throws Exception {
 
@@ -60,6 +63,7 @@ public class UsageAreaController {
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public UsageArea updateUsageArea(@PathVariable Long id, @RequestBody UsageArea UsageArea) throws Exception {
         return usageAreaService.updateUsageArea(id, UsageArea);
     }
