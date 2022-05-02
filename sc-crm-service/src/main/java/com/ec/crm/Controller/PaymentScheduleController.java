@@ -25,7 +25,7 @@ import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Service.PaymentScheduleService;
 
 @RestController
-@RequestMapping("/customer/payments")
+@RequestMapping("/customer/payments/scheduled")
 public class PaymentScheduleController
 {
 

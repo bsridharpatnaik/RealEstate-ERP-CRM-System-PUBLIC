@@ -30,7 +30,8 @@ import lombok.Data;
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @Audited(withModifiedFlag = true)
 @Data
-public class DealStructure extends ReusableFields implements Serializable
+public class
+DealStructure extends ReusableFields implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 

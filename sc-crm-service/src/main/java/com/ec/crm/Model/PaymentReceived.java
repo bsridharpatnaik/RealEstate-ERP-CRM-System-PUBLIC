@@ -1,8 +1,13 @@
 package com.ec.crm.Model;
 
+import Deserializers.DoubleTwoDigitDecimalSerializer;
+import com.ec.crm.Enums.PaymentReceivedFromEnum;
+import com.ec.crm.Enums.PaymentReceivedPaymentModeEnum;
+import com.ec.crm.ReusableClasses.DynamicAuthorizationEnumJsonSerializer;
 import com.ec.crm.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
@@ -28,25 +33,31 @@ public class PaymentReceived extends ReusableFields implements Serializable
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "payment_id", updatable = false, nullable = false)
-	Long scheduleId;
+	Long paymentId;
 
-	@Column(name = "payment_date")
+	@Column(name = "payment_received_date")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date paymentDate;
+	Date paymentReceivedDate;
 
-	@Column(name = "mode")
-	String mode;
+	@Column(name = "payment_by")
+	@JsonSerialize(using= DynamicAuthorizationEnumJsonSerializer.class)
+	PaymentReceivedFromEnum paymentBy;
+
+	@Column(name = "payment_mode")
+	@JsonSerialize(using= DynamicAuthorizationEnumJsonSerializer.class)
+	PaymentReceivedPaymentModeEnum paymentMode;
 
 	@Column(name = "amount")
+	@JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
 	Double amount;
 
 	@Column(name = "bank_name", length = 150)
 	@Size(max = 150)
 	String bankName;
 
-	@Column(name = "cheque_number", length = 150)
+	@Column(name = "reference_number", length = 150)
 	@Size(max = 150)
-	String chequeNumber;
+	String referenceNumber;
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "deal_id", nullable = false)
@@ -54,7 +65,4 @@ public class PaymentReceived extends ReusableFields implements Serializable
 	{ "hibernateLazyInitializer", "handler" })
 	@NotFound(action = NotFoundAction.IGNORE)
 	DealStructure ds;
-
-	@Column(nullable = false)
-	Boolean isCustomerPayment;
 }
