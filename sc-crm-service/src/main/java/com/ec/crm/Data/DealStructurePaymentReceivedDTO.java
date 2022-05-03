@@ -11,6 +11,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DealStructurePaymentReceivedDTO {
-    List<PaymentReceivedDTO> customerPayments;
-    List<PaymentReceivedDTO> bankPayments;
+    PaymentListWithTotalDTO customerPayments;
+    PaymentListWithTotalDTO bankPayments;
+
+    public DealStructurePaymentReceivedDTO(List<PaymentReceivedDTO> customerPayments, List<PaymentReceivedDTO> bankPayments) {
+        this.customerPayments = new PaymentListWithTotalDTO(customerPayments);
+        this.bankPayments = new PaymentListWithTotalDTO(bankPayments);
+    }
 }

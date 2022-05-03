@@ -42,6 +42,7 @@ public class DealStructureDAO
 	Double totalPendingBank;
 
 	List<ScheduleReturnDAO> schedules;
+
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double dealAmount;
 	Boolean loanRequired;

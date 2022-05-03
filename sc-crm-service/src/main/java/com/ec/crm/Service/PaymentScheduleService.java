@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.ec.crm.Data.*;
+import com.ec.crm.Repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,19 +18,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.crm.Data.CreateScheduleData;
-import com.ec.crm.Data.DropdownForClosedLeads;
-import com.ec.crm.Data.PaymentScheduleListingDTO;
-import com.ec.crm.Data.ScheduleReturnDAO;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Filters.PaymentScheduleSpecification;
 import com.ec.crm.Model.DealStructure;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Model.PaymentSchedule;
-import com.ec.crm.Repository.ClosedLeadsRepo;
-import com.ec.crm.Repository.DealStructureRepo;
-import com.ec.crm.Repository.LeadActivityRepo;
-import com.ec.crm.Repository.PaymentScheduleRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 
 @Service
@@ -51,6 +45,9 @@ public class PaymentScheduleService {
 
     @Autowired
     ClosedLeadsRepo clRepo;
+
+    @Autowired
+    PaymentReceivedRepo paymentReceivedRepo;
 
     Logger log = LoggerFactory.getLogger(ClosedLeadService.class);
 
@@ -90,7 +87,7 @@ public class PaymentScheduleService {
             if (!ps.getIsReceived().equals(payload.getIsReceived())) {
                 if (payload.getIsReceived().equals(true))
                     laService.deleteLeadActivity(ps.getLa().getLeadActivityId(), "Payment Received", (long) 404, false,
-                            "system",null);
+                            "system", null);
                 else {
                     LeadActivity la = laService.createPaymentActivity(ps);
                     ps.setLa(la);
@@ -253,8 +250,17 @@ public class PaymentScheduleService {
 
     public void deletePaymentSchedulesForDealStructure(Long id) {
         List<PaymentSchedule> psList = psRepo.getSchedulesForDeal(id);
-        for(PaymentSchedule ps : psList) {
+        for (PaymentSchedule ps : psList) {
             psRepo.softDelete(ps);
         }
+    }
+
+    public DealPaymentStatusDTO getPaymentStatusForDeal(Long id) throws Exception {
+        if (!dsRepo.existsById(id))
+            throw new Exception("Deal Structure with ID - " + id + " not found.");
+
+        DealStructure ds = dsRepo.findById(id).get();
+        Double totalPaymentReceived = paymentReceivedRepo.getTotalReceivedByDealStructure(id);
+        return new DealPaymentStatusDTO(ds,totalPaymentReceived);
     }
 }

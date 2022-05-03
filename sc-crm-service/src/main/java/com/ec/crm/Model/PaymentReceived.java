@@ -41,10 +41,12 @@ public class PaymentReceived extends ReusableFields implements Serializable
 
 	@Column(name = "payment_by")
 	@JsonSerialize(using= DynamicAuthorizationEnumJsonSerializer.class)
+	@Enumerated(EnumType.STRING)
 	PaymentReceivedFromEnum paymentBy;
 
 	@Column(name = "payment_mode")
 	@JsonSerialize(using= DynamicAuthorizationEnumJsonSerializer.class)
+	@Enumerated(EnumType.STRING)
 	PaymentReceivedPaymentModeEnum paymentMode;
 
 	@Column(name = "amount")
