@@ -109,4 +109,11 @@ public class PaymentReceivedService {
         else
             throw new Exception("Payment Receieved with ID " + id + " not found!");
     }
+
+    public Boolean getPaymentStepperStatus(Long id) {
+        int count = paymentReceivedRepo.getPaymentsForLead(id);
+        if(count>0)
+            return true;
+        return false;
+    }
 }

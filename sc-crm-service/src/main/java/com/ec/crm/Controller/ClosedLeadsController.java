@@ -181,6 +181,7 @@ public class ClosedLeadsController {
         return psService.getPaymentStatusForDeal(id);
     }
 
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {

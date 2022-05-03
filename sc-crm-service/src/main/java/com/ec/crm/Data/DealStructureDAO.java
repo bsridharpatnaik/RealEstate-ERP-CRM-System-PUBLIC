@@ -58,6 +58,12 @@ public class DealStructureDAO
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double supplementAmount;
 
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+	Double remainingOfTenPercentTotalAmount;
+
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+	Double tenPercentOfTotalAmount;
+
 	public Double getTotalAmount()
 	{
 		return supplementAmount+dealAmount;

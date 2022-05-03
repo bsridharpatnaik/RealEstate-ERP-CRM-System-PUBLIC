@@ -104,4 +104,14 @@ DealStructure extends ReusableFields implements Serializable
 	@NotAudited
 	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true and cps.isCustomerPayment=false)")
 	Double totalReceivedBank;
+
+	@NotAudited
+	@Formula("(SELECT ((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+	Double tenPercentOfTotalAmount;
+
+	@NotAudited
+	@Formula("(SELECT ((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
+			"(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id) " +
+			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+	Double remainingOfTenPercentTotalAmount;
 }

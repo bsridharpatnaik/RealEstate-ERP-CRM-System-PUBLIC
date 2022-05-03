@@ -10,4 +10,5 @@ public class ClosedLeadStatusDAO
 	Boolean documents;
 	Boolean loanDetails;
 	Boolean handover;
+	Boolean payment;
 }

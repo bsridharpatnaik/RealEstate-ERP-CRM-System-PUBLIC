@@ -52,7 +52,7 @@ public class PaymentReceivedController {
         return paymentReceivedService.getPaymentsList(dealId);
     }
 
-    @GetMapping
+    @GetMapping("/dropdown")
     @ResponseStatus(HttpStatus.OK)
     public ValidEnumsForPaymentReceived getValidEnumForDropdown() {
         return paymentReceivedService.getValidEnumForDropdown();

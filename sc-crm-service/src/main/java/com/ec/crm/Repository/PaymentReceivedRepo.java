@@ -19,4 +19,7 @@ public interface PaymentReceivedRepo extends BaseRepository<PaymentReceived, Lon
 
     @Query("SELECT SUM(amount) FROM PaymentReceived p WHERE p.ds.dealId=:dealStructureId")
     Double getTotalReceivedByDealStructure(@RequestParam("dealStructureId")Long dealStructureId);
+
+    @Query("SELECT COUNT(p) FROM PaymentReceived p WHERE p.ds.lead.leadId=:id")
+    int getPaymentsForLead(@RequestParam("id")Long id);
 }
