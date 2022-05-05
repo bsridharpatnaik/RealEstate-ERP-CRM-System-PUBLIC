@@ -609,6 +609,7 @@ public class OutwardInventoryService {
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot edit inventory record with date older than " + daysDifference + " days.");
+            }
 
             if (!oiData.getDate().equals(outwardInventory.getDate()))
                 throw new Exception("Date should not be modified while updating outward inventory record");
@@ -624,7 +625,6 @@ public class OutwardInventoryService {
             if (!(productsInPayload.containsAll(productsInExistingRecord)
                     && productsInPayload.size() == productsInExistingRecord.size()))
                 throw new Exception("Inventory List should not be modified while updating an outward inventory record");
-        }
 
         if (action.equals(APICallTypeForAuthorization.Create)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date());

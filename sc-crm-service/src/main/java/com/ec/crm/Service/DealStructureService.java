@@ -207,12 +207,15 @@ public class DealStructureService {
         dao.setPropertytypeId(ds.getPropertyType().getPropertyTypeId());
         dao.setSchedules(psService.getSchedulesForDeal(ds.getDealId()));
         dao.setSupplementAmount(ds.getSupplementAmount() == null ? 0 : ds.getSupplementAmount());
-        dao.setTotalPendingBank(ds.getTotalPendingBank() == null ? 0 : ds.getTotalPendingBank());
+        /*dao.setTotalPendingBank(ds.getTotalPendingBank() == null ? 0 : ds.getTotalPendingBank());
         dao.setTotalPendingCustomer(ds.getTotalPendingCustomer() == null ? 0 : ds.getTotalPendingCustomer());
         dao.setTotalReceivedBank(ds.getTotalReceivedBank() == null ? 0 : ds.getTotalReceivedBank());
-        dao.setTotalReceivedCustomer(ds.getTotalReceivedCustomer() == null ? 0 : ds.getTotalReceivedCustomer());
+        dao.setTotalReceivedCustomer(ds.getTotalReceivedCustomer() == null ? 0 : ds.getTotalReceivedCustomer());*/
+        dao.setRemainingCustomerAmount(ds.getRemainingCustomerAmount());
         dao.setTenPercentOfTotalAmount(ds.getTenPercentOfTotalAmount());
         dao.setRemainingOfTenPercentTotalAmount(ds.getRemainingOfTenPercentTotalAmount());
+        dao.setBankAmount(ds.getBankAmount());
+        dao.setRemainingBankAmount(ds.getRemainingBankAmount());
         return dao;
     }
 

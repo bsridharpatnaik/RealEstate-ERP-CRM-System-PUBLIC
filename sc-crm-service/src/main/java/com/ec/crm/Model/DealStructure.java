@@ -66,8 +66,6 @@ DealStructure extends ReusableFields implements Serializable
 
 	Double loanAmount= Double.valueOf(0);
 
-	Double customerAmount;
-
 	String bankName;
 
 	@Enumerated(EnumType.STRING)
@@ -89,7 +87,7 @@ DealStructure extends ReusableFields implements Serializable
 	@NotFound(action = NotFoundAction.IGNORE)
 	ClosedLeads lead;
 
-	@NotAudited
+	/*@NotAudited
 	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true and cps.isCustomerPayment=true)")
 	Double totalReceivedCustomer;
 
@@ -103,7 +101,7 @@ DealStructure extends ReusableFields implements Serializable
 
 	@NotAudited
 	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true and cps.isCustomerPayment=false)")
-	Double totalReceivedBank;
+	Double totalReceivedBank;*/
 
 	@NotAudited
 	@Formula("(SELECT ((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
@@ -114,4 +112,22 @@ DealStructure extends ReusableFields implements Serializable
 			"(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id) " +
 			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
 	Double remainingOfTenPercentTotalAmount;
+
+	@NotAudited
+	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+	Double customerAmount;
+
+	@NotAudited
+	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.deal_id=cds.deal_id AND cpr.payment_by='Customer')" +
+			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+	Double remainingCustomerAmount;
+
+	@NotAudited
+	@Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+	Double bankAmount;
+
+	@NotAudited
+	@Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.deal_id=cds.deal_id AND cpr.payment_by='Bank')" +
+			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+	Double remainingBankAmount;
 }

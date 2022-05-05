@@ -261,6 +261,8 @@ public class PaymentScheduleService {
 
         DealStructure ds = dsRepo.findById(id).get();
         Double totalPaymentReceived = paymentReceivedRepo.getTotalReceivedByDealStructure(id);
+        if(totalPaymentReceived==null)
+            totalPaymentReceived= Double.valueOf(0);
         return new DealPaymentStatusDTO(ds,totalPaymentReceived);
     }
 }
