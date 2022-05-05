@@ -171,8 +171,7 @@ public class ClosedLeadsController {
     }
 
     @GetMapping("/paymentschedule/bydealid/{id}")
-    public List<ScheduleReturnDAO> getPaymentScheduleForDeal(@PathVariable Long id) throws Exception {
-
+    public PaymentScheduleByDTO getPaymentScheduleForDeal(@PathVariable Long id) throws Exception {
         return psService.getSchedulesForDeal(id);
     }
 

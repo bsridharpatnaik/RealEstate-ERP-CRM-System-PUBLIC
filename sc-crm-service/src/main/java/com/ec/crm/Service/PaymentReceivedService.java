@@ -116,4 +116,12 @@ public class PaymentReceivedService {
             return true;
         return false;
     }
+
+    @Transactional
+    public void deletePaymentsForDeal(Long id) {
+        List<PaymentReceived> allPaymentsForDeal = paymentReceivedRepo.findAllPaymentsByDealStructureId(id);
+        for(PaymentReceived pr : allPaymentsForDeal){
+            paymentReceivedRepo.softDeleteById(pr.getPaymentId());
+        }
+    }
 }

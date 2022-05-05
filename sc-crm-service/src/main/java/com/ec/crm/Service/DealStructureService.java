@@ -39,6 +39,9 @@ public class DealStructureService {
     @Autowired
     PaymentScheduleService psService;
 
+    @Autowired
+    PaymentReceivedService paymentReceivedService;
+
     public List<IdNameProjections> getPropertyTypes() {
         return ptRepo.findIdAndNames();
     }
@@ -163,12 +166,13 @@ public class DealStructureService {
             throw new Exception("Deal structure already added for property - " + payload.getPropertyId());
     }
 
+    @Transactional
     public void deleteDealStructure(Long id) throws Exception {
         if (!dealStructureRepo.existsById(id))
             throw new Exception("Deal structure not found by ID - " + id);
 
         psService.deletePaymentSchedulesForDealStructure(id);
-        //TODO deletePaymentForDealStructure();
+        paymentReceivedService.deletePaymentsForDeal(id);
         dealStructureRepo.softDeleteById(id);
     }
 
@@ -205,7 +209,6 @@ public class DealStructureService {
         dao.setPropertyNameId(ds.getPropertyName().getPropertyNameId());
         dao.setPropertyType(ds.getPropertyType().getPropertyType());
         dao.setPropertytypeId(ds.getPropertyType().getPropertyTypeId());
-        dao.setSchedules(psService.getSchedulesForDeal(ds.getDealId()));
         dao.setSupplementAmount(ds.getSupplementAmount() == null ? 0 : ds.getSupplementAmount());
         /*dao.setTotalPendingBank(ds.getTotalPendingBank() == null ? 0 : ds.getTotalPendingBank());
         dao.setTotalPendingCustomer(ds.getTotalPendingCustomer() == null ? 0 : ds.getTotalPendingCustomer());

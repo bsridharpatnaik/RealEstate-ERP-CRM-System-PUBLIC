@@ -14,23 +14,20 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateScheduleData
-{
+public class CreateScheduleData {
 
-	Long dealStructureId;
+    Long dealStructureId;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date paymentDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date paymentDate;
 
-	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
-	String mode;
+    @JsonDeserialize(using = ToUpperCaseDeserializer.class)
+    String mode;
 
-	Double amount;
+    Double amount;
 
-	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	String details;
+    @JsonDeserialize(using = ToTitleCaseDeserializer.class)
+    String details;
 
-	Boolean isReceived;
-
-	Boolean isCustomerPayment;
+    Boolean isCustomerPayment;
 }

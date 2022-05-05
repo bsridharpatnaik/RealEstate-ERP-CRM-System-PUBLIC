@@ -17,4 +17,10 @@ public interface PaymentScheduleRepo extends BaseRepository<PaymentSchedule, Lon
 
 	@Query("select ps from PaymentSchedule ps where ps.la.leadActivityId=:leadActivityId")
 	List<PaymentSchedule> findByActivityID(@Param("leadActivityId") Long leadActivityId);
+
+	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId AND isCustomerPayment=false")
+    List<PaymentSchedule> getSchedulesForDealFromBank(@Param("dealId")Long dealId);
+
+	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId AND isCustomerPayment=true")
+	List<PaymentSchedule> getSchedulesForDealFromCustomer(@Param("dealId")Long dealId);
 }

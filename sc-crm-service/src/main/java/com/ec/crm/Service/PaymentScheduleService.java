@@ -55,10 +55,9 @@ public class PaymentScheduleService {
         validatePayload(payload, "create");
         PaymentSchedule ps = new PaymentSchedule();
         setFields(ps, payload);
-        if (payload.getIsReceived().equals(false)) {
+       //Create payment activity
             LeadActivity la = laService.createPaymentActivity(ps);
             ps.setLa(la);
-        }
         psRepo.save(ps);
         return convertPStoPSDAO(ps);
     }
@@ -82,23 +81,8 @@ public class PaymentScheduleService {
         validateBeforeUpdate(ps, payload);
         Date newDate = payload.getPaymentDate();
         newDate = ReusableMethods.setTimeTo11AM(newDate);
-        if (ps.getLa() != null) {
+        if (ps.getLa() != null && ps.getLa().getIsOpen())
             ps.getLa().setActivityDateTime(newDate);
-            if (!ps.getIsReceived().equals(payload.getIsReceived())) {
-                if (payload.getIsReceived().equals(true))
-                    laService.deleteLeadActivity(ps.getLa().getLeadActivityId(), "Payment Received", (long) 404, false,
-                            "system", null);
-                else {
-                    LeadActivity la = laService.createPaymentActivity(ps);
-                    ps.setLa(la);
-                }
-            }
-        } else if (ps.getLa() == null && !ps.getIsReceived().equals(payload.getIsReceived())) {
-            if (payload.getIsReceived().equals(false)) {
-                LeadActivity la = laService.createPaymentActivity(ps);
-                ps.setLa(la);
-            }
-        }
         setFields(ps, payload);
         psRepo.save(ps);
         return convertPStoPSDAO(ps);
@@ -114,7 +98,7 @@ public class PaymentScheduleService {
         ps.setAmount(payload.getAmount());
         ps.setDetails(payload.getDetails());
         ps.setDs(ds);
-        ps.setIsReceived(payload.getIsReceived());
+        ps.setIsReceived(false);
         ps.setMode(payload.getMode());
         ps.setPaymentDate(payload.getPaymentDate());
         ps.setIsCustomerPayment(payload.getIsCustomerPayment());
@@ -132,8 +116,6 @@ public class PaymentScheduleService {
             missingFields.add("Mode");
         if (payload.getPaymentDate() == null)
             missingFields.add("Payment Date");
-        if (payload.getIsReceived() == null)
-            missingFields.add("Received Status");
         if (payload.getIsCustomerPayment() == null)
             missingFields.add("Customer Payment");
 
@@ -148,12 +130,12 @@ public class PaymentScheduleService {
 
     }
 
-    public List<ScheduleReturnDAO> getSchedulesForDeal(Long id) throws Exception {
+    public PaymentScheduleByDTO getSchedulesForDeal(Long id) throws Exception {
         if (!dsRepo.existsById(id))
             throw new Exception("Deal Structure Not found with ID - " + id);
-
-        List<PaymentSchedule> psList = psRepo.getSchedulesForDeal(id);
-        return convertPSListtoPSDAOList(psList);
+        List<PaymentSchedule> bankList = psRepo.getSchedulesForDealFromBank(id);
+        List<PaymentSchedule> customerList = psRepo.getSchedulesForDealFromCustomer(id);
+        return new PaymentScheduleByDTO(bankList,customerList);
     }
 
     public ScheduleReturnDAO getPaymentSchedule(Long id) throws Exception {
@@ -174,7 +156,7 @@ public class PaymentScheduleService {
                 .collect(Collectors.toList());
     }
 
-    private ScheduleReturnDAO convertPStoPSDAO(PaymentSchedule ps) {
+    public static ScheduleReturnDAO convertPStoPSDAO(PaymentSchedule ps) {
         ScheduleReturnDAO sDAO = new ScheduleReturnDAO();
         sDAO.setAmount(ps.getAmount() == null ? null : ps.getAmount());
         sDAO.setDealStructureId(ps.getDs() == null ? null : ps.getDs().getDealId());
