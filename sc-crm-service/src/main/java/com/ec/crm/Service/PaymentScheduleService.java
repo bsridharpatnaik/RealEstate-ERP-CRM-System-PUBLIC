@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.ec.crm.Data.*;
 import com.ec.crm.Repository.*;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,7 +136,16 @@ public class PaymentScheduleService {
             throw new Exception("Deal Structure Not found with ID - " + id);
         List<PaymentSchedule> bankList = psRepo.getSchedulesForDealFromBank(id);
         List<PaymentSchedule> customerList = psRepo.getSchedulesForDealFromCustomer(id);
-        return new PaymentScheduleByDTO(bankList,customerList);
+        return new PaymentScheduleByDTO(bankList,customerList,isMatchingDealAmount(id));
+    }
+
+    private Boolean isMatchingDealAmount(Long dealId) {
+        DealStructure ds = dsRepo.findById(dealId).get();
+        Double totalAmount = ds.getDealAmount() + (ds.getSupplementAmount()==null?0:ds.getSupplementAmount());
+        Double totalscheduleAmount = (psRepo.getTotalScheduleAmount(dealId)==null?0:psRepo.getTotalScheduleAmount(dealId));
+        if(totalAmount.equals(totalscheduleAmount))
+            return true;
+        return false;
     }
 
     public ScheduleReturnDAO getPaymentSchedule(Long id) throws Exception {

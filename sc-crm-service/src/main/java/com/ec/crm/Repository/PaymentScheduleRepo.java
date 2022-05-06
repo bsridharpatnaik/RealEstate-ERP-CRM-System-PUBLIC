@@ -23,4 +23,7 @@ public interface PaymentScheduleRepo extends BaseRepository<PaymentSchedule, Lon
 
 	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId AND isCustomerPayment=true")
 	List<PaymentSchedule> getSchedulesForDealFromCustomer(@Param("dealId")Long dealId);
+
+	@Query("select SUM(CASE WHEN ps.amount IS NULL THEN 0 ELSE amount END) from PaymentSchedule ps where ps.ds.dealId=:dealId")
+	Double getTotalScheduleAmount(Long dealId);
 }

@@ -11,11 +11,13 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PaymentScheduleByDTO {
+    Boolean isMatchingDealAmount;
     ScheduleReturnWithTotalsDTO bank;
     ScheduleReturnWithTotalsDTO customer;
 
-    public PaymentScheduleByDTO(List<PaymentSchedule> bankList, List<PaymentSchedule> customerList) {
+    public PaymentScheduleByDTO(List<PaymentSchedule> bankList, List<PaymentSchedule> customerList, Boolean isMatchingDealAmount) {
         this.bank = new  ScheduleReturnWithTotalsDTO(bankList);
         this.customer = new ScheduleReturnWithTotalsDTO(customerList);
+        this.isMatchingDealAmount = isMatchingDealAmount;
     }
 }
