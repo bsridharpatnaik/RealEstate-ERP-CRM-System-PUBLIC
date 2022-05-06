@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.ec.crm.Data.ChartsInformation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -196,7 +197,6 @@ public class DealStructureService {
         DealStructureDAO dao = new DealStructureDAO();
         dao.setBankName(ds.getBankName() == null ? "" : ds.getBankName());
         dao.setBookingDate(ds.getBookingDate());
-        dao.setCustomerAmount(ds.getCustomerAmount() == null ? 0 : ds.getCustomerAmount());
         dao.setDealAmount(ds.getDealAmount());
         dao.setDealId(ds.getDealId());
         dao.setDetails(ds.getDetails());
@@ -210,15 +210,7 @@ public class DealStructureService {
         dao.setPropertyType(ds.getPropertyType().getPropertyType());
         dao.setPropertytypeId(ds.getPropertyType().getPropertyTypeId());
         dao.setSupplementAmount(ds.getSupplementAmount() == null ? 0 : ds.getSupplementAmount());
-        /*dao.setTotalPendingBank(ds.getTotalPendingBank() == null ? 0 : ds.getTotalPendingBank());
-        dao.setTotalPendingCustomer(ds.getTotalPendingCustomer() == null ? 0 : ds.getTotalPendingCustomer());
-        dao.setTotalReceivedBank(ds.getTotalReceivedBank() == null ? 0 : ds.getTotalReceivedBank());
-        dao.setTotalReceivedCustomer(ds.getTotalReceivedCustomer() == null ? 0 : ds.getTotalReceivedCustomer());*/
-        dao.setRemainingCustomerAmount(ds.getRemainingCustomerAmount());
-        dao.setTenPercentOfTotalAmount(ds.getTenPercentOfTotalAmount());
-        dao.setRemainingOfTenPercentTotalAmount(ds.getRemainingOfTenPercentTotalAmount());
-        dao.setBankAmount(ds.getBankAmount());
-        dao.setRemainingBankAmount(ds.getRemainingBankAmount());
+        dao.setChartsInformation(new ChartsInformation(ds));
         return dao;
     }
 

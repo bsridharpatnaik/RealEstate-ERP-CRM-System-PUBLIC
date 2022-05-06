@@ -29,21 +29,11 @@ public class DealStructureDAO
 	String details;
 	Long leadId;
 
-	/*@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double totalReceivedCustomer;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double totalPendingCustomer;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double totalReceivedBank;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double totalPendingBank;*/
-
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double dealAmount;
+
 	Boolean loanRequired;
+
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double loanAmount;
 
@@ -55,23 +45,7 @@ public class DealStructureDAO
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double supplementAmount;
 
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double remainingOfTenPercentTotalAmount;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double tenPercentOfTotalAmount;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double customerAmount;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double remainingCustomerAmount;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double bankAmount;
-
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double remainingBankAmount;
+	ChartsInformation chartsInformation;
 
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	public Double getTotalAmount()
