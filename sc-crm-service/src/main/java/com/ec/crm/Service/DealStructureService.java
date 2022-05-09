@@ -210,7 +210,8 @@ public class DealStructureService {
         dao.setPropertyType(ds.getPropertyType().getPropertyType());
         dao.setPropertytypeId(ds.getPropertyType().getPropertyTypeId());
         dao.setSupplementAmount(ds.getSupplementAmount() == null ? 0 : ds.getSupplementAmount());
-        dao.setChartsInformation(new ChartsInformation(ds));
+        if(ds.getTenPercentOfTotalAmount() != null)
+            dao.setChartsInformation(new ChartsInformation(ds));
         return dao;
     }
 
