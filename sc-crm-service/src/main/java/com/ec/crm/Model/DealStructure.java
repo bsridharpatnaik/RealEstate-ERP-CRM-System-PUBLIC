@@ -108,8 +108,10 @@ DealStructure extends ReusableFields implements Serializable
 	Double tenPercentOfTotalAmount;
 
 	@NotAudited
-	@Formula("(SELECT ((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
-			"(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id) " +
+	@Formula("(SELECT CASE WHEN (((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
+			"(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id)) <0 THEN 0 ELSE " +
+			"(((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
+			"(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id)) END " +
 			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
 	Double remainingOfTenPercentTotalAmount;
 
@@ -118,7 +120,7 @@ DealStructure extends ReusableFields implements Serializable
 	Double customerAmount;
 
 	@NotAudited
-	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.deal_id=cds.deal_id AND cpr.payment_by='Customer')" +
+	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.is_deleted = 0 AND cpr.deal_id=cds.deal_id AND cpr.payment_by='Customer')" +
 			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
 	Double remainingCustomerAmount;
 
@@ -127,7 +129,7 @@ DealStructure extends ReusableFields implements Serializable
 	Double bankAmount;
 
 	@NotAudited
-	@Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.deal_id=cds.deal_id AND cpr.payment_by='Bank')" +
+	@Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.is_deleted = 0 AND cpr.deal_id=cds.deal_id AND cpr.payment_by='Bank')" +
 			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
 	Double remainingBankAmount;
 }

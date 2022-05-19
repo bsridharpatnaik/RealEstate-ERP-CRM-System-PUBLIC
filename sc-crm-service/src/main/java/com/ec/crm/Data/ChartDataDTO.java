@@ -20,9 +20,9 @@ public class ChartDataDTO {
     @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
     Double received;
 
-    public ChartDataDTO(double total, double received) {
+    public ChartDataDTO(double total, double remaining) {
         this.total = total;
-        this.received = received;
-        this.remaining = total - received;
+        this.received = total - remaining;
+        this.remaining = remaining;
     }
 }
