@@ -7,8 +7,10 @@ import com.ec.crm.Data.ValidEnumsForPaymentReceived;
 import com.ec.crm.Enums.PaymentReceivedFromEnum;
 import com.ec.crm.Enums.PaymentReceivedPaymentModeEnum;
 import com.ec.crm.Model.PaymentReceived;
+import com.ec.crm.Model.PaymentSchedule;
 import com.ec.crm.Repository.DealStructureRepo;
 import com.ec.crm.Repository.PaymentReceivedRepo;
+import com.ec.crm.Repository.PaymentScheduleRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +29,17 @@ public class PaymentReceivedService {
     @Autowired
     DealStructureRepo dealStructureRepo;
 
+    @Autowired
+    PaymentScheduleRepo paymentScheduleRepo;
+
     @Transactional
     public PaymentReceived createNewPayment(PaymentReceivedCreateData payload) throws Exception {
         PaymentReceived paymentReceived = new PaymentReceived();
         validatePayload(payload);
         setFields(paymentReceived, payload);
-        return paymentReceivedRepo.save(paymentReceived);
+        paymentReceivedRepo.save(paymentReceived);
+        backFillScheduleStatus(paymentReceived.getDs().getDealId());
+        return paymentReceived;
     }
 
     @Transactional
@@ -43,10 +50,10 @@ public class PaymentReceivedService {
         return paymentReceivedRepo.save(paymentReceived);
     }
 
-    public DealStructurePaymentReceivedDTO getPaymentsList(Long dealStructureId){
+    public DealStructurePaymentReceivedDTO getPaymentsList(Long dealStructureId) {
         List<PaymentReceivedDTO> customerPayments = paymentReceivedRepo.findCustomerPaymentsByDealStructureId(dealStructureId).stream().map(this::convertToDTO).collect(Collectors.toList());
         List<PaymentReceivedDTO> bankPayments = paymentReceivedRepo.findBankPaymentsByDealStructureId(dealStructureId).stream().map(this::convertToDTO).collect(Collectors.toList());
-        return new DealStructurePaymentReceivedDTO(customerPayments,bankPayments);
+        return new DealStructurePaymentReceivedDTO(customerPayments, bankPayments);
     }
 
     private PaymentReceivedDTO convertToDTO(PaymentReceived paymentReceived) {
@@ -112,7 +119,7 @@ public class PaymentReceivedService {
 
     public Boolean getPaymentStepperStatus(Long id) {
         int count = paymentReceivedRepo.getPaymentsForLead(id);
-        if(count>0)
+        if (count > 0)
             return true;
         return false;
     }
@@ -120,8 +127,41 @@ public class PaymentReceivedService {
     @Transactional
     public void deletePaymentsForDeal(Long id) {
         List<PaymentReceived> allPaymentsForDeal = paymentReceivedRepo.findAllPaymentsByDealStructureId(id);
-        for(PaymentReceived pr : allPaymentsForDeal){
+        for (PaymentReceived pr : allPaymentsForDeal) {
             paymentReceivedRepo.softDeleteById(pr.getPaymentId());
+        }
+    }
+
+    @Transactional
+    public void backFillScheduleStatus(Long dealId) {
+        Double totalCustomerPayment = paymentReceivedRepo.findTotalCustomerPaymentsByDealStructureId(dealId);
+        Double totalBankPayment = paymentReceivedRepo.findTotalBankPaymentsByDealStructureId(dealId);
+
+        List<PaymentSchedule> schedules = paymentScheduleRepo.getSchedulesForDeal(dealId);
+
+        schedules = schedules.stream().sorted((o1, o2) -> o1.getPaymentDate().compareTo(o2.getPaymentDate())).collect(Collectors.toList());
+
+        Double scheduleCustomerTotalAmount = Double.valueOf(0);
+        Double scheduleBankTotalAmount = Double.valueOf(0);
+
+        for (PaymentSchedule schedule : schedules) {
+            if (schedule.getIsCustomerPayment()) {
+                scheduleCustomerTotalAmount = scheduleCustomerTotalAmount + schedule.getAmount();
+                if (scheduleCustomerTotalAmount <= totalCustomerPayment) {
+                    schedule.setIsReceived(true);
+                    paymentScheduleRepo.save(schedule);
+                }
+            } else if (!schedule.getIsCustomerPayment()) {
+                scheduleBankTotalAmount = scheduleBankTotalAmount + schedule.getAmount();
+                if (scheduleBankTotalAmount <= totalBankPayment) {
+                    schedule.setIsReceived(true);
+                    paymentScheduleRepo.save(schedule);
+                } else {
+                    schedule.setIsReceived(false);
+                    paymentScheduleRepo.save(schedule);
+                }
+
+            }
         }
     }
 }

@@ -12,16 +12,16 @@ import com.ec.crm.ReusableClasses.BaseRepository;
 @Repository
 public interface PaymentScheduleRepo extends BaseRepository<PaymentSchedule, Long>
 {
-	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId")
+	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId ORDER BY ps.paymentDate")
 	List<PaymentSchedule> getSchedulesForDeal(@Param("dealId") Long dealId);
 
 	@Query("select ps from PaymentSchedule ps where ps.la.leadActivityId=:leadActivityId")
 	List<PaymentSchedule> findByActivityID(@Param("leadActivityId") Long leadActivityId);
 
-	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId AND isCustomerPayment=false")
+	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId AND isCustomerPayment=false ORDER BY ps.paymentDate")
     List<PaymentSchedule> getSchedulesForDealFromBank(@Param("dealId")Long dealId);
 
-	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId AND isCustomerPayment=true")
+	@Query("select ps from PaymentSchedule ps where ps.ds.dealId=:dealId AND isCustomerPayment=true ORDER BY ps.paymentDate")
 	List<PaymentSchedule> getSchedulesForDealFromCustomer(@Param("dealId")Long dealId);
 
 	@Query("select SUM(CASE WHEN ps.amount IS NULL THEN 0 ELSE amount END) from PaymentSchedule ps where ps.ds.dealId=:dealId")

@@ -116,7 +116,7 @@ DealStructure extends ReusableFields implements Serializable
 	Double remainingOfTenPercentTotalAmount;
 
 	@NotAudited
-	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END + CASE WHEN cds.supplementAmount IS NULL THEN 0 ELSE supplementAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
 	Double customerAmount;
 
 	@NotAudited
