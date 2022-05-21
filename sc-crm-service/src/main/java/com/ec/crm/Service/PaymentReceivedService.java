@@ -148,17 +148,28 @@ public class PaymentReceivedService {
             if (schedule.getIsCustomerPayment()) {
                 scheduleCustomerTotalAmount = scheduleCustomerTotalAmount + schedule.getAmount();
                 if (scheduleCustomerTotalAmount <= totalCustomerPayment) {
-                    schedule.setIsReceived(true);
-                    paymentScheduleRepo.save(schedule);
+                    if (!schedule.getIsReceived()) {
+                        schedule.setIsReceived(true);
+                        paymentScheduleRepo.save(schedule);
+                    } else {
+                        if (schedule.getIsReceived()) {
+                            schedule.setIsReceived(false);
+                            paymentScheduleRepo.save(schedule);
+                        }
+                    }
                 }
             } else if (!schedule.getIsCustomerPayment()) {
                 scheduleBankTotalAmount = scheduleBankTotalAmount + schedule.getAmount();
                 if (scheduleBankTotalAmount <= totalBankPayment) {
-                    schedule.setIsReceived(true);
-                    paymentScheduleRepo.save(schedule);
+                    if (!schedule.getIsReceived()) {
+                        schedule.setIsReceived(true);
+                        paymentScheduleRepo.save(schedule);
+                    }
                 } else {
-                    schedule.setIsReceived(false);
-                    paymentScheduleRepo.save(schedule);
+                    if (schedule.getIsReceived()) {
+                        schedule.setIsReceived(false);
+                        paymentScheduleRepo.save(schedule);
+                    }
                 }
 
             }
