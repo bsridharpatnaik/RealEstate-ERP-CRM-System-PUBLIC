@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -30,6 +31,7 @@ import com.ec.common.Filters.FilterDataList;
 @RestController
 @RequestMapping("/buildingtype")
 public class BuildingTypeController {
+
     @Autowired
     BuildingTypeService buildingTypeService;
 
@@ -46,23 +48,21 @@ public class BuildingTypeController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteBuildingType(@PathVariable Long id) throws Exception {
-
         buildingTypeService.deleteBuildingType(id);
         return ResponseEntity.ok("Entity deleted");
     }
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public BuildingType createBuildingType(@RequestBody BuildingType payload) throws Exception {
-
-        // String json = ReusableMethods.convertObjectToJson(payload);
-        // BuildingType c =
-        // ReusableMethods.convertJSONtoObject(json,BuildingType.class);
         return buildingTypeService.createBuildingType(payload);
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public BuildingType updateBuildingType(@PathVariable Long id, @RequestBody BuildingType BuildingType)
             throws Exception {
         return buildingTypeService.updateBuildingType(id, BuildingType);

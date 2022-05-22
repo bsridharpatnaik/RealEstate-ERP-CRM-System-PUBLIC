@@ -98,7 +98,6 @@ public class CategoryService {
 
     public List<IdNameProjections> findIdAndNames() {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        // TODO Auto-generated method stub
         return categoryRepo.findIdAndNames();
     }
 

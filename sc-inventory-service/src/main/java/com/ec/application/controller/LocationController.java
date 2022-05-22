@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,6 +54,7 @@ public class LocationController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteLocation(@PathVariable Long id) throws Exception {
         locationService.deleteLocation(id);
         return ResponseEntity.ok("Entity deleted");
@@ -60,12 +62,14 @@ public class LocationController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public UsageLocation createLocation(@RequestBody UsageLocationData payload) throws Exception {
 
         return locationService.createLocation(payload);
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public UsageLocation updateLocation(@PathVariable Long id, @RequestBody UsageLocationData Location) throws Exception {
         return locationService.updateLocation(id, Location);
     }

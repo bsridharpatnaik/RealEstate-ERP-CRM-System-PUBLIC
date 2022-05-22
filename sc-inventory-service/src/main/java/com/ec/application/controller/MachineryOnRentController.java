@@ -3,6 +3,7 @@ package com.ec.application.controller;
 import java.text.ParseException;
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -52,12 +53,14 @@ public class MachineryOnRentController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public MachineryOnRent createMachineryOnRent(@RequestBody CreateMORentData payload) throws Exception {
 
         return morService.createData(payload);
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public MachineryOnRent updateMOR(@PathVariable Long id, @RequestBody CreateMORentData payload) throws Exception {
         return morService.UpdateData(payload, id);
     }
@@ -68,6 +71,7 @@ public class MachineryOnRentController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteMOR(@PathVariable Long id) throws Exception {
         morService.DeleteData(id);
         return ResponseEntity.ok("Entity deleted");

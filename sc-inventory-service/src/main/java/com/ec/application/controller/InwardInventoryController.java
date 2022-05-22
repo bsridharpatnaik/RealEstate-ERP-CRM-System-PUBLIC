@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,7 @@ public class InwardInventoryController {
     InwardInventoryService iiService;
 
     @PostMapping("/create")
+    @CheckAuthority
     @ResponseStatus(HttpStatus.CREATED)
     public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception {
 
@@ -67,6 +69,7 @@ public class InwardInventoryController {
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
+    @CheckAuthority
     public InwardInventory setRejectInwardInventory(@PathVariable Long id,
                                                     @RequestBody ReturnRejectInwardOutwardData rd) throws Exception {
         return iiService.addRejectInwardEntry(rd, id);
@@ -78,12 +81,14 @@ public class InwardInventoryController {
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
             throws Exception {
         return iiService.updateInwardnventory(payload, id);
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteInwardInventoryById(@PathVariable Long id) throws Exception {
 
         iiService.deleteInwardInventoryById(id);

@@ -3,6 +3,7 @@ package com.ec.application.controller;
 import java.text.ParseException;
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,6 +51,7 @@ public class ProductController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception {
         productService.deleteProduct(id);
         return ResponseEntity.ok("Entity deleted");
@@ -57,12 +59,13 @@ public class ProductController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public Product createProduct(@RequestBody ProductCreateData payload) throws Exception {
-
         return productService.createProduct(payload);
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception {
         return productService.updateProduct(id, Product);
     }

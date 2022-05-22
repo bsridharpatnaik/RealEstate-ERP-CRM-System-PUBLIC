@@ -1,5 +1,6 @@
 package com.ec.application.controller;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ public class FileHandlingController {
 
     @PostMapping(value = "/upload")
     @ResponseStatus(HttpStatus.ACCEPTED)
+    @CheckAuthority
     public FileInformation uploadDoc(@RequestParam("file") MultipartFile file) throws Exception {
         return fileHandlingSgervice.uploadDoc(file);
     }

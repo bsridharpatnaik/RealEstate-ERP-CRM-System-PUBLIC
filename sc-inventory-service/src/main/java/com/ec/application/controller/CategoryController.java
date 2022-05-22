@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -30,6 +31,7 @@ import com.ec.common.Filters.FilterDataList;
 @RestController
 @RequestMapping("/category")
 public class CategoryController {
+
     @Autowired
     CategoryService categoryService;
 
@@ -46,6 +48,7 @@ public class CategoryController {
     }
 
     @DeleteMapping(value = "/{id}")
+    @CheckAuthority
     public ResponseEntity<?> deleteCategory(@PathVariable Long id) throws Exception {
 
         categoryService.deleteCategory(id);
@@ -54,14 +57,13 @@ public class CategoryController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
     public Category createCategory(@RequestBody Category payload) throws Exception {
-
-        // String json = ReusableMethods.convertObjectToJson(payload);
-        // Category c = ReusableMethods.convertJSONtoObject(json,Category.class);
         return categoryService.createCategory(payload);
     }
 
     @PutMapping("/{id}")
+    @CheckAuthority
     public Category updateCategory(@PathVariable Long id, @RequestBody Category Category) throws Exception {
         return categoryService.updateCategory(id, Category);
     }
