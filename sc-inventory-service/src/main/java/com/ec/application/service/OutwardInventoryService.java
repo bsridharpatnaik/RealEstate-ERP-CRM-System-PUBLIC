@@ -603,20 +603,20 @@ public class OutwardInventoryService {
     @Transactional(rollbackFor = Exception.class)
     private void exitIfNotAuthorized(OutwardInventory outwardInventory, OutwardInventoryData oiData,
                                      APICallTypeForAuthorization action) throws Exception {
+
         if (action.equals(APICallTypeForAuthorization.Update)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date());
             Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot edit inventory record with date older than " + daysDifference + " days.");
-            }
+
 
             if (!oiData.getDate().equals(outwardInventory.getDate()))
                 throw new Exception("Date should not be modified while updating outward inventory record");
 
             if (!oiData.getWarehouseId().equals(outwardInventory.getWarehouse().getWarehouseId()))
                 throw new Exception("Warehouse should not be modified while updating outward inventory record");
-
             List<Long> productsInPayload = oiData.getProductWithQuantities().stream()
                     .map(ProductWithQuantity::getProductId).collect(Collectors.toList());
 
@@ -625,6 +625,7 @@ public class OutwardInventoryService {
             if (!(productsInPayload.containsAll(productsInExistingRecord)
                     && productsInPayload.size() == productsInExistingRecord.size()))
                 throw new Exception("Inventory List should not be modified while updating an outward inventory record");
+        }
 
         if (action.equals(APICallTypeForAuthorization.Create)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date());
