@@ -249,4 +249,12 @@ public class AllActivitiesService {
             stagnatedStatus = StagnatedEnum.RED;
         return stagnatedStatus;
     }
+
+    @Transactional
+    public void updateLeadActivityStatus(Long leadActivityId, Boolean status){
+        try{
+
+        }
+
+    }
 }

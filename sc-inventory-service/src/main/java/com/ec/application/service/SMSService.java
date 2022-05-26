@@ -98,6 +98,7 @@ public class SMSService {
         InwardOutwardTrend rsLatestTrend = fetchLatestDataFromTRend("riddhisiddhi");
         InwardOutwardTrend smcLatestTrend = fetchLatestDataFromTRend("smartcity");
         InwardOutwardTrend bpLatestTrend = fetchLatestDataFromTRend("businesspark");
+        InwardOutwardTrend dtcLatestTrend = fetchLatestDataFromTRend("drgtrdcntr");
 
         for (String number : numbers) {
             HashMap<String, String> childBody = new HashMap<>();
@@ -108,6 +109,7 @@ public class SMSService {
             childBody.put("rs", (int) Math.round(rsLatestTrend.getInwardCount()) + "/" + (int) Math.round(rsLatestTrend.getOutwardCount()));
             childBody.put("smc", (int) Math.round(smcLatestTrend.getInwardCount()) + "/" + (int) Math.round(smcLatestTrend.getOutwardCount()));
             childBody.put("bp", (int) Math.round(bpLatestTrend.getInwardCount()) + "/" + (int) Math.round(bpLatestTrend.getOutwardCount()));
+            childBody.put("dtc", (int) Math.round(dtcLatestTrend.getInwardCount()) + "/" + (int) Math.round(dtcLatestTrend.getOutwardCount()));
             body.add(childBody);
         }
         return new SMSExternalPayloadData(ProjectConstants.flowIdForSuncityIOStats, body);
