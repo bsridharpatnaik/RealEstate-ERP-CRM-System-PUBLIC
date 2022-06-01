@@ -1,9 +1,6 @@
 package com.ec.crm.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -251,9 +248,16 @@ public class AllActivitiesService {
     }
 
     @Transactional
-    public void updateLeadActivityStatus(Long leadActivityId, Boolean status){
-        try{
-
+    public void updateLeadActivityStatus(Long leadActivityId, Boolean status) {
+        try {
+            Optional<LeadActivity> leadActivityOpt = laRepo.findById(leadActivityId);
+            if (leadActivityOpt.isPresent()) {
+                LeadActivity leadActivity = leadActivityOpt.get();
+                leadActivity.setIsOpen(status);
+                laRepo.save(leadActivity);
+            }
+        } catch (Exception e) {
+            // DO NOTHING - This is intentional
         }
 
     }

@@ -32,6 +32,9 @@ public class PaymentReceivedService {
     @Autowired
     PaymentScheduleRepo paymentScheduleRepo;
 
+    @Autowired
+    AllActivitiesService allActivitiesService;
+
     @Transactional
     public PaymentReceived createNewPayment(PaymentReceivedCreateData payload) throws Exception {
         PaymentReceived paymentReceived = new PaymentReceived();
@@ -47,7 +50,9 @@ public class PaymentReceivedService {
         validatePayload(payload);
         PaymentReceived paymentReceived = paymentReceivedRepo.findById(payload.getPaymentId()).get();
         setFields(paymentReceived, payload);
-        return paymentReceivedRepo.save(paymentReceived);
+        paymentReceivedRepo.save(paymentReceived);
+        backFillScheduleStatus(paymentReceived.getDs().getDealId());
+        return paymentReceived;
     }
 
     public DealStructurePaymentReceivedDTO getPaymentsList(Long dealStructureId) {
@@ -111,10 +116,11 @@ public class PaymentReceivedService {
 
     public void deletePayment(Long id) throws Exception {
         Optional<PaymentReceived> paymentReceived = paymentReceivedRepo.findById(id);
-        if (paymentReceived.isPresent())
+        if (paymentReceived.isPresent()) {
             paymentReceivedRepo.softDeleteById(id);
-        else
-            throw new Exception("Payment Receieved with ID " + id + " not found!");
+            backFillScheduleStatus(paymentReceived.get().getDs().getDealId());
+        } else
+            throw new Exception("Payment Received with ID " + id + " not found!");
     }
 
     public Boolean getPaymentStepperStatus(Long id) {
@@ -150,10 +156,16 @@ public class PaymentReceivedService {
                 if (scheduleCustomerTotalAmount <= totalCustomerPayment) {
                     if (!schedule.getIsReceived()) {
                         schedule.setIsReceived(true);
+                        if (schedule.getLa() != null) {
+                            allActivitiesService.updateLeadActivityStatus(schedule.getLa().getLeadActivityId(), false);
+                        }
                         paymentScheduleRepo.save(schedule);
                     } else {
                         if (schedule.getIsReceived()) {
                             schedule.setIsReceived(false);
+                            if (schedule.getLa() != null) {
+                                allActivitiesService.updateLeadActivityStatus(schedule.getLa().getLeadActivityId(), true);
+                            }
                             paymentScheduleRepo.save(schedule);
                         }
                     }
@@ -163,11 +175,17 @@ public class PaymentReceivedService {
                 if (scheduleBankTotalAmount <= totalBankPayment) {
                     if (!schedule.getIsReceived()) {
                         schedule.setIsReceived(true);
+                        if (schedule.getLa() != null) {
+                            allActivitiesService.updateLeadActivityStatus(schedule.getLa().getLeadActivityId(), false);
+                        }
                         paymentScheduleRepo.save(schedule);
                     }
                 } else {
                     if (schedule.getIsReceived()) {
                         schedule.setIsReceived(false);
+                        if (schedule.getLa() != null) {
+                            allActivitiesService.updateLeadActivityStatus(schedule.getLa().getLeadActivityId(), false);
+                        }
                         paymentScheduleRepo.save(schedule);
                     }
                 }

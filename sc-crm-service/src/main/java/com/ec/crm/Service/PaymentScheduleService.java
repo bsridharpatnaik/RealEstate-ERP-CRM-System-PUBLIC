@@ -52,6 +52,8 @@ public class PaymentScheduleService {
 
     Logger log = LoggerFactory.getLogger(ClosedLeadService.class);
 
+
+    @Transactional
     public ScheduleReturnDAO createSchedule(CreateScheduleData payload) throws Exception {
         validatePayload(payload, "create");
         PaymentSchedule ps = new PaymentSchedule();
