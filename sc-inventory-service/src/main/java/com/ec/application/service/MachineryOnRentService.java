@@ -301,7 +301,7 @@ public class MachineryOnRentService {
                 throw new Exception("Supplier should not be modified while updating Machinery On Rent record");
         }
         if (action.equals(APICallTypeForAuthorization.Create)) {
-            Long daysDifference = ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date());
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date());
             Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
