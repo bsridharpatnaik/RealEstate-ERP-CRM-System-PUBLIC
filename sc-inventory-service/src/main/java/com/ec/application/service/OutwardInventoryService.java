@@ -246,25 +246,28 @@ public class OutwardInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         boolean flag = false;
 
-        if (outwardInventory.getInwardOutwardList().size() != iiData.getProductWithQuantities().size())
-            flag = true;
+        if (outwardInventory.getReturnOutwardList().size() > 0) {
 
-        for (InwardOutwardList ioList : outwardInventory.getInwardOutwardList()) {
-            Boolean isFound = false;
-            for (ProductWithQuantity pwq : iiData.getProductWithQuantities()) {
-                if (ioList.getProduct().getProductId().equals(pwq.getProductId())) {
-                    isFound = true;
-                    if (!ioList.getQuantity().equals(pwq.getQuantity())) {
-                        flag = true;
+            if (outwardInventory.getInwardOutwardList().size() != iiData.getProductWithQuantities().size())
+                flag = true;
+
+            for (InwardOutwardList ioList : outwardInventory.getInwardOutwardList()) {
+                Boolean isFound = false;
+                for (ProductWithQuantity pwq : iiData.getProductWithQuantities()) {
+                    if (ioList.getProduct().getProductId().equals(pwq.getProductId())) {
+                        isFound = true;
+                        if (!ioList.getQuantity().equals(pwq.getQuantity())) {
+                            flag = true;
+                        }
                     }
                 }
+                if (!isFound)
+                    flag = true;
             }
-            if (!isFound)
-                flag = true;
-        }
 
-        if (flag)
-            throw new Exception("Outward inventory entry cannot be edited after return entry is added.");
+            if (flag)
+                throw new Exception("Outward inventory entry cannot be edited after return entry is added.");
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
