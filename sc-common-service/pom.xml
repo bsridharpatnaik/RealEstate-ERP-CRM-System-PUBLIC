@@ -200,7 +200,7 @@
     </dependency>
         </dependencies>
     </dependencyManagement>
-    <build>
+     <build>
         <finalName>${proj}-common-service</finalName>
         <plugins>
             <plugin>
@@ -217,5 +217,5 @@
     </configuration>
             </plugin>
         </plugins>
-    </build>
+    </build> 
 </project>

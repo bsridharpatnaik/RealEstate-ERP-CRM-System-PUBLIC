@@ -6,6 +6,7 @@ public class FilterAttributeData {
 	
 	private String attrName;
 	private List<String> attrValue;
+	
 	public String getAttrName() {
 		return attrName;
 	}

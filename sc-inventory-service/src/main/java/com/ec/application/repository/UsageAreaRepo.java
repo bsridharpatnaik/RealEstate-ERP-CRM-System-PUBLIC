@@ -39,5 +39,11 @@ public interface UsageAreaRepo extends BaseRepository<UsageArea, Long>
 	@Query(value="SELECT count(m) from UsageArea m where m.usageAreaId=:id")
 	int usageAreaUsageCount(@Param("id")Long id);
 
+	UsageArea findByUsageAreaName(String location);
+
+	UsageArea findByUsageAreaId(long usageAreaId);
+
+	boolean existsByUsageAreaNameAndIsDeleted(String location, boolean b);
+
 	
 }

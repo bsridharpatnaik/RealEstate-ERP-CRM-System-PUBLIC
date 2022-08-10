@@ -66,6 +66,8 @@ public class JwtRequestFilter extends OncePerRequestFilter
 		if (username != null && SecurityContextHolder.getContext().getAuthentication() == null)
 		{
 			final String tenantId = request.getHeader("tenant-id");
+			System.out.println("tenantId "+tenantId);
+			
 			String path = new UrlPathHelper().getPathWithinApplication(request);
 			if (StringUtils.isNotBlank(path) && !path.contains("/ism") && !path.contains("/user")
 					&& !path.contains("tenant") && !path.contains("/notification") && !path.contains("/role")
@@ -80,9 +82,11 @@ public class JwtRequestFilter extends OncePerRequestFilter
 			UserDetails userDetails = null;
 			try
 			{
+				
 				userDetails = this.jwtUserDetailsService.loadUserByUsername(username);
 			} catch (JwtUserDetailsService.UserDataAccessException e)
 			{
+				
 				response.setContentType("application/json");
 				response.setCharacterEncoding("UTF-8");
 				response.getWriter().write(gson.toJson(new Error("User not allowed to access data")));

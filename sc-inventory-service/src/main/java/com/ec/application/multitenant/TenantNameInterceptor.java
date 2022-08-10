@@ -35,6 +35,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             return false;
         }
         
+        
         if(!schemasList.contains(tenantName)) {
         	response.setContentType("application/json");
         	response.setCharacterEncoding("UTF-8");

@@ -46,4 +46,16 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value = "SELECT p from Product p where p.showOnDashboard=true")
     List<Product> getDashboardProducts();
+
+	Product findByProductName(String inventory);
+
+	Product findByProductId(long productId);
+
+	boolean existsByProductNameAndIsDeleted(String inventory, boolean b);
+
+	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
+	List<IdNameProjections> findIdAndMeasurementUnitNames(@Param("id") long id);
+
+//	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
+//	List<IdNameProjections> findIdAndMeasurementUnitNames(long productId);
 }

@@ -42,4 +42,8 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 	@Query(value = "SELECT locationId as id,locationName as name from UsageLocation m where m.buildingType.typeId=:typeId order by name")
 	List<IdNameProjections> getByBuildingType(@Param("typeId") Long typeId);
 
+	UsageLocation findByLocationId(long buildingUnit);
+
+	List<UsageLocation> findByBuildingTypeTypeId(long businessTypeId);
+
 }

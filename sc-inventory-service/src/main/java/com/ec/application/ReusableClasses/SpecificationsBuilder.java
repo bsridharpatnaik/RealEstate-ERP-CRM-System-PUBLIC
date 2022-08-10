@@ -77,6 +77,19 @@ public class SpecificationsBuilder<T> {
         finalSpec = specAndCondition(internalSpec1, internalSpec2);
         return finalSpec;
     }
+    
+//    public Specification<T> whereDirectFieldDoubleBetween(String key, Double lowerLimit, Double upperLimit)
+//            throws ParseException {
+//
+//        Specification<T> finalSpec = null;
+//        Specification<T> internalSpec1 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+//                .lessThanOrEqualTo(root.get(key), upperLimit);
+//        Specification<T> internalSpec2 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
+//                .greaterThanOrEqualTo(root.get(key), lowerLimit);
+//        finalSpec = specAndCondition(internalSpec1, internalSpec2);
+//        return finalSpec;
+//    }
+//    
 
     public Specification<T> whereDirectFieldDateLessThan(String key, List<String> endDates) throws ParseException {
         Date startDate = new SimpleDateFormat(dateFormat).parse(endDates.get(0));
@@ -214,4 +227,13 @@ public class SpecificationsBuilder<T> {
         }
         return returnValue;
     }
+    
+//    public static String fetchValueFromFilterList2(FilterDataList filterDataList, String field) {
+//         String returnValue = null;
+//        for (FilterAttributeData filterData : filterDataList.getFilterData()) {
+//            if (filterData.getAttrName().equalsIgnoreCase(field))
+//                returnValue = filterData.getAttrValue();
+//        }
+//        return returnValue;
+//    }
 }

@@ -39,4 +39,6 @@ public interface BuildingTypeRepo extends BaseRepository<BuildingType, Long>
 
 	ArrayList<BuildingType> findBytypeId(@Param("typeId") Long typeId);
 
+	BuildingType findByTypeId(long buildingTypeId);
+
 }
