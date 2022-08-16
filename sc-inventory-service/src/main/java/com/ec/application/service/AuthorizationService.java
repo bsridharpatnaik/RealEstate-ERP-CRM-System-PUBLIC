@@ -27,11 +27,10 @@ public class AuthorizationService {
 
         for (UserTenantMapping ut : currentUser.getTenantList()) {
 
-            String tn = ut.getTenant().getName();
             if (profile.contains("sc") && profile.contains("new")) {
-                tn = tn.replace("new", "");
+                tenantName = tenantName.replace("new", "");
             }
-            if (tn.equalsIgnoreCase(tenantName) && ut.getAuthorization().equals(AuthorizationEnum.FullAccess)) {
+            if (ut.getTenant().getName().equalsIgnoreCase(tenantName) && ut.getAuthorization().equals(AuthorizationEnum.FullAccess)) {
                 isAllowed = true;
                 break;
             }
