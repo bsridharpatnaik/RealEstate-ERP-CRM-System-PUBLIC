@@ -201,7 +201,7 @@
         </dependencies>
     </dependencyManagement>
     <build>
-        <finalName>${proj}-common-service</finalName>
+        <finalName>${proj}-common-service${type}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

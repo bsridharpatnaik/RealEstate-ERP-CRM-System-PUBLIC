@@ -208,7 +208,7 @@
 -->
     </dependencies>
     <build>
-        <finalName>${proj}-inventory-service</finalName>
+        <finalName>${proj}-inventory-service${type}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
