@@ -207,8 +207,8 @@
 <dependency><groupId>org.springframework.cloud</groupId><artifactId>spring-cloud-starter-netflix-eureka-client</artifactId><version>2.2.2.RELEASE</version></dependency>
 -->
     </dependencies>
-   <build>
-        <finalName>${proj}-inventory-service</finalName>
+    <build>
+        <finalName>${proj}-inventory-service${type}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

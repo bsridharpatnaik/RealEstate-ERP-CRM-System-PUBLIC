@@ -10,7 +10,7 @@ VALUES
 ('EgcityIOStats',
 '918600033031');
 
-use suncitynx;
+use newsuncitynx;
 INSERT INTO `smsdeliverylist`
 (`type`,
 `numbers`)
