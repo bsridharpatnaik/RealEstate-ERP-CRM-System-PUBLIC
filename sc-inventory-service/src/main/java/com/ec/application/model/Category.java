@@ -72,4 +72,10 @@ public class Category extends ReusableFields
 		return serialVersionUID;
 	}
 
+	@Override
+	public String toString() {
+		return "Category [categoryId=" + categoryId + ", categoryName=" + categoryName + ", categoryDescription="
+				+ categoryDescription + "]";
+	}
+
 }

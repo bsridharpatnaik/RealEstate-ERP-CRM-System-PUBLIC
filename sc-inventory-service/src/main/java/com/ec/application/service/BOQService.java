@@ -3,7 +3,9 @@ package com.ec.application.service;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -26,6 +28,7 @@ import com.ec.application.data.UsageLocationDto;
 import com.ec.application.data.UsageLocationResponse;
 import com.ec.application.model.BOQUpload;
 import com.ec.application.model.BuildingType;
+import com.ec.application.model.Category;
 import com.ec.application.model.Product;
 import com.ec.application.model.UsageArea;
 import com.ec.application.model.UsageLocation;
@@ -66,7 +69,6 @@ public class BOQService {
     public List<BOQUploadValidationResponse> boqUpload(BOQDto boqDto) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUploadValidationResponse bOQUploadValidationResponse = new BOQUploadValidationResponse();
-        removeSpecialCharacters(boqDto);
         List<BOQUploadValidationResponse> listBOQUploadResponse = validateUploadedBOQ(boqDto);
         try {
             if (listBOQUploadResponse.isEmpty()) {
@@ -87,14 +89,6 @@ public class BOQService {
             listBOQUploadResponse.add(bOQUploadValidationResponse);
         }
         return new ArrayList<BOQUploadValidationResponse>();
-    }
-
-    private void removeSpecialCharacters(BOQDto boqDto) {
-        for (BOQUploadDto boqUploadDto : boqDto.getUpload()) {
-            boqUploadDto.setInventory(boqUploadDto.getInventory().replace("\n", ""));
-            boqUploadDto.setQuantity(boqUploadDto.getQuantity().replace("\n", ""));
-            boqUploadDto.setLocation(boqUploadDto.getLocation().replace("\n", ""));
-        }
     }
 
 
@@ -121,12 +115,19 @@ public class BOQService {
     private void deleteBoqQuantity(BOQUploadDto upload, BOQUpload boqUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (boqUpload != null) {
+
             double quantity = 0.0;
             double doublQuantity = Double.parseDouble(upload.getQuantity());
             quantity = boqUpload.getQuantity() - doublQuantity;
-            boqUpload.setQuantity(quantity);
-            boqUpload.setChanges(upload.getChanges());
-            bOQUploadRepository.save(boqUpload);
+            if (quantity == 0) {
+                boqUpload.setQuantity(quantity);
+                boqUpload.setChanges(upload.getChanges());
+                bOQUploadRepository.softDelete(boqUpload);
+            } else {
+                boqUpload.setQuantity(quantity);
+                boqUpload.setChanges(upload.getChanges());
+                bOQUploadRepository.save(boqUpload);
+            }
 
         }
     }
@@ -172,7 +173,7 @@ public class BOQService {
     private List<BOQUploadValidationResponse> validateUploadedBOQ(BOQDto boqDto) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         List<BOQUploadValidationResponse> listboqBoqUploadResponses = new ArrayList<>();
-
+        List<BOQUpload> listOfBOQUpload = bOQUploadRepository.findAll();
         boqDto.getUpload().forEach(upload -> {
             boolean isInventoryExist = productRepository.existsByProductName(upload.getInventory());
             boolean isLocationExist = locationRepository.existsByUsageAreaName(upload.getLocation());
@@ -183,7 +184,7 @@ public class BOQService {
                 } else if (doublQuantity < 1) {
                     validateBOQQuantity(listboqBoqUploadResponses, upload);
                 } else {
-                    validateChanges(listboqBoqUploadResponses, upload);
+                    validateChanges(listboqBoqUploadResponses, upload, listOfBOQUpload);
                 }
             } catch (Exception e) {
                 validateBOQQuantity(listboqBoqUploadResponses, upload);
@@ -205,7 +206,7 @@ public class BOQService {
     }
 
 
-    private void validateChanges(List<BOQUploadValidationResponse> listboqBoqUploadResponses, BOQUploadDto upload) {
+    private void validateChanges(List<BOQUploadValidationResponse> listboqBoqUploadResponses, BOQUploadDto upload, List<BOQUpload> listOfBOQUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Product product = productRepository.findByProductName(upload.getInventory());
         UsageArea location = locationRepository.findByUsageAreaName(upload.getLocation());
@@ -213,20 +214,30 @@ public class BOQService {
         if (upload.getChanges().equalsIgnoreCase(BOQUploadConstant.ADDITION)) {
             if (boqUpload != null) {
                 BOQUploadValidationResponse boqUploadResponse = setInventoryQuantityChangesLocation(upload);
-                boqUploadResponse.setMessage("This record will be overwritten");
+                boqUploadResponse.setMessage("record will be overwritten");
                 listboqBoqUploadResponses.add(boqUploadResponse);
             }
         } else if (upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPDATE)) {
             if (boqUpload == null) {
                 BOQUploadValidationResponse boqUploadResponse = setInventoryQuantityChangesLocation(upload);
-                boqUploadResponse.setMessage("Record not exist");
+                boqUploadResponse.setMessage("record not exist");
                 listboqBoqUploadResponses.add(boqUploadResponse);
             }
         } else if (upload.getChanges().equalsIgnoreCase(BOQUploadConstant.DELETION)) {
             if (boqUpload == null) {
+
                 BOQUploadValidationResponse boqUploadResponse = setInventoryQuantityChangesLocation(upload);
-                boqUploadResponse.setMessage("Record not exist");
+                boqUploadResponse.setMessage("record not exist");
                 listboqBoqUploadResponses.add(boqUploadResponse);
+            } else {
+                BOQUploadValidationResponse boqUploadResponse = setQuantity(upload);
+                double quantity = 0.0;
+                double doublQuantity = Double.parseDouble(upload.getQuantity());
+                quantity = boqUpload.getQuantity() - doublQuantity;
+                if (quantity < 0) {
+                    boqUploadResponse.setMessage("given quantity exceeds the existing quatity");
+                    listboqBoqUploadResponses.add(boqUploadResponse);
+                }
             }
         }
     }
@@ -245,21 +256,31 @@ public class BOQService {
         return boqUploadResponse;
     }
 
+    private BOQUploadValidationResponse setQuantity(BOQUploadDto upload) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        BOQUploadValidationResponse boqUploadResponse = new BOQUploadValidationResponse();
+        List<String> column = new ArrayList<String>();
+        column.add(BOQUploadConstant.QUANTITY);
+        boqUploadResponse.setColumns(column);
+        boqUploadResponse.setSno(upload.getSno());
+        return boqUploadResponse;
+    }
+
 
     private void validateInventoryLocationChanges(List<BOQUploadValidationResponse> listboqBoqUploadResponses, BOQUploadDto upload, boolean existInventory, boolean existLocation) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUploadValidationResponse bOQUploadResponse = new BOQUploadValidationResponse();
         List<String> columnName = new ArrayList<String>();
         if (!existInventory)
-            columnName.add("Inventory");
+            columnName.add(BOQUploadConstant.INVENTORY);
         if (!existLocation)
-            columnName.add("Final Location");
+            columnName.add(BOQUploadConstant.FINAL_LOCATION);
         if (upload.getChanges().isEmpty()) {
-            columnName.add("Changes");
+            columnName.add(BOQUploadConstant.CHANGES);
         } else {
-            if (!upload.getChanges().equalsIgnoreCase("addition") && !upload.getChanges().equalsIgnoreCase("update")
-                    && !upload.getChanges().equalsIgnoreCase("deletion")) {
-                columnName.add("Changes");
+            if (!upload.getChanges().equalsIgnoreCase(BOQUploadConstant.ADDITION) && !upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPDATE)
+                    && !upload.getChanges().equalsIgnoreCase(BOQUploadConstant.DELETION)) {
+                columnName.add(BOQUploadConstant.CHANGES);
             }
         }
         bOQUploadResponse.setSno(upload.getSno());
@@ -282,7 +303,6 @@ public class BOQService {
                 bOQStatusResponse.setBOQStatusDto(listBOQStatusResponse);
                 bOQStatusResponse.setMessage("Get BOQ Status details successfully");
             }
-
         } catch (Exception e) {
             bOQStatusResponse.setMessage("Error while retrieving the BOQ Status");
         }
@@ -292,32 +312,50 @@ public class BOQService {
 
     private void getOutwardAndBoqQuantity(Long buildingTypeId, Long buildingUnitId, List<BOQStatusDto> listBOQStatusResponse, List<Integer> boqUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        List<Product> listOfProduct = productRepository.findAll();
+        List<Object> listOfOutwardEntry = inwardOutwardListRepo.findByOutwardInventoryByBuildingTypeIdAndBuildingUnitId(buildingTypeId, buildingUnitId);
+        List<BOQUpload> listOfBoqQuantity = bOQUploadRepository.findBOQQuantity(buildingTypeId, buildingUnitId);
         boqUpload.forEach(iterateBoqUpload -> {
             BOQStatusDto boqStatusDto = new BOQStatusDto();
-            Product product = productRepository.findByProductId(iterateBoqUpload.longValue());
-            List<Object> list = inwardOutwardListRepo.findByOutwardInventory(buildingTypeId, buildingUnitId, iterateBoqUpload.longValue());
-
+            Map<Long, Category> mapCategory = listOfProduct.stream().collect(
+                    Collectors.toMap(Product::getProductId, Product::getCategory));
             double outwardQuantity = 0.0;
             long count = 0;
-            for (Object cdata : list) {
-                Object[] obj = (Object[]) cdata;
+            for (Object objectData : listOfOutwardEntry) {
+                Object[] obj = (Object[]) objectData;
 
                 if (obj[0] != null && obj[1] != null) {
-                    BigInteger productId = (BigInteger) obj[0];
-                    Double quantity = (Double) obj[5];
-                    outwardQuantity = outwardQuantity + quantity;
-                    count++;
+                    BigInteger productId = (BigInteger) obj[4];
+                    Long longValueOfProduct = productId.longValue();
+                    if (longValueOfProduct == iterateBoqUpload.longValue()) {
+                        Double quantity = (Double) obj[5];
+                        outwardQuantity = outwardQuantity + quantity;
+                        count++;
+                    }
                 }
             }
-            Double boqQuantity = bOQUploadRepository.findQuantityByProductProductId(iterateBoqUpload.longValue(), buildingTypeId, buildingUnitId);
-            int status = (int) (outwardQuantity / boqQuantity * 100);
-            boqStatusDto.setBoqQuantity(boqQuantity);
-            boqStatusDto.setInventory(product.getProductName());
-            boqStatusDto.setCategory(product.getCategory().getCategoryName());
+            getBoqQuantity(listOfBoqQuantity, iterateBoqUpload, boqStatusDto, outwardQuantity);
+            Map<Long, String> mapProductName = listOfProduct.stream().collect(
+                    Collectors.toMap(Product::getProductId, Product::getProductName));
+            boqStatusDto.setInventory(mapProductName.get(iterateBoqUpload.longValue()));
+            boqStatusDto.setCategory(mapCategory.get(iterateBoqUpload.longValue()).getCategoryName());
             boqStatusDto.setOutwardQuantity(outwardQuantity);
-            boqStatusDto.setStatus(status);
             listBOQStatusResponse.add(boqStatusDto);
         });
+    }
+
+
+    private void getBoqQuantity(List<BOQUpload> listOfBoqQuantity, Integer iterateBoqUpload,
+                                BOQStatusDto boqStatusDto, double outwardQuantity) {
+        double boqQuantity = 0.0;
+        for (BOQUpload iterateBoqQuantity : listOfBoqQuantity) {
+            if (iterateBoqQuantity.getProduct().getProductId() == iterateBoqUpload.longValue()) {
+                boqQuantity = boqQuantity + iterateBoqQuantity.getQuantity();
+            }
+            int status = (int) (outwardQuantity / boqQuantity * 100);
+            boqStatusDto.setBoqQuantity(boqQuantity);
+            boqStatusDto.setStatus(status);
+        }
     }
 
 
@@ -341,26 +379,27 @@ public class BOQService {
         return usageLocationResponse;
     }
 
-
     public BOQReportResponse getBoqReport() {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQReportResponse bOQReportResponse = new BOQReportResponse();
         try {
+            List<Product> listOfProduct = productRepository.findAll();
             List<BOQReportDto> listBOQReportResponse = new ArrayList<>();
             List<Object> listOfBuildingTypeBuildingUnitProduct = bOQUploadRepository.findBuildigTypeIdBuildingUnitIdProductId();
             listOfBuildingTypeBuildingUnitProduct.forEach(iterateList -> {
+
                 Object[] objArray = (Object[]) iterateList;
                 BigInteger bigIntegerNumber0 = (BigInteger) objArray[0];
                 BigInteger bigIntegerNumber1 = (BigInteger) objArray[1];
                 BigInteger bigIntegerNumber2 = (BigInteger) objArray[2];
-                Long buildingType = bigIntegerNumber0.longValue();
-                Long buildingUnit = bigIntegerNumber1.longValue();
-                Long productId = bigIntegerNumber2.longValue();
+                Long productId = bigIntegerNumber0.longValue();
+                Long buildingType = bigIntegerNumber1.longValue();
+                Long buildingUnit = bigIntegerNumber2.longValue();
+
                 BOQReportDto bOQReportDto = new BOQReportDto();
-                Product product = productRepository.findByProductId(productId);
                 List<Object> list = inwardOutwardListRepo.findByOutwardInventory(buildingType, buildingUnit, productId);
                 if (!list.isEmpty()) {
-                    getExcessQuantity(listBOQReportResponse, buildingType, buildingUnit, productId, bOQReportDto, product, list);
+                    getExcessQuantity(listBOQReportResponse, buildingType, buildingUnit, productId, bOQReportDto, listOfProduct, list);
                 }
             });
             bOQReportResponse.setMessage("Get BOQ Report successfully");
@@ -372,33 +411,43 @@ public class BOQService {
     }
 
 
-    private void getExcessQuantity(List<BOQReportDto> listBOQReportResponse, Long buildingType, Long buildingUnit, Long productId, BOQReportDto bOQReportDto, Product product, List<Object> list) {
+    private void getExcessQuantity(List<BOQReportDto> listBOQReportResponse, Long buildingType, Long buildingUnit, Long productId, BOQReportDto bOQReportDto, List<Product> listOfProduct, List<Object> list) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+        Map<Long, String> mapProductName = listOfProduct.stream().collect(
+                Collectors.toMap(Product::getProductId, Product::getProductName));
+        Map<Long, String> mapMeasurementUnit = listOfProduct.stream().collect(
+                Collectors.toMap(Product::getProductId, Product::getMeasurementUnit));
+
         long count = 0;
         double outwardQuantity = 0.0;
         for (Object cdata : list) {
             Object[] obj = (Object[]) cdata;
             if (obj[0] != null && obj[1] != null) {
                 Double quantity = (Double) obj[5];
+
                 outwardQuantity = outwardQuantity + quantity;
                 count++;
             }
         }
+
         Double boqQuantity = bOQUploadRepository.findQuantityByProductProductId(productId, buildingType, buildingUnit);
+
         Double excessQuantity = outwardQuantity - boqQuantity;
         if (excessQuantity > 0) {
             Optional<BuildingType> building = buildingTypeRepository.findById(buildingType.longValue());
             Optional<UsageLocation> usageLocation = usageLocationRepository.findById(buildingUnit.longValue());
             bOQReportDto.setBoqQuantity(boqQuantity);
-            bOQReportDto.setInventory(product.getProductName());
+            bOQReportDto.setInventory(mapProductName.get(productId));
             bOQReportDto.setBoqQuantity(boqQuantity);
             bOQReportDto.setBuildingType(building.get().getTypeName());
             bOQReportDto.setBuildingUnit(usageLocation.get().getLocationName());
             bOQReportDto.setOutwardQuantity(outwardQuantity);
             bOQReportDto.setExcessQuantity(excessQuantity);
-            bOQReportDto.setMeasurementUnit(product.getMeasurementUnit());
+            bOQReportDto.setMeasurementUnit(mapMeasurementUnit.get(productId));
             listBOQReportResponse.add(bOQReportDto);
         }
     }
+
 
 }

@@ -99,8 +99,9 @@ public class OutwardInventoryService {
         setFields(outwardInventory, oiData);
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
-        backFillClosingStock(String.join(",", outwardInventory.getInwardOutwardList()
-                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())), outwardInventory.getDate());
+        backFillClosingStock(outwardInventory.getInwardOutwardList()
+                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())
+                .stream().collect(Collectors.joining(",")), outwardInventory.getDate());
         return outwardInventory;
 
     }
