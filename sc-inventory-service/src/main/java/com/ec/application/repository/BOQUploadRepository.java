@@ -20,8 +20,8 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long>{
 
 	List<BOQUpload> findByBuildingTypeTypeIdAndUsageLocationLocationId(long buildingTypeId, long buildingUnitId);
 	
-	@Query(value="Select DISTINCT(product.productId) from BOQUpload b where b.buildingType.typeId=:buildingTypeId and b.usageLocation.locationId=:buildingUnitId")
-	List<Integer> findProductIdByBuildingTypeTypeIdAndUsageLocationLocationIds(@Param("buildingTypeId") long buildingTypeId,@Param("buildingUnitId") long buildingUnitId);
+	@Query(value="Select b from BOQUpload b where b.buildingType.typeId=:buildingTypeId and b.usageLocation.locationId=:buildingUnitId")
+	List<BOQUpload> findProductIdByBuildingTypeTypeIdAndUsageLocationLocationIds(@Param("buildingTypeId") long buildingTypeId,@Param("buildingUnitId") long buildingUnitId);
 	
 	BOQUpload findByUsageLocationLocationIdAndLocationUsageAreaIdAndProductProductId(long buildingUnit,
 			long usageAreaId, long productId);
@@ -30,13 +30,16 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long>{
 	List<BOQUpload> findBOQQuantity(long buildingTypeId, long buildingUnitId);
 
 	@Query(value = "Select Sum(quantity) as quantity from BOQUpload b where b.productId=?1 and b.buildingTypeId=?2 and b.usageLocationId=?3",nativeQuery = true)
-	Double findQuantityByProductProductId(long l, long buildingTypeId, long buildingUnitId);
+	Double findQuantityByProductProductId(long productId, long buildingTypeId, long buildingUnitId);
 
 	@Query(value="Select DISTINCT(productId), buildingTypeId,usageLocationId from BOQUpload b where is_deleted=false",nativeQuery = true)
 	List<Object> findBuildigTypeIdBuildingUnitIdProductId();
 	
 	@Query(value="Select DISTINCT(productId) from BOQUpload b",nativeQuery = true)
 	List<Integer> findByProductId();
+
+	List<BOQUpload> findByBuildingTypeTypeId(long buildingTypeId);
+
 
 	
 }

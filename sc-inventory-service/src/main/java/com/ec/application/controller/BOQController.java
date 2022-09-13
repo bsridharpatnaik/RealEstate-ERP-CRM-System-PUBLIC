@@ -26,6 +26,7 @@ import com.ec.application.data.BOQDto;
 import com.ec.application.data.BOQInformation;
 import com.ec.application.data.BOQReportInformation;
 import com.ec.application.data.BOQReportResponse;
+import com.ec.application.data.BOQStatusDataDto;
 import com.ec.application.data.BOQStatusResponse;
 import com.ec.application.data.BOQUploadValidationResponse;
 import com.ec.application.data.UsageLocationResponse;
@@ -49,9 +50,9 @@ public class BOQController {
 	
 	@PostMapping("/get_boq_status_details")
 	@ResponseStatus(HttpStatus.OK)
-	public BOQStatusResponse getBoqStatusDetails(@RequestParam("buildingTypeId") Long buildingTypeId, @RequestParam("buildingUnitId") Long buildingUnitId) 
+	public BOQStatusResponse getBoqStatusDetails(@RequestBody BOQStatusDataDto bOQStatusDataDto) 
 	{
-		return bOQService.getBoqStatusDetails(buildingTypeId,buildingUnitId);
+		return bOQService.getBoqStatusDetails(bOQStatusDataDto);
 	}
 	
 	@GetMapping("/get_buildingunit_by_buildingtypeid/{buildingtypeid}")
