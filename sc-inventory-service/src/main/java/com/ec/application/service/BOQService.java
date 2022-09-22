@@ -2,6 +2,8 @@ package com.ec.application.service;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,15 +18,18 @@ import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.BOQUploadConstant;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.data.BOQDto;
 import com.ec.application.data.BOQReportDto;
 import com.ec.application.data.BOQReportResponse;
 import com.ec.application.data.BOQStatusDataDto;
 import com.ec.application.data.BOQStatusDto;
+import com.ec.application.data.OutwardQuantityDtoForBoqStatus;
 import com.ec.application.data.BOQStatusResponse;
 import com.ec.application.data.BOQUploadDto;
 import com.ec.application.data.BOQUploadValidationResponse;
-
+import com.ec.application.data.BOQStatusDetailsDto;
+import com.ec.application.data.BOQStatusDetailsMapKey;
 import com.ec.application.data.UsageLocationDto;
 import com.ec.application.data.UsageLocationResponse;
 import com.ec.application.model.BOQUpload;
@@ -39,6 +44,7 @@ import com.ec.application.repository.InwardOutwardListRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.UsageAreaRepo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @Transactional
@@ -276,86 +282,134 @@ public class BOQService {
 			listboqBoqUploadResponses.add(bOQUploadResponse);
 		}
 
-		
+
 		public BOQStatusResponse getBoqStatusDetails(BOQStatusDataDto bOQStatusDataDto) {
 			log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 		BOQStatusResponse bOQStatusResponse=new BOQStatusResponse();
 		try
-		{
+		{	
 			List<BOQStatusDto> listBOQStatusResponse=new ArrayList<>();
-			List<Product> listOfProduct=productRepository.findAll();		
-			List<BOQUpload> boqUpload=bOQUploadRepository.findByBuildingTypeTypeId(bOQStatusDataDto.getBuildingTypeId());				
-			List<Object> listOfOutwardEntry=inwardOutwardListRepo.findByOutwardInventoryByBuildingTypeId(bOQStatusDataDto.getBuildingTypeId());
-
-			bOQStatusDataDto.getBuildingUnitIds().forEach(buildingUnitId ->{
-				
-				getOutwardAndBoqQuantity(bOQStatusDataDto.getBuildingTypeId(), buildingUnitId, listBOQStatusResponse,boqUpload,listOfProduct,listOfOutwardEntry);
-
+			List<Product> listOfProduct=productRepository.findAll();								
+			List<Object> listOfOutwardQuantity=bOQUploadRepository.findOutwardQuantityByBuildingTypeIdAndUsageLocationId(bOQStatusDataDto.getBuildingTypeId(),bOQStatusDataDto.getBuildingUnitIds());
+			List<Object> listOfboqDetails=bOQUploadRepository.findUsageAreaBoqQuantityOutwardQuantityByBuildingTypeIdAndUsageLocationId(bOQStatusDataDto.getBuildingTypeId(),bOQStatusDataDto.getBuildingUnitIds());
+			List<Object> listOfBoqUpload=bOQUploadRepository.findByBuildingTypeTypeIdAndUsageLocationLocationId(bOQStatusDataDto.getBuildingTypeId(), bOQStatusDataDto.getBuildingUnitIds());
+			
+			Map<Integer, Double> mapOutwardQuantity = getOutwardQuantty(listOfOutwardQuantity);	
+	    	Map<BOQStatusDetailsMapKey, List<BOQStatusDetailsDto>> mapOfBOQStatusDetails = getBoqStatusDetails(listOfboqDetails);
+			
+			Map<Long, String> mapProductName = listOfProduct.stream().collect(
+			Collectors.toMap(Product::getProductId, Product::getProductName));
+			
+			Map<Long, Category> mapCategory = listOfProduct.stream().collect(
+		    Collectors.toMap(Product::getProductId, Product::getCategory));
+						
+			getBoqStatus(listBOQStatusResponse, listOfBoqUpload, mapOutwardQuantity, mapOfBOQStatusDetails,mapProductName, mapCategory);
 			bOQStatusResponse.setBOQStatusDto(listBOQStatusResponse);
 			bOQStatusResponse.setMessage("Get BOQ Status details successfully");
-			});
-
 		}
 		catch (Exception e) {
 			bOQStatusResponse.setMessage("Error while retrieving the BOQ Status");
 		}
 		return bOQStatusResponse;
 	}
-		
-		private void getOutwardAndBoqQuantity(Long buildingTypeId, Long buildingUnitId,List<BOQStatusDto> listBOQStatusResponse, List<BOQUpload> boqUpload, List<Product> listOfProduct, List<Object> listOfOutwardEntry){
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		boqUpload.forEach(iterateBoqUpload->{
-			if(buildingUnitId.equals(iterateBoqUpload.getUsageLocation().getLoationId()))
-			{
-			BOQStatusDto boqStatusDto=new BOQStatusDto();		
-			double outwardQuantity=0.0;
-			long count=0;
-			for (Object objectData:listOfOutwardEntry) {
-				   Object[] obj= (Object[]) objectData;
+
+
+		private void getBoqStatus(List<BOQStatusDto> listBOQStatusResponse, List<Object> listOfBoqUpload,Map<Integer, Double> mapOutwardQuantity,Map<BOQStatusDetailsMapKey, List<BOQStatusDetailsDto>> mapOfBOQStatusDetails,
+				Map<Long, String> mapProductName, Map<Long, Category> mapCategory) {
+			listOfBoqUpload.forEach(iterateOfBoqUpload -> {				
+				BOQStatusDto boqStatusDto=new BOQStatusDto();	
+			    	
+				   Object[] obj= (Object[]) iterateOfBoqUpload;
 				     if(obj[1]!=null && obj[2]!=null){
-				    	 BigInteger bigIntegerBuildingUnit=(BigInteger)obj[2];
-				    	 Long buildingUnitID=bigIntegerBuildingUnit.longValue();
-				    	 BigInteger bigIntegerfinallocation=(BigInteger)obj[3];
-				    	 Long finallocationID=bigIntegerfinallocation.longValue();
-				    	 BigInteger bigIntegerproduct=(BigInteger)obj[4];
-				    	 Long productID=bigIntegerproduct.longValue();
+				    	Integer integerId=(Integer)obj[0];				    	 
+				    	 BigInteger bigIntegerUsageLocationId=(BigInteger)obj[2];				    	 
+				    	 Long usageLocationId=bigIntegerUsageLocationId.longValue();			    	 
+				    	 BigInteger bigIntegerProductId=(BigInteger)obj[4];				    	 
+				    	 Long productId=bigIntegerProductId.longValue();
+				    	 Double quantity= (Double) obj[5];				    	 
 				    	 
-				    	 if(finallocationID.equals(iterateBoqUpload.getLocation().getUsageAreaId()) && productID.equals(iterateBoqUpload.getProduct().getProductId()) && buildingUnitID.equals(iterateBoqUpload.getUsageLocation().getLoationId()))
+				    	 BOQStatusDetailsMapKey key = new BOQStatusDetailsMapKey();
+				    	 key.setUsageLocationId(String.valueOf(usageLocationId));
+				    	 key.setProductId(String.valueOf(productId));
+				    	 				    	 
+				    	 List<BOQStatusDetailsDto> listOfBoqStatusDetailsDto=mapOfBOQStatusDetails.get(key);
+				    	 
+				    	 boqStatusDto.setBoqDetails(listOfBoqStatusDetailsDto);				    	 
+				    	 boqStatusDto.setId(integerId);
+				    	 boqStatusDto.setInventory(mapProductName.get(productId));
+				    	 boqStatusDto.setCategory(mapCategory.get(productId).getCategoryName());
+				    	 boqStatusDto.setBoqQuantity(quantity);
+				    	 if(mapOutwardQuantity.get(integerId)!=null)
 				    	 {
-						     Double quantity= (Double) obj[5];
-						     outwardQuantity = outwardQuantity+quantity;
-						     count++;
-				    	 } 
+				    	 boqStatusDto.setOutwardQuantity(mapOutwardQuantity.get(integerId));				    	
+				    	 int status=(int) (mapOutwardQuantity.get(integerId)/quantity*100);
+				    	 boqStatusDto.setStatus(status);
+				    	 }
+				    	 
 				     }
-				     }
-			getBoqQuantity(iterateBoqUpload, boqStatusDto, outwardQuantity,listOfProduct,listBOQStatusResponse);
-			}
-		});		
+				     listBOQStatusResponse.add(boqStatusDto);				
+			});
 		}
 
 
-	private void getBoqQuantity(BOQUpload iterateBoqUpload,
-			BOQStatusDto boqStatusDto, double outwardQuantity, List<Product> listOfProduct, List<BOQStatusDto> listBOQStatusResponse) {
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-			int status=(int) (outwardQuantity/iterateBoqUpload.getQuantity()*100);
-			boqStatusDto.setBoqQuantity(iterateBoqUpload.getQuantity());
-			boqStatusDto.setStatus(status);
-			Map<Long, String> mapProductName = listOfProduct.stream().collect(
-			Collectors.toMap(Product::getProductId, Product::getProductName));
-			Map<Long, Category> mapCategory = listOfProduct.stream().collect(
-			        Collectors.toMap(Product::getProductId, Product::getCategory));
-					
-						boqStatusDto.setInventory(mapProductName.get(iterateBoqUpload.getProduct().getProductId()));
-						boqStatusDto.setCategory(mapCategory.get(iterateBoqUpload.getProduct().getProductId()).getCategoryName());
-						boqStatusDto.setFinalLocation(iterateBoqUpload.getLocation().getUsageAreaName());
-						boqStatusDto.setOutwardQuantity(outwardQuantity);
-						listBOQStatusResponse.add(boqStatusDto);	
-	}
-		
+		private Map<Integer, Double> getOutwardQuantty(List<Object> listOfOutwardQuantity) {
+			List<OutwardQuantityDtoForBoqStatus> listOfOutwardQuantityForBoqStatusDto = new ArrayList<>();
+					    for (Object objectData:listOfOutwardQuantity) {
+						   Object[] obj= (Object[]) objectData;					     	 
+						        OutwardQuantityDtoForBoqStatus outwardQuantityDtoForBoqStatus=new OutwardQuantityDtoForBoqStatus();
+						        Integer integerId=(Integer)obj[0];
+						        Double quantity= (Double) obj[1];
+						        outwardQuantityDtoForBoqStatus.setId(integerId);
+						        outwardQuantityDtoForBoqStatus.setOutwardQuantity(quantity);
+						        listOfOutwardQuantityForBoqStatusDto.add(outwardQuantityDtoForBoqStatus);			    	 
+					    }
+		    
+			Map<Integer,Double> mapOutwardQuantity= listOfOutwardQuantityForBoqStatusDto.stream().collect(
+			Collectors.toMap(OutwardQuantityDtoForBoqStatus::getId, OutwardQuantityDtoForBoqStatus::getOutwardQuantity));
+			return mapOutwardQuantity;
+		}
 
+
+		private Map<BOQStatusDetailsMapKey, List<BOQStatusDetailsDto>> getBoqStatusDetails(List<Object> listOfboqDetails) {
+			Map<BOQStatusDetailsMapKey,List<BOQStatusDetailsDto>> mapOfBOQStatusDetails= new HashMap<>();
+			List<BOQStatusDetailsDto> listOfBOQStatusDetailsDto=new ArrayList<>(); 
+			for (Object objectData:listOfboqDetails) {				
+			   Object[] obj= (Object[]) objectData;			   
+			   BOQStatusDetailsDto bOQStatusDetailsDto=new BOQStatusDetailsDto();
+			   
+			        Integer id=(Integer)obj[0];
+				    BigInteger bigIntegerProductId=(BigInteger)obj[2];				    	 
+			    	Long productId=bigIntegerProductId.longValue();
+			        Double outwardQuantity= (Double) obj[3];
+			        Double boqQuantity= (Double) obj[4];			       
+			        BigInteger bigIntegerUsageLocationId=(BigInteger)obj[5];				    	 
+				    Long usageLocationId=bigIntegerUsageLocationId.longValue();				    
+				    String finalLocationName=(String)obj[6];					
+				    BOQStatusDetailsMapKey bOQStatusDetailsMapKey=new BOQStatusDetailsMapKey();
+				    bOQStatusDetailsMapKey.setUsageLocationId(String.valueOf(usageLocationId));
+				    bOQStatusDetailsMapKey.setProductId(String.valueOf(productId));
+				    bOQStatusDetailsDto.setBOQStatusDetailsMapKey(bOQStatusDetailsMapKey);
+			        bOQStatusDetailsDto.setFinalLocation(finalLocationName);
+			        bOQStatusDetailsDto.setBoqQuantity(boqQuantity);
+			        bOQStatusDetailsDto.setOutwardQuantity(outwardQuantity);
+			        listOfBOQStatusDetailsDto.add(bOQStatusDetailsDto);		
+			        			        
+			        List<BOQStatusDetailsDto> filterlistOfBOQStatusDetailsDto=new ArrayList<>();
+			        for(BOQStatusDetailsDto iterateOfBOQStatusDetailsDto: listOfBOQStatusDetailsDto){
+			        	 	
+			        	if(iterateOfBOQStatusDetailsDto.getBOQStatusDetailsMapKey().getUsageLocationId().equals(String.valueOf(usageLocationId)) && iterateOfBOQStatusDetailsDto.getBOQStatusDetailsMapKey().getProductId().equals(String.valueOf(productId))){
+			        		filterlistOfBOQStatusDetailsDto.add(iterateOfBOQStatusDetailsDto);
+			        	}
+			        }
+			         mapOfBOQStatusDetails.put(bOQStatusDetailsMapKey, filterlistOfBOQStatusDetailsDto);		   
+			}
+			return mapOfBOQStatusDetails;
+		}
+		
+		
 		public UsageLocationResponse getBuildingUnitByBuildingType(long buildingTypeId) {
 			log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		UsageLocationResponse usageLocationResponse=new UsageLocationResponse();
+		    UsageLocationResponse usageLocationResponse=new UsageLocationResponse();
 
 			List<UsageLocationDto> listusageLocationDtos=new ArrayList<>();
 			List<UsageLocation> usageLocation=usageLocationRepository.findByBuildingTypeTypeId(buildingTypeId);
@@ -373,9 +427,7 @@ public class BOQService {
 			
 		return usageLocationResponse;
 	}
-		
-		
-		
+				
 		
 		public BOQReportResponse getBoqReport() {
 			log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());

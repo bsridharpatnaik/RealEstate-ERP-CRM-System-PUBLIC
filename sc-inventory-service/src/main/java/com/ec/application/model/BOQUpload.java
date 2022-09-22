@@ -115,6 +115,12 @@ public class BOQUpload extends ReusableFields {
 	{
 		return serialVersionUID;
 	}
+	@Override
+	public String toString() {
+		return "BOQUpload [id=" + id + ", sno=" + sno + ", buildingType=" + buildingType + ", product=" + product
+				+ ", location=" + location + ", usageLocation=" + usageLocation + ", quantity=" + quantity
+				+ ", changes=" + changes + "]";
+	}
 	
 	
 }
