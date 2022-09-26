@@ -288,13 +288,15 @@ public class BOQService {
 		BOQStatusResponse bOQStatusResponse=new BOQStatusResponse();
 		try
 		{	
+			if(!bOQStatusDataDto.getBuildingUnitIds().isEmpty())
+			{
 			List<BOQStatusDto> listBOQStatusResponse=new ArrayList<>();
 			List<Product> listOfProduct=productRepository.findAll();								
 			List<Object> listOfOutwardQuantity=bOQUploadRepository.findOutwardQuantityByBuildingTypeIdAndUsageLocationId(bOQStatusDataDto.getBuildingTypeId(),bOQStatusDataDto.getBuildingUnitIds());
 			List<Object> listOfboqDetails=bOQUploadRepository.findUsageAreaBoqQuantityOutwardQuantityByBuildingTypeIdAndUsageLocationId(bOQStatusDataDto.getBuildingTypeId(),bOQStatusDataDto.getBuildingUnitIds());
 			List<Object> listOfBoqUpload=bOQUploadRepository.findByBuildingTypeTypeIdAndUsageLocationLocationId(bOQStatusDataDto.getBuildingTypeId(), bOQStatusDataDto.getBuildingUnitIds());
 			
-			Map<Integer, Double> mapOutwardQuantity = getOutwardQuantty(listOfOutwardQuantity);	
+			Map<BOQStatusDetailsMapKey, Double> mapOutwardQuantity = getOutwardQuantty(listOfOutwardQuantity);	
 	    	Map<BOQStatusDetailsMapKey, List<BOQStatusDetailsDto>> mapOfBOQStatusDetails = getBoqStatusDetails(listOfboqDetails);
 			
 			Map<Long, String> mapProductName = listOfProduct.stream().collect(
@@ -306,7 +308,8 @@ public class BOQService {
 			getBoqStatus(listBOQStatusResponse, listOfBoqUpload, mapOutwardQuantity, mapOfBOQStatusDetails,mapProductName, mapCategory);
 			bOQStatusResponse.setBOQStatusDto(listBOQStatusResponse);
 			bOQStatusResponse.setMessage("Get BOQ Status details successfully");
-		}
+			}
+			}
 		catch (Exception e) {
 			bOQStatusResponse.setMessage("Error while retrieving the BOQ Status");
 		}
@@ -314,19 +317,20 @@ public class BOQService {
 	}
 
 
-		private void getBoqStatus(List<BOQStatusDto> listBOQStatusResponse, List<Object> listOfBoqUpload,Map<Integer, Double> mapOutwardQuantity,Map<BOQStatusDetailsMapKey, List<BOQStatusDetailsDto>> mapOfBOQStatusDetails,
+		private void getBoqStatus(List<BOQStatusDto> listBOQStatusResponse, List<Object> listOfBoqUpload,Map<BOQStatusDetailsMapKey, Double> mapOutwardQuantity,Map<BOQStatusDetailsMapKey, List<BOQStatusDetailsDto>> mapOfBOQStatusDetails,
 				Map<Long, String> mapProductName, Map<Long, Category> mapCategory) {
-			listOfBoqUpload.forEach(iterateOfBoqUpload -> {				
+			int count=0;
+			for (Object iterateOfBoqUpload:listOfBoqUpload)
+			{
 				BOQStatusDto boqStatusDto=new BOQStatusDto();	
 			    	
 				   Object[] obj= (Object[]) iterateOfBoqUpload;
-				     if(obj[1]!=null && obj[2]!=null){
-				    	Integer integerId=(Integer)obj[0];				    	 
-				    	 BigInteger bigIntegerUsageLocationId=(BigInteger)obj[2];				    	 
+				     if(obj[0]!=null && obj[1]!=null){
+				    	 BigInteger bigIntegerUsageLocationId=(BigInteger)obj[1];				    	 
 				    	 Long usageLocationId=bigIntegerUsageLocationId.longValue();			    	 
-				    	 BigInteger bigIntegerProductId=(BigInteger)obj[4];				    	 
+				    	 BigInteger bigIntegerProductId=(BigInteger)obj[2];				    	 
 				    	 Long productId=bigIntegerProductId.longValue();
-				    	 Double quantity= (Double) obj[5];				    	 
+				    	 Double quantity= (Double) obj[3];				    	 
 				    	 
 				    	 BOQStatusDetailsMapKey key = new BOQStatusDetailsMapKey();
 				    	 key.setUsageLocationId(String.valueOf(usageLocationId));
@@ -334,38 +338,47 @@ public class BOQService {
 				    	 				    	 
 				    	 List<BOQStatusDetailsDto> listOfBoqStatusDetailsDto=mapOfBOQStatusDetails.get(key);
 				    	 
-				    	 boqStatusDto.setBoqDetails(listOfBoqStatusDetailsDto);				    	 
-				    	 boqStatusDto.setId(integerId);
+				    	 boqStatusDto.setBoqDetails(listOfBoqStatusDetailsDto);	
+				    	 count++;
+				    	 boqStatusDto.setId(count);
 				    	 boqStatusDto.setInventory(mapProductName.get(productId));
 				    	 boqStatusDto.setCategory(mapCategory.get(productId).getCategoryName());
 				    	 boqStatusDto.setBoqQuantity(quantity);
-				    	 if(mapOutwardQuantity.get(integerId)!=null)
+				    	 if(mapOutwardQuantity.get(key)!=null)
 				    	 {
-				    	 boqStatusDto.setOutwardQuantity(mapOutwardQuantity.get(integerId));				    	
-				    	 int status=(int) (mapOutwardQuantity.get(integerId)/quantity*100);
+				    	 boqStatusDto.setOutwardQuantity(mapOutwardQuantity.get(key));				    	
+				    	 int status=(int) (mapOutwardQuantity.get(key)/quantity*100);
 				    	 boqStatusDto.setStatus(status);
 				    	 }
 				    	 
 				     }
 				     listBOQStatusResponse.add(boqStatusDto);				
-			});
+			}
 		}
 
 
-		private Map<Integer, Double> getOutwardQuantty(List<Object> listOfOutwardQuantity) {
+		private Map<BOQStatusDetailsMapKey, Double> getOutwardQuantty(List<Object> listOfOutwardQuantity) {
 			List<OutwardQuantityDtoForBoqStatus> listOfOutwardQuantityForBoqStatusDto = new ArrayList<>();
+			Map<BOQStatusDetailsMapKey,Double> mapOutwardQuantity= new HashMap<>();
 					    for (Object objectData:listOfOutwardQuantity) {
 						   Object[] obj= (Object[]) objectData;					     	 
 						        OutwardQuantityDtoForBoqStatus outwardQuantityDtoForBoqStatus=new OutwardQuantityDtoForBoqStatus();
-						        Integer integerId=(Integer)obj[0];
-						        Double quantity= (Double) obj[1];
-						        outwardQuantityDtoForBoqStatus.setId(integerId);
+						        Double quantity= (Double) obj[0];
+						        BigInteger bigIntegerUsageLocationId=(BigInteger)obj[2];				    	 
+						    	Long usageLocationId=bigIntegerUsageLocationId.longValue();			    	 
+						    	BigInteger bigIntegerProductId=(BigInteger)obj[3];				    	 
+						    	Long productId=bigIntegerProductId.longValue();						        
+						        
+						        BOQStatusDetailsMapKey key = new BOQStatusDetailsMapKey();
+						    	key.setUsageLocationId(String.valueOf(usageLocationId));
+						    	key.setProductId(String.valueOf(productId));
 						        outwardQuantityDtoForBoqStatus.setOutwardQuantity(quantity);
-						        listOfOutwardQuantityForBoqStatusDto.add(outwardQuantityDtoForBoqStatus);			    	 
+						        outwardQuantityDtoForBoqStatus.setbOQStatusDetailsMapKey(key);
+						        listOfOutwardQuantityForBoqStatusDto.add(outwardQuantityDtoForBoqStatus);	
+						        
+						        mapOutwardQuantity.put(key, quantity);		   
 					    }
 		    
-			Map<Integer,Double> mapOutwardQuantity= listOfOutwardQuantityForBoqStatusDto.stream().collect(
-			Collectors.toMap(OutwardQuantityDtoForBoqStatus::getId, OutwardQuantityDtoForBoqStatus::getOutwardQuantity));
 			return mapOutwardQuantity;
 		}
 
@@ -378,13 +391,14 @@ public class BOQService {
 			   BOQStatusDetailsDto bOQStatusDetailsDto=new BOQStatusDetailsDto();
 			   
 			        Integer id=(Integer)obj[0];
-				    BigInteger bigIntegerProductId=(BigInteger)obj[2];				    	 
+				    BigInteger bigIntegerProductId=(BigInteger)obj[7];				    	 
 			    	Long productId=bigIntegerProductId.longValue();
-			        Double outwardQuantity= (Double) obj[3];
-			        Double boqQuantity= (Double) obj[4];			       
-			        BigInteger bigIntegerUsageLocationId=(BigInteger)obj[5];				    	 
+			    	
+			        Double outwardQuantity= (Double) obj[2];
+			        Double boqQuantity= (Double) obj[3];			       
+			        BigInteger bigIntegerUsageLocationId=(BigInteger)obj[4];				    	 
 				    Long usageLocationId=bigIntegerUsageLocationId.longValue();				    
-				    String finalLocationName=(String)obj[6];					
+				    String finalLocationName=(String)obj[5];					
 				    BOQStatusDetailsMapKey bOQStatusDetailsMapKey=new BOQStatusDetailsMapKey();
 				    bOQStatusDetailsMapKey.setUsageLocationId(String.valueOf(usageLocationId));
 				    bOQStatusDetailsMapKey.setProductId(String.valueOf(productId));

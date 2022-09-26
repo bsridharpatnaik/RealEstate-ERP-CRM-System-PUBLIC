@@ -6,24 +6,6 @@ public class BOQStatusDetailsMapKey {
 	private String usageLocationId;
 	private String productId;
 	
-//	public long getUsageLocationId() {
-//		return usageLocationId;
-//	}
-//	public void setUsageLocationId(long usageLocationId) {
-//		this.usageLocationId = usageLocationId;
-//	}
-	
-//	public long getProductId() {
-//		return productId;
-//	}
-//	public void setProductId(long productId) {
-//		this.productId = productId;
-//	}
-//	
-//	public BOQStatusDetailsMapKey(long usageLocationId, long productId) {
-//		this.usageLocationId = usageLocationId;
-//		this.productId = productId;
-//	}
 	@Override
 	public String toString() {
 		return "[usageLocationId=" + usageLocationId + ", productId=" + productId + "]";
