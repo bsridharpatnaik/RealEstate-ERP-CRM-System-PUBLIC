@@ -40,12 +40,12 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long>{
 	List<Object> findByBuildingTypeTypeId(long buildingTypeId);
 
 	//**********
-	@Query(value="select buildingTypeId,usageLocationId,productId,sum(quantity) from boqupload where buildingTypeId=?1 and usageLocationId in(?2) and is_deleted=false\r\n"
+	@Query(value="select buildingTypeId,usageLocationId,productId,sum(quantity) from BOQUpload where buildingTypeId=?1 and usageLocationId in(?2) and is_deleted=false\r\n"
 			+ "			 GROUP BY buildingTypeId, usageLocationId,productId" ,nativeQuery = true)
 	List<Object> findByBuildingTypeTypeIdAndUsageLocationLocationId(long buildingTypeId, List<Long> buildingUnitIds);
 
 	@Query(value="select sum(ioe.quantity) as outwardQuantity,bu.buildingTypeId, bu.usageLocationId,bu.productId\r\n"
-			+ "	 from boqupload bu, outward_inventory oi, outwardinventory_entry oe, inward_outward_entries ioe, usage_location ul\r\n"
+			+ "	 from BOQUpload bu, outward_inventory oi, outwardinventory_entry oe, inward_outward_entries ioe, Usage_Location ul\r\n"
 			+ "	 where\r\n"
 			+ "	 bu.locationId=oi.usageAreaId and \r\n"
 			+ "	 bu.usageLocationId = oi.locationId and\r\n"
@@ -60,10 +60,10 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long>{
 	List<Object> findOutwardQuantityByBuildingTypeIdAndUsageLocationId(long buildingTypeId, List<Long> buildingUnitIds);
 
 	@Query(value="select bu.id,ua.usageAreaId,0.0 as ioequantity,bu.quantity as boqQuantity,bu.usageLocationId,ua.usagearea_name,bu.buildingTypeId ,bu.productId\r\n"
-			+ " from boqupload bu,usage_area ua where bu.locationId=ua.usageAreaId and bu.buildingTypeId=?1 and bu.usageLocationId in (?2) and bu.is_deleted=false and bu.id NOT IN (\r\n"
+			+ " from BOQUpload bu,usage_area ua where bu.locationId=ua.usageAreaId and bu.buildingTypeId=?1 and bu.usageLocationId in (?2) and bu.is_deleted=false and bu.id NOT IN (\r\n"
 			+ "select bus.id from \r\n"
 			+ "(select bu.id,oi.usageAreaId,sum(ioe.quantity),bu.quantity as boqQuantity,bu.usageLocationId,ua.usagearea_name,bu.buildingTypeId,bu.productId,bu.locationId\r\n"
-			+ "	from boqupload bu, outward_inventory oi, outwardinventory_entry oe, inward_outward_entries ioe, usage_location ul,usage_area ua\r\n"
+			+ "	from BOQUpload bu, outward_inventory oi, outwardinventory_entry oe, inward_outward_entries ioe, Usage_Location ul,usage_area ua\r\n"
 			+ "	where\r\n"
 			+ " bu.locationId=oi.usageAreaId and \r\n"
 			+ "	bu.usageLocationId = oi.locationId and\r\n"
@@ -78,7 +78,7 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long>{
 			+ "	)\r\n"
 			+ "	UNION\r\n"
 			+ "select bu.id,oi.usageAreaId,sum(ioe.quantity) as ioequantity ,bu.quantity as boqQuantity,bu.usageLocationId,ua.usagearea_name, bu.buildingTypeId,bu.productId\r\n"
-			+ "	from boqupload bu, outward_inventory oi, outwardinventory_entry oe, inward_outward_entries ioe, usage_location ul,usage_area ua\r\n"
+			+ "	from BOQUpload bu, outward_inventory oi, outwardinventory_entry oe, inward_outward_entries ioe, Usage_Location ul,usage_area ua\r\n"
 			+ "	where\r\n"
 			+ " bu.locationId=oi.usageAreaId and \r\n"
 			+ "	bu.usageLocationId = oi.locationId and\r\n"
