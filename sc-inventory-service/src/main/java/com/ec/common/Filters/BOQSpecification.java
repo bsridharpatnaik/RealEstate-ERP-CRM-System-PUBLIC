@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.data.BOQReportDto;
+import com.ec.application.data.BOQStatusView;
 import com.ec.application.model.BOQStatus;
 import com.ec.application.model.BOQStatus_;
 import com.ec.application.model.BOQUpload;
@@ -47,34 +48,35 @@ public class BOQSpecification {
 	private static InwardOutwardListRepo inwardOutwardListRepo;
 	
 
-	static SpecificationsBuilder<BOQUpload> specbldr = new SpecificationsBuilder<BOQUpload>();
+	static SpecificationsBuilder<BOQStatusView> specbldr = new SpecificationsBuilder<BOQStatusView>();
 
-	public static Specification<BOQUpload> getSpecification(FilterDataList filterDataList) throws Exception
+	public static Specification<BOQStatusView> getSpecification(BOQStatusFilterDataList filterDataList) throws Exception
 	{
 		System.out.println("filterDataList "+filterDataList.getFilterData().toString());
-		List<String> buildingType = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "buildingType");
-		List<String> usageLocation = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "usageLocation");
-		List<String> products = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "product");
-		List<String> categories = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "category");
-		List<String> boqStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "status");
+		
+		List<String> buildingType = SpecificationsBuilder.fetchValueFromBoqFilterList(filterDataList, "buildingType");
+		List<String> buildingUnits = SpecificationsBuilder.fetchValueFromBoqFilterList(filterDataList, "buildingUnit");
+		
+		List<String> products = SpecificationsBuilder.fetchValueFromBoqFilterList(filterDataList, "product");
+		List<String> categories = SpecificationsBuilder.fetchValueFromBoqFilterList(filterDataList, "category");
+		List<String> boqStatus = SpecificationsBuilder.fetchValueFromBoqFilterList(filterDataList, "status");
 		
 		System.out.println("percentage "+boqStatus);
 		
-		Specification<BOQUpload> finalSpec = null;
+		Specification<BOQStatusView> finalSpec = null;
 		 
 		 if (products != null && products.size() > 0)
 	            finalSpec = specbldr.specAndCondition(finalSpec,
-	                    specbldr.whereChildFieldContains(BOQUploadView_.Product,Product_.PRODUCT_NAME ,products));
+	                    specbldr.whereDirectFieldContains(BOQUploadView_.Product ,products));
 
 	     if (categories != null && categories.size() > 0)
-	            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereGrandChildFieldContains(BOQUploadView_.Product,Product_.CATEGORY,Category_.CATEGORY_NAME, categories));
+	            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(BOQUploadView_.Category, categories));
 
 		 if (buildingType != null && buildingType.size() > 0)
-         finalSpec = specbldr.specAndCondition(finalSpec,
-                 specbldr.whereChildFieldContains(BOQUploadView_.Building_Type,BuildingType_.TYPE_NAME, buildingType));
+         finalSpec = specbldr.specAndCondition(finalSpec,specbldr.whereDirectFieldContains(BOQUploadView_.Building_Type, buildingType));
 
-       if (usageLocation != null && usageLocation.size() > 0)
-         finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereChildFieldContains(BOQUploadView_.UsageLocation,UsageLocation_.LOCATION_NAME,usageLocation));
+       if (buildingUnits != null && buildingUnits.size() > 0)
+         finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(BOQUploadView_.Building_Unit,buildingUnits));
       
        if (boqStatus != null && boqStatus.size() > 0)
 		{
@@ -148,6 +150,7 @@ public class BOQSpecification {
 //			}
 		
 		}
+       System.out.println("final "+finalSpec);
 		return finalSpec;
 	}
 	

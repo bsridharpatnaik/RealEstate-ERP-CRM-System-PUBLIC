@@ -31,6 +31,7 @@ import com.ec.application.data.BOQStatusResponse;
 import com.ec.application.data.BOQUploadValidationResponse;
 import com.ec.application.data.UsageLocationResponse;
 import com.ec.application.service.BOQService;
+import com.ec.common.Filters.BOQStatusFilterDataList;
 import com.ec.common.Filters.FilterDataList;
 
 @RestController
@@ -48,12 +49,12 @@ public class BOQController {
 		return bOQService.boqUpload(boqDto);
 	}
 	
-	@PostMapping("/get_boq_status_details")
-	@ResponseStatus(HttpStatus.OK)
-	public BOQStatusResponse getBoqStatusDetails(@RequestBody BOQStatusDataDto bOQStatusDataDto) 
-	{
-		return bOQService.getBoqStatusDetails(bOQStatusDataDto);
-	}
+	  @PostMapping("/get_boq_status_details")
+	  @ResponseStatus(HttpStatus.OK)
+	  public BOQInformation getBoqStatueInformation(@RequestBody BOQStatusFilterDataList filterDataList,
+	                                                        @PageableDefault(page = 0, size = 10) Pageable pageable) throws Exception {
+	      return bOQService.fetchBoqStatusInformation(filterDataList, pageable);
+	  }
 	
 	@GetMapping("/get_buildingunit_by_buildingtypeid/{buildingtypeid}")
 	@ResponseStatus(HttpStatus.OK)
@@ -67,6 +68,7 @@ public class BOQController {
 	{
 		return bOQService.getBoqReport();
 	}
+		
 	
 	@ExceptionHandler(
             {JpaSystemException.class})

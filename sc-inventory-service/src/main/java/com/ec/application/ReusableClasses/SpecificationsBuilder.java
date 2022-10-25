@@ -12,6 +12,7 @@ import com.ec.application.config.ProjectConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
+import com.ec.common.Filters.BOQStatusFilterDataList;
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
 
@@ -228,12 +229,12 @@ public class SpecificationsBuilder<T> {
         return returnValue;
     }
     
-//    public static String fetchValueFromFilterList2(FilterDataList filterDataList, String field) {
-//         String returnValue = null;
-//        for (FilterAttributeData filterData : filterDataList.getFilterData()) {
-//            if (filterData.getAttrName().equalsIgnoreCase(field))
-//                returnValue = filterData.getAttrValue();
-//        }
-//        return returnValue;
-//    }
+    public static List<String> fetchValueFromBoqFilterList(BOQStatusFilterDataList filterDataList, String field) {
+        List<String> returnValue = null;
+        for (FilterAttributeData filterData : filterDataList.getFilterData()) {
+            if (filterData.getAttrName().equalsIgnoreCase(field))
+                returnValue = filterData.getAttrValue();
+        }
+        return returnValue;
+    }
 }

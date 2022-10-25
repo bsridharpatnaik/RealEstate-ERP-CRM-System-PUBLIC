@@ -7,5 +7,6 @@ import lombok.Data;
 @Data
 public class BOQInformation {
 
-	 Page<BOQStatusDto> boqstatusDto;
+	 Page<BOQStatusDto> boqstatusDto; 
+	 
 }

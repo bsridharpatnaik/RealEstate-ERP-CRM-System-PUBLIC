@@ -111,8 +111,7 @@ public class StockService {
                                                                    Pageable pageable) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         int start = (int) pageable.getOffset();
-        int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size()
-                : (start + pageable.getPageSize());
+        int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size(): (start + pageable.getPageSize());
         stockInformationsList = sortStockInformationsList(stockInformationsList, pageable.getSort());
         return new PageImpl<StockInformationFromView>(stockInformationsList.subList(start, end), pageable,
                 stockInformationsList.size());
@@ -231,6 +230,7 @@ public class StockService {
             dto.setTotalQuantityInHand(si.getTotalQuantityInHand());
             return dto;
         } catch (Exception e) {
+        	System.out.println(e);
             return null;
         }
     }
