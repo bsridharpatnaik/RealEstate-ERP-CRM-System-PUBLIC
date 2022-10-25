@@ -550,7 +550,6 @@ ORDER BY t1.month desc,product_name,warehousename;
 
 ##### BOQ Status VIEW
 
-
 CREATE  VIEW `boq_status_view` AS
 SELECT   Row_number() OVER (ORDER BY `bu`.`id` ) AS `id`,
          `p`.`productid`                         AS `productid`,
