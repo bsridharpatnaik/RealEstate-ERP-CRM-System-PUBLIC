@@ -11,7 +11,7 @@ public final class ProjectConstants {
 	public static String flowIdForEGCityIOStats ="6116a3dba235fa07c157acc2";
 	public static String flowIdForSuncityIOStats = "611a95c00be47073e9289c17";
 	public static String egCityTenantName="egcity";
-	public static String sunCityTenantName="suncitynx";
+	//public static String sunCityTenantName="suncitynx";
 	public static String sunCityTenantName="newsuncitynx";
 	public static String IODeliveryListForEgcity="EgcityIOStats";
 	public static String IODeliveryListForSuncity="SuncityIOStats";

@@ -93,12 +93,12 @@ public class SMSService {
 
     private SMSExternalPayloadData formPayloadDataForSuncity(List<String> numbers) throws Exception {
         List<HashMap<String, String>> body = new ArrayList<HashMap<String, String>>();
-        InwardOutwardTrend scLatestTrend = fetchLatestDataFromTRend("suncitynx");
-        InwardOutwardTrend kpLatestTrend = fetchLatestDataFromTRend("kalpavrish");
-        InwardOutwardTrend rsLatestTrend = fetchLatestDataFromTRend("riddhisiddhi");
-        InwardOutwardTrend smcLatestTrend = fetchLatestDataFromTRend("smartcity");
-        InwardOutwardTrend bpLatestTrend = fetchLatestDataFromTRend("businesspark");
-        InwardOutwardTrend dtcLatestTrend = fetchLatestDataFromTRend("drgtrdcntr");
+        InwardOutwardTrend scLatestTrend = fetchLatestDataFromTRend("newsuncitynx");
+        InwardOutwardTrend kpLatestTrend = fetchLatestDataFromTRend("newkalpavrish");
+        InwardOutwardTrend rsLatestTrend = fetchLatestDataFromTRend("newriddhisiddhi");
+        InwardOutwardTrend smcLatestTrend = fetchLatestDataFromTRend("newsmartcity");
+        InwardOutwardTrend bpLatestTrend = fetchLatestDataFromTRend("newbusinesspark");
+        InwardOutwardTrend dtcLatestTrend = fetchLatestDataFromTRend("newdrgtrdcntr");
 
         for (String number : numbers) {
             HashMap<String, String> childBody = new HashMap<>();
