@@ -270,7 +270,7 @@ public class MachineryOnRentService {
     private void exitIfNotAuthorized(MachineryOnRent mor, CreateMORentData morData, APICallTypeForAuthorization action)
             throws Exception {
         if (action.equals(APICallTypeForAuthorization.Update)) {
-            Long daysDifference = ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date());
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date());
             Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
