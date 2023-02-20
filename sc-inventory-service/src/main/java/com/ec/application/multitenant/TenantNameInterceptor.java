@@ -22,6 +22,10 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 	
 	@Value("${schemas.list}")
 	private String schemasList;
+
+    @Value("${spring.profiles.active}")
+    private String profile;
+
 	private Gson gson = new Gson();
 	
     @Override
@@ -43,8 +47,15 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return false;
         }
-        ThreadLocalStorage.setTenantName(tenantName);
+        ThreadLocalStorage.setTenantName(appendNewForNewSuncity(tenantName));
         return true;
+    }
+
+    private String appendNewForNewSuncity(String tenantName) {
+        if(profile.contains("sc-") && profile.contains("new")){
+            tenantName = "new" + tenantName;
+        }
+        return tenantName;
     }
 
     @Override
