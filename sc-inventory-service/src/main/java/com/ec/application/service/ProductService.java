@@ -7,6 +7,7 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import com.ec.application.config.ProjectConstants;
+import com.ec.application.repository.InventoryMonthPriceMappingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,9 @@ public class ProductService {
 
     @Autowired
     InventoryNotificationService inService;
+
+    @Autowired
+    InventoryMonthPriceMappingRepository inventoryMonthPriceMappingRepository;
 
     Logger log = LoggerFactory.getLogger(ProductService.class);
 
@@ -167,6 +171,7 @@ public class ProductService {
         } else if (!checkBeforeDeleteService.isProductUsed(id)) {
             inService.deleteNotificationForProduct(id);
             productRepo.softDeleteById(id);
+
         } else
             throw new Exception("Cannot Delete. Product already in use");
     }

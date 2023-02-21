@@ -17,23 +17,22 @@ import com.ec.application.model.Machinery;
 import com.ec.application.model.MachineryOnRent;
 
 @Repository
-public interface MachineryRepo extends BaseRepository<Machinery, Long>
-{
+public interface MachineryRepo extends BaseRepository<Machinery, Long> {
 
-	@Lock(LockModeType.PESSIMISTIC_WRITE)
-	Machinery save(Machinery entity);
-	
-	boolean existsByMachineryName(String machineryName);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Machinery save(Machinery entity);
 
-	ArrayList<Machinery> findBymachineryName(String machineryName);
+    boolean existsByMachineryName(String machineryName);
 
-	@Query(value="SELECT m from Machinery m where machineryName LIKE %:name%")
-	ArrayList<Machinery> findByPartialName(@Param("name") String name);
+    ArrayList<Machinery> findBymachineryName(String machineryName);
 
-	@Query(value="SELECT machineryId as id,machineryName as name from Machinery m order by name")
-	List<IdNameProjections> findIdAndNames();
-	
-	@Query(value="SELECT machineryName from Machinery m order by machineryName")
-	List<String> getNames();
-	
+    @Query(value = "SELECT m from Machinery m where machineryName LIKE %:name%")
+    ArrayList<Machinery> findByPartialName(@Param("name") String name);
+
+    @Query(value = "SELECT machineryId as id,machineryName as name from Machinery m order by name")
+    List<IdNameProjections> findIdAndNames();
+
+    @Query(value = "SELECT machineryName from Machinery m order by machineryName")
+    List<String> getNames();
+
 }
