@@ -44,7 +44,7 @@ public class InventoryMonthPriceMappingService {
     }
 
     private Date stringToDate(String date) throws ParseException {
-        Date newDate = new SimpleDateFormat("YYYY-MM").parse(date);
+        Date newDate = new SimpleDateFormat("yyyy/MM").parse(date);
         return newDate;
     }
 

@@ -588,3 +588,22 @@ GROUP BY `bu`.`buildingtypeid`,
          `p`.`product_name`,
          `cg`.`category_name`,
          `p`.`productid`;
+
+ -- Inventory Missing Pricing
+ CREATE OR REPLACE VIEW MissingInventoryPricingByMonth AS
+ SELECT DISTINCT
+ 	row_number()
+            over (
+              ORDER BY c.category_name,p.product_name, DATE_FORMAT(oi.date,'%Y-%m')) as id,
+ 	c.category_name as categoryName,
+ 	ioe.productId as productId,
+     p.product_name productName,
+ 	DATE_FORMAT(oi.date,'%Y-%m') AS date
+ FROM outward_inventory oi
+ 	INNER JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid
+     INNER JOIN inward_outward_entries ioe ON ioe.entryid = oie.entryid
+     INNER JOIN Product p on p.productId = ioe.productId
+     INNER JOIN Category c ON c.categoryId=p.categoryId
+ 	LEFT JOIN InventoryMonthPriceMapping imp ON imp.productId = ioe.productId AND DATE_FORMAT(imp.date,'%yyyy-%mm') != DATE_FORMAT(oi.date,'%yyyy-%mm')
+     WHERE oi.is_deleted=0 AND ioe.is_deleted=0
+     ORDER BY c.category_name,p.product_name, DATE_FORMAT(oi.date,'%Y-%m');
