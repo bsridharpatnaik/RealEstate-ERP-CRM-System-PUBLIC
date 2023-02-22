@@ -23,7 +23,7 @@ public class MissingInventoryPricingController {
     MissingInventoryPricingService missingInventoryPricingService;
 
     @GetMapping("/dropdown")
-    public NameAndProjectionDataForDropDown getDropdownValues(){
+    public NameAndProjectionDataForDropDown getDropdownValues() {
         return missingInventoryPricingService.getDropDownValues();
     }
 

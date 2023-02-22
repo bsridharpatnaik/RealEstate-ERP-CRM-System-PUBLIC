@@ -607,3 +607,28 @@ GROUP BY `bu`.`buildingtypeid`,
  	LEFT JOIN InventoryMonthPriceMapping imp ON imp.productId = ioe.productId AND DATE_FORMAT(imp.date,'%yyyy-%mm') != DATE_FORMAT(oi.date,'%yyyy-%mm')
      WHERE oi.is_deleted=0 AND ioe.is_deleted=0
      ORDER BY c.category_name,p.product_name, DATE_FORMAT(oi.date,'%Y-%m');
+
+
+   -- InventoryMonthUsageInformation
+   CREATE OR REPLACE view InventoryMonthUsageInformation AS
+   SELECT t.*,imp.price,TRUNCATE((t.totalQuantity * imp.price),2) as totalPrice  FROM
+   (
+   SELECT
+   		oi.locationId,
+           ul.location_name as locationName,
+           c.categoryId,
+           c.category_name as categoryName,
+           ioe.productId,
+           p.product_name as productName,
+           DATE_FORMAT(oi.date,'%y-%m') as ym,
+           TRUNCATE(SUM(ioe.quantity),2) as totalQuantity
+   	FROM outward_inventory oi
+   	INNER JOIN outwardinventory_entry oie on oi.outwardid=oie.outwardid
+       INNER JOIN inward_outward_entries ioe on ioe.entryid = oie.entryId
+       INNER JOIN Usage_Location ul on ul.locationId = oi.locationId
+       INNER JOIN Product p on p.productId = ioe.productId
+       INNER JOIN Category c on c.categoryId = p.categoryId
+   WHERE oi.is_deleted = 0 AND ioe.is_deleted = 0
+   GROUP BY oi.locationId, ul.location_name, c.categoryId, c.category_name, ioe.productId, p.product_name,DATE_FORMAT(oi.date,'%y-%m')
+   ) as t
+   LEFT JOIN InventoryMonthPriceMapping imp on DATE_FORMAT(imp.date,'%y-%m') = t.ym AND imp.productId=t.productId AND imp.is_deleted=0;
