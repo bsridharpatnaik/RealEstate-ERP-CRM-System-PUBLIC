@@ -611,9 +611,15 @@ GROUP BY `bu`.`buildingtypeid`,
 
    -- InventoryMonthUsageInformation
    CREATE OR REPLACE view InventoryMonthUsageInformation AS
-   SELECT t.*,imp.price,TRUNCATE((t.totalQuantity * imp.price),2) as totalPrice  FROM
+   SELECT
+
+   t.*,imp.price,TRUNCATE((t.totalQuantity * imp.price),2) as totalPrice  FROM
    (
    SELECT
+   DISTINCT
+   	row_number()
+              over (
+                ORDER BY oi.locationId, ul.location_name, c.categoryId, c.category_name, ioe.productId, p.product_name,DATE_FORMAT(oi.date,'%y-%m')) as id,
    		oi.locationId,
            ul.location_name as locationName,
            c.categoryId,
