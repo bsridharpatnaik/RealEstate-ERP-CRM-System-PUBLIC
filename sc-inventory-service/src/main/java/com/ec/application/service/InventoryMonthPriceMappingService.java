@@ -2,12 +2,20 @@ package com.ec.application.service;
 
 import com.ec.application.data.IMPPCreateDTO;
 import com.ec.application.data.IMPPDeleteDTO;
+import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.model.InventoryMonthPriceMapping;
+import com.ec.application.model.MissingInventoryPricing;
 import com.ec.application.repository.InventoryMonthPriceMappingRepository;
 import com.ec.application.repository.ProductRepo;
+import com.ec.common.Filters.FilterDataList;
+import com.ec.common.Filters.InventoryMonthPriceMappingSpecification;
+import com.ec.common.Filters.MissingInventoryPricingSpecifications;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -26,6 +34,8 @@ public class InventoryMonthPriceMappingService {
     @Autowired
     private ProductRepo productRepo;
 
+    @Autowired
+    PopulateDropdownService populateDropdownService;
     Logger log = LoggerFactory.getLogger(InventoryMonthPriceMappingService.class);
 
     public InventoryMonthPriceMapping createInventoryMonthPriceMapping(IMPPCreateDTO ipData) throws Exception {
@@ -72,5 +82,17 @@ public class InventoryMonthPriceMappingService {
             throw new Exception("Product not found with id !");
         if (ipData.getPrice() < 0)
             throw new Exception("Price cannot be negative!");
+    }
+
+    public Page<InventoryMonthPriceMapping> findAllInventoryMonthPriceMapping(FilterDataList filterDataList, Pageable pageable) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        Specification<InventoryMonthPriceMapping> spec = InventoryMonthPriceMappingSpecification.getSpecification(filterDataList);
+        if (spec != null)
+            return inventoryMonthPriceMappingRepository.findAll(spec, pageable);
+        return inventoryMonthPriceMappingRepository.findAll(pageable);
+    }
+
+    public NameAndProjectionDataForDropDown getDropDownValues() {
+        return populateDropdownService.fetchData("inventoryPricing");
     }
 }
