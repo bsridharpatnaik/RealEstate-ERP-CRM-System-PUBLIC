@@ -2,6 +2,7 @@ package com.ec.application.service;
 
 import com.ec.application.data.InventoryLocationUsageDTO;
 import com.ec.application.data.InventoryUsagePayload;
+import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.model.InventoryMonthPriceMapping;
 import com.ec.application.model.InventoryMonthUsageInformation;
 import com.ec.application.repository.InventoryMonthUsageInformationRepo;
@@ -28,6 +29,9 @@ public class InventoryMonthUsageInformationService {
     @Autowired
     MissingInventoryPricingRepo missingInventoryPricingRepo;
 
+    @Autowired
+    PopulateDropdownService populateDropdown;
+
     Logger log = LoggerFactory.getLogger(InventoryMonthUsageInformationService.class);
 
     public List<InventoryLocationUsageDTO> fetchMonthlyUsageInformation(InventoryUsagePayload payload, Pageable pageable) throws Exception {
@@ -52,5 +56,9 @@ public class InventoryMonthUsageInformationService {
 
     public List<String> findDatesByLocation(Long locationId) {
         return inventoryMonthUsageInformationRep.findDatesByLocation(locationId);
+    }
+
+    public NameAndProjectionDataForDropDown getDropdown() {
+        return populateDropdown.fetchData("PricingReport");
     }
 }

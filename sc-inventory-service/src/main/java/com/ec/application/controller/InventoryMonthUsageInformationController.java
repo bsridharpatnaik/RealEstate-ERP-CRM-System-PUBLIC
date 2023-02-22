@@ -3,6 +3,7 @@ package com.ec.application.controller;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.InventoryLocationUsageDTO;
 import com.ec.application.data.InventoryUsagePayload;
+import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.service.InventoryMonthUsageInformationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,12 @@ public class InventoryMonthUsageInformationController {
     @ResponseStatus(HttpStatus.OK)
     public List<String> findDatesByLocation(@PathVariable Long locationId) {
         return imiService.findDatesByLocation(locationId);
+    }
+
+    @GetMapping("/dropdown")
+    @ResponseStatus(HttpStatus.OK)
+    public NameAndProjectionDataForDropDown findLocationDropdown() {
+        return imiService.getDropdown();
     }
 
     @ExceptionHandler({JpaSystemException.class})

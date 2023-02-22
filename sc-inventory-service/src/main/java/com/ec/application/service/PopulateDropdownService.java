@@ -96,6 +96,9 @@ public class PopulateDropdownService {
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
                 morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
                 break;
+            case "PricingReport":
+                morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
+                break;
         }
         return morDropdownDataList;
     }
