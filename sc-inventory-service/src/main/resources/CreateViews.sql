@@ -591,25 +591,28 @@ GROUP BY `bu`.`buildingtypeid`,
 
  -- Inventory Missing Pricing
  CREATE OR REPLACE VIEW MissingInventoryPricingByMonth AS
-  SELECT row_number()
-             over () as id,s.*
-  FROM
-  (
-  SELECT
-  DISTINCT
-     	c.category_name as categoryName,
- 		ioe.productId as productId,
- 		p.product_name productName,
-         DATE_FORMAT(oi.date,'%Y-%m') AS date
-  FROM outward_inventory oi
- 	 INNER JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid
-      INNER JOIN inward_outward_entries ioe ON ioe.entryid = oie.entryid
-      INNER JOIN Product p on p.productId = ioe.productId
-      INNER JOIN Category c ON c.categoryId=p.categoryId
- 	 LEFT JOIN InventoryMonthPriceMapping imp ON imp.productId = ioe.productId AND imp.is_deleted=0
-      WHERE oi.is_deleted=0 AND ioe.is_deleted=0 AND imp.date IS NULL
- ORDER BY c.category_name, ioe.productId, p.product_name, DATE_FORMAT(oi.date,'%Y-%m')
-  ) as s;
+   SELECT row_number()
+              over () as id,s.*
+   FROM
+   (
+ 	SELECT oi.*
+    FROM
+ 	(
+ 	  SELECT
+ 	  DISTINCT
+ 			c.category_name as categoryName,
+ 			ioe.productId as productId,
+ 			p.product_name productName,
+ 			DATE_FORMAT(oi.date,'%Y-%m') AS date
+ 	  FROM outward_inventory oi
+ 		 INNER JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid
+ 		  INNER JOIN inward_outward_entries ioe ON ioe.entryid = oie.entryid
+ 		  INNER JOIN Product p on p.productId = ioe.productId
+ 		  INNER JOIN Category c ON c.categoryId=p.categoryId
+ 	 ) as oi LEFT JOIN InventoryMonthPriceMapping imp ON imp.productId = oi.productId AND DATE_FORMAT(imp.date,'%Y-%m') = oi.date AND imp.is_deleted=0
+      WHERE imp.date IS NULL
+      ORDER BY oi.categoryName, oi.productId, oi.productName, oi.date
+   ) s;
 
 
    -- InventoryMonthUsageInformation
