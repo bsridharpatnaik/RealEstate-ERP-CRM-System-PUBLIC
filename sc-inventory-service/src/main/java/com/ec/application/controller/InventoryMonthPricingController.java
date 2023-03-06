@@ -39,7 +39,8 @@ public class InventoryMonthPricingController {
         return inventoryMonthPriceMappingService.createInventoryMonthPriceMapping(imppCreateDTO);
     }
 
-    @DeleteMapping(value = "/delete")
+    @PostMapping(value = "/delete")
+    @ResponseStatus(HttpStatus.OK)
     @CheckAuthority
     public ResponseEntity<?> deleteInwardInventoryById(@RequestBody IMPPDeleteDTO imppDeleteDTO) throws Exception {
         inventoryMonthPriceMappingService.deleteInventoryMonthPriceMapping(imppDeleteDTO);
