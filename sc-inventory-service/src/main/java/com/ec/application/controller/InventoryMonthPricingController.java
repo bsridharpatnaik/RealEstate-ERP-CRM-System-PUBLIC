@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.data.ExistingInventoryPricingDTO;
 import com.ec.application.data.IMPPCreateDTO;
 import com.ec.application.data.IMPPDeleteDTO;
 import com.ec.application.data.NameAndProjectionDataForDropDown;
@@ -47,7 +48,7 @@ public class InventoryMonthPricingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public Page<InventoryMonthPriceMapping> findAllInventoryMonthPriceMapping(@RequestBody FilterDataList filterDataList, @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+    public Page<ExistingInventoryPricingDTO> findAllInventoryMonthPriceMapping(@RequestBody FilterDataList filterDataList, @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         return inventoryMonthPriceMappingService.findAllInventoryMonthPriceMapping(filterDataList, pageable);
     }
 

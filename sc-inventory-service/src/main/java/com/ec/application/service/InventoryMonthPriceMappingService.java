@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import com.ec.application.data.ExistingInventoryPricingDTO;
 import com.ec.application.data.IMPPCreateDTO;
 import com.ec.application.data.IMPPDeleteDTO;
 import com.ec.application.data.NameAndProjectionDataForDropDown;
@@ -84,12 +85,29 @@ public class InventoryMonthPriceMappingService {
             throw new Exception("Price cannot be negative!");
     }
 
-    public Page<InventoryMonthPriceMapping> findAllInventoryMonthPriceMapping(FilterDataList filterDataList, Pageable pageable) {
+    public Page<ExistingInventoryPricingDTO> findAllInventoryMonthPriceMapping(FilterDataList filterDataList, Pageable pageable) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        Page<ExistingInventoryPricingDTO> transformedPage = null;
+        Page<InventoryMonthPriceMapping> data = null;
         Specification<InventoryMonthPriceMapping> spec = InventoryMonthPriceMappingSpecification.getSpecification(filterDataList);
         if (spec != null)
-            return inventoryMonthPriceMappingRepository.findAll(spec, pageable);
-        return inventoryMonthPriceMappingRepository.findAll(pageable);
+            data = inventoryMonthPriceMappingRepository.findAll(spec, pageable);
+        else
+            data = inventoryMonthPriceMappingRepository.findAll(pageable);
+
+        transformedPage = data.map(this::ModelToDto);
+        return transformedPage;
+    }
+
+    private ExistingInventoryPricingDTO ModelToDto(InventoryMonthPriceMapping entity) {
+        ExistingInventoryPricingDTO dto = new ExistingInventoryPricingDTO();
+        dto.setPrice(entity.getPrice());
+        dto.setCategoryName(entity.getProduct().getCategory().getCategoryName());
+        dto.setId(entity.getId().toString());
+        dto.setProductId(entity.getProduct().getProductId());
+        dto.setProductName(entity.getProduct().getProductName());
+        dto.setDate(entity.getDate().toString());
+        return dto;
     }
 
     public NameAndProjectionDataForDropDown getDropDownValues() {
