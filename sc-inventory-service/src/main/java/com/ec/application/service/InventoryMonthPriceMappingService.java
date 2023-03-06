@@ -20,6 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.text.DateFormat;
 import java.util.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -100,13 +101,15 @@ public class InventoryMonthPriceMappingService {
     }
 
     private ExistingInventoryPricingDTO ModelToDto(InventoryMonthPriceMapping entity) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM");
         ExistingInventoryPricingDTO dto = new ExistingInventoryPricingDTO();
         dto.setPrice(entity.getPrice());
         dto.setCategoryName(entity.getProduct().getCategory().getCategoryName());
         dto.setId(entity.getId().toString());
         dto.setProductId(entity.getProduct().getProductId());
         dto.setProductName(entity.getProduct().getProductName());
-        dto.setDate(entity.getDate().toString());
+        dto.setDate(dateFormat.format(entity.getDate()));
+        dto.setMeasurementUnit(entity.getProduct().getMeasurementUnit());
         return dto;
     }
 

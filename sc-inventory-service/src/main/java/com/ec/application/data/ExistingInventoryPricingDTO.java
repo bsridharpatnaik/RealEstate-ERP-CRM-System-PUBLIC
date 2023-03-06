@@ -15,6 +15,7 @@ public class ExistingInventoryPricingDTO {
     String categoryName;
     Long productId;
     String productName;
+    String measurementUnit;
     String date;
     Double price;
 }
