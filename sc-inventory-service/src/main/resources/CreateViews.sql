@@ -610,6 +610,7 @@ GROUP BY `bu`.`buildingtypeid`,
   		  INNER JOIN inward_outward_entries ioe ON ioe.entryid = oie.entryid
   		  INNER JOIN Product p on p.productId = ioe.productId
   		  INNER JOIN Category c ON c.categoryId=p.categoryId
+  		  WHERE oi.is_deleted=0
   	 ) as oi LEFT JOIN InventoryMonthPriceMapping imp ON imp.productId = oi.productId AND DATE_FORMAT(imp.date,'%Y-%m') = oi.date AND imp.is_deleted=0
        WHERE imp.date IS NULL
        ORDER BY oi.categoryName, oi.productId, oi.productName, oi.date
