@@ -550,44 +550,68 @@ ORDER BY t1.month desc,product_name,warehousename;
 
 ##### BOQ Status VIEW
 
-CREATE  VIEW `boq_status_view` AS
-SELECT   Row_number() OVER (ORDER BY `bu`.`id` ) AS `id`,
-         `p`.`productid`                         AS `productid`,
-         sum(`bu`.`quantity`)                    AS `boqquantity`,
-         `bu`.`buildingtypeid`                   AS `buildingtypeid`,
-         `bu`.`usagelocationid`                  AS `usagelocationid`,
-         `ul`.`location_name`                    AS `buildingunit`,
-         `bt`.`building_type`                    AS `buildingtype`,
-         `p`.`product_name`                      AS `product`,
-         `cg`.`category_name`                    AS `category`,
-         0.0                                     AS `outwardquantity`,
-         0                                       AS `status`
-FROM     ((((`BOQUpload` `bu`
-JOIN     `Usage_Location` `ul`)
-JOIN     `Product` `p`)
-JOIN     `Category` `cg`)
-JOIN     `building_type` `bt`)
-WHERE    ((
-                           `bu`.`usagelocationid` = `ul`.`locationid`)
-         AND      (
-                           `p`.`productid` = `bu`.`productid`)
-         AND      (
-                           `cg`.`categoryid` = `p`.`categoryid`)
-         AND      (
-                           `bu`.`buildingtypeid` = `bt`.`typeid`)
-         AND      (
-                           `bu`.`buildingtypeid` = `bu`.`buildingtypeid`)
-         AND      (
-                           `bu`.`usagelocationid` = `bu`.`usagelocationid`)
-         AND      (
-                           `bu`.`is_deleted` = false))
-GROUP BY `bu`.`buildingtypeid`,
-         `bu`.`usagelocationid`,
-         `bu`.`productid`,
-         `ul`.`location_name`,
-         `p`.`product_name`,
-         `cg`.`category_name`,
-         `p`.`productid`;
+CREATE OR REPLACE VIEW boq_status_view AS
+select
+  row_number() OVER (
+    ORDER BY
+      `bu`.`id`
+  ) AS `id`,
+  `p`.`productId` AS `productId`,
+  sum(`bu`.`quantity`) AS `boqQuantity`,
+  `bu`.`buildingTypeId` AS `buildingTypeId`,
+  `bu`.`usageLocationId` AS `usageLocationId`,
+  `ul`.`location_name` AS `buildingUnit`,
+  `bt`.`building_type` AS `buildingType`,
+  `p`.`product_name` AS `product`,
+  `cg`.`category_name` AS `category`,
+  0.0 AS `outwardQuantity`,
+  0 AS `status`
+from
+  (
+    (
+      (
+        (
+          `BOQUpload` `bu`
+          join `Usage_Location` `ul`
+        )
+        join `Product` `p`
+      )
+      join `Category` `cg`
+    )
+    join `building_type` `bt`
+  )
+where
+  (
+    (
+      `bu`.`usageLocationId` = `ul`.`locationId`
+    )
+    and (
+      `p`.`productId` = `bu`.`productId`
+    )
+    and (
+      `cg`.`categoryId` = `p`.`categoryId`
+    )
+    and (
+      `bu`.`buildingTypeId` = `bt`.`typeId`
+    )
+    and (
+      `bu`.`buildingTypeId` = `bu`.`buildingTypeId`
+    )
+    and (
+      `bu`.`usageLocationId` = `bu`.`usageLocationId`
+    )
+    and (`bu`.`is_deleted` = false)
+  )
+group by
+	`bu`.`id`,
+  `bu`.`buildingTypeId`,
+  `bu`.`usageLocationId`,
+  `bu`.`productId`,
+  `ul`.`location_name`,
+  `p`.`product_name`,
+  `cg`.`category_name`,
+  `p`.`productId`;
+
 
  -- Inventory Missing Pricing
  CREATE OR REPLACE VIEW MissingInventoryPricingByMonth AS

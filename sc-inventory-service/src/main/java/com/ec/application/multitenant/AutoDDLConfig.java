@@ -47,7 +47,7 @@ public class AutoDDLConfig
 			System.out.println("####" + tenant);
 			tenant = tenant.trim();
 			DriverManagerDataSource dataSource = new DriverManagerDataSource();
-			dataSource.setDriverClassName("com.mysql.jdbc.Driver"); // Change here to MySql Driver
+			dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver"); // Change here to MySql Driver
 			dataSource.setSchema(tenant);
 			dataSource.setUrl("jdbc:mysql://" + dbHost + "/" + tenant
 					+ "?autoReconnect=true&characterEncoding=utf8&useSSL=false&useTimezone=true&serverTimezone=Asia/Kolkata&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true");
