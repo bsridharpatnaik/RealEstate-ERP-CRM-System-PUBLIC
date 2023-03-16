@@ -70,6 +70,10 @@ public class BOQController {
         return bOQService.getBoqReport();
     }
 
+    @GetMapping("/getboqquantity")
+    public Double getBoqQuantityForOutward(@RequestParam Long productId, @RequestParam Long locationId, @RequestParam Long finalLocationId) {
+        return bOQService.getBoqQuantityForOutward(productId, locationId, finalLocationId);
+    }
 
     @ExceptionHandler(
             {JpaSystemException.class})
