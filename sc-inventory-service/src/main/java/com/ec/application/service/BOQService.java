@@ -563,7 +563,7 @@ public class BOQService {
         buildingUnitIDsForQuery.add(bOQStatusView.getUsageLocationId());
 
     }
-    
+
     public Pageable getUpdatedPageable(Pageable pageable) {
         for (Sort.Order order : pageable.getSort()) {
             switch (order.getProperty()) {

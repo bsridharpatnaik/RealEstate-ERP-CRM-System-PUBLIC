@@ -14,71 +14,73 @@ import lombok.Data;
 
 @Data
 @JsonPropertyOrder(
-{ "Inward ID", "Date", "MRN/GRN", "Warehouse", "Supplier", "Purchase Order Date", "Purchase Order NO","Bill No","Category", "Inventory",
-		"Quantity", "Measurement Unit", "Closing Stock", "Vehicle No" })
-public class InwardInventoryExportDAO2
-{
-	@JsonProperty("Inward ID")
-	Long inwardid;
+        {"Inward ID", "Date", "MRN/GRN", "Warehouse", "Supplier", "Purchase Order Date", "Purchase Order NO", "Bill No", "Category", "Inventory",
+                "Quantity", "Measurement Unit", "Closing Stock", "Vehicle No"})
+public class InwardInventoryExportDAO2 {
+    @JsonProperty("Inward ID")
+    Long inwardid;
 
-	@JsonProperty("Date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date date;
+    @JsonProperty("Date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date date;
 
-	@JsonProperty("MRN/GRN")
-	String mrngrn;
+    @JsonProperty("MRN/GRN")
+    String mrngrn;
 
-	@JsonProperty("Category")
-	String category;
+    @JsonProperty("Category")
+    String category;
 
-	@JsonProperty("Warehouse")
-	String warehouse;
+    @JsonProperty("Warehouse")
+    String warehouse;
 
-	@JsonProperty("Supplier")
-	String supplier;
+    @JsonProperty("Supplier")
+    String supplier;
 
-	@JsonProperty("Purchase Order Date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date purchaseOrderDate;
+    @JsonProperty("Purchase Order Date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date purchaseOrderDate;
 
-	@JsonProperty("Purchase Order NO")
-	String purchaseOrderNO;
+    @JsonProperty("Purchase Order NO")
+    String purchaseOrderNO;
 
-	@JsonProperty("Bill No")
-	String billNo;
+    @JsonProperty("Bill No")
+    String billNo;
 
-	@JsonProperty("Inventory")
-	String inventory;
+    @JsonProperty("Inventory")
+    String inventory;
 
-	@JsonProperty("Quantity")
-	Double quantity;
+    @JsonProperty("Quantity")
+    Double quantity;
 
-	@JsonProperty("Measurement Unit")
-	String measurementUnit;
+    @JsonProperty("Measurement Unit")
+    String measurementUnit;
 
-	@JsonProperty("Closing Stock")
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double closingStock;
+    @JsonProperty("Closing Stock")
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    Double closingStock;
 
-	@JsonProperty("Vehicle No")
-	String vehicleNo;
+    @JsonProperty("Vehicle No")
+    String vehicleNo;
 
-	public InwardInventoryExportDAO2(InwardInventory ii, InwardOutwardList iol)
-	{
-		super();
-		this.inwardid = ii.getInwardid();
-		this.date = ii.getDate();
-		this.vehicleNo = ii.getVehicleNo() == null ? "" : ii.getVehicleNo();
-		this.quantity = iol.getQuantity();
-		this.closingStock = iol.getClosingStock();
-		this.measurementUnit = iol.getProduct().getMeasurementUnit();
-		this.warehouse = ii.getWarehouse().getWarehouseName();
-		this.supplier = ii.getSupplier().getName();
-		this.mrngrn = ii.getOurSlipNo() == null ? "" : ii.getOurSlipNo();
-		this.purchaseOrderDate = ii.getPurchaseOrderdate() == null ? null : ii.getPurchaseOrderdate();
-		this.purchaseOrderNO = ii.getPurchaseOrder() == null ? "" : ii.getPurchaseOrder();
-		this.inventory = iol.getProduct().getProductName();
-		this.category=iol.getProduct().getCategory().getCategoryName();
-		this.billNo = ii.getBillNo()==null?"":ii.getBillNo();
-	}
+    @JsonProperty("Additional Info")
+    String additionalInfo;
+
+    public InwardInventoryExportDAO2(InwardInventory ii, InwardOutwardList iol) {
+        super();
+        this.inwardid = ii.getInwardid();
+        this.date = ii.getDate();
+        this.vehicleNo = ii.getVehicleNo() == null ? "" : ii.getVehicleNo();
+        this.quantity = iol.getQuantity();
+        this.closingStock = iol.getClosingStock();
+        this.measurementUnit = iol.getProduct().getMeasurementUnit();
+        this.warehouse = ii.getWarehouse().getWarehouseName();
+        this.supplier = ii.getSupplier().getName();
+        this.mrngrn = ii.getOurSlipNo() == null ? "" : ii.getOurSlipNo();
+        this.purchaseOrderDate = ii.getPurchaseOrderdate() == null ? null : ii.getPurchaseOrderdate();
+        this.purchaseOrderNO = ii.getPurchaseOrder() == null ? "" : ii.getPurchaseOrder();
+        this.inventory = iol.getProduct().getProductName();
+        this.category = iol.getProduct().getCategory().getCategoryName();
+        this.billNo = ii.getBillNo() == null ? "" : ii.getBillNo();
+        this.additionalInfo = ii.getAdditionalInfo() == null ? "" : ii.getAdditionalInfo();
+    }
 }
