@@ -1,4 +1,4 @@
-package com.ec.application.data;
+package com.ec.application.model;
 
 import java.util.List;
 

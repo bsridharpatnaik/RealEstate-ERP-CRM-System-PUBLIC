@@ -670,3 +670,83 @@ group by
    GROUP BY oi.locationId, ul.location_name, c.categoryId, c.category_name, ioe.productId, p.product_name,DATE_FORMAT(oi.date,'%y-%m')
    ) as t
    LEFT JOIN InventoryMonthPriceMapping imp on DATE_FORMAT(imp.date,'%y-%m') = t.ym AND imp.productId=t.productId AND imp.is_deleted=0;
+
+
+   #### BOQ New view
+CREATE OR REPLACE VIEW boq_status_view2 AS
+SELECT
+		row_number() OVER () as id,
+		o.buildingTypeId,
+        o.building_type,
+        o.location_id,
+        o.location_name,
+        o.productId,
+        o.product_name,
+        o.category_name,
+		ROUND(SUM(o.boq_quantity),2) as total_boq_quantity,
+		ROUND(SUM(o.outward_quanity),2) as total_outward_quantity,
+        JSON_ARRAYAGG(JSON_OBJECT(
+			'finalLocationId',o.final_location_id,
+            'finalLocationName',o.final_location_name,
+            'total_boq_quantity',o.boq_quantity,
+            'total_outward_quantity',o.outward_quanity,
+            'status',o.status
+            )) as detailed,
+		ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) as status,
+        CASE
+			WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <= 10 THEN '0-10 %'
+			WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 10 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=20 THEN '10-20 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 20 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=30 THEN '20-30 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 30 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=40 THEN '30-40 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 40 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=50 THEN '40-50 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 50 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=60 THEN '50-60 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 60 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=70 THEN '60-70 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 70 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=80 THEN '70-80 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 80 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=90 THEN '80-90 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 90 AND ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) <=100 THEN '90-100 %'
+            WHEN ROUND(((SUM(o.outward_quanity) - SUM(o.boq_quantity))/SUM(o.boq_quantity) * 100),2) > 100 THEN 'above 100 %'
+		END as statusBucket
+FROM
+(
+	SELECT
+		t.buildingTypeId,
+        btype.building_type,
+        t.usageLocationId as location_id,
+        ul.location_name,
+        t.locationId as final_location_id,
+        ua.usagearea_name as final_location_name,
+        t.productId,
+        p.product_name,
+        c.category_name,
+        t.boq_quantity,
+        CASE WHEN t.outward_quanity IS NULL THEN 0 ELSE t.outward_quanity END as outward_quanity,
+        CASE WHEN t.outward_quanity IS NULL THEN 0 ELSE ROUND((t.outward_quanity-t.boq_quantity)/t.boq_quantity*100,2) END AS status
+    FROM
+    (
+		SELECT bu.buildingTypeId,bu.usageLocationId, bu.locationId, bu.productId, bu.boq_quantity, oi.outward_quanity FROM
+		(
+			SELECT bu.buildingTypeId, bu.usageLocationId, bu.locationId, bu.productId, quantity as boq_quantity FROM BOQUpload bu
+			WHERE bu.is_deleted=0
+		) bu LEFT JOIN
+		(
+			SELECT oi.locationId as usageLocationId, oi.usageAreaId as locationId,ioe.productId, SUM(quantity) as outward_quanity FROM outward_inventory oi
+				INNER JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid
+				INNER JOIN inward_outward_entries ioe ON ioe.entryid = oie.entryId
+			WHERE oi.is_deleted=0
+			GROUP BY oi.locationId, oi.usageAreaId,ioe.productId
+		) oi ON bu.usageLocationId=oi.usageLocationId AND bu.locationId=oi.locationId AND bu.productId=oi.productId
+	) t
+	INNER JOIN building_type btype ON t.buildingTypeId = btype.typeId
+    INNER JOIN Usage_Location ul ON t.usageLocationId = ul.locationId
+    INNER JOIN usage_area ua ON ua.usageAreaId = t.locationId
+    INNER JOIN Product p ON p.productId = t.productId
+    INNER JOIN Category c ON c.categoryId = p.categoryId
+    ORDER BY btype.building_type,ul.location_name, c.category_name, p.product_name
+) o
+GROUP BY o.buildingTypeId,
+        o.building_type,
+        o.location_id,
+        o.location_name,
+        o.productId,
+        o.product_name,
+        o.category_name

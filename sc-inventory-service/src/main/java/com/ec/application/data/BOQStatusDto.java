@@ -6,7 +6,6 @@ import lombok.Data;
 
 @Data
 public class BOQStatusDto {
-
 	private long id;
 	private String category;
 	private String product;
@@ -14,8 +13,5 @@ public class BOQStatusDto {
 	private double outwardQuantity;
 	private String buildingUnit;
 	private List<BOQStatusDetailsDto> boqDetails;
-	private int status;
-	
-	
-	
+	private Double status;
 }

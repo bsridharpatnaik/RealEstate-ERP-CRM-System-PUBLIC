@@ -2,8 +2,6 @@ package com.ec.application.model;
 
 import javax.persistence.metamodel.SingularAttribute;
 
-import com.ec.application.data.BOQStatusView;
-
 public abstract class BOQUploadView_ {
 
 	public static volatile SingularAttribute<BOQStatusView, String> buildingType;

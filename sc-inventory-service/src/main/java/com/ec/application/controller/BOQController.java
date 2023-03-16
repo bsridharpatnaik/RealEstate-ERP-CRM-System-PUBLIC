@@ -3,7 +3,9 @@ package com.ec.application.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -38,39 +40,38 @@ import com.ec.common.Filters.FilterDataList;
 @RequestMapping("/boqupload")
 public class BOQController {
 
-	@Autowired
-	BOQService bOQService;	
-	
-	@PostMapping("/boq_upload")
-	@ResponseStatus(HttpStatus.CREATED)
-	@CheckAuthority
-	public List<BOQUploadValidationResponse> boqUpload(@RequestBody BOQDto boqDto) throws Exception
-	{
-		return bOQService.boqUpload(boqDto);
-	}
-	
-	  @PostMapping("/get_boq_status_details")
-	  @ResponseStatus(HttpStatus.OK)
-	  public BOQInformation getBoqStatueInformation(@RequestBody BOQStatusFilterDataList filterDataList,
-	                                                        @PageableDefault(page = 0, size = 10) Pageable pageable) throws Exception {
-	      return bOQService.fetchBoqStatusInformation(filterDataList, pageable);
-	  }
-	
-	@GetMapping("/get_buildingunit_by_buildingtypeid/{buildingtypeid}")
-	@ResponseStatus(HttpStatus.OK)
-	public UsageLocationResponse getBuildingUnitByBuildingType(@PathVariable("buildingtypeid") long buildingtypeid) 
-	{
-		return bOQService.getBuildingUnitByBuildingType(buildingtypeid);
-	}
-	
-	@GetMapping("/get_boq_report")
-	public BOQReportResponse getBoqReport() 
-	{
-		return bOQService.getBoqReport();
-	}
-		
-	
-	@ExceptionHandler(
+    @Autowired
+    BOQService bOQService;
+
+    @PostMapping("/boq_upload")
+    @ResponseStatus(HttpStatus.CREATED)
+    @CheckAuthority
+    public List<BOQUploadValidationResponse> boqUpload(@RequestBody BOQDto boqDto) throws Exception {
+        return bOQService.boqUpload(boqDto);
+    }
+
+    @PostMapping("/get_boq_status_details")
+    @ResponseStatus(HttpStatus.OK)
+    public BOQInformation getBoqStatueInformation(@RequestBody BOQStatusFilterDataList filterDataList,
+                                                  @PageableDefault(page = 0, size = 10) Pageable pageable) throws Exception {
+        Pageable newPageable = bOQService.getUpdatedPageable(pageable);
+
+        return bOQService.fetchBoqStatusInformationv2(filterDataList, newPageable);
+    }
+
+    @GetMapping("/get_buildingunit_by_buildingtypeid/{buildingtypeid}")
+    @ResponseStatus(HttpStatus.OK)
+    public UsageLocationResponse getBuildingUnitByBuildingType(@PathVariable("buildingtypeid") long buildingtypeid) {
+        return bOQService.getBuildingUnitByBuildingType(buildingtypeid);
+    }
+
+    @GetMapping("/get_boq_report")
+    public BOQReportResponse getBoqReport() {
+        return bOQService.getBoqReport();
+    }
+
+
+    @ExceptionHandler(
             {JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
@@ -78,5 +79,5 @@ public class BOQController {
                 "Something went wrong while handling data. Contact Administrator.");
         return apiError;
     }
- 
+
 }

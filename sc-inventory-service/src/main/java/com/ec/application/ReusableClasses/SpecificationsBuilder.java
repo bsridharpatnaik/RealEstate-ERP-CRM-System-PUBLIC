@@ -78,7 +78,7 @@ public class SpecificationsBuilder<T> {
         finalSpec = specAndCondition(internalSpec1, internalSpec2);
         return finalSpec;
     }
-    
+
 //    public Specification<T> whereDirectFieldDoubleBetween(String key, Double lowerLimit, Double upperLimit)
 //            throws ParseException {
 //
@@ -228,7 +228,7 @@ public class SpecificationsBuilder<T> {
         }
         return returnValue;
     }
-    
+
     public static List<String> fetchValueFromBoqFilterList(BOQStatusFilterDataList filterDataList, String field) {
         List<String> returnValue = null;
         for (FilterAttributeData filterData : filterDataList.getFilterData()) {

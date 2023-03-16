@@ -1,39 +1,16 @@
 package com.ec.common.Filters;
 
-import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.data.BOQReportDto;
-import com.ec.application.data.BOQStatusView;
-import com.ec.application.model.BOQStatus;
-import com.ec.application.model.BOQStatus_;
-import com.ec.application.model.BOQUpload;
+import com.ec.application.model.BOQStatusView;
 import com.ec.application.model.BOQUploadView_;
-import com.ec.application.model.BuildingType;
-import com.ec.application.model.BuildingType_;
-import com.ec.application.model.Category_;
-import com.ec.application.model.InwardInventory_;
-import com.ec.application.model.Product;
-import com.ec.application.model.Product_;
-import com.ec.application.model.StockInformationFromView;
-import com.ec.application.model.StockInformationFromView_;
-import com.ec.application.model.UsageLocation;
-import com.ec.application.model.UsageLocation_;
-import com.ec.application.model.Warehouse_;
 import com.ec.application.repository.BOQUploadRepository;
-import com.ec.application.repository.BuildingTypeRepo;
-import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.InwardOutwardListRepo;
-import com.ec.application.repository.LocationRepo;
-import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
-import com.ec.application.repository.UsageAreaRepo;
 
 public class BOQSpecification {
 
