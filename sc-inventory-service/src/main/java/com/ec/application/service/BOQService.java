@@ -584,12 +584,10 @@ public class BOQService {
         return pageable;
     }
 
-    public Double getBoqQuantityForOutward(Long productId, Long locationId, Long finalLocationId) {
+    public String getBoqQuantityForOutward(Long productId, Long locationId, Long finalLocationId) {
         List<BOQUpload> list = bOQUploadRepository.getboqQuantityForOutward(productId, locationId, finalLocationId);
-
-        if(list.size()==0)
-            return (double) 0;
-
-        return null;
+        if (list.size() == 0)
+            return "NA";
+        return String.valueOf(list.get(0).getQuantity());
     }
 }

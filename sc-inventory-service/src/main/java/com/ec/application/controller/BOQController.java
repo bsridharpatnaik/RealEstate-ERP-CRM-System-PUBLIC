@@ -71,7 +71,7 @@ public class BOQController {
     }
 
     @GetMapping("/getboqquantity")
-    public Double getBoqQuantityForOutward(@RequestParam Long productId, @RequestParam Long locationId, @RequestParam Long finalLocationId) {
+    public String getBoqQuantityForOutward(@RequestParam Long productId, @RequestParam Long locationId, @RequestParam Long finalLocationId) {
         return bOQService.getBoqQuantityForOutward(productId, locationId, finalLocationId);
     }
 
