@@ -2,14 +2,7 @@ package com.ec.application.service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -585,9 +578,21 @@ public class BOQService {
     }
 
     public String getBoqQuantityForOutward(Long productId, Long locationId, Long finalLocationId) {
-        List<BOQUpload> list = bOQUploadRepository.getboqQuantityForOutward(productId, locationId, finalLocationId);
-        if (list.size() == 0)
+        List<BOQStatusViewV2> boqlist = boqStatusViewRepositoryV2.getboqStatusForOutward(locationId, productId);
+
+        if (boqlist.size() == 0)
             return "NA";
-        return String.valueOf(list.get(0).getQuantity());
+
+        try {
+            List<BOQDetailedJsonView> list = new ObjectMapper().readValue(boqlist.get(0).getDetailed(), new TypeReference<List<BOQDetailedJsonView>>() {
+            });
+            Optional<BOQDetailedJsonView> data = list
+                    .stream()
+                    .filter(e -> Objects.equals(e.getFinalLocationId(), finalLocationId))
+                    .findFirst();
+            return data.map(boqDetailedJsonView -> String.valueOf(boqDetailedJsonView.getTotal_boq_quantity() - boqDetailedJsonView.getTotal_outward_quantity())).orElse("NA");
+        } catch (IOException io) {
+            return "NA";
+        }
     }
 }
