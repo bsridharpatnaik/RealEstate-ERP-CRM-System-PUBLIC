@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public enum ActivityTypeEnum
 {
 
-	Call, Meeting, Property_Visit, Deal_Close, Reminder, Payment, Message, Email, Deal_Lost;
+	Call, Meeting, Property_Visit, Deal_Close, Reminder, Payment, Message, Email, Deal_Lost, Deal_Cancelled;
 
 	public ActivityTypeEnum setFromString(String name)
 	{

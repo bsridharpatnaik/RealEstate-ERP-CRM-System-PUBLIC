@@ -33,6 +33,7 @@ public class StarategyEgcity implements IStrategy {
             allowedActivities.add(ActivityTypeEnum.Reminder);
             allowedActivities.add(ActivityTypeEnum.Email);
             allowedActivities.add(ActivityTypeEnum.Message);
+            allowedActivities.add(ActivityTypeEnum.Deal_Cancelled);
             return allowedActivities;
         } else
         {
