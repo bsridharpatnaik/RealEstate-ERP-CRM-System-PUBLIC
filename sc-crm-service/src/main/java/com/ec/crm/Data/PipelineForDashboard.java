@@ -9,4 +9,5 @@ public class PipelineForDashboard {
     MapForPipelineAndActivities dealClosed;
     MapForPipelineAndActivities dealLost;
     MapForPipelineAndActivities dealLostReasons;
+    MapForPipelineAndActivities dealCancelled;
 }

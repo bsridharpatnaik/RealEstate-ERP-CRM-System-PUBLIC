@@ -62,13 +62,14 @@ public class DashboardServiceV2 {
         data = lRepo.getActivity(fromdate, nextDate);
 
         log.info("Fetching Stats");
-        ExecutorService executors = Executors.newFixedThreadPool(5);
-        CyclicBarrier barrier = new CyclicBarrier(5);
+        ExecutorService executors = Executors.newFixedThreadPool(6);
+        CyclicBarrier barrier = new CyclicBarrier(6);
         executors.submit(new SetActivitiesCreated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetLeadGenerated(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealClosed(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealLost(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         executors.submit(new SetDealLostReasons(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
+        executors.submit(new SetDealCancelled(barrier, dashboardPipelineReturnData, data, userIdNameMap, currentInstance));
         boolean flag = false;
         Date returnDateTime = new Date();
         while (flag == false) {

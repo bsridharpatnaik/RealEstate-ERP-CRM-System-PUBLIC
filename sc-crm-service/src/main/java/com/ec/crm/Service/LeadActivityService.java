@@ -2,10 +2,7 @@ package com.ec.crm.Service;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -245,7 +242,8 @@ public class LeadActivityService {
                 deletePostSalesRecordsBeforeConversion(leadActivity.getLead().getLeadId());
             if (leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
                 leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.getLead()));
-
+            else
+                leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
         }
         laRepo.save(leadActivity);
         if (isDealClosed)
@@ -289,13 +287,13 @@ public class LeadActivityService {
                 laRepo.save(leadActivity);
             }
         } else if ((status.equals(LeadStatusEnum.Visit_Completed) || status.equals(LeadStatusEnum.Visit_Scheduled))
-                && moveToNegotiation != null && moveToNegotiation != false) {
+                && moveToNegotiation != null && moveToNegotiation) {
             leadActivity.getLead().setStatus(LeadStatusEnum.Negotiation);
             leadActivity.setClosingComment(leadActivity.getClosingComment() + ". Moved Lead Stage to Negotiation.");
             laRepo.save(leadActivity);
         }
     }
-    
+
 
     private LeadStatusEnum fetchPreviousStatusFromHistory(Lead lead) throws Exception {
         log.info("Fetching previous status for lead -" + lead.getLeadId());
@@ -307,7 +305,7 @@ public class LeadActivityService {
 
         for (int ctr = leadHistory.size() - 1; ctr >= 0; ctr--) {
             Lead currentLead = leadHistory.get(ctr);
-            if (currentLead.getStatus().equals(lead.getStatus()) == false) {
+            if (!currentLead.getStatus().equals(lead.getStatus())) {
                 previousStatus = currentLead.getStatus();
                 log.info("Previous status found for lead - " + currentLead.getLeadId() + " - " + previousStatus);
                 break;
@@ -336,12 +334,14 @@ public class LeadActivityService {
                 || lead.getStatus().equals(LeadStatusEnum.Visit_Completed)) {
             if (payload.getActivityType().equals(ActivityTypeEnum.Deal_Close))
                 throw new Exception("Deal close activity not allowed for lead in stage " + lead.getStatus());
-        } else if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed)
-                || lead.getStatus().equals(LeadStatusEnum.Deal_Lost)) {
-            if (!payload.getActivityType().equals(ActivityTypeEnum.Meeting)
-                    && !payload.getActivityType().equals(ActivityTypeEnum.Call))
-                throw new Exception(
-                        "Only activity of type Meeting can be created if a lead is in stage " + lead.getStatus());
+        }
+        else if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed) || lead.getStatus().equals(LeadStatusEnum.Deal_Lost)) {
+            if (lead.getStatus().equals(LeadStatusEnum.Deal_Lost) && !payload.getActivityType().equals(ActivityTypeEnum.Meeting) && !payload.getActivityType().equals(ActivityTypeEnum.Call))
+                throw new Exception("Only activity of type Meeting/Call can be created if a lead is in stage " + lead.getStatus());
+
+            if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed) && !payload.getActivityType().equals(ActivityTypeEnum.Deal_Cancelled) && !payload.getActivityType().equals(ActivityTypeEnum.Meeting) && !payload.getActivityType().equals(ActivityTypeEnum.Call))
+                throw new Exception("Only activity of type Deal_Cancelled/Meeting/Call can be created if a lead is in stage " + lead.getStatus());
+
         }
 
         if (laRepo.getOpenCallActivities(lead.getLeadId()) > 0)
@@ -362,10 +362,10 @@ public class LeadActivityService {
 
         log.info("Invoked setFields");
         if (currentUserId == null)
-            throw new Exception("Unable to fetch currect user. Please logout-login and try again!");
+            throw new Exception("Unable to fetch correct user. Please logout-login and try again!");
         leadActivity.setActivityDateTime(payload.getActivityDateTime());
         leadActivity.setActivityType(payload.getActivityType());
-        leadActivity.setCreatorId(creatorType == "user" ? currentUserId : 404);
+        leadActivity.setCreatorId(Objects.equals(creatorType, "user") ? currentUserId : 404);
         leadActivity.setDescription(payload.getDescription());
         leadActivity.setTitle(payload.getTitle());
         leadActivity.setTags(payload.getTags());
@@ -374,7 +374,7 @@ public class LeadActivityService {
         leadActivity.setDealLostReason(payload.getDealLostReason() == null ? null : payload.getDealLostReason());
 
         if (payload.getActivityType().equals(ActivityTypeEnum.Deal_Lost)
-                || payload.getActivityType().equals(ActivityTypeEnum.Deal_Close))
+                || payload.getActivityType().equals(ActivityTypeEnum.Deal_Close) || payload.getActivityType().equals(ActivityTypeEnum.Deal_Cancelled))
             leadActivity.setIsOpen(false);
         else
             leadActivity.setIsOpen(true);
@@ -384,15 +384,15 @@ public class LeadActivityService {
         log.info("Validating LeadId from payload - " + payload.getLeadId());
         String errorMessage = "";
         if (payload.getActivityType() == null)
-            errorMessage = errorMessage == "" ? " Activity Type, " : errorMessage + " Activity Type, ";
+            errorMessage = Objects.equals(errorMessage, "") ? " Activity Type, " : errorMessage + " Activity Type, ";
         if (payload.getLeadId() == null)
-            errorMessage = errorMessage == "" ? " Lead ID, " : errorMessage + " Lead ID, ";
+            errorMessage = errorMessage.equals("") ? " Lead ID, " : errorMessage + " Lead ID, ";
         if (payload.getActivityDateTime() == null)
-            errorMessage = errorMessage == "" ? " Activity Date & Time, " : errorMessage + " Activity Date & Time, ";
-        if (payload.getTitle() == null || payload.getTitle() == "")
-            errorMessage = errorMessage == "" ? " Title, " : errorMessage + " Title, ";
+            errorMessage = errorMessage.equals("") ? " Activity Date & Time, " : errorMessage + " Activity Date & Time, ";
+        if (payload.getTitle() == null || Objects.equals(payload.getTitle(), ""))
+            errorMessage = errorMessage.equals("") ? " Title, " : errorMessage + " Title, ";
 
-        if (errorMessage != "")
+        if (!errorMessage.equals(""))
             throw new Exception("Fields Missing - " + errorMessage);
 
         Optional<Lead> leadOpt = lRepo.findById(payload.getLeadId());
