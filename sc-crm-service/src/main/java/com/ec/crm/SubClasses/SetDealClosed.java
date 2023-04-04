@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.ec.crm.Data.PipelineForDashboard;
 import com.ec.crm.Enums.InstanceEnum;
+import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +43,12 @@ public class SetDealClosed implements Runnable {
         log.info("Fetching stats for SetDealClosed");
         if (instance.equals(InstanceEnum.egcity))
             dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
-                    data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").count(),
-                    data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").collect(Collectors.groupingBy(c ->
+                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).count(),
+                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).collect(Collectors.groupingBy(c ->
                     {
                         try {
                             return idNameMap.get(c.getLead().getAsigneeId());
-                        } catch (Exception e) { 
+                        } catch (Exception e) {
                             log.error(e.getMessage());
                             e.printStackTrace();
                         }
@@ -55,12 +56,12 @@ public class SetDealClosed implements Runnable {
                     }, Collectors.counting()))));
         if (instance.equals(InstanceEnum.suncity))
             dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
-                    data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").count(),
-                    data.stream().filter(c -> c.getActivityType().name() == "Deal_Close").collect(Collectors.groupingBy(c ->
+                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).count(),
+                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).collect(Collectors.groupingBy(c ->
                     {
                         try {
-                            return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
-                        } catch (Exception e) { 
+                            return c.getLead().getPropertyType() == null ? PropertyTypeEnum.Empty : c.getLead().getPropertyType();
+                        } catch (Exception e) {
                             log.error(e.getMessage());
                             e.printStackTrace();
                         }
@@ -69,11 +70,7 @@ public class SetDealClosed implements Runnable {
         log.info("Completed stats for SetDealClosed");
         try {
             barrier.await();
-        } catch (InterruptedException e) {
-            
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
-            
+        } catch (InterruptedException | BrokenBarrierException e) {
             e.printStackTrace();
         }
     }
