@@ -1,13 +1,14 @@
 
 package com.ec.crm.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.crm.Data.ChartsInformation;
+import com.ec.crm.Data.LeadActivityCreate;
+import com.ec.crm.Enums.ActivityTypeEnum;
+import com.ec.crm.Enums.DealLostReasonEnum;
+import com.ec.crm.Model.Lead;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,9 @@ public class DealStructureService {
 
     @Autowired
     PaymentReceivedService paymentReceivedService;
+
+    @Autowired
+    LeadActivityService laService;
 
     public List<IdNameProjections> getPropertyTypes() {
         return ptRepo.findIdAndNames();
@@ -169,12 +173,19 @@ public class DealStructureService {
 
     @Transactional
     public void deleteDealStructure(Long id) throws Exception {
+        exitIfConditionExistsBeforeDelete(id);
+        psService.deletePaymentSchedulesForDealStructure(id);
+        paymentReceivedService.deletePaymentsForDeal(id);
+        laService.createDealCancelledActivity(dealStructureRepo.findById(id).get());
+        dealStructureRepo.softDeleteById(id);
+    }
+
+    private void exitIfConditionExistsBeforeDelete(Long id) throws Exception {
         if (!dealStructureRepo.existsById(id))
             throw new Exception("Deal structure not found by ID - " + id);
 
-        psService.deletePaymentSchedulesForDealStructure(id);
-        paymentReceivedService.deletePaymentsForDeal(id);
-        dealStructureRepo.softDeleteById(id);
+        if(dealStructureRepo.getDealStructureByLeadID(dealStructureRepo.findById(id).get().getLead().getLeadId()).size() == 1)
+            throw new Exception("Cannot delete deal as there is only one Deal Structure present. Please mark customer as Deal_Cancelled.");
     }
 
     public DealStructureDAO getDealStructure(Long id) throws Exception {

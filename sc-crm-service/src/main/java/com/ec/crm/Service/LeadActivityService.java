@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.ec.crm.Data.*;
 import com.ec.crm.Enums.*;
 import com.ec.crm.Model.*;
+import com.ec.crm.Repository.*;
 import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -29,10 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.crm.Filters.ActivitySpecifications;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Mapper.LeadActivityMapper;
-import com.ec.crm.Repository.ClosedLeadsRepo;
-import com.ec.crm.Repository.CustomerDocumentRepo;
-import com.ec.crm.Repository.LeadActivityRepo;
-import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 
 @Service
@@ -93,6 +90,9 @@ public class LeadActivityService {
 
     @Resource
     InstanceEnum currentInstance;
+
+    @Autowired
+    DealStructureRepo dsRepo;
 
     Logger log = LoggerFactory.getLogger(LeadService.class);
 
@@ -306,7 +306,10 @@ public class LeadActivityService {
         for (int ctr = leadHistory.size() - 1; ctr >= 0; ctr--) {
             Lead currentLead = leadHistory.get(ctr);
             if (!currentLead.getStatus().equals(lead.getStatus())) {
-                previousStatus = currentLead.getStatus();
+                if(currentLead.getStatus().equals(LeadStatusEnum.Deal_Lost) || currentLead.getStatus().equals(LeadStatusEnum.Deal_Closed))
+                    previousStatus = LeadStatusEnum.Negotiation;
+                else
+                    previousStatus = currentLead.getStatus();
                 log.info("Previous status found for lead - " + currentLead.getLeadId() + " - " + previousStatus);
                 break;
             }
@@ -334,15 +337,17 @@ public class LeadActivityService {
                 || lead.getStatus().equals(LeadStatusEnum.Visit_Completed)) {
             if (payload.getActivityType().equals(ActivityTypeEnum.Deal_Close))
                 throw new Exception("Deal close activity not allowed for lead in stage " + lead.getStatus());
-        }
-        else if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed) || lead.getStatus().equals(LeadStatusEnum.Deal_Lost)) {
+        } else if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed) || lead.getStatus().equals(LeadStatusEnum.Deal_Lost)) {
             if (lead.getStatus().equals(LeadStatusEnum.Deal_Lost) && !payload.getActivityType().equals(ActivityTypeEnum.Meeting) && !payload.getActivityType().equals(ActivityTypeEnum.Call))
                 throw new Exception("Only activity of type Meeting/Call can be created if a lead is in stage " + lead.getStatus());
 
             if (lead.getStatus().equals(LeadStatusEnum.Deal_Closed) && !payload.getActivityType().equals(ActivityTypeEnum.Deal_Cancelled) && !payload.getActivityType().equals(ActivityTypeEnum.Meeting) && !payload.getActivityType().equals(ActivityTypeEnum.Call))
                 throw new Exception("Only activity of type Deal_Cancelled/Meeting/Call can be created if a lead is in stage " + lead.getStatus());
-
         }
+
+        if(payload.getActivityType().equals(ActivityTypeEnum.Deal_Cancelled))
+            if (dsRepo.getDealStructureByLeadID(payload.getLeadId()).size() > 1)
+                throw new Exception("More than one Deal Structures present. Delete deal structures first and try again.");
 
         if (laRepo.getOpenCallActivities(lead.getLeadId()) > 0)
             throw new Exception("Please close CALL activity before creating any new activity");
@@ -861,5 +866,20 @@ public class LeadActivityService {
                         (la.getLead().getStatus().equals(LeadStatusEnum.Visit_Completed) || la.getLead().getStatus().equals(LeadStatusEnum.Visit_Scheduled))))
             return true;
         return false;
+    }
+
+    public void createDealCancelledActivity(DealStructure ds) {
+        LeadActivity la = new LeadActivity();
+        la.setActivityType(ActivityTypeEnum.Deal_Cancelled);
+        la.setActivityDateTime(new Date());
+        la.setDealLostReason(DealLostReasonEnum.Other);
+        la.setDescription("Property Type - " + ds.getPropertyType().getPropertyType() + ". Property Name - " + ds.getPropertyName().getName());
+        la.setTitle("Deal Cancelled");
+        la.setLead(lRepo.findById(ds.getLead().getLeadId()).get());
+        la.setCreatorId(404L);
+        la.setIsOpen(false);
+        la.setClosedBy(404L);
+        la.setDuration(0L);
+        laRepo.save(la);
     }
 }
