@@ -116,7 +116,9 @@ public class LeadService {
         validatePayload(payload);
         log.info("Payload Validated");
         log.info("Checking if record exists with mobile number");
-        exitIfMobileNoExists(payload);
+        exitIfMobileNoExists(payload.getPrimaryMobile());
+        if (payload.getSecondaryMobile() != null && !payload.getSecondaryMobile().trim().equals(""))
+            exitIfMobileNoExists(payload.getSecondaryMobile());
         log.info("Setting lead fields from payload");
         setLeadFields(lead, payload, "create");
         log.info("Saving new lead record to database");
@@ -146,13 +148,16 @@ public class LeadService {
         exitIfUpdateNotAllowed(leadForUpdate, payload);
 
         if (!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
-            exitIfMobileNoExists(payload);
+            exitIfMobileNoExists(payload.getPrimaryMobile());
 
+        if (!leadForUpdate.getSecondaryMobile().equals(payload.getSecondaryMobile()) && payload.getSecondaryMobile() != null && !payload.getSecondaryMobile().trim().equals(""))
+            exitIfMobileNoExists(payload.getSecondaryMobile());
         log.info("Setting lead fields from payload");
         setLeadFields(leadForUpdate, payload, "update");
         log.info("Saving new lead record to database");
         return lRepo.save(leadForUpdate);
     }
+
 
     private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception {
         UserReturnData currentUser = userDetailsService.getCurrentUser();
@@ -238,7 +243,7 @@ public class LeadService {
         lead.setSentiment(payload.getSentiment());
         lead.setSource(payload.getSourceId() == null ? null : sourceRepo.findById(payload.getSourceId()).get());
         lead.setBroker(payload.getBrokerId() == null ? null : bRepo.findById(payload.getBrokerId()).get());
-        lead.setIsProspectLead(payload.getIsProspectLead()==null?false:payload.getIsProspectLead());
+        lead.setIsProspectLead(payload.getIsProspectLead() == null ? false : payload.getIsProspectLead());
         lead.setAsigneeId(payload.getAssigneeId() == null ? currentUserID
                 : userDetailsService.getUserFromId(payload.getAssigneeId()).getId());
 
@@ -402,11 +407,11 @@ public class LeadService {
                 throw new Exception("Enter a valid pin code (6 Digits numeric)");
     }
 
-    private void exitIfMobileNoExists(LeadCreateData payload) throws Exception {
+    private void exitIfMobileNoExists(String mobileNo) throws Exception {
         log.info("Invoked exitIfMobileNoExists");
-        List<Lead> lList = lRepo.findLeadsByPMobileNo(payload.getPrimaryMobile());
+        List<Lead> lList = lRepo.findLeadsByMobileNo(mobileNo);
         if (lList.size() > 0) {
-            throw new Exception("Contact already exists by Primary Mobile Number. Contact Name - " + lList.get(0).getCustomerName() +
+            throw new Exception("Contact already exists by Primary/Secondary Mobile Number. Contact Name - " + lList.get(0).getCustomerName() +
                     ". Assignee - " + userDetailsService.getUserFromId(lList.get(0).getAsigneeId()).getUsername());
         }
     }
@@ -415,14 +420,14 @@ public class LeadService {
         log.info("Invoked validateRequiredFields");
         String message = "";
         if (payload.getPrimaryMobile() == null || payload.getPrimaryMobile().equals(""))
-            message = message == "" ? "Primary Mobile No." : message + ",Primary Mobile No.";
+            message = "Primary Mobile No.";
 
         if (payload.getCustomerName() == null || payload.getCustomerName().equals(""))
-            message = message == "" ? "Customer Name" : message + ", Customer Name";
+            message = message.equals("") ? "Customer Name" : message + ", Customer Name";
 
         if (currentInstance.equals(InstanceEnum.suncity)) {
             if (payload.getPropertyType() == null)
-                message = message == "" ? "Property Type" : message + ", Property Type";
+                message = message.equals("") ? "Property Type" : message + ", Property Type";
         }
         return message;
     }
