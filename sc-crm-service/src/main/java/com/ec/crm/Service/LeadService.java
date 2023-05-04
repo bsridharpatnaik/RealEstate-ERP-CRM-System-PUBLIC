@@ -150,8 +150,18 @@ public class LeadService {
         if (!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
             exitIfMobileNoExists(payload.getPrimaryMobile());
 
-        if (!leadForUpdate.getSecondaryMobile().equals(payload.getSecondaryMobile()) && payload.getSecondaryMobile() != null && !payload.getSecondaryMobile().trim().equals(""))
-            exitIfMobileNoExists(payload.getSecondaryMobile());
+        if (leadForUpdate.getSecondaryMobile() != null){
+            if(payload.getSecondaryMobile() != null){
+               if(!leadForUpdate.getSecondaryMobile().equals(payload.getSecondaryMobile())){
+                    exitIfMobileNoExists(payload.getSecondaryMobile());
+                }
+            }
+        }
+        else {
+            if (payload.getSecondaryMobile() != null) {
+                exitIfMobileNoExists(payload.getSecondaryMobile());
+            }
+        }
         log.info("Setting lead fields from payload");
         setLeadFields(leadForUpdate, payload, "update");
         log.info("Saving new lead record to database");
