@@ -122,19 +122,21 @@ public class DashboardServiceV2 {
 
     private List<Product> getDashboardProducts() {
         List<Product> productsForDashboard = productRepo.getDashboardProducts();
-        if (productsForDashboard.size() > 9) {
-            return productsForDashboard;
-        } else {
+        if (productsForDashboard.size() <= 9) {
             int ctr = 0;
             List<Product> allProducts = productRepo.findAll(Sort.by(Sort.Direction.DESC, "productId"));
-            while (productsForDashboard.size() != ProjectConstants.noOfProductsForDashboard && allProducts.size() >= ProjectConstants.noOfProductsForDashboard) {
-                Long pid = allProducts.get(ctr).getProductId();
-                if (!productsForDashboard.stream().anyMatch(o -> o.getProductId().equals(pid)))
-                    productsForDashboard.add(allProducts.get(ctr));
-                ctr++;
+            if (allProducts.size() < ProjectConstants.noOfProductsForDashboard) {
+                productsForDashboard.addAll(allProducts);
+            } else {
+                while (productsForDashboard.size() != ProjectConstants.noOfProductsForDashboard && allProducts.size() >= ProjectConstants.noOfProductsForDashboard) {
+                    Long pid = allProducts.get(ctr).getProductId();
+                    if (!productsForDashboard.stream().anyMatch(o -> o.getProductId().equals(pid)))
+                        productsForDashboard.add(allProducts.get(ctr));
+                    ctr++;
+                }
             }
-            return productsForDashboard;
         }
+        return productsForDashboard;
     }
 
     public List<StockPercentageForDashboard> getStockPercentForDashboard() {
