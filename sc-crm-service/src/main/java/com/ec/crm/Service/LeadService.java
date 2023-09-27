@@ -104,6 +104,9 @@ public class LeadService {
     @Resource
     InstanceEnum currentInstance;
 
+    @Autowired
+    AuthorizationService authorizationService;
+
     @Transactional
     public Lead createLead(@Valid LeadCreateData payload) throws Exception {
         log.info("Create Lead invoked with payload " + payload.toString());
@@ -150,14 +153,13 @@ public class LeadService {
         if (!leadForUpdate.getPrimaryMobile().equals(payload.getPrimaryMobile()))
             exitIfMobileNoExists(payload.getPrimaryMobile());
 
-        if (leadForUpdate.getSecondaryMobile() != null){
-            if(payload.getSecondaryMobile() != null){
-               if(!leadForUpdate.getSecondaryMobile().equals(payload.getSecondaryMobile())){
+        if (leadForUpdate.getSecondaryMobile() != null) {
+            if (payload.getSecondaryMobile() != null) {
+                if (!leadForUpdate.getSecondaryMobile().equals(payload.getSecondaryMobile())) {
                     exitIfMobileNoExists(payload.getSecondaryMobile());
                 }
             }
-        }
-        else {
+        } else {
             if (payload.getSecondaryMobile() != null) {
                 exitIfMobileNoExists(payload.getSecondaryMobile());
             }
@@ -191,6 +193,7 @@ public class LeadService {
             throw new Exception("Lead with ID -" + id + " Not Found");
         LeadDAO l = new LeadDAO();
         convertLeadToLeadDAO(leadOpt.get(), l);
+        authorizationService.exitIfNotAllowed(l);
         return l;
     }
 

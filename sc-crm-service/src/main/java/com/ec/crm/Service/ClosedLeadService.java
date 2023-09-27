@@ -55,6 +55,9 @@ public class ClosedLeadService {
     @Autowired
     PaymentReceivedService paymentReceivedService;
 
+    @Autowired
+    AuthorizationService authorizationService;;
+
     public Page<ClosedLeadsListDTO> fetchAllClosedLeads(Pageable pageable, FilterDataList filterDataList)
             throws Exception {
         Specification<ClosedLeads> spec = ClosedLeadsSpecification.getSpecification(filterDataList);
@@ -111,6 +114,7 @@ public class ClosedLeadService {
 
         LeadDAO l = new LeadDAO();
         convertLeadToLeadDAO(clRepo.findById(id).get(), l);
+        authorizationService.exitIfNotAllowed(l);
         return l;
     }
 
