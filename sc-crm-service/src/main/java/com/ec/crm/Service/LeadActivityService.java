@@ -314,7 +314,7 @@ public class LeadActivityService {
                 break;
             }
         }
-        return previousStatus;
+        return previousStatus==LeadStatusEnum.Deal_Lost?LeadStatusEnum.Negotiation:previousStatus;
     }
 
     @Transactional
