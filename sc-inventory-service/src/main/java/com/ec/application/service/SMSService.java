@@ -101,6 +101,7 @@ public class SMSService {
         InwardOutwardTrend dtcLatestTrend = fetchLatestDataFromTRend("newdrgtrdcntr");
         InwardOutwardTrend ccLatestTrend = fetchLatestDataFromTRend("newcitycenter");
         InwardOutwardTrend schoolLatestTrend = fetchLatestDataFromTRend("newschool");
+        InwardOutwardTrend bbLatestTrend = fetchLatestDataFromTRend("bhaavbhumi");
         for (String number : numbers) {
             HashMap<String, String> childBody = new HashMap<>();
             childBody.put("mobiles", number);
