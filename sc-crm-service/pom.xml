@@ -11,7 +11,7 @@
    <groupId>com.ec</groupId>
    <artifactId>crm</artifactId>
    <version>0.0.1-SNAPSHOT</version>
-   <name>sc-crm-service</name>
+
    <packaging>war</packaging>
    <description>Demo project for Spring Boot</description>
    <properties>
@@ -183,7 +183,7 @@
       </dependency>
    </dependencies>
    <build>
-      <finalName>${proj}-crm-service</finalName>
+      <finalName>${proj}-crm-service${type}</finalName>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
