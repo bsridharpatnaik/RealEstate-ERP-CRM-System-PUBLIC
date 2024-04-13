@@ -19,7 +19,9 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 	@Value("${schemas.list}")
 	private String schemasList;
 	private Gson gson = new Gson();
-	
+    @Value("${spring.profiles.active}")
+    private String profile;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String tenantName = request.getHeader("tenant-id");
@@ -38,8 +40,15 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return false;
         }
-        com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(tenantName);
+        com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(appendNewForNewSuncity(tenantName));
         return true;
+    }
+
+    private String appendNewForNewSuncity(String tenantName) {
+        if (profile.contains("sc-") && (profile.contains("new") || profile.contains("temp"))) {
+            tenantName = "new" + tenantName;
+        }
+        return tenantName;
     }
 
     @Override

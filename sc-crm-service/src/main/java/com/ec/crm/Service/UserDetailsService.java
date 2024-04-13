@@ -58,7 +58,7 @@ public class UserDetailsService {
             if (currentInstance.equals(InstanceEnum.egcity))
                 dbName = "egcity";
             else if (currentInstance.equals(InstanceEnum.suncity))
-                dbName = "suncitynx";
+                dbName = "newbhaavbhumitemp";
 
             ThreadLocalStorage.setTenantName(dbName);
             List<UserDetails> userList = udRepo.findAll();
