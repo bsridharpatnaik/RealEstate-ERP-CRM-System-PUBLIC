@@ -44,7 +44,6 @@ public class SetLeadGenerated implements Runnable {
     public void run() {
 
         log.info("Fetching stats for Lead Generated");
-        if (instance.equals(InstanceEnum.egcity))
             dashboardPipelineReturnData.setLeadGenerated(
                     new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
                             data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->
@@ -55,21 +54,6 @@ public class SetLeadGenerated implements Runnable {
                                     return idNameMap.get(c.getLead().getAsigneeId());
                                 } catch (Exception e) {
                                     
-                                    log.error(e.getMessage());
-                                    e.printStackTrace();
-                                    return null;
-                                }
-
-                            }, Collectors.counting()))));
-        if (instance.equals(InstanceEnum.suncity))
-            dashboardPipelineReturnData.setLeadGenerated(
-                    new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
-                            data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->
-                            {
-
-                                try {
-                                    return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
-                                } catch (Exception e) {
                                     log.error(e.getMessage());
                                     e.printStackTrace();
                                     return null;

@@ -42,26 +42,12 @@ public class SetActivitiesCreated implements Runnable {
 
         try {
             log.info("Fetching stats for SetActivitiesCreated");
-            if (instance.equals(InstanceEnum.egcity))
                 dashboardPipelineReturnData.setActivitiesCreated(
                         new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() != 405).count(),
                                 data.stream().filter(c -> c.getCreatorId() != 405).collect(Collectors.groupingBy(c ->
                                 {
                                     try {
                                         return idNameMap.get(c.getLead().getAsigneeId());
-                                    } catch (Exception e) {
-                                        log.error(e.getMessage());
-                                        e.printStackTrace();
-                                    }
-                                    return null;
-                                }, Collectors.counting()))));
-            if (instance.equals(InstanceEnum.suncity))
-                dashboardPipelineReturnData.setActivitiesCreated(
-                        new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() != 405).count(),
-                                data.stream().filter(c -> c.getCreatorId() != 405).collect(Collectors.groupingBy(c ->
-                                {
-                                    try {
-                                        return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
                                     } catch (Exception e) {
                                         log.error(e.getMessage());
                                         e.printStackTrace();

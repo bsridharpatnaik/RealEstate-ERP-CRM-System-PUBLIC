@@ -125,12 +125,12 @@ public class DashboardServiceV2 {
     }
 
     public List<ConversionRatio> conversionratio() {
-        IStrategy strategy = strategyFactory.findStrategy(currentInstance);
+        IStrategy strategy = strategyFactory.findStrategy(InstanceEnum.egcity);
         return strategy.fetchConversionRatio();
     }
 
     public List<StagnantStats> returnStagnantStats() {
-        IStrategy strategy = strategyFactory.findStrategy(currentInstance);
+        IStrategy strategy = strategyFactory.findStrategy(InstanceEnum.egcity);
         return strategy.returnStagnantStats();
     }
 

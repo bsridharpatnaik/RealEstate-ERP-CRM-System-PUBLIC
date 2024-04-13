@@ -38,26 +38,12 @@ public class SetDealCancelled implements Runnable {
     public void run() {
 
         log.info("Fetching stats for SetDealCancelled");
-        if (instance.equals(InstanceEnum.egcity))
             dashboardPipelineReturnData.setDealCancelled(new MapForPipelineAndActivities(
                     data.stream().filter(c -> c.getActivityType().name().equals("Deal_Cancelled")).count(),
                     data.stream().filter(c -> c.getActivityType().name().equals("Deal_Cancelled")).collect(Collectors.groupingBy(c ->
                     {
                         try {
                             return idNameMap.get(c.getLead().getAsigneeId());
-                        } catch (Exception e) { 
-                            log.error(e.getMessage());
-                            e.printStackTrace();
-                        }
-                        return null;
-                    }, Collectors.counting()))));
-        if (instance.equals(InstanceEnum.suncity))
-            dashboardPipelineReturnData.setDealCancelled(new MapForPipelineAndActivities(
-                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Cancelled")).count(),
-                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Cancelled")).collect(Collectors.groupingBy(c ->
-                    {
-                        try {
-                            return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
                         } catch (Exception e) { 
                             log.error(e.getMessage());
                             e.printStackTrace();

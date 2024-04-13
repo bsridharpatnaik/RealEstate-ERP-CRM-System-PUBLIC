@@ -41,26 +41,12 @@ public class SetDealLost implements Runnable {
     public void run() {
 
         log.info("Fetching stats for SetDealLost");
-        if (instance.equals(InstanceEnum.egcity))
             dashboardPipelineReturnData.setDealLost(new MapForPipelineAndActivities(
                     data.stream().filter(c -> c.getActivityType().name().equals("Deal_Lost")).count(),
                     data.stream().filter(c -> c.getActivityType().name().equals("Deal_Lost")).collect(Collectors.groupingBy(c ->
                     {
                         try {
                             return idNameMap.get(c.getLead().getAsigneeId());
-                        } catch (Exception e) { 
-                            log.error(e.getMessage());
-                            e.printStackTrace();
-                        }
-                        return null;
-                    }, Collectors.counting()))));
-        if (instance.equals(InstanceEnum.suncity))
-            dashboardPipelineReturnData.setDealLost(new MapForPipelineAndActivities(
-                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Lost")).count(),
-                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Lost")).collect(Collectors.groupingBy(c ->
-                    {
-                        try {
-                            return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
                         } catch (Exception e) { 
                             log.error(e.getMessage());
                             e.printStackTrace();

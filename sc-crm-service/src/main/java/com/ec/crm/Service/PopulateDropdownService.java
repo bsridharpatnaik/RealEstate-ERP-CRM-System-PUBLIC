@@ -51,7 +51,7 @@ public class PopulateDropdownService
 			morDropdownDataList.setSourceDetails(sourceRepo.findIdAndNames());
 			morDropdownDataList.setValidPropertyType(PropertyTypeEnum.getValidPropertyType());
 			morDropdownDataList.setValidStatusType(LeadStatusEnum.getValidLeadStatus());
-			morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getUserList()));
+			morDropdownDataList.setAssigneeDetails(new PopulateAssigneeList(userDetailsService.getCRMUserList()));
 			morDropdownDataList.setActvityStatus(actvityStatus);
 			morDropdownDataList.setValidActivityType(ActivityTypeEnum.getValidActivityTypes());
 			morDropdownDataList.setKeyValueForStagnantDropdown(StagnantDropdownValues.getKeyValue());

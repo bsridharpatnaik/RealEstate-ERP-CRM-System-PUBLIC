@@ -41,26 +41,12 @@ public class SetDealClosed implements Runnable {
     @Override
     public void run() {
         log.info("Fetching stats for SetDealClosed");
-        if (instance.equals(InstanceEnum.egcity))
             dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
                     data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).count(),
                     data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).collect(Collectors.groupingBy(c ->
                     {
                         try {
                             return idNameMap.get(c.getLead().getAsigneeId());
-                        } catch (Exception e) {
-                            log.error(e.getMessage());
-                            e.printStackTrace();
-                        }
-                        return null;
-                    }, Collectors.counting()))));
-        if (instance.equals(InstanceEnum.suncity))
-            dashboardPipelineReturnData.setDealClosed(new MapForPipelineAndActivities(
-                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).count(),
-                    data.stream().filter(c -> c.getActivityType().name().equals("Deal_Close") && c.getLead().getStatus().equals(LeadStatusEnum.Deal_Closed)).collect(Collectors.groupingBy(c ->
-                    {
-                        try {
-                            return c.getLead().getPropertyType() == null ? PropertyTypeEnum.Empty : c.getLead().getPropertyType();
                         } catch (Exception e) {
                             log.error(e.getMessage());
                             e.printStackTrace();

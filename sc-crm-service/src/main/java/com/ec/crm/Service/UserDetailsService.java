@@ -79,6 +79,39 @@ public class UserDetailsService {
         }
     }
 
+        public List<UserReturnData> getCRMUserList() throws Exception {
+            log.info("Making API Call to fetch userid from name");
+            try {
+                log.info("Fetching userlist from database");
+                String dbName = "";
+                List<UserReturnData> userDetails = new ArrayList<UserReturnData>();
+
+                if (currentInstance.equals(InstanceEnum.egcity))
+                    dbName = "egcity";
+                else if (currentInstance.equals(InstanceEnum.suncity))
+                    dbName = "newbhaavbhumitemp";
+
+                ThreadLocalStorage.setTenantName(dbName);
+                List<UserDetails> userList = udRepo.findAll();
+                for (UserDetails user : userList) {
+                    if(user.getRoles().toLowerCase().contains("crm")) {
+                        UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
+                                Arrays.asList(user.getRoles().split(",").clone()));
+                        //if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
+                        userDetails.add(userReturnData);
+                    }
+                }
+                ThreadLocalStorage.setTenantName(null);
+                if (userDetails != null)
+                    return userDetails;
+                else
+                    throw new Exception("Unable to fetch user details. Please log out and try again");
+            } catch (Exception e) {
+                log.info("Error API Call to fetch user from ID " + e);
+                throw new Exception("Unable to fetch user details. Please log out and try again");
+            }
+    }
+
     public UserReturnData getCurrentUser() throws Exception {
         log.info("Making API Call to fetch current user");
         try {

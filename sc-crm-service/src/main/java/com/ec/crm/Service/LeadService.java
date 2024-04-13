@@ -438,10 +438,10 @@ public class LeadService {
         if (payload.getCustomerName() == null || payload.getCustomerName().equals(""))
             message = message.equals("") ? "Customer Name" : message + ", Customer Name";
 
-        if (currentInstance.equals(InstanceEnum.suncity)) {
+        /*if (currentInstance.equals(InstanceEnum.suncity)) {
             if (payload.getPropertyType() == null)
                 message = message.equals("") ? "Property Type" : message + ", Property Type";
-        }
+        }*/
         return message;
     }
 
