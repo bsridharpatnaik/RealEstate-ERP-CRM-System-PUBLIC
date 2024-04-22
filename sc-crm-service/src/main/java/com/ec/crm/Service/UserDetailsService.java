@@ -58,14 +58,13 @@ public class UserDetailsService {
             if (currentInstance.equals(InstanceEnum.egcity))
                 dbName = "egcity";
             else if (currentInstance.equals(InstanceEnum.suncity))
-                dbName = "newbhaavbhumitemp";
+                dbName = "newbhaavbhumi";
 
             ThreadLocalStorage.setTenantName(dbName);
             List<UserDetails> userList = udRepo.findAll();
             for (UserDetails user : userList) {
                 UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
                         Arrays.asList(user.getRoles().split(",").clone()));
-                //if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
                 userDetails.add(userReturnData);
             }
             ThreadLocalStorage.setTenantName(null);
@@ -89,15 +88,17 @@ public class UserDetailsService {
                 if (currentInstance.equals(InstanceEnum.egcity))
                     dbName = "egcity";
                 else if (currentInstance.equals(InstanceEnum.suncity))
-                    dbName = "newbhaavbhumitemp";
+                    dbName = "newbhaavbhumi";
 
                 ThreadLocalStorage.setTenantName(dbName);
                 List<UserDetails> userList = udRepo.findAll();
                 for (UserDetails user : userList) {
-                    if(user.getRoles().toLowerCase().contains("crm")) {
+                    if (currentInstance.equals(InstanceEnum.suncity) && profile.contains("new")){
+                        dbName = dbName.replaceAll("new", "");
+                    }
+                    if(user.getRoles().toLowerCase().contains("crm") && user.getTenants().contains(dbName)) {
                         UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
                                 Arrays.asList(user.getRoles().split(",").clone()));
-                        //if (userReturnData.getRoles().contains("CRM") || userReturnData.getRoles().contains("CRM-Manager"))
                         userDetails.add(userReturnData);
                     }
                 }

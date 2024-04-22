@@ -2,6 +2,7 @@ package com.ec.crm.Data;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,6 @@ public class UserReturnData implements Serializable
 	{
 		this.id = userId;
 		this.username = userName2;
-		this.roles = fetchRolesFromSet;
+		this.roles = fetchRolesFromSet.stream().map(String::toLowerCase).collect(Collectors.toList());
 	}
 }

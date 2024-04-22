@@ -117,7 +117,7 @@ public class AllActivitiesService {
         for (LeadActivity leadActivity : filteredActivities) {
             String mobileNo = "";
             if (currentUser.getId().equals(leadActivity.getLead().getAsigneeId())
-                    || currentUser.getRoles().contains("CRM-Manager") || currentUser.getRoles().contains("admin"))
+                    || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager") || currentUser.getRoles().contains("admin"))
                 mobileNo = leadActivity.getLead().getPrimaryMobile();
             else
                 mobileNo = "******" + leadActivity.getLead().getPrimaryMobile().substring(7);
@@ -215,7 +215,7 @@ public class AllActivitiesService {
             PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
             pipelineSingleReturnDTO.setLeadId(l.getLeadId());
 
-            if (currentUser.getId().equals(l.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+            if (currentUser.getId().equals(l.getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
                     || currentUser.getRoles().contains("admin"))
                 pipelineSingleReturnDTO.setMobileNumber((l.getPrimaryMobile()));
             else

@@ -26,4 +26,7 @@ public class UserDetails {
 
     @Column(name="roles")
     String roles;
+
+    @Column(name="tenants")
+    String tenants;
 }

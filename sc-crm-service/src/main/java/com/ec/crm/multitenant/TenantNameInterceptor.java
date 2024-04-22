@@ -45,9 +45,12 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
     }
 
     private String appendNewForNewSuncity(String tenantName) {
-        if (profile.contains("sc-") && (profile.contains("new") || profile.contains("temp"))) {
+        if (profile.contains("sc-") && (profile.contains("new"))) {
             tenantName = "new" + tenantName;
         }
+        if(profile.contains("temp"))
+            tenantName = tenantName + "temp";
+
         return tenantName;
     }
 

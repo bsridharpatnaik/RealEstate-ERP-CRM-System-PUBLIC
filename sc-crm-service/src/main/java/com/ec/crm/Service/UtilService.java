@@ -2,6 +2,7 @@ package com.ec.crm.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class UtilService
 	public FilterDataList addAssigneeToFilterData(FilterDataList leadFilterDataList) throws Exception
 	{
 		UserReturnData currentUser = udService.getCurrentUser();
-		if (!currentUser.getRoles().contains("CRM-Manager") && !currentUser.getRoles().contains("admin"))
+		if (!currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager") && !currentUser.getRoles().contains("admin"))
 		{
 			List<String> values = new ArrayList<String>();
 			values.add(currentUser.getId().toString());

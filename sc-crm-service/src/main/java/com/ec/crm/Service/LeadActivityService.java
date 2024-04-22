@@ -3,6 +3,7 @@ package com.ec.crm.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -675,8 +676,8 @@ public class LeadActivityService {
         l.setLeadId(la.getLead().getLeadId());
         l.setLeadStatus(la.getLead().getStatus());
         l.setName(la.getLead().getCustomerName());
-        if (currentUser.getId().equals(la.getLead().getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
-                || currentUser.getRoles().contains("admin"))
+        if (currentUser.getId().equals(la.getLead().getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager" )
+                || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("admin"))
             l.setMobileNumber(la.getLead().getPrimaryMobile());
         else
             l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));

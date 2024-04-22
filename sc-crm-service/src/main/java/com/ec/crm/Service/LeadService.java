@@ -174,7 +174,7 @@ public class LeadService {
     private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception {
         UserReturnData currentUser = userDetailsService.getCurrentUser();
         if (!leadForUpdate.getAsigneeId().equals(currentUser.getId()) && !currentUser.getRoles().contains("admin")
-                && !currentUser.getRoles().contains("CRM-Manager")) {
+                && !currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")) {
             throw new Exception("User not allowed to edit lead. Please contact manager");
         }
 
@@ -215,14 +215,14 @@ public class LeadService {
         l.setOccupation(lead.getOccupation() == null ? "" : lead.getOccupation());
         l.setPincode(lead.getAddress().getPincode() == "" ? "" : lead.getAddress().getPincode());
         l.setIsProspectLead(lead.getIsProspectLead());
-        if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+        if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
                 || currentUser.getRoles().contains("admin"))
             l.setPrimaryMobile((lead.getPrimaryMobile()));
         else
             l.setPrimaryMobile("******" + lead.getPrimaryMobile().substring(7));
         l.setPropertyType(lead.getPropertyType() == null ? null : lead.getPropertyType());
         l.setPurpose(lead.getPurpose() == null ? "" : lead.getPurpose());
-        if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().contains("CRM-Manager")
+        if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
                 || currentUser.getRoles().contains("admin"))
             l.setSecondaryMobile(lead.getSecondaryMobile());
         else {
@@ -308,7 +308,7 @@ public class LeadService {
         UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
         List<String> typeAhead = new ArrayList<String>();
         typeAhead.addAll(lRepo.getLeadNames());
-        if (currentUser.getRoles().contains("CRM-Manager") || currentUser.getRoles().contains("admin"))
+        if (currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager") || currentUser.getRoles().contains("admin"))
             typeAhead.addAll(lRepo.getLeadMobileNos());
         else
             typeAhead.addAll(lRepo.getAssignedLeadMobileNos(currentUser.getId()));
