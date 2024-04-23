@@ -2,7 +2,7 @@ UPDATE common.tenant SET is_crm=true where name in ('bhaavbhumi','drgtrdcntr','k
 -- CREATE OR REPLACE view userdetails AS
 
 set @dbname='common';
-use common;
+-- use common;
 set @q=concat('CREATE OR REPLACE view userdetails AS SELECT t.user_id, t.user_name, t.roles, u.tenants FROM
 (
 SELECT su.user_id,su.user_name,group_concat(ur.role_name SEPARATOR \',\') as roles FROM ',@dbname,'.security_user su
