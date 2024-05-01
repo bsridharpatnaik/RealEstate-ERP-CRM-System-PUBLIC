@@ -15,7 +15,7 @@ public class InstanceService {
             return InstanceEnum.egcity;
         else if (profile.contains("sc-"))
             return InstanceEnum.suncity;
-        return null;
+        else return InstanceEnum.crm;
     }
 
     public String getEnvironment(){

@@ -34,6 +34,9 @@ public class UserDetailsService {
     @Value("${common.serverurl}")
     private String reqUrl;
 
+    @Value("${masterschemaname}")
+    private String masterSchemaName;
+
     @Value("${spring.profiles.active}")
     private String profile;
 
@@ -52,17 +55,13 @@ public class UserDetailsService {
         log.info("Making API Call to fetch userid from name");
         try {
             log.info("Fetching userlist from database");
-            String dbName = "";
+            String dbName = masterSchemaName;
             List<UserReturnData> userDetails = new ArrayList<UserReturnData>();
-
-            if (currentInstance.equals(InstanceEnum.egcity))
-                dbName = "egcity";
-            else if (currentInstance.equals(InstanceEnum.suncity))
-                dbName = "newbhaavbhumi";
 
             ThreadLocalStorage.setTenantName(dbName);
             List<UserDetails> userList = udRepo.findAll();
             for (UserDetails user : userList) {
+                log.info("UserName - " +  user.getUserName());
                 UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
                         Arrays.asList(user.getRoles().split(",").clone()));
                 userDetails.add(userReturnData);
@@ -82,21 +81,15 @@ public class UserDetailsService {
             log.info("Making API Call to fetch userid from name");
             try {
                 log.info("Fetching userlist from database");
-                String dbName = "";
+                System.out.println(ThreadLocalStorage.getTenantName());
                 List<UserReturnData> userDetails = new ArrayList<UserReturnData>();
-
-                if (currentInstance.equals(InstanceEnum.egcity))
-                    dbName = "egcity";
-                else if (currentInstance.equals(InstanceEnum.suncity))
-                    dbName = "newbhaavbhumi";
-
-                ThreadLocalStorage.setTenantName(dbName);
+                String dbName = ThreadLocalStorage.getTenantName();
                 List<UserDetails> userList = udRepo.findAll();
                 for (UserDetails user : userList) {
                     if (currentInstance.equals(InstanceEnum.suncity) && profile.contains("new")){
                         dbName = dbName.replaceAll("new", "");
                     }
-                    if(user.getRoles().toLowerCase().contains("crm") && user.getTenants().contains(dbName)) {
+                    if(user.getRoles().toLowerCase().contains("crm") && user.getTenants().contains(profile.contains("temp")?dbName.replace("temp",""):dbName)) {
                         UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
                                 Arrays.asList(user.getRoles().split(",").clone()));
                         userDetails.add(userReturnData);

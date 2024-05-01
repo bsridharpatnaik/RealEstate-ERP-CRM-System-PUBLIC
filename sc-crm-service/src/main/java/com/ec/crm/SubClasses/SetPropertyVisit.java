@@ -40,7 +40,7 @@ public class SetPropertyVisit implements Runnable {
     public void run() {
 
         log.info("Fetching stats for SetPropertyVisit");
-        if (instance.equals(InstanceEnum.egcity))
+
             dashboardPipelineReturnData.setTotalPropertyVisit(
                     new MapForPipelineAndActivities(
                             data.stream()
@@ -53,25 +53,6 @@ public class SetPropertyVisit implements Runnable {
                                     {
                                         try {
                                             return idNameMap.get(c.getLead().getAsigneeId());
-                                        } catch (Exception e) { 
-                                            log.error(e.getMessage());
-                                            e.printStackTrace();
-                                        }
-                                        return null;
-                                    }, Collectors.counting()))));
-        if (instance.equals(InstanceEnum.suncity))
-            dashboardPipelineReturnData.setTotalPropertyVisit(
-                    new MapForPipelineAndActivities(
-                            data.stream()
-                                    .filter(c -> c.getActivityType().name() == "Property_Visit"
-                                            && c.isRescheduled() == false)
-                                    .count(),
-                            data.stream().filter(
-                                    c -> c.getActivityType().name() == "Property_Visit" && c.isRescheduled() == false)
-                                    .collect(Collectors.groupingBy(c ->
-                                    {
-                                        try {
-                                            return c.getLead().getPropertyType()==null? PropertyTypeEnum.Empty:c.getLead().getPropertyType();
                                         } catch (Exception e) { 
                                             log.error(e.getMessage());
                                             e.printStackTrace();
