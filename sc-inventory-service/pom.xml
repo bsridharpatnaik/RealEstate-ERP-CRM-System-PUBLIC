@@ -230,5 +230,23 @@
     </configuration>
             </plugin>
         </plugins>
-    </build> 
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                    <!-- Include other resource files if needed -->
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/webapp</directory>
+                <targetPath>META-INF</targetPath>
+                <includes>
+                    <include>**/*.xml</include>
+                    <!-- Include other resource files if needed -->
+                </includes>
+            </resource>
+        </resources>
+    </build>
+
 </project>

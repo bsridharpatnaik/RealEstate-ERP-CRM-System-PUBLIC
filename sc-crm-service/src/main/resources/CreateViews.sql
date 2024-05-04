@@ -211,8 +211,6 @@ FROM   (SELECT CASE WHEN cl.propertytype IS NULL THEN 'OTHERS' ELSE  cl.property
                   GROUP  BY cl.propertyType) AS tx
               ON tx.propertyType = y.propertyType;
 
-set @dbname='common';
-
 -- Activities for dashboard
 set @q=concat('CREATE OR REPLACE VIEW activities_for_dashboard AS
 SELECT UUID() as id,\'today\' as type, su.user_name,COUNT(leadactivity_id) as count FROM LeadActivity la

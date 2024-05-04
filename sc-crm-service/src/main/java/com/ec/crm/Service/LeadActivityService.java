@@ -824,7 +824,7 @@ public class LeadActivityService {
             throw new Exception("Lead with ID not found");
         } else {
             LeadStatusEnum leadStatus = leadOpt.get().getStatus();
-            IStrategy strategy = strategyFactory.findStrategy(currentInstance);
+            IStrategy strategy = strategyFactory.findStrategy(InstanceEnum.egcity);
             return strategy.fetchAllowedActivities(leadStatus);
         }
     }
