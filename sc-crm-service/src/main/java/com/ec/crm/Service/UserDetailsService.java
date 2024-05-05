@@ -61,7 +61,6 @@ public class UserDetailsService {
             ThreadLocalStorage.setTenantName(dbName);
             List<UserDetails> userList = udRepo.findAll();
             for (UserDetails user : userList) {
-                log.info("UserName - " +  user.getUserName());
                 UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
                         Arrays.asList(user.getRoles().split(",").clone()));
                 userDetails.add(userReturnData);

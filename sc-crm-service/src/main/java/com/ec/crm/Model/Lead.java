@@ -129,47 +129,14 @@ public class Lead extends ReusableFields implements Serializable {
     @ColumnDefault("false")
     Boolean isProspectLead;
 
-    @Formula("(select la.leadactivity_id from customer_lead cl "
-            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
-            + "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
-            + "order by la.activity_date_time desc limit  1)")
+/*    @Formula("(SELECT p.recentIsOpen FROM lead_activity_for_pipeline p WHERE p.lead_id=lead_id)")
     @NotAudited
-    Long pastOpenId;
+    Boolean recentActivityStatus;
 
-    @Formula("(select la.leadactivity_id from customer_lead cl "
-            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time<CURDATE() "
-            + "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
-            + "order by la.activity_date_time desc limit  1)")
     @NotAudited
-    Long pastClosedId;
-
-    @Formula("(select la.leadactivity_id from customer_lead cl "
-            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
-            + "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
-            + "order by la.activity_date_time desc limit  1)")
-    @NotAudited
-    Long todayClosedId;
-
-    @Formula("(select la.leadactivity_id from customer_lead cl "
-            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time=CURDATE() "
-            + "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
-            + "order by la.activity_date_time desc limit  1)")
-    @NotAudited
-    Long todayOpenId;
-
-    @Formula("(select la.leadactivity_id from customer_lead cl "
-            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
-            + "and la.is_deleted=false " + "and la.isOpen=true " + "and cl.lead_id=lead_id "
-            + "order by la.activity_date_time asc limit  1)")
-    @NotAudited
-    Long upcomingOpenId;
-
-    @Formula("(select la.leadactivity_id from customer_lead cl "
-            + "inner join LeadActivity la on cl.lead_id=la.lead_id " + "where la.activity_date_time>CURDATE() "
-            + "and la.is_deleted=false " + "and la.isOpen=false " + "and cl.lead_id=lead_id "
-            + "order by la.activity_date_time desc limit  1)")
-    @NotAudited
-    Long upcomingClosedId;
+    @Formula("(SELECT p.recentActivityDateTime FROM lead_activity_for_pipeline p WHERE p.lead_id=lead_id)")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date recentActivityDateTime;*/
 
     @NotAudited
     @Formula("(select cds.loanStatus from customer_deal_structure cds " +

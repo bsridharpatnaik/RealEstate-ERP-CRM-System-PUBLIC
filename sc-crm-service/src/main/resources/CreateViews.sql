@@ -278,3 +278,72 @@ GROUP BY su.user_name;');
 PREPARE stmt FROM @q;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+
+-- Recent Lead Activity For Pipeline
+CREATE OR REPLACE view lead_activity_for_pipelinelead_id AS
+SELECT la.lead_id,la.isOpen as recentIsOpen,la.activity_date_time as recentActivityDateTime FROM
+(
+SELECT
+	lead_id,
+    CASE
+		WHEN pastOpenId IS NOT NULL THEN pastOpenId
+		WHEN todayOpenId IS NOT NULL THEN todayOpenId
+		WHEN todayOpenId IS NULL AND upcominOpen IS NULL THEN
+        (CASE
+			WHEN upcominClosed IS NOT NULL THEN upcominClosed
+			WHEN todayClosed IS NOT NULL THEN todayClosed
+            ELSE pastClosed
+		END)
+        WHEN todayOpenId IS NULL AND upcominOpen IS NOT NULL THEN upcominOpen
+    END as activityId
+FROM
+(
+SELECT
+	cl.lead_id,
+    poa.leadactivity_id as pastOpenId,
+    toa.leadactivity_id as todayOpenId,
+    uoa.leadactivity_id as upcominOpen,
+        pca.leadactivity_id as pastClosed,
+    tca.leadactivity_id as todayClosed,
+    uca.leadactivity_id as upcominClosed
+FROM customer_lead cl
+LEFT JOIN
+(
+	SELECT la.lead_id, max(la.leadactivity_id) as leadactivity_id  FROM LeadActivity la
+    WHERE CURDATE()>DATE_FORMAT(la.activity_date_time, "%Y-%m-%d") AND la.isOpen=true AND la.is_deleted=false
+    GROUP BY la.lead_id
+    ) poa ON cl.lead_id = poa.lead_id
+LEFT JOIN
+(
+	SELECT la.lead_id, max(la.leadactivity_id) as leadactivity_id  FROM LeadActivity la
+    WHERE CURDATE()=DATE_FORMAT(la.activity_date_time, "%Y-%m-%d") AND la.isOpen=true AND la.is_deleted=false
+    GROUP BY la.lead_id
+    ) toa ON cl.lead_id = toa.lead_id
+  LEFT JOIN
+(
+	SELECT la.lead_id, max(la.leadactivity_id) as leadactivity_id  FROM LeadActivity la
+    WHERE CURDATE()<DATE_FORMAT(la.activity_date_time, "%Y-%m-%d") AND la.isOpen=true AND la.is_deleted=false
+    GROUP BY la.lead_id
+    ) uoa ON cl.lead_id = uoa.lead_id
+LEFT JOIN
+(
+	SELECT la.lead_id, max(la.leadactivity_id) as leadactivity_id  FROM LeadActivity la
+    WHERE CURDATE()<DATE_FORMAT(la.activity_date_time, "%Y-%m-%d") AND la.isOpen=false AND la.is_deleted=false
+    GROUP BY la.lead_id
+    ) uca ON cl.lead_id = uca.lead_id
+LEFT JOIN
+(
+	SELECT la.lead_id, max(la.leadactivity_id) as leadactivity_id  FROM LeadActivity la
+    WHERE CURDATE()=DATE_FORMAT(la.activity_date_time, "%Y-%m-%d") AND la.isOpen=false AND la.is_deleted=false
+    GROUP BY la.lead_id
+    ) tca ON cl.lead_id = tca.lead_id
+LEFT JOIN
+(
+	SELECT la.lead_id, max(la.leadactivity_id) as leadactivity_id  FROM LeadActivity la
+    WHERE CURDATE()>DATE_FORMAT(la.activity_date_time, "%Y-%m-%d") AND la.isOpen=false AND la.is_deleted=false
+    GROUP BY la.lead_id
+    ) pca ON cl.lead_id = pca.lead_id
+WHERE cl.is_deleted=false AND cl.status != 'Deal_Lost'
+) ids
+) a INNER JOIN LeadActivity la on la.leadactivity_id=a.activityId;

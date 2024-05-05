@@ -28,5 +28,9 @@ public enum LeadStatusEnum
         .forEach(type -> leadStatuses.add(type.toString()));
 		return leadStatuses;
 	}
+
+	public static LeadStatusEnum[] getValuesForPipeline(){
+		return new LeadStatusEnum[]{New_Lead,Visit_Scheduled,Visit_Completed,Negotiation,Deal_Closed};
+	}
 	
 }

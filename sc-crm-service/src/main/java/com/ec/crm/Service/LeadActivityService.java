@@ -14,6 +14,7 @@ import com.ec.crm.Model.*;
 import com.ec.crm.Repository.*;
 import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
+import com.ec.crm.multitenant.ThreadLocalStorage;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sun.org.apache.xpath.internal.operations.Bool;
@@ -689,7 +690,9 @@ public class LeadActivityService {
         return l;
     }
 
-    public LeadActivity getRecentActivityByLead(Lead lead) {
+    /*public LeadActivity getRecentActivityByLead(Lead lead, String dbName) {
+        System.out.println("getRecentActivityByLead " + dbName);
+        ThreadLocalStorage.setTenantName(dbName);
         LeadActivity activity = new LeadActivity();
         if (lead.getPastOpenId() != null) {
             activity = laRepo.getOne(lead.getPastOpenId());
@@ -705,8 +708,11 @@ public class LeadActivityService {
         } else if (lead.getTodayOpenId() == null && lead.getUpcomingOpenId() != null) {
             activity = laRepo.getOne(lead.getUpcomingOpenId());
         }
+        if(activity == null)
+            laRepo.fetchMostRecentLeadActivity(lead.getLeadId());
+        ThreadLocalStorage.setTenantName(null);
         return activity;
-    }
+    }*/
 
     public LeadActivity getRecentActivityByLeadId(Long leadId) {
         LeadActivity activity = new LeadActivity();
