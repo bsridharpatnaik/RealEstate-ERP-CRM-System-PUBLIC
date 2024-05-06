@@ -255,6 +255,21 @@ SELECT UUID() as id,\'prospect\', su.user_name,COUNT(l.lead_id) as count FROM cu
 INNER JOIN ',@dbname,'.security_user su on su.user_id=l.user_id
 WHERE l.is_deleted=0
 	AND l.status NOT IN (\'Deal_Closed\',\'Deal_Lost\') AND l.is_prospect_lead=true
+GROUP BY su.user_name
+UNION ALL
+SELECT UUID() as id, \'stale\', su.user_name, COUNT(t.lead_id) FROM
+(
+SELECT
+  cl.lead_id,
+  SUM(CASE WHEN la.isOpen = 1 THEN 1 ELSE 0 END) AS openCount
+FROM
+  LeadActivity la
+	INNER JOIN customer_lead cl ON cl.lead_id=la.lead_id AND cl.status NOT IN (\'Deal_Closed\',\'Deal_Lost\')
+WHERE la.is_deleted=0 AND cl.is_deleted=0 AND la.is_deleted=0
+GROUP BY lead_id
+HAVING SUM(CASE WHEN la.isOpen = 1 THEN 1 ELSE 0 END)=0
+) t INNER JOIN customer_lead cl ON cl.lead_id=t.lead_id
+INNER JOIN ',@dbname,'.security_user su on su.user_id=cl.user_id
 GROUP BY su.user_name;');
 PREPARE stmt FROM @q;
 EXECUTE stmt;

@@ -10,5 +10,6 @@ public class ActivitiesForDashboard {
     MapForPipelineAndActivities tomorrowsActivities;
     MapForPipelineAndActivities pendingActivities;
     MapForPipelineAndActivities upcomingActivities;
+    MapForPipelineAndActivities staleLeads;
 }
 

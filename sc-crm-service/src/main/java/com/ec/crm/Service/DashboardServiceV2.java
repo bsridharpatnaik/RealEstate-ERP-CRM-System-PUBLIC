@@ -95,14 +95,15 @@ public class DashboardServiceV2 {
         List<ActivitiesStatsForDashboard> data = activitiesStatsForDashboardRepo.findAll();
 
         log.info("Fetching Activity Stats");
-        ExecutorService executors = Executors.newFixedThreadPool(6);
-        CyclicBarrier barrier = new CyclicBarrier(6);
+        ExecutorService executors = Executors.newFixedThreadPool(7);
+        CyclicBarrier barrier = new CyclicBarrier(7);
         executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetLiveLeads(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetProspectLeads(barrier, dashboardPipelineReturnData, data));
         executors.submit(new SetTomorrowActivities(barrier, dashboardPipelineReturnData, data));
+        executors.submit(new SetStaleLeads(barrier, dashboardPipelineReturnData, data));
         boolean flag = false;
         Date returnDateTime = new Date();
         while (flag == false) {
@@ -112,6 +113,7 @@ public class DashboardServiceV2 {
                     || dashboardPipelineReturnData.getProspectiveLeads() == null
                     || dashboardPipelineReturnData.getLiveLeads() == null
                     || dashboardPipelineReturnData.getTomorrowsActivities() == null
+                    || dashboardPipelineReturnData.getStaleLeads() == null
             )
                     && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 5)) {
                 flag = false;
