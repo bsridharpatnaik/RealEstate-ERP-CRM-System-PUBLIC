@@ -24,27 +24,22 @@ public class SetProspectLeads implements Runnable {
     private List<ActivitiesStatsForDashboard> data;
     Logger log = LoggerFactory.getLogger(SetProspectLeads.class);
 
-    public SetProspectLeads(CyclicBarrier barrier, ActivitiesForDashboard dashboardPipelineReturnData,
+    public SetProspectLeads(ActivitiesForDashboard dashboardPipelineReturnData,
                             List<ActivitiesStatsForDashboard> data) {
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
-        this.barrier = barrier;
         this.data = data;
     }
 
     @Override
     public void run() {
-
-        log.info("Fetching stats for Prospect Lead");
-        dashboardPipelineReturnData
-                .setProspectiveLeads(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("prospect")).mapToLong(i -> i.getCount()).sum()
-                        , data.stream().filter(e -> e.getType().equals("prospect")).collect(Collectors.toList())));
-        log.info("Completed stats for Lead Generated");
         try {
-            barrier.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
-            e.printStackTrace();
+            log.info("Fetching stats for Prospect Lead");
+            dashboardPipelineReturnData
+                    .setProspectiveLeads(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("prospect")).mapToLong(i -> i.getCount()).sum()
+                            , data.stream().filter(e -> e.getType().equals("prospect")).collect(Collectors.toList())));
+            log.info("Completed stats for Lead Generated");
+        } catch (Exception e) {
+            log.error("An error occurred in Set Prospect Leads: " + e.getMessage());
         }
     }
 }

@@ -20,29 +20,22 @@ public class SetLiveLeads implements Runnable {
 
     Logger log = LoggerFactory.getLogger(SetLiveLeads.class);
 
-    public SetLiveLeads(CyclicBarrier barrier, ActivitiesForDashboard dashboardPipelineReturnData,
+    public SetLiveLeads(ActivitiesForDashboard dashboardPipelineReturnData,
                         List<ActivitiesStatsForDashboard> data) {
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
-        this.barrier = barrier;
         this.data = data;
     }
 
     @Override
     public void run() {
-
-        log.info("Fetching stats for Set Live Leads");
-        dashboardPipelineReturnData
-                .setLiveLeads(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("live")).mapToLong(i -> i.getCount()).sum()
-                        , data.stream().filter(e -> e.getType().equals("live")).collect(Collectors.toList())));
-        log.info("Completed stats for Live Leads");
         try {
-            barrier.await();
-        } catch (InterruptedException e) {
-
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
-
-            e.printStackTrace();
+            log.info("Fetching stats for Set Live Leads");
+            dashboardPipelineReturnData
+                    .setLiveLeads(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("live")).mapToLong(i -> i.getCount()).sum()
+                            , data.stream().filter(e -> e.getType().equals("live")).collect(Collectors.toList())));
+            log.info("Completed stats for Live Leads");
+        } catch (Exception e) {
+            log.error("An error occurred in Set Live Leads: " + e.getMessage());
         }
     }
 }

@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -94,35 +95,36 @@ public class DashboardServiceV2 {
         ActivitiesForDashboard dashboardPipelineReturnData = new ActivitiesForDashboard();
         List<ActivitiesStatsForDashboard> data = activitiesStatsForDashboardRepo.findAll();
 
-        log.info("Fetching Activity Stats");
         ExecutorService executors = Executors.newFixedThreadPool(7);
-        CyclicBarrier barrier = new CyclicBarrier(7);
-        executors.submit(new SetTodaysActivities(barrier, dashboardPipelineReturnData, data));
-        executors.submit(new SetPendingActivities(barrier, dashboardPipelineReturnData, data));
-        executors.submit(new SetUpcomingActivities(barrier, dashboardPipelineReturnData, data));
-        executors.submit(new SetLiveLeads(barrier, dashboardPipelineReturnData, data));
-        executors.submit(new SetProspectLeads(barrier, dashboardPipelineReturnData, data));
-        executors.submit(new SetTomorrowActivities(barrier, dashboardPipelineReturnData, data));
-        executors.submit(new SetStaleLeads(barrier, dashboardPipelineReturnData, data));
-        boolean flag = false;
-        Date returnDateTime = new Date();
-        while (flag == false) {
-            if ((dashboardPipelineReturnData.getTodaysActivities() == null
-                    || dashboardPipelineReturnData.getPendingActivities() == null
-                    || dashboardPipelineReturnData.getUpcomingActivities() == null
-                    || dashboardPipelineReturnData.getProspectiveLeads() == null
-                    || dashboardPipelineReturnData.getLiveLeads() == null
-                    || dashboardPipelineReturnData.getTomorrowsActivities() == null
-                    || dashboardPipelineReturnData.getStaleLeads() == null
-            )
-                    && (Math.abs(returnDateTime.getTime() - new Date().getTime()) / 1000 < 5)) {
-                flag = false;
-            } else {
-                log.info("Flag is true. Current difference in time - "
-                        + (returnDateTime.getTime() - new Date().getTime()) / 1000);
-                flag = true;
-            }
-        }
+
+        CompletableFuture<Void> todaysActivitiesFuture = CompletableFuture.runAsync(() ->
+                new SetTodaysActivities(dashboardPipelineReturnData, data).run(), executors);
+        CompletableFuture<Void> pendingActivitiesFuture = CompletableFuture.runAsync(() ->
+                new SetPendingActivities(dashboardPipelineReturnData, data).run(), executors);
+        CompletableFuture<Void> upcomingActivitiesFuture = CompletableFuture.runAsync(() ->
+                new SetUpcomingActivities(dashboardPipelineReturnData, data).run(), executors);
+        CompletableFuture<Void> liveLeadsFuture = CompletableFuture.runAsync(() ->
+                new SetLiveLeads(dashboardPipelineReturnData, data).run(), executors);
+        CompletableFuture<Void> prospectLeadsFuture = CompletableFuture.runAsync(() ->
+                new SetProspectLeads(dashboardPipelineReturnData, data).run(), executors);
+        CompletableFuture<Void> tomorrowActivitiesFuture = CompletableFuture.runAsync(() ->
+                new SetTomorrowActivities(dashboardPipelineReturnData, data).run(), executors);
+        CompletableFuture<Void> staleLeadsFuture = CompletableFuture.runAsync(() ->
+                new SetStaleLeads(dashboardPipelineReturnData, data).run(), executors);
+
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+                todaysActivitiesFuture,
+                pendingActivitiesFuture,
+                upcomingActivitiesFuture,
+                liveLeadsFuture,
+                prospectLeadsFuture,
+                tomorrowActivitiesFuture,
+                staleLeadsFuture
+        );
+
+        allFutures.join(); // Wait for all tasks to complete
+        executors.shutdown();
+
         return dashboardPipelineReturnData;
     }
 

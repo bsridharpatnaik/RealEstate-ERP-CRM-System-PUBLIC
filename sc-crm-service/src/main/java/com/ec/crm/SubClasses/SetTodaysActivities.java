@@ -29,30 +29,23 @@ public class SetTodaysActivities implements Runnable {
     private List<ActivitiesStatsForDashboard> data;
     Logger log = LoggerFactory.getLogger(SetTodaysActivities.class);
 
-    public SetTodaysActivities(CyclicBarrier barrier, ActivitiesForDashboard dashboardPipelineReturnData,
+    public SetTodaysActivities(ActivitiesForDashboard dashboardPipelineReturnData,
                                List<ActivitiesStatsForDashboard> data) {
 
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
-        this.barrier = barrier;
         this.data = data;
     }
 
     @Override
     public void run() {
-
-        log.info("Fetching stats for SetTodaysActivities");
-        dashboardPipelineReturnData
-                .setTodaysActivities(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("today")).mapToLong(i -> i.getCount()).sum()
-                        , data.stream().filter(e -> e.getType().equals("today")).collect(Collectors.toList())));
-        log.info("Completed stats for SetTodaysActivities");
         try {
-            barrier.await();
-        } catch (InterruptedException e) {
-
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
-
-            e.printStackTrace();
+            log.info("Fetching stats for SetTodaysActivities");
+            dashboardPipelineReturnData
+                    .setTodaysActivities(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("today")).mapToLong(i -> i.getCount()).sum()
+                            , data.stream().filter(e -> e.getType().equals("today")).collect(Collectors.toList())));
+            log.info("Completed stats for SetTodaysActivities");
+        } catch (Exception e) {
+            log.error("An error occurred in SetTodaysActivities: " + e.getMessage());
         }
     }
 }

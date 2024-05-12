@@ -20,29 +20,22 @@ public class SetStaleLeads implements Runnable {
 
     Logger log = LoggerFactory.getLogger(SetStaleLeads.class);
 
-    public SetStaleLeads(CyclicBarrier barrier, ActivitiesForDashboard dashboardPipelineReturnData,
+    public SetStaleLeads(ActivitiesForDashboard dashboardPipelineReturnData,
                          List<ActivitiesStatsForDashboard> data) {
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
-        this.barrier = barrier;
         this.data = data;
     }
 
     @Override
     public void run() {
-
-        log.info("Fetching stats for Set tomorrow ");
+        try {
+        log.info("Fetching stats for SetStaleLeads");
         dashboardPipelineReturnData
                 .setStaleLeads(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("stale")).mapToLong(i -> i.getCount()).sum()
                         , data.stream().filter(e -> e.getType().equals("stale")).collect(Collectors.toList())));
         log.info("Completed stats for tomorrow ");
-        try {
-            barrier.await();
-        } catch (InterruptedException e) {
-
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
-
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error("An error occurred in SetStaleLeads : " + e.getMessage());
         }
     }
 }

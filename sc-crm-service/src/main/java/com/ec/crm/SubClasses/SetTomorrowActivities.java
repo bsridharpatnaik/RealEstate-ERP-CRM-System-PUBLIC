@@ -20,29 +20,22 @@ public class SetTomorrowActivities implements Runnable {
 
     Logger log = LoggerFactory.getLogger(SetTomorrowActivities.class);
 
-    public SetTomorrowActivities(CyclicBarrier barrier, ActivitiesForDashboard dashboardPipelineReturnData,
+    public SetTomorrowActivities(ActivitiesForDashboard dashboardPipelineReturnData,
                                  List<ActivitiesStatsForDashboard> data) {
         this.dashboardPipelineReturnData = dashboardPipelineReturnData;
-        this.barrier = barrier;
         this.data = data;
     }
 
     @Override
     public void run() {
-
-        log.info("Fetching stats for Set tomorrow ");
-        dashboardPipelineReturnData
-                .setTomorrowsActivities(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("tomorrow")).mapToLong(i -> i.getCount()).sum()
-                        , data.stream().filter(e -> e.getType().equals("tomorrow")).collect(Collectors.toList())));
-        log.info("Completed stats for tomorrow ");
         try {
-            barrier.await();
-        } catch (InterruptedException e) {
-
-            e.printStackTrace();
-        } catch (BrokenBarrierException e) {
-
-            e.printStackTrace();
+            log.info("Fetching stats for Set tomorrow ");
+            dashboardPipelineReturnData
+                    .setTomorrowsActivities(new MapForPipelineAndActivities(data.stream().filter(e -> e.getType().equals("tomorrow")).mapToLong(i -> i.getCount()).sum()
+                            , data.stream().filter(e -> e.getType().equals("tomorrow")).collect(Collectors.toList())));
+            log.info("Completed stats for tomorrow ");
+        } catch (Exception e) {
+            log.error("An error occurred in SetTomorrowActivities : " + e.getMessage());
         }
     }
 }
