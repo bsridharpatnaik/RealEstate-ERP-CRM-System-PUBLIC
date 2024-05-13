@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ec.crm.Data.*;
+import com.ec.crm.Model.PaymentReceived;
 import com.ec.crm.Repository.*;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.slf4j.Logger;
@@ -50,6 +51,12 @@ public class PaymentScheduleService {
     @Autowired
     PaymentReceivedRepo paymentReceivedRepo;
 
+    @Autowired
+    AllActivitiesService allActivitiesService;
+
+    @Autowired
+    PaymentReceivedService paymentReceivedService;
+
     Logger log = LoggerFactory.getLogger(ClosedLeadService.class);
 
 
@@ -58,13 +65,14 @@ public class PaymentScheduleService {
         validatePayload(payload, "create");
         PaymentSchedule ps = new PaymentSchedule();
         setFields(ps, payload);
-       //Create payment activity
-            LeadActivity la = laService.createPaymentActivity(ps);
-            ps.setLa(la);
+        //Create payment activity
+        LeadActivity la = laService.createPaymentActivity(ps);
+        ps.setLa(la);
         psRepo.save(ps);
         return convertPStoPSDAO(ps);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deletePaymentSchedule(Long id) throws Exception {
         Optional<PaymentSchedule> psOpt = psRepo.findById(id);
         if (!psOpt.isPresent())
@@ -72,6 +80,8 @@ public class PaymentScheduleService {
         PaymentSchedule ps = psOpt.get();
         if (ps.getLa() != null)
             laService.softDeleteLeadActivity(ps.getLa().getLeadActivityId());
+        if (ps.getPaymentReceived() != null)
+            paymentReceivedService.deleteSinglePaymentWithoutBackfill(ps.getPaymentReceived().getPaymentId());
         psRepo.softDeleteById(id);
     }
 
@@ -138,14 +148,14 @@ public class PaymentScheduleService {
             throw new Exception("Deal Structure Not found with ID - " + id);
         List<PaymentSchedule> bankList = psRepo.getSchedulesForDealFromBank(id);
         List<PaymentSchedule> customerList = psRepo.getSchedulesForDealFromCustomer(id);
-        return new PaymentScheduleByDTO(bankList,customerList,isMatchingDealAmount(id));
+        return new PaymentScheduleByDTO(bankList, customerList, isMatchingDealAmount(id));
     }
 
     private Boolean isMatchingDealAmount(Long dealId) {
         DealStructure ds = dsRepo.findById(dealId).get();
-        Double totalAmount = ds.getDealAmount() + (ds.getSupplementAmount()==null?0:ds.getSupplementAmount());
-        Double totalscheduleAmount = (psRepo.getTotalScheduleAmount(dealId)==null?0:psRepo.getTotalScheduleAmount(dealId));
-        if(totalAmount.equals(totalscheduleAmount))
+        Double totalAmount = ds.getDealAmount() + (ds.getSupplementAmount() == null ? 0 : ds.getSupplementAmount());
+        Double totalscheduleAmount = (psRepo.getTotalScheduleAmount(dealId) == null ? 0 : psRepo.getTotalScheduleAmount(dealId));
+        if (totalAmount.equals(totalscheduleAmount))
             return true;
         return false;
     }
@@ -242,9 +252,17 @@ public class PaymentScheduleService {
         return typeAhead;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deletePaymentSchedulesForDealStructure(Long id) {
         List<PaymentSchedule> psList = psRepo.getSchedulesForDeal(id);
         for (PaymentSchedule ps : psList) {
+            if (ps.getLa() != null) {
+                LeadActivity la = ps.getLa();
+                la.setIsOpen(false);
+                la.setClosedBy(404L);
+                la.setClosingComment("Deal Structure Deleted");
+                laRepo.save(la);
+            }
             psRepo.softDelete(ps);
         }
     }
@@ -255,8 +273,26 @@ public class PaymentScheduleService {
 
         DealStructure ds = dsRepo.findById(id).get();
         Double totalPaymentReceived = paymentReceivedRepo.getTotalReceivedByDealStructure(id);
-        if(totalPaymentReceived==null)
-            totalPaymentReceived= Double.valueOf(0);
-        return new DealPaymentStatusDTO(ds,totalPaymentReceived);
+        if (totalPaymentReceived == null)
+            totalPaymentReceived = (double) 0;
+        return new DealPaymentStatusDTO(ds, totalPaymentReceived);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void backFillScheduleStatus(PaymentSchedule ps, PaymentReceived pr, String action) {
+        if (action.equals("create")) {
+            ps.setIsReceived(true);
+            ps.setPaymentReceived(pr);
+            if (ps.getLa() != null) {
+                allActivitiesService.updateLeadActivityStatus(ps.getLa().getLeadActivityId(), false);
+            }
+        } else {
+            ps.setIsReceived(false);
+            ps.setPaymentReceived(null);
+            if (ps.getLa() != null) {
+                allActivitiesService.updateLeadActivityStatus(ps.getLa().getLeadActivityId(), true);
+            }
+        }
+        psRepo.save(ps);
     }
 }

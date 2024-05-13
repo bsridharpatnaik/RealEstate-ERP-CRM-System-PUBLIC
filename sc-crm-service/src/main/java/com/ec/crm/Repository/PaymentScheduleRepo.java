@@ -1,7 +1,9 @@
 package com.ec.crm.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
+import com.ec.crm.Model.PaymentReceived;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,4 +28,7 @@ public interface PaymentScheduleRepo extends BaseRepository<PaymentSchedule, Lon
 
 	@Query("select SUM(CASE WHEN ps.amount IS NULL THEN 0 ELSE amount END) from PaymentSchedule ps where ps.ds.dealId=:dealId")
 	Double getTotalScheduleAmount(Long dealId);
+
+	@Query("select ps from PaymentSchedule ps where ps.paymentReceived.paymentId=:paymentId")
+    PaymentSchedule findByPaymentReceived(@Param("paymentId")Long paymentId);
 }

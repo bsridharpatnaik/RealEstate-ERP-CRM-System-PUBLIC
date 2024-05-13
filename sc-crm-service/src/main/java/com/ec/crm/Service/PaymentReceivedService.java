@@ -35,24 +35,43 @@ public class PaymentReceivedService {
     @Autowired
     AllActivitiesService allActivitiesService;
 
-    @Transactional
+    @Autowired
+    PaymentScheduleService paymentScheduleService;
+
+    @Transactional(rollbackFor = Exception.class)
     public PaymentReceived createNewPayment(PaymentReceivedCreateData payload) throws Exception {
         PaymentReceived paymentReceived = new PaymentReceived();
         validatePayload(payload);
+        PaymentSchedule ps = exitIfScheduleDoesntExists(payload);
         setFields(paymentReceived, payload);
         paymentReceivedRepo.save(paymentReceived);
-        backFillScheduleStatus(paymentReceived.getDs().getDealId());
+        paymentScheduleService.backFillScheduleStatus(ps, paymentReceived, "create");
         return paymentReceived;
     }
 
-    @Transactional
+ /*   @Transactional(rollbackFor = Exception.class)
     public PaymentReceived updatePayment(PaymentReceivedCreateData payload) throws Exception {
         validatePayload(payload);
         PaymentReceived paymentReceived = paymentReceivedRepo.findById(payload.getPaymentId()).get();
+        exitIfScheduleDoesntExists(payload);
         setFields(paymentReceived, payload);
         paymentReceivedRepo.save(paymentReceived);
         backFillScheduleStatus(paymentReceived.getDs().getDealId());
         return paymentReceived;
+    }*/
+
+    private PaymentSchedule exitIfScheduleDoesntExists(PaymentReceivedCreateData payload) throws Exception {
+        List<PaymentSchedule> pSchedules = paymentScheduleRepo.getSchedulesForDeal(payload.getDealStructureId());
+        for (PaymentSchedule ps : pSchedules) {
+            if (!ps.getIsReceived() && ps.getAmount().equals(payload.getAmount())) {
+                if (ps.getIsCustomerPayment() && payload.getPaymentBy().equals(PaymentReceivedFromEnum.Customer)) {
+                    return ps;
+                } else if (!ps.getIsCustomerPayment() && payload.getPaymentBy().equals(PaymentReceivedFromEnum.Bank)) {
+                    return ps;
+                }
+            }
+        }
+        throw new Exception(("There is NO Payment scheduled for Amount - " + payload.getAmount()) + " From " + payload.getPaymentBy());
     }
 
     public DealStructurePaymentReceivedDTO getPaymentsList(Long dealStructureId) {
@@ -114,23 +133,32 @@ public class PaymentReceivedService {
         return validEnumsForPaymentReceived;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deletePayment(Long id) throws Exception {
         Optional<PaymentReceived> paymentReceived = paymentReceivedRepo.findById(id);
         if (paymentReceived.isPresent()) {
+            PaymentSchedule ps = paymentScheduleRepo.findByPaymentReceived(paymentReceived.get().getPaymentId());
+            paymentScheduleService.backFillScheduleStatus(ps, paymentReceived.get(), "delete");
             paymentReceivedRepo.softDeleteById(id);
-            backFillScheduleStatus(paymentReceived.get().getDs().getDealId());
+        } else
+            throw new Exception("Payment Received with ID " + id + " not found!");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteSinglePaymentWithoutBackfill(Long id) throws Exception {
+        Optional<PaymentReceived> paymentReceived = paymentReceivedRepo.findById(id);
+        if (paymentReceived.isPresent()) {
+            paymentReceivedRepo.softDeleteById(id);
         } else
             throw new Exception("Payment Received with ID " + id + " not found!");
     }
 
     public Boolean getPaymentStepperStatus(Long id) {
         int count = paymentReceivedRepo.getPaymentsForLead(id);
-        if (count > 0)
-            return true;
-        return false;
+        return count > 0;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deletePaymentsForDeal(Long id) {
         List<PaymentReceived> allPaymentsForDeal = paymentReceivedRepo.findAllPaymentsByDealStructureId(id);
         for (PaymentReceived pr : allPaymentsForDeal) {
@@ -138,7 +166,7 @@ public class PaymentReceivedService {
         }
     }
 
-    @Transactional
+/*    @Transactional(rollbackFor = Exception.class)
     public void backFillScheduleStatus(Long dealId) {
         Double totalCustomerPayment = paymentReceivedRepo.findTotalCustomerPaymentsByDealStructureId(dealId);
         Double totalBankPayment = paymentReceivedRepo.findTotalBankPaymentsByDealStructureId(dealId);
@@ -147,8 +175,8 @@ public class PaymentReceivedService {
 
         schedules = schedules.stream().sorted((o1, o2) -> o1.getPaymentDate().compareTo(o2.getPaymentDate())).collect(Collectors.toList());
 
-        Double scheduleCustomerTotalAmount = Double.valueOf(0);
-        Double scheduleBankTotalAmount = Double.valueOf(0);
+        double scheduleCustomerTotalAmount = (double) 0;
+        double scheduleBankTotalAmount = (double) 0;
 
         for (PaymentSchedule schedule : schedules) {
             if (schedule.getIsCustomerPayment()) {
@@ -192,5 +220,6 @@ public class PaymentReceivedService {
 
             }
         }
-    }
+    }*/
+
 }

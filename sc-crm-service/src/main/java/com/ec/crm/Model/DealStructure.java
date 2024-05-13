@@ -31,61 +31,60 @@ import lombok.Data;
 @Audited(withModifiedFlag = true)
 @Data
 public class
-DealStructure extends ReusableFields implements Serializable
-{
-	private static final long serialVersionUID = 1L;
+DealStructure extends ReusableFields implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "deal_id", updatable = false, nullable = false)
-	Long dealId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "deal_id", updatable = false, nullable = false)
+    Long dealId;
 
-	@Column(name = "booking_date")
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	Date bookingDate;
+    @Column(name = "booking_date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date bookingDate;
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "property_type_id", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	@NotFound(action = NotFoundAction.IGNORE)
-	PropertyType propertyType;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "property_type_id", nullable = false)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    @NotFound(action = NotFoundAction.IGNORE)
+    PropertyType propertyType;
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "property_name_id", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	@NotFound(action = NotFoundAction.IGNORE)
-	PropertyName propertyName;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "property_name_id", nullable = false)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    @NotFound(action = NotFoundAction.IGNORE)
+    PropertyName propertyName;
 
-	@Column(name = "deal_amount")
-	Double dealAmount;
+    @Column(name = "deal_amount")
+    Double dealAmount;
 
-	@Column(name = "loan_required")
-	Boolean loanRequired;
+    @Column(name = "loan_required")
+    Boolean loanRequired;
 
-	Double loanAmount= Double.valueOf(0);
+    Double loanAmount = Double.valueOf(0);
 
-	String bankName;
+    String bankName;
 
-	@Enumerated(EnumType.STRING)
-	LoanStatusEnum loanStatus;
+    @Enumerated(EnumType.STRING)
+    LoanStatusEnum loanStatus;
 
-	@Enumerated(EnumType.STRING)
-	CustomerStatusEnum customerStatus;
+    @Enumerated(EnumType.STRING)
+    CustomerStatusEnum customerStatus;
 
-	Double supplementAmount=Double.valueOf(0);
+    Double supplementAmount = Double.valueOf(0);
 
-	@Column(name = "details", length = 150)
-	@Size(max = 150)
-	String details;
+    @Column(name = "details", length = 150)
+    @Size(max = 150)
+    String details;
 
-	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "lead_id", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	@NotFound(action = NotFoundAction.IGNORE)
-	ClosedLeads lead;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "lead_id", nullable = false)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    @NotFound(action = NotFoundAction.IGNORE)
+    ClosedLeads lead;
 
 	/*@NotAudited
 	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true and cps.isCustomerPayment=true)")
@@ -103,33 +102,33 @@ DealStructure extends ReusableFields implements Serializable
 	@Formula("(select case when sum(cps.amount) is null then 0 else sum(cps.amount) end from  customer_payment_schedule cps where cps.deal_id=deal_id and is_deleted=0 and cps.isReceived=true and cps.isCustomerPayment=false)")
 	Double totalReceivedBank;*/
 
-	@NotAudited
-	@Formula("(SELECT ((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
-	Double tenPercentOfTotalAmount;
+    @NotAudited
+    @Formula("(SELECT ((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+    Double tenPercentOfTotalAmount;
 
-	@NotAudited
-	@Formula("(SELECT CASE WHEN (((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
-			"(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id)) <0 THEN 0 ELSE " +
-			"(((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
-			"(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id)) END " +
-			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
-	Double remainingOfTenPercentTotalAmount;
+    @NotAudited
+    @Formula("(SELECT CASE WHEN (((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
+            "(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id AND cpr.is_deleted=0)) <0 THEN 0 ELSE " +
+            "(((CASE WHEN deal_amount <> 0 THEN deal_amount ELSE 0 END) + (CASE WHEN supplementAmount <> 0 THEN supplementAmount ELSE 0 END))/10 - " +
+            "(SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM customer_payment_received cpr WHERE cpr.deal_id = cds.deal_id AND cpr.is_deleted=0)) END " +
+            "FROM customer_deal_structure cds WHERE cds.deal_id=deal_id AND cds.is_deleted=0)")
+    Double remainingOfTenPercentTotalAmount;
 
-	@NotAudited
-	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END + CASE WHEN cds.supplementAmount IS NULL THEN 0 ELSE supplementAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
-	Double customerAmount;
+    @NotAudited
+    @Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END + CASE WHEN cds.supplementAmount IS NULL THEN 0 ELSE supplementAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+    Double customerAmount;
 
-	@NotAudited
-	@Formula("(SELECT cds.deal_amount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.is_deleted = 0 AND cpr.deal_id=cds.deal_id AND cpr.payment_by='Customer')" +
-			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
-	Double remainingCustomerAmount;
+    @NotAudited
+    @Formula("(SELECT cds.deal_amount + cds.supplementAmount - CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.is_deleted = 0 AND cpr.deal_id=cds.deal_id AND cpr.payment_by='Customer')" +
+            "FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+    Double remainingCustomerAmount;
 
-	@NotAudited
-	@Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
-	Double bankAmount;
+    @NotAudited
+    @Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+    Double bankAmount;
 
-	@NotAudited
-	@Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.is_deleted = 0 AND cpr.deal_id=cds.deal_id AND cpr.payment_by='Bank')" +
-			"FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
-	Double remainingBankAmount;
+    @NotAudited
+    @Formula("(SELECT CASE WHEN loanAmount IS NULL THEN 0 ELSE loanAmount END - (SELECT CASE WHEN SUM(cpr.amount) IS NULL THEN 0 ELSE SUM(cpr.amount) END FROM  customer_payment_received cpr WHERE cpr.is_deleted = 0 AND cpr.deal_id=cds.deal_id AND cpr.payment_by='Bank')" +
+            "FROM customer_deal_structure cds WHERE cds.deal_id=deal_id)")
+    Double remainingBankAmount;
 }

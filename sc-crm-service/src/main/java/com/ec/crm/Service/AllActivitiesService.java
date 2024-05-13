@@ -216,7 +216,7 @@ public class AllActivitiesService {
         return stagnatedStatus;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateLeadActivityStatus(Long leadActivityId, Boolean status) {
         try {
             Optional<LeadActivity> leadActivityOpt = laRepo.findById(leadActivityId);

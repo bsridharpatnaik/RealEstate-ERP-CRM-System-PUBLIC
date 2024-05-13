@@ -51,6 +51,7 @@ public class DealStructureService {
         return ptRepo.findIdAndNames();
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public DealStructureDAO createDealStructure(CreateDealStructureDTO payload) throws Exception {
         validatePayload(payload, "create");
         DealStructure ds = new DealStructure();
@@ -151,6 +152,7 @@ public class DealStructureService {
         return convertDSListToDAOList(dsList);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public DealStructureDAO updateDealStructure(CreateDealStructureDTO payload, Long id) throws Exception {
         if (!dealStructureRepo.existsById(id))
             throw new Exception("Deal structure not found by ID - " + id);
@@ -171,12 +173,12 @@ public class DealStructureService {
             throw new Exception("Deal structure already added for property - " + payload.getPropertyId());
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteDealStructure(Long id) throws Exception {
         exitIfConditionExistsBeforeDelete(id);
         psService.deletePaymentSchedulesForDealStructure(id);
         paymentReceivedService.deletePaymentsForDeal(id);
-        laService.createDealCancelledActivity(dealStructureRepo.findById(id).get());
+        //laService.createDealCancelledActivity(dealStructureRepo.findById(id).get());
         dealStructureRepo.softDeleteById(id);
     }
 

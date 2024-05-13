@@ -75,6 +75,7 @@ public class LeadActivityService {
 
     @Autowired
     LeadActivityMapper laMapper;
+
     @Value("${common.serverurl}")
     private String reqUrl;
 
@@ -240,12 +241,18 @@ public class LeadActivityService {
         }
 
         if (status.equals(LeadStatusEnum.Deal_Closed) || status.equals(LeadStatusEnum.Deal_Lost)) {
-            if (status.equals(LeadStatusEnum.Deal_Closed))
-                deletePostSalesRecordsBeforeConversion(leadActivity.getLead().getLeadId());
-            if (leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting))
-                leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.getLead()));
-            else
-                leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+            if (status.equals(LeadStatusEnum.Deal_Closed)) {
+                if (leadActivity.getActivityType().equals(ActivityTypeEnum.Deal_Cancelled)) {
+                    deletePostSalesRecordsBeforeConversion(leadActivity.getLead().getLeadId());
+                    leadActivity.getLead().setStatus(LeadStatusEnum.Deal_Lost);
+                }
+            }
+            if (status.equals(LeadStatusEnum.Deal_Lost)) {
+                if (leadActivity.getActivityType().equals(ActivityTypeEnum.Meeting)) {
+                    deletePostSalesRecordsBeforeConversion(leadActivity.getLead().getLeadId());
+                    leadActivity.getLead().setStatus(fetchPreviousStatusFromHistory(leadActivity.getLead()));
+                }
+            }
         }
         laRepo.save(leadActivity);
         if (isDealClosed)
@@ -308,7 +315,7 @@ public class LeadActivityService {
         for (int ctr = leadHistory.size() - 1; ctr >= 0; ctr--) {
             Lead currentLead = leadHistory.get(ctr);
             if (!currentLead.getStatus().equals(lead.getStatus())) {
-                if(currentLead.getStatus().equals(LeadStatusEnum.Deal_Lost) || currentLead.getStatus().equals(LeadStatusEnum.Deal_Closed))
+                if (currentLead.getStatus().equals(LeadStatusEnum.Deal_Lost) || currentLead.getStatus().equals(LeadStatusEnum.Deal_Closed))
                     previousStatus = LeadStatusEnum.Negotiation;
                 else
                     previousStatus = currentLead.getStatus();
@@ -316,7 +323,7 @@ public class LeadActivityService {
                 break;
             }
         }
-        return previousStatus==LeadStatusEnum.Deal_Lost?LeadStatusEnum.Negotiation:previousStatus;
+        return previousStatus == LeadStatusEnum.Deal_Lost ? LeadStatusEnum.Negotiation : previousStatus;
     }
 
     @Transactional
@@ -347,7 +354,7 @@ public class LeadActivityService {
                 throw new Exception("Only activity of type Deal_Cancelled/Meeting/Call can be created if a lead is in stage " + lead.getStatus());
         }
 
-        if(payload.getActivityType().equals(ActivityTypeEnum.Deal_Cancelled))
+        if (payload.getActivityType().equals(ActivityTypeEnum.Deal_Cancelled))
             if (dsRepo.getDealStructureByLeadID(payload.getLeadId()).size() > 1)
                 throw new Exception("More than one Deal Structures present. Delete deal structures first and try again.");
 
@@ -677,7 +684,7 @@ public class LeadActivityService {
         l.setLeadId(la.getLead().getLeadId());
         l.setLeadStatus(la.getLead().getStatus());
         l.setName(la.getLead().getCustomerName());
-        if (currentUser.getId().equals(la.getLead().getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager" )
+        if (currentUser.getId().equals(la.getLead().getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
                 || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("admin"))
             l.setMobileNumber(la.getLead().getPrimaryMobile());
         else
@@ -842,11 +849,12 @@ public class LeadActivityService {
         la.setActivityDateTime(paymentDate);
         la.setActivityType(ActivityTypeEnum.Payment);
         la.setCreatorId((long) 404);
-        la.setDescription("Payment Reminder - Scheduled Payment. Payment Amount - " + ps.getAmount());
+        String paymentFrom = ps.getIsCustomerPayment() ? "Customer" : "Bank";
+        la.setDescription("Payment Reminder - Scheduled Payment. Payment Amount - " + ps.getAmount() + " From " + paymentFrom);
         la.setIsOpen(true);
         la.setLead(lRepo.findById(ps.getDs().getLead().getLeadId()).get());
         la.setRescheduled(false);
-        la.setTitle("Payment Reminder - Scheduled Payment");
+        la.setTitle("Payment Reminder - Scheduled Payment From - " + paymentFrom);
         laRepo.save(la);
         return la;
     }

@@ -77,4 +77,12 @@ public class PaymentSchedule extends ReusableFields implements Serializable
 
 	@Column(nullable = false)
 	Boolean isCustomerPayment;
+
+	@NotAudited
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "paymentId", nullable = true)
+	@JsonIgnoreProperties(
+			{ "hibernateLazyInitializer", "handler" })
+	@NotFound(action = NotFoundAction.IGNORE)
+	PaymentReceived paymentReceived;
 }

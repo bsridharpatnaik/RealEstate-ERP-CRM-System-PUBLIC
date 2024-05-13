@@ -34,12 +34,6 @@ public class PaymentReceivedController {
         return paymentReceivedService.createNewPayment(payload);
     }
 
-    @PutMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public PaymentReceived updatePayment(@RequestBody PaymentReceivedCreateData payload) throws Exception {
-        return paymentReceivedService.updatePayment(payload);
-    }
-
     @DeleteMapping("/{paymentId}")
     public ResponseEntity<?> updatePayment(@PathVariable Long paymentId) throws Exception {
         paymentReceivedService.deletePayment(paymentId);

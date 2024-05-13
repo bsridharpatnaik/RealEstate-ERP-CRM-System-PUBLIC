@@ -31,4 +31,7 @@ public interface PaymentReceivedRepo extends BaseRepository<PaymentReceived, Lon
 
     @Query("SELECT COUNT(p) FROM PaymentReceived p WHERE p.ds.lead.leadId=:id")
     int getPaymentsForLead(@RequestParam("id")Long id);
+
+    @Query("SELECT p FROM PaymentReceived p WHERE p.ds.lead.leadId=:id")
+    List<PaymentReceived> getPaymentsListForLead(@RequestParam("id")Long id);
 }
