@@ -214,21 +214,30 @@ FROM   (SELECT CASE WHEN cl.propertytype IS NULL THEN 'OTHERS' ELSE  cl.property
 -- Payments Page
 CREATE OR REPLACE VIEW payments_page AS
 SELECT
-	cl.lead_id,
+	row_number() over (
+    ORDER BY cps.payment_date,cl.lead_id,
     cl.name,
-    CASE WHEN cps.payment_date IS NULL THEN '' ELSE DATE_FORMAT(cps.payment_date, "%Y-%m-%d") END as paymentDate,
+    cds.deal_id,
     cps.amount,
-    CASE WHEN cps.isReceived=true THEN 'Received' ELSE 'Pending' END as isReceived,
-    CASE WHEN cps.isCustomerPayment=true THEN 'Customer' ELSE 'Bank' END as paymentFrom,
+    su.user_name,
+    pt.propertyType,
+    pn.name) as id,
+	cl.lead_id,
+    cl.name as customerName,
+    cds.deal_id as dealStructureId,
+    CASE WHEN cps.payment_date IS NULL THEN '' ELSE cps.payment_date END as paymentDate,
+    cps.amount,
+    cps.isReceived,
+    cps.isCustomerPayment,
     su.user_name,
     pt.propertyType,
     pn.name as propertyName
 FROM customer_deal_structure cds
 INNER JOIN customer_lead cl ON cds.lead_id=cl.lead_id
 INNER JOIN security_user su on su.user_id=cl.user_id
-LEFT JOIN customer_payment_schedule cps ON cps.deal_id=cds.deal_id AND cps.is_deleted=0
-LEFT JOIN property_type pt ON pt.property_type_id=cds.property_type_id
-LEFT JOIN property_name pn ON pn.property_name_id=cds.property_name_id
+INNER JOIN customer_payment_schedule cps ON cps.deal_id=cds.deal_id AND cps.is_deleted=0
+INNER JOIN property_type pt ON pt.property_type_id=cds.property_type_id
+INNER JOIN property_name pn ON pn.property_name_id=cds.property_name_id
 WHERE cds.is_Deleted=0 ;
 -- Activities for dashboard
 set @q=concat('CREATE OR REPLACE VIEW activities_for_dashboard AS
