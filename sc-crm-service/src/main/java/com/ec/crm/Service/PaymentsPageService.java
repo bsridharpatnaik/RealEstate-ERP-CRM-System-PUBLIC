@@ -40,6 +40,10 @@ public class PaymentsPageService {
         return spec == null ? paymentsPageRepo.findAll(pageable) : paymentsPageRepo.findAll(spec, pageable);
     }
 
+    public List<PaymentsPage> findFilteredListForExport(FilterDataList filterDataList, Pageable pageable) throws Exception {
+        Specification<PaymentsPage> spec = PaymentPageSpecification.getSpecification(filterDataList);
+        return spec == null ? paymentsPageRepo.findAll() : paymentsPageRepo.findAll(spec);
+    }
     public DropdownForClosedLeads getDropDownValues() throws Exception {
         DropdownForClosedLeads dropdownValues = new DropdownForClosedLeads();
         dropdownValues.setDropdownData(populateDropdownService.fetchData("payment"));

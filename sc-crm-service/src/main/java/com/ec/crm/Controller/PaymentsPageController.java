@@ -13,6 +13,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(value = "/customer/payments", produces =
         {"application/json", "text/json"})
@@ -25,6 +27,12 @@ public class PaymentsPageController {
     @ResponseStatus(HttpStatus.OK)
     public Page<PaymentsPage> returnFilteredData(@RequestBody FilterDataList leadFilterDataList, @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) throws Exception {
         return paymentsPageService.findFilteredList(leadFilterDataList, pageable);
+    }
+
+    @PostMapping("/export")
+    @ResponseStatus(HttpStatus.OK)
+    public List<PaymentsPage> returnFilteredDataForExport(@RequestBody FilterDataList leadFilterDataList, @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) throws Exception {
+        return paymentsPageService.findFilteredListForExport(leadFilterDataList, pageable);
     }
 
     @GetMapping("dropdown")
