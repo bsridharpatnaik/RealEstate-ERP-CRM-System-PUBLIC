@@ -32,22 +32,6 @@ public class PaymentScheduleController
 	@Autowired
 	PaymentScheduleService psService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.OK)
-	public Page<PaymentScheduleListingDTO> returnFilteredPaymentSchedules(
-			@RequestBody FilterDataList leadFilterDataList,
-			@PageableDefault(page = 0, size = 10, sort = "scheduleId", direction = Direction.DESC) Pageable pageable)
-			throws Exception
-	{
-		return psService.findFilteredDataForPayments(leadFilterDataList, pageable);
-	}
-
-	@GetMapping("/dropdown")
-	@ResponseStatus(HttpStatus.OK)
-	public DropdownForClosedLeads getDropDownValues() throws Exception
-	{
-		return psService.getDropDownValues();
-	}
 
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ExceptionHandler(MethodArgumentNotValidException.class)

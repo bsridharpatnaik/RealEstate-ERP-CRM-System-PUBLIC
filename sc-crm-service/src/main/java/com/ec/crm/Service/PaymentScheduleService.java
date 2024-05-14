@@ -8,9 +8,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ec.crm.Data.*;
-import com.ec.crm.Model.PaymentReceived;
+import com.ec.crm.Model.*;
 import com.ec.crm.Repository.*;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.crm.Filters.FilterDataList;
-import com.ec.crm.Filters.PaymentScheduleSpecification;
-import com.ec.crm.Model.DealStructure;
-import com.ec.crm.Model.LeadActivity;
-import com.ec.crm.Model.PaymentSchedule;
+import com.ec.crm.Filters.PaymentPageSpecification;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 
 @Service
@@ -207,18 +203,6 @@ public class PaymentScheduleService {
         }
     }
 
-    public Page<PaymentScheduleListingDTO> findFilteredDataForPayments(FilterDataList filterDataList, Pageable pageable)
-            throws Exception {
-        Page<PaymentScheduleListingDTO> payments = null;
-        Specification<PaymentSchedule> spec = PaymentScheduleSpecification.getSpecification(filterDataList);
-
-        if (spec == null)
-            payments = psRepo.findAll(pageable).map(this::convertToDto);
-        else
-            payments = psRepo.findAll(spec, pageable).map(this::convertToDto);
-        return payments;
-    }
-
     private PaymentScheduleListingDTO convertToDto(PaymentSchedule o) {
         PaymentScheduleListingDTO dto = new PaymentScheduleListingDTO();
         dto.setAmount(o.getAmount() == null ? null : o.getAmount());
@@ -235,21 +219,6 @@ public class PaymentScheduleService {
         dto.setPropertyName(o.getDs().getPropertyName().getName());
         dto.setIsCustomerPayment(o.getIsCustomerPayment());
         return dto;
-    }
-
-    public DropdownForClosedLeads getDropDownValues() throws Exception {
-        DropdownForClosedLeads dropdownValues = new DropdownForClosedLeads();
-        dropdownValues.setDropdownData(populateDropdownService.fetchData("payment"));
-        dropdownValues.setTypeAheadDataForGlobalSearch(fetchTypeAheadForLeadGlobalSearch());
-        return dropdownValues;
-    }
-
-    private List<String> fetchTypeAheadForLeadGlobalSearch() {
-        log.info("Invoked fetchTypeAheadForLeadGlobalSearch");
-        List<String> typeAhead = new ArrayList<String>();
-        typeAhead.addAll(clRepo.getLeadNames());
-        typeAhead.addAll(clRepo.getLeadMobileNos());
-        return typeAhead;
     }
 
     @Transactional(rollbackFor = Exception.class)

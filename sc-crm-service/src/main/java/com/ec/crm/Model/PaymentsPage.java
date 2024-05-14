@@ -29,7 +29,7 @@ public class PaymentsPage {
 
     @Column(name="dealStructureId")
     Long dealStructureId;
-    
+
     @Column(name = "paymentDate")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     Date paymentDate;

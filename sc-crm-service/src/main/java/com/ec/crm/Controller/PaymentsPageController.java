@@ -1,5 +1,7 @@
 package com.ec.crm.Controller;
 
+import com.ec.crm.Data.DropdownForClosedLeads;
+import com.ec.crm.Data.LeadActivityDropdownData;
 import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.PaymentsPage;
 import com.ec.crm.Service.PaymentsPageService;
@@ -23,5 +25,11 @@ public class PaymentsPageController {
     @ResponseStatus(HttpStatus.OK)
     public Page<PaymentsPage> returnFilteredData(@RequestBody FilterDataList leadFilterDataList, @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) throws Exception {
         return paymentsPageService.findFilteredList(leadFilterDataList, pageable);
+    }
+
+    @GetMapping("dropdown")
+    @ResponseStatus(HttpStatus.OK)
+    public DropdownForClosedLeads getDropdownValues() throws Exception {
+        return paymentsPageService.getDropDownValues();
     }
 }
