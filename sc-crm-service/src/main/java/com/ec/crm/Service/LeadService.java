@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 
+import com.ec.crm.Data.*;
 import com.ec.crm.Enums.InstanceEnum;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
@@ -26,16 +27,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.ec.crm.Data.AllActivitesForLeadDAO;
-import com.ec.crm.Data.AllNotesForLeadDAO;
-import com.ec.crm.Data.LeadActivityOnLeadInformationDTO;
-import com.ec.crm.Data.LeadCreateData;
-import com.ec.crm.Data.LeadDAO;
-import com.ec.crm.Data.LeadDetailInfo;
-import com.ec.crm.Data.LeadInformationAllTabData;
-import com.ec.crm.Data.LeadInformationAllTabDataList;
-import com.ec.crm.Data.LeadListWithTypeAheadData;
-import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.FilterDataList;
@@ -486,5 +477,16 @@ public class LeadService {
             lRepo.save(leadForUpdate);
         }
 
+    }
+
+    @Transactional
+    public void importLead(List<LeadImportPayloadData> payload) throws Exception {
+        for(LeadImportPayloadData data : payload) {
+            LeadCreateData leadCreateData = new LeadCreateData();
+            leadCreateData.setPrimaryMobile(data.getMobileNo());
+            leadCreateData.setCustomerName(data.getName());
+            leadCreateData.setAssigneeId(data.getAssigneeId());
+            createLead(leadCreateData);
+        }
     }
 }

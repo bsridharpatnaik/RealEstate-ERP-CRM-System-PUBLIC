@@ -7,27 +7,19 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import com.ec.crm.Data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
-import com.ec.crm.Data.ApiOnlyMessageAndCodeError;
-import com.ec.crm.Data.LeadCreateData;
-import com.ec.crm.Data.LeadDAO;
-import com.ec.crm.Data.LeadDetailInfo;
-import com.ec.crm.Data.LeadListWithTypeAheadData;
-import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
-import com.ec.crm.Filters.FilterDataList;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Service.LeadService;
 import com.ec.crm.Service.UserDetailsService;
@@ -92,6 +84,12 @@ public class LeadController {
     @ResponseStatus(HttpStatus.CREATED)
     public Lead createLead(@Valid @RequestBody LeadCreateData payload) throws Exception {
         return leadService.createLead(payload);
+    }
+
+    @PostMapping("/import")
+    @ResponseStatus(HttpStatus.OK)
+    public void importLead(@Valid @RequestBody List<LeadImportPayloadData> payload) throws Exception {
+        leadService.importLead(payload);
     }
 
     @PutMapping("/{id}")
