@@ -48,11 +48,9 @@ public class Note extends ReusableFields
 	{ @JoinColumn(name = "id", referencedColumnName = "id") })
 	Set<FileInformation> fileInformations = new HashSet<>();
 
-	@JsonIgnore
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "lead_id", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
+	@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 	@NotFound(action = NotFoundAction.IGNORE)
 	Lead lead;
 
