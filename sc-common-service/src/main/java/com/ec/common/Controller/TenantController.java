@@ -12,22 +12,18 @@ import com.ec.common.Service.TenantService;
 
 @RestController
 @RequestMapping(value = "/tenants", produces =
-{ "application/json", "text/json" })
-public class TenantController
-{
-	@Autowired
-	TenantService tenantService;
+        {"application/json", "text/json"})
+public class TenantController {
+    @Autowired
+    TenantService tenantService;
 
-	@GetMapping
-	public List<TenantInformation> fetchAllTenants()
-	{
+    @GetMapping
+    public List<TenantInformation> fetchAllTenants() {
+        return tenantService.fetchTenantList();
+    }
 
-		return tenantService.fetchTenantList();
-	}
-
-	@GetMapping("/validtenantkeys")
-	public List<String> getValidtTenantKeys()
-	{
-		return tenantService.getValidTenantKeys();
-	}
+    @GetMapping("/validtenantkeys")
+    public List<String> getValidtTenantKeys() {
+        return tenantService.getValidTenantKeys();
+    }
 }
