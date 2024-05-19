@@ -21,68 +21,68 @@ import com.ec.common.Exception.ValidationError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-	
-	ObjectMapper mapper = new ObjectMapper();
-	private AuthenticationManager authenticationManager;
-	private boolean postOnly = true;
 
-	private TokenProvider tokenProvider;
+    ObjectMapper mapper = new ObjectMapper();
+    private AuthenticationManager authenticationManager;
+    private boolean postOnly = true;
 
-	public JWTAuthenticationFilter(AuthenticationManager authenticationManager, TokenProvider tokenProvider) {
-		this.authenticationManager=authenticationManager;
-		this.tokenProvider=tokenProvider;
-	}
+    private TokenProvider tokenProvider;
 
-	public JWTAuthenticationFilter(AuthenticationManager authenticationManager2,
-			Class<UsernamePasswordAuthenticationFilter> class1) {
+    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, TokenProvider tokenProvider) {
+        this.authenticationManager = authenticationManager;
+        this.tokenProvider = tokenProvider;
+    }
 
-	}
+    public JWTAuthenticationFilter(AuthenticationManager authenticationManager2,
+                                   Class<UsernamePasswordAuthenticationFilter> class1) {
 
-	@Override
-	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-			throws AuthenticationException {
-		
-		if (postOnly && !request.getMethod().equals("POST")) {
-			throw new AuthenticationServiceException(
-					"Authentication method not supported: " + request.getMethod());
-		}
+    }
 
-		String username = request.getParameter("userName");
-		String password = request.getParameter("password");
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException {
 
-		if (username == null) {
-			username = "";
-		}
+        if (postOnly && !request.getMethod().equals("POST")) {
+            throw new AuthenticationServiceException(
+                    "Authentication method not supported: " + request.getMethod());
+        }
 
-		if (password == null) {
-			password = "";
-		}
+        String username = request.getParameter("userName");
+        String password = request.getParameter("password");
 
-		username = username.trim();
+        if (username == null) {
+            username = "";
+        }
 
-		UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password);
+        if (password == null) {
+            password = "";
+        }
 
-		// Allow subclasses to set the "details" property
-		setDetails(request, authRequest);
+        username = username.trim();
 
-		return this.getAuthenticationManager().authenticate(authRequest);
-	}
-	
-	@Override
-	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-			AuthenticationException failed) throws IOException, ServletException {
+        UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password);
 
-		// Create standard Response Object
-		LoginData status = new LoginData();
-		status.setStatus(false);
-		status.addError("Auth Error" ,new ValidationError("JWT Token", failed.getMessage(), "401"));
+        // Allow subclasses to set the "details" property
+        setDetails(request, authRequest);
 
-		// Set response Object to response
-		String exceptionJson = mapper.writeValueAsString(status);
-		response.setStatus(HttpStatus.UNAUTHORIZED.value());
-		response.getWriter().write(exceptionJson);
-		response.setCharacterEncoding(StandardCharsets.UTF_8.displayName());
-		response.setContentType(MediaType.APPLICATION_JSON.toString());
-	}
+        return this.getAuthenticationManager().authenticate(authRequest);
+    }
+
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+                                              AuthenticationException failed) throws IOException, ServletException {
+
+        // Create standard Response Object
+        LoginData status = new LoginData();
+        status.setStatus(false);
+        status.addError("Auth Error", new ValidationError("JWT Token", failed.getMessage(), "401"));
+
+        // Set response Object to response
+        String exceptionJson = mapper.writeValueAsString(status);
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.getWriter().write(exceptionJson);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.displayName());
+        response.setContentType(MediaType.APPLICATION_JSON.toString());
+    }
 
 }

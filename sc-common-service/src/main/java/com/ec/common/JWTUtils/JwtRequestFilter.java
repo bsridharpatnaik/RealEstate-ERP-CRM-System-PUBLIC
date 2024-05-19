@@ -71,7 +71,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
             UserDetails userDetails = null;
             try {
-
                 userDetails = this.jwtUserDetailsService.loadUserByUsername(username);
             } catch (JwtUserDetailsService.UserDataAccessException e) {
 
