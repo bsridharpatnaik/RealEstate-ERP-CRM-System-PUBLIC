@@ -103,7 +103,7 @@ public class ActivitySpecifications {
                     .or(specbldr.whereDirectFieldContains(LeadActivity_.DESCRIPTION, textSearch))
                     //.or(specbldr.whereDirectFieldContains(LeadActivity_.TAGS, textSearch))
                     .or(specbldr.whereDirectFieldContains(LeadActivity_.TITLE, textSearch))
-                    //.or(noteContentContains(textSearch.get(0)))
+                    .or(hasTag(textSearch.get(0)))
             );
             finalSpec = specbldr.specAndCondition(finalSpec, globalSearchSpec);
         }
@@ -213,6 +213,13 @@ public class ActivitySpecifications {
             Join<LeadActivity, Lead> leadJoin = root.join("lead", JoinType.INNER);
             Join<Lead, Note> noteJoin = leadJoin.join("notes", JoinType.INNER);
             return criteriaBuilder.like(noteJoin.get("content").as(String.class), "%" + searchString + "%");
+        };
+    }
+
+    public static Specification<LeadActivity> hasTag(String tag) {
+        return (root, query, builder) -> {
+            Join<LeadActivity, String> tagsJoin = root.join("tags", JoinType.INNER);
+            return builder.equal(tagsJoin, tag);
         };
     }
 }
