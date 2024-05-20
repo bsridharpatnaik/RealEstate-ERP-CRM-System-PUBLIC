@@ -1,4 +1,4 @@
-use newbhaavbhumitemp; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
+use newbhaavbhumi; -- newsuncitynx,newkalpavrish,newsmartcity,newdrgtrdcntr,newbhaavbhumi
 set @dbname='common';
 
 INSERT IGNORE INTO `source`
@@ -212,7 +212,7 @@ FROM   (SELECT CASE WHEN cl.propertytype IS NULL THEN 'OTHERS' ELSE  cl.property
               ON tx.propertyType = y.propertyType;
 
 -- Payments Page
-CREATE OR REPLACE VIEW payments_page AS
+set @q=concat('CREATE OR REPLACE VIEW payments_page AS
 SELECT
 	row_number() over (
     ORDER BY cps.payment_date,cl.lead_id,
@@ -225,7 +225,7 @@ SELECT
 	cl.lead_id,
     cl.name as customerName,
     cds.deal_id as dealStructureId,
-    CASE WHEN cps.payment_date IS NULL THEN '' ELSE cps.payment_date END as paymentDate,
+    CASE WHEN cps.payment_date IS NULL THEN \'\' ELSE cps.payment_date END as paymentDate,
     cps.amount,
     cps.isReceived,
     cps.isCustomerPayment,
@@ -234,11 +234,14 @@ SELECT
     pn.name as propertyName
 FROM customer_deal_structure cds
 INNER JOIN customer_lead cl ON cds.lead_id=cl.lead_id
-INNER JOIN security_user su on su.user_id=cl.user_id
+INNER JOIN ',@dbname,'.security_user su on su.user_id=cl.user_id
 INNER JOIN customer_payment_schedule cps ON cps.deal_id=cds.deal_id AND cps.is_deleted=0
 INNER JOIN property_type pt ON pt.property_type_id=cds.property_type_id
 INNER JOIN property_name pn ON pn.property_name_id=cds.property_name_id
-WHERE cds.is_Deleted=0 ;
+WHERE cds.is_Deleted=0 ;');
+PREPARE stmt FROM @q;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 -- Activities for dashboard
 set @q=concat('CREATE OR REPLACE VIEW activities_for_dashboard AS
 SELECT UUID() as id,\'today\' as type, su.user_name,COUNT(leadactivity_id) as count FROM LeadActivity la
