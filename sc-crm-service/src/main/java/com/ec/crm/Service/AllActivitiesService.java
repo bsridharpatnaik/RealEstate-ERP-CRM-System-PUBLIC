@@ -169,10 +169,10 @@ public class AllActivitiesService {
     public PipelineWithTotalReturnDAO fetchPipelineDataFromActivityList(List<Lead> leads, LeadStatusEnum leadStatus, UserReturnData currentUser, ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> recentActivityMap) throws Exception {
         List<Lead> filteredLeads = leads.stream().filter(Lead -> Lead.getStatus().equals(leadStatus))
                 .collect(Collectors.toList());
-        return transformToPipelineWithTotalReturnDAO(filteredLeads, currentUser, recentActivityMap);
+        return transformToPipelineWithTotalReturnDAO(filteredLeads, currentUser, recentActivityMap, leadStatus);
     }
 
-    private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads, UserReturnData currentUser, ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> recentActivityMap) throws Exception {
+    private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads, UserReturnData currentUser, ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> recentActivityMap, LeadStatusEnum leadStatus) throws Exception {
         log.info("Invoked transformToPipelineWithTotalReturnDAO");
         PipelineWithTotalReturnDAO PipelineWithTotalReturnDAO = new PipelineWithTotalReturnDAO();
         List<PipelineSingleReturnDTO> pipelineSingleReturnDTOList = new ArrayList<PipelineSingleReturnDTO>();
@@ -200,7 +200,7 @@ public class AllActivitiesService {
         }
         PipelineWithTotalReturnDAO.setLeads(pipelineSingleReturnDTOList);
         PipelineWithTotalReturnDAO.setTotalCount(filteredLeads.size());
-        PipelineWithTotalReturnDAO.setLeadStatus(filteredLeads.size() > 0 ? filteredLeads.get(0).getStatus() : null); // Set the lead status
+        PipelineWithTotalReturnDAO.setLeadStatus(leadStatus); // Set the lead status
         return PipelineWithTotalReturnDAO;
     }
 
