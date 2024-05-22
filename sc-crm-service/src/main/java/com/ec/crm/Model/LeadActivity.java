@@ -11,6 +11,7 @@ import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
+import org.hibernate.envers.NotAudited;
 import org.springframework.lang.NonNull;
 
 import com.ec.crm.Enums.ActivityTypeEnum;
@@ -74,6 +75,10 @@ public class LeadActivity extends ReusableFields implements Serializable {
     Lead lead;
 
     String closingComment;
+
+    @NotAudited
+    @Formula("(SELECT group_concat(lat.tags,',') FROM lead_activity_tags lat where lat.leadActivityId=leadactivity_id)")
+    String tagsGrouped;
 
     @NonNull
     @Column(nullable = false)

@@ -10,8 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
 
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.*;
 
 public class ActivitySpecifications {
     static SpecificationsBuilder<LeadActivity> specbldr = new SpecificationsBuilder<LeadActivity>();
@@ -96,14 +95,15 @@ public class ActivitySpecifications {
         }
 
         if (textSearch != null && textSearch.size() > 0) {
-            Specification<LeadActivity> globalSearchSpec = Objects.requireNonNull(specbldr
-                    .whereChildFieldContains(LeadActivity_.LEAD, Lead_.CUSTOMER_NAME, textSearch)
-                    .or(specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.PRIMARY_MOBILE, textSearch))
-                    .or(specbldr.whereDirectFieldContains(LeadActivity_.CLOSING_COMMENT, textSearch))
-                    .or(specbldr.whereDirectFieldContains(LeadActivity_.DESCRIPTION, textSearch))
-                    //.or(specbldr.whereDirectFieldContains(LeadActivity_.TAGS, textSearch))
-                    .or(specbldr.whereDirectFieldContains(LeadActivity_.TITLE, textSearch))
-                    .or(hasTag(textSearch.get(0)))
+            Specification<LeadActivity> globalSearchSpec = Objects.requireNonNull(
+                    specbldr
+                            .whereChildFieldContains(LeadActivity_.LEAD, Lead_.CUSTOMER_NAME, textSearch)
+                            .or(specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.PRIMARY_MOBILE, textSearch))
+                            .or(specbldr.whereDirectFieldContains(LeadActivity_.CLOSING_COMMENT, textSearch))
+                            .or(specbldr.whereDirectFieldContains(LeadActivity_.DESCRIPTION, textSearch))
+                            .or(specbldr.whereDirectFieldContains(LeadActivity_.TITLE, textSearch))
+                            .or(specbldr.whereDirectFieldContains(LeadActivity_.TAGS_GROUPED,textSearch))
+                            .or(specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.NOTES, textSearch))
             );
             finalSpec = specbldr.specAndCondition(finalSpec, globalSearchSpec);
         }
@@ -220,6 +220,20 @@ public class ActivitySpecifications {
         return (root, query, builder) -> {
             Join<LeadActivity, String> tagsJoin = root.join("tags", JoinType.INNER);
             return builder.equal(tagsJoin, tag);
+        };
+    }
+
+    public static Specification<LeadActivity> searchStringInNoteContent(String searchString) {
+        return new Specification<LeadActivity>() {
+            @Override
+            public Predicate toPredicate(Root<LeadActivity> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                Subquery<Note> noteSubquery = query.subquery(Note.class);
+                Root<Note> noteRoot = noteSubquery.from(Note.class);
+                noteSubquery.select(noteRoot.get("lead"))
+                        .where(criteriaBuilder.like(noteRoot.get("content"), "%" + searchString + "%"));
+                query.distinct(true); // Add DISTINCT to the main query
+                return criteriaBuilder.in(root.get("lead")).value(noteSubquery);
+            }
         };
     }
 }
