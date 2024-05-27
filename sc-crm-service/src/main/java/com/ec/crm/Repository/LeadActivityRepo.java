@@ -35,6 +35,9 @@ public interface LeadActivityRepo extends BaseRepository<LeadActivity, Long>, Jp
 	@Query(value = "SELECT la from LeadActivity la where la.lead.leadId=:leadId ORDER BY la.activityDateTime DESC")
 	List<LeadActivity> findAllActivitiesForLead(@Param("leadId") Long leadId);
 
+	@Query(value = "SELECT la from LeadActivity la where la.lead.leadId=:leadId AND la.isLatest='1' ORDER BY la.activityDateTime DESC")
+	List<LeadActivity> findAllLatestActivitiesForLead(@Param("leadId") Long leadId);
+
 	@Query(value = "SELECT la from LeadActivity la where la.isOpen = true and la.lead.leadId=:leadId "
 			+ "and la.activityDateTime > :todayDate " + "and la.activityDateTime < :tomorrowDate "
 			+ "ORDER BY la.activityDateTime asc")

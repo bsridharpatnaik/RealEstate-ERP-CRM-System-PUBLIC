@@ -14,10 +14,6 @@ import com.ec.crm.Model.*;
 import com.ec.crm.Repository.*;
 import com.ec.crm.Strategy.IStrategy;
 import com.ec.crm.Strategy.StrategyFactory;
-import com.ec.crm.multitenant.ThreadLocalStorage;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,10 +108,20 @@ public class LeadActivityService {
         LeadActivity leadActivity = new LeadActivity();
         setFields(leadActivity, payload, "user");
         log.info("Closed createLeadActivity");
+        updateIsLatestTofalseForOtherActivities(payload.getLeadId());
         laRepo.save(leadActivity);
         ExecuteBusinessLogicWhileCreation(leadActivity);
         return leadActivity;
 
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    private void updateIsLatestTofalseForOtherActivities(Long leadId) {
+        List<LeadActivity> activityList = laRepo.findAllLatestActivitiesForLead(leadId);
+        for(LeadActivity la:activityList){
+            la.setIsLatest(0);
+            laRepo.save(la);
+        }
     }
 
     public void softDeleteLeadActivity(Long id) {
@@ -124,10 +130,8 @@ public class LeadActivityService {
 
     @Transactional(rollbackFor = Exception.class)
     public void revertLeadActivity(Long id) throws Exception {
-
         LeadActivity la = getSingleLeadActivity(id);
         exitIfRevertNotAllowed(la);
-
         if (la.getIsOpen()) {
             if (la.getActivityType().equals(ActivityTypeEnum.Property_Visit)) {
                 addNoteBeforeRevert(la);
@@ -157,7 +161,6 @@ public class LeadActivityService {
                 laRepo.softDelete(la);
             }
         }
-        // TO DO - Add logic to revert the activity
     }
 
     @Transactional
@@ -180,12 +183,9 @@ public class LeadActivityService {
         List<LeadActivity> activities = laRepo.fetchMostRecentLeadActivity(la.getLead().getLeadId());
         if (activities.size() < 1)
             throw new Exception("No activities found for lead");
-
         LeadActivity latestActivity = activities.get(0);
-
         if (!latestActivity.getLeadActivityId().equals(la.getLeadActivityId()))
             throw new Exception("Revert not allowed for this activity.");
-
         else {
             if (latestActivity.getIsOpen()) {
                 if (!latestActivity.getActivityType().equals(ActivityTypeEnum.Property_Visit))
@@ -423,15 +423,6 @@ public class LeadActivityService {
             throw new Exception("Lead not found by lead ID -" + payload.getLeadId());
         else
             return leadOpt.get();
-
-
-        /*
-         * else if((leadOpt.get().getStatus().equals(LeadStatusEnum.New_Lead) ||
-         * leadOpt.get().getStatus().equals(LeadStatusEnum.Deal_Lost)) &&
-         * payload.getActivityType().equals(ActivityTypeEnum.Deal_Close)) throw new
-         * Exception("You cannot close a new lead or a lost lead. Lead should be closed only after property visit"
-         * );
-         */
     }
 
     public Page<LeadActivity> fetchAll(Pageable pageable) {
@@ -490,6 +481,7 @@ public class LeadActivityService {
         log.info("creating new Activity - success");
         LeadActivity newActivity = new LeadActivity();
         setFieldsForReschedule(rescheduleActivityData, newActivity, leadActivity);
+        updateIsLatestTofalseForOtherActivities(leadActivity.getLead().getLeadId());
         laRepo.save(newActivity);
         if (newActivity.getActivityType().equals(ActivityTypeEnum.Payment)) {
             psService.updateActivityForPaymentSchedule(leadActivity.getLeadActivityId(),
@@ -579,6 +571,7 @@ public class LeadActivityService {
         newActivity.setIsOpen(true);
         newActivity.setLead(lead);
         newActivity.setTitle("New Lead - Call");
+        updateIsLatestTofalseForOtherActivities(lead.getLeadId());
         laRepo.save(newActivity);
     }
 
@@ -591,35 +584,6 @@ public class LeadActivityService {
         return leadOpt.get();
     }
 
-    /*
-     * public LeadActivityListWithTypeAheadData getLeadActivityPage(FilterDataList
-     * leadFilterDataList, Pageable pageable) throws ParseException {
-     * log.info("Invoked findFilteredList with payload - " +
-     * leadFilterDataList.toString()); LeadActivityListWithTypeAheadData
-     * leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
-     *
-     * log.info("Fetching filteration based on filter data received");
-     * Specification<Lead> spec =
-     * LeadSpecifications.getSpecification(leadFilterDataList);
-     *
-     * Page<Lead> leadList = spec!=null?lRepo.findAll(spec,
-     * pageable):lRepo.findAll(pageable);
-     *
-     * //Page<LeadPageData> pagedata=leadToLeadActivityModelMapper.map(leadList,
-     * LeadPageData.class); //Page<LeadPageData> pagedata =
-     * ObjectMapperUtils.mapEntityPageIntoDtoPage(leadList, LeadPageData.class);
-     *
-     * Page<LeadPageData> pagedata = leadList.map(objectEntity ->
-     * leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
-     *
-     * leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
-     * log.info("Setting dropdown data");
-     * leadActivityListWithTypeAheadData.setDropdownData(populateDropdownService.
-     * fetchData("lead")); log.info("Setting typeahead data");
-     * leadActivityListWithTypeAheadData.setTypeAheadDataForGlobalSearch(lService.
-     * fetchTypeAheadForLeadGlobalSearch()); return
-     * leadActivityListWithTypeAheadData; }
-     */
     public LeadActivityDropdownData getDropdownForLead() throws Exception {
         LeadActivityDropdownData data = new LeadActivityDropdownData();
         data.setDropdownData(populateDropdownService.fetchData("lead"));
@@ -697,121 +661,6 @@ public class LeadActivityService {
         return l;
     }
 
-    /*public LeadActivity getRecentActivityByLead(Lead lead, String dbName) {
-        System.out.println("getRecentActivityByLead " + dbName);
-        ThreadLocalStorage.setTenantName(dbName);
-        LeadActivity activity = new LeadActivity();
-        if (lead.getPastOpenId() != null) {
-            activity = laRepo.getOne(lead.getPastOpenId());
-        } else if (lead.getTodayOpenId() != null) {
-            activity = laRepo.getOne(lead.getTodayOpenId());
-        } else if (lead.getTodayOpenId() == null && lead.getUpcomingOpenId() == null) {
-            if (lead.getUpcomingClosedId() != null)
-                activity = laRepo.getOne(lead.getUpcomingClosedId());
-            else if (lead.getTodayClosedId() != null)
-                activity = laRepo.getOne(lead.getTodayClosedId());
-            else
-                activity = laRepo.getOne(lead.getPastClosedId());
-        } else if (lead.getTodayOpenId() == null && lead.getUpcomingOpenId() != null) {
-            activity = laRepo.getOne(lead.getUpcomingOpenId());
-        }
-        if(activity == null)
-            laRepo.fetchMostRecentLeadActivity(lead.getLeadId());
-        ThreadLocalStorage.setTenantName(null);
-        return activity;
-    }*/
-
-    public LeadActivity getRecentActivityByLeadId(Long leadId) {
-        LeadActivity activity = new LeadActivity();
-        List<LeadActivity> activities = laRepo.findAllActivitiesForLead(leadId);
-        log.info("Get all the Activity");
-
-        try {
-            activity = getDisplayActivityForLeadFromAllActivities(activities);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return activity;
-    }
-
-    public LeadActivity getDisplayActivityForLeadFromAllActivities(List<LeadActivity> activities) throws Exception {
-        boolean isPendingExists = false;
-        // boolean isClosedExists=false;
-        boolean isUpcomingExists = false;
-        boolean pastExists = false;
-        List<LeadActivity> returndata = new ArrayList<LeadActivity>();
-        Long leadId = activities.get(0).getLead().getLeadId();
-        for (LeadActivity activity : activities) {
-            if (activity.getIsOpen() == true
-                    && activity.getActivityDateTime().after(ReusableMethods.atStartOfDay(new Date()))
-                    && activity.getActivityDateTime().before(ReusableMethods.atEndOfDay(new Date()))) // Pass time zone
-                // to
-                // constructor.)
-                isPendingExists = true;
-
-            if (activity.getIsOpen() == true
-                    && activity.getActivityDateTime().after(ReusableMethods.atEndOfDay(new Date()))) // Pass time zone
-                // to
-                // constructor.)
-                isUpcomingExists = true;
-
-            if (activity.getIsOpen() == true
-                    && activity.getActivityDateTime().before(ReusableMethods.atStartOfDay(new Date()))) // Pass time
-                // zone to
-                // constructor.)
-                pastExists = true;
-        }
-
-        /*
-         * Only Pending Only past Only upcoming
-         *
-         * If pending ignore others
-         *
-         * !past && !up past * up past & !up !past & up
-         */
-
-        if (isPendingExists)
-            returndata = laRepo.getRecentPendingActivity(leadId, ReusableMethods.atStartOfDay(new Date()),
-                    ReusableMethods.atEndOfDay(new Date()));
-
-        else if (!isUpcomingExists && !isPendingExists && pastExists)
-            returndata = laRepo.getRecentClosedActivity(leadId);
-
-        else if (!pastExists && !isPendingExists && !isUpcomingExists)
-            returndata = laRepo.getRecentActivityIrrespectiveOfStatus(leadId);
-
-        else if (!isPendingExists) {
-            if (!pastExists)
-                returndata = laRepo.getRecentUpcomingActivity(leadId, ReusableMethods.atEndOfDay(new Date()));
-
-            else if (isUpcomingExists && !pastExists)
-                returndata = laRepo.getRecentUpcomingActivity(leadId, ReusableMethods.atEndOfDay(new Date()));
-
-            else if (isUpcomingExists && pastExists)
-                returndata = laRepo.getRecentUpcomingActivity(leadId, ReusableMethods.atEndOfDay(new Date()));
-
-            else if (!isUpcomingExists && pastExists)
-                returndata = laRepo.getRecentPastActivity(leadId, ReusableMethods.atStartOfDay(new Date()));
-        }
-        if (returndata.size() == 0)
-            throw new Exception("No Activity present for lead - " + leadId);
-
-        return returndata.get(0);
-    }
-
-    public Long getStagnantDaysByLeadId(Long leadId) {
-        Date lastModified = laRepo.fetchLastModified(leadId);
-        try {
-            long noOfDaysBetween = ReusableMethods.daysBetweenTwoDates(lastModified, new Date());
-            return noOfDaysBetween;
-        } catch (Exception ch) {
-            return (long) 0;
-
-        }
-
-    }
-
     public Boolean getRevertable(Long leadActivityId, Long leadId) throws Exception {
         List<LeadActivity> activities = laRepo.fetchMostRecentLeadActivity(leadId);
         if (activities.size() < 1)
@@ -881,20 +730,5 @@ public class LeadActivityService {
                         (la.getLead().getStatus().equals(LeadStatusEnum.Visit_Completed) || la.getLead().getStatus().equals(LeadStatusEnum.Visit_Scheduled))))
             return true;
         return false;
-    }
-
-    public void createDealCancelledActivity(DealStructure ds) {
-        LeadActivity la = new LeadActivity();
-        la.setActivityType(ActivityTypeEnum.Deal_Cancelled);
-        la.setActivityDateTime(new Date());
-        la.setDealLostReason(DealLostReasonEnum.Other);
-        la.setDescription("Property Type - " + ds.getPropertyType().getPropertyType() + ". Property Name - " + ds.getPropertyName().getName());
-        la.setTitle("Deal Cancelled");
-        la.setLead(lRepo.findById(ds.getLead().getLeadId()).get());
-        la.setCreatorId(404L);
-        la.setIsOpen(false);
-        la.setClosedBy(404L);
-        la.setDuration(0L);
-        laRepo.save(la);
     }
 }
