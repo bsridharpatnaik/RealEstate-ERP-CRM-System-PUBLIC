@@ -11,6 +11,7 @@ import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.springframework.lang.NonNull;
 
@@ -24,6 +25,7 @@ import Deserializers.ToUsernameSerializer;
 import lombok.Data;
 
 @Entity
+@Audited
 @Table(name = "LeadActivity")
 @Data
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
@@ -88,13 +90,7 @@ public class LeadActivity extends ReusableFields implements Serializable {
     @Enumerated(EnumType.STRING)
     DealLostReasonEnum dealLostReason;
 
-    @Formula("(SELECT CASE WHEN count(la.leadactivity_id)>0 THEN true ELSE false END from customer_lead cl "
-            + "INNER  JOIN LeadActivity la on la.lead_id=cl.lead_id LEFT OUTER JOIN LeadActivity la2 on "
-            + "	(cl.lead_id=la2.lead_id AND la2.is_deleted=0 AND (la.created_at < la2.created_at OR "
-            + " (la.created_at = la2.created_at AND la.leadactivity_id<la2.leadactivity_id))) "
-            + "WHERE la2.leadactivity_id IS NULL AND la.leadactivity_id=leadactivity_id AND cl.is_deleted=false"
-            + " AND la.is_deleted=false)")
-    @NonNull
+    @Column(name = "isLatest", nullable = false)
     int isLatest;
 
     @Column(name = "isRescheduled", nullable = false)
@@ -104,5 +100,6 @@ public class LeadActivity extends ReusableFields implements Serializable {
 
     public LeadActivity() {
         super();
+        this.setIsLatest(1);
     }
 }
