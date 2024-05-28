@@ -91,18 +91,16 @@ public class Lead extends ReusableFields implements Serializable {
     SentimentEnum sentiment;
 
     @NotAudited
-    @Formula("(SELECT group_concat(n.content,',') from note n where n.lead_id=lead_id and n.is_deleted=0)")
+    @Column(name = "notes", columnDefinition = "TEXT")
     String notes;
 
     @NotAudited
-    @Formula("(Select max(la.updated_at) from LeadActivity la Where la.lead_id=lead_id and la.is_deleted=false)")
+    @Column(name = "lastActivityModifiedDate")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     Date lastActivityModifiedDate;
 
     @NotAudited
-    @Formula("(SELECT CASE WHEN l.status in ('Deal_closed','Deal_Lost') "
-            + "THEN 0 ELSE datediff(now(),max(la.updated_at)) END FROM LeadActivity la "
-            + "INNER JOIN customer_lead l on l.lead_id=la.lead_id WHERE la.lead_id=lead_id AND la.is_deleted=0)")
+    @Column(name = "stagnantDaysCount")
     Long stagnantDaysCount;
 
     @Column(name = "user_id")
@@ -122,47 +120,20 @@ public class Lead extends ReusableFields implements Serializable {
     @ColumnDefault("false")
     Boolean isProspectLead;
 
-/*    @Formula("(SELECT p.recentIsOpen FROM lead_activity_for_pipeline p WHERE p.lead_id=lead_id)")
     @NotAudited
-    Boolean recentActivityStatus;
-
-    @NotAudited
-    @Formula("(SELECT p.recentActivityDateTime FROM lead_activity_for_pipeline p WHERE p.lead_id=lead_id)")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    Date recentActivityDateTime;*/
-
-    @NotAudited
-    @Formula("(select cds.loanStatus from customer_deal_structure cds " +
-            "INNER JOIN customer_lead cl on cl.lead_id = cds.lead_id " +
-            "WHERE " +
-            "cds.is_deleted=false " +
-            "AND cl.is_deleted=false " +
-            "AND cl.lead_id=lead_id " +
-            "AND cds.loanStatus IS NOT NULL " +
-            "LIMIT 1)")
+    @Column(name="loanStatus")
     String loanStatus;
 
     @NotAudited
-    @Formula("(select cds.customerStatus from customer_deal_structure cds " +
-            "INNER JOIN customer_lead cl on cl.lead_id = cds.lead_id " +
-            "WHERE " +
-            "cds.is_deleted=false " +
-            "AND cl.is_deleted=false " +
-            "AND cl.lead_id=lead_id " +
-            "AND cds.customerStatus IS NOT NULL " +
-            "LIMIT 1)")
+    @Column(name="customerStatus")
     String customerStatus;
 
     @NotAudited
-    @Formula("(SELECT MIN(cps.payment_date) from customer_payment_schedule cps " +
-            "INNER JOIN customer_deal_structure cds on cps.deal_id=cds.deal_id " +
-            "WHERE cps.is_deleted=0 AND cds.is_deleted=0 AND cps.isReceived=false AND cds.lead_id = lead_id)")
+    @Column(name="nextPaymentDate")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     Date nextPaymentDate;
 
     @NotAudited
-    @Formula("(SELECT SUM(cps.amount) from customer_payment_schedule cps " +
-            "INNER JOIN customer_deal_structure cds on cps.deal_id=cds.deal_id " +
-            "WHERE cps.is_deleted=0 AND cds.is_deleted=0 AND cps.isReceived=false AND cds.lead_id = lead_id)")
-    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    @Column(name="totalPending")
     Double totalPending;
 }
