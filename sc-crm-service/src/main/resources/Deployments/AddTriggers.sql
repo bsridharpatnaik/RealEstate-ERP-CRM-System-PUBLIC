@@ -68,9 +68,10 @@ BEGIN
     LIMIT 1;
 
     -- Create a temporary table for leads to update
+    DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
     CREATE TEMPORARY TABLE LeadsToUpdate AS
     SELECT DISTINCT l.lead_id
-    FROM Lead l
+    FROM customer_lead l
     LEFT JOIN note n ON n.lead_id = l.lead_id AND n.is_deleted = 0
     LEFT JOIN LeadActivity la ON la.lead_id = l.lead_id AND la.is_deleted = 0
     LEFT JOIN customer_deal_structure cds ON cds.lead_id = l.lead_id AND cds.is_deleted = 0
@@ -81,17 +82,12 @@ BEGIN
        OR cps.updated_at > last_exec;
 
     -- Update notes
-    UPDATE Lead l
+    UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.notes = (
-        SELECT GROUP_CONCAT(n.content, ',')
-        FROM note n
-        WHERE n.lead_id = l.lead_id
-          AND n.is_deleted = 0
-    );
+    SET l.notes = '';
 
     -- Update lastActivityModifiedDate
-    UPDATE Lead l
+    UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
     SET l.lastActivityModifiedDate = (
         SELECT MAX(la.updated_at)
@@ -101,7 +97,7 @@ BEGIN
     );
 
     -- Update stagnantDaysCount
-    UPDATE Lead l
+    UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
     SET l.stagnantDaysCount = (
         SELECT CASE
@@ -115,7 +111,7 @@ BEGIN
     );
 
     -- Update loanStatus
-    UPDATE Lead l
+    UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
     SET l.loanStatus = (
         SELECT cds.loanStatus
@@ -129,7 +125,7 @@ BEGIN
     );
 
     -- Update customerStatus
-    UPDATE Lead l
+    UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
     SET l.customerStatus = (
         SELECT cds.customerStatus
@@ -143,7 +139,7 @@ BEGIN
     );
 
     -- Update nextPaymentDate
-    UPDATE Lead l
+    UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
     SET l.nextPaymentDate = (
         SELECT MIN(cps.payment_date)
@@ -156,7 +152,7 @@ BEGIN
     );
 
     -- Update totalPending
-    UPDATE Lead l
+    UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
     SET l.totalPending = (
         SELECT SUM(cps.amount)
@@ -176,7 +172,6 @@ BEGIN
 END //
 
 DELIMITER ;
-DELIMITER //
 
 -- Schedule the stored procedure:
 -- Drop the existing event if it exists

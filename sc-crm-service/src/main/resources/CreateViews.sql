@@ -404,6 +404,7 @@ INSERT IGNORE INTO execution_history (last_execution) VALUES ('2000-01-01 00:00:
 
 
 DELIMITER //
+
 DROP PROCEDURE IF EXISTS UpdateLeadDerivedFields;
 CREATE PROCEDURE UpdateLeadDerivedFields()
 BEGIN
@@ -416,6 +417,7 @@ BEGIN
     LIMIT 1;
 
     -- Create a temporary table for leads to update
+    DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
     CREATE TEMPORARY TABLE LeadsToUpdate AS
     SELECT DISTINCT l.lead_id
     FROM customer_lead l
@@ -428,102 +430,142 @@ BEGIN
        OR cds.updated_at > last_exec
        OR cps.updated_at > last_exec;
 
+    -- Create temporary table to hold hashtags
+    DROP TEMPORARY TABLE IF EXISTS TempNotes;
+    CREATE TEMPORARY TABLE TempNotes AS
+    SELECT lead_id,
+           GROUP_CONCAT(DISTINCT SUBSTRING_INDEX(SUBSTRING(n.content, LOCATE('#', n.content)), ' ', 1) SEPARATOR ', ') AS notes
+    FROM note n
+    WHERE n.is_deleted = 0 AND n.content REGEXP '#[a-zA-Z0-9_]+'
+    GROUP BY n.lead_id;
+
     -- Update notes
     UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.notes = (
-        SELECT GROUP_CONCAT(n.content, ',')
-        FROM note n
-        WHERE n.lead_id = l.lead_id
-          AND n.is_deleted = 0
-    );
+    LEFT JOIN TempNotes tn ON tn.lead_id = l.lead_id
+    SET l.notes = tn.notes;
+
+    -- Drop TempNotes temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempNotes;
+
+    -- Create temporary table for last activity modified date
+    DROP TEMPORARY TABLE IF EXISTS TempLastActivity;
+    CREATE TEMPORARY TABLE TempLastActivity AS
+    SELECT la.lead_id, MAX(la.updated_at) AS lastActivityModifiedDate
+    FROM LeadActivity la
+    WHERE la.is_deleted = 0
+    GROUP BY la.lead_id;
 
     -- Update lastActivityModifiedDate
     UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.lastActivityModifiedDate = (
-        SELECT MAX(la.updated_at)
-        FROM LeadActivity la
-        WHERE la.lead_id = l.lead_id
-          AND la.is_deleted = 0
-    );
+    LEFT JOIN TempLastActivity tla ON tla.lead_id = l.lead_id
+    SET l.lastActivityModifiedDate = tla.lastActivityModifiedDate;
+
+    -- Drop TempLastActivity temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempLastActivity;
+
+    -- Create temporary table for stagnant days count
+    DROP TEMPORARY TABLE IF EXISTS TempStagnantDays;
+    CREATE TEMPORARY TABLE TempStagnantDays AS
+    SELECT la.lead_id,
+           CASE
+               WHEN cl.status IN ('Deal_closed', 'Deal_Lost') THEN 0
+               ELSE DATEDIFF(NOW(), MAX(la.updated_at))
+           END AS stagnantDaysCount
+    FROM LeadActivity la
+    INNER JOIN customer_lead cl ON cl.lead_id = la.lead_id
+    WHERE la.is_deleted = 0
+    GROUP BY la.lead_id, cl.status;
 
     -- Update stagnantDaysCount
     UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.stagnantDaysCount = (
-        SELECT CASE
-                   WHEN l.status IN ('Deal_closed', 'Deal_Lost') THEN 0
-                   ELSE DATEDIFF(NOW(), MAX(la.updated_at))
-               END
-        FROM LeadActivity la
-        INNER JOIN customer_lead cl ON cl.lead_id = la.lead_id
-        WHERE la.lead_id = l.lead_id
-          AND la.is_deleted = 0
-    );
+    LEFT JOIN TempStagnantDays tsd ON tsd.lead_id = l.lead_id
+    SET l.stagnantDaysCount = tsd.stagnantDaysCount;
+
+    -- Drop TempStagnantDays temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempStagnantDays;
+
+    -- Create temporary table for loan status
+    DROP TEMPORARY TABLE IF EXISTS TempLoanStatus;
+    CREATE TEMPORARY TABLE TempLoanStatus AS
+    SELECT cds.lead_id, cds.loanStatus
+    FROM customer_deal_structure cds
+    INNER JOIN customer_lead cl ON cl.lead_id = cds.lead_id
+    WHERE cds.is_deleted = 0 AND cl.is_deleted = 0 AND cds.loanStatus IS NOT NULL;
 
     -- Update loanStatus
     UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.loanStatus = (
-        SELECT cds.loanStatus
-        FROM customer_deal_structure cds
-        INNER JOIN customer_lead cl ON cl.lead_id = cds.lead_id
-        WHERE cds.is_deleted = 0
-          AND cl.is_deleted = 0
-          AND cl.lead_id = l.lead_id
-          AND cds.loanStatus IS NOT NULL
-        LIMIT 1
-    );
+    LEFT JOIN TempLoanStatus tls ON tls.lead_id = l.lead_id
+    SET l.loanStatus = tls.loanStatus;
+
+    -- Drop TempLoanStatus temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempLoanStatus;
+
+    -- Create temporary table for customer status
+    DROP TEMPORARY TABLE IF EXISTS TempCustomerStatus;
+    CREATE TEMPORARY TABLE TempCustomerStatus AS
+    SELECT cds.lead_id, cds.customerStatus
+    FROM customer_deal_structure cds
+    INNER JOIN customer_lead cl ON cl.lead_id = cds.lead_id
+    WHERE cds.is_deleted = 0 AND cl.is_deleted = 0 AND cds.customerStatus IS NOT NULL;
 
     -- Update customerStatus
     UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.customerStatus = (
-        SELECT cds.customerStatus
-        FROM customer_deal_structure cds
-        INNER JOIN customer_lead cl ON cl.lead_id = cds.lead_id
-        WHERE cds.is_deleted = 0
-          AND cl.is_deleted = 0
-          AND cl.lead_id = l.lead_id
-          AND cds.customerStatus IS NOT NULL
-        LIMIT 1
-    );
+    LEFT JOIN TempCustomerStatus tcs ON tcs.lead_id = l.lead_id
+    SET l.customerStatus = tcs.customerStatus;
+
+    -- Drop TempCustomerStatus temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempCustomerStatus;
+
+    -- Create temporary table for next payment date
+    DROP TEMPORARY TABLE IF EXISTS TempNextPayment;
+    CREATE TEMPORARY TABLE TempNextPayment AS
+    SELECT cds.lead_id, MIN(cps.payment_date) AS nextPaymentDate
+    FROM customer_payment_schedule cps
+    INNER JOIN customer_deal_structure cds ON cps.deal_id = cds.deal_id
+    WHERE cps.is_deleted = 0 AND cds.is_deleted = 0 AND cps.isReceived = false
+    GROUP BY cds.lead_id;
 
     -- Update nextPaymentDate
     UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.nextPaymentDate = (
-        SELECT MIN(cps.payment_date)
-        FROM customer_payment_schedule cps
-        INNER JOIN customer_deal_structure cds ON cps.deal_id = cds.deal_id
-        WHERE cps.is_deleted = 0
-          AND cds.is_deleted = 0
-          AND cps.isReceived = false
-          AND cds.lead_id = l.lead_id
-    );
+    LEFT JOIN TempNextPayment tnp ON tnp.lead_id = l.lead_id
+    SET l.nextPaymentDate = tnp.nextPaymentDate;
+
+    -- Drop TempNextPayment temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempNextPayment;
+
+    -- Create temporary table for total pending
+    DROP TEMPORARY TABLE IF EXISTS TempTotalPending;
+    CREATE TEMPORARY TABLE TempTotalPending AS
+    SELECT cds.lead_id, SUM(cps.amount) AS totalPending
+    FROM customer_payment_schedule cps
+    INNER JOIN customer_deal_structure cds ON cps.deal_id = cds.deal_id
+    WHERE cps.is_deleted = 0 AND cds.is_deleted = 0 AND cps.isReceived = false
+    GROUP BY cds.lead_id;
 
     -- Update totalPending
     UPDATE customer_lead l
     JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    SET l.totalPending = (
-        SELECT SUM(cps.amount)
-        FROM customer_payment_schedule cps
-        INNER JOIN customer_deal_structure cds ON cps.deal_id = cds.deal_id
-        WHERE cps.is_deleted = 0
-          AND cds.is_deleted = 0
-          AND cps.isReceived = false
-          AND cds.lead_id = l.lead_id
-    );
+    LEFT JOIN TempTotalPending ttp ON ttp.lead_id = l.lead_id
+    SET l.totalPending = ttp.totalPending;
+
+    -- Drop TempTotalPending temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempTotalPending;
 
     -- Update the last execution time
     INSERT INTO execution_history (last_execution) VALUES (NOW());
 
-    -- Drop the temporary table
-    DROP TEMPORARY TABLE LeadsToUpdate;
+    -- Drop LeadsToUpdate temporary table
+    DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
 END //
 
 DELIMITER ;
+
 
 -- Schedule the stored procedure:
 -- Drop the existing event if it exists
