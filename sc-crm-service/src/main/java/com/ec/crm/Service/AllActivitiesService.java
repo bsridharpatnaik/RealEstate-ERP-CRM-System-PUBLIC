@@ -105,14 +105,13 @@ public class AllActivitiesService {
         // List to store futures for each async task
         List<CompletableFuture<PipelineWithTotalReturnDAO>> futures = new ArrayList<>();
         UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
-        ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> recentActivityMap = fetchRecentActivityForAllLeads();
 
         // Submit each task to the executor with try-catch blocks
         for (LeadStatusEnum leadStatus : LeadStatusEnum.getValuesForPipeline()) {
             futures.add(CompletableFuture.supplyAsync(() -> {
                 try {
                     ThreadLocalStorage.setTenantName(dbName);
-                    return fetchPipelineDataFromActivityList(leads, leadStatus, currentUser, recentActivityMap);
+                    return fetchPipelineDataFromActivityList(leads, leadStatus, currentUser);
                 } catch (Exception e) {
                     throw new RuntimeException("Error fetching pipeline data for " + leadStatus, e);
                 }
@@ -155,33 +154,22 @@ public class AllActivitiesService {
         return pipelineAllReturnDAO;
     }
 
-    private ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> fetchRecentActivityForAllLeads() {
-        ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> leadRecentActivityMapping = new ConcurrentHashMap<>();
-        List<RecentActivityForPipeline> recentActivityForLeads = recentActivityForPipelineRepo.findAll();
-        for (RecentActivityForPipeline recentActivityForLead : recentActivityForLeads){
-            AbstractMap.SimpleEntry<Boolean, Date> entry = new AbstractMap.SimpleEntry<>(recentActivityForLead.getRecentIsOpen(), recentActivityForLead.getRecentActivityDateTime());
-            leadRecentActivityMapping.put(recentActivityForLead.getLeadId(), entry);
 
-        }
-        return leadRecentActivityMapping;
-    }
-
-    public PipelineWithTotalReturnDAO fetchPipelineDataFromActivityList(List<Lead> leads, LeadStatusEnum leadStatus, UserReturnData currentUser, ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> recentActivityMap) throws Exception {
+    public PipelineWithTotalReturnDAO fetchPipelineDataFromActivityList(List<Lead> leads, LeadStatusEnum leadStatus, UserReturnData currentUser) throws Exception {
         List<Lead> filteredLeads = leads.stream().filter(Lead -> Lead.getStatus().equals(leadStatus))
                 .collect(Collectors.toList());
-        return transformToPipelineWithTotalReturnDAO(filteredLeads, currentUser, recentActivityMap, leadStatus);
+        return transformToPipelineWithTotalReturnDAO(filteredLeads, currentUser, leadStatus);
     }
 
-    private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads, UserReturnData currentUser, ConcurrentHashMap<Long, AbstractMap.SimpleEntry<Boolean, Date>> recentActivityMap, LeadStatusEnum leadStatus) throws Exception {
+    private PipelineWithTotalReturnDAO transformToPipelineWithTotalReturnDAO(List<Lead> filteredLeads, UserReturnData currentUser, LeadStatusEnum leadStatus) throws Exception {
         log.info("Invoked transformToPipelineWithTotalReturnDAO");
         PipelineWithTotalReturnDAO PipelineWithTotalReturnDAO = new PipelineWithTotalReturnDAO();
         List<PipelineSingleReturnDTO> pipelineSingleReturnDTOList = new ArrayList<PipelineSingleReturnDTO>();
 
         for (Lead l : filteredLeads) {
                 PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
-                AbstractMap.SimpleEntry<Boolean, Date> entry = recentActivityMap.get(l.getLeadId());
-                pipelineSingleReturnDTO.setIsOpen(entry.getKey());
-                pipelineSingleReturnDTO.setActivityDateTime(entry.getValue());
+                pipelineSingleReturnDTO.setIsOpen(l.getRecentIsOpen());
+                pipelineSingleReturnDTO.setActivityDateTime(l.getRecentActivityDateTime());
                 pipelineSingleReturnDTO.setLeadId(l.getLeadId());
 
                 if (currentUser.getId().equals(l.getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")

@@ -327,7 +327,7 @@ DEALLOCATE PREPARE stmt;
 
 
 -- Recent Lead Activity For Pipeline
-CREATE OR REPLACE view lead_activity_for_pipelinelead_id AS
+CREATE OR REPLACE view lead_activity_for_pipeline AS
 SELECT la.lead_id,la.isOpen as recentIsOpen,la.activity_date_time as recentActivityDateTime FROM
 (
 SELECT
@@ -397,22 +397,25 @@ WHERE cl.is_deleted=false AND cl.status != 'Deal_Lost'
 -- Execution history table
 CREATE TABLE IF NOT EXISTS  execution_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    procedure_name VARCHAR(50),
     last_execution TIMESTAMP NOT NULL
 );
 
-INSERT IGNORE INTO execution_history (last_execution) VALUES ('2000-01-01 00:00:00');
+INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdateLeadNotesAndStagnantDays','2000-01-01 00:00:00');
+INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdateLeadDerivedFields','2000-01-01 00:00:00');
 
 
 DELIMITER //
 
-DROP PROCEDURE IF EXISTS UpdateLeadDerivedFields;
-CREATE PROCEDURE UpdateLeadDerivedFields()
+DROP PROCEDURE IF EXISTS UpdateLeadNotesAndStagnantDays;
+CREATE PROCEDURE UpdateLeadNotesAndStagnantDays()
 BEGIN
     DECLARE last_exec TIMESTAMP;
 
-    -- Get the last execution time
+    -- Get the last execution time for this procedure
     SELECT last_execution INTO last_exec
     FROM execution_history
+    WHERE procedure_name = 'UpdateLeadNotesAndStagnantDays'
     ORDER BY id DESC
     LIMIT 1;
 
@@ -423,12 +426,8 @@ BEGIN
     FROM customer_lead l
     LEFT JOIN note n ON n.lead_id = l.lead_id AND n.is_deleted = 0
     LEFT JOIN LeadActivity la ON la.lead_id = l.lead_id AND la.is_deleted = 0
-    LEFT JOIN customer_deal_structure cds ON cds.lead_id = l.lead_id AND cds.is_deleted = 0
-    LEFT JOIN customer_payment_schedule cps ON cps.deal_id = cds.deal_id AND cps.is_deleted = 0 AND cps.isReceived = false
     WHERE n.updated_at > last_exec
-       OR la.updated_at > last_exec
-       OR cds.updated_at > last_exec
-       OR cps.updated_at > last_exec;
+       OR la.updated_at > last_exec;
 
     -- Create temporary table to hold hashtags
     DROP TEMPORARY TABLE IF EXISTS TempNotes;
@@ -447,23 +446,6 @@ BEGIN
 
     -- Drop TempNotes temporary table
     DROP TEMPORARY TABLE IF EXISTS TempNotes;
-
-    -- Create temporary table for last activity modified date
-    DROP TEMPORARY TABLE IF EXISTS TempLastActivity;
-    CREATE TEMPORARY TABLE TempLastActivity AS
-    SELECT la.lead_id, MAX(la.updated_at) AS lastActivityModifiedDate
-    FROM LeadActivity la
-    WHERE la.is_deleted = 0
-    GROUP BY la.lead_id;
-
-    -- Update lastActivityModifiedDate
-    UPDATE customer_lead l
-    JOIN LeadsToUpdate lu ON lu.lead_id = l.lead_id
-    LEFT JOIN TempLastActivity tla ON tla.lead_id = l.lead_id
-    SET l.lastActivityModifiedDate = tla.lastActivityModifiedDate;
-
-    -- Drop TempLastActivity temporary table
-    DROP TEMPORARY TABLE IF EXISTS TempLastActivity;
 
     -- Create temporary table for stagnant days count
     DROP TEMPORARY TABLE IF EXISTS TempStagnantDays;
@@ -486,6 +468,41 @@ BEGIN
 
     -- Drop TempStagnantDays temporary table
     DROP TEMPORARY TABLE IF EXISTS TempStagnantDays;
+
+    -- Update the last execution time
+    INSERT INTO execution_history (last_execution, procedure_name) VALUES (NOW(), 'UpdateLeadNotesAndStagnantDays');
+
+    -- Drop LeadsToUpdate temporary table
+    DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
+END //
+
+DELIMITER ;
+
+
+-- Procedure to derive other fields once every 15 minutes
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS UpdateLeadDerivedFields;
+CREATE PROCEDURE UpdateLeadDerivedFields()
+BEGIN
+    DECLARE last_exec TIMESTAMP;
+
+    -- Get the last execution time for this procedure
+    SELECT last_execution INTO last_exec
+    FROM execution_history
+    WHERE procedure_name = 'UpdateLeadDerivedFields'
+    ORDER BY id DESC
+    LIMIT 1;
+
+    -- Create a temporary table for leads to update
+    DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
+    CREATE TEMPORARY TABLE LeadsToUpdate AS
+    SELECT DISTINCT l.lead_id
+    FROM customer_lead l
+    LEFT JOIN customer_deal_structure cds ON cds.lead_id = l.lead_id AND cds.is_deleted = 0
+    LEFT JOIN customer_payment_schedule cps ON cps.deal_id = cds.deal_id AND cps.is_deleted = 0 AND cps.isReceived = false
+    WHERE cds.updated_at > last_exec
+       OR cps.updated_at > last_exec;
 
     -- Create temporary table for loan status
     DROP TEMPORARY TABLE IF EXISTS TempLoanStatus;
@@ -558,7 +575,7 @@ BEGIN
     DROP TEMPORARY TABLE IF EXISTS TempTotalPending;
 
     -- Update the last execution time
-    INSERT INTO execution_history (last_execution) VALUES (NOW());
+    INSERT INTO execution_history (last_execution, procedure_name) VALUES (NOW(), 'UpdateLeadDerivedFields');
 
     -- Drop LeadsToUpdate temporary table
     DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
@@ -567,15 +584,120 @@ END //
 DELIMITER ;
 
 
--- Schedule the stored procedure:
--- Drop the existing event if it exists
-DROP EVENT IF EXISTS UpdateLeadDerivedFieldsEvent;
+-- Procedure to update least activity color for lead pipelines
+DELIMITER //
 
--- Create the event
-CREATE EVENT UpdateLeadDerivedFieldsEvent
-ON SCHEDULE EVERY 30 MINUTE
-DO
-    CALL UpdateLeadDerivedFields();
+DROP PROCEDURE IF EXISTS UpdatePipelineActivityForLead;
+CREATE PROCEDURE UpdateLeadActivityFields()
+BEGIN
+    DECLARE last_exec TIMESTAMP;
+    DECLARE proc_name VARCHAR(255) DEFAULT 'UpdatePipelineActivityForLead';
 
--- Enable the event scheduler:
-SET GLOBAL event_scheduler = ON;
+    -- Get the last execution time for this procedure
+    SELECT last_execution INTO last_exec
+    FROM execution_history
+    WHERE procedure_name = proc_name
+    ORDER BY id DESC
+    LIMIT 1;
+
+    -- Create a temporary table for leads to update based on LeadActivity updates
+    DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
+    CREATE TEMPORARY TABLE LeadsToUpdate AS
+    SELECT DISTINCT l.lead_id
+    FROM customer_lead l
+    LEFT JOIN LeadActivity la ON la.lead_id = l.lead_id AND la.is_deleted = 0
+    WHERE la.updated_at > last_exec;
+
+    -- Create a temporary table to hold the lead activity details for the pipeline
+    DROP TEMPORARY TABLE IF EXISTS TempPipelineActivity;
+    CREATE TEMPORARY TABLE TempPipelineActivity AS
+    SELECT
+        cl.lead_id,
+        la.isOpen AS recentIsOpen,
+        la.activity_date_time AS recentActivityDateTime
+    FROM
+        customer_lead cl
+        INNER JOIN LeadActivity la ON cl.lead_id = la.lead_id
+    WHERE la.leadactivity_id IN (
+        SELECT
+            CASE
+                WHEN poa.leadactivity_id IS NOT NULL THEN poa.leadactivity_id
+                WHEN toa.leadactivity_id IS NOT NULL THEN toa.leadactivity_id
+                WHEN toa.leadactivity_id IS NULL AND uoa.leadactivity_id IS NULL THEN
+                    CASE
+                        WHEN uca.leadactivity_id IS NOT NULL THEN uca.leadactivity_id
+                        WHEN tca.leadactivity_id IS NOT NULL THEN tca.leadactivity_id
+                        ELSE pca.leadactivity_id
+                    END
+                WHEN toa.leadactivity_id IS NULL AND uoa.leadactivity_id IS NOT NULL THEN uoa.leadactivity_id
+            END
+        FROM
+            customer_lead cl
+            LEFT JOIN (
+                SELECT lead_id, MAX(leadactivity_id) as leadactivity_id
+                FROM LeadActivity
+                WHERE CURDATE() > DATE_FORMAT(activity_date_time, '%Y-%m-%d')
+                  AND isOpen = true
+                  AND is_deleted = false
+                GROUP BY lead_id
+            ) poa ON cl.lead_id = poa.lead_id
+            LEFT JOIN (
+                SELECT lead_id, MAX(leadactivity_id) as leadactivity_id
+                FROM LeadActivity
+                WHERE CURDATE() = DATE_FORMAT(activity_date_time, '%Y-%m-%d')
+                  AND isOpen = true
+                  AND is_deleted = false
+                GROUP BY lead_id
+            ) toa ON cl.lead_id = toa.lead_id
+            LEFT JOIN (
+                SELECT lead_id, MAX(leadactivity_id) as leadactivity_id
+                FROM LeadActivity
+                WHERE CURDATE() < DATE_FORMAT(activity_date_time, '%Y-%m-%d')
+                  AND isOpen = true
+                  AND is_deleted = false
+                GROUP BY lead_id
+            ) uoa ON cl.lead_id = uoa.lead_id
+            LEFT JOIN (
+                SELECT lead_id, MAX(leadactivity_id) as leadactivity_id
+                FROM LeadActivity
+                WHERE CURDATE() < DATE_FORMAT(activity_date_time, '%Y-%m-%d')
+                  AND isOpen = false
+                  AND is_deleted = false
+                GROUP BY lead_id
+            ) uca ON cl.lead_id = uca.lead_id
+            LEFT JOIN (
+                SELECT lead_id, MAX(leadactivity_id) as leadactivity_id
+                FROM LeadActivity
+                WHERE CURDATE() = DATE_FORMAT(activity_date_time, '%Y-%m-%d')
+                  AND isOpen = false
+                  AND is_deleted = false
+                GROUP BY lead_id
+            ) tca ON cl.lead_id = tca.lead_id
+            LEFT JOIN (
+                SELECT lead_id, MAX(leadactivity_id) as leadactivity_id
+                FROM LeadActivity
+                WHERE CURDATE() > DATE_FORMAT(activity_date_time, '%Y-%m-%d')
+                  AND isOpen = false
+                  AND is_deleted = false
+                GROUP BY lead_id
+            ) pca ON cl.lead_id = pca.lead_id
+        WHERE cl.is_deleted = false
+          AND cl.status != 'Deal_Lost'
+    );
+
+    -- Update the customer_lead table with the selected lead activity details
+    UPDATE customer_lead cl
+    JOIN TempPipelineActivity tpa ON cl.lead_id = tpa.lead_id
+    SET cl.recentIsOpen = tpa.recentIsOpen,
+        cl.recentActivityDateTime = tpa.recentActivityDateTime
+    WHERE cl.lead_id IN (SELECT lead_id FROM LeadsToUpdate);
+
+    -- Drop the temporary tables
+    DROP TEMPORARY TABLE IF EXISTS TempPipelineActivity;
+    DROP TEMPORARY TABLE IF EXISTS LeadsToUpdate;
+
+    -- Update the last execution time in the execution_history table
+    INSERT INTO execution_history (last_execution, procedure_name) VALUES (NOW(), proc_name);
+END //
+
+DELIMITER ;

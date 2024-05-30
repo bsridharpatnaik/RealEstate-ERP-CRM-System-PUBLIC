@@ -95,11 +95,6 @@ public class Lead extends ReusableFields implements Serializable {
     String notes;
 
     @NotAudited
-    @Column(name = "lastActivityModifiedDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    Date lastActivityModifiedDate;
-
-    @NotAudited
     @Column(name = "stagnantDaysCount")
     Long stagnantDaysCount;
 
@@ -136,4 +131,13 @@ public class Lead extends ReusableFields implements Serializable {
     @NotAudited
     @Column(name="totalPending")
     Double totalPending;
+
+    @NotAudited
+    @Column(name="recentIsOpen")
+    Boolean recentIsOpen;
+
+    @NotAudited
+    @Column(name="recentActivityDateTime")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date recentActivityDateTime;
 }

@@ -200,8 +200,6 @@ public class LeadService {
         l.setCustomerName(lead.getCustomerName());
         l.setDateOfBirth(lead.getDateOfBirth() == null ? null : lead.getDateOfBirth());
         l.setEmailId(lead.getEmailId() == null ? "" : lead.getEmailId());
-        l.setLastActivityModifiedDate(
-                lead.getLastActivityModifiedDate() == null ? null : lead.getLastActivityModifiedDate());
         l.setLeadId(lead.getLeadId());
         l.setOccupation(lead.getOccupation() == null ? "" : lead.getOccupation());
         l.setPincode(lead.getAddress().getPincode() == "" ? "" : lead.getAddress().getPincode());
