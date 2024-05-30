@@ -479,12 +479,24 @@ public class LeadService {
 
     @Transactional
     public void importLead(List<LeadImportPayloadData> payload) throws Exception {
-        for(LeadImportPayloadData data : payload) {
+        for (LeadImportPayloadData data : payload) {
             LeadCreateData leadCreateData = new LeadCreateData();
             leadCreateData.setPrimaryMobile(data.getMobileNo());
             leadCreateData.setCustomerName(data.getName());
             leadCreateData.setAssigneeId(data.getAssigneeId());
             createLead(leadCreateData);
         }
+    }
+
+    public void updateLeadNotesAndStagnantDays() {
+        lRepo.callUpdateLeadNotesAndStagnantDays();
+    }
+
+    public void updateLeadDerivedFields() {
+        lRepo.callUpdateLeadDerivedFields();
+    }
+
+    public void updatePipelineActivityForLead() {
+        lRepo.callUpdatePipelineActivityForLead();
     }
 }

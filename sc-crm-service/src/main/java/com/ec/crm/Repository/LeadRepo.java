@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -49,4 +50,14 @@ public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationEx
 
 	@Query(value = "SELECT m from Lead m where m.status<>'Deal_Lost'")
 	List<Lead> getOpenLeads();
+
+	@Procedure(name = "UpdateLeadNotesAndStagnantDays")
+	void callUpdateLeadNotesAndStagnantDays();
+
+	@Procedure(name = "UpdateLeadDerivedFields")
+	void callUpdateLeadDerivedFields();
+
+	@Procedure(name = "UpdatePipelineActivityForLead")
+	void callUpdatePipelineActivityForLead();
+
 }
