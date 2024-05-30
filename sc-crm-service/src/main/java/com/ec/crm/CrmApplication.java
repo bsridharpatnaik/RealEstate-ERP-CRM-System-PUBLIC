@@ -21,8 +21,10 @@ import com.ec.crm.Model.Lead;
 import com.ec.crm.Model.LeadActivity;
 import com.ec.crm.Service.LeadActivityService;
 import com.ec.crm.Service.UserDetailsService;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class CrmApplication extends SpringBootServletInitializer
 {
 	@Autowired

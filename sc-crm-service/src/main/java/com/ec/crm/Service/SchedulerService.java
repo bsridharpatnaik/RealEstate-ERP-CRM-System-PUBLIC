@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@EnableScheduling
+@Component
 public class SchedulerService {
 
     @Autowired
@@ -40,8 +40,9 @@ public class SchedulerService {
         }
     }
 
-    @Scheduled(cron = "*/5 * * * *")
+    @Scheduled(fixedDelay = 300000)
     public void updateLeadDerivedFields() {
+        log.info("Triggered store procedure updateLeadDerivedFields - " + new SimpleDateFormat("HH:mm").format(new Date()));
         String[] tenants = schemasList.split(",");
         for (String tenantName : tenants) {
             try {
@@ -49,16 +50,17 @@ public class SchedulerService {
                 log.info("Executing update for lead derived fields at " + new SimpleDateFormat("HH:mm").format(new Date()));
                 leadService.updateLeadDerivedFields();
                 com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 //Intentional exception.
                 log.info("Exception updateLeadDerivedFields " + e.getMessage());
             }
         }
+        log.info("Completed store procedure updateLeadDerivedFields - " + new SimpleDateFormat("HH:mm").format(new Date()));
     }
 
-    @Scheduled(cron = "*/5 * * * *")
+    @Scheduled(fixedDelay = 300000)
     public void updateLeadNotesAndStagnantDays() {
+        log.info("Triggered store procedure updateLeadNotesAndStagnantDays - " + new SimpleDateFormat("HH:mm").format(new Date()));
         String[] tenants = schemasList.split(",");
         for (String tenantName : tenants) {
             try {
@@ -66,16 +68,17 @@ public class SchedulerService {
                 log.info("Executing update for updateLeadNotesAndStagnantDays at " + new SimpleDateFormat("HH:mm").format(new Date()));
                 leadService.updateLeadNotesAndStagnantDays();
                 com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 //Intentional exception.
                 log.info("Exception updatingLeadNotesAndStagnantDays " + e.getMessage());
             }
         }
+        log.info("Completed store procedure updateLeadNotesAndStagnantDays - " + new SimpleDateFormat("HH:mm").format(new Date()));
     }
 
-    @Scheduled(cron = "*/5 * * * *")
+    @Scheduled(fixedDelay = 300000)
     public void callUpdatePipelineActivityForLead() {
+        log.info("Triggered store procedure callUpdatePipelineActivityForLead " + new SimpleDateFormat("HH:mm").format(new Date()));
         String[] tenants = schemasList.split(",");
         for (String tenantName : tenants) {
             try {
@@ -83,11 +86,11 @@ public class SchedulerService {
                 log.info("Executing update for updatePipelineActivityForLead at " + new SimpleDateFormat("HH:mm").format(new Date()));
                 leadService.updatePipelineActivityForLead();
                 com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 //Intentional ignore.
                 log.info("Exception updatePipelineActivityForLead " + e.getMessage());
             }
         }
+        log.info("Completed store procedure callUpdatePipelineActivityForLead " + new SimpleDateFormat("HH:mm").format(new Date()));
     }
 }

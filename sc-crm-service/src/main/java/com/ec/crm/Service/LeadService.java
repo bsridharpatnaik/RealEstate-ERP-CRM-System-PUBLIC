@@ -489,14 +489,14 @@ public class LeadService {
     }
 
     public void updateLeadNotesAndStagnantDays() {
-        lRepo.callUpdateLeadNotesAndStagnantDays();
+        lRepo.UpdateLeadNotesAndStagnantDays();
     }
 
     public void updateLeadDerivedFields() {
-        lRepo.callUpdateLeadDerivedFields();
+        lRepo.UpdateLeadDerivedFields();
     }
 
     public void updatePipelineActivityForLead() {
-        lRepo.callUpdatePipelineActivityForLead();
+        lRepo.UpdatePipelineActivityForLead();
     }
 }

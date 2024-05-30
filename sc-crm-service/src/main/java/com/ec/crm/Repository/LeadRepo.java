@@ -17,6 +17,14 @@ import javax.persistence.LockModeType;
 @Repository
 public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationExecutor<Lead>
 {
+	@Procedure(name = "UpdateLeadNotesAndStagnantDays")
+	void UpdateLeadNotesAndStagnantDays();
+
+	@Procedure(name = "UpdateLeadDerivedFields")
+	void UpdateLeadDerivedFields();
+
+	@Procedure(name = "UpdatePipelineActivityForLead")
+	void UpdatePipelineActivityForLead();
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	Lead save(Lead lead);
@@ -51,13 +59,5 @@ public interface LeadRepo extends BaseRepository<Lead, Long>, JpaSpecificationEx
 	@Query(value = "SELECT m from Lead m where m.status<>'Deal_Lost'")
 	List<Lead> getOpenLeads();
 
-	@Procedure(name = "UpdateLeadNotesAndStagnantDays")
-	void callUpdateLeadNotesAndStagnantDays();
-
-	@Procedure(name = "UpdateLeadDerivedFields")
-	void callUpdateLeadDerivedFields();
-
-	@Procedure(name = "UpdatePipelineActivityForLead")
-	void callUpdatePipelineActivityForLead();
 
 }
