@@ -2,6 +2,7 @@ package com.ec.crm.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class SchedulerService {
         }
     }
 
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 60 * 1000 * 15) // 15 minute;
     public void updateLeadDerivedFields() {
         log.info("Triggered store procedure updateLeadDerivedFields - " + new SimpleDateFormat("HH:mm").format(new Date()));
         String[] tenants = schemasList.split(",");
@@ -58,7 +59,7 @@ public class SchedulerService {
         log.info("Completed store procedure updateLeadDerivedFields - " + new SimpleDateFormat("HH:mm").format(new Date()));
     }
 
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 60 * 1000 * 180) // 3 hours
     public void updateLeadNotesAndStagnantDays() {
         log.info("Triggered store procedure updateLeadNotesAndStagnantDays - " + new SimpleDateFormat("HH:mm").format(new Date()));
         String[] tenants = schemasList.split(",");
@@ -76,7 +77,7 @@ public class SchedulerService {
         log.info("Completed store procedure updateLeadNotesAndStagnantDays - " + new SimpleDateFormat("HH:mm").format(new Date()));
     }
 
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 60 * 1000 * 20) //18 minutes
     public void callUpdatePipelineActivityForLead() {
         log.info("Triggered store procedure callUpdatePipelineActivityForLead " + new SimpleDateFormat("HH:mm").format(new Date()));
         String[] tenants = schemasList.split(",");
