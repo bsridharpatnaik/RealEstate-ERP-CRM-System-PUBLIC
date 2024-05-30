@@ -28,7 +28,7 @@ public class SchedulerService {
 
     // @Scheduled(cron = "* * * * * *")
 
-    @Scheduled(fixedDelay = 600000) // 10 minute;
+    /*@Scheduled(fixedDelay = 600000) // 10 minute;
     public void sendStockNotificationEmailInEvening() throws Exception {
         SimpleDateFormat localDateFormat = new SimpleDateFormat("HH:mm");
         log.info("Check and send notification to mobile. Current Time - " + localDateFormat.format(new Date()));
@@ -39,7 +39,7 @@ public class SchedulerService {
             sendCRMNotificationsService.sendSMSNotificationForUpcomingActivities();
             com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
         }
-    }
+    }*/
 
     @Scheduled(fixedDelay = 60 * 1000 * 15) // 15 minute;
     public void updateLeadDerivedFields() {
@@ -53,7 +53,7 @@ public class SchedulerService {
                 com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
             } catch (Exception e) {
                 //Intentional exception.
-                log.info("Exception updateLeadDerivedFields " + e.getMessage());
+                log.info("Exception updateLeadDerivedFields - " + tenantName + "Message - " + e.getMessage());
             }
         }
         log.info("Completed store procedure updateLeadDerivedFields - " + new SimpleDateFormat("HH:mm").format(new Date()));
@@ -71,7 +71,7 @@ public class SchedulerService {
                 com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
             } catch (Exception e) {
                 //Intentional exception.
-                log.info("Exception updatingLeadNotesAndStagnantDays " + e.getMessage());
+                log.info("Exception updatingLeadNotesAndStagnantDays for tenant - " + tenantName + "Message - " + e.getMessage());
             }
         }
         log.info("Completed store procedure updateLeadNotesAndStagnantDays - " + new SimpleDateFormat("HH:mm").format(new Date()));
@@ -89,7 +89,7 @@ public class SchedulerService {
                 com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
             } catch (Exception e) {
                 //Intentional ignore.
-                log.info("Exception updatePipelineActivityForLead " + e.getMessage());
+                log.info("Exception updatePipelineActivityForLead - " + tenantName + "Message - " + e.getMessage());
             }
         }
         log.info("Completed store procedure callUpdatePipelineActivityForLead " + new SimpleDateFormat("HH:mm").format(new Date()));
