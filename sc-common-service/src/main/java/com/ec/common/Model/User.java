@@ -34,6 +34,9 @@ public class User {
     @NonNull
     private String password;
 
+    @Column(name="email")
+    private String email;
+
     @NonNull
     private boolean status;
 
@@ -52,6 +55,15 @@ public class User {
             {@JoinColumn(name = "userId", referencedColumnName = "userId")}, inverseJoinColumns =
             {@JoinColumn(name = "mapping_id", referencedColumnName = "mapping_id")})
     Set<UserTenantMapping> tenantList = new HashSet<>();
+
+    public String getEmail() {
+
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
     public Long getUserId() {
         return userId;

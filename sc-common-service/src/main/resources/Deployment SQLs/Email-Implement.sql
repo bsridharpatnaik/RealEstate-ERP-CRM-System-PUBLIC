@@ -1,0 +1,1 @@
+alter table security_user ADD COLUMN email varchar(255);

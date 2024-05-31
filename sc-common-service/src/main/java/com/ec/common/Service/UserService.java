@@ -12,6 +12,7 @@ import com.ec.common.Data.*;
 import com.ec.common.Model.Tenant;
 import com.ec.common.Model.UserTenantMapping;
 import com.ec.common.Repository.TenantRepo;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,7 +73,7 @@ public class UserService {
             user.setRoles(roleset);
             user.setPassword(bCryptPassword(password));
             user.setPasswordExpired(false);
-
+            user.setEmail(userData.getEmail());
             Set<UserTenantMapping> tenantList = new HashSet<>();
             for (TenantUserDTO td : userData.getTenants()) {
                 UserTenantMapping data = new UserTenantMapping();
@@ -130,6 +131,34 @@ public class UserService {
         }
         if (!validTeant)
             throw new Exception("Invalid tenant name found in request!");
+
+        validateEmail(userData.getEmail());
+    }
+
+    private void validateEmail(String email) throws Exception {
+        if (StringUtils.isNotBlank(email)) {
+            String[] emails;
+            if (email.contains(";")) {
+                emails = email.split(";");
+                if(emails.length==0)
+                    throw new Exception("Invalid Email -" + email);
+            } else {
+                emails = new String[]{email};
+            }
+
+            for (String email1 : emails) {
+                if (!isValidEmailAddress(email1) || StringUtils.isBlank(email1)) {
+                    throw new Exception("Invalid Email -" + email1);
+                }
+            }
+        }
+    }
+
+    public boolean isValidEmailAddress(String email) {
+        String ePattern = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(ePattern);
+        java.util.regex.Matcher m = p.matcher(email);
+        return m.matches();
     }
 
     private String convertListTocsv(ArrayList<String> tenants) {
@@ -190,8 +219,8 @@ public class UserService {
     public UserReturnData fetchUserDetails() throws Exception {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = uRepo.findUserByUsername(auth.getName()).get(0);
-        return new UserReturnData(user.getUserId(), user.getUserName(), fetchRolesFromSet(user.getRoles())
-                ,fetchTenantFromSet(user.getTenantList()), user.getTenantList());
+        return new UserReturnData(user.getUserId(), user.getUserName(), user.getEmail(), fetchRolesFromSet(user.getRoles())
+                , fetchTenantFromSet(user.getTenantList()), user.getTenantList());
     }
 
     public UserReturnData fetchUserDetailsById(Long id) throws Exception {
@@ -205,6 +234,7 @@ public class UserService {
         userReturnData.setId(user.getUserId());
         userReturnData.setRoles(fetchRolesFromSet(user.getRoles()));
         userReturnData.setAllowedTenants(findTenantsForUser(user.getUserName()));
+        userReturnData.setEmail(user.getEmail());
         return userReturnData;
     }
 
@@ -220,7 +250,7 @@ public class UserService {
         List<UserReturnData> userReturnDataList = new ArrayList<UserReturnData>();
         List<User> userList = uRepo.findAll();
         for (User user : userList) {
-            UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
+            UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(), user.getEmail(),
                     fetchRolesFromSet(user.getRoles()), fetchTenantFromSet(user.getTenantList()), user.getTenantList());
             userReturnDataList.add(userReturnData);
         }
@@ -303,6 +333,7 @@ public class UserService {
         user.setUserName(username);
         user.setStatus(true);
         user.setRoles(roleset);
+        user.setEmail(payload.getEmail());
 
         Set<UserTenantMapping> tenantList = new HashSet<>();
         for (TenantUserDTO td : payload.getTenants()) {
@@ -331,6 +362,7 @@ public class UserService {
         userReturnData.setId(user.getUserId());
         userReturnData.setRoles(fetchRolesFromSet(user.getRoles()));
         userReturnData.setAllowedTenants(findTenantsForUser(user.getUserName()));
+        userReturnData.setEmail(user.getEmail());
         return userReturnData;
     }
 
