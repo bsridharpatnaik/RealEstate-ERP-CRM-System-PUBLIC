@@ -29,4 +29,7 @@ public class UserDetails {
 
     @Column(name="tenants")
     String tenants;
+
+    @Column(name="email")
+    String email;
 }

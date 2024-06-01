@@ -40,8 +40,7 @@ public class UtilService {
         return leadFilterDataList;
     }
 
-    public boolean isAdminOrManager() throws Exception {
-        UserReturnData currentUser = udService.getCurrentUser();
+    public boolean isAdminOrManager(UserReturnData currentUser) throws Exception {
         return (currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager") || currentUser.getRoles().contains("admin"));
     }
 }

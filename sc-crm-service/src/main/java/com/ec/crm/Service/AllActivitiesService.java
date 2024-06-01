@@ -172,7 +172,7 @@ public class AllActivitiesService {
                 pipelineSingleReturnDTO.setActivityDateTime(l.getRecentActivityDateTime());
                 pipelineSingleReturnDTO.setLeadId(l.getLeadId());
 
-                if (currentUser.getId().equals(l.getAsigneeId()) || utilService.isAdminOrManager())
+                if (currentUser.getId().equals(l.getAsigneeId()) || utilService.isAdminOrManager(currentUser))
                     pipelineSingleReturnDTO.setMobileNumber((l.getPrimaryMobile()));
                 else
                     pipelineSingleReturnDTO.setMobileNumber("******" + l.getPrimaryMobile().substring(7));
@@ -276,7 +276,7 @@ public class AllActivitiesService {
         List<PlannerSingleReturnDAO> activities = new ArrayList<PlannerSingleReturnDAO>();
         for (LeadActivity leadActivity : filteredActivities) {
             String mobileNo = "";
-            if (currentUser.getId().equals(leadActivity.getLead().getAsigneeId()) || utilService.isAdminOrManager())
+            if (currentUser.getId().equals(leadActivity.getLead().getAsigneeId()) || utilService.isAdminOrManager(currentUser))
                 mobileNo = leadActivity.getLead().getPrimaryMobile();
             else
                 mobileNo = "******" + leadActivity.getLead().getPrimaryMobile().substring(7);

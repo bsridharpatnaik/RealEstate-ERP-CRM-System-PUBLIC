@@ -641,7 +641,7 @@ public class LeadActivityService {
             l.setLeadId(la.getLead().getLeadId());
             l.setLeadStatus(la.getLead().getStatus());
             l.setName(la.getLead().getCustomerName());
-            if (currentUser.getId().equals(la.getLead().getAsigneeId()) || utilService.isAdminOrManager())
+            if (currentUser.getId().equals(la.getLead().getAsigneeId()) || utilService.isAdminOrManager(currentUser))
                 l.setMobileNumber(la.getLead().getPrimaryMobile());
             else
                 l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));

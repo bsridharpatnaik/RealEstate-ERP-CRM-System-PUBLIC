@@ -219,8 +219,9 @@ public class UserService {
     public UserReturnData fetchUserDetails() throws Exception {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = uRepo.findUserByUsername(auth.getName()).get(0);
-        return new UserReturnData(user.getUserId(), user.getUserName(), user.getEmail(), fetchRolesFromSet(user.getRoles())
+        UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(), user.getEmail(), fetchRolesFromSet(user.getRoles())
                 , fetchTenantFromSet(user.getTenantList()), user.getTenantList());
+        return userReturnData;
     }
 
     public UserReturnData fetchUserDetailsById(Long id) throws Exception {
