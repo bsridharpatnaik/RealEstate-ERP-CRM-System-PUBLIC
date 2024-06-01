@@ -172,8 +172,7 @@ public class AllActivitiesService {
                 pipelineSingleReturnDTO.setActivityDateTime(l.getRecentActivityDateTime());
                 pipelineSingleReturnDTO.setLeadId(l.getLeadId());
 
-                if (currentUser.getId().equals(l.getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
-                        || currentUser.getRoles().contains("admin"))
+                if (currentUser.getId().equals(l.getAsigneeId()) || utilService.isAdminOrManager())
                     pipelineSingleReturnDTO.setMobileNumber((l.getPrimaryMobile()));
                 else
                     pipelineSingleReturnDTO.setMobileNumber("******" + l.getPrimaryMobile().substring(7));
@@ -262,7 +261,7 @@ public class AllActivitiesService {
     }
 
     private PlannerWithTotalReturnDAO fetchPlannerDataFromActivityList(List<LeadActivity> activities,
-                                                                       String acivityType) {
+                                                                       String acivityType) throws Exception {
         log.info("Invoked PlannerWithTotalReturnDAO");
         List<LeadActivity> filteredActivities = activities.stream()
                 .filter(LeadActivity -> LeadActivity.getActivityType().equals(ActivityTypeEnum.valueOf(acivityType)))
@@ -270,15 +269,14 @@ public class AllActivitiesService {
         return transformToPlannerWithTotalReturnDAO(filteredActivities);
     }
 
-    private PlannerWithTotalReturnDAO transformToPlannerWithTotalReturnDAO(List<LeadActivity> filteredActivities) {
+    private PlannerWithTotalReturnDAO transformToPlannerWithTotalReturnDAO(List<LeadActivity> filteredActivities) throws Exception {
         log.info("Invoked transformToPlannerWithTotalReturnDAO");
         UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
         PlannerWithTotalReturnDAO plannerWithTotalReturnDAO = new PlannerWithTotalReturnDAO();
         List<PlannerSingleReturnDAO> activities = new ArrayList<PlannerSingleReturnDAO>();
         for (LeadActivity leadActivity : filteredActivities) {
             String mobileNo = "";
-            if (currentUser.getId().equals(leadActivity.getLead().getAsigneeId())
-                    || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager") || currentUser.getRoles().contains("admin"))
+            if (currentUser.getId().equals(leadActivity.getLead().getAsigneeId()) || utilService.isAdminOrManager())
                 mobileNo = leadActivity.getLead().getPrimaryMobile();
             else
                 mobileNo = "******" + leadActivity.getLead().getPrimaryMobile().substring(7);
