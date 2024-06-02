@@ -429,8 +429,8 @@ BEGIN
     FROM customer_lead l
     LEFT JOIN note n ON n.lead_id = l.lead_id AND n.is_deleted = 0
     LEFT JOIN LeadActivity la ON la.lead_id = l.lead_id AND la.is_deleted = 0
-    WHERE n.updated_at > last_exec
-       OR la.updated_at > last_exec;
+    WHERE n.updated_at >= last_exec
+       OR la.updated_at >= last_exec;
 
     -- Create temporary table to hold hashtags
     DROP TEMPORARY TABLE IF EXISTS TempNotes;
@@ -504,8 +504,8 @@ BEGIN
     FROM customer_lead l
     LEFT JOIN customer_deal_structure cds ON cds.lead_id = l.lead_id AND cds.is_deleted = 0
     LEFT JOIN customer_payment_schedule cps ON cps.deal_id = cds.deal_id AND cps.is_deleted = 0 AND cps.isReceived = false
-    WHERE cds.updated_at > last_exec
-       OR cps.updated_at > last_exec;
+    WHERE cds.updated_at >= last_exec
+       OR cps.updated_at >= last_exec;
 
     -- Create temporary table for loan status
     DROP TEMPORARY TABLE IF EXISTS TempLoanStatus;
@@ -609,7 +609,7 @@ BEGIN
     SELECT DISTINCT l.lead_id
     FROM customer_lead l
     LEFT JOIN LeadActivity la ON la.lead_id = l.lead_id AND la.is_deleted = 0
-    WHERE la.updated_at > last_exec;
+    WHERE la.updated_at >= last_exec;
 
     -- Create a temporary table to hold the lead activity details for the pipeline
     DROP TEMPORARY TABLE IF EXISTS TempPipelineActivity;

@@ -498,6 +498,7 @@ public class LeadService {
     }
 
     public void updatePipelineActivityForLead() {
+        log.info("Stored Procedure Called - PipelineActivity");
         lRepo.UpdatePipelineActivityForLead();
     }
 }
