@@ -1,5 +1,7 @@
+use egcity;
 alter table security_user ADD COLUMN email varchar(255);
 set @dbname='common';
+
 set @q=concat('CREATE OR REPLACE view userdetails AS SELECT t.user_id, t.user_name,t.email, t.roles, u.tenants FROM
 (
 SELECT su.user_id,su.user_name,su.email, group_concat(ur.role_name SEPARATOR \',\') as roles FROM ',@dbname,'.security_user su

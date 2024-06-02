@@ -230,6 +230,7 @@ SELECT
     cps.isReceived,
     cps.isCustomerPayment,
     su.user_name,
+    su.user_id,
     pt.propertyType,
     pn.name as propertyName
 FROM customer_deal_structure cds
@@ -401,9 +402,11 @@ CREATE TABLE IF NOT EXISTS  execution_history (
     last_execution TIMESTAMP NOT NULL
 );
 
+
+
 INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdateLeadNotesAndStagnantDays','2000-01-01 00:00:00');
 INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdateLeadDerivedFields','2000-01-01 00:00:00');
-
+INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdatePipelineActivityForLead','2000-01-01 00:00:00');
 
 DELIMITER //
 
@@ -584,11 +587,11 @@ END //
 DELIMITER ;
 
 
--- Procedure to update least activity color for lead pipelines
+-- Procedure to get actvity for pipeline for the lead
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS UpdatePipelineActivityForLead;
-CREATE PROCEDURE UpdateLeadActivityFields()
+CREATE PROCEDURE UpdatePipelineActivityForLead()
 BEGIN
     DECLARE last_exec TIMESTAMP;
     DECLARE proc_name VARCHAR(255) DEFAULT 'UpdatePipelineActivityForLead';
