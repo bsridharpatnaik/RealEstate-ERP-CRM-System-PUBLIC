@@ -33,11 +33,11 @@ public class PaymentPageSpecification {
 
         if (isReceived != null && isReceived.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectBoleanFieldEquals(PaymentsPage_.IS_RECEIVED, isReceived));
+                    specbldr.whereDirectBooleanFieldEquals(PaymentsPage_.IS_RECEIVED, isReceived));
 
         if (IsCustomerPayment != null && IsCustomerPayment.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectBoleanFieldEquals(PaymentsPage_.IS_CUSTOMER_PAYMENT, IsCustomerPayment));
+                    specbldr.whereDirectBooleanFieldEquals(PaymentsPage_.IS_CUSTOMER_PAYMENT, IsCustomerPayment));
 
         if (propertyType != null && propertyType.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldEquals(PaymentsPage_.PROPERTY_TYPE, propertyType));

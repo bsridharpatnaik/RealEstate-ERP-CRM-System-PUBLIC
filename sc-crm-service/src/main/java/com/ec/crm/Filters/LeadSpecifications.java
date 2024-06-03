@@ -1,153 +1,181 @@
 package com.ec.crm.Filters;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
+import com.ec.crm.Model.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import com.ec.crm.Enums.SentimentEnum;
-import com.ec.crm.Model.Address_;
-import com.ec.crm.Model.Broker_;
-import com.ec.crm.Model.ClosedLeads_;
-import com.ec.crm.Model.Lead;
-import com.ec.crm.Model.Lead_;
-import com.ec.crm.Model.Source_;
 import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
 
-public final class LeadSpecifications
-{
-	static SpecificationsBuilder<Lead> specbldr = new SpecificationsBuilder<Lead>();
+public final class LeadSpecifications {
+    static SpecificationsBuilder<Lead> specbldr = new SpecificationsBuilder<Lead>();
 
-	public static Specification<Lead> getSpecification(FilterDataList filterDataList) throws Exception
-	{
-		List<String> name = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "name");
-		List<String> mobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "mobile");
-		List<String> purpose = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "purpose");
-		List<String> address = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "address");
-		List<String> occupation = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "occupation");
-		List<String> broker = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "broker");
-		List<String> source = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "source");
-		List<String> propertytype = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "propertyType");
-		List<String> sentiment = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "sentiment");
-		List<String> assignee = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "assignee");
-		List<String> createdBy = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "createdBy");
-		List<String> createdStartDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
-				"createdStartDate");
-		List<String> createdEndDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "createdEndDate");
-		List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
-		List<String> leadStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "leadStatus");
-		List<String> stagnantStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stagnantStatus");
-		List<String> prospectLeads = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "prospectLead");
-		Specification<Lead> finalSpec = null;
+    public static Specification<Lead> getSpecification(FilterDataList filterDataList) throws Exception {
+        List<String> name = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "name");
+        List<String> mobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "mobile");
+        List<String> purpose = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "purpose");
+        List<String> address = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "address");
+        List<String> occupation = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "occupation");
+        List<String> broker = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "broker");
+        List<String> source = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "source");
+        List<String> propertytype = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "propertyType");
+        List<String> sentiment = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "sentiment");
+        List<String> assignee = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "assignee");
+        List<String> createdBy = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "createdBy");
+        List<String> createdStartDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
+                "createdStartDate");
+        List<String> createdEndDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "createdEndDate");
+        List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
+        List<String> leadStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "leadStatus");
+        List<String> stagnantStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stagnantStatus");
+        List<String> prospectLeads = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "prospectLead");
+        List<String> recentActivityStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "recentActivityStatus");
 
-		if (name != null && name.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(Lead_.customerName.getName(), name));
+        Specification<Lead> finalSpec = null;
 
-		if (mobile != null && mobile.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE, mobile)
-							.or(specbldr.whereDirectFieldContains(Lead_.SECONDARY_MOBILE, mobile)));
+        if (name != null && name.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldContains(Lead_.customerName.getName(), name));
 
-		if (prospectLeads != null && prospectLeads.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectBoleanFieldEquals(Lead_.IS_PROSPECT_LEAD, prospectLeads));
+        if (mobile != null && mobile.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE, mobile)
+                            .or(specbldr.whereDirectFieldContains(Lead_.SECONDARY_MOBILE, mobile)));
 
-		if (purpose != null && purpose.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(Lead_.PURPOSE, purpose));
+        if (prospectLeads != null && prospectLeads.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectBooleanFieldEquals(Lead_.IS_PROSPECT_LEAD, prospectLeads));
 
-		if (address != null && address.size() > 0)
-		{
-			Specification<Lead> addressSpec = specbldr
-					.whereChildFieldContains(Lead_.ADDRESS, Address_.ADDR_LINE1, address)
-					.or(specbldr.whereChildFieldContains(Lead_.ADDRESS, Address_.ADDR_LINE2, address))
-					.or(specbldr.whereChildFieldContains(Lead_.ADDRESS, Address_.CITY, address))
-					.or(specbldr.whereChildFieldContains(Lead_.ADDRESS, Address_.PINCODE, address));
-			finalSpec = specbldr.specAndCondition(finalSpec, addressSpec);
+        if (purpose != null && purpose.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(Lead_.PURPOSE, purpose));
 
-		}
-		if (globalSearch != null && globalSearch.size() > 0)
-		{
-			Specification<Lead> globalSearchSpec = specbldr.whereDirectFieldContains(Lead_.CUSTOMER_NAME, globalSearch)
-					.or(specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE, globalSearch));
+        if (address != null && address.size() > 0) {
+            Specification<Lead> addressSpec = specbldr
+                    .whereChildFieldContains(Lead_.ADDRESS, Address_.ADDR_LINE1, address)
+                    .or(specbldr.whereChildFieldContains(Lead_.ADDRESS, Address_.ADDR_LINE2, address))
+                    .or(specbldr.whereChildFieldContains(Lead_.ADDRESS, Address_.CITY, address))
+                    .or(specbldr.whereChildFieldContains(Lead_.ADDRESS, Address_.PINCODE, address));
+            finalSpec = specbldr.specAndCondition(finalSpec, addressSpec);
 
-			finalSpec = specbldr.specAndCondition(finalSpec, globalSearchSpec);
+        }
+        if (globalSearch != null && globalSearch.size() > 0) {
+            Specification<Lead> globalSearchSpec = specbldr.whereDirectFieldContains(Lead_.CUSTOMER_NAME, globalSearch)
+                    .or(specbldr.whereDirectFieldContains(Lead_.PRIMARY_MOBILE, globalSearch));
 
-		}
+            finalSpec = specbldr.specAndCondition(finalSpec, globalSearchSpec);
 
-		if (occupation != null && occupation.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(Lead_.OCCUPATION, occupation));
+        }
 
-		if (broker != null && broker.size() > 0)
-		{
-			if (ReusableMethods.isNumeric(broker.get(0)))
-				finalSpec = specbldr.specAndCondition(finalSpec,
-						specbldr.whereChildLongFieldContains(ClosedLeads_.BROKER, Broker_.BROKER_ID, broker));
-			else
-				finalSpec = specbldr.specAndCondition(finalSpec,
-						specbldr.whereChildFieldContains(ClosedLeads_.BROKER, Broker_.BROKER_NAME, broker));
-		}
-		if (source != null && source.size() > 0)
-		{
-			if (ReusableMethods.isNumeric(source.get(0)))
-				finalSpec = specbldr.specAndCondition(finalSpec,
-						specbldr.whereChildLongFieldContains(ClosedLeads_.SOURCE, Source_.SOURCE_ID, source));
-			else
-				finalSpec = specbldr.specAndCondition(finalSpec,
-						specbldr.whereChildFieldContains(ClosedLeads_.SOURCE, Source_.SOURCE_NAME, source));
-		}
-		if (propertytype != null && propertytype.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereEnumFieldEquals(Lead_.PROPERTY_TYPE, propertytype, PropertyTypeEnum.class));
+        if (occupation != null && occupation.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldContains(Lead_.OCCUPATION, occupation));
 
-		if (sentiment != null && sentiment.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereEnumFieldEquals(Lead_.SENTIMENT, sentiment, SentimentEnum.class));
+        if (broker != null && broker.size() > 0) {
+            if (ReusableMethods.isNumeric(broker.get(0)))
+                finalSpec = specbldr.specAndCondition(finalSpec,
+                        specbldr.whereChildLongFieldContains(ClosedLeads_.BROKER, Broker_.BROKER_ID, broker));
+            else
+                finalSpec = specbldr.specAndCondition(finalSpec,
+                        specbldr.whereChildFieldContains(ClosedLeads_.BROKER, Broker_.BROKER_NAME, broker));
+        }
+        if (source != null && source.size() > 0) {
+            if (ReusableMethods.isNumeric(source.get(0)))
+                finalSpec = specbldr.specAndCondition(finalSpec,
+                        specbldr.whereChildLongFieldContains(ClosedLeads_.SOURCE, Source_.SOURCE_ID, source));
+            else
+                finalSpec = specbldr.specAndCondition(finalSpec,
+                        specbldr.whereChildFieldContains(ClosedLeads_.SOURCE, Source_.SOURCE_NAME, source));
+        }
+        if (propertytype != null && propertytype.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereEnumFieldEquals(Lead_.PROPERTY_TYPE, propertytype, PropertyTypeEnum.class));
 
-		if (createdBy != null && createdBy.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectAssigneeContains(Lead_.CREATOR_ID, createdBy));
+        if (sentiment != null && sentiment.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereEnumFieldEquals(Lead_.SENTIMENT, sentiment, SentimentEnum.class));
 
-		if (assignee != null && assignee.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectAssigneeContains(Lead_.ASIGNEE_ID, assignee));
+        if (createdBy != null && createdBy.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectAssigneeContains(Lead_.CREATOR_ID, createdBy));
 
-		if (createdStartDate != null && createdStartDate.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldDateGreaterThanOrEqual(Lead_.CREATED, createdStartDate));
+        if (assignee != null && assignee.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectAssigneeContains(Lead_.ASIGNEE_ID, assignee));
 
-		if (createdEndDate != null && createdEndDate.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldDateLessThanOrEqual(Lead_.CREATED, createdEndDate));
+        if (createdStartDate != null && createdStartDate.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldDateGreaterThanOrEqual(Lead_.CREATED, createdStartDate));
 
-		if (leadStatus != null && leadStatus.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereEnumFieldEquals(Lead_.STATUS, leadStatus, LeadStatusEnum.class));
+        if (createdEndDate != null && createdEndDate.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldDateLessThanOrEqual(Lead_.CREATED, createdEndDate));
 
-		if (stagnantStatus != null && stagnantStatus.size() > 0)
-		{
-			Specification<Lead> internalSpec = null;
-			for (String str : stagnantStatus)
-			{
-				if (str.equalsIgnoreCase("NoColour"))
-					internalSpec = specbldr.specOrCondition(internalSpec,
-							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 0, 9));
-				if (str.equalsIgnoreCase("Green"))
-					internalSpec = specbldr.specOrCondition(internalSpec,
-							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 10, 19));
-				if (str.equalsIgnoreCase("Orange"))
-					internalSpec = specbldr.specOrCondition(internalSpec,
-							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 20, 29));
-				if (str.equalsIgnoreCase("Red"))
-					internalSpec = specbldr.specOrCondition(internalSpec,
-							specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 30, Integer.MAX_VALUE));
-			}
-			finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
-		}
-		return finalSpec;
-	}
+        if (leadStatus != null && leadStatus.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereEnumFieldEquals(Lead_.STATUS, leadStatus, LeadStatusEnum.class));
+
+        if (stagnantStatus != null && stagnantStatus.size() > 0) {
+            Specification<Lead> internalSpec = null;
+            for (String str : stagnantStatus) {
+                if (str.equalsIgnoreCase("NoColour"))
+                    internalSpec = specbldr.specOrCondition(internalSpec,
+                            specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 0, 9));
+                if (str.equalsIgnoreCase("Green"))
+                    internalSpec = specbldr.specOrCondition(internalSpec,
+                            specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 10, 19));
+                if (str.equalsIgnoreCase("Orange"))
+                    internalSpec = specbldr.specOrCondition(internalSpec,
+                            specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 20, 29));
+                if (str.equalsIgnoreCase("Red"))
+                    internalSpec = specbldr.specOrCondition(internalSpec,
+                            specbldr.whereDirectFieldIntBetween(Lead_.STAGNANT_DAYS_COUNT, 30, Integer.MAX_VALUE));
+            }
+            finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
+        }
+
+        if (recentActivityStatus != null && recentActivityStatus.size() > 0) {
+            Specification<Lead> internalSpec = null;
+            List<Specification<Lead>> specList = new ArrayList<Specification<Lead>>();
+            for (String str : recentActivityStatus) {
+                if (str.equalsIgnoreCase("today")) {
+                    Specification<Lead> internalSpec1 = specbldr.specAndCondition(
+                            specbldr.whereDirectBooleanFieldEquals(Lead_.RECENT_IS_OPEN, true),
+                            specbldr.whereDirectFieldDateEquals(Lead_.RECENT_ACTIVITY_DATE_TIME, Date.from(LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).atZone(ZoneId.systemDefault()).toInstant()))
+                    );
+                    specList.add(internalSpec1);
+                } else if (str.equalsIgnoreCase("past")) {
+                    Specification<Lead> internalSpec1 = specbldr.specAndCondition(
+                            specbldr.whereDirectBooleanFieldEquals(Lead_.RECENT_IS_OPEN, true),
+                            specbldr.whereDirectFieldDateLessThan(Lead_.RECENT_ACTIVITY_DATE_TIME, Date.from(LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).atZone(ZoneId.systemDefault()).toInstant()))
+                    );
+                    specList.add(internalSpec1);
+                } else if (str.equalsIgnoreCase("upcoming")) {
+                    Specification<Lead> internalSpec1 = specbldr.specAndCondition(
+                            specbldr.whereDirectBooleanFieldEquals(Lead_.RECENT_IS_OPEN, true),
+                            specbldr.whereDirectFieldDateGreaterThan(Lead_.RECENT_ACTIVITY_DATE_TIME, Date.from(LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0).atZone(ZoneId.systemDefault()).toInstant()))
+                    );
+                    specList.add(internalSpec1);
+                } else if (str.equalsIgnoreCase("completed")) {
+                    Specification<Lead> internalSpec1 = specbldr.whereDirectBooleanFieldEquals(Lead_.RECENT_IS_OPEN, false);
+                    specList.add(internalSpec1);
+                }
+            }
+            for (Specification<Lead> spec : specList) {
+                internalSpec = specbldr.specOrCondition(internalSpec, spec);
+            }
+            finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
+        }
+
+        return finalSpec;
+    }
 
 }
