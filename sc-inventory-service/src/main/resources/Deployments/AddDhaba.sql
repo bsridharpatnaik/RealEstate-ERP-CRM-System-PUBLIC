@@ -5,12 +5,12 @@ INSERT INTO `common`.`tenant`
 `is_inventory`,
 `tenant_long_name`)
 VALUES
-('newdhaba',
+('newdhabba',
 0,
 1,
 'DHABBA');
 
-use newdhaba; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
+use newdhabba; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 
 -- All Inventory --
 CREATE OR replace VIEW all_inventory

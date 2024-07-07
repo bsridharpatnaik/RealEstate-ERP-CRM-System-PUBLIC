@@ -457,6 +457,7 @@ public class LeadService {
         finalList.add("Property Visit");
         finalList.add("Enquiry for Plot");
         finalList.add("Enquiry for Bungalow");
+        finalList.add("Enquiry for Commercial");
         return finalList;
     }
 
