@@ -14,8 +14,8 @@ public enum PropertyTypeEnum implements Serializable {
     HOUSE_2_BHK,
     HOUSE_3_BHK,
     PLOT,
-    MULTIPLE,
-    EMPTY,
+    Multiple,
+    Empty,
     E_TYPE_5_BHK,
     F_TYPE_5_BHK,
     G_TYPE_4_BHK,
@@ -55,8 +55,8 @@ public enum PropertyTypeEnum implements Serializable {
                         HOUSE_2_BHK,
                         HOUSE_3_BHK,
                         PLOT,
-                        MULTIPLE,
-                        EMPTY
+                        Multiple,
+                        Empty
                 ));
         }
         if(tenantName.toLowerCase().contains("suncitynx")) {
@@ -118,8 +118,8 @@ public enum PropertyTypeEnum implements Serializable {
                     HOUSE_2_BHK,
                     HOUSE_3_BHK,
                     PLOT,
-                    MULTIPLE,
-                    EMPTY
+                    Multiple,
+                    Empty
             ));
         }
         List<String> returnData = new ArrayList<>();
