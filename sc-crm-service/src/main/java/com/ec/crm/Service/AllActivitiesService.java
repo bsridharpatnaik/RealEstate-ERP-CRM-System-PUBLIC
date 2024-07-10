@@ -231,6 +231,9 @@ public class AllActivitiesService {
         // check user. if not admin, apply default filters
         leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
 
+        //add today's date by default
+        leadFilterDataList = utilService.addTodaysDateToFilterData(leadFilterDataList);
+
         List<LeadActivity> activities = new ArrayList<LeadActivity>();
 
         Specification<LeadActivity> spec = ActivitySpecifications.getSpecification(leadFilterDataList);

@@ -1,6 +1,10 @@
 package com.ec.crm.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,22 @@ public class UtilService {
                 faData.setAttrValue(values);
                 leadFilterDataList.getFilterData().add(faData);
             }
+        }
+        return leadFilterDataList;
+    }
+
+    public FilterDataList addTodaysDateToFilterData(FilterDataList leadFilterDataList) {
+
+        List<String> attributes = Arrays.asList("activityStartDate", "activityEndDate");
+        leadFilterDataList.getFilterData().removeIf(faData -> faData.getAttrName().equalsIgnoreCase("activityStartDate") || faData.getAttrName().equalsIgnoreCase("activityEndDate"));
+        for (String attribute : attributes) {
+            FilterAttributeData faData = new FilterAttributeData();
+            List<String> values = new ArrayList<String>();
+            faData.setAttrName(attribute);
+            String formattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            values.add(formattedDate);
+            faData.setAttrValue(values);
+            leadFilterDataList.getFilterData().add(faData);
         }
         return leadFilterDataList;
     }

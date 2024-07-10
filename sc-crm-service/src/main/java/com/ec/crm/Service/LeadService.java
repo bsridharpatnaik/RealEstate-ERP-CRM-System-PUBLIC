@@ -408,6 +408,8 @@ public class LeadService {
         if (payload.getPincode() != null && payload.getPincode() != "")
             if (!payload.getPincode().matches("\\d{6}"))
                 throw new Exception("Enter a valid pin code (6 Digits numeric)");
+            if(payload.getCustomerName().trim().length() <1)
+                throw new Exception("Enter a valid customer name");
     }
 
     private void exitIfMobileNoExists(String mobileNo) throws Exception {
