@@ -1,7 +1,6 @@
 package com.ec.crm.Filters;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import com.ec.crm.Enums.*;
 import com.ec.crm.Model.*;
@@ -102,7 +101,7 @@ public class ActivitySpecifications {
                             .or(specbldr.whereDirectFieldContains(LeadActivity_.CLOSING_COMMENT, textSearch))
                             .or(specbldr.whereDirectFieldContains(LeadActivity_.DESCRIPTION, textSearch))
                             .or(specbldr.whereDirectFieldContains(LeadActivity_.TITLE, textSearch))
-                            .or(specbldr.whereDirectFieldContains(LeadActivity_.TAGS_GROUPED,textSearch))
+                            .or(specbldr.whereDirectFieldContains(LeadActivity_.TAGS_GROUPED, textSearch))
                             .or(specbldr.whereChildFieldContains(LeadActivity_.LEAD, Lead_.NOTES, textSearch))
             );
             finalSpec = specbldr.specAndCondition(finalSpec, globalSearchSpec);
@@ -169,7 +168,7 @@ public class ActivitySpecifications {
 
         if (activityStatus != null && activityStatus.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectBoleanFieldEquals(LeadActivity_.IS_OPEN, activityStatus));
+                    specbldr.whereDirectBooleanFieldEquals(LeadActivity_.IS_OPEN, activityStatus));
 
         if (activityStartDate != null && activityStartDate.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec, specbldr
@@ -205,8 +204,11 @@ public class ActivitySpecifications {
             }
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
         }
+
+
         return finalSpec;
     }
+
 
     public static Specification<LeadActivity> noteContentContains(String searchString) {
         return (root, query, criteriaBuilder) -> {

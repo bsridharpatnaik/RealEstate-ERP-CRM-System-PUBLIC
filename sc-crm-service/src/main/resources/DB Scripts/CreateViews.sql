@@ -20,22 +20,22 @@ WHERE la2.leadactivity_id IS NULL
 AND cl.is_deleted=false;
 
 -- User Information
-set @q=concat('CREATE OR REPLACE view userdetails AS SELECT t.user_id, t.user_name, t.roles, u.tenants FROM
+set @q=concat('CREATE OR REPLACE view userdetails AS SELECT t.user_id, t.user_name,t.email, t.roles, u.tenants FROM
 (
-SELECT su.user_id,su.user_name,group_concat(ur.role_name SEPARATOR \',\') as roles FROM ',@dbname,'.security_user su
+SELECT su.user_id,su.user_name,su.email, group_concat(ur.role_name SEPARATOR \',\') as roles FROM ',@dbname,'.security_user su
 INNER JOIN ',@dbname,'.user_role ur on ur.user_id = su.user_id
 INNER JOIN ',@dbname,'.role r on r.name = ur.role_name
 WHERE su.status=true
-GROUP BY su.user_id,su.user_name
+GROUP BY su.user_id,su.user_name, su.email
 ) as t
 LEFT JOIN
 (
-SELECT su.user_id,su.user_name,group_concat(tam.tenant_name SEPARATOR \',\') as tenants FROM ',@dbname,'.security_user su
+SELECT su.user_id,su.user_name,su.email,group_concat(tam.tenant_name SEPARATOR \',\') as tenants FROM ',@dbname,'.security_user su
 INNER JOIN ',@dbname,'.user_role ur on ur.user_id = su.user_id
 LEFT JOIN ',@dbname,'.user_tenant_mapping utm on su.user_id =utm.user_id
 INNER JOIN ',@dbname,'.tenant_authorization_mapping tam ON tam.mapping_id=utm.mapping_id
 WHERE su.status=true
-GROUP BY su.user_id,su.user_name
+GROUP BY su.user_id,su.user_name, su.email
 ) as u ON t.user_id=u.user_id;');
 PREPARE stmt FROM @q;
 EXECUTE stmt;
@@ -230,6 +230,7 @@ SELECT
     cps.isReceived,
     cps.isCustomerPayment,
     su.user_name,
+    su.user_id,
     pt.propertyType,
     pn.name as propertyName
 FROM customer_deal_structure cds
@@ -401,9 +402,11 @@ CREATE TABLE IF NOT EXISTS  execution_history (
     last_execution TIMESTAMP NOT NULL
 );
 
+
+
 INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdateLeadNotesAndStagnantDays','2000-01-01 00:00:00');
 INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdateLeadDerivedFields','2000-01-01 00:00:00');
-
+INSERT IGNORE INTO execution_history (procedure_name, last_execution) VALUES ('UpdatePipelineActivityForLead','2000-01-01 00:00:00');
 
 DELIMITER //
 
@@ -426,8 +429,8 @@ BEGIN
     FROM customer_lead l
     LEFT JOIN note n ON n.lead_id = l.lead_id AND n.is_deleted = 0
     LEFT JOIN LeadActivity la ON la.lead_id = l.lead_id AND la.is_deleted = 0
-    WHERE n.updated_at > last_exec
-       OR la.updated_at > last_exec;
+    WHERE n.updated_at >= last_exec
+       OR la.updated_at >= last_exec;
 
     -- Create temporary table to hold hashtags
     DROP TEMPORARY TABLE IF EXISTS TempNotes;
@@ -501,8 +504,8 @@ BEGIN
     FROM customer_lead l
     LEFT JOIN customer_deal_structure cds ON cds.lead_id = l.lead_id AND cds.is_deleted = 0
     LEFT JOIN customer_payment_schedule cps ON cps.deal_id = cds.deal_id AND cps.is_deleted = 0 AND cps.isReceived = false
-    WHERE cds.updated_at > last_exec
-       OR cps.updated_at > last_exec;
+    WHERE cds.updated_at >= last_exec
+       OR cps.updated_at >= last_exec;
 
     -- Create temporary table for loan status
     DROP TEMPORARY TABLE IF EXISTS TempLoanStatus;
@@ -584,11 +587,11 @@ END //
 DELIMITER ;
 
 
--- Procedure to update least activity color for lead pipelines
+-- Procedure to get actvity for pipeline for the lead
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS UpdatePipelineActivityForLead;
-CREATE PROCEDURE UpdateLeadActivityFields()
+CREATE PROCEDURE UpdatePipelineActivityForLead()
 BEGIN
     DECLARE last_exec TIMESTAMP;
     DECLARE proc_name VARCHAR(255) DEFAULT 'UpdatePipelineActivityForLead';
@@ -606,7 +609,7 @@ BEGIN
     SELECT DISTINCT l.lead_id
     FROM customer_lead l
     LEFT JOIN LeadActivity la ON la.lead_id = l.lead_id AND la.is_deleted = 0
-    WHERE la.updated_at > last_exec;
+    WHERE la.updated_at >= last_exec;
 
     -- Create a temporary table to hold the lead activity details for the pipeline
     DROP TEMPORARY TABLE IF EXISTS TempPipelineActivity;

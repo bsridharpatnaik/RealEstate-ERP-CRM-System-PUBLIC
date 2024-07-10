@@ -33,11 +33,11 @@ public class PaymentPageSpecification {
 
         if (isReceived != null && isReceived.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectBoleanFieldEquals(PaymentsPage_.IS_RECEIVED, isReceived));
+                    specbldr.whereDirectBooleanFieldEquals(PaymentsPage_.IS_RECEIVED, isReceived));
 
         if (IsCustomerPayment != null && IsCustomerPayment.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectBoleanFieldEquals(PaymentsPage_.IS_CUSTOMER_PAYMENT, IsCustomerPayment));
+                    specbldr.whereDirectBooleanFieldEquals(PaymentsPage_.IS_CUSTOMER_PAYMENT, IsCustomerPayment));
 
         if (propertyType != null && propertyType.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldEquals(PaymentsPage_.PROPERTY_TYPE, propertyType));
@@ -46,7 +46,7 @@ public class PaymentPageSpecification {
             finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldEquals(PaymentsPage_.PROPERTY_NAME, propertyName));
 
         if (assignee != null && assignee.size() > 0)
-            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldEquals(PaymentsPage_.ASSIGNEE, assignee));
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldEquals(PaymentsPage_.ASSIGNEE_ID, assignee));
 
         if (globalSearch != null && globalSearch.size() > 0) {
             Specification<PaymentsPage> internalSpec1 = specbldr.specAndCondition(finalSpec,

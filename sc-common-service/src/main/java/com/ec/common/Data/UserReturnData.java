@@ -9,15 +9,25 @@ public class UserReturnData {
     String username;
     List<String> roles;
     Long id;
+    String email;
     List<String> allowedTenants;
     Set<UserTenantMapping> tenantList;
 
-    public UserReturnData(Long userId, String userName2, List<String> fetchRolesFromSet, List<String> allowedTenants, Set<UserTenantMapping> tenantList) {
+    public UserReturnData(Long userId, String userName2, String email, List<String> fetchRolesFromSet, List<String> allowedTenants, Set<UserTenantMapping> tenantList) {
         this.id = userId;
         this.username = userName2;
         this.roles = fetchRolesFromSet;
         this.allowedTenants = allowedTenants;
         this.tenantList = tenantList;
+        this.email = email;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public Set<UserTenantMapping> getTenantList() {

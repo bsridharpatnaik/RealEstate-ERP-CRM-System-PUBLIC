@@ -98,6 +98,9 @@ public class LeadService {
     @Autowired
     AuthorizationService authorizationService;
 
+    @Autowired
+    UtilService utilService;
+
     @Transactional
     public Lead createLead(@Valid LeadCreateData payload) throws Exception {
         log.info("Create Lead invoked with payload " + payload.toString());
@@ -164,8 +167,7 @@ public class LeadService {
 
     private void exitIfUpdateNotAllowed(Lead leadForUpdate, @Valid LeadCreateData payload) throws Exception {
         UserReturnData currentUser = userDetailsService.getCurrentUser();
-        if (!leadForUpdate.getAsigneeId().equals(currentUser.getId()) && !currentUser.getRoles().contains("admin")
-                && !currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")) {
+        if (!leadForUpdate.getAsigneeId().equals(currentUser.getId()) && !utilService.isAdminOrManager(currentUser)) {
             throw new Exception("User not allowed to edit lead. Please contact manager");
         }
 
@@ -188,7 +190,7 @@ public class LeadService {
         return l;
     }
 
-    public void convertLeadToLeadDAO(Lead lead, LeadDAO l) {
+    public void convertLeadToLeadDAO(Lead lead, LeadDAO l) throws Exception {
         UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
         l.setAddr_line1(lead.getAddress().getAddr_line1() == null ? "" : lead.getAddress().getAddr_line1());
         l.setAddr_line2(lead.getAddress().getAddr_line2() == null ? "" : lead.getAddress().getAddr_line2());
@@ -204,15 +206,13 @@ public class LeadService {
         l.setOccupation(lead.getOccupation() == null ? "" : lead.getOccupation());
         l.setPincode(lead.getAddress().getPincode() == "" ? "" : lead.getAddress().getPincode());
         l.setIsProspectLead(lead.getIsProspectLead());
-        if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
-                || currentUser.getRoles().contains("admin"))
+        if (currentUser.getId().equals(lead.getAsigneeId()) || utilService.isAdminOrManager(currentUser))
             l.setPrimaryMobile((lead.getPrimaryMobile()));
         else
             l.setPrimaryMobile("******" + lead.getPrimaryMobile().substring(7));
         l.setPropertyType(lead.getPropertyType() == null ? null : lead.getPropertyType());
         l.setPurpose(lead.getPurpose() == null ? "" : lead.getPurpose());
-        if (currentUser.getId().equals(lead.getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
-                || currentUser.getRoles().contains("admin"))
+        if (currentUser.getId().equals(lead.getAsigneeId()) || utilService.isAdminOrManager(currentUser))
             l.setSecondaryMobile(lead.getSecondaryMobile());
         else {
             if (lead.getSecondaryMobile() != null)
@@ -253,6 +253,7 @@ public class LeadService {
             lead.setStatus(LeadStatusEnum.New_Lead);
             lead.setCreatorId(currentUserID);
             lead.setAddress(setAddress(payload, new Address()));
+            lead.setStagnantDaysCount(0L);
         } else if (type.equalsIgnoreCase("update"))
             lead.setAddress(setAddress(payload, lead.getAddress()));
     }
@@ -291,13 +292,13 @@ public class LeadService {
         return leadListWithTypeAheadData;
     }
 
-    List<String> fetchTypeAheadForLeadGlobalSearch() {
+    List<String> fetchTypeAheadForLeadGlobalSearch() throws Exception {
 
         log.info("Invoked fetchTypeAheadForLeadGlobalSearch");
         UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
         List<String> typeAhead = new ArrayList<String>();
         typeAhead.addAll(lRepo.getLeadNames());
-        if (currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager") || currentUser.getRoles().contains("admin"))
+        if (utilService.isAdminOrManager(currentUser))
             typeAhead.addAll(lRepo.getLeadMobileNos());
         else
             typeAhead.addAll(lRepo.getAssignedLeadMobileNos(currentUser.getId()));
@@ -497,6 +498,7 @@ public class LeadService {
     }
 
     public void updatePipelineActivityForLead() {
+        log.info("Stored Procedure Called - PipelineActivity");
         lRepo.UpdatePipelineActivityForLead();
     }
 }

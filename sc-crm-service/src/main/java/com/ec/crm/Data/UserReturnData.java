@@ -18,11 +18,13 @@ public class UserReturnData implements Serializable
 	String username;
 	List<String> roles;
 	Long id;
+	String email;
 
-	public UserReturnData(Long userId, String userName2, List<String> fetchRolesFromSet)
+	public UserReturnData(Long userId, String userName2, List<String> fetchRolesFromSet, String email)
 	{
 		this.id = userId;
 		this.username = userName2;
 		this.roles = fetchRolesFromSet.stream().map(String::toLowerCase).collect(Collectors.toList());
+		this.email = email;
 	}
 }

@@ -62,7 +62,7 @@ public class UserDetailsService {
             List<UserDetails> userList = udRepo.findAll();
             for (UserDetails user : userList) {
                 UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-                        Arrays.asList(user.getRoles().split(",").clone()));
+                        Arrays.asList(user.getRoles().split(",").clone()), user.getEmail());
                 userDetails.add(userReturnData);
             }
             ThreadLocalStorage.setTenantName(null);
@@ -90,7 +90,7 @@ public class UserDetailsService {
                     }
                     if(user.getRoles().toLowerCase().contains("crm") && user.getTenants().contains(profile.contains("temp")?dbName.replace("temp",""):dbName)) {
                         UserReturnData userReturnData = new UserReturnData(user.getUserId(), user.getUserName(),
-                                Arrays.asList(user.getRoles().split(",").clone()));
+                                Arrays.asList(user.getRoles().split(",").clone()), user.getEmail());
                         userDetails.add(userReturnData);
                     }
                 }

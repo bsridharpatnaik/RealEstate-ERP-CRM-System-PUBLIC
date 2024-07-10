@@ -118,7 +118,7 @@ public class LeadActivityService {
     @Transactional(rollbackFor = Exception.class)
     private void updateIsLatestTofalseForOtherActivities(Long leadId) {
         List<LeadActivity> activityList = laRepo.findAllLatestActivitiesForLead(leadId);
-        for(LeadActivity la:activityList){
+        for (LeadActivity la : activityList) {
             la.setIsLatest(0);
             laRepo.save(la);
         }
@@ -598,16 +598,9 @@ public class LeadActivityService {
         // check user. if not admin, apply default filters
         leadFilterDataList = utilService.addAssigneeToFilterData(leadFilterDataList);
         LeadActivityListWithTypeAheadData leadActivityListWithTypeAheadData = new LeadActivityListWithTypeAheadData();
-
         log.info("Fetching filteration based on filter data received");
         Specification<LeadActivity> spec = ActivitySpecifications.getSpecification(leadFilterDataList);
-
         Page<LeadActivity> leadActivityList = spec != null ? laRepo.findAll(spec, pageable) : laRepo.findAll(pageable);
-
-        /*
-         * Page<LeadPageData> pagedata = leadActivityList .map(objectEntity ->
-         * leadToLeadActivityModelMapper.map(objectEntity, LeadPageData.class));
-         */
 
         Page<LeadPageData> pagedata = leadActivityList.map(this::mapLeadActivityPage);
         leadActivityListWithTypeAheadData.setLeadPageDetails(pagedata);
@@ -630,8 +623,7 @@ public class LeadActivityService {
             throw new Exception("Too many rows (>2000) to export. Apply some more filters and try again");
 
         Page<LeadActivity> leadActivityList = spec != null ? laRepo.findAll(spec, pageable) : laRepo.findAll(pageable);
-        Page<LeadActivityExportDTO> pagedata = leadActivityList.map(this::mapLeadActivityForExport);
-        return pagedata;
+        return leadActivityList.map(this::mapLeadActivityForExport);
     }
 
     private LeadActivityExportDTO mapLeadActivityForExport(LeadActivity leadActivity) {
@@ -639,27 +631,31 @@ public class LeadActivityService {
     }
 
     private LeadPageData mapLeadActivityPage(LeadActivity la) {
-        UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
-        LeadPageData l = new LeadPageData();
-        l.setActivityDateTime(la.getActivityDateTime());
-        l.setActivityType(la.getActivityType());
-        l.setAssigneeId(la.getLead().getAsigneeId());
-        l.setIsOpen(la.getIsOpen());
-        l.setLeadId(la.getLead().getLeadId());
-        l.setLeadStatus(la.getLead().getStatus());
-        l.setName(la.getLead().getCustomerName());
-        if (currentUser.getId().equals(la.getLead().getAsigneeId()) || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("crm-manager")
-                || currentUser.getRoles().stream().map(String::toLowerCase).collect(Collectors.toList()).contains("admin"))
-            l.setMobileNumber(la.getLead().getPrimaryMobile());
-        else
-            l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
-        l.setFollowUpCount(la.getFollowUpCount() == null ? null : la.getFollowUpCount());
-        l.setLoanStatus(la.getLead().getLoanStatus() == null ? null : LoanStatusEnum.valueOf(la.getLead().getLoanStatus()));
-        l.setCustomerStatus(la.getLead().getCustomerStatus() == null ? null : CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus()));
-        l.setNextPaymentDate(la.getLead().getNextPaymentDate());
-        l.setTotalPending(la.getLead().getTotalPending());
-        return l;
+        try {
+            UserReturnData currentUser = (UserReturnData) request.getAttribute("currentUser");
+            LeadPageData l = new LeadPageData();
+            l.setActivityDateTime(la.getActivityDateTime());
+            l.setActivityType(la.getActivityType());
+            l.setAssigneeId(la.getLead().getAsigneeId());
+            l.setIsOpen(la.getIsOpen());
+            l.setLeadId(la.getLead().getLeadId());
+            l.setLeadStatus(la.getLead().getStatus());
+            l.setName(la.getLead().getCustomerName());
+            if (currentUser.getId().equals(la.getLead().getAsigneeId()) || utilService.isAdminOrManager(currentUser))
+                l.setMobileNumber(la.getLead().getPrimaryMobile());
+            else
+                l.setMobileNumber("******" + la.getLead().getPrimaryMobile().substring(7));
+            l.setFollowUpCount(la.getFollowUpCount() == null ? null : la.getFollowUpCount());
+            l.setLoanStatus(la.getLead().getLoanStatus() == null ? null : LoanStatusEnum.valueOf(la.getLead().getLoanStatus()));
+            l.setCustomerStatus(la.getLead().getCustomerStatus() == null ? null : CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus()));
+            l.setNextPaymentDate(la.getLead().getNextPaymentDate());
+            l.setTotalPending(la.getLead().getTotalPending());
+            return l;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
+
 
     public Boolean getRevertable(Long leadActivityId, Long leadId) throws Exception {
         List<LeadActivity> activities = laRepo.fetchMostRecentLeadActivity(leadId);

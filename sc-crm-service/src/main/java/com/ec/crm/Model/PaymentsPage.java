@@ -46,6 +46,9 @@ public class PaymentsPage {
     @Column(name = "user_name")
     String assignee;
 
+    @Column(name = "user_id")
+    Long assigneeId;
+
     @Column(name = "propertyType")
     String propertyType;
 
