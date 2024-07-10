@@ -111,6 +111,8 @@ public class UserService {
     }
 
     private void validatePayload(CreateUserData userData) throws Exception {
+        if(userData.getUsername().contains(" "))
+            throw new Exception("Username cannot contain spaces!");
         if (userData.getTenants() == null)
             throw new Exception("Required field tenants missing from request!");
         if (userData.getRoles() == null)
