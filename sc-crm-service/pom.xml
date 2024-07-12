@@ -181,6 +181,16 @@
          <artifactId>unirest-java</artifactId>
          <version>1.4.9</version>
       </dependency>
+      <dependency>
+         <groupId>org.freemarker</groupId>
+         <artifactId>freemarker</artifactId>
+         <version>2.3.30</version>
+      </dependency>
+      <dependency>
+         <groupId>javax.mail</groupId>
+         <artifactId>mail</artifactId>
+         <version>1.4</version>
+      </dependency>
    </dependencies>
    <build>
       <finalName>${proj}-crm-service${type}</finalName>
@@ -222,7 +232,11 @@
             <directory>src/main/resources</directory>
             <includes>
                <include>**/*.properties</include>
-               <!-- Include other resource files if needed -->
+               <include>**/*.yml</include>
+               <include>**/*.yaml</include>
+               <include>**/*.ftl</include>
+               <include>**/*.html</include>
+               <include>**/*.xml</include>
             </includes>
          </resource>
          <resource>
@@ -230,7 +244,6 @@
             <targetPath>META-INF</targetPath>
             <includes>
                <include>**/*.xml</include>
-               <!-- Include other resource files if needed -->
             </includes>
          </resource>
       </resources>
