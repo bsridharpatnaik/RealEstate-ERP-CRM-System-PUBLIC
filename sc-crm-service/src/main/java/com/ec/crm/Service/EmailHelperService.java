@@ -1,6 +1,7 @@
 package com.ec.crm.Service;
 
 import com.ec.crm.Config.EmailConstants;
+import com.ec.crm.Data.ActivityForEmail;
 import com.ec.crm.Data.EmailConfigData;
 import com.ec.crm.multitenant.ThreadLocalStorage;
 import freemarker.template.Configuration;
@@ -29,6 +30,7 @@ public class EmailHelperService {
     Logger log = LoggerFactory.getLogger(EmailHelperService.class);
 
     public void sendEmailForMorningStockNotsification() throws Exception {
+
         EmailConfigData emailConfigData = getEmailConfig();
         Properties props = getProperties();
         Session session = Session.getInstance(props, new javax.mail.Authenticator() {
@@ -36,12 +38,19 @@ public class EmailHelperService {
                 return new PasswordAuthentication(emailConfigData.mailUsername, emailConfigData.mailPassword);
             }
         });
+
         log.info("Creating mimemessage");
         MimeMessage message = new MimeMessage(session);
         try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                    StandardCharsets.UTF_8.name());
-            Map<String, Object> model = new HashMap<String, Object>();
+            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+
+            // Hardcoding sample values for the table
+            Map<String, Object> model = new HashMap<>();
+            model.put("leads", Arrays.asList(
+                    new ActivityForEmail("L001", "John Doe", "1234567890", "Web", "Apartment", "Agent A", "New", "2024-07-12 10:00 AM", "Initial Contact", "Discussed property details", "Yes", "Call", "Yes", 1),
+                    new ActivityForEmail("L002", "Jane Smith", "0987654321", "Referral", "House", "Agent B", "In Progress", "2024-07-11 02:30 PM", "Site Visit", "Visited the property", "No", "Meeting", "No", 2)
+            ));
+
             Template template = config.getTemplate("email-template.ftl");
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
             helper.setFrom(emailConfigData.mailUsername);
