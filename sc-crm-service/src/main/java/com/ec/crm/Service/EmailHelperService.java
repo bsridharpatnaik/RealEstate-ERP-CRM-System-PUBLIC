@@ -4,8 +4,8 @@ import com.ec.crm.Config.EmailConstants;
 import com.ec.crm.Data.ActivityForEmail;
 import com.ec.crm.Data.EmailConfigData;
 import com.ec.crm.multitenant.ThreadLocalStorage;
-import freemarker.template.Configuration;
-import freemarker.template.Template;
+import freemarker.core.ParseException;
+import freemarker.template.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +19,7 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -29,43 +30,63 @@ public class EmailHelperService {
 
     Logger log = LoggerFactory.getLogger(EmailHelperService.class);
 
-    public void sendEmailForMorningStockNotsification() throws Exception {
-
+    public void sendEmail(Map<String, Object> model, String recipientList, String subject, String key) {
         EmailConfigData emailConfigData = getEmailConfig();
         Properties props = getProperties();
-        Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+        Session session = createEmailSession(emailConfigData, props);
+        log.info("Creating mime message");
+        MimeMessage message = new MimeMessage(session);
+        try {
+            prepareAndSendEmail(message, model, emailConfigData, recipientList, subject, key);
+            log.info("Email Sent");
+        } catch (Exception e) {
+            log.error("Error sending email", e);
+            e.printStackTrace();
+        }
+    }
+
+    private Session createEmailSession(EmailConfigData emailConfigData, Properties props) {
+        return Session.getInstance(props, new javax.mail.Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(emailConfigData.mailUsername, emailConfigData.mailPassword);
             }
         });
+    }
 
-        log.info("Creating mimemessage");
-        MimeMessage message = new MimeMessage(session);
-        try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+    private void prepareAndSendEmail(MimeMessage message, Map<String, Object> model, EmailConfigData emailConfigData, String recipientList, String subject, String key) throws Exception {
+        MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
+        String html = generateEmailContent(model, key);
+        helper.setFrom(emailConfigData.mailUsername);
+        InternetAddress[] recipients = parseRecipientList(recipientList);
+        message.setRecipients(javax.mail.Message.RecipientType.TO, recipients);
+        helper.setSubject(ThreadLocalStorage.getTenantName() + " - " + subject + " - " + new Date());
+        helper.setText(html, true);
+        Transport.send(message);
+    }
 
-            // Hardcoding sample values for the table
-            Map<String, Object> model = new HashMap<>();
-            model.put("leads", Arrays.asList(
-                    new ActivityForEmail("L001", "John Doe", "1234567890", "Web", "Apartment", "Agent A", "New", "2024-07-12 10:00 AM", "Initial Contact", "Discussed property details", "Yes", "Call", "Yes", 1),
-                    new ActivityForEmail("L002", "Jane Smith", "0987654321", "Referral", "House", "Agent B", "In Progress", "2024-07-11 02:30 PM", "Site Visit", "Visited the property", "No", "Meeting", "No", 2)
-            ));
+    private String generateEmailContent(Map<String, Object> model, String key) throws Exception {
+        Template template = getTemplateByKey(key);
+        return FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
+    }
 
-            Template template = config.getTemplate("email-template.ftl");
-            String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
-            helper.setFrom(emailConfigData.mailUsername);
-
-            InternetAddress[] parse = InternetAddress.parse("bsridharpatnaik@gmail.com", true);
-            message.setRecipients(javax.mail.Message.RecipientType.TO, parse);
-
-            helper.setSubject(ThreadLocalStorage.getTenantName() + " - Latest Stock Information - " + new Date());
-            helper.setText(html, true);
-            Transport.send(message);
-            log.info("Email Sent");
-        } catch (MessagingException e) {
-            log.error("Error sending email", e);
-            e.printStackTrace();
+    private Template getTemplateByKey(String key) throws IOException {
+        Template template = null;
+        switch (key) {
+            case "upcomingEmailForLeadActivity":
+                template = config.getTemplate("lead-activity-list.ftl");
+                break;
         }
+        return template;
+    }
+
+
+    private InternetAddress[] parseRecipientList(String recipientList) throws Exception {
+        String[] recipientArray = recipientList.split(";");
+        InternetAddress[] recipients = new InternetAddress[recipientArray.length];
+        for (int i = 0; i < recipientArray.length; i++) {
+            recipients[i] = new InternetAddress(recipientArray[i].trim());
+        }
+        return recipients;
     }
 
     private Properties getProperties() {

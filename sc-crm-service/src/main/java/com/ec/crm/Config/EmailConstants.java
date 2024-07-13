@@ -1,9 +1,9 @@
 package com.ec.crm.Config;
 
 public final class EmailConstants{
-	public static final String mailHost = "mail.3pagecrm.com";
+	public static final String mailHost = "mail.greyboard.in";
 	public static final String mailPort="465";
-	public static final String mailUsername="stockupdate@evergreencity.in";
+	public static final String mailUsername="noreply@greyboard.in";
 	public static final String mailPassword = "REDACTED";
 	public static final String mailProtocol="smtp";
 	public static final String mailSmtpAuth = "true";

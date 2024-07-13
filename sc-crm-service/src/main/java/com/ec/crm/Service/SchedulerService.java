@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import com.ec.crm.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,22 +25,21 @@ public class SchedulerService {
     @Value("${schemas.list}")
     private String schemasList;
 
+    @Autowired
+    AllActivitiesService allActivitiesService;
+
     Logger log = LoggerFactory.getLogger(SchedulerService.class);
 
-    // @Scheduled(cron = "* * * * * *")
-
-    /*@Scheduled(fixedDelay = 600000) // 10 minute;
-    public void sendStockNotificationEmailInEvening() throws Exception {
-        SimpleDateFormat localDateFormat = new SimpleDateFormat("HH:mm");
-        log.info("Check and send notification to mobile. Current Time - " + localDateFormat.format(new Date()));
+    @Scheduled(cron = "0 0 18 * * *")
+    public void sendUpcomingActivities() throws Exception {
+        log.info("Sending sendUpcomingActivities Email");
         String[] tenants = schemasList.split(",");
         for (String tenantName : tenants) {
-            com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(tenantName);
-            //sendCRMNotificationsService.sendNotificationForUpcomingActivities();
-            sendCRMNotificationsService.sendSMSNotificationForUpcomingActivities();
-            com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(null);
+            ThreadLocalStorage.setTenantName(tenantName);
+            allActivitiesService.sendEveningEmailForLeadActivity();
+            ThreadLocalStorage.setTenantName(null);
         }
-    }*/
+    }
 
     @Scheduled(fixedDelay = 60 * 1000 * 15) // 15 minute;
     public void updateLeadDerivedFields() {

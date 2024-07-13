@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Email with Table</title>
+    <title>Upcoming Lead Activities</title>
     <style>
         table {
             width: 100%;
@@ -42,22 +42,22 @@
             </tr>
         </thead>
         <tbody>
-            <#list leads as lead>
+            <#list activities as activity>
             <tr>
-                <td>${lead.leadId}</td>
-                <td>${lead.customerName}</td>
-                <td>${lead.primaryMobile}</td>
-                <td>${lead.source}</td>
-                <td>${lead.propertyType}</td>
-                <td>${lead.assignee}</td>
-                <td>${lead.leadStatus}</td>
-                <td>${lead.activityDateTime}</td>
-                <td>${lead.title}</td>
-                <td>${lead.description}</td>
-                <td>${lead.isOpen}</td>
-                <td>${lead.activityType}</td>
-                <td>${lead.isLatestActivity}</td>
-                <td>${lead.followUpCount}</td>
+                <td>${activity.leadId}</td>
+                <td>${activity.customerName}</td>
+                <td>${activity.primaryMobile}</td>
+                <td>${activity.source}</td>
+                <td>${activity.propertyType}</td>
+                <td>${activity.assignee}</td>
+                <td>${activity.leadStatus}</td>
+                <td>${activity.activityDateTime}</td>
+                <td>${activity.title}</td>
+                <td>${activity.description}</td>
+                <td>${activity.isOpen}</td>
+                <td>${activity.activityType}</td>
+                <td>${activity.isLatestActivity}</td>
+                <td>${activity.followUpCount}</td>
             </tr>
             </#list>
         </tbody>

@@ -1,5 +1,6 @@
 package com.ec.crm.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,9 +14,12 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.servlet.http.HttpServletRequest;
 
+import com.ec.crm.Data.*;
 import com.ec.crm.Model.RecentActivityForPipeline;
 import com.ec.crm.Repository.RecentActivityForPipelineRepo;
+import com.ec.crm.ReusableClasses.ReusableMethods;
 import com.ec.crm.multitenant.ThreadLocalStorage;
+import freemarker.template.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +29,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.crm.Data.LeadActivityDropdownData;
-import com.ec.crm.Data.PipelineAllReturnDAO;
-import com.ec.crm.Data.PipelineSingleReturnDTO;
-import com.ec.crm.Data.PipelineWithTotalReturnDAO;
-import com.ec.crm.Data.PlannerAllReturnDAO;
-import com.ec.crm.Data.PlannerSingleReturnDAO;
-import com.ec.crm.Data.PlannerWithTotalReturnDAO;
 import com.ec.crm.Enums.StagnatedEnum;
-import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.LeadStatusEnum;
 import com.ec.crm.Filters.ActivitySpecifications;
@@ -45,6 +41,7 @@ import com.ec.crm.Model.Lead_;
 import com.ec.crm.Repository.LeadActivityRepo;
 import com.ec.crm.Repository.LeadRepo;
 import com.ec.crm.ReusableClasses.SpecificationsBuilder;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -75,6 +72,12 @@ public class AllActivitiesService {
     @Autowired
     RecentActivityForPipelineRepo recentActivityForPipelineRepo;
 
+    @Autowired
+    UserDetailsService userDetailsService;
+
+    @Autowired
+    EmailHelperService emailHelperService;
+
     private final ExecutorService executor = Executors.newFixedThreadPool(5);
 
     public PipelineAllReturnDAO findFilteredDataForPipeline(FilterDataList leadFilterDataList, Pageable pageable)
@@ -91,7 +94,7 @@ public class AllActivitiesService {
         Specification<Lead> internalSpec = (Root<Lead> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
                 .notEqual(root.get(Lead_.STATUS), Enum.valueOf(LeadStatusEnum.class, "Deal_Lost"));
         Specification<Lead> finalSpec = specbldr.specAndCondition(spec, internalSpec);
-        leads = finalSpec!=null?lRepo.findAll(finalSpec):lRepo.findAll();
+        leads = finalSpec != null ? lRepo.findAll(finalSpec) : lRepo.findAll();
         System.out.println(" DFANBE = " + ThreadLocalStorage.getTenantName());
         return transformDataToPipelineMode(leads, ThreadLocalStorage.getTenantName());
     }
@@ -167,23 +170,23 @@ public class AllActivitiesService {
         List<PipelineSingleReturnDTO> pipelineSingleReturnDTOList = new ArrayList<PipelineSingleReturnDTO>();
 
         for (Lead l : filteredLeads) {
-                PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
-                pipelineSingleReturnDTO.setIsOpen(l.getRecentIsOpen());
-                pipelineSingleReturnDTO.setActivityDateTime(l.getRecentActivityDateTime());
-                pipelineSingleReturnDTO.setLeadId(l.getLeadId());
+            PipelineSingleReturnDTO pipelineSingleReturnDTO = new PipelineSingleReturnDTO();
+            pipelineSingleReturnDTO.setIsOpen(l.getRecentIsOpen());
+            pipelineSingleReturnDTO.setActivityDateTime(l.getRecentActivityDateTime());
+            pipelineSingleReturnDTO.setLeadId(l.getLeadId());
 
-                if (currentUser.getId().equals(l.getAsigneeId()) || utilService.isAdminOrManager(currentUser))
-                    pipelineSingleReturnDTO.setMobileNumber((l.getPrimaryMobile()));
-                else
-                    pipelineSingleReturnDTO.setMobileNumber("******" + l.getPrimaryMobile().substring(7));
+            if (currentUser.getId().equals(l.getAsigneeId()) || utilService.isAdminOrManager(currentUser))
+                pipelineSingleReturnDTO.setMobileNumber((l.getPrimaryMobile()));
+            else
+                pipelineSingleReturnDTO.setMobileNumber("******" + l.getPrimaryMobile().substring(7));
 
-                pipelineSingleReturnDTO.setName(l.getCustomerName());
-                pipelineSingleReturnDTO.setSentiment(l.getSentiment());
-                //pipelineSingleReturnDTO.setActivityDateTime(l.getRecentActivityDateTime());
-                pipelineSingleReturnDTO.setStagnantStatus(getStagnantStatus(l.getStagnantDaysCount()));
-                //pipelineSingleReturnDTO.setIsOpen(l.getRecentActivityStatus());
-                pipelineSingleReturnDTO.setAssignee(l.getAsigneeId());
-                pipelineSingleReturnDTOList.add(pipelineSingleReturnDTO);
+            pipelineSingleReturnDTO.setName(l.getCustomerName());
+            pipelineSingleReturnDTO.setSentiment(l.getSentiment());
+            //pipelineSingleReturnDTO.setActivityDateTime(l.getRecentActivityDateTime());
+            pipelineSingleReturnDTO.setStagnantStatus(getStagnantStatus(l.getStagnantDaysCount()));
+            //pipelineSingleReturnDTO.setIsOpen(l.getRecentActivityStatus());
+            pipelineSingleReturnDTO.setAssignee(l.getAsigneeId());
+            pipelineSingleReturnDTOList.add(pipelineSingleReturnDTO);
         }
         PipelineWithTotalReturnDAO.setLeads(pipelineSingleReturnDTOList);
         PipelineWithTotalReturnDAO.setTotalCount(filteredLeads.size());
@@ -217,6 +220,7 @@ public class AllActivitiesService {
         }
 
     }
+
     public LeadActivityDropdownData getDropdownValues() throws Exception {
         LeadActivityDropdownData data = new LeadActivityDropdownData();
         data.setDropdownData(populateDropdownService.fetchData("lead"));
@@ -291,5 +295,80 @@ public class AllActivitiesService {
         plannerWithTotalReturnDAO.setActivities(activities);
         plannerWithTotalReturnDAO.setTotalActivities(activities.size());
         return plannerWithTotalReturnDAO;
+    }
+
+    public void sendEveningEmailForLeadActivity() throws Exception {
+        List<LeadActivity> activities = getActivitiesForNextDays(3);
+        Set<Long> uniqueAsigneeIds = activities.stream()
+                .map(LeadActivity::getLead)
+                .map(Lead::getAsigneeId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        List<UserReturnData> userData = userDetailsService.getUserList();
+        sendEmailsForLeadActivities(uniqueAsigneeIds, userData, activities, "Upcoming Lead Activities");
+    }
+
+    public String getEmailForUser(Long userId, List<UserReturnData> userData) {
+        for (UserReturnData user : userData) {
+            if (user.getId().equals(userId)) {
+                return user.getEmail();
+            }
+        }
+        return null;
+    }
+
+    public String getUsernameForAssigneeId(Long userId, List<UserReturnData> userData) {
+        for (UserReturnData user : userData) {
+            if (user.getId().equals(userId)) {
+                return user.getUsername();
+            }
+        }
+        return null;
+    }
+
+    public List<LeadActivity> getLeadActivitiesForAssignee(Long assigneeId, List<LeadActivity> activities) {
+        return activities.stream()
+                .filter(activity -> activity.getLead().getAsigneeId().equals(assigneeId))
+                .collect(Collectors.toList());
+    }
+
+    public void sendEmailsForLeadActivities(Set<Long> uniqueAsigneeIds, List<UserReturnData> userData, List<LeadActivity> activities, String subject) {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss a");
+        for (Long assigneeId : uniqueAsigneeIds) {
+            String email = getEmailForUser(assigneeId, userData);
+            if (email != null && !email.isEmpty()) {
+                List<LeadActivity> assigneeActivities = getLeadActivitiesForAssignee(assigneeId, activities);
+                Map<String, Object> model = new HashMap<>();
+                List<ActivityForEmail> activitiesForEmail = assigneeActivities.stream()
+                        .map(activity -> new ActivityForEmail(
+                                activity.getLead().getLeadId().toString(),
+                                activity.getLead().getCustomerName(),
+                                activity.getLead().getPrimaryMobile(),
+                                activity.getLead().getSource() == null ? "" : activity.getLead().getSource().getSourceName(),
+                                activity.getLead().getPropertyType() == null ? "" : activity.getLead().getPropertyType().name(),
+                                activity.getLead().getAsigneeId() == null ? "" : getUsernameForAssigneeId(activity.getLead().getAsigneeId(), userData),
+                                activity.getLead().getStatus().toString(),
+                                formatter.format(activity.getActivityDateTime()),
+                                activity.getTitle(),
+                                activity.getDescription() == null ? "" : activity.getDescription(),
+                                activity.getIsOpen() ? "Open" : "Close",
+                                activity.getActivityType().toString(),
+                                activity.getIsLatest() == 1 ? "Latest" : "No",
+                                activity.getFollowUpCount()
+                        ))
+                        .collect(Collectors.toList());
+                model.put("activities", activitiesForEmail);
+                emailHelperService.sendEmail(model, email, subject, "upcomingEmailForLeadActivity");
+            }
+        }
+    }
+
+    public List<LeadActivity> getActivitiesForNextDays(int days) {
+        Date fromDate = new Date();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(ReusableMethods.atStartOfDay(fromDate));
+        calendar.add(Calendar.DAY_OF_YEAR, days);
+        Date toDate = calendar.getTime();
+        return laRepo.getActivity(fromDate, ReusableMethods.atEndOfDay(toDate));
     }
 }

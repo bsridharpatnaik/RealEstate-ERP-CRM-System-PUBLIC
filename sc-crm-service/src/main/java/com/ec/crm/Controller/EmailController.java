@@ -1,6 +1,7 @@
 package com.ec.crm.Controller;
 
 import com.ec.crm.Data.ActivitiesForDashboard;
+import com.ec.crm.Service.AllActivitiesService;
 import com.ec.crm.Service.EmailHelperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,9 +17,12 @@ public class EmailController {
     @Autowired
     EmailHelperService emailHelperService;
 
-    @GetMapping("/send")
+    @Autowired
+    AllActivitiesService allActivitiesService;
+
+    @GetMapping("/ua")
     @ResponseStatus(HttpStatus.OK)
     public void sendEmail() throws Exception {
-        emailHelperService.sendEmailForMorningStockNotsification();
+        allActivitiesService.sendEveningEmailForLeadActivity();
     }
 }
