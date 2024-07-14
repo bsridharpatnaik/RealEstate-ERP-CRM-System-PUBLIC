@@ -44,22 +44,26 @@ public enum PropertyTypeEnum implements Serializable {
     TYPE_6_3_BHK,
     SARAFA,
     GENERAL,
-    CHOPATI;
+    CHOPATI,
+    KALPAVRIKSH,
+    SUNCITYNX,
+    SMARTCITY,
+    CITYCENTER;
 
     public static List<String> getValidPropertyType() {
         List<PropertyTypeEnum> propertyTypes = null;
         String tenantName = ThreadLocalStorage.getTenantName();
-        if(tenantName.toLowerCase().contains("egcity")) {
-                System.out.println("Tenant name: " + tenantName);
-                propertyTypes = new ArrayList<>(EnumSet.of(
-                        HOUSE_2_BHK,
-                        HOUSE_3_BHK,
-                        PLOT,
-                        Multiple,
-                        Empty
-                ));
+        if (tenantName.toLowerCase().contains("egcity")) {
+            System.out.println("Tenant name: " + tenantName);
+            propertyTypes = new ArrayList<>(EnumSet.of(
+                    HOUSE_2_BHK,
+                    HOUSE_3_BHK,
+                    PLOT,
+                    Multiple,
+                    Empty
+            ));
         }
-        if(tenantName.toLowerCase().contains("suncitynx")) {
+        if (tenantName.toLowerCase().contains("suncitynx")) {
             propertyTypes = new ArrayList<>(EnumSet.of(
                     E_TYPE_5_BHK,
                     F_TYPE_5_BHK,
@@ -70,7 +74,7 @@ public enum PropertyTypeEnum implements Serializable {
             ));
         }
 
-        if(tenantName.toLowerCase().contains("kalpavrish")) {
+        if (tenantName.toLowerCase().contains("kalpavrish")) {
             propertyTypes = new ArrayList<>(EnumSet.of(
                     A_BLOCK_4_BHK,
                     B_BLOCK_3_BHK,
@@ -80,7 +84,7 @@ public enum PropertyTypeEnum implements Serializable {
             ));
         }
 
-        if(tenantName.toLowerCase().contains("smartcity")) {
+        if (tenantName.toLowerCase().contains("smartcity")) {
             propertyTypes = new ArrayList<>(EnumSet.of(
                     A_BLOCK,
                     B_BLOCK,
@@ -92,7 +96,7 @@ public enum PropertyTypeEnum implements Serializable {
             ));
         }
 
-        if(tenantName.toLowerCase().contains("bhaavbhumi")) {
+        if (tenantName.toLowerCase().contains("bhaavbhumi")) {
             propertyTypes = new ArrayList<>(EnumSet.of(
                     TYPE_1_6_BHK,
                     TYPE_2_5_BHK,
@@ -105,7 +109,7 @@ public enum PropertyTypeEnum implements Serializable {
             ));
         }
 
-        if(tenantName.toLowerCase().contains("drgtrdcntr")) {
+        if (tenantName.toLowerCase().contains("drgtrdcntr")) {
             propertyTypes = new ArrayList<>(EnumSet.of(
                     SARAFA,
                     GENERAL,
@@ -113,7 +117,16 @@ public enum PropertyTypeEnum implements Serializable {
             ));
         }
 
-        if(propertyTypes==null){
+        if (tenantName.toLowerCase().contains("mgrental")) {
+            propertyTypes = new ArrayList<>(EnumSet.of(
+                    KALPAVRIKSH,
+                    SUNCITYNX,
+                    SMARTCITY,
+                    CITYCENTER
+            ));
+        }
+
+        if (propertyTypes == null) {
             propertyTypes = new ArrayList<>(EnumSet.of(
                     HOUSE_2_BHK,
                     HOUSE_3_BHK,
@@ -122,6 +135,8 @@ public enum PropertyTypeEnum implements Serializable {
                     Empty
             ));
         }
+
+
         List<String> returnData = new ArrayList<>();
         propertyTypes.forEach(type -> returnData.add(type.toString()));
         return returnData;
