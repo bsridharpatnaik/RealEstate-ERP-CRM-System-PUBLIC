@@ -45,19 +45,28 @@ public class UtilService {
     }
 
     public FilterDataList addTodaysDateToFilterData(FilterDataList leadFilterDataList) {
-
         List<String> attributes = Arrays.asList("activityStartDate", "activityEndDate");
-        leadFilterDataList.getFilterData().removeIf(faData -> faData.getAttrName().equalsIgnoreCase("activityStartDate") || faData.getAttrName().equalsIgnoreCase("activityEndDate"));
-        for (String attribute : attributes) {
-            FilterAttributeData faData = new FilterAttributeData();
-            List<String> values = new ArrayList<String>();
-            faData.setAttrName(attribute);
-            String formattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-            values.add(formattedDate);
-            faData.setAttrValue(values);
-            leadFilterDataList.getFilterData().add(faData);
+        if (!checkIfAttributeExists(leadFilterDataList, attributes)) {
+            for (String attribute : attributes) {
+                FilterAttributeData faData = new FilterAttributeData();
+                List<String> values = new ArrayList<String>();
+                faData.setAttrName(attribute);
+                String formattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+                values.add(formattedDate);
+                faData.setAttrValue(values);
+                leadFilterDataList.getFilterData().add(faData);
+            }
         }
         return leadFilterDataList;
+    }
+
+    private boolean checkIfAttributeExists(FilterDataList leadFilterDataList, List<String> attributes) {
+        for(FilterAttributeData faData : leadFilterDataList.getFilterData()){
+            if(faData.getAttrName().equalsIgnoreCase(attributes.get(0))){
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isAdminOrManager(UserReturnData currentUser) throws Exception {
