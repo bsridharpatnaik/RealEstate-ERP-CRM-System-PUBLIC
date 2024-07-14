@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 import com.ec.crm.Data.*;
+import com.ec.crm.aspects.CheckAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +44,7 @@ public class LeadController {
     }
 
     @GetMapping("{id}")
+    @CheckAccess
     public LeadDAO returnSingleLead(@PathVariable Long id) throws Exception {
         UserReturnData currentUser = userDetailsService.getCurrentUser();
         request.setAttribute("currentUser", currentUser);
@@ -61,6 +63,7 @@ public class LeadController {
     }
 
     @GetMapping("/getallinfo/{id}")
+    @CheckAccess
     public LeadDetailInfo findLeadDetailInfoByID(@PathVariable long id) throws Exception {
         return leadService.findSingleLeadDetailInfo(id);
     }
@@ -93,6 +96,7 @@ public class LeadController {
     }
 
     @PutMapping("/{id}")
+    @CheckAccess
     public Lead updateLead(@PathVariable Long id, @RequestBody LeadCreateData payload) throws Exception {
         return leadService.updateLead(payload, id);
     }

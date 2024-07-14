@@ -191,6 +191,10 @@
          <artifactId>mail</artifactId>
          <version>1.4</version>
       </dependency>
+      <dependency>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-aop</artifactId>
+      </dependency>
    </dependencies>
    <build>
       <finalName>${proj}-crm-service${type}</finalName>
