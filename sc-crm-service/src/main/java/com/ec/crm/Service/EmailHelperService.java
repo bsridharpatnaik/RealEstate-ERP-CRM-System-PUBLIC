@@ -30,14 +30,14 @@ public class EmailHelperService {
 
     Logger log = LoggerFactory.getLogger(EmailHelperService.class);
 
-    public void sendEmail(Map<String, Object> model, String recipientList, String subject, String key) {
+    public void sendEmail(String tenantName, Map<String, Object> model, String recipientList, String subject, String key) {
         EmailConfigData emailConfigData = getEmailConfig();
         Properties props = getProperties();
         Session session = createEmailSession(emailConfigData, props);
         log.info("Creating mime message");
         MimeMessage message = new MimeMessage(session);
         try {
-            prepareAndSendEmail(message, model, emailConfigData, recipientList, subject, key);
+            prepareAndSendEmail(tenantName, message, model, emailConfigData, recipientList, subject, key);
             log.info("Email Sent");
         } catch (Exception e) {
             log.error("Error sending email", e);
@@ -53,13 +53,13 @@ public class EmailHelperService {
         });
     }
 
-    private void prepareAndSendEmail(MimeMessage message, Map<String, Object> model, EmailConfigData emailConfigData, String recipientList, String subject, String key) throws Exception {
+    private void prepareAndSendEmail(String tenantName,MimeMessage message, Map<String, Object> model, EmailConfigData emailConfigData, String recipientList, String subject, String key) throws Exception {
         MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
         String html = generateEmailContent(model, key);
         helper.setFrom(emailConfigData.mailUsername);
         InternetAddress[] recipients = parseRecipientList(recipientList);
         message.setRecipients(javax.mail.Message.RecipientType.TO, recipients);
-        helper.setSubject(ThreadLocalStorage.getTenantName() + " - " + subject + " - " + new Date());
+        helper.setSubject(tenantName + " - " + subject + " - " + new Date());
         helper.setText(html, true);
         Transport.send(message);
     }

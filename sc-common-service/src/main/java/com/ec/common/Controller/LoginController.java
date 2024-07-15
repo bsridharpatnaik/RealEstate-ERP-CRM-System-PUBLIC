@@ -23,60 +23,56 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @RestController
-public class LoginController
-{
+public class LoginController {
 
-	public static String role = "";
-	@Autowired
-	private AuthenticationManager authenticationManager;
+    public static String role = "";
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-	@Autowired
-	private JWTTokenUtils jwtTokenUtil;
+    @Autowired
+    private JWTTokenUtils jwtTokenUtil;
 
-	@Autowired
-	UserRepo uRepo;
+    @Autowired
+    UserRepo uRepo;
 
-	@Autowired
-	private JwtUserDetailsService userDetailsService;
+    @Autowired
+    private JwtUserDetailsService userDetailsService;
 
-	@GetMapping("/ec//login")
-	public String getMessage()
-	{
-		return "Login";
-	}
-	@PostMapping(value = "/ec/login", produces =
-	{ "application/json", "text/json" })
-	public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception
-	{
-		LoginData loginData = new LoginData();
-		String username = userData.getUserName().trim();
-		String password = userData.getPassword();
-		authenticate(username, password);
-		final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-		final String token = jwtTokenUtil.generateToken(userDetails);
+    @GetMapping("/ec//login")
+    public String getMessage() {
+        return "Login";
+    }
 
-		Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
-		ArrayList<String> roles = new ArrayList<String>();
-		for (GrantedAuthority grantedAuthority : authorities)
-		{
-			roles.add(grantedAuthority.getAuthority());
-		}
-		String name = userDetails.getUsername().trim();
-		Long userid = uRepo.findId(name.trim());
-		return ResponseEntity.ok(new JwtResponse(name, token, userid, roles));
-	}
+    @PostMapping(value = "/ec/login", produces =
+            {"application/json", "text/json"})
+    public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception {
+        LoginData loginData = new LoginData();
+        String username = userData.getUserName().trim();
+        String password = userData.getPassword();
+        authenticate(username, password);
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        if (!userDetails.isEnabled()) {
+            throw new Exception("USER_DISABLED");
+        }
+        final String token = jwtTokenUtil.generateToken(userDetails);
 
-	private void authenticate(String username, String password) throws Exception
-	{
-		try
-		{
-			authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-		} catch (DisabledException e)
-		{
-			throw new Exception("USER_DISABLED", e);
-		} catch (BadCredentialsException e)
-		{
-			throw new Exception("INVALID_CREDENTIALS", e);
-		}
-	}
+        Collection<? extends GrantedAuthority> authorities = userDetails.getAuthorities();
+        ArrayList<String> roles = new ArrayList<String>();
+        for (GrantedAuthority grantedAuthority : authorities) {
+            roles.add(grantedAuthority.getAuthority());
+        }
+        String name = userDetails.getUsername().trim();
+        Long userid = uRepo.findId(name.trim());
+        return ResponseEntity.ok(new JwtResponse(name, token, userid, roles));
+    }
+
+    private void authenticate(String username, String password) throws Exception {
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        } catch (DisabledException e) {
+            throw new Exception("USER_DISABLED", e);
+        } catch (BadCredentialsException e) {
+            throw new Exception("INVALID_CREDENTIALS", e);
+        }
+    }
 }

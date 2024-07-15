@@ -297,7 +297,7 @@ public class AllActivitiesService {
         return plannerWithTotalReturnDAO;
     }
 
-    public void sendEveningEmailForLeadActivity() throws Exception {
+    public void sendEveningEmailForLeadActivity(String tenantName) throws Exception {
         List<LeadActivity> activities = getActivitiesForNextDays(3);
         Set<Long> uniqueAsigneeIds = activities.stream()
                 .map(LeadActivity::getLead)
@@ -305,7 +305,7 @@ public class AllActivitiesService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         List<UserReturnData> userData = userDetailsService.getUserList();
-        sendEmailsForLeadActivities(uniqueAsigneeIds, userData, activities, "Upcoming Lead Activities");
+        sendEmailsForLeadActivities(tenantName, uniqueAsigneeIds, userData, activities, "Upcoming Lead Activities");
     }
 
     public String getEmailForUser(Long userId, List<UserReturnData> userData) {
@@ -332,7 +332,7 @@ public class AllActivitiesService {
                 .collect(Collectors.toList());
     }
 
-    public void sendEmailsForLeadActivities(Set<Long> uniqueAsigneeIds, List<UserReturnData> userData, List<LeadActivity> activities, String subject) {
+    public void sendEmailsForLeadActivities(String tenantName, Set<Long> uniqueAsigneeIds, List<UserReturnData> userData, List<LeadActivity> activities, String subject) {
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss a");
         for (Long assigneeId : uniqueAsigneeIds) {
             String email = getEmailForUser(assigneeId, userData);
@@ -358,7 +358,7 @@ public class AllActivitiesService {
                         ))
                         .collect(Collectors.toList());
                 model.put("activities", activitiesForEmail);
-                emailHelperService.sendEmail(model, email, subject, "upcomingEmailForLeadActivity");
+                emailHelperService.sendEmail(tenantName, model, email, subject, "upcomingEmailForLeadActivity");
             }
         }
     }

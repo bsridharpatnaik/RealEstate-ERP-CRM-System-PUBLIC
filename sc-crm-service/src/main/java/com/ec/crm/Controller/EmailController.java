@@ -3,6 +3,7 @@ package com.ec.crm.Controller;
 import com.ec.crm.Data.ActivitiesForDashboard;
 import com.ec.crm.Service.AllActivitiesService;
 import com.ec.crm.Service.EmailHelperService;
+import com.ec.crm.multitenant.ThreadLocalStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,6 @@ public class EmailController {
     @GetMapping("/ua")
     @ResponseStatus(HttpStatus.OK)
     public void sendEmail() throws Exception {
-        allActivitiesService.sendEveningEmailForLeadActivity();
+        allActivitiesService.sendEveningEmailForLeadActivity(ThreadLocalStorage.getTenantName());
     }
 }

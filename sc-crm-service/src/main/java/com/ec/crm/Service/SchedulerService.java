@@ -36,7 +36,7 @@ public class SchedulerService {
         String[] tenants = schemasList.split(",");
         for (String tenantName : tenants) {
             ThreadLocalStorage.setTenantName(tenantName);
-            allActivitiesService.sendEveningEmailForLeadActivity();
+            allActivitiesService.sendEveningEmailForLeadActivity(tenantName);
             ThreadLocalStorage.setTenantName(null);
         }
     }
