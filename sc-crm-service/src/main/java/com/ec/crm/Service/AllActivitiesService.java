@@ -354,8 +354,7 @@ public class AllActivitiesService {
                                 activity.getIsOpen() ? "Open" : "Close",
                                 activity.getActivityType().toString(),
                                 activity.getIsLatest() == 1 ? "Latest" : "No",
-                                activity.getFollowUpCount()
-                        ))
+                                activity.getFollowUpCount()==null?0:activity.getFollowUpCount()                        ))
                         .collect(Collectors.toList());
                 model.put("activities", activitiesForEmail);
                 emailHelperService.sendEmail(tenantName, model, email, subject, "upcomingEmailForLeadActivity");
