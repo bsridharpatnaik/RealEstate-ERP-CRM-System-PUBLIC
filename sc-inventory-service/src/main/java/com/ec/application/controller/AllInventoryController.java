@@ -14,9 +14,21 @@ import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.service.AllInventoryService;
 import com.ec.common.Filters.FilterDataList;
 
-import java.util.HashMap;
-import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import java.util.List;
+import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/inventory")
 public class AllInventoryController {
@@ -26,18 +38,9 @@ public class AllInventoryController {
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
     public AllInventoryReturnData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
-                                                          @PageableDefault(page = 0, size = 10, sort =
-                                                                  {"date", "type", "keyid"}, direction = Direction.DESC) Pageable pageable) throws Exception {
-        return allInventoryService.fetchAllInventory(filterDataList, pageable);
-    }
-
-    @GetMapping("/refresh")
-    @ResponseStatus(HttpStatus.OK)
-    public HashMap<String, String> refreshAllInventoryData() {
-        HashMap<String, String> result = new HashMap<>();
-        allInventoryService.refreshAllInventoryData();
-        result.put("Message", "Data refresh triggered. Please check back after sometime.");
-        return result;
+                                                          @PageableDefault(page = 0, size = 10) Pageable pageable) throws Exception {
+        Pageable adjustedPageable = adjustSorting(pageable);
+        return allInventoryService.fetchAllInventory(filterDataList, adjustedPageable);
     }
 
     @PostMapping("/report")
@@ -53,5 +56,46 @@ public class AllInventoryController {
         ApiOnlyMessageAndCodeError apiError = new ApiOnlyMessageAndCodeError(500,
                 "Something went wrong while handling data. Contact Administrator.");
         return apiError;
+    }
+
+    private Pageable adjustSorting(Pageable pageable) {
+        // Get the current sorting orders
+        List<Order> orders = pageable.getSort().stream().collect(Collectors.toList());
+
+        if (orders.isEmpty()) {
+            // If no sorting is provided, use the default sorting
+            orders = Arrays.asList(
+                    Order.desc("date"),
+                    Order.desc("type"),
+                    Order.asc("keyid")
+            );
+        } else {
+            // Check if sorting by date is specified
+            boolean dateAsc = orders.stream().anyMatch(order -> order.getProperty().equals("date") && order.getDirection().isAscending());
+            boolean dateDesc = orders.stream().anyMatch(order -> order.getProperty().equals("date") && order.getDirection().isDescending());
+
+            if (dateAsc) {
+                orders = Arrays.asList(
+                        Order.asc("date"),
+                        Order.asc("type"),
+                        Order.desc("keyid")
+                );
+            } else if (dateDesc) {
+                orders = Arrays.asList(
+                        Order.desc("date"),
+                        Order.desc("type"),
+                        Order.asc("keyid")
+                );
+            } else {
+                // If no date sorting is found, use the default sorting
+                orders = Arrays.asList(
+                        Order.desc("date"),
+                        Order.desc("type"),
+                        Order.asc("keyid")
+                );
+            }
+        }
+
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
     }
 }

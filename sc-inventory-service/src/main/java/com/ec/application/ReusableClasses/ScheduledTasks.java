@@ -40,25 +40,6 @@ public class ScheduledTasks {
     @Autowired
     private AsyncService asyncService;
 
-    @Scheduled(cron = "0 0 22 * * ?")
-    public void backFillClosingStockForSameDay() {
-        log.info("Backfilling Closing Stock for the day");
-        String[] tenants = schemasList.split(",");
-        for (String tenantName : tenants) {
-            com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
-            asyncService.run(() ->
-            {
-                try {
-                    asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(), "", new Date(), "scheduler");
-                } catch (Exception e) {
-                    log.error(e.getMessage());
-                }
-            });
-            com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
-            log.info("Backfilling Closing Stock for the day completed");
-        }
-    }
-
     @Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
         log.info("Sending Stock Notification Email in evening");

@@ -89,10 +89,6 @@ public class AllInventoryService {
             return list.get(0);
     }
 
-    public void refreshAllInventoryData() {
-
-    }
-
     public List<InventoryReportByDate> getInventoryReport(FilterDataList filterDataList) throws Exception {
         FilterAttrValueListForAllInventory fiList = new FilterAttrValueListForAllInventory();
         getValueFromPayload(fiList, filterDataList);

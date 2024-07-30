@@ -99,11 +99,7 @@ public class OutwardInventoryService {
         setFields(outwardInventory, oiData);
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
-        backFillClosingStock(outwardInventory.getInwardOutwardList()
-                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())
-                .stream().collect(Collectors.joining(",")), outwardInventory.getDate());
         return outwardInventory;
-
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -158,9 +154,6 @@ public class OutwardInventoryService {
                 addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
                         productWithQuantity.getRemarks());
         }
-        backFillClosingStock(outwardInventoryRepo.findById(outwardId).get().getInwardOutwardList()
-                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())
-                .stream().collect(Collectors.joining(",")), outwardInventoryRepo.findById(outwardId).get().getDate());
         return outwardInventoryRepo.findById(outwardId).get();
     }
 
@@ -235,9 +228,6 @@ public class OutwardInventoryService {
         modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
         removeOrphans(oldOutwardInventory);
         outwardInventoryRepo.save(outwardInventory);
-        backFillClosingStock(outwardInventory.getInwardOutwardList()
-                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())
-                .stream().collect(Collectors.joining(",")), outwardInventory.getDate());
         return outwardInventory;
 
     }
@@ -327,18 +317,6 @@ public class OutwardInventoryService {
         }
         log.info("Exiting findQuantityForProductInIOList with return as null");
         return null;
-    }
-
-    public void backFillClosingStock(String id_list, Date date) {
-        asyncService.run(() ->
-        {
-            try {
-                asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(), id_list, date, "event");
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        });
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -590,10 +568,6 @@ public class OutwardInventoryService {
         updateStockBeforeDelete(outwardInventory);
         removeOrphans(outwardInventory);
         outwardInventoryRepo.softDeleteById(id);
-        backFillClosingStock(outwardInventory.getInwardOutwardList()
-                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())
-                .stream().collect(Collectors.joining(",")), outwardInventory.getDate());
-        log.info("Exiting deleteOutwardInventoryById");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -614,8 +588,6 @@ public class OutwardInventoryService {
             Double currentStock = stockRepo
                     .findStockForProductAndWarehouse(ioList.getProduct().getProductId(), warehouseName).get(0)
                     .getQuantityInHand();
-            //if (currentStock < stock)
-            //	throw new Exception("Cannot Delete. Stock will go negative if deleted");
             stockService.updateStock(ioList.getProduct().getProductId(), warehouseName, stock, "inward");
         }
         log.info("Exiting updateStockBeforeDelete");

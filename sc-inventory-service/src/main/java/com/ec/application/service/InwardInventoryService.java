@@ -99,7 +99,6 @@ public class InwardInventoryService {
         setFields(inwardInventory, iiData);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
-        backFillClosingStock(inwardInventory.getInwardOutwardList().stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(",")), inwardInventory.getDate());
         return inwardInventory;
     }
 
@@ -115,18 +114,6 @@ public class InwardInventoryService {
             Double closingStock = stockService.updateStock(productId, warehouseName, quantity, "inward");
             oiList.setClosingStock(closingStock);
         }
-    }
-
-    public void backFillClosingStock(String id_list, Date date) {
-        asyncService.run(() ->
-        {
-            try {
-                asyncServiceInventory.backFillClosingStock(ThreadLocalStorage.getTenantName(), id_list, date, "event");
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        });
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -165,8 +152,6 @@ public class InwardInventoryService {
              * productWithQuantity.getQuantity());
              */
         }
-        backFillClosingStock(inwardInventoryRepo.findById(inwardId).get().getInwardOutwardList().stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList()).stream().collect(Collectors.joining(","))
-                , inwardInventoryRepo.findById(inwardId).get().getDate());
         return inwardInventoryRepo.findById(inwardId).get();
     }
 
@@ -359,10 +344,6 @@ public class InwardInventoryService {
         updateStockBeforeDelete(inwardInventory);
         removeOrphans(inwardInventory);
         inwardInventoryRepo.softDeleteById(id);
-        backFillClosingStock(inwardInventory.getInwardOutwardList()
-                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())
-                .stream().collect(Collectors.joining(",")), inwardInventory.getDate());
-
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -403,11 +384,7 @@ public class InwardInventoryService {
         modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
         removeOrphans(oldInwardInventory);
         inwardInventoryRepo.save(inwardInventory);
-        backFillClosingStock(inwardInventory.getInwardOutwardList()
-                .stream().map(e -> e.getProduct().getProductId().toString()).collect(Collectors.toList())
-                .stream().collect(Collectors.joining(",")), inwardInventory.getDate());
         return inwardInventory;
-
     }
 
     @Transactional(rollbackFor = Exception.class)
