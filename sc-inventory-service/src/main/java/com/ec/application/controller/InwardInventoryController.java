@@ -47,8 +47,8 @@ public class InwardInventoryController {
     public ReturnInwardInventoryData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
                                                              @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
             throws Exception {
-
-        return iiService.fetchInwardnventory(filterDataList, pageable);
+        Pageable pageableUpdated = iiService.modifyPageable(pageable);
+        return iiService.fetchInwardnventory(filterDataList, pageableUpdated);
     }
 
     @PostMapping("/totals")

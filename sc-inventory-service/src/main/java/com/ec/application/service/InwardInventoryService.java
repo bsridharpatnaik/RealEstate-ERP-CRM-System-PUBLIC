@@ -10,7 +10,9 @@ import com.ec.application.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -568,5 +570,26 @@ public class InwardInventoryService {
             oiList.setClosingStock(closingStock);
         }
         return ioListset;
+    }
+
+    public Pageable modifyPageable(Pageable pageable) {
+        Sort sort = pageable.getSort();
+        Sort newSort = sort;
+
+        for (Sort.Order order : sort) {
+            String property = order.getProperty();
+            Sort.Direction direction = order.getDirection();
+            if (property.equalsIgnoreCase("date")) {
+                if (direction == Sort.Direction.ASC) {
+                    newSort = Sort.by(Sort.Order.asc("date"), Sort.Order.desc("inwardid"));
+                } else if (direction == Sort.Direction.DESC) {
+                    newSort = Sort.by(Sort.Order.desc("date"), Sort.Order.asc("inwardid"));
+                }
+                pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
+                break;
+            }
+        }
+
+        return pageable;
     }
 }

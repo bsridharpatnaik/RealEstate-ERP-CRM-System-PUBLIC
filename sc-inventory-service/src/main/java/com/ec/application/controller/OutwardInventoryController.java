@@ -63,7 +63,8 @@ public class OutwardInventoryController {
     public ReturnOutwardInventoryData fetchAllOutwardInventory(@RequestBody FilterDataList filterDataList,
                                                                @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
             throws ParseException {
-        return oiService.fetchOutwardnventory(filterDataList, pageable);
+        Pageable pageableUpdated = oiService.modifyPageable(pageable);
+        return oiService.fetchOutwardnventory(filterDataList, pageableUpdated);
     }
 
     @PostMapping("/totals")
