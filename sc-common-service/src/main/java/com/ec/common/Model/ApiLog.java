@@ -16,9 +16,18 @@ public class ApiLog {
     private String method;
     private String payload;
     private String username;
+    String tenantName;
     private LocalDateTime timestamp;
 
     // Getters and setters
+
+    public String getTenantName() {
+        return tenantName;
+    }
+
+    public void setTenantName(String tenantName) {
+        this.tenantName = tenantName;
+    }
 
     public Long getId() {
         return id;

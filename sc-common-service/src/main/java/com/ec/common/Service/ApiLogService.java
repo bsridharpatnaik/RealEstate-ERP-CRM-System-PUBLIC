@@ -19,13 +19,14 @@ public class ApiLogService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Async
-    public void logToDatabase(String url, String method, String payload, String username) {
+    public void logToDatabase(String tenantName, String url, String method, String payload, String username) {
         ApiLog log = new ApiLog();
         log.setUrl(url);
         log.setMethod(method);
         log.setPayload(payload);
         log.setUsername(username);
         log.setTimestamp(LocalDateTime.now());
+        log.setTenantName(tenantName);
         apiLogRepository.save(log);
     }
 }

@@ -19,78 +19,42 @@ import com.ec.common.Model.Role;
 import com.ec.common.Repository.UserRepository;
 
 @Service
-public class JwtUserDetailsService implements UserDetailsService
-{
+public class JwtUserDetailsService implements UserDetailsService {
 
-	@Autowired
-	private UserRepository userRepo;
+    @Autowired
+    private UserRepository userRepo;
 
-	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
-	{
-		boolean validateTenant = false;
-		if (username.contains("#"))
-		{
-			validateTenant = true;
-		}
-		String userName = null;
-		String tenant = null;
-		if (validateTenant)
-		{
-			userName = username.substring(0, username.lastIndexOf("#"));
-			tenant = username.substring(username.lastIndexOf("#") + 1, username.length());
-		} else
-		{
-			userName = username;
-		}
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        boolean validateTenant = false;
+        if (username.contains("#")) {
+            validateTenant = true;
+        }
+        String userName = null;
+        String tenant = null;
+        if (validateTenant) {
+            userName = username.substring(0, username.lastIndexOf("#"));
+            tenant = username.substring(username.lastIndexOf("#") + 1, username.length());
+        } else {
+            userName = username;
+        }
 
-		List<com.ec.common.Model.User> findByUserName = userRepo.findByUserName(userName);
-		if (findByUserName.size() > 0)
-		{
-			com.ec.common.Model.User user = findByUserName.get(0);
-			if (validateTenant)
-			{
-				//TODO tenant get logic
-				/*if (StringUtils.isBlank(user.getTenants()))
-				{
-					throw new UserDataAccessException();
-				}
-				if (!user.getTenants().contains(tenant) && !user.getTenants().equals("all"))
-				{
-					throw new UserDataAccessException();
-				}*/
-			}
-			List<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toList());
+        List<com.ec.common.Model.User> findByUserName = userRepo.findByUserName(userName);
+        if (findByUserName.size() > 0) {
+            com.ec.common.Model.User user = findByUserName.get(0);
+            List<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toList());
+            List<GrantedAuthority> authorities = roles == null ? Collections.emptyList()
+                    : roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
 
-			List<GrantedAuthority> authorities = roles == null ? Collections.emptyList()
-					: roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+            return new User(userName, user.getPassword(), authorities);
+        } else {
+            throw new UsernameNotFoundException("User not found with username: " + userName);
+        }
+    }
 
-			return new User(userName, user.getPassword(), authorities);
+    @SuppressWarnings("serial")
+    public static class UserDataAccessException extends RuntimeException {
 
-		} else
-		{
-			throw new UsernameNotFoundException("User not found with username: " + userName);
-		}
-	}
-
-	public String fetchRoles()
-	{
-		/*
-		 * Collection<? extends GrantedAuthority> authorities = String isAdmin =
-		 * "nonadmin";
-		 * 
-		 * for(GrantedAuthority grantedAuthority : authorities) {
-		 * System.out.println("{{{"+grantedAuthority.toString());
-		 * if(grantedAuthority.getAuthority().equals("admin")) {
-		 * System.out.println(grantedAuthority.getAuthority()); isAdmin = "admin";
-		 * //break; } } return isAdmin;
-		 */
-		return "";
-	}
-	
-	@SuppressWarnings("serial")
-	public static class UserDataAccessException extends RuntimeException {
-		
-	}
+    }
 
 }

@@ -53,7 +53,8 @@ public class LoggingZuulFilter extends ZuulFilter {
         String method = request.getMethod();
         String payload = getRequestBody(request);
         String username = getUsername(request);
-        apiLogService.logToDatabase(url, method, payload, username);
+        String tenantName = getTenantName(request);
+        apiLogService.logToDatabase(tenantName, url, method, payload, username);
         return null;
     }
 
@@ -71,5 +72,10 @@ public class LoggingZuulFilter extends ZuulFilter {
         } else {
             return securityUtils.getUsername();
         }
+    }
+
+    private String getTenantName(HttpServletRequest request) {
+        String tenantName = request.getHeader("Tenant-Id");
+        return tenantName==null?"":tenantName;
     }
 }

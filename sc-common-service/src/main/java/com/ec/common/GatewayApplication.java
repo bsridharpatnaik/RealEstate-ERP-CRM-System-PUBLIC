@@ -17,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
@@ -24,6 +25,7 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter;
 //@EnableEurekaServer
 @SpringBootApplication
 @EnableAsync
+@EnableScheduling
 public class GatewayApplication extends SpringBootServletInitializer{
 	
 	@PostConstruct
@@ -47,7 +49,6 @@ public class GatewayApplication extends SpringBootServletInitializer{
 	@Bean
 	public RestTemplate restTemplate() {
 		final RestTemplate restTemplate = new RestTemplate();
-
 		List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
 		MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
 		converter.setSupportedMediaTypes(Collections.singletonList(MediaType.ALL));

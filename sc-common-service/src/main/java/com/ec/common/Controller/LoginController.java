@@ -5,6 +5,7 @@ import com.ec.common.Data.LoginData;
 import com.ec.common.Data.UserSignInData;
 import com.ec.common.JWTUtils.JWTTokenUtils;
 import com.ec.common.Repository.UserRepo;
+import com.ec.common.Service.ApiLogService;
 import com.ec.common.Service.JwtUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,9 @@ public class LoginController {
         return "Login";
     }
 
+    @Autowired
+    ApiLogService apiLogService;
+
     @PostMapping(value = "/ec/login", produces =
             {"application/json", "text/json"})
     public ResponseEntity<?> login(@RequestBody UserSignInData userData) throws Exception {
@@ -63,6 +67,7 @@ public class LoginController {
         }
         String name = userDetails.getUsername().trim();
         Long userid = uRepo.findId(name.trim());
+        apiLogService.logToDatabase("","/Login","POST", "",name);
         return ResponseEntity.ok(new JwtResponse(name, token, userid, roles));
     }
 
