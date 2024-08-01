@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.model.AllInventoryTransactions;
@@ -44,7 +45,16 @@ public class AllInventoryService {
     @Autowired
     InventoryReportRepo inventoryReportRepo;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     Logger log = LoggerFactory.getLogger(AllInventoryService.class);
+
+    public void updateClosingStock() {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        jdbcTemplate.execute("CALL update_closing_stock()");
+        log.info("Update closing stock completed");
+    }
 
     public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable)
             throws ParseException {

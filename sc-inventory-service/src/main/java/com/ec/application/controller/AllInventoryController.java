@@ -29,6 +29,7 @@ import java.util.Arrays;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/inventory")
 public class AllInventoryController {
@@ -47,6 +48,12 @@ public class AllInventoryController {
     @ResponseStatus(HttpStatus.OK)
     public List<InventoryReportByDate> getInventoryReport(@RequestBody FilterDataList filterDataList) throws Exception {
         return allInventoryService.getInventoryReport(filterDataList);
+    }
+
+    @GetMapping("/refresh")
+    @ResponseStatus(HttpStatus.OK)
+    public void updateClosingStock() {
+        allInventoryService.updateClosingStock();
     }
 
     @ExceptionHandler(

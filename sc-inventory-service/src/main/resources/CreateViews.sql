@@ -111,133 +111,6 @@ AS
          left join contacts c
                 ON c.contactid = tx.contactid;
 
-
-  -- Backfill Closing Stock
-  CREATE OR REPLACE VIEW backfill_closing_stock AS
-  SELECT row_number()
-             over (
-               ORDER BY tx.date desc, tx.type desc, tx.keyid desc) as id,
-           tx.type,
-           tx.keyid,
-           tx.entryid,
-           tx.date,
-           tx.warehouseid,
-           tx.Productid,
-           tx.quantity,
-           tx.closingstock
-    FROM   (SELECT 'Inward'                         AS type,
-                   ii.inwardid                      as keyid,
-                   ioe.entryid                      as entryid,
-                   Date_format(ii.DATE, "%Y-%m-%d") AS date,
-                   ii.warehouse_id                  AS warehouseid,
-                   ioe.Productid                    AS Productid,
-                   ioe.quantity,
-                   ioe.closingstock
-            FROM   inward_inventory ii
-                   inner join inwardinventory_entry iie
-                           ON ii.inwardid = iie.inwardid
-                   inner join inward_outward_entries ioe
-                           ON iie.entryid = ioe.entryid
-            WHERE  ii.is_deleted = 0
-            UNION ALL
-            SELECT 'Outward'                        AS type,
-                   oi.outwardid                     as keyid,
-                   ioe.entryid                      as entryid,
-                   Date_format(oi.DATE, "%Y-%m-%d") AS date,
-                   oi.warehouse_id                  AS warehouseid,
-                   ioe.Productid,
-                   ioe.quantity,
-                   ioe.closingstock
-            FROM   outward_inventory oi
-                   inner join outwardinventory_entry oie
-                           ON oi.outwardid = oie.outwardid
-                   inner join inward_outward_entries ioe
-                           ON oie.entryid = ioe.entryid
-            WHERE  oi.is_deleted = 0
-            UNION ALL
-            SELECT 'Lost-Damaged'                    AS type,
-                   lostdamagedid                     as keyid,
-                   lostdamagedid                     as entryid,
-                   Date_format(ldi.DATE, "%Y-%m-%d") AS date,
-                   ldi.warehousename                 AS warehouseid,
-                   ldi.Productid                     AS Productid,
-                   ldi.quantity,
-                   ldi.closingstock
-            FROM   lost_damaged_inventory ldi
-            where  ldi.is_deleted = 0) AS tx;
-	
--- Store Procedure to backfill stock
-DELIMITER //
-DROP PROCEDURE IF EXISTS update_closing_stock//
-CREATE PROCEDURE update_closing_stock(id_list TEXT, editDate TEXT,triggerSource TEXT )
-         BEGIN
-			DECLARE done INT DEFAULT FALSE;
-			DECLARE entryid1 decimal;
-            DECLARE oldClosingStock decimal;
-            DECLARE newClosingStock decimal;
-            DECLARE cur CURSOR FOR SELECT ioe.entryid FROM inward_outward_entries ioe
-					LEFT JOIN inwardinventory_entry iie on ioe.entryid=iie.entryid
-					LEFT JOIN inward_inventory ii on ii.inwardid=iie.inwardid
-					LEFT JOIN outwardinventory_entry oie on ioe.entryid=oie.entryid
-					LEFT JOIN outward_inventory oi on oi.outwardid=oie.outwardid
-					WHERE
-                    CASE WHEN triggerSource='scheduler' THEN
-						ioe.is_deleted=0 AND (ii.date>=editDate OR oi.date>=editDate)
-					ELSE
-						FIND_IN_SET(ioe.productId,id_list)>0 AND ioe.is_deleted=0 AND (ii.date>=editDate OR oi.date>=editDate)
-					END;
-            DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
---            START TRANSACTION;
---            TRUNCATE temp;
---            INSERT INTO temp VALUES(CONCAT('Procedure Started ',SYSDATE()));
---            INSERT INTO temp VALUES(CONCAT('Product List - ', id_list));
---            INSERT INTO temp VALUES(CONCAT('Date - ', editDate));
---            COMMIT;
-
-            OPEN cur;
-			ins_loop: LOOP
-            FETCH cur INTO entryid1;
-
-            IF done THEN
-                LEAVE ins_loop;
-            END IF;
-
---            START TRANSACTION;
---            INSERT INTO temp VALUES(CONCAT('ENTRY ID - ', entryid1 ,' ',SYSDATE()));
---            COMMIT;
-
-            SELECT
-            bs1.closingStock as oldClosingStock,
-			CASE WHEN bs1.type='Inward' THEN(
-			(SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END FROM backfill_closing_stock bs2
-            WHERE bs2.id>=bs1.id AND bs2.type='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
-            -
-            (SELECT CASE WHEN SUM(bs2.quantity)IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
-            WHERE bs2.id>bs1.id AND bs2.type!='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
-			)
-			ELSE (
-			(SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
-            WHERE bs2.id>bs1.id AND bs2.type='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
-            -
-            (SELECT CASE WHEN SUM(bs2.quantity) IS NULL THEN 0 ELSE SUM(bs2.quantity) END  FROM backfill_closing_stock bs2
-            WHERE bs2.id>=bs1.id AND bs2.type!='Inward' AND bs1.Productid=bs2.productid AND bs2.warehouseid=bs1.warehouseid)
-			)
-			END AS closingStock
-            INTO oldClosingStock,newClosingStock
-			FROM backfill_closing_stock bs1 WHERE bs1.entryid=entryid1;
-
-
-            IF newClosingStock>=0 AND newClosingStock<>oldClosingStock THEN
-            START TRANSACTION;
-				UPDATE inward_outward_entries SET closingStock = newClosingStock WHERE entryid=entryid1;
-            COMMIT;
-			END IF;
-         END LOOP;
-		 CLOSE cur;
-END;
-
-
   -- --------- Stock Verification ------------
  create or replace view stock_verification as
 SELECT inw.inventory, 
@@ -749,57 +622,66 @@ GROUP BY o.buildingTypeId,
         o.location_name,
         o.productId,
         o.product_name,
-        o.category_name
+        o.category_name;
 
+-- backfill closing stock
 
- -- Calculate cumulative closing stock
- WITH SortedRecords AS (
-     SELECT
-         tx.entryid,
-         tx.date,
-         tx.warehouseid,
-         tx.Productid,
-         tx.quantity,
-         tx.closingstock AS oldClosingStock,
-         -- Assign row numbers based on the updated sorting order
-         ROW_NUMBER() OVER (
-             PARTITION BY tx.warehouseid, tx.Productid
-             ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC, tx.entryid
-         ) AS row_num
-     FROM all_inventory tx
- ),
- CumulativeStock AS (
-     SELECT
-         sr.entryid,
-         sr.oldClosingStock,
-         -- Calculate cumulative inward and outward quantities
-         SUM(CASE
-                 WHEN tx.type = 'Inward' THEN tx.quantity
-                 ELSE 0
-             END) OVER (
-                 PARTITION BY tx.warehouseid, tx.Productid
-                 ORDER BY sr.row_num
-                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-             ) AS cumulative_inward,
-         SUM(CASE
-                 WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
-                 ELSE 0
-             END) OVER (
-                 PARTITION BY tx.warehouseid, tx.Productid
-                 ORDER BY sr.row_num
-                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-             ) AS cumulative_outward
-     FROM SortedRecords sr
-     JOIN all_inventory tx ON sr.entryid = tx.entryid
- )
- -- Update the closingstock field where discrepancies are found
- UPDATE inward_outward_entries e
- JOIN (
-     SELECT
-         entryid,
-         oldClosingStock,
-         cumulative_inward - cumulative_outward AS calculatedClosingStock
-     FROM CumulativeStock
- ) ccs ON e.entryid = ccs.entryid
- SET e.closingstock = ccs.calculatedClosingStock
- WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS update_closing_stock;
+CREATE PROCEDURE update_closing_stock()
+BEGIN
+    -- Calculate cumulative closing stock
+    WITH SortedRecords AS (
+        SELECT
+            tx.entryid,
+            tx.date,
+            tx.warehouseid,
+            tx.Productid,
+            tx.quantity,
+            tx.closingstock AS oldClosingStock,
+            -- Assign row numbers based on the updated sorting order
+            ROW_NUMBER() OVER (
+                PARTITION BY tx.warehouseid, tx.Productid
+                ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC
+            ) AS row_num
+        FROM all_inventory tx
+    ),
+    CumulativeStock AS (
+        SELECT
+            sr.entryid,
+            sr.oldClosingStock,
+            -- Calculate cumulative inward and outward quantities
+            SUM(CASE
+                    WHEN tx.type = 'Inward' THEN tx.quantity
+                    ELSE 0
+                END) OVER (
+                    PARTITION BY tx.warehouseid, tx.Productid
+                    ORDER BY sr.row_num
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS cumulative_inward,
+            SUM(CASE
+                    WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
+                    ELSE 0
+                END) OVER (
+                    PARTITION BY tx.warehouseid, tx.Productid
+                    ORDER BY sr.row_num
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS cumulative_outward
+        FROM SortedRecords sr
+        JOIN all_inventory tx ON sr.entryid = tx.entryid
+    )
+    -- Update the closingstock field where discrepancies are found
+    UPDATE inward_outward_entries e
+    JOIN (
+        SELECT
+            entryid,
+            oldClosingStock,
+            cumulative_inward - cumulative_outward AS calculatedClosingStock
+        FROM CumulativeStock
+    ) ccs ON e.entryid = ccs.entryid
+    SET e.closingstock = ccs.calculatedClosingStock
+    WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
+END //
+
+DELIMITER ;

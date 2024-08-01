@@ -40,6 +40,9 @@ public class ScheduledTasks {
     @Autowired
     private AsyncService asyncService;
 
+    @Autowired
+    AllInventoryService allInventoryService;
+
     @Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
         log.info("Sending Stock Notification Email in evening");
@@ -65,5 +68,16 @@ public class ScheduledTasks {
     @Scheduled(cron = "0 0 20 * * MON-SAT")
     public void sendIOStats() throws Exception {
         smsService.sendIOStats();
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void updateClosingStock() throws Exception {
+        String[] tenants = schemasList.split(",");
+        for (String tenantName : tenants) {
+            com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
+            log.info("Update ClosingStock being triggered for tenant " + tenantName);
+            allInventoryService.updateClosingStock();
+            com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
+        }
     }
 }
