@@ -39,11 +39,6 @@ public class LoginController {
     @Autowired
     private JwtUserDetailsService userDetailsService;
 
-    @GetMapping("/ec//login")
-    public String getMessage() {
-        return "Login";
-    }
-
     @Autowired
     ApiLogService apiLogService;
 
