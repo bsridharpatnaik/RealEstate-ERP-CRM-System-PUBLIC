@@ -134,13 +134,13 @@ CREATE TABLE IF NOT EXISTS all_inventory (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS last_execution (
+CREATE TABLE IF NOT EXISTS execution_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     procedure_name VARCHAR(255) NOT NULL,
     last_exec_time DATETIME NOT NULL
 );
 
-INSERT IGNORE INTO `last_execution`
+INSERT IGNORE INTO `execution_history`
 (
 `procedure_name`,
 `last_exec_time`)
@@ -164,7 +164,7 @@ BEGIN
 
     -- Get the last execution time for the procedure 'update_all_inventory'
     SELECT last_exec_time INTO last_exec_time
-    FROM last_execution
+    FROM execution_history
     WHERE procedure_name = 'update_all_inventory'
     ORDER BY id DESC
     LIMIT 1;
@@ -184,7 +184,7 @@ BEGIN
     WHERE lastModifiedDate > last_exec_time;
 
     -- Update the last execution time for 'update_all_inventory'
-    INSERT INTO last_execution (last_exec_time, procedure_name)
+    INSERT INTO execution_history (last_exec_time, procedure_name)
     VALUES (NOW(), 'update_all_inventory')
     ON DUPLICATE KEY UPDATE
         last_exec_time = VALUES(last_exec_time);
