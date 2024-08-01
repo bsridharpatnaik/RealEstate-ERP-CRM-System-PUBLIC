@@ -1,7 +1,7 @@
 use egcity; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 
 -- All Inventory --
-CREATE OR replace VIEW all_inventory
+CREATE OR replace VIEW all_inventory_view
 AS
   SELECT row_number()
            over (
@@ -685,3 +685,5 @@ BEGIN
 END //
 
 DELIMITER ;
+
+

@@ -170,4 +170,10 @@ public class AllInventoryService {
         }
         return returnData;
     }
+
+    public void updateAllInventoryTable() {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        jdbcTemplate.execute("CALL update_all_inventory()");
+        log.info("Update all_inventory completed");
+    }
 }

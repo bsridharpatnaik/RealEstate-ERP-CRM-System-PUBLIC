@@ -54,6 +54,7 @@ public class AllInventoryController {
     @ResponseStatus(HttpStatus.OK)
     public void updateClosingStock() {
         allInventoryService.updateClosingStock();
+        allInventoryService.updateAllInventoryTable();
     }
 
     @ExceptionHandler(

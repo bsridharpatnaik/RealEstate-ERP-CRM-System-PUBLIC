@@ -77,6 +77,7 @@ public class ScheduledTasks {
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
             log.info("Update ClosingStock being triggered for tenant " + tenantName);
             allInventoryService.updateClosingStock();
+            allInventoryService.updateAllInventoryTable();
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
         }
     }
