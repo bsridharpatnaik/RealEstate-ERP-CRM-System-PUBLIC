@@ -19,7 +19,7 @@ public class LogCleanupService {
     // This method will run every day at 2:00 AM
     @Scheduled(cron = "0 0 2 * * ?")
     public void cleanupOldLogs() {
-        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(10);
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(20);
         apiLogRepository.deleteByTimestampBefore(cutoffDate);
         logger.info("Cleanup completed. API Logs older than " + cutoffDate + " have been deleted.");
     }
