@@ -53,8 +53,8 @@ public class AllInventoryController {
     @GetMapping("/refresh")
     @ResponseStatus(HttpStatus.OK)
     public void updateClosingStock() {
-        allInventoryService.updateClosingStock();
         allInventoryService.updateAllInventoryTable();
+        allInventoryService.updateClosingStock();
     }
 
     @ExceptionHandler(
