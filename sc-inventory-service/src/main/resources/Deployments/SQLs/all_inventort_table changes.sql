@@ -1,3 +1,65 @@
+DROP PROCEDURE IF EXISTS update_closing_stock;
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS update_closing_stock;
+CREATE PROCEDURE update_closing_stock()
+BEGIN
+    -- Calculate cumulative closing stock
+    WITH SortedRecords AS (
+        SELECT
+            tx.entryid,
+            tx.date,
+            tx.warehouseid,
+            tx.Productid,
+            tx.quantity,
+            tx.closingstock AS oldClosingStock,
+            -- Assign row numbers based on the updated sorting order
+            ROW_NUMBER() OVER (
+                PARTITION BY tx.warehouseid, tx.Productid
+                ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC
+            ) AS row_num
+        FROM all_inventory tx
+    ),
+    CumulativeStock AS (
+        SELECT
+            sr.entryid,
+            sr.oldClosingStock,
+            -- Calculate cumulative inward and outward quantities
+            SUM(CASE
+                    WHEN tx.type = 'Inward' THEN tx.quantity
+                    ELSE 0
+                END) OVER (
+                    PARTITION BY tx.warehouseid, tx.Productid
+                    ORDER BY sr.row_num
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS cumulative_inward,
+            SUM(CASE
+                    WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
+                    ELSE 0
+                END) OVER (
+                    PARTITION BY tx.warehouseid, tx.Productid
+                    ORDER BY sr.row_num
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS cumulative_outward
+        FROM SortedRecords sr
+        JOIN all_inventory tx ON sr.entryid = tx.entryid
+    )
+    -- Update the closingstock field where discrepancies are found
+    UPDATE inward_outward_entries e
+    JOIN (
+        SELECT
+            entryid,
+            oldClosingStock,
+            cumulative_inward - cumulative_outward AS calculatedClosingStock
+        FROM CumulativeStock
+    ) ccs ON e.entryid = ccs.entryid
+    SET e.closingstock = ccs.calculatedClosingStock
+    WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
+END //
+
+DELIMITER ;
+
 drop view IF EXISTS all_inventory;
 CREATE OR replace VIEW all_inventory_view
 AS
@@ -159,13 +221,15 @@ CREATE PROCEDURE update_all_inventory()
 BEGIN
     DECLARE last_execution DATETIME;
     DECLARE min_modified_id BIGINT;
+    DECLARE min_deleted_keyid BIGINT;
+    DECLARE min_id BIGINT;
 
     -- Start a new transaction
     START TRANSACTION;
 
     -- Get the last execution time for the procedure 'update_all_inventory'
     SELECT last_execution INTO last_execution
-    FROM last_execution
+    FROM execution_history
     WHERE procedure_name = 'update_all_inventory'
     ORDER BY id DESC
     LIMIT 1;
@@ -180,22 +244,34 @@ BEGIN
     FROM all_inventory_view
     WHERE lastModifiedDate > last_execution;
 
-    -- If no modified records are found, set min_modified_id to a high value to prevent deletion
-    IF min_modified_id IS NULL THEN
-        SET min_modified_id = 9223372036854775807; -- Max value for BIGINT
+    -- Find the minimum keyid of the records that have been deleted since the last execution time
+    SELECT MIN(keyid) INTO min_deleted_keyid
+    FROM all_inventory ai
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM all_inventory_view aiv
+        WHERE ai.keyid = aiv.keyid
+    );
+
+    -- Determine the minimum id between modified and deleted records
+    SET min_id = LEAST(IFNULL(min_modified_id, 9223372036854775807), IFNULL(min_deleted_keyid, 9223372036854775807));
+
+    -- If no modified or deleted records are found, set min_id to a high value to prevent deletion
+    IF min_id IS NULL THEN
+        SET min_id = 9223372036854775807; -- Max value for BIGINT
     END IF;
 
-    -- Delete records from the main table that have id >= min_modified_id
+    -- Delete records from the main table that have id >= min_id
     DELETE FROM all_inventory
-    WHERE id >= min_modified_id;
+    WHERE id >= min_id;
 
     -- Insert updated records from the view into the main table
     INSERT INTO all_inventory
     SELECT * FROM all_inventory_view
-    WHERE id >= min_modified_id;
+    WHERE id >= min_id;
 
     -- Update the last execution time for 'update_all_inventory'
-    INSERT INTO last_execution (last_execution, procedure_name)
+    INSERT INTO execution_history (last_execution, procedure_name)
     VALUES (NOW(), 'update_all_inventory')
     ON DUPLICATE KEY UPDATE
         last_execution = VALUES(last_execution);
@@ -205,4 +281,5 @@ BEGIN
 END //
 
 DELIMITER ;
+
 
