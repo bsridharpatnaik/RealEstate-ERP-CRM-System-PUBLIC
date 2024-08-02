@@ -137,13 +137,13 @@ CREATE TABLE IF NOT EXISTS all_inventory (
 CREATE TABLE IF NOT EXISTS execution_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     procedure_name VARCHAR(255) NOT NULL,
-    last_exec_time DATETIME NOT NULL
+    last_execution DATETIME NOT NULL
 );
 
 INSERT IGNORE INTO `execution_history`
 (
 `procedure_name`,
-`last_exec_time`)
+`last_execution`)
 VALUES
 (
 'update_all_inventory',
@@ -157,40 +157,52 @@ DELIMITER //
 
 CREATE PROCEDURE update_all_inventory()
 BEGIN
-    DECLARE last_exec_time DATETIME;
+    DECLARE last_execution DATETIME;
+    DECLARE min_modified_id BIGINT;
 
     -- Start a new transaction
     START TRANSACTION;
 
     -- Get the last execution time for the procedure 'update_all_inventory'
-    SELECT last_exec_time INTO last_exec_time
-    FROM execution_history
+    SELECT last_execution INTO last_execution
+    FROM last_execution
     WHERE procedure_name = 'update_all_inventory'
     ORDER BY id DESC
     LIMIT 1;
 
-    -- Ensure last_exec_time has a value, default to '2010-01-01' if not
-    IF last_exec_time IS NULL THEN
-        SET last_exec_time = '2010-01-01';
+    -- Ensure last_execution has a value, default to '2010-01-01' if not
+    IF last_execution IS NULL THEN
+        SET last_execution = '2010-01-01';
     END IF;
 
-    -- Delete records from the main table that are present in the temporary table
-    DELETE FROM all_inventory
-    WHERE lastModifiedDate > last_exec_time;
+    -- Find the minimum id of the records that have been modified since the last execution time
+    SELECT MIN(id) INTO min_modified_id
+    FROM all_inventory_view
+    WHERE lastModifiedDate > last_execution;
 
-    -- Insert updated records from the temporary table into the main table
+    -- If no modified records are found, set min_modified_id to a high value to prevent deletion
+    IF min_modified_id IS NULL THEN
+        SET min_modified_id = 9223372036854775807; -- Max value for BIGINT
+    END IF;
+
+    -- Delete records from the main table that have id >= min_modified_id
+    DELETE FROM all_inventory
+    WHERE id >= min_modified_id;
+
+    -- Insert updated records from the view into the main table
     INSERT INTO all_inventory
     SELECT * FROM all_inventory_view
-    WHERE lastModifiedDate > last_exec_time;
+    WHERE id >= min_modified_id;
 
     -- Update the last execution time for 'update_all_inventory'
-    INSERT INTO execution_history (last_exec_time, procedure_name)
+    INSERT INTO last_execution (last_execution, procedure_name)
     VALUES (NOW(), 'update_all_inventory')
     ON DUPLICATE KEY UPDATE
-        last_exec_time = VALUES(last_exec_time);
+        last_execution = VALUES(last_execution);
 
     -- Commit the transaction
     COMMIT;
 END //
 
 DELIMITER ;
+
