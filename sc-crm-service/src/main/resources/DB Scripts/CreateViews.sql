@@ -489,6 +489,7 @@ DROP PROCEDURE IF EXISTS UpdateLeadDerivedFields;
 CREATE PROCEDURE UpdateLeadDerivedFields()
 BEGIN
     DECLARE last_exec TIMESTAMP;
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; -- Continue on error
 
     -- Get the last execution time for this procedure
     SELECT last_execution INTO last_exec
@@ -587,14 +588,25 @@ END //
 DELIMITER ;
 
 
+
 -- Procedure to get actvity for pipeline for the lead
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS UpdatePipelineActivityForLead;
 CREATE PROCEDURE UpdatePipelineActivityForLead()
 BEGIN
-    DECLARE last_exec TIMESTAMP;
+    DECLARE last_exec TIMESTAMP DEFAULT '1970-01-01 00:00:00';  -- Default value if no record is found
     DECLARE proc_name VARCHAR(255) DEFAULT 'UpdatePipelineActivityForLead';
+
+    -- Error handler
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        -- Rollback the transaction if there is an error
+        ROLLBACK;
+    END;
+
+    -- Start transaction
+    START TRANSACTION;
 
     -- Get the last execution time for this procedure
     SELECT last_execution INTO last_exec
@@ -701,6 +713,10 @@ BEGIN
 
     -- Update the last execution time in the execution_history table
     INSERT INTO execution_history (last_execution, procedure_name) VALUES (NOW(), proc_name);
+
+    -- Commit the transaction
+    COMMIT;
 END //
 
 DELIMITER ;
+
