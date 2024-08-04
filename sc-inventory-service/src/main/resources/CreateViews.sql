@@ -110,118 +110,6 @@ AS
          left join contacts c
                 ON c.contactid = tx.contactid;
 
-CREATE TABLE IF NOT EXISTS all_inventory (
-    id BIGINT UNSIGNED NOT NULL DEFAULT 0,
-    type VARCHAR(12) NOT NULL,
-    keyid BIGINT NOT NULL DEFAULT 0,
-    entryid BIGINT NOT NULL DEFAULT 0,
-    date VARCHAR(10) DEFAULT NULL,
-    contactid VARCHAR(20) NOT NULL,
-    warehouseid BIGINT NOT NULL DEFAULT 0,
-    Productid BIGINT NOT NULL DEFAULT 0,
-    quantity DOUBLE DEFAULT NULL,
-    closingstock DOUBLE DEFAULT NULL,
-    creationDate DATETIME NOT NULL,
-    lastModifiedDate DATETIME NOT NULL,
-    Product_name VARCHAR(255) DEFAULT NULL,
-    category_name VARCHAR(255) DEFAULT NULL,
-    measurementunit VARCHAR(255) DEFAULT NULL,
-    name VARCHAR(255) DEFAULT NULL,
-    mobileno VARCHAR(255) DEFAULT NULL,
-    emailid VARCHAR(255) DEFAULT NULL,
-    contacttype VARCHAR(255) DEFAULT NULL,
-    warehouse_id BIGINT NOT NULL DEFAULT 0,
-    warehousename VARCHAR(50) NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS execution_history (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    procedure_name VARCHAR(255) NOT NULL,
-    last_execution DATETIME NOT NULL
-);
-
-INSERT IGNORE INTO `execution_history`
-(
-`procedure_name`,
-`last_execution`)
-VALUES
-(
-'update_all_inventory',
-'2010-01-01');
-
-
--- Store procedure to update table from view
-DROP PROCEDURE IF EXISTS update_all_inventory;
-
-DELIMITER //
-
-CREATE PROCEDURE update_all_inventory()
-BEGIN
-    DECLARE last_execution DATETIME;
-    DECLARE min_modified_id BIGINT;
-    DECLARE min_deleted_keyid BIGINT;
-    DECLARE min_id BIGINT;
-
-    -- Start a new transaction
-    START TRANSACTION;
-
-    -- Get the last execution time for the procedure 'update_all_inventory'
-    SELECT last_execution INTO last_execution
-    FROM execution_history
-    WHERE procedure_name = 'update_all_inventory'
-    ORDER BY id DESC
-    LIMIT 1;
-
-    -- Ensure last_execution has a value, default to '2010-01-01' if not
-    IF last_execution IS NULL THEN
-        SET last_execution = '2010-01-01';
-    END IF;
-
-    -- Find the minimum id of the records that have been modified since the last execution time
-    SELECT MIN(id) INTO min_modified_id
-    FROM all_inventory_view
-    WHERE lastModifiedDate > last_execution;
-
-    -- Find the minimum keyid of the records that have been deleted since the last execution time
-    SELECT MIN(keyid) INTO min_deleted_keyid
-    FROM all_inventory ai
-    WHERE NOT EXISTS (
-        SELECT 1
-        FROM all_inventory_view aiv
-        WHERE ai.keyid = aiv.keyid
-    );
-
-    -- Determine the minimum id between modified and deleted records
-    SET min_id = LEAST(IFNULL(min_modified_id, 9223372036854775807), IFNULL(min_deleted_keyid, 9223372036854775807));
-
-    -- If no modified or deleted records are found, set min_id to a high value to prevent deletion
-    IF min_id IS NULL THEN
-        SET min_id = 9223372036854775807; -- Max value for BIGINT
-    END IF;
-
-    -- Delete records from the main table that have id >= min_id
-    DELETE FROM all_inventory
-    WHERE id >= min_id;
-
-    -- Insert updated records from the view into the main table
-    INSERT INTO all_inventory
-    SELECT * FROM all_inventory_view
-    WHERE id >= min_id;
-
-    -- Update the last execution time for 'update_all_inventory'
-    INSERT INTO execution_history (last_execution, procedure_name)
-    VALUES (NOW(), 'update_all_inventory')
-    ON DUPLICATE KEY UPDATE
-        last_execution = VALUES(last_execution);
-
-    -- Commit the transaction
-    COMMIT;
-END //
-
-DELIMITER ;
-
-
 
   -- --------- Stock Verification ------------
  create or replace view stock_verification as
@@ -770,3 +658,77 @@ END //
 DELIMITER ;
 
 
+CREATE TABLE IF NOT EXISTS execution_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    procedure_name VARCHAR(255) NOT NULL,
+    last_execution DATETIME NOT NULL
+);
+
+INSERT IGNORE INTO `execution_history`
+(
+`procedure_name`,
+`last_execution`)
+VALUES
+(
+'update_all_inventory',
+'2010-01-01');
+
+
+-- Store procedure to update table from view
+DROP PROCEDURE IF EXISTS update_all_inventory;
+
+DELIMITER //
+
+CREATE PROCEDURE update_all_inventory()
+BEGIN
+    DECLARE last_execution DATETIME DEFAULT '2010-01-01 00:00:00';
+    DECLARE min_modified_id BIGINT DEFAULT 9223372036854775807;
+    DECLARE min_deleted_keyid BIGINT DEFAULT 9223372036854775807;
+    DECLARE min_id BIGINT;
+
+    -- Start a new transaction
+    START TRANSACTION;
+
+    -- Get the last execution time for the procedure 'update_all_inventory'
+    SELECT COALESCE(MAX(last_execution), '2010-01-01 00:00:00')
+    INTO last_execution
+    FROM execution_history
+    WHERE procedure_name = 'update_all_inventory';
+
+    -- Find the minimum id of the records that have been modified since the last execution time
+    SELECT COALESCE(MIN(id), 9223372036854775807)
+    INTO min_modified_id
+    FROM all_inventory_view
+    WHERE lastModifiedDate > last_execution;
+
+    -- Find the minimum keyid of the records that have been deleted since the last execution time
+    SELECT COALESCE(MIN(keyid), 9223372036854775807)
+    INTO min_deleted_keyid
+    FROM all_inventory ai
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM all_inventory_view aiv
+        WHERE ai.keyid = aiv.keyid
+    );
+
+    -- Determine the minimum id between modified and deleted records
+    SET min_id = LEAST(min_modified_id, min_deleted_keyid);
+
+    -- Delete records from the main table that have id >= min_id
+    DELETE FROM all_inventory
+    WHERE id >= min_id;
+
+    -- Insert updated records from the view into the main table
+    INSERT INTO all_inventory
+    SELECT * FROM all_inventory_view
+    WHERE id >= min_id;
+
+    -- Update the last execution time for 'update_all_inventory'
+    INSERT INTO execution_history (last_execution, procedure_name)
+    VALUES (NOW(), 'update_all_inventory');
+
+    -- Commit the transaction
+    COMMIT;
+END //
+
+DELIMITER ;

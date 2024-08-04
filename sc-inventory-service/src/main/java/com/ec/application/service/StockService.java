@@ -78,9 +78,10 @@ public class StockService {
         if (!isHistorical) {
             Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
             Page<StockInformationDTO> map;
-            if (spec == null)
-                map = siRepo.findAll(page).map(this::convertToDTO);
-            else
+            if (spec == null) {
+                Page<StockInformationFromView> list = siRepo.findAll(page);
+                map = list.map(this::convertToDTO);
+            }else
                 map = siRepo.findAll(spec, page).map(this::convertToDTO);
             stockInformation.setStockInformation(map);
             return stockInformation;
