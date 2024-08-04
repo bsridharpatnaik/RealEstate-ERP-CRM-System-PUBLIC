@@ -27,3 +27,6 @@ ec-crm-service/.settings/org.eclipse.jdt.apt.core.prefs
 ec-crm-service/.settings/org.eclipse.core.resources.prefs
 ec-crm-service/.project
 ec-crm-service/.factorypath
+sc-common-service/common-service.iml
+sc-inventory-service/com.ec.iml
+sc-inventory-service/com.ec.iml
