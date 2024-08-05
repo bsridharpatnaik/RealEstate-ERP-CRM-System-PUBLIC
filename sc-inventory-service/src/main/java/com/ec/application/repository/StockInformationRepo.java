@@ -29,11 +29,11 @@ public interface StockInformationRepo extends BaseRepository<StockInformationFro
             "INNER JOIN " +
             "(SELECT " +
             "Productid, " +
-            "        warehouseid, " +
+            "        warehouse_id, " +
             "        MIN(id) as id " +
             "FROM all_inventory ai " +
             "    WHERE ai.date<=:maxDate " +
-            "    GROUP BY Productid,warehouseid " +
+            "    GROUP BY Productid,warehouse_id " +
             "    ) AS ai2  ON ai1.id=ai2.id " +
             "INNER JOIN Product p on p.productId=ai1.ProductId " +
             "INNER JOIN Category c on p.categoryId=c.categoryId " +

@@ -1,64 +1,67 @@
+
 DROP PROCEDURE IF EXISTS update_closing_stock;
 
 DELIMITER //
 
-DROP PROCEDURE IF EXISTS update_closing_stock;
 CREATE PROCEDURE update_closing_stock()
 BEGIN
-    -- Calculate cumulative closing stock
-    WITH SortedRecords AS (
+    -- Temporary table to store cumulative stock calculations
+    CREATE TEMPORARY TABLE IF NOT EXISTS TempCumulativeStock (
+        entryid BIGINT,
+        oldClosingStock DOUBLE,
+        calculatedClosingStock DOUBLE
+    );
+
+    -- Insert calculated cumulative stocks into temporary table
+    INSERT INTO TempCumulativeStock (entryid, oldClosingStock, calculatedClosingStock)
+    SELECT
+        sr.entryid,
+        sr.oldClosingStock,
+        SUM(CASE
+                WHEN tx.type = 'Inward' THEN tx.quantity
+                ELSE 0
+            END) OVER (
+                PARTITION BY sr.warehouse_id, sr.productid
+                ORDER BY sr.row_num
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) -
+        SUM(CASE
+                WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
+                ELSE 0
+            END) OVER (
+                PARTITION BY sr.warehouse_id, sr.productid
+                ORDER BY sr.row_num
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) AS calculatedClosingStock
+    FROM (
         SELECT
             tx.entryid,
             tx.date,
-            tx.warehouseid,
-            tx.Productid,
+            tx.warehouse_id AS warehouse_id,
+            tx.productid AS productid,
             tx.quantity,
             tx.closingstock AS oldClosingStock,
-            -- Assign row numbers based on the updated sorting order
             ROW_NUMBER() OVER (
-                PARTITION BY tx.warehouseid, tx.Productid
+                PARTITION BY tx.warehouse_id, tx.productid
                 ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC
             ) AS row_num
         FROM all_inventory tx
-    ),
-    CumulativeStock AS (
-        SELECT
-            sr.entryid,
-            sr.oldClosingStock,
-            -- Calculate cumulative inward and outward quantities
-            SUM(CASE
-                    WHEN tx.type = 'Inward' THEN tx.quantity
-                    ELSE 0
-                END) OVER (
-                    PARTITION BY tx.warehouseid, tx.Productid
-                    ORDER BY sr.row_num
-                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-                ) AS cumulative_inward,
-            SUM(CASE
-                    WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
-                    ELSE 0
-                END) OVER (
-                    PARTITION BY tx.warehouseid, tx.Productid
-                    ORDER BY sr.row_num
-                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-                ) AS cumulative_outward
-        FROM SortedRecords sr
-        JOIN all_inventory tx ON sr.entryid = tx.entryid
-    )
+    ) sr
+    JOIN all_inventory tx ON sr.entryid = tx.entryid;
+
     -- Update the closingstock field where discrepancies are found
     UPDATE inward_outward_entries e
-    JOIN (
-        SELECT
-            entryid,
-            oldClosingStock,
-            cumulative_inward - cumulative_outward AS calculatedClosingStock
-        FROM CumulativeStock
-    ) ccs ON e.entryid = ccs.entryid
+    JOIN TempCumulativeStock ccs ON e.entryid = ccs.entryid
     SET e.closingstock = ccs.calculatedClosingStock
     WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
+
+    -- Clean up temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempCumulativeStock;
 END //
 
 DELIMITER ;
+
+
 
 drop view IF EXISTS all_inventory;
 CREATE OR replace VIEW all_inventory_view
@@ -233,9 +236,15 @@ BEGIN
     WHERE id >= min_id;
 
     -- Insert updated records from the view into the main table
-    INSERT INTO all_inventory
-    SELECT * FROM all_inventory_view
+-- Ensure that the columns in the INSERT statement match those in the table schema
+    INSERT INTO all_inventory (
+        id, category_name, closingstock, contactid, contacttype, creationDate, date, emailid, entryid, keyid, lastModifiedDate, measurementunit, mobileno, name, productid, product_name, quantity, type, warehouse_id, warehousename
+    )
+    SELECT
+        id, category_name, closingstock, contactid, contacttype, creationDate, date, emailid, entryid, keyid, lastModifiedDate, measurementunit, mobileno, name, productid, product_name, quantity, type, warehouse_id, warehousename
+    FROM all_inventory_view
     WHERE id >= min_id;
+
 
     -- Update the last execution time for 'update_all_inventory'
     INSERT INTO execution_history (last_execution, procedure_name)
@@ -247,4 +256,71 @@ END //
 
 DELIMITER ;
 
+CREATE OR REPLACE VIEW stockInformation as
+	SELECT
+		p.productId as productId,
+        p.product_name,
+        p.reorderQuantity,
+        p.measurementUnit,
+        c.category_name,
+        ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
+        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
+        JSON_ARRAYAGG(JSON_OBJECT(
+			'warehouseName',w.warehouseName,
+            'quantityInHand',s.quantityInHand,
+            'measurementUnit',p.measurementUnit
+            )) as detailedStock
+	FROM Stock s
+	INNER JOIN Product p on p.productId=s.productId
+	INNER JOIN Category c on p.categoryId=c.categoryId
+    INNER JOIN Warehouse w on w.warehouse_id = s.warehouseName
+	WHERE s.is_deleted=0
+	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
 
+
+##########
+CREATE OR REPLACE view boq_status AS
+SELECT
+	ex.*,
+    ow.totalConsumedQuantity,
+    FORMAT(CASE WHEN ow.totalConsumedQuantity /totalExpectedQuantity*100 IS NULL THEN 0 ELSE  ow.totalConsumedQuantity /totalExpectedQuantity*100 END,2)+0 as consumedPercent
+FROM
+(
+SELECT
+	row_number() over (ORDER BY bt.typeId) as id,
+	bt.typeId,
+    bt.building_type,
+    ul.locationId,
+    ul.location_name,
+    p.productId,
+	p.product_name,
+    CASE WHEN SUM(bi.quantity) IS NULL THEN 0 ELSE SUM(bi.quantity) END as totalExpectedQuantity
+FROM
+	building_type bt
+INNER JOIN Usage_Location ul ON ul.typeId=bt.typeId AND ul.typeId IS NOT NULL AND ul.is_deleted=0
+INNER JOIN boq_inventory bi  ON ((ul.locationId = bi.locationId OR ul.typeId = bi.typeId) AND bi.is_deleted = 0)
+INNER JOIN Product p on p.productId = bi.productId AND p.is_deleted = 0
+WHERE bt.is_deleted = 0
+GROUP BY
+    bt.typeId,
+    bt.building_type,
+    ul.locationId,
+    ul.location_name,
+    p.productId,
+	p.product_name
+    ) as ex
+    INNER JOIN
+    (SELECT
+	ul.locationId,
+    ul.location_name,
+    p.productId,
+	p.product_name,
+	CASE WHEN SUM(ioe.quantity) IS NULL THEN 0 ELSE SUM(ioe.quantity) END as totalConsumedQuantity
+FROM
+	outward_inventory oi
+INNER JOIN outwardinventory_entry oie on oie.outwardid=oi.outwardid
+INNER JOIN inward_outward_entries ioe on ioe.entryid = oie.entryId AND ioe.is_deleted=0
+INNER JOIN Usage_Location ul ON oi.locationId=ul.locationId and ul.is_deleted=0
+INNER JOIN Product p on p.productId = ioe.productId AND p.is_deleted = 0
+GROUP BY locationId,location_name,productId,product_name) as ow
+ON ex.locationId=ow.locationId AND ex.productId=ow.productId;

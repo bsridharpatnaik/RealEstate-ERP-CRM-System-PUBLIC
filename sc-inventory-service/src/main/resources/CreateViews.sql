@@ -239,11 +239,11 @@ FROM all_inventory ai1
 INNER JOIN
 	(SELECT
 		Productid,
-        warehouseid,
+        warehouse_id,
         MIN(id) as id
 	FROM all_inventory ai
     WHERE ai.date<='2021-03-01'
-    GROUP BY Productid,warehouseid
+    GROUP BY Productid,warehouse_id
     ) AS ai2  ON ai1.id=ai2.id
 INNER JOIN Product p on p.productId=ai1.ProductId
 INNER JOIN Category c on p.categoryId=c.categoryId
@@ -597,65 +597,261 @@ GROUP BY o.buildingTypeId,
 
 -- backfill closing stock
 
+DROP PROCEDURE IF EXISTS update_closing_stock;
+
 DELIMITER //
 
-DROP PROCEDURE IF EXISTS update_closing_stock;
 CREATE PROCEDURE update_closing_stock()
 BEGIN
-    -- Calculate cumulative closing stock
-    WITH SortedRecords AS (
+    -- Temporary table to store cumulative stock calculations
+    CREATE TEMPORARY TABLE IF NOT EXISTS TempCumulativeStock (
+        entryid BIGINT,
+        oldClosingStock DOUBLE,
+        calculatedClosingStock DOUBLE
+    );
+
+    -- Insert calculated cumulative stocks into temporary table
+    INSERT INTO TempCumulativeStock (entryid, oldClosingStock, calculatedClosingStock)
+    SELECT
+        sr.entryid,
+        sr.oldClosingStock,
+        SUM(CASE
+                WHEN tx.type = 'Inward' THEN tx.quantity
+                ELSE 0
+            END) OVER (
+                PARTITION BY sr.warehouse_id, sr.productid
+                ORDER BY sr.row_num
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) -
+        SUM(CASE
+                WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
+                ELSE 0
+            END) OVER (
+                PARTITION BY sr.warehouse_id, sr.productid
+                ORDER BY sr.row_num
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) AS calculatedClosingStock
+    FROM (
         SELECT
             tx.entryid,
             tx.date,
-            tx.warehouseid,
-            tx.Productid,
+            tx.warehouse_id AS warehouse_id,
+            tx.productid AS productid,
             tx.quantity,
             tx.closingstock AS oldClosingStock,
-            -- Assign row numbers based on the updated sorting order
             ROW_NUMBER() OVER (
-                PARTITION BY tx.warehouseid, tx.Productid
+                PARTITION BY tx.warehouse_id, tx.productid
                 ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC
             ) AS row_num
         FROM all_inventory tx
-    ),
-    CumulativeStock AS (
-        SELECT
-            sr.entryid,
-            sr.oldClosingStock,
-            -- Calculate cumulative inward and outward quantities
-            SUM(CASE
-                    WHEN tx.type = 'Inward' THEN tx.quantity
-                    ELSE 0
-                END) OVER (
-                    PARTITION BY tx.warehouseid, tx.Productid
-                    ORDER BY sr.row_num
-                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-                ) AS cumulative_inward,
-            SUM(CASE
-                    WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
-                    ELSE 0
-                END) OVER (
-                    PARTITION BY tx.warehouseid, tx.Productid
-                    ORDER BY sr.row_num
-                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-                ) AS cumulative_outward
-        FROM SortedRecords sr
-        JOIN all_inventory tx ON sr.entryid = tx.entryid
-    )
+    ) sr
+    JOIN all_inventory tx ON sr.entryid = tx.entryid;
+
     -- Update the closingstock field where discrepancies are found
     UPDATE inward_outward_entries e
-    JOIN (
-        SELECT
-            entryid,
-            oldClosingStock,
-            cumulative_inward - cumulative_outward AS calculatedClosingStock
-        FROM CumulativeStock
-    ) ccs ON e.entryid = ccs.entryid
+    JOIN TempCumulativeStock ccs ON e.entryid = ccs.entryid
     SET e.closingstock = ccs.calculatedClosingStock
     WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
+
+    -- Clean up temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempCumulativeStock;
 END //
 
 DELIMITER ;
+
+
+CREATE TABLE IF NOT EXISTS execution_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    procedure_name VARCHAR(255) NOT NULL,
+    last_execution DATETIME NOT NULL
+);
+
+INSERT IGNORE INTO `execution_history`
+(
+`procedure_name`,
+`last_execution`)
+VALUES
+(
+'update_all_inventory',
+'2010-01-01');
+
+
+-- Store procedure to update table from view
+
+DROP PROCEDURE IF EXISTS update_closing_stock;
+
+DELIMITER //
+
+CREATE PROCEDURE update_closing_stock()
+BEGIN
+    -- Temporary table to store cumulative stock calculations
+    CREATE TEMPORARY TABLE IF NOT EXISTS TempCumulativeStock (
+        entryid BIGINT,
+        oldClosingStock DOUBLE,
+        calculatedClosingStock DOUBLE
+    );
+
+    -- Insert calculated cumulative stocks into temporary table
+    INSERT INTO TempCumulativeStock (entryid, oldClosingStock, calculatedClosingStock)
+    SELECT
+        sr.entryid,
+        sr.oldClosingStock,
+        SUM(CASE
+                WHEN tx.type = 'Inward' THEN tx.quantity
+                ELSE 0
+            END) OVER (
+                PARTITION BY sr.warehouse_id, sr.productid
+                ORDER BY sr.row_num
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) -
+        SUM(CASE
+                WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
+                ELSE 0
+            END) OVER (
+                PARTITION BY sr.warehouse_id, sr.productid
+                ORDER BY sr.row_num
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+            ) AS calculatedClosingStock
+    FROM (
+        SELECT
+            tx.entryid,
+            tx.date,
+            tx.warehouse_id AS warehouse_id,
+            tx.productid AS productid,
+            tx.quantity,
+            tx.closingstock AS oldClosingStock,
+            ROW_NUMBER() OVER (
+                PARTITION BY tx.warehouse_id, tx.productid
+                ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC
+            ) AS row_num
+        FROM all_inventory tx
+    ) sr
+    JOIN all_inventory tx ON sr.entryid = tx.entryid;
+
+    -- Update the closingstock field where discrepancies are found
+    UPDATE inward_outward_entries e
+    JOIN TempCumulativeStock ccs ON e.entryid = ccs.entryid
+    SET e.closingstock = ccs.calculatedClosingStock
+    WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
+
+    -- Clean up temporary table
+    DROP TEMPORARY TABLE IF EXISTS TempCumulativeStock;
+END //
+
+DELIMITER ;
+
+
+
+drop view IF EXISTS all_inventory;
+CREATE OR replace VIEW all_inventory_view
+AS
+  SELECT row_number()
+           over (
+             ORDER BY tx.date desc, tx.type desc, tx.keyid desc) as id,
+         tx.type,
+         tx.keyid,
+         tx.entryid,
+         tx.date, -- index
+         tx.contactid,
+         tx.warehouseid,
+         tx.Productid,
+         tx.quantity,
+         tx.closingstock,
+         tx.creationDate,
+         tx.lastModifiedDate,
+         tx.Product_name, -- index
+         tx.category_name, -- index
+         tx.measurementunit,
+         c.name,
+         c.mobileno,
+         c.emailid,
+         c.contacttype,
+         tx.warehouse_id,
+         tx.warehousename -- index
+  FROM   (SELECT 'Inward'                         AS type,
+                 ii.inwardid                      as keyid,
+                 ioe.entryid                      as entryid,
+                 Date_format(ii.DATE, "%Y-%m-%d") AS date,
+                 ii.contactid                     AS contactid,
+                 ii.warehouse_id                  AS warehouseid,
+                 ioe.Productid                    AS Productid,
+                 ioe.quantity,
+                 ioe.closingstock,
+                 ioe.creationDate,
+                 ioe.lastModifiedDate,
+                 p.Product_name,
+                 cat.category_name,
+                 p.measurementunit,
+                 w.warehouse_id,
+                 w.warehousename
+          FROM   inward_inventory ii
+                 inner join inwardinventory_entry iie
+                         ON ii.inwardid = iie.inwardid
+                 inner join inward_outward_entries ioe
+                         ON iie.entryid = ioe.entryid
+                 inner join Product p
+                         on p.Productid = ioe.Productid
+                 INNER JOIN Category cat
+                         on p.categoryId = cat.categoryId
+                 inner join Warehouse w
+                         ON w.warehouse_id = ii.warehouse_id
+          WHERE  ii.is_deleted = 0
+          UNION ALL
+          SELECT 'Outward'                        AS type,
+                 oi.outwardid                     as keyid,
+                 ioe.entryid                      as entryid,
+                 Date_format(oi.DATE, "%Y-%m-%d") AS date,
+                 oi.contactid                     AS contactid,
+                 oi.warehouse_id                  AS warehouseid,
+                 ioe.Productid                    AS Productid,
+                 ioe.quantity,
+                 ioe.closingstock,
+                 ioe.creationDate,
+                 ioe.lastModifiedDate,
+                 p.Product_name,
+                 cat.category_name,
+                 p.measurementunit,
+                 w.warehouse_id,
+                 w.warehousename
+          FROM   outward_inventory oi
+                 inner join outwardinventory_entry oie
+                         ON oi.outwardid = oie.outwardid
+                 inner join inward_outward_entries ioe
+                         ON oie.entryid = ioe.entryid
+                 inner join Product p
+                         on p.Productid = ioe.Productid
+                 INNER JOIN Category cat
+                         on p.categoryId = cat.categoryId
+                 inner join Warehouse w
+                         ON w.warehouse_id = oi.warehouse_id
+          WHERE  oi.is_deleted = 0
+          UNION ALL
+          SELECT 'Lost-Damaged'                    AS type,
+                 lostdamagedid                     as keyid,
+                 lostdamagedid                     as entryid,
+                 Date_format(ldi.DATE, "%Y-%m-%d") AS date,
+                 ''                                AS contactid,
+                 ldi.warehousename                 AS warehouseid,
+                 ldi.Productid                     AS Productid,
+                 ldi.quantity,
+                 ldi.closingstock,
+                 ldi.creationDate,
+                 ldi.lastModifiedDate,
+                 p.Product_name,
+                 cat.category_name,
+                 p.measurementunit,
+                 w.warehouse_id,
+                 w.warehousename
+          FROM   lost_damaged_inventory ldi
+                 inner join Product p
+                         on p.Productid = ldi.Productid
+                 INNER JOIN Category cat
+                         on p.categoryId = cat.categoryId
+                 inner join Warehouse w
+                         ON w.warehouse_id = ldi.warehousename
+          where  ldi.is_deleted = 0) AS tx
+         left join contacts c
+                ON c.contactid = tx.contactid;
 
 
 CREATE TABLE IF NOT EXISTS execution_history (
@@ -719,9 +915,15 @@ BEGIN
     WHERE id >= min_id;
 
     -- Insert updated records from the view into the main table
-    INSERT INTO all_inventory
-    SELECT * FROM all_inventory_view
+-- Ensure that the columns in the INSERT statement match those in the table schema
+    INSERT INTO all_inventory (
+        id, category_name, closingstock, contactid, contacttype, creationDate, date, emailid, entryid, keyid, lastModifiedDate, measurementunit, mobileno, name, productid, product_name, quantity, type, warehouse_id, warehousename
+    )
+    SELECT
+        id, category_name, closingstock, contactid, contacttype, creationDate, date, emailid, entryid, keyid, lastModifiedDate, measurementunit, mobileno, name, productid, product_name, quantity, type, warehouse_id, warehousename
+    FROM all_inventory_view
     WHERE id >= min_id;
+
 
     -- Update the last execution time for 'update_all_inventory'
     INSERT INTO execution_history (last_execution, procedure_name)

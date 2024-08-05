@@ -19,30 +19,17 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import lombok.Data;
 
+import javax.persistence.*;
+import java.io.Serializable;
+import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Data;
+import org.hibernate.envers.Audited;
+
 @Entity
-@Table(name = "all_inventory", indexes = {
-		@Index(name = "idx_id", columnList = "id"),
-		@Index(name = "idx_type", columnList = "type"),
-		@Index(name = "idx_keyid", columnList = "keyid"),
-		@Index(name = "idx_entryid", columnList = "entryid"),
-		@Index(name = "idx_category_name", columnList = "category_name"),
-		@Index(name = "idx_date", columnList = "date"),
-		@Index(name = "idx_contactid", columnList = "contactid"),
-		@Index(name = "idx_product_name", columnList = "product_name"),
-		@Index(name = "idx_measurementunit", columnList = "measurementunit"),
-		@Index(name = "idx_warehouseid", columnList = "warehouseid"),
-		@Index(name = "idx_productid", columnList = "productid"),
-		@Index(name = "idx_quantity", columnList = "quantity"),
-		@Index(name = "idx_name", columnList = "name"),
-		@Index(name = "idx_mobileno", columnList = "mobileno"),
-		@Index(name = "idx_emailid", columnList = "emailid"),
-		@Index(name = "idx_contacttype", columnList = "contacttype"),
-		@Index(name = "idx_warehousename", columnList = "warehousename"),
-		@Index(name = "idx_creationDate", columnList = "creationDate"),
-		@Index(name = "idx_lastModifiedDate", columnList = "lastModifiedDate"),
-		@Index(name = "idx_closingStock", columnList = "closingStock")
-})
-@Audited
+@Table(name = "all_inventory")
 @Data
 public class AllInventoryTransactions implements Serializable {
 
@@ -62,11 +49,11 @@ public class AllInventoryTransactions implements Serializable {
 	@Column(name = "entryid")
 	Long entryid;
 
-	@Column(name="category_name")
+	@Column(name = "category_name")
 	String categoryName;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name = "date")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") // Adjusted to match DATE type
 	Date date;
 
 	@Column(name = "contactid")
@@ -79,7 +66,7 @@ public class AllInventoryTransactions implements Serializable {
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String measurementUnit;
 
-	@Column(name = "warehouseid")
+	@Column(name = "warehouse_id")
 	Long warehouseId;
 
 	@Column(name = "productid")
@@ -104,15 +91,15 @@ public class AllInventoryTransactions implements Serializable {
 	@Column(name = "warehousename")
 	String warehouseName;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name = "creationDate")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") // Adjusted format to match VARCHAR(255)
 	String creationDate;
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	@Column(name = "lastModifiedDate")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") // Adjusted format to match VARCHAR(255)
 	String lastModifiedDate;
 
+	@Column(name = "closingstock")
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	@Column(name = "closingStock")
 	Double closingStock;
 }
