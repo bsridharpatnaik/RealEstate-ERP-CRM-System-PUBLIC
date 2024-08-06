@@ -150,29 +150,6 @@ FROM   (SELECT p.product_name AS inventory,
                    GROUP  BY p.product_name) AS stock 
                ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0;
 
-###################  STOCk STATUS #############
-
-CREATE OR REPLACE VIEW stockInformation as
-	SELECT
-		p.productId as productId,
-        p.product_name,
-        p.reorderQuantity,
-        p.measurementUnit,
-        c.category_name,
-        ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
-        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
-        JSON_ARRAYAGG(JSON_OBJECT(
-			'warehouseName',w.warehouseName,
-            'quantityInHand',s.quantityInHand,
-            'measurementUnit',p.measurementUnit
-            )) as detailedStock
-	FROM Stock s
-	INNER JOIN Product p on p.productId=s.productId
-	INNER JOIN Category c on p.categoryId=c.categoryId
-    INNER JOIN Warehouse w on w.warehouse_id = s.warehouseName
-	WHERE s.is_deleted=0
-	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
-
 
 ##########
 CREATE OR REPLACE view boq_status AS
@@ -934,3 +911,26 @@ BEGIN
 END //
 
 DELIMITER ;
+
+###################  STOCk STATUS #############
+
+CREATE OR REPLACE VIEW stockInformation as
+	SELECT
+		p.productId as productId,
+        p.product_name,
+        p.reorderQuantity,
+        p.measurementUnit,
+        c.category_name,
+        ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
+        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
+        JSON_ARRAYAGG(JSON_OBJECT(
+			'warehouseName',w.warehouseName,
+            'quantityInHand',s.quantityInHand,
+            'measurementUnit',p.measurementUnit
+            )) as detailedStock
+	FROM Stock s
+	INNER JOIN Product p on p.productId=s.productId
+	INNER JOIN Category c on p.categoryId=c.categoryId
+    INNER JOIN Warehouse w on w.warehouse_id = s.warehouseName
+	WHERE s.is_deleted=0
+	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
