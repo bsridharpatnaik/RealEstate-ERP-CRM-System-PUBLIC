@@ -1,8 +1,8 @@
-package com.ec.common.Controller;
+package com.ec.application.controller;
 
-import com.ec.common.Data.ProjectConstantsUpdateDTO;
-import com.ec.common.Model.ProjectConstants;
-import com.ec.common.Service.ProjectConstantsService;
+import com.ec.application.data.ProjectConstantsUpdateDTO;
+import com.ec.application.model.ProjectConstants;
+import com.ec.application.service.ProjectConstantsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -12,7 +12,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/project-constants")
+@RequestMapping("/project-constants")
 public class ProjectConstantsController {
 
     @Autowired

@@ -1,6 +1,6 @@
-package com.ec.common.Configuration;
+package com.ec.application.config;
 
-public enum ConstantKeys {
+public enum ConstantKeysEnum {
     INVENTORY_ALLOWED_DAYS_ADMIN,
     INVENTORY_ALLOWED_DAYS_MANAGER,
     INVENTORY_ALLOWED_DAYS_EXECUTIVE;

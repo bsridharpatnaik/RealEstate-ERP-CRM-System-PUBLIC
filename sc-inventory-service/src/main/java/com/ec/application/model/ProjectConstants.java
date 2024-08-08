@@ -1,4 +1,4 @@
-package com.ec.common.Model;
+package com.ec.application.model;
 
 import lombok.Data;
 
@@ -7,6 +7,7 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "project_constants")
+@Data
 public class ProjectConstants implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -21,28 +22,4 @@ public class ProjectConstants implements Serializable {
 
 	@Column(name = "key_value")
 	Integer value;
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getKey() {
-		return key;
-	}
-
-	public void setKey(String key) {
-		this.key = key;
-	}
-
-	public Integer getValue() {
-		return value;
-	}
-
-	public void setValue(Integer value) {
-		this.value = value;
-	}
 }

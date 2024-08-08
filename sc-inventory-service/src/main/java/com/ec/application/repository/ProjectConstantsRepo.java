@@ -1,7 +1,6 @@
-package com.ec.common.Repository;
+package com.ec.application.repository;
 
-import com.ec.ReusableClasses.BaseRepository;
-import com.ec.common.Model.ProjectConstants;
+import com.ec.application.model.ProjectConstants;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
