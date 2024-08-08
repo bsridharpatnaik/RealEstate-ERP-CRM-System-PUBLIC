@@ -8,7 +8,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "project_constants")
 @Data
-public class ProjectConstants implements Serializable {
+public class ProjectConstantsTable implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 

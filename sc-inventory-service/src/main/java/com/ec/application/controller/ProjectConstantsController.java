@@ -1,7 +1,7 @@
 package com.ec.application.controller;
 
 import com.ec.application.data.ProjectConstantsUpdateDTO;
-import com.ec.application.model.ProjectConstants;
+import com.ec.application.model.ProjectConstantsTable;
 import com.ec.application.service.ProjectConstantsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,16 +20,16 @@ public class ProjectConstantsController {
 
     // Get all project constants
     @GetMapping
-    public ResponseEntity<List<ProjectConstants>> getAllProjectConstants() {
-        List<ProjectConstants> projectConstants = projectConstantsService.getAllProjectConstants();
+    public ResponseEntity<List<ProjectConstantsTable>> getAllProjectConstants() {
+        List<ProjectConstantsTable> projectConstants = projectConstantsService.getAllProjectConstants();
         return ResponseEntity.ok(projectConstants);
     }
 
     // Get a single project constant by id
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectConstants> getSingleProjectConstant(@PathVariable Long id) {
+    public ResponseEntity<ProjectConstantsTable> getSingleProjectConstant(@PathVariable Long id) {
         try {
-            ProjectConstants projectConstant = projectConstantsService.getSingleProjectConstants(id);
+            ProjectConstantsTable projectConstant = projectConstantsService.getSingleProjectConstants(id);
             return ResponseEntity.ok(projectConstant);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
@@ -48,7 +48,7 @@ public class ProjectConstantsController {
         }
 
         try {
-            ProjectConstants updatedProjectConstant = projectConstantsService.updateConstants(id, updateDTO.getValue());
+            ProjectConstantsTable updatedProjectConstant = projectConstantsService.updateConstants(id, updateDTO.getValue());
             return ResponseEntity.ok(updatedProjectConstant);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

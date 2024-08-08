@@ -1,7 +1,7 @@
 package com.ec.application.service;
 
+import com.ec.application.model.ProjectConstantsTable;
 import com.ec.application.multitenant.ThreadLocalStorage;
-import org.apache.tomcat.jni.Thread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,7 +10,6 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 
-import com.ec.application.model.ProjectConstants;
 import com.ec.application.repository.ProjectConstantsRepo;
 import com.ec.application.config.ConstantKeysEnum;
 
@@ -37,25 +36,25 @@ public class ProjectConstantsService {
     }
 
     private void addDefaultProjectConstants(String key, Integer defaultValue) {
-        Optional<ProjectConstants> existingEntry = projectConstantsRepo.findByKey(key);
+        Optional<ProjectConstantsTable> existingEntry = projectConstantsRepo.findByKey(key);
         if (!existingEntry.isPresent()) {
-            ProjectConstants projectConstant = new ProjectConstants();
+            ProjectConstantsTable projectConstant = new ProjectConstantsTable();
             projectConstant.setKey(key);
             projectConstant.setValue(defaultValue);
             projectConstantsRepo.save(projectConstant);
         }
     }
 
-    public List<ProjectConstants> getAllProjectConstants() {
+    public List<ProjectConstantsTable> getAllProjectConstants() {
         return projectConstantsRepo.findAll();
     }
 
-    public ProjectConstants getSingleProjectConstants(Long id) throws Exception {
+    public ProjectConstantsTable getSingleProjectConstants(Long id) throws Exception {
         return projectConstantsRepo.findById(id).orElseThrow(() -> new Exception("ProjectConstant not found with ID " + id));
     }
 
-    public ProjectConstants updateConstants(Long id, Integer value) throws Exception {
-        ProjectConstants constant = projectConstantsRepo.findById(id).orElseThrow(() -> new Exception("ProjectConstant not found with ID " + id));
+    public ProjectConstantsTable updateConstants(Long id, Integer value) throws Exception {
+        ProjectConstantsTable constant = projectConstantsRepo.findById(id).orElseThrow(() -> new Exception("ProjectConstant not found with ID " + id));
         constant.setValue(value);
         return projectConstantsRepo.save(constant);
     }
