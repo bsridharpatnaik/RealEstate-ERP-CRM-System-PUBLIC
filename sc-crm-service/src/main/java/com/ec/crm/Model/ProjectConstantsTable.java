@@ -1,4 +1,4 @@
-package com.ec.application.model;
+package com.ec.crm.Model;
 
 import lombok.Data;
 
@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "project_constants_inventory")
+@Table(name = "project_constants_crm")
 @Data
 public class ProjectConstantsTable implements Serializable {
 

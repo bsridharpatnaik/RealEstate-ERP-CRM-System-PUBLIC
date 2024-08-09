@@ -58,7 +58,7 @@ public class MachineryOnRentService {
 
     @Autowired
     ProjectConstantsService projectConstantsService;
-    
+
     Logger log = LoggerFactory.getLogger(MachineryOnRentService.class);
 
     public MachineryOnRent createData(CreateMORentData payload) throws Exception {
