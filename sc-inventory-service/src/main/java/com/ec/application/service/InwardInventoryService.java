@@ -90,6 +90,9 @@ public class InwardInventoryService {
     @Autowired
     AsyncServiceInventory asyncServiceInventory;
 
+    @Autowired
+    ProjectConstantsService projectConstantsService;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -398,7 +401,7 @@ public class InwardInventoryService {
         if (action.equals(APICallTypeForAuthorization.Update)) {
 
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date());
-            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot modify record that is created greater than " + daysDifference + " days ago.");
@@ -420,7 +423,7 @@ public class InwardInventoryService {
         }
         if (action.equals(APICallTypeForAuthorization.Create)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date());
-            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot add inventory record with date older than " + daysDifference + " days.");
@@ -428,7 +431,7 @@ public class InwardInventoryService {
 
         if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date());
-            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot DELETE inward inventory created more than " + daysDifference + " Days ago. ");

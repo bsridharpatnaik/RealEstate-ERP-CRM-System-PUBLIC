@@ -3,7 +3,6 @@ package com.ec.application.service;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
-import com.ec.application.config.ProjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.WebClient;
-
+import com.ec.application.config.ConstantKeysEnum;
+import com.ec.application.config.ProjectConstants;
+import com.ec.application.repository.ProjectConstantsRepo;
 import com.ec.application.data.UserReturnData;
 
 @Service
 @Transactional
 public class UserDetailsService {
+
     @Autowired
     WebClient.Builder webClientBuilder;
 
@@ -49,18 +51,5 @@ public class UserDetailsService {
             e.printStackTrace();
             throw new Exception("Unable to fetch current user. Please contact system administrator.");
         }
-    }
-
-    public Long getInventoryEditDaysForCurrentUser() throws Exception {
-        UserReturnData userReturnData = getCurrentUser();
-        for (String role : userReturnData.getRoles()) {
-            if (role.toLowerCase().contains("admin"))
-                return ProjectConstants.editAllowedDaysAdmin;
-            else if (role.toLowerCase().contains("inventory-manager"))
-                return ProjectConstants.editAllowedDaysManager;
-            else if (role.toLowerCase().contains("inventory-executive"))
-                return ProjectConstants.editAllowedDaysExecutive;
-        }
-        return (long) 30;
     }
 }

@@ -90,6 +90,9 @@ public class OutwardInventoryService {
     @Autowired
     AsyncServiceInventory asyncServiceInventory;
 
+    @Autowired
+    ProjectConstantsService projectConstantsService;
+
     Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -601,7 +604,7 @@ public class OutwardInventoryService {
 
         if (action.equals(APICallTypeForAuthorization.Update)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date());
-            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot edit inventory record with date older than " + daysDifference + " days.");
@@ -624,14 +627,14 @@ public class OutwardInventoryService {
 
         if (action.equals(APICallTypeForAuthorization.Create)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(oiData.getDate(), new Date());
-            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot edit inventory record with date older than " + daysDifference + " days.");
         }
         if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date());
-            Long daysEditAllowed = userDetailService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot DELETE inventory record with date older than " + daysDifference + " days.");

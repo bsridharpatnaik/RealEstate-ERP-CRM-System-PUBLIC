@@ -56,6 +56,9 @@ public class MachineryOnRentService {
     @Autowired
     PopulateDropdownService populateDropdownService;
 
+    @Autowired
+    ProjectConstantsService projectConstantsService;
+    
     Logger log = LoggerFactory.getLogger(MachineryOnRentService.class);
 
     public MachineryOnRent createData(CreateMORentData payload) throws Exception {
@@ -262,7 +265,7 @@ public class MachineryOnRentService {
         machineryOnRent.setAdditionalNotes(payload.getAdditionalNotes());
         machineryOnRent.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
         machineryOnRent.setRate(payload.getRate());
-        machineryOnRent.setMrnGrn(payload.getMrnGrn()==null?null:payload.getMrnGrn());
+        machineryOnRent.setMrnGrn(payload.getMrnGrn() == null ? null : payload.getMrnGrn());
         return machineryOnRent;
     }
 
@@ -271,7 +274,7 @@ public class MachineryOnRentService {
             throws Exception {
         if (action.equals(APICallTypeForAuthorization.Update)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date());
-            Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot update MOR record with date older than " + daysDifference + " days.");
@@ -302,14 +305,14 @@ public class MachineryOnRentService {
         }
         if (action.equals(APICallTypeForAuthorization.Create)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(morData.getDate(), new Date());
-            Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot create MOR record with date older than " + daysDifference + " days.");
         }
         if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(mor.getDate(), new Date());
-            Long daysEditAllowed = userDetailsService.getInventoryEditDaysForCurrentUser();
+            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot delete MOR record with date older than " + daysDifference + " days.");
@@ -365,7 +368,7 @@ public class MachineryOnRentService {
             dao.setAmountCharged(mor.getAmountCharged());
             dao.setVehicleNo(mor.getVehicleNo());
             dao.setAdditionalNotes(mor.getAdditionalNotes());
-            dao.setMrnGrn(mor.getMrnGrn()==null?"":mor.getMrnGrn());
+            dao.setMrnGrn(mor.getMrnGrn() == null ? "" : mor.getMrnGrn());
             exportList.add(dao);
         }
         return exportList;

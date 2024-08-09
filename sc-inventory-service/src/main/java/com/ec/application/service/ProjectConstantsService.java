@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import com.ec.application.data.UserReturnData;
 import com.ec.application.model.ProjectConstantsTable;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ public class ProjectConstantsService {
 
     @Value("${schemas.list}")
     private String schemasList;
+
+    @Autowired
+    UserDetailsService userDetailsService;
 
     @PostConstruct
     public void init() {
@@ -57,5 +61,18 @@ public class ProjectConstantsService {
         ProjectConstantsTable constant = projectConstantsRepo.findById(id).orElseThrow(() -> new Exception("ProjectConstant not found with ID " + id));
         constant.setValue(value);
         return projectConstantsRepo.save(constant);
+    }
+
+    public Long getInventoryEditDaysForCurrentUser() throws Exception {
+        UserReturnData userReturnData = userDetailsService.getCurrentUser();
+        for (String role : userReturnData.getRoles()) {
+            if (role.toLowerCase().contains("admin"))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString()).get().getValue());
+            else if (role.toLowerCase().contains("inventory-manager"))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_MANAGER.toString()).get().getValue());
+            else if (role.toLowerCase().contains("inventory-executive"))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString()).get().getValue());;
+        }
+        return (long) 30;
     }
 }
