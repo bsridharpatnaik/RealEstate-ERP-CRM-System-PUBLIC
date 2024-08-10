@@ -57,17 +57,23 @@ public class AllInventoryService {
     }
 
     public AllInventoryReturnData fetchAllInventory(FilterDataList filterDataList, Pageable pageable)
-            throws ParseException {
+            throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         AllInventoryReturnData allInventoryReturnData = new AllInventoryReturnData();
         Specification<AllInventoryTransactions> spec = AllInventorySpecification.getSpecification(filterDataList);
 
         if (spec != null) {
             Page<AllInventoryTransactions> data = allInventoryRepo.findAll(spec, pageable);
+            if(data.getContent().size() > 5000)
+                throw new Exception("Too many records. Please apply some filters and try again.");
             allInventoryReturnData.setTransactions(data);
 
-        } else
-            allInventoryReturnData.setTransactions(allInventoryRepo.findAll(pageable));
+        } else{
+            Page<AllInventoryTransactions> data2 = allInventoryRepo.findAll(pageable);
+            if(data2.getContent().size() > 5000)
+                throw new Exception("Too many records. Please apply some filters and try again.");
+            allInventoryReturnData.setTransactions(data2);
+        }
         allInventoryReturnData.setLdDropdown(populateDropdownService.fetchData("allinventory"));
         return allInventoryReturnData;
     }
