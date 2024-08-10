@@ -404,7 +404,7 @@ public class InwardInventoryService {
             Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
-                throw new Exception("Cannot modify record that is created greater than " + daysDifference + " days ago.");
+                throw new Exception("Cannot modify record that is created greater than " + daysEditAllowed + " days ago.");
 
             if (!iiData.getDate().equals(inwardInventory.getDate()))
                 throw new Exception("Date should not be modified while updating inward inventory record");
@@ -426,7 +426,7 @@ public class InwardInventoryService {
             Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
-                throw new Exception("Cannot add inventory record with date older than " + daysDifference + " days.");
+                throw new Exception("Cannot add inventory record with date older than " + daysEditAllowed + " days.");
         }
 
         if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
@@ -434,7 +434,7 @@ public class InwardInventoryService {
             Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
-                throw new Exception("Cannot DELETE inward inventory created more than " + daysDifference + " Days ago. ");
+                throw new Exception("Cannot DELETE inward inventory created more than " + daysEditAllowed + " Days ago. ");
         }
     }
 
