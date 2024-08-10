@@ -20,6 +20,18 @@ public class ApiLog {
     private LocalDateTime timestamp;
 
     // Getters and setters
+    public ApiLog(Long id, String url, String method, String payload, String username, String tenantName, LocalDateTime timestamp) {
+        this.id = id;
+        this.url = url;
+        this.method = method;
+        this.payload = payload;
+        this.username = username;
+        this.tenantName = tenantName;
+        this.timestamp = timestamp;
+    }
+
+    public ApiLog() {
+    }
 
     public String getTenantName() {
         return tenantName;

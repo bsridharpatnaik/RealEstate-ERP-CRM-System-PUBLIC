@@ -10,12 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.time.LocalDate;
 
 @Service
 public class ApiLogService {
@@ -25,6 +23,7 @@ public class ApiLogService {
 
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm:ss a");
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    private final ZoneId istZoneId = ZoneId.of("Asia/Kolkata"); // IST timezone
 
     public List<UserReportDto> getUserReports() {
         List<ApiLog> allLogs = apiLogRepository.findAll();
@@ -43,13 +42,26 @@ public class ApiLogService {
             String username = entry.getKey(); // Formatted username
             List<ApiLog> userLogs = entry.getValue();
 
+            // Convert timestamps to IST
+            List<ApiLog> logsWithIst = userLogs.stream()
+                    .map(log -> new ApiLog(
+                            log.getId(),
+                            log.getUrl(),
+                            log.getMethod(),
+                            log.getPayload(),
+                            log.getUsername(),
+                            log.getTenantName(),
+                            convertToIst(log.getTimestamp())
+                    ))
+                    .collect(Collectors.toList());
+
             // Find first and last API call times
-            LocalDateTime firstCall = userLogs.stream()
+            LocalDateTime firstCall = logsWithIst.stream()
                     .map(ApiLog::getTimestamp)
                     .min(LocalDateTime::compareTo)
                     .orElse(null);
 
-            LocalDateTime lastCall = userLogs.stream()
+            LocalDateTime lastCall = logsWithIst.stream()
                     .map(ApiLog::getTimestamp)
                     .max(LocalDateTime::compareTo)
                     .orElse(null);
@@ -59,7 +71,7 @@ public class ApiLogService {
             String formattedLastCall = formatTime(lastCall);
 
             // Group logs by date
-            Map<LocalDate, List<ApiLog>> logsByDate = userLogs.stream()
+            Map<LocalDate, List<ApiLog>> logsByDate = logsWithIst.stream()
                     .collect(Collectors.groupingBy(log -> log.getTimestamp().toLocalDate()));
 
             List<DateReportDto> dateReports = new ArrayList<>();
@@ -94,6 +106,13 @@ public class ApiLogService {
         }
 
         return userReports;
+    }
+
+    private LocalDateTime convertToIst(LocalDateTime dateTime) {
+        if (dateTime == null) return null;
+        ZonedDateTime zonedDateTime = dateTime.atZone(ZoneId.systemDefault()); // Assuming logs are in system default time zone
+        ZonedDateTime istDateTime = zonedDateTime.withZoneSameInstant(istZoneId);
+        return istDateTime.toLocalDateTime();
     }
 
     private String formatTime(LocalDateTime dateTime) {
