@@ -1,6 +1,7 @@
 package com.ec.common.Controller;
 
 import com.ec.common.Data.ApiLogReportDTO;
+import com.ec.common.Data.UserReportDto;
 import com.ec.common.Service.ApiLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,5 +19,10 @@ public class ApiLogController {
     @GetMapping("/usagehistory")
     public List<ApiLogReportDTO> getApiLogReport() {
         return apiLogService.generateReport();
+    }
+
+    @GetMapping("/user")
+    public List<UserReportDto> getUserReports() {
+        return apiLogService.getUserReports();
     }
 }
