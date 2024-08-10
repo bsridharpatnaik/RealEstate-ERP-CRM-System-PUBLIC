@@ -595,7 +595,7 @@ DELIMITER //
 DROP PROCEDURE IF EXISTS UpdatePipelineActivityForLead;
 CREATE PROCEDURE UpdatePipelineActivityForLead()
 BEGIN
-    DECLARE last_exec TIMESTAMP DEFAULT '1970-01-01 00:00:00';  -- Default value if no record is found
+    DECLARE last_exec TIMESTAMP;  -- Default value if no record is found
     DECLARE proc_name VARCHAR(255) DEFAULT 'UpdatePipelineActivityForLead';
 
     -- Error handler
