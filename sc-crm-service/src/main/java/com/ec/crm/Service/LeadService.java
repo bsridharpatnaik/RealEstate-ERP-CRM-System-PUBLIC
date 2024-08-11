@@ -3,6 +3,7 @@ package com.ec.crm.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -20,6 +21,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -79,7 +81,6 @@ public class LeadService {
 
     @PersistenceContext
     private EntityManager entityManager;
-    ;
 
     @Autowired
     LeadActivityService leadActivityService;
@@ -100,6 +101,13 @@ public class LeadService {
 
     @Autowired
     UtilService utilService;
+
+    Map<Long, String> userDetailMap;
+
+    @PostConstruct
+    public void init() throws Exception {
+        userDetailMap = userDetailsService.fetchUserListAsMap();
+    }
 
     @Transactional
     public Lead createLead(@Valid LeadCreateData payload) throws Exception {
@@ -132,12 +140,11 @@ public class LeadService {
         currentUserID = userDetailsService.getCurrentUser().getId();
         log.info("Fetched current user from common-service " + currentUserID.toString());
         Optional<Lead> leadOpt = lRepo.findById(id);
-
         if (!leadOpt.isPresent())
             throw new Exception("Lead with ID -" + id + " Not Found");
 
         Lead leadForUpdate = leadOpt.get();
-        log.info("Formatting mobile number received in payload");
+        Long oldAssigneeId = leadForUpdate.getAsigneeId();
         formatMobileNo(payload);
         log.info("Validating payload");
         validatePayload(payload);
@@ -160,7 +167,11 @@ public class LeadService {
         }
         log.info("Setting lead fields from payload");
         setLeadFields(leadForUpdate, payload, "update");
-        log.info("Saving new lead record to database");
+
+        // Create note if assignee is modified
+        if(!oldAssigneeId.equals(payload.getAssigneeId()))
+            createNotesWhenAssigneeUpdated(leadForUpdate, userDetailMap.get(oldAssigneeId), userDetailMap.get(payload.getAssigneeId()));
+
         return lRepo.save(leadForUpdate);
     }
 
@@ -408,8 +419,8 @@ public class LeadService {
         if (payload.getPincode() != null && payload.getPincode() != "")
             if (!payload.getPincode().matches("\\d{6}"))
                 throw new Exception("Enter a valid pin code (6 Digits numeric)");
-            if(payload.getCustomerName().trim().length() <1)
-                throw new Exception("Enter a valid customer name");
+        if (payload.getCustomerName().trim().length() < 1)
+            throw new Exception("Enter a valid customer name");
     }
 
     private void exitIfMobileNoExists(String mobileNo) throws Exception {
@@ -482,14 +493,65 @@ public class LeadService {
     }
 
     @Transactional
-    public void importLead(List<LeadImportPayloadData> payload) throws Exception {
-        for (LeadImportPayloadData data : payload) {
-            LeadCreateData leadCreateData = new LeadCreateData();
-            leadCreateData.setPrimaryMobile(data.getMobileNo());
-            leadCreateData.setCustomerName(data.getName());
-            leadCreateData.setAssigneeId(data.getAssigneeId());
-            createLead(leadCreateData);
+    public List<LeadImportResponseData> importLead(BulkLeadImport payload) throws Exception {
+        if (payload.getImportType().equalsIgnoreCase("create")) {
+            return createLeads(payload);
+        } else if (payload.getImportType().equalsIgnoreCase("update")) {
+            return updateLeads(payload);
+        } else
+            throw new Exception("Invalid Import Type. Import type should be either create or update");
+    }
+
+    private List<LeadImportResponseData> updateLeads(BulkLeadImport payload) {
+        List<LeadImportResponseData> response = new ArrayList<LeadImportResponseData>();
+        for (LeadImportPayloadData data : payload.getData()) {
+            LeadImportResponseData leadImportResponseData;
+            try {
+                List<Lead> leadList = lRepo.findLeadsByPMobileNo(data.getMobileNo());
+
+                if (leadList.isEmpty()) {
+                    throw new Exception("Lead with mobile number -" + data.getMobileNo() + " Not Found");
+                }
+
+                Lead lead = leadList.get(0);
+                String oldAssignee = userDetailMap.get(lead.getAsigneeId());
+                if (!oldAssignee.equalsIgnoreCase(data.getAssignee())) {
+                    lead.setAsigneeId(getUserIdByUsername(data.getAssignee()));
+                    lRepo.save(lead);
+                    response.add(new LeadImportResponseData(data.getAssignee(), data.getMobileNo(), data.getName(), "Success"));
+                    createNotesWhenAssigneeUpdated(lead, oldAssignee, data.getAssignee());
+                } else {
+                    response.add(new LeadImportResponseData(data.getAssignee(), data.getMobileNo(), data.getName(), "Failure - Assignee Same as existing Record"));
+                }
+            } catch (Exception e) {
+                response.add(new LeadImportResponseData(data.getAssignee(), data.getMobileNo(), data.getName(), "Failure - " + e.getMessage()));
+            }
         }
+        return response;
+    }
+
+    @Transactional
+    private void createNotesWhenAssigneeUpdated(Lead lead, String oldAssignee, String assignee) throws Exception {
+        NoteCreateData noteCreateData = new NoteCreateData(lead.getLeadId(),"Assignee Updated - #" + oldAssignee + "To" + assignee );
+        noteService.createNote(noteCreateData);
+    }
+
+    private List<LeadImportResponseData> createLeads(BulkLeadImport payload) {
+        List<LeadImportResponseData> response = new ArrayList<LeadImportResponseData>();
+        for (LeadImportPayloadData data : payload.getData()) {
+            LeadImportResponseData leadImportResponseData;
+            try {
+                LeadCreateData leadCreateData = new LeadCreateData();
+                leadCreateData.setPrimaryMobile(data.getMobileNo());
+                leadCreateData.setCustomerName(data.getName());
+                leadCreateData.setAssigneeId(getUserIdByUsername(data.getAssignee()));
+                createLead(leadCreateData);
+                response.add(new LeadImportResponseData(data.getAssignee(), data.getMobileNo(), data.getName(), "Success"));
+            } catch (Exception e) {
+                response.add(new LeadImportResponseData(data.getAssignee(), data.getMobileNo(), data.getName(), "Failure - " + e.getMessage()));
+            }
+        }
+        return response;
     }
 
     public void updateLeadNotesAndStagnantDays() {
@@ -503,5 +565,14 @@ public class LeadService {
     public void updatePipelineActivityForLead() {
         log.info("Stored Procedure Called - PipelineActivity");
         lRepo.UpdatePipelineActivityForLead();
+    }
+
+    public Long getUserIdByUsername(String username) throws Exception {
+        for (Map.Entry<Long, String> entry : userDetailMap.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(username)) {
+                return entry.getKey();
+            }
+        }
+        throw new Exception("Assignee not found with username - " + username); // or throw an exception if the username is not found
     }
 }

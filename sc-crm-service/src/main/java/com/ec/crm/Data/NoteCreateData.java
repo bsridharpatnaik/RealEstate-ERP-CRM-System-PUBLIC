@@ -1,5 +1,6 @@
 package com.ec.crm.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.lang.NonNull;
@@ -11,23 +12,28 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class NoteCreateData
-{
+public class NoteCreateData {
 
-	String content;
+    String content;
 
-	@NonNull
-	Long leadId;
+    @NonNull
+    Long leadId;
 
-	Boolean pinned;
+    Boolean pinned;
 
-	@NonNull
-	List<FileInformationDAO> fileInformations;
+    @NonNull
+    List<FileInformationDAO> fileInformations;
 
-	@Override
-	public String toString()
-	{
-		return "NoteCreateData [content=" + content + ", leadId=" + leadId + ", pinned=" + pinned
-				+ ", fileInformations=" + fileInformations + "]";
-	}
+    public NoteCreateData(Long leadId, String s) {
+        this.leadId = leadId;
+        this.content = s;
+        this.fileInformations = new ArrayList<FileInformationDAO>();
+        this.pinned = false;
+    }
+
+    @Override
+    public String toString() {
+        return "NoteCreateData [content=" + content + ", leadId=" + leadId + ", pinned=" + pinned
+                + ", fileInformations=" + fileInformations + "]";
+    }
 }

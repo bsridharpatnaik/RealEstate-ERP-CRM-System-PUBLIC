@@ -2,11 +2,14 @@ package com.ec.crm.Data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-public class LeadImportPayloadData {
+@NoArgsConstructor
+public class LeadImportResponseData {
     String Assignee;
     String MobileNo;
     String Name;
+    String result;
 }
