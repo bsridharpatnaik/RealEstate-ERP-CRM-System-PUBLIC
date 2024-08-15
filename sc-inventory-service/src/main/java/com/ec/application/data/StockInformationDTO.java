@@ -1,5 +1,6 @@
 package com.ec.application.data;
 
+import com.ec.application.model.AllInventoryTransactions;
 import com.google.gson.JsonObject;
 import lombok.Data;
 
@@ -16,4 +17,12 @@ public class StockInformationDTO {
     Double totalQuantityInHand;
     String stockStatus;
     List<SingleStockInformationDTO> detailedStock;
+    List<AllInventoryTransactions> inwardOutwardHistory;
+
+    public void updateDetailedStock(List<SingleStockInformationDTO> detailedStock, StockAgingData stockAgingDataMap) {
+        for(SingleStockInformationDTO dStock : detailedStock){
+            String warehouseName = dStock.getWarehouseName();
+            dStock.setStockAgingData(stockAgingDataMap.getStockAge().get(warehouseName));
+        }
+    }
 }

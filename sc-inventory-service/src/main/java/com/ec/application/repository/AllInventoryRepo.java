@@ -87,4 +87,7 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 			" ) as t2 ON t1.month=t2.month AND t1.category_name=t2.category_name AND t1.product_name=t2.product_name AND t1.warehousename=t2.warehousename" +
 			" ORDER BY t1.month desc,product_name,warehousename",nativeQuery = true)
 	ArrayList<InventoryReportByDate> getFilteredTransactionReport(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
+
+	@Query("SELECT a FROM AllInventoryTransactions a WHERE a.productId = :productId ORDER BY a.id")
+    List<AllInventoryTransactions> findInwardOutwardByProductId(@Param("productId")Long productId);
 }
