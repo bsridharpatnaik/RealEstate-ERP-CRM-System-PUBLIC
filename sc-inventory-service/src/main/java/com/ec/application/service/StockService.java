@@ -290,9 +290,55 @@ public class StockService {
         return stockAges;
     }
 
-    private static int daysBetween(Date startDate, Date endDate) {
+    private static String daysBetween(Date startDate, Date endDate) {
         long differenceInMillis = endDate.getTime() - startDate.getTime();
-        return (int) (differenceInMillis / (1000 * 60 * 60 * 24));
+        return convertDaysToWords((int) (differenceInMillis / (1000 * 60 * 60 * 24)));
+    }
+
+    public static String convertDaysToWords(int days) {
+        if (days < 0) {
+            throw new IllegalArgumentException("Days cannot be negative");
+        }
+
+        int years = days / 365;
+        days %= 365;
+
+        int months = days / 30;
+        days %= 30;
+
+        int weeks = days / 7;
+        days %= 7;
+
+        StringBuilder result = new StringBuilder();
+
+        if (years > 0) {
+            result.append(years).append(" year").append(years > 1 ? "s" : "");
+        }
+
+        if (months > 0) {
+            if (result.length() > 0) result.append(", ");
+            result.append(months).append(" month").append(months > 1 ? "s" : "");
+        }
+
+        if (weeks > 0) {
+            if (result.length() > 0) result.append(", ");
+            result.append(weeks).append(" week").append(weeks > 1 ? "s" : "");
+        }
+
+        if (days > 0) {
+            if (result.length() > 0) result.append(", ");
+            result.append(days).append(" day").append(days > 1 ? "s" : "");
+        }
+
+        String resultString = result.toString();
+
+        // Handle the case where there are multiple units by adding "and" before the last unit
+        int lastCommaIndex = resultString.lastIndexOf(", ");
+        if (lastCommaIndex != -1) {
+            resultString = resultString.substring(0, lastCommaIndex) + " and" + resultString.substring(lastCommaIndex + 1);
+        }
+
+        return resultString.isEmpty() ? "0 days" : resultString;
     }
 
     public NameAndProjectionDataForDropDown getStockDropdownValues() {

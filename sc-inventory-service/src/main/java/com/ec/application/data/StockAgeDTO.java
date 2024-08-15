@@ -13,9 +13,9 @@ public class StockAgeDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     Date date;
 
-    int age;
+    String age;
 
-    public StockAgeDTO(double quantity, Date entryDate, int age) {
+    public StockAgeDTO(double quantity, Date entryDate, String age) {
         this.quantity = quantity;
         this.date = entryDate;
         this.age = age;
