@@ -97,7 +97,16 @@ public class StockService {
         List<StockInformationFromView> dbData = siRepo.getHistoricalStock(closingDate);
         List<StockInformationFromView> filteredData = filterStockInformation(dbData, filterDataList);
         returnData = convertToPageAndSort(filteredData, page);
+        removeStockAgingForHistorical(returnData);
         return returnData;
+    }
+
+    private void removeStockAgingForHistorical(StockInformationV2 returnData) {
+        for(StockInformationDTO s : returnData.getStockInformation().getContent()){
+            for(SingleStockInformationDTO si : s.getDetailedStock()){
+                si.setStockAgingData(null);
+            }
+        }
     }
 
     private StockInformationV2 convertToPageAndSort(List<StockInformationFromView> filteredData, Pageable page) {
