@@ -94,7 +94,8 @@ public class StockService {
         Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
                 .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
 
-        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId())));
+        // This wasted 5 hours for me. There can be records that have entry in stock but there may be zero inward/outward records. May be after adding inward, they deleted it.
+        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()) == null?new ArrayList<>():transactionsMap.get(si.getProductId())));
         stockInformation.setStockInformation(map);
         return stockInformation;
     }
@@ -284,7 +285,6 @@ public class StockService {
         StockAgingData stockAgingData = new StockAgingData();
         Map<String, List<StockAgeDTO>> stockMap = new HashMap<String, List<StockAgeDTO>>();
         for (SingleStockInformationDTO si : detailedStock) {
-
             if (si.getQuantityInHand() <= 0)
                 continue;
 
