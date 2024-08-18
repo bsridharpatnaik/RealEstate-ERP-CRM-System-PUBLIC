@@ -106,14 +106,22 @@ public class StockService {
         List<StockInformationFromView> dbData = siRepo.getHistoricalStock(closingDate);
         List<StockInformationFromView> filteredData = filterStockInformation(dbData, filterDataList);
         returnData = convertToPageAndSort(filteredData, page);
-        removeStockAgingForHistorical(returnData);
+        updateStockAgingForHistorical(returnData, closingDate);
         return returnData;
     }
 
-    private void removeStockAgingForHistorical(StockInformationV2 returnData) {
-        for(StockInformationDTO s : returnData.getStockInformation().getContent()){
-            for(SingleStockInformationDTO si : s.getDetailedStock()){
+    private void updateStockAgingForHistorical(StockInformationV2 returnData, Date closingDate) {
+        for (StockInformationDTO s : returnData.getStockInformation().getContent()) {
+            for (SingleStockInformationDTO si : s.getDetailedStock()) {
                 si.setStockAgingData(null);
+            }
+            List<AllInventoryTransactions> aiList = s.getInwardOutwardHistory();
+            List<AllInventoryTransactions> filtered = aiList.stream().filter(i -> i.getDate().before(closingDate)).collect(Collectors.toList());
+            s.setInwardOutwardHistory(filtered);
+            if (!filtered.isEmpty()) {
+                List<AllInventoryTransactions> iList = filtered.stream().filter(i -> i.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+                Date lastInwardDate = !iList.isEmpty() ? aiList.get(0).getDate() : null;
+                s.setLastInwardDate(lastInwardDate);
             }
         }
     }
@@ -246,8 +254,10 @@ public class StockService {
         try {
             ObjectMapper mapper = new ObjectMapper();
             StockInformationDTO dto = new StockInformationDTO();
-            dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {}));
+            dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
+            }));
             dto.updateDetailedStock(dto.getDetailedStock(), getStockAgingData(aiList, dto.getDetailedStock()));
+            dto.setLastInwardDate(getLastInwardDate(aiList));
             dto.setCategoryName(si.getCategoryName());
             dto.setProductId(si.getProductId());
             dto.setStockStatus(si.getStockStatus());
@@ -263,21 +273,28 @@ public class StockService {
         }
     }
 
+    private Date getLastInwardDate(List<AllInventoryTransactions> aiList) {
+        List<AllInventoryTransactions> filtered = aiList.stream().filter(e -> e.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+        if (!filtered.isEmpty())
+            return filtered.get(0).getDate();
+        return null;
+    }
+
     private StockAgingData getStockAgingData(List<AllInventoryTransactions> aiList, List<SingleStockInformationDTO> detailedStock) {
         StockAgingData stockAgingData = new StockAgingData();
         Map<String, List<StockAgeDTO>> stockMap = new HashMap<String, List<StockAgeDTO>>();
         for (SingleStockInformationDTO si : detailedStock) {
 
-            if (si.getQuantityInHand()<=0)
+            if (si.getQuantityInHand() <= 0)
                 continue;
 
             String warehouse = si.getWarehouseName();
             Double stock = si.getQuantityInHand();
             List<AllInventoryTransactions> aiListFIltered = aiList.stream().filter(ai -> ai.getType()
-                                                                    .equalsIgnoreCase("Inward") && ai.getWarehouseName()
-                                                                    .equalsIgnoreCase(warehouse))
-                                                                    .sorted(Comparator.comparing(AllInventoryTransactions::getId))
-                                                                    .collect(Collectors.toList());
+                            .equalsIgnoreCase("Inward") && ai.getWarehouseName()
+                            .equalsIgnoreCase(warehouse))
+                    .sorted(Comparator.comparing(AllInventoryTransactions::getId))
+                    .collect(Collectors.toList());
             List<StockAgeDTO> stockAges = calculateStockAges(aiListFIltered, stock);
             stockMap.put(warehouse, stockAges);
         }
@@ -378,6 +395,7 @@ public class StockService {
                 si.setMeasurementUnit(dto.getMeasurementUnit());
                 si.setStockStatus(dto.getStockStatus());
                 si.setReorderQuantity(dto.getReorderQuantity());
+                si.setLastInwardDate(dto.getLastInwardDate());
                 exportData.add(si);
             }
         }
