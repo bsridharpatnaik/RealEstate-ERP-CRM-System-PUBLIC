@@ -74,20 +74,29 @@ public class StockService {
 
     public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) throws ParseException {
         StockInformationV2 stockInformation = new StockInformationV2();
+
         if (checkIfHistorical(filterDataList)) {
             return getHistoricalData(page, filterDataList);
         }
 
         Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
-        Page<StockInformationDTO> map;
-        if (spec == null) {
-            Page<StockInformationFromView> list = siRepo.findAll(page);
-            map = list.map(this::convertToDTO);
-        } else
-            map = siRepo.findAll(spec, page).map(this::convertToDTO);
+        Page<StockInformationFromView> list = (spec == null) ? siRepo.findAll(page) : siRepo.findAll(spec, page);
+
+        // Fetch all ProductIds in the current page
+        List<Long> productIds = list.stream()
+                .map(StockInformationFromView::getProductId)
+                .collect(Collectors.toList());
+
+        // Fetch all InventoryTransactions in one go
+        List<AllInventoryTransactions> allInventoryTransactions = allInventoryRepo.findInwardOutwardByProductIds(productIds);
+
+        // Create a map of ProductId to List<AllInventoryTransactions>
+        Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
+                .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
+
+        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId())));
         stockInformation.setStockInformation(map);
         return stockInformation;
-
     }
 
     private StockInformationV2 getHistoricalData(Pageable page, FilterDataList filterDataList) throws ParseException {
@@ -111,9 +120,19 @@ public class StockService {
 
     private StockInformationV2 convertToPageAndSort(List<StockInformationFromView> filteredData, Pageable page) {
         StockInformationV2 returnData = new StockInformationV2();
-        returnData.setStockInformation(convertListStockToPages(sortStockInformationsList(filteredData, page.getSort()), page).map(this::convertToDTO));
+
+        // Step 1: Collect all ProductIds from the filtered data
+        List<Long> productIds = filteredData.stream()
+                .map(StockInformationFromView::getProductId)
+                .collect(Collectors.toList());
+        List<AllInventoryTransactions> allInventoryTransactions = allInventoryRepo.findInwardOutwardByProductIds(productIds);
+        Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
+                .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
+        Page<StockInformationFromView> convertedList = convertListStockToPages(sortStockInformationsList(filteredData, page.getSort()), page);
+        returnData.setStockInformation(convertedList.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()))));
         return returnData;
     }
+
 
     private Page<StockInformationFromView> convertListStockToPages(List<StockInformationFromView> stockInformationsList,
                                                                    Pageable pageable) {
@@ -223,13 +242,11 @@ public class StockService {
     }
 
 
-    private StockInformationDTO convertToDTO(StockInformationFromView si) {
+    private StockInformationDTO convertToDTO(StockInformationFromView si, List<AllInventoryTransactions> aiList) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             StockInformationDTO dto = new StockInformationDTO();
-            List<AllInventoryTransactions> aiList = allInventoryRepo.findInwardOutwardByProductId(si.getProductId());
-            dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
-            }));
+            dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {}));
             dto.updateDetailedStock(dto.getDetailedStock(), getStockAgingData(aiList, dto.getDetailedStock()));
             dto.setCategoryName(si.getCategoryName());
             dto.setProductId(si.getProductId());
@@ -365,18 +382,6 @@ public class StockService {
             }
         }
         return exportData;
-    }
-
-
-    private List<StockInformationExportDAO> transformDataForExport(Page<SingleStockInfo> allStocks) {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        List<StockInformationExportDAO> stockInformationExportDAO = new ArrayList<StockInformationExportDAO>();
-        for (SingleStockInfo ssi : allStocks) {
-            for (Stock stock : ssi.getDetailedStock()) {
-                stockInformationExportDAO.add(new StockInformationExportDAO(ssi, stock));
-            }
-        }
-        return stockInformationExportDAO;
     }
 
     @Transactional(rollbackFor = Exception.class)
