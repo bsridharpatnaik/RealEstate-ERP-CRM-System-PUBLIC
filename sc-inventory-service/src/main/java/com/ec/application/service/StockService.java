@@ -1,6 +1,5 @@
 package com.ec.application.service;
 
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -28,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.common.Filters.FilterAttributeData;
 import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.StockSpecification;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -67,27 +65,29 @@ public class StockService {
     InventoryNotificationService inventoryNotificationService;
 
     @Autowired
+    AllInventoryRepo allInventoryRepo;
+
+    @Autowired
     StockInformationRepo siRepo;
 
     Logger log = LoggerFactory.getLogger(StockService.class);
 
     public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) throws ParseException {
         StockInformationV2 stockInformation = new StockInformationV2();
-
-        Boolean isHistorical = checkIfHistorical(filterDataList);
-        if (!isHistorical) {
-            Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
-            Page<StockInformationDTO> map;
-            if (spec == null) {
-                Page<StockInformationFromView> list = siRepo.findAll(page);
-                map = list.map(this::convertToDTO);
-            }else
-                map = siRepo.findAll(spec, page).map(this::convertToDTO);
-            stockInformation.setStockInformation(map);
-            return stockInformation;
-        } else {
+        if (checkIfHistorical(filterDataList)) {
             return getHistoricalData(page, filterDataList);
         }
+
+        Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
+        Page<StockInformationDTO> map;
+        if (spec == null) {
+            Page<StockInformationFromView> list = siRepo.findAll(page);
+            map = list.map(this::convertToDTO);
+        } else
+            map = siRepo.findAll(spec, page).map(this::convertToDTO);
+        stockInformation.setStockInformation(map);
+        return stockInformation;
+
     }
 
     private StockInformationV2 getHistoricalData(Pageable page, FilterDataList filterDataList) throws ParseException {
@@ -97,14 +97,21 @@ public class StockService {
         List<StockInformationFromView> dbData = siRepo.getHistoricalStock(closingDate);
         List<StockInformationFromView> filteredData = filterStockInformation(dbData, filterDataList);
         returnData = convertToPageAndSort(filteredData, page);
+        removeStockAgingForHistorical(returnData);
         return returnData;
+    }
+
+    private void removeStockAgingForHistorical(StockInformationV2 returnData) {
+        for(StockInformationDTO s : returnData.getStockInformation().getContent()){
+            for(SingleStockInformationDTO si : s.getDetailedStock()){
+                si.setStockAgingData(null);
+            }
+        }
     }
 
     private StockInformationV2 convertToPageAndSort(List<StockInformationFromView> filteredData, Pageable page) {
         StockInformationV2 returnData = new StockInformationV2();
-        filteredData = sortStockInformationsList(filteredData, page.getSort());
-        Page<StockInformationFromView> pagedData = convertListStockToPages(filteredData, page);
-        returnData.setStockInformation(pagedData.map(this::convertToDTO));
+        returnData.setStockInformation(convertListStockToPages(sortStockInformationsList(filteredData, page.getSort()), page).map(this::convertToDTO));
         return returnData;
     }
 
@@ -112,7 +119,7 @@ public class StockService {
                                                                    Pageable pageable) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         int start = (int) pageable.getOffset();
-        int end = (start + pageable.getPageSize()) > stockInformationsList.size() ? stockInformationsList.size(): (start + pageable.getPageSize());
+        int end = Math.min((start + pageable.getPageSize()), stockInformationsList.size());
         stockInformationsList = sortStockInformationsList(stockInformationsList, pageable.getSort());
         return new PageImpl<StockInformationFromView>(stockInformationsList.subList(start, end), pageable,
                 stockInformationsList.size());
@@ -220,8 +227,10 @@ public class StockService {
         try {
             ObjectMapper mapper = new ObjectMapper();
             StockInformationDTO dto = new StockInformationDTO();
+            List<AllInventoryTransactions> aiList = allInventoryRepo.findInwardOutwardByProductId(si.getProductId());
             dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
             }));
+            dto.updateDetailedStock(dto.getDetailedStock(), getStockAgingData(aiList, dto.getDetailedStock()));
             dto.setCategoryName(si.getCategoryName());
             dto.setProductId(si.getProductId());
             dto.setStockStatus(si.getStockStatus());
@@ -229,11 +238,107 @@ public class StockService {
             dto.setProductName(si.getProductName());
             dto.setReorderQuantity(si.getReorderQuantity());
             dto.setTotalQuantityInHand(si.getTotalQuantityInHand());
+            dto.setInwardOutwardHistory(aiList);
             return dto;
         } catch (Exception e) {
-        	System.out.println(e);
+            System.out.println(e);
             return null;
         }
+    }
+
+    private StockAgingData getStockAgingData(List<AllInventoryTransactions> aiList, List<SingleStockInformationDTO> detailedStock) {
+        StockAgingData stockAgingData = new StockAgingData();
+        Map<String, List<StockAgeDTO>> stockMap = new HashMap<String, List<StockAgeDTO>>();
+        for (SingleStockInformationDTO si : detailedStock) {
+
+            if (si.getQuantityInHand()<=0)
+                continue;
+
+            String warehouse = si.getWarehouseName();
+            Double stock = si.getQuantityInHand();
+            List<AllInventoryTransactions> aiListFIltered = aiList.stream().filter(ai -> ai.getType()
+                                                                    .equalsIgnoreCase("Inward") && ai.getWarehouseName()
+                                                                    .equalsIgnoreCase(warehouse))
+                                                                    .sorted(Comparator.comparing(AllInventoryTransactions::getId))
+                                                                    .collect(Collectors.toList());
+            List<StockAgeDTO> stockAges = calculateStockAges(aiListFIltered, stock);
+            stockMap.put(warehouse, stockAges);
+        }
+        stockAgingData.setStockAge(stockMap);
+        return stockAgingData;
+    }
+
+    private List<StockAgeDTO> calculateStockAges(List<AllInventoryTransactions> aiList, Double currentStock) {
+        List<StockAgeDTO> stockAges = new ArrayList<>();
+        Double accumulatedQuantity = 0.0;
+        Date today = new Date(); // Current date
+
+        for (AllInventoryTransactions entry : aiList) {
+            if (currentStock <= 0) break;
+
+            Double quantity = entry.getQuantity();
+            Date entryDate = entry.getDate();
+
+            if (currentStock >= quantity) {
+                stockAges.add(new StockAgeDTO(quantity, entryDate, daysBetween(entryDate, today)));
+                currentStock -= quantity;
+            } else {
+                stockAges.add(new StockAgeDTO(currentStock, entryDate, daysBetween(entryDate, today)));
+                currentStock = 0.0;
+            }
+        }
+        return stockAges;
+    }
+
+    private static String daysBetween(Date startDate, Date endDate) {
+        long differenceInMillis = endDate.getTime() - startDate.getTime();
+        return convertDaysToWords((int) (differenceInMillis / (1000 * 60 * 60 * 24)));
+    }
+
+    public static String convertDaysToWords(int days) {
+        if (days < 0) {
+            throw new IllegalArgumentException("Days cannot be negative");
+        }
+
+        int years = days / 365;
+        days %= 365;
+
+        int months = days / 30;
+        days %= 30;
+
+        int weeks = days / 7;
+        days %= 7;
+
+        StringBuilder result = new StringBuilder();
+
+        if (years > 0) {
+            result.append(years).append(" year").append(years > 1 ? "s" : "");
+        }
+
+        if (months > 0) {
+            if (result.length() > 0) result.append(", ");
+            result.append(months).append(" month").append(months > 1 ? "s" : "");
+        }
+
+        if (weeks > 0) {
+            if (result.length() > 0) result.append(", ");
+            result.append(weeks).append(" week").append(weeks > 1 ? "s" : "");
+        }
+
+        if (days > 0) {
+            if (result.length() > 0) result.append(", ");
+            result.append(days).append(" day").append(days > 1 ? "s" : "");
+        }
+
+        String resultString = result.toString();
+
+        // Handle the case where there are multiple units by adding "and" before the last unit
+        int lastCommaIndex = resultString.lastIndexOf(", ");
+        if (lastCommaIndex != -1) {
+            resultString = resultString.substring(0, lastCommaIndex) + " and" + resultString.substring(lastCommaIndex + 1);
+        }
+
+        return resultString.isEmpty() ? "0 days" : resultString;
     }
 
     public NameAndProjectionDataForDropDown getStockDropdownValues() {
@@ -387,11 +492,10 @@ public class StockService {
     }
 
     public void deleteStockForProduct(Long id) throws Exception {
-        Page<Stock> stockList = stockRepo.findStockForProduct(PageRequest.of(0, Integer.MAX_VALUE),id);
+        Page<Stock> stockList = stockRepo.findStockForProduct(PageRequest.of(0, Integer.MAX_VALUE), id);
         List<Stock> stocksToBeDeleted = new ArrayList<>();
-        for (Stock stock : stockList)
-        {
-            if(stock.getQuantityInHand()>0)
+        for (Stock stock : stockList) {
+            if (stock.getQuantityInHand() > 0)
                 throw new Exception("Cannot delete Stock/Product. Contact Administrator");
             stockRepo.softDelete(stock);
         }
