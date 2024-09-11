@@ -74,20 +74,30 @@ public class StockService {
 
     public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) throws ParseException {
         StockInformationV2 stockInformation = new StockInformationV2();
+
         if (checkIfHistorical(filterDataList)) {
             return getHistoricalData(page, filterDataList);
         }
 
         Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
-        Page<StockInformationDTO> map;
-        if (spec == null) {
-            Page<StockInformationFromView> list = siRepo.findAll(page);
-            map = list.map(this::convertToDTO);
-        } else
-            map = siRepo.findAll(spec, page).map(this::convertToDTO);
+        Page<StockInformationFromView> list = (spec == null) ? siRepo.findAll(page) : siRepo.findAll(spec, page);
+
+        // Fetch all ProductIds in the current page
+        List<Long> productIds = list.stream()
+                .map(StockInformationFromView::getProductId)
+                .collect(Collectors.toList());
+
+        // Fetch all InventoryTransactions in one go
+        List<AllInventoryTransactions> allInventoryTransactions = allInventoryRepo.findInwardOutwardByProductIds(productIds);
+
+        // Create a map of ProductId to List<AllInventoryTransactions>
+        Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
+                .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
+
+        // This wasted 5 hours for me. There can be records that have entry in stock but there may be zero inward/outward records. May be after adding inward, they deleted it.
+        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()) == null?new ArrayList<>():transactionsMap.get(si.getProductId())));
         stockInformation.setStockInformation(map);
         return stockInformation;
-
     }
 
     private StockInformationV2 getHistoricalData(Pageable page, FilterDataList filterDataList) throws ParseException {
@@ -97,23 +107,41 @@ public class StockService {
         List<StockInformationFromView> dbData = siRepo.getHistoricalStock(closingDate);
         List<StockInformationFromView> filteredData = filterStockInformation(dbData, filterDataList);
         returnData = convertToPageAndSort(filteredData, page);
-        removeStockAgingForHistorical(returnData);
+        updateStockAgingForHistorical(returnData, closingDate);
         return returnData;
     }
 
-    private void removeStockAgingForHistorical(StockInformationV2 returnData) {
-        for(StockInformationDTO s : returnData.getStockInformation().getContent()){
-            for(SingleStockInformationDTO si : s.getDetailedStock()){
+    private void updateStockAgingForHistorical(StockInformationV2 returnData, Date closingDate) {
+        for (StockInformationDTO s : returnData.getStockInformation().getContent()) {
+            for (SingleStockInformationDTO si : s.getDetailedStock()) {
                 si.setStockAgingData(null);
+            }
+            List<AllInventoryTransactions> aiList = s.getInwardOutwardHistory();
+            List<AllInventoryTransactions> filtered = aiList.stream().filter(i -> i.getDate().before(closingDate)).collect(Collectors.toList());
+            s.setInwardOutwardHistory(filtered);
+            if (!filtered.isEmpty()) {
+                List<AllInventoryTransactions> iList = filtered.stream().filter(i -> i.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+                Date lastInwardDate = !iList.isEmpty() ? aiList.get(0).getDate() : null;
+                s.setLastInwardDate(lastInwardDate);
             }
         }
     }
 
     private StockInformationV2 convertToPageAndSort(List<StockInformationFromView> filteredData, Pageable page) {
         StockInformationV2 returnData = new StockInformationV2();
-        returnData.setStockInformation(convertListStockToPages(sortStockInformationsList(filteredData, page.getSort()), page).map(this::convertToDTO));
+
+        // Step 1: Collect all ProductIds from the filtered data
+        List<Long> productIds = filteredData.stream()
+                .map(StockInformationFromView::getProductId)
+                .collect(Collectors.toList());
+        List<AllInventoryTransactions> allInventoryTransactions = allInventoryRepo.findInwardOutwardByProductIds(productIds);
+        Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
+                .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
+        Page<StockInformationFromView> convertedList = convertListStockToPages(sortStockInformationsList(filteredData, page.getSort()), page);
+        returnData.setStockInformation(convertedList.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()))));
         return returnData;
     }
+
 
     private Page<StockInformationFromView> convertListStockToPages(List<StockInformationFromView> stockInformationsList,
                                                                    Pageable pageable) {
@@ -223,14 +251,14 @@ public class StockService {
     }
 
 
-    private StockInformationDTO convertToDTO(StockInformationFromView si) {
+    private StockInformationDTO convertToDTO(StockInformationFromView si, List<AllInventoryTransactions> aiList) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             StockInformationDTO dto = new StockInformationDTO();
-            List<AllInventoryTransactions> aiList = allInventoryRepo.findInwardOutwardByProductId(si.getProductId());
             dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
             }));
             dto.updateDetailedStock(dto.getDetailedStock(), getStockAgingData(aiList, dto.getDetailedStock()));
+            dto.setLastInwardDate(getLastInwardDate(aiList));
             dto.setCategoryName(si.getCategoryName());
             dto.setProductId(si.getProductId());
             dto.setStockStatus(si.getStockStatus());
@@ -246,21 +274,27 @@ public class StockService {
         }
     }
 
+    private Date getLastInwardDate(List<AllInventoryTransactions> aiList) {
+        List<AllInventoryTransactions> filtered = aiList.stream().filter(e -> e.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+        if (!filtered.isEmpty())
+            return filtered.get(0).getDate();
+        return null;
+    }
+
     private StockAgingData getStockAgingData(List<AllInventoryTransactions> aiList, List<SingleStockInformationDTO> detailedStock) {
         StockAgingData stockAgingData = new StockAgingData();
         Map<String, List<StockAgeDTO>> stockMap = new HashMap<String, List<StockAgeDTO>>();
         for (SingleStockInformationDTO si : detailedStock) {
-
-            if (si.getQuantityInHand()<=0)
+            if (si.getQuantityInHand() <= 0)
                 continue;
 
             String warehouse = si.getWarehouseName();
             Double stock = si.getQuantityInHand();
             List<AllInventoryTransactions> aiListFIltered = aiList.stream().filter(ai -> ai.getType()
-                                                                    .equalsIgnoreCase("Inward") && ai.getWarehouseName()
-                                                                    .equalsIgnoreCase(warehouse))
-                                                                    .sorted(Comparator.comparing(AllInventoryTransactions::getId))
-                                                                    .collect(Collectors.toList());
+                            .equalsIgnoreCase("Inward") && ai.getWarehouseName()
+                            .equalsIgnoreCase(warehouse))
+                    .sorted(Comparator.comparing(AllInventoryTransactions::getId))
+                    .collect(Collectors.toList());
             List<StockAgeDTO> stockAges = calculateStockAges(aiListFIltered, stock);
             stockMap.put(warehouse, stockAges);
         }
@@ -361,22 +395,11 @@ public class StockService {
                 si.setMeasurementUnit(dto.getMeasurementUnit());
                 si.setStockStatus(dto.getStockStatus());
                 si.setReorderQuantity(dto.getReorderQuantity());
+                si.setLastInwardDate(dto.getLastInwardDate());
                 exportData.add(si);
             }
         }
         return exportData;
-    }
-
-
-    private List<StockInformationExportDAO> transformDataForExport(Page<SingleStockInfo> allStocks) {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        List<StockInformationExportDAO> stockInformationExportDAO = new ArrayList<StockInformationExportDAO>();
-        for (SingleStockInfo ssi : allStocks) {
-            for (Stock stock : ssi.getDetailedStock()) {
-                stockInformationExportDAO.add(new StockInformationExportDAO(ssi, stock));
-            }
-        }
-        return stockInformationExportDAO;
     }
 
     @Transactional(rollbackFor = Exception.class)

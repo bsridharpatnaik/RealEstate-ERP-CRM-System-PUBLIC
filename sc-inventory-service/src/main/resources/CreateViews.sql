@@ -719,7 +719,6 @@ DELIMITER ;
 
 
 
-drop view IF EXISTS all_inventory;
 CREATE OR replace VIEW all_inventory_view
 AS
   SELECT row_number()
@@ -729,7 +728,7 @@ AS
          tx.keyid,
          tx.entryid,
          tx.date, -- index
-         tx.contactid,
+         CASE WHEN tx.contactid = '' THEN 404 ELSE tx.contactid END as contactid,
          tx.warehouseid,
          tx.Productid,
          tx.quantity,
@@ -739,10 +738,10 @@ AS
          tx.Product_name, -- index
          tx.category_name, -- index
          tx.measurementunit,
-         c.name,
+         CASE WHEN c.name IS NULL THEN  '' ELSE c.name END as name,
          c.mobileno,
          c.emailid,
-         c.contacttype,
+         CASE WHEN c.contacttype IS NULL THEN  '' ELSE c.contacttype END as contacttype,
          tx.warehouse_id,
          tx.warehousename -- index
   FROM   (SELECT 'Inward'                         AS type,
