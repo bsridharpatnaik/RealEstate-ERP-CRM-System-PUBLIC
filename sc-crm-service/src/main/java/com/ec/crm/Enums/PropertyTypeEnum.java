@@ -48,6 +48,8 @@ public enum PropertyTypeEnum implements Serializable {
     KALPAVRIKSH,
     SUNCITYNX,
     SMARTCITY,
+    Bx_BLOCK,
+    G_BLOCK,
     CITYCENTER;
 
     public static List<String> getValidPropertyType() {
@@ -92,7 +94,9 @@ public enum PropertyTypeEnum implements Serializable {
                     D_BLOCK,
                     E_BLOCK,
                     F_BLOCK,
-                    L_BLOCK
+                    L_BLOCK,
+                    Bx_BLOCK,
+                    G_BLOCK
             ));
         }
 
