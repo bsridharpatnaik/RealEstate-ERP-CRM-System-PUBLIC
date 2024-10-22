@@ -1,10 +1,12 @@
 package com.ec.crm.multitenant;
 
+import com.ec.crm.ReusableClasses.TenantHelper;
 import com.google.gson.Gson;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -21,6 +23,9 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 	private Gson gson = new Gson();
     @Value("${spring.profiles.active}")
     private String profile;
+
+    @Autowired
+    TenantHelper tenantHelper;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -40,18 +45,8 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return false;
         }
-        com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(appendNewForNewSuncity(tenantName));
+        com.ec.crm.multitenant.ThreadLocalStorage.setTenantName(tenantHelper.appendNewForNewSuncity(tenantName));
         return true;
-    }
-
-    private String appendNewForNewSuncity(String tenantName) {
-        if (profile.contains("sc-") && (profile.contains("new"))) {
-            tenantName = "new" + tenantName;
-        }
-        if(profile.contains("temp"))
-            tenantName = tenantName + "temp";
-
-        return tenantName;
     }
 
     @Override
