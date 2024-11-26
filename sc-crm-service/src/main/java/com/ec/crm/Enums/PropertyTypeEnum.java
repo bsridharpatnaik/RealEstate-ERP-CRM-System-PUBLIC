@@ -50,7 +50,11 @@ public enum PropertyTypeEnum implements Serializable {
     SMARTCITY,
     Bx_BLOCK,
     G_BLOCK,
-    CITYCENTER;
+    CITYCENTER,
+    A,
+    B,
+    L_PHASE_1,
+    L_PHASE_2;
 
     public static List<String> getValidPropertyType() {
         List<PropertyTypeEnum> propertyTypes = null;
@@ -127,6 +131,15 @@ public enum PropertyTypeEnum implements Serializable {
                     SUNCITYNX,
                     SMARTCITY,
                     CITYCENTER
+            ));
+        }
+
+        if (tenantName.toLowerCase().contains("dhabba")) {
+            propertyTypes = new ArrayList<>(EnumSet.of(
+                    A,
+                    B,
+                    L_PHASE_1,
+                    L_PHASE_2
             ));
         }
 
