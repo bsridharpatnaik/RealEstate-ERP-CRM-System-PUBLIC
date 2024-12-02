@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.ec.crm.Data.MapForDashboardStatsDAO;
 import com.ec.crm.Data.PipelineForDashboard;
+import com.ec.crm.Enums.ActivityTypeEnum;
 import com.ec.crm.Enums.InstanceEnum;
 import com.ec.crm.Enums.PropertyTypeEnum;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ public class SetLeadGenerated implements Runnable {
 
         log.info("Fetching stats for Lead Generated");
             dashboardPipelineReturnData.setLeadGenerated(
-                    new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404).count(),
+                    new MapForPipelineAndActivities(data.stream().filter(c -> c.getCreatorId() == 404 && c.getActivityType().equals(ActivityTypeEnum.Call)).count(),
                             data.stream().filter(c -> c.getCreatorId() == 404).collect(Collectors.groupingBy(c ->
                             {
 
