@@ -933,3 +933,72 @@ CREATE OR REPLACE VIEW stockInformation as
     INNER JOIN Warehouse w on w.warehouse_id = s.warehouseName
 	WHERE s.is_deleted=0
 	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
+
+-- Stock Report
+CREATE OR REPLACE VIEW stock_report AS
+WITH product_stocks AS (
+    SELECT
+        s.productId,
+        SUM(s.quantityInHand) as total_quantity
+    FROM Stock s
+    WHERE s.is_deleted = 0
+    GROUP BY s.productId
+    HAVING SUM(s.quantityInHand) > 0
+),
+last_inward_dates AS (
+    SELECT DISTINCT
+        ioe.productId,
+        i.date as last_inward_date,
+        co.name as supplier_name
+    FROM inward_outward_entries ioe
+    JOIN inwardinventory_entry ie ON ioe.entryid = ie.entryId
+    JOIN inward_inventory i ON ie.inwardid = i.inwardid
+    JOIN contacts co ON i.contactId = co.contactId
+    WHERE ioe.is_deleted = 0
+    AND (ioe.productId, i.date) IN (
+        SELECT
+            ioe2.productId,
+            MAX(i2.date)
+        FROM inward_outward_entries ioe2
+        JOIN inwardinventory_entry ie2 ON ioe2.entryid = ie2.entryId
+        JOIN inward_inventory i2 ON ie2.inwardid = i2.inwardid
+        WHERE ioe2.is_deleted = 0
+        GROUP BY ioe2.productId
+    )
+)
+SELECT
+    ROW_NUMBER() OVER (ORDER BY COALESCE(lid.last_inward_date, '1900-01-01') ASC, c.category_name, p.product_name) as sr_no,
+    lid.last_inward_date,
+    lid.supplier_name,
+    c.category_name,
+    p.product_name as item_name,
+    ps.total_quantity as quantity,
+    p.measurementUnit as measurement_unit,
+    CONCAT_WS(', ',
+        CASE
+            WHEN FLOOR(DATEDIFF(CURRENT_DATE, lid.last_inward_date)/365) > 0
+            THEN CONCAT(FLOOR(DATEDIFF(CURRENT_DATE, lid.last_inward_date)/365), ' years')
+            ELSE NULL
+        END,
+        CASE
+            WHEN FLOOR((DATEDIFF(CURRENT_DATE, lid.last_inward_date) % 365)/30) > 0
+            THEN CONCAT(FLOOR((DATEDIFF(CURRENT_DATE, lid.last_inward_date) % 365)/30), ' months')
+            ELSE NULL
+        END,
+        CASE
+            WHEN FLOOR((DATEDIFF(CURRENT_DATE, lid.last_inward_date) % 30)/7) > 0
+            THEN CONCAT(FLOOR((DATEDIFF(CURRENT_DATE, lid.last_inward_date) % 30)/7), ' weeks')
+            ELSE NULL
+        END,
+        CASE
+            WHEN (DATEDIFF(CURRENT_DATE, lid.last_inward_date) % 7) > 0
+            THEN CONCAT((DATEDIFF(CURRENT_DATE, lid.last_inward_date) % 7), ' days')
+            ELSE NULL
+        END
+    ) as aging_period,
+    '' as aging_reason,
+    NULL as remark
+FROM product_stocks ps
+JOIN Product p ON ps.productId = p.productId
+JOIN Category c ON p.categoryId = c.categoryId
+LEFT JOIN last_inward_dates lid ON ps.productId = lid.productId;
