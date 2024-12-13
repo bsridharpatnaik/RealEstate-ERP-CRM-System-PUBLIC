@@ -1,32 +1,76 @@
-/.*
-**/.idea/**
-ec-common-service/.*
-ec-common-service/target/**
-ec-inventory-service/.classpath
-ec-inventory-service/.factorypath
-ec-inventory-service/.project
-ec-inventory-service/.settings/**
-ec-inventory-service/.DS_Store
-ec-inventory-service/.DS_Store
-ec-inventory-service/.DS_Store
-ec-inventory-service/src/.DS_Store
-ec-inventory-service/src/main/.DS_Store
-ec-inventory-service/.DS_Store
-ec-inventory-service/.DS_Store
-ec-inventory-service/target/**
-ec-inventory-service/.DS_Store
+# Maven
+target/
+**/target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+**/.project
+**/.classpath
+**/.settings/
+**/.factorypath
+**/*.prefs
+**/*.component
+**/*.xml
+**/*.container
+**/*.name
+**/org.eclipse.*
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Compiled Java classes
+*_java
+*.class
+
+# Logs
+logs/
+*.log
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs
+hs_err_pid*
+
+# Generated Sources
+**/generated-sources/**
+**/generated-test-sources/**
+
+# Local configuration
+application-*.properties
+!application.properties
+!application-ec-local.properties
+
+# OS generated files
 .DS_Store
-**/**.class
-**/**.classpath
-**/target/**
-**/logs/**
-ec-crm-service/.settings/org.eclipse.wst.common.project.facet.core.xml
-ec-crm-service/.settings/org.eclipse.wst.common.component
-ec-crm-service/.settings/org.eclipse.jdt.core.prefs
-ec-crm-service/.settings/org.eclipse.jdt.apt.core.prefs
-ec-crm-service/.settings/org.eclipse.core.resources.prefs
-ec-crm-service/.project
-ec-crm-service/.factorypath
-sc-common-service/common-service.iml
-sc-inventory-service/com.ec.iml
-sc-inventory-service/com.ec.iml
+**/.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
