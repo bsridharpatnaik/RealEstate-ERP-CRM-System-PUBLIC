@@ -361,9 +361,12 @@ public class MachineryOnRentService {
             dao.setStartDate(mor.getStartDate());
             dao.setEndDate(mor.getEndDate());
             dao.setStartDateTime(mor.getStartDateTime());
-            dao.setInitialMeterReading(mor.getInitialMeterReading());
-            dao.setEndMeterReading(mor.getEndMeterReading());
-            dao.setNoOfTrips(mor.getNoOfTrips());
+            dao.setEndDateTime(mor.getEndDateTime());
+            
+            // Handle meter readings with null checks
+            dao.setInitialMeterReading(mor.getInitialMeterReading() != null ? mor.getInitialMeterReading() : 0.0);
+            dao.setEndMeterReading(mor.getEndMeterReading() != null ? mor.getEndMeterReading() : 0.0);
+            dao.setNoOfTrips(mor.getNoOfTrips() != null ? mor.getNoOfTrips() : 0.0);
             dao.setRate(mor.getRate());
             dao.setAmountCharged(mor.getAmountCharged());
             dao.setVehicleNo(mor.getVehicleNo());
