@@ -21,10 +21,12 @@ import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -105,5 +107,6 @@ public class MachineryOnRent extends ReusableFields
 	Double endMeterReading;
 	Double noOfTrips;
 	Double rate;
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double amountCharged;
 }

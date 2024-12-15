@@ -5,6 +5,8 @@ import java.util.Date;
 import com.ec.application.model.MORRentModeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 
 public class MORExportDAO
 {
@@ -50,6 +52,8 @@ public class MORExportDAO
 	Double endMeterReading;
 	Double noOfTrips;
 	Double rate;
+
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double amountCharged;
 
 	public String getMrnGrn() 
