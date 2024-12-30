@@ -137,9 +137,8 @@ public class ApiLogService {
         log.setTenantName(tenant);
         log.setUrl(url);
         log.setMethod(method);
-        log.setPayload(payload);
+        log.setPayload(payload != null ? payload.substring(0, Math.min(payload.length(), 255)) : null);
         log.setUsername(username);
-        log.setTenantName(tenant); // Make sure this field is available in ApiLog
         log.setTimestamp(LocalDateTime.now());
         apiLogRepository.save(log);
     }
