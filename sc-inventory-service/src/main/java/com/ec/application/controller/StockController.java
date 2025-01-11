@@ -8,6 +8,7 @@ import java.util.List;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.*;
 import com.ec.application.model.StockInformationFromView;
+import com.ec.application.model.StockReport;
 import com.ec.application.repository.StockInformationRepo;
 import com.ec.application.service.StockInformationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,7 @@ public class StockController {
 
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
-    public List<StockInformationExportDAO> returnAllStockForExport(@RequestBody FilterDataList filterDataList)
+    public List<StockReport> returnAllStockForExport(@RequestBody FilterDataList filterDataList)
             throws Exception {
         return stockService.findStockForAllForExport(filterDataList);
     }

@@ -3,6 +3,7 @@ package com.ec.crm.aspects;
 import com.ec.crm.Data.UserReturnData;
 import com.ec.crm.Model.Lead;
 import com.ec.crm.Repository.LeadRepo;
+import com.ec.crm.ReusableClasses.TenantHelper;
 import com.ec.crm.Service.UserDetailsService;
 import com.ec.crm.multitenant.ThreadLocalStorage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class AccessInterceptor implements HandlerInterceptor {
     @Autowired
     private LeadRepo leadRepo;
 
+    @Autowired
+    TenantHelper tenantHelper;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (handler instanceof HandlerMethod) {
@@ -46,8 +50,10 @@ public class AccessInterceptor implements HandlerInterceptor {
                     if (id != null) {
                         // Extract tenant-id from the header
                         String tenantId = request.getHeader("tenant-id");
+
                         if (tenantId != null && !tenantId.isEmpty()) {
-                            ThreadLocalStorage.setTenantName(tenantId);
+                            //append new for suncity
+                            ThreadLocalStorage.setTenantName(tenantHelper.appendNewForNewSuncity(tenantId));
                         } else {
                             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing tenant-id header");
                             return false;
@@ -58,7 +64,7 @@ public class AccessInterceptor implements HandlerInterceptor {
                                 .map(String::toLowerCase)
                                 .collect(Collectors.toList());
 
-                        if (!roles.contains("admin") && !roles.contains("manager")) {
+                        if (!roles.contains("admin") && !roles.contains("crm-manager")) {
                             Optional<Lead> leadOpt = leadRepo.findById(id);
                             if (!leadOpt.isPresent()) {
                                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Lead with ID -" + id + " Not Found");

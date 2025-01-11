@@ -35,6 +35,9 @@ public class StockService {
     StockRepo stockRepo;
 
     @Autowired
+    StockReportRepository stockReportRepository;
+
+    @Autowired
     ProductRepo productRepo;
 
     @Autowired
@@ -380,26 +383,8 @@ public class StockService {
         return populateDropdownService.fetchData("stock");
     }
 
-    public List<StockInformationExportDAO> findStockForAllForExport(FilterDataList filterDataList) throws Exception {
-        StockInformationV2 fetchStockInformation = fetchStockInformation(PageRequest.of(0, Integer.MAX_VALUE), filterDataList);
-        List<StockInformationExportDAO> exportData = new ArrayList<StockInformationExportDAO>();
-        for (StockInformationDTO dto : fetchStockInformation.getStockInformation()) {
-            for (SingleStockInformationDTO sInfo : dto.getDetailedStock()) {
-                StockInformationExportDAO si = new StockInformationExportDAO();
-                si.setWarehouseStock(sInfo.getQuantityInHand());
-                si.setTotalStock(dto.getTotalQuantityInHand().toString());
-                si.setWarehouse(sInfo.getWarehouseName());
-                si.setInventory(dto.getProductName());
-                si.setCategory(dto.getCategoryName());
-                si.setProductId(dto.getProductId());
-                si.setMeasurementUnit(dto.getMeasurementUnit());
-                si.setStockStatus(dto.getStockStatus());
-                si.setReorderQuantity(dto.getReorderQuantity());
-                si.setLastInwardDate(dto.getLastInwardDate());
-                exportData.add(si);
-            }
-        }
-        return exportData;
+    public List<StockReport> findStockForAllForExport(FilterDataList filterDataList) throws Exception {
+            return stockReportRepository.findAll();
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -497,10 +482,10 @@ public class StockService {
         List<FilterAttributeData> filterData = new ArrayList<FilterAttributeData>();
         filterDataList.setFilterData(filterData);
         log.info("Fetching stock information");
-        List<StockInformationExportDAO> dataForInsertList = stockService.findStockForAllForExport(filterDataList);
+        //List<StockInformationExportDAO> dataForInsertList = stockService.findStockForAllForExport(filterDataList);
 
         log.info("Sending email for stock information");
-        emailHelper.sendEmailForMorningStockNottification(dataForInsertList);
+        //emailHelper.sendEmailForMorningStockNottification(dataForInsertList);
         log.info("saving stock information to DB");
         //stockHistoryService.insertLatestStockHistory(dataForInsertList);
     }

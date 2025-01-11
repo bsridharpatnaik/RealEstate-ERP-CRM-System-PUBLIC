@@ -5,6 +5,8 @@ import java.util.Date;
 import com.ec.application.model.MORRentModeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 
 public class MORExportDAO
 {
@@ -50,19 +52,23 @@ public class MORExportDAO
 	Double endMeterReading;
 	Double noOfTrips;
 	Double rate;
+
+	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double amountCharged;
 
-	public String getMrnGrn() {
-		return mrnGrn;
+	public String getMrnGrn() 
+	{
+		return mrnGrn != null ? mrnGrn : "";
 	}
 
-	public void setMrnGrn(String mrnGrn) {
+	public void setMrnGrn(String mrnGrn) 
+	{
 		this.mrnGrn = mrnGrn;
 	}
 
 	public Long getMorid()
 	{
-		return morid;
+		return morid != null ? morid : 0L;
 	}
 
 	public void setMorid(Long morid)
@@ -72,7 +78,7 @@ public class MORExportDAO
 
 	public Date getDate()
 	{
-		return date;
+		return date != null ? date : new Date();
 	}
 
 	public void setDate(Date date)
@@ -82,10 +88,7 @@ public class MORExportDAO
 
 	public String getMachinery()
 	{
-		if (this.machinery == null)
-			return "";
-		else
-			return machinery;
+		return machinery != null ? machinery : "";
 	}
 
 	public void setMachinery(String machinery)
@@ -95,10 +98,7 @@ public class MORExportDAO
 
 	public String getSupplier()
 	{
-		if (this.supplier == null)
-			return "";
-		else
-			return supplier;
+		return supplier != null ? supplier : "";
 	}
 
 	public void setSupplier(String supplier)
@@ -108,10 +108,7 @@ public class MORExportDAO
 
 	public String getContractor()
 	{
-		if (this.contractor == null)
-			return "";
-		else
-			return contractor;
+		return contractor != null ? contractor : "";
 	}
 
 	public void setContractor(String contractor)
@@ -121,10 +118,7 @@ public class MORExportDAO
 
 	public String getBuildingUnit()
 	{
-		if (this.buildingUnit == null)
-			return "";
-		else
-			return buildingUnit;
+		return buildingUnit != null ? buildingUnit : "";
 	}
 
 	public void setBuildingUnit(String buildingUnit)
@@ -134,10 +128,7 @@ public class MORExportDAO
 
 	public String getVehicleNo()
 	{
-		if (this.vehicleNo == null)
-			return "";
-		else
-			return vehicleNo;
+		return vehicleNo != null ? vehicleNo : "";
 	}
 
 	public void setVehicleNo(String vehicleNo)
@@ -147,10 +138,7 @@ public class MORExportDAO
 
 	public String getAdditionalNotes()
 	{
-		if (this.additionalNotes == null)
-			return "";
-		else
-			return additionalNotes;
+		return additionalNotes != null ? additionalNotes : "";
 	}
 
 	public void setAdditionalNotes(String additionalNotes)
@@ -160,7 +148,7 @@ public class MORExportDAO
 
 	public MORRentModeEnum getMode()
 	{
-		return mode;
+		return mode;  // Enum should be handled at service layer
 	}
 
 	public void setMode(MORRentModeEnum mode)
@@ -170,7 +158,7 @@ public class MORExportDAO
 
 	public Date getStartDateTime()
 	{
-		return startDateTime;
+		return startDateTime != null ? startDateTime : null;  // Date can be null based on mode
 	}
 
 	public void setStartDateTime(Date startDateTime)
@@ -180,7 +168,7 @@ public class MORExportDAO
 
 	public Date getEndDateTime()
 	{
-		return endDateTime;
+		return endDateTime != null ? endDateTime : null;  // Date can be null based on mode
 	}
 
 	public void setEndDateTime(Date endDateTime)
@@ -190,7 +178,7 @@ public class MORExportDAO
 
 	public Date getStartDate()
 	{
-		return startDate;
+		return startDate != null ? startDate : null;  // Date can be null based on mode
 	}
 
 	public void setStartDate(Date startDate)
@@ -200,7 +188,7 @@ public class MORExportDAO
 
 	public Date getEndDate()
 	{
-		return endDate;
+		return endDate != null ? endDate : null;  // Date can be null based on mode
 	}
 
 	public void setEndDate(Date endDate)
@@ -210,10 +198,7 @@ public class MORExportDAO
 
 	public Double getInitialMeterReading()
 	{
-		if (this.rate == null)
-			return (double) 0;
-		else
-			return initialMeterReading;
+		return initialMeterReading != null ? initialMeterReading : 0.0;
 	}
 
 	public void setInitialMeterReading(Double initialMeterReading)
@@ -223,10 +208,7 @@ public class MORExportDAO
 
 	public Double getEndMeterReading()
 	{
-		if (this.rate == null)
-			return (double) 0;
-		else
-			return endMeterReading;
+		return endMeterReading != null ? endMeterReading : 0.0;
 	}
 
 	public void setEndMeterReading(Double endMeterReading)
@@ -236,10 +218,7 @@ public class MORExportDAO
 
 	public Double getNoOfTrips()
 	{
-		if (this.rate == null)
-			return (double) 0;
-		else
-			return noOfTrips;
+		return noOfTrips != null ? noOfTrips : 0.0;
 	}
 
 	public void setNoOfTrips(Double noOfTrips)
@@ -249,11 +228,7 @@ public class MORExportDAO
 
 	public Double getRate()
 	{
-		if (this.rate == null)
-			return (double) 0;
-		else
-
-			return rate;
+		return rate != null ? rate : 0.0;
 	}
 
 	public void setRate(Double rate)
@@ -263,15 +238,11 @@ public class MORExportDAO
 
 	public Double getAmountCharged()
 	{
-		if (this.amountCharged == null)
-			return (double) 0;
-		else
-			return amountCharged;
+		return amountCharged != null ? amountCharged : 0.0;
 	}
 
 	public void setAmountCharged(Double amountCharged)
 	{
-
 		this.amountCharged = amountCharged;
 	}
 

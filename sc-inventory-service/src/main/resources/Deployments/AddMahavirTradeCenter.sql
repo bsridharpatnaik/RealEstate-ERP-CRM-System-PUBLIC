@@ -1,4 +1,16 @@
-use egcity; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
+create database newmhvrtrdcntr;
+INSERT INTO `common`.`tenant`
+(`name`,
+`is_crm`,
+`is_inventory`,
+`tenant_long_name`)
+VALUES
+('newmhvrtrdcntr',
+0,
+1,
+'Mahavir Trade Center');
+
+use newmhvrtrdcntr; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 
 CREATE OR replace VIEW all_inventory_view
 AS
@@ -113,41 +125,41 @@ AS
 
   -- --------- Stock Verification ------------
  create or replace view stock_verification as
-SELECT inw.inventory, 
-       ROUND(total_inward,2)                                     AS 'total_inward', 
-       ROUND(total_outward  ,2)                                  AS 'total_outward', 
-       ROUND(current_stock ,2)                                   AS 'current_stock', 
-       ROUND(total_inward - ( total_outward + current_stock ),2) AS 
-       'diff_in_Stock' 
-FROM   (SELECT p.product_name AS inventory, 
-               Sum(quantity)  AS total_inward 
-        FROM   inward_inventory ii 
-               INNER JOIN inwardinventory_entry iie 
-                       ON iie.inwardid = ii.inwardid 
-               INNER JOIN inward_outward_entries ioe 
-                       ON ioe.entryid = iie.entryid 
-               INNER JOIN Product p 
-                       ON p.productid = ioe.productid 
-        WHERE  ii.is_deleted = 0 
-        GROUP  BY p.product_name) AS inw 
-       INNER JOIN (SELECT p.product_name AS inventory, 
-                          Sum(quantity)  AS total_outward 
-                   FROM   outward_inventory oi 
-                          INNER JOIN outwardinventory_entry oie 
-                                  ON oie.outwardid = oi.outwardid 
-                          INNER JOIN inward_outward_entries ioe 
-                                  ON ioe.entryid = oie.entryid 
-                          INNER JOIN Product p 
-                                  ON p.productid = ioe.productid 
-                   WHERE  oi.is_deleted = 0 
-                   GROUP  BY p.product_name) AS outw 
-               ON outw.inventory = inw.inventory 
-       INNER JOIN (SELECT p.product_name          AS inventory, 
-                          Sum(s.quantityinhand) AS current_stock 
-                   FROM   Stock s 
-                          INNER JOIN Product p 
-                                  ON p.productid = s.productid 
-                   GROUP  BY p.product_name) AS stock 
+SELECT inw.inventory,
+       ROUND(total_inward,2)                                     AS 'total_inward',
+       ROUND(total_outward  ,2)                                  AS 'total_outward',
+       ROUND(current_stock ,2)                                   AS 'current_stock',
+       ROUND(total_inward - ( total_outward + current_stock ),2) AS
+       'diff_in_Stock'
+FROM   (SELECT p.product_name AS inventory,
+               Sum(quantity)  AS total_inward
+        FROM   inward_inventory ii
+               INNER JOIN inwardinventory_entry iie
+                       ON iie.inwardid = ii.inwardid
+               INNER JOIN inward_outward_entries ioe
+                       ON ioe.entryid = iie.entryid
+               INNER JOIN Product p
+                       ON p.productid = ioe.productid
+        WHERE  ii.is_deleted = 0
+        GROUP  BY p.product_name) AS inw
+       INNER JOIN (SELECT p.product_name AS inventory,
+                          Sum(quantity)  AS total_outward
+                   FROM   outward_inventory oi
+                          INNER JOIN outwardinventory_entry oie
+                                  ON oie.outwardid = oi.outwardid
+                          INNER JOIN inward_outward_entries ioe
+                                  ON ioe.entryid = oie.entryid
+                          INNER JOIN Product p
+                                  ON p.productid = ioe.productid
+                   WHERE  oi.is_deleted = 0
+                   GROUP  BY p.product_name) AS outw
+               ON outw.inventory = inw.inventory
+       INNER JOIN (SELECT p.product_name          AS inventory,
+                          Sum(s.quantityinhand) AS current_stock
+                   FROM   Stock s
+                          INNER JOIN Product p
+                                  ON p.productid = s.productid
+                   GROUP  BY p.product_name) AS stock
                ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0;
 
 
