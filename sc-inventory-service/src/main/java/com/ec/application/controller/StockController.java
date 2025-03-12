@@ -51,7 +51,7 @@ public class StockController {
 
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
-    public List<StockReport> returnAllStockForExport(@RequestBody FilterDataList filterDataList)
+    public <T> List<T> returnAllStockForExport(@RequestBody FilterDataList filterDataList)
             throws Exception {
         return stockService.findStockForAllForExport(filterDataList);
     }

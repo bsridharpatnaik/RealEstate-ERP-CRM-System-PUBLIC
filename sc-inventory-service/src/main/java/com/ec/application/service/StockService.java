@@ -73,6 +73,9 @@ public class StockService {
     @Autowired
     StockInformationRepo siRepo;
 
+    @Autowired
+    ActiveProfileService activeProfileService;
+
     Logger log = LoggerFactory.getLogger(StockService.class);
 
     public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) throws ParseException {
@@ -98,7 +101,7 @@ public class StockService {
                 .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
 
         // This wasted 5 hours for me. There can be records that have entry in stock but there may be zero inward/outward records. May be after adding inward, they deleted it.
-        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()) == null?new ArrayList<>():transactionsMap.get(si.getProductId())));
+        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()) == null ? new ArrayList<>() : transactionsMap.get(si.getProductId())));
         stockInformation.setStockInformation(map);
         return stockInformation;
     }
@@ -383,8 +386,31 @@ public class StockService {
         return populateDropdownService.fetchData("stock");
     }
 
-    public List<StockReport> findStockForAllForExport(FilterDataList filterDataList) throws Exception {
-            return stockReportRepository.findAll();
+    public <T> List<T> findStockForAllForExport(FilterDataList filterDataList) throws Exception {
+        if (activeProfileService.fetchProfile().contains("sc-")) {
+            return (List<T>) stockReportRepository.findAll();
+        } else {
+            StockInformationV2 fetchStockInformation = fetchStockInformation(PageRequest.of(0, Integer.MAX_VALUE), filterDataList);
+            List<StockInformationExportDAO> exportData = new ArrayList<StockInformationExportDAO>();
+
+            for (StockInformationDTO dto : fetchStockInformation.getStockInformation()) {
+                for (SingleStockInformationDTO sInfo : dto.getDetailedStock()) {
+                    StockInformationExportDAO si = new StockInformationExportDAO();
+                    si.setWarehouseStock(sInfo.getQuantityInHand());
+                    si.setTotalStock(dto.getTotalQuantityInHand().toString());
+                    si.setWarehouse(sInfo.getWarehouseName());
+                    si.setInventory(dto.getProductName());
+                    si.setCategory(dto.getCategoryName());
+                    si.setProductId(dto.getProductId());
+                    si.setMeasurementUnit(dto.getMeasurementUnit());
+                    si.setStockStatus(dto.getStockStatus());
+                    si.setReorderQuantity(dto.getReorderQuantity());
+                    si.setLastInwardDate(dto.getLastInwardDate());
+                    exportData.add(si);
+                }
+            }
+            return (List<T>) exportData;
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
