@@ -45,24 +45,7 @@ public class GatewayNotificationService
 	@PostConstruct
 	private void initialize()
 	{
-		try
-		{
-			FirebaseOptions options = new FirebaseOptions.Builder()
-					.setCredentials(
-							GoogleCredentials.fromStream(new ClassPathResource(firebaseConfig).getInputStream()))
-					.build();
 
-			if (FirebaseApp.getApps().isEmpty())
-			{
-				this.firebaseApp = FirebaseApp.initializeApp(options);
-			} else
-			{
-				this.firebaseApp = FirebaseApp.getInstance();
-			}
-		} catch (IOException e)
-		{
-			log.error("Create FirebaseApp Error", e);
-		}
 	}
 
 	@SuppressWarnings("deprecation")
