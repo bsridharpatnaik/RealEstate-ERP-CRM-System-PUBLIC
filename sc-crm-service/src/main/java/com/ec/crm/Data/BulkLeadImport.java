@@ -6,6 +6,5 @@ import java.util.List;
 
 @Data
 public class BulkLeadImport {
-    String importType;
     List<LeadImportPayloadData> data;
 }

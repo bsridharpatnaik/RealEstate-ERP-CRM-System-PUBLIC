@@ -493,13 +493,8 @@ public class LeadService {
     }
 
     @Transactional
-    public List<LeadImportResponseData> importLead(BulkLeadImport payload) throws Exception {
-        if (payload.getImportType().equalsIgnoreCase("create")) {
+    public List<LeadImportResponseData> importLead(List<LeadImportData> payload) throws Exception {
             return createLeads(payload);
-        } else if (payload.getImportType().equalsIgnoreCase("update")) {
-            return updateLeads(payload);
-        } else
-            throw new Exception("Invalid Import Type. Import type should be either create or update");
     }
 
     private List<LeadImportResponseData> updateLeads(BulkLeadImport payload) {
@@ -536,19 +531,32 @@ public class LeadService {
         noteService.createNote(noteCreateData);
     }
 
-    private List<LeadImportResponseData> createLeads(BulkLeadImport payload) {
+    private List<LeadImportResponseData> createLeads(List<LeadImportData> payload) {
         List<LeadImportResponseData> response = new ArrayList<LeadImportResponseData>();
-        for (LeadImportPayloadData data : payload.getData()) {
+
+        for (LeadImportData data : payload) {
             LeadImportResponseData leadImportResponseData;
             try {
                 LeadCreateData leadCreateData = new LeadCreateData();
                 leadCreateData.setPrimaryMobile(data.getMobileNo());
                 leadCreateData.setCustomerName(data.getName());
                 leadCreateData.setAssigneeId(getUserIdByUsername(data.getAssignee()));
+
                 createLead(leadCreateData);
-                response.add(new LeadImportResponseData(data.getAssignee(), data.getMobileNo(), data.getName(), "Success"));
+
+                response.add(new LeadImportResponseData(
+                        data.getAssignee(),
+                        data.getMobileNo(),
+                        data.getName(),
+                        "Success"
+                ));
             } catch (Exception e) {
-                response.add(new LeadImportResponseData(data.getAssignee(), data.getMobileNo(), data.getName(), "Failure - " + e.getMessage()));
+                response.add(new LeadImportResponseData(
+                        data.getAssignee(),
+                        data.getMobileNo(),
+                        data.getName(),
+                        "Failure - " + e.getMessage()
+                ));
             }
         }
         return response;

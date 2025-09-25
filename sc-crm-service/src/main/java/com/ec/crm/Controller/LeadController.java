@@ -91,7 +91,7 @@ public class LeadController {
 
     @PostMapping("/import")
     @ResponseStatus(HttpStatus.OK)
-    public List<LeadImportResponseData> importLead(@Valid @RequestBody BulkLeadImport payload) throws Exception {
+    public List<LeadImportResponseData> importLead(@Valid @RequestBody List<LeadImportData> payload) throws Exception {
         return leadService.importLead(payload);
     }
 
