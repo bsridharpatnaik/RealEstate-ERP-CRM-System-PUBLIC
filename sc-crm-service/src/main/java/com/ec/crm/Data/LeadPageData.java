@@ -29,6 +29,9 @@ public class LeadPageData
 	String name;
 	
 	String mobileNumber;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
+	Date leadCreationDate;
 	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern="dd-MM-yyyy HH:mm")
 	Date activityDateTime;
@@ -73,6 +76,7 @@ public class LeadPageData
 		this.nextPaymentDate=la.getLead().getNextPaymentDate();
 		this.totalPending = la.getLead().getTotalPending();
 		this.customerStatus = CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus());
+		this.leadCreationDate = la.getLead().getCreated();
 
 	}
 }

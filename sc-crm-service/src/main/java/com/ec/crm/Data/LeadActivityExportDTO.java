@@ -38,6 +38,10 @@ public class LeadActivityExportDTO {
     @JsonProperty("Secondary Mobile")
     String secondaryMobile;
 
+    @JsonProperty("Lead Creation Date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    Date leadCreationDate;
+
     @JsonProperty("Email Id")
     String emailId;
 
@@ -157,6 +161,7 @@ public class LeadActivityExportDTO {
         this.secondaryMobile = la.getLead().getSecondaryMobile()==null?"":la.getLead().getSecondaryMobile();
         this.primaryMobile = la.getLead().getPrimaryMobile()==null?"":la.getLead().getPrimaryMobile();
         this.leadId = la.getLead().getLeadId();
+        this.leadCreationDate = la.getLead().getCreated();
     }
 
     private String concatAddress(Address address) {

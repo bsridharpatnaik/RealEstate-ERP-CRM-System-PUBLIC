@@ -650,6 +650,7 @@ public class LeadActivityService {
             l.setCustomerStatus(la.getLead().getCustomerStatus() == null ? null : CustomerStatusEnum.valueOf(la.getLead().getCustomerStatus()));
             l.setNextPaymentDate(la.getLead().getNextPaymentDate());
             l.setTotalPending(la.getLead().getTotalPending());
+            l.setLeadCreationDate(la.getLead().getCreated());
             return l;
         } catch (Exception e) {
             throw new RuntimeException(e);
