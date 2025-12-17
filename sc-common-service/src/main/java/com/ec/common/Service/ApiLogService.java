@@ -6,6 +6,8 @@ import com.ec.common.Data.HourlyCountDto;
 import com.ec.common.Data.UserReportDto;
 import com.ec.common.Model.ApiLog;
 import com.ec.common.Repository.ApiLogRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ApiLogService {
+
+    private final Logger logger = LoggerFactory.getLogger(ApiLogService.class);
 
     @Autowired
     private ApiLogRepository apiLogRepository;
@@ -133,14 +137,14 @@ public class ApiLogService {
 
     @Async
     public void logToDatabase(String tenant, String url, String method, String payload, String username) {
-        ApiLog log = new ApiLog();
+/*        ApiLog log = new ApiLog();
         log.setTenantName(tenant);
         log.setUrl(url);
         log.setMethod(method);
         log.setPayload(payload != null ? payload.substring(0, Math.min(payload.length(), 255)) : null);
         log.setUsername(username);
         log.setTimestamp(LocalDateTime.now());
-        apiLogRepository.save(log);
+        apiLogRepository.save(log);*/
     }
 
     public List<ApiLogReportDTO> generateReport() {
@@ -206,6 +210,12 @@ public class ApiLogService {
             }
         });
         return hourlyReport;
+    }
+
+    public void cleanupOldLogs() {
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(20);
+        apiLogRepository.deleteByTimestampBefore(cutoffDate);
+        logger.info("API Logs older than {} have been cleared", cutoffDate);
     }
 }
 

@@ -4,6 +4,7 @@ import com.ec.common.Data.ApiLogReportDTO;
 import com.ec.common.Data.UserReportDto;
 import com.ec.common.Service.ApiLogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,5 +25,11 @@ public class ApiLogController {
     @GetMapping("/user")
     public List<UserReportDto> getUserReports() {
         return apiLogService.getUserReports();
+    }
+
+    @GetMapping("/clearlog")
+    public ResponseEntity<String> clearLogs() {
+        apiLogService.cleanupOldLogs();
+        return ResponseEntity.ok("API logs cleanup completed successfully");
     }
 }
