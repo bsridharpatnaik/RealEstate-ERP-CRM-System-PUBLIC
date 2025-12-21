@@ -27,4 +27,8 @@ public interface WarehouseRepo extends BaseRepository<Warehouse, Long>
 
 	@Query(value="SELECT warehouseId as id,warehouseName as name from Warehouse m  order by name")
 	List<IdNameProjections> findIdAndNames();
+
+	boolean existsByWarehouseNameIgnoreCase(String warehouseName);
+
+	long countByWarehouseNameIgnoreCase(String warehouseName);
 }
