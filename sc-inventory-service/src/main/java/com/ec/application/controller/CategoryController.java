@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +50,7 @@ public class CategoryController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {"admin", "inventory-manager"})
     public ResponseEntity<?> deleteCategory(@PathVariable Long id) throws Exception {
 
         categoryService.deleteCategory(id);
@@ -58,12 +60,14 @@ public class CategoryController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
+    @AllowOnly(roles = {"admin", "inventory-manager"})
     public Category createCategory(@RequestBody Category payload) throws Exception {
         return categoryService.createCategory(payload);
     }
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {"admin", "inventory-manager"})
     public Category updateCategory(@PathVariable Long id, @RequestBody Category Category) throws Exception {
         return categoryService.updateCategory(id, Category);
     }
