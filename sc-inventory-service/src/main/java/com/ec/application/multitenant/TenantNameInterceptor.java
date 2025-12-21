@@ -31,6 +31,8 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String tenantName = request.getHeader("tenant-id");
+        tenantName = changeTenantForSuncity(tenantName);
+
         if (StringUtils.isBlank(schemasList)) {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
@@ -40,6 +42,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
         }
 
         System.out.println("Schema List " + schemasList.toString());
+
         if (!schemasList.contains(tenantName)) {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
@@ -47,14 +50,18 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return false;
         }
-        ThreadLocalStorage.setTenantName(appendNewForNewSuncity(tenantName));
-        System.out.println("###" + appendNewForNewSuncity(tenantName));
+        ThreadLocalStorage.setTenantName(tenantName);
+        System.out.println("### Tenant Name - " + tenantName);
         return true;
     }
 
-    private String appendNewForNewSuncity(String tenantName) {
+    private String changeTenantForSuncity(String tenantName) {
         if (profile.contains("sc-") && profile.contains("new")) {
             tenantName = "new" + tenantName;
+        }
+
+        if (profile.contains("sc-") && profile.contains("v2")) {
+            tenantName = tenantName + "v2";
         }
         return tenantName;
     }

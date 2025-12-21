@@ -1,4 +1,0 @@
-Add View Backfill Closing Stock
-Add Store Procedure to backfill stock
-update all_inventory
-Fix closing stock for previously wrong

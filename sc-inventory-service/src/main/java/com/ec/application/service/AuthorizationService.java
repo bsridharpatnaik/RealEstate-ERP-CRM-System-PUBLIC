@@ -29,6 +29,8 @@ public class AuthorizationService {
             if (profile.contains("sc") && profile.contains("new")) {
                 tenantName = tenantName.replace("new", "");
             }
+            if (tenantName.contains("v2"))
+                tenantName = tenantName.replace("v2", "");
             if (ut.getTenant().getName().equalsIgnoreCase(tenantName) && ut.getAuthorization().equals(AuthorizationEnum.FullAccess)) {
                 isAllowed = true;
                 break;
@@ -38,5 +40,4 @@ public class AuthorizationService {
         if (!isAllowed)
             throw new Exception("User not allowed to add/modify data for this project");
     }
-
 }

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.aspects.UseDefaultTenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import com.ec.common.Filters.FilterDataList;
 
 @Service
 @Transactional
+@UseDefaultTenant
 public class CategoryService {
 
     @Autowired
@@ -113,6 +115,5 @@ public class CategoryService {
 
         allCategoriesWithNamesData.setNames(ReusableMethods.removeNullsFromStringList(categoryRepo.getCategoryNames()));
         return allCategoriesWithNamesData;
-
     }
 }
