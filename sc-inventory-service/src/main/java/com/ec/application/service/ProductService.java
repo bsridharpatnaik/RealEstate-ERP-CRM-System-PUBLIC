@@ -67,14 +67,7 @@ public class ProductService {
         if (!productRepo.existsByProductName(payload.getProductName())) {
             Optional<Category> categoryOpt = categoryRepo.findById(payload.getCategoryId());
             if (categoryOpt.isPresent()) {
-                Product product = new Product();
-                product.setCategory(categoryOpt.get());
-                product.setMeasurementUnit(payload.getMeasurementUnit().trim());
-                product.setProductDescription(
-                        payload.getProductDescription() == null ? "" : payload.getProductDescription().trim());
-                product.setProductName(payload.getProductName().trim());
-                product.setReorderQuantity(payload.getReorderQuantity());
-                product.setShowOnDashboard(payload.getShowOnDashboard()==null?false:payload.getShowOnDashboard());
+                Product product = getProduct(payload, categoryOpt);
                 productRepo.save(product);
                 return product;
             } else {
@@ -83,6 +76,23 @@ public class ProductService {
         } else {
             throw new Exception("Product already exists!");
         }
+    }
+
+    private static Product getProduct(ProductCreateData payload, Optional<Category> categoryOpt) {
+        Product product = new Product();
+        product.setCategory(categoryOpt.get());
+        product.setMeasurementUnit(payload.getMeasurementUnit().trim());
+        product.setProductDescription(
+                payload.getProductDescription() == null ? "" : payload.getProductDescription().trim());
+        product.setProductName(payload.getProductName().trim());
+        product.setReorderQuantity(payload.getReorderQuantity());
+        product.setShowOnDashboard(payload.getShowOnDashboard() != null && payload.getShowOnDashboard());
+        if (payload.getIsManagedInventory() == null) {
+            product.setIsManagedInventory(true);
+        } else {
+            product.setIsManagedInventory(payload.getIsManagedInventory());
+        }
+        return product;
     }
 
     private void checkIfDashboardProductLimitReached(Product productForUpdate, ProductCreateData payload, String action) throws Exception {
@@ -122,36 +132,29 @@ public class ProductService {
     public Product updateProduct(Long id, ProductCreateData payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
-        Optional<Product> ProductForUpdateOpt = productRepo.findById(id);
-        if (!ProductForUpdateOpt.isPresent())
-            throw new Exception("Product not found with productid");
-        Optional<Category> categoryOpt = categoryRepo.findById(payload.getCategoryId());
-        if (!categoryOpt.isPresent())
-            throw new Exception("Category with ID not found");
 
-        Product ProductForUpdate = ProductForUpdateOpt.get();
+        Product product = productRepo.findById(id)
+                .orElseThrow(() -> new Exception("Product not found with productid"));
 
-        checkIfDashboardProductLimitReached(ProductForUpdate, payload, "update");
-        if (!productRepo.existsByProductName(payload.getProductName())
-                && !payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName())) {
-            ProductForUpdate.setProductName(payload.getProductName());
-            ProductForUpdate.setProductDescription(payload.getProductDescription());
-            ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
-            ProductForUpdate.setCategory(categoryOpt.get());
-            ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
-            ProductForUpdate.setShowOnDashboard(payload.getShowOnDashboard()==null?false:payload.getShowOnDashboard());
-        } else if (payload.getProductName().equalsIgnoreCase(ProductForUpdate.getProductName())) {
-            ProductForUpdate.setProductDescription(payload.getProductDescription());
-            ProductForUpdate.setMeasurementUnit(payload.getMeasurementUnit());
-            ProductForUpdate.setCategory(categoryOpt.get());
-            ProductForUpdate.setReorderQuantity(payload.getReorderQuantity());
-            ProductForUpdate.setShowOnDashboard(payload.getShowOnDashboard()==null?false:payload.getShowOnDashboard());
-        } else {
+        Category category = categoryRepo.findById(payload.getCategoryId())
+                .orElseThrow(() -> new Exception("Category with ID not found"));
+
+        checkIfDashboardProductLimitReached(product, payload, "update");
+
+        if (productRepo.existsByProductName(payload.getProductName())
+                && !payload.getProductName().equalsIgnoreCase(product.getProductName())) {
             throw new Exception("Product with same Name already exists");
         }
 
-        return productRepo.save(ProductForUpdate);
+        product.setProductName(payload.getProductName());
+        product.setProductDescription(payload.getProductDescription());
+        product.setMeasurementUnit(payload.getMeasurementUnit());
+        product.setCategory(category);
+        product.setReorderQuantity(payload.getReorderQuantity());
+        product.setShowOnDashboard(Boolean.TRUE.equals(payload.getShowOnDashboard()));
+        product.setIsManagedInventory(payload.getIsManagedInventory() == null || payload.getIsManagedInventory());
 
+        return productRepo.save(product);
     }
 
     public Product findSingleProduct(Long id) throws Exception {

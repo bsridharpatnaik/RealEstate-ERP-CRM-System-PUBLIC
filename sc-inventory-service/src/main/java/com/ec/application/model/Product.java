@@ -42,6 +42,9 @@ public class Product extends ReusableFields {
     @Column(name = "reorderQuantity")
     Double reorderQuantity;
 
+    @Column(name = "is_managed_inventory", columnDefinition = "boolean default true")
+    Boolean isManagedInventory;
+
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "categoryId", nullable = false)
     @JsonIgnoreProperties(
