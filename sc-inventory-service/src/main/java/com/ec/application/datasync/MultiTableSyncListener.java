@@ -66,8 +66,11 @@ public class MultiTableSyncListener {
 
                 boolean isId = field.isAnnotationPresent(Id.class);
                 boolean isColumn = field.isAnnotationPresent(Column.class);
+                boolean isManyToOne = field.isAnnotationPresent(ManyToOne.class);
+                boolean isJoinColumn = field.isAnnotationPresent(JoinColumn.class);
 
-                if (!isId && !isColumn) {
+                // Include @Id, @Column, @ManyToOne, or @JoinColumn fields
+                if (!isId && !isColumn && !isManyToOne && !isJoinColumn) {
                     continue;
                 }
 
@@ -76,6 +79,8 @@ public class MultiTableSyncListener {
                 String columnName;
                 if (isColumn) {
                     columnName = field.getAnnotation(Column.class).name();
+                } else if (isJoinColumn) {
+                    columnName = field.getAnnotation(JoinColumn.class).name();
                 } else {
                     columnName = field.getName();
                 }

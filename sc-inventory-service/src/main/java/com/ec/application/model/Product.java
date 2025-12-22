@@ -1,16 +1,8 @@
 package com.ec.application.model;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
+import com.ec.application.datasync.MultiTableSyncListener;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.NotFound;
@@ -28,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @Data
 @NoArgsConstructor
+@EntityListeners(MultiTableSyncListener.class)
 public class Product extends ReusableFields {
 
     private static final long serialVersionUID = 1L;

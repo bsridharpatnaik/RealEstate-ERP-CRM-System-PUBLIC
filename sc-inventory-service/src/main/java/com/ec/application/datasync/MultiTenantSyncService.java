@@ -1,11 +1,13 @@
 package com.ec.application.datasync;
 
+import com.ec.application.model.Category;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,7 +39,7 @@ public class MultiTenantSyncService {
                 .collect(Collectors.toList());
     }
 
-    @Async
+    @Transactional
     public void syncRow(String tableName,
                         Map<String, Object> rowData,
                         String action,
@@ -47,14 +49,15 @@ public class MultiTenantSyncService {
             return;
         }
 
-        for (String tenant : targetSchemas) {
+        Map<String, Object> normalizedData = normalizeRowData(tableName, rowData);
 
+        for (String tenant : targetSchemas) {
             if ("INSERT".equalsIgnoreCase(action)) {
-                insertRow(tenant, tableName, rowData);
+                insertRow(tenant, tableName, normalizedData);
             } else if ("UPDATE".equalsIgnoreCase(action)) {
-                updateRow(tenant, tableName, rowData, pkColumns);
+                updateRow(tenant, tableName, normalizedData, pkColumns);
             } else if ("DELETE".equalsIgnoreCase(action)) {
-                deleteRow(tenant, tableName, rowData, pkColumns);
+                deleteRow(tenant, tableName, normalizedData, pkColumns);
             }
         }
     }
@@ -128,5 +131,38 @@ public class MultiTenantSyncService {
         }
 
         jdbcTemplate.update(sql, params.toArray());
+    }
+
+    private Map<String, Object> normalizeRowData(
+            String tableName,
+            Map<String, Object> rowData) {
+
+        Map<String, Object> normalized = new LinkedHashMap<>();
+
+        for (Map.Entry<String, Object> entry : rowData.entrySet()) {
+            String column = entry.getKey();
+            Object value = entry.getValue();
+
+            // Skip relation field itself
+            if ("category".equalsIgnoreCase(column)) {
+                continue;
+            }
+
+            // Extract FK
+            if (value instanceof Category) {
+                Category category = (Category) value;
+                normalized.put("categoryId", category.getCategoryId());
+                continue;
+            }
+
+            // Ignore non-db fields
+            if ("serialVersionUID".equals(column)) {
+                continue;
+            }
+
+            normalized.put(column, value);
+        }
+
+        return normalized;
     }
 }
