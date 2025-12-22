@@ -42,7 +42,8 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
                     Pattern.compile("^/contractor(/.*)?$"),
                     Pattern.compile("^/supplier(/.*)?$"),
                     Pattern.compile("^/machinery(/.*)?$"),
-                    Pattern.compile("^/product(/.*)?$")
+                    Pattern.compile("^/product(/.*)?$"),
+                    Pattern.compile("^/error(/.*)?$")
             ));
 
     @Override
