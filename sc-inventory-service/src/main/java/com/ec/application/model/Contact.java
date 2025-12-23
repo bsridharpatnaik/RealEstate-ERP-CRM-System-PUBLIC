@@ -8,6 +8,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.ec.application.datasync.MultiTableSyncListener;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -21,7 +22,7 @@ import lombok.Data;
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 @Data
 @Audited
-@EntityListeners(AuditingEntityListener.class)
+@EntityListeners({AuditingEntityListener.class, MultiTableSyncListener.class})
 public class Contact extends ContactMappedSuperClass
 {
 
