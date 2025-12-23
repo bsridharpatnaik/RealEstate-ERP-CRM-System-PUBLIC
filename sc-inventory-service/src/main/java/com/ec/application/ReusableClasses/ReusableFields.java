@@ -24,8 +24,8 @@ public abstract class ReusableFields implements Serializable {
 
     public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
 
-    @Column(name = "is_deleted", columnDefinition = "BOOLEAN DEFAULT true")
-    public boolean isDeleted;
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 
     @CreatedBy
     @Column(name = "createdBy")
