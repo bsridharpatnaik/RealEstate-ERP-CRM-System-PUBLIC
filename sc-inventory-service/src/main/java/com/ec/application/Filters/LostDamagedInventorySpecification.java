@@ -1,4 +1,4 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import java.text.ParseException;
 import java.util.List;
@@ -10,8 +10,6 @@ import com.ec.application.model.Category_;
 import com.ec.application.model.LostDamagedInventory;
 import com.ec.application.model.LostDamagedInventory_;
 import com.ec.application.model.Product_;
-import com.ec.application.model.Stock;
-import com.ec.application.model.Stock_;
 import com.ec.application.model.Warehouse_;
 
 public class LostDamagedInventorySpecification 

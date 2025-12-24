@@ -1,14 +1,8 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.BOQStatusView;
 import com.ec.application.model.BOQStatusViewV2;
 import com.ec.application.model.BOQStatusViewV2_;
-import com.ec.application.model.BOQUploadView_;
-import com.ec.application.repository.BOQUploadRepository;
-import com.ec.application.repository.InwardOutwardListRepo;
-import com.ec.application.repository.ProductRepo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;

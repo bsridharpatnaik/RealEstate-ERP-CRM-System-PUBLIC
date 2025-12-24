@@ -18,8 +18,8 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllUsageAreasWithNamesData;
 import com.ec.application.model.UsageArea;
 import com.ec.application.repository.UsageAreaRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.UsageAreaSpecifications;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.UsageAreaSpecifications;
 
 @Service
 @Transactional

@@ -20,8 +20,8 @@ import com.ec.application.data.AllCategoriesWithNamesData;
 import com.ec.application.model.Category;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ProductRepo;
-import com.ec.common.Filters.CategorySpecifications;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.CategorySpecifications;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 @Transactional

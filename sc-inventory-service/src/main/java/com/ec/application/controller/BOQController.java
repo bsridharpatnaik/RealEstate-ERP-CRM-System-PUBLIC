@@ -3,10 +3,7 @@ package com.ec.application.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -21,20 +18,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
-import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.aspects.CheckAuthority;
-import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.data.BOQDto;
 import com.ec.application.data.BOQInformation;
-import com.ec.application.data.BOQReportInformation;
 import com.ec.application.data.BOQReportResponse;
-import com.ec.application.data.BOQStatusDataDto;
-import com.ec.application.data.BOQStatusResponse;
 import com.ec.application.data.BOQUploadValidationResponse;
 import com.ec.application.data.UsageLocationResponse;
 import com.ec.application.service.BOQService;
-import com.ec.common.Filters.BOQStatusFilterDataList;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.BOQStatusFilterDataList;
 
 @RestController
 @RequestMapping("/boqupload")

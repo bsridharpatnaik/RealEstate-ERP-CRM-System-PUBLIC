@@ -1,20 +1,17 @@
 package com.ec.application.service;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
-import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.Filters.AllInventorySpecification;
+import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.Filters.FilterDataList;
 import com.ec.application.comparators.MonthlyReportComparator;
 import com.ec.application.data.*;
-import com.ec.application.model.InventoryReport;
-import com.ec.application.model.InwardInventory;
-import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.InventoryReportRepo;
-import com.ec.common.Filters.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

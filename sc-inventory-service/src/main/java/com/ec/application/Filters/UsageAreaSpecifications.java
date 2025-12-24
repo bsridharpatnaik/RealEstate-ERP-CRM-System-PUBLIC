@@ -1,12 +1,10 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.Category;
-import com.ec.application.model.Category_;
 import com.ec.application.model.UsageArea;
 import com.ec.application.model.UsageArea_;
 

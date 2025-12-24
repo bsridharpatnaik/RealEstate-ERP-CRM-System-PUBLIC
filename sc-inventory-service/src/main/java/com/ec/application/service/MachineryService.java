@@ -18,8 +18,8 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllMachineriesWithNamesData;
 import com.ec.application.model.Machinery;
 import com.ec.application.repository.MachineryRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.MachinerySpecifications;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.MachinerySpecifications;
 
 @Service
 @Transactional

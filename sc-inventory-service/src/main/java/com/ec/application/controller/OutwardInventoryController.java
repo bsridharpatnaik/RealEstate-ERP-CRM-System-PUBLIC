@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.model.OutwardInventory;
 import com.ec.application.service.OutwardInventoryService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/outward")

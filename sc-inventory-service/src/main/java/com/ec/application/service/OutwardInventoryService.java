@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.application.model.*;
-import com.ec.application.multitenant.ThreadLocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,14 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.config.ProjectConstants;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO2;
 import com.ec.application.data.ProductGroupedDAO;
 import com.ec.application.data.ProductWithQuantity;
 import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.data.ReturnRejectInwardOutwardData;
-import com.ec.application.data.UserReturnData;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.InwardOutwardListRepo;
 import com.ec.application.repository.LocationRepo;
@@ -36,8 +33,8 @@ import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.OutwardInventorySpecification;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.OutwardInventorySpecification;
 
 @Service
 @Transactional

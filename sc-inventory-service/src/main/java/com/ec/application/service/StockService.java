@@ -10,7 +10,7 @@ import com.ec.application.config.ProjectConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
 import com.ec.application.repository.*;
-import com.ec.common.Filters.StockInformationSpecification;
+import com.ec.application.Filters.StockInformationSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -25,8 +25,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.common.Filters.FilterAttributeData;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 @Transactional(rollbackFor = Exception.class)

@@ -1,8 +1,6 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.AllInventoryTransactions;
-import com.ec.application.model.AllInventoryTransactions_;
 import com.ec.application.model.InventoryReport;
 import com.ec.application.model.InventoryReport_;
 import org.springframework.data.jpa.domain.Specification;

@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.model.Contact;
 import com.ec.application.service.ContactService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/contact")

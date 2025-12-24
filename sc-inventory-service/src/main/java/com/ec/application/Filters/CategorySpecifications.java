@@ -1,18 +1,12 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import java.util.List;
-
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.model.Category;
 import com.ec.application.model.Category_;
-import com.ec.application.model.Product;
-import com.ec.application.model.Product_;
 
 public final class CategorySpecifications 
 {

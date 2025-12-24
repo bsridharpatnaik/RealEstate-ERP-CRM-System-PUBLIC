@@ -12,9 +12,9 @@ import com.ec.application.config.ProjectConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ec.common.Filters.BOQStatusFilterDataList;
-import com.ec.common.Filters.FilterAttributeData;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.BOQStatusFilterDataList;
+import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.Filters.FilterDataList;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

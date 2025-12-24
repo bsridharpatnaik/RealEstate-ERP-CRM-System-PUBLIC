@@ -1,24 +1,12 @@
 package com.ec.application.ReusableClasses;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
-import com.ec.application.data.StockInformationExportDAO;
-import com.ec.common.Filters.FilterAttributeData;
-import com.ec.common.Filters.FilterDataList;
 
 //@Component
 @EnableScheduling

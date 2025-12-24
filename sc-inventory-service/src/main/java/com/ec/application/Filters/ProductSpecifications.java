@@ -1,11 +1,7 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import java.util.List;
 
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Root;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;

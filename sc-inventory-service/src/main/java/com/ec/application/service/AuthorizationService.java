@@ -20,9 +20,16 @@ public class AuthorizationService {
     @Value("${spring.profiles.active}")
     private String profile;
 
+    @Value("${master.schema}")
+    private String masterSchema;
+
     public void exitIfReadOnly() throws Exception {
-        UserReturnData currentUser = userService.getCurrentUser();
         String tenantName = ThreadLocalStorage.getTenantName();
+
+        if(tenantName.equals(masterSchema))
+            return;
+
+        UserReturnData currentUser = userService.getCurrentUser();
         boolean isAllowed = false;
 
         for (UserTenantMapping ut : currentUser.getTenantList()) {

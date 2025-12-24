@@ -24,8 +24,8 @@ import com.ec.application.model.Category;
 import com.ec.application.model.Product;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ProductRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.ProductSpecifications;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.ProductSpecifications;
 
 @Service
 @Transactional

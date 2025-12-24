@@ -1,4 +1,4 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.model.Category_;

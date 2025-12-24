@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.service.InwardInventoryService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/inward")

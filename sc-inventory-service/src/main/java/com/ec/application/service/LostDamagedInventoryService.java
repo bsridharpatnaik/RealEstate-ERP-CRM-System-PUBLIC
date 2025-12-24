@@ -20,8 +20,8 @@ import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
 import com.ec.application.repository.WarehouseRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.LostDamagedInventorySpecification;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.LostDamagedInventorySpecification;
 
 @Service
 @Transactional

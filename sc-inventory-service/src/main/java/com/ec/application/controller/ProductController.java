@@ -30,7 +30,7 @@ import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Product;
 import com.ec.application.service.ProductService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/product")

@@ -20,7 +20,6 @@ import com.ec.application.model.Product;
 import com.ec.application.repository.IndentInventoryRepository;
 import com.ec.application.repository.IndentRepository;
 import com.ec.application.repository.ProductRepo;
-import com.ec.common.Filters.FilterAttributeData;
 
 @Service
 public class PurchaseOrderService {

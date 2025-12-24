@@ -1,4 +1,4 @@
-package com.ec.common.Filters;
+package com.ec.application.Filters;
 
 import java.text.ParseException;
 import java.util.List;
@@ -6,13 +6,9 @@ import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.Category_;
 import com.ec.application.model.MachineryOnRent;
 import com.ec.application.model.MachineryOnRent_;
 import com.ec.application.model.Machinery_;
-import com.ec.application.model.Product;
-import com.ec.application.model.Product_;
-import com.ec.application.model.Supplier;
 import com.ec.application.model.Supplier_;
 import com.ec.application.model.UsageLocation_;
 

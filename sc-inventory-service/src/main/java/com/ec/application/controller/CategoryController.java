@@ -27,7 +27,7 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.AllCategoriesWithNamesData;
 import com.ec.application.model.Category;
 import com.ec.application.service.CategoryService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/category")

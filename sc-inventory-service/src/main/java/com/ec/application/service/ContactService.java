@@ -21,8 +21,8 @@ import com.ec.application.ReusableClasses.CommonUtils;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.model.Contact;
 import com.ec.application.repository.ContactInfoRepo;
-import com.ec.common.Filters.ContactSpecifications;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.ContactSpecifications;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 @Transactional

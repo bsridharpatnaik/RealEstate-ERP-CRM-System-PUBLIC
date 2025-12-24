@@ -26,7 +26,7 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.AllBuildingTypesWithNames;
 import com.ec.application.model.BuildingType;
 import com.ec.application.service.BuildingTypeService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/buildingtype")
