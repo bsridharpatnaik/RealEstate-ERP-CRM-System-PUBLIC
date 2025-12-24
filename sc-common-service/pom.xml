@@ -20,6 +20,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <hibernate.version>5.4.6.Final</hibernate.version>
       <!--  <java.version>15</java.version> -->
         <hibernate.version>5.4.22.Final</hibernate.version>
         <lombok.version>1.18.16</lombok.version>
