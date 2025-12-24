@@ -13,6 +13,7 @@ DROP DATABASE IF EXISTS schoolv2;
 DROP DATABASE IF EXISTS bhaavbhumiv2;
 DROP DATABASE IF EXISTS dhabbav2;
 DROP DATABASE IF EXISTS mhvrtrdcntrv2;
+DROP DATABASE IF EXISTS masterschema;
 
 -- CREATE DATABASE commands
 CREATE DATABASE suncitynxv2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -26,3 +27,4 @@ CREATE DATABASE schoolv2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE bhaavbhumiv2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE dhabbav2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE mhvrtrdcntrv2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE masterschema CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
