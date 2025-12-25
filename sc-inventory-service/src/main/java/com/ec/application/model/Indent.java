@@ -1,0 +1,61 @@
+package com.ec.application.model;
+
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Where;
+import org.hibernate.envers.Audited;
+import org.springframework.lang.NonNull;
+
+import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@Entity
+@Table(name = "indent_inventory")
+@Audited
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Data
+@NoArgsConstructor
+public class Indent extends ReusableFields implements Cloneable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "indent_id")
+    Long indentId;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @Column(name = "indent_date", nullable = false)
+    @NonNull
+    Date indentDate;
+
+    @Column(name="notes")
+    String notes;
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "indent_fileinformation", joinColumns =
+            {@JoinColumn(name = "indent_id", referencedColumnName = "indent_id")},
+            inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
+    Set<FileInformation> fileInformations = new HashSet<>();
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+}
