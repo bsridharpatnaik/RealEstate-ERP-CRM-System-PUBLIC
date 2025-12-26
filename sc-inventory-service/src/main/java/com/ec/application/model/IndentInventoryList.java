@@ -42,4 +42,7 @@ public class IndentInventoryList extends ReusableFields {
 
     @Column(name="measurement_unit")
     String measurementUnit;
+
+    @Column(name="line_item_status")
+    String lineItemStatus;
 }

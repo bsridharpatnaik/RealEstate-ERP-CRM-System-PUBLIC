@@ -1,39 +1,52 @@
 package com.ec.application.IDGenerator;
 
-import com.ec.application.model.Indent;
+import com.ec.application.config.SpringContextHolder;
+import com.ec.application.model.IndentInventory;
+import com.ec.application.model.IndentSequence;
+import com.ec.application.repository.IndentSequenceRepository;
+import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.io.Serializable;
 
 public class SchemaPrefixedIdGenerator implements IdentifierGenerator {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    private IndentSequenceRepository indentSequenceRepository;
+
+    private IndentSequenceRepository getRepository() {
+        if (indentSequenceRepository == null) {
+            indentSequenceRepository =
+                    SpringContextHolder.getBean(IndentSequenceRepository.class);
+        }
+        return indentSequenceRepository;
+    }
 
     @Override
-    public Serializable generate(SharedSessionContractImplementor session, Object object) {
-        if (!(object instanceof Indent)) {
+    public Serializable generate(SharedSessionContractImplementor session, Object object)
+            throws HibernateException {
+
+        if (!(object instanceof IndentInventory)) {
             throw new IllegalArgumentException("Unexpected object: " + object);
         }
 
-        Indent indent = (Indent) object;
-        String schemaCode = indent.getTenantSchemaCode(); // set before persist
+        try {
+            IndentInventory indent = (IndentInventory) object;
+            String schemaCode = indent.getTenantSchemaCode();
 
-        // increment last_id in DB and fetch updated value atomically
-        entityManager.getTransaction().begin();
-        entityManager.createQuery("UPDATE IndentSequence s SET s.lastId = s.lastId + 1 WHERE s.tenantCode = :code")
-                .setParameter("code", schemaCode)
-                .executeUpdate();
+            IndentSequenceRepository repo = getRepository();
 
-        Long nextId = (Long) entityManager.createQuery("SELECT s.lastId FROM IndentSequence s WHERE s.tenantCode = :code")
-                .setParameter("code", schemaCode)
-                .getSingleResult();
-        entityManager.getTransaction().commit();
+            IndentSequence seq = repo.findById(schemaCode)
+                    .orElseThrow(() ->
+                            new RuntimeException("IndentSequence not found for tenantCode: " + schemaCode));
 
-        return schemaCode + String.format("%06d", nextId);
+            seq.setLastId(seq.getLastId() + 1);
+            repo.save(seq);
+
+            return schemaCode + "-" + seq.getLastId();
+
+        } catch (Exception e) {
+            throw new HibernateException("Failed to generate ID for IndentInventory", e);
+        }
     }
 }
-

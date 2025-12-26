@@ -57,6 +57,7 @@ public class ContactMappedSuperClass {
 			regexp = "(?i)SUPPLIER|CONTRACTOR",
 			message = "contactType must be SUPPLIER or CONTRACTOR"
 	)
+	@Column(name = "contactType", nullable = true, length = 255)
 	private String contactType;
 
 	@Column(name = "gst_number", nullable = true, length = 255)

@@ -1,22 +1,19 @@
 package com.ec.application.model;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "indent_inventory")
@@ -25,15 +22,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Setter
 @NoArgsConstructor
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class Indent extends ReusableFields implements Cloneable {
+public class IndentInventory extends ReusableFields implements Cloneable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "indent_id")
-    Long indentId;
+    @GeneratedValue(generator = "schema-id-gen")
+    @GenericGenerator(
+            name = "schema-id-gen",
+            strategy = "com.ec.application.IDGenerator.SchemaPrefixedIdGenerator"
+    )
+    @Column(name = "indent_id", nullable = false, length = 20)
+    private String indentId;
 
     @Transient
     private String tenantSchemaCode;
+
+    @Column(name = "indent_status", nullable = false, length = 20)
+    private String indentStatus;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @Column(name = "indent_date", nullable = false)
@@ -50,7 +54,8 @@ public class Indent extends ReusableFields implements Cloneable {
     @JoinTable(name = "indentinventory_entry", joinColumns =
             { @JoinColumn(name = "indent_id", referencedColumnName = "indent_id") }, inverseJoinColumns =
             { @JoinColumn(name = "entryid", referencedColumnName = "entryid") })
-    Set<IndentInventoryList> inventoryList = new HashSet<>();;
+    List<IndentInventoryList> inventoryList = new ArrayList<>();;
+
 
     @Override
     public Object clone() throws CloneNotSupportedException {
