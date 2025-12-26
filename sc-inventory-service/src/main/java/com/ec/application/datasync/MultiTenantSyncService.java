@@ -1,6 +1,8 @@
 package com.ec.application.datasync;
 
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.model.Category;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -16,8 +18,8 @@ public class MultiTenantSyncService {
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Value("${schemas.list}")
-    private String schemasList;
+    @Autowired
+    private SchemaConfig schemaConfig;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -33,8 +35,7 @@ public class MultiTenantSyncService {
      */
     @PostConstruct
     public void init() {
-        targetSchemas = Arrays.stream(schemasList.split(","))
-                .map(String::trim)
+        targetSchemas = schemaConfig.getSchemaList().stream()
                 .filter(s -> !s.equalsIgnoreCase(masterSchema))
                 .collect(Collectors.toList());
     }

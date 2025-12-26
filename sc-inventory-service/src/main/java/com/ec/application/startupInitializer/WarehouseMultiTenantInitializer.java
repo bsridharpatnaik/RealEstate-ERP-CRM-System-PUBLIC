@@ -1,5 +1,6 @@
 package com.ec.application.startupInitializer;
 
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.model.Warehouse;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.WarehouseRepo;
@@ -20,8 +21,8 @@ public class WarehouseMultiTenantInitializer implements ApplicationRunner {
 
     private static final String DEFAULT_WAREHOUSE = "Dead Stock Warehouse";
 
-    @Value("${schemas.list}")
-    private String schemas;
+    @Autowired
+    private SchemaConfig schemaConfig;
 
     @Autowired
     private WarehouseRepo warehouseRepo;
@@ -31,10 +32,7 @@ public class WarehouseMultiTenantInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
 
-        List<String> tenants = Arrays.stream(schemas.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+        List<String> tenants = schemaConfig.getSchemaList();
 
         for (String tenant : tenants) {
             try {
@@ -56,8 +54,6 @@ public class WarehouseMultiTenantInitializer implements ApplicationRunner {
             warehouse.setWarehouseName(DEFAULT_WAREHOUSE);
             warehouseRepo.save(warehouse);
             log.info("[{}] Default warehouse created", tenant);
-        } else {
-            log.info("[{}] Default warehouse already exists", tenant);
         }
     }
 }

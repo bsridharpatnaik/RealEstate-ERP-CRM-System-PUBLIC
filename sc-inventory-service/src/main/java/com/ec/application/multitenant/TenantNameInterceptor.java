@@ -10,7 +10,9 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.ec.application.config.SchemaConfig;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
@@ -24,8 +26,8 @@ import lombok.Setter;
 @Component
 public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 
-    @Value("${schemas.list}")
-    private String schemasList;
+    @Autowired
+    private SchemaConfig schemaConfig;
 
     @Value("${spring.profiles.active}")
     private String profile;
@@ -47,9 +49,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             ));
 
     @Override
-    public boolean preHandle(HttpServletRequest request,
-                             HttpServletResponse response,
-                             Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
         if (shouldSkipTenantCheck(request)) {
             ThreadLocalStorage.setTenantName(defaultTenant);
@@ -58,20 +58,19 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 
         String tenantName = changeTenantForSuncity(request.getHeader("tenant-id"));
 
-        if (StringUtils.isBlank(schemasList)) {
-            writeError(response, "Tenants not initalized...");
+        // Validate tenants initialized
+        if (schemaConfig.getSchemaMap() == null || schemaConfig.getSchemaMap().isEmpty()) {
+            writeError(response, "Tenants not initialized...");
             return false;
         }
 
-        System.out.println("Schema List " + schemasList);
-
-        if (!schemasList.contains(tenantName)) {
+        // Validate tenant access
+        if (!schemaConfig.getSchemaMap().containsKey(tenantName)) {
             writeError(response, "User not allowed to access data");
             return false;
         }
 
         ThreadLocalStorage.setTenantName(tenantName);
-        System.out.println("### Tenant Name - " + tenantName);
         return true;
     }
 

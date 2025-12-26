@@ -1,5 +1,6 @@
 package com.ec.application.ReusableClasses;
 
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,14 +9,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.util.List;
+
 //@Component
 @EnableScheduling
 public class ScheduledTasks {
     @Autowired
     StockService stockService;
 
-    @Value("${schemas.list}")
-    private String schemasList;
+    @Autowired
+    private SchemaConfig schemaConfig;
 
     Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
@@ -34,7 +37,7 @@ public class ScheduledTasks {
     @Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
         log.info("Sending Stock Notification Email in evening");
-        String[] tenants = schemasList.split(",");
+        List<String> tenants = schemaConfig.getSchemaList();
         for (String tenantName : tenants) {
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
             stockService.sendStockNotificationEmail();
@@ -45,7 +48,7 @@ public class ScheduledTasks {
     @Scheduled(cron = "0 0 18 * * ?")
     public void sendStockValidationEmail() throws Exception {
         log.info("Sending Stock Notification Email in evening");
-        String[] tenants = schemasList.split(",");
+        List<String> tenants = schemaConfig.getSchemaList();
         for (String tenantName : tenants) {
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
             stockService.sendStockValidationEmail();
@@ -60,7 +63,7 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 * * * *")
     public void updateClosingStock() throws Exception {
-        String[] tenants = schemasList.split(",");
+        List<String> tenants = schemaConfig.getSchemaList();
         for (String tenantName : tenants) {
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
             log.info("Update ClosingStock being triggered for tenant " + tenantName);

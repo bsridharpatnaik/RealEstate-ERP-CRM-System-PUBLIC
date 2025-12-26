@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.UserReturnData;
 import com.ec.application.model.ProjectConstantsTable;
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -20,15 +21,15 @@ public class ProjectConstantsService {
     @Autowired
     ProjectConstantsRepo projectConstantsRepo;
 
-    @Value("${schemas.list}")
-    private String schemasList;
+    @Autowired
+    private SchemaConfig schemaConfig;
 
     @Autowired
     UserDetailsService userDetailsService;
 
     @PostConstruct
     public void init() {
-        String[] tenants = schemasList.split(",");
+        List<String> tenants = schemaConfig.getSchemaList();
         for (String tenant : tenants) {
             ThreadLocalStorage.setTenantName(tenant);
             addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString(), 100);
