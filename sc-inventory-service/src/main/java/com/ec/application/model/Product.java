@@ -2,9 +2,11 @@ package com.ec.application.model;
 
 import javax.persistence.*;
 
+import com.ec.application.IDGenerator.ProductCodeGenerator;
 import com.ec.application.datasync.MultiTableSyncListener;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
@@ -33,6 +35,9 @@ public class Product extends ReusableFields {
     @Column(name = "product_name", unique = true, nullable = false)
     String productName;
 
+    @Column(name = "product_code", unique = true, nullable = false, updatable = false)
+    String productCode;
+
     @Column(name = "productDescription")
     String productDescription;
 
@@ -54,4 +59,11 @@ public class Product extends ReusableFields {
 
     @Column(name = "show_on_dashboard")
     Boolean showOnDashboard;
+
+    @PrePersist
+    public void assignProductCode() {
+        if (this.productCode == null) {
+            this.productCode = ProductCodeGenerator.nextProductCode();
+        }
+    }
 }

@@ -84,6 +84,11 @@ public class ProductController {
         return productService.productMeasurementUnit();
     }
 
+    @GetMapping("/getproductfordropdown")
+    public List<IdNameAndUnit> getProductForDropdown() {
+        return productService.productMeasurementUnit();
+    }
+
     @GetMapping("/typeahead/{name}")
     public List<String> getTypeAhead(@PathVariable String name) {
         return productService.typeAheadDataList(name);
