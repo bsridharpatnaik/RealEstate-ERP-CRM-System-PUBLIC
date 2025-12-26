@@ -44,16 +44,15 @@ public class IndentInventoryController {
         return iiService.createIndentInventory(payload);
     }
 
-    /*
+
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public ReturnInwardInventoryData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
+    public ReturnIndentInventoryData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
                                                              @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
             throws Exception {
-        Pageable pageableUpdated = iiService.modifyPageable(pageable);
-        return iiService.fetchInwardnventory(filterDataList, pageableUpdated);
+        return iiService.fetchIndentInventory(filterDataList, pageable);
     }
-
+/*
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
     public List<InwardInventoryExportDAO2> fetchAllInwardInventoryForExport2(@RequestBody FilterDataList filterDataList)

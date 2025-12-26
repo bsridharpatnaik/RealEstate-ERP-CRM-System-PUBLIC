@@ -183,6 +183,22 @@ public class SpecificationsBuilder<T> {
         };
     }
 
+    public Specification<T> whereIndentCategoryContains(List<String> categoryNames, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+
+            Join<T, InwardOutwardList> ioList = root.join(joinTable);
+            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
+            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
+            query.distinct(true);
+            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
+            Predicate parentPredicate = parentExpression.in(categoryNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
     public Specification<T> whereProductContains(List<String> productNames, String joinTable) {
 
         return (root, query, cb) ->
@@ -190,6 +206,21 @@ public class SpecificationsBuilder<T> {
 
             Join<T, InwardOutwardList> ioList = root.join(joinTable);
             Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
+            Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> whereIndentContainsProduct(List<String> productNames, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+
+            Join<T, InwardOutwardList> ioList = root.join(joinTable);
+            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
             query.distinct(true);
             Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
             Predicate parentPredicate = parentExpression.in(productNames);

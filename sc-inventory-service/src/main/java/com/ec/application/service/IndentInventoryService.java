@@ -1,12 +1,12 @@
 package com.ec.application.service;
 
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.IndentInventorySpecification;
+import com.ec.application.Filters.InwardInventorySpecification;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.config.IndentStatusConstants;
 import com.ec.application.config.SchemaConfig;
-import com.ec.application.data.IndentInventoryData;
-import com.ec.application.data.IndentProductDTO;
-import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.ProductWithQuantity;
+import com.ec.application.data.*;
 import com.ec.application.model.APICallTypeForAuthorization;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentInventoryList;
@@ -17,9 +17,12 @@ import com.ec.application.repository.ProductRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -95,4 +98,20 @@ public class IndentInventoryService {
             throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
 
     }
+
+    public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
+        ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
+        Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
+
+        // Feed listing
+        if (spec != null)
+            returnData.setIndentInventories(indentInventoryRepo.findAll(spec, pageable));
+        else
+            returnData.setIndentInventories(indentInventoryRepo.findAll(pageable));
+
+        // Feed dropdowns
+        //returnInwardInventoryData.setIiDropdown(populateDropdownService.fetchData("inward"));
+        return returnData;
+    }
+
 }
