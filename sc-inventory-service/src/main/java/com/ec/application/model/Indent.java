@@ -18,7 +18,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
@@ -30,9 +32,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "indent_inventory")
 @Audited
-@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class Indent extends ReusableFields implements Cloneable {
 
     @Id
@@ -45,14 +48,17 @@ public class Indent extends ReusableFields implements Cloneable {
     @NonNull
     Date indentDate;
 
-    @Column(name="notes")
-    String notes;
-
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "indent_fileinformation", joinColumns =
             {@JoinColumn(name = "indent_id", referencedColumnName = "indent_id")},
             inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
     Set<FileInformation> fileInformations = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "indentinventory_entry", joinColumns =
+            { @JoinColumn(name = "indent_id", referencedColumnName = "indent_id") }, inverseJoinColumns =
+            { @JoinColumn(name = "entryid", referencedColumnName = "entryid") })
+    Set<IndentInventoryList> inventoryList = new HashSet<>();;
 
     @Override
     public Object clone() throws CloneNotSupportedException {

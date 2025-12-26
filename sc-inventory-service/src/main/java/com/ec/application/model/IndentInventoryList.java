@@ -33,4 +33,13 @@ public class IndentInventoryList extends ReusableFields {
     @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
     @Column(name = "quantity")
     Double quantity;
+
+    @Column(name="specification")
+    String specification;
+
+    @Column(name="remarks")
+    String remarks;
+
+    @Column(name="measurement_unit")
+    String measurementUnit;
 }
