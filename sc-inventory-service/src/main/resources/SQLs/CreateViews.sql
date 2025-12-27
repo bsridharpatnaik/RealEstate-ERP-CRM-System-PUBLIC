@@ -1,4 +1,3 @@
-use egcity; -- suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark;
 
 CREATE OR replace VIEW all_inventory_view
 AS

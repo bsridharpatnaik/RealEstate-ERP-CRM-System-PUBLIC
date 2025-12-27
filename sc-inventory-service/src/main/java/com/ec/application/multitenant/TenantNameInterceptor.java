@@ -40,13 +40,14 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
     private static final List<Pattern> EXCLUDED_URL_PATTERNS =
             Collections.unmodifiableList(Arrays.asList(
                     Pattern.compile(".*/category.*"),
-                    Pattern.compile("^/contact(/.*)?$"),
-                    Pattern.compile("^/contractor(/.*)?$"),
-                    Pattern.compile("^/supplier(/.*)?$"),
-                    Pattern.compile("^/machinery(/.*)?$"),
-                    Pattern.compile("^/product(/.*)?$"),
-                    Pattern.compile("^/error(/.*)?$")
+                    Pattern.compile(".*/contact.*"),
+                    Pattern.compile(".*/contractor.*"),
+                    Pattern.compile(".*/supplier.*"),
+                    Pattern.compile(".*/machinery.*"),
+                    Pattern.compile(".*/product.*"),
+                    Pattern.compile(".*/error.*")
             ));
+
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
