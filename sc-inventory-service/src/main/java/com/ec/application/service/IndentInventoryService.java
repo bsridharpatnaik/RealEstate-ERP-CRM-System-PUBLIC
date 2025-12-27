@@ -114,4 +114,8 @@ public class IndentInventoryService {
         return returnData;
     }
 
+    public IndentInventory findById(String id) {
+        return indentInventoryRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Indent Inventory not found with ID " + id));
+    }
 }

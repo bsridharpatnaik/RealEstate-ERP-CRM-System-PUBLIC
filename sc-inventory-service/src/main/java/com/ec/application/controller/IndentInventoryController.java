@@ -52,6 +52,11 @@ public class IndentInventoryController {
             throws Exception {
         return iiService.fetchIndentInventory(filterDataList, pageable);
     }
+
+    @GetMapping("/{id}")
+    public IndentInventory findInwardInventoryById(@PathVariable String id) throws Exception {
+        return iiService.findById(id);
+    }
 /*
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
@@ -61,18 +66,7 @@ public class IndentInventoryController {
         return iiService.fetchInwardnventoryForExport2(filterDataList);
     }
 
-    @PatchMapping("/{id}")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    @CheckAuthority
-    public InwardInventory setRejectInwardInventory(@PathVariable Long id,
-                                                    @RequestBody ReturnRejectInwardOutwardData rd) throws Exception {
-        return iiService.addRejectInwardEntry(rd, id);
-    }
 
-    @GetMapping("/{id}")
-    public InwardInventory findInwardInventoryById(@PathVariable long id) throws Exception {
-        return iiService.findById(id);
-    }
 
     @PutMapping("/{id}")
     @CheckAuthority
