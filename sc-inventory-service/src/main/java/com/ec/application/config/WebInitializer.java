@@ -1,3 +1,4 @@
+/*
 package com.ec.application.config;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -13,4 +14,4 @@ public class WebInitializer extends SpringBootServletInitializer {
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
         return application.sources(EcApplication.class);
     }    
-}
+}*/

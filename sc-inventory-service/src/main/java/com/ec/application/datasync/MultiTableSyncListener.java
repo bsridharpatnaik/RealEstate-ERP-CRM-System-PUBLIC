@@ -8,11 +8,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-@Component
 public class MultiTableSyncListener {
 
-    @Autowired
     private MultiTenantSyncService syncService;
+
+    @Autowired
+    public void setSyncService(MultiTenantSyncService service) {
+        this.syncService = service;
+    }
 
     @PostPersist
     public void afterInsert(Object entity) {
