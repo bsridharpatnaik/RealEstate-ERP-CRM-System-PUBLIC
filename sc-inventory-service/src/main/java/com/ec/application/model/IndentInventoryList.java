@@ -2,9 +2,7 @@ package com.ec.application.model;
 
 import javax.persistence.*;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
@@ -13,10 +11,13 @@ import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "indent_inventory_entries")
 @Audited
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class IndentInventoryList extends ReusableFields {
@@ -45,4 +46,29 @@ public class IndentInventoryList extends ReusableFields {
 
     @Column(name="line_item_status")
     String lineItemStatus;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof IndentInventoryList)) return false;
+
+        IndentInventoryList that = (IndentInventoryList) o;
+
+        return Objects.equals(product.getProductId(), that.product.getProductId()) &&
+                Objects.equals(quantity, that.quantity) &&
+                Objects.equals(specification, that.specification) &&
+                Objects.equals(remarks, that.remarks) &&
+                Objects.equals(measurementUnit, that.measurementUnit);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                product.getProductId(),
+                quantity,
+                specification,
+                remarks,
+                measurementUnit
+        );
+    }
 }

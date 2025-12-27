@@ -23,10 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.counting;
@@ -51,17 +48,19 @@ public class IndentInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         IndentInventory indentInventory = new IndentInventory();
         validateInputs(iiData);
-        setFields(indentInventory, iiData);
+        setFields(indentInventory, iiData, "create");
         indentInventoryRepo.save(indentInventory);
         return indentInventory;
     }
 
-    private void setFields(IndentInventory indentInventory, IndentInventoryData iiData) {
+    private void setFields(IndentInventory indentInventory, IndentInventoryData iiData, String action) {
         indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(ThreadLocalStorage.getTenantName()));
-        indentInventory.setIndentDate(iiData.getIndentDate());
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
-        indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CREATED);
         indentInventory.setInventoryList(fetchIndentProductList(iiData.getInventoryList()));
+        indentInventory.setIndentDate(iiData.getIndentDate());
+        if(!action.equalsIgnoreCase("update")) {
+            indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CREATED);
+        }
     }
 
     private List<IndentInventoryList> fetchIndentProductList(List<IndentProductDTO> indentProductDTOs) {
@@ -117,5 +116,31 @@ public class IndentInventoryService {
     public IndentInventory findById(String id) {
         return indentInventoryRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Indent Inventory not found with ID " + id));
+    }
+
+    public void deleteInwardInventoryById(String id) {
+        IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
+        indentInventoryRepo.softDelete(indentInventory);
+    }
+
+    public IndentInventory updateInwardnventory(IndentInventoryData payload, String id) throws Exception {
+        IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
+        validateInputs(payload);
+        setFields(indentInventory, payload, "update");
+        indentInventoryRepo.save(indentInventory);
+        return indentInventory;
+    }
+
+    public IndentInventory validateAndGetIndentInventoryForModification(String id) {
+        Optional<IndentInventory> indentInventoryOptional = indentInventoryRepo.findById(id);
+        if(!indentInventoryOptional.isPresent()) {
+            throw new RuntimeException("Indent Inventory not found with ID " + id);
+        }
+
+        IndentInventory indentInventory = indentInventoryOptional.get();
+        if (!indentInventory.getIndentStatus().equalsIgnoreCase(IndentStatusConstants.STATUS_CREATED))
+            throw new RuntimeException("Indent Inventory cannot be edited after PO is created.");
+
+        return indentInventory;
     }
 }

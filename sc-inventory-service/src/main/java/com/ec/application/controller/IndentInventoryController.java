@@ -57,6 +57,21 @@ public class IndentInventoryController {
     public IndentInventory findInwardInventoryById(@PathVariable String id) throws Exception {
         return iiService.findById(id);
     }
+
+    @DeleteMapping(value = "/{id}")
+    @CheckAuthority
+    public ResponseEntity<?> deleteIndentInventoryById(@PathVariable String id) throws Exception {
+
+        iiService.deleteInwardInventoryById(id);
+        return ResponseEntity.ok("Entity deleted");
+    }
+
+    @PutMapping("/{id}")
+    @CheckAuthority
+    public IndentInventory updateInwardInventoryById(@PathVariable String id, @RequestBody IndentInventoryData payload)
+            throws Exception {
+        return iiService.updateInwardnventory(payload, id);
+    }
 /*
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
@@ -64,23 +79,6 @@ public class IndentInventoryController {
             throws Exception {
 
         return iiService.fetchInwardnventoryForExport2(filterDataList);
-    }
-
-
-
-    @PutMapping("/{id}")
-    @CheckAuthority
-    public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
-            throws Exception {
-        return iiService.updateInwardnventory(payload, id);
-    }
-
-    @DeleteMapping(value = "/{id}")
-    @CheckAuthority
-    public ResponseEntity<?> deleteInwardInventoryById(@PathVariable Long id) throws Exception {
-
-        iiService.deleteInwardInventoryById(id);
-        return ResponseEntity.ok("Entity deleted");
     }
 
     @ExceptionHandler(
