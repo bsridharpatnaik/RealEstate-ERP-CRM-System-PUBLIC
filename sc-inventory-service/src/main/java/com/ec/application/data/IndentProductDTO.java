@@ -26,4 +26,7 @@ public class IndentProductDTO {
 
     @JsonDeserialize(using = ToUpperCaseDeserializer.class)
     String measurementUnit;
+
+    private String lineItemCode;  // Will be null for new items during creation
+    private String parentLineItemCode;
 }

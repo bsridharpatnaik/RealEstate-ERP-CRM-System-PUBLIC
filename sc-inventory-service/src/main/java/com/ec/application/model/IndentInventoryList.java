@@ -21,14 +21,22 @@ import java.util.Objects;
 @NoArgsConstructor
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class IndentInventoryList extends ReusableFields {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     Long entryid;
 
+    // Unique identifier for the line item
+    @Column(name = "line_item_code", unique = true, nullable = false, length = 50)
+    private String lineItemCode;
+
+    // To track split lineage (optional but useful for tracking)
+    @Column(name = "parent_line_item_code", length = 50)
+    private String parentLineItemCode;
+
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "productId", nullable = false)
-    @JsonIgnoreProperties(
-            {"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     Product product;
 
     @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
@@ -47,28 +55,21 @@ public class IndentInventoryList extends ReusableFields {
     @Column(name="line_item_status")
     String lineItemStatus;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "indent_id", nullable = false)
+    @JsonIgnoreProperties
+    private IndentInventory indentInventory;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof IndentInventoryList)) return false;
-
         IndentInventoryList that = (IndentInventoryList) o;
-
-        return Objects.equals(product.getProductId(), that.product.getProductId()) &&
-                Objects.equals(quantity, that.quantity) &&
-                Objects.equals(specification, that.specification) &&
-                Objects.equals(remarks, that.remarks) &&
-                Objects.equals(measurementUnit, that.measurementUnit);
+        return Objects.equals(lineItemCode, that.lineItemCode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                product.getProductId(),
-                quantity,
-                specification,
-                remarks,
-                measurementUnit
-        );
+        return Objects.hash(lineItemCode);
     }
 }

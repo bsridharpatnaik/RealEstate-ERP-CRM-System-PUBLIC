@@ -1,6 +1,7 @@
 package com.ec.application.model;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -50,11 +51,8 @@ public class IndentInventory extends ReusableFields implements Cloneable {
             inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
     Set<FileInformation> fileInformations = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(name = "indentinventory_entry", joinColumns =
-            { @JoinColumn(name = "indent_id", referencedColumnName = "indent_id") }, inverseJoinColumns =
-            { @JoinColumn(name = "entryid", referencedColumnName = "entryid") })
-    List<IndentInventoryList> inventoryList = new ArrayList<>();;
+    @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
+    private List<IndentInventoryList> inventoryList = new ArrayList<>();
 
 
     @Override
