@@ -41,8 +41,11 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value = "SELECT distinct productId from Product m")
 	List<Long> fetchUniqueProductIds();
 
-	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode) from Product m")
+	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory) from Product m")
 	List<IdNameAndUnit> getProductMeasurementUnit();
+
+	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory) from Product m WHERE m.isManagedInventory=:isManagedInventory")
+	List<IdNameAndUnit> getProducts(@Param("isManagedInventory") boolean isManagedInventory);
 
 	@Query(value = "SELECT p from Product p where p.showOnDashboard=true")
     List<Product> getDashboardProducts();

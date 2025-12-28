@@ -228,4 +228,9 @@ public class ProductService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         return productRepo.getProductMeasurementUnit();
     }
+
+    public List<IdNameAndUnit> getProducts(Boolean isManagedInventory) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        return productRepo.getProducts(isManagedInventory);
+    }
 }

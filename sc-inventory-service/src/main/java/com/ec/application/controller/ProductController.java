@@ -13,16 +13,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -84,9 +75,9 @@ public class ProductController {
         return productService.productMeasurementUnit();
     }
 
-    @GetMapping("/getproductfordropdown")
-    public List<IdNameAndUnit> getProductForDropdown() {
-        return productService.productMeasurementUnit();
+    @GetMapping
+    public List<IdNameAndUnit> getProducts(@RequestParam(name = "isManagedInventory", defaultValue = "true") boolean isManagedInventory) {
+        return productService.getProducts(isManagedInventory);
     }
 
     @GetMapping("/typeahead/{name}")
