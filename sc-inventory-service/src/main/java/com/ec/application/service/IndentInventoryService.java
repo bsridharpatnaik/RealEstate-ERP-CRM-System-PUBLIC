@@ -7,10 +7,7 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.config.IndentStatusConstants;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.*;
-import com.ec.application.model.APICallTypeForAuthorization;
-import com.ec.application.model.IndentInventory;
-import com.ec.application.model.IndentInventoryList;
-import com.ec.application.model.InwardInventory;
+import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.ProductRepo;
@@ -83,8 +80,12 @@ public class IndentInventoryService {
             throw new Exception("Purchase Order Date is a mandatory field");
 
         for(IndentProductDTO indentProductDTO : iiData.getInventoryList()) {
-            if (!productRepo.existsById(indentProductDTO.getProductId()))
+            Optional<Product> productOpt = productRepo.findById(indentProductDTO.getProductId());
+
+            if (!productOpt.isPresent())
                 throw new Exception("Product not found with ID " + indentProductDTO.getProductId());
+            else if(productOpt.get().getIsManagedInventory() == false)
+                throw new Exception("Product with ID " + indentProductDTO.getProductId() + " is not managed inventory. Cannot be added to Indent Inventory.");
             if (indentProductDTO.getQuantity() <= 0)
                 throw new Exception("Quantity cannot be less that or equals zero");
         }
