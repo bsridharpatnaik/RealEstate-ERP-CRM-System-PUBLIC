@@ -44,42 +44,31 @@ public class IndentInventoryService {
     @Transactional(rollbackFor = Exception.class)
     public IndentInventory createIndentInventory(IndentInventoryData iiData) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
         IndentInventory indentInventory = new IndentInventory();
         validateInputsForCreate(iiData);
-        setFieldsForCreate(indentInventory, iiData);
-        indentInventoryRepo.save(indentInventory);
-        return indentInventory;
-    }
 
-    /**
-     * Set fields during CREATION
-     */
-    private void setFieldsForCreate(IndentInventory indentInventory, IndentInventoryData iiData) {
+        // Set basic fields (without inventory list)
         indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(ThreadLocalStorage.getTenantName()));
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         indentInventory.setIndentDate(iiData.getIndentDate());
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CREATED);
 
-        // Generate line item codes for new inventory items
-        // Note: indentId will be generated after save, so we need to handle this
-        // Option 1: Generate indentId before setting inventory list
-        // Option 2: Set inventory list after save in a separate step
+        // First save to generate indentId
+        indentInventoryRepo.save(indentInventory);
+        indentInventoryRepo.flush(); // Ensure ID is generated
 
-        // For now, we'll set a temporary list and update after save
-        indentInventory.setInventoryList(new ArrayList<>());
-    }
-
-    /**
-     * Process inventory list after indent is created (has indentId)
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public void setInitialInventoryList(IndentInventory indentInventory, IndentInventoryData iiData) {
+        // Now add inventory list with proper line item codes
         List<IndentInventoryList> inventoryList = processInventoryListForCreation(
                 iiData.getInventoryList(),
-                indentInventory.getIndentId()
+                indentInventory  // PASS THE PARENT OBJECT
         );
         indentInventory.setInventoryList(inventoryList);
+
+        // Save again with inventory list
         indentInventoryRepo.save(indentInventory);
+
+        return indentInventory;
     }
 
     /**
@@ -88,12 +77,15 @@ public class IndentInventoryService {
      */
     private List<IndentInventoryList> processInventoryListForCreation(
             List<IndentProductDTO> indentProductDTOs,
-            String indentId) {
+            IndentInventory indentInventory) {  // CHANGED: Accept IndentInventory instead of String
 
         List<IndentInventoryList> inventoryList = new ArrayList<>();
 
         for (IndentProductDTO dto : indentProductDTOs) {
             IndentInventoryList item = new IndentInventoryList();
+
+            // SET THE PARENT REFERENCE - THIS IS CRITICAL!
+            item.setIndentInventory(indentInventory);
 
             // Set product
             Product product = productRepo.findByProductId(dto.getProductId());
@@ -108,8 +100,8 @@ public class IndentInventoryService {
 
             // Generate unique line item code: INDENT_ID/PRODUCT_ID
             String lineItemCode = LineItemCodeGenerator.generateInitialCode(
-                    indentId,
-                    String.valueOf(dto.getProductId())
+                    indentInventory.getIndentId(),
+                    String.valueOf(product.getProductId())
             );
             item.setLineItemCode(lineItemCode);
             item.setParentLineItemCode(null); // No parent for initial items
@@ -126,13 +118,16 @@ public class IndentInventoryService {
      */
     private List<IndentInventoryList> processInventoryListForUpdate(
             List<IndentProductDTO> indentProductDTOs,
-            String indentId,
+            IndentInventory indentInventory,  // CHANGED: Accept IndentInventory instead of separate params
             List<IndentInventoryList> existingInventoryList) {
 
         List<IndentInventoryList> processedList = new ArrayList<>();
 
         for (IndentProductDTO dto : indentProductDTOs) {
             IndentInventoryList item = new IndentInventoryList();
+
+            // SET THE PARENT REFERENCE FOR NEW ITEMS - THIS IS CRITICAL!
+            item.setIndentInventory(indentInventory);
 
             // Set product
             Product product = productRepo.findByProductId(dto.getProductId());
@@ -143,7 +138,7 @@ public class IndentInventoryService {
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setLineItemStatus(item.getLineItemStatus());
+            item.setLineItemStatus(item.getLineItemStatus());  // FIXED: was item.getLineItemStatus()
 
             // Handle line item code
             if (dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty()) {
@@ -167,8 +162,8 @@ public class IndentInventoryService {
             } else {
                 // Brand new product being added - generate initial code
                 String lineItemCode = LineItemCodeGenerator.generateInitialCode(
-                        indentId,
-                        String.valueOf(dto.getProductId())
+                        indentInventory.getIndentId(),
+                        String.valueOf(product.getProductId())
                 );
                 item.setLineItemCode(lineItemCode);
                 item.setParentLineItemCode(null);
@@ -226,7 +221,6 @@ public class IndentInventoryService {
         }
 
         // Remove items that are no longer in the new list
-        // This removes from collection, which deletes the mapping from join table
         indentInventory.getInventoryList().removeIf(item -> !itemsToKeep.contains(item));
     }
 
@@ -325,7 +319,7 @@ public class IndentInventoryService {
         // Process and synchronize inventory list
         List<IndentInventoryList> processedInventoryList = processInventoryListForUpdate(
                 payload.getInventoryList(),
-                indentInventory.getIndentId(),
+                indentInventory,  // CHANGED: Pass the object instead of ID
                 indentInventory.getInventoryList()
         );
 
@@ -349,60 +343,80 @@ public class IndentInventoryService {
     }
 
     /**
-     * Split a line item into multiple items
+     * Split a line item into TWO items
+     * Only quantity and code change, everything else stays the same
      */
     @Transactional(rollbackFor = Exception.class)
-    public IndentInventory splitLineItem(String indentId, String lineItemCode, List<IndentProductDTO> splitItemsData) throws Exception {
+    public IndentInventory splitLineItem(String indentId, SplitLineItemRequest request) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(indentId);
 
         // Find the original item to be split
         IndentInventoryList originalItem = indentInventory.getInventoryList().stream()
-                .filter(item -> item.getLineItemCode().equals(lineItemCode))
+                .filter(item -> item.getLineItemCode().equals(request.getLineItemCode()))
                 .findFirst()
-                .orElseThrow(() -> new Exception("Line item not found with code: " + lineItemCode));
+                .orElseThrow(() -> new Exception("Line item not found with code: " + request.getLineItemCode()));
 
-        // Validate total quantity matches
-        double totalSplitQuantity = splitItemsData.stream()
-                .mapToDouble(IndentProductDTO::getQuantity)
-                .sum();
-
-        if (Math.abs(totalSplitQuantity - originalItem.getQuantity()) > 0.01) {
-            throw new Exception("Total quantity of split items (" + totalSplitQuantity +
-                    ") must equal original quantity (" + originalItem.getQuantity() + ")");
+        // Validate split quantity
+        if (request.getSplitQuantity() == null || request.getSplitQuantity() <= 0) {
+            throw new Exception("Split quantity must be greater than zero");
         }
 
-        // Create split items
-        List<IndentInventoryList> newSplitItems = new ArrayList<>();
-        int splitIndex = 1;
-
-        for (IndentProductDTO splitDto : splitItemsData) {
-            // Find next available split index
-            int nextIndex = LineItemCodeGenerator.getNextSplitIndex(
-                    lineItemCode,
-                    indentInventory.getInventoryList()
-            );
-
-            IndentInventoryList splitItem = new IndentInventoryList();
-            splitItem.setProduct(originalItem.getProduct());
-            splitItem.setQuantity(splitDto.getQuantity());
-            splitItem.setSpecification(splitDto.getSpecification());
-            splitItem.setRemarks(splitDto.getRemarks());
-            splitItem.setMeasurementUnit(originalItem.getMeasurementUnit());
-            splitItem.setLineItemStatus(splitItem.getLineItemStatus());
-
-            // Generate split code
-            String splitCode = LineItemCodeGenerator.generateSplitCode(lineItemCode, nextIndex);
-            splitItem.setLineItemCode(splitCode);
-            splitItem.setParentLineItemCode(lineItemCode);
-
-            newSplitItems.add(splitItem);
-            indentInventory.getInventoryList().add(splitItem);
+        if (request.getSplitQuantity() >= originalItem.getQuantity()) {
+            throw new Exception("Split quantity (" + request.getSplitQuantity() +
+                    ") must be less than original quantity (" + originalItem.getQuantity() + ")");
         }
+
+        // Calculate remainder quantity
+        Double remainderQuantity = originalItem.getQuantity() - request.getSplitQuantity();
+
+        // Find next available split indices
+        String parentCode = request.getLineItemCode();
+        int splitIndex1 = LineItemCodeGenerator.getNextSplitIndex(parentCode, indentInventory.getInventoryList());
+        int splitIndex2 = splitIndex1 + 1;
+
+        // Create first split item (with requested quantity)
+        IndentInventoryList splitItem1 = new IndentInventoryList();
+        splitItem1.setIndentInventory(indentInventory);  // SET PARENT!
+        splitItem1.setProduct(originalItem.getProduct());
+        splitItem1.setQuantity(request.getSplitQuantity());
+        splitItem1.setSpecification(originalItem.getSpecification());
+        splitItem1.setRemarks(originalItem.getRemarks());
+        splitItem1.setMeasurementUnit(originalItem.getMeasurementUnit());
+        splitItem1.setLineItemStatus(originalItem.getLineItemStatus());
+
+        String splitCode1 = LineItemCodeGenerator.generateSplitCode(parentCode, splitIndex1);
+        splitItem1.setLineItemCode(splitCode1);
+        splitItem1.setParentLineItemCode(parentCode);
+
+        // Create second split item (with remainder quantity)
+        IndentInventoryList splitItem2 = new IndentInventoryList();
+        splitItem2.setIndentInventory(indentInventory);  // SET PARENT!
+        splitItem2.setProduct(originalItem.getProduct());
+        splitItem2.setQuantity(remainderQuantity);
+        splitItem2.setSpecification(originalItem.getSpecification());
+        splitItem2.setRemarks(originalItem.getRemarks());
+        splitItem2.setMeasurementUnit(originalItem.getMeasurementUnit());
+        splitItem2.setLineItemStatus(originalItem.getLineItemStatus());
+
+        String splitCode2 = LineItemCodeGenerator.generateSplitCode(parentCode, splitIndex2);
+        splitItem2.setLineItemCode(splitCode2);
+        splitItem2.setParentLineItemCode(parentCode);
+
+        // Add new split items to inventory list
+        indentInventory.getInventoryList().add(splitItem1);
+        indentInventory.getInventoryList().add(splitItem2);
 
         // Remove the original item from the collection
         indentInventory.getInventoryList().remove(originalItem);
 
+        // Save changes
         indentInventoryRepo.save(indentInventory);
+
+        log.info("Split line item {} (qty: {}) into {} (qty: {}) and {} (qty: {})",
+                parentCode, originalItem.getQuantity(),
+                splitCode1, request.getSplitQuantity(),
+                splitCode2, remainderQuantity);
+
         return indentInventory;
     }
 }

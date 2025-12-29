@@ -72,6 +72,19 @@ public class IndentInventoryController {
             throws Exception {
         return iiService.updateInwardnventory(payload, id);
     }
+
+    @PostMapping("/{indentId}/split")
+    public ResponseEntity<?> splitLineItem(
+            @PathVariable String indentId,
+            @RequestBody SplitLineItemRequest request) {
+        try {
+            IndentInventory result = iiService.splitLineItem(indentId, request);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiOnlyMessageAndCodeError(400, e.getMessage()));
+        }
+    }
 /*
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)

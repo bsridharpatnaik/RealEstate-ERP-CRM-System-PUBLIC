@@ -8,6 +8,7 @@ import org.hibernate.envers.Audited;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonIgnore;  // ADD THIS IMPORT
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -57,7 +58,7 @@ public class IndentInventoryList extends ReusableFields {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "indent_id", nullable = false)
-    @JsonIgnoreProperties
+    @JsonIgnore  // CHANGED: This prevents circular reference during serialization
     private IndentInventory indentInventory;
 
     @Override
