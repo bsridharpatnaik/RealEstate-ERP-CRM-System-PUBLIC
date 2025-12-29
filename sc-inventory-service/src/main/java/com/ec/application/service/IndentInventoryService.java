@@ -3,9 +3,10 @@ package com.ec.application.service;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.IndentInventorySpecification;
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.config.IndentLineItemStatusConstants;
-import com.ec.application.config.IndentStatusConstants;
+import com.ec.application.constants.IndentLineItemStatusConstants;
+import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -41,6 +42,9 @@ public class IndentInventoryService {
 
     @Autowired
     DraftService draftService;
+
+    @Autowired
+    UserDetailsService userDetailsService;
 
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
 
@@ -297,15 +301,18 @@ public class IndentInventoryService {
                 .orElseThrow(() -> new RuntimeException("Indent Inventory not found with ID " + id));
     }
 
-    public void deleteInwardInventoryById(String id) {
+    public void deleteInwardInventoryById(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         String status = indentInventory.getIndentStatus();
-        if (IndentStatusConstants.STATUS_CREATED.equalsIgnoreCase(status)) {
+        boolean isAdminOrManager = userDetailsService.hasRole(RoleConstants.ADMIN) || userDetailsService.hasRole(RoleConstants.INVENTORY_MANAGER);
+        boolean isInventoryExecutive = userDetailsService.hasRole(RoleConstants.INVENTORY_EXECUTIVE);
+
+        if (IndentStatusConstants.STATUS_CREATED.equalsIgnoreCase(status) && isInventoryExecutive) {
             indentInventoryRepo.softDelete(indentInventory);
-        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status)) {
+        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrManager) {
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
         } else {
-            throw new IllegalStateException("Indent cannot be deleted or cancelled in status: " + status);
+            throw new IllegalStateException("Indent cannot be deleted or cancelled in status: " + status + "by current user.");
         }
     }
 

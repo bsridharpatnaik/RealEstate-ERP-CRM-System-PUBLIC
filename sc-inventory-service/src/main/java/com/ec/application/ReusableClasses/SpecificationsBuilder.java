@@ -8,7 +8,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import com.ec.application.config.ProjectConstants;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 

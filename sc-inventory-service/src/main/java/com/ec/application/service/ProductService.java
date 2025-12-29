@@ -7,7 +7,7 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import com.ec.application.aspects.UseDefaultTenant;
-import com.ec.application.config.ProjectConstants;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.repository.InventoryMonthPriceMappingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,7 @@
 package com.ec.application.service;
 
 import com.ec.application.ReusableClasses.CommonUtils;
-import com.ec.application.config.ProjectConstants;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.InstanceList;
 import com.ec.application.data.SMSExternalPayloadData;
 import com.ec.application.data.SMSGatewayResponse;

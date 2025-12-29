@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.application.ReusableClasses.*;
-import com.ec.application.config.ProjectConstants;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
 import com.ec.application.repository.*;

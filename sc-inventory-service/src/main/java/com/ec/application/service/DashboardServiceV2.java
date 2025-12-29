@@ -1,6 +1,6 @@
 package com.ec.application.service;
 
-import com.ec.application.config.ProjectConstants;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.InventoryHistoricalStats;
 import com.ec.application.data.StockPercentageForDashboard;
 import com.ec.application.data.TimelyProductStatsForDashboard;
@@ -8,7 +8,6 @@ import com.ec.application.model.*;
 import com.ec.application.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.ec.application.config;
+package com.ec.application.constants;
 
 public final class ProjectConstants {
 	public static String smsGatewayURL = "https://api.msg91.com/api/v5/flow/";

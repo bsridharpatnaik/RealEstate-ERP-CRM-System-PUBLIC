@@ -1,4 +1,4 @@
-package com.ec.application.config;
+package com.ec.application.constants;
 
 import lombok.Data;
 
