@@ -73,7 +73,7 @@ public class IndentInventoryController {
         return iiService.updateInwardnventory(payload, id);
     }
 
-    @PostMapping("/{indentId}/split")
+    @PatchMapping("/{indentId}/split")
     public ResponseEntity<?> splitLineItem(
             @PathVariable String indentId,
             @RequestBody SplitLineItemRequest request) {

@@ -2,6 +2,7 @@ package com.ec.application.util;
 
 import com.ec.application.model.IndentInventoryList;
 import java.util.List;
+import java.util.Set;
 
 public class LineItemCodeGenerator {
 
@@ -45,7 +46,7 @@ public class LineItemCodeGenerator {
     /**
      * Get the next available split index for a parent code
      */
-    public static int getNextSplitIndex(String parentCode, List<IndentInventoryList> existingItems) {
+    public static int getNextSplitIndex(String parentCode, Set<IndentInventoryList> existingItems) {
         int maxIndex = 0;
         String prefix = parentCode + "/";
 

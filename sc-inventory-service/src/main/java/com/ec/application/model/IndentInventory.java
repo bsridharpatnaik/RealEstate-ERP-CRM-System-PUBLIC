@@ -8,6 +8,8 @@ import javax.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
@@ -51,8 +53,8 @@ public class IndentInventory extends ReusableFields implements Cloneable {
             inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
     Set<FileInformation> fileInformations = new HashSet<>();
 
-    @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER, orphanRemoval = false)
-    List<IndentInventoryList> inventoryList = new ArrayList<>();
+    @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY, orphanRemoval = false)
+    private Set<IndentInventoryList> inventoryList = new HashSet<>();
 
 
     @Override

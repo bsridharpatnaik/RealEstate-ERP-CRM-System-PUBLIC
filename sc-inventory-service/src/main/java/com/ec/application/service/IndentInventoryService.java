@@ -59,14 +59,17 @@ public class IndentInventoryService {
         indentInventoryRepo.flush(); // Ensure ID is generated
 
         // Now add inventory list with proper line item codes
-        List<IndentInventoryList> inventoryList = processInventoryListForCreation(
+        Set<IndentInventoryList> inventoryList = processInventoryListForCreation(
                 iiData.getInventoryList(),
-                indentInventory  // PASS THE PARENT OBJECT
+                indentInventory
         );
         indentInventory.setInventoryList(inventoryList);
 
         // Save again with inventory list
         indentInventoryRepo.save(indentInventory);
+
+        // Force load the list before returning (to avoid lazy init exception)
+        indentInventory.getInventoryList().size();
 
         return indentInventory;
     }
@@ -75,11 +78,11 @@ public class IndentInventoryService {
      * Process inventory list for CREATION
      * Generates unique line item codes for each product
      */
-    private List<IndentInventoryList> processInventoryListForCreation(
+    private Set<IndentInventoryList> processInventoryListForCreation(
             List<IndentProductDTO> indentProductDTOs,
             IndentInventory indentInventory) {  // CHANGED: Accept IndentInventory instead of String
 
-        List<IndentInventoryList> inventoryList = new ArrayList<>();
+        Set<IndentInventoryList> inventoryList = new HashSet<>();
 
         for (IndentProductDTO dto : indentProductDTOs) {
             IndentInventoryList item = new IndentInventoryList();
@@ -116,12 +119,12 @@ public class IndentInventoryService {
      * Process inventory list for UPDATE
      * Handles existing items, new items, and split items
      */
-    private List<IndentInventoryList> processInventoryListForUpdate(
+    private Set<IndentInventoryList> processInventoryListForUpdate(
             List<IndentProductDTO> indentProductDTOs,
             IndentInventory indentInventory,  // CHANGED: Accept IndentInventory instead of separate params
-            List<IndentInventoryList> existingInventoryList) {
+            Set<IndentInventoryList> existingInventoryList) {
 
-        List<IndentInventoryList> processedList = new ArrayList<>();
+        Set<IndentInventoryList> processedList = new HashSet<>();
 
         for (IndentProductDTO dto : indentProductDTOs) {
             IndentInventoryList item = new IndentInventoryList();
@@ -179,13 +182,13 @@ public class IndentInventoryService {
      * Synchronize inventory list during update
      * Only updates changed items, adds new items, removes deleted items
      */
-    private void syncInventoryList(IndentInventory indentInventory, List<IndentInventoryList> newInventoryList) {
+    private void syncInventoryList(IndentInventory indentInventory, Set<IndentInventoryList> newInventoryList) {
         if (newInventoryList == null) {
-            newInventoryList = new ArrayList<>();
+            newInventoryList = new HashSet<>();
         }
 
         if (indentInventory.getInventoryList() == null) {
-            indentInventory.setInventoryList(new ArrayList<>());
+            indentInventory.setInventoryList(new HashSet<>());
         }
 
         // Create a map of existing items by lineItemCode
@@ -228,6 +231,28 @@ public class IndentInventoryService {
      * Validation for CREATE - no duplicate products allowed
      */
     private void validateInputsForCreate(IndentInventoryData iiData) throws Exception {
+        basicValidation(iiData, " is not managed inventory. Cannot be added to Indent Inventory.");
+    }
+
+    /**
+     * Validation for UPDATE - allows duplicate products (due to split functionality)
+     */
+    private void validateInputsForUpdate(IndentInventoryData iiData) throws Exception {
+
+        basicValidation(iiData, " is not managed inventory.");
+        //validate for duplicate line item codes
+        Long duplicateLineItemCodeCount = iiData.getInventoryList().stream()
+                .filter(dto -> dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty())
+                .collect(Collectors.groupingBy(IndentProductDTO::getLineItemCode, counting()))
+                .entrySet().stream()
+                .filter(e -> e.getValue() > 1).count();
+
+        if (duplicateLineItemCodeCount > 0)
+            throw new Exception("Duplicate line item codes found. Each line item must have a unique code.");
+    }
+
+    private void basicValidation(IndentInventoryData iiData, String x) throws Exception {
+
         if (iiData.getIndentDate() == null)
             throw new Exception("Indent Date is a mandatory field");
 
@@ -237,7 +262,7 @@ public class IndentInventoryService {
             if (!productOpt.isPresent())
                 throw new Exception("Product not found with ID " + dto.getProductId());
             else if (productOpt.get().getIsManagedInventory() == false)
-                throw new Exception("Product with ID " + dto.getProductId() + " is not managed inventory. Cannot be added to Indent Inventory.");
+                throw new Exception("Product with ID " + dto.getProductId() + x);
             if (dto.getQuantity() <= 0)
                 throw new Exception("Quantity cannot be less than or equal to zero");
         }
@@ -248,37 +273,7 @@ public class IndentInventoryService {
                 .filter(e -> e.getValue() > 1).count();
 
         if (duplicateProductIdCount > 0)
-            throw new Exception("Same product cannot be added multiple times during creation. Use split functionality after creation if needed.");
-    }
-
-    /**
-     * Validation for UPDATE - allows duplicate products (due to split functionality)
-     */
-    private void validateInputsForUpdate(IndentInventoryData iiData) throws Exception {
-        if (iiData.getIndentDate() == null)
-            throw new Exception("Indent Date is a mandatory field");
-
-        for (IndentProductDTO dto : iiData.getInventoryList()) {
-            Optional<Product> productOpt = productRepo.findById(dto.getProductId());
-
-            if (!productOpt.isPresent())
-                throw new Exception("Product not found with ID " + dto.getProductId());
-            else if (productOpt.get().getIsManagedInventory() == false)
-                throw new Exception("Product with ID " + dto.getProductId() + " is not managed inventory.");
-            if (dto.getQuantity() <= 0)
-                throw new Exception("Quantity cannot be less than or equal to zero");
-        }
-
-        // No duplicate check here - same product can appear multiple times due to split
-        // But validate that line item codes are unique
-        Long duplicateLineItemCodeCount = iiData.getInventoryList().stream()
-                .filter(dto -> dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty())
-                .collect(Collectors.groupingBy(IndentProductDTO::getLineItemCode, counting()))
-                .entrySet().stream()
-                .filter(e -> e.getValue() > 1).count();
-
-        if (duplicateLineItemCodeCount > 0)
-            throw new Exception("Duplicate line item codes found. Each line item must have a unique code.");
+            throw new Exception("Same product cannot be added multiple times during creation/updation. Use split functionality if needed.");
     }
 
     public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
@@ -294,7 +289,7 @@ public class IndentInventoryService {
     }
 
     public IndentInventory findById(String id) {
-        return indentInventoryRepo.findById(id)
+        return indentInventoryRepo.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Indent Inventory not found with ID " + id));
     }
 
@@ -309,28 +304,23 @@ public class IndentInventoryService {
     public IndentInventory updateInwardnventory(IndentInventoryData payload, String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         validateInputsForUpdate(payload);
-
-        // Update file informations
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
-
-        // Update indent date
         indentInventory.setIndentDate(payload.getIndentDate());
 
         // Process and synchronize inventory list
-        List<IndentInventoryList> processedInventoryList = processInventoryListForUpdate(
+        Set<IndentInventoryList> processedInventoryList = processInventoryListForUpdate(
                 payload.getInventoryList(),
                 indentInventory,  // CHANGED: Pass the object instead of ID
                 indentInventory.getInventoryList()
         );
 
         syncInventoryList(indentInventory, processedInventoryList);
-
         indentInventoryRepo.save(indentInventory);
         return indentInventory;
     }
 
     public IndentInventory validateAndGetIndentInventoryForModification(String id) {
-        Optional<IndentInventory> indentInventoryOptional = indentInventoryRepo.findById(id);
+        Optional<IndentInventory> indentInventoryOptional = indentInventoryRepo.findByIdWithDetails(id);
         if (!indentInventoryOptional.isPresent()) {
             throw new RuntimeException("Indent Inventory not found with ID " + id);
         }
