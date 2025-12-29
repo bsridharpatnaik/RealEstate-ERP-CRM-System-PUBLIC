@@ -85,6 +85,18 @@ public class IndentInventoryController {
                     .body(new ApiOnlyMessageAndCodeError(400, e.getMessage()));
         }
     }
+
+    @PatchMapping("/{indentId}/approve")
+    public ResponseEntity<?> approveIndent(@PathVariable String indentId) {
+        try {
+            IndentInventory result = iiService.approveIndentInventory(indentId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiOnlyMessageAndCodeError(400, e.getMessage()));
+        }
+    }
+
 /*
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
@@ -92,7 +104,7 @@ public class IndentInventoryController {
             throws Exception {
 
         return iiService.fetchInwardnventoryForExport2(filterDataList);
-    }
+    }*/
 
     @ExceptionHandler(
             {JpaSystemException.class})
@@ -100,5 +112,5 @@ public class IndentInventoryController {
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
         return new ApiOnlyMessageAndCodeError(500,
                 "Something went wrong while handling data. Contact Administrator.");
-    }*/
+    }
 }

@@ -409,4 +409,13 @@ public class IndentInventoryService {
 
         return indentInventory;
     }
+
+    public IndentInventory approveIndentInventory(String id) throws Exception {
+        IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
+        if(!indentInventory.getIndentStatus().equalsIgnoreCase(IndentStatusConstants.STATUS_CREATED))
+            throw new Exception("Only indents in CREATED status can be approved.");
+        indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
+        indentInventoryRepo.save(indentInventory);
+        return indentInventory;
+    }
 }
