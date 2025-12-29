@@ -39,6 +39,9 @@ public class IndentInventoryService {
     @Autowired
     SchemaConfig schemaConfig;
 
+    @Autowired
+    DraftService draftService;
+
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -70,7 +73,8 @@ public class IndentInventoryService {
 
         // Force load the list before returning (to avoid lazy init exception)
         indentInventory.getInventoryList().size();
-
+        if (iiData.getDraftId() != null)
+            draftService.deleteDraft(iiData.getDraftId());
         return indentInventory;
     }
 
@@ -295,8 +299,16 @@ public class IndentInventoryService {
 
     public void deleteInwardInventoryById(String id) {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
-        indentInventoryRepo.softDelete(indentInventory);
+        String status = indentInventory.getIndentStatus();
+        if (IndentStatusConstants.STATUS_CREATED.equalsIgnoreCase(status)) {
+            indentInventoryRepo.softDelete(indentInventory);
+        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status)) {
+            indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
+        } else {
+            throw new IllegalStateException("Indent cannot be deleted or cancelled in status: " + status);
+        }
     }
+
 
     /**
      * Updated UPDATE method with synchronization logic
@@ -412,7 +424,7 @@ public class IndentInventoryService {
 
     public IndentInventory approveIndentInventory(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
-        if(!indentInventory.getIndentStatus().equalsIgnoreCase(IndentStatusConstants.STATUS_CREATED))
+        if (!indentInventory.getIndentStatus().equalsIgnoreCase(IndentStatusConstants.STATUS_CREATED))
             throw new Exception("Only indents in CREATED status can be approved.");
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventoryRepo.save(indentInventory);

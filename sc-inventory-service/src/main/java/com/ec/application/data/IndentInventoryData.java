@@ -19,4 +19,6 @@ public class IndentInventoryData {
 
     @NonNull
     List<IndentProductDTO> inventoryList;
+
+    Long draftId;
 }
