@@ -31,7 +31,7 @@ public class UserDetailsService {
 
     @Cacheable(
             value = "currentUser",
-            key = "#root.methodName + ':' + T(com.ec.application.util.AuthUtil).getAuthHeader()",
+            key = "#root.methodName + ':' + T(com.ec.application.util.AuthUtil).getAuthKey()",
             unless = "#result == null"
     )
     public UserReturnData getCurrentUser() throws Exception {
