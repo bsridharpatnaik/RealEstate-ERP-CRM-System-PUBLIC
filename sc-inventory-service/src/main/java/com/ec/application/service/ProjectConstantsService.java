@@ -1,6 +1,7 @@
 package com.ec.application.service;
 
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.UserReturnData;
 import com.ec.application.model.ProjectConstantsTable;
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -67,11 +68,11 @@ public class ProjectConstantsService {
     public Long getInventoryEditDaysForCurrentUser() throws Exception {
         UserReturnData userReturnData = userDetailsService.getCurrentUser();
         for (String role : userReturnData.getRoles()) {
-            if (role.toLowerCase().contains("admin"))
+            if (role.toLowerCase().contains(RoleConstants.ADMIN))
                 return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString()).get().getValue());
-            else if (role.toLowerCase().contains("inventory-manager"))
+            else if (role.toLowerCase().contains(RoleConstants.INVENTORY_MANAGER))
                 return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_MANAGER.toString()).get().getValue());
-            else if (role.toLowerCase().contains("inventory-executive"))
+            else if (role.toLowerCase().contains(RoleConstants.INVENTORY_EXECUTIVE))
                 return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString()).get().getValue());;
         }
         return (long) 3;

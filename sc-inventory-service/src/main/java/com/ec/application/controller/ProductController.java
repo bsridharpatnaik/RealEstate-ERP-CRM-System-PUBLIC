@@ -44,7 +44,7 @@ public class ProductController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
-    @AllowOnly(roles = {"admin", "inventory-manager"})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception {
         productService.deleteProduct(id);
         return ResponseEntity.ok("Entity deleted");
@@ -53,14 +53,14 @@ public class ProductController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
-    @AllowOnly(roles = {"admin", "inventory-manager"})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public Product createProduct(@RequestBody ProductCreateData payload) throws Exception {
         return productService.createProduct(payload);
     }
 
     @PutMapping("/{id}")
     @CheckAuthority
-    @AllowOnly(roles = {"admin", "inventory-manager"})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception {
         return productService.updateProduct(id, Product);
     }
