@@ -6,7 +6,6 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.config.SchemaConfig;
-import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -46,6 +45,9 @@ public class IndentInventoryService {
     @Autowired
     UserDetailsService userDetailsService;
 
+    @Autowired
+    IndentValidationService indentValidationService;
+
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -59,7 +61,7 @@ public class IndentInventoryService {
         indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(ThreadLocalStorage.getTenantName()));
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         indentInventory.setIndentDate(iiData.getIndentDate());
-        indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CREATED);
+        indentInventory.setIndentStatus(IndentStatusConstants.STATUS_NEW);
 
         // First save to generate indentId
         indentInventoryRepo.save(indentInventory);
@@ -88,7 +90,7 @@ public class IndentInventoryService {
      */
     private Set<IndentInventoryList> processInventoryListForCreation(
             List<IndentProductDTO> indentProductDTOs,
-            IndentInventory indentInventory) {  // CHANGED: Accept IndentInventory instead of String
+            IndentInventory indentInventory) {
 
         Set<IndentInventoryList> inventoryList = new HashSet<>();
 
@@ -107,7 +109,7 @@ public class IndentInventoryService {
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_CREATED);
+            item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
 
             // Generate unique line item code: INDENT_ID/PRODUCT_ID
             String lineItemCode = LineItemCodeGenerator.generateInitialCode(
@@ -303,16 +305,13 @@ public class IndentInventoryService {
 
     public void deleteInwardInventoryById(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
-        String status = indentInventory.getIndentStatus();
-        boolean isAdminOrManager = userDetailsService.hasRole(RoleConstants.ADMIN) || userDetailsService.hasRole(RoleConstants.INVENTORY_MANAGER);
-        boolean isInventoryExecutive = userDetailsService.hasRole(RoleConstants.INVENTORY_EXECUTIVE);
-
-        if (IndentStatusConstants.STATUS_CREATED.equalsIgnoreCase(status) && isInventoryExecutive) {
+        String action = indentValidationService.validateBeforeDelete(indentInventory);
+        if (action.equalsIgnoreCase("DELETE")) {
             indentInventoryRepo.softDelete(indentInventory);
-        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrManager) {
+        }
+        if (action.equalsIgnoreCase("CANCEL")) {
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
-        } else {
-            throw new IllegalStateException("Indent cannot be deleted or cancelled in status: " + status + "by current user.");
+            indentInventoryRepo.save(indentInventory);
         }
     }
 
@@ -322,6 +321,7 @@ public class IndentInventoryService {
      */
     public IndentInventory updateInwardnventory(IndentInventoryData payload, String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
+        indentValidationService.validateBeforeUpdate(indentInventory);
         validateInputsForUpdate(payload);
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
         indentInventory.setIndentDate(payload.getIndentDate());
@@ -343,11 +343,7 @@ public class IndentInventoryService {
         if (!indentInventoryOptional.isPresent()) {
             throw new RuntimeException("Indent Inventory not found with ID " + id);
         }
-
         IndentInventory indentInventory = indentInventoryOptional.get();
-        if (!indentInventory.getIndentStatus().equalsIgnoreCase(IndentStatusConstants.STATUS_CREATED))
-            throw new RuntimeException("Indent Inventory cannot be edited after PO is created.");
-
         return indentInventory;
     }
 
@@ -365,6 +361,8 @@ public class IndentInventoryService {
                 .findFirst()
                 .orElseThrow(() -> new Exception("Line item not found with code: " + request.getLineItemCode()));
 
+        indentValidationService.validateBeforeSplit(indentInventory, originalItem);
+
         // Validate split quantity
         if (request.getSplitQuantity() == null || request.getSplitQuantity() <= 0) {
             throw new Exception("Split quantity must be greater than zero");
@@ -378,9 +376,17 @@ public class IndentInventoryService {
         // Calculate remainder quantity
         Double remainderQuantity = originalItem.getQuantity() - request.getSplitQuantity();
 
-        // Find next available split indices
-        String parentCode = request.getLineItemCode();
-        int splitIndex1 = LineItemCodeGenerator.getNextSplitIndex(parentCode, indentInventory.getInventoryList());
+        // Determine ROOT parent line item code
+        String rootParentCode =
+                originalItem.getParentLineItemCode() != null
+                        ? originalItem.getParentLineItemCode()
+                        : originalItem.getLineItemCode();
+
+        // Find next available split index under ROOT parent
+        int splitIndex1 = LineItemCodeGenerator.getNextSplitIndex(
+                rootParentCode,
+                indentInventory.getInventoryList()
+        );
         int splitIndex2 = splitIndex1 + 1;
 
         // Create first split item (with requested quantity)
@@ -393,9 +399,9 @@ public class IndentInventoryService {
         splitItem1.setMeasurementUnit(originalItem.getMeasurementUnit());
         splitItem1.setLineItemStatus(originalItem.getLineItemStatus());
 
-        String splitCode1 = LineItemCodeGenerator.generateSplitCode(parentCode, splitIndex1);
+        String splitCode1 = LineItemCodeGenerator.generateSplitCode(rootParentCode, splitIndex1);
         splitItem1.setLineItemCode(splitCode1);
-        splitItem1.setParentLineItemCode(parentCode);
+        splitItem1.setParentLineItemCode(rootParentCode);
 
         // Create second split item (with remainder quantity)
         IndentInventoryList splitItem2 = new IndentInventoryList();
@@ -407,32 +413,25 @@ public class IndentInventoryService {
         splitItem2.setMeasurementUnit(originalItem.getMeasurementUnit());
         splitItem2.setLineItemStatus(originalItem.getLineItemStatus());
 
-        String splitCode2 = LineItemCodeGenerator.generateSplitCode(parentCode, splitIndex2);
+        String splitCode2 = LineItemCodeGenerator.generateSplitCode(rootParentCode, splitIndex2);
         splitItem2.setLineItemCode(splitCode2);
-        splitItem2.setParentLineItemCode(parentCode);
+        splitItem2.setParentLineItemCode(rootParentCode);
 
         // Add new split items to inventory list
         indentInventory.getInventoryList().add(splitItem1);
         indentInventory.getInventoryList().add(splitItem2);
 
         // Remove the original item from the collection
-        indentInventory.getInventoryList().remove(originalItem);
-
+        //indentInventory.getInventoryList().remove(originalItem);
+        originalItem.setDeleted(true);
         // Save changes
         indentInventoryRepo.save(indentInventory);
-
-        log.info("Split line item {} (qty: {}) into {} (qty: {}) and {} (qty: {})",
-                parentCode, originalItem.getQuantity(),
-                splitCode1, request.getSplitQuantity(),
-                splitCode2, remainderQuantity);
-
         return indentInventory;
     }
 
     public IndentInventory approveIndentInventory(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
-        if (!indentInventory.getIndentStatus().equalsIgnoreCase(IndentStatusConstants.STATUS_CREATED))
-            throw new Exception("Only indents in CREATED status can be approved.");
+        indentValidationService.validateBeforeApprove(indentInventory);
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventoryRepo.save(indentInventory);
         return indentInventory;

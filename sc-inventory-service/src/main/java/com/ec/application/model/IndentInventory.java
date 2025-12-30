@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
+import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -54,6 +56,7 @@ public class IndentInventory extends ReusableFields implements Cloneable {
     Set<FileInformation> fileInformations = new HashSet<>();
 
     @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY, orphanRemoval = false)
+    @JsonSerialize(using = ActiveIndentInventoryListSerializer.class)
     private Set<IndentInventoryList> inventoryList = new HashSet<>();
 
 
