@@ -80,10 +80,9 @@ public class ScheduledTasks {
         }
     }
 
-    //@Scheduled(cron = "0 0 * * * *")
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 * * * *")
+    //@Scheduled(cron = "0 * * * * *") // every minute
     public void syncDeadStock() {
-        //log.info("Starting scheduled dead stock sync job");
-        //deadStockSyncJob.updateDeadStockInMasterAsync();
+        deadStockSyncJob.syncAllTenants();
     }
 }
