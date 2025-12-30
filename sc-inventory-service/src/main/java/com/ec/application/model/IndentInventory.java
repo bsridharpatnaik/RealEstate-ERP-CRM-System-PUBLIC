@@ -7,6 +7,7 @@ import javax.persistence.*;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -59,6 +60,8 @@ public class IndentInventory extends ReusableFields implements Cloneable {
     @JsonSerialize(using = ActiveIndentInventoryListSerializer.class)
     private Set<IndentInventoryList> inventoryList = new HashSet<>();
 
+    @Transient
+    Boolean approvalAllowed;
 
     @Override
     public Object clone() throws CloneNotSupportedException {

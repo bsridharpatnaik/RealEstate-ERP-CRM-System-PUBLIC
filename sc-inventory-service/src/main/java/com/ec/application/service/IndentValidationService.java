@@ -16,8 +16,8 @@ public class IndentValidationService {
 
     public String validateBeforeDelete(IndentInventory indentInventory) throws Exception {
         String status = indentInventory.getIndentStatus();
-        boolean isAdminOrManager = userDetailsService.hasRole(RoleConstants.ADMIN) || userDetailsService.hasRole(RoleConstants.INVENTORY_MANAGER);
-        boolean isInventoryExecutive = userDetailsService.hasRole(RoleConstants.INVENTORY_EXECUTIVE);
+        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
+        boolean isInventoryExecutive = userDetailsService.isInventoryExecutive();
 
         if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isInventoryExecutive) {
             return "DELETE";
@@ -30,7 +30,7 @@ public class IndentValidationService {
 
     public void validateBeforeApprove(IndentInventory indentInventory) throws Exception {
         String status = indentInventory.getIndentStatus();
-        boolean isAdminOrManager = userDetailsService.hasRole(RoleConstants.ADMIN) || userDetailsService.hasRole(RoleConstants.INVENTORY_MANAGER);
+        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
         if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isAdminOrManager) {
             return;
         } else {
@@ -40,8 +40,8 @@ public class IndentValidationService {
 
     public void validateBeforeUpdate(IndentInventory indentInventory) throws Exception {
         String status = indentInventory.getIndentStatus();
-        boolean isAdminOrManager = userDetailsService.hasRole(RoleConstants.ADMIN) || userDetailsService.hasRole(RoleConstants.INVENTORY_MANAGER);
-        boolean isInventoryExecutive = userDetailsService.hasRole(RoleConstants.INVENTORY_EXECUTIVE);
+        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
+        boolean isInventoryExecutive = userDetailsService.isInventoryExecutive();
 
         if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isInventoryExecutive) {
             return;
@@ -55,7 +55,7 @@ public class IndentValidationService {
     public void validateBeforeSplit(IndentInventory indentInventory, IndentInventoryList lineItem) throws Exception {
         String indentStatus = indentInventory.getIndentStatus();
         String lineItemStatus = lineItem.getLineItemStatus();
-        boolean isAdminOrManager = userDetailsService.hasRole(RoleConstants.ADMIN) || userDetailsService.hasRole(RoleConstants.INVENTORY_MANAGER);
+        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
 
         if (
                 (indentStatus.equalsIgnoreCase(IndentStatusConstants.STATUS_APPROVED) || indentStatus.equalsIgnoreCase(IndentStatusConstants.STATUS_PO_PARTIAL)) &&

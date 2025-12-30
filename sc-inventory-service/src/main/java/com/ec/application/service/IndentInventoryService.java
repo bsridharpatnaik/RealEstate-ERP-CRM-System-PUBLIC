@@ -7,14 +7,17 @@ import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.*;
+import com.ec.application.enricher.IndentInventoryUiEnricher;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.util.LineItemCodeGenerator;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -51,6 +54,9 @@ public class IndentInventoryService {
     @Autowired
     PopulateDropdownService populateDropdownService;
 
+    @Autowired
+    IndentInventoryUiEnricher indentInventoryUiEnricher;
+
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -84,6 +90,7 @@ public class IndentInventoryService {
         indentInventory.getInventoryList().size();
         if (iiData.getDraftId() != null)
             draftService.deleteDraft(iiData.getDraftId());
+        indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
     }
 
@@ -290,22 +297,28 @@ public class IndentInventoryService {
     }
 
     @Transactional(readOnly = true)
-    public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
+    public ReturnIndentInventoryData fetchIndentInventory(
+            FilterDataList filterDataList,
+            Pageable pageable) throws ParseException {
+
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
         Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
 
-        if (spec != null)
-            returnData.setIndentInventories(indentInventoryRepo.findAll(spec, pageable));
-        else
-            returnData.setIndentInventories(indentInventoryRepo.findAll(pageable));
-
+        Page<IndentInventory> page = (spec != null) ? indentInventoryRepo.findAll(spec, pageable) : indentInventoryRepo.findAll(pageable);
+        // Enrich ONCE for UI
+        indentInventoryUiEnricher.enrich(page.getContent());
+        returnData.setIndentInventories(page);
         returnData.setIiDropdown(populateDropdownService.fetchData("indent"));
         return returnData;
     }
 
-    public IndentInventory findById(String id) {
-        return indentInventoryRepo.findByIdWithDetails(id)
-                .orElseThrow(() -> new RuntimeException("Indent Inventory not found with ID " + id));
+    public IndentInventory findById(String id) throws Exception {
+        IndentInventory indentInventory = indentInventoryRepo.findByIdWithDetails(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Indent Inventory not found with ID " + id));
+
+        indentInventoryUiEnricher.enrich(indentInventory);
+        return indentInventory;
     }
 
     public void deleteInwardInventoryById(String id) throws Exception {

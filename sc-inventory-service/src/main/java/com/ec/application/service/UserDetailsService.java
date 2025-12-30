@@ -3,6 +3,7 @@ package com.ec.application.service;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import com.ec.application.constants.RoleConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import com.ec.application.data.UserReturnData;
 
 import java.util.Collections;
 import java.util.List;
+
 import org.springframework.cache.annotation.Cacheable;
 
 @Service
@@ -95,5 +97,13 @@ public class UserDetailsService {
     public boolean hasRole(String role) throws Exception {
         return getCurrentUserRoles().stream()
                 .anyMatch(r -> r.equalsIgnoreCase(role));
+    }
+
+    public boolean isAdminOrManager() throws Exception {
+        return (hasRole(RoleConstants.ADMIN) || hasRole(RoleConstants.INVENTORY_MANAGER));
+    }
+
+    public boolean isInventoryExecutive() throws Exception {
+        return (hasRole(RoleConstants.INVENTORY_EXECUTIVE) && !hasRole(RoleConstants.INVENTORY_MANAGER) && !hasRole(RoleConstants.ADMIN));
     }
 }
