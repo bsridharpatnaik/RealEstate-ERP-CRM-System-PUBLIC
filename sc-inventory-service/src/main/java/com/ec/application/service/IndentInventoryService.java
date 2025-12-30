@@ -48,6 +48,9 @@ public class IndentInventoryService {
     @Autowired
     IndentValidationService indentValidationService;
 
+    @Autowired
+    PopulateDropdownService populateDropdownService;
+
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -295,6 +298,7 @@ public class IndentInventoryService {
         else
             returnData.setIndentInventories(indentInventoryRepo.findAll(pageable));
 
+        returnData.setIiDropdown(populateDropdownService.fetchData("indent"));
         return returnData;
     }
 

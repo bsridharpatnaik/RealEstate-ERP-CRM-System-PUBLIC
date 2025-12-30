@@ -2,6 +2,8 @@ package com.ec.application.service;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.constants.IndentLineItemStatusConstants;
+import com.ec.application.constants.IndentStatusConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +100,13 @@ public class PopulateDropdownService {
                 break;
             case "PricingReport":
                 morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
+                break;
+            case "indent":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setIndentStatus(IndentStatusConstants.getAllStatuses());
+                morDropdownDataList.setIndentLineItemStatus(IndentLineItemStatusConstants.getAllStatuses());
                 break;
         }
         return morDropdownDataList;
