@@ -23,94 +23,82 @@ import lombok.NonNull;
 
 @Entity
 @JsonIgnoreProperties(
-{ "hibernateLazyInitializer", "handler" })
+        {"hibernateLazyInitializer", "handler"})
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class Stock extends ReusableFields
-{
+public class Stock extends ReusableFields {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	Long stockId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    Long stockId;
 
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "productId", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	@NotFound(action = NotFoundAction.IGNORE)
-	@NonNull
-	Product product;
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "productId", nullable = false)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    @NotFound(action = NotFoundAction.IGNORE)
+    @NonNull
+    Product product;
 
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "warehouseName", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	@NotFound(action = NotFoundAction.IGNORE)
-	@NonNull
-	Warehouse warehouse;
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "warehouseName", nullable = false)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    @NotFound(action = NotFoundAction.IGNORE)
+    @NonNull
+    Warehouse warehouse;
 
-	@NonNull
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double quantityInHand;
+    @NonNull
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    Double quantityInHand;
 
-	public Stock(@NonNull Product product, @NonNull Warehouse warehouse, @NonNull Double quantityInHand)
-	{
-		super();
-		this.product = product;
-		this.warehouse = warehouse;
-		this.quantityInHand = quantityInHand;
-	}
+    public Stock(@NonNull Product product, @NonNull Warehouse warehouse, @NonNull Double quantityInHand) {
+        super();
+        this.product = product;
+        this.warehouse = warehouse;
+        this.quantityInHand = quantityInHand;
+    }
 
-	public Long getStockId()
-	{
-		return stockId;
-	}
+    public Long getStockId() {
+        return stockId;
+    }
 
-	public void setStockId(Long stockId)
-	{
-		this.stockId = stockId;
-	}
+    public void setStockId(Long stockId) {
+        this.stockId = stockId;
+    }
 
-	public Product getProduct()
-	{
-		return product;
-	}
+    public Product getProduct() {
+        return product;
+    }
 
-	public void setProduct(Product product)
-	{
-		this.product = product;
-	}
+    public void setProduct(Product product) {
+        this.product = product;
+    }
 
-	public Warehouse getWarehouse()
-	{
-		return warehouse;
-	}
+    public Warehouse getWarehouse() {
+        return warehouse;
+    }
 
-	public void setWarehouse(Warehouse warehouse)
-	{
-		this.warehouse = warehouse;
-	}
+    public void setWarehouse(Warehouse warehouse) {
+        this.warehouse = warehouse;
+    }
 
-	public Double getQuantityInHand()
-	{
-		return quantityInHand;
-	}
+    public Double getQuantityInHand() {
+        return quantityInHand;
+    }
 
-	public void setQuantityInHand(Double quantityInHand)
-	{
-		this.quantityInHand = quantityInHand;
-	}
+    public void setQuantityInHand(Double quantityInHand) {
+        this.quantityInHand = quantityInHand;
+    }
 
-	public static long getSerialversionuid()
-	{
-		return serialVersionUID;
-	}
+    public static long getSerialversionuid() {
+        return serialVersionUID;
+    }
 
-	public Stock()
-	{
-		super();
-	}
+    public Stock() {
+        super();
+    }
 
 }

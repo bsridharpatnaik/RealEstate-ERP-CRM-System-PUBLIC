@@ -71,4 +71,7 @@ public interface StockRepo extends BaseRepository<Stock, Long>
 			+ " WHERE m.product IN :dashboardProducts"
 			+ " group by m.product.productId,m.product.productName,m.lastModifiedDate")
 	List<StockPercentageForDashboard> getCurrentStockPercentForDashboardProducts(List<Product> dashboardProducts);
+
+	@Query(value = "SELECT m from Stock m where m.warehouse.warehouseName='Dead Stock Warehouse'")
+    List<Stock> findDeadStocks();
 }

@@ -1,17 +1,21 @@
 package com.ec.application.ReusableClasses;
 
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.datasync.DeadStockSyncJob;
 import com.ec.application.service.*;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
-//@Component
+@Component
 @EnableScheduling
 public class ScheduledTasks {
     @Autowired
@@ -33,6 +37,9 @@ public class ScheduledTasks {
 
     @Autowired
     AllInventoryService allInventoryService;
+
+    @Autowired
+    DeadStockSyncJob deadStockSyncJob;
 
     @Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
@@ -71,5 +78,12 @@ public class ScheduledTasks {
             allInventoryService.updateClosingStock();
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
         }
+    }
+
+    //@Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
+    public void syncDeadStock() {
+        //log.info("Starting scheduled dead stock sync job");
+        //deadStockSyncJob.updateDeadStockInMasterAsync();
     }
 }

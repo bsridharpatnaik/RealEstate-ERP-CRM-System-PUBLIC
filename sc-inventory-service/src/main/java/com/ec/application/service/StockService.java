@@ -534,4 +534,10 @@ public class StockService {
             stockRepo.softDelete(stock);
         }
     }
+
+    public List<Stock> getDeadStocks() {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        List<Stock> deadStocks = stockRepo.findDeadStocks();
+        return deadStocks;
+    }
 }
