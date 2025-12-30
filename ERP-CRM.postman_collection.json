@@ -1495,7 +1495,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"categoryId\":{{categoryId}},\n\t\"productName\":\"Product {{$randomInt}}\",\n\t\"productDescription\":null,\n\t\"measurementUnit\":\"No\",\n\t\"reorderQuantity\":1,\n    \"showOnDashboard\":true,\n    \"isManagedInventory\":true\n\n}"
+											"raw": "{\n\t\"categoryId\":{{categoryId}},\n\t\"productName\":\"Product {{$randomInt}}\",\n\t\"productDescription\":null,\n\t\"measurementUnit\":\"No\",\n\t\"reorderQuantity\":1,\n    \"showOnDashboard\":false,\n    \"isManagedInventory\":true\n\n}"
 										},
 										"url": {
 											"raw": "{{method}}://{{serverUrlAPI}}/inventory/product/create",
@@ -1556,6 +1556,13 @@
 												"packages": {},
 												"requests": {}
 											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"packages": {},
+												"type": "text/javascript"
+											}
 										}
 									],
 									"request": {
@@ -1568,27 +1575,21 @@
 											}
 										],
 										"url": {
-											"raw": "{{method}}://{{serverUrlAPI}}/inventory/product/getproductfordropdown",
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/product",
 											"protocol": "{{method}}",
 											"host": [
 												"{{serverUrlAPI}}"
 											],
 											"path": [
 												"inventory",
-												"product",
-												"getproductfordropdown"
+												"product"
 											]
 										}
 									},
 									"response": []
-								}
-							]
-						},
-						{
-							"name": "Indent",
-							"item": [
+								},
 								{
-									"name": "Create Indent",
+									"name": "Create Indent Copy",
 									"event": [
 										{
 											"listen": "test",
@@ -1671,9 +1672,423 @@
 										}
 									},
 									"response": []
+								}
+							]
+						},
+						{
+							"name": "Indent",
+							"item": [
+								{
+									"name": "Indent - Save as Draft",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"draftId\", jsonData.draftId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/drafts?draftType=INDENT",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"drafts"
+											],
+											"query": [
+												{
+													"key": "draftType",
+													"value": "INDENT"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Indent - Overwrite Draft",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/drafts?draftType=INDENT&draftId={{draftId}}",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"drafts"
+											],
+											"query": [
+												{
+													"key": "draftType",
+													"value": "INDENT"
+												},
+												{
+													"key": "draftId",
+													"value": "{{draftId}}"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Draft Indents",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"indentid\", jsonData.indentId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/drafts/list?draftType=INDENT",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"drafts",
+												"list"
+											],
+											"query": [
+												{
+													"key": "draftType",
+													"value": "INDENT"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create Indent",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"indentid\", jsonData.indentId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n   // \"draftId\":\"{{draftId}}\",\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 150.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent/create",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"indent",
+												"create"
+											]
+										}
+									},
+									"response": []
 								},
 								{
 									"name": "Get by ID",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"// Parse response",
+													"const res = pm.response.json();",
+													"",
+													"// Get inventory list",
+													"const inventory = res.inventoryList;",
+													"",
+													"if (!inventory || inventory.length === 0) {",
+													"    throw new Error(\"inventoryList is empty or missing\");",
+													"}",
+													"",
+													"// Pick a random line item",
+													"const randomIndex = Math.floor(Math.random() * inventory.length);",
+													"const item = inventory[randomIndex];",
+													"",
+													"// Extract lineItemCode",
+													"const lineItemCode = item.lineItemCode;",
+													"",
+													"// Extract quantity",
+													"const quantity = item.quantity;",
+													"",
+													"// Generate a smaller number than quantity (minimum 1)",
+													"const smallerQuantity = Math.floor(Math.random() * quantity) || 1;",
+													"",
+													"// Save to environment variables",
+													"pm.environment.set(\"lineItemCode\", lineItemCode);",
+													"pm.environment.set(\"quantity\", quantity);",
+													"pm.environment.set(\"splitQuantity\", smallerQuantity);",
+													"",
+													"// Optional: log for debugging",
+													"console.log({",
+													"    lineItemCode,",
+													"    quantity,",
+													"    smallerQuantity",
+													"});",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
 									"request": {
 										"method": "GET",
 										"header": [
@@ -1711,7 +2126,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId3}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 150.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -1728,6 +2143,116 @@
 												"inventory",
 												"indent",
 												"{{indentid}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Approve Indent",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"// Parse response",
+													"const res = pm.response.json();",
+													"",
+													"// Get inventory list",
+													"const inventory = res.inventoryList;",
+													"",
+													"if (!inventory || inventory.length === 0) {",
+													"    throw new Error(\"inventoryList is empty or missing\");",
+													"}",
+													"",
+													"// Pick a random line item",
+													"const randomIndex = Math.floor(Math.random() * inventory.length);",
+													"const item = inventory[randomIndex];",
+													"",
+													"// Extract lineItemCode",
+													"const lineItemCode = item.lineItemCode;",
+													"",
+													"// Extract quantity",
+													"const quantity = item.quantity;",
+													"",
+													"// Generate a smaller number than quantity (minimum 1)",
+													"const smallerQuantity = Math.floor(Math.random() * quantity) || 1;",
+													"",
+													"// Save to environment variables",
+													"pm.environment.set(\"lineItemCode\", lineItemCode);",
+													"pm.environment.set(\"quantity\", quantity);",
+													"pm.environment.set(\"splitQuantity\", smallerQuantity);",
+													"",
+													"// Optional: log for debugging",
+													"console.log({",
+													"    lineItemCode,",
+													"    quantity,",
+													"    smallerQuantity",
+													"});",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent/{{indentid}}/approve",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"indent",
+												"{{indentid}}",
+												"approve"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Split Indent",
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"lineItemCode\":\"{{lineItemCode}}\",\n    \"splitQuantity\":\"{{splitQuantity}}\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent/{{indentid}}/split",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"indent",
+												"{{indentid}}",
+												"split"
 											]
 										}
 									},
@@ -1816,7 +2341,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    // possible attrName - startDate,endDate, productNames, globalSearch, categoryNames, status\n    \"filterData\": [\n        {\n    \t\t\"attrName\":\"globalSearch\",\n    \t\t\"attrValue\":[\"1234\"]\n    \t}\n    ]\n}",
+											"raw": "{\n    // possible attrName - startDate,endDate, productNames, productCodes, globalSearch, categoryNames, indentStatus, lineItemStatus\n    \"filterData\": [\n        {\n    \t\t\"attrName\":\"globalSearch\",\n    \t\t\"attrValue\":[\"1234\"]\n    \t}\n    ]\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -1832,6 +2357,368 @@
 											"path": [
 												"inventory",
 												"indent"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Draft",
+							"item": [
+								{
+									"name": "Indent - Save as Draft",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"draftId\", jsonData.draftId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/drafts?draftType=INDENT",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"drafts"
+											],
+											"query": [
+												{
+													"key": "draftType",
+													"value": "INDENT"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Draft",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"indentid\", jsonData.indentId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/drafts/{{draftId}}",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"drafts",
+												"{{draftId}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Draft List",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"indentid\", jsonData.indentId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/drafts/list?draftType=INDENT",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"drafts",
+												"list"
+											],
+											"query": [
+												{
+													"key": "draftType",
+													"value": "INDENT"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Delete Draft",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"indentid\", jsonData.indentId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/drafts/{{draftId}}",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"drafts",
+												"{{draftId}}"
 											]
 										}
 									},
@@ -3212,7 +4099,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"categoryId\":{{categoryId}},\n\t\"productName\":\"Product {{$randomInt}}\",\n\t\"productDescription\":null,\n\t\"measurementUnit\":\"No\",\n\t\"reorderQuantity\":1,\n    \"showOnDashboard\":true,\n    \"isManagedInventory\":true\n\n}"
+									"raw": "{\n\t\"categoryId\":{{categoryId}},\n\t\"productName\":\"Product {{$randomInt}}\",\n\t\"productDescription\":null,\n\t\"measurementUnit\":\"No\",\n\t\"reorderQuantity\":1,\n    \"showOnDashboard\":false,\n    \"isManagedInventory\":true\n\n}"
 								},
 								"url": {
 									"raw": "{{method}}://{{serverUrlAPI}}/inventory/product/create",
@@ -3360,6 +4247,86 @@
 										"inventory",
 										"product",
 										"idandnames"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get ProductID List",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Parse the JSON response",
+											"let products = pm.response.json();",
+											"",
+											"// If more than 3, select random 3",
+											"if (products.length > 3) {",
+											"    // Shuffle array",
+											"    products.sort(() => Math.random() - 0.5);",
+											"    products = products.slice(0, 3);",
+											"}",
+											"",
+											"// Clear previous values",
+											"pm.environment.unset(\"productId1\");",
+											"pm.environment.unset(\"productId2\");",
+											"pm.environment.unset(\"productId3\");",
+											"pm.environment.unset(\"measurementUnit1\");",
+											"pm.environment.unset(\"measurementUnit2\");",
+											"pm.environment.unset(\"measurementUnit3\");",
+											"",
+											"// Extract and set product IDs and measurement units",
+											"products.forEach((product, index) => {",
+											"    let varNum = index + 1;",
+											"    pm.environment.set(`productId${varNum}`, product.productId);",
+											"    pm.environment.set(`measurementUnit${varNum}`, product.measurementUnit);",
+											"    ",
+											"    console.log(`productId${varNum}:`, product.productId);",
+											"    console.log(`measurementUnit${varNum}:`, product.measurementUnit);",
+											"});",
+											"",
+											"// Optional: Test verification",
+											"pm.test(`Extracted ${products.length} product(s)`, function () {",
+											"    pm.expect(products.length).to.be.at.least(1);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{method}}://{{serverUrlAPI}}/inventory/product",
+									"protocol": "{{method}}",
+									"host": [
+										"{{serverUrlAPI}}"
+									],
+									"path": [
+										"inventory",
+										"product"
 									]
 								}
 							},

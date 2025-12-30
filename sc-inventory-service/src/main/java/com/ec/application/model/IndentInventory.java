@@ -55,7 +55,7 @@ public class IndentInventory extends ReusableFields implements Cloneable {
             inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
     Set<FileInformation> fileInformations = new HashSet<>();
 
-    @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY, orphanRemoval = false)
+    @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER, orphanRemoval = false)
     @JsonSerialize(using = ActiveIndentInventoryListSerializer.class)
     private Set<IndentInventoryList> inventoryList = new HashSet<>();
 

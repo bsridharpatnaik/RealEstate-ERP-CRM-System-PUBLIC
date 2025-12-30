@@ -226,7 +226,7 @@ public class IndentInventoryService {
                 existingItem.setSpecification(newItem.getSpecification());
                 existingItem.setRemarks(newItem.getRemarks());
                 existingItem.setMeasurementUnit(newItem.getMeasurementUnit());
-                existingItem.setLineItemStatus(newItem.getLineItemStatus());
+                existingItem.setLineItemStatus(existingItem.getLineItemStatus());
 
                 itemsToKeep.add(existingItem);
             } else {
@@ -289,6 +289,7 @@ public class IndentInventoryService {
             throw new Exception("Same product cannot be added multiple times during creation/updation. Use split functionality if needed.");
     }
 
+    @Transactional(readOnly = true)
     public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
         Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
@@ -323,7 +324,7 @@ public class IndentInventoryService {
     /**
      * Updated UPDATE method with synchronization logic
      */
-    public IndentInventory updateInwardnventory(IndentInventoryData payload, String id) throws Exception {
+    public IndentInventory updateIndentInventory(IndentInventoryData payload, String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         indentValidationService.validateBeforeUpdate(indentInventory);
         validateInputsForUpdate(payload);
@@ -347,8 +348,7 @@ public class IndentInventoryService {
         if (!indentInventoryOptional.isPresent()) {
             throw new RuntimeException("Indent Inventory not found with ID " + id);
         }
-        IndentInventory indentInventory = indentInventoryOptional.get();
-        return indentInventory;
+        return indentInventoryOptional.get();
     }
 
     /**

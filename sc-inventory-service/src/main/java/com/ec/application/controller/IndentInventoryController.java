@@ -68,9 +68,9 @@ public class IndentInventoryController {
 
     @PutMapping("/{id}")
     @CheckAuthority
-    public IndentInventory updateInwardInventoryById(@PathVariable String id, @RequestBody IndentInventoryData payload)
+    public IndentInventory updateIndentInventoryById(@PathVariable String id, @RequestBody IndentInventoryData payload)
             throws Exception {
-        return iiService.updateInwardnventory(payload, id);
+        return iiService.updateIndentInventory(payload, id);
     }
 
     @PatchMapping("/{indentId}/split")
