@@ -38,9 +38,6 @@ public class AuthorizationService {
             }
             if (tenantName.contains("v2"))
                 tenantName = tenantName.replace("v2", "");
-
-            System.out.println(ut.getTenant().getName());
-            System.out.println(ut.getAuthorization());
             if (ut.getTenant().getName().equalsIgnoreCase(tenantName) && ut.getAuthorization().equals(AuthorizationEnum.FullAccess)) {
                 isAllowed = true;
                 break;
