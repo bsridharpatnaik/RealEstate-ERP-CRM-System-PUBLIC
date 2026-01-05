@@ -56,7 +56,6 @@ public class InventoryTransfer extends ReusableFields {
     @Column(name = "remarks")
     private String remarks;
 
-    // Only relation
     @OneToMany(
             mappedBy = "inventoryTransfer",
             cascade = CascadeType.ALL,

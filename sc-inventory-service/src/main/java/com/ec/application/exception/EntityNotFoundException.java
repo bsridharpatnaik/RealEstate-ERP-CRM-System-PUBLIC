@@ -1,4 +1,4 @@
-package com.ec.application;
+package com.ec.application.exception;
 
 import org.apache.commons.lang3.StringUtils;
 

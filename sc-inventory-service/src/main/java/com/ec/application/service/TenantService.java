@@ -17,6 +17,9 @@ public class TenantService {
     @Autowired
     InstanceService instanceService;
 
+    @Value("${spring.profiles.active}")
+    private String profile;
+
     Logger log = LoggerFactory.getLogger(TenantService.class);
 
     public void setDefaultTenant() {
@@ -24,5 +27,15 @@ public class TenantService {
         if (instanceService.getInstance().equals(InstanceList.suncity)) {
             ThreadLocalStorage.setTenantName(defaultTenant);
         }
+    }
+
+    public String changeTenantForSuncity(String tenantName) {
+        if (profile.contains("sc-") && profile.contains("new")) {
+            tenantName = "new" + tenantName;
+        }
+        if (profile.contains("sc-") && profile.contains("v2")) {
+            tenantName = tenantName + "v2";
+        }
+        return tenantName;
     }
 }

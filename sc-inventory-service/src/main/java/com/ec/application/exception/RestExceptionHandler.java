@@ -1,4 +1,4 @@
-package com.ec.application;
+package com.ec.application.exception;
 
 import com.ec.apierror.ApiError;
 import lombok.extern.slf4j.Slf4j;
@@ -215,6 +215,19 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
         return new ResponseEntity<>(apiError, apiError.getStatus());
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    protected ResponseEntity<Object> handleInsufficientStock(
+            InsufficientStockException ex) {
+
+        ApiError apiError = new ApiError(BAD_REQUEST);
+        apiError.setMessage(ex.getMessage());
+
+        // 👇 Attach low-stock list WITHOUT breaking ApiError
+        apiError.addAdditionalInfo("lowStockItems", ex.getLowStockItems());
+
+        return buildResponseEntity(apiError);
     }
 
 }

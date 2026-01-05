@@ -12,9 +12,7 @@ import org.springframework.validation.ObjectError;
 
 import javax.validation.ConstraintViolation;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.CUSTOM, property = "error", visible = true)
@@ -28,6 +26,14 @@ class ApiError {
     private String message;
     private String debugMessage;
     private List<ApiSubError> subErrors;
+    private Map<String, Object> additionalInfo;
+
+    public void addAdditionalInfo(String key, Object value) {
+        if (this.additionalInfo == null) {
+            this.additionalInfo = new HashMap<>();
+        }
+        this.additionalInfo.put(key, value);
+    }
 
     private ApiError() {
         timestamp = LocalDateTime.now();

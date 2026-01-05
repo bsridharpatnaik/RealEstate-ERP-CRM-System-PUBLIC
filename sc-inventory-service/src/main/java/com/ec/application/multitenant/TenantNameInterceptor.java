@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.service.TenantService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,9 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
     @Value("${master.schema}")
     private String defaultTenant;
 
+    @Autowired
+    TenantService tenantService;
+
     private static final Gson GSON = new Gson();
 
     private static final List<Pattern> EXCLUDED_URL_PATTERNS =
@@ -45,6 +49,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
                     Pattern.compile(".*/supplier.*"),
                     Pattern.compile(".*/machinery.*"),
                     Pattern.compile(".*/product.*"),
+                    Pattern.compile(".*/inventory-transfer.*"),
                     Pattern.compile(".*/error.*")
             ));
 
@@ -57,7 +62,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             return true;
         }
 
-        String tenantName = changeTenantForSuncity(request.getHeader("tenant-id"));
+        String tenantName = tenantService.changeTenantForSuncity(request.getHeader("tenant-id"));
 
         // Validate tenants initialized
         if (schemaConfig.getSchemaMap() == null || schemaConfig.getSchemaMap().isEmpty()) {
@@ -73,18 +78,6 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 
         ThreadLocalStorage.setTenantName(tenantName);
         return true;
-    }
-
-    private String changeTenantForSuncity(String tenantName) {
-        if (profile.contains("sc-") && profile.contains("new")) {
-            tenantName = "new" + tenantName;
-        }
-
-        if (profile.contains("sc-") && profile.contains("v2")) {
-            tenantName = tenantName + "v2";
-        }
-
-        return tenantName;
     }
 
     /**
