@@ -9,6 +9,7 @@ import com.ec.application.ReusableClasses.*;
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.*;
 import com.ec.application.Filters.StockInformationSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -415,6 +416,7 @@ public class StockService {
 
     @Transactional(rollbackFor = Exception.class)
     public Double updateStock(Long productId, String warehousename, Double quantity, String operation) throws Exception {
+        System.out.println("updateStock - Tenant =- " + ThreadLocalStorage.getTenantName());
         Stock currentStock = findOrInsertStock(productId, warehousename);
         Double oldStock = currentStock.getQuantityInHand();
         Double newStock = (double) 0;
@@ -448,10 +450,11 @@ public class StockService {
         List<Warehouse> warehouseOpt = warehouseRepo.findByName(warehousename);
 
         if (!productOpt.isPresent() || warehouseOpt.size() != 1)
-            throw new Exception("Product of warehouse not found");
+            throw new Exception("Product or warehouse not found");
 
         Product product = productOpt.get();
         Warehouse warehouse = warehouseOpt.get(0);
+        System.out.println("findOrInsertStock - Tenant =- " + ThreadLocalStorage.getTenantName());
         List<Stock> stocks = stockRepo.findByIdName(productId, warehousename);
         if (stocks.size() == 0) {
             Stock stock = new Stock(product, warehouse, 0.0);
@@ -466,6 +469,32 @@ public class StockService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Double currentStock = stockRepo.getCurrentStockForProductWarehouse(productId, warehouseId);
         return currentStock;
+    }
+
+    public Double findStockForProductWarehouse(Long productId, String warehouseName) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        Double currentStock = stockRepo.getCurrentStockForProductWarehouseByName(productId, warehouseName);
+        return currentStock;
+    }
+
+    public Map<Long, Double> findStockForProductsInWarehouse(Long warehouseId, List<Long> productIds) throws Exception {
+
+        if(warehouseId==null)
+            throw new Exception("Warehouse ID cannot be null");
+
+
+        if(productIds == null || productIds.size()==0)
+            throw new Exception("Product IDs cannot be null or empty");
+
+        System.out.println("Tenant =- " + ThreadLocalStorage.getTenantName());
+        List<Object[]> results = stockRepo.getCurrentStockForProductsInWarehouse(warehouseId, productIds);
+        Map<Long, Double> stockMap = new HashMap<>();
+        for (Object[] row : results) {
+            Long productId = (Long) row[0];
+            Double stock = (Double) row[1];
+            stockMap.put(productId, stock);
+        }
+        return stockMap;
     }
 
     public Double findTotalStockForProduct(Long productId) {

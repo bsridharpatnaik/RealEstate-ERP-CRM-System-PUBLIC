@@ -43,7 +43,7 @@ public class Stock extends ReusableFields {
     Product product;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinColumn(name = "warehouseName", nullable = false)
+    @JoinColumn(name = "warehouseId", nullable = false)
     @JsonIgnoreProperties(
             {"hibernateLazyInitializer", "handler"})
     @NotFound(action = NotFoundAction.IGNORE)
