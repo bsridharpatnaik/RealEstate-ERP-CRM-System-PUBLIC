@@ -30,13 +30,12 @@ public interface StockRepo extends BaseRepository<Stock, Long> {
     @Query(value = "SELECT m from Stock m where m.product.productId=:productId")
     Page<Stock> findStockForProduct(Pageable pageable, @Param("productId") Long productId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query(value = "SELECT m from Stock m where m.product.productId=:productId and m.warehouse.warehouseName=:warehousename")
-    List<Stock> findByIdName(@Param("productId") Long productId, @Param("warehousename") String warehousename);
+    @Query(value = "SELECT m from Stock m where m.product.productId=:productId and m.warehouse.warehouseId=:warehouseId")
+    List<Stock> findByProductAndWarehouseId(@Param("productId") Long productId, @Param("warehouseId") Long warehouseId);
 
-    @Query(value = "SELECT m from Stock m where m.product.productId=:productId and m.warehouse.warehouseName=:warehousename")
+    @Query(value = "SELECT m from Stock m where m.product.productId=:productId and m.warehouse.warehouseId=:warehouseId")
     List<Stock> findStockForProductAndWarehouse(@Param("productId") Long productId,
-                                                @Param("warehousename") String warehousename);
+                                                @Param("warehouseId") Long warehouseId);
 
     @Query(value = "SELECT count(*) from Stock m where m.product.productId=:productId")
     int productUsageCount(@Param("productId") Long productId);

@@ -415,9 +415,9 @@ public class StockService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Double updateStock(Long productId, String warehousename, Double quantity, String operation) throws Exception {
+    public Double updateStock(Long productId, Long warehouseId, Double quantity, String operation) throws Exception {
         System.out.println("updateStock - Tenant =- " + ThreadLocalStorage.getTenantName());
-        Stock currentStock = findOrInsertStock(productId, warehousename);
+        Stock currentStock = findOrInsertStock(productId, warehouseId);
         Double oldStock = currentStock.getQuantityInHand();
         Double newStock = (double) 0;
         switch (operation) {
@@ -439,31 +439,27 @@ public class StockService {
             inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
             return newStock;
         }
-
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private Stock findOrInsertStock(Long productId, String warehousename) throws Exception {
+    private Stock findOrInsertStock(Long productId, Long warehouseId) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-
         Optional<Product> productOpt = productRepo.findById(productId);
-        List<Warehouse> warehouseOpt = warehouseRepo.findByName(warehousename);
+        Optional<Warehouse> warehouseOpt = warehouseRepo.findById(warehouseId);
 
-        if (!productOpt.isPresent() || warehouseOpt.size() != 1)
+        if (!productOpt.isPresent() || !warehouseOpt.isPresent())
             throw new Exception("Product or warehouse not found");
 
         Product product = productOpt.get();
-        Warehouse warehouse = warehouseOpt.get(0);
-        System.out.println("findOrInsertStock - Tenant =- " + ThreadLocalStorage.getTenantName());
-        List<Stock> stocks = stockRepo.findByIdName(productId, warehousename);
-        if (stocks.size() == 0) {
+        Warehouse warehouse = warehouseOpt.get();
+        List<Stock> stocks = stockRepo.findByProductAndWarehouseId(productId, warehouseId);
+        if (stocks.isEmpty()) {
             Stock stock = new Stock(product, warehouse, 0.0);
             return stockRepo.save(stock);
         } else {
             return stocks.get(0);
         }
     }
-
 
     public Double findStockForProductWarehouse(Long productId, Long warehouseId) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -479,11 +475,11 @@ public class StockService {
 
     public Map<Long, Double> findStockForProductsInWarehouse(Long warehouseId, List<Long> productIds) throws Exception {
 
-        if(warehouseId==null)
+        if (warehouseId == null)
             throw new Exception("Warehouse ID cannot be null");
 
 
-        if(productIds == null || productIds.size()==0)
+        if (productIds == null || productIds.size() == 0)
             throw new Exception("Product IDs cannot be null or empty");
 
         System.out.println("Tenant =- " + ThreadLocalStorage.getTenantName());

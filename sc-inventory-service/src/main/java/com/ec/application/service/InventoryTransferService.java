@@ -63,6 +63,7 @@ public class InventoryTransferService {
         Warehouse sourceWarehouse = warehouseRepo.findById(dto.getSourceWarehouseId()).orElseThrow(
                 () -> new IllegalArgumentException("Source warehouse does not exist")
         );
+        ThreadLocalStorage.setTenantName(dto.getTargetTenant());
         Warehouse targetWarehouse = warehouseRepo.findById(dto.getTargetWarehouseId()).orElseThrow(
                 () -> new IllegalArgumentException("Target warehouse does not exist")
         );
@@ -95,7 +96,7 @@ public class InventoryTransferService {
             for (InventoryTransferItem item : items) {
                 stockService.updateStock(
                         item.getProductId(),
-                        sourceWarehouse.getWarehouseName(),
+                        transfer.getSourceWarehouseId(),
                         item.getQuantity(),
                         "outward"
                 );
@@ -106,7 +107,7 @@ public class InventoryTransferService {
             for (InventoryTransferItem item : items) {
                 stockService.updateStock(
                         item.getProductId(),
-                        targetWarehouse.getWarehouseName(),
+                        targetWarehouse.getWarehouseId(),
                         item.getQuantity(),
                         "inward"
                 );
@@ -134,12 +135,12 @@ public class InventoryTransferService {
         try {
             ThreadLocalStorage.setTenantName(transfer.getTargetTenant());
             for (InventoryTransferItem item : items) {
-                stockService.updateStock(item.getProductId(), transfer.getTargetWarehouseName(), item.getQuantity(), "outward");
+                stockService.updateStock(item.getProductId(), transfer.getTargetWarehouseId(), item.getQuantity(), "outward");
             }
 
             ThreadLocalStorage.setTenantName(transfer.getSourceTenant());
             for (InventoryTransferItem item : items) {
-                stockService.updateStock(item.getProductId(), transfer.getSourceWarehouseName(), item.getQuantity(), "inward");
+                stockService.updateStock(item.getProductId(), transfer.getSourceWarehouseId(), item.getQuantity(), "inward");
             }
 
         } catch (Exception ex) {
