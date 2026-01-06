@@ -26,6 +26,8 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	ArrayList<Product> findByproductName(String productName);
 
+	ArrayList<Product> findByproductCode(String productCode);
+
 	@Query(value = "SELECT m from Product m where m.category.categoryId=id")
 	ArrayList<Product> existsByCategoryId(@Param("id") Long id);
 

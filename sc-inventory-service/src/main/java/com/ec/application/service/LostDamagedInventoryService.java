@@ -83,8 +83,8 @@ public class LostDamagedInventoryService {
     @Transactional(rollbackFor = Exception.class)
     private Double adjustStockBeforeCreate(CreateLostOrDamagedInventoryData payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        String warehouseName = warehouseRepo.findById(payload.getWarehouseId()).get().getWarehouseName();
-        return stockService.updateStock(payload.getProductId(), warehouseName, payload.getQuantity(), "outward");
+        Long warehouseId = warehouseRepo.findById(payload.getWarehouseId()).get().getWarehouseId();
+        return stockService.updateStock(payload.getProductId(), warehouseId, payload.getQuantity(), "outward");
     }
 
     private void populateData(LostDamagedInventory lostDamagedInventory, CreateLostOrDamagedInventoryData payload)
@@ -153,7 +153,7 @@ public class LostDamagedInventoryService {
     private void AdjustStockBeforeDelete(LostDamagedInventory lostDamagedInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         stockService.updateStock(lostDamagedInventory.getProduct().getProductId(),
-                lostDamagedInventory.getWarehouse().getWarehouseName(), lostDamagedInventory.getQuantity(), "inward");
+                lostDamagedInventory.getWarehouse().getWarehouseId(), lostDamagedInventory.getQuantity(), "inward");
     }
 
     public Page<LostDamagedInventory> findAll(Pageable pageable) {
