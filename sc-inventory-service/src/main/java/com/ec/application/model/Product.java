@@ -16,7 +16,7 @@ import org.springframework.lang.NonNull;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@Entity
+@Entity(name = "Product")
 @Table(name = "Product")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)

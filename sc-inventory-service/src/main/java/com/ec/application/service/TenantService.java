@@ -29,12 +29,22 @@ public class TenantService {
         }
     }
 
-    public String changeTenantForSuncity(String tenantName) {
+    public String addPrefixForSuncity(String tenantName) {
         if (profile.contains("sc-") && profile.contains("new")) {
             tenantName = "new" + tenantName;
         }
         if (profile.contains("sc-") && profile.contains("v2")) {
             tenantName = tenantName + "v2";
+        }
+        return tenantName;
+    }
+
+    public String removePrefixForSuncity(String tenantName) {
+        if (profile.contains("sc-") && profile.contains("new")) {
+            tenantName = tenantName.replace("new", "");
+        }
+        if (profile.contains("sc-") && profile.contains("v2")) {
+            tenantName = tenantName.replace("v2", "");
         }
         return tenantName;
     }

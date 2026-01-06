@@ -1,7 +1,6 @@
 package com.ec.application.multitenant;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.service.TenantService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -62,7 +60,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             return true;
         }
 
-        String tenantName = tenantService.changeTenantForSuncity(request.getHeader("tenant-id"));
+        String tenantName = tenantService.addPrefixForSuncity(request.getHeader("tenant-id"));
 
         // Validate tenants initialized
         if (schemaConfig.getSchemaMap() == null || schemaConfig.getSchemaMap().isEmpty()) {

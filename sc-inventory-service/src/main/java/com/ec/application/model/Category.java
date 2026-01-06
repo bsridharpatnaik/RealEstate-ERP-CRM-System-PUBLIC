@@ -16,7 +16,7 @@ import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-@Entity
+@Entity(name = "Category")
 @Table(name = "Category")
 @Audited
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)

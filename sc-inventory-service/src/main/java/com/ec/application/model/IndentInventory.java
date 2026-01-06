@@ -21,7 +21,7 @@ import org.springframework.lang.NonNull;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-@Entity
+@Entity(name = "IndentInventory")
 @Table(name = "indent_inventory")
 @Audited
 @Getter

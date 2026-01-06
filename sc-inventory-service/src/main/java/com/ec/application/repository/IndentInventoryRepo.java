@@ -25,17 +25,5 @@ public interface IndentInventoryRepo extends BaseRepository<IndentInventory, Str
             "WHERE i.indentId = :id")
     Optional<IndentInventory> findByIdWithDetails(@Param("id") String id);
 
-    @Query("select new com.ec.application.dto.ConsolidatedIndentLineDTO(" +
-            "i.tenantSchemaCode," +
-            "i.date," +
-            "i.indentNo," +
-            "l.lineItemCode," +
-            "l.categoryName," +
-            "l.productId," +
-            "l.productName," +
-            "l.measurementUnit," +
-            "l.approvedQuantity," +
-            "l.specification," +
-            "l.remarks,l.status) from IndentInventory i join i.indentInventoryList l where l.status in ('APPROVED', 'PARTIALLY_ORDERED')")
-    List<ConsolidatedIndentLineDTO> fetchConsolidatedIndentLines();
+    List<IndentInventory> findByIndentStatusIn(List<String> statuses);
 }

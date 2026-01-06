@@ -1,9 +1,7 @@
 package com.ec.application.service;
 
 import com.ec.application.Filters.FilterDataList;
-import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.data.*;
-import com.ec.application.exception.InsufficientStockException;
 import com.ec.application.model.InventoryTransfer;
 import com.ec.application.model.InventoryTransferItem;
 import com.ec.application.model.Product;
@@ -21,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -130,8 +127,8 @@ public class InventoryTransferService {
     }
 
     private void replaceTenantNamesForSuncity(CreateTransferDTO transfer) {
-        transfer.setSourceTenant(tenantService.changeTenantForSuncity(transfer.getSourceTenant()));
-        transfer.setTargetTenant(tenantService.changeTenantForSuncity(transfer.getTargetTenant()));
+        transfer.setSourceTenant(tenantService.addPrefixForSuncity(transfer.getSourceTenant()));
+        transfer.setTargetTenant(tenantService.addPrefixForSuncity(transfer.getTargetTenant()));
     }
 
     private void compensate(InventoryTransfer transfer, List<InventoryTransferItem> items) {
@@ -258,7 +255,7 @@ public class InventoryTransferService {
 
         try {
             ThreadLocalStorage.setTenantName(
-                    tenantService.changeTenantForSuncity(tenant)
+                    tenantService.addPrefixForSuncity(tenant)
             );
 
             Double stock =

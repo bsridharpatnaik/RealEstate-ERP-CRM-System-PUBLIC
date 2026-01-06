@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.Objects;
 
-@Entity
+@Entity(name = "IndentInventoryList")
 @Table(name = "indent_inventory_entries")
 @Audited
 @Getter
