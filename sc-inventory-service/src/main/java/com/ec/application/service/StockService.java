@@ -14,6 +14,7 @@ import com.ec.application.repository.*;
 import com.ec.application.Filters.StockInformationSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
