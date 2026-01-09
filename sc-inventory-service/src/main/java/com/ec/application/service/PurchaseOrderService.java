@@ -42,54 +42,7 @@ public class PurchaseOrderService {
         targetSchemas = schemaConfig.getSchemaList().stream().filter(s -> !s.equalsIgnoreCase(masterSchema)).collect(Collectors.toList());
     }
 
-    List<String> poEligibleStatuses = Arrays.asList(IndentStatusConstants.STATUS_APPROVED, IndentStatusConstants.STATUS_PO_PARTIAL);
 
-    public Map<String, List<ConsolidatedIndentLineDTO>> fetchGroupedByCategory() {
-        List<ConsolidatedIndentLineDTO> allLines = new ArrayList<>();
-        for (Map.Entry<String, String> entry : schemaConfig.getSchemaMap().entrySet()) {
-            String tenantSchemaCode = entry.getValue();
-            String schemaNameUpdated = entry.getKey();
-            ThreadLocalStorage.setTenantName(schemaNameUpdated);
-            try {
-                List<IndentInventory> inventoryList = indentInventoryRepo.findByIndentStatusIn(poEligibleStatuses);
-                List<ConsolidatedIndentLineDTO> result = flatten(inventoryList, entry.getKey(), tenantSchemaCode);
-                allLines.addAll(result);
-            } finally {
-                ThreadLocalStorage.setTenantName(null);
-            }
-        }
-        return allLines.stream().collect(Collectors.groupingBy(ConsolidatedIndentLineDTO::getCategoryName, LinkedHashMap::new, Collectors.toList()));
-    }
 
-    List<ConsolidatedIndentLineDTO> flatten(List<IndentInventory> indents, String tenantName, String tenantSchemaCode) {
-        List<ConsolidatedIndentLineDTO> result = new ArrayList<>();
 
-        for (IndentInventory indent : indents) {
-            for (IndentInventoryList line : indent.getInventoryList()) {
-
-                Product p = line.getProduct();
-                Category c = p.getCategory();
-
-                ConsolidatedIndentLineDTO dto =
-                        new ConsolidatedIndentLineDTO(
-                                tenantService.removePrefixForSuncity(tenantName),
-                                tenantSchemaCode,
-                                indent.getIndentDate(),
-                                indent.getIndentId(),
-                                line.getLineItemCode(),
-                                c.getCategoryName(),
-                                p.getProductId(),
-                                p.getProductName(),
-                                p.getMeasurementUnit(),
-                                line.getQuantity(),
-                                line.getSpecification(),
-                                line.getRemarks(),
-                                line.getLineItemStatus()
-                        );
-
-                result.add(dto);
-            }
-        }
-        return result;
-    }
 }

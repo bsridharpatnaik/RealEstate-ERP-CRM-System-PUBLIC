@@ -56,11 +56,11 @@ public class TenantService {
     public String fetchTenantFromHeader() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attrs == null) {
-            throw new IllegalStateException("No request context available to fetch tenant-id.");
+            return null;
         }
         String tenantId = attrs.getRequest().getHeader("tenant-id");
         if (tenantId == null) {
-            throw new IllegalArgumentException("Tenant information is missing in the request header.");
+            return null;
         }
         return tenantId;
     }

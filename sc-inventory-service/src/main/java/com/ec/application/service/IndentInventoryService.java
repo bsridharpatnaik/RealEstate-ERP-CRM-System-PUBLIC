@@ -62,6 +62,9 @@ public class IndentInventoryService {
     @Autowired
     TenantService tenantService;
 
+    List<String> indentPOEligibleStatuses = Arrays.asList(IndentStatusConstants.STATUS_APPROVED, IndentStatusConstants.STATUS_PO_PARTIAL);
+    List<String> indentLineItemPoEligibleStatuses = Arrays.asList(IndentLineItemStatusConstants.STATUS_NEW);
+
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -70,10 +73,14 @@ public class IndentInventoryService {
 
         IndentInventory indentInventory = new IndentInventory();
         validateInputsForCreate(iiData);
-
         // Set basic fields (without inventory list)
-        indentInventory.setTenant(tenantService.fetchTenantFromHeader());
-        indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(ThreadLocalStorage.getTenantName()));
+        String tenantName = tenantService.fetchTenantFromHeader();
+
+        if (tenantName == null)
+            throw new IllegalStateException("No request context available to fetch tenant-id.");
+
+        indentInventory.setTenant(tenantName);
+        indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(tenantService.fetchTenantFromHeader()));
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         indentInventory.setIndentDate(iiData.getIndentDate());
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_NEW);
@@ -83,10 +90,7 @@ public class IndentInventoryService {
         indentInventoryRepo.flush(); // Ensure ID is generated
 
         // Now add inventory list with proper line item codes
-        Set<IndentInventoryList> inventoryList = processInventoryListForCreation(
-                iiData.getInventoryList(),
-                indentInventory
-        );
+        Set<IndentInventoryList> inventoryList = processInventoryListForCreation(iiData.getInventoryList(), indentInventory);
         indentInventory.setInventoryList(inventoryList);
 
         // Save again with inventory list
@@ -307,8 +311,13 @@ public class IndentInventoryService {
 
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
         Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
-        Specification<IndentInventory> specWithTenant = IndentInventorySpecification.getTenantSpecification(tenantService.fetchTenantFromHeader(), spec);
-        Page<IndentInventory> page = (spec != null) ? indentInventoryRepo.findAll(specWithTenant, pageable) : indentInventoryRepo.findAll(pageable);
+
+        String tenantName = tenantService.fetchTenantFromHeader();
+        if (tenantName != null) {
+            spec = IndentInventorySpecification.getTenantSpecification(tenantName, spec);
+        }
+
+        Page<IndentInventory> page = (spec != null) ? indentInventoryRepo.findAll(spec, pageable) : indentInventoryRepo.findAll(pageable);
         // Enrich ONCE for UI
         indentInventoryUiEnricher.enrich(page.getContent());
         returnData.setIndentInventories(page);
@@ -324,6 +333,7 @@ public class IndentInventoryService {
         return indentInventory;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteInwardInventoryById(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         String action = indentValidationService.validateBeforeDelete(indentInventory);
@@ -340,6 +350,7 @@ public class IndentInventoryService {
     /**
      * Updated UPDATE method with synchronization logic
      */
+    @Transactional(rollbackFor = Exception.class)
     public IndentInventory updateIndentInventory(IndentInventoryData payload, String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         indentValidationService.validateBeforeUpdate(indentInventory);
@@ -455,5 +466,46 @@ public class IndentInventoryService {
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventoryRepo.save(indentInventory);
         return indentInventory;
+    }
+
+    /**
+     * Fetch all PO-eligible indent line items
+     * grouped by category across all tenants.
+     */
+    public Map<String, List<ConsolidatedIndentLineDTO>> fetchGroupedByCategory() {
+        List<IndentInventory> inventoryList = indentInventoryRepo.findByIndentStatusIn(indentPOEligibleStatuses);
+        List<ConsolidatedIndentLineDTO> allLines = new ArrayList<>(flatten(inventoryList));
+        return allLines.stream().collect(Collectors.groupingBy(ConsolidatedIndentLineDTO::getCategoryName, LinkedHashMap::new, Collectors.toList()));
+    }
+
+    List<ConsolidatedIndentLineDTO> flatten(List<IndentInventory> indents) {
+        List<ConsolidatedIndentLineDTO> result = new ArrayList<>();
+
+        for (IndentInventory indent : indents) {
+            for (IndentInventoryList line : indent.getInventoryList()) {
+                if (!indentLineItemPoEligibleStatuses.contains(line.getLineItemStatus()))
+                    continue;    // Skip non-eligible line items
+                Product p = line.getProduct();
+                Category c = p.getCategory();
+                ConsolidatedIndentLineDTO dto =
+                        new ConsolidatedIndentLineDTO(
+                                indent.getTenant(),
+                                schemaConfig.getSchemaMap().get(indent.getTenant()),
+                                indent.getIndentDate(),
+                                indent.getIndentId(),
+                                line.getLineItemCode(),
+                                c.getCategoryName(),
+                                p.getProductId(),
+                                p.getProductName(),
+                                p.getMeasurementUnit(),
+                                line.getQuantity(),
+                                line.getSpecification(),
+                                line.getRemarks(),
+                                line.getLineItemStatus()
+                        );
+                result.add(dto);
+            }
+        }
+        return result;
     }
 }

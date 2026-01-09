@@ -18,13 +18,5 @@ public class PurchaseOrderController {
 
     private final PurchaseOrderService purchaseOrderService;
 
-    /**
-     * Fetch all PO-eligible indent line items
-     * grouped by category across all tenants.
-     */
-    @GetMapping("/open-indents-by-category")
-    public ResponseEntity<Map<String, List<ConsolidatedIndentLineDTO>>> getOpenIndentsGroupedByCategory() {
-        Map<String, List<ConsolidatedIndentLineDTO>> result = purchaseOrderService.fetchGroupedByCategory();
-        return ResponseEntity.ok(result);
-    }
+
 }

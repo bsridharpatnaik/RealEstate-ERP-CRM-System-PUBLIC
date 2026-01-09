@@ -1,8 +1,10 @@
 package com.ec.application.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.data.*;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.service.IndentInventoryService;
@@ -32,6 +34,7 @@ import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/indent")
+@UseDefaultTenant
 public class IndentInventoryController {
 
     @Autowired
@@ -97,6 +100,15 @@ public class IndentInventoryController {
         }
     }
 
+    /**
+     * Fetch all PO-eligible indent line items
+     * grouped by category across all tenants.
+     */
+    @GetMapping("/open-indents/by-category")
+    public ResponseEntity<Map<String, List<ConsolidatedIndentLineDTO>>> getOpenIndentsGroupedByCategory() {
+        Map<String, List<ConsolidatedIndentLineDTO>> result = iiService.fetchGroupedByCategory();
+        return ResponseEntity.ok(result);
+    }
 /*
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
