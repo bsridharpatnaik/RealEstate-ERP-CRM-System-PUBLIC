@@ -31,16 +31,19 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class IndentInventory extends ReusableFields implements Cloneable {
 
     @Id
-    @GeneratedValue(generator = "schema-id-gen")
+    @GeneratedValue(generator = "indent-id-gen")
     @GenericGenerator(
-            name = "schema-id-gen",
-            strategy = "com.ec.application.IDGenerator.SchemaPrefixedIdGenerator"
+            name = "indent-id-gen",
+            strategy = "com.ec.application.IDGenerator.GlobalIndentIdGenerator"
     )
     @Column(name = "indent_id", nullable = false, length = 20)
     private String indentId;
 
     @Transient
     private String tenantSchemaCode;
+
+    @Column(name="tenant", nullable = false, length = 50)
+    String tenant;
 
     @Column(name = "indent_status", nullable = false, length = 20)
     private String indentStatus;

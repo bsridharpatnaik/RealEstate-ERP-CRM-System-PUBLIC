@@ -1,7 +1,6 @@
 package com.ec.application.IDGenerator;
 
 import com.ec.application.config.SpringContextHolder;
-import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentSequence;
 import com.ec.application.repository.IndentSequenceRepository;
 import org.hibernate.HibernateException;
@@ -10,13 +9,16 @@ import org.hibernate.id.IdentifierGenerator;
 
 import java.io.Serializable;
 
-public class SchemaPrefixedIdGenerator implements IdentifierGenerator {
+public class GlobalIndentIdGenerator implements IdentifierGenerator {
+
+    private static final String PREFIX = "IN";
 
     private IndentSequenceRepository indentSequenceRepository;
 
     private IndentSequenceRepository getRepository() {
         if (indentSequenceRepository == null) {
-            indentSequenceRepository = SpringContextHolder.getBean(IndentSequenceRepository.class);
+            indentSequenceRepository =
+                    SpringContextHolder.getBean(IndentSequenceRepository.class);
         }
         return indentSequenceRepository;
     }
@@ -25,27 +27,25 @@ public class SchemaPrefixedIdGenerator implements IdentifierGenerator {
     public Serializable generate(SharedSessionContractImplementor session, Object object)
             throws HibernateException {
 
-        if (!(object instanceof IndentInventory)) {
-            throw new IllegalArgumentException("Unexpected object: " + object);
-        }
-
         try {
-            IndentInventory indent = (IndentInventory) object;
-            String schemaCode = indent.getTenantSchemaCode();
-
             IndentSequenceRepository repo = getRepository();
 
-            IndentSequence seq = repo.findById(schemaCode)
-                    .orElseThrow(() ->
-                            new RuntimeException("IndentSequence not found for tenantCode: " + schemaCode));
+            IndentSequence seq = repo.findForUpdate(PREFIX)
+                    .orElseGet(() -> {
+                        IndentSequence s = new IndentSequence();
+                        s.setTenantCode(PREFIX);
+                        s.setLastId(0L);
+                        return repo.save(s);
+                    });
 
-            seq.setLastId(seq.getLastId() + 1);
+            Long nextId = seq.getLastId() + 1;
+            seq.setLastId(nextId);
             repo.save(seq);
 
-            return schemaCode + "-" + seq.getLastId();
+            return PREFIX + "-" + nextId;
 
         } catch (Exception e) {
-            throw new HibernateException("Failed to generate ID for IndentInventory", e);
+            throw new HibernateException("Failed to generate Indent ID", e);
         }
     }
 }

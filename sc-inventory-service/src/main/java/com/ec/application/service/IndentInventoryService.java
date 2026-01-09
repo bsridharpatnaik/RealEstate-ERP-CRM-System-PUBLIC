@@ -3,6 +3,7 @@ package com.ec.application.service;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.IndentInventorySpecification;
 import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.config.SchemaConfig;
@@ -31,6 +32,7 @@ import static java.util.stream.Collectors.counting;
 
 @Service
 @Transactional
+@UseDefaultTenant
 public class IndentInventoryService {
 
     @Autowired
@@ -57,6 +59,9 @@ public class IndentInventoryService {
     @Autowired
     IndentInventoryUiEnricher indentInventoryUiEnricher;
 
+    @Autowired
+    TenantService tenantService;
+
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -67,6 +72,7 @@ public class IndentInventoryService {
         validateInputsForCreate(iiData);
 
         // Set basic fields (without inventory list)
+        indentInventory.setTenant(tenantService.fetchTenantFromHeader());
         indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(ThreadLocalStorage.getTenantName()));
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         indentInventory.setIndentDate(iiData.getIndentDate());
@@ -297,14 +303,12 @@ public class IndentInventoryService {
     }
 
     @Transactional(readOnly = true)
-    public ReturnIndentInventoryData fetchIndentInventory(
-            FilterDataList filterDataList,
-            Pageable pageable) throws ParseException {
+    public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
 
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
         Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
-
-        Page<IndentInventory> page = (spec != null) ? indentInventoryRepo.findAll(spec, pageable) : indentInventoryRepo.findAll(pageable);
+        Specification<IndentInventory> specWithTenant = IndentInventorySpecification.getTenantSpecification(tenantService.fetchTenantFromHeader(), spec);
+        Page<IndentInventory> page = (spec != null) ? indentInventoryRepo.findAll(specWithTenant, pageable) : indentInventoryRepo.findAll(pageable);
         // Enrich ONCE for UI
         indentInventoryUiEnricher.enrich(page.getContent());
         returnData.setIndentInventories(page);
@@ -316,7 +320,6 @@ public class IndentInventoryService {
         IndentInventory indentInventory = indentInventoryRepo.findByIdWithDetails(id)
                 .orElseThrow(() ->
                         new RuntimeException("Indent Inventory not found with ID " + id));
-
         indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
     }

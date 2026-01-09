@@ -12,9 +12,12 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class IndentInventorySpecification {
+
     static SpecificationsBuilder<IndentInventory> specbldr = new SpecificationsBuilder<IndentInventory>();
 
     public static Specification<IndentInventory> getSpecification(FilterDataList filterDataList) throws ParseException {
@@ -56,5 +59,10 @@ public final class IndentInventorySpecification {
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
         }
         return finalSpec;
+    }
+
+    public static Specification<IndentInventory> getTenantSpecification(String tenantName, Specification<IndentInventory> spec) {
+        Specification<IndentInventory> tenantSpec = specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, Collections.singletonList(tenantName));
+        return specbldr.specAndCondition(spec, tenantSpec);
     }
 }

@@ -7,6 +7,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Service
 public class TenantService {
@@ -47,5 +51,17 @@ public class TenantService {
             tenantName = tenantName.replace("v2", "");
         }
         return tenantName;
+    }
+
+    public String fetchTenantFromHeader() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs == null) {
+            throw new IllegalStateException("No request context available to fetch tenant-id.");
+        }
+        String tenantId = attrs.getRequest().getHeader("tenant-id");
+        if (tenantId == null) {
+            throw new IllegalArgumentException("Tenant information is missing in the request header.");
+        }
+        return tenantId;
     }
 }
