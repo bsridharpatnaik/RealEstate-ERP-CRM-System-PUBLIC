@@ -1,5 +1,6 @@
 package com.ec.application.model;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import org.hibernate.annotations.Where;
 
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 
 @Entity
-@Table(name = "purchase_order", schema = "master")
+@Table(name = "purchase_order")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,11 +36,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class PurchaseOrder extends ReusableFields {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "po_number", nullable = false, unique = true)
-    private String poNumber;
+    @GeneratedValue(generator = "po-id-gen")
+    @GenericGenerator(
+            name = "po-id-gen",
+            strategy = "com.ec.application.IDGenerator.GlobalPurchaseOrderIdGenerator"
+    )
+    @Column(name = "purchase_order_id", nullable = false, length = 20)
+    private String purchaseOrderId;
 
     @Column(nullable = false)
     private String status;
@@ -53,5 +56,10 @@ public class PurchaseOrder extends ReusableFields {
     private Firm firm;
 
     private String subject;
-    private BigDecimal totalAmount;
+
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double grandTotal;
+
+    @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
+    private Set<PurchaseOrderLine> lines = new HashSet<>();
 }
