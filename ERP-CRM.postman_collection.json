@@ -902,6 +902,39 @@
 					"item": [
 						{
 							"name": "Get All Tenants",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Parse response JSON",
+											"const response = pm.response.json();",
+											"",
+											"// Safety check",
+											"if (Array.isArray(response) && response.length >= 2) {",
+											"",
+											"    // Read first and second tenantCode",
+											"    const firstTenantCode = response[0].tenantCode;",
+											"    const secondTenantCode = response[1].tenantCode;",
+											"",
+											"    // Set as environment variables",
+											"    pm.environment.set(\"tenantCode1\", firstTenantCode);",
+											"    pm.environment.set(\"tenantCode2\", secondTenantCode);",
+											"",
+											"    console.log(\"tenantCode1:\", firstTenantCode);",
+											"    console.log(\"tenantCode2:\", secondTenantCode);",
+											"",
+											"} else {",
+											"    console.warn(\"Response does not contain at least two tenants\");",
+											"}",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
 							"request": {
 								"method": "GET",
 								"header": [
@@ -1587,91 +1620,6 @@
 										}
 									},
 									"response": []
-								},
-								{
-									"name": "Create Indent Copy",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													"var jsonData = JSON.parse(responseBody);",
-													"pm.environment.set(\"indentid\", jsonData.indentId)"
-												],
-												"type": "text/javascript",
-												"packages": {},
-												"requests": {}
-											}
-										},
-										{
-											"listen": "prerequest",
-											"script": {
-												"exec": [
-													"// Get today's date",
-													"const today = new Date();",
-													"",
-													"// Format as dd-MM-yyyy",
-													"const day = String(today.getDate()).padStart(2, '0');",
-													"const month = String(today.getMonth() + 1).padStart(2, '0');",
-													"const year = today.getFullYear();",
-													"",
-													"const formattedDate = `${day}-${month}-${year}`;",
-													"",
-													"// Save to environment or collection variable",
-													"pm.environment.set(\"indentDate\", formattedDate);",
-													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
-													"",
-													"console.log(\"indentDate:\", formattedDate);",
-													""
-												],
-												"type": "text/javascript",
-												"packages": {},
-												"requests": {}
-											}
-										}
-									],
-									"request": {
-										"method": "POST",
-										"header": [
-											{
-												"key": "Content-Type",
-												"value": "application/json",
-												"type": "text"
-											},
-											{
-												"key": "Authorization",
-												"value": "{{token}}",
-												"type": "text"
-											},
-											{
-												"key": "tenant-id",
-												"value": "egcity",
-												"type": "text"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 50.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
-											"options": {
-												"raw": {
-													"language": "json"
-												}
-											}
-										},
-										"url": {
-											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent/create",
-											"protocol": "{{method}}",
-											"host": [
-												"{{serverUrlAPI}}"
-											],
-											"path": [
-												"inventory",
-												"indent",
-												"create"
-											]
-										}
-									},
-									"response": []
 								}
 							]
 						},
@@ -2018,7 +1966,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n   // \"draftId\":\"{{draftId}}\",\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 150.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
+											"raw": "{\n    // \"draftId\":\"{{draftId}}\",\n    \"indentDate\": \"{{indentDate}}\",\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"3c0baf3e-d159-4073-95ce-a459f113a549\",\n            \"fileName\": \"SC - QA.postman_environment.json\"\n        }\n    ],\n    \"inventoryList\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 150.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit1}}\"\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100.0,\n            \"specification\": \"{{$randomJobDescriptor}}\",\n            \"remarks\": \"{{$randomJobTitle}}\",\n            \"measurementUnit\": \"{{measurementUnit2}}\"\n        }\n    ]\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -2310,7 +2258,7 @@
 											}
 										},
 										"url": {
-											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent",
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent?sort=indentStatus,desc",
 											"protocol": "{{method}}",
 											"host": [
 												"{{serverUrlAPI}}"
@@ -2318,6 +2266,12 @@
 											"path": [
 												"inventory",
 												"indent"
+											],
+											"query": [
+												{
+													"key": "sort",
+													"value": "indentStatus,desc"
+												}
 											]
 										}
 									},
@@ -2357,6 +2311,126 @@
 											"path": [
 												"inventory",
 												"indent"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Fetch Indent Line Items",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent/open-indents/by-category",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"indent",
+												"open-indents",
+												"by-category"
 											]
 										}
 									},
@@ -2719,6 +2793,1141 @@
 												"inventory",
 												"drafts",
 												"{{draftId}}"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Dead Stock",
+							"item": [
+								{
+									"name": "Sync Dead Stock",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"draftId\", jsonData.draftId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"indentDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"indentDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock/sync",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"dead-stock",
+												"sync"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Firm",
+							"item": [
+								{
+									"name": "Create Firm",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"firmId\", jsonData.firmId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n       \"firmName\": \"{{$randomCompanyName}}\",\n       \"firmDescription\": \"{{$randomBsBuzz}}\",\n       \"firmAddress\": \"{{$randomStreetAddress}}\",\n       \"firmGstNumber\": \"{{firmGstNumber}}\",\n       \"firmPanNumber\": \"{{firmPanNumber}}\",\n       \"firmContactNumber\": \"{{firmContactNumber}}\"\n     }"
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/firm/create",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"firm",
+												"create"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Update Firm",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"machineryId\", jsonData.machineryId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"firmName\": \"{{$randomCompanyName}}\",\n    \"firmDescription\": \"{{$randomBsBuzz}}\",\n    \"firmAddress\": \"{{$randomStreetAddress}}\",\n    \"firmGstNumber\": \"{{firmGstNumber}}\",\n    \"firmPanNumber\": \"{{firmPanNumber}}\",\n    \"firmContactNumber\": \"{{firmContactNumber}}\"\n}"
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/firm/{{firmId}}",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"firm",
+												"{{firmId}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Firm",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"machineryId\", jsonData.machineryId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random GST number",
+													"const gstNumber = pm.variables.replaceIn('{{$randomInt}}');",
+													"const formattedGstNumber = `GST${gstNumber.padStart(10, '0')}`;",
+													"pm.environment.set('firmGstNumber', formattedGstNumber);",
+													"",
+													"// Generate random PAN number",
+													"const panNumber = pm.variables.replaceIn('{{$randomAlphaNumeric}}');",
+													"const formattedPanNumber = `PAN${panNumber.toUpperCase().slice(0, 10)}`;",
+													"pm.environment.set('firmPanNumber', formattedPanNumber);",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"firmName\": \"{{$randomCompanyName}}\",\n    \"firmDescription\": \"{{$randomBsBuzz}}\",\n    \"firmAddress\": \"{{$randomStreetAddress}}\",\n    \"firmGstNumber\": \"{{firmGstNumber}}\",\n    \"firmPanNumber\": \"{{firmPanNumber}}\",\n    \"firmContactNumber\": \"{{firmContactNumber}}\"\n}"
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/firm/{{firmId}}",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"firm",
+												"{{firmId}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Firm Copy",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"machineryId\", jsonData.machineryId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random GST number",
+													"const gstNumber = pm.variables.replaceIn('{{$randomInt}}');",
+													"const formattedGstNumber = `GST${gstNumber.padStart(10, '0')}`;",
+													"pm.environment.set('firmGstNumber', formattedGstNumber);",
+													"",
+													"// Generate random PAN number",
+													"const panNumber = pm.variables.replaceIn('{{$randomAlphaNumeric}}');",
+													"const formattedPanNumber = `PAN${panNumber.toUpperCase().slice(0, 10)}`;",
+													"pm.environment.set('firmPanNumber', formattedPanNumber);",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"firmName\": \"{{$randomCompanyName}}\",\n    \"firmDescription\": \"{{$randomBsBuzz}}\",\n    \"firmAddress\": \"{{$randomStreetAddress}}\",\n    \"firmGstNumber\": \"{{firmGstNumber}}\",\n    \"firmPanNumber\": \"{{firmPanNumber}}\",\n    \"firmContactNumber\": \"{{firmContactNumber}}\"\n}"
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/firm/idandnames",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"firm",
+												"idandnames"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Inventory Transfer",
+							"item": [
+								{
+									"name": "Get All Tenants",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"// Parse response JSON",
+													"const response = pm.response.json();",
+													"",
+													"// Safety check",
+													"if (Array.isArray(response) && response.length >= 2) {",
+													"",
+													"    // Read first and second tenantCode",
+													"    const firstTenantCode = response[0].tenantCode;",
+													"    const secondTenantCode = response[1].tenantCode;",
+													"",
+													"    // Set as environment variables",
+													"    pm.environment.set(\"tenantCode1\", firstTenantCode);",
+													"    pm.environment.set(\"tenantCode2\", secondTenantCode);",
+													"",
+													"    console.log(\"tenantCode1:\", firstTenantCode);",
+													"    console.log(\"tenantCode2:\", secondTenantCode);",
+													"",
+													"} else {",
+													"    console.warn(\"Response does not contain at least two tenants\");",
+													"}",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlCommon}}/tenants",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlCommon}}"
+											],
+											"path": [
+												"tenants"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Current Stock",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"firmId\", jsonData.firmId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/inventory-transfer/current-stock?tenant={{tenantCode1}}&productId={{productId2}}&warehouseId=4",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"inventory-transfer",
+												"current-stock"
+											],
+											"query": [
+												{
+													"key": "tenant",
+													"value": "{{tenantCode1}}"
+												},
+												{
+													"key": "productId",
+													"value": "{{productId2}}"
+												},
+												{
+													"key": "warehouseId",
+													"value": "4"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Current Stock Bulk",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"firmId\", jsonData.firmId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"tenant\": \"{{tenantCode1}}\",\n  \"warehouseId\": 4,\n  \"productIds\": [{{productId1}}, {{productId2}}, {{productId3}}]\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/inventory-transfer/current-stock/bulk",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"inventory-transfer",
+												"current-stock",
+												"bulk"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Inward Inventory Create",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"inwardid\", jsonData.inwardid);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"date\": \"26-12-2025\",\n    \"supplierId\": {{supplierId}},\n    \"warehouseId\": {{warehouseId}},\n    \"purchaseOrder\":\"{{$randomAlphaNumeric}}\",\n    \"purchaseOrderDate\":\"30-05-2021\",\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 100\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 100\n        }\n    ],\n    \"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t],\n    \"invoiceReceived\":true,\n    \"vehicleNo\":\"MH31EU5079\",\n    \"vendorSlipNo\":\"Le jaa bhai\",\n    \"ourSlipNo\":\"{{$randomCountryCode}}\",\n    \"additionalComments\":\"{{$randomLoremSentence}}\",\n    \"challanNo\":\"123\",\n    \"challanDate\":\"03-03-2021\",\n    \"billNo\":\"12334\",\n    \"billDate\":\"03-03-2021\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/inward/create",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"inward",
+												"create"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Create Transfer",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"firmId\", jsonData.firmId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);",
+													"",
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"transferDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"transferDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"transferDate\": \"{{transferDate}}\",\n    \"sourceTenant\": \"{{tenantCode1}}\",\n    \"targetTenant\": \"{{tenantCode2}}\",\n    \"sourceWarehouseId\": 4,\n    \"targetWarehouseId\": 4,\n    \"items\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 1\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 1\n        }\n    ]\n}"
+										},
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/inventory-transfer/create",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"inventory-transfer",
+												"create"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Purchase Order",
+							"item": [
+								{
+									"name": "Fetch Indent Line Items",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/indent/open-indents/by-category",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"indent",
+												"open-indents",
+												"by-category"
 											]
 										}
 									},
@@ -7374,7 +8583,7 @@
 									"query": [
 										{
 											"key": "file",
-											"value": null,
+											"value": "",
 											"disabled": true
 										}
 									]
@@ -7908,17 +9117,6 @@
 						},
 						{
 							"name": "Create BOQ for Type (when location unselected)",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
 							"request": {
 								"method": "POST",
 								"header": [
@@ -8372,7 +9570,7 @@
 									"query": [
 										{
 											"key": "",
-											"value": null
+											"value": ""
 										}
 									]
 								}
@@ -8441,17 +9639,6 @@
 							"item": [
 								{
 									"name": "Fetch All Pageable",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -8486,17 +9673,6 @@
 								},
 								{
 									"name": "Fetch Filtered Pageable",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -8531,17 +9707,6 @@
 								},
 								{
 									"name": "Dropdown",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"protocolProfileBehavior": {
 										"disableBodyPruning": true
 									},
@@ -8585,17 +9750,6 @@
 							"item": [
 								{
 									"name": "Create Inventory Month Pricing Mapping",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -8631,17 +9785,6 @@
 								},
 								{
 									"name": "DELETE Inventory Month De Mapping Copy",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -8677,17 +9820,6 @@
 								},
 								{
 									"name": "Fetch All Pageable",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -8722,17 +9854,6 @@
 								},
 								{
 									"name": "Fetch Filtered Pageable",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -8767,17 +9888,6 @@
 								},
 								{
 									"name": "Dropdown",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"protocolProfileBehavior": {
 										"disableBodyPruning": true
 									},
@@ -8821,17 +9931,6 @@
 							"item": [
 								{
 									"name": "Fetch All Pageable",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -8866,17 +9965,6 @@
 								},
 								{
 									"name": "Fetch Dates By Location",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"protocolProfileBehavior": {
 										"disableBodyPruning": true
 									},
@@ -8915,17 +10003,6 @@
 								},
 								{
 									"name": "Dropdown Copy",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"protocolProfileBehavior": {
 										"disableBodyPruning": true
 									},
@@ -8969,17 +10046,6 @@
 							"item": [
 								{
 									"name": "Create Inventory Month Pricing Mapping Copy",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"exec": [
-													""
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
 									"request": {
 										"method": "POST",
 										"header": [
@@ -9022,17 +10088,6 @@
 					"item": [
 						{
 							"name": "Get BOQ for Outward",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											""
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
 							"protocolProfileBehavior": {
 								"disableBodyPruning": true
 							},
@@ -9090,18 +10145,6 @@
 					"item": [
 						{
 							"name": "Send StockNotification",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											""
-										],
-										"type": "text/javascript",
-										"packages": {}
-									}
-								}
-							],
 							"request": {
 								"method": "GET",
 								"header": [
@@ -9358,7 +10401,10 @@
 					"name": "New Request",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": ""
+						}
 					},
 					"response": []
 				}
@@ -10007,26 +11053,6 @@
 								}
 							},
 							"response": []
-						}
-					],
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									""
-								]
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									""
-								]
-							}
 						}
 					]
 				},
@@ -11208,26 +12234,6 @@
 							},
 							"response": []
 						}
-					],
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									""
-								]
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									""
-								]
-							}
-						}
 					]
 				},
 				{
@@ -12372,17 +13378,6 @@
 										},
 										{
 											"name": "Update Payment Received",
-											"event": [
-												{
-													"listen": "test",
-													"script": {
-														"exec": [
-															""
-														],
-														"type": "text/javascript"
-													}
-												}
-											],
 											"request": {
 												"method": "PUT",
 												"header": [
@@ -12419,17 +13414,6 @@
 										},
 										{
 											"name": "Update Payment Received Copy",
-											"event": [
-												{
-													"listen": "test",
-													"script": {
-														"exec": [
-															""
-														],
-														"type": "text/javascript"
-													}
-												}
-											],
 											"request": {
 												"method": "DELETE",
 												"header": [
@@ -12986,18 +13970,6 @@
 					"item": [
 						{
 							"name": "Send Email - UA",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											""
-										],
-										"type": "text/javascript",
-										"packages": {}
-									}
-								}
-							],
 							"request": {
 								"method": "GET",
 								"header": [

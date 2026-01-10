@@ -1,0 +1,1152 @@
+{
+  "info": {
+    "_postman_id": "96a3bc7f-f288-447e-b187-2f15bbf2107b",
+    "name": "Expense Tracker",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "75cb6ba4-e88f-4af7-a494-2beddf2f9569",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"token\", jsonData.token);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "39324790-240b-455d-b180-694ad5e0bfd5",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\":\"raja\",\n    \"password\":\"Test@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/auth/login",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST -d \"username=user1\" -d \"password=password1\" http://localhost:8095/login -c cookies.txt\n"
+          },
+          "response": []
+        },
+        {
+          "name": "User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "75cb6ba4-e88f-4af7-a494-2beddf2f9569",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "401e78a0-03aa-40b0-a882-d06b497bab65",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/user/status",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "user",
+                "status"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST -d \"username=user1\" -d \"password=password1\" http://localhost:8095/login -c cookies.txt\n"
+          },
+          "response": []
+        }
+      ],
+      "id": "1fe121f6-0a67-453c-b8b8-bd891c9f08dd"
+    },
+    {
+      "name": "File Handling - Transaction",
+      "item": [
+        {
+          "name": "Upload File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "6b6e7e33-b82c-405a-8b2b-0ac695c314e3",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"fileUuid\", jsonData.fileUuid);",
+                  "postman.setEnvironmentVariable(\"filename\", jsonData.filename);",
+                  "postman.setEnvironmentVariable(\"uploadDate\", jsonData.uploadDate);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "d9fd7033-c6c7-4310-9a2a-9906c3255164",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/Users/bsridharpatnaik/Downloads/Fav Green v2-1.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{servername}}/api/file/upload",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "file",
+                "upload"
+              ],
+              "query": [
+                {
+                  "key": "file",
+                  "value": null,
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DownloadFile",
+          "id": "7cd17206-7c84-4e23-8813-a5a8c1223116",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "{{acces",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{servername}}/api/file/download/{{fileUuid}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "file",
+                "download",
+                "{{fileUuid}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "71a2bd6a-709e-4ded-9b26-774f7e394b09"
+    },
+    {
+      "name": "Transaction",
+      "item": [
+        {
+          "name": "Party List",
+          "id": "7615de2b-0077-49f9-89e3-18eada2966fa",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/transaction/party",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "transaction",
+                "party"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "4d4d28f0-f7f8-42d0-89ba-b228d45c4984",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"txId\", jsonData.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "79f83eb0-6a4c-4f9e-9922-3c2073e825aa",
+                "exec": [
+                  "// Define the range of days (last 60 days)",
+                  "const daysAgoStart = 60;",
+                  "const daysAgoEnd = 1;",
+                  "",
+                  "// Generate a random number of days between 1 and 60",
+                  "const randomDaysAgo = Math.floor(Math.random() * (daysAgoEnd - daysAgoStart + 1)) + daysAgoStart;",
+                  "",
+                  "// Calculate the date",
+                  "const date = new Date();",
+                  "date.setDate(date.getDate() - randomDaysAgo);",
+                  "",
+                  "// Format the date in dd-MM-yyyy format",
+                  "const formattedDate = (\"0\" + date.getDate()).slice(-2) + \"-\" + (\"0\" + (date.getMonth() + 1)).slice(-2) + \"-\" + date.getFullYear();",
+                  "",
+                  "// Randomly choose between INCOME and EXPENSE",
+                  "const transactionTypes = [\"INCOME\", \"EXPENSE\"];",
+                  "const randomTypeIndex = Math.floor(Math.random() * transactionTypes.length);",
+                  "const randomTransactionType = transactionTypes[randomTypeIndex];",
+                  "",
+                  "// Set the variable for date",
+                  "pm.environment.set(\"randomDate\", formattedDate);",
+                  "",
+                  "// Set the variable for transaction type",
+                  "pm.environment.set(\"randomTransactionType\", randomTransactionType);",
+                  "",
+                  "// Generate a random number between 10 and 1000",
+                  "var randomNumber = Math.floor(Math.random() * (1000 - 10 + 1)) + 10;",
+                  "",
+                  "// Set the random number as an environment variable",
+                  "pm.environment.set(\"randomNumber\", randomNumber);",
+                  "",
+                  "// Log the random number to the console (optional)",
+                  "console.log(\"Generated Random Number: \" + randomNumber);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "6fbecd2a-25ea-429f-8ec7-99869d5348b1",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionType\": \"{{randomTransactionType}}\", // possible values are INCOME/EXPENSE\n    \"date\": \"{{randomDate}}\",\n    \"title\": \"Sample Transaction\",\n    \"party\": \"{{$randomFullName}}\",\n    \"amount\": {{randomNumber}},\n    \"description\":\"{{$randomAbbreviation}}\",\n    \"files\": [\n        {\n            \"fileUuid\": \"{{fileUuid}}\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/transaction",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "transaction"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update",
+          "id": "e2a0d807-9eca-40a2-8e71-fcf474248d07",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    // \"transactionType\":\"EXPENSE\",\n    //\"date\": \"24-08-2024\",\n    //\"title\": \"Sample Transaction1\",\n    //\"party\": \"Sample Party\",\n    //\"amount\": 112.56,\n    /*\"files\": [\n        {\n            \"fileUuid\": \"{{fileUuid}}\"\n        }\n    ]*/\n    \"description\":\"{{$randomBankAccountName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/transaction/{{txId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "transaction",
+                "{{txId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete",
+          "id": "2897bf8c-9544-4290-8b2e-c08b3f7c549a",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/transaction/{{txId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "transaction",
+                "{{txId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "83f3b23b-13f3-42ae-a432-bc83e933d2f1"
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Fetch Daily",
+          "id": "7182b4db-de1e-49e7-b7c4-57a41b40332b",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/dashboard/summary?dateOrMonth=2024-12-04",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "dateOrMonth",
+                  "value": "2024-12-04"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Monthly",
+          "id": "d87e7320-6ebf-49f9-bb20-565b7862c671",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/dashboard/summary?dateOrMonth=2024-10-18",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "summary"
+              ],
+              "query": [
+                {
+                  "key": "dateOrMonth",
+                  "value": "2024-10-18"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fetch Monthly Grouped",
+          "id": "2b22f0fb-2245-4ab2-93dd-8cce2cd75e9a",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/dashboard/summary/grouped?startDate=2024-10",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "dashboard",
+                "summary",
+                "grouped"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-10"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "c6f0c47c-8ccd-45b3-96f1-d62c31f72585"
+    },
+    {
+      "name": "Vault V2",
+      "item": [
+        {
+          "name": "Get Root folder content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "79016f8f-2c67-4b5b-a4b0-d1dc764c4f02",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"rootId\", jsonData.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "79682446-7154-4dce-b1c2-8b6be55a3a58",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/vault/folders",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "vault",
+                "folders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Folder",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "f6b6db6c-22cb-4f2c-bdae-db9146fc7675",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"folderId\", jsonData.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "d1d3c55d-2404-4b32-9be3-460e77e3ab5f",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/vault/folders?name={{$randomCity}}&parentId={{rootId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "vault",
+                "folders"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "{{$randomCity}}"
+                },
+                {
+                  "key": "parentId",
+                  "value": "{{rootId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload File to Folder",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "6a6eeb7e-1587-48e3-93dc-6d267e15d504",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"fileId\", jsonData.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "28c8f528-5303-4e12-9ca9-1824bee2078b",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/Users/bsridharpatnaik/Downloads/Evergreen (2).zip"
+                },
+                {
+                  "key": "folderId",
+                  "value": "{{folderId}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{servername}}/api/vault/files",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "vault",
+                "files"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST \"http://localhost:8080/api/vault/files\" \\\n     -F \"file=@/path/to/your/file.txt\" \\\n     -F \"folderId=123\"\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Download File",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "6a6eeb7e-1587-48e3-93dc-6d267e15d504",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "b75c29e9-854f-4f12-bbd4-e7fa90e7dfa8",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/vault/files/download/{{fileId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "vault",
+                "files",
+                "download",
+                "{{fileId}}"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST \"http://localhost:8080/api/vault/files\" \\\n     -F \"file=@/path/to/your/file.txt\" \\\n     -F \"folderId=123\"\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Folder Content",
+          "id": "72623a0e-a682-4a60-a09b-a0f621680469",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/vault/folders?folderId={{folderId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "vault",
+                "folders"
+              ],
+              "query": [
+                {
+                  "key": "folderId",
+                  "value": "{{folderId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete FIle",
+          "id": "661a19d8-b5a0-4dc5-bf4c-e4aae9ea4f62",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/vault/files/{{fileId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "vault",
+                "files",
+                "{{fileId}}"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST \"http://localhost:8080/api/vault/files\" \\\n     -F \"file=@/path/to/your/file.txt\" \\\n     -F \"folderId=123\"\n"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Folder",
+          "id": "348b7f6f-c1a7-4857-b6db-f1effb356e43",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/vault/folders/{{folderId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "vault",
+                "folders",
+                "{{folderId}}"
+              ]
+            },
+            "description": "Generated from cURL: curl -X POST \"http://localhost:8080/api/vault/files\" \\\n     -F \"file=@/path/to/your/file.txt\" \\\n     -F \"folderId=123\"\n"
+          },
+          "response": []
+        }
+      ],
+      "id": "b94bc9b6-64a3-4c9d-8bc1-b439f0a7e0bc"
+    },
+    {
+      "name": "History",
+      "item": [
+        {
+          "name": "Get History",
+          "id": "06634bf8-a09c-407c-ac3b-f848aff81c1b",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/history",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "history"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "96038534-6a1a-4695-9b6f-ec12e214cbaf"
+    },
+    {
+      "name": "Bulk Add Transactions",
+      "item": [
+        {
+          "name": "Create Copy",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "4d4d28f0-f7f8-42d0-89ba-b228d45c4984",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"txId\", jsonData.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "79f83eb0-6a4c-4f9e-9922-3c2073e825aa",
+                "exec": [
+                  "// Define the range of days (last 60 days)",
+                  "const daysAgoStart = 0;",
+                  "const daysAgoEnd = 0;",
+                  "",
+                  "// Generate a random number of days between 1 and 60",
+                  "const randomDaysAgo = Math.floor(Math.random() * (daysAgoEnd - daysAgoStart + 1)) + daysAgoStart;",
+                  "",
+                  "// Calculate the date",
+                  "const date = new Date();",
+                  "date.setDate(date.getDate() - randomDaysAgo);",
+                  "",
+                  "// Format the date in dd-MM-yyyy format",
+                  "const formattedDate = (\"0\" + date.getDate()).slice(-2) + \"-\" + (\"0\" + (date.getMonth() + 1)).slice(-2) + \"-\" + date.getFullYear();",
+                  "",
+                  "// Randomly choose between INCOME and EXPENSE",
+                  "const transactionTypes = [\"INCOME\", \"EXPENSE\"];",
+                  "const randomTypeIndex = Math.floor(Math.random() * transactionTypes.length);",
+                  "const randomTransactionType = transactionTypes[randomTypeIndex];",
+                  "",
+                  "// Set the variable for date",
+                  "pm.environment.set(\"randomDate\", formattedDate);",
+                  "",
+                  "// Set the variable for transaction type",
+                  "pm.environment.set(\"randomTransactionType\", randomTransactionType);",
+                  "",
+                  "var randomNumber = Math.floor(Math.random() * (1000 - 10 + 1)) + 10;",
+                  "",
+                  "// Set the random number as an environment variable",
+                  "pm.environment.set(\"randomNumber\", randomNumber);",
+                  "",
+                  "// Log the random number to the console (optional)",
+                  "console.log(\"Generated Random Number: \" + randomNumber);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "id": "faaafe54-dc43-4fe6-b71c-beab5a02e9b5",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"transactionType\": \"{{randomTransactionType}}\", // possible values are INCOME/EXPENSE\n    \"date\": \"{{randomDate}}\",\n    \"title\": \"{{$randomBsNoun}}\",\n    \"party\": \"{{$randomFullName}}\",\n    \"amount\": {{randomNumber}},\n    \"files\": [\n        {\n            \"fileUuid\": \"{{fileUuid}}\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/transaction",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "transaction"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "c622b67b-d610-4039-9548-b03e6654e729"
+    },
+    {
+      "name": "Notes",
+      "item": [
+        {
+          "name": "Create Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "91cdfd26-d299-472a-8857-5992c309b110",
+                "exec": [
+                  "var jsonData = JSON.parse(responseBody);",
+                  "postman.setEnvironmentVariable(\"noteId\", jsonData.id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "28dc8f51-a912-4cb7-972a-6bf7a71cfdce",
+                "exec": [
+                  "// Set the desired date format",
+                  "const dateFormat = \"yyyy-MM-dd\";",
+                  "",
+                  "// Get the current date",
+                  "const currentDate = new Date();",
+                  "",
+                  "// Format the date as a string in the desired format",
+                  "const formattedDate = currentDate.toISOString().split(\"T\")[0];",
+                  "",
+                  "// Set the formatted date as a Postman environment variable",
+                  "pm.environment.set(\"todaysDate\", formattedDate);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "efaa4e3a-8319-479d-9cd4-c79024e8726a",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"date\": \"{{todaysDate}}\",\n    \"text\": \"Sample note text - {{$randomAlphaNumeric}}\",\n    \"files\": [\n        {\n            \"fileUuid\": \"{{fileUuid}}\",\n            \"filename\": \"example.pdf\"\n        }\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/notes",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "notes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "91cdfd26-d299-472a-8857-5992c309b110",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "3bcd9a31-c73d-4296-9d58-c26a2080b0b1",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"text\": \"Updated note text\",\n    \"files\": [\n      {\n        \"fileUuid\": \"{{fileUuid}}\",\n        \"filename\": \"image1.jpg\"\n      }\n    ]\n  }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/notes/{{noteId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "notes",
+                "{{noteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Note",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "91cdfd26-d299-472a-8857-5992c309b110",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "33b33288-1292-4821-adb9-cf7db9495ecf",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n       \"text\": \"Updated note text\",\n       \"fileUuids\": [\n         \"123e4567-e89b-12d3-a456-426614174000\",\n         \"123e4567-e89b-12d3-a456-426614174002\"\n       ]\n     }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{servername}}/api/notes/{{noteId}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "notes",
+                "{{noteId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Note By Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "91cdfd26-d299-472a-8857-5992c309b110",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "bde011a7-9348-4369-95e1-6c8408f85062",
+                "exec": [
+                  "// Set the desired date format",
+                  "const dateFormat = \"yyyy-MM-dd\";",
+                  "",
+                  "// Get the current date",
+                  "const currentDate = new Date();",
+                  "",
+                  "// Format the date as a string in the desired format",
+                  "const formattedDate = currentDate.toISOString().split(\"T\")[0];",
+                  "",
+                  "// Set the formatted date as a Postman environment variable",
+                  "pm.environment.set(\"todaysDate\", formattedDate);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "dab3dfdc-20cc-49f6-8748-cbf08b06123b",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{servername}}/api/notes?date={{todaysDate}}",
+              "host": [
+                "{{servername}}"
+              ],
+              "path": [
+                "api",
+                "notes"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "{{todaysDate}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "ad43a104-f26b-4296-8032-0cee30f3fca2"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "b6fb4feb-0b90-424e-bda4-e9f44c1e97ac",
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "7610dd11-ff58-40e8-b34b-f4277d3c61f9",
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}

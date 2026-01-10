@@ -25,4 +25,6 @@ public class ConsolidatedIndentLineDTO {
     private String specification;
     private String remarks;
     private String lineItemStatus;
+    private Date creationDate;
+    private String deadStock;
 }

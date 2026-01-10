@@ -118,8 +118,7 @@ public class IndentInventoryController {
         return iiService.fetchInwardnventoryForExport2(filterDataList);
     }*/
 
-    @ExceptionHandler(
-            {JpaSystemException.class})
+    @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
         return new ApiOnlyMessageAndCodeError(500,
