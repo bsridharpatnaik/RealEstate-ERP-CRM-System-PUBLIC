@@ -501,11 +501,41 @@ public class IndentInventoryService {
                                 line.getQuantity(),
                                 line.getSpecification(),
                                 line.getRemarks(),
-                                line.getLineItemStatus()
+                                line.getLineItemStatus(),
+                                indent.getCreationDate(),
+                                buildDummyDeadStock()
                         );
                 result.add(dto);
             }
         }
         return result;
+    }
+
+    private DeadStockDTO buildDummyDeadStock() {
+
+        DeadStockDTO deadStockDTO = new DeadStockDTO();
+
+        // Total dead stock
+        deadStockDTO.setToalDealStock(1250.75);
+
+        // Detailed dead stock breakup
+        List<Map<String, Double>> detailedList = new ArrayList<>();
+
+        Map<String, Double> warehouseA = new HashMap<>();
+        warehouseA.put("bhaavbhumi", 450.25);
+
+        Map<String, Double> warehouseB = new HashMap<>();
+        warehouseB.put("drgtrdcntr", 300.50);
+
+        Map<String, Double> warehouseC = new HashMap<>();
+        warehouseC.put("drgtrdcntr", 500.00);
+
+        detailedList.add(warehouseA);
+        detailedList.add(warehouseB);
+        detailedList.add(warehouseC);
+
+        deadStockDTO.setDetailedDeadStock(detailedList);
+
+        return deadStockDTO;
     }
 }

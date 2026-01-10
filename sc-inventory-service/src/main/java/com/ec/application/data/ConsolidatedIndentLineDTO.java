@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -25,6 +27,7 @@ public class ConsolidatedIndentLineDTO {
     private String specification;
     private String remarks;
     private String lineItemStatus;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date creationDate;
-    private String deadStock;
+    private DeadStockDTO deadStock;
 }
