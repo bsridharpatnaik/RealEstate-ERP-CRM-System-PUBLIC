@@ -54,6 +54,9 @@ public class PurchaseOrderService extends ReusableFields {
     @Autowired
     PurchaseOrderUiEnricher purchaseOrderUiEnricher;
 
+    @Autowired
+    PopulateDropdownService populateDropdownService;
+
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
@@ -73,7 +76,7 @@ public class PurchaseOrderService extends ReusableFields {
         initializeLazyAssociations(page.getContent());
         purchaseOrderUiEnricher.enrich(page.getContent());
         returnData.setPuchaseOrders(page);
-        returnData.setPoDropdown(null);
+        returnData.setPoDropdown(populateDropdownService.fetchData("purchaseorder"));
         return returnData;
     }
 

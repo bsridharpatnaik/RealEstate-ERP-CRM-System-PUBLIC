@@ -4,6 +4,7 @@ import javax.transaction.Transactional;
 
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
+import com.ec.application.constants.POStatusConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,8 +109,14 @@ public class PopulateDropdownService {
                 morDropdownDataList.setIndentStatus(IndentStatusConstants.getAllStatuses());
                 morDropdownDataList.setIndentLineItemStatus(IndentLineItemStatusConstants.getAllStatuses());
                 break;
+            case "purchaseorder":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setPurchaseOrderStatus(POStatusConstants.getAllStatuses());
+                morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+                break;
         }
         return morDropdownDataList;
     }
-
 }

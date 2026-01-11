@@ -22,5 +22,6 @@ public class NameAndProjectionDataForDropDown {
     List<IdNameProjections> productCodes;
     List<String> indentStatus;
     List<String> indentLineItemStatus;
+    List<String> purchaseOrderStatus;
 }
 
