@@ -61,6 +61,8 @@ public class IndentInventoryList extends ReusableFields {
     @JsonIgnore  // CHANGED: This prevents circular reference during serialization
     private IndentInventory indentInventory;
 
+    private String purchaseOrderId;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -68,6 +70,7 @@ public class IndentInventoryList extends ReusableFields {
         IndentInventoryList that = (IndentInventoryList) o;
         return entryid != null && entryid.equals(that.entryid);
     }
+
 
     @Override
     public int hashCode() {
