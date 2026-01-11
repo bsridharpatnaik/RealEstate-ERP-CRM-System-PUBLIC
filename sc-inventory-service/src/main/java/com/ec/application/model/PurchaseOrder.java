@@ -56,10 +56,12 @@ public class PurchaseOrder extends ReusableFields {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Supplier supplier;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "firm_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Firm firm;
 
     private String subject;
@@ -73,4 +75,10 @@ public class PurchaseOrder extends ReusableFields {
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("purchaseOrder")
     private Set<PurchaseOrderLine> lines = new HashSet<>();
+
+    @Transient
+    Boolean approvalAllowed;
+
+    @Transient
+    Boolean cancellationAllowed;
 }

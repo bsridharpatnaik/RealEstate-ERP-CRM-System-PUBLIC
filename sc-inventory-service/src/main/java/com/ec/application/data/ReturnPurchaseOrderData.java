@@ -8,5 +8,5 @@ import org.springframework.data.domain.Page;
 @Data
 public class ReturnPurchaseOrderData {
     NameAndProjectionDataForDropDown poDropdown;
-    Page<PurchaseOrder> indentInventories;
+    Page<PurchaseOrder> puchaseOrders;
 }

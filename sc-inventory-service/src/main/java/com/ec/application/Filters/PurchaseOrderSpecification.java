@@ -22,6 +22,7 @@ public class PurchaseOrderSpecification {
         List<String> statusList = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "status");
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
         List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
+        List<String> suppliers = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "suppliers");
         Specification<PurchaseOrder> finalSpec = null;
 /*
         if (startDates != null && startDates.size() > 0)

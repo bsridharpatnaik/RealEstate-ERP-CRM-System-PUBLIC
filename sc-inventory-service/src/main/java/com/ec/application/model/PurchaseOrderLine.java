@@ -28,6 +28,7 @@ public class PurchaseOrderLine extends ReusableFields {
     private PurchaseOrder purchaseOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "product_id")
     private Product product;
     private String brand;
