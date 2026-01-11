@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "po_indent_ref")
@@ -17,15 +18,29 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Audited
 public class PurchaseOrderIndentRef extends ReusableFields {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "po_line_id")
-    @JsonIgnore
-    private PurchaseOrderLine poLine;
-
     private String indentNo;
     private String indentLineItemCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "po_line_id", nullable = false)
+    private PurchaseOrderLine poLine;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PurchaseOrderIndentRef)) return false;
+        PurchaseOrderIndentRef that = (PurchaseOrderIndentRef) o;
+        return Objects.equals(indentLineItemCode, that.indentLineItemCode);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(indentLineItemCode);
+    }
 }
+

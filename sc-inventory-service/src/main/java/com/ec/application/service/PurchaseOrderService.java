@@ -8,6 +8,7 @@ import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
+import com.ec.application.constants.POIndentUpdateAction;
 import com.ec.application.constants.POStatusConstants;
 import com.ec.application.data.*;
 import com.ec.application.enricher.PurchaseOrderUiEnricher;
@@ -62,7 +63,7 @@ public class PurchaseOrderService extends ReusableFields {
         validator.validateIndentLineItems(request.getLineItems());
         PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
-        indentStatusUpdater.updateIndentStatuses(savedPO.getLines());
+        indentStatusUpdater.updateIndentStatuses(savedPO.getLines(), POIndentUpdateAction.CREATE_PO);
         return savedPO;
     }
 
@@ -113,8 +114,38 @@ public class PurchaseOrderService extends ReusableFields {
         });
     }
 
-    public PurchaseOrder findByIdWithDetails(String id) {
-        return purchaseOrderRepo.findByIdWithDetails(id)
-                .orElseThrow(() -> new RuntimeException("Purchase Order not found with ID: " + id));
+    @Transactional(readOnly = true)
+    public PurchaseOrder getPurchaseOrderWithInit(String id) {
+        PurchaseOrder po = purchaseOrderRepo.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Purchase Order not found with ID: " + id));
+        // Initialize supplier & firm (for JSON)
+        if (po.getSupplier() != null) {
+            po.getSupplier().getName();
+        }
+        if (po.getFirm() != null) {
+            po.getFirm().getFirmName();
+        }
+        // Initialize lines + indentRefs + product
+        for (PurchaseOrderLine line : po.getLines()) {
+            // force init of indentRefs
+            line.getIndentRefs().size();
+
+            // force init of product if serialized
+            if (line.getProduct() != null) {
+                line.getProduct().getProductName();
+            }
+        }
+        return po;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelPurchaseOrderById(String id) {
+        PurchaseOrder po = getPurchaseOrderWithInit(id);
+        if (!po.getStatus().equalsIgnoreCase(POStatusConstants.STATUS_NEW))
+            throw new RuntimeException("Only Purchase Orders with status 'New' can be cancelled.");
+        po.setStatus(POStatusConstants.STATUS_CANCELLED);
+        purchaseOrderRepo.save(po);
+        indentStatusUpdater.updateIndentStatuses(po.getLines(), POIndentUpdateAction.CANCEL_PO);
     }
 }

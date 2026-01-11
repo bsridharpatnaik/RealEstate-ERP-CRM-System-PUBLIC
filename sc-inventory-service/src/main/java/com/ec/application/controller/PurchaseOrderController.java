@@ -1,8 +1,10 @@
 package com.ec.application.controller;
 
 import com.ec.application.Filters.FilterDataList;
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.PurchaseOrder;
@@ -28,6 +30,7 @@ public class PurchaseOrderController {
 
     @PostMapping("/create")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     @ResponseStatus(HttpStatus.CREATED)
     public PurchaseOrder createPurchaseOrder(@RequestBody CreatePoRequest payload) throws Exception {
         return purchaseOrderService.createPurchaseOrder(payload);
@@ -41,6 +44,14 @@ public class PurchaseOrderController {
 
     @GetMapping("/{id}")
     public PurchaseOrder findPurchaseOrderByID(@PathVariable String id) throws Exception {
-        return purchaseOrderService.findByIdWithDetails(id);
+        return purchaseOrderService.getPurchaseOrderWithInit(id);
+    }
+
+    @DeleteMapping(value = "/{id}")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    public ResponseEntity<?> cancelPurchaseOrderById(@PathVariable String id) throws Exception {
+        purchaseOrderService.cancelPurchaseOrderById(id);
+        return ResponseEntity.ok("Entity deleted");
     }
 }

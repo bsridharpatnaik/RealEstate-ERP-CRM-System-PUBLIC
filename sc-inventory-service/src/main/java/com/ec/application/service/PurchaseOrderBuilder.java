@@ -55,9 +55,13 @@ public class PurchaseOrderBuilder {
         line.setQuantity(itemReq.getQuantity());
         line.setDiameter(itemReq.getDiameter());
         line.setTotalAmount(itemReq.getTotalAmount());
+
         for (IndentLineRefRequest indentRef : itemReq.getIndentRefs()) {
-            line.getIndentRefs().add(buildIndentRef(indentRef));
+            PurchaseOrderIndentRef ref = buildIndentRef(indentRef);
+            ref.setPoLine(line);
+            line.getIndentRefs().add(ref);
         }
+
         return line;
     }
 

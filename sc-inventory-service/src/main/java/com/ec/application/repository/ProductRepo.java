@@ -61,7 +61,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
 	List<IdNameProjections> findIdAndMeasurementUnitNames(@Param("id") long id);
 
-	@Query(value = "SELECT productId as id,productCode as code from Product m  order by productCode")
+	@Query(value = "SELECT productId as id,productCode as name from Product m  order by productCode")
 	List<IdNameProjections> findIdAndProductCodes();
 
 //	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")

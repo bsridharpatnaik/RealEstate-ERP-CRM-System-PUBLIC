@@ -8,7 +8,9 @@ import lombok.Setter;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -43,7 +45,7 @@ public class PurchaseOrderLine extends ReusableFields {
     private Double totalAmount;
 
     /** Traceability */
-    @OneToMany(mappedBy = "poLine", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("poLine")
-    private Set<PurchaseOrderIndentRef> indentRefs = new HashSet<>();
+    @OneToMany(mappedBy = "poLine", cascade = CascadeType.ALL)
+    private List<PurchaseOrderIndentRef> indentRefs = new ArrayList<>();
 }
