@@ -8,12 +8,13 @@ import java.util.List;
 
 @Data
 public class CreatePoLineRequest {
-
-    private String lineItemCode;
-    @JsonDeserialize(using= ToTitleCaseDeserializer.class)
+    private Long productId;
+    private Double quantity;
+    @JsonDeserialize(using = ToTitleCaseDeserializer.class)
     private String brand;
     private String grade;
     private String diameter;
+    @JsonDeserialize(using = ToTitleCaseDeserializer.class)
     private String specification;
     private Double rate;
     private Double gstPercent;

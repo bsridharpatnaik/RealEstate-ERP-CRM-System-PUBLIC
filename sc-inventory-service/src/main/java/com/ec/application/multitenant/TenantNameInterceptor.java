@@ -49,6 +49,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
                     Pattern.compile(".*/product.*"),
                     Pattern.compile(".*/inventory-transfer.*"),
                     Pattern.compile(".*/indent.*"),
+                    Pattern.compile(".*/purchase-order.*"),
                     Pattern.compile(".*/error.*")
             ));
 

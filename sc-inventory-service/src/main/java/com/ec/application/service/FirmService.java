@@ -87,6 +87,9 @@ public class FirmService {
 
     public Firm findSingleFirm(Long id) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        if(id == null){
+            throw new Exception("Firm id cannot be null");
+        }
         Firm firm = firmRepo.findById(id)
                 .orElseThrow(() -> new Exception("Firm not found for the given id"));
         return firm;

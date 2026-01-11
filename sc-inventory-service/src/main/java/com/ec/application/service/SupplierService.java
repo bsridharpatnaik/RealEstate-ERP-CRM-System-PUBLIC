@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.model.Firm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,12 @@ public class SupplierService {
     public Page<Supplier> findAll(Pageable pageable) {
         // TODO Auto-generated method stub
         return supplierRepo.findAll(pageable);
+    }
+
+    public Supplier findSingleSupplier(Long id) throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        return supplierRepo.findById(id)
+                .orElseThrow(() -> new Exception("Supplier not found for the given id"));
     }
 
     public boolean isContactUsedAsSupplier(Long id) {

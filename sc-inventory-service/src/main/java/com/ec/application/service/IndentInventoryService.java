@@ -528,7 +528,7 @@ public class IndentInventoryService {
         warehouseB.put("drgtrdcntr", 300.50);
 
         Map<String, Double> warehouseC = new HashMap<>();
-        warehouseC.put("drgtrdcntr", 500.00);
+        warehouseC.put("suncitynx", 500.00);
 
         detailedList.add(warehouseA);
         detailedList.add(warehouseB);

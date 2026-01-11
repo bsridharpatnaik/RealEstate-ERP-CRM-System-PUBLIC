@@ -1,8 +1,11 @@
 package com.ec.application.model;
 
+import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -13,7 +16,8 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PurchaseOrderLine {
+@Audited
+public class PurchaseOrderLine extends ReusableFields {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,5 +43,6 @@ public class PurchaseOrderLine {
 
     /** Traceability */
     @OneToMany(mappedBy = "poLine", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("poLine")
     private Set<PurchaseOrderIndentRef> indentRefs = new HashSet<>();
 }

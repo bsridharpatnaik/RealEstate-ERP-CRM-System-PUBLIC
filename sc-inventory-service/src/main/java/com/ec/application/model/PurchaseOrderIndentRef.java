@@ -1,9 +1,12 @@
 package com.ec.application.model;
 
 
+import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 
@@ -12,16 +15,17 @@ import javax.persistence.*;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PurchaseOrderIndentRef {
+@Audited
+public class PurchaseOrderIndentRef extends ReusableFields {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "po_line_id")
+    @JsonIgnore
     private PurchaseOrderLine poLine;
 
-    private String tenantSchemaCode;
     private String indentNo;
     private String indentLineItemCode;
 }

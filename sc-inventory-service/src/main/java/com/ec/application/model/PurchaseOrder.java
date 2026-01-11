@@ -2,6 +2,7 @@ package com.ec.application.model;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Where;
 
 import java.math.BigDecimal;
@@ -33,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Setter
 @NoArgsConstructor
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Audited
 public class PurchaseOrder extends ReusableFields {
 
     @Id
@@ -43,6 +45,11 @@ public class PurchaseOrder extends ReusableFields {
     )
     @Column(name = "purchase_order_id", nullable = false, length = 20)
     private String purchaseOrderId;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @Column(name = "po_date", nullable = false)
+    @NonNull
+    Date poDate;
 
     @Column(nullable = false)
     private String status;
@@ -60,6 +67,10 @@ public class PurchaseOrder extends ReusableFields {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double grandTotal;
 
+    @Column(name="notes", length = 2000)
+    private String notes;
+
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("purchaseOrder")
     private Set<PurchaseOrderLine> lines = new HashSet<>();
 }
