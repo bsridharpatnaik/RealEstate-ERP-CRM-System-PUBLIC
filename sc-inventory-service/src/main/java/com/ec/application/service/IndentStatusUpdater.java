@@ -33,7 +33,7 @@ public class IndentStatusUpdater {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private void updateSingleIndentLine(String indentLineItemCode, POIndentUpdateAction action, String puchaseOrderId) {
+    private void updateSingleIndentLine(String indentLineItemCode, POIndentUpdateAction action, String purchaseOrderId) {
         List<IndentInventoryList> items = indentInventoryListRepo.findByLineItemCode(indentLineItemCode);
         if (items.isEmpty()) {
             throw new RuntimeException("Indent line item not found: " + indentLineItemCode);
@@ -42,13 +42,11 @@ public class IndentStatusUpdater {
         IndentInventory indent = item.getIndentInventory();
         if (action == POIndentUpdateAction.CREATE_PO) {
             item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_PO_CREATED);
+            item.setPurchaseOrderId(purchaseOrderId);
         } else if (action == POIndentUpdateAction.CANCEL_PO) {
             item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
-        }
-        if (action.equals(POIndentUpdateAction.CREATE_PO))
-            item.setPurchaseOrderId(puchaseOrderId);
-        else
             item.setPurchaseOrderId(null);
+        }
         recalculateIndentStatus(indent);
         indentInventoryListRepo.saveAll(indent.getInventoryList());
     }
