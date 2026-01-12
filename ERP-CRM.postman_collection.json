@@ -3208,7 +3208,7 @@
 									"response": []
 								},
 								{
-									"name": "Get Firm Copy",
+									"name": "ID And Names - Firm",
 									"event": [
 										{
 											"listen": "test",

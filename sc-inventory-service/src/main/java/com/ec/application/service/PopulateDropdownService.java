@@ -2,6 +2,7 @@ package com.ec.application.service;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.constants.POStatusConstants;
@@ -19,6 +20,10 @@ import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.SupplierRepo;
 import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -50,6 +55,12 @@ public class PopulateDropdownService {
 
     @Autowired
     UsageAreaRepo usageAreaRepo;
+
+    @Autowired
+    SchemaConfig schemaConfig;
+
+    @Autowired
+    TenantService tenantService;
 
     Logger log = LoggerFactory.getLogger(PopulateDropdownService.class);
 
@@ -116,7 +127,21 @@ public class PopulateDropdownService {
                 morDropdownDataList.setPurchaseOrderStatus(POStatusConstants.getAllStatuses());
                 morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
                 break;
+            case "inventorytransfer":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setTenants(fetchTenantNames());
         }
         return morDropdownDataList;
+    }
+
+    private List<String> fetchTenantNames() {
+        List<String> tenantNames = new ArrayList<>(schemaConfig.getSchemaMap().keySet());
+        List<String> tenantNamesUpdated = new ArrayList<>();
+        for (String tenantName : tenantNames) {
+            tenantNamesUpdated.add(tenantService.removePrefixForSuncity(tenantName));
+        }
+        return tenantNamesUpdated;
     }
 }

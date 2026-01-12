@@ -44,6 +44,7 @@ public class InventoryTransferService {
     private final ProductRepo productRepo;
     private final WarehouseRepo warehouseRepo;
     private final InventoryTransferMapper inventoryTransferMapper;
+    private final PopulateDropdownService populateDropdownService;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -331,7 +332,7 @@ public class InventoryTransferService {
         Specification<InventoryTransfer> spec = InventoryTransferSpecification.getSpecification(filterDataList);
         Page<InventoryTransfer> page = (spec != null) ? inventoryTransferRepository.findAll(spec, pageable) : inventoryTransferRepository.findAll(pageable);
         returnData.setInventoryTransfers(page);
-        returnData.setItDropdown(null);
+        returnData.setItDropdown(populateDropdownService.fetchData("inventorytransfer"));
         return returnData;
     }
 
