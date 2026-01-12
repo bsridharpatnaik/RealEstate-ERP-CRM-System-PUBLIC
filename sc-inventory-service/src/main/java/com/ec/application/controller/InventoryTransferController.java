@@ -4,6 +4,7 @@ import com.ec.application.Filters.FilterDataList;
 import com.ec.application.data.BulkCurrentStockRequest;
 import com.ec.application.data.CreateTransferDTO;
 import com.ec.application.data.CurrentStockResponse;
+import com.ec.application.data.InventoryTransferResult;
 import com.ec.application.model.InventoryTransfer;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.service.InventoryTransferService;
@@ -35,8 +36,8 @@ public class InventoryTransferController {
     // CREATE TRANSFER
     // =========================
     @PostMapping("/create")
-    public ResponseEntity<InventoryTransfer> createTransfer(@RequestBody CreateTransferDTO transfer) throws Exception {
-        InventoryTransfer savedTransfer = inventoryTransferService.createTransfer(transfer);
+    public ResponseEntity<InventoryTransferResult> createTransfer(@RequestBody CreateTransferDTO transfer) throws Exception {
+        InventoryTransferResult savedTransfer = inventoryTransferService.createTransfer(transfer);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTransfer);
     }
 
