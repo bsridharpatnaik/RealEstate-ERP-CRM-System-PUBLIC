@@ -44,4 +44,11 @@ public class InventoryTransferItem extends ReusableFields {
 
     @Column(nullable = false)
     private Double quantity;
+
+    @Column(name = "source_closing_stock")
+    private Double sourceClosingStock;
+
+    @Column(name = "target_closing_stock")
+    private Double targetClosingStock;
 }
+

@@ -3,7 +3,9 @@ package com.ec.application.service;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.data.*;
+import com.ec.application.exception.EntityNotFoundException;
 import com.ec.application.exception.InsufficientStockException;
+import com.ec.application.mapper.InventoryTransferMapper;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.InventoryTransferRepository;
@@ -30,14 +32,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InventoryTransferService {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(InventoryTransferService.class);
+    private static final Logger log = LoggerFactory.getLogger(InventoryTransferService.class);
 
     private final InventoryTransferRepository inventoryTransferRepository;
     private final StockService stockService;
     private final TenantService tenantService;
     private final ProductRepo productRepo;
     private final WarehouseRepo warehouseRepo;
+    private final InventoryTransferMapper inventoryTransferMapper;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -47,13 +49,9 @@ public class InventoryTransferService {
        ===================================================== */
 
     public InventoryTransferResult createTransfer(CreateTransferDTO dto) throws Exception {
-
         replaceTenantNamesForSuncity(dto);
-
         validateTransferRequest(dto);
         validateDuplicateProducts(dto);
-
-        // UX optimization – NOT authoritative
         validateSourceStockAvailability(dto);
 
         String sourceTenant = dto.getSourceTenant();
@@ -71,9 +69,7 @@ public class InventoryTransferService {
 
         Map<Long, Product> productMap = fetchProducts(dto, masterSchema);
 
-        InventoryTransfer transfer =
-                buildTransferEntity(dto, sourceWarehouse, targetWarehouse, productMap);
-
+        InventoryTransfer transfer = buildTransferEntity(dto, sourceWarehouse, targetWarehouse, productMap);
         List<TransferItemResult> itemResults = new ArrayList<>();
         List<InventoryTransferItem> successfulItems = new ArrayList<>();
 
@@ -83,32 +79,38 @@ public class InventoryTransferService {
         for (InventoryTransferItem item : transfer.getItems()) {
 
             try {
-                // 1️⃣ AUTHORITATIVE DEBIT (DB-level check)
-                withTenant(sourceTenant, () -> {
-                    stockService.updateStock(
-                            item.getProductId(),
-                            sourceWarehouse.getWarehouseId(),
-                            item.getQuantity(),
-                            "outward"
-                    );
-                    return null;
-                });
-
-                try {
-                    // 2️⃣ CREDIT TARGET
-                    withTenant(targetTenant, () -> {
+                // DEBIT SOURCE
+                Double sourceClosingStock = withTenant(sourceTenant, () ->
                         stockService.updateStock(
                                 item.getProductId(),
-                                targetWarehouse.getWarehouseId(),
+                                sourceWarehouse.getWarehouseId(),
                                 item.getQuantity(),
-                                "inward"
-                        );
-                        return null;
-                    });
+                                "outward"
+                        )
+                );
+
+                try {
+                    // CREDIT TARGET
+                    Double targetClosingStock = withTenant(targetTenant, () ->
+                            stockService.updateStock(
+                                    item.getProductId(),
+                                    targetWarehouse.getWarehouseId(),
+                                    item.getQuantity(),
+                                    "inward"
+                            )
+                    );
+
+                    // SET CLOSING STOCKS ONLY ON FULL SUCCESS
+                    item.setSourceClosingStock(sourceClosingStock);
+                    item.setTargetClosingStock(targetClosingStock);
 
                     successfulItems.add(item);
+
                     itemResults.add(new TransferItemResult(
-                            item.getProductId(), true, "Transfer successful"));
+                            item.getProductId(),
+                            true,
+                            "Transfer successful"
+                    ));
 
                 } catch (Exception creditEx) {
 
@@ -225,7 +227,7 @@ public class InventoryTransferService {
         transfer.setSourceWarehouseName(source.getWarehouseName());
         transfer.setTargetWarehouseName(target.getWarehouseName());
         transfer.setTransferDate(dto.getTransferDate());
-
+        transfer.setRemarks(dto.getRemarks());
         List<InventoryTransferItem> items = dto.getItems().stream().map(i -> {
             Product p = productMap.get(i.getProductId());
 
@@ -320,7 +322,8 @@ public class InventoryTransferService {
         }
     }
 
-    public Page<InventoryTransfer> fetchTransfers(FilterDataList filterDataList, Pageable pageable) {
+    public ReturnInventoryTransferData fetchTransfers(FilterDataList filterDataList, Pageable pageable) {
+
         return null;
     }
 
@@ -364,5 +367,10 @@ public class InventoryTransferService {
         } finally {
             ThreadLocalStorage.setTenantName(null);
         }
+    }
+
+    public InventoryTransfer getOneInventoryTransfer(Long transferId) {
+        InventoryTransfer transfer = inventoryTransferRepository.findById(transferId).orElseThrow(() -> new IllegalArgumentException("Inventory Transfer not found"));
+        return transfer;
     }
 }

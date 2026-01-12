@@ -5,10 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class InventoryTransferItemDTO {
-    Long productId;
-    Double quantity;
+
+    private Long productId;
+    private String productName;
+    private String productCode;
+    private String measurementUnit;
+    private Double quantity;
+    private Double sourceClosingStock;
+    private Double targetClosingStock;
 }
 
