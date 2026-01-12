@@ -474,7 +474,7 @@ public class StockService {
         return currentStock;
     }
 
-    public Map<Long, Double> findStockForProductsInWarehouse(Long warehouseId, List<Long> productIds) throws Exception {
+    public Map<Long, Double> findStockForProductsInWarehouse(Long warehouseId, List<Long> productIds, String tenantName) throws Exception {
 
         if (warehouseId == null)
             throw new Exception("Warehouse ID cannot be null");
@@ -483,7 +483,8 @@ public class StockService {
         if (productIds == null || productIds.size() == 0)
             throw new Exception("Product IDs cannot be null or empty");
 
-        System.out.println("Tenant =- " + ThreadLocalStorage.getTenantName());
+        if(tenantName!=null)
+            ThreadLocalStorage.setTenantName(tenantName);
         List<Object[]> results = stockRepo.getCurrentStockForProductsInWarehouse(warehouseId, productIds);
         Map<Long, Double> stockMap = new HashMap<>();
         for (Object[] row : results) {

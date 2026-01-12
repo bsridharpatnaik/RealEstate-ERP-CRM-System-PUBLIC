@@ -55,7 +55,9 @@ public class InventoryTransferService {
         ThreadLocalStorage.setTenantName(dto.getSourceTenant());
         validateTransferRequest(dto);
         validateDuplicateProducts(dto);
-        //validateSourceStockAvailability(dto);
+        String sourceTenant = dto.getSourceTenant();
+        String targetTenant = dto.getTargetTenant();
+        validateSourceStockAvailability(dto);
         List<CurrentStockResponse> currentStocks = fetchCurrentStockInBulk(
                 new BulkCurrentStockRequest(
                         dto.getSourceTenant(),
@@ -64,10 +66,11 @@ public class InventoryTransferService {
                 )
         );
         InventoryTransfer transfer = new InventoryTransfer();
+        ThreadLocalStorage.setTenantName(sourceTenant);
         Warehouse sourceWarehouse = warehouseRepo.findById(dto.getSourceWarehouseId()).orElseThrow(
                 () -> new IllegalArgumentException("Source warehouse does not exist")
         );
-        ThreadLocalStorage.setTenantName(dto.getTargetTenant());
+        ThreadLocalStorage.setTenantName(targetTenant);
         Warehouse targetWarehouse = warehouseRepo.findById(dto.getTargetWarehouseId()).orElseThrow(
                 () -> new IllegalArgumentException("Target warehouse does not exist")
         );
@@ -214,7 +217,7 @@ public class InventoryTransferService {
         }
     }
 
-    /*private void validateSourceStockAvailability(CreateTransferDTO transfer) throws Exception {
+    private void validateSourceStockAvailability(CreateTransferDTO transfer) throws Exception {
         ThreadLocalStorage.setTenantName(transfer.getSourceTenant());
         List<LowStockItem> lowStockItems = new ArrayList<>();
         try {
@@ -223,7 +226,7 @@ public class InventoryTransferService {
                     .map(InventoryTransferItemDTO::getProductId)
                     .collect(Collectors.toList());
 
-            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(transfer.getSourceWarehouseId(), productIds);
+            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(transfer.getSourceWarehouseId(), productIds, transfer.getSourceTenant());
 
             for (InventoryTransferItemDTO item : transfer.getItems()) {
                 Double currentStock = stockMap.getOrDefault(item.getProductId(), 0.0);
@@ -246,7 +249,7 @@ public class InventoryTransferService {
         } finally {
             ThreadLocalStorage.setTenantName(null);
         }
-    }*/
+    }
 
 
     public Page<InventoryTransfer> fetchTransfers(FilterDataList filterDataList, Pageable pageable) {
@@ -280,9 +283,9 @@ public class InventoryTransferService {
 
     public List<CurrentStockResponse> fetchCurrentStockInBulk(BulkCurrentStockRequest request) throws Exception {
         try {
-            //ThreadLocalStorage.setTenantName(tenantService.changeTenantForSuncity(request.getTenant()));
-            ThreadLocalStorage.setTenantName(request.getTenant());
-            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(request.getWarehouseId(), request.getProductIds());
+            String sourceTenant = tenantService.changeTenantForSuncity(request.getTenant());
+            ThreadLocalStorage.setTenantName(sourceTenant);
+            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(request.getWarehouseId(), request.getProductIds(), sourceTenant);
             List<CurrentStockResponse> response = new ArrayList<>();
 
             for (Long productId : request.getProductIds()) {

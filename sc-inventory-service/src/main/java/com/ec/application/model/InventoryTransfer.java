@@ -3,6 +3,7 @@ package com.ec.application.model;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.ec.application.datasync.MultiTableSyncListener;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -61,5 +62,6 @@ public class InventoryTransfer extends ReusableFields {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @JsonManagedReference
     private List<InventoryTransferItem> items = new ArrayList<>();
 }
