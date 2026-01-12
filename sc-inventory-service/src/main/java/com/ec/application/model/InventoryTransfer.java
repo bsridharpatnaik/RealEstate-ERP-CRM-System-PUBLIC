@@ -3,6 +3,7 @@ package com.ec.application.model;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.ec.application.datasync.MultiTableSyncListener;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = "items")
 public class InventoryTransfer extends ReusableFields {
 
     @Id
@@ -59,7 +61,9 @@ public class InventoryTransfer extends ReusableFields {
     @OneToMany(
             mappedBy = "inventoryTransfer",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
     )
+    @JsonManagedReference
     private List<InventoryTransferItem> items = new ArrayList<>();
 }

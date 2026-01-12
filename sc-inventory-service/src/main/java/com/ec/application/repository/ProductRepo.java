@@ -22,6 +22,9 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	Product save(Product entity);
 
+	@Query("Select p from Product p where p.isDeleted=false and p.productId IN :ids")
+	ArrayList<Product> findByProductIdIn(@Param("ids") List<Long> ids);
+
 	boolean existsByProductName(String productName);
 
 	ArrayList<Product> findByproductName(String productName);

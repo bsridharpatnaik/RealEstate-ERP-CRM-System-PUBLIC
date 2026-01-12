@@ -18,5 +18,6 @@ public class CreateTransferDTO {
     private String targetTenant;
     private Long sourceWarehouseId;
     private Long targetWarehouseId;
+    String remarks;
     List<InventoryTransferItemDTO> items;
 }

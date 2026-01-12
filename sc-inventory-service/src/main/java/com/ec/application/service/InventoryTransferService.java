@@ -1,11 +1,12 @@
 package com.ec.application.service;
 
 import com.ec.application.Filters.FilterDataList;
+import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.data.*;
-import com.ec.application.model.InventoryTransfer;
-import com.ec.application.model.InventoryTransferItem;
-import com.ec.application.model.Product;
-import com.ec.application.model.Warehouse;
+import com.ec.application.exception.EntityNotFoundException;
+import com.ec.application.exception.InsufficientStockException;
+import com.ec.application.mapper.InventoryTransferMapper;
+import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.InventoryTransferRepository;
 import com.ec.application.repository.ProductRepo;
@@ -19,6 +20,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,209 +32,169 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InventoryTransferService {
 
-    @Autowired
-    InventoryTransferRepository inventoryTransferRepository;
+    private static final Logger log = LoggerFactory.getLogger(InventoryTransferService.class);
 
-    @Autowired
-    StockService stockService;
-
-    Logger log = LoggerFactory.getLogger(InventoryTransferService.class);
+    private final InventoryTransferRepository inventoryTransferRepository;
+    private final StockService stockService;
+    private final TenantService tenantService;
+    private final ProductRepo productRepo;
+    private final WarehouseRepo warehouseRepo;
+    private final InventoryTransferMapper inventoryTransferMapper;
 
     @Value("${master.schema}")
     private String masterSchema;
 
-    @Autowired
-    TenantService tenantService;
+    /* =====================================================
+       MAIN API
+       ===================================================== */
 
-    @Autowired
-    ProductRepo productRepo;
-
-    @Autowired
-    WarehouseRepo warehouseRepo;
-
-    public InventoryTransfer createTransfer(CreateTransferDTO dto) throws Exception {
+    public InventoryTransferResult createTransfer(CreateTransferDTO dto) throws Exception {
         replaceTenantNamesForSuncity(dto);
-        ThreadLocalStorage.setTenantName(dto.getSourceTenant());
         validateTransferRequest(dto);
         validateDuplicateProducts(dto);
-        //validateSourceStockAvailability(dto);
-        List<CurrentStockResponse> currentStocks = fetchCurrentStockInBulk(
-                new BulkCurrentStockRequest(
-                        dto.getSourceTenant(),
-                        dto.getSourceWarehouseId(),
-                        dto.getItems().stream().map(InventoryTransferItemDTO::getProductId).collect(Collectors.toList())
-                )
-        );
-        InventoryTransfer transfer = new InventoryTransfer();
-        Warehouse sourceWarehouse = warehouseRepo.findById(dto.getSourceWarehouseId()).orElseThrow(
-                () -> new IllegalArgumentException("Source warehouse does not exist")
-        );
-        ThreadLocalStorage.setTenantName(dto.getTargetTenant());
-        Warehouse targetWarehouse = warehouseRepo.findById(dto.getTargetWarehouseId()).orElseThrow(
-                () -> new IllegalArgumentException("Target warehouse does not exist")
-        );
-        transfer.setSourceTenant(dto.getSourceTenant());
-        transfer.setTargetTenant(dto.getTargetTenant());
-        transfer.setSourceWarehouseName(sourceWarehouse.getWarehouseName());
-        transfer.setTargetWarehouseName(targetWarehouse.getWarehouseName());
-        transfer.setTransferDate(dto.getTransferDate());
-        transfer.setTargetWarehouseId(targetWarehouse.getWarehouseId());
-        transfer.setSourceWarehouseId(sourceWarehouse.getWarehouseId());
-        List<InventoryTransferItem> items = new ArrayList<>();
+        validateSourceStockAvailability(dto);
 
-        for (InventoryTransferItemDTO itemDTO : dto.getItems()) {
-            InventoryTransferItem item = new InventoryTransferItem();
-            Product product = productRepo.findByProductId(itemDTO.getProductId());
-            item.setProductId(itemDTO.getProductId());
-            item.setQuantity(itemDTO.getQuantity());
-            item.setProductCode(product.getProductCode());
-            item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setProductName(product.getProductName());
-            item.setInventoryTransfer(transfer);
-            items.add(item);
-        }
+        String sourceTenant = dto.getSourceTenant();
+        String targetTenant = dto.getTargetTenant();
 
-        transfer.setItems(items);
+        Warehouse sourceWarehouse = withTenant(sourceTenant,
+                () -> warehouseRepo.findById(dto.getSourceWarehouseId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Source warehouse not found")));
 
-        try {
-            // SOURCE tenant → OUTWARD
-            ThreadLocalStorage.setTenantName(dto.getSourceTenant());
-            for (InventoryTransferItem item : items) {
-                stockService.updateStock(
+        Warehouse targetWarehouse = withTenant(targetTenant,
+                () -> warehouseRepo.findById(dto.getTargetWarehouseId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Target warehouse not found")));
+
+        Map<Long, Product> productMap = fetchProducts(dto, masterSchema);
+
+        InventoryTransfer transfer = buildTransferEntity(dto, sourceWarehouse, targetWarehouse, productMap);
+        List<TransferItemResult> itemResults = new ArrayList<>();
+        List<InventoryTransferItem> successfulItems = new ArrayList<>();
+
+        /* =====================================================
+           PER-PRODUCT SAGA
+           ===================================================== */
+        for (InventoryTransferItem item : transfer.getItems()) {
+
+            try {
+                // DEBIT SOURCE
+                Double sourceClosingStock = withTenant(sourceTenant, () ->
+                        stockService.updateStock(
+                                item.getProductId(),
+                                sourceWarehouse.getWarehouseId(),
+                                item.getQuantity(),
+                                "outward"
+                        )
+                );
+
+                try {
+                    // CREDIT TARGET
+                    Double targetClosingStock = withTenant(targetTenant, () ->
+                            stockService.updateStock(
+                                    item.getProductId(),
+                                    targetWarehouse.getWarehouseId(),
+                                    item.getQuantity(),
+                                    "inward"
+                            )
+                    );
+
+                    // SET CLOSING STOCKS ONLY ON FULL SUCCESS
+                    item.setSourceClosingStock(sourceClosingStock);
+                    item.setTargetClosingStock(targetClosingStock);
+
+                    successfulItems.add(item);
+
+                    itemResults.add(new TransferItemResult(
+                            item.getProductId(),
+                            true,
+                            "Transfer successful"
+                    ));
+
+                } catch (Exception creditEx) {
+
+                    // 3️⃣ COMPENSATE DEBIT
+                    withTenant(sourceTenant, () -> {
+                        stockService.updateStock(
+                                item.getProductId(),
+                                sourceWarehouse.getWarehouseId(),
+                                item.getQuantity(),
+                                "inward"
+                        );
+                        return null;
+                    });
+
+                    itemResults.add(new TransferItemResult(
+                            item.getProductId(),
+                            false,
+                            "Credit failed: " + creditEx.getMessage()
+                    ));
+                }
+
+            } catch (Exception debitEx) {
+                itemResults.add(new TransferItemResult(
                         item.getProductId(),
-                        transfer.getSourceWarehouseId(),
-                        item.getQuantity(),
-                        "outward"
-                );
+                        false,
+                        "Debit failed: " + debitEx.getMessage()
+                ));
             }
-
-            // TARGET tenant → INWARD
-            ThreadLocalStorage.setTenantName(dto.getTargetTenant());
-            for (InventoryTransferItem item : items) {
-                stockService.updateStock(
-                        item.getProductId(),
-                        targetWarehouse.getWarehouseId(),
-                        item.getQuantity(),
-                        "inward"
-                );
-            }
-
-            // MASTER → SAVE
-            ThreadLocalStorage.setTenantName(masterSchema);
-            return inventoryTransferRepository.save(transfer);
-
-        } catch (Exception ex) {
-            compensate(transfer, items);
-            throw ex;
-        } finally {
-            ThreadLocalStorage.setTenantName(null);
         }
+
+        /* =====================================================
+           PERSIST ONLY SUCCESSFUL ITEMS
+           ===================================================== */
+        transfer.setItems(successfulItems);
+
+        if (!successfulItems.isEmpty()) {
+            withTenant(masterSchema, () -> inventoryTransferRepository.save(transfer));
+        }
+
+        boolean fullySuccessful =
+                itemResults.stream().allMatch(TransferItemResult::isSuccess);
+
+        return new InventoryTransferResult(
+                transfer.getTransferId(),
+                fullySuccessful,
+                itemResults
+        );
     }
 
-    private void replaceTenantNamesForSuncity(CreateTransferDTO transfer) {
-        transfer.setSourceTenant(tenantService.addPrefixForSuncity(transfer.getSourceTenant()));
-        transfer.setTargetTenant(tenantService.addPrefixForSuncity(transfer.getTargetTenant()));
-    }
+    /* =====================================================
+       PRE-VALIDATION (UX ONLY)
+       ===================================================== */
 
-    private void compensate(InventoryTransfer transfer, List<InventoryTransferItem> items) {
+    /**
+     * PRE-VALIDATION ONLY.
+     * This improves UX by failing early.
+     * Stock correctness is enforced during debit.
+     */
+    private void validateSourceStockAvailability(CreateTransferDTO transfer) throws Exception {
 
-        try {
-            ThreadLocalStorage.setTenantName(transfer.getTargetTenant());
-            for (InventoryTransferItem item : items) {
-                stockService.updateStock(item.getProductId(), transfer.getTargetWarehouseId(), item.getQuantity(), "outward");
-            }
+        withTenant(transfer.getSourceTenant(), () -> {
 
-            ThreadLocalStorage.setTenantName(transfer.getSourceTenant());
-            for (InventoryTransferItem item : items) {
-                stockService.updateStock(item.getProductId(), transfer.getSourceWarehouseId(), item.getQuantity(), "inward");
-            }
-
-        } catch (Exception ex) {
-            log.error("COMPENSATION FAILED", ex);
-        }
-    }
-
-    private void validateTransferRequest(CreateTransferDTO transfer) {
-
-        if (transfer == null) {
-            throw new IllegalArgumentException("Transfer request cannot be null");
-        }
-
-        if (transfer.getSourceTenant() == null || transfer.getTargetTenant() == null) {
-            throw new IllegalArgumentException("Source and Target tenant are mandatory");
-        }
-
-        if (transfer.getSourceWarehouseId() == null || transfer.getTargetWarehouseId() == null) {
-            throw new IllegalArgumentException("Source and Target warehouse are mandatory");
-        }
-
-        if (!warehouseRepo.existsById(transfer.getSourceWarehouseId())) {
-            throw new IllegalArgumentException("Source warehouse does not exist");
-        }
-
-        if (!warehouseRepo.existsById(transfer.getTargetWarehouseId())) {
-            throw new IllegalArgumentException("Target warehouse does not exist");
-        }
-
-        if (transfer.getItems() == null || transfer.getItems().isEmpty()) {
-            throw new IllegalArgumentException("At least one item is required for transfer");
-        }
-
-        if (transfer.getItems().size() > 5) {
-            throw new IllegalArgumentException("Maximum 5 items allowed per transfer");
-        }
-
-        // Same tenant + same warehouse is invalid
-        if (transfer.getSourceTenant().equalsIgnoreCase(transfer.getTargetTenant())
-                && transfer.getSourceWarehouseId().equals(transfer.getTargetWarehouseId())) {
-            throw new IllegalArgumentException("Source and Target warehouse must be different");
-        }
-
-        for (InventoryTransferItemDTO item : transfer.getItems()) {
-
-            if (item.getProductId() == null) {
-                throw new IllegalArgumentException("Product ID cannot be null");
-            }
-
-            if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                throw new IllegalArgumentException(
-                        "Quantity must be greater than zero for product ID: " + item.getProductId()
-                );
-            }
-        }
-    }
-
-    private void validateDuplicateProducts(CreateTransferDTO transfer) {
-        // Key format: sourceTenant|sourceWarehouseId|productId
-        Set<String> uniqueCombination = new HashSet<>();
-        for (InventoryTransferItemDTO item : transfer.getItems()) {
-            String key = transfer.getSourceTenant() + "|" + transfer.getSourceWarehouseId() + "|" + item.getProductId();
-            if (!uniqueCombination.add(key)) {
-                throw new IllegalArgumentException(
-                        "Duplicate product in transfer for same source tenant and warehouse. Product ID: " + item.getProductId());
-            }
-        }
-    }
-
-    /*private void validateSourceStockAvailability(CreateTransferDTO transfer) throws Exception {
-        ThreadLocalStorage.setTenantName(transfer.getSourceTenant());
-        List<LowStockItem> lowStockItems = new ArrayList<>();
-        try {
             List<Long> productIds = transfer.getItems()
                     .stream()
                     .map(InventoryTransferItemDTO::getProductId)
                     .collect(Collectors.toList());
 
-            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(transfer.getSourceWarehouseId(), productIds);
+            Map<Long, Double> stockMap =
+                    stockService.findStockForProductsInWarehouse(
+                            transfer.getSourceWarehouseId(),
+                            productIds,
+                            transfer.getSourceTenant()
+                    );
+
+            List<LowStockItem> lowStockItems = new ArrayList<>();
 
             for (InventoryTransferItemDTO item : transfer.getItems()) {
-                Double currentStock = stockMap.getOrDefault(item.getProductId(), 0.0);
+                double available = stockMap.getOrDefault(item.getProductId(), 0.0);
 
-                if (currentStock < item.getQuantity()) {
+                if (available < item.getQuantity()) {
                     lowStockItems.add(
                             new LowStockItem(
                                     item.getProductId(),
-                                    currentStock,
+                                    available,
                                     item.getQuantity()
                             )
                     );
@@ -240,13 +205,125 @@ public class InventoryTransferService {
                 throw new InsufficientStockException(lowStockItems);
             }
 
+            return null;
+        });
+    }
+
+    /* =====================================================
+       ENTITY BUILDING
+       ===================================================== */
+
+    private InventoryTransfer buildTransferEntity(
+            CreateTransferDTO dto,
+            Warehouse source,
+            Warehouse target,
+            Map<Long, Product> productMap) {
+
+        InventoryTransfer transfer = new InventoryTransfer();
+        transfer.setSourceTenant(dto.getSourceTenant());
+        transfer.setTargetTenant(dto.getTargetTenant());
+        transfer.setSourceWarehouseId(source.getWarehouseId());
+        transfer.setTargetWarehouseId(target.getWarehouseId());
+        transfer.setSourceWarehouseName(source.getWarehouseName());
+        transfer.setTargetWarehouseName(target.getWarehouseName());
+        transfer.setTransferDate(dto.getTransferDate());
+        transfer.setRemarks(dto.getRemarks());
+        List<InventoryTransferItem> items = dto.getItems().stream().map(i -> {
+            Product p = productMap.get(i.getProductId());
+
+            InventoryTransferItem item = new InventoryTransferItem();
+            item.setProductId(p.getProductId());
+            item.setProductCode(p.getProductCode());
+            item.setProductName(p.getProductName());
+            item.setMeasurementUnit(p.getMeasurementUnit());
+            item.setQuantity(i.getQuantity());
+            item.setInventoryTransfer(transfer);
+            return item;
+        }).collect(Collectors.toList());
+
+        transfer.setItems(items);
+        return transfer;
+    }
+
+    private Map<Long, Product> fetchProducts(CreateTransferDTO dto, String tenantName) {
+
+        ThreadLocalStorage.setTenantName(tenantName);
+        List<Long> productIds = dto.getItems()
+                .stream()
+                .map(InventoryTransferItemDTO::getProductId)
+                .collect(Collectors.toList());
+
+        List<Product> products = productRepo.findByProductIdIn(productIds);
+
+        if (products.size() != productIds.size()) {
+            throw new IllegalArgumentException("One or more products not found");
+        }
+
+        return products.stream()
+                .collect(Collectors.toMap(Product::getProductId, p -> p));
+    }
+
+    /* =====================================================
+       VALIDATIONS
+       ===================================================== */
+
+    private void validateTransferRequest(CreateTransferDTO transfer) {
+
+        if (transfer == null)
+            throw new IllegalArgumentException("Transfer request cannot be null");
+
+        if (transfer.getItems() == null || transfer.getItems().isEmpty())
+            throw new IllegalArgumentException("At least one item is required");
+
+        if (transfer.getItems().size() > 5)
+            throw new IllegalArgumentException("Maximum 5 items allowed");
+
+        if (transfer.getSourceTenant().equalsIgnoreCase(transfer.getTargetTenant())
+                && transfer.getSourceWarehouseId().equals(transfer.getTargetWarehouseId())) {
+            throw new IllegalArgumentException("Source and target warehouse must be different");
+        }
+
+        for (InventoryTransferItemDTO item : transfer.getItems()) {
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                throw new IllegalArgumentException(
+                        "Invalid quantity for product " + item.getProductId());
+            }
+        }
+    }
+
+    private void validateDuplicateProducts(CreateTransferDTO transfer) {
+
+        Set<Long> productIds = new HashSet<>();
+        for (InventoryTransferItemDTO item : transfer.getItems()) {
+            if (!productIds.add(item.getProductId())) {
+                throw new IllegalArgumentException(
+                        "Duplicate product in transfer: " + item.getProductId());
+            }
+        }
+    }
+
+    private void replaceTenantNamesForSuncity(CreateTransferDTO transfer) {
+        transfer.setSourceTenant(
+                tenantService.changeTenantForSuncity(transfer.getSourceTenant()));
+        transfer.setTargetTenant(
+                tenantService.changeTenantForSuncity(transfer.getTargetTenant()));
+    }
+
+    /* =====================================================
+       TENANT HELPER
+       ===================================================== */
+
+    private <T> T withTenant(String tenant, Callable<T> action) throws Exception {
+        try {
+            ThreadLocalStorage.setTenantName(tenant);
+            return action.call();
         } finally {
             ThreadLocalStorage.setTenantName(null);
         }
-    }*/
+    }
 
+    public ReturnInventoryTransferData fetchTransfers(FilterDataList filterDataList, Pageable pageable) {
 
-    public Page<InventoryTransfer> fetchTransfers(FilterDataList filterDataList, Pageable pageable) {
         return null;
     }
 
@@ -255,7 +332,7 @@ public class InventoryTransferService {
 
         try {
             ThreadLocalStorage.setTenantName(
-                    tenantService.addPrefixForSuncity(tenant)
+                    tenantService.changeTenantForSuncity(tenant)
             );
 
             Double stock =
@@ -277,9 +354,9 @@ public class InventoryTransferService {
 
     public List<CurrentStockResponse> fetchCurrentStockInBulk(BulkCurrentStockRequest request) throws Exception {
         try {
-            //ThreadLocalStorage.setTenantName(tenantService.changeTenantForSuncity(request.getTenant()));
-            ThreadLocalStorage.setTenantName(request.getTenant());
-            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(request.getWarehouseId(), request.getProductIds());
+            String sourceTenant = tenantService.changeTenantForSuncity(request.getTenant());
+            ThreadLocalStorage.setTenantName(sourceTenant);
+            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(request.getWarehouseId(), request.getProductIds(), sourceTenant);
             List<CurrentStockResponse> response = new ArrayList<>();
 
             for (Long productId : request.getProductIds()) {
@@ -290,5 +367,10 @@ public class InventoryTransferService {
         } finally {
             ThreadLocalStorage.setTenantName(null);
         }
+    }
+
+    public InventoryTransfer getOneInventoryTransfer(Long transferId) {
+        InventoryTransfer transfer = inventoryTransferRepository.findById(transferId).orElseThrow(() -> new IllegalArgumentException("Inventory Transfer not found"));
+        return transfer;
     }
 }
