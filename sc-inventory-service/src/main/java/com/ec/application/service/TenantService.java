@@ -64,4 +64,11 @@ public class TenantService {
         }
         return tenantId;
     }
+
+    public String changeTenantForSuncity(String tenant) {
+        if (instanceService.getInstance().equals(InstanceList.suncity)) {
+            tenant = addPrefixForSuncity(tenant);
+        }
+        return tenant;
+    }
 }

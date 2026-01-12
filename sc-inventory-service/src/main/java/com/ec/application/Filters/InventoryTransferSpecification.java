@@ -15,11 +15,14 @@ public final class InventoryTransferSpecification {
     public static Specification<InventoryTransfer> getSpecification(FilterDataList filterDataList) throws ParseException {
         List<String> startDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "startDate");
         List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "endDate");
+        List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productNames");
         List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
-        List<String> statusList = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "status");
+        List<String> sourceTenant = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "sourceTenant");
+        List<String> targetTenant = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "targetTenant");
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
-        List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
+
+
         Specification<InventoryTransfer> finalSpec = null;
 /*
         if (startDates != null && startDates.size() > 0)

@@ -1,6 +1,8 @@
 package com.ec.application.service;
 
 import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.IndentInventorySpecification;
+import com.ec.application.Filters.InventoryTransferSpecification;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.data.*;
 import com.ec.application.exception.EntityNotFoundException;
@@ -18,10 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
@@ -322,9 +326,13 @@ public class InventoryTransferService {
         }
     }
 
-    public ReturnInventoryTransferData fetchTransfers(FilterDataList filterDataList, Pageable pageable) {
-
-        return null;
+    public ReturnInventoryTransferData fetchTransfers(FilterDataList filterDataList, Pageable pageable) throws ParseException {
+        ReturnInventoryTransferData returnData = new ReturnInventoryTransferData();
+        Specification<InventoryTransfer> spec = InventoryTransferSpecification.getSpecification(filterDataList);
+        Page<InventoryTransfer> page = (spec != null) ? inventoryTransferRepository.findAll(spec, pageable) : inventoryTransferRepository.findAll(pageable);
+        returnData.setInventoryTransfers(page);
+        returnData.setItDropdown(null);
+        return returnData;
     }
 
     public ResponseEntity<CurrentStockResponse> fetchCurrentStock(

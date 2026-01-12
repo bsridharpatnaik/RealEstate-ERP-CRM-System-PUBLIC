@@ -3345,7 +3345,7 @@
 									"response": []
 								},
 								{
-									"name": "Get Current Stock",
+									"name": "Get Source Stock",
 									"event": [
 										{
 											"listen": "test",
@@ -3464,6 +3464,140 @@
 												{
 													"key": "tenant",
 													"value": "{{tenantCode1}}"
+												},
+												{
+													"key": "productId",
+													"value": "{{productId2}}"
+												},
+												{
+													"key": "warehouseId",
+													"value": "4"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get Target Stock",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"postman.setEnvironmentVariable(\"firmId\", jsonData.firmId);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Generate random PAN number",
+													"function generatePanNumber() {",
+													"  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]$/;",
+													"  let panNumber = '';",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    panNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  panNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  return panNumber;",
+													"}",
+													"",
+													"// Generate random GST number",
+													"function generateGstNumber() {",
+													"  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;",
+													"  let gstNumber = '';",
+													"  ",
+													"  // Generate 2 random digits",
+													"  for (let i = 0; i < 2; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 5 random uppercase letters",
+													"  for (let i = 0; i < 5; i++) {",
+													"    gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  }",
+													"  ",
+													"  // Generate 4 random digits",
+													"  for (let i = 0; i < 4; i++) {",
+													"    gstNumber += Math.floor(Math.random() * 10);",
+													"  }",
+													"  ",
+													"  // Generate 1 random uppercase letter",
+													"  gstNumber += String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  ",
+													"  // Generate 1 random character (1-9 or A-Z)",
+													"  const randomChar = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar;",
+													"  ",
+													"  // Add \"Z\"",
+													"  gstNumber += 'Z';",
+													"  ",
+													"  // Generate 1 random character (0-9 or A-Z)",
+													"  const randomChar2 = Math.random() < 0.5 ? Math.floor(Math.random() * 10) : String.fromCharCode(Math.floor(Math.random() * 26) + 65);",
+													"  gstNumber += randomChar2;",
+													"  ",
+													"  return gstNumber;",
+													"}",
+													"",
+													"// Set the generated PAN and GST numbers to environment variables",
+													"pm.environment.set('firmPanNumber', generatePanNumber());",
+													"pm.environment.set('firmGstNumber', generateGstNumber());",
+													"",
+													"// Generate random contact number",
+													"const contactNumber = pm.variables.replaceIn('{{$randomPhoneNumber}}');",
+													"pm.environment.set('firmContactNumber', contactNumber);"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/inventory-transfer/current-stock?tenant={{tenantCode2}}&productId={{productId2}}&warehouseId=4",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"inventory-transfer",
+												"current-stock"
+											],
+											"query": [
+												{
+													"key": "tenant",
+													"value": "{{tenantCode2}}"
 												},
 												{
 													"key": "productId",
@@ -3675,7 +3809,7 @@
 											"script": {
 												"exec": [
 													"var jsonData = JSON.parse(responseBody);",
-													"postman.setEnvironmentVariable(\"firmId\", jsonData.firmId);"
+													"postman.setEnvironmentVariable(\"transferId\", jsonData.transferId);"
 												],
 												"type": "text/javascript",
 												"packages": {},
@@ -3791,7 +3925,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"transferDate\": \"{{transferDate}}\",\n    \"sourceTenant\": \"{{tenantCode1}}\",\n    \"targetTenant\": \"{{tenantCode2}}\",\n    \"sourceWarehouseId\": 4,\n    \"targetWarehouseId\": 4,\n    \"items\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 1\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 1\n        }\n    ]\n}"
+											"raw": "{\n    \"transferDate\": \"{{transferDate}}\",\n    \"sourceTenant\": \"{{tenantCode1}}\",\n    \"targetTenant\": \"{{tenantCode2}}\",\n    \"sourceWarehouseId\": 4,\n    \"targetWarehouseId\": 4,\n    \"remarks\":\"{{$randomCatchPhrase}}\",\n    \"items\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 10\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 1\n        }\n    ]\n}"
 										},
 										"url": {
 											"raw": "{{method}}://{{serverUrlAPI}}/inventory/inventory-transfer/create",
@@ -4033,6 +4167,82 @@
 									],
 									"request": {
 										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "{{token}}",
+												"type": "text"
+											},
+											{
+												"key": "tenant-id",
+												"value": "egcity",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{method}}://{{serverUrlAPI}}/inventory/purchase-order/{{purchaseOrderId}}",
+											"protocol": "{{method}}",
+											"host": [
+												"{{serverUrlAPI}}"
+											],
+											"path": [
+												"inventory",
+												"purchase-order",
+												"{{purchaseOrderId}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Cancel PO",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"var jsonData = JSON.parse(responseBody);",
+													"pm.environment.set(\"poId\", jsonData.indentId)"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"// Get today's date",
+													"const today = new Date();",
+													"",
+													"// Format as dd-MM-yyyy",
+													"const day = String(today.getDate()).padStart(2, '0');",
+													"const month = String(today.getMonth() + 1).padStart(2, '0');",
+													"const year = today.getFullYear();",
+													"",
+													"const formattedDate = `${day}-${month}-${year}`;",
+													"",
+													"// Save to environment or collection variable",
+													"pm.environment.set(\"poDate\", formattedDate);",
+													"// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+													"",
+													"console.log(\"poDate:\", formattedDate);",
+													""
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "DELETE",
 										"header": [
 											{
 												"key": "Content-Type",
@@ -10610,17 +10820,6 @@
 							]
 						},
 						"description": "Generated from cURL: curl 'http://localhost:3000/api/inventory/boqupload/boq_upload' \\\n  -H 'sec-ch-ua-platform: \"macOS\"' \\\n  -H 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzcmlkaGFyIiwiZXhwIjoxNzM1NTk0MTAxLCJpYXQiOjE3MzU1NzYxMDF9.8u3XpLFVPWThSCa8Trq5mdKyKx941YRf7RX3acMkkjptIRT9X0rwSFYM6xmpOR1yge2PM3KyjDbYyNfdlaxf6w' \\\n  -H 'Referer: http://localhost:3000/' \\\n  -H 'sec-ch-ua: \"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"' \\\n  -H 'sec-ch-ua-mobile: ?0' \\\n  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' \\\n  -H 'Accept: application/json, text/plain, */*' \\\n  -H 'Content-Type: application/json' \\\n  -H 'tenant-id: drgtrdcntr' \\\n  --data-raw $'{\"upload\":[{\"sno\":\"1\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"2 Way Bib Cock - Kup-chr- 35041pm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"2\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Angle Cock - Aqt-chr - 3057p\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"3\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Bottle Trap - Ale- Ess - 773ml300x190\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"4\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Brass Air Release Valve - 25mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"5\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Brass Air Release Valve - 20mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"6\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cp Nipple 1\\\\\"\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"7\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cp Nipple 1.5\\\\\"\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"8\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Waste Coupling - Ald-chr- 705l130\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"9\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Elbow - 1\\'\\'\",\"quantity\":\"14\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"10\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Elbow 3/4\\\\\"\",\"quantity\":\"20\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"11\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Pipe 3/4\\\\\" X 3 Mtr\",\"quantity\":\"10\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"12\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Shoe Elbow - 1\\'\\'\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"13\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Tee 1\\\\\"\",\"quantity\":\"7\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"14\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Ball Valve 1\\\\\"\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"15\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Ball Valve 3/4\\\\\"\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"16\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Brass Elbow 3/4\\\\\" X 1/2\\\\\"\",\"quantity\":\"5\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"17\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Brass Fta 3/4\\\\\" X 1/2\\\\\"\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"18\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Converter Bush - 1\\'\\'x1\\'\\'\",\"quantity\":\"6\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"19\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Bush - 1\\'\\'x3/4\\'\\'\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"20\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Bush - 3/4\\'\\'x1/2\\'\\'\",\"quantity\":\"0\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"21\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc End Cap - 1\\'\\'\",\"quantity\":\"5\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"22\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc End Cap - 3/4\\'\\'\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"23\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Brass Fta - 1\\'\\'\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"24\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Brass Fta - 3/4\\'\\'\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"25\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Long Plug 3/4\\\\\"\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"26\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Brass Mta 3/4\\\\\" X 1/2\\\\\"\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"27\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Pipe 1\\\\\" X 3 Mtr\",\"quantity\":\"14\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"28\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Shoe Elbow - 1\\'\\'\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"29\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Shoe Elbow 3/4\\\\\"\",\"quantity\":\"6\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"30\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Socket 1\\\\\"\",\"quantity\":\"14\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"31\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Socket 3/4\\\\\"\",\"quantity\":\"8\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"32\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Solvent 237 Ml\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"33\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Tee - 1\\'\\'x3/4\\'\\'\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"34\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Cpvc Tee 3/4\\\\\"\",\"quantity\":\"5\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"35\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"G.i.slotted Z Shape Channel 16 Gauge( Z-patti)\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"36\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Gully Trap - 110mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"37\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Health Foucet 573\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"38\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Multi Trap - 110mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"39\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Geberit Cistern - Push Plate\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"40\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Shoe Bend - 75mm\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"41\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Shoe Bend - 110mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"42\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Swr Single Y 110 Mm\",\"quantity\":\"0\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"43\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Single Tee - 110 Mm\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"44\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Single Tee - 75mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"45\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Cowel 110 Mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"46\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Swr End Cap 110 Mm\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"47\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Nahani Trap - 110mm X 75mm\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"48\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Solvent 250 Ml\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"49\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Swr Plain Bend 75 Mm\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"50\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc D/s Pipe 110 Mm X 10\\'\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"51\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc S/s Pipe 110 Mm X 10\\'\",\"quantity\":\"5\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"52\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc S/s Pipe 75 Mm X 10\\'\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"53\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Swr Plain Bend 110 Mm\",\"quantity\":\"5\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"54\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Swr Socket 110 Mm\",\"quantity\":\"5\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"55\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Swr Socket - 75mm\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"56\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc D/s Pipe 110 Mm X 06\\'\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"57\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Swr Pipe 75 Mm X 6\\'\",\"quantity\":\"0\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"58\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Reducer - 110mm X 75mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"59\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Elbow - 40mm\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"60\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Elbow - 50mm\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"61\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc End Cap - 40mm\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"62\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc End Cup - 50mm\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"63\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Rigid Pipe 40 Mm X 6 Mtr\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"64\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Pvc Rigid Pipe 50 Mm X 6 Mtr\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"65\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Reducer - 75mm X 50mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"66\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Shoe Bend - 50mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"67\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Socket - 40mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"68\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Socket - 50mm\",\"quantity\":\"2\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"69\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Shoe Bend - 40mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"70\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Bend - 140mm\",\"quantity\":\"0\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"71\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Bend - 160mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"72\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Shoe Bend - 140mm\",\"quantity\":\"0\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"73\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Shoe Bend - 160mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"74\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc S/s Pipe 140mm X 6mtr\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"75\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc S/s Pipe 160mm X 6mtr\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"76\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Socket - 140mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"77\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Rpvc Socket - 160mm\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"78\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Piller Cock Kup-35001\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"79\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Tafflon Tape\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"80\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"G.i. U Clamp With Nut Waisher - 3/4\\'\\'\",\"quantity\":\"8\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"81\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"G.i. U Clamp With Nut Waisher - 1\\'\\'\",\"quantity\":\"12\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"82\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"G.i. U Clamp With Nut Waisher - 4\\'\\'\",\"quantity\":\"8\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"83\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"G.i. U Clamp With Nut Waisher - 7\\'\\'\",\"quantity\":\"8\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"84\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Upvc Elbow - 1\\'\\'\",\"quantity\":\"20\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"85\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Upvc Shoe Bend - 1\\'\\'\",\"quantity\":\"3\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"86\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Upvc Tee - 1\\'\\'\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"87\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Upvc End Cup - 1\\'\\'\",\"quantity\":\"5\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"88\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Upvc Pipe - 1\\'\\'\",\"quantity\":\"6\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"89\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Upvc Socket - 1\\'\\'\",\"quantity\":\"4\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"},{\"sno\":\"90\",\"buildingType\":31760,\"buildingUnit\":14642,\"inventory\":\"Upvc Solvent 250 Ml\",\"quantity\":\"1\",\"location\":\"Durg Trade Center\",\"changes\":\"addition\"}]}'"
-					},
-					"response": []
-				},
-				{
-					"name": "New Request",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": ""
-						}
 					},
 					"response": []
 				}
