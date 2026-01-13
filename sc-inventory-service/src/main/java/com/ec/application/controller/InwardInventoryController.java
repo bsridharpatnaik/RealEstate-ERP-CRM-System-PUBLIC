@@ -95,11 +95,9 @@ public class InwardInventoryController {
         return ResponseEntity.ok("Entity deleted");
     }
 
-    @ExceptionHandler(
-            {JpaSystemException.class})
+    @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-        return new ApiOnlyMessageAndCodeError(500,
-                "Something went wrong while handling data. Contact Administrator.");
+        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
     }
 }

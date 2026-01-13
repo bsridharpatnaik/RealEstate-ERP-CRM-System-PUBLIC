@@ -57,7 +57,7 @@ public class InventoryTransferService {
         replaceTenantNamesForSuncity(dto);
         validateTransferRequest(dto);
         validateDuplicateProducts(dto);
-        validateSourceStockAvailability(dto);
+        //validateSourceStockAvailability(dto);
 
         String sourceTenant = dto.getSourceTenant();
         String targetTenant = dto.getTargetTenant();
@@ -333,6 +333,7 @@ public class InventoryTransferService {
         Page<InventoryTransfer> page = (spec != null) ? inventoryTransferRepository.findAll(spec, pageable) : inventoryTransferRepository.findAll(pageable);
         returnData.setInventoryTransfers(page);
         returnData.setItDropdown(populateDropdownService.fetchData("inventorytransfer"));
+        returnData.setMaxAllowedInventory(5);
         return returnData;
     }
 

@@ -63,6 +63,9 @@ public class IndentInventoryList extends ReusableFields {
 
     private String purchaseOrderId;
 
+    @Column(name="inward_id")
+    private Long inwardId;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -8,4 +8,5 @@ import org.springframework.data.domain.Page;
 public class ReturnInventoryTransferData {
     NameAndProjectionDataForDropDown itDropdown;
     Page<InventoryTransfer> inventoryTransfers;
+    Integer maxAllowedInventory;
 }

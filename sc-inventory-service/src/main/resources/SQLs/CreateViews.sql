@@ -1,4 +1,4 @@
-
+-- use suncitynxv2,kalpavrishv2,riddhisiddhiv2,smartcityv2,businessparkv2,drgtrdcntrv2,citycenterv2,schoolv2,bhaavbhumiv2,dhabbav2,mhvrtrdcntrv2
 CREATE OR replace VIEW all_inventory_view
 AS
   SELECT row_number()
@@ -1001,3 +1001,52 @@ FROM product_stocks ps
 JOIN Product p ON ps.productId = p.productId
 JOIN Category c ON p.categoryId = c.categoryId
 LEFT JOIN last_inward_dates lid ON ps.productId = lid.productId;
+
+
+-- Get indents for inward
+CREATE OR REPLACE VIEW masterschema.IndentsForInward AS
+SELECT
+    iie.line_item_code AS lineItemCode,
+
+    ii.indent_id,
+    ii.indent_date,
+    ii.indent_status,
+    ii.createdBy AS indentCreatedBy,
+    ii.tenant,
+
+    iie.line_item_status,
+    iie.productId,
+
+    p.product_name,
+    p.product_code,
+    p.measurementUnit,
+
+    iie.purchaseOrderId,
+    iie.quantity,
+    iie.remarks,
+    iie.inward_id,
+
+    po.po_date,
+    po.purchase_order_id,
+    po.grandTotal,
+    po.status AS po_status,
+
+    c.contactId AS supplier_id,
+    c.name AS supplier_name
+
+FROM masterschema.indent_inventory ii
+INNER JOIN masterschema.indent_inventory_entries iie
+    ON ii.indent_id = iie.indent_id
+INNER JOIN masterschema.Product p
+    ON p.productId = iie.productId
+INNER JOIN masterschema.purchase_order po
+    ON po.purchase_order_id = iie.purchaseOrderId
+INNER JOIN masterschema.contacts c
+    ON po.supplier_id = c.contactId
+WHERE
+    iie.line_item_status = 'PO Created'
+    AND ii.is_deleted = 0
+    AND iie.is_deleted = 0
+    AND po.is_deleted = 0
+    AND p.is_deleted=0
+    AND c.is_deleted=0;
