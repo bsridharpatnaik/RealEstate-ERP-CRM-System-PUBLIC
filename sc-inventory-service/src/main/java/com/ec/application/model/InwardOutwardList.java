@@ -34,49 +34,18 @@ public class InwardOutwardList extends ReusableFields
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
 	Product product;
+
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double quantity;
+
 	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
 	Double closingStock;
 
-	public Long getEntryid()
-	{
-		return entryid;
-	}
+	String lineItemCode;
 
-	public void setEntryid(Long entryid)
-	{
-		this.entryid = entryid;
-	}
-
-	public void setClosingStock(Double closingStock)
-	{
-		this.closingStock = closingStock;
-	}
-
-	public Double getClosingStock()
-	{
-		return closingStock;
-	}
-
-	public Product getProduct()
-	{
-		return product;
-	}
-
-	public void setProduct(Product product)
-	{
-		this.product = product;
-	}
-
-	public Double getQuantity()
-	{
-		return quantity;
-	}
-
-	public void setQuantity(Double quantity)
-	{
-		this.quantity = quantity;
-	}
-
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "warehouse_id", nullable = false)
+	@JsonIgnoreProperties(
+			{"hibernateLazyInitializer", "handler"})
+	Warehouse warehouse;
 }

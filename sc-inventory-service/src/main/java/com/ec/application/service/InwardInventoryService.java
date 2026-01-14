@@ -84,6 +84,82 @@ public class InwardInventoryService {
 
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
+    public List<PoDropdownItem> getPendingPoDropdown() {
+        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
+        List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(tenant);
+
+        return rows.stream()
+                .map(r -> {
+                    PoDropdownItem dto = new PoDropdownItem();
+                    dto.setPurchaseOrderNumber((String) r[0]);
+                    dto.setPoDate((java.util.Date) r[1]);
+                    dto.setSupplierName((String) r[2]);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public PoForInwardResponse getPoForInward(String poNumber) {
+        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
+        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItems(poNumber, tenant);
+
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("No pending inward items for this PO and tenant");
+        }
+
+        IndentsForInwardView first = rows.get(0);
+
+        PoForInwardResponse response = new PoForInwardResponse();
+        response.setPurchaseOrderNumber(first.getPurchaseOrderNumber());
+        response.setPoDate(first.getPoDate());
+        response.setPoStatus(first.getPoStatus());
+        response.setGrandTotal(first.getGrandTotal());
+        response.setSupplierId(first.getSupplierId());
+        response.setSupplierName(first.getSupplierName());
+        response.setTenant(first.getTenant());
+
+        response.setLineItems(
+                rows.stream()
+                        .map(this::toLineItem)
+                        .collect(Collectors.toList())
+        );
+
+        return response;
+    }
+
+    /**
+     * 🔒 Optimistic + quantity validation
+     */
+    @Transactional(readOnly = true)
+    public void validateBeforeInward(List<InwardLineItemRequest> inwardItems) {
+
+        for (InwardLineItemRequest req : inwardItems) {
+
+            List<IndentsForInwardView> row = indentsForInwardViewRepository.validateLineItemForInward(req.getLineItemCode());
+
+            if (row.isEmpty()) {
+                throw new IllegalStateException("Line item already fully inwarded or modified: " + req.getLineItemCode());
+            }
+
+            if (req.getQuantity() == null || req.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Invalid inward quantity for line item: " + req.getLineItemCode());
+            }
+        }
+    }
+
+    private PoLineItemForInward toLineItem(IndentsForInwardView v) {
+        PoLineItemForInward li = new PoLineItemForInward();
+        li.setLineItemCode(v.getLineItemCode());
+        li.setIndentId(v.getIndentId());
+        li.setProductId(v.getProductId());
+        li.setProductName(v.getProductName());
+        li.setProductCode(v.getProductCode());
+        li.setMeasurementUnit(v.getMeasurementUnit());
+        li.setOrderedQuantity(v.getQuantity());
+        li.setRemarks(v.getRemarks());
+        return li;
+    }
+    
     @Transactional(rollbackFor = Exception.class)
     public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -585,79 +661,5 @@ public class InwardInventoryService {
         return pageable;
     }
 
-    public List<PoDropdownItem> getPendingPoDropdown() {
-        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
-        List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(tenant);
 
-        return rows.stream()
-                .map(r -> {
-                    PoDropdownItem dto = new PoDropdownItem();
-                    dto.setPurchaseOrderNumber((String) r[0]);
-                    dto.setPoDate((java.util.Date) r[1]);
-                    dto.setSupplierName((String) r[2]);
-                    return dto;
-                })
-                .collect(Collectors.toList());
-    }
-
-    public PoForInwardResponse getPoForInward(String poNumber) {
-        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
-        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItems(poNumber, tenant);
-
-        if (rows.isEmpty()) {
-            throw new IllegalStateException("No pending inward items for this PO and tenant");
-        }
-
-        IndentsForInwardView first = rows.get(0);
-
-        PoForInwardResponse response = new PoForInwardResponse();
-        response.setPurchaseOrderNumber(first.getPurchaseOrderNumber());
-        response.setPoDate(first.getPoDate());
-        response.setPoStatus(first.getPoStatus());
-        response.setGrandTotal(first.getGrandTotal());
-        response.setSupplierId(first.getSupplierId());
-        response.setSupplierName(first.getSupplierName());
-        response.setTenant(first.getTenant());
-
-        response.setLineItems(
-                rows.stream()
-                        .map(this::toLineItem)
-                        .collect(Collectors.toList())
-        );
-
-        return response;
-    }
-
-    /**
-     * 🔒 Optimistic + quantity validation
-     */
-    @Transactional(readOnly = true)
-    public void validateBeforeInward(List<InwardLineItemRequest> inwardItems) {
-
-        for (InwardLineItemRequest req : inwardItems) {
-
-            List<IndentsForInwardView> row = indentsForInwardViewRepository.validateLineItemForInward(req.getLineItemCode());
-
-            if (row.isEmpty()) {
-                throw new IllegalStateException("Line item already fully inwarded or modified: " + req.getLineItemCode());
-            }
-
-            if (req.getQuantity() == null || req.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Invalid inward quantity for line item: " + req.getLineItemCode());
-            }
-        }
-    }
-
-    private PoLineItemForInward toLineItem(IndentsForInwardView v) {
-        PoLineItemForInward li = new PoLineItemForInward();
-        li.setLineItemCode(v.getLineItemCode());
-        li.setIndentId(v.getIndentId());
-        li.setProductId(v.getProductId());
-        li.setProductName(v.getProductName());
-        li.setProductCode(v.getProductCode());
-        li.setMeasurementUnit(v.getMeasurementUnit());
-        li.setOrderedQuantity(v.getQuantity());
-        li.setRemarks(v.getRemarks());
-        return li;
-    }
 }
