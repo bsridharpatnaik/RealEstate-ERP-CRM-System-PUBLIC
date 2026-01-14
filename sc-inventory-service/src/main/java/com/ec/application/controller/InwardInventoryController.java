@@ -95,6 +95,18 @@ public class InwardInventoryController {
         return ResponseEntity.ok("Entity deleted");
     }
 
+    // 🔹 PO dropdown (tenant from ThreadLocal)
+    @GetMapping("/po/dropdown")
+    public ResponseEntity<List<PoDropdownItem>> getPoDropdown() {
+        return ResponseEntity.ok(iiService.getPendingPoDropdown());
+    }
+
+    // 🔹 PO details + pending line items
+    @GetMapping("/po/{poNumber}")
+    public ResponseEntity<PoForInwardResponse> getPoForInward(@PathVariable String poNumber) {
+        return ResponseEntity.ok(iiService.getPoForInward(poNumber));
+    }
+
     @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {

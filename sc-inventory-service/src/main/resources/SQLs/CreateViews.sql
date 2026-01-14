@@ -1032,7 +1032,9 @@ SELECT
     po.status AS po_status,
 
     c.contactId AS supplier_id,
-    c.name AS supplier_name
+    c.name AS supplier_name,
+
+    COALESCE(iip.total_inward_quantity, 0) AS total_inward_quantity
 
 FROM masterschema.indent_inventory ii
 INNER JOIN masterschema.indent_inventory_entries iie
@@ -1043,10 +1045,19 @@ INNER JOIN masterschema.purchase_order po
     ON po.purchase_order_id = iie.purchaseOrderId
 INNER JOIN masterschema.contacts c
     ON po.supplier_id = c.contactId
+
+LEFT JOIN (
+    SELECT
+        line_item_code,
+        SUM(inward_quantity) AS total_inward_quantity
+    FROM indent_inward_mapping
+    GROUP BY line_item_code
+) iip ON iie.line_item_code = iip.line_item_code
+
 WHERE
-    iie.line_item_status = 'PO Created'
+    iie.line_item_status IN ('PO Created', 'Partial Inward')
     AND ii.is_deleted = 0
     AND iie.is_deleted = 0
     AND po.is_deleted = 0
-    AND p.is_deleted=0
-    AND c.is_deleted=0;
+    AND p.is_deleted = 0
+    AND c.is_deleted = 0;

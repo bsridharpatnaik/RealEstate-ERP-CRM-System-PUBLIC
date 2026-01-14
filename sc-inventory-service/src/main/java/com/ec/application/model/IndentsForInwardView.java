@@ -10,6 +10,16 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.Subselect;
+import org.hibernate.annotations.Synchronize;
+
+import javax.persistence.*;
+import java.math.BigDecimal;
+import java.util.Date;
+
 @Entity
 @Getter
 @Setter
@@ -20,15 +30,17 @@ import java.util.Date;
         "masterschema.indent_inventory_entries",
         "masterschema.purchase_order",
         "masterschema.contacts",
-        "masterschema.product"
+        "masterschema.product",
+        "masterschema.indent_inward_mapping"
 })
 public class IndentsForInwardView {
 
+    // ---------- Identity ----------
     @Id
     @Column(name = "lineItemCode")
     private String lineItemCode;
 
-    // ---- Indent ----
+    // ---------- Indent ----------
     @Column(name = "indent_id")
     private String indentId;
 
@@ -45,14 +57,20 @@ public class IndentsForInwardView {
     @Column(name = "tenant")
     private String tenant;
 
-    // ---- Line Item ----
+    // ---------- Line Item ----------
     @Column(name = "line_item_status")
     private String lineItemStatus;
 
     @Column(name = "productId")
     private Long productId;
 
-    // ---- Product ----
+    @Column(name = "quantity")
+    private Double quantity;
+
+    @Column(name = "remarks")
+    private String remarks;
+
+    // ---------- Product ----------
     @Column(name = "product_name")
     private String productName;
 
@@ -62,20 +80,10 @@ public class IndentsForInwardView {
     @Column(name = "measurementUnit")
     private String measurementUnit;
 
-    // ---- PO / Quantity ----
+    // ---------- Purchase Order ----------
     @Column(name = "purchaseOrderId")
     private String purchaseOrderId;
 
-    @Column(name = "quantity")
-    private BigDecimal quantity;
-
-    @Column(name = "remarks")
-    private String remarks;
-
-    @Column(name = "inward_id")
-    private String inwardId;
-
-    // ---- Purchase Order ----
     @Temporal(TemporalType.DATE)
     @Column(name = "po_date")
     private Date poDate;
@@ -89,10 +97,14 @@ public class IndentsForInwardView {
     @Column(name = "po_status")
     private String poStatus;
 
-    // ---- Supplier ----
+    // ---------- Supplier ----------
     @Column(name = "supplier_id")
     private Long supplierId;
 
     @Column(name = "supplier_name")
     private String supplierName;
+
+    // ---------- Inward Aggregation ----------
+    @Column(name = "total_inward_quantity")
+    private Double totalInwardQuantity;
 }

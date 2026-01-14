@@ -99,12 +99,12 @@ public class ProductService {
 
         if (action.equals("create") && payload.getShowOnDashboard()) {
             List<Product> existingDashboardProducts = productRepo.getDashboardProducts();
-            if(existingDashboardProducts.size()>= ProjectConstants.noOfProductsForDashboard)
-                throw new Exception("Only "+ProjectConstants.noOfProductsForDashboard+" products can be shown in dashboard. Please uncheck flag Show In Dashboard");
+            if (existingDashboardProducts.size() >= ProjectConstants.noOfProductsForDashboard)
+                throw new Exception("Only " + ProjectConstants.noOfProductsForDashboard + " products can be shown in dashboard. Please uncheck flag Show In Dashboard");
         } else if (action.equals("update")) {
             List<Product> existingDashboardProducts = productRepo.getDashboardProducts();
-            if(payload.getShowOnDashboard() && !existingDashboardProducts.contains(productForUpdate) && existingDashboardProducts.size()>=ProjectConstants.noOfProductsForDashboard)
-                throw new Exception("Only "+ProjectConstants.noOfProductsForDashboard+" products can be shown in dashboard. Please uncheck flag Show In Dashboard");
+            if (payload.getShowOnDashboard() && !existingDashboardProducts.contains(productForUpdate) && existingDashboardProducts.size() >= ProjectConstants.noOfProductsForDashboard)
+                throw new Exception("Only " + ProjectConstants.noOfProductsForDashboard + " products can be shown in dashboard. Please uncheck flag Show In Dashboard");
         }
     }
 
@@ -119,7 +119,7 @@ public class ProductService {
         if (payload.getProductName() == null)
             throw new Exception("Product Name cannot be empty. Please Enter Product Name");
 
-        if(payload.getProductName().contains(","))
+        if (payload.getProductName().contains(","))
             throw new Exception("Comma(,) not allowed in product name. Please enter valid product name.");
 
         if (payload.getReorderQuantity() == null || payload.getReorderQuantity() == 0)
@@ -230,7 +230,6 @@ public class ProductService {
     }
 
     public List<IdNameAndUnit> getProducts(Boolean isManagedInventory) {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        return productRepo.getProducts(isManagedInventory);
+        return isManagedInventory == null ? productRepo.getProducts() : productRepo.getProducts(isManagedInventory);
     }
 }

@@ -77,7 +77,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<IdNameAndUnit> getProducts(@RequestParam(name = "isManagedInventory", defaultValue = "true") boolean isManagedInventory) {
+    public List<IdNameAndUnit> getProducts(@RequestParam(name = "isManagedInventory", required = false) Boolean isManagedInventory) {
         return productService.getProducts(isManagedInventory);
     }
 

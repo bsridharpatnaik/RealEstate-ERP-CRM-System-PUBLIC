@@ -6,6 +6,10 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.ec.application.data.*;
+import com.ec.application.model.*;
+import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,24 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.InwardInventoryExportDAO2;
-import com.ec.application.data.ProductGroupedDAO;
-import com.ec.application.data.ProductWithQuantity;
-import com.ec.application.data.ReturnInwardInventoryData;
-import com.ec.application.data.ReturnRejectInwardOutwardData;
-import com.ec.application.model.APICallTypeForAuthorization;
-import com.ec.application.model.InwardInventory;
-import com.ec.application.model.InwardOutwardList;
-import com.ec.application.model.Product;
-import com.ec.application.model.RejectInwardList;
-import com.ec.application.model.Warehouse;
-import com.ec.application.repository.InwardInventoryRepo;
-import com.ec.application.repository.InwardOutwardListRepo;
-import com.ec.application.repository.ProductRepo;
-import com.ec.application.repository.StockRepo;
-import com.ec.application.repository.SupplierRepo;
-import com.ec.application.repository.WarehouseRepo;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.InwardInventorySpecification;
 
@@ -89,6 +75,12 @@ public class InwardInventoryService {
 
     @Autowired
     ProjectConstantsService projectConstantsService;
+
+    @Autowired
+    IndentsForInwardViewRepository indentsForInwardViewRepository;
+
+    @Autowired
+    TenantService tenantService;
 
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
@@ -591,5 +583,81 @@ public class InwardInventoryService {
         }
 
         return pageable;
+    }
+
+    public List<PoDropdownItem> getPendingPoDropdown() {
+        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
+        List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(tenant);
+
+        return rows.stream()
+                .map(r -> {
+                    PoDropdownItem dto = new PoDropdownItem();
+                    dto.setPurchaseOrderNumber((String) r[0]);
+                    dto.setPoDate((java.util.Date) r[1]);
+                    dto.setSupplierName((String) r[2]);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public PoForInwardResponse getPoForInward(String poNumber) {
+        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
+        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItems(poNumber, tenant);
+
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("No pending inward items for this PO and tenant");
+        }
+
+        IndentsForInwardView first = rows.get(0);
+
+        PoForInwardResponse response = new PoForInwardResponse();
+        response.setPurchaseOrderNumber(first.getPurchaseOrderNumber());
+        response.setPoDate(first.getPoDate());
+        response.setPoStatus(first.getPoStatus());
+        response.setGrandTotal(first.getGrandTotal());
+        response.setSupplierId(first.getSupplierId());
+        response.setSupplierName(first.getSupplierName());
+        response.setTenant(first.getTenant());
+
+        response.setLineItems(
+                rows.stream()
+                        .map(this::toLineItem)
+                        .collect(Collectors.toList())
+        );
+
+        return response;
+    }
+
+    /**
+     * 🔒 Optimistic + quantity validation
+     */
+    @Transactional(readOnly = true)
+    public void validateBeforeInward(List<InwardLineItemRequest> inwardItems) {
+
+        for (InwardLineItemRequest req : inwardItems) {
+
+            List<IndentsForInwardView> row = indentsForInwardViewRepository.validateLineItemForInward(req.getLineItemCode());
+
+            if (row.isEmpty()) {
+                throw new IllegalStateException("Line item already fully inwarded or modified: " + req.getLineItemCode());
+            }
+
+            if (req.getQuantity() == null || req.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Invalid inward quantity for line item: " + req.getLineItemCode());
+            }
+        }
+    }
+
+    private PoLineItemForInward toLineItem(IndentsForInwardView v) {
+        PoLineItemForInward li = new PoLineItemForInward();
+        li.setLineItemCode(v.getLineItemCode());
+        li.setIndentId(v.getIndentId());
+        li.setProductId(v.getProductId());
+        li.setProductName(v.getProductName());
+        li.setProductCode(v.getProductCode());
+        li.setMeasurementUnit(v.getMeasurementUnit());
+        li.setOrderedQuantity(v.getQuantity());
+        li.setRemarks(v.getRemarks());
+        return li;
     }
 }

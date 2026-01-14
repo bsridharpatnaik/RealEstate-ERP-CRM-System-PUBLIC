@@ -12,7 +12,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;  // ADD THIS IMPORT
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity(name = "IndentInventoryList")
 @Table(name = "indent_inventory_entries")
@@ -31,7 +34,7 @@ public class IndentInventoryList extends ReusableFields {
     @Column(name = "line_item_code", unique = true, nullable = false, length = 50)
     private String lineItemCode;
 
-    // To track split lineage (optional but useful for tracking)
+    // To track split lineage
     @Column(name = "parent_line_item_code", length = 50)
     private String parentLineItemCode;
 
@@ -44,27 +47,34 @@ public class IndentInventoryList extends ReusableFields {
     @Column(name = "quantity")
     Double quantity;
 
-    @Column(name="specification")
+    @Column(name = "specification")
     String specification;
 
-    @Column(name="remarks")
+    @Column(name = "remarks")
     String remarks;
 
-    @Column(name="measurement_unit")
+    @Column(name = "measurement_unit")
     String measurementUnit;
 
-    @Column(name="line_item_status")
+    @Column(name = "line_item_status")
     String lineItemStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "indent_id", nullable = false)
-    @JsonIgnore  // CHANGED: This prevents circular reference during serialization
+    @JsonIgnore
     private IndentInventory indentInventory;
 
     private String purchaseOrderId;
 
-    @Column(name="inward_id")
-    private Long inwardId;
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "indent_inward_mapping",
+            joinColumns = @JoinColumn(name = "line_item_code")
+    )
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Set<IndentInwardEntry> inwardEntries = new HashSet<>();
+
+    // ----------------- equals & hashCode -----------------
 
     @Override
     public boolean equals(Object o) {
@@ -73,7 +83,6 @@ public class IndentInventoryList extends ReusableFields {
         IndentInventoryList that = (IndentInventoryList) o;
         return entryid != null && entryid.equals(that.entryid);
     }
-
 
     @Override
     public int hashCode() {
