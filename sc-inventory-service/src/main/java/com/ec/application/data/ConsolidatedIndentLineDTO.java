@@ -1,6 +1,9 @@
 package com.ec.application.data;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +26,7 @@ public class ConsolidatedIndentLineDTO {
     private Long productId;
     private String productName;
     private String measurementUnit;
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double quantity;
     private String specification;
     private String remarks;
