@@ -69,24 +69,6 @@ public class InwardInventoryController {
         return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
     }
 
-    /*
-    @PostMapping("/create")
-    @CheckAuthority
-    @ResponseStatus(HttpStatus.CREATED)
-    public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception {
-
-        return iiService.createInwardnventory(payload);
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.OK)
-    public ReturnInwardInventoryData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
-                                                             @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
-            throws Exception {
-        Pageable pageableUpdated = iiService.modifyPageable(pageable);
-        return iiService.fetchInwardnventory(filterDataList, pageableUpdated);
-    }
-
     @PostMapping("/totals")
     @ResponseStatus(HttpStatus.OK)
     public List<ProductGroupedDAO> fetchAllInwardInventoryTotals(@RequestBody FilterDataList filterDataList)
@@ -116,19 +98,28 @@ public class InwardInventoryController {
         return iiService.findById(id);
     }
 
-    @PutMapping("/{id}")
-    @CheckAuthority
-    public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
-            throws Exception {
-        return iiService.updateInwardnventory(payload, id);
-    }
-
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
     public ResponseEntity<?> deleteInwardInventoryById(@PathVariable Long id) throws Exception {
 
         iiService.deleteInwardInventoryById(id);
         return ResponseEntity.ok("Entity deleted");
+    }
+
+    /*
+    @PostMapping("/create")
+    @CheckAuthority
+    @ResponseStatus(HttpStatus.CREATED)
+    public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception {
+
+        return iiService.createInwardnventory(payload);
+    }
+
+    @PutMapping("/{id}")
+    @CheckAuthority
+    public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
+            throws Exception {
+        return iiService.updateInwardnventory(payload, id);
     }
  */
 }
