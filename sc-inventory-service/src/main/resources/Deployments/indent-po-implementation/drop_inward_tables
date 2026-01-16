@@ -1,0 +1,119 @@
+-- ==============================
+-- suncitynxv2
+-- ==============================
+DROP TABLE IF EXISTS suncitynxv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS suncitynxv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS suncitynxv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS suncitynxv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS suncitynxv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS suncitynxv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- kalpavrishv2
+-- ==============================
+DROP TABLE IF EXISTS kalpavrishv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS kalpavrishv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS kalpavrishv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS kalpavrishv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS kalpavrishv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS kalpavrishv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- riddhisiddhiv2
+-- ==============================
+DROP TABLE IF EXISTS riddhisiddhiv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS riddhisiddhiv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS riddhisiddhiv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS riddhisiddhiv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS riddhisiddhiv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS riddhisiddhiv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- smartcityv2
+-- ==============================
+DROP TABLE IF EXISTS smartcityv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS smartcityv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS smartcityv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS smartcityv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS smartcityv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS smartcityv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- businessparkv2
+-- ==============================
+DROP TABLE IF EXISTS businessparkv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS businessparkv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS businessparkv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS businessparkv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS businessparkv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS businessparkv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- drgtrdcntrv2
+-- ==============================
+DROP TABLE IF EXISTS drgtrdcntrv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS drgtrdcntrv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS drgtrdcntrv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS drgtrdcntrv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS drgtrdcntrv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS drgtrdcntrv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- citycenterv2
+-- ==============================
+DROP TABLE IF EXISTS citycenterv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS citycenterv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS citycenterv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS citycenterv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS citycenterv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS citycenterv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- schoolv2
+-- ==============================
+DROP TABLE IF EXISTS schoolv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS schoolv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS schoolv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS schoolv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS schoolv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS schoolv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- bhaavbhumiv2
+-- ==============================
+DROP TABLE IF EXISTS bhaavbhumiv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS bhaavbhumiv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS bhaavbhumiv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS bhaavbhumiv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS bhaavbhumiv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS bhaavbhumiv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- dhabbav2
+-- ==============================
+DROP TABLE IF EXISTS dhabbav2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS dhabbav2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS dhabbav2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS dhabbav2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS dhabbav2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS dhabbav2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- mhvrtrdcntrv2
+-- ==============================
+DROP TABLE IF EXISTS mhvrtrdcntrv2.inward_inventory CASCADE;
+DROP TABLE IF EXISTS mhvrtrdcntrv2.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS mhvrtrdcntrv2.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS mhvrtrdcntrv2.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS mhvrtrdcntrv2.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS mhvrtrdcntrv2.inwardinventory_entry_AUD CASCADE;
+
+-- ==============================
+-- masterschema
+-- ==============================
+DROP TABLE IF EXISTS masterschema.inward_inventory CASCADE;
+DROP TABLE IF EXISTS masterschema.inward_inventory_AUD CASCADE;
+DROP TABLE IF EXISTS masterschema.inward_outward_entries CASCADE;
+DROP TABLE IF EXISTS masterschema.inward_outward_entries_AUD CASCADE;
+DROP TABLE IF EXISTS masterschema.inwardinventory_entry CASCADE;
+DROP TABLE IF EXISTS masterschema.inwardinventory_entry_AUD CASCADE;

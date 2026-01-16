@@ -34,6 +34,33 @@ public class InwardInventoryController {
     @Autowired
     InwardInventoryService iiService;
 
+
+    // 🔹 PO dropdown (tenant from ThreadLocal)
+    @GetMapping("/po/dropdown")
+    public ResponseEntity<List<PoDropdownItem>> getPoDropdown() {
+        return ResponseEntity.ok(iiService.getPendingPoDropdown());
+    }
+
+    // 🔹 PO details + pending line items
+    @GetMapping("/po/{poNumber}")
+    public ResponseEntity<PoForInwardResponse> getPoForInward(@PathVariable String poNumber) {
+        return ResponseEntity.ok(iiService.getPoForInward(poNumber));
+    }
+
+    @PostMapping("/create/from-po")
+    @CheckAuthority
+    @ResponseStatus(HttpStatus.CREATED)
+    public InwardInventory createInwardInventory(@RequestBody InwardFromPODTO payload) throws Exception {
+        return iiService.createInwardnventory(payload);
+    }
+
+    @ExceptionHandler({JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
+    }
+
+    /*
     @PostMapping("/create")
     @CheckAuthority
     @ResponseStatus(HttpStatus.CREATED)
@@ -94,22 +121,5 @@ public class InwardInventoryController {
         iiService.deleteInwardInventoryById(id);
         return ResponseEntity.ok("Entity deleted");
     }
-
-    // 🔹 PO dropdown (tenant from ThreadLocal)
-    @GetMapping("/po/dropdown")
-    public ResponseEntity<List<PoDropdownItem>> getPoDropdown() {
-        return ResponseEntity.ok(iiService.getPendingPoDropdown());
-    }
-
-    // 🔹 PO details + pending line items
-    @GetMapping("/po/{poNumber}")
-    public ResponseEntity<PoForInwardResponse> getPoForInward(@PathVariable String poNumber) {
-        return ResponseEntity.ok(iiService.getPoForInward(poNumber));
-    }
-
-    @ExceptionHandler({JpaSystemException.class})
-    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
-    }
+ */
 }

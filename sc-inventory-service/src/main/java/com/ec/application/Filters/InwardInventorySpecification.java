@@ -7,13 +7,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.InwardInventory;
-import com.ec.application.model.InwardInventory_;
-import com.ec.application.model.Supplier_;
-import com.ec.application.model.Warehouse_;
 
 public final class InwardInventorySpecification
 {
@@ -56,7 +53,7 @@ public final class InwardInventorySpecification
 
 		if (warehouseNames != null && warehouseNames.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec, specbldr
-					.whereChildFieldContains(InwardInventory_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, warehouseNames));
+					.whereGrandChildFieldContains(InwardInventory_.INWARD_OUTWARD_LIST, InwardOutwardList_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, warehouseNames));
 
 		if (invoiceReceived != null && invoiceReceived.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
@@ -67,7 +64,7 @@ public final class InwardInventorySpecification
 			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.BILL_NO,textSearch));
 			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.CHALLAN_NO,textSearch));
 			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.ADDITIONAL_INFO,textSearch));
-			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.PURCHASE_ORDER,textSearch));
+			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.PURCHASE_ORDER_NO,textSearch));
 			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.OUR_SLIP_NO,textSearch));
 			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(InwardInventory_.VEHICLE_NO,textSearch));
 			finalSpec = specbldr.specAndCondition(finalSpec,

@@ -4,18 +4,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -68,7 +57,7 @@ public class InwardInventory extends ReusableFields implements Cloneable {
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "contactId", nullable = false)
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Supplier supplier;
 
     private String vehicleNo;
@@ -98,7 +87,7 @@ public class InwardInventory extends ReusableFields implements Cloneable {
        Line Items (Inward / Reject)
        ========================================================= */
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "inwardinventory_entry",
             joinColumns = @JoinColumn(name = "inwardid", referencedColumnName = "inwardid"),
@@ -106,7 +95,7 @@ public class InwardInventory extends ReusableFields implements Cloneable {
     )
     private Set<InwardOutwardList> inwardOutwardList = new HashSet<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "rejectInward_entry",
             joinColumns = @JoinColumn(name = "inwardid", referencedColumnName = "inwardid"),
@@ -118,7 +107,7 @@ public class InwardInventory extends ReusableFields implements Cloneable {
        Attachments
        ========================================================= */
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "inward_fileinformation",
             joinColumns = @JoinColumn(name = "inwardid", referencedColumnName = "inwardid"),

@@ -66,7 +66,7 @@ public class IndentInventoryList extends ReusableFields {
 
     private String purchaseOrderId;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "indent_inward_mapping",
             joinColumns = @JoinColumn(name = "line_item_code")

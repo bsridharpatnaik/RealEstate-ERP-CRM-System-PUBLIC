@@ -16,7 +16,7 @@ public interface IndentsForInwardViewRepository
      * Pending = ordered qty > already inwarded qty
      */
     @Query("SELECT v FROM IndentsForInwardView v WHERE v.purchaseOrderNumber =:poNumber AND v.tenant =:tenant AND v.quantity > v.totalInwardQuantity AND v.lineItemStatus IN ('PO Created', 'Partial Inward') ")
-    List<IndentsForInwardView> findPendingLineItems(@Param("poNumber") String poNumber, @Param("tenant") String tenant);
+    List<IndentsForInwardView> findPendingLineItemsForPO(@Param("poNumber") String poNumber, @Param("tenant") String tenant);
 
     /**
      * 2️⃣ Dropdown – only POs having at least one pending inward item
@@ -27,6 +27,9 @@ public interface IndentsForInwardViewRepository
     /**
      * 3️⃣ Optimistic locking + stale UI protection
      */
-    @Query("SELECT v FROM IndentsForInwardView v WHERE v.lineItemCode = :lineItemCode AND v.lineItemStatus IN ('PO Created', 'Partial Inward') AND v.quantity > v.totalInwardQuantity")
-    List<IndentsForInwardView> validateLineItemForInward(@Param("lineItemCode") String lineItemCode);
+    @Query("SELECT v FROM IndentsForInwardView v WHERE v.lineItemCode = :lineItemCode AND v.lineItemStatus IN ('PO Created', 'Partial Inward') AND v.quantity > v.totalInwardQuantity AND v.tenant =:tenant")
+    List<IndentsForInwardView> getLineItemForInward(@Param("lineItemCode") String lineItemCode, @Param("tenant") String tenant);
+
+    @Query("SELECT v FROM IndentsForInwardView v WHERE v.lineItemStatus IN ('PO Created', 'Partial Inward') AND v.quantity > v.totalInwardQuantity AND v.tenant =:tenant")
+    List<IndentsForInwardView> getLineItemsForInward(@Param("tenant") String tenant);
 }

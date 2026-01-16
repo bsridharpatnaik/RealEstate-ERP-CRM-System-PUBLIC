@@ -1,4 +1,6 @@
 -- use suncitynxv2,kalpavrishv2,riddhisiddhiv2,smartcityv2,businessparkv2,drgtrdcntrv2,citycenterv2,schoolv2,bhaavbhumiv2,dhabbav2,mhvrtrdcntrv2
+
+-- use suncitynxv2;
 CREATE OR replace VIEW all_inventory_view
 AS
   SELECT row_number()
@@ -29,7 +31,7 @@ AS
                  ioe.entryid                      as entryid,
                  Date_format(ii.DATE, "%Y-%m-%d") AS date,
                  ii.contactid                     AS contactid,
-                 ii.warehouse_id                  AS warehouseid,
+                 ioe.warehouse_id                  AS warehouseid,
                  ioe.Productid                    AS Productid,
                  ioe.quantity,
                  ioe.closingstock,
@@ -50,7 +52,7 @@ AS
                  INNER JOIN Category cat
                          on p.categoryId = cat.categoryId
                  inner join Warehouse w
-                         ON w.warehouse_id = ii.warehouse_id
+                         ON w.warehouse_id = ioe.warehouse_id
           WHERE  ii.is_deleted = 0
           UNION ALL
           SELECT 'Outward'                        AS type,
@@ -748,7 +750,7 @@ AS
                  ioe.entryid                      as entryid,
                  Date_format(ii.DATE, "%Y-%m-%d") AS date,
                  ii.contactid                     AS contactid,
-                 ii.warehouse_id                  AS warehouseid,
+                 ioe.warehouse_id                  AS warehouseid,
                  ioe.Productid                    AS Productid,
                  ioe.quantity,
                  ioe.closingstock,
@@ -769,7 +771,7 @@ AS
                  INNER JOIN Category cat
                          on p.categoryId = cat.categoryId
                  inner join Warehouse w
-                         ON w.warehouse_id = ii.warehouse_id
+                         ON w.warehouse_id = ioe.warehouse_id
           WHERE  ii.is_deleted = 0
           UNION ALL
           SELECT 'Outward'                        AS type,
@@ -929,7 +931,7 @@ CREATE OR REPLACE VIEW stockInformation as
 	FROM Stock s
 	INNER JOIN Product p on p.productId=s.productId
 	INNER JOIN Category c on p.categoryId=c.categoryId
-    INNER JOIN Warehouse w on w.warehouse_id = s.warehouseName
+    INNER JOIN Warehouse w on w.warehouse_id = s.warehouseId
 	WHERE s.is_deleted=0
 	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
 
@@ -1024,8 +1026,6 @@ SELECT
     iie.purchaseOrderId,
     iie.quantity,
     iie.remarks,
-    iie.inward_id,
-
     po.po_date,
     po.purchase_order_id,
     po.grandTotal,

@@ -82,6 +82,9 @@ public class InwardInventoryService {
     @Autowired
     TenantService tenantService;
 
+    @Autowired
+    EditAuthorizationService editAuthorizationService;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     public List<PoDropdownItem> getPendingPoDropdown() {
@@ -101,7 +104,7 @@ public class InwardInventoryService {
 
     public PoForInwardResponse getPoForInward(String poNumber) {
         String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
-        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItems(poNumber, tenant);
+        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItemsForPO(poNumber, tenant);
 
         if (rows.isEmpty()) {
             throw new IllegalStateException("No pending inward items for this PO and tenant");
@@ -127,26 +130,6 @@ public class InwardInventoryService {
         return response;
     }
 
-    /**
-     * 🔒 Optimistic + quantity validation
-     */
-    @Transactional(readOnly = true)
-    public void validateBeforeInward(List<InwardLineItemRequest> inwardItems) {
-
-        for (InwardLineItemRequest req : inwardItems) {
-
-            List<IndentsForInwardView> row = indentsForInwardViewRepository.validateLineItemForInward(req.getLineItemCode());
-
-            if (row.isEmpty()) {
-                throw new IllegalStateException("Line item already fully inwarded or modified: " + req.getLineItemCode());
-            }
-
-            if (req.getQuantity() == null || req.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Invalid inward quantity for line item: " + req.getLineItemCode());
-            }
-        }
-    }
-
     private PoLineItemForInward toLineItem(IndentsForInwardView v) {
         PoLineItemForInward li = new PoLineItemForInward();
         li.setLineItemCode(v.getLineItemCode());
@@ -160,6 +143,130 @@ public class InwardInventoryService {
         return li;
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
+    public InwardInventory createInwardnventory(InwardFromPODTO iiData) throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        InwardInventory inwardInventory = new InwardInventory();
+        editAuthorizationService.validateCreateDate(iiData.getInwardDate());
+        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(iiData.getPoNumber(), tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName()));
+
+        if (pendingItemsForInward.isEmpty()) {
+            throw new IllegalArgumentException("No pending inward items found for the provided Purchase Order Number - " + iiData.getPoNumber());
+        }
+
+        validateInputsFromPO(iiData, pendingItemsForInward);
+        setFieldsFromPO(inwardInventory, iiData, pendingItemsForInward);
+        updateStockForCreateInwardInventory(inwardInventory);
+        inwardInventoryRepo.save(inwardInventory);
+        return inwardInventory;
+    }
+
+    private void setFieldsFromPO(InwardInventory inwardInventory, InwardFromPODTO iiData, List<IndentsForInwardView> pendingItemsForInward) throws Exception {
+
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
+        inwardInventory.setDate(iiData.getInwardDate());
+        inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
+        inwardInventory.setVehicleNo(iiData.getVehicleNo());
+        inwardInventory.setSupplierSlipNo(iiData.getSupplierSlipNo());
+        inwardInventory.setAdditionalInfo(iiData.getAdditionalInfo());
+        inwardInventory.setSupplier(supplierRepo.findById(pendingItemsForInward.get(0).getSupplierId()).get());
+        inwardInventory.setPurchaseOrderNo(iiData.getPoNumber());
+        inwardInventory.setPurchaseOrderDate(pendingItemsForInward.get(0).getPoDate());
+        inwardInventory.setChallanDate(iiData.getChallanDate() == null ? null : iiData.getChallanDate());
+        inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
+        inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
+        inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setInwardOutwardList(fetchInwardOutwardListFromPOLine(iiData.getLineItems(), pendingItemsForInward));
+        inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
+    }
+
+    public Set<InwardOutwardList> fetchInwardOutwardListFromPOLine(List<LineItemForInwardThroughPODTO> lineItems, List<IndentsForInwardView> pendingItemsForInward) {
+        Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
+        for (LineItemForInwardThroughPODTO lineItem : lineItems) {
+            InwardOutwardList inwardOutwardList = new InwardOutwardList();
+            List<IndentsForInwardView> rowsWithLineItemCode = pendingItemsForInward.stream().filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode())).collect(Collectors.toList());
+
+            if (rowsWithLineItemCode.isEmpty()) {
+                throw new IllegalArgumentException("No pending inward items found for the line item code - " + lineItem.getLineItemCode());
+            }
+            IndentsForInwardView row = rowsWithLineItemCode.get(0);
+            Product product = productRepo.findById(row.getProductId()).get();
+            inwardOutwardList.setProduct(product);
+            inwardOutwardList.setQuantity(lineItem.getQuantityReceived());
+            inwardOutwardList.setWarehouse(warehouseRepo.findById(lineItem.getWarehouseId()).get());
+            inwardOutwardList.setLineItemCode(row.getLineItemCode());
+            inwardOutwardListSet.add(inwardOutwardList);
+        }
+        return inwardOutwardListSet;
+    }
+
+    private void validateInputsFromPO(InwardFromPODTO iiData, List<IndentsForInwardView> pendingItemsForInward) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+
+        Set<String> validLineItemCodes = pendingItemsForInward.stream()
+                .map(IndentsForInwardView::getLineItemCode)
+                .collect(Collectors.toSet());
+
+        for (LineItemForInwardThroughPODTO lineItem : iiData.getLineItems()) {
+            if (!warehouseRepo.existsById(lineItem.getWarehouseId()))
+                throw new IllegalArgumentException("Warehouse not found with ID - " + lineItem.getWarehouseId());
+
+            if (lineItem.getQuantityReceived() == null || lineItem.getQuantityReceived() <= 0) {
+                throw new IllegalArgumentException("Quantity received should be greater than zero for line item code: " + lineItem.getLineItemCode());
+            }
+
+            Double poQuantity = pendingItemsForInward.stream()
+                    .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
+                    .mapToDouble(IndentsForInwardView::getQuantity)
+                    .sum();
+            Double inwardQuantity = pendingItemsForInward.stream()
+                    .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
+                    .mapToDouble(IndentsForInwardView::getTotalInwardQuantity)
+                    .sum();
+
+            double allowedQuantity = poQuantity - inwardQuantity;
+
+            if(lineItem.getQuantityReceived() > allowedQuantity) {
+                throw new IllegalArgumentException("Quantity received for line item code " + lineItem.getLineItemCode() +
+                        " exceeds the allowed quantity for inward. Allowed quantity: " + allowedQuantity);
+            }
+
+            if (!validLineItemCodes.contains(lineItem.getLineItemCode()))
+                throw new IllegalArgumentException("Line item code " + lineItem.getLineItemCode() + " is invalid or already fully received.");
+        }
+
+        long duplicateProductIdCount = iiData.getLineItems().stream()
+                .collect(Collectors.groupingBy(LineItemForInwardThroughPODTO::getLineItemCode, counting())).entrySet().stream()
+                .filter(e -> e.getValue() > 1).count();
+
+        if (duplicateProductIdCount > 0)
+            throw new IllegalArgumentException("Inventory List should be Unique. Same line item added multiple times.");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    private void updateStockForCreateInwardInventory(InwardInventory inwardInventory) throws Exception {
+        Set<InwardOutwardList> productsWithQuantities = inwardInventory.getInwardOutwardList();
+        for (InwardOutwardList oiList : productsWithQuantities) {
+            Long warehouseId = oiList.getWarehouse().getWarehouseId();
+            Long productId = oiList.getProduct().getProductId();
+            Double quantity = oiList.getQuantity();
+            Double closingStock = stockService.updateStock(productId, warehouseId, quantity, "inward");
+            oiList.setClosingStock(closingStock);
+        }
+    }
+/**
+     OLD CODE
+ *
+ *
+ *
+ *
+ *
+     */
+
+
     @Transactional(rollbackFor = Exception.class)
     public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -172,19 +279,7 @@ public class InwardInventoryService {
         return inwardInventory;
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForCreateInwardInventory(InwardInventory inwardInventory) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        Set<InwardOutwardList> productsWithQuantities = inwardInventory.getInwardOutwardList();
 
-        for (InwardOutwardList oiList : productsWithQuantities) {
-            Long warehouseId = oiList.getWarehouse().getWarehouseId();
-            Long productId = oiList.getProduct().getProductId();
-            Double quantity = oiList.getQuantity();
-            Double closingStock = stockService.updateStock(productId, warehouseId, quantity, "inward");
-            oiList.setClosingStock(closingStock);
-        }
-    }
 
     @Transactional(rollbackFor = Exception.class)
     public InwardInventory addRejectInwardEntry(ReturnRejectInwardOutwardData rd, Long inwardId) throws Exception {
@@ -505,9 +600,9 @@ public class InwardInventoryService {
             throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         //if (!oldInwardInventory.getWarehouse().getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
-            updateWhenWarehouseChanged(oldInwardInventory, inwardInventory);
-       // else
-            updateWhenWarehouseSame(oldInwardInventory, inwardInventory);
+        updateWhenWarehouseChanged(oldInwardInventory, inwardInventory);
+        // else
+        updateWhenWarehouseSame(oldInwardInventory, inwardInventory);
     }
 
     @Transactional(rollbackFor = Exception.class)

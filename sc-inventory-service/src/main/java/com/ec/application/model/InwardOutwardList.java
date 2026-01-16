@@ -1,14 +1,6 @@
 package com.ec.application.model;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.Data;
 import org.hibernate.annotations.Where;
@@ -25,29 +17,27 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Data
 //@JsonSerialize(using = InwardOutwardListClosingStockSerializer.class)
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class InwardOutwardList extends ReusableFields
-{
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	Long entryid;
+public class InwardOutwardList extends ReusableFields {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long entryid;
 
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "productId", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Product product;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "productId", nullable = false)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    Product product;
 
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double quantity;
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    Double quantity;
 
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double closingStock;
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    Double closingStock;
 
-	String lineItemCode;
+    String lineItemCode;
 
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "warehouse_id", nullable = false)
-	@JsonIgnoreProperties(
-			{"hibernateLazyInitializer", "handler"})
-	Warehouse warehouse;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    Warehouse warehouse;
 }
