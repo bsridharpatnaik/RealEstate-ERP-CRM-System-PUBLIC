@@ -20,6 +20,7 @@ public final class InwardInventorySpecification
 		List<String> startDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "startDate");
 		List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "endDate");
 		List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productNames");
+		List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
 		List<String> supplierNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "supplierNames");
 		List<String> warehouseNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "warehouseNames");
 		List<String> invoiceReceived = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,

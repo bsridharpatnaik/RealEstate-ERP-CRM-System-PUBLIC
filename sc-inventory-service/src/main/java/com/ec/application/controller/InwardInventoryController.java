@@ -54,6 +54,15 @@ public class InwardInventoryController {
         return iiService.createInwardnventory(payload);
     }
 
+    @PostMapping
+    @ResponseStatus(HttpStatus.OK)
+    public ReturnInwardInventoryData fetchAllInwardInventory(@RequestBody FilterDataList filterDataList,
+                                                             @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Direction.DESC) Pageable pageable)
+            throws Exception {
+        Pageable pageableUpdated = iiService.modifyPageable(pageable);
+        return iiService.fetchInwardnventory(filterDataList, pageableUpdated);
+    }
+
     @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {

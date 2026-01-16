@@ -229,7 +229,7 @@ public class InwardInventoryService {
 
             double allowedQuantity = poQuantity - inwardQuantity;
 
-            if(lineItem.getQuantityReceived() > allowedQuantity) {
+            if (lineItem.getQuantityReceived() > allowedQuantity) {
                 throw new IllegalArgumentException("Quantity received for line item code " + lineItem.getLineItemCode() +
                         " exceeds the allowed quantity for inward. Allowed quantity: " + allowedQuantity);
             }
@@ -257,13 +257,30 @@ public class InwardInventoryService {
             oiList.setClosingStock(closingStock);
         }
     }
-/**
-     OLD CODE
- *
- *
- *
- *
- *
+
+    public Pageable modifyPageable(Pageable pageable) {
+        Sort sort = pageable.getSort();
+        Sort newSort = sort;
+
+        for (Sort.Order order : sort) {
+            String property = order.getProperty();
+            Sort.Direction direction = order.getDirection();
+            if (property.equalsIgnoreCase("date")) {
+                if (direction == Sort.Direction.ASC) {
+                    newSort = Sort.by(Sort.Order.asc("date"), Sort.Order.desc("inwardid"));
+                } else if (direction == Sort.Direction.DESC) {
+                    newSort = Sort.by(Sort.Order.desc("date"), Sort.Order.asc("inwardid"));
+                }
+                pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
+                break;
+            }
+        }
+
+        return pageable;
+    }
+
+    /**
+     * OLD CODE
      */
 
 
@@ -278,7 +295,6 @@ public class InwardInventoryService {
         inwardInventoryRepo.save(inwardInventory);
         return inwardInventory;
     }
-
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -384,6 +400,24 @@ public class InwardInventoryService {
         return inwardOutwardListSet;
     }
 
+    public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList, Pageable pageable)
+            throws ParseException {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        ReturnInwardInventoryData returnInwardInventoryData = new ReturnInwardInventoryData();
+        // Fetch Specification
+        Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
+
+        // Feed listing
+        if (spec != null)
+            returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(spec, pageable));
+        else
+            returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(pageable));
+
+        // Feed dropdowns
+        returnInwardInventoryData.setIiDropdown(populateDropdownService.fetchData("inward"));
+        return returnInwardInventoryData;
+    }
+
     private void validateInputs(InwardInventoryData iiData) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (iiData.getPurchaseOrderDate() == null)
@@ -410,23 +444,6 @@ public class InwardInventoryService {
 
     }
 
-    public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList, Pageable pageable)
-            throws ParseException {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        ReturnInwardInventoryData returnInwardInventoryData = new ReturnInwardInventoryData();
-        // Fetch Specification
-        Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
-
-        // Feed listing
-        if (spec != null)
-            returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(spec, pageable));
-        else
-            returnInwardInventoryData.setInwardInventory(inwardInventoryRepo.findAll(pageable));
-
-        // Feed dropdowns
-        returnInwardInventoryData.setIiDropdown(populateDropdownService.fetchData("inward"));
-        return returnInwardInventoryData;
-    }
 
     public List<ProductGroupedDAO> getTotalsForInward(FilterDataList filterDataList) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -711,24 +728,5 @@ public class InwardInventoryService {
         return ioListset;
     }
 
-    public Pageable modifyPageable(Pageable pageable) {
-        Sort sort = pageable.getSort();
-        Sort newSort = sort;
 
-        for (Sort.Order order : sort) {
-            String property = order.getProperty();
-            Sort.Direction direction = order.getDirection();
-            if (property.equalsIgnoreCase("date")) {
-                if (direction == Sort.Direction.ASC) {
-                    newSort = Sort.by(Sort.Order.asc("date"), Sort.Order.desc("inwardid"));
-                } else if (direction == Sort.Direction.DESC) {
-                    newSort = Sort.by(Sort.Order.desc("date"), Sort.Order.asc("inwardid"));
-                }
-                pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
-                break;
-            }
-        }
-
-        return pageable;
-    }
 }
