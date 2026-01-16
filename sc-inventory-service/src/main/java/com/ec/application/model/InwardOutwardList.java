@@ -10,6 +10,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import lombok.Data;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Entity
 @Table(name = "inward_outward_entries")
 @Audited
+@Data
 //@JsonSerialize(using = InwardOutwardListClosingStockSerializer.class)
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
 public class InwardOutwardList extends ReusableFields

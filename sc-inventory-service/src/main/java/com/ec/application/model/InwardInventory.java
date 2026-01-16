@@ -57,6 +57,11 @@ public class InwardInventory extends ReusableFields implements Cloneable {
     @Column(nullable = false)
     private Boolean invoiceReceived;
 
+    private String purchaseOrderNo;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    private Date purchaseOrderDate;
+
     /* =========================================================
        Supplier & Transport Details
        ========================================================= */

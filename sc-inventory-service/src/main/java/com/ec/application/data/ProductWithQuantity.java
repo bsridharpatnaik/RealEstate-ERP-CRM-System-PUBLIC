@@ -12,6 +12,7 @@ public class ProductWithQuantity
 	@NonNull
 	Double quantity;
 
+	Long warehouseId;
 	String remarks;
 
 }

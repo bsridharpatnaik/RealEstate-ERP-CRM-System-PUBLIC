@@ -159,7 +159,7 @@ public class InwardInventoryService {
         li.setRemarks(v.getRemarks());
         return li;
     }
-    
+
     @Transactional(rollbackFor = Exception.class)
     public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -176,9 +176,9 @@ public class InwardInventoryService {
     private void updateStockForCreateInwardInventory(InwardInventory inwardInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Set<InwardOutwardList> productsWithQuantities = inwardInventory.getInwardOutwardList();
-        Long warehouseId = inwardInventory.getWarehouse().getWarehouseId();
 
         for (InwardOutwardList oiList : productsWithQuantities) {
+            Long warehouseId = oiList.getWarehouse().getWarehouseId();
             Long productId = oiList.getProduct().getProductId();
             Double quantity = oiList.getQuantity();
             Double closingStock = stockService.updateStock(productId, warehouseId, quantity, "inward");
@@ -232,15 +232,14 @@ public class InwardInventoryService {
         Set<RejectInwardList> rejectInwardList = ii.getRejectInwardList();
         Set<InwardOutwardList> inwardOutwardListSet = ii.getInwardOutwardList();
         for (InwardOutwardList inwardOutwardList : inwardOutwardListSet) {
+            Long warehouseId = inwardOutwardList.getWarehouse().getWarehouseId();
             if (inwardOutwardList.getProduct().getProductId().equals(productId)) {
                 Double currentQuantity = inwardOutwardList.getQuantity();
                 if (quantity > currentQuantity)
-                    throw new Exception(
-                            "Reject quantity cannot be greater than existing quantity for product -"
-                                    + inwardOutwardList.getProduct().getProductName());
+                    throw new Exception("Reject quantity cannot be greater than existing quantity for product -" + inwardOutwardList.getProduct().getProductName());
 
                 Double diffInQuantity = currentQuantity - quantity;
-                Double closingStock = stockService.updateStock(productId, ii.getWarehouse().getWarehouseId(),
+                Double closingStock = stockService.updateStock(productId, warehouseId,
                         quantity, "outward");
                 rejectInwardList.add(new RejectInwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
                         quantity, closingStock, remarks));
@@ -260,15 +259,15 @@ public class InwardInventoryService {
         inwardInventory.setDate(iiData.getDate());
         inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
         inwardInventory.setVehicleNo(iiData.getVehicleNo());
-        inwardInventory.setVendorSlipNo(iiData.getVendorSlipNo());
+        inwardInventory.setSupplierSlipNo(iiData.getVendorSlipNo());
         inwardInventory.setAdditionalInfo(iiData.getAdditionalInfo());
         inwardInventory.setSupplier(supplierRepo.findById(iiData.getSupplierId()).get());
-        inwardInventory.setWarehouse(warehouseRepo.findById(iiData.getWarehouseId()).get());
+        //inwardInventory.setWarehouse(warehouseRepo.findById(iiData.getWarehouseId()).get());
         inwardInventory.setInwardOutwardList(fetchInwardOutwardList(iiData.getProductWithQuantities(),
                 warehouseRepo.findById(iiData.getWarehouseId()).get()));
         inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
-        inwardInventory.setPurchaseOrder(iiData.getPurchaseOrder());
-        inwardInventory.setPurchaseOrderdate(iiData.getPurchaseOrderDate());
+        inwardInventory.setPurchaseOrderNo(iiData.getPurchaseOrder());
+        inwardInventory.setPurchaseOrderDate(iiData.getPurchaseOrderDate());
         inwardInventory.setChallanDate(iiData.getChallanDate() == null ? null : iiData.getChallanDate());
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
@@ -285,6 +284,7 @@ public class InwardInventoryService {
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
             inwardOutwardListSet.add(inwardOutwardList);
+            inwardOutwardList.setWarehouse(warehouseRepo.findById(productWithQuantity.getWarehouseId()).get());
         }
         return inwardOutwardListSet;
     }
@@ -428,8 +428,8 @@ public class InwardInventoryService {
     @Transactional(rollbackFor = Exception.class)
     private void updateStockBeforeDelete(InwardInventory inwardInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        Long warehouseId = inwardInventory.getWarehouse().getWarehouseId();
         for (InwardOutwardList ioList : inwardInventory.getInwardOutwardList()) {
+            Long warehouseId = ioList.getWarehouse().getWarehouseId();
             Double stock = ioList.getQuantity();
             Double currentStock = stockRepo
                     .findStockForProductAndWarehouse(ioList.getProduct().getProductId(), warehouseId).get(0)
@@ -448,7 +448,7 @@ public class InwardInventoryService {
             throw new Exception("Inventory Entry with ID not found");
         validateInputs(iiData);
         InwardInventory inwardInventory = inwardInventoryOpt.get();
-        InwardInventory oldInwardInventory = (InwardInventory) inwardInventory.clone();
+        InwardInventory oldInwardInventory = null;
         exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Update);
         setFields(inwardInventory, iiData);
         modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
@@ -473,9 +473,6 @@ public class InwardInventoryService {
 
             if (!iiData.getDate().equals(inwardInventory.getDate()))
                 throw new Exception("Date should not be modified while updating inward inventory record");
-
-            if (!iiData.getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
-                throw new Exception("Warehouse should not be modified while updating inward inventory record");
 
             List<Long> productsInPayload = iiData.getProductWithQuantities().stream()
                     .map(ProductWithQuantity::getProductId).collect(Collectors.toList());
@@ -507,9 +504,9 @@ public class InwardInventoryService {
     private void modifyStockBeforeUpdate(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
             throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        if (!oldInwardInventory.getWarehouse().getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
+        //if (!oldInwardInventory.getWarehouse().getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
             updateWhenWarehouseChanged(oldInwardInventory, inwardInventory);
-        else
+       // else
             updateWhenWarehouseSame(oldInwardInventory, inwardInventory);
     }
 
@@ -547,13 +544,7 @@ public class InwardInventoryService {
             logger.info("Difference in quantity -" + quantityForUpdate);
             for (InwardOutwardList ioList : newIOListSet) {
 
-                if (id.equals(ioList.getProduct().getProductId())) {
-                    Double closingStock = stockService.updateStock(id,
-                            inwardInventory.getWarehouse().getWarehouseId(), quantityForUpdate, "inward");
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            inwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
-                    ioList.setClosingStock(closingStock);
-                }
+
             }
             inwardInventory.setInwardOutwardList(newIOListSet);
         }
@@ -581,10 +572,7 @@ public class InwardInventoryService {
             for (InwardOutwardList ioList : ioListSet) {
                 if (id.equals(ioList.getProduct().getProductId())) {
                     Double quantity = ioList.getQuantity();
-                    Double closingStock = stockService.updateStock(id,
-                            inwardInventory.getWarehouse().getWarehouseId(), quantity, "inward");
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            inwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
+                    Double closingStock = (double) 0;
                     ioList.setClosingStock(closingStock);
                 }
             }
@@ -602,11 +590,7 @@ public class InwardInventoryService {
             for (InwardOutwardList ioList : ioListSet) {
                 if (id.equals(ioList.getProduct().getProductId())) {
                     Double quantity = ioList.getQuantity();
-                    Double closingStock = stockService.updateStock(id,
-                            oldInwardInventory.getWarehouse().getWarehouseId(), quantity, "outward");
-
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            oldInwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
+                    Double closingStock = (double) 0;
                 }
             }
         }
@@ -616,14 +600,6 @@ public class InwardInventoryService {
     private void updateWhenWarehouseChanged(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
             throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        // Delete all stock added as part of old warehouse
-        traverseListAndUpdateStock(oldInwardInventory.getInwardOutwardList(), "outward",
-                oldInwardInventory.getWarehouse());
-
-        // Add new stock to new warehouse
-        Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(inwardInventory.getInwardOutwardList(), "inward",
-                inwardInventory.getWarehouse());
-        inwardInventory.setInwardOutwardList(newLIOList);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -660,6 +636,4 @@ public class InwardInventoryService {
 
         return pageable;
     }
-
-
 }
