@@ -67,9 +67,6 @@ public class OutwardInventoryService {
     WarehouseRepo warehouseRepo;
 
     @Autowired
-    InwardInventoryService iiService;
-
-    @Autowired
     UsageAreaRepo usageAreaRepo;
 
     @Autowired
@@ -416,8 +413,7 @@ public class OutwardInventoryService {
         outwardInventory.setDate(oiData.getDate());
         outwardInventory.setPurpose(oiData.getPurpose());
         outwardInventory.setSlipNo(oiData.getSlipNo());
-        outwardInventory
-                .setInwardOutwardList(iiService.fetchInwardOutwardList(oiData.getProductWithQuantities(), warehouse));
+        outwardInventory.setInwardOutwardList(fetchInwardOutwardList(oiData.getProductWithQuantities(), warehouse));
         outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
         log.info("Exited setFields");
     }
@@ -657,5 +653,20 @@ public class OutwardInventoryService {
         }
 
         return pageable;
+    }
+
+    public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities,
+                                                         Warehouse warehouse) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
+        for (ProductWithQuantity productWithQuantity : productWithQuantities) {
+            InwardOutwardList inwardOutwardList = new InwardOutwardList();
+            Product product = productRepo.findById(productWithQuantity.getProductId()).get();
+            inwardOutwardList.setProduct(product);
+            inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
+            inwardOutwardListSet.add(inwardOutwardList);
+            inwardOutwardList.setWarehouse(warehouse);
+        }
+        return inwardOutwardListSet;
     }
 }
