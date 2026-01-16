@@ -21,7 +21,10 @@ public class IndentValidationService {
 
         if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isInventoryExecutive) {
             return "DELETE";
-        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrManager) {
+        }
+        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isAdminOrManager) {
+            return "CANCEL";
+        }else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrManager) {
             return "CANCEL";
         } else {
             throw new IllegalStateException("Indent cannot be deleted or cancelled in status: " + status + " by current user.");
