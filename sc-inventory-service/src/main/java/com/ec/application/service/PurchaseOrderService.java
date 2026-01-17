@@ -12,6 +12,7 @@ import com.ec.application.constants.POIndentUpdateAction;
 import com.ec.application.constants.POStatusConstants;
 import com.ec.application.data.*;
 import com.ec.application.enricher.PurchaseOrderUiEnricher;
+import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryListRepo;
@@ -57,6 +58,9 @@ public class PurchaseOrderService extends ReusableFields {
 
     @Autowired
     PopulateDropdownService populateDropdownService;
+
+    @Autowired
+    PurchaseOrderLifecycleManager poLifecycleManager;
 
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
@@ -141,11 +145,6 @@ public class PurchaseOrderService extends ReusableFields {
 
     @Transactional(rollbackFor = Exception.class)
     public void cancelPurchaseOrderById(String id) {
-        PurchaseOrder po = getPurchaseOrderWithInit(id);
-        if (!po.getStatus().equalsIgnoreCase(POStatusConstants.STATUS_NEW))
-            throw new RuntimeException("Only Purchase Orders with status 'New' can be cancelled.");
-        po.setStatus(POStatusConstants.STATUS_CANCELLED);
-        purchaseOrderRepo.save(po);
-        indentStatusUpdater.updateIndentStatuses(po.getLines(), POIndentUpdateAction.CANCEL_PO);
+        poLifecycleManager.cancelIfAllowed(id);
     }
 }
