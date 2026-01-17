@@ -106,7 +106,7 @@ public class InwardInventoryController {
         return ResponseEntity.ok("Entity deleted");
     }
 
-    /*
+
     @PostMapping("/create")
     @CheckAuthority
     @ResponseStatus(HttpStatus.CREATED)
@@ -115,6 +115,7 @@ public class InwardInventoryController {
         return iiService.createInwardnventory(payload);
     }
 
+    /*
     @PutMapping("/{id}")
     @CheckAuthority
     public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
