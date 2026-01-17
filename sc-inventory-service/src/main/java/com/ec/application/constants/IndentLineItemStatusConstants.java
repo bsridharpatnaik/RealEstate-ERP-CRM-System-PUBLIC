@@ -9,9 +9,13 @@ import java.util.stream.Collectors;
 @Data
 public class IndentLineItemStatusConstants {
     public static final String STATUS_NEW = "NEW";
-    public static final String STATUS_PO_CREATED = "PO Created";
+    public static final String STATUS_PO_CREATED = "PO CREATED";
+    public static final String STATUS_INWARD_PARTIAL = "INWARD PARTIAL";
+    public static final String STATUS_INWARD_COMPLETE = "INWARD COMPLETE";
+    public static final String STATUS_SHORT_CLOSED = "SHORT CLOSED";
     public static final String STATUS_CANCELLED = "CANCELLED";
-    public static final String STATUS_SPLIT = "SPLIT";
+    public static final String STATUS_SPLIT = "SPLIT"; // not displayed to user
+
 
     public static List<String> getAllStatuses() {
         return Arrays.stream(IndentLineItemStatusConstants.class.getDeclaredFields())
