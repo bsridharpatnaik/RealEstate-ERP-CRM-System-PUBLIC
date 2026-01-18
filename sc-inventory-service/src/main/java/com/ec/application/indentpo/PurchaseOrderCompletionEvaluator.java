@@ -10,6 +10,8 @@ import com.ec.application.model.PurchaseOrderLine;
 import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,8 @@ public class PurchaseOrderCompletionEvaluator {
 
     private final PurchaseOrderRepo purchaseOrderRepo;
     private final IndentInventoryListRepo indentInventoryListRepo;
+
+    private static final Logger log = LoggerFactory.getLogger(PurchaseOrderCompletionEvaluator.class);
 
     @Transactional
     public void evaluate(PurchaseOrder po) {
@@ -53,7 +57,7 @@ public class PurchaseOrderCompletionEvaluator {
         // Fetch indent lines in ONE DB call
         // --------------------------------------------
         List<IndentInventoryList> indentLines = indentInventoryListRepo.findByLineItemCodeIn(lineItemCodes);
-
+        log.info("PO [{}] - Fetched {} indent lines for evaluation", po.getPurchaseOrderId(), indentLines.size());
         if (indentLines.isEmpty()) {
             return;
         }
@@ -80,6 +84,7 @@ public class PurchaseOrderCompletionEvaluator {
             }
         }
 
+        log.info("PO [{}] - anyInwardStarted: {}, allInwardComplete: {}", po.getPurchaseOrderId(), anyInwardStarted, allInwardComplete);
         if (!anyInwardStarted) {
             // No inward done for any indent line
             po.setStatus(POStatusConstants.STATUS_NEW);

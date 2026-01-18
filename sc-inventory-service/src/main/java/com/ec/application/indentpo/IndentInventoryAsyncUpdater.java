@@ -21,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -43,8 +40,8 @@ public class IndentInventoryAsyncUpdater {
     // CREATE / UPDATE FLOW  (ENTITY IS SAFE TO USE)
     // ============================================================
     @Async
+    @UseDefaultTenant
     public void updateIndentAfterInwardAsync(String tenantSchema, InwardInventory inwardInventory, InwardActionType actionType) {
-        ThreadLocalStorage.setTenantName(tenantSchema);
         try {
             doUpdateIndentAfterInward(inwardInventory, actionType);
         } finally {
@@ -54,8 +51,8 @@ public class IndentInventoryAsyncUpdater {
 
 
     @Async
+    @UseDefaultTenant
     public void updateIndentAfterInwardAsync(String tenantSchema, InwardSnapshot inwardInventory, InwardActionType actionType) {
-        ThreadLocalStorage.setTenantName(tenantSchema);
         try {
             doUpdateIndentAfterDelete(inwardInventory, actionType);
         } finally {
@@ -64,38 +61,178 @@ public class IndentInventoryAsyncUpdater {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void doUpdateIndentAfterInward(InwardInventory inwardInventory, InwardActionType actionType) {
+    public void doUpdateIndentAfterInward(
+            InwardInventory inwardInventory,
+            InwardActionType actionType
+    ) {
+
+        final String threadName = Thread.currentThread().getName();
+
+        log.info(
+                "[TX-START] thread={} action={} inwardId={} tenant={}",
+                threadName,
+                actionType,
+                inwardInventory != null ? inwardInventory.getInwardId() : null,
+                ThreadLocalStorage.getTenantName()
+        );
 
         try {
-            log.info("Starting async inward {} processing | inwardId={}", actionType, inwardInventory.getInwardId());
-            Set<IndentInventory> affectedIndents = new HashSet<IndentInventory>();
+
+            if (ThreadLocalStorage.getTenantName() == null) {
+                log.error(
+                        "[TX-FATAL] thread={} tenant is NULL at TX start",
+                        threadName
+                );
+                return;
+            }
+
+            Set<String> affectedIndentIds = new HashSet<>();
             Set<String> affectedPoNumbers = new HashSet<String>();
+
+            int index = 0;
 
             for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
 
-                List<IndentInventoryList> rows = indentInventoryListRepo.findByLineItemCode(io.getLineItemCode());
+                index++;
 
-                if (rows.isEmpty()) {
+                log.info(
+                        "[TX-LINE-START] thread={} idx={} lineItemCode={} tenant={}",
+                        threadName,
+                        index,
+                        io.getLineItemCode(),
+                        ThreadLocalStorage.getTenantName()
+                );
+
+                // -------------------------------
+                // Before repository query
+                // -------------------------------
+                log.info(
+                        "[TX-BEFORE-QUERY] thread={} idx={} tenant={}",
+                        threadName,
+                        index,
+                        ThreadLocalStorage.getTenantName()
+                );
+
+                List<IndentInventoryList> rows =
+                        indentInventoryListRepo.findByLineItemCode(
+                                io.getLineItemCode()
+                        );
+
+                // -------------------------------
+                // After repository query
+                // -------------------------------
+                log.info(
+                        "[TX-AFTER-QUERY] thread={} idx={} resultSize={}",
+                        threadName,
+                        index,
+                        rows != null ? rows.size() : null
+                );
+
+                if (rows == null || rows.isEmpty()) {
+                    log.warn(
+                            "[TX-SKIP] thread={} idx={} No indent line found for lineItemCode={}",
+                            threadName,
+                            index,
+                            io.getLineItemCode()
+                    );
                     continue;
                 }
 
                 IndentInventoryList indentLine = rows.get(0);
 
+                log.info(
+                        "[TX-FOUND] thread={} idx={} indentLineId={} indentId={} poId={}",
+                        threadName,
+                        index,
+                        indentLine.getEntryid(),
+                        indentLine.getIndentInventory() != null
+                                ? indentLine.getIndentInventory().getIndentId()
+                                : null,
+                        indentLine.getPurchaseOrderId()
+                );
+
+                // -------------------------------
                 // UPSERT inward entry
+                // -------------------------------
+                log.info(
+                        "[TX-UPSERT] thread={} idx={} inwardId={}",
+                        threadName,
+                        index,
+                        inwardInventory.getInwardId()
+                );
+
                 upsertInwardEntry(indentLine, inwardInventory, io);
 
-                // Recalculate derived values
+                // -------------------------------
+                // Recalculate
+                // -------------------------------
                 recalculateIndentLine(indentLine);
+
+                // -------------------------------
+                // Save indent line
+                // -------------------------------
+                log.info(
+                        "[TX-BEFORE-SAVE] thread={} idx={} indentLineId={}",
+                        threadName,
+                        index,
+                        indentLine.getEntryid()
+                );
+
                 indentInventoryListRepo.save(indentLine);
-                affectedIndents.add(indentLine.getIndentInventory());
+
+                log.info(
+                        "[TX-AFTER-SAVE] thread={} idx={} indentLineId={}",
+                        threadName,
+                        index,
+                        indentLine.getEntryid()
+                );
+
+                affectedIndentIds.add(indentLine.getIndentInventory().getIndentId());
+
                 if (indentLine.getPurchaseOrderId() != null) {
                     affectedPoNumbers.add(indentLine.getPurchaseOrderId());
                 }
             }
-            reevaluateIndentsAndPOs(affectedIndents, affectedPoNumbers);
+
+            // -------------------------------
+            // Re-evaluate statuses
+            // -------------------------------
+            log.info(
+                    "[TX-REEVAL-START] thread={} indents={} pos={}",
+                    threadName,
+                    affectedIndentIds.size(),
+                    affectedPoNumbers.size()
+            );
+
+            reevaluateIndentsAndPOs(affectedIndentIds, affectedPoNumbers);
+
+            log.info(
+                    "[TX-SUCCESS] thread={} action={} inwardId={}",
+                    threadName,
+                    actionType,
+                    inwardInventory.getInwardId()
+            );
+
         } catch (Exception ex) {
-            log.error("Async inward {} failed | inwardId={}", actionType, inwardInventory.getInwardId(), ex);
+
+            log.error(
+                    "[TX-EXCEPTION] thread={} tenant={} action={} inwardId={}",
+                    threadName,
+                    ThreadLocalStorage.getTenantName(),
+                    actionType,
+                    inwardInventory != null ? inwardInventory.getInwardId() : null,
+                    ex
+            );
+
         } finally {
+
+            log.info(
+                    "[TX-END] thread={} clearing tenant (was={})",
+                    threadName,
+                    ThreadLocalStorage.getTenantName()
+            );
+
+            // ⚠️ Do NOT clear tenant here if caller manages it
             ThreadLocalStorage.setTenantName(null);
         }
     }
@@ -115,7 +252,7 @@ public class IndentInventoryAsyncUpdater {
                 return;
             }
 
-            Set<IndentInventory> affectedIndents = new HashSet<IndentInventory>();
+            Set<String> affectedIndents = new HashSet<>();
             Set<String> affectedPoNumbers = new HashSet<String>();
 
             for (InwardLineSnapshot line : snapshot.getLines()) {
@@ -131,7 +268,7 @@ public class IndentInventoryAsyncUpdater {
                 // Recalculate
                 recalculateIndentLine(indentLine);
                 indentInventoryListRepo.save(indentLine);
-                affectedIndents.add(indentLine.getIndentInventory());
+                affectedIndents.add(indentLine.getIndentInventory().getIndentId());
                 if (indentLine.getPurchaseOrderId() != null) {
                     affectedPoNumbers.add(indentLine.getPurchaseOrderId());
                 }
@@ -207,17 +344,26 @@ public class IndentInventoryAsyncUpdater {
         );
     }
 
-    private void reevaluateIndentsAndPOs(Set<IndentInventory> indents, Set<String> poNumbers) {
+    private void reevaluateIndentsAndPOs(Set<String> indentIds, Set<String> poNumbers) {
 
-        for (IndentInventory indent : indents) {
-            indentCompletionEvaluator.evaluate(indent);
-            indentInventoryRepo.save(indent);
+        for (String indentId : indentIds) {
+            Optional<IndentInventory> indentOpt = indentInventoryRepo.findByIdWithDetails(indentId);
+            if (!indentOpt.isPresent()) {
+                continue;
+            }
+            indentCompletionEvaluator.evaluate(indentOpt.get());
         }
 
+        // -----------------------------
+        // Re-evaluate PURCHASE ORDERS
+        // -----------------------------
         for (String poNumber : poNumbers) {
-            PurchaseOrder po = purchaseOrderRepo.findByIdWithDetails(poNumber).get();
-            purchaseOrderCompletionEvaluator.evaluate(po);
-            purchaseOrderRepo.save(po);
+            Optional<PurchaseOrder> poOpt = purchaseOrderRepo.findByIdWithDetails(poNumber);
+            if (!poOpt.isPresent()) {
+                continue;
+            }
+            log.info("Re-evaluating PO [{}] after inward update",  poNumber);
+            purchaseOrderCompletionEvaluator.evaluate(poOpt.get());
         }
     }
 }
