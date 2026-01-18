@@ -2780,6 +2780,90 @@
                   "response": []
                 },
                 {
+                  "name": "Short Close PO",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"poDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"poDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"purchaseOrderNo\":\"{{purchaseOrderId}}\",\n    \"reason\":\"{{$randomAdjective}}\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/purchase-order/short-close",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "purchase-order",
+                        "short-close"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
                   "name": "Fetch PO Page",
                   "event": [
                     {
@@ -3010,7 +3094,26 @@
                       "script": {
                         "exec": [
                           "var jsonData = JSON.parse(responseBody);",
-                          "pm.environment.set(\"inwardId\", jsonData.inwardId)"
+                          "pm.environment.set(\"inwardId\", jsonData.inwardId)",
+                          "",
+                          "// Parse response",
+                          "const res = pm.response.json();",
+                          "",
+                          "// Safety check",
+                          "if (!res.inwardOutwardList || res.inwardOutwardList.length < 2) {",
+                          "    throw new Error(\"Less than 2 inwardOutwardList items found\");",
+                          "}",
+                          "",
+                          "// Extract productIds",
+                          "const productId1 = res.inwardOutwardList[0].product.productId;",
+                          "const productId2 = res.inwardOutwardList[1].product.productId;",
+                          "",
+                          "// Set Postman variables",
+                          "pm.environment.set(\"productId1\", productId1);",
+                          "pm.environment.set(\"productId2\", productId2);",
+                          "",
+                          "console.log(\"Product IDs saved:\", productId1, productId2);",
+                          ""
                         ],
                         "type": "text/javascript",
                         "packages": {},
@@ -3065,7 +3168,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"poNumber\": \"{{poNumber}}\",\n    \"inwardDate\": \"{{inwardDate}}\",\n    \"invoiceReceived\": true,\n    \"vehicleNo\": \"MH31EU5079\",\n    \"supplierSlipNo\": \"1\",\n    \"ourSlipNo\": \"{{$randomInt}}\",\n    \"billNo\": \"{{$randomInt}}\",\n    \"challanNo\": \"{{$randomInt}}\",\n    \"challanDate\":  \"{{inwardDate}}\",\n    \"billDate\":  \"{{inwardDate}}\",\n    \"additionalInfo\": \"{{$randomAbbreviation}}\",\n    \"fileInformations\": [],\n    \"lineItems\": [\n        {\n            \"lineItemCode\": \"{{line1_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 4\n        },\n        {\n            \"lineItemCode\": \"{{line2_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 11\n        }\n    ]\n}",
+                      "raw": "{\n    \"poNumber\": \"{{poNumber}}\",\n    \"inwardDate\": \"{{inwardDate}}\",\n    \"invoiceReceived\": true,\n    \"vehicleNo\": \"MH31EU5079\",\n    \"supplierSlipNo\": \"1\",\n    \"ourSlipNo\": \"{{$randomInt}}\",\n    \"billNo\": \"{{$randomInt}}\",\n    \"challanNo\": \"{{$randomInt}}\",\n    \"challanDate\":  \"{{inwardDate}}\",\n    \"billDate\":  \"{{inwardDate}}\",\n    \"additionalInfo\": \"{{$randomAbbreviation}}\",\n    \"fileInformations\": [],\n    \"lineItems\": [\n        {\n            \"lineItemCode\": \"{{line1_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 4\n        },\n        {\n            \"lineItemCode\": \"{{line2_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 4\n        }\n    ]\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3083,6 +3186,90 @@
                         "inward",
                         "create",
                         "from-po"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Inventory",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"inwardDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"inwardDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"supplierId\": 26,\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 2\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 10\n        }\n    ],\n    \"vehicleNo\": \"{{$randomVerb}}\",\n    \"supplierSlipNo\": \"1\",\n    \"ourSlipNo\": \"12345\",\n    \"additionalInfo\": \"Sql\",\n    \"invoiceReceived\": true,\n    \"challanNo\": \"67890\",\n    \"billNo\": \"98765\",\n    \"challanDate\": \"16-01-2026\",\n    \"billDate\": \"16-01-2026\",\n    \"fileInformations\": []\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/inward/{{inwardId}}",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "inward",
+                        "{{inwardId}}"
                       ]
                     }
                   },
@@ -8370,6 +8557,32 @@
                     "packages": {},
                     "requests": {}
                   }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// Get today's date",
+                      "const today = new Date();",
+                      "",
+                      "// Format as dd-MM-yyyy",
+                      "const day = String(today.getDate()).padStart(2, '0');",
+                      "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                      "const year = today.getFullYear();",
+                      "",
+                      "const formattedDate = `${day}-${month}-${year}`;",
+                      "",
+                      "// Save to environment or collection variable",
+                      "pm.environment.set(\"inwardDate\", formattedDate);",
+                      "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                      "",
+                      "console.log(\"inwardDate:\", formattedDate);",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
                 }
               ],
               "request": {
@@ -8393,7 +8606,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"date\": \"26-12-2025\",\n    \"supplierId\": {{supplierId}},\n    \"warehouseId\": {{warehouseId}},\n    \"purchaseOrder\":\"{{$randomAlphaNumeric}}\",\n    \"purchaseOrderDate\":\"30-05-2021\",\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 100\n        }\n    ],\n    \"fileInformations\":\n    [\n    \t{\n    \t\t\"fileUUId\":\"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n    \t\t\"fileName\":\"temp\"\n    \t},\n    \t{\n    \t\t\"fileUUId\":\"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n    \t\t\"fileName\":\"doosrafile.zip\"\n    \t}\n    \t],\n    \"invoiceReceived\":true,\n    \"vehicleNo\":\"MH31EU5079\",\n    \"vendorSlipNo\":\"Le jaa bhai\",\n    \"ourSlipNo\":\"{{$randomCountryCode}}\",\n    \"additionalComments\":\"{{$randomLoremSentence}}\",\n    \"challanNo\":\"123\",\n    \"challanDate\":\"03-03-2021\",\n    \"billNo\":\"12334\",\n    \"billDate\":\"03-03-2021\"\n}",
+                  "raw": "{\n    \"inwardDate\": \"{{inwardDate}}\",\n    \"supplierId\": {{supplierId}},\n    \"productWithQuantities\": [\n        {\n            \"warehouseId\": {{warehouseId}},\n            \"productId\": {{productId1}},\n            \"quantity\": 100\n        },\n        {\n            \"warehouseId\": {{warehouseId}},\n            \"productId\": {{productId2}},\n            \"quantity\": 200\n        }\n    ],\n    \"fileInformations\": [],\n    \"invoiceReceived\": true,\n    \"vehicleNo\": \"MH31EU5079\",\n    \"supplierSlipNo\": \"{{$randomInt}}\",\n    \"ourSlipNo\": \"{{$randomCountryCode}}\",\n    \"additionalComments\": \"{{$randomLoremSentence}}\",\n    \"challanNo\": \"123\",\n    \"challanDate\": \"{{inwardDate}}\",\n    \"billNo\": \"12334\",\n    \"billDate\": null\n}",
                   "options": {
                     "raw": {
                       "language": "json"
