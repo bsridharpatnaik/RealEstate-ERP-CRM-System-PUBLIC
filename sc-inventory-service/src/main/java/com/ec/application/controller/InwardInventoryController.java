@@ -115,12 +115,10 @@ public class InwardInventoryController {
         return iiService.createInwardnventory(payload);
     }
 
-    /*
     @PutMapping("/{id}")
     @CheckAuthority
-    public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
+    public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryUpdateData payload)
             throws Exception {
-        return iiService.updateInwardnventory(payload, id);
+        return iiService.updateInwardInventory(id, payload);
     }
- */
 }

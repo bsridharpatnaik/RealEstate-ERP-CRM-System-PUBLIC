@@ -1,5 +1,6 @@
 package com.ec.application.indentpo;
 
+import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.POIndentUpdateAction;
 import com.ec.application.constants.POStatusConstants;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@UseDefaultTenant
 public class PurchaseOrderLifecycleManager {
 
     private final PurchaseOrderRepo purchaseOrderRepo;

@@ -1,6 +1,8 @@
 package com.ec.application.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Column;
@@ -10,10 +12,12 @@ import java.util.Date;
 @Embeddable
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class IndentInwardEntry {
 
     @Column(name = "inward_id", nullable = false, length = 50)
-    private String inwardId;
+    private Long inwardId;
 
     @Column(name = "inward_date", nullable = false)
     private Date inwardDate;

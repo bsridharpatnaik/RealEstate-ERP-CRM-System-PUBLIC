@@ -1,34 +1,27 @@
 package com.ec.application.data;
 
-import java.util.Date;
-import java.util.List;
-
+import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.ec.application.Deserializers.ToUpperCaseDeserializer;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.DateDeserializers;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.NonNull;
 
-import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
-import com.ec.application.Deserializers.ToUpperCaseDeserializer;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.util.Date;
+import java.util.List;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class InwardInventoryData {
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    @JsonDeserialize(using = DateDeserializers.DateDeserializer.class)
-    @NonNull
-    Date inwardDate;
+public class InwardInventoryUpdateData {
 
     @NonNull
     Long supplierId;
 
     @NonNull
-    List<ProductWithQuantity> productWithQuantities;
+    List<ProductAndQuantity> productWithQuantities;
 
     @JsonDeserialize(using = ToUpperCaseDeserializer.class)
     String vehicleNo;
@@ -56,3 +49,4 @@ public class InwardInventoryData {
 
     List<FileInformationDAO> fileInformations;
 }
+

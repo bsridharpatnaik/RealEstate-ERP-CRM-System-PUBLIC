@@ -120,4 +120,6 @@ public class InwardInventory extends ReusableFields implements Cloneable {
        ========================================================= */
 
     private String additionalInfo;
+
+    private Boolean createdFromPO;
 }

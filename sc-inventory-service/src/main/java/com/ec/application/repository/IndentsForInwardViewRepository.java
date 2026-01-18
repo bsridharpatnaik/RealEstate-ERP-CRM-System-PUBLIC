@@ -33,4 +33,8 @@ public interface IndentsForInwardViewRepository
 
     @Query("SELECT v FROM IndentsForInwardView v WHERE v.lineItemStatus IN :statuses AND v.quantity > v.totalInwardQuantity AND v.tenant =:tenant")
     List<IndentsForInwardView> getLineItemsForInward(@Param("statuses") Collection<String> statuses, @Param("tenant") String tenant);
+
+    @Query("SELECT v FROM IndentsForInwardView v WHERE v.lineItemCode = :lineItemCode AND v.tenant =:tenant")
+    List<IndentsForInwardView> getLineItemDetails(@Param("lineItemCode") String lineItemCode, @Param("tenant") String tenant);
+
 }

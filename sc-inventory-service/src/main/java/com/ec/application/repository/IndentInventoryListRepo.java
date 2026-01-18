@@ -15,6 +15,9 @@ public interface IndentInventoryListRepo extends BaseRepository<IndentInventoryL
     @Query("Select i from IndentInventoryList i where i.lineItemCode = :lineItemCode" )
     List<IndentInventoryList> findByLineItemCode(@Param("lineItemCode")String lineItemCode);
 
+    @Query("Select i from IndentInventoryList i where i.lineItemCode IN :lineItemCodes" )
+    List<IndentInventoryList> findByLineItemCodeIn(@Param("lineItemCodes")Collection<String> lineItemCodes);
+
     @Query("Select i from IndentInventoryList i where i.lineItemCode = :lineItemCode AND lineItemStatus IN :statuses" )
     List<IndentInventoryList> findByLineItemCodeAndStatuses(@Param("lineItemCode")String lineItemCode, @Param("statuses") Collection<String> statuses);
 }

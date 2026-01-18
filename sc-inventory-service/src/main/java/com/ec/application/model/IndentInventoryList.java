@@ -74,15 +74,6 @@ public class IndentInventoryList extends ReusableFields {
 
     private String purchaseOrderId;
 
-    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-    Double orderedQuantity;
-
-    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-    Double totalInwardQuantity;
-
-    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-    Double pendingQuantity;
-
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "indent_inward_mapping",
