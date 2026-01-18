@@ -30,8 +30,7 @@ public class IndentLineItemStatusResolver {
         String tenant =
                 tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
 
-        List<IndentsForInwardView> rows =
-                inwardViewRepo.getLineItemForInward(lineItemCode, tenant);
+        List<IndentsForInwardView> rows = inwardViewRepo.getLineItemForInward(lineItemCode, IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, tenant);
 
         double ordered = 0;
         double inwarded = 0;

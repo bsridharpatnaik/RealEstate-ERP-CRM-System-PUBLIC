@@ -6,6 +6,7 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.data.*;
 import com.ec.application.indentpo.IndentReconciliationTaskService;
 import com.ec.application.model.*;
@@ -93,7 +94,7 @@ public class InwardInventoryService {
 
     public List<PoDropdownItem> getPendingPoDropdown() {
         String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
-        List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(tenant);
+        List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, tenant);
 
         return rows.stream()
                 .map(r -> {
@@ -108,7 +109,7 @@ public class InwardInventoryService {
 
     public PoForInwardResponse getPoForInward(String poNumber) {
         String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
-        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItemsForPO(poNumber, tenant);
+        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, poNumber, tenant);
 
         if (rows.isEmpty()) {
             throw new IllegalStateException("No pending inward items for this PO and tenant");
@@ -153,7 +154,7 @@ public class InwardInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         InwardInventory inwardInventory = new InwardInventory();
         editAuthorizationService.validateCreateDate(iiData.getInwardDate());
-        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(iiData.getPoNumber(), tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName()));
+        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, iiData.getPoNumber(), tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName()));
 
         if (pendingItemsForInward.isEmpty()) {
             throw new IllegalArgumentException("No pending inward items found for the provided Purchase Order Number - " + iiData.getPoNumber());

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,4 +14,7 @@ import java.util.Optional;
 public interface IndentInventoryListRepo extends BaseRepository<IndentInventoryList, Long> {
     @Query("Select i from IndentInventoryList i where i.lineItemCode = :lineItemCode" )
     List<IndentInventoryList> findByLineItemCode(@Param("lineItemCode")String lineItemCode);
+
+    @Query("Select i from IndentInventoryList i where i.lineItemCode = :lineItemCode AND lineItemStatus IN :statuses" )
+    List<IndentInventoryList> findByLineItemCodeAndStatuses(@Param("lineItemCode")String lineItemCode, @Param("statuses") Collection<String> statuses);
 }

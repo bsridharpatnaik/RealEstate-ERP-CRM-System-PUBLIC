@@ -147,4 +147,11 @@ public class PurchaseOrderService extends ReusableFields {
     public void cancelPurchaseOrderById(String id) {
         poLifecycleManager.cancelIfAllowed(id);
     }
+
+    @Transactional
+    public void shortClosePurchaseOrder(ShortClosePoRequest request) {
+        if(request.getPurchaseOrderNo() == null)
+            throw new IllegalArgumentException("Purchase Order Number cannot be null");
+        poLifecycleManager.shortClosePo(request);
+    }
 }

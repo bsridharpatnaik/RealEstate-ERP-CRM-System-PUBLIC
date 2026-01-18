@@ -27,10 +27,17 @@ public class IndentReconciliationWorker {
         for (IndentReconciliationTask task : tasks) {
 
             try {
-                ThreadLocalStorage.setTenantName(task.getTenant());
+                // 1️⃣ Mark IN_PROGRESS (prevents double processing)
+                task.setStatus("IN_PROGRESS");
+                repo.save(task);
 
+                // 2️⃣ Set tenant explicitly
+                ThreadLocalStorage.setTenantName(task.getTenantSchema());
+
+                // 3️⃣ Resolve inward → line item status
                 statusResolver.resolve(task.getLineItemCode());
 
+                // 4️⃣ Recalculate indent
                 IndentInventoryList item =
                         indentInventoryListRepo
                                 .findByLineItemCode(task.getLineItemCode())
@@ -38,13 +45,22 @@ public class IndentReconciliationWorker {
 
                 completionEvaluator.evaluate(item.getIndentInventory());
 
+                // 5️⃣ Mark DONE
                 task.setStatus("DONE");
 
             } catch (Exception e) {
+
                 task.setRetryCount(task.getRetryCount() + 1);
                 task.setLastError(e.getMessage());
-                task.setStatus(task.getRetryCount() > 5 ? "FAILED" : "PENDING");
+
+                if (task.getRetryCount() >= 5) {
+                    task.setStatus("FAILED");
+                } else {
+                    task.setStatus("PENDING");
+                }
+
             } finally {
+                // 6️⃣ Always clear tenant
                 ThreadLocalStorage.setTenantName(null);
                 repo.save(task);
             }

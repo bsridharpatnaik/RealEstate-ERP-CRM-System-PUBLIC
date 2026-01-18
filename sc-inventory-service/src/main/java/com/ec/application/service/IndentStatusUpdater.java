@@ -30,11 +30,7 @@ public class IndentStatusUpdater {
 
         for (PurchaseOrderLine line : lines) {
             for (PurchaseOrderIndentRef ref : line.getIndentRefs()) {
-
-                IndentInventoryList item =
-                        indentInventoryListRepo.findByLineItemCode(
-                                ref.getIndentLineItemCode()
-                        ).get(0);
+                IndentInventoryList item = indentInventoryListRepo.findByLineItemCode(ref.getIndentLineItemCode()).get(0);
 
                 if (action == POIndentUpdateAction.CREATE_PO) {
                     item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_PO_CREATED);

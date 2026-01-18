@@ -54,4 +54,10 @@ public class PurchaseOrderController {
         purchaseOrderService.cancelPurchaseOrderById(id);
         return ResponseEntity.ok("Entity deleted");
     }
+
+    @PostMapping("/short-close")
+    public ResponseEntity<Void> shortClosePo(@RequestBody ShortClosePoRequest request) {
+        purchaseOrderService.shortClosePurchaseOrder(request);
+        return ResponseEntity.ok().build();
+    }
 }

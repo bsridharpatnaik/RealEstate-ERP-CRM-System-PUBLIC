@@ -69,6 +69,8 @@ public class PurchaseOrder extends ReusableFields {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double grandTotal;
 
+    private String shortCloseReason;
+
     @Column(name="notes", length = 2000)
     private String notes;
 

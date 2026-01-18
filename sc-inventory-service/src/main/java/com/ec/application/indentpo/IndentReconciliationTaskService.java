@@ -1,5 +1,7 @@
 package com.ec.application.indentpo;
 
+import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.service.TenantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,9 +18,11 @@ public class IndentReconciliationTaskService {
     public void enqueue(String lineItemCode) {
 
         IndentReconciliationTask task = new IndentReconciliationTask();
-        task.setTenant(tenantService.fetchTenantFromHeader());
+        task.setTenantSchema(ThreadLocalStorage.getTenantName()); // CURRENT tenant
         task.setLineItemCode(lineItemCode);
         task.setStatus("PENDING");
+        task.setRetryCount(0);
+
         repo.save(task);
     }
 }
