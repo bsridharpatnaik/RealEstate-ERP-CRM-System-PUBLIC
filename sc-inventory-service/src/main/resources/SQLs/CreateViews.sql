@@ -1055,7 +1055,7 @@ LEFT JOIN (
 ) iip ON iie.line_item_code = iip.line_item_code
 
 WHERE
-    iie.line_item_status IN ('PO Created', 'Partial Inward', 'INWARD COMPLETE')
+    iie.line_item_status IN ('PO Created', 'INWARD PARTIAL', 'INWARD COMPLETE')
     AND ii.is_deleted = 0
     AND iie.is_deleted = 0
     AND po.is_deleted = 0

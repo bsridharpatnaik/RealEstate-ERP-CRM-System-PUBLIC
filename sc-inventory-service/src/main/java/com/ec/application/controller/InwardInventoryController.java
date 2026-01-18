@@ -63,12 +63,6 @@ public class InwardInventoryController {
         return iiService.fetchInwardnventory(filterDataList, pageableUpdated);
     }
 
-    @ExceptionHandler({JpaSystemException.class})
-    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
-    }
-
     @PostMapping("/totals")
     @ResponseStatus(HttpStatus.OK)
     public List<ProductGroupedDAO> fetchAllInwardInventoryTotals(@RequestBody FilterDataList filterDataList)
@@ -120,5 +114,11 @@ public class InwardInventoryController {
     public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryUpdateData payload)
             throws Exception {
         return iiService.updateInwardInventory(id, payload);
+    }
+
+    @ExceptionHandler({JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
     }
 }

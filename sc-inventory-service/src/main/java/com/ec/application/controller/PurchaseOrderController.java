@@ -1,6 +1,7 @@
 package com.ec.application.controller;
 
 import com.ec.application.Filters.FilterDataList;
+import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,8 +58,14 @@ public class PurchaseOrderController {
     }
 
     @PostMapping("/short-close")
-    public ResponseEntity<Void> shortClosePo(@RequestBody ShortClosePoRequest request) {
-        purchaseOrderService.shortClosePurchaseOrder(request);
-        return ResponseEntity.ok().build();
+    public PurchaseOrder shortClosePo(@RequestBody ShortClosePoRequest request) {
+        PurchaseOrder po = purchaseOrderService.shortClosePurchaseOrder(request);
+        return po;
+    }
+
+    @ExceptionHandler({JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
     }
 }

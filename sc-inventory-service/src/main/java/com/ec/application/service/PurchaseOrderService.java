@@ -149,9 +149,10 @@ public class PurchaseOrderService extends ReusableFields {
     }
 
     @Transactional
-    public void shortClosePurchaseOrder(ShortClosePoRequest request) {
+    public PurchaseOrder shortClosePurchaseOrder(ShortClosePoRequest request) {
         if(request.getPurchaseOrderNo() == null)
             throw new IllegalArgumentException("Purchase Order Number cannot be null");
         poLifecycleManager.shortClosePo(request);
+        return purchaseOrderRepo.findByIdWithDetails(request.getPurchaseOrderNo()).get();
     }
 }
