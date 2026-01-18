@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PurchaseOrderLifecycleManager {
 
     private final PurchaseOrderRepo purchaseOrderRepo;
-    private final POLineInwardSummaryService inwardSummaryService;
     private final IndentStatusUpdater indentStatusUpdater;
     private final IndentInventoryListRepo indentInventoryListRepo;
     private final IndentCompletionEvaluator indentCompletionEvaluator;
@@ -36,7 +35,7 @@ public class PurchaseOrderLifecycleManager {
 
         po.setStatus(POStatusConstants.STATUS_CANCELLED);
         purchaseOrderRepo.save(po);
-        indentStatusUpdater.updateIndentStatuses(po.getLines(), POIndentUpdateAction.CANCEL_PO);
+        indentStatusUpdater.updateIndentStatuses(po, POIndentUpdateAction.CANCEL_PO);
     }
 
     @Transactional

@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.data.*;
-import com.ec.application.indentpo.IndentReconciliationTaskService;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.*;
@@ -83,9 +82,6 @@ public class InwardInventoryService {
 
     @Autowired
     TenantService tenantService;
-
-    @Autowired
-    IndentReconciliationTaskService indentReconciliationTaskService;
 
     @Autowired
     EditAuthorizationService editAuthorizationService;
@@ -164,9 +160,7 @@ public class InwardInventoryService {
         setFieldsFromPO(inwardInventory, iiData, pendingItemsForInward);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
-        for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
-            indentReconciliationTaskService.enqueue(io.getLineItemCode());
-        }
+        //updateIndentAndPOStatusAfterInwardCreation(inwardInventory);
         return inwardInventory;
     }
 

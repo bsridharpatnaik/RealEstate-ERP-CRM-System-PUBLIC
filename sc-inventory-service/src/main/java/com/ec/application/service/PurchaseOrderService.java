@@ -67,7 +67,7 @@ public class PurchaseOrderService extends ReusableFields {
         validator.validateIndentLineItems(request.getLineItems());
         PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
-        indentStatusUpdater.updateIndentStatuses(savedPO.getLines(), POIndentUpdateAction.CREATE_PO);
+        indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
         return savedPO;
     }
 

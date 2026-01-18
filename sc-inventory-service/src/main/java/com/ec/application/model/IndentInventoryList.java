@@ -47,6 +47,14 @@ public class IndentInventoryList extends ReusableFields {
     @Column(name = "quantity")
     Double quantity;
 
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    @Column(name = "quantity_received")
+    Double quantityReceived;
+
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    @Column(name = "quantity_pending")
+    Double quantityPending;
+
     @Column(name = "specification")
     String specification;
 
