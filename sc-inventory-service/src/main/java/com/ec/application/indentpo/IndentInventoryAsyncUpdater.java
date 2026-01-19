@@ -30,6 +30,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@UseDefaultTenant
 public class IndentInventoryAsyncUpdater {
 
     private final IndentInventoryListRepo indentInventoryListRepo;
@@ -39,13 +40,13 @@ public class IndentInventoryAsyncUpdater {
     private final IndentInventoryRepo indentInventoryRepo;
     private final InwardSyncFailureService inwardSyncFailureService;
 
-    private static final Logger log =
-            LoggerFactory.getLogger(IndentInventoryAsyncUpdater.class);
+    private static final Logger log = LoggerFactory.getLogger(IndentInventoryAsyncUpdater.class);
 
     // ============================================================
     // ASYNC ENTRY POINT (DTO-DRIVEN)
     // ============================================================
     @Async
+    @UseDefaultTenant
     public void updateIndentAfterInwardAsync(IndentInwardSyncDTO dto) throws JsonProcessingException {
 
         String tenantSchema = dto.getTenantSchema();
@@ -53,8 +54,6 @@ public class IndentInventoryAsyncUpdater {
         InwardActionType actionType = dto.getActionType();
 
         try {
-            ThreadLocalStorage.setTenantName(tenantSchema);
-
             log.info(
                     "[ASYNC-START] tenant={} inwardId={} action={} deltaCount={}",
                     tenantSchema,
@@ -91,6 +90,7 @@ public class IndentInventoryAsyncUpdater {
     // TENANT-SCOPED TRANSACTIONAL WORKER
     // ============================================================
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @UseDefaultTenant
     protected void doSyncIndentAndPO(IndentInwardSyncDTO dto) {
 
         if (ThreadLocalStorage.getTenantName() == null) {
