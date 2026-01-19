@@ -1,5 +1,5 @@
 2020-10-10 00:23:47,884 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-8 housekeeper] HikariPool-8 - Thread starvation or clock leap detected (housekeeper delta=22m35s814ms).
-2020-10-10 00:23:52,416 INFO com.ec.application.ReusableClasses.ScheduledTasks [scheduling-1] Sending Stock Notification Email in evening
+2020-10-10 00:23:52,416 INFO com.ec.application.scheduled.ScheduledTasks [scheduling-1] Sending Stock Notification Email in evening
 2020-10-10 00:23:53,169 INFO com.ec.application.service.StockService [scheduling-1] Fetching stock information
 2020-10-10 00:23:54,043 INFO com.ec.application.service.StockService [scheduling-1] Sending email for stock information
 2020-10-10 00:23:54,046 INFO com.ec.application.service.EmailService [scheduling-1] Getting email configuration from master
@@ -8,7 +8,7 @@
 2020-10-10 00:23:54,217 INFO freemarker.log._JULLoggerFactory$JULLogger [scheduling-1] Detected multiple classes with the same name, "com.ec.application.data.StockInformationExportDAO". Assuming it was a class-reloading. Clearing class introspection caches to release old data.
 2020-10-10 00:24:05,783 INFO com.ec.application.ReusableClasses.EmailHelper [scheduling-1] Email Sent
 2020-10-10 00:24:05,784 INFO com.ec.application.service.StockService [scheduling-1] saving stock information to DB
-2020-10-10 00:24:06,844 INFO com.ec.application.ReusableClasses.ScheduledTasks [scheduling-1] Sending Stock Notification Email in evening
+2020-10-10 00:24:06,844 INFO com.ec.application.scheduled.ScheduledTasks [scheduling-1] Sending Stock Notification Email in evening
 2020-10-10 00:24:07,045 INFO com.ec.application.service.EmailService [scheduling-1] Getting email configuration from master
 2020-10-10 00:24:07,046 INFO com.ec.application.service.EmailService [scheduling-1] Getting email configuration from master
 2020-10-10 00:24:07,051 INFO com.ec.application.ReusableClasses.EmailHelper [scheduling-1] Creating mimemessage

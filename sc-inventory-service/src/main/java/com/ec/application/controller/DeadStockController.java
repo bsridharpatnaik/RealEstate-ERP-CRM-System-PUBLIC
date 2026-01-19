@@ -1,7 +1,7 @@
 package com.ec.application.controller;
 
 import com.ec.application.config.SchemaConfig;
-import com.ec.application.datasync.DeadStockSyncJob;
+import com.ec.application.service.DeadStockSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,25 +21,11 @@ import java.util.stream.Collectors;
 public class DeadStockController {
 
     @Autowired
-    private DeadStockSyncJob deadStockSyncJob;
+    private DeadStockSyncService deadStockSyncService;
 
     @PostMapping("/sync")
-    public ResponseEntity<String> syncDeadStock() {
-
-        if (deadStockSyncJob.isRunning()) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body("Dead stock sync already running");
-        }
-
-        deadStockSyncJob.syncAllTenants();
-        return ResponseEntity.ok("Dead stock sync completed");
-    }
-
-    @GetMapping("/status")
-    public ResponseEntity<String> status() {
-        return ResponseEntity.ok(
-                deadStockSyncJob.isRunning() ? "RUNNING" : "IDLE"
-        );
+    public ResponseEntity<String> sync() {
+        deadStockSyncService.syncAllTenants();
+        return ResponseEntity.ok("Dead stock sync triggered");
     }
 }

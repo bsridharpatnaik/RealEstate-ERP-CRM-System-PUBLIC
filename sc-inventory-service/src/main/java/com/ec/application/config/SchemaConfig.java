@@ -19,9 +19,13 @@ public class SchemaConfig {
     @Value("${schemas.map}")
     private String schemasMapString;
 
-    private Map<String, String> schemaMap = new HashMap<>();
+    @Value("${master.schema}")
+    private String masterSchema;
 
+    private Map<String, String> schemaMap = new HashMap<>();
     private List<String> schemaList = new ArrayList<>();
+    private List<String> nonMasterSchemaList = new ArrayList<>();
+
 
     public SchemaConfig() {
     }
@@ -40,12 +44,14 @@ public class SchemaConfig {
                     .collect(Collectors.toMap(a -> a[0], a -> a[1]));
 
             schemaList = new ArrayList<>(schemaMap.keySet());
+            nonMasterSchemaList = schemaList.stream().filter(s -> !s.equals(masterSchema)).collect(Collectors.toList());
         }
     }
 
     public String getSchemaCode(String schemaName) {
         return schemaMap.get(schemaName);
     }
+
     public boolean isValidSchema(String schema) {
         return schemaMap.containsKey(schema);
     }
