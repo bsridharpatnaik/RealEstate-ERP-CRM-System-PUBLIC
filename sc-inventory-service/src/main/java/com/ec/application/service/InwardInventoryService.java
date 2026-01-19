@@ -393,6 +393,7 @@ public class InwardInventoryService {
                     .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
                     .mapToDouble(IndentsForInwardView::getQuantity)
                     .sum();
+
             Double inwardQuantity = pendingItemsForInward.stream()
                     .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
                     .mapToDouble(IndentsForInwardView::getTotalInwardQuantity)

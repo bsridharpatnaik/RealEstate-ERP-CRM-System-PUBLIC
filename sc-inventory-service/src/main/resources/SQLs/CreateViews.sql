@@ -1048,11 +1048,12 @@ INNER JOIN masterschema.contacts c
 
 LEFT JOIN (
     SELECT
-        line_item_code,
+        indent_entry_id,
         SUM(inward_quantity) AS total_inward_quantity
-    FROM indent_inward_mapping
-    GROUP BY line_item_code
-) iip ON iie.line_item_code = iip.line_item_code
+    FROM masterschema.indent_inward_mapping
+    GROUP BY indent_entry_id
+) iip
+ON iie.entryid = iip.indent_entry_id
 
 WHERE
     iie.line_item_status IN ('PO Created', 'INWARD PARTIAL', 'INWARD COMPLETE')

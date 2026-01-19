@@ -77,7 +77,10 @@ public class IndentInventoryList extends ReusableFields {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "indent_inward_mapping",
-            joinColumns = @JoinColumn(name = "line_item_code")
+            joinColumns = @JoinColumn(
+                    name = "indent_entry_id",
+                    referencedColumnName = "entryid"
+            )
     )
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Set<IndentInwardEntry> inwardEntries = new HashSet<>();
