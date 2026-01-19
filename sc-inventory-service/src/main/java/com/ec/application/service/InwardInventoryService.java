@@ -38,16 +38,10 @@ public class InwardInventoryService {
     InwardInventoryRepo inwardInventoryRepo;
 
     @Autowired
-    private AsyncService asyncService;
-
-    @Autowired
     InwardOutwardListRepo iolRepo;
 
     @Autowired
     ProductRepo productRepo;
-
-    @Autowired
-    ProductService productService;
 
     @Autowired
     SupplierRepo supplierRepo;
@@ -65,21 +59,6 @@ public class InwardInventoryService {
     WarehouseRepo warehouseRepo;
 
     @Autowired
-    GroupBySpecification groupBySpecification;
-
-    @Autowired
-    InventoryNotificationService inventoryNotificationService;
-
-    @Autowired
-    UserDetailsService userDetailService;
-
-    @Autowired
-    AsyncServiceInventory asyncServiceInventory;
-
-    @Autowired
-    ProjectConstantsService projectConstantsService;
-
-    @Autowired
     IndentsForInwardViewRepository indentsForInwardViewRepository;
 
     @Autowired
@@ -90,6 +69,9 @@ public class InwardInventoryService {
 
     @Autowired
     IndentInventoryAsyncUpdater indentInventoryAsyncUpdater;
+
+    @Autowired
+    PurchaseOrderShortClosedViewRepo purchaseOrderShortClosedViewRepo;
 
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
@@ -754,6 +736,10 @@ public class InwardInventoryService {
 
         InwardInventory inwardInventory = inwardInventoryOpt.get();
         editAuthorizationService.validateDeleteDate(inwardInventory.getDate());
+        if (purchaseOrderShortClosedViewRepo.existsById(inwardInventory.getPurchaseOrderNo())) {
+            throw new Exception("Cannot delete inward inventory linked to a short closed purchase order.");
+        }
+
         updateStockBeforeDelete(inwardInventory);
         removeOrphans(inwardInventory);
         InwardSnapshot snapshot = buildSnapshot(inwardInventory);
