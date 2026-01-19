@@ -1,5 +1,6 @@
 package com.ec.application.model;
 
+import com.ec.application.ReusableClasses.ReusableFields;
 import com.ec.application.constants.InwardActionType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +23,7 @@ import javax.persistence.*;
 @Getter
 @Setter
 @NoArgsConstructor
-public class InwardSyncFailure {
+public class InwardSyncFailure extends ReusableFields {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,12 +39,9 @@ public class InwardSyncFailure {
     @Column(name = "action_type", nullable = false, length = 20)
     private InwardActionType actionType;
 
-    /**
-     * Comma-separated indent line item codes
-     * Example: SMC-14/1,SMC-14/2
-     */
-    @Column(name = "line_item_codes", nullable = false, length = 2000)
-    private String lineItemCodes;
+    @Lob
+    @Column(name = "payload_json", nullable = false)
+    private String payloadJson;
 
     @Column(name = "retry_count", nullable = false)
     private int retryCount = 0;

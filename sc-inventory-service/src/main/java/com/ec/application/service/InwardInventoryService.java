@@ -165,7 +165,14 @@ public class InwardInventoryService {
         setFieldsFromPO(inwardInventory, iiData, pendingItemsForInward);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
-        indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(ThreadLocalStorage.getTenantName(), inwardInventory, InwardActionType.CREATE);
+        List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+
+        for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
+            deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), io.getQuantity()));
+        }
+
+        IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, deltas);
+        indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
         return inwardInventory;
     }
 
@@ -210,6 +217,11 @@ public class InwardInventoryService {
             throw new Exception("Supplier change not allowed for inward created from PO.");
         }
 
+        Map<String, Double> oldQuantityMap = new HashMap<>();
+        for (InwardOutwardList io : inward.getInwardOutwardList()) {
+            oldQuantityMap.put(io.getLineItemCode(), io.getQuantity());
+        }
+
         inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());
         inward.setVehicleNo(data.getVehicleNo());
         inward.setSupplierSlipNo(data.getSupplierSlipNo());
@@ -233,6 +245,7 @@ public class InwardInventoryService {
         for (ProductAndQuantity pq : data.getProductWithQuantities()) {
             qtyByProductId.put(pq.getProductId(), pq.getQuantity());
         }
+
 
         // -------------------------------------------------
         // 5️⃣ Update quantities + stock adjustment
@@ -282,7 +295,36 @@ public class InwardInventoryService {
         // 8️⃣ Trigger async indent / PO reconciliation
         // -------------------------------------------------
         if (Boolean.TRUE.equals(inward.getCreatedFromPO())) {
-            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(ThreadLocalStorage.getTenantName(), inward, InwardActionType.UPDATE);
+            List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+
+            for (InwardOutwardList io : inward.getInwardOutwardList()) {
+
+                Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+                Double newQty = io.getQuantity();
+
+                double delta = newQty - oldQty;
+
+                if (delta != 0.0) {
+                    deltas.add(
+                            new IndentInwardDeltaDTO(
+                                    io.getLineItemCode(),
+                                    delta                 // +ve or -ve
+                            )
+                    );
+                }
+            }
+
+            if (!deltas.isEmpty()) {
+
+                IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(
+                        ThreadLocalStorage.getTenantName(),
+                        inward.getInwardId(),
+                        InwardActionType.UPDATE,
+                        deltas
+                );
+
+                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
+            }
         }
 
         return inward;
@@ -464,95 +506,70 @@ public class InwardInventoryService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private void addReturnForInward(
-            Long inwardId,
-            Long productId,
-            Double quantity,
-            String remarks
-    ) throws Exception {
+    private void addReturnForInward(Long inwardId, Long productId, Double quantity, String remarks) throws Exception {
 
         log.info("Invoked addReturnForInward");
-
-        InwardInventory ii =
-                inwardInventoryRepo.findById(inwardId)
-                        .orElseThrow(() ->
-                                new Exception("Inward Inventory not found with id=" + inwardId)
-                        );
-
+        InwardInventory ii = inwardInventoryRepo.findById(inwardId).orElseThrow(() -> new Exception("Inward Inventory not found with id=" + inwardId));
         editAuthorizationService.validateUpdateDates(ii.getDate(), ii.getDate());
 
+        Map<String, Double> oldQuantityMap = new HashMap<>();
+        for (InwardOutwardList io : ii.getInwardOutwardList()) {
+            oldQuantityMap.put(io.getLineItemCode(), io.getQuantity());
+        }
         Set<RejectInwardList> rejectInwardList = ii.getRejectInwardList();
         Set<InwardOutwardList> inwardOutwardListSet = ii.getInwardOutwardList();
 
         for (InwardOutwardList inwardOutwardList : inwardOutwardListSet) {
-
             if (!inwardOutwardList.getProduct().getProductId().equals(productId)) {
                 continue;
             }
 
-            Long warehouseId =
-                    inwardOutwardList.getWarehouse().getWarehouseId();
-
+            Long warehouseId = inwardOutwardList.getWarehouse().getWarehouseId();
             Double currentQuantity = inwardOutwardList.getQuantity();
 
             if (quantity > currentQuantity) {
-                throw new Exception(
-                        "Reject quantity cannot be greater than existing quantity for product - " +
-                                inwardOutwardList.getProduct().getProductName()
-                );
+                throw new Exception("Reject quantity cannot be greater than existing quantity for product - " + inwardOutwardList.getProduct().getProductName());
             }
 
             // -----------------------------------------
             // Stock OUTWARD for returned quantity
             // -----------------------------------------
-            Double closingStock =
-                    stockService.updateStock(
-                            productId,
-                            warehouseId,
-                            quantity,
-                            "outward"
-                    );
+            Double closingStock = stockService.updateStock(productId, warehouseId, quantity, "outward");
 
             // -----------------------------------------
             // Record reject entry
             // -----------------------------------------
-            rejectInwardList.add(
-                    new RejectInwardList(
-                            new Date(),
-                            inwardOutwardList.getProduct(),
-                            currentQuantity,
-                            quantity,
-                            closingStock,
-                            remarks
-                    )
-            );
+            rejectInwardList.add(new RejectInwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity, quantity, closingStock, remarks));
 
             // -----------------------------------------
             // Reduce inward quantity
             // -----------------------------------------
             Double updatedQuantity = currentQuantity - quantity;
-
             inwardOutwardList.setQuantity(updatedQuantity);
             inwardOutwardList.setClosingStock(closingStock);
         }
 
         ii.setRejectInwardList(rejectInwardList);
         ii.setInwardOutwardList(inwardOutwardListSet);
-
-        // -----------------------------------------
-        // Save inward
-        // -----------------------------------------
         inwardInventoryRepo.save(ii);
 
         // -----------------------------------------
         // 🔑 Trigger async indent / PO reconciliation
         // -----------------------------------------
-        if (Boolean.TRUE.equals(ii.getCreatedFromPO())) {
-            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(
-                    ThreadLocalStorage.getTenantName(),
-                    ii,
-                    InwardActionType.UPDATE
-            );
+        List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+        for (InwardOutwardList io : ii.getInwardOutwardList()) {
+            Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+            Double newQty = io.getQuantity();
+            double delta = newQty - oldQty;
+
+            if (delta != 0.0) {
+                deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), delta));
+            }
+        }
+
+        if (!deltas.isEmpty()) {
+            IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(ThreadLocalStorage.getTenantName(), ii.getInwardId(), InwardActionType.UPDATE, deltas);
+            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
         }
     }
 
@@ -634,7 +651,6 @@ public class InwardInventoryService {
 
     }
 
-
     public List<ProductGroupedDAO> getTotalsForInward(FilterDataList filterDataList) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
@@ -707,7 +723,6 @@ public class InwardInventoryService {
 
     @Transactional(rollbackFor = Exception.class)
     public void deleteInwardInventoryById(Long id) throws Exception {
-
         Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
 
         if (!inwardInventoryOpt.isPresent()) {
@@ -721,7 +736,12 @@ public class InwardInventoryService {
         InwardSnapshot snapshot = buildSnapshot(inwardInventory);
 
         if (inwardInventory.getCreatedFromPO()) {
-            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(ThreadLocalStorage.getTenantName(), snapshot, InwardActionType.DELETE);
+            List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+            for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
+                deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), -io.getQuantity()));
+            }
+            IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.DELETE, deltas);
+            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
         }
         inwardInventoryRepo.softDeleteById(id);
     }

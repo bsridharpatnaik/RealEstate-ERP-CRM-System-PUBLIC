@@ -1,59 +1,80 @@
 package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.data.IndentInwardDeltaDTO;
+import com.ec.application.data.IndentInwardSyncDTO;
 import com.ec.application.indentpo.IndentInventoryAsyncUpdater;
 import com.ec.application.model.InwardSyncFailure;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.InwardSyncFailureRepo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @UseDefaultTenant
 public class InwardSyncRetryJob {
 
-    private final InwardSyncFailureRepo failureRepo;
-    private final IndentInventoryAsyncUpdater asyncUpdater;
+    Logger log = LoggerFactory.getLogger(InwardSyncRetryJob.class);
 
-    @Scheduled(cron = "0 */10 * * * *") // every 10 minutes
+    private static final int MAX_RETRIES = 5;
+
+    private final InwardSyncFailureRepo inwardSyncFailureRepo;
+    private final IndentInventoryAsyncUpdater indentInventoryAsyncUpdater;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * Retry failed inward → indent/PO syncs.
+     * Runs every 10 minutes.
+     */
+    @Scheduled(cron = "0 */10 * * * *")
     @UseDefaultTenant
     public void retryFailedInwardSyncs() {
         try {
+            List<InwardSyncFailure> failures = inwardSyncFailureRepo.findTop20ByStatusOrderByCreatedDateAsc("PENDING");
+            if (failures.isEmpty()) {
+                return;
+            }
 
-            List<InwardSyncFailure> failures = failureRepo.findTop20ByStatusOrderByCreatedDateAsc("PENDING");
+            log.info("[INWARD-RETRY] Found {} pending inward sync failures", failures.size());
 
             for (InwardSyncFailure failure : failures) {
-
                 try {
-                    Set<String> lineItemCodes =
-                            new HashSet<>(
-                                    Arrays.asList(
-                                            failure.getLineItemCodes().split(",")
-                                    )
-                            );
+                    log.info("[INWARD-RETRY-START] failureId={} tenant={} inwardId={} action={} retryCount={}", failure.getId(), failure.getTenantSchema(), failure.getInwardId(), failure.getActionType(), failure.getRetryCount());
+                    // ---------------------------------------------
+                    // Rebuild DTO from stored JSON payload
+                    // ---------------------------------------------
+                    IndentInwardSyncDTO dto = objectMapper.readValue(failure.getPayloadJson(), IndentInwardSyncDTO.class);
 
-                    asyncUpdater.updateIndentAfterInwardAsync(
-                            failure.getTenantSchema(),
-                            failure.getActionType(),
-                            failure.getInwardId(),
-                            lineItemCodes
-                    );
+                    // ---------------------------------------------
+                    // Replay async command
+                    // ---------------------------------------------
+                    indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(dto);
+
+                    // ---------------------------------------------
+                    // Mark success
+                    // ---------------------------------------------
                     failure.setStatus("SUCCESS");
+                    log.info("[INWARD-RETRY-SUCCESS] failureId={} inwardId={}", failure.getId(), failure.getInwardId());
                 } catch (Exception ex) {
-                    failure.setRetryCount(failure.getRetryCount() + 1);
+                    int nextRetryCount = failure.getRetryCount() + 1;
+                    failure.setRetryCount(nextRetryCount);
                     failure.setLastError(ex.getMessage());
-                    if (failure.getRetryCount() >= 5) {
+                    if (nextRetryCount >= MAX_RETRIES) {
                         failure.setStatus("FAILED");
+                        log.error("[INWARD-RETRY-FAILED] failureId={} inwardId={} retriesExceeded", failure.getId(), failure.getInwardId(), ex);
+
+                    } else {
+                        log.warn("[INWARD-RETRY-RETRYING] failureId={} inwardId={} retryCount={}", failure.getId(), failure.getInwardId(), nextRetryCount, ex);
                     }
                 }
-                failureRepo.save(failure);
+                inwardSyncFailureRepo.save(failure);
             }
         } finally {
             ThreadLocalStorage.setTenantName(null);
