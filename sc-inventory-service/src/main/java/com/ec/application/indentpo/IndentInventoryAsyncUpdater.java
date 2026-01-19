@@ -103,7 +103,7 @@ public class IndentInventoryAsyncUpdater {
         for (IndentInwardDeltaDTO delta : dto.getDeltas()) {
 
             String lineItemCode = delta.getLineItemCode();
-            Double qtyDelta = delta.getQuantityDelta();
+            Double qtyDelta = delta.getFinalQuantity();
 
             log.info(
                     "[ASYNC-LINE] lineItemCode={} delta={}",
@@ -127,7 +127,12 @@ public class IndentInventoryAsyncUpdater {
             // ------------------------------------------------
             // APPLY DELTA TO INWARD ENTRIES
             // ------------------------------------------------
-            applyDelta(indentLine, dto.getInwardId(), qtyDelta);
+            upsertAbsoluteQuantity(
+                    indentLine,
+                    dto.getInwardId(),
+                    delta.getFinalQuantity(),
+                    dto.getInwardDate()
+            );
 
             // ------------------------------------------------
             // RECALCULATE DERIVED FIELDS
@@ -180,50 +185,38 @@ public class IndentInventoryAsyncUpdater {
     // ============================================================
     // APPLY DELTA LOGIC (IDEMPOTENT)
     // ============================================================
-    private void applyDelta(
+    private void upsertAbsoluteQuantity(
             IndentInventoryList indentLine,
             Long inwardId,
-            Double qtyDelta
+            Double finalQty,
+            Date inwardDate
     ) {
 
-        if (qtyDelta == null || qtyDelta == 0.0) {
-            return;
-        }
-
-        IndentInwardEntry target = null;
+        IndentInwardEntry existing = null;
 
         for (IndentInwardEntry entry : indentLine.getInwardEntries()) {
             if (inwardId.equals(entry.getInwardId())) {
-                target = entry;
+                existing = entry;
                 break;
             }
         }
 
-        // DELETE or net-zero case
-        if (qtyDelta < 0) {
-            if (target != null) {
-                target.setQuantity(
-                        target.getQuantity() + qtyDelta
-                );
-
-                if (target.getQuantity() <= 0.0) {
-                    indentLine.getInwardEntries().remove(target);
-                }
+        // DELETE case
+        if (finalQty == null || finalQty <= 0.0) {
+            if (existing != null) {
+                indentLine.getInwardEntries().remove(existing);
             }
             return;
         }
 
-        // CREATE / UPDATE (positive delta)
-        if (target == null) {
-            indentLine.getInwardEntries().add(
-                    new IndentInwardEntry(
-                            inwardId,
-                            new Date(),     // date is informational here
-                            qtyDelta
-                    )
-            );
+        // CREATE / UPDATE
+        if (existing != null) {
+            existing.setQuantity(finalQty);
+            existing.setInwardDate(inwardDate);
         } else {
-            target.setQuantity(target.getQuantity() + qtyDelta);
+            indentLine.getInwardEntries().add(
+                    new IndentInwardEntry(inwardId, inwardDate, finalQty)
+            );
         }
     }
 

@@ -15,5 +15,5 @@ public class IndentInwardDeltaDTO {
      * +ve → inward added / increased
      * -ve → inward reduced / deleted
      */
-    private Double quantityDelta;
+    private Double finalQuantity;
 }

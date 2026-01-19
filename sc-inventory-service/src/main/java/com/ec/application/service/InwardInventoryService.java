@@ -171,7 +171,7 @@ public class InwardInventoryService {
             deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), io.getQuantity()));
         }
 
-        IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, deltas);
+        IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, deltas);
         indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
         return inwardInventory;
     }
@@ -295,6 +295,7 @@ public class InwardInventoryService {
         // 8️⃣ Trigger async indent / PO reconciliation
         // -------------------------------------------------
         if (Boolean.TRUE.equals(inward.getCreatedFromPO())) {
+
             List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
 
             for (InwardOutwardList io : inward.getInwardOutwardList()) {
@@ -302,13 +303,13 @@ public class InwardInventoryService {
                 Double oldQty = oldQuantityMap.get(io.getLineItemCode());
                 Double newQty = io.getQuantity();
 
-                double delta = newQty - oldQty;
+                // Only send if quantity actually changed
+                if (oldQty == null || Double.compare(oldQty, newQty) != 0) {
 
-                if (delta != 0.0) {
                     deltas.add(
                             new IndentInwardDeltaDTO(
                                     io.getLineItemCode(),
-                                    delta                 // +ve or -ve
+                                    newQty   // ✅ FINAL ABSOLUTE QUANTITY
                             )
                     );
                 }
@@ -317,6 +318,7 @@ public class InwardInventoryService {
             if (!deltas.isEmpty()) {
 
                 IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(
+                        inward.getDate(),
                         ThreadLocalStorage.getTenantName(),
                         inward.getInwardId(),
                         InwardActionType.UPDATE,
@@ -556,25 +558,44 @@ public class InwardInventoryService {
         // -----------------------------------------
         // 🔑 Trigger async indent / PO reconciliation
         // -----------------------------------------
-        List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
-        for (InwardOutwardList io : ii.getInwardOutwardList()) {
-            Double oldQty = oldQuantityMap.get(io.getLineItemCode());
-            Double newQty = io.getQuantity();
-            double delta = newQty - oldQty;
+        if (Boolean.TRUE.equals(ii.getCreatedFromPO())) {
 
-            if (delta != 0.0) {
-                deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), delta));
+            List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+
+            for (InwardOutwardList io : ii.getInwardOutwardList()) {
+
+                Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+                Double newQty = io.getQuantity();
+
+                // Only send if quantity actually changed
+                if (oldQty == null || Double.compare(oldQty, newQty) != 0) {
+
+                    deltas.add(
+                            new IndentInwardDeltaDTO(
+                                    io.getLineItemCode(),
+                                    newQty
+                            )
+                    );
+                }
             }
-        }
 
-        if (!deltas.isEmpty()) {
-            IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(ThreadLocalStorage.getTenantName(), ii.getInwardId(), InwardActionType.UPDATE, deltas);
-            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
+            if (!deltas.isEmpty()) {
+
+                IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(
+                        ii.getDate(),
+                        ThreadLocalStorage.getTenantName(),
+                        ii.getInwardId(),
+                        InwardActionType.UPDATE,
+                        deltas
+                );
+
+                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
+            }
         }
     }
 
-
-    private void setFieldsForInward(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception {
+    private void setFieldsForInward(InwardInventory inwardInventory, InwardInventoryData iiData) throws
+            Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
         inwardInventory.setDate(iiData.getInwardDate());
@@ -660,7 +681,8 @@ public class InwardInventoryService {
             return fetchInwardnventoryGroupBy();
     }
 
-    public List<InwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws Exception {
+    public List<InwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws
+            Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
         long size = spec != null ? inwardInventoryRepo.count(spec) : inwardInventoryRepo.count();
@@ -740,7 +762,7 @@ public class InwardInventoryService {
             for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
                 deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), -io.getQuantity()));
             }
-            IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.DELETE, deltas);
+            IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.DELETE, deltas);
             indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
         }
         inwardInventoryRepo.softDeleteById(id);

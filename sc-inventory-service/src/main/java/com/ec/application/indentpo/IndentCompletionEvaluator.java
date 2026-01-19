@@ -28,10 +28,14 @@ public class IndentCompletionEvaluator {
                 ).contains(li.getLineItemStatus())
         );
 
+        boolean anyInward = indent.getInventoryList().stream().anyMatch(li ->
+                IndentLineItemStatusConstants.STATUS_INWARD_PARTIAL.equals(li.getLineItemStatus())
+        );
+
         boolean poComplete = indent.getInventoryList().stream().allMatch(li ->
                 Arrays.asList(
                         IndentLineItemStatusConstants.STATUS_PO_CREATED,
-                        IndentLineItemStatusConstants.STATUS_INWARD_PARTIAL
+                        IndentLineItemStatusConstants.STATUS_CANCELLED
                 ).contains(li.getLineItemStatus())
         );
 
@@ -41,16 +45,15 @@ public class IndentCompletionEvaluator {
 
         if (allComplete) {
             indent.setIndentStatus(IndentStatusConstants.STATUS_CLOSED);
-        }
-        else if(poComplete){
+        } else if (anyInward) {
+            indent.setIndentStatus(IndentStatusConstants.STATUS_INWARD_PARTIAL);
+        } else if (poComplete) {
             indent.setIndentStatus(IndentStatusConstants.STATUS_PO_COMPLETED);
-        }
-        else if (anyPoCreated) {
+        } else if (anyPoCreated) {
             indent.setIndentStatus(IndentStatusConstants.STATUS_PO_PARTIAL);
         } else {
             indent.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         }
-
         indentInventoryRepo.save(indent);
     }
 }
