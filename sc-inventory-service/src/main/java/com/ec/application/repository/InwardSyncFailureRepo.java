@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface InwardSyncFailureRepo extends JpaRepository<InwardSyncFailure, Long> {
 
-    List<InwardSyncFailure> findTop20ByStatusOrderByCreatedDateAsc(String status);
+    List<InwardSyncFailure> findTop20ByStatusOrderByCreationDateAsc(String status);
 
     boolean existsByTenantSchemaAndInwardIdAndActionTypeAndStatus(
             String tenantSchema,

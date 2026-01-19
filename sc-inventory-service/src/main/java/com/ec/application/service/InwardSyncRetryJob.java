@@ -37,7 +37,7 @@ public class InwardSyncRetryJob {
     @UseDefaultTenant
     public void retryFailedInwardSyncs() {
         try {
-            List<InwardSyncFailure> failures = inwardSyncFailureRepo.findTop20ByStatusOrderByCreatedDateAsc("PENDING");
+            List<InwardSyncFailure> failures = inwardSyncFailureRepo.findTop20ByStatusOrderByCreationDateAsc("PENDING");
             if (failures.isEmpty()) {
                 return;
             }
