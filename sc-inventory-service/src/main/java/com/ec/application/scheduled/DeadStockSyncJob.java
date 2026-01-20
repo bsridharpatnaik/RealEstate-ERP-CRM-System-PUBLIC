@@ -1,5 +1,6 @@
 package com.ec.application.scheduled;
 
+import com.ec.application.service.DeadStockSyncOrchestrator;
 import com.ec.application.service.DeadStockSyncService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DeadStockSyncJob {
 
-    private final DeadStockSyncService deadStockSyncService;
+    private final DeadStockSyncOrchestrator deadStockSyncService;
 
     Logger log = LoggerFactory.getLogger(DeadStockSyncJob.class);
 

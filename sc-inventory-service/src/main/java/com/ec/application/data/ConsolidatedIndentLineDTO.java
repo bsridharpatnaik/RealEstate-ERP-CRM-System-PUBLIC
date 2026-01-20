@@ -33,5 +33,5 @@ public class ConsolidatedIndentLineDTO {
     private String lineItemStatus;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date creationDate;
-    private DeadStockDTO deadStock;
+    private DeadStockDTOForIndent deadStock;
 }

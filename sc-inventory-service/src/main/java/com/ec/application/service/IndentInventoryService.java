@@ -511,9 +511,9 @@ public class IndentInventoryService {
         return result;
     }
 
-    private DeadStockDTO buildDummyDeadStock() {
+    private DeadStockDTOForIndent buildDummyDeadStock() {
 
-        DeadStockDTO deadStockDTO = new DeadStockDTO();
+        DeadStockDTOForIndent deadStockDTO = new DeadStockDTOForIndent();
 
         // Total dead stock
         deadStockDTO.setToalDealStock(1250.75);

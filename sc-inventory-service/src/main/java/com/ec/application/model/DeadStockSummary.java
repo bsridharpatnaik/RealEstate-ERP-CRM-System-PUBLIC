@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -20,6 +21,7 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Audited
 public class DeadStockSummary extends ReusableFields {
 
     @Id
@@ -32,6 +34,9 @@ public class DeadStockSummary extends ReusableFields {
     @Column(nullable = false)
     private Long productId;
 
+    @Column(nullable = false, length = 50)
+    private String productCode;
+
     @Column(nullable = false, length = 150)
     private String productName;
 
@@ -43,10 +48,6 @@ public class DeadStockSummary extends ReusableFields {
 
     @Column(nullable = false)
     private Double quantityInHand;
-
-    /** copied from tenant Stock.lastModifiedDate */
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date sourceLastModifiedDate;
 
     /** when sync job ran */
     @Temporal(TemporalType.TIMESTAMP)

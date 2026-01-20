@@ -140,7 +140,7 @@ public class PopulateDropdownService {
         List<String> tenantNames = new ArrayList<>(schemaConfig.getSchemaMap().keySet());
         List<String> tenantNamesUpdated = new ArrayList<>();
         for (String tenantName : tenantNames) {
-            tenantNamesUpdated.add(tenantService.removePrefixForSuncity(tenantName));
+            tenantNamesUpdated.add(tenantService.changeTenantForSuncity(tenantName));
         }
         return tenantNamesUpdated;
     }

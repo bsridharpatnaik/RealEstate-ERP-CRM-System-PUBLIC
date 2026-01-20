@@ -62,7 +62,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             return true;
         }
 
-        String tenantName = tenantService.addPrefixForSuncity(request.getHeader("tenant-id"));
+        String tenantName = tenantService.changeTenantForSuncity(request.getHeader("tenant-id"));
 
         // Validate tenants initialized
         if (schemaConfig.getSchemaMap() == null || schemaConfig.getSchemaMap().isEmpty()) {

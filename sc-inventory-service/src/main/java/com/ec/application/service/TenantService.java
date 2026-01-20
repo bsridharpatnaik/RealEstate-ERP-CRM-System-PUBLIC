@@ -33,26 +33,6 @@ public class TenantService {
         }
     }
 
-    public String addPrefixForSuncity(String tenantName) {
-        if (profile.contains("sc-") && profile.contains("new")) {
-            tenantName = "new" + tenantName;
-        }
-        if (profile.contains("sc-") && profile.contains("v2")) {
-            tenantName = tenantName + "v2";
-        }
-        return tenantName;
-    }
-
-    public String removePrefixForSuncity(String tenantName) {
-        if (profile.contains("sc-") && profile.contains("new")) {
-            tenantName = tenantName.replace("new", "");
-        }
-        if (profile.contains("sc-") && profile.contains("v2")) {
-            tenantName = tenantName.replace("v2", "");
-        }
-        return tenantName;
-    }
-
     public String fetchTenantFromHeader() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attrs == null) {
@@ -65,10 +45,21 @@ public class TenantService {
         return tenantId;
     }
 
-    public String changeTenantForSuncity(String tenant) {
-        if (instanceService.getInstance().equals(InstanceList.suncity)) {
-            tenant = addPrefixForSuncity(tenant);
+    public String changeTenantForSuncity(String tenantName) {
+
+        if (profile.contains("sc-") && profile.contains("new")) {
+            if (!tenantName.contains("new")) {
+                tenantName = "new" + tenantName;
+                return tenantName;
+            }
+
         }
-        return tenant;
+        if (profile.contains("sc-") && profile.contains("v2")) {
+            if (!tenantName.contains("v2")) {
+                tenantName = tenantName + "v2";
+                return tenantName;
+            }
+        }
+        return tenantName;
     }
 }

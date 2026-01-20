@@ -1,6 +1,7 @@
 package com.ec.application.controller;
 
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.service.DeadStockSyncOrchestrator;
 import com.ec.application.service.DeadStockSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +22,11 @@ import java.util.stream.Collectors;
 public class DeadStockController {
 
     @Autowired
-    private DeadStockSyncService deadStockSyncService;
+    private DeadStockSyncOrchestrator deadStockSyncOrchestrator;
 
     @PostMapping("/sync")
     public ResponseEntity<String> sync() {
-        deadStockSyncService.syncAllTenants();
+        deadStockSyncOrchestrator.syncAllTenants();
         return ResponseEntity.ok("Dead stock sync triggered");
     }
 }

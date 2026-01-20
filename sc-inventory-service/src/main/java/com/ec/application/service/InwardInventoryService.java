@@ -76,7 +76,7 @@ public class InwardInventoryService {
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     public List<PoDropdownItem> getPendingPoDropdown() {
-        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
+        String tenant = tenantService.changeTenantForSuncity(ThreadLocalStorage.getTenantName());
         List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, tenant);
 
         return rows.stream()
@@ -91,7 +91,7 @@ public class InwardInventoryService {
     }
 
     public PoForInwardResponse getPoForInward(String poNumber) {
-        String tenant = tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName());
+        String tenant = tenantService.changeTenantForSuncity(ThreadLocalStorage.getTenantName());
         List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, poNumber, tenant);
 
         if (rows.isEmpty()) {
@@ -137,7 +137,7 @@ public class InwardInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         InwardInventory inwardInventory = new InwardInventory();
         editAuthorizationService.validateCreateDate(iiData.getInwardDate());
-        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, iiData.getPoNumber(), tenantService.removePrefixForSuncity(ThreadLocalStorage.getTenantName()));
+        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, iiData.getPoNumber(), tenantService.changeTenantForSuncity(ThreadLocalStorage.getTenantName()));
 
         if (pendingItemsForInward.isEmpty()) {
             throw new IllegalArgumentException("No pending inward items found for the provided Purchase Order Number - " + iiData.getPoNumber());

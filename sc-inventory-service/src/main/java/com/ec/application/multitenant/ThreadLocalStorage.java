@@ -5,6 +5,7 @@ public class ThreadLocalStorage {
 
     public static void setTenantName(String tenantName) {
         System.out.println("Setting Tenant to : " + tenantName);
+
         tenant.set(tenantName);
     }
 
