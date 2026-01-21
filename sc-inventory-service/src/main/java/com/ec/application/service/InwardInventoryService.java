@@ -76,7 +76,7 @@ public class InwardInventoryService {
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     public List<PoDropdownItem> getPendingPoDropdown() {
-        String tenant = tenantService.changeTenantForSuncity(ThreadLocalStorage.getTenantName());
+        String tenant = ThreadLocalStorage.getTenantName();
         List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, tenant);
 
         return rows.stream()
@@ -91,7 +91,7 @@ public class InwardInventoryService {
     }
 
     public PoForInwardResponse getPoForInward(String poNumber) {
-        String tenant = tenantService.changeTenantForSuncity(ThreadLocalStorage.getTenantName());
+        String tenant = ThreadLocalStorage.getTenantName();
         List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, poNumber, tenant);
 
         if (rows.isEmpty()) {
@@ -137,7 +137,7 @@ public class InwardInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         InwardInventory inwardInventory = new InwardInventory();
         editAuthorizationService.validateCreateDate(iiData.getInwardDate());
-        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, iiData.getPoNumber(), tenantService.changeTenantForSuncity(ThreadLocalStorage.getTenantName()));
+        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, iiData.getPoNumber(), ThreadLocalStorage.getTenantName());
 
         if (pendingItemsForInward.isEmpty()) {
             throw new IllegalArgumentException("No pending inward items found for the provided Purchase Order Number - " + iiData.getPoNumber());
@@ -163,37 +163,14 @@ public class InwardInventoryService {
 
         log.info("Invoked updateInwardInventory for id={}", inwardId);
 
-        // -------------------------------------------------
-        // 1️⃣ Fetch existing inward
-        // -------------------------------------------------
-        InwardInventory inward =
-                inwardInventoryRepo.findById(inwardId)
-                        .orElseThrow(() ->
-                                new Exception("Inward Inventory not found with id=" + inwardId)
-                        );
-
-        // -------------------------------------------------
-        // 2️⃣ Authorization &  validation
-        // -------------------------------------------------
+        InwardInventory inward = inwardInventoryRepo.findById(inwardId).orElseThrow(() -> new Exception("Inward Inventory not found with id=" + inwardId));
         editAuthorizationService.validateUpdateDates(inward.getDate(), inward.getDate());
-        Set<Long> existingProductIds =
-                inward.getInwardOutwardList()
-                        .stream()
-                        .map(io -> io.getProduct().getProductId())
-                        .collect(Collectors.toSet());
-
-        Set<Long> payloadProductIds =
-                data.getProductWithQuantities()
-                        .stream()
-                        .map(ProductAndQuantity::getProductId)
-                        .collect(Collectors.toSet());
+        Set<Long> existingProductIds = inward.getInwardOutwardList().stream().map(io -> io.getProduct().getProductId()).collect(Collectors.toSet());
+        Set<Long> payloadProductIds = data.getProductWithQuantities().stream().map(ProductAndQuantity::getProductId).collect(Collectors.toSet());
 
         if (!existingProductIds.equals(payloadProductIds)) {
             throw new Exception("Product list mismatch during inward update. " + "Adding or removing products is not allowed.");
         }
-        // -------------------------------------------------
-        // 3️⃣ Update header fields
-        // -------------------------------------------------
 
         if (inward.getCreatedFromPO() && inward.getSupplier().getContactId() != data.getSupplierId()) {
             throw new Exception("Supplier change not allowed for inward created from PO.");
@@ -220,7 +197,7 @@ public class InwardInventoryService {
         }
 
         // -------------------------------------------------
-        // 4️⃣ Build lookup map from request
+        // Build lookup map from request
         // -------------------------------------------------
         Map<Long, Double> qtyByProductId = new HashMap<Long, Double>();
 
@@ -267,50 +244,32 @@ public class InwardInventoryService {
             }
 
             // ---------------------------------------------
-            // 5️⃣.2 Update quantity
+            // Update quantity
             // ---------------------------------------------
             io.setQuantity(newQty);
         }
         inwardInventoryRepo.save(inward);
 
         // -------------------------------------------------
-        // 8️⃣ Trigger async indent / PO reconciliation
+        // Trigger async indent / PO reconciliation
         // -------------------------------------------------
         if (Boolean.TRUE.equals(inward.getCreatedFromPO())) {
 
             List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
-
             for (InwardOutwardList io : inward.getInwardOutwardList()) {
-
                 Double oldQty = oldQuantityMap.get(io.getLineItemCode());
                 Double newQty = io.getQuantity();
-
                 // Only send if quantity actually changed
                 if (oldQty == null || Double.compare(oldQty, newQty) != 0) {
-
-                    deltas.add(
-                            new IndentInwardDeltaDTO(
-                                    io.getLineItemCode(),
-                                    newQty   // ✅ FINAL ABSOLUTE QUANTITY
-                            )
-                    );
+                    deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), newQty));
                 }
             }
 
             if (!deltas.isEmpty()) {
-
-                IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(
-                        inward.getDate(),
-                        ThreadLocalStorage.getTenantName(),
-                        inward.getInwardId(),
-                        InwardActionType.UPDATE,
-                        deltas
-                );
-
+                IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inward.getDate(), ThreadLocalStorage.getTenantName(), inward.getInwardId(), InwardActionType.UPDATE, deltas);
                 indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
             }
         }
-
         return inward;
     }
 

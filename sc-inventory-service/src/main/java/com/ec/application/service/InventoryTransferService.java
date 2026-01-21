@@ -86,83 +86,42 @@ public class InventoryTransferService {
             try {
                 // DEBIT SOURCE
                 Double sourceClosingStock = withTenant(sourceTenant, () ->
-                        stockService.updateStock(
-                                item.getProductId(),
-                                sourceWarehouse.getWarehouseId(),
-                                item.getQuantity(),
-                                "outward"
-                        )
-                );
+                        stockService.updateStock(item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity(), "outward"));
 
                 try {
                     // CREDIT TARGET
                     Double targetClosingStock = withTenant(targetTenant, () ->
-                            stockService.updateStock(
-                                    item.getProductId(),
-                                    targetWarehouse.getWarehouseId(),
-                                    item.getQuantity(),
-                                    "inward"
-                            )
-                    );
+                            stockService.updateStock(item.getProductId(), targetWarehouse.getWarehouseId(), item.getQuantity(), "inward"));
 
                     // SET CLOSING STOCKS ONLY ON FULL SUCCESS
                     item.setSourceClosingStock(sourceClosingStock);
                     item.setTargetClosingStock(targetClosingStock);
-
                     successfulItems.add(item);
-
-                    itemResults.add(new TransferItemResult(
-                            item.getProductId(),
-                            true,
-                            "Transfer successful"
-                    ));
-
+                    itemResults.add(new TransferItemResult(item.getProductId(), true, "Transfer successful"));
                 } catch (Exception creditEx) {
 
                     // 3️⃣ COMPENSATE DEBIT
                     withTenant(sourceTenant, () -> {
-                        stockService.updateStock(
-                                item.getProductId(),
-                                sourceWarehouse.getWarehouseId(),
-                                item.getQuantity(),
-                                "inward"
-                        );
+                        stockService.updateStock(item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity(), "inward");
                         return null;
                     });
 
-                    itemResults.add(new TransferItemResult(
-                            item.getProductId(),
-                            false,
-                            "Credit failed: " + creditEx.getMessage()
-                    ));
+                    itemResults.add(new TransferItemResult(item.getProductId(), false, "Credit failed: " + creditEx.getMessage()));
                 }
 
             } catch (Exception debitEx) {
-                itemResults.add(new TransferItemResult(
-                        item.getProductId(),
-                        false,
-                        "Debit failed: " + debitEx.getMessage()
-                ));
+                itemResults.add(new TransferItemResult(item.getProductId(), false, "Debit failed: " + debitEx.getMessage()));
             }
         }
-
         /* =====================================================
            PERSIST ONLY SUCCESSFUL ITEMS
            ===================================================== */
         transfer.setItems(successfulItems);
-
         if (!successfulItems.isEmpty()) {
             withTenant(masterSchema, () -> inventoryTransferRepository.save(transfer));
         }
-
-        boolean fullySuccessful =
-                itemResults.stream().allMatch(TransferItemResult::isSuccess);
-
-        return new InventoryTransferResult(
-                transfer.getTransferId(),
-                fullySuccessful,
-                itemResults
-        );
+        boolean fullySuccessful = itemResults.stream().allMatch(TransferItemResult::isSuccess);
+        return new InventoryTransferResult(transfer.getTransferId(), fullySuccessful, itemResults);
     }
 
     /* =====================================================
@@ -175,34 +134,18 @@ public class InventoryTransferService {
      * Stock correctness is enforced during debit.
      */
     private void validateSourceStockAvailability(CreateTransferDTO transfer) throws Exception {
-
         withTenant(transfer.getSourceTenant(), () -> {
-
             List<Long> productIds = transfer.getItems()
                     .stream()
                     .map(InventoryTransferItemDTO::getProductId)
                     .collect(Collectors.toList());
-
-            Map<Long, Double> stockMap =
-                    stockService.findStockForProductsInWarehouse(
-                            transfer.getSourceWarehouseId(),
-                            productIds,
-                            transfer.getSourceTenant()
-                    );
-
+            Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(transfer.getSourceWarehouseId(), productIds, transfer.getSourceTenant());
             List<LowStockItem> lowStockItems = new ArrayList<>();
-
             for (InventoryTransferItemDTO item : transfer.getItems()) {
                 double available = stockMap.getOrDefault(item.getProductId(), 0.0);
 
                 if (available < item.getQuantity()) {
-                    lowStockItems.add(
-                            new LowStockItem(
-                                    item.getProductId(),
-                                    available,
-                                    item.getQuantity()
-                            )
-                    );
+                    lowStockItems.add(new LowStockItem(item.getProductId(), available, item.getQuantity()));
                 }
             }
 
@@ -283,15 +226,13 @@ public class InventoryTransferService {
         if (transfer.getItems().size() > 5)
             throw new IllegalArgumentException("Maximum 5 items allowed");
 
-        if (transfer.getSourceTenant().equalsIgnoreCase(transfer.getTargetTenant())
-                && transfer.getSourceWarehouseId().equals(transfer.getTargetWarehouseId())) {
+        if (transfer.getSourceTenant().equalsIgnoreCase(transfer.getTargetTenant()) && transfer.getSourceWarehouseId().equals(transfer.getTargetWarehouseId())) {
             throw new IllegalArgumentException("Source and target warehouse must be different");
         }
 
         for (InventoryTransferItemDTO item : transfer.getItems()) {
             if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                throw new IllegalArgumentException(
-                        "Invalid quantity for product " + item.getProductId());
+                throw new IllegalArgumentException("Invalid quantity for product " + item.getProductId());
             }
         }
     }
@@ -301,17 +242,14 @@ public class InventoryTransferService {
         Set<Long> productIds = new HashSet<>();
         for (InventoryTransferItemDTO item : transfer.getItems()) {
             if (!productIds.add(item.getProductId())) {
-                throw new IllegalArgumentException(
-                        "Duplicate product in transfer: " + item.getProductId());
+                throw new IllegalArgumentException("Duplicate product in transfer: " + item.getProductId());
             }
         }
     }
 
     private void replaceTenantNamesForSuncity(CreateTransferDTO transfer) {
-        transfer.setSourceTenant(
-                tenantService.changeTenantForSuncity(transfer.getSourceTenant()));
-        transfer.setTargetTenant(
-                tenantService.changeTenantForSuncity(transfer.getTargetTenant()));
+        transfer.setSourceTenant(transfer.getSourceTenant());
+        transfer.setTargetTenant(transfer.getTargetTenant());
     }
 
     /* =====================================================
@@ -341,22 +279,10 @@ public class InventoryTransferService {
             String tenant, Long productId, Long warehouseId) {
 
         try {
-            ThreadLocalStorage.setTenantName(
-                    tenantService.changeTenantForSuncity(tenant)
-            );
+            ThreadLocalStorage.setTenantName(tenant);
 
-            Double stock =
-                    stockService.findStockForProductWarehouse(productId, warehouseId);
-
-            return ResponseEntity.ok(
-                    new CurrentStockResponse(
-                            tenant,
-                            productId,
-                            warehouseId,
-                            stock == null ? 0.0 : stock
-                    )
-            );
-
+            Double stock = stockService.findStockForProductWarehouse(productId, warehouseId);
+            return ResponseEntity.ok(new CurrentStockResponse(tenant, productId, warehouseId, stock == null ? 0.0 : stock));
         } finally {
             ThreadLocalStorage.setTenantName(null);
         }
@@ -364,14 +290,13 @@ public class InventoryTransferService {
 
     public List<CurrentStockResponse> fetchCurrentStockInBulk(BulkCurrentStockRequest request) throws Exception {
         try {
-            String sourceTenant = tenantService.changeTenantForSuncity(request.getTenant());
+            String sourceTenant = request.getTenant();
             ThreadLocalStorage.setTenantName(sourceTenant);
             Map<Long, Double> stockMap = stockService.findStockForProductsInWarehouse(request.getWarehouseId(), request.getProductIds(), sourceTenant);
             List<CurrentStockResponse> response = new ArrayList<>();
 
             for (Long productId : request.getProductIds()) {
-                response.add(
-                        new CurrentStockResponse(request.getTenant(), productId, request.getWarehouseId(), stockMap.getOrDefault(productId, 0.0)));
+                response.add(new CurrentStockResponse(request.getTenant(), productId, request.getWarehouseId(), stockMap.getOrDefault(productId, 0.0)));
             }
             return response;
         } finally {
@@ -380,7 +305,6 @@ public class InventoryTransferService {
     }
 
     public InventoryTransfer getOneInventoryTransfer(Long transferId) {
-        InventoryTransfer transfer = inventoryTransferRepository.findById(transferId).orElseThrow(() -> new IllegalArgumentException("Inventory Transfer not found"));
-        return transfer;
+        return inventoryTransferRepository.findById(transferId).orElseThrow(() -> new IllegalArgumentException("Inventory Transfer not found"));
     }
 }

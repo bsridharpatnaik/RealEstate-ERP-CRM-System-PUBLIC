@@ -1,6 +1,5 @@
--- use suncitynxv2,kalpavrishv2,riddhisiddhiv2,smartcityv2,businessparkv2,drgtrdcntrv2,citycenterv2,schoolv2,bhaavbhumiv2,dhabbav2,mhvrtrdcntrv2
-
--- use suncitynxv2;
+-- use suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark,drgtrdcntr,citycenter,school,bhaavbhumi,dhabba,mhvrtrdcntr
+use mhvrtrdcntr;
 CREATE OR replace VIEW all_inventory_view
 AS
   SELECT row_number()

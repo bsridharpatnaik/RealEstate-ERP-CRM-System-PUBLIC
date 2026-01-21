@@ -44,22 +44,4 @@ public class TenantService {
         }
         return tenantId;
     }
-
-    public String changeTenantForSuncity(String tenantName) {
-
-        if (profile.contains("sc-") && profile.contains("new")) {
-            if (!tenantName.contains("new")) {
-                tenantName = "new" + tenantName;
-                return tenantName;
-            }
-
-        }
-        if (profile.contains("sc-") && profile.contains("v2")) {
-            if (!tenantName.contains("v2")) {
-                tenantName = tenantName + "v2";
-                return tenantName;
-            }
-        }
-        return tenantName;
-    }
 }

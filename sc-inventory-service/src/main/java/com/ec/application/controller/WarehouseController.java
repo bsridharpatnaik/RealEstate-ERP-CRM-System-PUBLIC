@@ -58,7 +58,7 @@ public class WarehouseController {
     @GetMapping("/idandnames")
     public List<IdNameProjections> returnIdandNames(@RequestParam(required = false) String tenantName) {
         if (tenantName != null && !tenantName.isEmpty()) {
-            ThreadLocalStorage.setTenantName(tenantService.changeTenantForSuncity(tenantName));
+            ThreadLocalStorage.setTenantName(tenantName);
         }
         return warehouseService.findIdAndNames();
     }

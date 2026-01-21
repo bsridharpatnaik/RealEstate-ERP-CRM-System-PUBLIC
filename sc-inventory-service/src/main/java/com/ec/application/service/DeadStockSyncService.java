@@ -36,7 +36,6 @@ public class DeadStockSyncService {
 
     public void syncSingleTenant(String tenantSchema) {
         String masterSchema = schemaConfig.getMasterSchema();
-        String tenantWithPrefix = tenantService.changeTenantForSuncity(tenantSchema);
         System.out.println("▶️ Starting DeadStock sync for tenant: " + tenantSchema);
 
         try {
@@ -51,7 +50,7 @@ public class DeadStockSyncService {
             }
 
             // ---------- Step 2: Fetch dead stocks from TENANT ----------
-            ThreadLocalStorage.setTenantName(tenantWithPrefix);
+            ThreadLocalStorage.setTenantName(tenantSchema);
             List<Stock> stocks = stockRepo.findDeadStocksUpdatedAfter(lastSyncTime);
 
             System.out.println("📦 Dead stock records fetched: " + stocks.size());

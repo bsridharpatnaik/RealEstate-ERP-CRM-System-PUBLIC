@@ -1,5 +1,6 @@
 package com.ec.application.repository;
 
+import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.model.DeadStockSummary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 @Repository
-public interface DeadStockSummaryRepo extends JpaRepository<DeadStockSummary, Long> {
+public interface DeadStockSummaryRepo extends BaseRepository<DeadStockSummary, Long> {
 
     List<DeadStockSummary> findByTenantSchema(String tenantSchema);
 

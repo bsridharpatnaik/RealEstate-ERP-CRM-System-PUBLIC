@@ -132,6 +132,11 @@ public class PopulateDropdownService {
                 morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
                 morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
                 morDropdownDataList.setTenants(fetchTenantNames());
+
+            case "deadstock":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setTenants(fetchTenantNames());
         }
         return morDropdownDataList;
     }
@@ -140,7 +145,7 @@ public class PopulateDropdownService {
         List<String> tenantNames = new ArrayList<>(schemaConfig.getSchemaMap().keySet());
         List<String> tenantNamesUpdated = new ArrayList<>();
         for (String tenantName : tenantNames) {
-            tenantNamesUpdated.add(tenantService.changeTenantForSuncity(tenantName));
+            tenantNamesUpdated.add(tenantName);
         }
         return tenantNamesUpdated;
     }
