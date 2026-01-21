@@ -14,6 +14,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class DeadStockDTOForIndent {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
-    private Double toalDealStock;
+    private Double toalDeadStock;
     List<Map<String, Double>> detailedDeadStock;
 }

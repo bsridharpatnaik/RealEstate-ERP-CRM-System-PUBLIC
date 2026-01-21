@@ -20,4 +20,7 @@ public interface DeadStockSummaryRepo extends BaseRepository<DeadStockSummary, L
     Date findLastSyncTime();
 
     List<DeadStockSummary> findByTenantSchemaAndProductIdAndWarehouseId(String tenantSchema, Long productId, Long warehouseId);
+
+    @Query("SELECT d FROM DeadStockSummary d WHERE d.productId IN :productIds")
+    List<DeadStockSummary> fetchDeadStockByProductIds(@Param("productIds") List<Long> productIds);
 }

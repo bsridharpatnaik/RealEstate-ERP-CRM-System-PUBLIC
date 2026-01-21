@@ -62,6 +62,9 @@ public class IndentInventoryService {
     @Autowired
     TenantService tenantService;
 
+    @Autowired
+    DeadStockService deadStockService;
+
     List<String> indentPOEligibleStatuses = Arrays.asList(IndentStatusConstants.STATUS_APPROVED, IndentStatusConstants.STATUS_PO_PARTIAL);
     List<String> indentLineItemPoEligibleStatuses = Arrays.asList(IndentLineItemStatusConstants.STATUS_NEW);
 
@@ -479,63 +482,37 @@ public class IndentInventoryService {
     }
 
     List<ConsolidatedIndentLineDTO> flatten(List<IndentInventory> indents) {
+
         List<ConsolidatedIndentLineDTO> result = new ArrayList<>();
+
+        // 1. Collect productIds only once (and only eligible ones)
+        Set<Long> productIds = new HashSet<>();
 
         for (IndentInventory indent : indents) {
             for (IndentInventoryList line : indent.getInventoryList()) {
+                if (indentLineItemPoEligibleStatuses.contains(line.getLineItemStatus())) {
+                    productIds.add(line.getProduct().getProductId());
+                }
+            }
+        }
+
+        // 2. Fetch dead stock in one go
+        Map<Long, DeadStockDTOForIndent> deadStocks = deadStockService.fetchDeadStockForProductIds(new ArrayList<>(productIds));
+
+        // 3. Flatten
+        for (IndentInventory indent : indents) {
+            String tenant = indent.getTenant();
+            String tenantCode = schemaConfig.getSchemaMap().get(tenant);
+            for (IndentInventoryList line : indent.getInventoryList()) {
                 if (!indentLineItemPoEligibleStatuses.contains(line.getLineItemStatus()))
-                    continue;    // Skip non-eligible line items
+                    continue;
                 Product p = line.getProduct();
                 Category c = p.getCategory();
-                ConsolidatedIndentLineDTO dto =
-                        new ConsolidatedIndentLineDTO(
-                                indent.getTenant(),
-                                schemaConfig.getSchemaMap().get(indent.getTenant()),
-                                indent.getIndentDate(),
-                                indent.getIndentId(),
-                                line.getLineItemCode(),
-                                c.getCategoryName(),
-                                p.getProductId(),
-                                p.getProductName(),
-                                p.getMeasurementUnit(),
-                                line.getQuantity(),
-                                line.getSpecification(),
-                                line.getRemarks(),
-                                line.getLineItemStatus(),
-                                indent.getCreationDate(),
-                                buildDummyDeadStock()
-                        );
+                DeadStockDTOForIndent deadStock = deadStocks.getOrDefault(p.getProductId(), new DeadStockDTOForIndent(0.0, Collections.emptyList()));
+                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock);
                 result.add(dto);
             }
         }
         return result;
-    }
-
-    private DeadStockDTOForIndent buildDummyDeadStock() {
-
-        DeadStockDTOForIndent deadStockDTO = new DeadStockDTOForIndent();
-
-        // Total dead stock
-        deadStockDTO.setToalDealStock(1250.75);
-
-        // Detailed dead stock breakup
-        List<Map<String, Double>> detailedList = new ArrayList<>();
-
-        Map<String, Double> warehouseA = new HashMap<>();
-        warehouseA.put("bhaavbhumi", 450.25);
-
-        Map<String, Double> warehouseB = new HashMap<>();
-        warehouseB.put("drgtrdcntr", 300.50);
-
-        Map<String, Double> warehouseC = new HashMap<>();
-        warehouseC.put("suncitynx", 500.00);
-
-        detailedList.add(warehouseA);
-        detailedList.add(warehouseB);
-        detailedList.add(warehouseC);
-
-        deadStockDTO.setDetailedDeadStock(detailedList);
-
-        return deadStockDTO;
     }
 }

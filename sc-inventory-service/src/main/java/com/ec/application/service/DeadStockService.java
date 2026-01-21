@@ -5,10 +5,7 @@ import com.ec.application.Filters.DeadStockSpecification;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.aspects.UseDefaultTenant;
-import com.ec.application.data.AllCategoriesWithNamesData;
-import com.ec.application.data.DeadStockDTO;
-import com.ec.application.data.DeadStockInformation;
-import com.ec.application.data.DeadStockWithDropdownData;
+import com.ec.application.data.*;
 import com.ec.application.model.Category;
 import com.ec.application.model.DeadStockSummary;
 import com.ec.application.model.JobExecutionLog;
@@ -24,10 +21,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,4 +60,61 @@ public class DeadStockService {
         returnData.setLastSyncDate(jobExecutionLogRepo.findLastSuccessfulRunTime("DEAD_STOCK_SYNC"));
         return returnData;
     }
+
+    public Map<Long, DeadStockDTOForIndent> fetchDeadStockForProductIds(List<Long> productIds) {
+
+        Map<Long, DeadStockDTOForIndent> result = new HashMap<>();
+
+        //Mandatory guard (prevents IN ())
+        if (productIds == null || productIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // Initialize all productIds with zero values
+        for (Long productId : productIds) {
+            DeadStockDTOForIndent dto = new DeadStockDTOForIndent();
+            dto.setToalDeadStock(0.0);
+            dto.setDetailedDeadStock(new ArrayList<>());
+            result.put(productId, dto);
+        }
+
+        //⃣ Fetch all matching dead stock rows
+        List<DeadStockSummary> summaries = deadStockSummaryRepo.fetchDeadStockByProductIds(productIds);
+
+        if (summaries == null || summaries.isEmpty()) {
+            return result; // all zero-filled
+        }
+
+        //️ Populate detailed + aggregate total
+        for (DeadStockSummary summary : summaries) {
+
+            DeadStockDTOForIndent dto = result.get(summary.getProductId());
+            if (dto == null) {
+                continue; // defensive, should not happen
+            }
+
+            // detailedDeadStock entry: { tenantSchema : quantity }
+            Map<String, Double> detail = new LinkedHashMap<>();
+            detail.put(
+                    summary.getTenantSchema(),
+                    round2(summary.getQuantityInHand())
+            );
+            dto.getDetailedDeadStock().add(detail);
+
+            // accumulate total
+            dto.setToalDeadStock(
+                    round2(dto.getToalDeadStock() + summary.getQuantityInHand())
+            );
+        }
+
+        return result;
+    }
+
+    private double round2(Double value) {
+        if (value == null) return 0.0;
+        return BigDecimal.valueOf(value)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
 }
