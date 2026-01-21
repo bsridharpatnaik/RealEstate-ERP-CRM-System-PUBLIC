@@ -1252,7 +1252,7 @@
           ]
         },
         {
-          "name": "Indent & PO",
+          "name": "2026 Release",
           "item": [
             {
               "name": "Setup",
@@ -3093,26 +3093,6 @@
                       "listen": "test",
                       "script": {
                         "exec": [
-                          "var jsonData = JSON.parse(responseBody);",
-                          "pm.environment.set(\"inwardId\", jsonData.inwardId)",
-                          "",
-                          "// Parse response",
-                          "const res = pm.response.json();",
-                          "",
-                          "// Safety check",
-                          "if (!res.inwardOutwardList || res.inwardOutwardList.length < 2) {",
-                          "    throw new Error(\"Less than 2 inwardOutwardList items found\");",
-                          "}",
-                          "",
-                          "// Extract productIds",
-                          "const productId1 = res.inwardOutwardList[0].product.productId;",
-                          "const productId2 = res.inwardOutwardList[1].product.productId;",
-                          "",
-                          "// Set Postman variables",
-                          "pm.environment.set(\"productId1\", productId1);",
-                          "pm.environment.set(\"productId2\", productId2);",
-                          "",
-                          "console.log(\"Product IDs saved:\", productId1, productId2);",
                           ""
                         ],
                         "type": "text/javascript",
@@ -3631,6 +3611,245 @@
               ]
             },
             {
+              "name": "Dead Stock",
+              "item": [
+                {
+                  "name": "Sync Dead Stock",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(responseBody);",
+                          "pm.environment.set(\"draftId\", jsonData.draftId)"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"indentDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"indentDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock/sync",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dead-stock",
+                        "sync"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Paged Data",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"indentDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"indentDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"filterData\": []\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dead-stock"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get SIngle Dead Stock",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"indentDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"indentDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock/s{{deadStockId}}",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dead-stock",
+                        "s{{deadStockId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
               "name": "Draft",
               "item": [
                 {
@@ -3985,87 +4204,6 @@
                         "inventory",
                         "drafts",
                         "{{draftId}}"
-                      ]
-                    }
-                  },
-                  "response": []
-                }
-              ]
-            },
-            {
-              "name": "Dead Stock",
-              "item": [
-                {
-                  "name": "Sync Dead Stock",
-                  "event": [
-                    {
-                      "listen": "test",
-                      "script": {
-                        "exec": [
-                          "var jsonData = JSON.parse(responseBody);",
-                          "pm.environment.set(\"draftId\", jsonData.draftId)"
-                        ],
-                        "type": "text/javascript",
-                        "packages": {},
-                        "requests": {}
-                      }
-                    },
-                    {
-                      "listen": "prerequest",
-                      "script": {
-                        "exec": [
-                          "// Get today's date",
-                          "const today = new Date();",
-                          "",
-                          "// Format as dd-MM-yyyy",
-                          "const day = String(today.getDate()).padStart(2, '0');",
-                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
-                          "const year = today.getFullYear();",
-                          "",
-                          "const formattedDate = `${day}-${month}-${year}`;",
-                          "",
-                          "// Save to environment or collection variable",
-                          "pm.environment.set(\"indentDate\", formattedDate);",
-                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
-                          "",
-                          "console.log(\"indentDate:\", formattedDate);",
-                          ""
-                        ],
-                        "type": "text/javascript",
-                        "packages": {},
-                        "requests": {}
-                      }
-                    }
-                  ],
-                  "request": {
-                    "method": "POST",
-                    "header": [
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json",
-                        "type": "text"
-                      },
-                      {
-                        "key": "Authorization",
-                        "value": "{{token}}",
-                        "type": "text"
-                      },
-                      {
-                        "key": "tenant-id",
-                        "value": "egcity",
-                        "type": "text"
-                      }
-                    ],
-                    "url": {
-                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock/sync",
-                      "protocol": "{{method}}",
-                      "host": [
-                        "{{serverUrlAPI}}"
-                      ],
-                      "path": [
-                        "inventory",
-                        "dead-stock",
-                        "sync"
                       ]
                     }
                   },
