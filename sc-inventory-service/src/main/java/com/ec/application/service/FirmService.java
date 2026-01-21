@@ -61,6 +61,14 @@ public class FirmService {
         if (payload.getFirmName() == null || payload.getFirmName().trim() == "")
             throw new Exception("Firm Name cannot be empty!");
 
+        if(payload.getFirmContactNumber() != null && payload.getFirmContactNumber().trim() != "") {
+            if(!ReusableMethods.isValidMobileNumber(payload.getFirmContactNumber().trim())) {
+                throw new Exception("Invalid Mobile Number format!");
+            }
+        }
+
+        if(payload.getFirmAddress() != null && payload.getFirmAddress().trim() == "")
+            throw new Exception("Firm Address cannot be empty if provided!");
     }
 
     public Firm updateFirm(Long id, Firm payload) throws Exception {
