@@ -11,7 +11,9 @@ import com.ec.application.data.DeadStockInformation;
 import com.ec.application.data.DeadStockWithDropdownData;
 import com.ec.application.model.Category;
 import com.ec.application.model.DeadStockSummary;
+import com.ec.application.model.JobExecutionLog;
 import com.ec.application.repository.DeadStockSummaryRepo;
+import com.ec.application.repository.JobExecutionLogRepository;
 import com.ec.application.repository.ProductRepo;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -35,6 +37,7 @@ public class DeadStockService {
 
     private final DeadStockSummaryRepo deadStockSummaryRepo;
     private final PopulateDropdownService populateDropdownService;
+    private final JobExecutionLogRepository jobExecutionLogRepo;
 
     Logger log = LoggerFactory.getLogger(CategoryService.class);
 
@@ -58,6 +61,7 @@ public class DeadStockService {
             returnData.setDaeadStockSummaries(deadStockSummaryRepo.findAll(pageable));
 
         returnData.setDeadStockDropdown(populateDropdownService.fetchData("deadstock"));
+        returnData.setLastSyncDate(jobExecutionLogRepo.findLastSuccessfulRunTime("DEAD_STOCK_SYNC"));
         return returnData;
     }
 }

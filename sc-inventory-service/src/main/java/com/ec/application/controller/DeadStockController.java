@@ -50,7 +50,7 @@ public class DeadStockController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
-    public DeadStockWithDropdownData returnFilteredProducts(@RequestBody FilterDataList filterDataList, @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) throws ParseException {
+    public DeadStockWithDropdownData returnFilteredProducts(@RequestBody FilterDataList filterDataList, @PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Sort.Direction.DESC) Pageable pageable) throws ParseException {
         return deadStockService.findFilteredDeadStock(filterDataList, pageable);
     }
 }
