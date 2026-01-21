@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.data.DeadStockDTOForIndent;
 import com.ec.application.data.DeadStockWithDropdownData;
 import com.ec.application.model.DeadStockSummary;
 import com.ec.application.model.Product;
@@ -46,6 +47,11 @@ public class DeadStockController {
     @GetMapping("/{id}")
     public DeadStockSummary findDeadStock(@PathVariable long id) throws Exception {
         return deadStockService.findSingleItem(id);
+    }
+
+    @GetMapping
+    public DeadStockDTOForIndent findDeadStockForProduct(@RequestParam("productId") long productId) throws Exception {
+        return deadStockService.fetchDeadStockForProductId(productId);
     }
 
     @PostMapping

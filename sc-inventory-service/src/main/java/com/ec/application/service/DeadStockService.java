@@ -117,4 +117,9 @@ public class DeadStockService {
                 .doubleValue();
     }
 
+    public DeadStockDTOForIndent fetchDeadStockForProductId(long productId) {
+        List<Long> productIds = Collections.singletonList(productId);
+        Map<Long, DeadStockDTOForIndent> deadStockMap = fetchDeadStockForProductIds(productIds);
+        return deadStockMap.get(productId);
+    }
 }
