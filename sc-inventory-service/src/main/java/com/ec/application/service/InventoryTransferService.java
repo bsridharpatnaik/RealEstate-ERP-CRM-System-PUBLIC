@@ -57,7 +57,7 @@ public class InventoryTransferService {
         replaceTenantNamesForSuncity(dto);
         validateTransferRequest(dto);
         validateDuplicateProducts(dto);
-        //validateSourceStockAvailability(dto);
+        validateSourceStockAvailability(dto);
 
         String sourceTenant = dto.getSourceTenant();
         String targetTenant = dto.getTargetTenant();
