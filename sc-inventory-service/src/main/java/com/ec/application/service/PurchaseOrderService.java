@@ -62,12 +62,16 @@ public class PurchaseOrderService extends ReusableFields {
     @Autowired
     PurchaseOrderLifecycleManager poLifecycleManager;
 
+    @Autowired
+    DraftService draftService;
+
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
         PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
+        draftService.deleteDraftForUser("PO");
         return savedPO;
     }
 

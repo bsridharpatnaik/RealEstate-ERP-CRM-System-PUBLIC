@@ -101,8 +101,7 @@ public class IndentInventoryService {
 
         // Force load the list before returning (to avoid lazy init exception)
         indentInventory.getInventoryList().size();
-        if (iiData.getDraftId() != null)
-            draftService.deleteDraft(iiData.getDraftId());
+        draftService.deleteDraftForUser("INDENT");
         indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
     }

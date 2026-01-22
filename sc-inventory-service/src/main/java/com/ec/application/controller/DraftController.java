@@ -27,43 +27,22 @@ public class DraftController {
         this.draftService = draftService;
     }
 
-    @PostMapping()
-    public ResponseEntity<?> saveDraft(
-            @RequestParam(name = "draftType") String draftType,
-            @RequestParam(name = "draftId", required = false) Long draftId,
-            @RequestBody String payload) {
+    @PostMapping
+    public ResponseEntity<?> saveDraft(@RequestParam(name = "draftType") String draftType, @RequestBody String payload) throws Exception {
         if (!ALLOWED_DRAFT_TYPES.contains(draftType.toUpperCase())) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Only INDENT or PO draft types are allowed"));
         }
-        draftId = draftService.saveOrUpdateDraft(draftId, draftType.toUpperCase(), payload);
+        draftService.saveOrUpdateDraftForUser(draftType.toUpperCase(), payload);
         Map<String, Object> response = new HashMap<>();
-        response.put("draftId", draftId);
+        response.put("message", "Successfully saved draft");
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{draftId}")
-    public ResponseEntity<?> getDraftPayload(@PathVariable Long draftId) {
-        return draftService.getDraft(draftId)
-                .map(draft -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(draft.getPayload()))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{draftId}")
-    public ResponseEntity<?> deleteDraft(@PathVariable Long draftId) {
-        draftService.deleteDraft(draftId);
-        return ResponseEntity.ok().body("Draft Deleted Successfully");
-    }
-
-    @GetMapping("list")
-    public ResponseEntity<?> getDraftsByType(@RequestParam(name = "draftType") String draftType, @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) {
-
-        if (!ALLOWED_DRAFT_TYPES.contains(draftType.toUpperCase())) {
-            return ResponseEntity.badRequest()
-                    .body("Only INDENT or PO draft types are allowed");
-        }
-        Page<Draft> drafts = draftService.getDraftsByType(draftType.toUpperCase(), pageable);
-        return ResponseEntity.ok(drafts);
+    @GetMapping
+    public ResponseEntity<?> getDraftPayload(@RequestParam(name = "draftType") String draftType) throws Exception {
+        Draft draft = draftService.getDraftsByTypeForUser(draftType.toUpperCase());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(draft.getPayload());
     }
 }

@@ -1,59 +1,85 @@
 package com.ec.application.service;
 
+import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.model.Draft;
 import com.ec.application.repository.DraftRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
-import javax.persistence.Lob;
-import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
+@UseDefaultTenant
 public class DraftService {
 
-    private final DraftRepository draftRepository;
+    @Autowired
+    private DraftRepository draftRepository;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    public DraftService(DraftRepository draftRepository) {
-        this.draftRepository = draftRepository;
-    }
+    @Autowired
+    TenantService tenantService;
 
-    public Long saveOrUpdateDraft(Long draftId, String draftType, String payload) {
+    public void saveOrUpdateDraftForUser(String draftType, String payload) throws Exception {
         validateJson(payload);
-        Draft draft;
-        if (draftId != null) {
-            draft = draftRepository.findById(draftId)
-                    .orElseThrow(() ->
-                            new RuntimeException("Draft with id " + draftId + " not found"));
-            draft.setPayload(payload);
-        } else {
-            draft = new Draft(draftType, payload);
-        }
+
+        String username = userDetailsService.getCurrentUser().getUsername();
+
+        final String tenant =
+                "PO".equalsIgnoreCase(draftType)
+                        ? null
+                        : tenantService.fetchTenantFromHeader();
+
+        Optional<Draft> existingDraft =
+                tenant != null
+                        ? draftRepository.findFirstByDraftTypeAndUsernameAndTenant(
+                        draftType, username, tenant)
+                        : draftRepository.findFirstByDraftTypeAndUsernameAndTenantIsNull(
+                        draftType, username);
+
+        Draft draft = existingDraft
+                .map(d -> {
+                    d.setPayload(payload);
+                    return d;
+                })
+                .orElseGet(() -> {
+                    Draft d = new Draft(draftType, payload, username);
+                    d.setTenant(tenant);   // null for PO, value for Indent
+                    return d;
+                });
+
         draftRepository.save(draft);
-        return draft.getDraftId();
     }
 
-    public Optional<Draft> getDraft(Long draftId) {
-        return draftRepository.findById(draftId);
-    }
+    public Draft getDraftsByTypeForUser(String draftType) throws Exception {
+        String username = userDetailsService.getCurrentUser().getUsername();
 
-    public Page<Draft> getDraftsByType(String draftType, Pageable pageable) {
-        return draftRepository.findByDraftType(draftType, pageable);
-    }
+        final String tenant =
+                "PO".equalsIgnoreCase(draftType)
+                        ? null
+                        : tenantService.fetchTenantFromHeader();
 
-    public void deleteDraft(Long draftId) {
-        Draft draft = draftRepository.findById(draftId)
-                .orElseThrow(() ->
-                        new RuntimeException("Draft with id " + draftId + " not found"));
-        draftRepository.delete(draft);
+        return (tenant != null
+                ? draftRepository.findFirstByDraftTypeAndUsernameAndTenant(
+                draftType, username, tenant)
+                : draftRepository.findFirstByDraftTypeAndUsernameAndTenantIsNull(
+                draftType, username)
+        ).orElseThrow(() ->
+                new RuntimeException(
+                        "No draft found for type: " + draftType +
+                                ", user: " + username +
+                                ", tenant: " + tenant
+                )
+        );
     }
 
     private void validateJson(String payload) {
@@ -62,5 +88,29 @@ public class DraftService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid JSON payload");
         }
+    }
+
+    @UseDefaultTenant
+    @Transactional
+    public void deleteDraftForUser(String draftType) throws Exception {
+        String username = userDetailsService.getCurrentUser().getUsername();
+
+        // Resolve tenant ONCE
+        final String tenant =
+                "PO".equalsIgnoreCase(draftType)
+                        ? null
+                        : tenantService.fetchTenantFromHeader();
+
+        Optional<Draft> draftOpt =
+                tenant != null
+                        ? draftRepository.findFirstByDraftTypeAndUsernameAndTenant(
+                        draftType, username, tenant)
+                        : draftRepository.findFirstByDraftTypeAndUsernameAndTenantIsNull(
+                        draftType, username);
+
+        // ✅ Idempotent soft delete
+        draftOpt.ifPresent(draft ->
+                draftRepository.softDeleteById(draft.getDraftId())
+        );
     }
 }
