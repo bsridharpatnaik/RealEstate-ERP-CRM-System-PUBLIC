@@ -21,7 +21,7 @@ public class PurchaseOrderHistoryController {
     private PurchaseOrderHistoryService historyService;
 
     @GetMapping("/previous-rates")
-    public List<PreviousPurchaseRateDTO> getPreviousRates(@RequestParam("productId") Long productId, @PageableDefault(page = 0, size = 10, sort = "lastModifiedDate", direction = Sort.Direction.DESC) Pageable pageable) {
-        return historyService.getPreviousRates(productId, pageable);
+    public List<PreviousPurchaseRateDTO> getPreviousRates(@RequestParam("productId") Long productId) {
+        return historyService.getPreviousRates(productId);
     }
 }
