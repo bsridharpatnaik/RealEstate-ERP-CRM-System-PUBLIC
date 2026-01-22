@@ -8,9 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.ec.application.model.*;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,22 +38,28 @@ public final class IndentInventorySpecification {
 
         if (productNames != null && productNames.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereIndentContainsProduct(productNames, IndentInventory_.INVENTORY_LIST));
-//TODO - add more filters as needed
-        /*
+                    specbldr.whereIndentContainsProductName(productNames, IndentInventory_.INVENTORY_LIST));
+
+        if (productCodes != null && productCodes.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereIndentContainsProductCode(productCodes, IndentInventory_.INVENTORY_LIST));
+
+        if (statusList != null && statusList.size() > 0)
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals(IndentInventory_.INDENT_STATUS, statusList));
+
         if (categoryNames != null && categoryNames.size() > 0)
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereIndentCategoryContains(categoryNames, IndentInventory_.INVENTORY_LIST));
 
-        if (statusList != null && statusList.size() > 0)
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains(IndentInventory_.INDENT_STATUS, statusList));
-*/
         if (globalSearch != null && globalSearch.size() > 0) {
             Specification<IndentInventory> internalSpec = null;
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(IndentInventory_.INDENT_STATUS, globalSearch));
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(IndentInventory_.INDENT_ID, globalSearch));
-            //TODO - add more filters as needed
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(IndentInventory_.TENANT, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereIndentContainsProductName(globalSearch, IndentInventory_.INVENTORY_LIST));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereIndentContainsProductCode(globalSearch, IndentInventory_.INVENTORY_LIST));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereIndentCategoryContains(globalSearch, IndentInventory_.INVENTORY_LIST));
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
         }
         return finalSpec;

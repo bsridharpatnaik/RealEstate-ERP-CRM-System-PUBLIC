@@ -214,7 +214,7 @@ public class SpecificationsBuilder<T> {
         };
     }
 
-    public Specification<T> whereIndentContainsProduct(List<String> productNames, String joinTable) {
+    public Specification<T> whereIndentContainsProductName(List<String> productNames, String joinTable) {
 
         return (root, query, cb) ->
         {
@@ -224,6 +224,20 @@ public class SpecificationsBuilder<T> {
             query.distinct(true);
             Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
             Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> whereIndentContainsProductCode(List<String> productCodes, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+            Join<T, InwardOutwardList> ioList = root.join(joinTable);
+            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_CODE);
+            Predicate parentPredicate = parentExpression.in(productCodes);
             query.where(parentPredicate);
             return query.getRestriction();
         };
