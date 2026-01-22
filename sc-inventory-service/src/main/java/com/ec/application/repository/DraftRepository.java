@@ -17,9 +17,7 @@ import java.util.Optional;
 @Repository
 public interface DraftRepository extends BaseRepository<Draft, Long> {
     Optional<Draft> findFirstByDraftTypeAndUsernameAndTenant(String draftType, String username, String tenant);
-
     Optional<Draft> findFirstByDraftTypeAndUsernameAndTenantIsNull(String draftType, String username);
-
     @Query("SELECT d FROM Draft d " + "WHERE d.isDeleted = false " + "AND d.lastModifiedDate < :todayStart")
     List<Draft> findDraftsBeforeToday(@Param("todayStart") Date todayStart);
 }

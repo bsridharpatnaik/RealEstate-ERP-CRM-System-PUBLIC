@@ -24,18 +24,36 @@ public class DraftCleanupScheduler {
     private DraftRepository draftRepository;
 
     @Autowired
-    SchemaConfig schemaConfig;
+    private SchemaConfig schemaConfig;
 
     /**
-     * Runs every day at 00:00 (midnight)
+     * Runs every day at 00:00 IST
      */
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Kolkata")
     @Transactional
     public void softDeleteOldDrafts() {
-        LocalDate todayIST = LocalDate.now(ZoneId.of("Asia/Kolkata"));
-        Date todayStartIST = Date.from(todayIST.atStartOfDay(ZoneId.of("Asia/Kolkata")).toInstant());
-        List<Draft> oldDrafts = draftRepository.findDraftsBeforeToday(todayStartIST);
-        oldDrafts.forEach(draft -> draftRepository.softDeleteById(draft.getDraftId())
-        );
+
+        try {
+            // Always run cleanup in master schema
+            ThreadLocalStorage.setTenantName(schemaConfig.getMasterSchema());
+            ZoneId istZone = ZoneId.of("Asia/Kolkata");
+            // Start of today (00:00 IST)
+            LocalDate todayIST = LocalDate.now(istZone);
+            Date todayStartIST = Date.from(
+                    todayIST.atStartOfDay(istZone).toInstant()
+            );
+            List<Draft> oldDrafts = draftRepository.findDraftsBeforeToday(todayStartIST);
+
+            if (oldDrafts == null || oldDrafts.isEmpty()) {
+                return;
+            }
+
+            for (Draft draft : oldDrafts) {
+                draftRepository.softDeleteById(draft.getDraftId());
+            }
+
+        } finally {
+            ThreadLocalStorage.setTenantName(null);
+        }
     }
 }
