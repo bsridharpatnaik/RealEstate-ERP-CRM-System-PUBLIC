@@ -25,12 +25,7 @@ public class PurchaseOrderHistoryService {
     @Transactional(readOnly = true)
     public List<PreviousPurchaseRateDTO> getPreviousRates(Long productId) {
         Pageable top15 = PageRequest.of(0, 15);
-        List<PreviousPurchaseRateDTO> result =
-                poLineRepo.findPreviousRates(
-                        productId,
-                        STATUS_CANCELLED,
-                        top15
-                );
+        List<PreviousPurchaseRateDTO> result = poLineRepo.findPreviousRates(productId, STATUS_CANCELLED, top15);
         return result != null ? result : Collections.emptyList();
     }
 }

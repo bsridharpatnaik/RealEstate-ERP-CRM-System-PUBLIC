@@ -14,12 +14,14 @@ public interface PurchaseOrderLineRepository
 
     @Query(
             "SELECT new com.ec.application.data.PreviousPurchaseRateDTO(" +
-                    " po.purchaseOrderId, po.poDate, s.name, pol.rate) " +
+                    "   po.purchaseOrderId, po.poDate, s.name, pol.rate" +
+                    ") " +
                     "FROM PurchaseOrderLine pol " +
                     "JOIN pol.purchaseOrder po " +
                     "JOIN po.supplier s " +
                     "WHERE pol.product.productId = :productId " +
-                    "AND po.status <> :cancelledStatus"
+                    "AND po.status <> :cancelledStatus " +
+                    "ORDER BY CAST(SUBSTRING(po.purchaseOrderId, LOCATE('-', po.purchaseOrderId) + 1) AS integer) DESC"
     )
     List<PreviousPurchaseRateDTO> findPreviousRates(@Param("productId") Long productId, @Param("cancelledStatus") String cancelledStatus, Pageable pageable);
 }
