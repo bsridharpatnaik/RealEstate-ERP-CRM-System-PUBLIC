@@ -172,7 +172,7 @@ public class InwardInventoryService {
             throw new Exception("Product list mismatch during inward update. " + "Adding or removing products is not allowed.");
         }
 
-        if (inward.getCreatedFromPO() && inward.getSupplier().getContactId() != data.getSupplierId()) {
+        if (inward.getCreatedFromPO() && !inward.getSupplier().getContactId().equals(data.getSupplierId())) {
             throw new Exception("Supplier change not allowed for inward created from PO.");
         }
 
