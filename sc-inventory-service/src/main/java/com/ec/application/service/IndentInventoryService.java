@@ -283,22 +283,61 @@ public class IndentInventoryService {
         basicValidation(iiData, " is not managed inventory. Cannot be added to Indent Inventory.");
     }
 
+    private String resolveRootParentCode(IndentProductDTO dto) {
+        if (dto.getParentLineItemCode() != null && !dto.getParentLineItemCode().contains("/")) {
+            return dto.getParentLineItemCode();
+        }
+        if (dto.getParentLineItemCode() != null) {
+            return dto.getParentLineItemCode();
+        }
+        return dto.getLineItemCode(); // existing root
+    }
+
     /**
      * Validation for UPDATE - allows duplicate products (due to split functionality)
      */
-    private void validateInputsForUpdate(IndentInventoryData iiData) throws Exception {
+    validateInputsForUpdate(IndentInventoryData iiData) throws Exception {
 
         basicValidation(iiData, " is not managed inventory.");
-        //validate for duplicate line item codes
-        Long duplicateLineItemCodeCount = iiData.getInventoryList().stream()
-                .filter(dto -> dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty())
-                .collect(Collectors.groupingBy(IndentProductDTO::getLineItemCode, counting()))
-                .entrySet().stream()
-                .filter(e -> e.getValue() > 1).count();
 
-        if (duplicateLineItemCodeCount > 0)
-            throw new Exception("Duplicate line item codes found. Each line item must have a unique code.");
+        // 1️⃣ Duplicate lineItemCode check (already correct)
+        long duplicateLineItemCodeCount =
+                iiData.getInventoryList().stream()
+                        .filter(dto -> dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty())
+                        .collect(Collectors.groupingBy(IndentProductDTO::getLineItemCode, counting()))
+                        .values().stream()
+                        .filter(count -> count > 1)
+                        .count();
+
+        if (duplicateLineItemCodeCount > 0) {
+            throw new Exception("Duplicate line item codes found.");
+        }
+
+        // 2️⃣ Enforce product duplication ONLY via split
+        Map<Long, Set<String>> productToRoots = new HashMap<>();
+
+        for (IndentProductDTO dto : iiData.getInventoryList()) {
+            String root;
+            if (dto.getParentLineItemCode() != null && !dto.getParentLineItemCode().isEmpty()) {
+                root = dto.getParentLineItemCode();
+            } else if (dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty()) {
+                root = dto.getLineItemCode();
+            } else {
+                root = "NEW"; // brand-new product attempt
+            }
+            productToRoots
+                    .computeIfAbsent(dto.getProductId(), k -> new HashSet<>())
+                    .add(root);
+        }
+
+        // If same product maps to multiple roots → illegal duplication
+        for (Map.Entry<Long, Set<String>> entry : productToRoots.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                throw new Exception("Product ID " + entry.getKey() + " can appear multiple times only via split from the same line item.");
+            }
+        }
     }
+
 
     private void basicValidation(IndentInventoryData iiData, String x) throws Exception {
 
