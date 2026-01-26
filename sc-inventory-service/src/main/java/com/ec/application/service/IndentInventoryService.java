@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -296,7 +297,7 @@ public class IndentInventoryService {
     /**
      * Validation for UPDATE - allows duplicate products (due to split functionality)
      */
-    validateInputsForUpdate(IndentInventoryData iiData) throws Exception {
+    private void validateInputsForUpdate(IndentInventoryData iiData) throws Exception {
 
         basicValidation(iiData, " is not managed inventory.");
 
@@ -317,7 +318,9 @@ public class IndentInventoryService {
         Map<Long, Set<String>> productToRoots = new HashMap<>();
 
         for (IndentProductDTO dto : iiData.getInventoryList()) {
+
             String root;
+
             if (dto.getParentLineItemCode() != null && !dto.getParentLineItemCode().isEmpty()) {
                 root = dto.getParentLineItemCode();
             } else if (dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty()) {
@@ -325,6 +328,7 @@ public class IndentInventoryService {
             } else {
                 root = "NEW"; // brand-new product attempt
             }
+
             productToRoots
                     .computeIfAbsent(dto.getProductId(), k -> new HashSet<>())
                     .add(root);
@@ -333,7 +337,10 @@ public class IndentInventoryService {
         // If same product maps to multiple roots → illegal duplication
         for (Map.Entry<Long, Set<String>> entry : productToRoots.entrySet()) {
             if (entry.getValue().size() > 1) {
-                throw new Exception("Product ID " + entry.getKey() + " can appear multiple times only via split from the same line item.");
+                throw new Exception(
+                        "Product ID " + entry.getKey() +
+                                " can appear multiple times only via split from the same line item."
+                );
             }
         }
     }
@@ -530,11 +537,88 @@ public class IndentInventoryService {
      * Fetch all PO-eligible indent line items
      * grouped by category across all tenants.
      */
-    public Map<String, List<ConsolidatedIndentLineDTO>> fetchGroupedByCategory() {
-        List<IndentInventory> inventoryList = indentInventoryRepo.findByIndentStatusIn(indentPOEligibleStatuses);
-        List<ConsolidatedIndentLineDTO> allLines = new ArrayList<>(flatten(inventoryList));
-        return allLines.stream().collect(Collectors.groupingBy(ConsolidatedIndentLineDTO::getCategoryName, LinkedHashMap::new, Collectors.toList()));
+    public Map<String, List<ConsolidatedIndentLineDTO>> fetchGroupedByCategory(
+            String sortBy,
+            Sort.Direction direction
+    ) {
+
+        List<IndentInventory> inventoryList =
+                indentInventoryRepo.findByIndentStatusIn(indentPOEligibleStatuses);
+
+        List<ConsolidatedIndentLineDTO> allLines =
+                new ArrayList<>(flatten(inventoryList));
+
+        // 🧭 Apply sorting
+        Comparator<ConsolidatedIndentLineDTO> comparator =
+                buildComparator(sortBy, direction);
+
+        if (comparator != null) {
+            allLines.sort(comparator);
+        }
+
+        // 📦 Group by category
+        return allLines.stream()
+                .collect(Collectors.groupingBy(
+                        ConsolidatedIndentLineDTO::getCategoryName,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
     }
+
+    private Comparator<ConsolidatedIndentLineDTO> buildComparator(
+            String sortBy,
+            Sort.Direction direction
+    ) {
+
+        if (sortBy == null) {
+            sortBy = "productName";
+        }
+
+        if (direction == null) {
+            direction = Sort.Direction.ASC;
+        }
+
+        Comparator<ConsolidatedIndentLineDTO> comparator;
+
+        switch (sortBy) {
+
+            case "productName":
+                comparator = Comparator.comparing(
+                        ConsolidatedIndentLineDTO::getProductName,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                );
+                break;
+
+            case "indentNo":
+                comparator = Comparator.comparing(
+                        ConsolidatedIndentLineDTO::getIndentNo,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                );
+                break;
+
+            case "creationDate":
+                comparator = Comparator.comparing(
+                        ConsolidatedIndentLineDTO::getCreationDate,
+                        Comparator.nullsLast(Date::compareTo)
+                );
+                break;
+
+            case "quantity":
+                comparator = Comparator.comparing(
+                        ConsolidatedIndentLineDTO::getQuantity,
+                        Comparator.nullsLast(Double::compareTo)
+                );
+                break;
+
+            default:
+                return null; // unknown field → no sort
+        }
+
+        return direction == Sort.Direction.DESC
+                ? comparator.reversed()
+                : comparator;
+    }
+
 
     List<ConsolidatedIndentLineDTO> flatten(List<IndentInventory> indents) {
 

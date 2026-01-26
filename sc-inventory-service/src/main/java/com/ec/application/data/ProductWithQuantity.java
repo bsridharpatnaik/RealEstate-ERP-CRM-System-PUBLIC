@@ -12,7 +12,6 @@ public class ProductWithQuantity {
     @NonNull
     Double quantity;
 
-    @NonNull
     Long warehouseId;
 
     String remarks;
