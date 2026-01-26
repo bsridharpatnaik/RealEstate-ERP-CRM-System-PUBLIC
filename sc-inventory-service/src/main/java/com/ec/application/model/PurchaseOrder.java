@@ -12,8 +12,7 @@ import java.util.stream.Collectors;
 import javax.persistence.*;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

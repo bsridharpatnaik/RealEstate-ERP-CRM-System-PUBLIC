@@ -149,40 +149,51 @@ public class IndentInventoryService {
 
     /**
      * Process inventory list for UPDATE
-     * Handles existing items, new items, and split items
+     * - Existing items: keep lineItemCode & status
+     * - Split items: generate split code, status = NEW
+     * - New products: generate initial code, status = NEW
      */
     private Set<IndentInventoryList> processInventoryListForUpdate(
             List<IndentProductDTO> indentProductDTOs,
-            IndentInventory indentInventory,  // CHANGED: Accept IndentInventory instead of separate params
+            IndentInventory indentInventory,
             Set<IndentInventoryList> existingInventoryList) {
 
         Set<IndentInventoryList> processedList = new HashSet<>();
 
         for (IndentProductDTO dto : indentProductDTOs) {
+
             IndentInventoryList item = new IndentInventoryList();
 
-            // SET THE PARENT REFERENCE FOR NEW ITEMS - THIS IS CRITICAL!
+            // Always set parent
             item.setIndentInventory(indentInventory);
 
-            // Set product
+            // Product
             Product product = productRepo.findByProductId(dto.getProductId());
             item.setProduct(product);
 
-            // Set other fields
+            // Mutable fields (always allowed)
             item.setQuantity(dto.getQuantity());
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setLineItemStatus(item.getLineItemStatus());  // FIXED: was item.getLineItemStatus()
 
-            // Handle line item code
+            /*
+             * CASE 1: Existing line item (update)
+             * - Keep same lineItemCode
+             * - DO NOT touch status (DB value must survive)
+             */
             if (dto.getLineItemCode() != null && !dto.getLineItemCode().isEmpty()) {
-                // Existing item being updated - keep the same code
                 item.setLineItemCode(dto.getLineItemCode());
                 item.setParentLineItemCode(dto.getParentLineItemCode());
+                // IMPORTANT: status intentionally NOT set here
+            }
 
-            } else if (dto.getParentLineItemCode() != null && !dto.getParentLineItemCode().isEmpty()) {
-                // New split item - generate split code
+            /*
+             * CASE 2: Split item
+             * - Generate split code under root parent
+             * - Status must be NEW
+             */
+            else if (dto.getParentLineItemCode() != null && !dto.getParentLineItemCode().isEmpty()) {
                 int splitIndex = LineItemCodeGenerator.getNextSplitIndex(
                         dto.getParentLineItemCode(),
                         existingInventoryList
@@ -193,22 +204,28 @@ public class IndentInventoryService {
                 );
                 item.setLineItemCode(splitCode);
                 item.setParentLineItemCode(dto.getParentLineItemCode());
+                item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
+            }
 
-            } else {
-                // Brand new product being added - generate initial code
+            /*
+             * CASE 3: Brand new product added during update
+             * - Generate initial lineItemCode
+             * - Status must be NEW
+             */
+            else {
                 String lineItemCode = LineItemCodeGenerator.generateInitialCode(
                         indentInventory.getIndentId(),
                         String.valueOf(product.getProductId())
                 );
                 item.setLineItemCode(lineItemCode);
                 item.setParentLineItemCode(null);
+                item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
             }
-
             processedList.add(item);
         }
-
         return processedList;
     }
+
 
     /**
      * Synchronize inventory list during update
@@ -245,7 +262,7 @@ public class IndentInventoryService {
                 existingItem.setSpecification(newItem.getSpecification());
                 existingItem.setRemarks(newItem.getRemarks());
                 existingItem.setMeasurementUnit(newItem.getMeasurementUnit());
-                existingItem.setLineItemStatus(existingItem.getLineItemStatus());
+                //existingItem.setLineItemStatus(existingItem.getLineItemStatus());
 
                 itemsToKeep.add(existingItem);
             } else {
