@@ -1,9 +1,7 @@
 package com.ec.application.Filters;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.IndentInventory;
-import com.ec.application.model.IndentInventory_;
-import com.ec.application.model.PurchaseOrder;
+import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.text.ParseException;
@@ -24,22 +22,42 @@ public class PurchaseOrderSpecification {
         List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> suppliers = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "suppliers");
         Specification<PurchaseOrder> finalSpec = null;
-/*
-        if (startDates != null && startDates.size() > 0)
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldDateGreaterThan(IndentInventory_.INDENT_DATE, startDates));
 
-        if (endDates != null && endDates.size() > 0)
+        if (startDates != null && !startDates.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldDateLessThan(IndentInventory_.INDENT_DATE, endDates));
+                    specbldr.whereDirectFieldDateGreaterThan(PurchaseOrder_.PO_DATE, startDates));
 
-        if (globalSearch != null && globalSearch.size() > 0) {
-            Specification<IndentInventory> internalSpec = null;
-            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(IndentInventory_.INDENT_STATUS, globalSearch));
-            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(IndentInventory_.INDENT_ID, globalSearch));
-            //TODO - add more filters as needed
+        if (endDates != null && !endDates.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldDateLessThan(PurchaseOrder_.PO_DATE, endDates));
+
+        if (productNames != null && !productNames.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.wherePurchanseOrderContainsProductName(productNames, PurchaseOrder_.LINES));
+
+        if (productCodes != null && !productCodes.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.wherePurchanseOrderContainsProductCode(productCodes, PurchaseOrder_.LINES));
+
+        if (statusList != null && !statusList.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals(PurchaseOrder_.STATUS, statusList));
+
+        if (categoryNames != null && !categoryNames.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.wherePurchaseOrderCategoryContains(categoryNames, PurchaseOrder_.LINES));
+
+        if (globalSearch != null && !globalSearch.isEmpty()) {
+            Specification<PurchaseOrder> internalSpec = null;
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(PurchaseOrder_.STATUS, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(PurchaseOrder_.PURCHASE_ORDER_ID, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(PurchaseOrder_.NOTES, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(PurchaseOrder_.SHORT_CLOSE_REASON, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(PurchaseOrder_.SUBJECT, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldContains(PurchaseOrder_.FIRM, Firm_.FIRM_NAME, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldContains(PurchaseOrder_.SUPPLIER, Supplier_.NAME, globalSearch));
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
-        }*/
+        }
         return finalSpec;
     }
 }

@@ -200,7 +200,6 @@ public class SpecificationsBuilder<T> {
     }
 
     public Specification<T> whereProductContains(List<String> productNames, String joinTable) {
-
         return (root, query, cb) ->
         {
 
@@ -209,6 +208,49 @@ public class SpecificationsBuilder<T> {
             query.distinct(true);
             Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
             Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> wherePurchanseOrderContainsProductName(List<String> productNames, String joinTable) {
+        return (root, query, cb) ->
+        {
+
+            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
+            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
+            Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> wherePurchanseOrderContainsProductCode(List<String> productNames, String joinTable) {
+        return (root, query, cb) ->
+        {
+
+            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
+            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_CODE);
+            Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> wherePurchaseOrderCategoryContains(List<String> categoryNames, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
+            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
+            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
+            query.distinct(true);
+            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
+            Predicate parentPredicate = parentExpression.in(categoryNames);
             query.where(parentPredicate);
             return query.getRestriction();
         };

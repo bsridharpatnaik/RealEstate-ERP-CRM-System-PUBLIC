@@ -66,7 +66,7 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 * * * *")
     public void updateClosingStock() throws Exception {
-        List<String> tenants = schemaConfig.getSchemaList();
+        List<String> tenants = schemaConfig.getNonMasterSchemaList();
         for (String tenantName : tenants) {
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
             log.info("Update ClosingStock being triggered for tenant " + tenantName);
