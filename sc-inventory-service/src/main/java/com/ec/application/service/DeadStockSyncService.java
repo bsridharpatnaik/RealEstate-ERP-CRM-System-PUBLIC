@@ -122,6 +122,7 @@ public class DeadStockSyncService {
         summary.setWarehouseId(deadStock.getWarehouseId());
         summary.setWarehouseName(deadStock.getWarehouseName());
         summary.setQuantityInHand(deadStock.getQuantityInHand());
+        summary.setMeasurementUnit(deadStock.getMeasurementUnit());
         summary.setSyncedAt(syncedAt);
         return summary;
     }
@@ -144,6 +145,7 @@ public class DeadStockSyncService {
             dto.setWarehouseId(stock.getWarehouse().getWarehouseId());
             dto.setWarehouseName(stock.getWarehouse().getWarehouseName());
             dto.setQuantityInHand(stock.getQuantityInHand());
+            dto.setMeasurementUnit(stock.getProduct().getMeasurementUnit());
             result.add(dto);
         }
         return result;

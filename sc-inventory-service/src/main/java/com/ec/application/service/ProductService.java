@@ -229,7 +229,7 @@ public class ProductService {
         return productRepo.getProductMeasurementUnit();
     }
 
-    public List<IdNameAndUnit> getProducts(Boolean isManagedInventory) {
-        return isManagedInventory == null ? productRepo.getProducts() : productRepo.getProducts(isManagedInventory);
+    public List<IdNameAndUnit> getProducts(Boolean isManagedInventory, Long categoryId) {
+        return productRepo.getProducts(isManagedInventory, categoryId);
     }
 }

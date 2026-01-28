@@ -49,6 +49,9 @@ public class DeadStockSummary extends ReusableFields {
     @Column(nullable = false)
     private Double quantityInHand;
 
+    @Column(name="measurement_unit", length = 20)
+    String measurementUnit;
+
     /** when sync job ran */
     @Temporal(TemporalType.TIMESTAMP)
     private Date syncedAt;

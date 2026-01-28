@@ -25,6 +25,6 @@ public class DeadStockDTO {
 
     private Long warehouseId;
     private String warehouseName;
-
+    private  String measurementUnit;
     private Double quantityInHand;
 }

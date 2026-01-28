@@ -77,8 +77,11 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<IdNameAndUnit> getProducts(@RequestParam(name = "isManagedInventory", required = false) Boolean isManagedInventory) {
-        return productService.getProducts(isManagedInventory);
+    public List<IdNameAndUnit> getProducts(
+            @RequestParam(name = "isManagedInventory", required = false) Boolean isManagedInventory,
+            @RequestParam(name = "categoryId", required = false) Long categoryId
+    ) {
+        return productService.getProducts(isManagedInventory, categoryId);
     }
 
     @GetMapping("/typeahead/{name}")
