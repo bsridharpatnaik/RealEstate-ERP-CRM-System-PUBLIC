@@ -18,6 +18,7 @@ import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
+import com.ec.application.util.PurchaseOrderPriceMasker;
 import lombok.RequiredArgsConstructor;
 import org.checkerframework.checker.units.qual.A;
 import org.hibernate.Hibernate;
@@ -65,6 +66,9 @@ public class PurchaseOrderService extends ReusableFields {
     @Autowired
     DraftService draftService;
 
+    @Autowired
+    PurchaseOrderPriceMasker purchaseOrderPriceMasker;
+
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
@@ -76,16 +80,34 @@ public class PurchaseOrderService extends ReusableFields {
     }
 
     @Transactional(readOnly = true)
-    public ReturnPurchaseOrderData fetchPurchaseOrdersPage(FilterDataList filterDataList, Pageable pageable) throws ParseException {
-        ReturnPurchaseOrderData returnData = new ReturnPurchaseOrderData();
-        Specification<PurchaseOrder> spec = PurchaseOrderSpecification.getSpecification(filterDataList);
-        Page<PurchaseOrder> page = (spec != null) ? purchaseOrderRepo.findAll(spec, pageable) : purchaseOrderRepo.findAll(pageable);
+    public ReturnPurchaseOrderData fetchPurchaseOrdersPage(
+            FilterDataList filterDataList,
+            Pageable pageable
+    ) throws Exception {
 
-        // Initialize all lazy-loaded associations
+        ReturnPurchaseOrderData returnData = new ReturnPurchaseOrderData();
+
+        Specification<PurchaseOrder> spec =
+                PurchaseOrderSpecification.getSpecification(filterDataList);
+
+        Page<PurchaseOrder> page = (spec != null)
+                ? purchaseOrderRepo.findAll(spec, pageable)
+                : purchaseOrderRepo.findAll(pageable);
+
+        // Initialize lazy-loaded associations
         initializeLazyAssociations(page.getContent());
+
+        // 🔒 MASK PRICE FIELDS
+        purchaseOrderPriceMasker.mask(page);
+
+        // Enrich UI flags
         purchaseOrderUiEnricher.enrich(page.getContent());
+
         returnData.setPuchaseOrders(page);
-        returnData.setPoDropdown(populateDropdownService.fetchData("purchaseorder"));
+        returnData.setPoDropdown(
+                populateDropdownService.fetchData("purchaseorder")
+        );
+
         return returnData;
     }
 
@@ -123,27 +145,31 @@ public class PurchaseOrderService extends ReusableFields {
     }
 
     @Transactional(readOnly = true)
-    public PurchaseOrder getPurchaseOrderWithInit(String id) {
+    public PurchaseOrder getPurchaseOrderWithInit(String id) throws Exception {
         PurchaseOrder po = purchaseOrderRepo.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Purchase Order not found with ID: " + id));
-        // Initialize supplier & firm (for JSON)
+                        new RuntimeException(
+                                "Purchase Order not found with ID: " + id
+                        ));
+
+        // Initialize supplier & firm
         if (po.getSupplier() != null) {
             po.getSupplier().getName();
         }
         if (po.getFirm() != null) {
             po.getFirm().getFirmName();
         }
+
         // Initialize lines + indentRefs + product
         for (PurchaseOrderLine line : po.getLines()) {
-            // force init of indentRefs
             line.getIndentRefs().size();
-
-            // force init of product if serialized
             if (line.getProduct() != null) {
                 line.getProduct().getProductName();
             }
         }
+
+        // MASK PRICE FIELDS
+        purchaseOrderPriceMasker.mask(po);
         return po;
     }
 
@@ -154,7 +180,7 @@ public class PurchaseOrderService extends ReusableFields {
 
     @Transactional
     public PurchaseOrder shortClosePurchaseOrder(ShortClosePoRequest request) {
-        if(request.getPurchaseOrderNo() == null)
+        if (request.getPurchaseOrderNo() == null)
             throw new IllegalArgumentException("Purchase Order Number cannot be null");
         poLifecycleManager.shortClosePo(request);
         return purchaseOrderRepo.findByIdWithDetails(request.getPurchaseOrderNo()).get();
