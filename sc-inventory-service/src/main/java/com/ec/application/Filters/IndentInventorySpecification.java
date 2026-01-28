@@ -23,36 +23,41 @@ public final class IndentInventorySpecification {
         List<String> endDates = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "endDate");
         List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productNames");
         List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
-        List<String> statusList = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "status");
+        List<String> statusList = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "indentStatus");
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
         List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
+        List<String> lineItemStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "lineItemStatus");
         Specification<IndentInventory> finalSpec = null;
 
-        if (startDates != null && startDates.size() > 0)
+        if (startDates != null && !startDates.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldDateGreaterThan(IndentInventory_.INDENT_DATE, startDates));
 
-        if (endDates != null && endDates.size() > 0)
+        if (endDates != null && !endDates.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldDateLessThan(IndentInventory_.INDENT_DATE, endDates));
 
-        if (productNames != null && productNames.size() > 0)
+        if (productNames != null && !productNames.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereIndentContainsProductName(productNames, IndentInventory_.INVENTORY_LIST));
 
-        if (productCodes != null && productCodes.size() > 0)
+        if (productCodes != null && !productCodes.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereIndentContainsProductCode(productCodes, IndentInventory_.INVENTORY_LIST));
 
-        if (statusList != null && statusList.size() > 0)
+        if (statusList != null && !statusList.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldEquals(IndentInventory_.INDENT_STATUS, statusList));
 
-        if (categoryNames != null && categoryNames.size() > 0)
+        if (lineItemStatus != null && !lineItemStatus.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereIndentContainsLineItemStatus(lineItemStatus, IndentInventory_.INVENTORY_LIST));
+
+        if (categoryNames != null && !categoryNames.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereIndentCategoryContains(categoryNames, IndentInventory_.INVENTORY_LIST));
 
-        if (globalSearch != null && globalSearch.size() > 0) {
+        if (globalSearch != null && !globalSearch.isEmpty()) {
             Specification<IndentInventory> internalSpec = null;
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(IndentInventory_.INDENT_STATUS, globalSearch));
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(IndentInventory_.INDENT_ID, globalSearch));

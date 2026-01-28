@@ -1,12 +1,7 @@
 package com.ec.application.ReusableClasses;
 
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.model.*;
@@ -282,6 +277,19 @@ public class SpecificationsBuilder<T> {
             Predicate parentPredicate = parentExpression.in(productCodes);
             query.where(parentPredicate);
             return query.getRestriction();
+        };
+    }
+
+    public <T> Specification<T> whereIndentContainsLineItemStatus(List<String> lineItemStatuses, String joinTable) {
+        return (root, query, cb) -> {
+
+            if (lineItemStatuses == null || lineItemStatuses.isEmpty()) {
+                return cb.conjunction(); // no filtering
+            }
+
+            Join<T, IndentInventoryList> lineItemJoin = root.join(joinTable, JoinType.INNER);
+            query.distinct(true);
+            return lineItemJoin.get(IndentInventoryList_.lineItemStatus).in(lineItemStatuses);
         };
     }
 
