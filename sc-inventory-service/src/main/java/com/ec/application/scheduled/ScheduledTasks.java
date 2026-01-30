@@ -35,7 +35,7 @@ public class ScheduledTasks {
     AllInventoryService allInventoryService;
 
     @Autowired
-    DeadStockSyncJob deadStockSyncJob;
+    StockSyncJob stockSyncJob;
 
  /*   //@Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {

@@ -12,7 +12,7 @@ import java.util.Date;
 
 @Entity
 @Table(
-        name = "dead_stock_summary",
+        name = "stock_summary",
         uniqueConstraints = @UniqueConstraint(
                 columnNames = {"tenantSchema", "productId", "warehouseId"}
         )
@@ -22,7 +22,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Audited
-public class DeadStockSummary extends ReusableFields {
+public class StockSummary extends ReusableFields {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

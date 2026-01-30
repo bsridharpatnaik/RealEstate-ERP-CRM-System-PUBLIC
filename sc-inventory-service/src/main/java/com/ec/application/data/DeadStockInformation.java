@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class DeadStockInformation {
 
-    private List<DeadStockDTO> content;
+    private List<StockSummaryDTO> content;
     private long totalElements;
     private int totalPages;
     private int pageNumber;

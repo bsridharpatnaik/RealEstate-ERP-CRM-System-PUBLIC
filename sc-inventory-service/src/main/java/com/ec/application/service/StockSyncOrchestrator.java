@@ -9,32 +9,30 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import com.ec.application.service.DeadStockSyncService;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @RequiredArgsConstructor
-public class DeadStockSyncOrchestrator {
+public class StockSyncOrchestrator {
 
-    private static final String JOB_NAME = "DEAD_STOCK_SYNC";
+    private static final String JOB_NAME = "STOCK_SYNC";
 
-    private final DeadStockSyncService tenantSyncService;
+    private final StockSummarySyncService tenantSyncService;
     private final SchemaConfig schemaConfig;
     private final JobExecutionLogRepository jobRepo;
 
     private final AtomicBoolean syncRunning = new AtomicBoolean(false);
 
     private static final Logger log =
-            LoggerFactory.getLogger(DeadStockSyncOrchestrator.class);
+            LoggerFactory.getLogger(StockSyncOrchestrator.class);
 
     @UseDefaultTenant  // IMPORTANT: master schema
     public String syncAllTenants() {
 
         if (!syncRunning.compareAndSet(false, true)) {
-            return "Dead stock sync is already running. Please refresh page in few minutes.";
+            return "Stock sync is already running. Please refresh page in few minutes.";
         }
 
         JobExecutionLog job =
@@ -56,7 +54,7 @@ public class DeadStockSyncOrchestrator {
                 try {
                     tenantSyncService.syncSingleTenant(tenant);
                 } catch (Exception e) {
-                    log.error("DeadStock sync failed for tenant {}", tenant, e);
+                    log.error("Stock sync failed for tenant {}", tenant, e);
                 }
             }
             ThreadLocalStorage.setTenantName(schemaConfig.getMasterSchema());
@@ -80,6 +78,6 @@ public class DeadStockSyncOrchestrator {
             syncRunning.set(false);
         }
 
-        return "Dead stock sync triggered. Please refresh page in few minutes.";
+        return "Stock sync triggered. Please refresh page in few minutes.";
     }
 }

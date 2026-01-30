@@ -1,21 +1,16 @@
 package com.ec.application.service;
 
-import com.ec.application.Filters.CategorySpecifications;
-import com.ec.application.Filters.DeadStockSpecification;
+import com.ec.application.Filters.StockSummarySpecification;
 import com.ec.application.Filters.FilterDataList;
-import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.*;
-import com.ec.application.model.Category;
-import com.ec.application.model.DeadStockSummary;
-import com.ec.application.model.JobExecutionLog;
-import com.ec.application.repository.DeadStockSummaryRepo;
+import com.ec.application.model.StockSummary;
+import com.ec.application.repository.StockSummaryRepo;
 import com.ec.application.repository.JobExecutionLogRepository;
-import com.ec.application.repository.ProductRepo;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -24,22 +19,21 @@ import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @UseDefaultTenant
 public class DeadStockService {
 
-    private final DeadStockSummaryRepo deadStockSummaryRepo;
+    private final StockSummaryRepo stockSummaryRepo;
     private final PopulateDropdownService populateDropdownService;
     private final JobExecutionLogRepository jobExecutionLogRepo;
 
-    Logger log = LoggerFactory.getLogger(CategoryService.class);
+    Logger log = LoggerFactory.getLogger(DeadStockService.class);
 
-    public DeadStockSummary findSingleItem(Long id) {
+    public StockSummary findSingleItem(Long id) {
         log.info("Invoked - findSingleItem | id={}", id);
-        return deadStockSummaryRepo.findById(id)
+        return stockSummaryRepo.findById(id)
                 .orElseThrow(() ->
                         new EntityNotFoundException("Dead Stock Summary not found for id: " + id)
                 );
@@ -49,15 +43,16 @@ public class DeadStockService {
     public DeadStockWithDropdownData findFilteredDeadStock(FilterDataList filterDataList, Pageable pageable) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         DeadStockWithDropdownData returnData = new DeadStockWithDropdownData();
-        Specification<DeadStockSummary> spec = DeadStockSpecification.getSpecification(filterDataList);
+        Specification<StockSummary> spec = StockSummarySpecification.getSpecification(filterDataList);
+        spec = StockSummarySpecification.addWarehouseForDeadStockFilter(spec);
 
         if (spec != null)
-            returnData.setDaeadStockSummaries(deadStockSummaryRepo.findAll(spec, pageable));
+            returnData.setDaeadStockSummaries(stockSummaryRepo.findAll(spec, pageable));
         else
-            returnData.setDaeadStockSummaries(deadStockSummaryRepo.findAll(pageable));
+            returnData.setDaeadStockSummaries(stockSummaryRepo.findAll(pageable));
 
         returnData.setDeadStockDropdown(populateDropdownService.fetchData("deadstock"));
-        returnData.setLastSyncDate(jobExecutionLogRepo.findLastSuccessfulRunTime("DEAD_STOCK_SYNC"));
+        returnData.setLastSyncDate(jobExecutionLogRepo.findLastSuccessfulRunTime("STOCK_SYNC"));
         return returnData;
     }
 
@@ -79,14 +74,14 @@ public class DeadStockService {
         }
 
         //⃣ Fetch all matching dead stock rows
-        List<DeadStockSummary> summaries = deadStockSummaryRepo.fetchDeadStockByProductIds(productIds);
+        List<StockSummary> summaries = stockSummaryRepo.fetchStockByProductIdsAndWarehouse(productIds, ProjectConstants.deadStockWarehouseName);
 
         if (summaries == null || summaries.isEmpty()) {
             return result; // all zero-filled
         }
 
         //️ Populate detailed + aggregate total
-        for (DeadStockSummary summary : summaries) {
+        for (StockSummary summary : summaries) {
 
             DeadStockDTOForIndent dto = result.get(summary.getProductId());
             if (dto == null) {

@@ -2,46 +2,38 @@ package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.config.SchemaConfig;
-import com.ec.application.data.DeadStockDTO;
-import com.ec.application.model.DeadStockSummary;
-import com.ec.application.model.Product;
+import com.ec.application.data.StockSummaryDTO;
+import com.ec.application.model.StockSummary;
 import com.ec.application.model.Stock;
 import com.ec.application.multitenant.ThreadLocalStorage;
-import com.ec.application.repository.DeadStockSummaryRepo;
-import com.ec.application.repository.ProductRepo;
+import com.ec.application.repository.StockSummaryRepo;
 import com.ec.application.repository.StockRepo;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class DeadStockSyncService {
+public class StockSummarySyncService {
 
-    private final DeadStockSummaryRepo deadStockSummaryRepo;
+    private final StockSummaryRepo stockSummaryRepo;
     private final StockRepo stockRepo;
     private final SchemaConfig schemaConfig;
     private final TenantService tenantService;
 
     public void syncSingleTenant(String tenantSchema) {
         String masterSchema = schemaConfig.getMasterSchema();
-        System.out.println("▶️ Starting DeadStock sync for tenant: " + tenantSchema);
+        System.out.println("▶️ Starting Stock sync for tenant: " + tenantSchema);
 
         try {
             // ---------- Step 1: Get last sync time from MASTER ----------
             ThreadLocalStorage.setTenantName(masterSchema);
-            Date lastSyncTime = deadStockSummaryRepo.findLastSyncTime();
+            Date lastSyncTime = stockSummaryRepo.findLastSyncTime();
             if (lastSyncTime == null) {
                 lastSyncTime = new Date(0); // 01-01-1970 00:00:00
                 System.out.println("⏱ Last sync time not found. Using minimum date: " + lastSyncTime);
@@ -49,19 +41,19 @@ public class DeadStockSyncService {
                 System.out.println("⏱ Last sync time: " + lastSyncTime);
             }
 
-            // ---------- Step 2: Fetch dead stocks from TENANT ----------
+            // ---------- Step 2: Fetch stocks from TENANT ----------
             ThreadLocalStorage.setTenantName(tenantSchema);
-            List<Stock> stocks = stockRepo.findDeadStocksUpdatedAfter(lastSyncTime);
+            List<Stock> stocks = stockRepo.findStocksUpdatedAfter(lastSyncTime);
 
-            System.out.println("📦 Dead stock records fetched: " + stocks.size());
+            System.out.println("Stock records fetched: " + stocks.size());
 
             if (stocks.isEmpty()) {
-                System.out.println("No dead stock changes for tenant: " + tenantSchema);
+                System.out.println("No Stock changes for tenant: " + tenantSchema);
                 return;
             }
 
             // ---------- Step 3: Map to DTO ----------
-            List<DeadStockDTO> deadStocks = mapStockToDeadStockDTO(stocks, tenantSchema);
+            List<StockSummaryDTO> stocksDTOs = mapStockToStockDTO(stocks, tenantSchema);
 
             // ---------- Step 4: Persist into MASTER ----------
             ThreadLocalStorage.setTenantName(masterSchema);
@@ -70,8 +62,8 @@ public class DeadStockSyncService {
             int created = 0;
             int updated = 0;
 
-            for (DeadStockDTO deadStock : deadStocks) {
-                boolean isNew = findOrCreateAndUpdateDeadStockSummary(deadStock, now);
+            for (StockSummaryDTO stock : stocksDTOs) {
+                boolean isNew = findOrCreateAndUpdateStockSummary(stock, now);
                 if (isNew) {
                     created++;
                 } else {
@@ -79,10 +71,10 @@ public class DeadStockSyncService {
                 }
             }
 
-            System.out.println("DeadStock sync completed for tenant: " + tenantSchema + " | Created: " + created + " | Updated: " + updated);
+            System.out.println("Stock sync completed for tenant: " + tenantSchema + " | Created: " + created + " | Updated: " + updated);
 
         } catch (Exception e) {
-            System.out.println("DeadStock sync FAILED for tenant: " + tenantSchema);
+            System.out.println("Stock sync FAILED for tenant: " + tenantSchema);
             e.printStackTrace();
             throw e;
         }
@@ -93,36 +85,36 @@ public class DeadStockSyncService {
     // ------------------------------------------------------------
     @UseDefaultTenant
     @Transactional
-    private boolean findOrCreateAndUpdateDeadStockSummary(DeadStockDTO deadStock, Date syncedAt) {
-        List<DeadStockSummary> existing = deadStockSummaryRepo.findByTenantSchemaAndProductIdAndWarehouseId(deadStock.getTenantSchema(), deadStock.getProductId(), deadStock.getWarehouseId());
+    private boolean findOrCreateAndUpdateStockSummary(StockSummaryDTO stock, Date syncedAt) {
+        List<StockSummary> existing = stockSummaryRepo.findByTenantSchemaAndProductIdAndWarehouseId(stock.getTenantSchema(), stock.getProductId(), stock.getWarehouseId());
 
         // ---------- CREATE ----------
         if (existing == null || existing.isEmpty()) {
-            DeadStockSummary newSummary = buildDeadStockSummary(deadStock, syncedAt);
-            deadStockSummaryRepo.save(newSummary);
-            System.out.println("➕ Created DeadStockSummary | Product: " + deadStock.getProductId() + " | Warehouse: " + deadStock.getWarehouseId());
+            StockSummary newSummary = buildStockSummary(stock, syncedAt);
+            stockSummaryRepo.save(newSummary);
+            System.out.println("➕ Created StockSummary | Product: " + stock.getProductId());
             return true;
         }
 
         // ---------- UPDATE ----------
-        DeadStockSummary summary = existing.get(0);
-        summary.setQuantityInHand(deadStock.getQuantityInHand());
+        StockSummary summary = existing.get(0);
+        summary.setQuantityInHand(stock.getQuantityInHand());
         summary.setSyncedAt(syncedAt);
-        deadStockSummaryRepo.save(summary);
-        System.out.println("✏️ Updated DeadStockSummary | Product: " + deadStock.getProductId() + " | Warehouse: " + deadStock.getWarehouseId());
+        stockSummaryRepo.save(summary);
+        System.out.println("✏️ Updated StockSummary | Product: " + stock.getProductId());
         return false;
     }
 
-    private DeadStockSummary buildDeadStockSummary(DeadStockDTO deadStock, Date syncedAt) {
-        DeadStockSummary summary = new DeadStockSummary();
-        summary.setTenantSchema(deadStock.getTenantSchema());
-        summary.setProductId(deadStock.getProductId());
-        summary.setProductName(deadStock.getProductName());
-        summary.setProductCode(deadStock.getProductCode());
-        summary.setWarehouseId(deadStock.getWarehouseId());
-        summary.setWarehouseName(deadStock.getWarehouseName());
-        summary.setQuantityInHand(deadStock.getQuantityInHand());
-        summary.setMeasurementUnit(deadStock.getMeasurementUnit());
+    private StockSummary buildStockSummary(StockSummaryDTO stock, Date syncedAt) {
+        StockSummary summary = new StockSummary();
+        summary.setTenantSchema(stock.getTenantSchema());
+        summary.setProductId(stock.getProductId());
+        summary.setProductName(stock.getProductName());
+        summary.setProductCode(stock.getProductCode());
+        summary.setWarehouseId(stock.getWarehouseId());
+        summary.setWarehouseName(stock.getWarehouseName());
+        summary.setQuantityInHand(stock.getQuantityInHand());
+        summary.setMeasurementUnit(stock.getMeasurementUnit());
         summary.setSyncedAt(syncedAt);
         return summary;
     }
@@ -130,13 +122,13 @@ public class DeadStockSyncService {
     // ------------------------------------------------------------
     // Tenant-side mapping
     // ------------------------------------------------------------
-    private List<DeadStockDTO> mapStockToDeadStockDTO(List<Stock> stocks, String tenantSchema) {
-        List<DeadStockDTO> result = new ArrayList<>(stocks.size());
+    private List<StockSummaryDTO> mapStockToStockDTO(List<Stock> stocks, String tenantSchema) {
+        List<StockSummaryDTO> result = new ArrayList<>(stocks.size());
         for (Stock stock : stocks) {
             if (stock == null || stock.getProduct() == null || stock.getWarehouse() == null) {
                 continue;
             }
-            DeadStockDTO dto = new DeadStockDTO();
+            StockSummaryDTO dto = new StockSummaryDTO();
             dto.setTenantSchema(tenantSchema);
             dto.setTenantCode(tenantSchema);
             dto.setProductId(stock.getProduct().getProductId());

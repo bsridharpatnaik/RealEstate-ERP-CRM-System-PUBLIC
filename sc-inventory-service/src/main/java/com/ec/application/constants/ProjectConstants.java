@@ -15,4 +15,5 @@ public final class ProjectConstants {
 	public static String sunCityTenantName="newsuncitynx";
 	public static String IODeliveryListForEgcity="EgcityIOStats";
 	public static String IODeliveryListForSuncity="SuncityIOStats";
+	public static String deadStockWarehouseName = "Dead Stock Warehouse";
 }

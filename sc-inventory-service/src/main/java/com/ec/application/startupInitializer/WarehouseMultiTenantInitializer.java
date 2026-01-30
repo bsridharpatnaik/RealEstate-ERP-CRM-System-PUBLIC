@@ -1,6 +1,7 @@
 package com.ec.application.startupInitializer;
 
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.model.Warehouse;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.WarehouseRepo;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @Component
 public class WarehouseMultiTenantInitializer implements ApplicationRunner {
 
-    private static final String DEFAULT_WAREHOUSE = "Dead Stock Warehouse";
+    private static final String DEFAULT_WAREHOUSE = ProjectConstants.deadStockWarehouseName;
 
     @Autowired
     private SchemaConfig schemaConfig;

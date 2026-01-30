@@ -1,7 +1,6 @@
 package com.ec.application.scheduled;
 
-import com.ec.application.service.DeadStockSyncOrchestrator;
-import com.ec.application.service.DeadStockSyncService;
+import com.ec.application.service.StockSyncOrchestrator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,11 +9,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class DeadStockSyncJob {
+public class StockSyncJob {
 
-    private final DeadStockSyncOrchestrator deadStockSyncService;
+    private final StockSyncOrchestrator deadStockSyncService;
 
-    Logger log = LoggerFactory.getLogger(DeadStockSyncJob.class);
+    Logger log = LoggerFactory.getLogger(StockSyncJob.class);
 
     @Scheduled(cron = "0 0 * * * *") // every 1 hour
     public void run() {

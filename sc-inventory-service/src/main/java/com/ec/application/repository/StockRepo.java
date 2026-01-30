@@ -83,6 +83,6 @@ public interface StockRepo extends BaseRepository<Stock, Long> {
     )
     List<Object[]> getCurrentStockForProductsInWarehouse(@Param("warehouseId") Long warehouseId, @Param("productIds") List<Long> productIds);
 
-    @Query(value = "SELECT m from Stock m where m.warehouse.warehouseName='Dead Stock Warehouse' AND m.lastModifiedDate>=:lastSyncTime")
-    List<Stock> findDeadStocksUpdatedAfter(Date lastSyncTime);
+    @Query(value = "SELECT m from Stock m where m.lastModifiedDate>=:lastSyncTime")
+    List<Stock> findStocksUpdatedAfter(Date lastSyncTime);
 }
