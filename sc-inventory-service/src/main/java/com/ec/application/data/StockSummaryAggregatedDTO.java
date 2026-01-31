@@ -1,6 +1,8 @@
 package com.ec.application.data;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,7 +16,10 @@ public class StockSummaryAggregatedDTO {
     private Long productId;
     private String productCode;
     private String productName;
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
     private Double quantityInHand;   // SUM
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double deadStock;
     private String measurementUnit;
 
     @JsonFormat(
