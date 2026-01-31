@@ -1,5 +1,6 @@
 package com.ec.application.data;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,5 +17,10 @@ public class StockSummaryAggregatedDTO {
     private Double quantityInHand;   // SUM
     private String measurementUnit;
 
+    @JsonFormat(
+            shape = JsonFormat.Shape.STRING,
+            pattern = "dd MMM yyyy, hh:mm a",
+            timezone = "Asia/Kolkata"
+    )
     private Date syncedAt;            // MAX
 }

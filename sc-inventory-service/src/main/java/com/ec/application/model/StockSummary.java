@@ -1,6 +1,7 @@
 package com.ec.application.model;
 
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,5 +57,10 @@ public class StockSummary extends ReusableFields {
 
     /** when sync job ran */
     @Temporal(TemporalType.TIMESTAMP)
+    @JsonFormat(
+            shape = JsonFormat.Shape.STRING,
+            pattern = "dd MMM yyyy, hh:mm a",
+            timezone = "Asia/Kolkata"
+    )
     private Date syncedAt;
 }

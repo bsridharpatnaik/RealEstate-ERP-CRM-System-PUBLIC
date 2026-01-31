@@ -56,7 +56,6 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
         ));
 
 
-
         if (!predicates.isEmpty()) {
             cq.where(cb.and(predicates.toArray(new Predicate[0])));
         }
@@ -140,7 +139,7 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
 
             switch (attr) {
 
-                case "tenantSchema":
+                case "tenants":
                     predicates.add(root.get("tenantSchema").in(values));
                     break;
 
@@ -154,11 +153,11 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                     );
                     break;
 
-                case "productCode":
+                case "productCodes":
                     predicates.add(root.get("productCode").in(values));
                     break;
 
-                case "productName":
+                case "productNames":
                     predicates.add(
                             cb.lower(root.get("productName"))
                                     .in(values.stream()
@@ -166,9 +165,18 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                                             .collect(Collectors.toList()))
                     );
                     break;
+                case "globalSearch":
+                    List<Predicate> orPredicates = new ArrayList<>();
+                    for (String term : values) {
+                        String pattern = "%" + term.toLowerCase() + "%";
+                        orPredicates.add(cb.like(cb.lower(root.get("tenantSchema")), pattern));
+                        orPredicates.add(cb.like(cb.lower(root.get("productCode")), pattern));
+                        orPredicates.add(cb.like(cb.lower(root.get("productName")), pattern));
+                    }
+                    predicates.add(cb.or(orPredicates.toArray(new Predicate[0])));
+                    break;
             }
         }
-
         return predicates;
     }
 }
