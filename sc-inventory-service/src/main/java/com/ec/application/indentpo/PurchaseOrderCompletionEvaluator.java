@@ -9,6 +9,7 @@ import com.ec.application.model.PurchaseOrderIndentRef;
 import com.ec.application.model.PurchaseOrderLine;
 import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
+import com.ec.application.service.PurchaseOrderStatusHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public class PurchaseOrderCompletionEvaluator {
 
     private final PurchaseOrderRepo purchaseOrderRepo;
     private final IndentInventoryListRepo indentInventoryListRepo;
+    private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
 
     private static final Logger log = LoggerFactory.getLogger(PurchaseOrderCompletionEvaluator.class);
 
@@ -85,6 +87,7 @@ public class PurchaseOrderCompletionEvaluator {
         }
 
         log.info("PO [{}] - anyInwardStarted: {}, allInwardComplete: {}", po.getPurchaseOrderId(), anyInwardStarted, allInwardComplete);
+        String oldStatus = po.getStatus();
         if (!anyInwardStarted) {
             // No inward done for any indent line
             po.setStatus(POStatusConstants.STATUS_NEW);
@@ -94,6 +97,10 @@ public class PurchaseOrderCompletionEvaluator {
         } else {
             // Some inward done, but not all complete
             po.setStatus(POStatusConstants.STATUS_PARTIAL);
+        }
+        if (oldStatus != po.getStatus()) {
+            log.info("PO [{}] status changed from {} to {}", po.getPurchaseOrderId(), oldStatus, po.getStatus());
+            purchaseOrderStatusHistoryService.logStatusChange(po, oldStatus, po.getStatus(), "System", "PO status auto-updated by system based on indent line item statuses. Old Status - " + oldStatus + ", New Status - " + po.getStatus());
         }
         purchaseOrderRepo.save(po);
     }

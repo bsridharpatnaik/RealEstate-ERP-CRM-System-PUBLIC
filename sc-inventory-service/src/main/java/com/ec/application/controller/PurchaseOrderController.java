@@ -8,8 +8,11 @@ import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.IndentInventory;
+import com.ec.application.model.IndentStatusHistory;
 import com.ec.application.model.PurchaseOrder;
+import com.ec.application.model.PurchaseOrderStatusHistory;
 import com.ec.application.service.PurchaseOrderService;
+import com.ec.application.service.PurchaseOrderStatusHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,6 +32,7 @@ import java.util.Map;
 public class PurchaseOrderController {
 
     private final PurchaseOrderService purchaseOrderService;
+    private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
 
     @PostMapping("/create")
     @CheckAuthority
@@ -58,9 +62,14 @@ public class PurchaseOrderController {
     }
 
     @PostMapping("/short-close")
-    public PurchaseOrder shortClosePo(@RequestBody ShortClosePoRequest request) {
+    public PurchaseOrder shortClosePo(@RequestBody ShortClosePoRequest request) throws Exception {
         PurchaseOrder po = purchaseOrderService.shortClosePurchaseOrder(request);
         return po;
+    }
+
+    @GetMapping("/{id}/status-history")
+    public List<PurchaseOrderStatusHistory> getIndentStatusHistory(@PathVariable String id) {
+        return purchaseOrderStatusHistoryService.getStatusHistoryForPO(id);
     }
 
     @ExceptionHandler({JpaSystemException.class})

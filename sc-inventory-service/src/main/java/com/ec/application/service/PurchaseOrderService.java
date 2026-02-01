@@ -69,6 +69,9 @@ public class PurchaseOrderService extends ReusableFields {
     @Autowired
     PurchaseOrderStatusHistoryService poStatusHistoryService;
 
+    @Autowired
+    UserDetailsService userDetailsService;
+
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
@@ -76,14 +79,12 @@ public class PurchaseOrderService extends ReusableFields {
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
         draftService.deleteDraftForUser("PO");
+        poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), userDetailsService.getCurrentUser().getUsername(), "Purchase Order created by user " + userDetailsService.getCurrentUser().getUsername());
         return savedPO;
     }
 
     @Transactional(readOnly = true)
-    public ReturnPurchaseOrderData fetchPurchaseOrdersPage(
-            FilterDataList filterDataList,
-            Pageable pageable
-    ) throws Exception {
+    public ReturnPurchaseOrderData fetchPurchaseOrdersPage(FilterDataList filterDataList, Pageable pageable) throws Exception {
 
         ReturnPurchaseOrderData returnData = new ReturnPurchaseOrderData();
         Specification<PurchaseOrder> spec = PurchaseOrderSpecification.getSpecification(filterDataList);
@@ -167,12 +168,12 @@ public class PurchaseOrderService extends ReusableFields {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void cancelPurchaseOrderById(String id) {
+    public void cancelPurchaseOrderById(String id) throws Exception {
         poLifecycleManager.cancelIfAllowed(id);
     }
 
     @Transactional
-    public PurchaseOrder shortClosePurchaseOrder(ShortClosePoRequest request) {
+    public PurchaseOrder shortClosePurchaseOrder(ShortClosePoRequest request) throws Exception {
         if (request.getPurchaseOrderNo() == null)
             throw new IllegalArgumentException("Purchase Order Number cannot be null");
         poLifecycleManager.shortClosePo(request);

@@ -8,10 +8,14 @@ import com.ec.application.data.ShortClosePoRequest;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentInventoryList;
 import com.ec.application.model.PurchaseOrder;
+import com.ec.application.model.PurchaseOrderStatusHistory;
 import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
+import com.ec.application.repository.PurchaseOrderStatusHistoryRepo;
 import com.ec.application.service.IndentStatusHistoryService;
 import com.ec.application.service.IndentStatusUpdater;
+import com.ec.application.service.PurchaseOrderStatusHistoryService;
+import com.ec.application.service.UserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,9 +30,11 @@ public class PurchaseOrderLifecycleManager {
     private final IndentInventoryListRepo indentInventoryListRepo;
     private final IndentCompletionEvaluator indentCompletionEvaluator;
     private final IndentStatusHistoryService indentStatusHistoryService;
+    private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
+    private final UserDetailsService userDetailsService;
 
     @Transactional
-    public void cancelIfAllowed(String poId) {
+    public void cancelIfAllowed(String poId) throws Exception {
 
         PurchaseOrder po = purchaseOrderRepo.findById(poId)
                 .orElseThrow(() -> new IllegalStateException("PO not found"));
@@ -37,13 +43,14 @@ public class PurchaseOrderLifecycleManager {
             throw new IllegalStateException("PO can be cancelled only in status NEW. It must be short closed.");
         }
 
+        purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_CANCELLED, "System", "PO cancelled by user " + userDetailsService.getCurrentUser().getUsername());
         po.setStatus(POStatusConstants.STATUS_CANCELLED);
         purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(po, POIndentUpdateAction.CANCEL_PO);
     }
 
     @Transactional
-    public void shortClosePo(ShortClosePoRequest request) {
+    public void shortClosePo(ShortClosePoRequest request) throws Exception {
 
         PurchaseOrder po = purchaseOrderRepo.findById(request.getPurchaseOrderNo())
                 .orElseThrow(() -> new IllegalStateException("PO not found"));
@@ -54,6 +61,7 @@ public class PurchaseOrderLifecycleManager {
         }
 
         // 3. Update PO status
+        purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_SHORT_CLOSED, "System", "PO short closed by user " + userDetailsService.getCurrentUser().getUsername());
         po.setStatus(POStatusConstants.STATUS_SHORT_CLOSED);
         po.setShortCloseReason(request.getReason()); // optional column
         purchaseOrderRepo.save(po);

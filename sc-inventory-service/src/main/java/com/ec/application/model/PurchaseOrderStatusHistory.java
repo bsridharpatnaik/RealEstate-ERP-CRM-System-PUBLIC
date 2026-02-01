@@ -1,6 +1,7 @@
 package com.ec.application.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 
@@ -19,6 +20,7 @@ public class PurchaseOrderStatusHistory {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "indent_id", nullable = false)
+    @JsonIgnore
     private PurchaseOrder purchaseOrder;
 
     private String oldStatus;
