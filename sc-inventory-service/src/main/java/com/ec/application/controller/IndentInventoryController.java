@@ -7,7 +7,9 @@ import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.data.*;
 import com.ec.application.model.IndentInventory;
+import com.ec.application.model.IndentStatusHistory;
 import com.ec.application.service.IndentInventoryService;
+import com.ec.application.service.IndentStatusHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -30,6 +32,9 @@ public class IndentInventoryController {
 
     @Autowired
     IndentInventoryService iiService;
+
+    @Autowired
+    private IndentStatusHistoryService indentStatusHistoryService;
 
     @PostMapping("/create")
     @CheckAuthority
@@ -89,6 +94,11 @@ public class IndentInventoryController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiOnlyMessageAndCodeError(400, e.getMessage()));
         }
+    }
+
+    @GetMapping("/{indentId}/status-history")
+    public List<IndentStatusHistory> getIndentStatusHistory(@PathVariable String indentId) {
+        return indentStatusHistoryService.getStatusHistoryForIndent(indentId);
     }
 
     /**

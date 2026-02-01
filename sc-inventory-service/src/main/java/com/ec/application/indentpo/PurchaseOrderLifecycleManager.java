@@ -65,7 +65,7 @@ public class PurchaseOrderLifecycleManager {
                     // Only pending items are short closed
                     if (IndentLineItemStatusConstants.SHORTCLOSE_ALLOWED_STATUSES.contains(item.getLineItemStatus())) {
                         item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_SHORT_CLOSED);
-                        indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + "status changed to " + item.getLineItemStatus() + " due to PO " + "short close." + po.getPurchaseOrderId() +".");
+                        indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + " status changed to " + item.getLineItemStatus() + " due to PO " + " short close - " + po.getPurchaseOrderId() +".");
                         indentInventoryListRepo.save(item);
                     }
                 })

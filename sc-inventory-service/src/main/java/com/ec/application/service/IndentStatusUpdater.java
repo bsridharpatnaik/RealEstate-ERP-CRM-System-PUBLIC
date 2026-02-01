@@ -33,11 +33,11 @@ public class IndentStatusUpdater {
                 if (action == POIndentUpdateAction.CREATE_PO) {
                     item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_PO_CREATED);
                     item.setPurchaseOrderId(po.getPurchaseOrderId());
-                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + "status changed to " + item.getLineItemStatus() + " due to PO " + "creation " + po.getPurchaseOrderId() +".");
+                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + " status changed to " + item.getLineItemStatus() + " due to PO " + "creation " + po.getPurchaseOrderId() +".");
                 } else {
                     item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
                     item.setPurchaseOrderId(null);
-                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + "status changed to " + item.getLineItemStatus() + " due to PO " + "cancellation." + po.getPurchaseOrderId() +".");
+                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + " status changed to " + item.getLineItemStatus() + " due to PO " + "cancellation." + po.getPurchaseOrderId() +".");
                 }
                 indentInventoryListRepo.save(item);
                 indentCompletionEvaluator.evaluate(item.getIndentInventory());

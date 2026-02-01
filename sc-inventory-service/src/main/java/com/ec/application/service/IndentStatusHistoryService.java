@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -20,15 +21,18 @@ public class IndentStatusHistoryService {
 
     @Transactional
     public void logStatusChange(IndentInventory indent, String oldStatus, String newStatus, String changedBy, String changeMessage) {
-        if (!Objects.equals(oldStatus, newStatus)) {
-            IndentStatusHistory h = new IndentStatusHistory();
-            h.setIndent(indent);
-            h.setOldStatus(oldStatus);   // can be null on creation
-            h.setNewStatus(newStatus);   // must not be null
-            h.setChangedAt(new Date());
-            h.setChangedBy(changedBy);
-            h.setChangeMessage(changeMessage);
-            indentStatusHistoryRepo.save(h);
-        }
+        IndentStatusHistory h = new IndentStatusHistory();
+        h.setIndent(indent);
+        h.setOldStatus(oldStatus);   // can be null on creation
+        h.setNewStatus(newStatus);   // must not be null
+        h.setChangedAt(new Date());
+        h.setChangedBy(changedBy);
+        h.setChangeMessage(changeMessage);
+        indentStatusHistoryRepo.save(h);
+    }
+
+    @Transactional(readOnly = true)
+    public List<IndentStatusHistory> getStatusHistoryForIndent(String indentId) {
+        return indentStatusHistoryRepo.findByIndent_IndentIdOrderByIdDesc(indentId);
     }
 }
