@@ -24,7 +24,7 @@ public class PurchaseOrderStatusHistory {
     private String oldStatus;
     private String newStatus;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "d MMM yyyy h:mm a")
     private Date changedAt;
 
     private String changedBy;

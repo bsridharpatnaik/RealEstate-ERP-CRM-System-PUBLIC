@@ -1,6 +1,8 @@
 package com.ec.application.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 
@@ -19,12 +21,13 @@ public class IndentStatusHistory {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "indent_id", nullable = false)
+    @JsonIgnore
     private IndentInventory indent;
 
     private String oldStatus;
     private String newStatus;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "d MMM yyyy h:mm a")
     private Date changedAt;
 
     private String changedBy;
