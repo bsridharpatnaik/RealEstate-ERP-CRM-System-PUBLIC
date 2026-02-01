@@ -4,6 +4,7 @@ import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.repository.IndentInventoryRepo;
+import com.ec.application.service.IndentStatusHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,12 @@ import java.util.Set;
 public class IndentCompletionEvaluator {
 
     private final IndentInventoryRepo indentInventoryRepo;
+    private final IndentStatusHistoryService indentStatusHistoryService;
 
     @Transactional
     public void evaluate(IndentInventory indent) {
 
+        String oldStatus = indent.getIndentStatus();
         boolean allComplete = indent.getInventoryList().stream().allMatch(li ->
                 Arrays.asList(
                         IndentLineItemStatusConstants.STATUS_INWARD_COMPLETE,
@@ -54,6 +57,8 @@ public class IndentCompletionEvaluator {
         } else {
             indent.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         }
+        if (!oldStatus.equals(indent.getIndentStatus()))
+            indentStatusHistoryService.logStatusChange(indent, oldStatus, indent.getIndentStatus(), "SYSTEM", "Status changed from " + oldStatus + "to " + indent.getIndentStatus() + " - Auto-updated indent status based on line item statuses");
         indentInventoryRepo.save(indent);
     }
 }

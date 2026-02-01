@@ -5,7 +5,6 @@ import com.ec.application.data.PreviousPurchaseRateDTO;
 import com.ec.application.data.PriceScatterPointDTO;
 import com.ec.application.repository.PurchaseOrderLineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class PurchaseOrderHistoryService {
+public class PurchaseOrderHistoryPriceService {
 
     private static final String STATUS_CANCELLED = "CANCELLED";
 

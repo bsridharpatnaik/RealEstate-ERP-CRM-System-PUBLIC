@@ -55,7 +55,7 @@ public class InwardSyncRetryJob {
                     // ---------------------------------------------
                     // Replay async command
                     // ---------------------------------------------
-                    indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(dto);
+                    indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(dto, "create or update");
 
                     // ---------------------------------------------
                     // Mark success

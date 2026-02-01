@@ -154,7 +154,7 @@ public class InwardInventoryService {
         }
 
         IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, deltas);
-        indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
+        indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "create");
         return inwardInventory;
     }
 
@@ -267,7 +267,7 @@ public class InwardInventoryService {
 
             if (!deltas.isEmpty()) {
                 IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inward.getDate(), ThreadLocalStorage.getTenantName(), inward.getInwardId(), InwardActionType.UPDATE, deltas);
-                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
+                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "update");
             }
         }
         return inward;
@@ -531,7 +531,7 @@ public class InwardInventoryService {
                         deltas
                 );
 
-                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
+                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "reject-inward");
             }
         }
     }
@@ -709,7 +709,7 @@ public class InwardInventoryService {
                 deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), -io.getQuantity()));
             }
             IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.DELETE, deltas);
-            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO);
+            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "delete");
         }
         inwardInventoryRepo.softDeleteById(id);
     }

@@ -2,11 +2,8 @@ package com.ec.application.controller;
 
 import com.ec.application.data.PreviousPurchaseRateDTO;
 import com.ec.application.data.PriceScatterPointDTO;
-import com.ec.application.service.PurchaseOrderHistoryService;
+import com.ec.application.service.PurchaseOrderHistoryPriceService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,7 +16,7 @@ import java.util.List;
 public class PurchaseOrderHistoryController {
 
     @Autowired
-    private PurchaseOrderHistoryService historyService;
+    private PurchaseOrderHistoryPriceService historyService;
 
     @GetMapping("/previous-rates")
     public List<PreviousPurchaseRateDTO> getPreviousRates(@RequestParam("productId") Long productId) {

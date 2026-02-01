@@ -66,6 +66,9 @@ public class IndentInventoryService {
     @Autowired
     DeadStockService deadStockService;
 
+    @Autowired
+    IndentStatusHistoryService indentStatusHistoryService;
+
     List<String> indentPOEligibleStatuses = Arrays.asList(IndentStatusConstants.STATUS_APPROVED, IndentStatusConstants.STATUS_PO_PARTIAL);
     List<String> indentLineItemPoEligibleStatuses = Arrays.asList(IndentLineItemStatusConstants.STATUS_NEW);
 
@@ -102,6 +105,7 @@ public class IndentInventoryService {
 
         // Force load the list before returning (to avoid lazy init exception)
         indentInventory.getInventoryList().size();
+        indentStatusHistoryService.logStatusChange(indentInventory, null, IndentStatusConstants.STATUS_NEW, userDetailsService.getCurrentUser().getUsername(), "Indent created by " + userDetailsService.getCurrentUser().getUsername());
         draftService.deleteDraftForUser("INDENT");
         indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
@@ -111,10 +115,7 @@ public class IndentInventoryService {
      * Process inventory list for CREATION
      * Generates unique line item codes for each product
      */
-    private Set<IndentInventoryList> processInventoryListForCreation(
-            List<IndentProductDTO> indentProductDTOs,
-            IndentInventory indentInventory) {
-
+    private Set<IndentInventoryList> processInventoryListForCreation(List<IndentProductDTO> indentProductDTOs, IndentInventory indentInventory) {
         Set<IndentInventoryList> inventoryList = new HashSet<>();
 
         for (IndentProductDTO dto : indentProductDTOs) {
@@ -135,16 +136,11 @@ public class IndentInventoryService {
             item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
 
             // Generate unique line item code: INDENT_ID/PRODUCT_ID
-            String lineItemCode = LineItemCodeGenerator.generateInitialCode(
-                    indentInventory.getIndentId(),
-                    String.valueOf(product.getProductId())
-            );
+            String lineItemCode = LineItemCodeGenerator.generateInitialCode(indentInventory.getIndentId(), String.valueOf(product.getProductId()));
             item.setLineItemCode(lineItemCode);
             item.setParentLineItemCode(null); // No parent for initial items
-
             inventoryList.add(item);
         }
-
         return inventoryList;
     }
 
@@ -154,20 +150,13 @@ public class IndentInventoryService {
      * - Split items: generate split code, status = NEW
      * - New products: generate initial code, status = NEW
      */
-    private Set<IndentInventoryList> processInventoryListForUpdate(
-            List<IndentProductDTO> indentProductDTOs,
-            IndentInventory indentInventory,
-            Set<IndentInventoryList> existingInventoryList) {
-
+    private Set<IndentInventoryList> processInventoryListForUpdate(List<IndentProductDTO> indentProductDTOs, IndentInventory indentInventory, Set<IndentInventoryList> existingInventoryList) {
         Set<IndentInventoryList> processedList = new HashSet<>();
 
         for (IndentProductDTO dto : indentProductDTOs) {
-
             IndentInventoryList item = new IndentInventoryList();
-
             // Always set parent
             item.setIndentInventory(indentInventory);
-
             // Product
             Product product = productRepo.findByProductId(dto.getProductId());
             item.setProduct(product);
@@ -177,7 +166,6 @@ public class IndentInventoryService {
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-
             /*
              * CASE 1: Existing line item (update)
              * - Keep same lineItemCode
@@ -195,14 +183,8 @@ public class IndentInventoryService {
              * - Status must be NEW
              */
             else if (dto.getParentLineItemCode() != null && !dto.getParentLineItemCode().isEmpty()) {
-                int splitIndex = LineItemCodeGenerator.getNextSplitIndex(
-                        dto.getParentLineItemCode(),
-                        existingInventoryList
-                );
-                String splitCode = LineItemCodeGenerator.generateSplitCode(
-                        dto.getParentLineItemCode(),
-                        splitIndex
-                );
+                int splitIndex = LineItemCodeGenerator.getNextSplitIndex(dto.getParentLineItemCode(), existingInventoryList);
+                String splitCode = LineItemCodeGenerator.generateSplitCode(dto.getParentLineItemCode(), splitIndex);
                 item.setLineItemCode(splitCode);
                 item.setParentLineItemCode(dto.getParentLineItemCode());
                 item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
@@ -263,8 +245,6 @@ public class IndentInventoryService {
                 existingItem.setSpecification(newItem.getSpecification());
                 existingItem.setRemarks(newItem.getRemarks());
                 existingItem.setMeasurementUnit(newItem.getMeasurementUnit());
-                //existingItem.setLineItemStatus(existingItem.getLineItemStatus());
-
                 itemsToKeep.add(existingItem);
             } else {
                 // New item (brand new or split) - add to collection
@@ -272,7 +252,6 @@ public class IndentInventoryService {
                 itemsToKeep.add(newItem);
             }
         }
-
         // Remove items that are no longer in the new list
         indentInventory.getInventoryList().removeIf(item -> !itemsToKeep.contains(item));
     }
@@ -282,16 +261,6 @@ public class IndentInventoryService {
      */
     private void validateInputsForCreate(IndentInventoryData iiData) throws Exception {
         basicValidation(iiData, " is not managed inventory. Cannot be added to Indent Inventory.");
-    }
-
-    private String resolveRootParentCode(IndentProductDTO dto) {
-        if (dto.getParentLineItemCode() != null && !dto.getParentLineItemCode().contains("/")) {
-            return dto.getParentLineItemCode();
-        }
-        if (dto.getParentLineItemCode() != null) {
-            return dto.getParentLineItemCode();
-        }
-        return dto.getLineItemCode(); // existing root
     }
 
     /**
@@ -337,10 +306,7 @@ public class IndentInventoryService {
         // If same product maps to multiple roots → illegal duplication
         for (Map.Entry<Long, Set<String>> entry : productToRoots.entrySet()) {
             if (entry.getValue().size() > 1) {
-                throw new Exception(
-                        "Product ID " + entry.getKey() +
-                                " can appear multiple times only via split from the same line item."
-                );
+                throw new Exception("Product ID " + entry.getKey() + " can appear multiple times only via split from the same line item.");
             }
         }
     }
@@ -406,6 +372,7 @@ public class IndentInventoryService {
             indentInventoryRepo.softDelete(indentInventory);
         }
         if (action.equalsIgnoreCase("CANCEL")) {
+            indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_CANCELLED, userDetailsService.getCurrentUser().getUsername(), "Indent cancelled by " + userDetailsService.getCurrentUser().getUsername());
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
             indentInventoryRepo.save(indentInventory);
         }
@@ -525,9 +492,11 @@ public class IndentInventoryService {
         return indentInventory;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public IndentInventory approveIndentInventory(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         indentValidationService.validateBeforeApprove(indentInventory);
+        indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_APPROVED, userDetailsService.getCurrentUser().getUsername(), "Indent approved by " + userDetailsService.getCurrentUser().getUsername());
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventoryRepo.save(indentInventory);
         return indentInventory;
@@ -537,26 +506,18 @@ public class IndentInventoryService {
      * Fetch all PO-eligible indent line items
      * grouped by category across all tenants.
      */
-    public Map<String, List<ConsolidatedIndentLineDTO>> fetchGroupedByCategory(
-            String sortBy,
-            Sort.Direction direction
-    ) {
+    public Map<String, List<ConsolidatedIndentLineDTO>> fetchGroupedByCategory(String sortBy, Sort.Direction direction) {
+        List<IndentInventory> inventoryList = indentInventoryRepo.findByIndentStatusIn(indentPOEligibleStatuses);
+        List<ConsolidatedIndentLineDTO> allLines = new ArrayList<>(flatten(inventoryList));
 
-        List<IndentInventory> inventoryList =
-                indentInventoryRepo.findByIndentStatusIn(indentPOEligibleStatuses);
-
-        List<ConsolidatedIndentLineDTO> allLines =
-                new ArrayList<>(flatten(inventoryList));
-
-        // 🧭 Apply sorting
-        Comparator<ConsolidatedIndentLineDTO> comparator =
-                buildComparator(sortBy, direction);
+        // Apply sorting
+        Comparator<ConsolidatedIndentLineDTO> comparator = buildComparator(sortBy, direction);
 
         if (comparator != null) {
             allLines.sort(comparator);
         }
 
-        // 📦 Group by category
+        // Group by category
         return allLines.stream()
                 .collect(Collectors.groupingBy(
                         ConsolidatedIndentLineDTO::getCategoryName,
@@ -565,10 +526,7 @@ public class IndentInventoryService {
                 ));
     }
 
-    private Comparator<ConsolidatedIndentLineDTO> buildComparator(
-            String sortBy,
-            Sort.Direction direction
-    ) {
+    private Comparator<ConsolidatedIndentLineDTO> buildComparator(String sortBy, Sort.Direction direction) {
 
         if (sortBy == null) {
             sortBy = "productName";
@@ -581,7 +539,6 @@ public class IndentInventoryService {
         Comparator<ConsolidatedIndentLineDTO> comparator;
 
         switch (sortBy) {
-
             case "productName":
                 comparator = Comparator.comparing(
                         ConsolidatedIndentLineDTO::getProductName,

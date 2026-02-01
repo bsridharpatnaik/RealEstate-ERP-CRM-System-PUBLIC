@@ -10,6 +10,7 @@ import com.ec.application.model.IndentInventoryList;
 import com.ec.application.model.PurchaseOrder;
 import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
+import com.ec.application.service.IndentStatusHistoryService;
 import com.ec.application.service.IndentStatusUpdater;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class PurchaseOrderLifecycleManager {
     private final IndentStatusUpdater indentStatusUpdater;
     private final IndentInventoryListRepo indentInventoryListRepo;
     private final IndentCompletionEvaluator indentCompletionEvaluator;
+    private final IndentStatusHistoryService indentStatusHistoryService;
 
     @Transactional
     public void cancelIfAllowed(String poId) {
@@ -63,6 +65,7 @@ public class PurchaseOrderLifecycleManager {
                     // Only pending items are short closed
                     if (IndentLineItemStatusConstants.SHORTCLOSE_ALLOWED_STATUSES.contains(item.getLineItemStatus())) {
                         item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_SHORT_CLOSED);
+                        indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + "status changed to " + item.getLineItemStatus() + " due to PO " + "short close." + po.getPurchaseOrderId() +".");
                         indentInventoryListRepo.save(item);
                     }
                 })

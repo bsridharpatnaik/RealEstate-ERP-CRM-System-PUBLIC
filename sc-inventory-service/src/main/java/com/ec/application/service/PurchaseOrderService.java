@@ -14,9 +14,6 @@ import com.ec.application.data.*;
 import com.ec.application.enricher.PurchaseOrderUiEnricher;
 import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
 import com.ec.application.model.*;
-import com.ec.application.multitenant.ThreadLocalStorage;
-import com.ec.application.repository.IndentInventoryListRepo;
-import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
 import com.ec.application.util.PurchaseOrderPriceMasker;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +66,9 @@ public class PurchaseOrderService extends ReusableFields {
     @Autowired
     PurchaseOrderPriceMasker purchaseOrderPriceMasker;
 
+    @Autowired
+    PurchaseOrderStatusHistoryService poStatusHistoryService;
+
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
@@ -86,10 +86,7 @@ public class PurchaseOrderService extends ReusableFields {
     ) throws Exception {
 
         ReturnPurchaseOrderData returnData = new ReturnPurchaseOrderData();
-
-        Specification<PurchaseOrder> spec =
-                PurchaseOrderSpecification.getSpecification(filterDataList);
-
+        Specification<PurchaseOrder> spec = PurchaseOrderSpecification.getSpecification(filterDataList);
         Page<PurchaseOrder> page = (spec != null)
                 ? purchaseOrderRepo.findAll(spec, pageable)
                 : purchaseOrderRepo.findAll(pageable);
@@ -97,17 +94,13 @@ public class PurchaseOrderService extends ReusableFields {
         // Initialize lazy-loaded associations
         initializeLazyAssociations(page.getContent());
 
-        // 🔒 MASK PRICE FIELDS
+        // MASK PRICE FIELDS
         purchaseOrderPriceMasker.mask(page);
 
         // Enrich UI flags
         purchaseOrderUiEnricher.enrich(page.getContent());
-
         returnData.setPuchaseOrders(page);
-        returnData.setPoDropdown(
-                populateDropdownService.fetchData("purchaseorder")
-        );
-
+        returnData.setPoDropdown(populateDropdownService.fetchData("purchaseorder"));
         return returnData;
     }
 

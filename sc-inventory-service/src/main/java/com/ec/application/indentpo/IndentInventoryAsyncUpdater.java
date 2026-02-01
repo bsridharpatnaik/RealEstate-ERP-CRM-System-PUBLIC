@@ -14,6 +14,7 @@ import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.InwardSyncFailureRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
 import com.ec.application.service.CategoryService;
+import com.ec.application.service.IndentStatusHistoryService;
 import com.ec.application.service.InwardInventoryService;
 import com.ec.application.service.InwardSyncFailureService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,6 +40,7 @@ public class IndentInventoryAsyncUpdater {
     private final PurchaseOrderRepo purchaseOrderRepo;
     private final IndentInventoryRepo indentInventoryRepo;
     private final InwardSyncFailureService inwardSyncFailureService;
+    private final IndentStatusHistoryService indentStatusHistoryService;
 
     private static final Logger log = LoggerFactory.getLogger(IndentInventoryAsyncUpdater.class);
 
@@ -47,29 +49,16 @@ public class IndentInventoryAsyncUpdater {
     // ============================================================
     @Async
     @UseDefaultTenant
-    public void updateIndentAfterInwardAsync(IndentInwardSyncDTO dto) throws JsonProcessingException {
+    public void updateIndentAfterInwardAsync(IndentInwardSyncDTO dto, String action) throws JsonProcessingException {
 
         String tenantSchema = dto.getTenantSchema();
         Long inwardId = dto.getInwardId();
         InwardActionType actionType = dto.getActionType();
 
         try {
-            log.info(
-                    "[ASYNC-START] tenant={} inwardId={} action={} deltaCount={}",
-                    tenantSchema,
-                    inwardId,
-                    actionType,
-                    dto.getDeltas().size()
-            );
-
+            log.info("[ASYNC-START] tenant={} inwardId={} action={} deltaCount={}", tenantSchema, inwardId, actionType, dto.getDeltas().size());
             doSyncIndentAndPO(dto);
-
-            log.info(
-                    "[ASYNC-SUCCESS] tenant={} inwardId={} action={}",
-                    tenantSchema,
-                    inwardId,
-                    actionType
-            );
+            log.info("[ASYNC-SUCCESS] tenant={} inwardId={} action={}", tenantSchema, inwardId, actionType);
         } catch (Exception ex) {
             log.error("[ASYNC-FAILURE] tenant={} inwardId={} action={}", tenantSchema, inwardId, actionType, ex);
             inwardSyncFailureService.recordFailure(dto, ex);
@@ -111,40 +100,33 @@ public class IndentInventoryAsyncUpdater {
                     qtyDelta
             );
 
-            List<IndentInventoryList> rows =
-                    indentInventoryListRepo.findByLineItemCode(lineItemCode);
+            List<IndentInventoryList> rows = indentInventoryListRepo.findByLineItemCode(lineItemCode);
 
             if (rows.isEmpty()) {
-                log.warn(
-                        "[ASYNC-SKIP] No indent line found for lineItemCode={}",
-                        lineItemCode
-                );
+                log.warn("[ASYNC-SKIP] No indent line found for lineItemCode={}", lineItemCode);
                 continue;
             }
 
             IndentInventoryList indentLine = rows.get(0);
-
+            String oldStatus = indentLine.getLineItemStatus();
             // ------------------------------------------------
             // APPLY DELTA TO INWARD ENTRIES
             // ------------------------------------------------
-            upsertAbsoluteQuantity(
-                    indentLine,
-                    dto.getInwardId(),
-                    delta.getFinalQuantity(),
-                    dto.getInwardDate()
-            );
+            upsertAbsoluteQuantity(indentLine, dto.getInwardId(), delta.getFinalQuantity(), dto.getInwardDate());
 
             // ------------------------------------------------
             // RECALCULATE DERIVED FIELDS
             // ------------------------------------------------
             recalculateIndentLine(indentLine);
-
+            String newStatus = indentLine.getLineItemStatus();
+            if (!oldStatus.equals(newStatus)) {
+                log.info("[ASYNC-STATUS-CHANGE] lineItemCode={} oldStatus={} newStatus={}", lineItemCode, oldStatus, newStatus);
+                indentStatusHistoryService.logStatusChange(indentLine.getIndentInventory(), null, null, "System", "Indent line item " + indentLine.getLineItemCode() + " status changed to " + newStatus + " due to inward sync for inward ID " + dto.getInwardId() + ".");
+            }
             indentInventoryListRepo.save(indentLine);
 
             // Track affected parents
-            affectedIndentIds.add(
-                    indentLine.getIndentInventory().getIndentId()
-            );
+            affectedIndentIds.add(indentLine.getIndentInventory().getIndentId());
 
             if (indentLine.getPurchaseOrderId() != null) {
                 affectedPoNumbers.add(indentLine.getPurchaseOrderId());
@@ -155,14 +137,10 @@ public class IndentInventoryAsyncUpdater {
         // RE-EVALUATE INDENTS
         // ------------------------------------------------
         for (String indentId : affectedIndentIds) {
-
-            Optional<IndentInventory> indentOpt =
-                    indentInventoryRepo.findByIdWithDetails(indentId);
-
+            Optional<IndentInventory> indentOpt = indentInventoryRepo.findByIdWithDetails(indentId);
             if (!indentOpt.isPresent()) {
                 continue;
             }
-
             indentCompletionEvaluator.evaluate(indentOpt.get());
         }
 
@@ -170,14 +148,10 @@ public class IndentInventoryAsyncUpdater {
         // RE-EVALUATE PURCHASE ORDERS
         // ------------------------------------------------
         for (String poNumber : affectedPoNumbers) {
-
-            Optional<PurchaseOrder> poOpt =
-                    purchaseOrderRepo.findByIdWithDetails(poNumber);
-
+            Optional<PurchaseOrder> poOpt = purchaseOrderRepo.findByIdWithDetails(poNumber);
             if (!poOpt.isPresent()) {
                 continue;
             }
-
             purchaseOrderCompletionEvaluator.evaluate(poOpt.get());
         }
     }
@@ -225,9 +199,7 @@ public class IndentInventoryAsyncUpdater {
     // ============================================================
     private void recalculateIndentLine(IndentInventoryList indentLine) {
 
-        double orderedQty =
-                indentLine.getQuantity() == null ? 0.0 : indentLine.getQuantity();
-
+        double orderedQty = indentLine.getQuantity() == null ? 0.0 : indentLine.getQuantity();
         double received = 0.0;
 
         for (IndentInwardEntry entry : indentLine.getInwardEntries()) {
