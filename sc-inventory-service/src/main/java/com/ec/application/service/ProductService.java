@@ -169,16 +169,7 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) throws Exception {
-        if (checkBeforeDeleteService.isProductNotUsedButStockExists(id)) {
-            stockService.deleteStockForProduct(id);
-            inService.deleteNotificationForProduct(id);
-            productRepo.softDeleteById(id);
-        } else if (!checkBeforeDeleteService.isProductUsed(id)) {
-            inService.deleteNotificationForProduct(id);
-            productRepo.softDeleteById(id);
-
-        } else
-            throw new Exception("Cannot Delete. Product already in use");
+            throw new Exception("Product is a global entity and cannot be deleted. Please contact administrator for further assistance.");
     }
 
     public ArrayList<Product> findProductsByName(String name) {
