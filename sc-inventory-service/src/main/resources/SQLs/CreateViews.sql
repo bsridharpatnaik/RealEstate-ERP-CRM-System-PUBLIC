@@ -1,114 +1,194 @@
 -- use suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark,drgtrdcntr,citycenter,school,bhaavbhumi,dhabba,mhvrtrdcntr
 use mhvrtrdcntr;
-CREATE OR replace VIEW all_inventory_view
-AS
-  SELECT row_number()
-           over (
-             ORDER BY tx.date desc, tx.type desc, tx.keyid desc) as id,
-         tx.type,
-         tx.keyid,
-         tx.entryid,
-         tx.date, -- index
-         CASE WHEN tx.contactid = '' THEN 404 ELSE tx.contactid END as contactid,
-         tx.warehouseid,
-         tx.Productid,
-         tx.quantity,
-         tx.closingstock,
-         tx.creationDate,
-         tx.lastModifiedDate,
-         tx.Product_name, -- index
-         tx.category_name, -- index
-         tx.measurementunit,
-         CASE WHEN c.name IS NULL THEN  '' ELSE c.name END as name,
-         c.mobileno,
-         c.emailid,
-         CASE WHEN c.contacttype IS NULL THEN  '' ELSE c.contacttype END as contacttype,
-         tx.warehouse_id,
-         tx.warehousename -- index
-  FROM   (SELECT 'Inward'                         AS type,
-                 ii.inwardid                      as keyid,
-                 ioe.entryid                      as entryid,
-                 Date_format(ii.DATE, "%Y-%m-%d") AS date,
-                 ii.contactid                     AS contactid,
-                 ioe.warehouse_id                  AS warehouseid,
-                 ioe.Productid                    AS Productid,
-                 ioe.quantity,
-                 ioe.closingstock,
-                 ioe.creationDate,
-                 ioe.lastModifiedDate,
-                 p.Product_name,
-                 cat.category_name,
-                 p.measurementunit,
-                 w.warehouse_id,
-                 w.warehousename
-          FROM   inward_inventory ii
-                 inner join inwardinventory_entry iie
-                         ON ii.inwardid = iie.inwardid
-                 inner join inward_outward_entries ioe
-                         ON iie.entryid = ioe.entryid
-                 inner join Product p
-                         on p.Productid = ioe.Productid
-                 INNER JOIN Category cat
-                         on p.categoryId = cat.categoryId
-                 inner join Warehouse w
-                         ON w.warehouse_id = ioe.warehouse_id
-          WHERE  ii.is_deleted = 0
-          UNION ALL
-          SELECT 'Outward'                        AS type,
-                 oi.outwardid                     as keyid,
-                 ioe.entryid                      as entryid,
-                 Date_format(oi.DATE, "%Y-%m-%d") AS date,
-                 oi.contactid                     AS contactid,
-                 oi.warehouse_id                  AS warehouseid,
-                 ioe.Productid                    AS Productid,
-                 ioe.quantity,
-                 ioe.closingstock,
-                 ioe.creationDate,
-                 ioe.lastModifiedDate,
-                 p.Product_name,
-                 cat.category_name,
-                 p.measurementunit,
-                 w.warehouse_id,
-                 w.warehousename
-          FROM   outward_inventory oi
-                 inner join outwardinventory_entry oie
-                         ON oi.outwardid = oie.outwardid
-                 inner join inward_outward_entries ioe
-                         ON oie.entryid = ioe.entryid
-                 inner join Product p
-                         on p.Productid = ioe.Productid
-                 INNER JOIN Category cat
-                         on p.categoryId = cat.categoryId
-                 inner join Warehouse w
-                         ON w.warehouse_id = oi.warehouse_id
-          WHERE  oi.is_deleted = 0
-          UNION ALL
-          SELECT 'Lost-Damaged'                    AS type,
-                 lostdamagedid                     as keyid,
-                 lostdamagedid                     as entryid,
-                 Date_format(ldi.DATE, "%Y-%m-%d") AS date,
-                 ''                                AS contactid,
-                 ldi.warehousename                 AS warehouseid,
-                 ldi.Productid                     AS Productid,
-                 ldi.quantity,
-                 ldi.closingstock,
-                 ldi.creationDate,
-                 ldi.lastModifiedDate,
-                 p.Product_name,
-                 cat.category_name,
-                 p.measurementunit,
-                 w.warehouse_id,
-                 w.warehousename
-          FROM   lost_damaged_inventory ldi
-                 inner join Product p
-                         on p.Productid = ldi.Productid
-                 INNER JOIN Category cat
-                         on p.categoryId = cat.categoryId
-                 inner join Warehouse w
-                         ON w.warehouse_id = ldi.warehousename
-          where  ldi.is_deleted = 0) AS tx
-         left join contacts c
-                ON c.contactid = tx.contactid;
+
+CREATE OR REPLACE VIEW all_inventory_recalc_view AS
+SELECT
+    ROW_NUMBER() OVER (
+        ORDER BY
+            tx.tx_date ASC,
+            tx.sort_order ASC,
+            tx.creationDate ASC,
+            tx.keyid ASC
+    ) AS seq_no,
+
+    tx.type,
+    tx.transferType,
+    tx.keyid,
+    tx.entryid,
+    tx.tx_date,
+    tx.productId,
+    tx.warehouseId,
+
+    -- normalized quantity (THIS is what you re-sum)
+    tx.normalized_quantity,
+
+    -- stored closing stock (what user saved)
+    tx.closingstock,
+
+    tx.creationDate,
+    tx.lastModifiedDate,
+    tx.product_name,
+    tx.category_name,
+    tx.measurementunit,
+    tx.warehousename
+FROM (
+
+    /* =========================
+       INWARD (including Transfer-IN)
+       ========================= */
+    SELECT
+        'Inward' AS type,
+        NULL AS transferType,
+        ii.inwardid AS keyid,
+        ioe.entryid AS entryid,
+        DATE(ii.date) AS tx_date,
+        ioe.productid AS productId,
+        ioe.warehouse_id AS warehouseId,
+        ioe.quantity AS normalized_quantity,
+        ioe.closingstock,
+        ioe.creationDate,
+        ioe.lastModifiedDate,
+        p.product_name,
+        cat.category_name,
+        p.measurementunit,
+        w.warehousename,
+        1 AS sort_order
+    FROM inward_inventory ii
+    JOIN inwardinventory_entry iie
+        ON ii.inwardid = iie.inwardid
+    JOIN inward_outward_entries ioe
+        ON iie.entryid = ioe.entryid
+    JOIN product p ON p.productid = ioe.productid
+    JOIN category cat ON cat.categoryid = p.categoryid
+    JOIN warehouse w ON w.warehouse_id = ioe.warehouse_id
+    WHERE ii.is_deleted = 0
+
+    UNION ALL
+
+    /* =========================
+       TRANSFER-IN
+       ========================= */
+    SELECT
+        'Transfer' AS type,
+        'IN' AS transferType,
+        it.transferId AS keyid,
+        iti.transferItemId AS entryid,
+        DATE(it.transfer_date) AS tx_date,
+        iti.productId,
+        it.target_warehouse_id AS warehouseId,
+        iti.quantity AS normalized_quantity,
+        iti.target_closing_stock AS closingstock,
+        iti.creationDate,
+        iti.lastModifiedDate,
+        iti.productName,
+        cat.category_name,
+        iti.measurementUnit,
+        it.target_warehouse_name,
+        1 AS sort_order
+    FROM inventory_transfer it
+    JOIN inventory_transfer_item iti
+        ON iti.transfer_id = it.transferId
+    JOIN category cat
+        ON cat.categoryid = (
+            SELECT p.categoryid FROM product p WHERE p.productid = iti.productId
+        )
+    WHERE it.is_deleted = 0
+      AND iti.is_deleted = 0
+
+    UNION ALL
+
+    /* =========================
+       LOST / DAMAGED
+       ========================= */
+    SELECT
+        'Lost-Damaged' AS type,
+        NULL AS transferType,
+        ldi.lostdamagedid AS keyid,
+        ldi.lostdamagedid AS entryid,
+        DATE(ldi.date) AS tx_date,
+        ldi.productid,
+        ldi.warehousename AS warehouseId,
+        ldi.quantity AS normalized_quantity,
+        ldi.closingstock,
+        ldi.creationDate,
+        ldi.lastModifiedDate,
+        p.product_name,
+        cat.category_name,
+        p.measurementunit,
+        w.warehousename,
+        2 AS sort_order
+    FROM lost_damaged_inventory ldi
+    JOIN product p ON p.productid = ldi.productid
+    JOIN category cat ON cat.categoryid = p.categoryid
+    JOIN warehouse w ON w.warehouse_id = ldi.warehousename
+    WHERE ldi.is_deleted = 0
+
+    UNION ALL
+
+    /* =========================
+       OUTWARD (including Transfer-OUT)
+       ========================= */
+    SELECT
+        'Outward' AS type,
+        NULL AS transferType,
+        oi.outwardid AS keyid,
+        ioe.entryid AS entryid,
+        DATE(oi.date) AS tx_date,
+        ioe.productid,
+        oi.warehouse_id AS warehouseId,
+        ioe.quantity AS normalized_quantity,
+        ioe.closingstock,
+        ioe.creationDate,
+        ioe.lastModifiedDate,
+        p.product_name,
+        cat.category_name,
+        p.measurementunit,
+        w.warehousename,
+        3 AS sort_order
+    FROM outward_inventory oi
+    JOIN outwardinventory_entry oie
+        ON oi.outwardid = oie.outwardid
+    JOIN inward_outward_entries ioe
+        ON oie.entryid = ioe.entryid
+    JOIN product p ON p.productid = ioe.productid
+    JOIN category cat ON cat.categoryid = p.categoryid
+    JOIN warehouse w ON w.warehouse_id = oi.warehouse_id
+    WHERE oi.is_deleted = 0
+
+    UNION ALL
+
+    /* =========================
+       TRANSFER-OUT
+       ========================= */
+    SELECT
+        'Transfer' AS type,
+        'OUT' AS transferType,
+        it.transferId AS keyid,
+        iti.transferItemId AS entryid,
+        DATE(it.transfer_date) AS tx_date,
+        iti.productId,
+        it.source_warehouse_id AS warehouseId,
+        iti.quantity AS normalized_quantity,
+        iti.source_closing_stock AS closingstock,
+        iti.creationDate,
+        iti.lastModifiedDate,
+        iti.productName,
+        cat.category_name,
+        iti.measurementUnit,
+        it.source_warehouse_name,
+        3 AS sort_order
+    FROM inventory_transfer it
+    JOIN inventory_transfer_item iti
+        ON iti.transfer_id = it.transferId
+    JOIN category cat
+        ON cat.categoryid = (
+            SELECT p.categoryid FROM product p WHERE p.productid = iti.productId
+        )
+    WHERE it.is_deleted = 0
+      AND iti.is_deleted = 0
+
+) tx;
+
 
   -- --------- Stock Verification ------------
  create or replace view stock_verification as
