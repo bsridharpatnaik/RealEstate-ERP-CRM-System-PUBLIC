@@ -19,7 +19,7 @@ public class PurchaseOrderStatusHistory {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "indent_id", nullable = false)
+    @JoinColumn(name = "purchase_order_id", nullable = false)
     @JsonIgnore
     private PurchaseOrder purchaseOrder;
 

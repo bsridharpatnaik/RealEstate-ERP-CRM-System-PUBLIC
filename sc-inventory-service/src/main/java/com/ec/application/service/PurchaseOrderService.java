@@ -79,7 +79,8 @@ public class PurchaseOrderService extends ReusableFields {
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
         draftService.deleteDraftForUser("PO");
-        poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), userDetailsService.getCurrentUser().getUsername(), "Purchase Order created by user " + userDetailsService.getCurrentUser().getUsername());
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), username, buildPoCreationMessage(request, username));
         return savedPO;
     }
 
@@ -178,5 +179,19 @@ public class PurchaseOrderService extends ReusableFields {
             throw new IllegalArgumentException("Purchase Order Number cannot be null");
         poLifecycleManager.shortClosePo(request);
         return purchaseOrderRepo.findByIdWithDetails(request.getPurchaseOrderNo()).get();
+    }
+
+    private String buildPoCreationMessage(CreatePoRequest request, String username) {
+        String indentDetails = request.getLineItems().stream()
+                .flatMap(line ->
+                        line.getIndentRefs().stream()
+                                .map(ref ->
+                                        ref.getIndentLineItemCode() +
+                                                " (Qty: " + line.getQuantity() + ")"
+                                )
+                )
+                .collect(Collectors.joining(", "));
+
+        return "Purchase Order created by user " + username + ". Indent line items: " + indentDetails;
     }
 }

@@ -96,7 +96,10 @@ public class StockService {
                 .collect(Collectors.toList());
 
         // Fetch all InventoryTransactions in one go
-        List<AllInventoryTransactions> allInventoryTransactions = allInventoryRepo.findInwardOutwardByProductIds(productIds);
+        List<AllInventoryTransactions> allInventoryTransactions =
+                productIds.isEmpty()
+                        ? Collections.emptyList()
+                        : allInventoryRepo.findInwardOutwardByProductIds(productIds);
 
         // Create a map of ProductId to List<AllInventoryTransactions>
         Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
