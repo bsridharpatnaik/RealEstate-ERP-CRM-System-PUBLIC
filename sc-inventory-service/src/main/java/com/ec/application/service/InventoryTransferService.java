@@ -72,8 +72,8 @@ public class InventoryTransferService {
                         .orElseThrow(() ->
                                 new IllegalArgumentException("Target warehouse not found")));
 
-        Map<Long, Product> productMap = fetchProducts(dto, masterSchema);
 
+        Map<Long, Product> productMap = fetchProducts(dto, masterSchema);
         InventoryTransfer transfer = buildTransferEntity(dto, sourceWarehouse, targetWarehouse, productMap);
         List<TransferItemResult> itemResults = new ArrayList<>();
         List<InventoryTransferItem> successfulItems = new ArrayList<>();
@@ -120,6 +120,15 @@ public class InventoryTransferService {
         if (!successfulItems.isEmpty()) {
             withTenant(masterSchema, () -> inventoryTransferRepository.save(transfer));
         }
+
+        withTenant(sourceTenant, () -> inventoryTransferRepository.save(copyForTenant(transfer)));
+
+        if (!sourceTenant.equals(targetTenant)) {
+            withTenant(targetTenant, () -> {
+                inventoryTransferRepository.save(copyForTenant(transfer));
+                return null;
+            });
+        }
         boolean fullySuccessful = itemResults.stream().allMatch(TransferItemResult::isSuccess);
         return new InventoryTransferResult(transfer.getTransferId(), fullySuccessful, itemResults);
     }
@@ -156,6 +165,37 @@ public class InventoryTransferService {
             return null;
         });
     }
+
+    private InventoryTransfer copyForTenant(InventoryTransfer original) {
+        InventoryTransfer t = new InventoryTransfer();
+        t.setTransferId(original.getTransferId());
+        t.setSourceTenant(original.getSourceTenant());
+        t.setTargetTenant(original.getTargetTenant());
+        t.setSourceWarehouseId(original.getSourceWarehouseId());
+        t.setTargetWarehouseId(original.getTargetWarehouseId());
+        t.setSourceWarehouseName(original.getSourceWarehouseName());
+        t.setTargetWarehouseName(original.getTargetWarehouseName());
+        t.setTransferDate(original.getTransferDate());
+        t.setRemarks(original.getRemarks());
+
+        List<InventoryTransferItem> items = original.getItems().stream().map(i -> {
+            InventoryTransferItem ni = new InventoryTransferItem();
+            ni.setTransferItemId(i.getTransferItemId());
+            ni.setProductId(i.getProductId());
+            ni.setProductCode(i.getProductCode());
+            ni.setProductName(i.getProductName());
+            ni.setMeasurementUnit(i.getMeasurementUnit());
+            ni.setQuantity(i.getQuantity());
+            ni.setSourceClosingStock(i.getSourceClosingStock());
+            ni.setTargetClosingStock(i.getTargetClosingStock());
+            ni.setInventoryTransfer(t);
+            return ni;
+        }).collect(Collectors.toList());
+
+        t.setItems(items);
+        return t;
+    }
+
 
     /* =====================================================
        ENTITY BUILDING

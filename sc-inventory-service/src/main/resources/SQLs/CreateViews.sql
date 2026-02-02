@@ -9,7 +9,7 @@ AS
          tx.keyid,
          tx.entryid,
          tx.date, -- index
-         tx.contactid,
+         CASE WHEN tx.contactid = '' THEN 404 ELSE tx.contactid END as contactid,
          tx.warehouseid,
          tx.Productid,
          tx.quantity,
@@ -19,10 +19,10 @@ AS
          tx.Product_name, -- index
          tx.category_name, -- index
          tx.measurementunit,
-         c.name,
+         CASE WHEN c.name IS NULL THEN  '' ELSE c.name END as name,
          c.mobileno,
          c.emailid,
-         c.contacttype,
+         CASE WHEN c.contacttype IS NULL THEN  '' ELSE c.contacttype END as contacttype,
          tx.warehouse_id,
          tx.warehousename -- index
   FROM   (SELECT 'Inward'                         AS type,
@@ -109,7 +109,6 @@ AS
           where  ldi.is_deleted = 0) AS tx
          left join contacts c
                 ON c.contactid = tx.contactid;
-
 
   -- --------- Stock Verification ------------
  create or replace view stock_verification as
@@ -716,118 +715,6 @@ BEGIN
 END //
 
 DELIMITER ;
-
-
-
-CREATE OR replace VIEW all_inventory_view
-AS
-  SELECT row_number()
-           over (
-             ORDER BY tx.date desc, tx.type desc, tx.keyid desc) as id,
-         tx.type,
-         tx.keyid,
-         tx.entryid,
-         tx.date, -- index
-         CASE WHEN tx.contactid = '' THEN 404 ELSE tx.contactid END as contactid,
-         tx.warehouseid,
-         tx.Productid,
-         tx.quantity,
-         tx.closingstock,
-         tx.creationDate,
-         tx.lastModifiedDate,
-         tx.Product_name, -- index
-         tx.category_name, -- index
-         tx.measurementunit,
-         CASE WHEN c.name IS NULL THEN  '' ELSE c.name END as name,
-         c.mobileno,
-         c.emailid,
-         CASE WHEN c.contacttype IS NULL THEN  '' ELSE c.contacttype END as contacttype,
-         tx.warehouse_id,
-         tx.warehousename -- index
-  FROM   (SELECT 'Inward'                         AS type,
-                 ii.inwardid                      as keyid,
-                 ioe.entryid                      as entryid,
-                 Date_format(ii.DATE, "%Y-%m-%d") AS date,
-                 ii.contactid                     AS contactid,
-                 ioe.warehouse_id                  AS warehouseid,
-                 ioe.Productid                    AS Productid,
-                 ioe.quantity,
-                 ioe.closingstock,
-                 ioe.creationDate,
-                 ioe.lastModifiedDate,
-                 p.Product_name,
-                 cat.category_name,
-                 p.measurementunit,
-                 w.warehouse_id,
-                 w.warehousename
-          FROM   inward_inventory ii
-                 inner join inwardinventory_entry iie
-                         ON ii.inwardid = iie.inwardid
-                 inner join inward_outward_entries ioe
-                         ON iie.entryid = ioe.entryid
-                 inner join Product p
-                         on p.Productid = ioe.Productid
-                 INNER JOIN Category cat
-                         on p.categoryId = cat.categoryId
-                 inner join Warehouse w
-                         ON w.warehouse_id = ioe.warehouse_id
-          WHERE  ii.is_deleted = 0
-          UNION ALL
-          SELECT 'Outward'                        AS type,
-                 oi.outwardid                     as keyid,
-                 ioe.entryid                      as entryid,
-                 Date_format(oi.DATE, "%Y-%m-%d") AS date,
-                 oi.contactid                     AS contactid,
-                 oi.warehouse_id                  AS warehouseid,
-                 ioe.Productid                    AS Productid,
-                 ioe.quantity,
-                 ioe.closingstock,
-                 ioe.creationDate,
-                 ioe.lastModifiedDate,
-                 p.Product_name,
-                 cat.category_name,
-                 p.measurementunit,
-                 w.warehouse_id,
-                 w.warehousename
-          FROM   outward_inventory oi
-                 inner join outwardinventory_entry oie
-                         ON oi.outwardid = oie.outwardid
-                 inner join inward_outward_entries ioe
-                         ON oie.entryid = ioe.entryid
-                 inner join Product p
-                         on p.Productid = ioe.Productid
-                 INNER JOIN Category cat
-                         on p.categoryId = cat.categoryId
-                 inner join Warehouse w
-                         ON w.warehouse_id = oi.warehouse_id
-          WHERE  oi.is_deleted = 0
-          UNION ALL
-          SELECT 'Lost-Damaged'                    AS type,
-                 lostdamagedid                     as keyid,
-                 lostdamagedid                     as entryid,
-                 Date_format(ldi.DATE, "%Y-%m-%d") AS date,
-                 ''                                AS contactid,
-                 ldi.warehousename                 AS warehouseid,
-                 ldi.Productid                     AS Productid,
-                 ldi.quantity,
-                 ldi.closingstock,
-                 ldi.creationDate,
-                 ldi.lastModifiedDate,
-                 p.Product_name,
-                 cat.category_name,
-                 p.measurementunit,
-                 w.warehouse_id,
-                 w.warehousename
-          FROM   lost_damaged_inventory ldi
-                 inner join Product p
-                         on p.Productid = ldi.Productid
-                 INNER JOIN Category cat
-                         on p.categoryId = cat.categoryId
-                 inner join Warehouse w
-                         ON w.warehouse_id = ldi.warehousename
-          where  ldi.is_deleted = 0) AS tx
-         left join contacts c
-                ON c.contactid = tx.contactid;
 
 
 CREATE TABLE IF NOT EXISTS execution_history (
