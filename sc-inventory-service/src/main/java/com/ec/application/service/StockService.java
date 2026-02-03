@@ -275,6 +275,7 @@ public class StockService {
             dto.setStockStatus(si.getStockStatus());
             dto.setMeasurementUnit(si.getMeasurementUnit());
             dto.setProductName(si.getProductName());
+            dto.setProductCode(si.getProductCode());
             dto.setReorderQuantity(si.getReorderQuantity());
             dto.setTotalQuantityInHand(si.getTotalQuantityInHand());
             dto.setInwardOutwardHistory(aiList);

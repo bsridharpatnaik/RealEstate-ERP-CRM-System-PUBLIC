@@ -851,6 +851,7 @@ CREATE OR REPLACE VIEW stockInformation as
 	SELECT
 		p.productId as productId,
         p.product_name,
+        p.product_code,
         p.reorderQuantity,
         p.measurementUnit,
         c.category_name,
@@ -866,7 +867,7 @@ CREATE OR REPLACE VIEW stockInformation as
 	INNER JOIN Category c on p.categoryId=c.categoryId
     INNER JOIN Warehouse w on w.warehouse_id = s.warehouseId
 	WHERE s.is_deleted=0
-	GROUP BY p.productId,p.product_name,p.reorderQuantity,p.measurementUnit,c.category_name;
+	GROUP BY p.productId,p.product_name,p.product_code,p.reorderQuantity,p.measurementUnit,c.category_name;
 
 -- Stock Report
 CREATE OR REPLACE VIEW stock_report AS
