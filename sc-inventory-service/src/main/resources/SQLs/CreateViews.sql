@@ -670,158 +670,114 @@ DELIMITER //
 
 CREATE PROCEDURE update_closing_stock()
 BEGIN
-    -- Temporary table to store cumulative stock calculations
+    /* =====================================================
+       TEMP TABLE
+       ===================================================== */
     CREATE TEMPORARY TABLE IF NOT EXISTS TempCumulativeStock (
         entryid BIGINT,
+        type VARCHAR(20),
         oldClosingStock DOUBLE,
         calculatedClosingStock DOUBLE
     );
 
-    -- Insert calculated cumulative stocks into temporary table
-    INSERT INTO TempCumulativeStock (entryid, oldClosingStock, calculatedClosingStock)
+    TRUNCATE TABLE TempCumulativeStock;
+
+    /* =====================================================
+       RECOMPUTE CLOSING STOCK SEQUENTIALLY
+       ===================================================== */
+    INSERT INTO TempCumulativeStock (
+        entryid,
+        type,
+        oldClosingStock,
+        calculatedClosingStock
+    )
     SELECT
         sr.entryid,
+        sr.type,
         sr.oldClosingStock,
-        SUM(CASE
-                WHEN tx.type = 'Inward' THEN tx.quantity
+
+        /* ---- running inward ---- */
+        SUM(
+            CASE
+                WHEN sr.type = 'Inward' THEN sr.quantity
                 ELSE 0
-            END) OVER (
-                PARTITION BY sr.warehouse_id, sr.productid
-                ORDER BY sr.row_num
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ) -
-        SUM(CASE
-                WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
+            END
+        ) OVER (
+            PARTITION BY sr.warehouse_id, sr.productid
+            ORDER BY sr.row_num
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        )
+        -
+        /* ---- running outward + lost ---- */
+        SUM(
+            CASE
+                WHEN sr.type IN ('Outward', 'Lost-Damaged') THEN sr.quantity
                 ELSE 0
-            END) OVER (
-                PARTITION BY sr.warehouse_id, sr.productid
-                ORDER BY sr.row_num
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ) AS calculatedClosingStock
+            END
+        ) OVER (
+            PARTITION BY sr.warehouse_id, sr.productid
+            ORDER BY sr.row_num
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        )
+        AS calculatedClosingStock
+
     FROM (
         SELECT
-            tx.entryid,
-            tx.date,
-            tx.warehouse_id AS warehouse_id,
-            tx.productid AS productid,
-            tx.quantity,
-            tx.closingstock AS oldClosingStock,
+            ai.entryid,
+            ai.type,
+            ai.date,
+            ai.warehouse_id,
+            ai.productid,
+            ai.quantity,
+            ai.closingstock AS oldClosingStock,
             ROW_NUMBER() OVER (
-                PARTITION BY tx.warehouse_id, tx.productid
-                ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC
+                PARTITION BY ai.warehouse_id, ai.productid
+                ORDER BY
+                    ai.date ASC,
+                    ai.type ASC,
+                    ai.keyid ASC,
+                    ai.entryid ASC
             ) AS row_num
-        FROM all_inventory tx
-    ) sr
-    JOIN all_inventory tx ON sr.entryid = tx.entryid;
+        FROM all_inventory ai
+    ) sr;
 
-    -- Update the closingstock field where discrepancies are found
+    /* =====================================================
+       UPDATE INWARD / OUTWARD ENTRIES
+       ===================================================== */
     UPDATE inward_outward_entries e
-    JOIN TempCumulativeStock ccs ON e.entryid = ccs.entryid
-    SET e.closingstock = ccs.calculatedClosingStock
-    WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
+    JOIN TempCumulativeStock tcs
+        ON e.entryid = tcs.entryid
+    SET e.closingstock = tcs.calculatedClosingStock
+    WHERE tcs.oldClosingStock <> tcs.calculatedClosingStock;
 
-    -- Clean up temporary table
+    /* =====================================================
+       UPDATE TRANSFER - CREDIT SIDE (INWARD)
+       ===================================================== */
+    UPDATE inventory_transfer_item iti
+    JOIN TempCumulativeStock tcs
+        ON iti.transferItemId = tcs.entryid
+    SET iti.target_closing_stock = tcs.calculatedClosingStock
+    WHERE tcs.type = 'Inward'
+      AND iti.target_closing_stock <> tcs.calculatedClosingStock;
+
+    /* =====================================================
+       UPDATE TRANSFER - DEBIT SIDE (OUTWARD)
+       ===================================================== */
+    UPDATE inventory_transfer_item iti
+    JOIN TempCumulativeStock tcs
+        ON iti.transferItemId = tcs.entryid
+    SET iti.source_closing_stock = tcs.calculatedClosingStock
+    WHERE tcs.type = 'Outward'
+      AND iti.source_closing_stock <> tcs.calculatedClosingStock;
+
+    /* =====================================================
+       CLEANUP
+       ===================================================== */
     DROP TEMPORARY TABLE IF EXISTS TempCumulativeStock;
+
 END //
 
 DELIMITER ;
-
-
-CREATE TABLE IF NOT EXISTS execution_history (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    procedure_name VARCHAR(255) NOT NULL,
-    last_execution DATETIME NOT NULL
-);
-
-INSERT IGNORE INTO `execution_history`
-(
-`procedure_name`,
-`last_execution`)
-VALUES
-(
-'update_all_inventory',
-'2010-01-01');
-
-
--- Store procedure to update table from view
-
-DROP PROCEDURE IF EXISTS update_closing_stock;
-
-DELIMITER //
-
-CREATE PROCEDURE update_closing_stock()
-BEGIN
-    -- Temporary table to store cumulative stock calculations
-    CREATE TEMPORARY TABLE IF NOT EXISTS TempCumulativeStock (
-        entryid BIGINT,
-        oldClosingStock DOUBLE,
-        calculatedClosingStock DOUBLE
-    );
-
-    -- Insert calculated cumulative stocks into temporary table
-    INSERT INTO TempCumulativeStock (entryid, oldClosingStock, calculatedClosingStock)
-    SELECT
-        sr.entryid,
-        sr.oldClosingStock,
-        SUM(CASE
-                WHEN tx.type = 'Inward' THEN tx.quantity
-                ELSE 0
-            END) OVER (
-                PARTITION BY sr.warehouse_id, sr.productid
-                ORDER BY sr.row_num
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ) -
-        SUM(CASE
-                WHEN tx.type IN ('Outward', 'Lost-Damaged') THEN tx.quantity
-                ELSE 0
-            END) OVER (
-                PARTITION BY sr.warehouse_id, sr.productid
-                ORDER BY sr.row_num
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ) AS calculatedClosingStock
-    FROM (
-        SELECT
-            tx.entryid,
-            tx.date,
-            tx.warehouse_id AS warehouse_id,
-            tx.productid AS productid,
-            tx.quantity,
-            tx.closingstock AS oldClosingStock,
-            ROW_NUMBER() OVER (
-                PARTITION BY tx.warehouse_id, tx.productid
-                ORDER BY tx.date ASC, tx.type ASC, tx.keyid DESC
-            ) AS row_num
-        FROM all_inventory tx
-    ) sr
-    JOIN all_inventory tx ON sr.entryid = tx.entryid;
-
-    -- Update the closingstock field where discrepancies are found
-    UPDATE inward_outward_entries e
-    JOIN TempCumulativeStock ccs ON e.entryid = ccs.entryid
-    SET e.closingstock = ccs.calculatedClosingStock
-    WHERE ccs.oldClosingStock <> ccs.calculatedClosingStock;
-
-    -- Clean up temporary table
-    DROP TEMPORARY TABLE IF EXISTS TempCumulativeStock;
-END //
-
-DELIMITER ;
-
-
-CREATE TABLE IF NOT EXISTS execution_history (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    procedure_name VARCHAR(255) NOT NULL,
-    last_execution DATETIME NOT NULL
-);
-
-INSERT IGNORE INTO `execution_history`
-(
-`procedure_name`,
-`last_execution`)
-VALUES
-(
-'update_all_inventory',
-'2010-01-01');
 
 
 -- Store procedure to update table from view

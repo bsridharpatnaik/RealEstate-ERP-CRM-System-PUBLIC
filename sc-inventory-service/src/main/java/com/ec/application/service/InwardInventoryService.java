@@ -73,6 +73,9 @@ public class InwardInventoryService {
     @Autowired
     PurchaseOrderShortClosedViewRepo purchaseOrderShortClosedViewRepo;
 
+    @Autowired
+    InventoryNotificationService inventoryNotificationService;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     public List<PoDropdownItem> getPendingPoDropdown() {
@@ -241,6 +244,7 @@ public class InwardInventoryService {
                 }
                 Double closingStock = stockService.updateStock(productId, io.getWarehouse().getWarehouseId(), absQty, direction);
                 io.setClosingStock(closingStock);
+                inventoryNotificationService.pushQuantityEditedNotification(io.getProduct(), io.getWarehouse().getWarehouseName(), direction, closingStock);
             }
 
             // ---------------------------------------------

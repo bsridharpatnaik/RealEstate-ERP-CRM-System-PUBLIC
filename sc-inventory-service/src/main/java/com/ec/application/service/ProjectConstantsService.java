@@ -33,9 +33,9 @@ public class ProjectConstantsService {
         List<String> tenants = schemaConfig.getSchemaList();
         for (String tenant : tenants) {
             ThreadLocalStorage.setTenantName(tenant);
-            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString(), 100);
-            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_MANAGER.toString(), 100);
-            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString(), 100);
+            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString(), 30);
+            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_MANAGER.toString(), 30);
+            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString(), 7);
             ThreadLocalStorage.setTenantName(null);
         }
 
