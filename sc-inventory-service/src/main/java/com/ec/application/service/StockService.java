@@ -246,6 +246,13 @@ public class StockService {
                     dbData = dbData.stream().filter(c -> stockStatus.contains(c.getStockStatus())).collect(Collectors.toList());
                 }
             }
+
+            if (filterData.getAttrName().equalsIgnoreCase("productCodes")) {
+                List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
+                if (!productCodes.contains("All")) {
+                    dbData = dbData.stream().filter(c -> productCodes.contains(c.getProductCode())).collect(Collectors.toList());
+                }
+            }
         }
         return dbData;
     }

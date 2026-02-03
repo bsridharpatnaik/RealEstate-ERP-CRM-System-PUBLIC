@@ -11,33 +11,40 @@ public class StockInformationSpecification {
 
     public static Specification<StockInformationFromView> getSpecification(FilterDataList filterDataList) {
         List<String> products = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "products");
+        List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
         List<String> categories = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categories");
         List<String> warehouses = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "warehouses");
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
         List<String>  stockStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stockStatus");
         Specification<StockInformationFromView> finalSpec = null;
 
-        if (products != null && products.size() > 0)
+        if (products != null && !products.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_NAME, products));
 
-        if (categories != null && categories.size() > 0)
+        if (productCodes != null && !productCodes.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_CODE, productCodes));
+
+        if (categories != null && !categories.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(StockInformationFromView_.CATEGORY_NAME, categories));
 
-        if (warehouses != null && warehouses.size() > 0)
+        if (warehouses != null && !warehouses.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldContains(StockInformationFromView_.DETAILED_STOCK, warehouses));
 
-        if (stockStatus != null && stockStatus.size() > 0) {
+        if (stockStatus != null && !stockStatus.isEmpty()) {
             if(!stockStatus.contains("All")) {
                 finalSpec = specbldr.specAndCondition(finalSpec,
                         specbldr.whereDirectFieldContains(StockInformationFromView_.STOCK_STATUS, stockStatus));
             }
         }
-        if (globalSearch != null && globalSearch.size() > 0) {
+        if (globalSearch != null && !globalSearch.isEmpty()) {
             Specification<StockInformationFromView> internalSpec = null;
             internalSpec = specbldr.specOrCondition(internalSpec,
                     specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_NAME, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec,
+                    specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_CODE, globalSearch));
             internalSpec = specbldr.specOrCondition(internalSpec,
                     specbldr.whereDirectFieldContains(StockInformationFromView_.DETAILED_STOCK, globalSearch));
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
