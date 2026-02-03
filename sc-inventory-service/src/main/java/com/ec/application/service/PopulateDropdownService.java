@@ -93,6 +93,7 @@ public class PopulateDropdownService {
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
                 morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
                 morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
                 break;
             case "lostdamaged":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
