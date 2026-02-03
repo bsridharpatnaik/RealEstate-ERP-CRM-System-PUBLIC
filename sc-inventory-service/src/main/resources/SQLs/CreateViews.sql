@@ -57,11 +57,11 @@ FROM (
         ON ii.inwardid = iie.inwardid
     JOIN inward_outward_entries ioe
         ON iie.entryid = ioe.entryid
-    JOIN product p
+    JOIN Product p
         ON p.productid = ioe.productid
-    JOIN category cat
+    JOIN Category cat
         ON cat.categoryid = p.categoryid
-    JOIN warehouse w
+    JOIN Warehouse w
         ON w.warehouse_id = ioe.warehouse_id
     WHERE ii.is_deleted = 0
 
@@ -90,9 +90,9 @@ FROM (
     FROM inventory_transfer it
     JOIN inventory_transfer_item iti
         ON iti.transfer_id = it.transferId
-    JOIN product p
+    JOIN Product p
         ON p.productid = iti.productId
-    JOIN category cat
+    JOIN Category cat
         ON cat.categoryid = p.categoryid
     WHERE it.is_deleted = 0
       AND iti.is_deleted = 0
@@ -120,11 +120,11 @@ FROM (
         w.warehousename,
         2 AS sort_order
     FROM lost_damaged_inventory ldi
-    JOIN product p
+    JOIN Product p
         ON p.productid = ldi.productid
-    JOIN category cat
+    JOIN Category cat
         ON cat.categoryid = p.categoryid
-    JOIN warehouse w
+    JOIN Warehouse w
         ON w.warehouse_id = ldi.warehousename
     WHERE ldi.is_deleted = 0
 
@@ -155,11 +155,11 @@ FROM (
         ON oi.outwardid = oie.outwardid
     JOIN inward_outward_entries ioe
         ON oie.entryid = ioe.entryid
-    JOIN product p
+    JOIN Product p
         ON p.productid = ioe.productid
-    JOIN category cat
+    JOIN Category cat
         ON cat.categoryid = p.categoryid
-    JOIN warehouse w
+    JOIN Warehouse w
         ON w.warehouse_id = oi.warehouse_id
     WHERE oi.is_deleted = 0
 
@@ -188,9 +188,9 @@ FROM (
     FROM inventory_transfer it
     JOIN inventory_transfer_item iti
         ON iti.transfer_id = it.transferId
-    JOIN product p
+    JOIN Product p
         ON p.productid = iti.productId
-    JOIN category cat
+    JOIN Category cat
         ON cat.categoryid = p.categoryid
     WHERE it.is_deleted = 0
       AND iti.is_deleted = 0
