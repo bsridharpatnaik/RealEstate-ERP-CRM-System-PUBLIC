@@ -28,5 +28,7 @@ public class CreatePoRequest {
 
     /** One entry = one PO line */
     private List<CreatePoLineRequest> lineItems;
+    @NonNull
+    List<FileInformationDAO> fileInformations;
 }
 

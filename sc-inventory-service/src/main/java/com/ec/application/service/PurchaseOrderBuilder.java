@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.POStatusConstants;
 import com.ec.application.data.CreatePoLineRequest;
@@ -38,7 +39,11 @@ public class PurchaseOrderBuilder {
         for (CreatePoLineRequest itemReq : request.getLineItems()) {
             po.getLines().add(buildPoLine(po, itemReq));
         }
-
+        if (request.getFileInformations() != null) {
+            po.setFileInformations(ReusableMethods.convertFilesListToSet(request.getFileInformations()));
+        } else {
+            //throw new Exception("Invalid Payload. Please add file information in the payload.");
+        }
         return po;
     }
 
@@ -55,13 +60,11 @@ public class PurchaseOrderBuilder {
         line.setQuantity(itemReq.getQuantity());
         line.setDiameter(itemReq.getDiameter());
         line.setTotalAmount(itemReq.getTotalAmount());
-
         for (IndentLineRefRequest indentRef : itemReq.getIndentRefs()) {
             PurchaseOrderIndentRef ref = buildIndentRef(indentRef);
             ref.setPoLine(line);
             line.getIndentRefs().add(ref);
         }
-
         return line;
     }
 

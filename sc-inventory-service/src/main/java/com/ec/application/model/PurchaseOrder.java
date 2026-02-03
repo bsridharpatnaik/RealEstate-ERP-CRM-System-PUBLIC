@@ -77,6 +77,12 @@ public class PurchaseOrder extends ReusableFields {
     @JsonIgnoreProperties("purchaseOrder")
     private Set<PurchaseOrderLine> lines = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "po_fileinformation", joinColumns =
+            {@JoinColumn(name = "purchase_order_id", referencedColumnName = "purchase_order_id")},
+            inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
+    Set<FileInformation> fileInformations = new HashSet<>();
+
     @Transient
     Boolean approvalAllowed;
 
