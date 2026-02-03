@@ -1,56 +1,55 @@
 -- use suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark,drgtrdcntr,citycenter,school,bhaavbhumi,dhabba,mhvrtrdcntr
-use mhvrtrdcntr;
+use suncitynx;
 
-CREATE OR REPLACE VIEW all_inventory_recalc_view AS
+CREATE OR REPLACE VIEW all_inventory_view AS
 SELECT
     ROW_NUMBER() OVER (
         ORDER BY
-            tx.tx_date ASC,
-            tx.sort_order ASC,
-            tx.creationDate ASC,
-            tx.keyid ASC
-    ) AS seq_no,
+            q.date ASC,
+            q.sort_order ASC,
+            q.creationDate ASC,
+            q.keyid ASC
+    ) AS id,
 
-    tx.type,
-    tx.transferType,
-    tx.keyid,
-    tx.entryid,
-    tx.tx_date,
-    tx.productId,
-    tx.warehouseId,
-
-    -- normalized quantity (THIS is what you re-sum)
-    tx.normalized_quantity,
-
-    -- stored closing stock (what user saved)
-    tx.closingstock,
-
-    tx.creationDate,
-    tx.lastModifiedDate,
-    tx.product_name,
-    tx.category_name,
-    tx.measurementunit,
-    tx.warehousename
+    q.type,
+    q.keyid,
+    q.entryid,
+    q.date,
+    q.contactid,
+    q.productid,
+    q.quantity,
+    q.closingstock,
+    q.creationDate,
+    q.lastModifiedDate,
+    q.product_name,
+    q.category_name,
+    q.measurementunit,
+    c.name,
+    c.mobileno,
+    c.emailid,
+    c.contacttype,
+    q.warehouse_id,
+    q.warehousename
 FROM (
 
-    /* =========================
-       INWARD (including Transfer-IN)
-       ========================= */
+    /* =====================================================
+       INWARD (NORMAL)
+       ===================================================== */
     SELECT
         'Inward' AS type,
-        NULL AS transferType,
         ii.inwardid AS keyid,
-        ioe.entryid AS entryid,
-        DATE(ii.date) AS tx_date,
-        ioe.productid AS productId,
-        ioe.warehouse_id AS warehouseId,
-        ioe.quantity AS normalized_quantity,
+        ioe.entryid,
+        DATE(ii.date) AS date,
+        ii.contactid,
+        ioe.productid,
+        ioe.quantity,
         ioe.closingstock,
         ioe.creationDate,
         ioe.lastModifiedDate,
         p.product_name,
         cat.category_name,
         p.measurementunit,
+        w.warehouse_id,
         w.warehousename,
         1 AS sort_order
     FROM inward_inventory ii
@@ -58,91 +57,97 @@ FROM (
         ON ii.inwardid = iie.inwardid
     JOIN inward_outward_entries ioe
         ON iie.entryid = ioe.entryid
-    JOIN product p ON p.productid = ioe.productid
-    JOIN category cat ON cat.categoryid = p.categoryid
-    JOIN warehouse w ON w.warehouse_id = ioe.warehouse_id
+    JOIN product p
+        ON p.productid = ioe.productid
+    JOIN category cat
+        ON cat.categoryid = p.categoryid
+    JOIN warehouse w
+        ON w.warehouse_id = ioe.warehouse_id
     WHERE ii.is_deleted = 0
 
     UNION ALL
 
-    /* =========================
-       TRANSFER-IN
-       ========================= */
+    /* =====================================================
+       TRANSFER CREDIT (ALWAYS)
+       ===================================================== */
     SELECT
-        'Transfer' AS type,
-        'IN' AS transferType,
+        'Inward' AS type,
         it.transferId AS keyid,
         iti.transferItemId AS entryid,
-        DATE(it.transfer_date) AS tx_date,
-        iti.productId,
-        it.target_warehouse_id AS warehouseId,
-        iti.quantity AS normalized_quantity,
+        DATE(it.transfer_date) AS date,
+        NULL AS contactid,
+        iti.productId AS productid,
+        iti.quantity,
         iti.target_closing_stock AS closingstock,
         iti.creationDate,
         iti.lastModifiedDate,
-        iti.productName,
+        iti.productName AS product_name,
         cat.category_name,
-        iti.measurementUnit,
-        it.target_warehouse_name,
+        iti.measurementUnit AS measurementunit,
+        it.target_warehouse_id AS warehouse_id,
+        it.target_warehouse_name AS warehousename,
         1 AS sort_order
     FROM inventory_transfer it
     JOIN inventory_transfer_item iti
         ON iti.transfer_id = it.transferId
+    JOIN product p
+        ON p.productid = iti.productId
     JOIN category cat
-        ON cat.categoryid = (
-            SELECT p.categoryid FROM product p WHERE p.productid = iti.productId
-        )
+        ON cat.categoryid = p.categoryid
     WHERE it.is_deleted = 0
       AND iti.is_deleted = 0
 
     UNION ALL
 
-    /* =========================
+    /* =====================================================
        LOST / DAMAGED
-       ========================= */
+       ===================================================== */
     SELECT
         'Lost-Damaged' AS type,
-        NULL AS transferType,
         ldi.lostdamagedid AS keyid,
         ldi.lostdamagedid AS entryid,
-        DATE(ldi.date) AS tx_date,
+        DATE(ldi.date) AS date,
+        NULL AS contactid,
         ldi.productid,
-        ldi.warehousename AS warehouseId,
-        ldi.quantity AS normalized_quantity,
+        ldi.quantity,
         ldi.closingstock,
         ldi.creationDate,
         ldi.lastModifiedDate,
         p.product_name,
         cat.category_name,
         p.measurementunit,
+        w.warehouse_id,
         w.warehousename,
         2 AS sort_order
     FROM lost_damaged_inventory ldi
-    JOIN product p ON p.productid = ldi.productid
-    JOIN category cat ON cat.categoryid = p.categoryid
-    JOIN warehouse w ON w.warehouse_id = ldi.warehousename
+    JOIN product p
+        ON p.productid = ldi.productid
+    JOIN category cat
+        ON cat.categoryid = p.categoryid
+    JOIN warehouse w
+        ON w.warehouse_id = ldi.warehousename
     WHERE ldi.is_deleted = 0
 
     UNION ALL
 
-    /* =========================
-       OUTWARD (including Transfer-OUT)
-       ========================= */
+    /* =====================================================
+       OUTWARD (NORMAL)
+       ===================================================== */
     SELECT
         'Outward' AS type,
-        NULL AS transferType,
         oi.outwardid AS keyid,
-        ioe.entryid AS entryid,
-        DATE(oi.date) AS tx_date,
+        ioe.entryid,
+        DATE(oi.date) AS date,
+        oi.contactid,
         ioe.productid,
-        oi.warehouse_id AS warehouseId,
-        ioe.quantity AS normalized_quantity,
+        ioe.quantity,
         ioe.closingstock,
         ioe.creationDate,
         ioe.lastModifiedDate,
         p.product_name,
         cat.category_name,
         p.measurementunit,
+        w.warehouse_id,
         w.warehousename,
         3 AS sort_order
     FROM outward_inventory oi
@@ -150,44 +155,50 @@ FROM (
         ON oi.outwardid = oie.outwardid
     JOIN inward_outward_entries ioe
         ON oie.entryid = ioe.entryid
-    JOIN product p ON p.productid = ioe.productid
-    JOIN category cat ON cat.categoryid = p.categoryid
-    JOIN warehouse w ON w.warehouse_id = oi.warehouse_id
+    JOIN product p
+        ON p.productid = ioe.productid
+    JOIN category cat
+        ON cat.categoryid = p.categoryid
+    JOIN warehouse w
+        ON w.warehouse_id = oi.warehouse_id
     WHERE oi.is_deleted = 0
 
     UNION ALL
 
-    /* =========================
-       TRANSFER-OUT
-       ========================= */
+    /* =====================================================
+       TRANSFER DEBIT (ALWAYS)
+       ===================================================== */
     SELECT
-        'Transfer' AS type,
-        'OUT' AS transferType,
+        'Outward' AS type,
         it.transferId AS keyid,
         iti.transferItemId AS entryid,
-        DATE(it.transfer_date) AS tx_date,
-        iti.productId,
-        it.source_warehouse_id AS warehouseId,
-        iti.quantity AS normalized_quantity,
+        DATE(it.transfer_date) AS date,
+        NULL AS contactid,
+        iti.productId AS productid,
+        iti.quantity,
         iti.source_closing_stock AS closingstock,
         iti.creationDate,
         iti.lastModifiedDate,
-        iti.productName,
+        iti.productName AS product_name,
         cat.category_name,
-        iti.measurementUnit,
-        it.source_warehouse_name,
+        iti.measurementUnit AS measurementunit,
+        it.source_warehouse_id AS warehouse_id,
+        it.source_warehouse_name AS warehousename,
         3 AS sort_order
     FROM inventory_transfer it
     JOIN inventory_transfer_item iti
         ON iti.transfer_id = it.transferId
+    JOIN product p
+        ON p.productid = iti.productId
     JOIN category cat
-        ON cat.categoryid = (
-            SELECT p.categoryid FROM product p WHERE p.productid = iti.productId
-        )
+        ON cat.categoryid = p.categoryid
     WHERE it.is_deleted = 0
       AND iti.is_deleted = 0
 
-) tx;
+) q
+LEFT JOIN contacts c
+       ON c.contactid = q.contactid;
+
 
 
   -- --------- Stock Verification ------------
