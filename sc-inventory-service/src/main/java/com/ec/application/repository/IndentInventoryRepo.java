@@ -3,6 +3,7 @@ package com.ec.application.repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.data.ConsolidatedIndentLineDTO;
+import com.ec.application.data.StatusGroupCountDTO;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.InwardInventory;
 import org.springframework.data.jpa.repository.Lock;
@@ -26,4 +27,19 @@ public interface IndentInventoryRepo extends BaseRepository<IndentInventory, Str
     Optional<IndentInventory> findByIdWithDetails(@Param("id") String id);
 
     List<IndentInventory> findByIndentStatusIn(List<String> statuses);
+
+    @Query(
+            "SELECT new com.ec.application.data.StatusGroupCountDTO(" +
+                    "   ii.indentStatus, " +
+                    "   ii.tenant, " +
+                    "   COUNT(ii.indentId)" +
+                    ") " +
+                    "FROM IndentInventory ii " +
+                    "WHERE ii.indentStatus IN :statuses " +
+                    "AND ii.isDeleted = false " +
+                    "GROUP BY ii.indentStatus, ii.tenant"
+    )
+    List<StatusGroupCountDTO> fetchCurrentIndentStatusCounts(
+            @Param("statuses") List<String> statuses
+    );
 }

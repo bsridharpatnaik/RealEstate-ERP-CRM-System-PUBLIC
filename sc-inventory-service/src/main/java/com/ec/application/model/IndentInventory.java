@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import javax.persistence.*;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.Getter;
@@ -62,6 +63,15 @@ public class IndentInventory extends ReusableFields implements Cloneable {
     @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER, orphanRemoval = false)
     @JsonSerialize(using = ActiveIndentInventoryListSerializer.class)
     private Set<IndentInventoryList> inventoryList = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "indent",
+            cascade = CascadeType.ALL,
+            orphanRemoval = false,
+            fetch = FetchType.LAZY
+    )
+    @JsonIgnore   // optional – depends if you want it in API response
+    private List<IndentStatusHistory> statusHistory = new ArrayList<>();
 
     @Transient
     Boolean approvalAllowed;

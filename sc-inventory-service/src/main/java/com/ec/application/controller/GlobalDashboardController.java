@@ -21,6 +21,6 @@ public class GlobalDashboardController {
 
     @GetMapping("/charts")
     public DashboardChartListDTO getIndentDashboard(@RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") Date startDate, @RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") Date endDate) {
-        return globalDashboardService.getAllIndentDashboards(startDate, endDate);
+        return globalDashboardService.getAllSlicedData(startDate, endDate);
     }
 }

@@ -611,4 +611,42 @@ public class IndentInventoryService {
         }
         return result;
     }
+
+    @Transactional(readOnly = true)
+    public Map<String, DashboardChartDTO> getCurrentIndentDashboards() {
+
+        List<String> statuses = Arrays.asList(
+                IndentStatusConstants.STATUS_NEW,            // Awaiting Approval
+                IndentStatusConstants.STATUS_APPROVED,       // No PO
+                IndentStatusConstants.STATUS_PO_PARTIAL,     // PO Partial
+                IndentStatusConstants.STATUS_INWARD_PARTIAL  // Inward Partial
+        );
+
+        List<StatusGroupCountDTO> rows = indentInventoryRepo.fetchCurrentIndentStatusCounts(statuses);
+
+        Map<String, Map<String, Long>> grouped = new HashMap<>();
+
+        for (StatusGroupCountDTO row : rows) {
+            grouped
+                    .computeIfAbsent(row.getStatus(), k -> new HashMap<>())
+                    .merge(row.getGroupKey(), row.getCount(), Long::sum);
+        }
+
+        Map<String, DashboardChartDTO> dashboards = new HashMap<>();
+
+        for (String status : statuses) {
+            Map<String, Long> tenantMap = grouped.getOrDefault(status, new HashMap<>());
+
+            List<TenantCountDTO> tenantCounts = new ArrayList<>();
+            long total = 0;
+
+            for (Map.Entry<String, Long> e : tenantMap.entrySet()) {
+                tenantCounts.add(new TenantCountDTO(e.getKey(), e.getValue()));
+                total += e.getValue();
+            }
+            dashboards.put(status, new DashboardChartDTO(total, tenantCounts));
+        }
+
+        return dashboards;
+    }
 }

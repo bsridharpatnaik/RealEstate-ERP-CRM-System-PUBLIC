@@ -7,15 +7,36 @@ import lombok.Data;
 public class DashboardChartListDTO {
     DashboardChartDTO newIndents;
     DashboardChartDTO approvedIndents;
-    DashboardChartDTO poPartialIndents;
     DashboardChartDTO poCompletedIndents;
     DashboardChartDTO closedIndents;
+    DashboardChartDTO poCreated;
+    DashboardChartDTO poCompleted;
+    DashboardChartDTO poShortClosed;
+    DashboardChartDTO awaitingApprovalIndents;
+    DashboardChartDTO zeroPOIndents;
+    DashboardChartDTO partialPOIndents;
+    DashboardChartDTO inwardPartialIndents;
+    DashboardChartDTO statusNewPO;
+    DashboardChartDTO statusPartialPO;
 
-    public DashboardChartListDTO(DashboardChartDTO newIndents, DashboardChartDTO approvedIndents, DashboardChartDTO poPartialIndents, DashboardChartDTO poCompletedIndents, DashboardChartDTO closedIndents) {
+
+    public DashboardChartListDTO(DashboardChartDTO newIndents, DashboardChartDTO approvedIndents,
+                                 DashboardChartDTO poCompletedIndents, DashboardChartDTO closedIndents,
+                                 DashboardChartDTO poCreated, DashboardChartDTO poCompleted, DashboardChartDTO poShortClosed,
+                                 DashboardChartDTO awaitingApprovalIndents, DashboardChartDTO zeroPOIndents, DashboardChartDTO partialPOIndents,
+                                 DashboardChartDTO inwardPartialIndents, DashboardChartDTO statusNewPO, DashboardChartDTO statusPartialPO) {
         this.newIndents = newIndents;
         this.approvedIndents = approvedIndents;
-        this.poPartialIndents = poPartialIndents;
         this.poCompletedIndents = poCompletedIndents;
         this.closedIndents = closedIndents;
+        this.poCreated = poCreated;
+        this.poCompleted = poCompleted;
+        this.poShortClosed = poShortClosed;
+        this.awaitingApprovalIndents = awaitingApprovalIndents;
+        this.zeroPOIndents = zeroPOIndents;
+        this.partialPOIndents = partialPOIndents;
+        this.inwardPartialIndents = inwardPartialIndents;
+        this.statusNewPO = statusNewPO;
+        this.statusPartialPO = statusPartialPO;
     }
 }

@@ -194,4 +194,43 @@ public class PurchaseOrderService extends ReusableFields {
 
         return "Purchase Order created by user " + username + ". Indent line items: " + indentDetails;
     }
+
+    @Transactional(readOnly = true)
+    public Map<String, DashboardChartDTO> getCurrentPODashboards() {
+
+        List<String> statuses = Arrays.asList(
+                POStatusConstants.STATUS_NEW,      // Zero Inward
+                POStatusConstants.STATUS_PARTIAL   // Partial
+        );
+
+        List<StatusGroupCountDTO> rows = purchaseOrderRepo.fetchCurrentPOStatusCounts(statuses);
+
+        Map<String, Map<String, Long>> grouped = new HashMap<>();
+
+        for (StatusGroupCountDTO row : rows) {
+            grouped
+                    .computeIfAbsent(row.getStatus(), k -> new HashMap<>())
+                    .merge(row.getGroupKey(), row.getCount(), Long::sum);
+        }
+
+        Map<String, DashboardChartDTO> dashboards = new HashMap<>();
+
+        for (String status : statuses) {
+            Map<String, Long> firmMap =
+                    grouped.getOrDefault(status, new HashMap<>());
+
+            List<TenantCountDTO> firmCounts = new ArrayList<>();
+            long total = 0;
+
+            for (Map.Entry<String, Long> e : firmMap.entrySet()) {
+                firmCounts.add(new TenantCountDTO(e.getKey(), e.getValue()));
+                total += e.getValue();
+            }
+
+            dashboards.put(status,
+                    new DashboardChartDTO(total, firmCounts));
+        }
+
+        return dashboards;
+    }
 }

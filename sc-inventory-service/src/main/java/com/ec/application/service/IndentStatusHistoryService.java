@@ -1,7 +1,9 @@
 package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.data.DashboardChartDTO;
+import com.ec.application.data.StatusGroupCountDTO;
 import com.ec.application.data.TenantCountDTO;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentStatusHistory;
@@ -10,9 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @UseDefaultTenant
@@ -39,9 +39,36 @@ public class IndentStatusHistoryService {
     }
 
     @Transactional(readOnly = true)
-    public DashboardChartDTO getIndentCountForDashboard(String status, Date startDate, Date endDate) {
-        Long totalCount = indentStatusHistoryRepo.countIndents(status, startDate, endDate);
-        List<TenantCountDTO> tenantCounts = indentStatusHistoryRepo.findIndentCountByTenant(status, startDate, endDate);
-        return new DashboardChartDTO(totalCount, tenantCounts);
+    public Map<String, DashboardChartDTO> getDashboards(Date startDate, Date endDate) {
+        List<String> statuses = Arrays.asList(
+                IndentStatusConstants.STATUS_NEW,
+                IndentStatusConstants.STATUS_APPROVED,
+                IndentStatusConstants.STATUS_PO_COMPLETED,
+                IndentStatusConstants.STATUS_CLOSED
+        );
+
+        List<StatusGroupCountDTO> rows = indentStatusHistoryRepo.fetchIndentDashboardData(statuses, startDate, endDate);
+        Map<String, Map<String, Long>> statusMap = new HashMap<>();
+        for (StatusGroupCountDTO row : rows) {
+            statusMap
+                    .computeIfAbsent(row.getStatus(), k -> new HashMap<>())
+                    .merge(row.getGroupKey(), row.getCount(), Long::sum);
+        }
+
+        Map<String, DashboardChartDTO> dashboards = new HashMap<>();
+
+        for (String status : statuses) {
+            Map<String, Long> tenantMap = statusMap.getOrDefault(status, new HashMap<>());
+
+            List<TenantCountDTO> tenantCounts = new ArrayList<>();
+            long total = 0;
+
+            for (Map.Entry<String, Long> e : tenantMap.entrySet()) {
+                tenantCounts.add(new TenantCountDTO(e.getKey(), e.getValue()));
+                total += e.getValue();
+            }
+            dashboards.put(status, new DashboardChartDTO(total, tenantCounts));
+        }
+        return dashboards;
     }
 }
