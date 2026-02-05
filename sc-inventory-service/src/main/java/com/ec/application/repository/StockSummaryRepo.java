@@ -31,11 +31,19 @@ public interface StockSummaryRepo
     List<StockSummary> fetchStockByProductIdsAndWarehouse(@Param("productIds") List<Long> productIds, @Param("warehouseName") String warehouseName);
 
     @Query("SELECT new com.ec.application.data.ProductStockSumDTO(d.productId, SUM(d.quantityInHand)) FROM StockSummary d " +
-                    "WHERE d.productId IN :productIds " +
-                    "GROUP BY d.productId")
+            "WHERE d.productId IN :productIds " +
+            "GROUP BY d.productId")
     List<ProductStockSumDTO> fetchTotalStockByProductIds(
             @Param("productIds") List<Long> productIds
     );
+
+    @Query(
+            "SELECT s.productId, s.tenantSchema, SUM(s.quantityInHand) " +
+                    "FROM StockSummary s " +
+                    "WHERE s.productId IN :productIds " +
+                    "GROUP BY s.productId, s.tenantSchema"
+    )
+    List<Object[]> fetchTenantWiseStockForProducts(@Param("productIds") List<Long> productIds);
 
 
 }

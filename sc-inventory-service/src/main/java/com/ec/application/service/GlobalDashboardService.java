@@ -3,10 +3,7 @@ package com.ec.application.service;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.constants.POStatusConstants;
-import com.ec.application.data.DashboardChartDTO;
-import com.ec.application.data.DashboardChartListDTO;
-import com.ec.application.data.StatusGroupCountDTO;
-import com.ec.application.data.TenantCountDTO;
+import com.ec.application.data.*;
 import com.ec.application.repository.IndentStatusHistoryRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +29,9 @@ public class GlobalDashboardService {
 
     @Autowired
     PurchaseOrderService purchaseOrderService;
+
+    @Autowired
+    StockSummaryService stockSummaryService;
 
     /**
      * Builds and returns all dashboard data required by the Global Dashboard
@@ -100,5 +100,9 @@ public class GlobalDashboardService {
                 poStaticDashboards.get(POStatusConstants.STATUS_NEW),     // PO Zero Inward
                 poStaticDashboards.get(POStatusConstants.STATUS_PARTIAL)  // PO Partial
         );
+    }
+
+    public List<DashboardProductStockDTO> getDashboardProductStock() {
+        return stockSummaryService.getDashboardProductStock();
     }
 }

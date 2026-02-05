@@ -18,7 +18,7 @@ import java.util.*;
 public class DashboardServiceV2 {
 
     @Autowired
-    ProductRepo productRepo;
+    ProductService productService;
 
     @Autowired
     InwardInventoryRepo iiRepo;
@@ -39,7 +39,7 @@ public class DashboardServiceV2 {
     OutwardInventoryStatsForDashboardRepo outwardInventoryStatsForDashboardRepo;
 
     public List<InventoryHistoricalStats> getInventoryHistoricalStats() {
-        List<Product> productsForDashboard = getDashboardProducts();
+        List<Product> productsForDashboard = productService.getDashboardProducts();
         List<InwardInventory> inwardsInOneMonth = iiRepo.getCurrentMonthData();
         List<OutwardInventory> outwardsInOneMonth = oiRepo.getCurrentMonthData();
         return transformInwardAndOutward(productsForDashboard, inwardsInOneMonth, outwardsInOneMonth);
@@ -119,27 +119,10 @@ public class DashboardServiceV2 {
         }
     }
 
-    private List<Product> getDashboardProducts() {
-        List<Product> productsForDashboard = productRepo.getDashboardProducts();
-        if (productsForDashboard.size() <= 9) {
-            int ctr = 0;
-            List<Product> allProducts = productRepo.findAll(Sort.by(Sort.Direction.DESC, "productId"));
-            if (allProducts.size() < ProjectConstants.noOfProductsForDashboard) {
-                productsForDashboard.addAll(allProducts);
-            } else {
-                while (productsForDashboard.size() != ProjectConstants.noOfProductsForDashboard && allProducts.size() >= ProjectConstants.noOfProductsForDashboard) {
-                    Long pid = allProducts.get(ctr).getProductId();
-                    if (!productsForDashboard.stream().anyMatch(o -> o.getProductId().equals(pid)))
-                        productsForDashboard.add(allProducts.get(ctr));
-                    ctr++;
-                }
-            }
-        }
-        return productsForDashboard;
-    }
+
 
     public List<StockPercentageForDashboard> getStockPercentForDashboard() {
-        List<Product> productsForDashboard = getDashboardProducts();
+        List<Product> productsForDashboard = productService.getDashboardProducts();
         List<StockPercentageForDashboard> returnData = new ArrayList<StockPercentageForDashboard>();
         List<StockPercentageForDashboard> existingStock = stockRepo.getCurrentStockPercentForDashboardProducts(productsForDashboard);
         for (Product p : productsForDashboard) {

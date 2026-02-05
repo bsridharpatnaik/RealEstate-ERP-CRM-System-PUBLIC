@@ -1,8 +1,7 @@
 package com.ec.application.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -14,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -223,4 +223,40 @@ public class ProductService {
     public List<IdNameAndUnit> getProducts(Boolean isManagedInventory, Long categoryId) {
         return productRepo.getProducts(isManagedInventory, categoryId);
     }
+
+    List<Product> getDashboardProducts() {
+        int requiredCount = ProjectConstants.noOfProductsForDashboard;
+
+        // 1. Fetch flagged products
+        List<Product> flaggedProducts = productRepo.getDashboardProducts();
+
+        // If we already have enough, return exactly requiredCount
+        if (flaggedProducts.size() >= requiredCount) {
+            return flaggedProducts.subList(0, requiredCount);
+        }
+
+        // 2. Fetch remaining products excluding already selected ones
+        Set<Long> selectedIds = flaggedProducts.stream()
+                .map(Product::getProductId)
+                .collect(Collectors.toSet());
+
+        List<Product> remainingProducts = productRepo.findAll().stream()
+                .filter(p -> !selectedIds.contains(p.getProductId()))
+                .collect(Collectors.toList());
+
+        // 3. Shuffle to make selection random
+        Collections.shuffle(remainingProducts);
+
+        // 4. Pick only what is needed
+        int remainingNeeded = requiredCount - flaggedProducts.size();
+        List<Product> randomFill = remainingProducts.stream()
+                .limit(remainingNeeded)
+                .collect(Collectors.toList());
+
+        // 5. Merge and return
+        List<Product> dashboardProducts = new ArrayList<>(flaggedProducts);
+        dashboardProducts.addAll(randomFill);
+        return dashboardProducts;
+    }
+
 }
