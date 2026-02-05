@@ -1,5 +1,6 @@
 package com.ec.application.repository;
 
+import com.ec.application.data.IndentStatusChangeDTO;
 import com.ec.application.data.StatusGroupCountDTO;
 import com.ec.application.data.TenantCountDTO;
 import com.ec.application.model.IndentStatusHistory;
@@ -28,4 +29,12 @@ public interface IndentStatusHistoryRepo extends JpaRepository<IndentStatusHisto
                     "GROUP BY ish.newStatus, ish.indent.tenant"
     )
     List<StatusGroupCountDTO> fetchIndentDashboardData(@Param("statuses") List<String> statuses, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+
+    @Query(
+            "SELECT ish.newStatus, ish.changedAt " +
+                    "FROM IndentStatusHistory ish " +
+                    "WHERE ish.changedAt >= :fromDate"
+    )
+    List<Object[]> fetchIndentStatusChangesSince(@Param("fromDate") Date fromDate
+    );
 }

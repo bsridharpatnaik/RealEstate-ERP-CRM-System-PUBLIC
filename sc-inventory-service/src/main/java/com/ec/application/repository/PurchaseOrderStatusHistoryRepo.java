@@ -1,5 +1,6 @@
 package com.ec.application.repository;
 
+import com.ec.application.data.PoStatusChangeDTO;
 import com.ec.application.data.StatusGroupCountDTO;
 import com.ec.application.data.TenantCountDTO;
 import com.ec.application.model.PurchaseOrder;
@@ -32,4 +33,14 @@ public interface PurchaseOrderStatusHistoryRepo extends JpaRepository<PurchaseOr
                     "GROUP BY posh.newStatus, posh.purchaseOrder.firm.firmName"
     )
     List<StatusGroupCountDTO> fetchPODashboardData(@Param("statuses") List<String> statuses, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+
+    @Query(
+            "SELECT new com.ec.application.data.PoStatusChangeDTO(" +
+                    "       psh.newStatus, psh.changedAt) " +
+                    "FROM PurchaseOrderStatusHistory psh " +
+                    "WHERE psh.changedAt >= :fromDate"
+    )
+    List<PoStatusChangeDTO> fetchPoStatusChangesSince(
+            @Param("fromDate") Date fromDate
+    );
 }

@@ -8,16 +8,12 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.ec.application.data.FileInformationDAO;
+import com.ec.application.data.WeekBucket;
 import com.ec.application.model.FileInformation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -160,4 +156,51 @@ public final class ReusableMethods
 		return ChronoUnit.DAYS.between(Instant.ofEpochMilli(dateFrom.getTime()),
 				Instant.ofEpochMilli(dateTo.getTime()));
 	}
+
+	public static List<WeekBucket> getLast4Weeks() {
+
+		List<WeekBucket> buckets = new ArrayList<WeekBucket>();
+
+		TimeZone ist = TimeZone.getTimeZone("Asia/Kolkata");
+		Calendar cal = Calendar.getInstance(ist);
+
+		// ---- Step 1: Anchor to CURRENT week ----
+		cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+
+		Date currentWeekStart = cal.getTime();
+
+		cal.add(Calendar.DAY_OF_WEEK, 6);
+		cal.set(Calendar.HOUR_OF_DAY, 23);
+		cal.set(Calendar.MINUTE, 59);
+		cal.set(Calendar.SECOND, 59);
+		cal.set(Calendar.MILLISECOND, 999);
+
+		Date currentWeekEnd = cal.getTime();
+
+		// ---- Step 2: Build W-3 → W-0 ----
+		for (int i = 3; i >= 0; i--) {
+
+			Calendar startCal = Calendar.getInstance(ist);
+			startCal.setTime(currentWeekStart);
+			startCal.add(Calendar.WEEK_OF_YEAR, -i);
+
+			Calendar endCal = Calendar.getInstance(ist);
+			endCal.setTime(currentWeekEnd);
+			endCal.add(Calendar.WEEK_OF_YEAR, -i);
+
+			buckets.add(new WeekBucket(
+					"W-" + (3 - i),
+					startCal.getTime(),
+					endCal.getTime()
+			));
+		}
+
+		return buckets;
+	}
+
+
 }

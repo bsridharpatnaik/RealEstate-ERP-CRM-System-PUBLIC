@@ -1,10 +1,9 @@
 package com.ec.application.service;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.POStatusConstants;
-import com.ec.application.data.DashboardChartDTO;
-import com.ec.application.data.StatusGroupCountDTO;
-import com.ec.application.data.TenantCountDTO;
+import com.ec.application.data.*;
 import com.ec.application.model.*;
 import com.ec.application.repository.IndentStatusHistoryRepo;
 import com.ec.application.repository.PurchaseOrderStatusHistoryRepo;
@@ -70,4 +69,77 @@ public class PurchaseOrderStatusHistoryService {
         }
         return dashboards;
     }
+
+    @Transactional(readOnly = true)
+    public DashboardTrendChartDTO getPoLifecycleTrendLast4Weeks() {
+
+        // 1. Prepare week buckets
+        List<WeekBucket> weeks = ReusableMethods.getLast4Weeks();
+        Date fromDate = weeks.get(0).getStart();
+
+        // 2. Fetch PO status changes
+        List<PoStatusChangeDTO> rows = purchaseOrderStatusHistoryRepo.fetchPoStatusChangesSince(fromDate);
+
+        // 3. Status → weekIndex → count
+        Map<String, long[]> statusWeekCounts = new HashMap<String, long[]>();
+
+        String[] trackedStatuses = new String[]{
+                POStatusConstants.STATUS_NEW,
+                POStatusConstants.STATUS_PARTIAL,
+                POStatusConstants.STATUS_COMPLETED,
+                POStatusConstants.STATUS_SHORT_CLOSED
+        };
+
+        for (String status : trackedStatuses) {
+            statusWeekCounts.put(status, new long[4]);
+        }
+
+        // 4. Bucket events into weeks
+        for (PoStatusChangeDTO row : rows) {
+
+            String status = row.getNewStatus();
+            Date changedAt = row.getChangedAt();
+
+            if (!statusWeekCounts.containsKey(status)) {
+                continue;
+            }
+
+            for (int i = 0; i < weeks.size(); i++) {
+                WeekBucket wb = weeks.get(i);
+                System.out.println("Checking status " + status + " changedAt " + changedAt + " for week " + wb.getLabel());
+
+                if (!changedAt.before(wb.getStart()) && changedAt.before(wb.getEnd())) {
+                    statusWeekCounts.get(status)[i]++;
+                    break;
+                }
+            }
+        }
+
+        // 5. Build response
+        DashboardTrendChartDTO chart = new DashboardTrendChartDTO();
+        chart.setTitle("PO Lifecycle Trend (Last 4 Weeks)");
+
+        List<String> periods = new ArrayList<String>();
+        for (WeekBucket wb : weeks) {
+            periods.add(wb.getLabel());
+        }
+        chart.setPeriods(periods);
+        List<DashboardTrendSeriesDTO> series = new ArrayList<DashboardTrendSeriesDTO>();
+        series.add(buildSeries("Created", statusWeekCounts.get(POStatusConstants.STATUS_NEW)));
+        series.add(buildSeries("Partial", statusWeekCounts.get(POStatusConstants.STATUS_PARTIAL)));
+        series.add(buildSeries("Completed", statusWeekCounts.get(POStatusConstants.STATUS_COMPLETED)));
+        series.add(buildSeries("Short Closed", statusWeekCounts.get(POStatusConstants.STATUS_SHORT_CLOSED)));
+        chart.setSeries(series);
+        return chart;
+    }
+
+    private DashboardTrendSeriesDTO buildSeries(String label, long[] data) {
+        List<Long> values = new ArrayList<Long>();
+        for (long v : data) {
+            values.add(v);
+        }
+        return new DashboardTrendSeriesDTO(label, values);
+    }
+
+
 }

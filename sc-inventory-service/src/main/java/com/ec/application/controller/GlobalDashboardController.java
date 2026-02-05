@@ -1,16 +1,16 @@
 package com.ec.application.controller;
 
-import com.ec.application.data.DashboardChartDTO;
+import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.DashboardChartListDTO;
 import com.ec.application.data.DashboardProductStockDTO;
+import com.ec.application.data.DashboardTrendChartDTO;
 import com.ec.application.service.GlobalDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
@@ -31,5 +31,22 @@ public class GlobalDashboardController {
     public ResponseEntity<List<DashboardProductStockDTO>> getDashboardProductsStock() {
         List<DashboardProductStockDTO> response = globalDashboardService.getDashboardProductStock();
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/indent/trend")
+    public ResponseEntity<DashboardTrendChartDTO> getIndentLifecycleTrendLast4Weeks() {
+        DashboardTrendChartDTO response = globalDashboardService.getIndentLifecycleTrendLast4Weeks();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/po/trend")
+    public ResponseEntity<DashboardTrendChartDTO> getPoLifecycleTrend() {
+        return ResponseEntity.ok(globalDashboardService.getPoLifecycleTrendLast4Weeks());
+    }
+
+    @ExceptionHandler({JpaSystemException.class})
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
+        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
     }
 }

@@ -9,10 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @UseDefaultTenant
@@ -104,5 +101,13 @@ public class GlobalDashboardService {
 
     public List<DashboardProductStockDTO> getDashboardProductStock() {
         return stockSummaryService.getDashboardProductStock();
+    }
+
+    public DashboardTrendChartDTO getIndentLifecycleTrendLast4Weeks() {
+        return indentStatusHistoryService.getIndentLifecycleTrendLast4Weeks();
+    }
+
+    public DashboardTrendChartDTO getPoLifecycleTrendLast4Weeks() {
+        return purchaseOrderStatusHistoryService.getPoLifecycleTrendLast4Weeks();
     }
 }
