@@ -2,25 +2,27 @@ package com.ec.application.model;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.*;
 
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.ReusableClasses.ReusableFields;
@@ -82,6 +84,23 @@ public class PurchaseOrder extends ReusableFields {
             {@JoinColumn(name = "purchase_order_id", referencedColumnName = "purchase_order_id")},
             inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
     Set<FileInformation> fileInformations = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "purchaseOrder",
+            cascade = CascadeType.ALL,
+            orphanRemoval = false,
+            fetch = FetchType.LAZY
+    )
+    @JsonIgnore   // optional – depends if you want it in API response
+    private List<PurchaseOrderStatusHistory> statusHistory = new ArrayList<>();
+
+    @Column(
+            name = "last_status_updated_at",
+            nullable = false,
+            columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP"
+    )
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "d MMM yyyy h:mm a")
+    private Date lastStatusUpdatedAt;
 
     @Transient
     Boolean approvalAllowed;

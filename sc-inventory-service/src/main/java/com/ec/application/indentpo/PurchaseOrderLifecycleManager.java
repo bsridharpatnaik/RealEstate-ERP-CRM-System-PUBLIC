@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
+
 @Service
 @RequiredArgsConstructor
 @UseDefaultTenant
@@ -44,6 +46,7 @@ public class PurchaseOrderLifecycleManager {
         }
 
         purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_CANCELLED, "System", "PO cancelled by user " + userDetailsService.getCurrentUser().getUsername());
+        po.setLastStatusUpdatedAt(new Date());
         po.setStatus(POStatusConstants.STATUS_CANCELLED);
         purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(po, POIndentUpdateAction.CANCEL_PO);
@@ -62,6 +65,7 @@ public class PurchaseOrderLifecycleManager {
 
         // 3. Update PO status
         purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_SHORT_CLOSED, "System", "PO short closed by user " + userDetailsService.getCurrentUser().getUsername());
+        po.setLastStatusUpdatedAt(new Date());
         po.setStatus(POStatusConstants.STATUS_SHORT_CLOSED);
         po.setShortCloseReason(request.getReason()); // optional column
         purchaseOrderRepo.save(po);

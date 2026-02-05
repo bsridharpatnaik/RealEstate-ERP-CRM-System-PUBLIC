@@ -4,6 +4,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,11 +15,9 @@ import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.*;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.ReusableClasses.ReusableFields;
@@ -75,6 +76,14 @@ public class IndentInventory extends ReusableFields implements Cloneable {
 
     @Transient
     Boolean approvalAllowed;
+
+    @Column(
+            name = "last_status_updated_at",
+            nullable = false,
+            columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP"
+    )
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "d MMM yyyy h:mm a")
+    private Date lastStatusUpdatedAt;
 
     @Override
     public Object clone() throws CloneNotSupportedException {

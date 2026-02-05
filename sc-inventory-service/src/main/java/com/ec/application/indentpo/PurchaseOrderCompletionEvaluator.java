@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -100,6 +101,7 @@ public class PurchaseOrderCompletionEvaluator {
         }
         if (oldStatus != po.getStatus()) {
             log.info("PO [{}] status changed from {} to {}", po.getPurchaseOrderId(), oldStatus, po.getStatus());
+            po.setLastStatusUpdatedAt(new Date());
             purchaseOrderStatusHistoryService.logStatusChange(po, oldStatus, po.getStatus(), "System", "PO status auto-updated by system based on indent line item statuses. Old Status - " + oldStatus + ", New Status - " + po.getStatus());
         }
         purchaseOrderRepo.save(po);

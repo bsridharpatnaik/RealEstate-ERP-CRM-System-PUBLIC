@@ -14,6 +14,7 @@ import com.ec.application.repository.IndentInventoryListRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -35,6 +36,7 @@ public class PurchaseOrderBuilder {
         po.setNotes(request.getNotes());
         po.setGrandTotal(request.getGrandTotal());
         po.setStatus(POStatusConstants.STATUS_NEW);
+        po.setLastStatusUpdatedAt(new Date());
         po.setSubject(request.getSubject());
         for (CreatePoLineRequest itemReq : request.getLineItems()) {
             po.getLines().add(buildPoLine(po, itemReq));

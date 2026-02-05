@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Set;
 
 @Service
@@ -57,8 +58,10 @@ public class IndentCompletionEvaluator {
         } else {
             indent.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         }
-        if (!oldStatus.equals(indent.getIndentStatus()))
+        if (!oldStatus.equals(indent.getIndentStatus())) {
             indentStatusHistoryService.logStatusChange(indent, oldStatus, indent.getIndentStatus(), "System", " Status changed from " + oldStatus + " to " + indent.getIndentStatus() + " - Auto-updated indent status based on line item statuses");
+            indent.setLastStatusUpdatedAt(new Date());
+        }
         indentInventoryRepo.save(indent);
     }
 }

@@ -91,7 +91,7 @@ public class IndentInventoryService {
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         indentInventory.setIndentDate(iiData.getIndentDate());
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_NEW);
-
+        indentInventory.setLastStatusUpdatedAt(new Date());
         // First save to generate indentId
         indentInventoryRepo.save(indentInventory);
         indentInventoryRepo.flush(); // Ensure ID is generated
@@ -374,6 +374,7 @@ public class IndentInventoryService {
         if (action.equalsIgnoreCase("CANCEL")) {
             indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_CANCELLED, userDetailsService.getCurrentUser().getUsername(), "Indent cancelled by " + userDetailsService.getCurrentUser().getUsername());
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
+            indentInventory.setLastStatusUpdatedAt(new Date());
             indentInventoryRepo.save(indentInventory);
         }
     }
@@ -498,6 +499,7 @@ public class IndentInventoryService {
         indentValidationService.validateBeforeApprove(indentInventory);
         indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_APPROVED, userDetailsService.getCurrentUser().getUsername(), "Indent approved by " + userDetailsService.getCurrentUser().getUsername());
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
+        indentInventory.setLastStatusUpdatedAt(new Date());
         indentInventoryRepo.save(indentInventory);
         return indentInventory;
     }
