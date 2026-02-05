@@ -3,6 +3,7 @@ package com.ec.application.ReusableClasses;
 
 import javax.persistence.criteria.*;
 
+import com.ec.application.constants.POStatusConstants;
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -331,5 +332,25 @@ public class SpecificationsBuilder<T> {
                 returnValue = filterData.getAttrValue();
         }
         return returnValue;
+    }
+
+    public Specification<IndentInventory> whereIndentLastStatusUpdatedBefore(Date cutoffDate) {
+        return (root, query, cb) ->
+                cb.lessThan(root.get(IndentInventory_.LAST_STATUS_UPDATED_AT), cutoffDate);
+    }
+
+    public Specification<PurchaseOrder> wherePOLastStatusUpdatedBefore(Date cutoffDate) {
+        return (root, query, cb) ->
+                cb.lessThan(root.get(PurchaseOrder_.LAST_STATUS_UPDATED_AT), cutoffDate);
+    }
+
+    public Specification<IndentInventory> whereIndentStatusNotIn(List<String> statuses) {
+        return (root, query, cb) ->
+                cb.not(root.get(IndentInventory_.INDENT_STATUS).in(statuses));
+    }
+
+    public Specification<PurchaseOrder> wherePOStatusNotIn(List<String> statuses) {
+        return (root, query, cb) ->
+                cb.not(root.get(PurchaseOrder_.STATUS).in(statuses));
     }
 }

@@ -1,12 +1,18 @@
 package com.ec.application.Filters;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
+import com.ec.application.constants.IndentStatusConstants;
+import com.ec.application.constants.POStatusConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+
+import static com.ec.application.ReusableClasses.ReusableMethods.resolveCutoffDate;
 
 public class PurchaseOrderSpecification {
 
@@ -21,6 +27,7 @@ public class PurchaseOrderSpecification {
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
         List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> suppliers = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "suppliers");
+        List<String> staleBuckets = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "staleBuckets");
         Specification<PurchaseOrder> finalSpec = null;
 
         if (startDates != null && !startDates.isEmpty())
@@ -43,9 +50,20 @@ public class PurchaseOrderSpecification {
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldEquals(PurchaseOrder_.STATUS, statusList));
 
+        if (suppliers != null && !suppliers.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereChildFieldEquals(PurchaseOrder_.SUPPLIER, Supplier_.NAME, suppliers));
+
         if (categoryNames != null && !categoryNames.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.wherePurchaseOrderCategoryContains(categoryNames, PurchaseOrder_.LINES));
+
+        if (staleBuckets != null && !staleBuckets.isEmpty()) {
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.wherePOStatusNotIn(POStatusConstants.getTerminalStatuses()));
+            String staleBucketKey = staleBuckets.get(0); // single-select UI
+            Date cutoffDate = resolveCutoffDate(staleBucketKey);
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.wherePOLastStatusUpdatedBefore((cutoffDate)));
+        }
 
         if (globalSearch != null && !globalSearch.isEmpty()) {
             Specification<PurchaseOrder> internalSpec = null;

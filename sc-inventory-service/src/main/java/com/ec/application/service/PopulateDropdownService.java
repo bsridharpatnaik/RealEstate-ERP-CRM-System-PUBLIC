@@ -2,10 +2,13 @@ package com.ec.application.service;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.constants.POStatusConstants;
+import com.ec.application.data.StaleAgeBucket;
+import com.ec.application.data.StaleBucketConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,6 +123,7 @@ public class PopulateDropdownService {
                 morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
                 morDropdownDataList.setIndentStatus(IndentStatusConstants.getAllStatuses());
                 morDropdownDataList.setIndentLineItemStatus(IndentLineItemStatusConstants.getAllStatuses());
+                morDropdownDataList.setStalebuckets(StaleBucketConstants.getAllBuckets());
                 break;
             case "purchaseorder":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
@@ -127,6 +131,7 @@ public class PopulateDropdownService {
                 morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
                 morDropdownDataList.setPurchaseOrderStatus(POStatusConstants.getAllStatuses());
                 morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+                morDropdownDataList.setStalebuckets(StaleBucketConstants.getAllBuckets());
                 break;
             case "inventorytransfer":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());

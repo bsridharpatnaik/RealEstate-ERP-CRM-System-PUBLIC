@@ -24,5 +24,6 @@ public class NameAndProjectionDataForDropDown {
     List<String> indentLineItemStatus;
     List<String> purchaseOrderStatus;
     List<String> tenants;
+    List<IdNameDTO> stalebuckets;
 }
 

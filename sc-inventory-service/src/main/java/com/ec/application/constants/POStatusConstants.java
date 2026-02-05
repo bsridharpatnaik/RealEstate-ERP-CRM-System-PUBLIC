@@ -26,5 +26,8 @@ public class POStatusConstants {
                 })
                 .collect(Collectors.toList());
     }
-}
 
+    public static List<String> getTerminalStatuses() {
+        return Arrays.asList(POStatusConstants.STATUS_CANCELLED, POStatusConstants.STATUS_COMPLETED, POStatusConstants.STATUS_SHORT_CLOSED);
+    }
+}

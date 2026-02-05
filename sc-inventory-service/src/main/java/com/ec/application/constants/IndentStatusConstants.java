@@ -28,5 +28,13 @@ public class IndentStatusConstants {
                 })
                 .collect(Collectors.toList());
     }
+
+    public static List<String> getTerminalStatuses() {
+        return Arrays.asList(
+                IndentStatusConstants.STATUS_CLOSED,
+                IndentStatusConstants.STATUS_CANCELLED
+                // add more if needed
+        );
+    }
 }
 

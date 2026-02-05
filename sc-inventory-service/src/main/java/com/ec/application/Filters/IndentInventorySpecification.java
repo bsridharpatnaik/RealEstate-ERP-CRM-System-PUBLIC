@@ -1,6 +1,8 @@
 package com.ec.application.Filters;
 
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
+import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentInventory_;
@@ -12,7 +14,10 @@ import javax.persistence.criteria.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+
+import static com.ec.application.ReusableClasses.ReusableMethods.resolveCutoffDate;
 
 public final class IndentInventorySpecification {
 
@@ -27,6 +32,7 @@ public final class IndentInventorySpecification {
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
         List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> lineItemStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "lineItemStatus");
+        List<String> staleBuckets = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "staleBuckets");
         Specification<IndentInventory> finalSpec = null;
 
         if (startDates != null && !startDates.isEmpty())
@@ -56,6 +62,13 @@ public final class IndentInventorySpecification {
         if (categoryNames != null && !categoryNames.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereIndentCategoryContains(categoryNames, IndentInventory_.INVENTORY_LIST));
+
+        if (staleBuckets != null && !staleBuckets.isEmpty()) {
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereIndentStatusNotIn(IndentStatusConstants.getTerminalStatuses()));
+            String staleBucketKey = staleBuckets.get(0); // single-select UI
+            Date cutoffDate = resolveCutoffDate(staleBucketKey);
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereIndentLastStatusUpdatedBefore(cutoffDate));
+        }
 
         if (globalSearch != null && !globalSearch.isEmpty()) {
             Specification<IndentInventory> internalSpec = null;
