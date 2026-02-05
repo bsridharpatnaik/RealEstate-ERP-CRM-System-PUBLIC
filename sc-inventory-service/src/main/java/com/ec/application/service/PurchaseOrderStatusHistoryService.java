@@ -141,5 +141,61 @@ public class PurchaseOrderStatusHistoryService {
         return new DashboardTrendSeriesDTO(label, values);
     }
 
+    @Transactional(readOnly = true)
+    public List<SupplierLeadTimeHeatmapDTO> getSupplierLeadTimeHeatmap(int limit) {
+
+        List<Object[]> rows =
+                purchaseOrderStatusHistoryRepo.findAvgLeadTimeBySupplier(
+                        POStatusConstants.STATUS_NEW,
+                        Arrays.asList(
+                                POStatusConstants.STATUS_COMPLETED,
+                                POStatusConstants.STATUS_SHORT_CLOSED
+                        )
+                );
+
+        if (rows == null || rows.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<SupplierLeadTimeHeatmapDTO> result = new ArrayList<SupplierLeadTimeHeatmapDTO>();
+
+        int count = 0;
+
+        for (Object[] row : rows) {
+            Long supplierId = ((Number) row[0]).longValue();
+            String supplierName = (String) row[1];
+            Number avgSecondsNum = (Number) row[2]; // BigInteger / BigDecimal / Double
+            double avgSeconds = avgSecondsNum.doubleValue();
+            double avgDays = avgSeconds / (60 * 60 * 24);
+            String bucket = classifyBucket(avgDays);
+            result.add(new SupplierLeadTimeHeatmapDTO(
+                    supplierId,
+                    supplierName,
+                    round(avgDays, 1),
+                    bucket
+            ));
+
+            count++;
+        }
+        return result;
+    }
+
+    private String classifyBucket(double days) {
+
+        if (days <= 1) {
+            return "WITHIN_1_DAY";
+        }
+        if (days <= 4) {
+            return "TWO_TO_FOUR_DAYS";
+        }
+        if (days <= 10) {
+            return "FOUR_TO_TEN_DAYS";
+        }
+        return "TEN_PLUS_DAYS";
+    }
+
+    private double round(double value, int places) {
+        double scale = Math.pow(10, places);
+        return Math.round(value * scale) / scale;
+    }
 
 }

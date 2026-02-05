@@ -4,6 +4,7 @@ import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.DashboardChartListDTO;
 import com.ec.application.data.DashboardProductStockDTO;
 import com.ec.application.data.DashboardTrendChartDTO;
+import com.ec.application.data.SupplierLeadTimeHeatmapDTO;
 import com.ec.application.service.GlobalDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -42,6 +43,12 @@ public class GlobalDashboardController {
     @GetMapping("/po/trend")
     public ResponseEntity<DashboardTrendChartDTO> getPoLifecycleTrend() {
         return ResponseEntity.ok(globalDashboardService.getPoLifecycleTrendLast4Weeks());
+    }
+
+    @GetMapping("/suppliers/lead-time/heatmap")
+    public ResponseEntity<List<SupplierLeadTimeHeatmapDTO>> getSupplierLeadTimeHeatmap(@RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(globalDashboardService.getSupplierLeadTimeHeatmap(limit)
+        );
     }
 
     @ExceptionHandler({JpaSystemException.class})

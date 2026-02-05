@@ -110,4 +110,8 @@ public class GlobalDashboardService {
     public DashboardTrendChartDTO getPoLifecycleTrendLast4Weeks() {
         return purchaseOrderStatusHistoryService.getPoLifecycleTrendLast4Weeks();
     }
+
+    public List<SupplierLeadTimeHeatmapDTO> getSupplierLeadTimeHeatmap(int limit) {
+        return purchaseOrderStatusHistoryService.getSupplierLeadTimeHeatmap(limit);
+    }
 }

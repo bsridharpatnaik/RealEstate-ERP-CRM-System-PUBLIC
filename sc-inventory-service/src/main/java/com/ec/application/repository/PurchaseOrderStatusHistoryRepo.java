@@ -43,4 +43,26 @@ public interface PurchaseOrderStatusHistoryRepo extends JpaRepository<PurchaseOr
     List<PoStatusChangeDTO> fetchPoStatusChangesSince(
             @Param("fromDate") Date fromDate
     );
+
+    @Query(
+            value =
+                    "SELECT po.supplier_id, s.name, " +
+                            "       AVG(TIMESTAMPDIFF(SECOND, c.changedAt, x.changedAt)) AS avg_seconds " +
+                            "FROM po_status_history c " +
+                            "JOIN po_status_history x " +
+                            "     ON c.purchase_order_id = x.purchase_order_id " +
+                            "JOIN purchase_order po ON po.purchase_order_id = c.purchase_order_id " +
+                            "JOIN contacts s ON s.contactId = po.supplier_id " +
+                            "WHERE c.newStatus = :createdStatus " +
+                            "  AND x.newStatus IN (:closedStatuses) " +
+                            "  AND x.changedAt > c.changedAt " +
+                            "GROUP BY po.supplier_id, s.name " +
+                            "ORDER BY avg_seconds DESC",
+            nativeQuery = true
+    )
+    List<Object[]> findAvgLeadTimeBySupplier(
+            @Param("createdStatus") String createdStatus,
+            @Param("closedStatuses") List<String> closedStatuses
+    );
+
 }
