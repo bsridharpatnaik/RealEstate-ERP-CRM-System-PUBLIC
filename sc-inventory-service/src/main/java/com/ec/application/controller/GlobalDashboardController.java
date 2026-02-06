@@ -1,11 +1,9 @@
 package com.ec.application.controller;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
-import com.ec.application.data.DashboardChartListDTO;
-import com.ec.application.data.DashboardProductStockDTO;
-import com.ec.application.data.DashboardTrendChartDTO;
-import com.ec.application.data.SupplierLeadTimeHeatmapDTO;
+import com.ec.application.data.*;
 import com.ec.application.service.GlobalDashboardService;
+import com.ec.application.service.IndentStaleDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -22,6 +20,9 @@ public class GlobalDashboardController {
 
     @Autowired
     GlobalDashboardService globalDashboardService;
+
+    @Autowired
+    IndentStaleDashboardService indentStaleDashboardService;
 
     @GetMapping("/charts")
     public DashboardChartListDTO getIndentDashboard(@RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") Date startDate, @RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") Date endDate) {
@@ -43,6 +44,11 @@ public class GlobalDashboardController {
     @GetMapping("/po/trend")
     public ResponseEntity<DashboardTrendChartDTO> getPoLifecycleTrend() {
         return ResponseEntity.ok(globalDashboardService.getPoLifecycleTrendLast4Weeks());
+    }
+
+    @GetMapping("/indent/stale")
+    public ResponseEntity<List<StaleBucketChartDTO>> getStaleIndentStackedChart() {
+        return ResponseEntity.ok(indentStaleDashboardService.getStaleIndentStackedChart());
     }
 
     @GetMapping("/suppliers/lead-time/heatmap")

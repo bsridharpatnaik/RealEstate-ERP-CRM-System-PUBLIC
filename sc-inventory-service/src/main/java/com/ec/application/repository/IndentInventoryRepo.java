@@ -42,4 +42,26 @@ public interface IndentInventoryRepo extends BaseRepository<IndentInventory, Str
     List<StatusGroupCountDTO> fetchCurrentIndentStatusCounts(
             @Param("statuses") List<String> statuses
     );
+
+    @Query(
+            value =
+                    "SELECT " +
+                            "  ii.tenant AS tenant, " +
+                            "  CASE " +
+                            "    WHEN ii.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 'GT_30_DAYS' " +
+                            "    WHEN ii.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 15 DAY) THEN 'GT_15_DAYS' " +
+                            "    WHEN ii.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 7 DAY)  THEN 'GT_7_DAYS'  " +
+                            "    WHEN ii.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 3 DAY)  THEN 'GT_3_DAYS'  " +
+                            "  END AS bucket, " +
+                            "  COUNT(*) AS cnt " +
+                            "FROM indent_inventory ii " +
+                            "WHERE ii.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 3 DAY) " +
+                            "  AND ii.indent_status NOT IN (:terminalStatuses) " +
+                            "  AND ii.is_deleted = 0 " +
+                            "GROUP BY ii.tenant, bucket",
+            nativeQuery = true
+    )
+    List<Object[]> fetchStaleIndentBucketData(@Param("terminalStatuses") List<String> terminalStatuses);
 }
+
+

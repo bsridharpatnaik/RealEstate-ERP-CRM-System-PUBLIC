@@ -996,3 +996,18 @@ WHERE
     AND po.is_deleted = 0
     AND p.is_deleted = 0
     AND c.is_deleted = 0;
+
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'indent_inventory'
+   AND index_name = 'idx_indent_stale_dashboard';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_indent_stale_dashboard
+      ON indent_inventory (last_status_updated_at, indent_status, tenant)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
