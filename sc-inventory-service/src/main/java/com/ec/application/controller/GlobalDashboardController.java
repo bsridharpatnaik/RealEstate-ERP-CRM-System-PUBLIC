@@ -3,7 +3,7 @@ package com.ec.application.controller;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.*;
 import com.ec.application.service.GlobalDashboardService;
-import com.ec.application.service.IndentStaleDashboardService;
+import com.ec.application.service.StaleChartsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -22,7 +22,7 @@ public class GlobalDashboardController {
     GlobalDashboardService globalDashboardService;
 
     @Autowired
-    IndentStaleDashboardService indentStaleDashboardService;
+    StaleChartsService indentStaleDashboardService;
 
     @GetMapping("/charts")
     public DashboardChartListDTO getIndentDashboard(@RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") Date startDate, @RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") Date endDate) {
@@ -46,9 +46,9 @@ public class GlobalDashboardController {
         return ResponseEntity.ok(globalDashboardService.getPoLifecycleTrendLast4Weeks());
     }
 
-    @GetMapping("/indent/stale")
-    public ResponseEntity<List<StaleBucketChartDTO>> getStaleIndentStackedChart() {
-        return ResponseEntity.ok(indentStaleDashboardService.getStaleIndentStackedChart());
+    @GetMapping("/stale-charts")
+    public ResponseEntity<StaleChartsDTO> getStaleIndentStackedChart() {
+        return ResponseEntity.ok(globalDashboardService.getStaleStackedChart());
     }
 
     @GetMapping("/suppliers/lead-time/heatmap")

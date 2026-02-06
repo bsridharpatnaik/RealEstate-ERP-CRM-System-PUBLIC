@@ -4,10 +4,8 @@ import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.constants.POStatusConstants;
 import com.ec.application.data.*;
-import com.ec.application.repository.IndentStatusHistoryRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -29,6 +27,9 @@ public class GlobalDashboardService {
 
     @Autowired
     StockSummaryService stockSummaryService;
+
+    @Autowired
+    StaleChartsService staleChartsService;
 
     /**
      * Builds and returns all dashboard data required by the Global Dashboard
@@ -113,5 +114,11 @@ public class GlobalDashboardService {
 
     public List<SupplierLeadTimeHeatmapDTO> getSupplierLeadTimeHeatmap(int limit) {
         return purchaseOrderStatusHistoryService.getSupplierLeadTimeHeatmap(limit);
+    }
+
+    public StaleChartsDTO getStaleStackedChart() {
+        List<IndentStaleBucketChartDTO> indentStaleBuckets = staleChartsService.getStaleIndentStackedChart();
+        List<POStaleBucketChartDTO> poStaleBuckets = staleChartsService.getStalePOStackedChart();
+        return new StaleChartsDTO(indentStaleBuckets, poStaleBuckets);
     }
 }

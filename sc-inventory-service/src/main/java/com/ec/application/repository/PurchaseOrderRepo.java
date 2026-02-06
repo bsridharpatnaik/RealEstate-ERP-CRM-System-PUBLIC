@@ -37,4 +37,27 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
     )
     List<StatusGroupCountDTO> fetchCurrentPOStatusCounts(@Param("statuses") List<String> statuses
     );
+
+
+    @Query(
+            value =
+                    "SELECT " +
+                            "  s.name AS supplier, " +
+                            "  CASE " +
+                            "    WHEN po.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 'GT_30_DAYS' " +
+                            "    WHEN po.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 15 DAY) THEN 'GT_15_DAYS' " +
+                            "    WHEN po.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 7 DAY)  THEN 'GT_7_DAYS'  " +
+                            "    WHEN po.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 3 DAY)  THEN 'GT_3_DAYS'  " +
+                            "  END AS bucket, " +
+                            "  COUNT(*) AS cnt " +
+                            "FROM purchase_order po " +
+                            "JOIN contacts s ON s.contactId = po.supplier_id " +
+                            "WHERE po.last_status_updated_at < DATE_SUB(NOW(), INTERVAL 3 DAY) " +
+                            "  AND po.status NOT IN (:terminalStatuses) " +
+                            "  AND po.is_deleted = 0 " +
+                            "GROUP BY s.name, bucket",
+            nativeQuery = true
+    )
+    List<Object[]> fetchStalePOBucketData(@Param("terminalStatuses") List<String> terminalStatuses);
 }
+
