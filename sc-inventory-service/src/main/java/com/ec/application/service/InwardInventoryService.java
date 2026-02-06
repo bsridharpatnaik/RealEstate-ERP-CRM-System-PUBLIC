@@ -416,94 +416,128 @@ public class InwardInventoryService {
 
     @Transactional(rollbackFor = Exception.class)
     public InwardInventory addRejectInwardEntry(ReturnRejectInwardOutwardData rd, Long inwardId) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        if (!inwardInventoryRepo.existsById(inwardId))
+        log.info("Invoked - addRejectInwardEntry");
+
+        // ---------- Basic validations ----------
+        if (!inwardInventoryRepo.existsById(inwardId)) {
             throw new Exception("Inward inventory with ID not found");
+        }
 
-        if (rd.getProductWithQuantities().size() == 0)
+        if (rd.getProductWithQuantities() == null || rd.getProductWithQuantities().isEmpty()) {
             throw new Exception("Minimum of one product is required to save data.");
+        }
 
+        // ---------- Duplicate product check in request ----------
+        boolean hasDuplicates = rd.getProductWithQuantities().stream()
+                .map(ProductWithQuantity::getProductId)
+                .distinct()
+                .count() != rd.getProductWithQuantities().size();
+
+        if (hasDuplicates) {
+            throw new Exception("Inventory List should be unique. Same product added multiple times. Please correct.");
+        }
+
+        // ---------- Validate & process ----------
+        Set<Long> processedProductIds = new HashSet<>();
         for (ProductWithQuantity pwq : rd.getProductWithQuantities()) {
-            if (pwq.getRemarks() == null)
-                throw new Exception(
-                        "Remarks is a mandatory field. Please provide remarks for all products before saving data");
 
-            if (pwq.getRemarks().trim().equals(""))
-                throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+            if (pwq.getRemarks() == null || pwq.getRemarks().trim().isEmpty()) {
+                throw new Exception("Remarks is a mandatory field. Please provide remarks for all products before saving data");
+            }
+
+            if (!productRepo.existsById(pwq.getProductId())) {
+                throw new Exception("Product not found with ID - " + pwq.getProductId());
+            }
+
+            // ---------- Process only once per product ----------
+            if (processedProductIds.add(pwq.getProductId())) {
+                addReturnForInward(inwardId, pwq.getProductId(), pwq.getQuantity(), pwq.getRemarks());
+            }
         }
 
-        Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
-                .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
-                .filter(e -> e.getValue() > 1).count();
-
-        if (duplicateProductIdCount > 0)
-            throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
-
-        for (ProductWithQuantity productWithQuantity : rd.getProductWithQuantities()) {
-            if (productWithQuantity.getQuantity() == null || productWithQuantity.getProductId() == null
-                    || !productRepo.existsById(productWithQuantity.getProductId()))
-                throw new Exception("Error fetching product details");
-            addReturnForInward(inwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
-                    productWithQuantity.getRemarks());
-            /*
-             * else addRejectForOutward(inwardId, productWithQuantity.getProductId(),
-             * productWithQuantity.getQuantity());
-             */
-        }
         return inwardInventoryRepo.findById(inwardId).get();
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private void addReturnForInward(Long inwardId, Long productId, Double quantity, String remarks) throws Exception {
+    private void addReturnForInward(
+            Long inwardId,
+            Long productId,
+            Double quantity,
+            String remarks
+    ) throws Exception {
 
         log.info("Invoked addReturnForInward");
-        InwardInventory ii = inwardInventoryRepo.findById(inwardId).orElseThrow(() -> new Exception("Inward Inventory not found with id=" + inwardId));
+
+        InwardInventory ii = inwardInventoryRepo.findById(inwardId)
+                .orElseThrow(() ->
+                        new Exception("Inward Inventory not found with id=" + inwardId)
+                );
+
         editAuthorizationService.validateUpdateDates(ii.getDate(), ii.getDate());
 
+        // ------------------------------------------------
+        // Capture old quantities for async delta sync
+        // ------------------------------------------------
         Map<String, Double> oldQuantityMap = new HashMap<>();
         for (InwardOutwardList io : ii.getInwardOutwardList()) {
             oldQuantityMap.put(io.getLineItemCode(), io.getQuantity());
         }
+
         Set<RejectInwardList> rejectInwardList = ii.getRejectInwardList();
         Set<InwardOutwardList> inwardOutwardListSet = ii.getInwardOutwardList();
 
-        for (InwardOutwardList inwardOutwardList : inwardOutwardListSet) {
-            if (!inwardOutwardList.getProduct().getProductId().equals(productId)) {
-                continue;
-            }
+        // ------------------------------------------------
+        // 🔑 Pick BEST inward row (max qty that can satisfy)
+        // ------------------------------------------------
+        InwardOutwardList target = inwardOutwardListSet.stream()
+                .filter(io -> io.getProduct().getProductId().equals(productId))
+                .filter(io -> io.getQuantity() >= quantity)
+                .max(Comparator.comparing(InwardOutwardList::getQuantity))
+                .orElseThrow(() -> new Exception(
+                        "Reject quantity cannot be greater than existing quantity for product - "
+                                + productId
+                ));
 
-            Long warehouseId = inwardOutwardList.getWarehouse().getWarehouseId();
-            Double currentQuantity = inwardOutwardList.getQuantity();
+        Long warehouseId = target.getWarehouse().getWarehouseId();
+        Double currentQuantity = target.getQuantity();
 
-            if (quantity > currentQuantity) {
-                throw new Exception("Reject quantity cannot be greater than existing quantity for product - " + inwardOutwardList.getProduct().getProductName());
-            }
+        // -----------------------------------------
+        // Stock OUTWARD
+        // -----------------------------------------
+        Double closingStock = stockService.updateStock(
+                productId,
+                warehouseId,
+                quantity,
+                "outward"
+        );
 
-            // -----------------------------------------
-            // Stock OUTWARD for returned quantity
-            // -----------------------------------------
-            Double closingStock = stockService.updateStock(productId, warehouseId, quantity, "outward");
+        // -----------------------------------------
+        // Record reject entry
+        // -----------------------------------------
+        rejectInwardList.add(
+                new RejectInwardList(
+                        new Date(),
+                        target.getProduct(),
+                        currentQuantity,
+                        quantity,
+                        closingStock,
+                        remarks
+                )
+        );
 
-            // -----------------------------------------
-            // Record reject entry
-            // -----------------------------------------
-            rejectInwardList.add(new RejectInwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity, quantity, closingStock, remarks));
-
-            // -----------------------------------------
-            // Reduce inward quantity
-            // -----------------------------------------
-            Double updatedQuantity = currentQuantity - quantity;
-            inwardOutwardList.setQuantity(updatedQuantity);
-            inwardOutwardList.setClosingStock(closingStock);
-        }
+        // -----------------------------------------
+        // Reduce inward quantity
+        // -----------------------------------------
+        target.setQuantity(currentQuantity - quantity);
+        target.setClosingStock(closingStock);
 
         ii.setRejectInwardList(rejectInwardList);
         ii.setInwardOutwardList(inwardOutwardListSet);
         inwardInventoryRepo.save(ii);
 
-        // -----------------------------------------
-        // 🔑 Trigger async indent / PO reconciliation
-        // -----------------------------------------
+        // ------------------------------------------------
+        // 🔁 Async indent / PO reconciliation
+        // ------------------------------------------------
         if (Boolean.TRUE.equals(ii.getCreatedFromPO())) {
 
             List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
@@ -513,9 +547,7 @@ public class InwardInventoryService {
                 Double oldQty = oldQuantityMap.get(io.getLineItemCode());
                 Double newQty = io.getQuantity();
 
-                // Only send if quantity actually changed
                 if (oldQty == null || Double.compare(oldQty, newQty) != 0) {
-
                     deltas.add(
                             new IndentInwardDeltaDTO(
                                     io.getLineItemCode(),
@@ -535,7 +567,10 @@ public class InwardInventoryService {
                         deltas
                 );
 
-                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "reject-inward");
+                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(
+                        syncDTO,
+                        "reject-inward"
+                );
             }
         }
     }
