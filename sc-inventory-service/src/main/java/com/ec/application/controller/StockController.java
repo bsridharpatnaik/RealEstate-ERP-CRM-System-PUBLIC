@@ -1,18 +1,11 @@
 package com.ec.application.controller;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
-import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.*;
-import com.ec.application.model.StockInformationFromView;
-import com.ec.application.model.StockReport;
 import com.ec.application.repository.StockInformationRepo;
-import com.ec.application.service.StockInformationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
@@ -31,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.service.StockService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/stock")

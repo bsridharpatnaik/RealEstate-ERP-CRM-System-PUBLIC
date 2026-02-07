@@ -1,20 +1,16 @@
 package com.ec.application.ReusableClasses;
 
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 
-import com.ec.application.config.ProjectConstants;
+import com.ec.application.constants.POStatusConstants;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ec.common.Filters.BOQStatusFilterDataList;
-import com.ec.common.Filters.FilterAttributeData;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.BOQStatusFilterDataList;
+import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.Filters.FilterDataList;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -183,8 +179,23 @@ public class SpecificationsBuilder<T> {
         };
     }
 
-    public Specification<T> whereProductContains(List<String> productNames, String joinTable) {
+    public Specification<T> whereIndentCategoryContains(List<String> categoryNames, String joinTable) {
 
+        return (root, query, cb) ->
+        {
+
+            Join<T, InwardOutwardList> ioList = root.join(joinTable);
+            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
+            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
+            query.distinct(true);
+            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
+            Predicate parentPredicate = parentExpression.in(categoryNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> whereProductContains(List<String> productNames, String joinTable) {
         return (root, query, cb) ->
         {
 
@@ -195,6 +206,91 @@ public class SpecificationsBuilder<T> {
             Predicate parentPredicate = parentExpression.in(productNames);
             query.where(parentPredicate);
             return query.getRestriction();
+        };
+    }
+
+    public Specification<T> wherePurchanseOrderContainsProductName(List<String> productNames, String joinTable) {
+        return (root, query, cb) ->
+        {
+
+            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
+            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
+            Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> wherePurchanseOrderContainsProductCode(List<String> productNames, String joinTable) {
+        return (root, query, cb) ->
+        {
+
+            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
+            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_CODE);
+            Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> wherePurchaseOrderCategoryContains(List<String> categoryNames, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
+            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
+            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
+            query.distinct(true);
+            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
+            Predicate parentPredicate = parentExpression.in(categoryNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> whereIndentContainsProductName(List<String> productNames, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+
+            Join<T, InwardOutwardList> ioList = root.join(joinTable);
+            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
+            Predicate parentPredicate = parentExpression.in(productNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public Specification<T> whereIndentContainsProductCode(List<String> productCodes, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+            Join<T, InwardOutwardList> ioList = root.join(joinTable);
+            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
+            query.distinct(true);
+            Expression<String> parentExpression = productList.get(Product_.PRODUCT_CODE);
+            Predicate parentPredicate = parentExpression.in(productCodes);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
+    public <T> Specification<T> whereIndentContainsLineItemStatus(List<String> lineItemStatuses, String joinTable) {
+        return (root, query, cb) -> {
+
+            if (lineItemStatuses == null || lineItemStatuses.isEmpty()) {
+                return cb.conjunction(); // no filtering
+            }
+
+            Join<T, IndentInventoryList> lineItemJoin = root.join(joinTable, JoinType.INNER);
+            query.distinct(true);
+            return lineItemJoin.get(IndentInventoryList_.lineItemStatus).in(lineItemStatuses);
         };
     }
 
@@ -236,5 +332,25 @@ public class SpecificationsBuilder<T> {
                 returnValue = filterData.getAttrValue();
         }
         return returnValue;
+    }
+
+    public Specification<IndentInventory> whereIndentLastStatusUpdatedBefore(Date cutoffDate) {
+        return (root, query, cb) ->
+                cb.lessThan(root.get(IndentInventory_.LAST_STATUS_UPDATED_AT), cutoffDate);
+    }
+
+    public Specification<PurchaseOrder> wherePOLastStatusUpdatedBefore(Date cutoffDate) {
+        return (root, query, cb) ->
+                cb.lessThan(root.get(PurchaseOrder_.LAST_STATUS_UPDATED_AT), cutoffDate);
+    }
+
+    public Specification<IndentInventory> whereIndentStatusNotIn(List<String> statuses) {
+        return (root, query, cb) ->
+                cb.not(root.get(IndentInventory_.INDENT_STATUS).in(statuses));
+    }
+
+    public Specification<PurchaseOrder> wherePOStatusNotIn(List<String> statuses) {
+        return (root, query, cb) ->
+                cb.not(root.get(PurchaseOrder_.STATUS).in(statuses));
     }
 }

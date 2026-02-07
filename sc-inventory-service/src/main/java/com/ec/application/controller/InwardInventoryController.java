@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.service.InwardInventoryService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/inward")
@@ -34,11 +34,23 @@ public class InwardInventoryController {
     @Autowired
     InwardInventoryService iiService;
 
-    @PostMapping("/create")
+
+    // 🔹 PO dropdown (tenant from ThreadLocal)
+    @GetMapping("/po/dropdown")
+    public ResponseEntity<List<PoDropdownItem>> getPoDropdown() {
+        return ResponseEntity.ok(iiService.getPendingPoDropdown());
+    }
+
+    // 🔹 PO details + pending line items
+    @GetMapping("/po/{poNumber}")
+    public ResponseEntity<PoForInwardResponse> getPoForInward(@PathVariable String poNumber) {
+        return ResponseEntity.ok(iiService.getPoForInward(poNumber));
+    }
+
+    @PostMapping("/create/from-po")
     @CheckAuthority
     @ResponseStatus(HttpStatus.CREATED)
-    public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception {
-
+    public InwardInventory createInwardInventory(@RequestBody InwardFromPODTO payload) throws Exception {
         return iiService.createInwardnventory(payload);
     }
 
@@ -80,13 +92,6 @@ public class InwardInventoryController {
         return iiService.findById(id);
     }
 
-    @PutMapping("/{id}")
-    @CheckAuthority
-    public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryData payload)
-            throws Exception {
-        return iiService.updateInwardnventory(payload, id);
-    }
-
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
     public ResponseEntity<?> deleteInwardInventoryById(@PathVariable Long id) throws Exception {
@@ -95,11 +100,25 @@ public class InwardInventoryController {
         return ResponseEntity.ok("Entity deleted");
     }
 
-    @ExceptionHandler(
-            {JpaSystemException.class})
+
+    @PostMapping("/create")
+    @CheckAuthority
+    @ResponseStatus(HttpStatus.CREATED)
+    public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception {
+
+        return iiService.createInwardnventory(payload);
+    }
+
+    @PutMapping("/{id}")
+    @CheckAuthority
+    public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryUpdateData payload)
+            throws Exception {
+        return iiService.updateInwardInventory(id, payload);
+    }
+
+    @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
-        return new ApiOnlyMessageAndCodeError(500,
-                "Something went wrong while handling data. Contact Administrator.");
+        return new ApiOnlyMessageAndCodeError(500, "Something went wrong while handling data. Contact Administrator.");
     }
 }

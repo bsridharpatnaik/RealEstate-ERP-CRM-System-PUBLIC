@@ -22,9 +22,14 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	Product save(Product entity);
 
+	@Query("Select p from Product p where p.isDeleted=false and p.productId IN :ids")
+	ArrayList<Product> findByProductIdIn(@Param("ids") List<Long> ids);
+
 	boolean existsByProductName(String productName);
 
 	ArrayList<Product> findByproductName(String productName);
+
+	ArrayList<Product> findByproductCode(String productCode);
 
 	@Query(value = "SELECT m from Product m where m.category.categoryId=id")
 	ArrayList<Product> existsByCategoryId(@Param("id") Long id);
@@ -41,8 +46,26 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value = "SELECT distinct productId from Product m")
 	List<Long> fetchUniqueProductIds();
 
-	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit) from Product m")
+	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory) from Product m")
 	List<IdNameAndUnit> getProductMeasurementUnit();
+
+	@Query(
+			"SELECT new com.ec.application.data.IdNameAndUnit(" +
+					"   m.productId, m.productName, m.measurementUnit, m.productCode, m.isManagedInventory" +
+					") " +
+					"FROM Product m " +
+					"WHERE (:isManagedInventory IS NULL OR m.isManagedInventory = :isManagedInventory) " +
+					"AND (:categoryId IS NULL OR m.category.categoryId = :categoryId)"
+	)
+	List<IdNameAndUnit> getProducts(
+			@Param("isManagedInventory") Boolean isManagedInventory,
+			@Param("categoryId") Long categoryId
+	);
+
+
+
+	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory) from Product m")
+	List<IdNameAndUnit> getProducts();
 
 	@Query(value = "SELECT p from Product p where p.showOnDashboard=true")
     List<Product> getDashboardProducts();
@@ -55,6 +78,9 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
 	List<IdNameProjections> findIdAndMeasurementUnitNames(@Param("id") long id);
+
+	@Query(value = "SELECT productId as id,productCode as name from Product m  order by productCode")
+	List<IdNameProjections> findIdAndProductCodes();
 
 //	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
 //	List<IdNameProjections> findIdAndMeasurementUnitNames(long productId);

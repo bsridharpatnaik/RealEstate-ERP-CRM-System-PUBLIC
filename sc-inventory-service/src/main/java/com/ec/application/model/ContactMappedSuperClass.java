@@ -4,12 +4,14 @@ import static javax.persistence.TemporalType.TIMESTAMP;
 
 import java.util.Date;
 
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Temporal;
+import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -19,240 +21,92 @@ import org.springframework.lang.NonNull;
 
 import com.ec.application.Deserializers.ToTitleCaseDeserializer;
 import com.ec.application.Deserializers.ToUpperCaseDeserializer;
-import com.ec.application.data.CustomerTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @MappedSuperclass
+@Access(AccessType.FIELD)
 @Audited
-public class ContactMappedSuperClass
-{
+@Getter
+@Setter
+@NoArgsConstructor
+public class ContactMappedSuperClass {
+
 	public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
 
-	@Column(name = "is_deleted", columnDefinition = "BOOLEAN DEFAULT true")
-	public boolean isDeleted;
+	@Column(
+			name = "is_deleted",
+			nullable = false,
+			columnDefinition = "BOOLEAN DEFAULT true"
+	)
+	private boolean isDeleted;
 
 	@NonNull
-	@Column(nullable = false)
+	@Column(name = "name", nullable = false, length = 255)
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
-	String name;
+	private String name;
 
-	@Column(nullable = true)
-	String mobileNo;
+	@Column(name = "mobileNo", nullable = true, length = 255)
+	private String mobileNo;
 
-	String emailId;
+	@Column(name = "emailId", nullable = true, length = 255)
+	private String emailId;
 
-	@NonNull
-	@Column(nullable = false)
-	@Enumerated(EnumType.STRING)
-	@JsonFormat(shape = JsonFormat.Shape.STRING)
-	CustomerTypeEnum contactType;
+	@NotBlank(message = "contactType is required")
+	@Pattern(
+			regexp = "(?i)SUPPLIER|CONTRACTOR",
+			message = "contactType must be SUPPLIER or CONTRACTOR"
+	)
+	@Column(name = "contactType", nullable = true, length = 255)
+	private String contactType;
 
+	@Column(name = "gst_number", nullable = true, length = 255)
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
-	@Column(name = "gst_number")
-	String gstNumber;
+	private String gstNumber;
+
+	@Column(name = "contactPerson", nullable = true, length = 255)
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	String contactPerson;
-	String contactPersonMobileNo;
+	private String contactPerson;
+
+	@Column(name = "contactPersonMobileNo", nullable = true, length = 255)
+	private String contactPersonMobileNo;
+
+	@Column(name = "addr_line1", nullable = true, length = 255)
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	String addr_line1;
+	private String addr_line1;
+
+	@Column(name = "addr_line2", nullable = true, length = 255)
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	String addr_line2;
+	private String addr_line2;
+
+	@Column(name = "city", nullable = true, length = 255)
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	String city;
+	private String city;
+
+	@Column(name = "state", nullable = true, length = 255)
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
-	String state;
-	String zip;
+	private String state;
+
+	@Column(name = "zip", nullable = true, length = 255)
+	private String zip;
 
 	@CreatedBy
+	@Column(name = "createdBy", nullable = true, length = 255, updatable = false)
 	protected String createdBy;
 
 	@CreatedDate
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "creationDate", nullable = true, updatable = false)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	@Temporal(TIMESTAMP)
 	protected Date creationDate;
 
 	@LastModifiedBy
+	@Column(name = "lastModifiedBy", nullable = true, length = 255)
 	protected String lastModifiedBy;
 
 	@LastModifiedDate
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "lastModifiedDate", nullable = true)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-	@Temporal(TIMESTAMP)
 	protected Date lastModifiedDate;
-
-	public boolean isDeleted()
-	{
-		return isDeleted;
-	}
-
-	public void setDeleted(boolean isDeleted)
-	{
-		this.isDeleted = isDeleted;
-	}
-
-	public static String getSoftDeletedClause()
-	{
-		return SOFT_DELETED_CLAUSE;
-	}
-
-	public String getName()
-	{
-		return name;
-	}
-
-	public String getCreatedBy()
-	{
-		return createdBy;
-	}
-
-	public void setCreatedBy(String createdBy)
-	{
-		this.createdBy = createdBy;
-	}
-
-	public Date getCreationDate()
-	{
-		return creationDate;
-	}
-
-	public void setCreationDate(Date creationDate)
-	{
-		this.creationDate = creationDate;
-	}
-
-	public String getLastModifiedBy()
-	{
-		return lastModifiedBy;
-	}
-
-	public void setLastModifiedBy(String lastModifiedBy)
-	{
-		this.lastModifiedBy = lastModifiedBy;
-	}
-
-	public Date getLastModifiedDate()
-	{
-		return lastModifiedDate;
-	}
-
-	public void setLastModifiedDate(Date lastModifiedDate)
-	{
-		this.lastModifiedDate = lastModifiedDate;
-	}
-
-	public void setName(String name)
-	{
-		this.name = name;
-	}
-
-	public String getMobileNo()
-	{
-		return mobileNo;
-	}
-
-	public void setMobileNo(String mobileNo)
-	{
-		this.mobileNo = mobileNo;
-	}
-
-	public String getEmailId()
-	{
-		return emailId;
-	}
-
-	public void setEmailId(String emailId)
-	{
-		this.emailId = emailId;
-	}
-
-	public CustomerTypeEnum getContactType()
-	{
-		return contactType;
-	}
-
-	public void setContactType(CustomerTypeEnum contactType)
-	{
-		this.contactType = contactType;
-	}
-
-	public String getGstNumber()
-	{
-		return gstNumber;
-	}
-
-	public void setGstNumber(String gstNumber)
-	{
-		this.gstNumber = gstNumber;
-	}
-
-	public String getContactPerson()
-	{
-		return contactPerson;
-	}
-
-	public void setContactPerson(String contactPerson)
-	{
-		this.contactPerson = contactPerson;
-	}
-
-	public String getContactPersonMobileNo()
-	{
-		return contactPersonMobileNo;
-	}
-
-	public void setContactPersonMobileNo(String contactPersonMobileNo)
-	{
-		this.contactPersonMobileNo = contactPersonMobileNo;
-	}
-
-	public String getAddr_line1()
-	{
-		return addr_line1;
-	}
-
-	public void setAddr_line1(String addr_line1)
-	{
-		this.addr_line1 = addr_line1;
-	}
-
-	public String getAddr_line2()
-	{
-		return addr_line2;
-	}
-
-	public void setAddr_line2(String addr_line2)
-	{
-		this.addr_line2 = addr_line2;
-	}
-
-	public String getCity()
-	{
-		return city;
-	}
-
-	public void setCity(String city)
-	{
-		this.city = city;
-	}
-
-	public String getState()
-	{
-		return state;
-	}
-
-	public void setState(String state)
-	{
-		this.state = state;
-	}
-
-	public String getZip()
-	{
-		return zip;
-	}
-
-	public void setZip(String zip)
-	{
-		this.zip = zip;
-	}
-
 }

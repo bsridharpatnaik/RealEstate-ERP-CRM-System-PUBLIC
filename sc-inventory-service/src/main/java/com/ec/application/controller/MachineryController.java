@@ -26,7 +26,7 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.AllMachineriesWithNamesData;
 import com.ec.application.model.Machinery;
 import com.ec.application.service.MachineryService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/machinery")

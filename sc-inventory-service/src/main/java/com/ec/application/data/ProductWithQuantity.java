@@ -5,13 +5,14 @@ import org.springframework.lang.NonNull;
 import lombok.Data;
 
 @Data
-public class ProductWithQuantity
-{
-	@NonNull
-	Long productId;
-	@NonNull
-	Double quantity;
+public class ProductWithQuantity {
+    @NonNull
+    Long productId;
 
-	String remarks;
+    @NonNull
+    Double quantity;
 
+    Long warehouseId;
+
+    String remarks;
 }

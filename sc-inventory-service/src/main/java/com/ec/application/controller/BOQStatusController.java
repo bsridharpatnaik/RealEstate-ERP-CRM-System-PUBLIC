@@ -23,7 +23,7 @@ import com.ec.application.data.BOQStatusLocationsForType;
 import com.ec.application.data.BOQStatusTypeListWithConsumedUnitCount;
 import com.ec.application.model.BOQStatus;
 import com.ec.application.service.BOQStatusService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/boqstatus")

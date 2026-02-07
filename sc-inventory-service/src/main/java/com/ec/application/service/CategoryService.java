@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.aspects.UseDefaultTenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +20,12 @@ import com.ec.application.data.AllCategoriesWithNamesData;
 import com.ec.application.model.Category;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ProductRepo;
-import com.ec.common.Filters.CategorySpecifications;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.CategorySpecifications;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 @Transactional
+@UseDefaultTenant
 public class CategoryService {
 
     @Autowired
@@ -113,6 +115,5 @@ public class CategoryService {
 
         allCategoriesWithNamesData.setNames(ReusableMethods.removeNullsFromStringList(categoryRepo.getCategoryNames()));
         return allCategoriesWithNamesData;
-
     }
 }

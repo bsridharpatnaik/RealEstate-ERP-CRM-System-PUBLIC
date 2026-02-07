@@ -2,6 +2,13 @@ package com.ec.application.service;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.config.SchemaConfig;
+import com.ec.application.constants.IndentLineItemStatusConstants;
+import com.ec.application.constants.IndentStatusConstants;
+import com.ec.application.constants.POStatusConstants;
+import com.ec.application.data.StaleAgeBucket;
+import com.ec.application.data.StaleBucketConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +23,10 @@ import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.SupplierRepo;
 import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -48,6 +59,12 @@ public class PopulateDropdownService {
     @Autowired
     UsageAreaRepo usageAreaRepo;
 
+    @Autowired
+    SchemaConfig schemaConfig;
+
+    @Autowired
+    TenantService tenantService;
+
     Logger log = LoggerFactory.getLogger(PopulateDropdownService.class);
 
     public NameAndProjectionDataForDropDown fetchData(String page) {
@@ -79,6 +96,7 @@ public class PopulateDropdownService {
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
                 morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
                 morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
                 break;
             case "lostdamaged":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
@@ -99,8 +117,42 @@ public class PopulateDropdownService {
             case "PricingReport":
                 morDropdownDataList.setUsagelocation(locationRepo.findIdAndNames());
                 break;
+            case "indent":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setIndentStatus(IndentStatusConstants.getAllStatuses());
+                morDropdownDataList.setIndentLineItemStatus(IndentLineItemStatusConstants.getAllStatuses());
+                morDropdownDataList.setStalebuckets(StaleBucketConstants.getAllBuckets());
+                break;
+            case "purchaseorder":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setPurchaseOrderStatus(POStatusConstants.getAllStatuses());
+                morDropdownDataList.setSupplier(supplierRepo.findIdAndNames());
+                morDropdownDataList.setStalebuckets(StaleBucketConstants.getAllBuckets());
+                break;
+            case "inventorytransfer":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setTenants(fetchTenantNames());
+
+            case "deadstock":
+                morDropdownDataList.setProduct(productRepo.findIdAndNames());
+                morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setTenants(fetchTenantNames());
         }
         return morDropdownDataList;
     }
 
+    private List<String> fetchTenantNames() {
+        List<String> tenantNames = new ArrayList<>(schemaConfig.getSchemaMap().keySet());
+        List<String> tenantNamesUpdated = new ArrayList<>();
+        for (String tenantName : tenantNames) {
+            tenantNamesUpdated.add(tenantName);
+        }
+        return tenantNamesUpdated;
+    }
 }

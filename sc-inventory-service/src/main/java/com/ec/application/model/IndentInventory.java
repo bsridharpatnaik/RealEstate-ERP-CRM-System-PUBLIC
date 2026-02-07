@@ -1,113 +1,92 @@
 package com.ec.application.model;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.persistence.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Where;
-import org.hibernate.envers.Audited;
-
+import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.ec.application.ReusableClasses.*;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.sun.org.apache.xpath.internal.operations.Bool;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.springframework.lang.NonNull;
 
-@Entity
+import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@Entity(name = "IndentInventory")
 @Table(name = "indent_inventory")
 @Audited
-//@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class IndentInventory {
+@Getter
+@Setter
+@NoArgsConstructor
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+public class IndentInventory extends ReusableFields implements Cloneable {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private long id;
-	
-	private String unit;
-	
-	private double quantity;
-	
-	private String stock;
-	
-	@JsonIgnore
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
-	@JoinColumn(name = "indentNumber", nullable = true)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	private Indent indent;
-	
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
-	@JoinColumn(name = "productId", nullable = true)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Product product;
+    @Id
+    @GeneratedValue(generator = "indent-id-gen")
+    @GenericGenerator(
+            name = "indent-id-gen",
+            strategy = "com.ec.application.IDGenerator.GlobalIndentIdGenerator"
+    )
+    @Column(name = "indent_id", nullable = false, length = 20)
+    private String indentId;
 
-	public long getId() {
-		return id;
-	}
+    @Transient
+    private String tenantSchemaCode;
 
+    @Column(name="tenant", nullable = false, length = 50)
+    String tenant;
 
-	public void setId(long id) {
-		this.id = id;
-	}
+    @Column(name = "indent_status", nullable = false, length = 20)
+    private String indentStatus;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @Column(name = "indent_date", nullable = false)
+    @NonNull
+    Date indentDate;
 
-	public String getUnit() {
-		return unit;
-	}
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinTable(name = "indent_fileinformation", joinColumns =
+            {@JoinColumn(name = "indent_id", referencedColumnName = "indent_id")},
+            inverseJoinColumns = {@JoinColumn(name = "file_information_id", referencedColumnName = "id")})
+    Set<FileInformation> fileInformations = new HashSet<>();
 
+    @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER, orphanRemoval = false)
+    @JsonSerialize(using = ActiveIndentInventoryListSerializer.class)
+    private Set<IndentInventoryList> inventoryList = new HashSet<>();
 
-	public void setUnit(String unit) {
-		this.unit = unit;
-	}
+    @OneToMany(
+            mappedBy = "indent",
+            cascade = CascadeType.ALL,
+            orphanRemoval = false,
+            fetch = FetchType.LAZY
+    )
+    @JsonIgnore   // optional – depends if you want it in API response
+    private List<IndentStatusHistory> statusHistory = new ArrayList<>();
 
+    @Transient
+    Boolean approvalAllowed;
 
-	public double getQuantity() {
-		return quantity;
-	}
+    @Column(
+            name = "last_status_updated_at",
+            nullable = false,
+            columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP"
+    )
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "d MMM yyyy h:mm a")
+    private Date lastStatusUpdatedAt;
 
-
-	public void setQuantity(double quantity) {
-		this.quantity = quantity;
-	}
-
-
-	public String getStock() {
-		return stock;
-	}
-
-
-	public void setStock(String stock) {
-		this.stock = stock;
-	}
-
-
-	public Indent getIndent() {
-		return indent;
-	}
-
-
-	public void setIndent(Indent indent) {
-		this.indent = indent;
-	}
-
-
-	public Product getProduct() {
-		return product;
-	}
-
-
-	public void setProduct(Product product) {
-		this.product = product;
-	}
-
-
-	
-
-	
-	
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 }

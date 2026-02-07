@@ -1,9 +1,8 @@
-spring.profiles.active=ec-local
+spring.profiles.active=sc-local-v2
 server.port=8091
 
 ########## JPA Config ###############
 spring.jpa.open-in-view=false
-spring.jpa.show-sql=false
 spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 spring.jpa.database=mysql
 spring.datasource.initialize=false
@@ -11,11 +10,12 @@ spring.jpa.hibernate.ddl-auto=none
 spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
 spring.jpa.properties.hibernate.jdbc.time_zone = Asia/Kolkata
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL5InnoDBDialect
-##############Debug Logging#########################
-#logging.level.org.springframework=DEBUG
-#logging.level.org.hibernate.SQL=DEBUG
 
-#logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+##############Debug Logging#########################
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
 
 
 #########    HIkari  Pool ##############

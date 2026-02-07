@@ -6,13 +6,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.application.ReusableClasses.*;
-import com.ec.application.config.ProjectConstants;
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.*;
-import com.ec.common.Filters.StockInformationSpecification;
+import com.ec.application.Filters.StockInformationSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +27,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.common.Filters.FilterAttributeData;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -94,7 +96,10 @@ public class StockService {
                 .collect(Collectors.toList());
 
         // Fetch all InventoryTransactions in one go
-        List<AllInventoryTransactions> allInventoryTransactions = allInventoryRepo.findInwardOutwardByProductIds(productIds);
+        List<AllInventoryTransactions> allInventoryTransactions =
+                productIds.isEmpty()
+                        ? Collections.emptyList()
+                        : allInventoryRepo.findInwardOutwardByProductIds(productIds);
 
         // Create a map of ProductId to List<AllInventoryTransactions>
         Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
@@ -241,6 +246,13 @@ public class StockService {
                     dbData = dbData.stream().filter(c -> stockStatus.contains(c.getStockStatus())).collect(Collectors.toList());
                 }
             }
+
+            if (filterData.getAttrName().equalsIgnoreCase("productCodes")) {
+                List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
+                if (!productCodes.contains("All")) {
+                    dbData = dbData.stream().filter(c -> productCodes.contains(c.getProductCode())).collect(Collectors.toList());
+                }
+            }
         }
         return dbData;
     }
@@ -270,6 +282,7 @@ public class StockService {
             dto.setStockStatus(si.getStockStatus());
             dto.setMeasurementUnit(si.getMeasurementUnit());
             dto.setProductName(si.getProductName());
+            dto.setProductCode(si.getProductCode());
             dto.setReorderQuantity(si.getReorderQuantity());
             dto.setTotalQuantityInHand(si.getTotalQuantityInHand());
             dto.setInwardOutwardHistory(aiList);
@@ -414,8 +427,9 @@ public class StockService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Double updateStock(Long productId, String warehousename, Double quantity, String operation) throws Exception {
-        Stock currentStock = findOrInsertStock(productId, warehousename);
+    public Double updateStock(Long productId, Long warehouseId, Double quantity, String operation) throws Exception {
+        System.out.println("updateStock - Tenant =- " + ThreadLocalStorage.getTenantName());
+        Stock currentStock = findOrInsertStock(productId, warehouseId);
         Double oldStock = currentStock.getQuantityInHand();
         Double newStock = (double) 0;
         switch (operation) {
@@ -437,23 +451,21 @@ public class StockService {
             inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
             return newStock;
         }
-
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private Stock findOrInsertStock(Long productId, String warehousename) throws Exception {
+    private Stock findOrInsertStock(Long productId, Long warehouseId) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-
         Optional<Product> productOpt = productRepo.findById(productId);
-        List<Warehouse> warehouseOpt = warehouseRepo.findByName(warehousename);
+        Optional<Warehouse> warehouseOpt = warehouseRepo.findById(warehouseId);
 
-        if (!productOpt.isPresent() || warehouseOpt.size() != 1)
-            throw new Exception("Product of warehouse not found");
+        if (!productOpt.isPresent() || !warehouseOpt.isPresent())
+            throw new Exception("Product or warehouse not found");
 
         Product product = productOpt.get();
-        Warehouse warehouse = warehouseOpt.get(0);
-        List<Stock> stocks = stockRepo.findByIdName(productId, warehousename);
-        if (stocks.size() == 0) {
+        Warehouse warehouse = warehouseOpt.get();
+        List<Stock> stocks = stockRepo.findByProductAndWarehouseId(productId, warehouseId);
+        if (stocks.isEmpty()) {
             Stock stock = new Stock(product, warehouse, 0.0);
             return stockRepo.save(stock);
         } else {
@@ -461,11 +473,37 @@ public class StockService {
         }
     }
 
-
     public Double findStockForProductWarehouse(Long productId, Long warehouseId) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Double currentStock = stockRepo.getCurrentStockForProductWarehouse(productId, warehouseId);
         return currentStock;
+    }
+
+    public Double findStockForProductWarehouse(Long productId, String warehouseName) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        Double currentStock = stockRepo.getCurrentStockForProductWarehouseByName(productId, warehouseName);
+        return currentStock;
+    }
+
+    public Map<Long, Double> findStockForProductsInWarehouse(Long warehouseId, List<Long> productIds, String tenantName) throws Exception {
+
+        if (warehouseId == null)
+            throw new Exception("Warehouse ID cannot be null");
+
+
+        if (productIds == null || productIds.size() == 0)
+            throw new Exception("Product IDs cannot be null or empty");
+
+        if(tenantName!=null)
+            ThreadLocalStorage.setTenantName(tenantName);
+        List<Object[]> results = stockRepo.getCurrentStockForProductsInWarehouse(warehouseId, productIds);
+        Map<Long, Double> stockMap = new HashMap<>();
+        for (Object[] row : results) {
+            Long productId = (Long) row[0];
+            Double stock = (Double) row[1];
+            stockMap.put(productId, stock);
+        }
+        return stockMap;
     }
 
     public Double findTotalStockForProduct(Long productId) {
@@ -533,5 +571,11 @@ public class StockService {
                 throw new Exception("Cannot delete Stock/Product. Contact Administrator");
             stockRepo.softDelete(stock);
         }
+    }
+
+    public List<Stock> getDeadStocks() {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        List<Stock> deadStocks = stockRepo.findDeadStocks();
+        return deadStocks;
     }
 }

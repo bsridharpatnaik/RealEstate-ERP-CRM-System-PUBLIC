@@ -1,15 +1,8 @@
 package com.ec.application.model;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
+import lombok.Data;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
@@ -21,62 +14,30 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @Entity
 @Table(name = "inward_outward_entries")
 @Audited
+@Data
 //@JsonSerialize(using = InwardOutwardListClosingStockSerializer.class)
 @Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
-public class InwardOutwardList extends ReusableFields
-{
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	Long entryid;
+public class InwardOutwardList extends ReusableFields {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    Long entryid;
 
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "productId", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Product product;
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double quantity;
-	@JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
-	Double closingStock;
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "productId", nullable = false)
+    @JsonIgnoreProperties(
+            {"hibernateLazyInitializer", "handler"})
+    Product product;
 
-	public Long getEntryid()
-	{
-		return entryid;
-	}
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    Double quantity;
 
-	public void setEntryid(Long entryid)
-	{
-		this.entryid = entryid;
-	}
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    Double closingStock;
 
-	public void setClosingStock(Double closingStock)
-	{
-		this.closingStock = closingStock;
-	}
+    String lineItemCode;
 
-	public Double getClosingStock()
-	{
-		return closingStock;
-	}
-
-	public Product getProduct()
-	{
-		return product;
-	}
-
-	public void setProduct(Product product)
-	{
-		this.product = product;
-	}
-
-	public Double getQuantity()
-	{
-		return quantity;
-	}
-
-	public void setQuantity(Double quantity)
-	{
-		this.quantity = quantity;
-	}
-
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    Warehouse warehouse;
 }

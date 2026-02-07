@@ -13,6 +13,7 @@ import java.util.List;
 public class StockInformationDTO {
     Long productId;
     String productName;
+    String productCode;
     Double reorderQuantity;
     String measurementUnit;
     String categoryName;

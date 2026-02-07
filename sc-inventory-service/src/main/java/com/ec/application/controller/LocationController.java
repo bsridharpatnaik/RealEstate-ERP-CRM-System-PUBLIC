@@ -27,7 +27,7 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.UsageLocationData;
 import com.ec.application.model.UsageLocation;
 import com.ec.application.service.LocationService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/location")

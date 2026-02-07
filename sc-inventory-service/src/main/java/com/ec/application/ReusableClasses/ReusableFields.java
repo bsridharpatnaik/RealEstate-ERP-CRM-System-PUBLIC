@@ -20,83 +20,75 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class ReusableFields implements Serializable
-{
+public abstract class ReusableFields implements Serializable {
 
-	public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
+    public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
 
-	@Column(name = "is_deleted", columnDefinition = "BOOLEAN DEFAULT true")
-	public boolean isDeleted;
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 
-	@CreatedBy
-	protected String createdBy;
+    @CreatedBy
+    @Column(name = "createdBy")
+    protected String createdBy;
 
-	@CreatedDate
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
-	@Temporal(TIMESTAMP)
-	protected Date creationDate;
+    @CreatedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+    @Temporal(TIMESTAMP)
+    @Column(name = "creationDate")
+    protected Date creationDate;
 
-	@LastModifiedBy
-	protected String lastModifiedBy;
+    @LastModifiedBy
+    @Column(name = "lastModifiedBy")
+    protected String lastModifiedBy;
 
-	@LastModifiedDate
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
-	@Temporal(TIMESTAMP)
-	protected Date lastModifiedDate;
+    @LastModifiedDate
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+    @Temporal(TIMESTAMP)
+    @Column(name = "lastModifiedDate")
+    protected Date lastModifiedDate;
 
-	public boolean isDeleted()
-	{
-		return isDeleted;
-	}
+    public boolean isDeleted() {
+        return isDeleted;
+    }
 
-	public void setDeleted(boolean isDeleted)
-	{
-		this.isDeleted = isDeleted;
-	}
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
 
-	public String getCreatedBy()
-	{
-		return createdBy;
-	}
+    public String getCreatedBy() {
+        return createdBy;
+    }
 
-	public void setCreatedBy(String createdBy)
-	{
-		this.createdBy = createdBy;
-	}
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
 
-	public Date getCreationDate()
-	{
-		return creationDate;
-	}
+    public Date getCreationDate() {
+        return creationDate;
+    }
 
-	public void setCreationDate(Date creationDate)
-	{
-		this.creationDate = creationDate;
-	}
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
 
-	public String getLastModifiedBy()
-	{
-		return lastModifiedBy;
-	}
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
 
-	public void setLastModifiedBy(String lastModifiedBy)
-	{
-		this.lastModifiedBy = lastModifiedBy;
-	}
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
 
-	public Date getLastModifiedDate()
-	{
-		return lastModifiedDate;
-	}
+    public Date getLastModifiedDate() {
+        return lastModifiedDate;
+    }
 
-	public void setLastModifiedDate(Date lastModifiedDate)
-	{
-		this.lastModifiedDate = lastModifiedDate;
-	}
+    public void setLastModifiedDate(Date lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
 
-	public static String getSoftDeletedClause()
-	{
-		return SOFT_DELETED_CLAUSE;
-	}
+    public static String getSoftDeletedClause() {
+        return SOFT_DELETED_CLAUSE;
+    }
 
 }

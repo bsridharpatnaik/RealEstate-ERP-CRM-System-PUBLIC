@@ -2,7 +2,9 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -26,7 +28,7 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.AllCategoriesWithNamesData;
 import com.ec.application.model.Category;
 import com.ec.application.service.CategoryService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/category")
@@ -49,6 +51,7 @@ public class CategoryController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public ResponseEntity<?> deleteCategory(@PathVariable Long id) throws Exception {
 
         categoryService.deleteCategory(id);
@@ -58,12 +61,14 @@ public class CategoryController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public Category createCategory(@RequestBody Category payload) throws Exception {
         return categoryService.createCategory(payload);
     }
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public Category updateCategory(@PathVariable Long id, @RequestBody Category Category) throws Exception {
         return categoryService.updateCategory(id, Category);
     }

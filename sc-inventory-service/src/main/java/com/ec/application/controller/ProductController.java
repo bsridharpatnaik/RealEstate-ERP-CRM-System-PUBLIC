@@ -3,7 +3,9 @@ package com.ec.application.controller;
 import java.text.ParseException;
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,16 +14,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -29,7 +22,7 @@ import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.model.Product;
 import com.ec.application.service.ProductService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/product")
@@ -52,6 +45,7 @@ public class ProductController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception {
         productService.deleteProduct(id);
         return ResponseEntity.ok("Entity deleted");
@@ -60,12 +54,14 @@ public class ProductController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public Product createProduct(@RequestBody ProductCreateData payload) throws Exception {
         return productService.createProduct(payload);
     }
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception {
         return productService.updateProduct(id, Product);
     }
@@ -78,6 +74,14 @@ public class ProductController {
     @GetMapping("/measurementunits/all")
     public List<IdNameAndUnit> returnIdAndMU() {
         return productService.productMeasurementUnit();
+    }
+
+    @GetMapping
+    public List<IdNameAndUnit> getProducts(
+            @RequestParam(name = "isManagedInventory", required = false) Boolean isManagedInventory,
+            @RequestParam(name = "categoryId", required = false) Long categoryId
+    ) {
+        return productService.getProducts(isManagedInventory, categoryId);
     }
 
     @GetMapping("/typeahead/{name}")

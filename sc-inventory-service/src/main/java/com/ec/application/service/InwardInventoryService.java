@@ -6,7 +6,13 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.ec.application.constants.IndentLineItemStatusConstants;
+import com.ec.application.constants.InwardActionType;
+import com.ec.application.data.*;
+import com.ec.application.indentpo.IndentInventoryAsyncUpdater;
+import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,28 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.config.ProjectConstants;
-import com.ec.application.data.InwardInventoryData;
-import com.ec.application.data.InwardInventoryExportDAO2;
-import com.ec.application.data.ProductGroupedDAO;
-import com.ec.application.data.ProductWithQuantity;
-import com.ec.application.data.ReturnInwardInventoryData;
-import com.ec.application.data.ReturnRejectInwardOutwardData;
-import com.ec.application.data.UserReturnData;
-import com.ec.application.model.APICallTypeForAuthorization;
-import com.ec.application.model.InwardInventory;
-import com.ec.application.model.InwardOutwardList;
-import com.ec.application.model.Product;
-import com.ec.application.model.RejectInwardList;
-import com.ec.application.model.Warehouse;
-import com.ec.application.repository.InwardInventoryRepo;
-import com.ec.application.repository.InwardOutwardListRepo;
-import com.ec.application.repository.ProductRepo;
-import com.ec.application.repository.StockRepo;
-import com.ec.application.repository.SupplierRepo;
-import com.ec.application.repository.WarehouseRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.InwardInventorySpecification;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.InwardInventorySpecification;
 
 @Service
 @Transactional
@@ -52,16 +38,10 @@ public class InwardInventoryService {
     InwardInventoryRepo inwardInventoryRepo;
 
     @Autowired
-    private AsyncService asyncService;
-
-    @Autowired
     InwardOutwardListRepo iolRepo;
 
     @Autowired
     ProductRepo productRepo;
-
-    @Autowired
-    ProductService productService;
 
     @Autowired
     SupplierRepo supplierRepo;
@@ -79,139 +59,545 @@ public class InwardInventoryService {
     WarehouseRepo warehouseRepo;
 
     @Autowired
-    GroupBySpecification groupBySpecification;
+    IndentsForInwardViewRepository indentsForInwardViewRepository;
+
+    @Autowired
+    TenantService tenantService;
+
+    @Autowired
+    EditAuthorizationService editAuthorizationService;
+
+    @Autowired
+    IndentInventoryAsyncUpdater indentInventoryAsyncUpdater;
+
+    @Autowired
+    PurchaseOrderShortClosedViewRepo purchaseOrderShortClosedViewRepo;
 
     @Autowired
     InventoryNotificationService inventoryNotificationService;
 
-    @Autowired
-    UserDetailsService userDetailService;
-
-    @Autowired
-    AsyncServiceInventory asyncServiceInventory;
-
-    @Autowired
-    ProjectConstantsService projectConstantsService;
-
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
+
+    public List<PoDropdownItem> getPendingPoDropdown() {
+        String tenant = ThreadLocalStorage.getTenantName();
+        List<Object[]> rows = indentsForInwardViewRepository.findPendingPoDropdown(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, tenant);
+
+        return rows.stream()
+                .map(r -> {
+                    PoDropdownItem dto = new PoDropdownItem();
+                    dto.setPurchaseOrderNumber((String) r[0]);
+                    dto.setPoDate((java.util.Date) r[1]);
+                    dto.setSupplierName((String) r[2]);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public PoForInwardResponse getPoForInward(String poNumber) {
+        String tenant = ThreadLocalStorage.getTenantName();
+        List<IndentsForInwardView> rows = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, poNumber, tenant);
+
+        if (rows.isEmpty()) {
+            throw new IllegalStateException("No pending inward items for this PO and tenant");
+        }
+
+        IndentsForInwardView first = rows.get(0);
+
+        PoForInwardResponse response = new PoForInwardResponse();
+        response.setPurchaseOrderNumber(first.getPurchaseOrderNumber());
+        response.setPoDate(first.getPoDate());
+        response.setPoStatus(first.getPoStatus());
+        response.setGrandTotal(first.getGrandTotal());
+        response.setSupplierId(first.getSupplierId());
+        response.setSupplierName(first.getSupplierName());
+        response.setTenant(first.getTenant());
+
+        response.setLineItems(
+                rows.stream()
+                        .map(this::toLineItem)
+                        .collect(Collectors.toList())
+        );
+
+        return response;
+    }
+
+    private PoLineItemForInward toLineItem(IndentsForInwardView v) {
+        PoLineItemForInward li = new PoLineItemForInward();
+        li.setLineItemCode(v.getLineItemCode());
+        li.setIndentId(v.getIndentId());
+        li.setProductId(v.getProductId());
+        li.setProductName(v.getProductName());
+        li.setProductCode(v.getProductCode());
+        li.setMeasurementUnit(v.getMeasurementUnit());
+        li.setOrderedQuantity(v.getQuantity());
+        li.setRemarks(v.getRemarks());
+        return li;
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public InwardInventory createInwardnventory(InwardFromPODTO iiData) throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        InwardInventory inwardInventory = new InwardInventory();
+        editAuthorizationService.validateCreateDate(iiData.getInwardDate());
+        List<IndentsForInwardView> pendingItemsForInward = indentsForInwardViewRepository.findPendingLineItemsForPO(IndentLineItemStatusConstants.INWARD_ELIGIBLE_STATUSES, iiData.getPoNumber(), ThreadLocalStorage.getTenantName());
+
+        if (pendingItemsForInward.isEmpty()) {
+            throw new IllegalArgumentException("No pending inward items found for the provided Purchase Order Number - " + iiData.getPoNumber());
+        }
+
+        validateInputsFromPO(iiData, pendingItemsForInward);
+        setFieldsFromPO(inwardInventory, iiData, pendingItemsForInward);
+        updateStockForCreateInwardInventory(inwardInventory);
+        inwardInventoryRepo.save(inwardInventory);
+        List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+
+        for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
+            deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), io.getQuantity()));
+        }
+
+        IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, deltas);
+        indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "create");
+        return inwardInventory;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public InwardInventory updateInwardInventory(Long inwardId, InwardInventoryUpdateData data) throws Exception {
+
+        log.info("Invoked updateInwardInventory for id={}", inwardId);
+
+        InwardInventory inward = inwardInventoryRepo.findById(inwardId).orElseThrow(() -> new Exception("Inward Inventory not found with id=" + inwardId));
+        editAuthorizationService.validateUpdateDates(inward.getDate(), inward.getDate());
+        Set<Long> existingProductIds = inward.getInwardOutwardList().stream().map(io -> io.getProduct().getProductId()).collect(Collectors.toSet());
+        Set<Long> payloadProductIds = data.getProductWithQuantities().stream().map(ProductAndQuantity::getProductId).collect(Collectors.toSet());
+
+        if (!existingProductIds.equals(payloadProductIds)) {
+            throw new Exception("Product list mismatch during inward update. " + "Adding or removing products is not allowed.");
+        }
+
+        if (inward.getCreatedFromPO() && !inward.getSupplier().getContactId().equals(data.getSupplierId())) {
+            throw new Exception("Supplier change not allowed for inward created from PO.");
+        }
+
+        Map<String, Double> oldQuantityMap = new HashMap<>();
+        for (InwardOutwardList io : inward.getInwardOutwardList()) {
+            oldQuantityMap.put(io.getLineItemCode(), io.getQuantity());
+        }
+
+        inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());
+        inward.setVehicleNo(data.getVehicleNo());
+        inward.setSupplierSlipNo(data.getSupplierSlipNo());
+        inward.setOurSlipNo(data.getOurSlipNo());
+        inward.setAdditionalInfo(data.getAdditionalInfo());
+        inward.setInvoiceReceived(data.getInvoiceReceived());
+        inward.setChallanNo(data.getChallanNo());
+        inward.setBillNo(data.getBillNo());
+        inward.setChallanDate(data.getChallanDate());
+        inward.setBillDate(data.getBillDate());
+
+        if (data.getFileInformations() != null) {
+            inward.setFileInformations(ReusableMethods.convertFilesListToSet(data.getFileInformations()));
+        }
+
+        // -------------------------------------------------
+        // Build lookup map from request
+        // -------------------------------------------------
+        Map<Long, Double> qtyByProductId = new HashMap<Long, Double>();
+
+        for (ProductAndQuantity pq : data.getProductWithQuantities()) {
+            qtyByProductId.put(pq.getProductId(), pq.getQuantity());
+        }
+
+
+        // -------------------------------------------------
+        // 5️⃣ Update quantities + stock adjustment
+        // -------------------------------------------------
+        for (InwardOutwardList io : inward.getInwardOutwardList()) {
+            Long productId = io.getProduct().getProductId();
+            if (!qtyByProductId.containsKey(productId)) {
+                throw new Exception("Product removal not allowed during inward update. ProductId=" + productId);
+            }
+
+            Double oldQty = io.getQuantity();
+            Double newQty = qtyByProductId.get(productId);
+
+            if (newQty == null || newQty <= 0) {
+                throw new Exception("Invalid quantity for productId=" + productId);
+            }
+
+            double delta = newQty - oldQty;
+
+            // ---------------------------------------------
+            // 5️⃣.1 Stock reconciliation
+            // ---------------------------------------------
+            if (delta != 0.0) {
+
+                String direction;
+                double absQty;
+
+                if (delta > 0) {
+                    direction = "inward";
+                    absQty = delta;
+                } else {
+                    direction = "outward";
+                    absQty = Math.abs(delta);
+                }
+                Double closingStock = stockService.updateStock(productId, io.getWarehouse().getWarehouseId(), absQty, direction);
+                io.setClosingStock(closingStock);
+                inventoryNotificationService.pushQuantityEditedNotification(io.getProduct(), io.getWarehouse().getWarehouseName(), direction, closingStock);
+            }
+
+            // ---------------------------------------------
+            // Update quantity
+            // ---------------------------------------------
+            io.setQuantity(newQty);
+        }
+        inwardInventoryRepo.save(inward);
+
+        // -------------------------------------------------
+        // Trigger async indent / PO reconciliation
+        // -------------------------------------------------
+        if (Boolean.TRUE.equals(inward.getCreatedFromPO())) {
+
+            List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+            for (InwardOutwardList io : inward.getInwardOutwardList()) {
+                Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+                Double newQty = io.getQuantity();
+                // Only send if quantity actually changed
+                if (oldQty == null || Double.compare(oldQty, newQty) != 0) {
+                    deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), newQty));
+                }
+            }
+
+            if (!deltas.isEmpty()) {
+                IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inward.getDate(), ThreadLocalStorage.getTenantName(), inward.getInwardId(), InwardActionType.UPDATE, deltas);
+                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "update");
+            }
+        }
+        return inward;
+    }
+
+
+    private void setFieldsFromPO(InwardInventory inwardInventory, InwardFromPODTO iiData, List<IndentsForInwardView> pendingItemsForInward) throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
+        inwardInventory.setDate(iiData.getInwardDate());
+        inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
+        inwardInventory.setVehicleNo(iiData.getVehicleNo());
+        inwardInventory.setSupplierSlipNo(iiData.getSupplierSlipNo());
+        inwardInventory.setAdditionalInfo(iiData.getAdditionalInfo());
+        inwardInventory.setSupplier(supplierRepo.findById(pendingItemsForInward.get(0).getSupplierId()).get());
+        inwardInventory.setPurchaseOrderNo(iiData.getPoNumber());
+        inwardInventory.setPurchaseOrderDate(pendingItemsForInward.get(0).getPoDate());
+        inwardInventory.setChallanDate(iiData.getChallanDate() == null ? null : iiData.getChallanDate());
+        inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
+        inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
+        inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setInwardOutwardList(fetchInwardOutwardListFromPOLine(iiData.getLineItems(), pendingItemsForInward));
+        inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
+        inwardInventory.setCreatedFromPO(true);
+    }
+
+    public Set<InwardOutwardList> fetchInwardOutwardListFromPOLine(List<LineItemForInwardThroughPODTO> lineItems, List<IndentsForInwardView> pendingItemsForInward) {
+        Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
+        for (LineItemForInwardThroughPODTO lineItem : lineItems) {
+            InwardOutwardList inwardOutwardList = new InwardOutwardList();
+            List<IndentsForInwardView> rowsWithLineItemCode = pendingItemsForInward.stream().filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode())).collect(Collectors.toList());
+
+            if (rowsWithLineItemCode.isEmpty()) {
+                throw new IllegalArgumentException("No pending inward items found for the line item code - " + lineItem.getLineItemCode());
+            }
+            IndentsForInwardView row = rowsWithLineItemCode.get(0);
+            Product product = productRepo.findById(row.getProductId()).get();
+            inwardOutwardList.setProduct(product);
+            inwardOutwardList.setQuantity(lineItem.getQuantityReceived());
+            inwardOutwardList.setWarehouse(warehouseRepo.findById(lineItem.getWarehouseId()).get());
+            inwardOutwardList.setLineItemCode(row.getLineItemCode());
+            inwardOutwardListSet.add(inwardOutwardList);
+        }
+        return inwardOutwardListSet;
+    }
+
+    private void validateInputsFromPO(InwardFromPODTO iiData, List<IndentsForInwardView> pendingItemsForInward) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+
+        Set<String> validLineItemCodes = pendingItemsForInward.stream()
+                .map(IndentsForInwardView::getLineItemCode)
+                .collect(Collectors.toSet());
+
+        for (LineItemForInwardThroughPODTO lineItem : iiData.getLineItems()) {
+            if (!warehouseRepo.existsById(lineItem.getWarehouseId()))
+                throw new IllegalArgumentException("Warehouse not found with ID - " + lineItem.getWarehouseId());
+
+            if (lineItem.getQuantityReceived() == null || lineItem.getQuantityReceived() <= 0) {
+                throw new IllegalArgumentException("Quantity received should be greater than zero for line item code: " + lineItem.getLineItemCode());
+            }
+
+            Double poQuantity = pendingItemsForInward.stream()
+                    .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
+                    .mapToDouble(IndentsForInwardView::getQuantity)
+                    .sum();
+
+            Double inwardQuantity = pendingItemsForInward.stream()
+                    .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
+                    .mapToDouble(IndentsForInwardView::getTotalInwardQuantity)
+                    .sum();
+
+            double allowedQuantity = poQuantity - inwardQuantity;
+
+            if (lineItem.getQuantityReceived() > allowedQuantity) {
+                throw new IllegalArgumentException("Quantity received for line item code " + lineItem.getLineItemCode() +
+                        " exceeds the allowed quantity for inward. Allowed quantity: " + allowedQuantity);
+            }
+
+            if (!validLineItemCodes.contains(lineItem.getLineItemCode()))
+                throw new IllegalArgumentException("Line item code " + lineItem.getLineItemCode() + " is invalid or already fully received.");
+        }
+
+        long duplicateProductIdCount = iiData.getLineItems().stream()
+                .collect(Collectors.groupingBy(LineItemForInwardThroughPODTO::getLineItemCode, counting())).entrySet().stream()
+                .filter(e -> e.getValue() > 1).count();
+
+        if (duplicateProductIdCount > 0)
+            throw new IllegalArgumentException("Inventory List should be Unique. Same line item added multiple times.");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    private void updateStockForCreateInwardInventory(InwardInventory inwardInventory) throws Exception {
+        Set<InwardOutwardList> productsWithQuantities = inwardInventory.getInwardOutwardList();
+        for (InwardOutwardList oiList : productsWithQuantities) {
+            Long warehouseId = oiList.getWarehouse().getWarehouseId();
+            Long productId = oiList.getProduct().getProductId();
+            Double quantity = oiList.getQuantity();
+            Double closingStock = stockService.updateStock(productId, warehouseId, quantity, "inward");
+            oiList.setClosingStock(closingStock);
+        }
+    }
+
+    public Pageable modifyPageable(Pageable pageable) {
+        Sort sort = pageable.getSort();
+        Sort newSort = sort;
+
+        for (Sort.Order order : sort) {
+            String property = order.getProperty();
+            Sort.Direction direction = order.getDirection();
+            if (property.equalsIgnoreCase("date")) {
+                if (direction == Sort.Direction.ASC) {
+                    newSort = Sort.by(Sort.Order.asc("date"), Sort.Order.desc("inwardid"));
+                } else if (direction == Sort.Direction.DESC) {
+                    newSort = Sort.by(Sort.Order.desc("date"), Sort.Order.asc("inwardid"));
+                }
+                pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
+                break;
+            }
+        }
+
+        return pageable;
+    }
+
+    /**
+     * OLD CODE
+     */
+
 
     @Transactional(rollbackFor = Exception.class)
     public InwardInventory createInwardnventory(InwardInventoryData iiData) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        editAuthorizationService.validateCreateDate(iiData.getInwardDate());
         InwardInventory inwardInventory = new InwardInventory();
         validateInputs(iiData);
-        exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Create);
-        setFields(inwardInventory, iiData);
+        setFieldsForInward(inwardInventory, iiData);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
         return inwardInventory;
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForCreateInwardInventory(InwardInventory inwardInventory) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        Set<InwardOutwardList> productsWithQuantities = inwardInventory.getInwardOutwardList();
-        String warehouseName = inwardInventory.getWarehouse().getWarehouseName();
-
-        for (InwardOutwardList oiList : productsWithQuantities) {
-            Long productId = oiList.getProduct().getProductId();
-            Double quantity = oiList.getQuantity();
-            Double closingStock = stockService.updateStock(productId, warehouseName, quantity, "inward");
-            oiList.setClosingStock(closingStock);
-        }
-    }
 
     @Transactional(rollbackFor = Exception.class)
     public InwardInventory addRejectInwardEntry(ReturnRejectInwardOutwardData rd, Long inwardId) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        if (!inwardInventoryRepo.existsById(inwardId))
+        log.info("Invoked - addRejectInwardEntry");
+
+        // ---------- Basic validations ----------
+        if (!inwardInventoryRepo.existsById(inwardId)) {
             throw new Exception("Inward inventory with ID not found");
+        }
 
-        if (rd.getProductWithQuantities().size() == 0)
+        if (rd.getProductWithQuantities() == null || rd.getProductWithQuantities().isEmpty()) {
             throw new Exception("Minimum of one product is required to save data.");
+        }
 
+        // ---------- Duplicate product check in request ----------
+        boolean hasDuplicates = rd.getProductWithQuantities().stream()
+                .map(ProductWithQuantity::getProductId)
+                .distinct()
+                .count() != rd.getProductWithQuantities().size();
+
+        if (hasDuplicates) {
+            throw new Exception("Inventory List should be unique. Same product added multiple times. Please correct.");
+        }
+
+        // ---------- Validate & process ----------
+        Set<Long> processedProductIds = new HashSet<>();
         for (ProductWithQuantity pwq : rd.getProductWithQuantities()) {
-            if (pwq.getRemarks() == null)
-                throw new Exception(
-                        "Remarks is a mandatory field. Please provide remarks for all products before saving data");
 
-            if (pwq.getRemarks().trim().equals(""))
-                throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
+            if (pwq.getRemarks() == null || pwq.getRemarks().trim().isEmpty()) {
+                throw new Exception("Remarks is a mandatory field. Please provide remarks for all products before saving data");
+            }
+
+            if (!productRepo.existsById(pwq.getProductId())) {
+                throw new Exception("Product not found with ID - " + pwq.getProductId());
+            }
+
+            // ---------- Process only once per product ----------
+            if (processedProductIds.add(pwq.getProductId())) {
+                addReturnForInward(inwardId, pwq.getProductId(), pwq.getQuantity(), pwq.getRemarks());
+            }
         }
 
-        Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
-                .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
-                .filter(e -> e.getValue() > 1).count();
-
-        if (duplicateProductIdCount > 0)
-            throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
-
-        for (ProductWithQuantity productWithQuantity : rd.getProductWithQuantities()) {
-            if (productWithQuantity.getQuantity() == null || productWithQuantity.getProductId() == null
-                    || !productRepo.existsById(productWithQuantity.getProductId()))
-                throw new Exception("Error fetching product details");
-            addReturnForInward(inwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
-                    productWithQuantity.getRemarks());
-            /*
-             * else addRejectForOutward(inwardId, productWithQuantity.getProductId(),
-             * productWithQuantity.getQuantity());
-             */
-        }
         return inwardInventoryRepo.findById(inwardId).get();
     }
 
-    private void addReturnForInward(Long inwardId, Long productId, Double quantity, String remarks) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        InwardInventory ii = inwardInventoryRepo.findById(inwardId).get();
-        exitIfNotAuthorized(ii, null, APICallTypeForAuthorization.Reject);
+    @Transactional(rollbackFor = Exception.class)
+    private void addReturnForInward(
+            Long inwardId,
+            Long productId,
+            Double quantity,
+            String remarks
+    ) throws Exception {
+
+        log.info("Invoked addReturnForInward");
+
+        InwardInventory ii = inwardInventoryRepo.findById(inwardId)
+                .orElseThrow(() ->
+                        new Exception("Inward Inventory not found with id=" + inwardId)
+                );
+
+        editAuthorizationService.validateUpdateDates(ii.getDate(), ii.getDate());
+
+        // ------------------------------------------------
+        // Capture old quantities for async delta sync
+        // ------------------------------------------------
+        Map<String, Double> oldQuantityMap = new HashMap<>();
+        for (InwardOutwardList io : ii.getInwardOutwardList()) {
+            oldQuantityMap.put(io.getLineItemCode(), io.getQuantity());
+        }
+
         Set<RejectInwardList> rejectInwardList = ii.getRejectInwardList();
         Set<InwardOutwardList> inwardOutwardListSet = ii.getInwardOutwardList();
-        for (InwardOutwardList inwardOutwardList : inwardOutwardListSet) {
-            if (inwardOutwardList.getProduct().getProductId().equals(productId)) {
-                Double currentQuantity = inwardOutwardList.getQuantity();
-                if (quantity > currentQuantity)
-                    throw new Exception(
-                            "Reject quantity cannot be greater than existing quantity for product -"
-                                    + inwardOutwardList.getProduct().getProductName());
 
-                Double diffInQuantity = currentQuantity - quantity;
-                Double closingStock = stockService.updateStock(productId, ii.getWarehouse().getWarehouseName(),
-                        quantity, "outward");
-                rejectInwardList.add(new RejectInwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
-                        quantity, closingStock, remarks));
-                inwardOutwardList.setQuantity(diffInQuantity);
-                inwardOutwardList.setClosingStock(closingStock);
-            }
-        }
+        // ------------------------------------------------
+        // 🔑 Pick BEST inward row (max qty that can satisfy)
+        // ------------------------------------------------
+        InwardOutwardList target = inwardOutwardListSet.stream()
+                .filter(io -> io.getProduct().getProductId().equals(productId))
+                .filter(io -> io.getQuantity() >= quantity)
+                .max(Comparator.comparing(InwardOutwardList::getQuantity))
+                .orElseThrow(() -> new Exception(
+                        "Reject quantity cannot be greater than existing quantity for product - "
+                                + productId
+                ));
+
+        Long warehouseId = target.getWarehouse().getWarehouseId();
+        Double currentQuantity = target.getQuantity();
+
+        // -----------------------------------------
+        // Stock OUTWARD
+        // -----------------------------------------
+        Double closingStock = stockService.updateStock(
+                productId,
+                warehouseId,
+                quantity,
+                "outward"
+        );
+
+        // -----------------------------------------
+        // Record reject entry
+        // -----------------------------------------
+        rejectInwardList.add(
+                new RejectInwardList(
+                        new Date(),
+                        target.getProduct(),
+                        currentQuantity,
+                        quantity,
+                        closingStock,
+                        remarks
+                )
+        );
+
+        // -----------------------------------------
+        // Reduce inward quantity
+        // -----------------------------------------
+        target.setQuantity(currentQuantity - quantity);
+        target.setClosingStock(closingStock);
+
         ii.setRejectInwardList(rejectInwardList);
         ii.setInwardOutwardList(inwardOutwardListSet);
         inwardInventoryRepo.save(ii);
+
+        // ------------------------------------------------
+        // 🔁 Async indent / PO reconciliation
+        // ------------------------------------------------
+        if (Boolean.TRUE.equals(ii.getCreatedFromPO())) {
+
+            List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+
+            for (InwardOutwardList io : ii.getInwardOutwardList()) {
+
+                Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+                Double newQty = io.getQuantity();
+
+                if (oldQty == null || Double.compare(oldQty, newQty) != 0) {
+                    deltas.add(
+                            new IndentInwardDeltaDTO(
+                                    io.getLineItemCode(),
+                                    newQty
+                            )
+                    );
+                }
+            }
+
+            if (!deltas.isEmpty()) {
+
+                IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(
+                        ii.getDate(),
+                        ThreadLocalStorage.getTenantName(),
+                        ii.getInwardId(),
+                        InwardActionType.UPDATE,
+                        deltas
+                );
+
+                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(
+                        syncDTO,
+                        "reject-inward"
+                );
+            }
+        }
     }
 
-    private void setFields(InwardInventory inwardInventory, InwardInventoryData iiData) throws Exception {
+    private void setFieldsForInward(InwardInventory inwardInventory, InwardInventoryData iiData) throws
+            Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
-        // inwardInventory.setInvoiceReceived(false);
-        inwardInventory.setDate(iiData.getDate());
+        inwardInventory.setDate(iiData.getInwardDate());
         inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
         inwardInventory.setVehicleNo(iiData.getVehicleNo());
-        inwardInventory.setVendorSlipNo(iiData.getVendorSlipNo());
+        inwardInventory.setSupplierSlipNo(iiData.getSupplierSlipNo());
         inwardInventory.setAdditionalInfo(iiData.getAdditionalInfo());
         inwardInventory.setSupplier(supplierRepo.findById(iiData.getSupplierId()).get());
-        inwardInventory.setWarehouse(warehouseRepo.findById(iiData.getWarehouseId()).get());
-        inwardInventory.setInwardOutwardList(fetchInwardOutwardList(iiData.getProductWithQuantities(),
-                warehouseRepo.findById(iiData.getWarehouseId()).get()));
+        //inwardInventory.setWarehouse(warehouseRepo.findById(iiData.getWarehouseId()).get());
+        inwardInventory.setInwardOutwardList(fetchInwardOutwardList(iiData.getProductWithQuantities()));
         inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
-        inwardInventory.setPurchaseOrder(iiData.getPurchaseOrder());
-        inwardInventory.setPurchaseOrderdate(iiData.getPurchaseOrderDate());
+        inwardInventory.setPurchaseOrderNo(null);
+        inwardInventory.setPurchaseOrderDate(null);
         inwardInventory.setChallanDate(iiData.getChallanDate() == null ? null : iiData.getChallanDate());
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setCreatedFromPO(false);
     }
 
-    public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities,
-                                                         Warehouse warehouse) {
+    public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
         for (ProductWithQuantity productWithQuantity : productWithQuantities) {
@@ -220,34 +606,9 @@ public class InwardInventoryService {
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
             inwardOutwardListSet.add(inwardOutwardList);
+            inwardOutwardList.setWarehouse(warehouseRepo.findById(productWithQuantity.getWarehouseId()).get());
         }
         return inwardOutwardListSet;
-    }
-
-    private void validateInputs(InwardInventoryData iiData) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        if (iiData.getPurchaseOrderDate() == null)
-            throw new Exception("Purchase Order Date is a mandatory field");
-
-        for (ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities()) {
-            if (!productRepo.existsById(productWithQuantity.getProductId()))
-                throw new Exception("Product not found with ID " + productWithQuantity.getProductId());
-            //if (productWithQuantity.getQuantity() <= 0)
-            //  throw new Exception("Quantity cannot be less that or equals zero");
-        }
-        if (!supplierRepo.existsById(iiData.getSupplierId()))
-            throw new Exception("Supplier not found with ID");
-
-        if (!warehouseRepo.existsById(iiData.getWarehouseId()))
-            throw new Exception("Warehouse not found");
-
-        Long duplicateProductIdCount = iiData.getProductWithQuantities().stream()
-                .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
-                .filter(e -> e.getValue() > 1).count();
-
-        if (duplicateProductIdCount > 0)
-            throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
-
     }
 
     public ReturnInwardInventoryData fetchInwardnventory(FilterDataList filterDataList, Pageable pageable)
@@ -268,6 +629,30 @@ public class InwardInventoryService {
         return returnInwardInventoryData;
     }
 
+    private void validateInputs(InwardInventoryData iiData) throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+
+        for (ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities()) {
+            if (!productRepo.existsById(productWithQuantity.getProductId()))
+                throw new Exception("Product not found with ID " + productWithQuantity.getProductId());
+
+            if (!warehouseRepo.existsById(productWithQuantity.getWarehouseId()))
+                throw new Exception("Warehouse not found");
+        }
+
+        if (!supplierRepo.existsById(iiData.getSupplierId()))
+            throw new Exception("Supplier not found with ID");
+
+        Long duplicateProductIdCount = iiData.getProductWithQuantities().stream()
+                .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
+                .filter(e -> e.getValue() > 1).count();
+
+        if (duplicateProductIdCount > 0)
+            throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
+
+    }
+
     public List<ProductGroupedDAO> getTotalsForInward(FilterDataList filterDataList) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
@@ -277,7 +662,8 @@ public class InwardInventoryService {
             return fetchInwardnventoryGroupBy();
     }
 
-    public List<InwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws Exception {
+    public List<InwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList) throws
+            Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
         long size = spec != null ? inwardInventoryRepo.count(spec) : inwardInventoryRepo.count();
@@ -340,14 +726,30 @@ public class InwardInventoryService {
 
     @Transactional(rollbackFor = Exception.class)
     public void deleteInwardInventoryById(Long id) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
-        if (!inwardInventoryOpt.isPresent())
+
+        if (!inwardInventoryOpt.isPresent()) {
             throw new Exception("Inward Inventory with ID not found");
+        }
+
         InwardInventory inwardInventory = inwardInventoryOpt.get();
-        exitIfNotAuthorized(inwardInventory, null, APICallTypeForAuthorization.Delete);
+        editAuthorizationService.validateDeleteDate(inwardInventory.getDate());
+        if (purchaseOrderShortClosedViewRepo.existsById(inwardInventory.getPurchaseOrderNo())) {
+            throw new Exception("Cannot delete inward inventory linked to a short closed purchase order.");
+        }
+
         updateStockBeforeDelete(inwardInventory);
         removeOrphans(inwardInventory);
+        InwardSnapshot snapshot = buildSnapshot(inwardInventory);
+
+        if (inwardInventory.getCreatedFromPO()) {
+            List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
+            for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
+                deltas.add(new IndentInwardDeltaDTO(io.getLineItemCode(), -io.getQuantity()));
+            }
+            IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.DELETE, deltas);
+            indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "delete");
+        }
         inwardInventoryRepo.softDeleteById(id);
     }
 
@@ -363,236 +765,73 @@ public class InwardInventoryService {
     @Transactional(rollbackFor = Exception.class)
     private void updateStockBeforeDelete(InwardInventory inwardInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        String warehouseName = inwardInventory.getWarehouse().getWarehouseName();
         for (InwardOutwardList ioList : inwardInventory.getInwardOutwardList()) {
+            Long warehouseId = ioList.getWarehouse().getWarehouseId();
             Double stock = ioList.getQuantity();
             Double currentStock = stockRepo
-                    .findStockForProductAndWarehouse(ioList.getProduct().getProductId(), warehouseName).get(0)
+                    .findStockForProductAndWarehouse(ioList.getProduct().getProductId(), warehouseId).get(0)
                     .getQuantityInHand();
             if (currentStock < stock)
                 throw new Exception("Cannot Delete. Stock will go negative if deleted");
-            stockService.updateStock(ioList.getProduct().getProductId(), warehouseName, stock, "outward");
+            stockService.updateStock(ioList.getProduct().getProductId(), warehouseId, stock, "outward");
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public InwardInventory updateInwardnventory(InwardInventoryData iiData, Long id) throws Exception {
-        logger.info("In undate inward inventory flow");
-        Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
-        if (!inwardInventoryOpt.isPresent())
-            throw new Exception("Inventory Entry with ID not found");
-        validateInputs(iiData);
-        InwardInventory inwardInventory = inwardInventoryOpt.get();
-        InwardInventory oldInwardInventory = (InwardInventory) inwardInventory.clone();
-        exitIfNotAuthorized(inwardInventory, iiData, APICallTypeForAuthorization.Update);
-        setFields(inwardInventory, iiData);
-        modifyStockBeforeUpdate(oldInwardInventory, inwardInventory);
-        removeOrphans(oldInwardInventory);
-        inwardInventoryRepo.save(inwardInventory);
-        return inwardInventory;
+    /*
+        @Transactional(rollbackFor = Exception.class)
+        public InwardInventory updateInwardnventory(InwardInventoryData iiData, Long id) throws Exception {
+            logger.info("In undate inward inventory flow");
+            Optional<InwardInventory> inwardInventoryOpt = inwardInventoryRepo.findById(id);
+            if (!inwardInventoryOpt.isPresent())
+                throw new Exception("Inventory Entry with ID not found");
+            return null;
+        }
+    */
+    private InwardSnapshot buildSnapshot(InwardInventory inward) {
+        InwardSnapshot snap = new InwardSnapshot();
+        snap.setInwardId(inward.getInwardId());
+        snap.setInwardDate(inward.getDate());
+        for (InwardOutwardList io : inward.getInwardOutwardList()) {
+            InwardLineSnapshot line = new InwardLineSnapshot();
+            line.setLineItemCode(io.getLineItemCode());
+            line.setQuantity(io.getQuantity());
+            snap.getLines().add(line);
+        }
+        return snap;
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    private void exitIfNotAuthorized(InwardInventory inwardInventory, InwardInventoryData iiData,
-                                     APICallTypeForAuthorization action) throws Exception {
+    private IndentsForInwardView fetchPoLine(String lineItemCode, String tenant) {
 
-        //UserReturnData currentUserData = userDetailService.getCurrentUser();
+        List<IndentsForInwardView> result = indentsForInwardViewRepository.getLineItemDetails(lineItemCode, tenant);
 
-        if (action.equals(APICallTypeForAuthorization.Update)) {
-
-            Long daysDifference = ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date());
-            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
-
-            if (daysDifference > daysEditAllowed)
-                throw new Exception("Cannot modify record that is created greater than " + daysEditAllowed + " days ago.");
-
-            if (!iiData.getDate().equals(inwardInventory.getDate()))
-                throw new Exception("Date should not be modified while updating inward inventory record");
-
-            if (!iiData.getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
-                throw new Exception("Warehouse should not be modified while updating inward inventory record");
-
-            List<Long> productsInPayload = iiData.getProductWithQuantities().stream()
-                    .map(ProductWithQuantity::getProductId).collect(Collectors.toList());
-
-            List<Long> productsInExistingRecord = inwardInventory.getInwardOutwardList().stream()
-                    .map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
-            if (!(productsInPayload.containsAll(productsInExistingRecord)
-                    && productsInPayload.size() == productsInExistingRecord.size()))
-                throw new Exception("Inventory List should not be modified while updating an inward inventory record");
-        }
-        if (action.equals(APICallTypeForAuthorization.Create)) {
-            Long daysDifference = ReusableMethods.daysBetweenTwoDates(iiData.getDate(), new Date());
-            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
-
-            if (daysDifference > daysEditAllowed)
-                throw new Exception("Cannot add inventory record with date older than " + daysEditAllowed + " days.");
+        if (result.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "No PO line item found for code: " + lineItemCode);
         }
 
-        if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
-            Long daysDifference = ReusableMethods.daysBetweenTwoDates(inwardInventory.getDate(), new Date());
-            Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
+        return result.get(0);
+    }
 
-            if (daysDifference > daysEditAllowed)
-                throw new Exception("Cannot DELETE inward inventory created more than " + daysEditAllowed + " Days ago. ");
+    private void validateQuantityAgainstPO(String lineItemCode, String tenant, Double newQty, Double oldQty) {
+
+        IndentsForInwardView poView = fetchPoLine(lineItemCode, tenant);
+
+        double orderedQty = poView.getQuantity() != null ? poView.getQuantity() : 0d;
+        double totalInwardQty = poView.getTotalInwardQuantity() != null ? poView.getTotalInwardQuantity() : 0d;
+        double effectiveAlreadyInwarded = oldQty == null ? totalInwardQty : totalInwardQty - oldQty;
+        double maxAllowed = orderedQty - effectiveAlreadyInwarded;
+
+        if (newQty > maxAllowed) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Quantity exceeds PO limit for lineItemCode [%s]. " +
+                                    "Ordered: %.2f, Already inwarded: %.2f, Max allowed now: %.2f",
+                            lineItemCode,
+                            orderedQty,
+                            effectiveAlreadyInwarded,
+                            maxAllowed
+                    )
+            );
         }
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void modifyStockBeforeUpdate(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
-            throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        if (!oldInwardInventory.getWarehouse().getWarehouseId().equals(inwardInventory.getWarehouse().getWarehouseId()))
-            updateWhenWarehouseChanged(oldInwardInventory, inwardInventory);
-        else
-            updateWhenWarehouseSame(oldInwardInventory, inwardInventory);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateWhenWarehouseSame(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
-            throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        // Fetch product only in old and only in new and common
-        Set<Long> oldProductSet = new HashSet<>(oldInwardInventory.getInwardOutwardList().size());
-        Set<Long> newProductSet = new HashSet<>(inwardInventory.getInwardOutwardList().size());
-        oldInwardInventory.getInwardOutwardList().stream().filter(p -> oldProductSet.add(p.getProduct().getProductId()))
-                .collect(Collectors.toList());
-        inwardInventory.getInwardOutwardList().stream().filter(p -> newProductSet.add(p.getProduct().getProductId()))
-                .collect(Collectors.toList());
-        Set<Long> onlyInOld = ReusableMethods.differenceBetweenSets(oldProductSet, newProductSet);
-        Set<Long> onlyInNew = ReusableMethods.differenceBetweenSets(newProductSet, oldProductSet);
-        Set<Long> commonInBoth = ReusableMethods.commonBetweenSets(oldProductSet, newProductSet);
-        updateStockForOnlyInOld(onlyInOld, oldInwardInventory);
-        updateStockForOnlyInNew(onlyInNew, inwardInventory);
-        updateStockForCommonInBoth(commonInBoth, oldInwardInventory, inwardInventory);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForCommonInBoth(Set<Long> commonInBoth, InwardInventory oldInwardInventory,
-                                            InwardInventory inwardInventory) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        logger.info("Updating stock for productid common in both old and new");
-        Set<InwardOutwardList> oldIOListSet = oldInwardInventory.getInwardOutwardList();
-        Set<InwardOutwardList> newIOListSet = inwardInventory.getInwardOutwardList();
-        for (Long id : commonInBoth) {
-
-            Double oldQuantity = findQuantityForProductInIOList(id, oldIOListSet);
-            Double newQuantity = findQuantityForProductInIOList(id, newIOListSet);
-            Double quantityForUpdate = newQuantity - oldQuantity;
-            logger.info("Difference in quantity -" + quantityForUpdate);
-            for (InwardOutwardList ioList : newIOListSet) {
-
-                if (id.equals(ioList.getProduct().getProductId())) {
-                    Double closingStock = stockService.updateStock(id,
-                            inwardInventory.getWarehouse().getWarehouseName(), quantityForUpdate, "inward");
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            inwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
-                    ioList.setClosingStock(closingStock);
-                }
-            }
-            inwardInventory.setInwardOutwardList(newIOListSet);
-        }
-
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private Double findQuantityForProductInIOList(Long productId, Set<InwardOutwardList> ioListSet) {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        for (InwardOutwardList ioList : ioListSet) {
-            if (productId.equals(ioList.getProduct().getProductId())) {
-                Double oldQuantity = ioList.getQuantity();
-                return oldQuantity;
-            }
-        }
-        return null;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForOnlyInNew(Set<Long> onlyInNew, InwardInventory inwardInventory) throws Exception {
-        logger.info("Processing Update Stock for productids present only in new");
-        for (Long id : onlyInNew) {
-            Set<InwardOutwardList> ioListSet = inwardInventory.getInwardOutwardList();
-
-            for (InwardOutwardList ioList : ioListSet) {
-                if (id.equals(ioList.getProduct().getProductId())) {
-                    Double quantity = ioList.getQuantity();
-                    Double closingStock = stockService.updateStock(id,
-                            inwardInventory.getWarehouse().getWarehouseName(), quantity, "inward");
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            inwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
-                    ioList.setClosingStock(closingStock);
-                }
-            }
-            inwardInventory.setInwardOutwardList(ioListSet);
-        }
-
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForOnlyInOld(Set<Long> onlyInOld, InwardInventory oldInwardInventory) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        // Delete stock received as part of old inventory
-        for (Long id : onlyInOld) {
-            Set<InwardOutwardList> ioListSet = oldInwardInventory.getInwardOutwardList();
-            for (InwardOutwardList ioList : ioListSet) {
-                if (id.equals(ioList.getProduct().getProductId())) {
-                    Double quantity = ioList.getQuantity();
-                    Double closingStock = stockService.updateStock(id,
-                            oldInwardInventory.getWarehouse().getWarehouseName(), quantity, "outward");
-
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            oldInwardInventory.getWarehouse().getWarehouseName(), "inward", closingStock);
-                }
-            }
-        }
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateWhenWarehouseChanged(InwardInventory oldInwardInventory, InwardInventory inwardInventory)
-            throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        // Delete all stock added as part of old warehouse
-        traverseListAndUpdateStock(oldInwardInventory.getInwardOutwardList(), "outward",
-                oldInwardInventory.getWarehouse());
-
-        // Add new stock to new warehouse
-        Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(inwardInventory.getInwardOutwardList(), "inward",
-                inwardInventory.getWarehouse());
-        inwardInventory.setInwardOutwardList(newLIOList);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset, String type,
-                                                              Warehouse warehouse) throws Exception {
-        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        for (InwardOutwardList oiList : ioListset) {
-            Double closingStock = stockService.updateStock(oiList.getProduct().getProductId(),
-                    warehouse.getWarehouseName(), oiList.getQuantity(), type);
-            inventoryNotificationService.pushQuantityEditedNotification(oiList.getProduct(),
-                    warehouse.getWarehouseName(), "inward", closingStock);
-            oiList.setClosingStock(closingStock);
-        }
-        return ioListset;
-    }
-
-    public Pageable modifyPageable(Pageable pageable) {
-        Sort sort = pageable.getSort();
-        Sort newSort = sort;
-
-        for (Sort.Order order : sort) {
-            String property = order.getProperty();
-            Sort.Direction direction = order.getDirection();
-            if (property.equalsIgnoreCase("date")) {
-                if (direction == Sort.Direction.ASC) {
-                    newSort = Sort.by(Sort.Order.asc("date"), Sort.Order.desc("inwardid"));
-                } else if (direction == Sort.Direction.DESC) {
-                    newSort = Sort.by(Sort.Order.desc("date"), Sort.Order.asc("inwardid"));
-                }
-                pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), newSort);
-                break;
-            }
-        }
-
-        return pageable;
     }
 }

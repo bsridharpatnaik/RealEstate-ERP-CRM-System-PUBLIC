@@ -27,7 +27,7 @@ import com.ec.application.data.LostDamagedReturnData;
 import com.ec.application.model.LostDamagedInventory;
 import com.ec.application.service.LostDamagedInventoryService;
 import com.ec.application.service.PopulateDropdownService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/lostdamaged")

@@ -67,17 +67,17 @@ public class InwardInventoryExportDAO2 {
 
     public InwardInventoryExportDAO2(InwardInventory ii, InwardOutwardList iol) {
         super();
-        this.inwardid = ii.getInwardid();
+        this.inwardid = ii.getInwardId();
         this.date = ii.getDate();
         this.vehicleNo = ii.getVehicleNo() == null ? "" : ii.getVehicleNo();
         this.quantity = iol.getQuantity();
         this.closingStock = iol.getClosingStock();
         this.measurementUnit = iol.getProduct().getMeasurementUnit();
-        this.warehouse = ii.getWarehouse().getWarehouseName();
+        this.warehouse = iol.getWarehouse().getWarehouseName();
         this.supplier = ii.getSupplier().getName();
         this.mrngrn = ii.getOurSlipNo() == null ? "" : ii.getOurSlipNo();
-        this.purchaseOrderDate = ii.getPurchaseOrderdate() == null ? null : ii.getPurchaseOrderdate();
-        this.purchaseOrderNO = ii.getPurchaseOrder() == null ? "" : ii.getPurchaseOrder();
+        this.purchaseOrderDate = ii.getPurchaseOrderDate() == null ? null : ii.getPurchaseOrderDate();
+        this.purchaseOrderNO = ii.getPurchaseOrderNo() == null ? "" : ii.getPurchaseOrderNo();
         this.inventory = iol.getProduct().getProductName();
         this.category = iol.getProduct().getCategory().getCategoryName();
         this.billNo = ii.getBillNo() == null ? "" : ii.getBillNo();

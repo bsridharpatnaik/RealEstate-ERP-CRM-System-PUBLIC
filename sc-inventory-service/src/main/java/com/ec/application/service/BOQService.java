@@ -10,7 +10,7 @@ import javax.transaction.Transactional;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
 import com.ec.application.repository.*;
-import com.ec.common.Filters.BOQSpecificationV2;
+import com.ec.application.Filters.BOQSpecificationV2;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
@@ -22,10 +22,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.BOQUploadConstant;
-import com.ec.common.Filters.BOQSpecification;
-import com.ec.common.Filters.BOQStatusFilterDataList;
-
-import java.io.IOException;
+import com.ec.application.Filters.BOQSpecification;
+import com.ec.application.Filters.BOQStatusFilterDataList;
 
 @Service
 @Transactional

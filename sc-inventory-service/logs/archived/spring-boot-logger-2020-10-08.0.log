@@ -4,7 +4,7 @@
 2020-10-08 09:57:26,020 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h57m3s997ms).
 2020-10-08 11:04:30,612 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=36m34s417ms).
 2020-10-08 16:11:02,864 WARN com.zaxxer.hikari.pool.HikariPool$HouseKeeper [HikariPool-1 housekeeper] HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1m59s694ms).
-2020-10-08 16:32:41,403 INFO com.ec.application.ReusableClasses.ScheduledTasks [scheduling-1] Sending Stock Notification Email in evening
+2020-10-08 16:32:41,403 INFO com.ec.application.scheduled.ScheduledTasks [scheduling-1] Sending Stock Notification Email in evening
 2020-10-08 16:32:42,154 INFO com.ec.application.service.StockService [scheduling-1] Fetching stock information
 2020-10-08 16:32:43,058 INFO com.ec.application.service.StockService [scheduling-1] Sending email for stock information
 2020-10-08 16:32:43,060 INFO com.ec.application.service.EmailService [scheduling-1] Getting email configuration from master

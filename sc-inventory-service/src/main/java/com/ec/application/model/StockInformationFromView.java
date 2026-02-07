@@ -20,7 +20,8 @@ public class StockInformationFromView {
 
     @Column(name="product_name")
     String productName;
-
+    @Column(name="product_code")
+    String productCode;
     @Column(name="reorderQuantity")
     Double reorderQuantity;
     @Column(name="measurementUnit")

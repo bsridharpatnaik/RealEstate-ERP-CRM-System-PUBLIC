@@ -18,8 +18,8 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllBuildingTypesWithNames;
 import com.ec.application.model.BuildingType;
 import com.ec.application.repository.BuildingTypeRepo;
-import com.ec.common.Filters.BuildingTypeSpecifications;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.BuildingTypeSpecifications;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 @Transactional

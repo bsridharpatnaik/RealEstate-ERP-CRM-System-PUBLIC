@@ -20,8 +20,8 @@ public interface InwardInventoryRepo extends BaseRepository<InwardInventory, Lon
 {
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	InwardInventory save(InwardInventory entity);
-	
-	@Query(value="SELECT count(*) from InwardInventory m where m.warehouse.warehouseName=:warehouseName")
+
+	@Query("    SELECT COUNT(DISTINCT m)    FROM InwardInventory m    JOIN m.inwardOutwardList l    WHERE l.warehouse.warehouseName = :warehouseName")
 	int warehouseUsageCount(@Param("warehouseName") String warehouseName);
 
 	@Query(value="SELECT count(*) from InwardInventory m where m.supplier.contactId=:id")

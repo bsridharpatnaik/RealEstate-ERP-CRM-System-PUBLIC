@@ -1,204 +1,236 @@
 package com.ec.application.service;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.IndentInventorySpecification;
+import com.ec.application.Filters.PurchaseOrderSpecification;
+import com.ec.application.ReusableClasses.ReusableFields;
+import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.config.SchemaConfig;
+import com.ec.application.constants.IndentLineItemStatusConstants;
+import com.ec.application.constants.IndentStatusConstants;
+import com.ec.application.constants.POIndentUpdateAction;
+import com.ec.application.constants.POStatusConstants;
+import com.ec.application.data.*;
+import com.ec.application.enricher.PurchaseOrderUiEnricher;
+import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
+import com.ec.application.model.*;
+import com.ec.application.repository.PurchaseOrderRepo;
+import com.ec.application.util.PurchaseOrderPriceMasker;
+import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
+import org.hibernate.Hibernate;
+import org.hibernate.envers.Audited;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.application.ReusableClasses.IdNameProjections;
-import com.ec.application.data.FilterIndentAttributeData;
-import com.ec.application.data.IndentInventoryDto;
-import com.ec.application.data.IndentInventoryResponse;
-import com.ec.application.data.IndentResponse;
-import com.ec.application.model.Indent;
-import com.ec.application.model.IndentInventory;
-import com.ec.application.model.Product;
-import com.ec.application.repository.IndentInventoryRepository;
-import com.ec.application.repository.IndentRepository;
-import com.ec.application.repository.ProductRepo;
-import com.ec.common.Filters.FilterAttributeData;
+import javax.annotation.PostConstruct;
+import java.text.ParseException;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-public class PurchaseOrderService {
+@RequiredArgsConstructor
+@UseDefaultTenant
+public class PurchaseOrderService extends ReusableFields {
 
-	@Autowired
-	private IndentInventoryRepository indentInventoryRepository;
-	
-	@Autowired
-	private IndentRepository indentRepository;
-	
-	@Autowired
-	private ProductRepo productRepository;
-	
-	Logger log = LoggerFactory.getLogger(PurchaseOrderService.class);
-	
-	public IndentResponse addIndent(List<IndentInventoryDto> listIndentInventory) {
-		log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		IndentResponse indentResponse=new IndentResponse();
-		
-        try
-        {
-        	
-        	Indent indent=new Indent();
-        	indent.setCreationDate(new Timestamp(System.currentTimeMillis()));
-        	indent.setIndentStatus("Created");
-        	indent.setNoOfInventory(listIndentInventory.size());
-        	Indent indentId = indentRepository.save(indent);
-        	
-        	for(IndentInventoryDto iterateInventory:listIndentInventory)
-        	{
-        		
-        		Product product=productRepository.findByProductId(iterateInventory.getInventory());
-        		IndentInventory indentInventory=new IndentInventory();	
-        		indentInventory.setIndent(indentId);
-        		indentInventory.setProduct(product);
-        		indentInventory.setQuantity(iterateInventory.getQuantity());
-        		indentInventory.setStock(iterateInventory.getStock());
-        		indentInventory.setUnit(iterateInventory.getUnit());
-        		indentInventoryRepository.save(indentInventory);
-        	}
-        	
-        	indentResponse.setMessage("Add inventory successfully");
-        }
-        catch (Exception e) {
-			e.printStackTrace();
-			
-		}
-		return indentResponse;
-	}
+    @Autowired
+    PurchaseOrderRepo purchaseOrderRepo;
 
-	public IndentResponse getListOfIndent() {
-		IndentResponse indentResponse=new IndentResponse();
-        try
-        {
-        	List<Indent> indent=indentRepository.findAll();
-        	indentResponse.setIndent(indent);
-        	indentResponse.setMessage("Get list of indent successfully");
-        }
-        catch (Exception e) {
-			e.printStackTrace();
-		}
-		return indentResponse;
-	}
+    @Autowired
+    PurchaseOrderValidator validator;
 
-	public IndentInventoryResponse viewIndent(long indentNumber) {
-		IndentInventoryResponse indentInventoryResponse=new IndentInventoryResponse();
-		try
-		{
-			
-			List<IndentInventory> listOfindentInventory=indentInventoryRepository.findByIndentIndentNumber(indentNumber);
-			System.out.println("hello");
-			List<IndentInventoryDto> listOfIndentInventoryDto=new ArrayList<>();
-			for(IndentInventory indentInventory: listOfindentInventory)
-			{
-			
-				IndentInventoryDto indentInventoryDto=new IndentInventoryDto();
-				indentInventoryDto.setId(indentInventory.getId());
-				indentInventoryDto.setInventoryName(indentInventory.getProduct().getProductName());
-				indentInventoryDto.setQuantity(indentInventory.getQuantity());
-				indentInventoryDto.setStock(indentInventory.getStock());
-				indentInventoryDto.setUnit(indentInventory.getUnit());
-				indentInventoryDto.setInventory(indentInventory.getProduct().getProductId());
-				listOfIndentInventoryDto.add(indentInventoryDto);
-			}
-			indentInventoryResponse.setIndentInventory(listOfIndentInventoryDto);
-			indentInventoryResponse.setMessage("Get Indent Successuflly");
-			
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			indentInventoryResponse.setMessage("Get Indent failed");
-		}
-		return indentInventoryResponse;
-	}
+    @Autowired
+    PurchaseOrderBuilder poBuilder;
 
-	public IndentInventoryResponse updateIndent(List<IndentInventoryDto> listIndentInventory) {
-		IndentInventoryResponse indentInventoryResponse=new IndentInventoryResponse();
-		try
-		{			
-			for(IndentInventoryDto iterateInventory:listIndentInventory)
-        	{
-				IndentInventory indentInventory=indentInventoryRepository.findById(iterateInventory.getId());
-        		Product product=productRepository.findByProductId(iterateInventory.getInventory());
-        		
-        		System.out.println(product.getProductId());
-        		indentInventory.setProduct(product);
-        		indentInventory.setQuantity(iterateInventory.getQuantity());
-        		indentInventory.setStock(iterateInventory.getStock());
-        		indentInventory.setUnit(iterateInventory.getUnit());
-        		indentInventoryRepository.save(indentInventory);
-        		
-        	}
-        	
-			indentInventoryResponse.setMessage("Update Indent Successuflly");
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			indentInventoryResponse.setMessage("Update Indent failed");
-		}
-		return indentInventoryResponse;
-	}
+    @Autowired
+    IndentStatusUpdater indentStatusUpdater;
 
-	
-	public IndentInventoryResponse deleteIndent(long indentNumber) {
-		IndentInventoryResponse indentInventoryResponse=new IndentInventoryResponse();
-		try
-		{
-			
-			List<IndentInventory> indentInventory=indentInventoryRepository.findByIndentIndentNumber(indentNumber);
-			if(!indentInventory.isEmpty())
-			{
-				indentInventoryRepository.deleteByIndentIndentNumber(indentNumber);
-			}
-			
-			Indent indent=indentRepository.findByIndentNumber(indentNumber);
-			if(indent!=null)
-			{
-				indentRepository.deleteByIndentNumber(indentNumber);
-			}
-			indentInventoryResponse.setMessage("Delete Indent successfully");
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			indentInventoryResponse.setMessage("Delete Indent failed");
-		}
-		return indentInventoryResponse;
-	}
+    @Autowired
+    PurchaseOrderUiEnricher purchaseOrderUiEnricher;
 
-	
+    @Autowired
+    PopulateDropdownService populateDropdownService;
 
-	public IndentResponse searchByIndentNumber(FilterIndentAttributeData filterAttributeData) {
-		IndentResponse indentResponse=new IndentResponse();
-		try
-		{
-			List<Indent> list=new ArrayList<>();
-			List<Indent> indent=indentRepository.findByIndentNumberIn(filterAttributeData.getAttrValue());
-			if(!indent.isEmpty())
-			{
-				list.addAll(indent);	
-			}
-			indentResponse.setIndent(indent);
-			indentResponse.setMessage("Successfully done");
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			indentResponse.setMessage("Successfully failed");
-		}
-		return indentResponse;
-	}
+    @Autowired
+    PurchaseOrderLifecycleManager poLifecycleManager;
 
-     public List<IdNameProjections> getListOfIndentNumber() {
-		
-		return indentRepository.findIdAndNames();
-	 }
+    @Autowired
+    DraftService draftService;
 
-	public List<IdNameProjections> productMeasurementUnit(long productId) {
-			log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-		return productRepository.findIdAndMeasurementUnitNames(productId);
+    @Autowired
+    PurchaseOrderPriceMasker purchaseOrderPriceMasker;
+
+    @Autowired
+    PurchaseOrderStatusHistoryService poStatusHistoryService;
+
+    @Autowired
+    UserDetailsService userDetailsService;
+
+    @Transactional
+    public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
+        validator.validateIndentLineItems(request.getLineItems());
+        PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
+        PurchaseOrder savedPO = purchaseOrderRepo.save(po);
+        indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
+        draftService.deleteDraftForUser("PO");
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), username, buildPoCreationMessage(request, username));
+        return savedPO;
     }
-	
+
+    @Transactional(readOnly = true)
+    public ReturnPurchaseOrderData fetchPurchaseOrdersPage(FilterDataList filterDataList, Pageable pageable) throws Exception {
+
+        ReturnPurchaseOrderData returnData = new ReturnPurchaseOrderData();
+        Specification<PurchaseOrder> spec = PurchaseOrderSpecification.getSpecification(filterDataList);
+        Page<PurchaseOrder> page = (spec != null)
+                ? purchaseOrderRepo.findAll(spec, pageable)
+                : purchaseOrderRepo.findAll(pageable);
+
+        // Initialize lazy-loaded associations
+        initializeLazyAssociations(page.getContent());
+
+        // MASK PRICE FIELDS
+        purchaseOrderPriceMasker.mask(page);
+
+        // Enrich UI flags
+        purchaseOrderUiEnricher.enrich(page.getContent());
+        returnData.setPuchaseOrders(page);
+        returnData.setPoDropdown(populateDropdownService.fetchData("purchaseorder"));
+        return returnData;
+    }
+
+    private void initializeLazyAssociations(List<PurchaseOrder> purchaseOrders) {
+        purchaseOrders.forEach(po -> {
+            // Initialize supplier
+            if (po.getSupplier() != null) {
+                Hibernate.initialize(po.getSupplier());
+                String supplierName = po.getSupplier().getName(); // Touch to load
+            }
+
+            // Initialize firm
+            if (po.getFirm() != null) {
+                Hibernate.initialize(po.getFirm());
+                String firmName = po.getFirm().getFirmName(); // Touch to load
+            }
+
+            // Initialize lines
+            if (po.getLines() != null && !po.getLines().isEmpty()) {
+                Hibernate.initialize(po.getLines());
+                po.getLines().forEach(line -> {
+                    // Initialize product
+                    if (line.getProduct() != null) {
+                        Hibernate.initialize(line.getProduct());
+                        String productName = line.getProduct().getProductName(); // Touch to load
+                    }
+
+                    // Initialize indent refs
+                    if (line.getIndentRefs() != null) {
+                        Hibernate.initialize(line.getIndentRefs());
+                    }
+                });
+            }
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public PurchaseOrder getPurchaseOrderWithInit(String id) throws Exception {
+        PurchaseOrder po = purchaseOrderRepo.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Purchase Order not found with ID: " + id
+                        ));
+
+        // Initialize supplier & firm
+        if (po.getSupplier() != null) {
+            po.getSupplier().getName();
+        }
+        if (po.getFirm() != null) {
+            po.getFirm().getFirmName();
+        }
+
+        // Initialize lines + indentRefs + product
+        for (PurchaseOrderLine line : po.getLines()) {
+            line.getIndentRefs().size();
+            if (line.getProduct() != null) {
+                line.getProduct().getProductName();
+            }
+        }
+
+        // MASK PRICE FIELDS
+        purchaseOrderPriceMasker.mask(po);
+        return po;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelPurchaseOrderById(String id) throws Exception {
+        poLifecycleManager.cancelIfAllowed(id);
+    }
+
+    @Transactional
+    public PurchaseOrder shortClosePurchaseOrder(ShortClosePoRequest request) throws Exception {
+        if (request.getPurchaseOrderNo() == null)
+            throw new IllegalArgumentException("Purchase Order Number cannot be null");
+        poLifecycleManager.shortClosePo(request);
+        return purchaseOrderRepo.findByIdWithDetails(request.getPurchaseOrderNo()).get();
+    }
+
+    private String buildPoCreationMessage(CreatePoRequest request, String username) {
+        String indentDetails = request.getLineItems().stream()
+                .flatMap(line ->
+                        line.getIndentRefs().stream()
+                                .map(ref ->
+                                        ref.getIndentLineItemCode() +
+                                                " (Qty: " + line.getQuantity() + ")"
+                                )
+                )
+                .collect(Collectors.joining(", "));
+
+        return "Purchase Order created by user " + username + ". Indent line items: " + indentDetails;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, DashboardChartDTO> getCurrentPODashboards() {
+
+        List<String> statuses = Arrays.asList(
+                POStatusConstants.STATUS_NEW,      // Zero Inward
+                POStatusConstants.STATUS_PARTIAL   // Partial
+        );
+
+        List<StatusGroupCountDTO> rows = purchaseOrderRepo.fetchCurrentPOStatusCounts(statuses);
+
+        Map<String, Map<String, Long>> grouped = new HashMap<>();
+
+        for (StatusGroupCountDTO row : rows) {
+            grouped
+                    .computeIfAbsent(row.getStatus(), k -> new HashMap<>())
+                    .merge(row.getGroupKey(), row.getCount(), Long::sum);
+        }
+
+        Map<String, DashboardChartDTO> dashboards = new HashMap<>();
+
+        for (String status : statuses) {
+            Map<String, Long> firmMap =
+                    grouped.getOrDefault(status, new HashMap<>());
+
+            List<TenantCountDTO> firmCounts = new ArrayList<>();
+            long total = 0;
+
+            for (Map.Entry<String, Long> e : firmMap.entrySet()) {
+                firmCounts.add(new TenantCountDTO(e.getKey(), e.getValue()));
+                total += e.getValue();
+            }
+
+            dashboards.put(status,
+                    new DashboardChartDTO(total, firmCounts));
+        }
+
+        return dashboards;
+    }
 }

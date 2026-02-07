@@ -26,7 +26,7 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.AllUsageAreasWithNamesData;
 import com.ec.application.model.UsageArea;
 import com.ec.application.service.UsageAreaService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/usagearea")

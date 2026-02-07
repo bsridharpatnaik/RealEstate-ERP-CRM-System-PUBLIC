@@ -1,13 +1,13 @@
 package com.ec.application.service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import com.ec.application.aspects.UseDefaultTenant;
 import org.apache.commons.collections.ListUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +21,12 @@ import com.ec.application.ReusableClasses.CommonUtils;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.model.Contact;
 import com.ec.application.repository.ContactInfoRepo;
-import com.ec.common.Filters.ContactSpecifications;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.ContactSpecifications;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 @Transactional
+@UseDefaultTenant
 public class ContactService {
 
     @Autowired
@@ -41,6 +42,8 @@ public class ContactService {
     CheckBeforeDeleteService checkBeforeDeleteService;
 
     CommonUtils utilObj = new CommonUtils();
+
+    private static final Set<String> ALLOWED_CONTACT_TYPES = new HashSet<>(Arrays.asList("SUPPLIER", "CONTRACTOR"));
 
     Logger log = LoggerFactory.getLogger(ContactService.class);
 
@@ -173,6 +176,10 @@ public class ContactService {
         if (payload.getZip() != null && payload.getZip() != "") {
             if (!payload.getZip().matches("\\d{6}"))
                 throw new Exception("Enter a valid pin code (6 Digits numeric)");
+        }
+
+        if (!ALLOWED_CONTACT_TYPES.contains(payload.getContactType().toUpperCase())) {
+            throw new IllegalArgumentException("contactType must be SUPPLIER or CONTRACTOR");
         }
     }
 

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.aspects.UseDefaultTenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +18,12 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.AllMachineriesWithNamesData;
 import com.ec.application.model.Machinery;
 import com.ec.application.repository.MachineryRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.MachinerySpecifications;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.MachinerySpecifications;
 
 @Service
 @Transactional
+@UseDefaultTenant
 public class MachineryService {
 
     @Autowired

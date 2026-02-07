@@ -28,7 +28,7 @@ import com.ec.application.data.MORExportDAO;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
 import com.ec.application.model.MachineryOnRent;
 import com.ec.application.service.MachineryOnRentService;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.FilterDataList;
 
 @RestController
 @RequestMapping("/mor")

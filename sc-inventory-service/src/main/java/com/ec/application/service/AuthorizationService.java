@@ -20,15 +20,24 @@ public class AuthorizationService {
     @Value("${spring.profiles.active}")
     private String profile;
 
+    @Value("${master.schema}")
+    private String masterSchema;
+
     public void exitIfReadOnly() throws Exception {
-        UserReturnData currentUser = userService.getCurrentUser();
         String tenantName = ThreadLocalStorage.getTenantName();
+
+        if(tenantName.equals(masterSchema))
+            return;
+
+        UserReturnData currentUser = userService.getCurrentUser();
         boolean isAllowed = false;
 
         for (UserTenantMapping ut : currentUser.getTenantList()) {
             if (profile.contains("sc") && profile.contains("new")) {
                 tenantName = tenantName.replace("new", "");
             }
+            if (tenantName.contains("v2"))
+                tenantName = tenantName.replace("v2", "");
             if (ut.getTenant().getName().equalsIgnoreCase(tenantName) && ut.getAuthorization().equals(AuthorizationEnum.FullAccess)) {
                 isAllowed = true;
                 break;
@@ -38,5 +47,4 @@ public class AuthorizationService {
         if (!isAllowed)
             throw new Exception("User not allowed to add/modify data for this project");
     }
-
 }

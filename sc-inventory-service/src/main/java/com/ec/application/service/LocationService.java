@@ -18,8 +18,8 @@ import com.ec.application.data.UsageLocationData;
 import com.ec.application.model.UsageLocation;
 import com.ec.application.repository.BuildingTypeRepo;
 import com.ec.application.repository.LocationRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.LocationSpecifications;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.LocationSpecifications;
 
 @Service
 @Transactional

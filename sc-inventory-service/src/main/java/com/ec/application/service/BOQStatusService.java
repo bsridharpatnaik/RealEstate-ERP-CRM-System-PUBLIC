@@ -19,9 +19,9 @@ import com.ec.application.model.BuildingType;
 import com.ec.application.repository.BOQStatusRepo;
 import com.ec.application.repository.BuildingTypeRepo;
 import com.ec.application.repository.LocationRepo;
-import com.ec.common.Filters.BOQStatusSpecification;
-import com.ec.common.Filters.FilterAttributeData;
-import com.ec.common.Filters.FilterDataList;
+import com.ec.application.Filters.BOQStatusSpecification;
+import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.Filters.FilterDataList;
 
 @Service
 public class BOQStatusService {

@@ -16,11 +16,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
-import com.ec.application.config.ProjectConstants;
 import com.ec.application.data.CreateMORentData;
 import com.ec.application.data.MORExportDAO;
 import com.ec.application.data.MachineryOnRentWithDropdownData;
-import com.ec.application.data.UserReturnData;
 import com.ec.application.model.APICallTypeForAuthorization;
 import com.ec.application.model.MORRentModeEnum;
 import com.ec.application.model.MachineryOnRent;
@@ -29,8 +27,8 @@ import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryOnRentRepo;
 import com.ec.application.repository.MachineryRepo;
 import com.ec.application.repository.SupplierRepo;
-import com.ec.common.Filters.FilterDataList;
-import com.ec.common.Filters.MachineryOnRentSpecifications;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.MachineryOnRentSpecifications;
 
 @Service
 @Transactional

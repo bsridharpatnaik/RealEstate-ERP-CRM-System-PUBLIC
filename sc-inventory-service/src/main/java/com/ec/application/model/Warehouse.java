@@ -34,7 +34,7 @@ public class Warehouse extends ReusableFields implements Cloneable
 	
 	@NotNull
 	@Size(max = 50)
-	@Column(length = 50)
+	@Column(length = 50, unique = true, nullable = false)
 	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	String warehouseName;
 
