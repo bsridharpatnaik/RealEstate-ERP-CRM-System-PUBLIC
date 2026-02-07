@@ -1,4 +1,4 @@
--- use suncitynx,kalpavrish,riddhisiddhi,smartcity,businesspark,drgtrdcntr,citycenter,school,bhaavbhumi,dhabba,mhvrtrdcntr
+-- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries
 use suncitynx;
 
 CREATE OR REPLACE VIEW all_inventory_view AS
