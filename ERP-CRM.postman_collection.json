@@ -1612,7 +1612,7 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/product?isManagedInventory=true",
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/product?isManagedInventory=true&categoryId={{categoryId}}",
                       "protocol": "{{method}}",
                       "host": [
                         "{{serverUrlAPI}}"
@@ -1625,6 +1625,10 @@
                         {
                           "key": "isManagedInventory",
                           "value": "true"
+                        },
+                        {
+                          "key": "categoryId",
+                          "value": "{{categoryId}}"
                         }
                       ]
                     }
@@ -2073,6 +2077,80 @@
                   "response": []
                 },
                 {
+                  "name": "Indent History",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "// Parse response",
+                          "const res = pm.response.json();",
+                          "",
+                          "// Get inventory list",
+                          "const inventory = res.inventoryList;",
+                          "",
+                          "if (!inventory || inventory.length === 0) {",
+                          "    throw new Error(\"inventoryList is empty or missing\");",
+                          "}",
+                          "",
+                          "// Pick a random line item",
+                          "const randomIndex = Math.floor(Math.random() * inventory.length);",
+                          "const item = inventory[randomIndex];",
+                          "",
+                          "// Extract lineItemCode",
+                          "const lineItemCode = item.lineItemCode;",
+                          "",
+                          "// Extract quantity",
+                          "const quantity = item.quantity;",
+                          "",
+                          "// Generate a smaller number than quantity (minimum 1)",
+                          "const smallerQuantity = Math.floor(Math.random() * quantity) || 1;",
+                          "",
+                          "// Save to environment variables",
+                          "pm.environment.set(\"lineItemCode\", lineItemCode);",
+                          "pm.environment.set(\"quantity\", quantity);",
+                          "pm.environment.set(\"splitQuantity\", smallerQuantity);",
+                          "",
+                          "// Optional: log for debugging",
+                          "console.log({",
+                          "    lineItemCode,",
+                          "    quantity,",
+                          "    smallerQuantity",
+                          "});",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/indent/{{indentid}}/status-history",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "indent",
+                        "{{indentid}}",
+                        "status-history"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
                   "name": "Split Indent",
                   "request": {
                     "method": "PATCH",
@@ -2197,7 +2275,46 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    // possible attrName - startDate,endDate, productNames, productCodes, globalSearch, categoryNames, indentStatus, lineItemStatus\n    \"filterData\": [\n        {\n    \t\t\"attrName\":\"startDate\",\n    \t\t\"attrValue\":[\"22-01-2026\"]\n    \t}\n    ]\n}",
+                      "raw": "{\n    \"filterData\": [\n       /* {\n            \"attrName\": \"globalSearch\",\n            \"attrValue\": [\n                \"bb\"\n            ]\n        },\n        {\n            \"attrName\": \"startDate\",\n            \"attrValue\": [\n                \"01-01-2026\"\n            ]\n        },\n        {\n            \"attrName\": \"endDate\",\n            \"attrValue\": [\n                \"28-01-2026\"\n            ]\n        },\n        {\n            \"attrName\": \"categoryNames\",\n            \"attrValue\": [\n                \"Carpainting Goods\",\n                \"Category 456\"\n            ]\n        },\n        {\n            \"attrName\": \"productNames\",\n            \"attrValue\": [\n                \"10x 1 Way Switch 10amp.\"\n            ]\n        },\n        {\n            \"attrName\": \"productCodes\",\n            \"attrValue\": [\n                260\n            ]\n        },\n        {\n            \"attrName\": \"indentStatus\",\n            \"attrValue\": [\n                \"NEW\"\n            ]\n        },*/\n        {\n            \"attrName\": \"staleBuckets\",\n            \"attrValue\": [\n                \"GT_3_DAYS\"\n            ]\n        }\n    ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/indent",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "indent"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Fetch With Filter Copy",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"staleBuckets\",\n            \"attrValue\": [\n                \"GT_3_DAYS\"\n            ]\n        }\n    ]\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -2675,7 +2792,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"poDate\": \"{{poDate}}\",\n    \"supplierId\": {{supplierId}},\n    \"firmId\": {{firmId}},\n    \"subject\": \"{{$randomWords}}\",\n    \"notes\": \"{{$randomLoremSentences}}\",\n    \"grandTotal\": 125500.00,\n    \"lineItems\": [\n        {\n            \"productId\": {{indentProductId1}},\n            \"quantity\": {{indentQuantity1}},\n            \"brand\": \"{{$randomCompanyName}}\",\n            \"grade\": \"Fe 500D\",\n            \"diameter\": \"12mm\",\n            \"specification\": \"{{$randomPhrase}}\",\n            \"rate\": 55.00,\n            \"gstPercent\": 18.0,\n            \"netRate\": 64.90,\n            \"totalAmount\": 6490.00,\n            \"indentRefs\": [\n                {\n                    \"indentLineItemCode\": \"{{indentLineItemCode1}}\"\n                }\n            ]\n        },\n        {\n            \"productId\": {{indentProductId2}},\n            \"quantity\": {{indentQuantity2}},\n            \"brand\": \"{{$randomCompanyName}}\",\n            \"grade\": \"Fe 500D\",\n            \"diameter\": \"12mm\",\n            \"specification\": \"{{$randomPhrase}}\",\n            \"rate\": 55.00,\n            \"gstPercent\": 18.0,\n            \"netRate\": 64.90,\n            \"totalAmount\": 6490.00,\n            \"indentRefs\": [\n                {\n                    \"indentLineItemCode\": \"{{indentLineItemCode2}}\"\n                }\n            ]\n        }\n    ]\n}",
+                      "raw": "{\n    \"poDate\": \"{{poDate}}\",\n    \"supplierId\": {{supplierId}},\n    \"firmId\": {{firmId}},\n    \"subject\": \"{{$randomWords}}\",\n    \"notes\": \"{{$randomLoremSentences}}\",\n    \"grandTotal\": 125500.00,\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"3c0baf3e-d159-4073-95ce-a459f113a549\",\n            \"fileName\": \"SC - QA.postman_environment.json\"\n        }\n    ],\n    \"lineItems\": [\n        {\n            \"productId\": {{indentProductId1}},\n            \"quantity\": {{indentQuantity1}},\n            \"brand\": \"{{$randomCompanyName}}\",\n            \"grade\": \"Fe 500D\",\n            \"diameter\": \"12mm\",\n            \"specification\": \"{{$randomPhrase}}\",\n            \"rate\": 55.00,\n            \"gstPercent\": 18.0,\n            \"netRate\": 64.90,\n            \"totalAmount\": 6490.00,\n            \"indentRefs\": [\n                {\n                    \"indentLineItemCode\": \"{{indentLineItemCode1}}\"\n                }\n            ]\n        },\n        {\n            \"productId\": {{indentProductId2}},\n            \"quantity\": {{indentQuantity2}},\n            \"brand\": \"{{$randomCompanyName}}\",\n            \"grade\": \"Fe 500D\",\n            \"diameter\": \"12mm\",\n            \"specification\": \"{{$randomPhrase}}\",\n            \"rate\": 55.00,\n            \"gstPercent\": 18.0,\n            \"netRate\": 64.90,\n            \"totalAmount\": 6490.00,\n            \"indentRefs\": [\n                {\n                    \"indentLineItemCode\": \"{{indentLineItemCode2}}\"\n                }\n            ]\n        }\n    ]\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -2768,6 +2885,83 @@
                         "inventory",
                         "purchase-order",
                         "{{purchaseOrderId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PO History",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(responseBody);",
+                          "pm.environment.set(\"poId\", jsonData.indentId)"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"poDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"poDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/purchase-order/{{purchaseOrderId}}/status-history",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "purchase-order",
+                        "{{purchaseOrderId}}",
+                        "status-history"
                       ]
                     }
                   },
@@ -3016,6 +3210,90 @@
                     }
                   },
                   "response": []
+                },
+                {
+                  "name": "Fetch PO Page Copy",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(responseBody);",
+                          "pm.environment.set(\"poId\", jsonData.indentId)"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"poDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"poDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    //startDate,endDate,productNames,productCodes,status,globalSearch,categoryNames,suppliers\n    \"filterData\": [\n     {\n            \"attrName\": \"staleBuckets\",\n            \"attrValue\": [\n                \"GT_3_DAYS\"\n            ]\n        }\n    ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/purchase-order",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "purchase-order"
+                      ]
+                    }
+                  },
+                  "response": []
                 }
               ]
             },
@@ -3163,7 +3441,8 @@
                       "listen": "test",
                       "script": {
                         "exec": [
-                          ""
+                          "var jsonData = JSON.parse(responseBody);",
+                          "pm.environment.set(\"inwardId\", jsonData.inwardId)"
                         ],
                         "type": "text/javascript",
                         "packages": {},
@@ -3218,7 +3497,7 @@
                     ],
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"poNumber\": \"{{poNumber}}\",\n    \"inwardDate\": \"{{inwardDate}}\",\n    \"invoiceReceived\": true,\n    \"vehicleNo\": \"MH31EU5079\",\n    \"supplierSlipNo\": \"1\",\n    \"ourSlipNo\": \"{{$randomInt}}\",\n    \"billNo\": \"{{$randomInt}}\",\n    \"challanNo\": \"{{$randomInt}}\",\n    \"challanDate\":  \"{{inwardDate}}\",\n    \"billDate\":  \"{{inwardDate}}\",\n    \"additionalInfo\": \"{{$randomAbbreviation}}\",\n    \"fileInformations\": [],\n    \"lineItems\": [\n        {\n            \"lineItemCode\": \"{{line1_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 4\n        },\n        {\n            \"lineItemCode\": \"{{line2_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 4\n        }\n    ]\n}",
+                      "raw": "{\n    \"poNumber\": \"{{poNumber}}\",\n    \"inwardDate\": \"{{inwardDate}}\",\n    \"invoiceReceived\": true,\n    \"vehicleNo\": \"MH31EU5079\",\n    \"supplierSlipNo\": \"1\",\n    \"ourSlipNo\": \"{{$randomInt}}\",\n    \"billNo\": \"{{$randomInt}}\",\n    \"challanNo\": \"{{$randomInt}}\",\n    \"challanDate\":  \"{{inwardDate}}\",\n    \"billDate\":  \"{{inwardDate}}\",\n    \"additionalInfo\": \"{{$randomAbbreviation}}\",\n    \"fileInformations\": [],\n    \"lineItems\": [\n        {\n            \"lineItemCode\": \"{{line1_code}}\",\n            \"quantityReceived\": 130,\n            \"warehouseId\": {{warehouseId}}\n        },\n        {\n            \"lineItemCode\": \"{{line2_code}}\",\n            \"quantityReceived\": 80,\n            \"warehouseId\": {{warehouseId}}\n        }\n    ]\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -3243,6 +3522,90 @@
                 },
                 {
                   "name": "Update Inventory",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"inwardDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"inwardDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"supplierId\": 174,\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId1}},\n            \"quantity\": 2\n        },\n        {\n            \"productId\": {{productId2}},\n            \"quantity\": 10\n        }\n    ],\n    \"vehicleNo\": \"{{$randomVerb}}\",\n    \"supplierSlipNo\": \"1\",\n    \"ourSlipNo\": \"12345\",\n    \"additionalInfo\": \"Sql\",\n    \"invoiceReceived\": true,\n    \"challanNo\": \"67100\",\n    \"billNo\": \"98765\",\n    \"challanDate\": \"16-01-2026\",\n    \"billDate\": \"16-01-2026\",\n    \"fileInformations\": []\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/inward/{{inwardId}}",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "inward",
+                        "{{inwardId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Inventory Copy",
                   "event": [
                     {
                       "listen": "test",
@@ -3903,7 +4266,7 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock/s{{deadStockId}}",
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock/{{deadStockId}}",
                       "protocol": "{{method}}",
                       "host": [
                         "{{serverUrlAPI}}"
@@ -3911,7 +4274,7 @@
                       "path": [
                         "inventory",
                         "dead-stock",
-                        "s{{deadStockId}}"
+                        "{{deadStockId}}"
                       ]
                     }
                   },
@@ -3992,6 +4355,253 @@
                           "key": "productId",
                           "value": "{{indentProductId1}}"
                         }
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Stock Summary",
+              "item": [
+                {
+                  "name": "Sync Stock",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(responseBody);",
+                          "pm.environment.set(\"draftId\", jsonData.draftId)"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"indentDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"indentDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dead-stock/sync",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dead-stock",
+                        "sync"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Paged Data",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"indentDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"indentDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"filterData\": []\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/stock-summary",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "stock-summary"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Paged Filtered Data",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          "// Get today's date",
+                          "const today = new Date();",
+                          "",
+                          "// Format as dd-MM-yyyy",
+                          "const day = String(today.getDate()).padStart(2, '0');",
+                          "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                          "const year = today.getFullYear();",
+                          "",
+                          "const formattedDate = `${day}-${month}-${year}`;",
+                          "",
+                          "// Save to environment or collection variable",
+                          "pm.environment.set(\"indentDate\", formattedDate);",
+                          "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                          "",
+                          "console.log(\"indentDate:\", formattedDate);",
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "tenant-id",
+                        "value": "egcity",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"filterData\": [\n        {\n            \"attrName\": \"tenants\",\n            \"attrValue\": [\n                \"bhaavbhumi\"\n            ]\n        }/*,\n        {\n            \"attrName\": \"productCodes\",\n            \"attrValue\": [\n                \"MG145\",\n                \"MG165\"\n            ]\n        },\n        {\n            \"attrName\": \"productNames\",\n            \"attrValue\": [\n                \"Carpainting Goods\",\n                \"Product 456\"\n            ]\n        }*/\n    ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/stock-summary",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "stock-summary"
                       ]
                     }
                   },
@@ -5812,10 +6422,10 @@
               ]
             },
             {
-              "name": "History",
+              "name": "Product History",
               "item": [
                 {
-                  "name": "Fetch Indent Line Items Copy",
+                  "name": "Fetch Product PO History",
                   "event": [
                     {
                       "listen": "test",
@@ -5890,7 +6500,7 @@
                       }
                     ],
                     "url": {
-                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/purchase-orders/previous-rates?productId={{indentProductId1}}",
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/purchase-orders/previous-rates?productId={{productId1}}",
                       "protocol": "{{method}}",
                       "host": [
                         "{{serverUrlAPI}}"
@@ -5903,7 +6513,104 @@
                       "query": [
                         {
                           "key": "productId",
-                          "value": "{{indentProductId1}}"
+                          "value": "{{productId1}}"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Fetch Product PO History Copy",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "// Parse the JSON response",
+                          "let jsonData = pm.response.json();",
+                          "",
+                          "// Flatten the categorized data into a single array",
+                          "let allItems = [];",
+                          "for (let category in jsonData) {",
+                          "    if (jsonData.hasOwnProperty(category)) {",
+                          "        allItems = allItems.concat(jsonData[category]);",
+                          "    }",
+                          "}",
+                          "",
+                          "// Filter items with lineItemStatus = \"NEW\"",
+                          "let newItems = allItems.filter(item => item.lineItemStatus === \"NEW\");",
+                          "",
+                          "// Check if we have at least 2 items",
+                          "if (newItems.length >= 2) {",
+                          "    // Set variables for first item",
+                          "    pm.environment.set(\"indentProductId1\", newItems[0].productId);",
+                          "    pm.environment.set(\"indentQuantity1\", newItems[0].quantity);",
+                          "    pm.environment.set(\"indentLineItemCode1\", newItems[0].lineItemCode);",
+                          "    ",
+                          "    // Set variables for second item",
+                          "    pm.environment.set(\"indentProductId2\", newItems[1].productId);",
+                          "    pm.environment.set(\"indentQuantity2\", newItems[1].quantity);",
+                          "    pm.environment.set(\"indentLineItemCode2\", newItems[1].lineItemCode);",
+                          "    ",
+                          "    console.log(\"✅ Variables set successfully:\");",
+                          "    console.log(\"Item 1 - ProductId:\", newItems[0].productId, ",
+                          "                \"Quantity:\", newItems[0].quantity, ",
+                          "                \"LineItemCode:\", newItems[0].lineItemCode);",
+                          "    console.log(\"Item 2 - ProductId:\", newItems[1].productId, ",
+                          "                \"Quantity:\", newItems[1].quantity, ",
+                          "                \"LineItemCode:\", newItems[1].lineItemCode);",
+                          "} else {",
+                          "    console.error(\"❌ Not enough items with status 'NEW'. Found:\", newItems.length);",
+                          "}"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    },
+                    {
+                      "listen": "prerequest",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/purchase-orders/price-trend/scatter?productId={{productId1}}",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "purchase-orders",
+                        "price-trend",
+                        "scatter"
+                      ],
+                      "query": [
+                        {
+                          "key": "productId",
+                          "value": "{{productId1}}"
                         }
                       ]
                     }
@@ -5913,89 +6620,258 @@
               ]
             },
             {
-              "name": "Get By ID Copy",
-              "event": [
+              "name": "Global Dashboard",
+              "item": [
                 {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "var jsonData = JSON.parse(responseBody);",
-                      "pm.environment.set(\"purchaseOrderId\", jsonData.purchaseOrderId)"
-                    ],
-                    "type": "text/javascript",
-                    "packages": {},
-                    "requests": {}
-                  }
-                },
-                {
-                  "listen": "prerequest",
-                  "script": {
-                    "exec": [
-                      "// Get today's date",
-                      "const today = new Date();",
-                      "",
-                      "// Format as dd-MM-yyyy",
-                      "const day = String(today.getDate()).padStart(2, '0');",
-                      "const month = String(today.getMonth() + 1).padStart(2, '0');",
-                      "const year = today.getFullYear();",
-                      "",
-                      "const formattedDate = `${day}-${month}-${year}`;",
-                      "",
-                      "// Save to environment or collection variable",
-                      "pm.environment.set(\"inwardDate\", formattedDate);",
-                      "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
-                      "",
-                      "console.log(\"inwardDate:\", formattedDate);",
-                      ""
-                    ],
-                    "type": "text/javascript",
-                    "packages": {},
-                    "requests": {}
-                  }
-                }
-              ],
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Authorization",
-                    "value": "{{token}}",
-                    "type": "text"
-                  },
-                  {
-                    "key": "tenant-id",
-                    "value": "egcity",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"poNumber\": \"{{poNumber}}\",\n    \"inwardDate\": \"{{inwardDate}}\",\n    \"invoiceReceived\": true,\n    \"vehicleNo\": \"MH31EU5079\",\n    \"supplierSlipNo\": \"1\",\n    \"ourSlipNo\": \"{{$randomInt}}\",\n    \"billNo\": \"{{$randomInt}}\",\n    \"challanNo\": \"{{$randomInt}}\",\n    \"challanDate\":  \"{{inwardDate}}\",\n    \"billDate\":  \"{{inwardDate}}\",\n    \"additionalInfo\": \"{{$randomAbbreviation}}\",\n    \"fileInformations\": [],\n    \"lineItems\": [\n        {\n            \"lineItemCode\": \"{{line1_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 4\n        },\n        {\n            \"lineItemCode\": \"{{line2_code}}\",\n            \"quantityReceived\": 10,\n            \"warehouseId\": 11\n        }\n    ]\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
+                  "name": "Get Dashboard Chart",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
                     }
-                  }
-                },
-                "url": {
-                  "raw": "{{method}}://{{serverUrlAPI}}/inventory/inward/{{inwardId}}",
-                  "protocol": "{{method}}",
-                  "host": [
-                    "{{serverUrlAPI}}"
                   ],
-                  "path": [
-                    "inventory",
-                    "inward",
-                    "{{inwardId}}"
-                  ]
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/charts?startDate=01-01-2026&endDate=28-02-2026",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "charts"
+                      ],
+                      "query": [
+                        {
+                          "key": "startDate",
+                          "value": "01-01-2026"
+                        },
+                        {
+                          "key": "endDate",
+                          "value": "28-02-2026"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Stock Table",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/products/stock",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "products",
+                        "stock"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Indent Trend",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/indent/trend",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "indent",
+                        "trend"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PO Trend",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/po/trend",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "po",
+                        "trend"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Supplier Heat Map",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/suppliers/lead-time/heatmap",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "suppliers",
+                        "lead-time",
+                        "heatmap"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Stale Charts",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/stale-charts",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "stale-charts"
+                      ]
+                    }
+                  },
+                  "response": []
                 }
-              },
-              "response": []
+              ]
             }
           ]
         },
@@ -9676,7 +10552,35 @@
                       "var jsonData = JSON.parse(responseBody);",
                       "postman.setEnvironmentVariable(\"outwardid\", jsonData.outwardid);"
                     ],
-                    "type": "text/javascript"
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "// Get today's date",
+                      "const today = new Date();",
+                      "",
+                      "// Format as dd-MM-yyyy",
+                      "const day = String(today.getDate()).padStart(2, '0');",
+                      "const month = String(today.getMonth() + 1).padStart(2, '0');",
+                      "const year = today.getFullYear();",
+                      "",
+                      "const formattedDate = `${day}-${month}-${year}`;",
+                      "",
+                      "// Save to environment or collection variable",
+                      "pm.environment.set(\"outwardDate\", formattedDate);",
+                      "// or use pm.collectionVariables.set(\"indentDate\", formattedDate);",
+                      "",
+                      "console.log(\"outwardDate:\", formattedDate);",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
                   }
                 }
               ],
@@ -9686,7 +10590,6 @@
                   {
                     "key": "Content-Type",
                     "value": "application/json",
-                    "name": "Content-Type",
                     "type": "text"
                   },
                   {
@@ -9697,7 +10600,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"date\": \"01-04-2021\",\n    \"contractorId\": {{contractorId}},\n    \"usageLocationId\": {{locationId}},\n    \"warehouseId\": {{warehouseId}},\n    \"usageAreaId\": {{usageAreaId}},\n    \"slipNo\": \"le BHAG\",\n    \"purpose\": \"yun hi\",\n    \"additionalInfo\": \"sdasdas\",\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId}},\n            \"quantity\": 10\n        }\n    ],\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ]\n}",
+                  "raw": "{\n    \"date\": \"{{outwardDate}}\",\n    \"contractorId\": {{contractorId}},\n    \"usageLocationId\": {{locationId}},\n    \"warehouseId\": {{warehouseId}},\n    \"usageAreaId\": {{usageAreaId}},\n    \"slipNo\": \"le BHAG\",\n    \"purpose\": \"yun hi\",\n    \"additionalInfo\": \"sdasdas\",\n    \"productWithQuantities\": [\n        {\n            \"productId\": {{productId}},\n            \"quantity\": 10\n        }\n    ],\n    \"fileInformations\": [\n        {\n            \"fileUUId\": \"8351b4c8-2e11-4efd-8d61-1e5995503595\",\n            \"fileName\": \"temp\"\n        },\n        {\n            \"fileUUId\": \"a400e7a4-2570-4186-8276-8a9d772wewfd\",\n            \"fileName\": \"doosrafile.zip\"\n        }\n    ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
