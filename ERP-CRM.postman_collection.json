@@ -1157,7 +1157,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n\t\"userName\":\"sridhar\",\n\t\"password\":\"Test@123\"\n}"
+                  "raw": "{\n\t\"userName\":\"sridhar\",\n\t\"password\":\"{{password}}\"\n}"
                 },
                 "url": {
                   "raw": "{{method}}://{{serverUrlCommon}}/ec/login",
@@ -6865,6 +6865,514 @@
                       "path": [
                         "inventory",
                         "global-dashboard",
+                        "stale-charts"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Dummy-Global Dashboard",
+              "item": [
+                {
+                  "name": "Get Dashboard Chart",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/charts?startDate=01-01-2026&endDate=28-02-2026",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "charts"
+                      ],
+                      "query": [
+                        {
+                          "key": "startDate",
+                          "value": "01-01-2026"
+                        },
+                        {
+                          "key": "endDate",
+                          "value": "28-02-2026"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Stock Table",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/products/stock",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "products",
+                        "stock"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Indent Trend",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/indent/trend",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "indent",
+                        "trend"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PO Trend",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/po/trend",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "po",
+                        "trend"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Supplier Heat Map",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/suppliers/lead-time/heatmap",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "suppliers",
+                        "lead-time",
+                        "heatmap"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Stale Charts",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/stale-charts",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "stale-charts"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Zero-Global Dashboard Copy",
+              "item": [
+                {
+                  "name": "Get Dashboard Chart",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/zero-global-dashboard/charts?startDate=01-01-2026&endDate=28-02-2026",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "zero-global-dashboard",
+                        "charts"
+                      ],
+                      "query": [
+                        {
+                          "key": "startDate",
+                          "value": "01-01-2026"
+                        },
+                        {
+                          "key": "endDate",
+                          "value": "28-02-2026"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Stock Table",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/products/stock",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "products",
+                        "stock"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Indent Trend",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/global-dashboard/indent/trend",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "global-dashboard",
+                        "indent",
+                        "trend"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "PO Trend",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/po/trend",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "po",
+                        "trend"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Supplier Heat Map",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/suppliers/lead-time/heatmap",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
+                        "suppliers",
+                        "lead-time",
+                        "heatmap"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Stale Charts",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          ""
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "{{token}}",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{method}}://{{serverUrlAPI}}/inventory/dummy-global-dashboard/stale-charts",
+                      "protocol": "{{method}}",
+                      "host": [
+                        "{{serverUrlAPI}}"
+                      ],
+                      "path": [
+                        "inventory",
+                        "dummy-global-dashboard",
                         "stale-charts"
                       ]
                     }
