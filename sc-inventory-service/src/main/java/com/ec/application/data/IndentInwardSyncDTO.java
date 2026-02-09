@@ -16,6 +16,7 @@ public class IndentInwardSyncDTO {
     private String tenantSchema;
     private Long inwardId;
     private InwardActionType actionType;
+    private String poNumber;
     /**
      * One entry per indent line item
      */

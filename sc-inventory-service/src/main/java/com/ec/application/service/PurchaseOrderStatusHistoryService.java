@@ -21,16 +21,37 @@ public class PurchaseOrderStatusHistoryService {
     private PurchaseOrderStatusHistoryRepo purchaseOrderStatusHistoryRepo;
 
     @Transactional
-    public void logStatusChange(PurchaseOrder po, String oldStatus, String newStatus, String changedBy, String changeMessage) {
+    public void logStatusChange(
+            PurchaseOrder po,
+            String oldStatus,
+            String newStatus,
+            String changedBy,
+            String changeMessage,
+            List<HistoryRelationInput> relations
+    ) {
         PurchaseOrderStatusHistory h = new PurchaseOrderStatusHistory();
         h.setPurchaseOrder(po);
-        h.setOldStatus(oldStatus);   // can be null on creation
-        h.setNewStatus(newStatus);   // must not be null
+        h.setOldStatus(oldStatus);
+        h.setNewStatus(newStatus);
         h.setChangedAt(new Date());
         h.setChangedBy(changedBy);
         h.setChangeMessage(changeMessage);
+
+        if (relations != null && !relations.isEmpty()) {
+            for (HistoryRelationInput r : relations) {
+                PurchaseOrderStatusHistoryRelation rel =
+                        new PurchaseOrderStatusHistoryRelation();
+                rel.setPoHistory(h);
+                rel.setRelationType(r.getRelationType());
+                rel.setTenant(r.getTenant());
+                rel.setReferenceId(r.getReferenceId());
+                h.getRelations().add(rel);
+            }
+        }
+
         purchaseOrderStatusHistoryRepo.save(h);
     }
+
 
     @Transactional(readOnly = true)
     public List<PurchaseOrderStatusHistory> getStatusHistoryForPO(String purchaseOrderId) {

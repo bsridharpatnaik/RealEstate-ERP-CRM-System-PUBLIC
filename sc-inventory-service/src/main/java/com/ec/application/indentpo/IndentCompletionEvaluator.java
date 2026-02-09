@@ -59,7 +59,7 @@ public class IndentCompletionEvaluator {
             indent.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         }
         if (!oldStatus.equals(indent.getIndentStatus())) {
-            indentStatusHistoryService.logStatusChange(indent, oldStatus, indent.getIndentStatus(), "System", " Status changed from " + oldStatus + " to " + indent.getIndentStatus() + " - Auto-updated indent status based on line item statuses");
+            indentStatusHistoryService.logStatusChange(indent, oldStatus, indent.getIndentStatus(), "System", " Status changed from " + oldStatus + " to " + indent.getIndentStatus() + " - Auto-updated indent status based on line item statuses", null);
             indent.setLastStatusUpdatedAt(new Date());
         }
         indentInventoryRepo.save(indent);

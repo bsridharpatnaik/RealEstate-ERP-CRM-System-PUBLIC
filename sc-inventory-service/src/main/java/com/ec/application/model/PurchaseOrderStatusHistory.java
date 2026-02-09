@@ -6,7 +6,9 @@ import lombok.Data;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "po_status_history")
@@ -32,4 +34,13 @@ public class PurchaseOrderStatusHistory {
     private String changedBy;
 
     private String changeMessage;
+
+    @OneToMany(
+            mappedBy = "poHistory",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
+    )
+    @OrderBy("id ASC")
+    private List<PurchaseOrderStatusHistoryRelation> relations = new ArrayList<>();
 }
