@@ -105,7 +105,7 @@ public class IndentInventoryService {
 
         // Force load the list before returning (to avoid lazy init exception)
         indentInventory.getInventoryList().size();
-        indentStatusHistoryService.logStatusChange(indentInventory, null, IndentStatusConstants.STATUS_NEW, userDetailsService.getCurrentUser().getUsername(), "Indent created by " + userDetailsService.getCurrentUser().getUsername());
+        indentStatusHistoryService.logStatusChange(indentInventory, null, IndentStatusConstants.STATUS_NEW, userDetailsService.getCurrentUser().getUsername(), "Indent created by " + userDetailsService.getCurrentUser().getUsername(), null);
         draftService.deleteDraftForUser("INDENT");
         indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
@@ -372,7 +372,7 @@ public class IndentInventoryService {
             indentInventoryRepo.softDelete(indentInventory);
         }
         if (action.equalsIgnoreCase("CANCEL")) {
-            indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_CANCELLED, userDetailsService.getCurrentUser().getUsername(), "Indent cancelled by " + userDetailsService.getCurrentUser().getUsername());
+            indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_CANCELLED, userDetailsService.getCurrentUser().getUsername(), "Indent cancelled by " + userDetailsService.getCurrentUser().getUsername(), null);
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
             indentInventory.setLastStatusUpdatedAt(new Date());
             indentInventoryRepo.save(indentInventory);
@@ -497,7 +497,7 @@ public class IndentInventoryService {
     public IndentInventory approveIndentInventory(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         indentValidationService.validateBeforeApprove(indentInventory);
-        indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_APPROVED, userDetailsService.getCurrentUser().getUsername(), "Indent approved by " + userDetailsService.getCurrentUser().getUsername());
+        indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_APPROVED, userDetailsService.getCurrentUser().getUsername(), "Indent approved by " + userDetailsService.getCurrentUser().getUsername(), null);
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventory.setLastStatusUpdatedAt(new Date());
         indentInventoryRepo.save(indentInventory);

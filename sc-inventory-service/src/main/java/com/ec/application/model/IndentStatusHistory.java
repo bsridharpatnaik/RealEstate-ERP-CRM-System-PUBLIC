@@ -7,7 +7,9 @@ import lombok.Data;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "indent_status_history")
@@ -33,4 +35,13 @@ public class IndentStatusHistory {
     private String changedBy;
 
     private String changeMessage;
+
+    @OneToMany(
+            mappedBy = "history",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
+    )
+    @OrderBy("id ASC")
+    private List<IndentStatusHistoryRelation> relations = new ArrayList<>();
 }

@@ -1,9 +1,11 @@
 package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.HistoryRelationType;
 import com.ec.application.constants.IndentLineItemStatusConstants;
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.constants.POIndentUpdateAction;
+import com.ec.application.data.HistoryRelationInput;
 import com.ec.application.indentpo.IndentCompletionEvaluator;
 import com.ec.application.model.*;
 import com.ec.application.repository.IndentInventoryListRepo;
@@ -11,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -33,11 +36,11 @@ public class IndentStatusUpdater {
                 if (action == POIndentUpdateAction.CREATE_PO) {
                     item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_PO_CREATED);
                     item.setPurchaseOrderId(po.getPurchaseOrderId());
-                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + " status changed to " + item.getLineItemStatus() + " due to PO " + "creation " + po.getPurchaseOrderId() +".");
+                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + " status changed to " + item.getLineItemStatus() + " due to PO " + "creation " + po.getPurchaseOrderId() + ".", Collections.singletonList(new HistoryRelationInput(HistoryRelationType.PO, "", po.getPurchaseOrderId())));
                 } else {
                     item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
                     item.setPurchaseOrderId(null);
-                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + " status changed to " + item.getLineItemStatus() + " due to PO " + "cancellation." + po.getPurchaseOrderId() +".");
+                    indentStatusHistoryService.logStatusChange(item.getIndentInventory(), null, null, "System", "Indent line item " + item.getLineItemCode() + " status changed to " + item.getLineItemStatus() + " due to PO " + "cancellation." + po.getPurchaseOrderId() + ".", Collections.singletonList(new HistoryRelationInput(HistoryRelationType.PO, "", po.getPurchaseOrderId())));
                 }
                 indentInventoryListRepo.save(item);
                 indentCompletionEvaluator.evaluate(item.getIndentInventory());

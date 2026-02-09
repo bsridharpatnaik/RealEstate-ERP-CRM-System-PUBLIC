@@ -6,10 +6,7 @@ import com.ec.application.Filters.PurchaseOrderSpecification;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.config.SchemaConfig;
-import com.ec.application.constants.IndentLineItemStatusConstants;
-import com.ec.application.constants.IndentStatusConstants;
-import com.ec.application.constants.POIndentUpdateAction;
-import com.ec.application.constants.POStatusConstants;
+import com.ec.application.constants.*;
 import com.ec.application.data.*;
 import com.ec.application.enricher.PurchaseOrderUiEnricher;
 import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
@@ -80,7 +77,7 @@ public class PurchaseOrderService extends ReusableFields {
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
         draftService.deleteDraftForUser("PO");
         String username = userDetailsService.getCurrentUser().getUsername();
-        poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), username, buildPoCreationMessage(request, username));
+        poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), username, buildPoCreationMessage(request, username), buildPoCreationRelations(request));
         return savedPO;
     }
 
@@ -193,6 +190,32 @@ public class PurchaseOrderService extends ReusableFields {
                 .collect(Collectors.joining(", "));
 
         return "Purchase Order created by user " + username + ". Indent line items: " + indentDetails;
+    }
+
+    private List<HistoryRelationInput> buildPoCreationRelations(CreatePoRequest request) {
+        return request.getLineItems().stream()
+                .flatMap(line ->
+                        line.getIndentRefs().stream()
+                                .map(ref -> extractIndentId(ref.getIndentLineItemCode()))
+                )
+                .distinct()
+                .map(indentId ->
+                        new HistoryRelationInput(
+                                HistoryRelationType.INDENT,
+                                "",
+                                indentId
+                        )
+                )
+                .collect(Collectors.toList());
+    }
+
+    private String extractIndentId(String indentLineItemCode) {
+        if (indentLineItemCode == null || !indentLineItemCode.contains("/")) {
+            throw new IllegalArgumentException(
+                    "Invalid indent line item code: " + indentLineItemCode
+            );
+        }
+        return indentLineItemCode.substring(0, indentLineItemCode.indexOf('/'));
     }
 
     @Transactional(readOnly = true)

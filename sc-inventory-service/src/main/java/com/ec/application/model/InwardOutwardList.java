@@ -36,8 +36,19 @@ public class InwardOutwardList extends ReusableFields {
 
     String lineItemCode;
 
+    @Transient
+    private String indentId;
+
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "warehouse_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     Warehouse warehouse;
+
+    @Transient
+    public String getIndentId() {
+        if (lineItemCode == null || !lineItemCode.contains("/")) {
+            return null; // or throw exception if you want strictness
+        }
+        return lineItemCode.substring(0, lineItemCode.indexOf('/'));
+    }
 }
