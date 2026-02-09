@@ -218,7 +218,7 @@ public class IndentInventoryAsyncUpdater {
 
         if (received == 0.0) {
             indentLine.setLineItemStatus(
-                    IndentLineItemStatusConstants.STATUS_NEW
+                    IndentLineItemStatusConstants.STATUS_PO_CREATED
             );
         } else if (pending == 0.0) {
             indentLine.setLineItemStatus(
