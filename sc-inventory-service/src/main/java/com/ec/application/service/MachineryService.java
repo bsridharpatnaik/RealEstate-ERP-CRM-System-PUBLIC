@@ -82,10 +82,7 @@ public class MachineryService {
 
     public void deleteMachinery(Long id) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        if (!checkBeforeDeleteService.isMachineryUsed(id))
-            machineryRepo.softDeleteById(id);
-        else
-            throw new Exception("Machinery already in use");
+            throw new Exception("Machinery is a global configuration and cannot be deleted!");
     }
 
     public List<IdNameProjections> findIdAndNames() {
