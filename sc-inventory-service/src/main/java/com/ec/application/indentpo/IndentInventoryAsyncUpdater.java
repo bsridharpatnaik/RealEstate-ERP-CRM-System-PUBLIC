@@ -13,10 +13,7 @@ import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.InwardSyncFailureRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
-import com.ec.application.service.CategoryService;
-import com.ec.application.service.IndentStatusHistoryService;
-import com.ec.application.service.InwardInventoryService;
-import com.ec.application.service.InwardSyncFailureService;
+import com.ec.application.service.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -41,6 +38,7 @@ public class IndentInventoryAsyncUpdater {
     private final IndentInventoryRepo indentInventoryRepo;
     private final InwardSyncFailureService inwardSyncFailureService;
     private final IndentStatusHistoryService indentStatusHistoryService;
+    private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
 
     private static final Logger log = LoggerFactory.getLogger(IndentInventoryAsyncUpdater.class);
 
@@ -121,7 +119,7 @@ public class IndentInventoryAsyncUpdater {
             String newStatus = indentLine.getLineItemStatus();
             if (!oldStatus.equals(newStatus)) {
                 log.info("[ASYNC-STATUS-CHANGE] lineItemCode={} oldStatus={} newStatus={}", lineItemCode, oldStatus, newStatus);
-                indentStatusHistoryService.logStatusChange(indentLine.getIndentInventory(), null, null, "System", "Indent line item " + indentLine.getLineItemCode() + " status changed to " + newStatus + " due to inward sync for inward ID " + dto.getInwardId() + ".");
+                indentStatusHistoryService.logStatusChange(indentLine.getIndentInventory(), null, null, "System", "Indent line item " + indentLine.getLineItemCode() + " status changed to " + newStatus + " due to inward sync for " + dto.getTenantSchema() + " inward ID " + dto.getInwardId() + ".");
             }
             indentInventoryListRepo.save(indentLine);
 
@@ -141,6 +139,13 @@ public class IndentInventoryAsyncUpdater {
             if (!indentOpt.isPresent()) {
                 continue;
             }
+            if (dto.getActionType().equals(InwardActionType.CREATE)) {
+                indentStatusHistoryService.logStatusChange(indentOpt.get(), null, null, "System", "New inward entry for " + dto.getTenantSchema() + " inward ID " + dto.getInwardId() + ".");
+            } else if (dto.getActionType().equals(InwardActionType.UPDATE)) {
+                indentStatusHistoryService.logStatusChange(indentOpt.get(), null, null, "System", "Inward entry updated for " + dto.getTenantSchema() + " inward ID " + dto.getInwardId() + ".");
+            } else if (dto.getActionType().equals(InwardActionType.DELETE)) {
+                indentStatusHistoryService.logStatusChange(indentOpt.get(), null, null, "System", "Inward entry deleted for " + dto.getTenantSchema() + " inward ID " + dto.getInwardId() + ".");
+            }
             indentCompletionEvaluator.evaluate(indentOpt.get());
         }
 
@@ -151,6 +156,13 @@ public class IndentInventoryAsyncUpdater {
             Optional<PurchaseOrder> poOpt = purchaseOrderRepo.findByIdWithDetails(poNumber);
             if (!poOpt.isPresent()) {
                 continue;
+            }
+            if (dto.getActionType().equals(InwardActionType.CREATE)) {
+                purchaseOrderStatusHistoryService.logStatusChange(poOpt.get(), null, null, "System", "Inward entry CREATED for " + dto.getTenantSchema() + ". Inward ID - " + dto.getInwardId() + ".");
+            } else if (dto.getActionType().equals(InwardActionType.UPDATE)) {
+                purchaseOrderStatusHistoryService.logStatusChange(poOpt.get(), null, null, "System", "Inward entry UPDATED for " + dto.getTenantSchema() + ". Inward ID - " + dto.getInwardId() + ".");
+            } else if (dto.getActionType().equals(InwardActionType.DELETE)) {
+                purchaseOrderStatusHistoryService.logStatusChange(poOpt.get(), null, null, "System", "Inward entry DELETED for " + dto.getTenantSchema() + ". Inward ID - " + dto.getInwardId() + ".");
             }
             purchaseOrderCompletionEvaluator.evaluate(poOpt.get());
         }
