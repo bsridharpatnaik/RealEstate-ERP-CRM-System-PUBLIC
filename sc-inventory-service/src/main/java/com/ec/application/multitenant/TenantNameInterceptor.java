@@ -10,7 +10,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.data.UserReturnData;
 import com.ec.application.service.TenantService;
+import com.ec.application.service.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,9 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 
     @Autowired
     TenantService tenantService;
+
+    @Autowired
+    UserDetailsService userDetailsService;
 
     private static final Gson GSON = new Gson();
 
@@ -64,6 +69,13 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 
         String tenantName = request.getHeader("tenant-id");
 
+        if (tenantName == null || tenantName.isEmpty()) {
+            writeError(response, "Missing tenant-id header");
+            return false;
+        }
+
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+
         // Validate tenants initialized
         if (schemaConfig.getSchemaMap() == null || schemaConfig.getSchemaMap().isEmpty()) {
             writeError(response, "Tenants not initialized...");
@@ -72,7 +84,12 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
 
         // Validate tenant access
         if (!schemaConfig.getSchemaMap().containsKey(tenantName)) {
-            writeError(response, "User not allowed to access data");
+            writeError(response, "Invalid tenant-id header received in request. Please contact system administrator.");
+            return false;
+        }
+
+        if (!currentUser.getAllowedTenants().contains(tenantName)) {
+            writeError(response, "User not allowed to access data for this project - " + tenantName);
             return false;
         }
 
