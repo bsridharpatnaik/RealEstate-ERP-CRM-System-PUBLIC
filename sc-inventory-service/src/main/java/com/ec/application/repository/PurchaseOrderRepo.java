@@ -17,15 +17,6 @@ import java.util.Optional;
 
 @Repository
 public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String> {
-    @EntityGraph(attributePaths = {
-            "supplier",
-            "firm",
-            "lines",
-            "lines.product",
-            "lines.indentRefs"
-    })
-    @Query("SELECT po FROM PurchaseOrder po WHERE po.purchaseOrderId = :id")
-    Optional<PurchaseOrder> findByIdWithDetails(@Param("id") String id);
 
     @Query(
             "SELECT new com.ec.application.data.StatusGroupCountDTO(" +
@@ -38,9 +29,7 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
                     "AND po.isDeleted = false " +
                     "GROUP BY po.status, po.firm.firmName"
     )
-    List<StatusGroupCountDTO> fetchCurrentPOStatusCounts(@Param("statuses") List<String> statuses
-    );
-
+    List<StatusGroupCountDTO> fetchCurrentPOStatusCounts(@Param("statuses") List<String> statuses);
 
     @Query(
             value =
@@ -63,13 +52,13 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
     )
     List<Object[]> fetchStalePOBucketData(@Param("terminalStatuses") List<String> terminalStatuses);
 
-   // @EntityGraph(attributePaths = {})
-        // no collections
+    // STEP 1: spec-aware, pagination-safe
     Page<PurchaseOrder> findAll(
             Specification<PurchaseOrder> spec,
             Pageable pageable
     );
 
+    // STEP 2: fetch full graph by IDs
     @EntityGraph(attributePaths = {
             "supplier",
             "firm",
@@ -78,8 +67,16 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
             "lines.indentRefs"
     })
     @Query("select po from PurchaseOrder po where po.purchaseOrderId in :ids")
-    List<PurchaseOrder> findWithDetailsByIdIn(
-            @Param("ids") List<String> ids
-    );
-}
+    List<PurchaseOrder> findWithDetailsByIdIn(@Param("ids") List<String> ids);
 
+    // Single PO with details
+    @EntityGraph(attributePaths = {
+            "supplier",
+            "firm",
+            "lines",
+            "lines.product",
+            "lines.indentRefs"
+    })
+    @Query("select po from PurchaseOrder po where po.purchaseOrderId = :id")
+    Optional<PurchaseOrder> findByIdWithDetails(@Param("id") String id);
+}
