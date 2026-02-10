@@ -14,18 +14,24 @@ import com.ec.application.model.*;
 import com.ec.application.repository.PurchaseOrderRepo;
 import com.ec.application.util.PurchaseOrderPriceMasker;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.checkerframework.checker.units.qual.A;
 import org.hibernate.Hibernate;
 import org.hibernate.envers.Audited;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.List;
 import java.util.*;
@@ -256,4 +262,177 @@ public class PurchaseOrderService extends ReusableFields {
 
         return dashboards;
     }
+
+    public void streamPurchaseOrderExcel(
+            FilterDataList filterDataList,
+            OutputStream os) {
+
+        SXSSFWorkbook workbook = null;
+
+        try {
+            workbook = new SXSSFWorkbook(100);
+            Sheet sheet = workbook.createSheet("Purchase Orders");
+
+            int rowNum = 0;
+
+            // ===== Header =====
+            Row header = sheet.createRow(rowNum++);
+            String[] headers = {
+                    "PO Number",
+                    "PO Date",
+                    "PO Status",
+
+                    "Supplier",
+                    "Firm",
+
+                    "Product",
+                    "Quantity",
+                    "Rate",
+                    "GST %",
+                    "Net Rate",
+                    "Total Amount",
+
+                    "Indent No",
+                    "Indent Line Item Code"
+            };
+
+            for (int i = 0; i < headers.length; i++) {
+                header.createCell(i).setCellValue(headers[i]);
+            }
+
+            Specification<PurchaseOrder> spec =
+                    PurchaseOrderSpecification.getSpecification(filterDataList);
+
+            int page = 0;
+            int size = 200;
+            Page<PurchaseOrder> poPage;
+
+            do {
+                Pageable pageable = PageRequest.of(page, size);
+                poPage = purchaseOrderRepo.findAll(spec, pageable);
+
+                List<String> poIds = poPage.getContent().stream()
+                        .map(PurchaseOrder::getPurchaseOrderId)
+                        .collect(Collectors.toList());
+
+                if (!poIds.isEmpty()) {
+
+                    List<PurchaseOrder> purchaseOrders =
+                            purchaseOrderRepo.findWithDetailsByIdIn(poIds);
+
+                    // ===== Flatten PO → Lines =====
+                    for (PurchaseOrder po : purchaseOrders) {
+
+                        String supplierName =
+                                po.getSupplier() != null
+                                        ? po.getSupplier().getName()
+                                        : "";
+
+                        String firmName =
+                                po.getFirm() != null
+                                        ? po.getFirm().getFirmName()
+                                        : "";
+
+                        for (PurchaseOrderLine line : po.getLines()) {
+
+                            if (line.getIndentRefs() == null
+                                    || line.getIndentRefs().isEmpty()) {
+
+                                // Still export line even if no indent
+                                Row row = sheet.createRow(rowNum++);
+                                writePoRow(row, po, supplierName, firmName,
+                                        line, "", "");
+                            } else {
+                                for (PurchaseOrderIndentRef ref : line.getIndentRefs()) {
+                                    Row row = sheet.createRow(rowNum++);
+                                    writePoRow(
+                                            row,
+                                            po,
+                                            supplierName,
+                                            firmName,
+                                            line,
+                                            extractIndentId(ref.getIndentLineItemCode()),
+                                            ref.getIndentLineItemCode()
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
+                page++;
+            } while (!poPage.isLast());
+
+            workbook.write(os);
+            os.flush();
+
+        } catch (Exception e) {
+            LoggerFactory.getLogger(getClass())
+                    .error("PO Excel export error", e);
+        } finally {
+            if (workbook != null) {
+                workbook.dispose();
+            }
+        }
+    }
+
+    private void writePoRow(
+            Row row,
+            PurchaseOrder po,
+            String supplierName,
+            String firmName,
+            PurchaseOrderLine line,
+            String indentNo,
+            String indentLineItemCode) {
+
+        int col = 0;
+
+        row.createCell(col++).setCellValue(po.getPurchaseOrderId());
+        row.createCell(col++).setCellValue(
+                po.getPoDate() != null ? po.getPoDate().toString() : ""
+        );
+        row.createCell(col++).setCellValue(
+                safeExcel(po.getStatus())
+        );
+
+        row.createCell(col++).setCellValue(safeExcel(supplierName));
+        row.createCell(col++).setCellValue(safeExcel(firmName));
+
+        row.createCell(col++).setCellValue(
+                safeExcel(
+                        line.getProduct() != null
+                                ? line.getProduct().getProductName()
+                                : ""
+                )
+        );
+
+        row.createCell(col++).setCellValue(
+                line.getQuantity() != null ? line.getQuantity() : 0.0
+        );
+        row.createCell(col++).setCellValue(
+                line.getRate() != null ? line.getRate() : 0.0
+        );
+        row.createCell(col++).setCellValue(
+                line.getGstPercent() != null ? line.getGstPercent() : 0.0
+        );
+        row.createCell(col++).setCellValue(
+                line.getNetRate() != null ? line.getNetRate() : 0.0
+        );
+        row.createCell(col++).setCellValue(
+                line.getTotalAmount() != null ? line.getTotalAmount() : 0.0
+        );
+
+        row.createCell(col++).setCellValue(safeExcel(indentNo));
+        row.createCell(col++).setCellValue(safeExcel(indentLineItemCode));
+    }
+
+    private String safeExcel(String value) {
+        if (value == null) return "";
+        if (value.startsWith("=") || value.startsWith("+")
+                || value.startsWith("-") || value.startsWith("@")) {
+            return "'" + value;
+        }
+        return value;
+    }
+
 }

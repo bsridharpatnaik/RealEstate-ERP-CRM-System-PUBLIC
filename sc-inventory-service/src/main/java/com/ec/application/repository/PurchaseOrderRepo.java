@@ -4,6 +4,9 @@ import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.data.StatusGroupCountDTO;
 import com.ec.application.model.PurchaseOrder;
 import com.fasterxml.jackson.databind.ser.Serializers;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -59,5 +62,26 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
             nativeQuery = true
     )
     List<Object[]> fetchStalePOBucketData(@Param("terminalStatuses") List<String> terminalStatuses);
+
+   // @EntityGraph(attributePaths = {})
+        // no collections
+    Page<PurchaseOrder> findAll(
+            Specification<PurchaseOrder> spec,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {
+            "supplier",
+            "firm",
+            "lines",
+            "lines.product",
+            "lines.indentRefs"
+    })
+    @Query("select po from PurchaseOrder po where po.purchaseOrderId in :ids")
+    List<PurchaseOrder> findWithDetailsByIdIn(
+            @Param("ids") List<String> ids
+    );
+
+
 }
 
