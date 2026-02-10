@@ -5,16 +5,21 @@ import java.util.Map;
 
 import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.*;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentStatusHistory;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.service.IndentInventoryService;
 import com.ec.application.service.IndentStatusHistoryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
@@ -24,6 +29,7 @@ import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.model.InwardInventory;
 import com.ec.application.service.InwardInventoryService;
 import com.ec.application.Filters.FilterDataList;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping("/indent")
@@ -34,7 +40,12 @@ public class IndentInventoryController {
     IndentInventoryService iiService;
 
     @Autowired
+    SchemaConfig schemaConfig;
+
+    @Autowired
     private IndentStatusHistoryService indentStatusHistoryService;
+
+    Logger log = LoggerFactory.getLogger(IndentInventoryController.class);
 
     @PostMapping("/create")
     @CheckAuthority
@@ -109,6 +120,41 @@ public class IndentInventoryController {
     public Map<String, List<ConsolidatedIndentLineDTO>> fetchConsolidated(@RequestParam(required = false) String sortBy, @RequestParam(defaultValue = "ASC") Sort.Direction direction) {
         return iiService.fetchGroupedByCategory(sortBy, direction);
     }
+
+
+    @PostMapping(
+            value = "/export/excel",
+            produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    public ResponseEntity<StreamingResponseBody> exportIndentExcel(
+            @RequestBody(required = false) FilterDataList filterDataList) {
+
+        // ✅ Capture tenant on request thread
+        String tenant = schemaConfig.getMasterSchema();
+
+        StreamingResponseBody stream = outputStream -> {
+            try {
+                // ✅ Set tenant INSIDE async thread
+                ThreadLocalStorage.setTenantName(tenant);
+
+                iiService.streamIndentExcel(filterDataList, outputStream);
+
+            } catch (Exception e) {
+                log.error("Excel export failed", e);
+            } finally {
+                // ✅ ALWAYS clear
+                ThreadLocalStorage.setTenantName(null);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=indent-export.xlsx"
+                )
+                .body(stream);
+    }
+
 /*
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)

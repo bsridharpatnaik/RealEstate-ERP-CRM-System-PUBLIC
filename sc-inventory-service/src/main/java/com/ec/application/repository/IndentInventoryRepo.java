@@ -6,6 +6,10 @@ import com.ec.application.data.ConsolidatedIndentLineDTO;
 import com.ec.application.data.StatusGroupCountDTO;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.InwardInventory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -62,6 +66,15 @@ public interface IndentInventoryRepo extends BaseRepository<IndentInventory, Str
             nativeQuery = true
     )
     List<Object[]> fetchStaleIndentBucketData(@Param("terminalStatuses") List<String> terminalStatuses);
+
+    @EntityGraph(attributePaths = {
+            "inventoryList",
+            "inventoryList.product"
+    })
+    Page<IndentInventory> findAll(
+            Specification<IndentInventory> spec,
+            Pageable pageable);
+
 }
 
 

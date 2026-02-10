@@ -14,17 +14,22 @@ import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.util.LineItemCodeGenerator;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -651,4 +656,134 @@ public class IndentInventoryService {
 
         return dashboards;
     }
+
+    @UseDefaultTenant
+    public void streamIndentExcel(FilterDataList filterDataList, OutputStream os) throws Exception {
+
+        SXSSFWorkbook workbook = new SXSSFWorkbook(100); // keep 100 rows in memory
+        Sheet sheet = workbook.createSheet("Indents");
+
+        int rowNum = 0;
+
+        // Header
+        Row header = sheet.createRow(rowNum++);
+
+        String[] columns = {
+                "Indent No",
+                "Tenant",
+                "Indent Date",
+                "Indent Status",
+                "Last Status Updated At",
+
+                "Line Item Code",
+                "Product",
+                "Category",
+
+                "Quantity Requested",
+                "Quantity Received",
+                "Quantity Pending",
+
+                "Line Item Status",
+                "Remarks"
+        };
+
+        for (int i = 0; i < columns.length; i++) {
+            header.createCell(i).setCellValue(columns[i]);
+        }
+
+        Specification<IndentInventory> spec =
+                IndentInventorySpecification.getSpecification(filterDataList);
+
+        int page = 0;
+        int size = 500;
+        Page<IndentInventory> result;
+
+        do {
+            Pageable pageable = PageRequest.of(page, size);
+            result = indentInventoryRepo.findAll(spec, pageable);
+
+            rowNum = writeExcelPage(result.getContent(), sheet, rowNum);
+
+            page++;
+        } while (!result.isLast());
+
+        workbook.write(os);
+        workbook.dispose(); // VERY IMPORTANT
+    }
+
+    private int writeExcelPage(
+            List<IndentInventory> indents,
+            Sheet sheet,
+            int rowNum) {
+
+        for (IndentInventory indent : indents) {
+            for (IndentInventoryList line : indent.getInventoryList()) {
+
+                Row row = sheet.createRow(rowNum++);
+                int col = 0;
+
+                // ===== Indent-level fields =====
+                row.createCell(col++).setCellValue(indent.getIndentId());
+                row.createCell(col++).setCellValue(indent.getTenant());
+                row.createCell(col++).setCellValue(
+                        indent.getIndentDate() != null
+                                ? indent.getIndentDate().toString()
+                                : ""
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(indent.getIndentStatus())
+                );
+                row.createCell(col++).setCellValue(
+                        indent.getLastStatusUpdatedAt() != null
+                                ? indent.getLastStatusUpdatedAt().toString()
+                                : ""
+                );
+
+                // ===== Line-item-level fields =====
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getLineItemCode())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getProduct().getProductName())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getProduct().getCategory().getCategoryName())
+                );
+
+                // Quantities
+                row.createCell(col++).setCellValue(
+                        line.getQuantity() != null ? line.getQuantity() : 0.0
+                );
+                row.createCell(col++).setCellValue(
+                        line.getQuantityReceived() != null
+                                ? line.getQuantityReceived()
+                                : 0.0
+                );
+                row.createCell(col++).setCellValue(
+                        line.getQuantityPending() != null
+                                ? line.getQuantityPending()
+                                : 0.0
+                );
+
+                // Status & remarks
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getLineItemStatus())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getRemarks())
+                );
+            }
+        }
+        return rowNum;
+    }
+
+    private String safeExcel(String value) {
+        if (value == null) return "";
+        if (value.startsWith("=") || value.startsWith("+")
+                || value.startsWith("-") || value.startsWith("@")) {
+            return "'" + value;
+        }
+        return value;
+    }
+
 }
