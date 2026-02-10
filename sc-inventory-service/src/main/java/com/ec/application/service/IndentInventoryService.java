@@ -21,10 +21,7 @@ import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -346,15 +343,36 @@ public class IndentInventoryService {
     public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
 
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
-        Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
+        Specification<IndentInventory> spec =
+                IndentInventorySpecification.getSpecification(filterDataList);
 
         String tenantName = tenantService.fetchTenantFromHeader();
         if (tenantName != null) {
             spec = IndentInventorySpecification.getTenantSpecification(tenantName, spec);
         }
 
-        Page<IndentInventory> page = (spec != null) ? indentInventoryRepo.findAll(spec, pageable) : indentInventoryRepo.findAll(pageable);
-        // Enrich ONCE for UI
+        if (spec == null) {
+            spec = Specification.where(null);
+        }
+
+        // STEP 1: page ONLY parents (safe)
+        Page<IndentInventory> idPage =
+                indentInventoryRepo.findAll(spec, pageable);
+
+        List<String> ids = idPage.getContent()
+                .stream()
+                .map(IndentInventory::getIndentId)
+                .collect(Collectors.toList());
+
+        // STEP 2: fetch full graph
+        List<IndentInventory> full =
+                ids.isEmpty()
+                        ? Collections.emptyList()
+                        : indentInventoryRepo.findWithDetailsByIndentIdIn(ids);
+
+        Page<IndentInventory> page =
+                new PageImpl<>(full, pageable, idPage.getTotalElements());
+
         indentInventoryUiEnricher.enrich(page.getContent());
         returnData.setIndentInventories(page);
         returnData.setIiDropdown(populateDropdownService.fetchData("indent"));
@@ -694,6 +712,10 @@ public class IndentInventoryService {
         Specification<IndentInventory> spec =
                 IndentInventorySpecification.getSpecification(filterDataList);
 
+        String tenantName = tenantService.fetchTenantFromHeader();
+        if (tenantName != null) {
+            spec = IndentInventorySpecification.getTenantSpecification(tenantName, spec);
+        }
         int page = 0;
         int size = 500;
         Page<IndentInventory> result;

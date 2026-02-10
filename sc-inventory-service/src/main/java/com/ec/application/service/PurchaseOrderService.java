@@ -92,9 +92,12 @@ public class PurchaseOrderService extends ReusableFields {
 
         ReturnPurchaseOrderData returnData = new ReturnPurchaseOrderData();
         Specification<PurchaseOrder> spec = PurchaseOrderSpecification.getSpecification(filterDataList);
-        Page<PurchaseOrder> page = (spec != null)
-                ? purchaseOrderRepo.findAll(spec, pageable)
-                : purchaseOrderRepo.findAll(pageable);
+
+        if (spec == null) {
+            spec = Specification.where(null); // no-op spec
+        }
+
+        Page<PurchaseOrder> page = purchaseOrderRepo.findAll(spec, pageable);
 
         // Initialize lazy-loaded associations
         initializeLazyAssociations(page.getContent());

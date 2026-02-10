@@ -81,7 +81,5 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
     List<PurchaseOrder> findWithDetailsByIdIn(
             @Param("ids") List<String> ids
     );
-
-
 }
 
