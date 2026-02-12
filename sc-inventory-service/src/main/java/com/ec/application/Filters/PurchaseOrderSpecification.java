@@ -7,7 +7,12 @@ import com.ec.application.constants.POStatusConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
 
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -28,6 +33,11 @@ public class PurchaseOrderSpecification {
         List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> suppliers = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "suppliers");
         List<String> staleBuckets = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "staleBuckets");
+        List<String> statusChangedTo = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedTo");
+        List<String> statusChangedAfterDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedAfterDate");
+        List<String> statusChangedBeforeDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
+
+
         Specification<PurchaseOrder> finalSpec = null;
 
         if (startDates != null && !startDates.isEmpty())
@@ -76,6 +86,54 @@ public class PurchaseOrderSpecification {
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldContains(PurchaseOrder_.SUPPLIER, Supplier_.NAME, globalSearch));
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
         }
+
+        if ((statusChangedTo != null && !statusChangedTo.isEmpty())
+                || (statusChangedAfterDate != null && !statusChangedAfterDate.isEmpty())
+                || (statusChangedBeforeDate != null && !statusChangedBeforeDate.isEmpty())) {
+
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    wherePOStatusHistoryChangedBetween(
+                            statusChangedTo,
+                            statusChangedAfterDate,
+                            statusChangedBeforeDate
+                    ));
+        }
+
+
         return finalSpec;
     }
+
+    private static Specification<PurchaseOrder> wherePOStatusHistoryChangedBetween(List<String> statusChangedTo, List<String> statusChangedAfterDate, List<String> statusChangedBeforeDate) {
+        return (root, query, cb) -> {
+            query.distinct(true);   // VERY IMPORTANT
+            Join<PurchaseOrder, PurchaseOrderStatusHistory> historyJoin = root.join("statusHistory", JoinType.INNER);
+            List<Predicate> predicates = new ArrayList<>();
+
+            // Filter by newStatus
+            if (statusChangedTo != null && !statusChangedTo.isEmpty()) {
+                predicates.add(historyJoin.get("newStatus").in(statusChangedTo));
+            }
+
+            try {
+
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+
+                if (statusChangedAfterDate != null && !statusChangedAfterDate.isEmpty()) {
+                    Date afterDate = sdf.parse(statusChangedAfterDate.get(0));
+                    predicates.add(cb.greaterThanOrEqualTo(historyJoin.get("changedAt"), ReusableMethods.atStartOfDay(afterDate)));
+                }
+
+                if (statusChangedBeforeDate != null && !statusChangedBeforeDate.isEmpty()) {
+                    Date beforeDate = sdf.parse(statusChangedBeforeDate.get(0));
+                    predicates.add(cb.lessThanOrEqualTo(historyJoin.get("changedAt"), ReusableMethods.atEndOfDay(beforeDate)));
+                }
+
+            } catch (ParseException e) {
+                throw new RuntimeException("Invalid date format in PO status history filter", e);
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+
 }

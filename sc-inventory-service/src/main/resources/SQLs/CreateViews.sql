@@ -844,6 +844,27 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 
+-- Drop if exists (MySQL 8+)
+DROP INDEX IF EXISTS idx_po_history_status_date ON po_status_history;
+DROP INDEX IF EXISTS idx_po_history_po ON po_status_history;
+
+-- Recreate indexes
+CREATE INDEX idx_po_history_status_date
+ON po_status_history (new_status, changed_at);
+
+CREATE INDEX idx_po_history_po
+ON po_status_history (purchase_order_id);
+
+DROP INDEX IF EXISTS idx_indent_history_status_date ON indent_status_history;
+DROP INDEX IF EXISTS idx_indent_history_indent ON indent_status_history;
+
+CREATE INDEX idx_indent_history_status_date
+ON indent_status_history (new_status, changed_at);
+
+CREATE INDEX idx_indent_history_indent
+ON indent_status_history (indent_id);
+
+
 -- -------- inventory_transfer_item.lastModifiedDate --------
 SELECT COUNT(*) INTO @idx_exists
 FROM information_schema.statistics
