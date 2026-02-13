@@ -103,6 +103,11 @@ public class FirmService {
         return firm;
     }
 
+
+    public List<Firm> getAllFirms() throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        return firmRepo.findAll();
+    }
     public List<IdNameProjections> findIdAndNames() {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         // TODO Auto-generated method stub
