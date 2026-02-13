@@ -3,7 +3,9 @@ package com.ec.application.service;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.RoleConstants;
+import com.ec.application.data.UserTenantMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,6 @@ import java.util.List;
 import org.springframework.cache.annotation.Cacheable;
 
 @Service
-@Transactional
 public class UserDetailsService {
 
     @Autowired
@@ -28,6 +29,9 @@ public class UserDetailsService {
 
     @Value("${common.serverurl}")
     private String reqUrl;
+
+    @Autowired
+    SchemaConfig schemaConfig;
 
     Logger log = LoggerFactory.getLogger(UserDetailsService.class);
 
@@ -75,6 +79,9 @@ public class UserDetailsService {
         user.setId(404L);
         user.setUsername("system");
         user.setRoles(Collections.singletonList("SYSTEM"));
+        for(String scheme : schemaConfig.getSchemaList()){
+            user.getAllowedTenants().add(scheme);
+        }
         return user;
     }
 

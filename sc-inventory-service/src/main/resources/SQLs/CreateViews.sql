@@ -1,6 +1,13 @@
 -- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries
 use suncitynx;
 
+CREATE TABLE IF NOT EXISTS execution_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    procedure_name VARCHAR(255) NOT NULL,
+    last_execution DATETIME NOT NULL DEFAULT '2010-01-01 00:00:00',
+    UNIQUE KEY uk_execution_history_procedure (procedure_name)
+);
+
 CREATE OR REPLACE VIEW all_inventory_view AS
 SELECT
     ROW_NUMBER() OVER (
@@ -779,6 +786,120 @@ END //
 
 DELIMITER ;
 
+/* =====================================================
+   SAFE INDEX CREATION (IGNORE IF ALREADY EXISTS)
+   ===================================================== */
+
+-- -------- all_inventory.lastModifiedDate --------
+SELECT COUNT(*) INTO @idx_exists
+FROM information_schema.statistics
+WHERE table_schema = DATABASE()
+  AND table_name = 'all_inventory'
+  AND index_name = 'idx_all_inventory_last_modified';
+
+SET @sql = IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_all_inventory_last_modified ON all_inventory (lastModifiedDate)',
+    'SELECT ''idx_all_inventory_last_modified already exists'''
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+-- -------- all_inventory.keyid --------
+SELECT COUNT(*) INTO @idx_exists
+FROM information_schema.statistics
+WHERE table_schema = DATABASE()
+  AND table_name = 'all_inventory'
+  AND index_name = 'idx_all_inventory_keyid';
+
+SET @sql = IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_all_inventory_keyid ON all_inventory (keyid)',
+    'SELECT ''idx_all_inventory_keyid already exists'''
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+-- -------- inward_outward_entries.lastModifiedDate --------
+SELECT COUNT(*) INTO @idx_exists
+FROM information_schema.statistics
+WHERE table_schema = DATABASE()
+  AND table_name = 'inward_outward_entries'
+  AND index_name = 'idx_ioe_last_modified';
+
+SET @sql = IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_ioe_last_modified ON inward_outward_entries (lastModifiedDate)',
+    'SELECT ''idx_ioe_last_modified already exists'''
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+-- Drop if exists (MySQL 8+)
+DROP INDEX IF EXISTS idx_po_history_status_date ON po_status_history;
+DROP INDEX IF EXISTS idx_po_history_po ON po_status_history;
+
+-- Recreate indexes
+CREATE INDEX idx_po_history_status_date
+ON po_status_history (new_status, changed_at);
+
+CREATE INDEX idx_po_history_po
+ON po_status_history (purchase_order_id);
+
+DROP INDEX IF EXISTS idx_indent_history_status_date ON indent_status_history;
+DROP INDEX IF EXISTS idx_indent_history_indent ON indent_status_history;
+
+CREATE INDEX idx_indent_history_status_date
+ON indent_status_history (new_status, changed_at);
+
+CREATE INDEX idx_indent_history_indent
+ON indent_status_history (indent_id);
+
+
+-- -------- inventory_transfer_item.lastModifiedDate --------
+SELECT COUNT(*) INTO @idx_exists
+FROM information_schema.statistics
+WHERE table_schema = DATABASE()
+  AND table_name = 'inventory_transfer_item'
+  AND index_name = 'idx_transfer_item_last_modified';
+
+SET @sql = IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_transfer_item_last_modified ON inventory_transfer_item (lastModifiedDate)',
+    'SELECT ''idx_transfer_item_last_modified already exists'''
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+-- -------- lost_damaged_inventory.lastModifiedDate --------
+SELECT COUNT(*) INTO @idx_exists
+FROM information_schema.statistics
+WHERE table_schema = DATABASE()
+  AND table_name = 'lost_damaged_inventory'
+  AND index_name = 'idx_lost_damaged_last_modified';
+
+SET @sql = IF(
+    @idx_exists = 0,
+    'CREATE INDEX idx_lost_damaged_last_modified ON lost_damaged_inventory (lastModifiedDate)',
+    'SELECT ''idx_lost_damaged_last_modified already exists'''
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 
 -- Store procedure to update table from view
 DROP PROCEDURE IF EXISTS update_all_inventory;
@@ -786,28 +907,58 @@ DROP PROCEDURE IF EXISTS update_all_inventory;
 DELIMITER //
 
 CREATE PROCEDURE update_all_inventory()
-BEGIN
+proc_end: BEGIN
     DECLARE last_execution DATETIME DEFAULT '2010-01-01 00:00:00';
     DECLARE min_modified_id BIGINT DEFAULT 9223372036854775807;
     DECLARE min_deleted_keyid BIGINT DEFAULT 9223372036854775807;
     DECLARE min_id BIGINT;
+    DECLARE lock_acquired INT DEFAULT 0;
 
-    -- Start a new transaction
+    /* =====================================================
+       SAFETY: ENSURE LOCK RELEASE + ROLLBACK ON ERROR
+       ===================================================== */
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        DO RELEASE_LOCK('update_all_inventory_lock');
+        RESIGNAL;
+    END;
+
+    /* =====================================================
+       ACQUIRE GLOBAL LOCK (PREVENT PARALLEL RUNS)
+       ===================================================== */
+    SELECT GET_LOCK('update_all_inventory_lock', 10)
+    INTO lock_acquired;
+
+    IF lock_acquired = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'update_all_inventory is already running';
+    END IF;
+
+    /* =====================================================
+       BEGIN TRANSACTION
+       ===================================================== */
     START TRANSACTION;
 
-    -- Get the last execution time for the procedure 'update_all_inventory'
+    /* =====================================================
+       FETCH LAST EXECUTION TIME
+       ===================================================== */
     SELECT COALESCE(MAX(last_execution), '2010-01-01 00:00:00')
     INTO last_execution
     FROM execution_history
     WHERE procedure_name = 'update_all_inventory';
 
-    -- Find the minimum id of the records that have been modified since the last execution time
+    /* =====================================================
+       FIND EARLIEST MODIFIED RECORD
+       ===================================================== */
     SELECT COALESCE(MIN(id), 9223372036854775807)
     INTO min_modified_id
     FROM all_inventory_view
     WHERE lastModifiedDate > last_execution;
 
-    -- Find the minimum keyid of the records that have been deleted since the last execution time
+    /* =====================================================
+       FIND EARLIEST DELETED RECORD
+       ===================================================== */
     SELECT COALESCE(MIN(keyid), 9223372036854775807)
     INTO min_deleted_keyid
     FROM all_inventory ai
@@ -817,33 +968,98 @@ BEGIN
         WHERE ai.keyid = aiv.keyid
     );
 
-    -- Determine the minimum id between modified and deleted records
+    /* =====================================================
+       DETERMINE REFRESH START POINT
+       ===================================================== */
     SET min_id = LEAST(min_modified_id, min_deleted_keyid);
 
-    -- Delete records from the main table that have id >= min_id
+    /* =====================================================
+       NOTHING CHANGED → ONLY UPDATE EXECUTION HISTORY
+       ===================================================== */
+    IF min_id = 9223372036854775807 THEN
+        INSERT INTO execution_history (procedure_name, last_execution)
+        VALUES ('update_all_inventory', NOW())
+        ON DUPLICATE KEY UPDATE
+            last_execution = VALUES(last_execution);
+
+        COMMIT;
+        DO RELEASE_LOCK('update_all_inventory_lock');
+        LEAVE proc_end;
+    END IF;
+
+    /* =====================================================
+       DELETE STALE RECORDS
+       ===================================================== */
     DELETE FROM all_inventory
     WHERE id >= min_id;
 
-    -- Insert updated records from the view into the main table
--- Ensure that the columns in the INSERT statement match those in the table schema
+    /* =====================================================
+       INSERT UPDATED RECORDS
+       ===================================================== */
     INSERT INTO all_inventory (
-        id, category_name, closingstock, contactid, contacttype, creationDate, date, emailid, entryid, keyid, lastModifiedDate, measurementunit, mobileno, name, productid, product_name, quantity, type, warehouse_id, warehousename
+        id,
+        category_name,
+        closingstock,
+        contactid,
+        contacttype,
+        creationDate,
+        date,
+        emailid,
+        entryid,
+        keyid,
+        lastModifiedDate,
+        measurementunit,
+        mobileno,
+        name,
+        productid,
+        product_name,
+        quantity,
+        type,
+        warehouse_id,
+        warehousename
     )
     SELECT
-        id, category_name, closingstock, contactid, contacttype, creationDate, date, emailid, entryid, keyid, lastModifiedDate, measurementunit, mobileno, name, productid, product_name, quantity, type, warehouse_id, warehousename
+        id,
+        category_name,
+        closingstock,
+        contactid,
+        contacttype,
+        creationDate,
+        date,
+        emailid,
+        entryid,
+        keyid,
+        lastModifiedDate,
+        measurementunit,
+        mobileno,
+        name,
+        productid,
+        product_name,
+        quantity,
+        type,
+        warehouse_id,
+        warehousename
     FROM all_inventory_view
     WHERE id >= min_id;
 
+    /* =====================================================
+       UPDATE EXECUTION HISTORY
+       ===================================================== */
+    INSERT INTO execution_history (procedure_name, last_execution)
+    VALUES ('update_all_inventory', NOW())
+    ON DUPLICATE KEY UPDATE
+        last_execution = VALUES(last_execution);
 
-    -- Update the last execution time for 'update_all_inventory'
-    INSERT INTO execution_history (last_execution, procedure_name)
-    VALUES (NOW(), 'update_all_inventory');
-
-    -- Commit the transaction
+    /* =====================================================
+       COMMIT + RELEASE LOCK
+       ===================================================== */
     COMMIT;
+    DO RELEASE_LOCK('update_all_inventory_lock');
+
 END //
 
 DELIMITER ;
+
 
 ###################  STOCk STATUS #############
 

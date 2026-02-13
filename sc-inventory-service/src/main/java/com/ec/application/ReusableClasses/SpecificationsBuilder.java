@@ -55,7 +55,7 @@ public class SpecificationsBuilder<T> {
     }
 
     public Specification<T> whereDirectFieldDateGreaterThan(String key, List<String> startDates) throws ParseException {
-        Date startDate = new SimpleDateFormat(dateFormat).parse(startDates.get(0));
+        Date startDate = ReusableMethods.atStartOfDay(new SimpleDateFormat(dateFormat).parse(startDates.get(0)));
         Specification<T> finalSpec = null;
         Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
                 .greaterThanOrEqualTo(root.get(key), startDate);
@@ -89,7 +89,7 @@ public class SpecificationsBuilder<T> {
 //    
 
     public Specification<T> whereDirectFieldDateLessThan(String key, List<String> endDates) throws ParseException {
-        Date startDate = new SimpleDateFormat(dateFormat).parse(endDates.get(0));
+        Date startDate = ReusableMethods.atEndOfDay(new SimpleDateFormat(dateFormat).parse(endDates.get(0)));
         Specification<T> finalSpec = null;
         Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
                 .lessThanOrEqualTo(root.get(key), startDate);
@@ -336,12 +336,12 @@ public class SpecificationsBuilder<T> {
 
     public Specification<IndentInventory> whereIndentLastStatusUpdatedBefore(Date cutoffDate) {
         return (root, query, cb) ->
-                cb.lessThan(root.get(IndentInventory_.LAST_STATUS_UPDATED_AT), cutoffDate);
+                cb.lessThan(root.get(IndentInventory_.LAST_STATUS_UPDATED_AT), ReusableMethods.atEndOfDay(cutoffDate));
     }
 
     public Specification<PurchaseOrder> wherePOLastStatusUpdatedBefore(Date cutoffDate) {
         return (root, query, cb) ->
-                cb.lessThan(root.get(PurchaseOrder_.LAST_STATUS_UPDATED_AT), cutoffDate);
+                cb.lessThan(root.get(PurchaseOrder_.LAST_STATUS_UPDATED_AT), ReusableMethods.atEndOfDay(cutoffDate));
     }
 
     public Specification<IndentInventory> whereIndentStatusNotIn(List<String> statuses) {

@@ -6,6 +6,7 @@ import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentStatusHistory;
+import com.ec.application.model.IndentStatusHistoryRelation;
 import com.ec.application.repository.IndentStatusHistoryRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,14 @@ public class IndentStatusHistoryService {
     private IndentStatusHistoryRepo indentStatusHistoryRepo;
 
     @Transactional
-    public void logStatusChange(IndentInventory indent, String oldStatus, String newStatus, String changedBy, String changeMessage) {
+    public void logStatusChange(
+            IndentInventory indent,
+            String oldStatus,
+            String newStatus,
+            String changedBy,
+            String changeMessage,
+            List<HistoryRelationInput> relations
+    ) {
         IndentStatusHistory h = new IndentStatusHistory();
         h.setIndent(indent);
         h.setOldStatus(oldStatus);   // can be null on creation
@@ -29,6 +37,18 @@ public class IndentStatusHistoryService {
         h.setChangedAt(new Date());
         h.setChangedBy(changedBy);
         h.setChangeMessage(changeMessage);
+
+        if (relations != null && !relations.isEmpty()) {
+            for (HistoryRelationInput r : relations) {
+                IndentStatusHistoryRelation rel = new IndentStatusHistoryRelation();
+                rel.setHistory(h);
+                rel.setRelationType(r.getRelationType());
+                rel.setTenant(r.getTenant());
+                rel.setReferenceId(r.getReferenceId());
+                h.getRelations().add(rel);
+            }
+        }
+
         indentStatusHistoryRepo.save(h);
     }
 
@@ -139,6 +159,15 @@ public class IndentStatusHistoryService {
             values.add(v);
         }
         return new DashboardTrendSeriesDTO(label, values);
+    }
+
+    private IndentStatusHistoryRelation buildRelation(IndentStatusHistory history, String type, String tenant, String refId) {
+        IndentStatusHistoryRelation r = new IndentStatusHistoryRelation();
+        r.setHistory(history);
+        r.setRelationType(type);
+        r.setTenant(tenant);
+        r.setReferenceId(refId);
+        return r;
     }
 
 }

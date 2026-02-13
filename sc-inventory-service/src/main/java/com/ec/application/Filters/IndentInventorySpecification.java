@@ -12,6 +12,7 @@ import com.ec.application.model.*;
 
 import javax.persistence.criteria.*;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -33,6 +34,9 @@ public final class IndentInventorySpecification {
         List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> lineItemStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "lineItemStatus");
         List<String> staleBuckets = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "staleBuckets");
+        List<String> statusChangedTo = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedTo");
+        List<String> statusChangedAfterDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedAfterDate");
+        List<String> statusChangedBeforeDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
         Specification<IndentInventory> finalSpec = null;
 
         if (startDates != null && !startDates.isEmpty())
@@ -80,6 +84,20 @@ public final class IndentInventorySpecification {
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereIndentCategoryContains(globalSearch, IndentInventory_.INVENTORY_LIST));
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
         }
+
+        // ================= STATUS HISTORY FILTER =================
+
+        if ((statusChangedTo != null && !statusChangedTo.isEmpty())
+                || (statusChangedAfterDate != null && !statusChangedAfterDate.isEmpty())
+                || (statusChangedBeforeDate != null && !statusChangedBeforeDate.isEmpty())) {
+
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    whereIndentHistoryStatusChangedBetween(
+                            statusChangedTo,
+                            statusChangedAfterDate,
+                            statusChangedBeforeDate
+                    ));
+        }
         return finalSpec;
     }
 
@@ -87,4 +105,37 @@ public final class IndentInventorySpecification {
         Specification<IndentInventory> tenantSpec = specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, Collections.singletonList(tenantName));
         return specbldr.specAndCondition(spec, tenantSpec);
     }
+
+    private static Specification<IndentInventory> whereIndentHistoryStatusChangedBetween(List<String> statusChangedTo, List<String> statusChangedAfterDate, List<String> statusChangedBeforeDate) {
+        return (root, query, cb) -> {
+            query.distinct(true);   // VERY IMPORTANT (one indent → many history rows)
+            Join<IndentInventory, IndentStatusHistory> historyJoin = root.join("statusHistory", JoinType.INNER);
+            List<Predicate> predicates = new ArrayList<>();
+            // Filter by newStatus
+            if (statusChangedTo != null && !statusChangedTo.isEmpty()) {
+                predicates.add(historyJoin.get("newStatus").in(statusChangedTo));
+            }
+
+            // Date format matches your @JsonFormat
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+
+            try {
+                if (statusChangedAfterDate != null && !statusChangedAfterDate.isEmpty()) {
+                    Date afterDate = sdf.parse(statusChangedAfterDate.get(0));
+                    predicates.add(cb.greaterThanOrEqualTo(historyJoin.get("changedAt"), ReusableMethods.atStartOfDay(afterDate)));
+                }
+
+                if (statusChangedBeforeDate != null && !statusChangedBeforeDate.isEmpty()) {
+                    Date beforeDate = sdf.parse(statusChangedBeforeDate.get(0));
+                    predicates.add(cb.lessThanOrEqualTo(historyJoin.get("changedAt"), ReusableMethods.atEndOfDay(beforeDate)));
+                }
+
+            } catch (ParseException e) {
+                throw new RuntimeException("Invalid date format in status history filter", e);
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+
 }

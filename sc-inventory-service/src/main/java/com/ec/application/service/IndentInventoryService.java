@@ -14,17 +14,19 @@ import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.util.LineItemCodeGenerator;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -105,7 +107,7 @@ public class IndentInventoryService {
 
         // Force load the list before returning (to avoid lazy init exception)
         indentInventory.getInventoryList().size();
-        indentStatusHistoryService.logStatusChange(indentInventory, null, IndentStatusConstants.STATUS_NEW, userDetailsService.getCurrentUser().getUsername(), "Indent created by " + userDetailsService.getCurrentUser().getUsername());
+        indentStatusHistoryService.logStatusChange(indentInventory, null, IndentStatusConstants.STATUS_NEW, userDetailsService.getCurrentUser().getUsername(), "Indent created by " + userDetailsService.getCurrentUser().getUsername(), null);
         draftService.deleteDraftForUser("INDENT");
         indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
@@ -341,15 +343,36 @@ public class IndentInventoryService {
     public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
 
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
-        Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
+        Specification<IndentInventory> spec =
+                IndentInventorySpecification.getSpecification(filterDataList);
 
         String tenantName = tenantService.fetchTenantFromHeader();
         if (tenantName != null) {
             spec = IndentInventorySpecification.getTenantSpecification(tenantName, spec);
         }
 
-        Page<IndentInventory> page = (spec != null) ? indentInventoryRepo.findAll(spec, pageable) : indentInventoryRepo.findAll(pageable);
-        // Enrich ONCE for UI
+        if (spec == null) {
+            spec = Specification.where(null);
+        }
+
+        // STEP 1: page ONLY parents (safe)
+        Page<IndentInventory> idPage =
+                indentInventoryRepo.findAll(spec, pageable);
+
+        List<String> ids = idPage.getContent()
+                .stream()
+                .map(IndentInventory::getIndentId)
+                .collect(Collectors.toList());
+
+        // STEP 2: fetch full graph
+        List<IndentInventory> full =
+                ids.isEmpty()
+                        ? Collections.emptyList()
+                        : indentInventoryRepo.findWithDetailsByIndentIdIn(ids);
+
+        Page<IndentInventory> page =
+                new PageImpl<>(full, pageable, idPage.getTotalElements());
+
         indentInventoryUiEnricher.enrich(page.getContent());
         returnData.setIndentInventories(page);
         returnData.setIiDropdown(populateDropdownService.fetchData("indent"));
@@ -372,7 +395,7 @@ public class IndentInventoryService {
             indentInventoryRepo.softDelete(indentInventory);
         }
         if (action.equalsIgnoreCase("CANCEL")) {
-            indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_CANCELLED, userDetailsService.getCurrentUser().getUsername(), "Indent cancelled by " + userDetailsService.getCurrentUser().getUsername());
+            indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_CANCELLED, userDetailsService.getCurrentUser().getUsername(), "Indent cancelled by " + userDetailsService.getCurrentUser().getUsername(), null);
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
             indentInventory.setLastStatusUpdatedAt(new Date());
             indentInventoryRepo.save(indentInventory);
@@ -497,7 +520,7 @@ public class IndentInventoryService {
     public IndentInventory approveIndentInventory(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         indentValidationService.validateBeforeApprove(indentInventory);
-        indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_APPROVED, userDetailsService.getCurrentUser().getUsername(), "Indent approved by " + userDetailsService.getCurrentUser().getUsername());
+        indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_APPROVED, userDetailsService.getCurrentUser().getUsername(), "Indent approved by " + userDetailsService.getCurrentUser().getUsername(), null);
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventory.setLastStatusUpdatedAt(new Date());
         indentInventoryRepo.save(indentInventory);
@@ -651,4 +674,138 @@ public class IndentInventoryService {
 
         return dashboards;
     }
+
+    @UseDefaultTenant
+    public void streamIndentExcel(FilterDataList filterDataList, OutputStream os) throws Exception {
+
+        SXSSFWorkbook workbook = new SXSSFWorkbook(100); // keep 100 rows in memory
+        Sheet sheet = workbook.createSheet("Indents");
+
+        int rowNum = 0;
+
+        // Header
+        Row header = sheet.createRow(rowNum++);
+
+        String[] columns = {
+                "Indent No",
+                "Tenant",
+                "Indent Date",
+                "Indent Status",
+                "Last Status Updated At",
+
+                "Line Item Code",
+                "Product",
+                "Category",
+
+                "Quantity Requested",
+                "Quantity Received",
+                "Quantity Pending",
+
+                "Line Item Status",
+                "Remarks"
+        };
+
+        for (int i = 0; i < columns.length; i++) {
+            header.createCell(i).setCellValue(columns[i]);
+        }
+
+        Specification<IndentInventory> spec =
+                IndentInventorySpecification.getSpecification(filterDataList);
+
+        String tenantName = tenantService.fetchTenantFromHeader();
+        if (tenantName != null) {
+            spec = IndentInventorySpecification.getTenantSpecification(tenantName, spec);
+        }
+        int page = 0;
+        int size = 500;
+        Page<IndentInventory> result;
+
+        do {
+            Pageable pageable = PageRequest.of(page, size);
+            result = indentInventoryRepo.findAll(spec, pageable);
+
+            rowNum = writeExcelPage(result.getContent(), sheet, rowNum);
+
+            page++;
+        } while (!result.isLast());
+
+        workbook.write(os);
+        workbook.dispose(); // VERY IMPORTANT
+    }
+
+    private int writeExcelPage(
+            List<IndentInventory> indents,
+            Sheet sheet,
+            int rowNum) {
+
+        for (IndentInventory indent : indents) {
+            for (IndentInventoryList line : indent.getInventoryList()) {
+
+                Row row = sheet.createRow(rowNum++);
+                int col = 0;
+
+                // ===== Indent-level fields =====
+                row.createCell(col++).setCellValue(indent.getIndentId());
+                row.createCell(col++).setCellValue(indent.getTenant());
+                row.createCell(col++).setCellValue(
+                        indent.getIndentDate() != null
+                                ? indent.getIndentDate().toString()
+                                : ""
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(indent.getIndentStatus())
+                );
+                row.createCell(col++).setCellValue(
+                        indent.getLastStatusUpdatedAt() != null
+                                ? indent.getLastStatusUpdatedAt().toString()
+                                : ""
+                );
+
+                // ===== Line-item-level fields =====
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getLineItemCode())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getProduct().getProductName())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getProduct().getCategory().getCategoryName())
+                );
+
+                // Quantities
+                row.createCell(col++).setCellValue(
+                        line.getQuantity() != null ? line.getQuantity() : 0.0
+                );
+                row.createCell(col++).setCellValue(
+                        line.getQuantityReceived() != null
+                                ? line.getQuantityReceived()
+                                : 0.0
+                );
+                row.createCell(col++).setCellValue(
+                        line.getQuantityPending() != null
+                                ? line.getQuantityPending()
+                                : 0.0
+                );
+
+                // Status & remarks
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getLineItemStatus())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getRemarks())
+                );
+            }
+        }
+        return rowNum;
+    }
+
+    private String safeExcel(String value) {
+        if (value == null) return "";
+        if (value.startsWith("=") || value.startsWith("+")
+                || value.startsWith("-") || value.startsWith("@")) {
+            return "'" + value;
+        }
+        return value;
+    }
+
 }

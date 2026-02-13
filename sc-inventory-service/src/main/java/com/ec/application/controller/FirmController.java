@@ -30,6 +30,11 @@ public class FirmController {
         return firmService.findSingleFirm(id);
     }
 
+    @GetMapping
+    public List<Firm> getAllFirm() throws Exception {
+        return firmService.getAllFirms();
+    }
+
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
