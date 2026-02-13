@@ -79,9 +79,6 @@ public class UserDetailsService {
         user.setId(404L);
         user.setUsername("system");
         user.setRoles(Collections.singletonList("SYSTEM"));
-        for(String scheme : schemaConfig.getSchemaList()){
-            user.getAllowedTenants().add(scheme);
-        }
         return user;
     }
 
