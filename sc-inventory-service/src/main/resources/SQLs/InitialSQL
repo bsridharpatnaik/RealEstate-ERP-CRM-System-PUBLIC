@@ -40,6 +40,19 @@ INSERT INTO `common`.`tenant`
 VALUES
 ('iseries', 0, 1, 'I-SERIES/SCHOOL');
 
+INSERT INTO `common`.`user_role`
+(`user_id`,
+`role_name`)
+VALUES
+(10001,
+'admin');
+
+INSERT INTO `common`.`user_tenant_mapping`
+(`user_id`,
+`mapping_id`)
+VALUES
+(10001,
+-101);
 
 INSERT INTO `common`.`tenant_authorization_mapping`
 (`mapping_id`,

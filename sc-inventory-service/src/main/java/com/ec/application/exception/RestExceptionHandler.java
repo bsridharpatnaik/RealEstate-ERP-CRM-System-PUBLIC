@@ -26,13 +26,31 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
+import org.hibernate.exception.SQLGrammarException;
+import java.sql.SQLException;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 @Slf4j
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
-	Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
-	
+    Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
+
+    @ExceptionHandler({
+            InvalidDataAccessResourceUsageException.class,
+            SQLGrammarException.class,
+            SQLException.class
+    })
+    protected ResponseEntity<Object> handleSqlErrors(Exception ex) {
+
+        logger.error("Database SQL error occurred", ex);
+
+        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR);
+        apiError.setMessage("A database error occurred while processing the request.");
+
+        return buildResponseEntity(apiError);
+    }
+
     /**
      * Handle MissingServletRequestParameterException. Triggered when a 'required' request parameter is missing.
      *

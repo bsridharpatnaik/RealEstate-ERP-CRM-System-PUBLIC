@@ -1,5 +1,5 @@
 -- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries
-use suncitynx;
+use iseries;
 
 CREATE TABLE IF NOT EXISTS execution_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -210,41 +210,41 @@ LEFT JOIN contacts c
 
   -- --------- Stock Verification ------------
  create or replace view stock_verification as
-SELECT inw.inventory, 
-       ROUND(total_inward,2)                                     AS 'total_inward', 
-       ROUND(total_outward  ,2)                                  AS 'total_outward', 
-       ROUND(current_stock ,2)                                   AS 'current_stock', 
-       ROUND(total_inward - ( total_outward + current_stock ),2) AS 
-       'diff_in_Stock' 
-FROM   (SELECT p.product_name AS inventory, 
-               Sum(quantity)  AS total_inward 
-        FROM   inward_inventory ii 
-               INNER JOIN inwardinventory_entry iie 
-                       ON iie.inwardid = ii.inwardid 
-               INNER JOIN inward_outward_entries ioe 
-                       ON ioe.entryid = iie.entryid 
-               INNER JOIN Product p 
-                       ON p.productid = ioe.productid 
-        WHERE  ii.is_deleted = 0 
-        GROUP  BY p.product_name) AS inw 
-       INNER JOIN (SELECT p.product_name AS inventory, 
-                          Sum(quantity)  AS total_outward 
-                   FROM   outward_inventory oi 
-                          INNER JOIN outwardinventory_entry oie 
-                                  ON oie.outwardid = oi.outwardid 
-                          INNER JOIN inward_outward_entries ioe 
-                                  ON ioe.entryid = oie.entryid 
-                          INNER JOIN Product p 
-                                  ON p.productid = ioe.productid 
-                   WHERE  oi.is_deleted = 0 
-                   GROUP  BY p.product_name) AS outw 
-               ON outw.inventory = inw.inventory 
-       INNER JOIN (SELECT p.product_name          AS inventory, 
-                          Sum(s.quantityinhand) AS current_stock 
-                   FROM   Stock s 
-                          INNER JOIN Product p 
-                                  ON p.productid = s.productid 
-                   GROUP  BY p.product_name) AS stock 
+SELECT inw.inventory,
+       ROUND(total_inward,2)                                     AS 'total_inward',
+       ROUND(total_outward  ,2)                                  AS 'total_outward',
+       ROUND(current_stock ,2)                                   AS 'current_stock',
+       ROUND(total_inward - ( total_outward + current_stock ),2) AS
+       'diff_in_Stock'
+FROM   (SELECT p.product_name AS inventory,
+               Sum(quantity)  AS total_inward
+        FROM   inward_inventory ii
+               INNER JOIN inwardinventory_entry iie
+                       ON iie.inwardid = ii.inwardid
+               INNER JOIN inward_outward_entries ioe
+                       ON ioe.entryid = iie.entryid
+               INNER JOIN Product p
+                       ON p.productid = ioe.productid
+        WHERE  ii.is_deleted = 0
+        GROUP  BY p.product_name) AS inw
+       INNER JOIN (SELECT p.product_name AS inventory,
+                          Sum(quantity)  AS total_outward
+                   FROM   outward_inventory oi
+                          INNER JOIN outwardinventory_entry oie
+                                  ON oie.outwardid = oi.outwardid
+                          INNER JOIN inward_outward_entries ioe
+                                  ON ioe.entryid = oie.entryid
+                          INNER JOIN Product p
+                                  ON p.productid = ioe.productid
+                   WHERE  oi.is_deleted = 0
+                   GROUP  BY p.product_name) AS outw
+               ON outw.inventory = inw.inventory
+       INNER JOIN (SELECT p.product_name          AS inventory,
+                          Sum(s.quantityinhand) AS current_stock
+                   FROM   Stock s
+                          INNER JOIN Product p
+                                  ON p.productid = s.productid
+                   GROUP  BY p.product_name) AS stock
                ON inw.inventory = stock.inventory WHERE ROUND(total_inward - ( total_outward + current_stock ),2)!=0;
 
 
@@ -844,25 +844,55 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 
--- Drop if exists (MySQL 8+)
-DROP INDEX IF EXISTS idx_po_history_status_date ON po_status_history;
-DROP INDEX IF EXISTS idx_po_history_po ON po_status_history;
+DELIMITER //
 
--- Recreate indexes
-CREATE INDEX idx_po_history_status_date
-ON po_status_history (new_status, changed_at);
+DROP PROCEDURE IF EXISTS create_indexes_safe//
 
-CREATE INDEX idx_po_history_po
-ON po_status_history (purchase_order_id);
+CREATE PROCEDURE create_indexes_safe()
+BEGIN
+    -- Drop and recreate po_status_history indexes
+    IF EXISTS (SELECT 1 FROM information_schema.statistics
+               WHERE table_schema = DATABASE()
+               AND table_name = 'po_status_history'
+               AND index_name = 'idx_po_history_status_date') THEN
+        DROP INDEX idx_po_history_status_date ON po_status_history;
+    END IF;
 
-DROP INDEX IF EXISTS idx_indent_history_status_date ON indent_status_history;
-DROP INDEX IF EXISTS idx_indent_history_indent ON indent_status_history;
+    CREATE INDEX idx_po_history_status_date ON po_status_history (newStatus, changed_at);
 
-CREATE INDEX idx_indent_history_status_date
-ON indent_status_history (new_status, changed_at);
+    IF EXISTS (SELECT 1 FROM information_schema.statistics
+               WHERE table_schema = DATABASE()
+               AND table_name = 'po_status_history'
+               AND index_name = 'idx_po_history_po') THEN
+        DROP INDEX idx_po_history_po ON po_status_history;
+    END IF;
 
-CREATE INDEX idx_indent_history_indent
-ON indent_status_history (indent_id);
+    CREATE INDEX idx_po_history_po ON po_status_history (purchase_order_id);
+
+    -- Drop and recreate indent_status_history indexes
+    IF EXISTS (SELECT 1 FROM information_schema.statistics
+               WHERE table_schema = DATABASE()
+               AND table_name = 'indent_status_history'
+               AND index_name = 'idx_indent_history_status_date') THEN
+        DROP INDEX idx_indent_history_status_date ON indent_status_history;
+    END IF;
+
+    CREATE INDEX idx_indent_history_status_date ON indent_status_history (newStatus, changed_at);
+
+    IF EXISTS (SELECT 1 FROM information_schema.statistics
+               WHERE table_schema = DATABASE()
+               AND table_name = 'indent_status_history'
+               AND index_name = 'idx_indent_history_indent') THEN
+        DROP INDEX idx_indent_history_indent ON indent_status_history;
+    END IF;
+
+    CREATE INDEX idx_indent_history_indent ON indent_status_history (indent_id);
+END//
+
+DELIMITER ;
+
+CALL create_indexes_safe();
+DROP PROCEDURE create_indexes_safe;
 
 
 -- -------- inventory_transfer_item.lastModifiedDate --------
