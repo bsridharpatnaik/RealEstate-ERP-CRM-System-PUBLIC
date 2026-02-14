@@ -370,8 +370,22 @@ public class IndentInventoryService {
                         ? Collections.emptyList()
                         : indentInventoryRepo.findWithDetailsByIndentIdIn(ids);
 
+        Map<String, IndentInventory> map =
+                full.stream()
+                        .collect(Collectors.toMap(
+                                IndentInventory::getIndentId,
+                                i -> i
+                        ));
+
+        List<IndentInventory> ordered =
+                ids.stream()
+                        .map(map::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+
         Page<IndentInventory> page =
-                new PageImpl<>(full, pageable, idPage.getTotalElements());
+                new PageImpl<>(ordered, pageable, idPage.getTotalElements());
+
 
         indentInventoryUiEnricher.enrich(page.getContent());
         returnData.setIndentInventories(page);
