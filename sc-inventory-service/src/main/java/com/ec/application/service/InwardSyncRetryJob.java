@@ -60,7 +60,9 @@ public class InwardSyncRetryJob {
                     // ---------------------------------------------
                     // Mark success
                     // ---------------------------------------------
-                    failure.setStatus("SUCCESS");
+                    if (!"SUCCESS".equals(failure.getStatus())) {
+                        failure.setStatus("SUCCESS");
+                    }
                     log.info("[INWARD-RETRY-SUCCESS] failureId={} inwardId={}", failure.getId(), failure.getInwardId());
                 } catch (Exception ex) {
                     int nextRetryCount = failure.getRetryCount() + 1;

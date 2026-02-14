@@ -15,8 +15,7 @@ import javax.persistence.*;
                 columnNames = {
                         "tenant_schema",
                         "inward_id",
-                        "action_type",
-                        "status"
+                        "action_type"
                 }
         )
 )
