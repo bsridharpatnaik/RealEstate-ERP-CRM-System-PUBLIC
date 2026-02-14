@@ -76,6 +76,9 @@ public class InwardInventoryService {
     @Autowired
     InventoryNotificationService inventoryNotificationService;
 
+    @Autowired
+    MrnService mrnService;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     public List<PoDropdownItem> getPendingPoDropdown() {
@@ -187,7 +190,7 @@ public class InwardInventoryService {
         inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());
         inward.setVehicleNo(data.getVehicleNo());
         inward.setSupplierSlipNo(data.getSupplierSlipNo());
-        inward.setOurSlipNo(data.getOurSlipNo());
+        //inward.setOurSlipNo(data.getOurSlipNo());  // MRN should be auto calculated
         inward.setAdditionalInfo(data.getAdditionalInfo());
         inward.setInvoiceReceived(data.getInvoiceReceived());
         inward.setChallanNo(data.getChallanNo());
@@ -282,7 +285,7 @@ public class InwardInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
         inwardInventory.setDate(iiData.getInwardDate());
-        inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
+        inwardInventory.setOurSlipNo(mrnService.getNextMrn().toString());
         inwardInventory.setVehicleNo(iiData.getVehicleNo());
         inwardInventory.setSupplierSlipNo(iiData.getSupplierSlipNo());
         inwardInventory.setAdditionalInfo(iiData.getAdditionalInfo());
@@ -581,7 +584,7 @@ public class InwardInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         inwardInventory.setInvoiceReceived(iiData.getInvoiceReceived());
         inwardInventory.setDate(iiData.getInwardDate());
-        inwardInventory.setOurSlipNo(iiData.getOurSlipNo());
+        inwardInventory.setOurSlipNo(mrnService.getNextMrn().toString());
         inwardInventory.setVehicleNo(iiData.getVehicleNo());
         inwardInventory.setSupplierSlipNo(iiData.getSupplierSlipNo());
         inwardInventory.setAdditionalInfo(iiData.getAdditionalInfo());

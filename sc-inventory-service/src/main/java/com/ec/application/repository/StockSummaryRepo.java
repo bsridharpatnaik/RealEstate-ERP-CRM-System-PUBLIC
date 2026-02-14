@@ -22,6 +22,9 @@ public interface StockSummaryRepo
     @Query("SELECT MAX(d.syncedAt) FROM StockSummary d")
     Date findLastSyncTime();
 
+    @Query("SELECT MAX(d.syncedAt) FROM StockSummary d where tenantSchema=:tenantSchema")
+    Date findLastSyncTimeByTenantSchema(@Param("tenantSchema") String tenantSchema);
+
     List<StockSummary> findByTenantSchemaAndProductIdAndWarehouseId(String tenantSchema, Long productId, Long warehouseId);
 
     @Query("SELECT d FROM StockSummary d WHERE d.productId IN :productIds")

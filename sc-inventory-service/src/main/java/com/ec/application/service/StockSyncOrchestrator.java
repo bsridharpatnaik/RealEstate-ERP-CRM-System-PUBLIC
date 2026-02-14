@@ -52,6 +52,7 @@ public class StockSyncOrchestrator {
         try {
             for (String tenant : schemaConfig.getNonMasterSchemaList()) {
                 try {
+                    log.info("Starting stock sync for tenant {}", tenant);
                     tenantSyncService.syncSingleTenant(tenant);
                 } catch (Exception e) {
                     log.error("Stock sync failed for tenant {}", tenant, e);

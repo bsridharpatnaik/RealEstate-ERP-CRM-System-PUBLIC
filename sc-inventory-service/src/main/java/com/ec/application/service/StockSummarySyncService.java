@@ -33,7 +33,7 @@ public class StockSummarySyncService {
         try {
             // ---------- Step 1: Get last sync time from MASTER ----------
             ThreadLocalStorage.setTenantName(masterSchema);
-            Date lastSyncTime = stockSummaryRepo.findLastSyncTime();
+            Date lastSyncTime = stockSummaryRepo.findLastSyncTimeByTenantSchema(tenantSchema);
             if (lastSyncTime == null) {
                 lastSyncTime = new Date(0); // 01-01-1970 00:00:00
                 System.out.println("⏱ Last sync time not found. Using minimum date: " + lastSyncTime);
