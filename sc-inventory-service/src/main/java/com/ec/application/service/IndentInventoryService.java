@@ -71,7 +71,11 @@ public class IndentInventoryService {
     @Autowired
     IndentStatusHistoryService indentStatusHistoryService;
 
-    List<String> indentPOEligibleStatuses = Arrays.asList(IndentStatusConstants.STATUS_APPROVED, IndentStatusConstants.STATUS_PO_PARTIAL);
+    List<String> indentPOEligibleStatuses = Arrays.asList(
+            IndentStatusConstants.STATUS_APPROVED,
+            IndentStatusConstants.STATUS_PO_PARTIAL,
+            IndentStatusConstants.STATUS_INWARD_PARTIAL
+    );
     List<String> indentLineItemPoEligibleStatuses = Arrays.asList(IndentLineItemStatusConstants.STATUS_NEW);
 
     Logger log = LoggerFactory.getLogger(IndentInventoryService.class);
