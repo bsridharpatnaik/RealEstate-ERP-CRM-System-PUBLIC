@@ -850,46 +850,38 @@ DROP PROCEDURE IF EXISTS create_indexes_safe//
 
 CREATE PROCEDURE create_indexes_safe()
 BEGIN
-    -- Drop and recreate po_status_history indexes
-    IF EXISTS (SELECT 1 FROM information_schema.statistics
-               WHERE table_schema = DATABASE()
-               AND table_name = 'po_status_history'
-               AND index_name = 'idx_po_history_status_date') THEN
+    -- Only handle composite status/date indexes
+
+    -- po_status_history
+    IF EXISTS (
+        SELECT 1 FROM information_schema.statistics
+        WHERE table_schema = DATABASE()
+        AND table_name = 'po_status_history'
+        AND index_name = 'idx_po_history_status_date'
+    ) THEN
         DROP INDEX idx_po_history_status_date ON po_status_history;
     END IF;
 
-    CREATE INDEX idx_po_history_status_date ON po_status_history (newStatus, changed_at);
+    CREATE INDEX idx_po_history_status_date
+    ON po_status_history (newStatus, changedAt);
 
-    IF EXISTS (SELECT 1 FROM information_schema.statistics
-               WHERE table_schema = DATABASE()
-               AND table_name = 'po_status_history'
-               AND index_name = 'idx_po_history_po') THEN
-        DROP INDEX idx_po_history_po ON po_status_history;
-    END IF;
-
-    CREATE INDEX idx_po_history_po ON po_status_history (purchase_order_id);
-
-    -- Drop and recreate indent_status_history indexes
-    IF EXISTS (SELECT 1 FROM information_schema.statistics
-               WHERE table_schema = DATABASE()
-               AND table_name = 'indent_status_history'
-               AND index_name = 'idx_indent_history_status_date') THEN
+    -- indent_status_history
+    IF EXISTS (
+        SELECT 1 FROM information_schema.statistics
+        WHERE table_schema = DATABASE()
+        AND table_name = 'indent_status_history'
+        AND index_name = 'idx_indent_history_status_date'
+    ) THEN
         DROP INDEX idx_indent_history_status_date ON indent_status_history;
     END IF;
 
-    CREATE INDEX idx_indent_history_status_date ON indent_status_history (newStatus, changed_at);
+    CREATE INDEX idx_indent_history_status_date
+    ON indent_status_history (newStatus, changedAt);
 
-    IF EXISTS (SELECT 1 FROM information_schema.statistics
-               WHERE table_schema = DATABASE()
-               AND table_name = 'indent_status_history'
-               AND index_name = 'idx_indent_history_indent') THEN
-        DROP INDEX idx_indent_history_indent ON indent_status_history;
-    END IF;
-
-    CREATE INDEX idx_indent_history_indent ON indent_status_history (indent_id);
 END//
 
 DELIMITER ;
+
 
 CALL create_indexes_safe();
 DROP PROCEDURE create_indexes_safe;
