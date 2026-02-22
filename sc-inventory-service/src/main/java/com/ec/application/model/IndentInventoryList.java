@@ -92,7 +92,11 @@ public class IndentInventoryList extends ReusableFields {
         if (this == o) return true;
         if (!(o instanceof IndentInventoryList)) return false;
         IndentInventoryList that = (IndentInventoryList) o;
-        return entryid != null && entryid.equals(that.entryid);
+
+        if (entryid != null && that.entryid != null)
+            return entryid.equals(that.entryid);
+
+        return lineItemCode != null && lineItemCode.equals(that.lineItemCode);
     }
 
     @Override

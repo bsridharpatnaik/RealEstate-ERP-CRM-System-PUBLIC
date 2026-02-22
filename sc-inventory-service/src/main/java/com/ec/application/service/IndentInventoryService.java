@@ -259,7 +259,17 @@ public class IndentInventoryService {
             }
         }
         // Remove items that are no longer in the new list
-        indentInventory.getInventoryList().removeIf(item -> !itemsToKeep.contains(item));
+        for (IndentInventoryList existingItem : indentInventory.getInventoryList()) {
+            if (!itemsToKeep.contains(existingItem)) {
+
+                // 🚨 Business rule check (optional but recommended)
+                if (existingItem.getPurchaseOrderId() != null) {
+                    throw new RuntimeException("Cannot remove line item linked to Purchase Order");
+                }
+
+                existingItem.setDeleted(true);   // ✅ SOFT DELETE
+            }
+        }
     }
 
     /**
