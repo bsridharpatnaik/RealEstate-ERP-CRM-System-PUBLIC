@@ -37,6 +37,7 @@ public final class IndentInventorySpecification {
         List<String> statusChangedTo = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedTo");
         List<String> statusChangedAfterDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedAfterDate");
         List<String> statusChangedBeforeDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
+        List<String> tenants = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "tenants");
         Specification<IndentInventory> finalSpec = null;
 
         if (startDates != null && !startDates.isEmpty())
@@ -58,6 +59,10 @@ public final class IndentInventorySpecification {
         if (statusList != null && !statusList.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldEquals(IndentInventory_.INDENT_STATUS, statusList));
+
+        if (tenants != null && !tenants.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, tenants));
 
         if (lineItemStatus != null && !lineItemStatus.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
@@ -101,8 +106,8 @@ public final class IndentInventorySpecification {
         return finalSpec;
     }
 
-    public static Specification<IndentInventory> getTenantSpecification(String tenantName, Specification<IndentInventory> spec) {
-        Specification<IndentInventory> tenantSpec = specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, Collections.singletonList(tenantName));
+    public static Specification<IndentInventory> getTenantSpecification(List<String> tenantNames, Specification<IndentInventory> spec) {
+        Specification<IndentInventory> tenantSpec = specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, tenantNames);
         return specbldr.specAndCondition(spec, tenantSpec);
     }
 

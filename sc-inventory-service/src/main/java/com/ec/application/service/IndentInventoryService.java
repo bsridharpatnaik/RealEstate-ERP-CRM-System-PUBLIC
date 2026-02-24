@@ -354,7 +354,7 @@ public class IndentInventoryService {
     }
 
     @Transactional(readOnly = true)
-    public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws ParseException {
+    public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws Exception {
 
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
         Specification<IndentInventory> spec =
@@ -362,7 +362,12 @@ public class IndentInventoryService {
 
         String tenantName = tenantService.fetchTenantFromHeader();
         if (tenantName != null) {
-            spec = IndentInventorySpecification.getTenantSpecification(tenantName, spec);
+            spec = IndentInventorySpecification.getTenantSpecification(Collections.singletonList(tenantName), spec);
+        }
+
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+        if(tenantName == null){
+            spec = IndentInventorySpecification.getTenantSpecification(currentUser.getAllowedTenants(), spec);
         }
 
         if (spec == null) {
@@ -411,13 +416,24 @@ public class IndentInventoryService {
         IndentInventory indentInventory = indentInventoryRepo.findByIdWithDetails(id)
                 .orElseThrow(() ->
                         new RuntimeException("Indent Inventory not found with ID " + id));
+        String tenant = indentInventory.getTenant();
+        exitIfTenantNotAllowed(tenant);
         indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
     }
 
+    private void exitIfTenantNotAllowed(String tenant) throws Exception {
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+        if(!currentUser.getAllowedTenants().contains(tenant)){
+            throw new Exception("User not allowed to access data for Project: " + tenant);
+        }
+    }
+
+
     @Transactional(rollbackFor = Exception.class)
     public void deleteInwardInventoryById(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
+        exitIfTenantNotAllowed(indentInventory.getTenant());
         String action = indentValidationService.validateBeforeDelete(indentInventory);
         if (action.equalsIgnoreCase("DELETE")) {
             indentInventoryRepo.softDelete(indentInventory);
@@ -454,11 +470,12 @@ public class IndentInventoryService {
         return indentInventory;
     }
 
-    public IndentInventory validateAndGetIndentInventoryForModification(String id) {
+    public IndentInventory validateAndGetIndentInventoryForModification(String id) throws Exception {
         Optional<IndentInventory> indentInventoryOptional = indentInventoryRepo.findByIdWithDetails(id);
         if (!indentInventoryOptional.isPresent()) {
             throw new RuntimeException("Indent Inventory not found with ID " + id);
         }
+        exitIfTenantNotAllowed(indentInventoryOptional.get().getTenant());
         return indentInventoryOptional.get();
     }
 
@@ -742,7 +759,7 @@ public class IndentInventoryService {
 
         String tenantName = tenantService.fetchTenantFromHeader();
         if (tenantName != null) {
-            spec = IndentInventorySpecification.getTenantSpecification(tenantName, spec);
+            spec = IndentInventorySpecification.getTenantSpecification(Collections.singletonList(tenantName), spec);
         }
         int page = 0;
         int size = 500;

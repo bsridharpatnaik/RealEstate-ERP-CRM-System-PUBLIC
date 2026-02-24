@@ -179,6 +179,22 @@ public class SpecificationsBuilder<T> {
         };
     }
 
+    public Specification<T> whereWarehouseContains(List<String> warehouseNames, String joinTable) {
+
+        return (root, query, cb) ->
+        {
+
+            Join<T, InwardOutwardList> ioList = root.join(joinTable);
+            Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
+            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
+            query.distinct(true);
+            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
+            Predicate parentPredicate = parentExpression.in(warehouseNames);
+            query.where(parentPredicate);
+            return query.getRestriction();
+        };
+    }
+
     public Specification<T> whereIndentCategoryContains(List<String> categoryNames, String joinTable) {
 
         return (root, query, cb) ->

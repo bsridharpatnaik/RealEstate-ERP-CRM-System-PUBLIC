@@ -2,10 +2,9 @@ package com.ec.application.Filters;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -53,8 +52,7 @@ public final class InwardInventorySpecification
 					specbldr.whereChildFieldContains(InwardInventory_.SUPPLIER, Supplier_.NAME, supplierNames));
 
 		if (warehouseNames != null && warehouseNames.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec, specbldr
-					.whereGrandChildFieldContains(InwardInventory_.INWARD_OUTWARD_LIST, InwardOutwardList_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, warehouseNames));
+			finalSpec = specbldr.specAndCondition(finalSpec, hasWarehouseNamesIgnoreCase(warehouseNames));
 
 		if (invoiceReceived != null && invoiceReceived.size() > 0)
 			finalSpec = specbldr.specAndCondition(finalSpec,
@@ -94,6 +92,30 @@ public final class InwardInventorySpecification
 			}
 		}
 		return finalSpec;
+	}
+
+	public static Specification<InwardInventory> hasWarehouseNamesIgnoreCase(List<String> warehouseNames) {
+		return (root, query, cb) -> {
+
+			if (warehouseNames == null || warehouseNames.isEmpty()) {
+				return null;
+			}
+
+			query.distinct(true);
+
+			Join<InwardInventory, InwardOutwardList> inwardOutwardJoin =
+					root.join(InwardInventory_.inwardOutwardList, JoinType.LEFT);
+
+			Join<InwardOutwardList, Warehouse> warehouseJoin =
+					inwardOutwardJoin.join(InwardOutwardList_.warehouse, JoinType.LEFT);
+
+			List<String> lowerCaseNames = warehouseNames.stream()
+					.map(String::toLowerCase)
+					.collect(Collectors.toList());
+
+			return cb.lower(warehouseJoin.get(Warehouse_.warehouseName))
+					.in(lowerCaseNames);
+		};
 	}
 
 }
