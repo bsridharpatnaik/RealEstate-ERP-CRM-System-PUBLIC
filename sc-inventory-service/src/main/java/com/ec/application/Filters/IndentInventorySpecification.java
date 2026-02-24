@@ -143,4 +143,22 @@ public final class IndentInventorySpecification {
     }
 
 
+    public static Specification<IndentInventory> buildSpecificationWithTenantSecurity(FilterDataList filterDataList, String headerTenant, List<String> allowedTenants) throws ParseException {
+
+        Specification<IndentInventory> finalSpec = getSpecification(filterDataList);
+
+        // If header tenant present → force that tenant
+        if (headerTenant != null) {
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, Collections.singletonList(headerTenant)));
+        }
+        // Otherwise restrict to allowed tenants
+        else if (allowedTenants != null && !allowedTenants.isEmpty()) {
+            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, allowedTenants));
+        }
+
+        if (finalSpec == null) {
+            finalSpec = Specification.where(null);
+        }
+        return finalSpec;
+    }
 }

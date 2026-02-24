@@ -354,27 +354,21 @@ public class IndentInventoryService {
     }
 
     @Transactional(readOnly = true)
-    public ReturnIndentInventoryData fetchIndentInventory(FilterDataList filterDataList, Pageable pageable) throws Exception {
+    public ReturnIndentInventoryData fetchIndentInventory(
+            FilterDataList filterDataList,
+            Pageable pageable) throws Exception {
 
         ReturnIndentInventoryData returnData = new ReturnIndentInventoryData();
+
+        // 🔐 Single secured spec builder
         Specification<IndentInventory> spec =
-                IndentInventorySpecification.getSpecification(filterDataList);
+                IndentInventorySpecification.buildSpecificationWithTenantSecurity(
+                        filterDataList,
+                        tenantService.fetchTenantFromHeader(),
+                        userDetailsService.getCurrentUser().getAllowedTenants()
+                );
 
-        String tenantName = tenantService.fetchTenantFromHeader();
-        if (tenantName != null) {
-            spec = IndentInventorySpecification.getTenantSpecification(Collections.singletonList(tenantName), spec);
-        }
-
-        UserReturnData currentUser = userDetailsService.getCurrentUser();
-        if(tenantName == null){
-            spec = IndentInventorySpecification.getTenantSpecification(currentUser.getAllowedTenants(), spec);
-        }
-
-        if (spec == null) {
-            spec = Specification.where(null);
-        }
-
-        // STEP 1: page ONLY parents (safe)
+        // STEP 1: Page only parent IDs
         Page<IndentInventory> idPage =
                 indentInventoryRepo.findAll(spec, pageable);
 
@@ -383,7 +377,7 @@ public class IndentInventoryService {
                 .map(IndentInventory::getIndentId)
                 .collect(Collectors.toList());
 
-        // STEP 2: fetch full graph
+        // STEP 2: Fetch full graph safely
         List<IndentInventory> full =
                 ids.isEmpty()
                         ? Collections.emptyList()
@@ -405,10 +399,12 @@ public class IndentInventoryService {
         Page<IndentInventory> page =
                 new PageImpl<>(ordered, pageable, idPage.getTotalElements());
 
-
+        // Enrich UI data
         indentInventoryUiEnricher.enrich(page.getContent());
+
         returnData.setIndentInventories(page);
         returnData.setIiDropdown(populateDropdownService.fetchData("indent"));
+
         return returnData;
     }
 
@@ -424,7 +420,7 @@ public class IndentInventoryService {
 
     private void exitIfTenantNotAllowed(String tenant) throws Exception {
         UserReturnData currentUser = userDetailsService.getCurrentUser();
-        if(!currentUser.getAllowedTenants().contains(tenant)){
+        if (!currentUser.getAllowedTenants().contains(tenant)) {
             throw new Exception("User not allowed to access data for Project: " + tenant);
         }
     }
@@ -701,9 +697,7 @@ public class IndentInventoryService {
                     .computeIfAbsent(row.getStatus(), k -> new HashMap<>())
                     .merge(row.getGroupKey(), row.getCount(), Long::sum);
         }
-
         Map<String, DashboardChartDTO> dashboards = new HashMap<>();
-
         for (String status : statuses) {
             Map<String, Long> tenantMap = grouped.getOrDefault(status, new HashMap<>());
 
@@ -716,36 +710,33 @@ public class IndentInventoryService {
             }
             dashboards.put(status, new DashboardChartDTO(total, tenantCounts));
         }
-
         return dashboards;
     }
 
     @UseDefaultTenant
-    public void streamIndentExcel(FilterDataList filterDataList, OutputStream os) throws Exception {
+    public void streamIndentExcel(
+            FilterDataList filterDataList,
+            OutputStream os) throws Exception {
 
-        SXSSFWorkbook workbook = new SXSSFWorkbook(100); // keep 100 rows in memory
+        SXSSFWorkbook workbook = new SXSSFWorkbook(100);
         Sheet sheet = workbook.createSheet("Indents");
 
         int rowNum = 0;
 
         // Header
         Row header = sheet.createRow(rowNum++);
-
         String[] columns = {
                 "Indent No",
                 "Tenant",
                 "Indent Date",
                 "Indent Status",
                 "Last Status Updated At",
-
                 "Line Item Code",
                 "Product",
                 "Category",
-
                 "Quantity Requested",
                 "Quantity Received",
                 "Quantity Pending",
-
                 "Line Item Status",
                 "Remarks"
         };
@@ -754,28 +745,35 @@ public class IndentInventoryService {
             header.createCell(i).setCellValue(columns[i]);
         }
 
+        // 🔐 Same secured spec builder as UI
         Specification<IndentInventory> spec =
-                IndentInventorySpecification.getSpecification(filterDataList);
+                IndentInventorySpecification.buildSpecificationWithTenantSecurity(
+                        filterDataList,
+                        tenantService.fetchTenantFromHeader(),
+                        userDetailsService.getCurrentUser().getAllowedTenants()
+                );
 
-        String tenantName = tenantService.fetchTenantFromHeader();
-        if (tenantName != null) {
-            spec = IndentInventorySpecification.getTenantSpecification(Collections.singletonList(tenantName), spec);
-        }
         int page = 0;
         int size = 500;
         Page<IndentInventory> result;
 
         do {
             Pageable pageable = PageRequest.of(page, size);
+
             result = indentInventoryRepo.findAll(spec, pageable);
 
-            rowNum = writeExcelPage(result.getContent(), sheet, rowNum);
+            rowNum = writeExcelPage(
+                    result.getContent(),
+                    sheet,
+                    rowNum
+            );
 
             page++;
+
         } while (!result.isLast());
 
         workbook.write(os);
-        workbook.dispose(); // VERY IMPORTANT
+        workbook.dispose(); // IMPORTANT for SXSSFWorkbook
     }
 
     private int writeExcelPage(
@@ -851,6 +849,24 @@ public class IndentInventoryService {
             return "'" + value;
         }
         return value;
+    }
+
+    private Specification<IndentInventory> buildIndentSpecification(FilterDataList filterDataList) throws Exception {
+
+        Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
+
+        String tenantName = tenantService.fetchTenantFromHeader();
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+
+        if (tenantName != null) {
+            spec = IndentInventorySpecification.getTenantSpecification(Collections.singletonList(tenantName), spec);
+        } else {
+            spec = IndentInventorySpecification.getTenantSpecification(currentUser.getAllowedTenants(), spec);
+        }
+        if (spec == null) {
+            spec = Specification.where(null);
+        }
+        return spec;
     }
 
 }
