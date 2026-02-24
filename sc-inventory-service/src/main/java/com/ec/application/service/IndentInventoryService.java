@@ -88,7 +88,7 @@ public class IndentInventoryService {
         validateInputsForCreate(iiData);
         // Set basic fields (without inventory list)
         String tenantName = tenantService.fetchTenantFromHeader();
-
+        exitIfReadOnly(tenantName);
         if (tenantName == null)
             throw new IllegalStateException("No request context available to fetch tenant-id.");
 
@@ -115,6 +115,22 @@ public class IndentInventoryService {
         draftService.deleteDraftForUser("INDENT");
         indentInventoryUiEnricher.enrich(indentInventory);
         return indentInventory;
+    }
+
+    private void exitIfReadOnly(String tenantName) throws Exception {
+        UserReturnData currentUser = userDetailsService.getCurrentUser();
+        boolean readOnly = true;
+        for(UserTenantMapping ut : currentUser.getTenantList()){
+            if(ut.getTenant().getName().equalsIgnoreCase(tenantName)){
+                if(ut.getAuthorization().equals(AuthorizationEnum.FullAccess)){
+                    readOnly = false;
+                    break;
+                }
+            }
+        }
+
+        if(readOnly)
+            throw new Exception("User not allowed to add/modify data for this project");
     }
 
     /**
@@ -429,7 +445,7 @@ public class IndentInventoryService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteInwardInventoryById(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
-        exitIfTenantNotAllowed(indentInventory.getTenant());
+        exitIfReadOnly(indentInventory.getTenant());
         String action = indentValidationService.validateBeforeDelete(indentInventory);
         if (action.equalsIgnoreCase("DELETE")) {
             indentInventoryRepo.softDelete(indentInventory);
@@ -449,6 +465,7 @@ public class IndentInventoryService {
     @Transactional(rollbackFor = Exception.class)
     public IndentInventory updateIndentInventory(IndentInventoryData payload, String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
+        exitIfReadOnly(indentInventory.getTenant());
         indentValidationService.validateBeforeUpdate(indentInventory);
         validateInputsForUpdate(payload);
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
@@ -482,7 +499,7 @@ public class IndentInventoryService {
     @Transactional(rollbackFor = Exception.class)
     public IndentInventory splitLineItem(String indentId, SplitLineItemRequest request) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(indentId);
-
+        exitIfReadOnly(indentInventory.getTenant());
         // Find the original item to be split
         IndentInventoryList originalItem = indentInventory.getInventoryList().stream()
                 .filter(item -> item.getLineItemCode().equals(request.getLineItemCode()))
@@ -560,6 +577,7 @@ public class IndentInventoryService {
     @Transactional(rollbackFor = Exception.class)
     public IndentInventory approveIndentInventory(String id) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
+        exitIfReadOnly(indentInventory.getTenant());
         indentValidationService.validateBeforeApprove(indentInventory);
         indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_APPROVED, userDetailsService.getCurrentUser().getUsername(), "Indent approved by " + userDetailsService.getCurrentUser().getUsername(), null);
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
