@@ -19,6 +19,8 @@ public interface FirmRepo extends BaseRepository<Firm, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Firm save(Firm entity);
 
+    boolean existsByFirmNameIgnoreCase(String firmName);
+
     boolean existsByFirmName(String firmName);
 
     ArrayList<Firm> findByfirmName(String firmName);

@@ -3,7 +3,9 @@ package com.ec.application.controller;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.AllMachineriesWithNamesData;
 import com.ec.application.model.Firm;
 import com.ec.application.service.FirmService;
@@ -37,12 +39,14 @@ public class FirmController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     @CheckAuthority
     public Firm createFirm(@RequestBody Firm payload) throws Exception {
         return firmService.createFirm(payload);
     }
 
     @PutMapping("/{id}")
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
     @CheckAuthority
     public Firm updateFirm(@PathVariable Long id, @RequestBody Firm Firm) throws Exception {
         return firmService.updateFirm(id, Firm);
