@@ -58,6 +58,7 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
                     Pattern.compile(".*/charts.*"),
                     Pattern.compile(".*/trend.*"),
                     Pattern.compile(".*/stale-charts.*"),
+                    Pattern.compile(".*/firm.*"),
                     Pattern.compile(".*/error.*")
             ));
 
