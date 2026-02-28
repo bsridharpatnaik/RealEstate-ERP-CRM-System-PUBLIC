@@ -43,7 +43,7 @@ public class ContactMappedSuperClass {
 
 	@NonNull
 	@Column(name = "name", nullable = false, length = 255)
-	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
 	private String name;
 
 	@Column(name = "mobileNo", nullable = true, length = 255)
@@ -89,6 +89,25 @@ public class ContactMappedSuperClass {
 
 	@Column(name = "zip", nullable = true, length = 255)
 	private String zip;
+
+	@Column(name = "account_name", nullable = true, length = 255)
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
+	private String accountName;
+
+	@Column(name = "account_number", nullable = true, length = 50)
+	private String accountNumber;
+
+	@Column(name = "bank_name", nullable = true, length = 255)
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
+	private String bankName;
+
+	@Column(name = "branch_name", nullable = true, length = 255)
+	@JsonDeserialize(using = ToTitleCaseDeserializer.class)
+	private String branchName;
+
+	@Column(name = "ifsc_code", nullable = true, length = 20)
+	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
+	private String ifscCode;
 
 	@CreatedBy
 	@Column(name = "createdBy", nullable = true, length = 255, updatable = false)
