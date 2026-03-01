@@ -8,16 +8,16 @@ CREATE TABLE IF NOT EXISTS execution_history (
     UNIQUE KEY uk_execution_history_procedure (procedure_name)
 );
 
+
 CREATE OR REPLACE VIEW all_inventory_view AS
 SELECT
     ROW_NUMBER() OVER (
         ORDER BY
-            q.date ASC,
-            q.sort_order ASC,
-            q.creationDate ASC,
-            q.keyid ASC
+            q.date         DESC,
+            q.sort_order   DESC,   -- Lost-Damaged(5) at top, Inward(1) at bottom within same day
+            q.creationDate DESC,
+            q.keyid        DESC
     ) AS id,
-
     q.type,
     q.keyid,
     q.entryid,
@@ -31,6 +31,7 @@ SELECT
     q.product_name,
     q.category_name,
     q.measurementunit,
+    q.sort_order,
     c.name,
     c.mobileno,
     c.emailid,
@@ -39,18 +40,16 @@ SELECT
     q.warehousename
 FROM (
 
-    /* =====================================================
-       INWARD (NORMAL)
-       ===================================================== */
+    /* === INWARD (NORMAL) — sort_order 1 === */
     SELECT
-        'Inward' AS type,
-        ii.inwardid AS keyid,
+        'Inward'                AS type,
+        ii.inwardid             AS keyid,
         ioe.entryid,
-        DATE(ii.date) AS date,
+        DATE(ii.date)           AS date,
         ii.contactid,
         ioe.productid,
         ioe.quantity,
-        ioe.closingstock,
+        ioe.closingstock,                    -- written by update_closing_stock
         ioe.creationDate,
         ioe.lastModifiedDate,
         p.product_name,
@@ -58,66 +57,109 @@ FROM (
         p.measurementunit,
         w.warehouse_id,
         w.warehousename,
-        1 AS sort_order
+        1                       AS sort_order
     FROM inward_inventory ii
-    JOIN inwardinventory_entry iie
-        ON ii.inwardid = iie.inwardid
-    JOIN inward_outward_entries ioe
-        ON iie.entryid = ioe.entryid
-    JOIN Product p
-        ON p.productid = ioe.productid
-    JOIN Category cat
-        ON cat.categoryid = p.categoryid
-    JOIN Warehouse w
-        ON w.warehouse_id = ioe.warehouse_id
+    JOIN inwardinventory_entry iie  ON ii.inwardid    = iie.inwardid
+    JOIN inward_outward_entries ioe ON iie.entryid    = ioe.entryid
+    JOIN Product p                  ON p.productid    = ioe.productid
+    JOIN Category cat               ON cat.categoryid = p.categoryid
+    JOIN Warehouse w                ON w.warehouse_id = ioe.warehouse_id
     WHERE ii.is_deleted = 0
 
     UNION ALL
 
-    /* =====================================================
-       TRANSFER CREDIT (ALWAYS)
-       ===================================================== */
+    /* === TRANSFER-IN (credit/target side) — sort_order 2 === */
     SELECT
-        'Inward' AS type,
-        it.transferId AS keyid,
-        iti.transferItemId AS entryid,
-        DATE(it.transfer_date) AS date,
-        NULL AS contactid,
-        iti.productId AS productid,
+        'Transfer-In'               AS type,
+        it.transferId               AS keyid,
+        iti.transferItemId          AS entryid,
+        DATE(it.transfer_date)      AS date,
+        NULL                        AS contactid,
+        iti.productId               AS productid,
         iti.quantity,
-        iti.target_closing_stock AS closingstock,
+        iti.target_closing_stock    AS closingstock,  -- written by update_closing_stock
         iti.creationDate,
         iti.lastModifiedDate,
-        iti.productName AS product_name,
+        iti.productName             AS product_name,
         cat.category_name,
-        iti.measurementUnit AS measurementunit,
-        it.target_warehouse_id AS warehouse_id,
-        it.target_warehouse_name AS warehousename,
-        1 AS sort_order
+        iti.measurementUnit         AS measurementunit,
+        it.target_warehouse_id      AS warehouse_id,
+        it.target_warehouse_name    AS warehousename,
+        2                           AS sort_order
     FROM inventory_transfer it
-    JOIN inventory_transfer_item iti
-        ON iti.transfer_id = it.transferId
-    JOIN Product p
-        ON p.productid = iti.productId
-    JOIN Category cat
-        ON cat.categoryid = p.categoryid
-    WHERE it.is_deleted = 0
+    JOIN inventory_transfer_item iti ON iti.transfer_id  = it.transferId
+    JOIN Product p                   ON p.productid      = iti.productId
+    JOIN Category cat                ON cat.categoryid   = p.categoryid
+    WHERE it.is_deleted  = 0
       AND iti.is_deleted = 0
 
     UNION ALL
 
-    /* =====================================================
-       LOST / DAMAGED
-       ===================================================== */
+    /* === TRANSFER-OUT (debit/source side) — sort_order 3 === */
     SELECT
-        'Lost-Damaged' AS type,
-        ldi.lostdamagedid AS keyid,
-        ldi.lostdamagedid AS entryid,
-        DATE(ldi.date) AS date,
-        NULL AS contactid,
+        'Transfer-Out'              AS type,
+        it.transferId               AS keyid,
+        iti.transferItemId          AS entryid,
+        DATE(it.transfer_date)      AS date,
+        NULL                        AS contactid,
+        iti.productId               AS productid,
+        iti.quantity,
+        iti.source_closing_stock    AS closingstock,  -- written by update_closing_stock
+        iti.creationDate,
+        iti.lastModifiedDate,
+        iti.productName             AS product_name,
+        cat.category_name,
+        iti.measurementUnit         AS measurementunit,
+        it.source_warehouse_id      AS warehouse_id,
+        it.source_warehouse_name    AS warehousename,
+        3                           AS sort_order
+    FROM inventory_transfer it
+    JOIN inventory_transfer_item iti ON iti.transfer_id  = it.transferId
+    JOIN Product p                   ON p.productid      = iti.productId
+    JOIN Category cat                ON cat.categoryid   = p.categoryid
+    WHERE it.is_deleted  = 0
+      AND iti.is_deleted = 0
+
+    UNION ALL
+
+    /* === OUTWARD (NORMAL) — sort_order 4 === */
+    SELECT
+        'Outward'               AS type,
+        oi.outwardid            AS keyid,
+        ioe.entryid,
+        DATE(oi.date)           AS date,
+        oi.contactid,
+        ioe.productid,
+        ioe.quantity,
+        ioe.closingstock,                    -- written by update_closing_stock
+        ioe.creationDate,
+        ioe.lastModifiedDate,
+        p.product_name,
+        cat.category_name,
+        p.measurementunit,
+        w.warehouse_id,
+        w.warehousename,
+        4                       AS sort_order
+    FROM outward_inventory oi
+    JOIN outwardinventory_entry oie ON oi.outwardid   = oie.outwardid
+    JOIN inward_outward_entries ioe ON oie.entryid    = ioe.entryid
+    JOIN Product p                  ON p.productid    = ioe.productid
+    JOIN Category cat               ON cat.categoryid = p.categoryid
+    JOIN Warehouse w                ON w.warehouse_id = oi.warehouse_id
+    WHERE oi.is_deleted = 0
+
+    UNION ALL
+
+    /* === LOST / DAMAGED — sort_order 5 === */
+    SELECT
+        'Lost-Damaged'          AS type,
+        ldi.lostdamagedid       AS keyid,
+        ldi.lostdamagedid       AS entryid,
+        DATE(ldi.date)          AS date,
+        NULL                    AS contactid,
         ldi.productid,
         ldi.quantity,
-        ldi.closingstock,
+        ldi.closingstock,                    -- written by update_closing_stock
         ldi.creationDate,
         ldi.lastModifiedDate,
         p.product_name,
@@ -125,86 +167,206 @@ FROM (
         p.measurementunit,
         w.warehouse_id,
         w.warehousename,
-        2 AS sort_order
+        5                       AS sort_order
     FROM lost_damaged_inventory ldi
-    JOIN Product p
-        ON p.productid = ldi.productid
-    JOIN Category cat
-        ON cat.categoryid = p.categoryid
-    JOIN Warehouse w
-        ON w.warehouse_id = ldi.warehousename
+    JOIN Product p    ON p.productid    = ldi.productid
+    JOIN Category cat ON cat.categoryid = p.categoryid
+    JOIN Warehouse w  ON w.warehouse_id = ldi.warehousename
     WHERE ldi.is_deleted = 0
 
-    UNION ALL
-
-    /* =====================================================
-       OUTWARD (NORMAL)
-       ===================================================== */
-    SELECT
-        'Outward' AS type,
-        oi.outwardid AS keyid,
-        ioe.entryid,
-        DATE(oi.date) AS date,
-        oi.contactid,
-        ioe.productid,
-        ioe.quantity,
-        ioe.closingstock,
-        ioe.creationDate,
-        ioe.lastModifiedDate,
-        p.product_name,
-        cat.category_name,
-        p.measurementunit,
-        w.warehouse_id,
-        w.warehousename,
-        3 AS sort_order
-    FROM outward_inventory oi
-    JOIN outwardinventory_entry oie
-        ON oi.outwardid = oie.outwardid
-    JOIN inward_outward_entries ioe
-        ON oie.entryid = ioe.entryid
-    JOIN Product p
-        ON p.productid = ioe.productid
-    JOIN Category cat
-        ON cat.categoryid = p.categoryid
-    JOIN Warehouse w
-        ON w.warehouse_id = oi.warehouse_id
-    WHERE oi.is_deleted = 0
-
-    UNION ALL
-
-    /* =====================================================
-       TRANSFER DEBIT (ALWAYS)
-       ===================================================== */
-    SELECT
-        'Outward' AS type,
-        it.transferId AS keyid,
-        iti.transferItemId AS entryid,
-        DATE(it.transfer_date) AS date,
-        NULL AS contactid,
-        iti.productId AS productid,
-        iti.quantity,
-        iti.source_closing_stock AS closingstock,
-        iti.creationDate,
-        iti.lastModifiedDate,
-        iti.productName AS product_name,
-        cat.category_name,
-        iti.measurementUnit AS measurementunit,
-        it.source_warehouse_id AS warehouse_id,
-        it.source_warehouse_name AS warehousename,
-        3 AS sort_order
-    FROM inventory_transfer it
-    JOIN inventory_transfer_item iti
-        ON iti.transfer_id = it.transferId
-    JOIN Product p
-        ON p.productid = iti.productId
-    JOIN Category cat
-        ON cat.categoryid = p.categoryid
-    WHERE it.is_deleted = 0
-      AND iti.is_deleted = 0
-
 ) q
-LEFT JOIN contacts c
-       ON c.contactid = q.contactid;
+LEFT JOIN contacts c ON c.contactid = q.contactid;
+
+
+DROP PROCEDURE IF EXISTS update_closing_stock;
+DELIMITER //
+
+CREATE PROCEDURE update_closing_stock()
+BEGIN
+
+    /* =====================================================
+       Build a complete sorted ledger directly from source
+       tables — no dependency on all_inventory table.
+       Uses the same UNION structure as the view.
+    ===================================================== */
+    CREATE TEMPORARY TABLE IF NOT EXISTS tmp_ledger (
+        row_num        BIGINT,
+        entryid        BIGINT,
+        type           VARCHAR(20),
+        warehouse_id   BIGINT,
+        productid      BIGINT,
+        quantity       DOUBLE,
+        closingstock   DOUBLE    -- will be filled by window calculation
+    );
+    TRUNCATE TABLE tmp_ledger;
+
+    INSERT INTO tmp_ledger (row_num, entryid, type, warehouse_id, productid, quantity)
+    SELECT
+        ROW_NUMBER() OVER (
+            PARTITION BY src.warehouse_id, src.productid
+            ORDER BY
+                src.date       ASC,
+                src.sort_order ASC,   -- 1=Inward,2=Transfer-In,3=Transfer-Out,4=Outward,5=Lost
+                src.creationDate ASC,
+                src.keyid      ASC
+        ) AS row_num,
+        src.entryid,
+        src.type,
+        src.warehouse_id,
+        src.productid,
+        src.quantity
+    FROM (
+
+        SELECT
+            ioe.entryid,
+            'Inward'            AS type,
+            ioe.warehouse_id,
+            ioe.productid,
+            ioe.quantity,
+            DATE(ii.date)       AS date,
+            ioe.creationDate,
+            ii.inwardid         AS keyid,
+            1                   AS sort_order
+        FROM inward_inventory ii
+        JOIN inwardinventory_entry iie  ON ii.inwardid  = iie.inwardid
+        JOIN inward_outward_entries ioe ON iie.entryid  = ioe.entryid
+        WHERE ii.is_deleted = 0 AND ioe.is_deleted = 0
+
+        UNION ALL
+
+        SELECT
+            iti.transferItemId  AS entryid,
+            'Transfer-In'       AS type,
+            it.target_warehouse_id AS warehouse_id,
+            iti.productId       AS productid,
+            iti.quantity,
+            DATE(it.transfer_date) AS date,
+            iti.creationDate,
+            it.transferId       AS keyid,
+            2                   AS sort_order
+        FROM inventory_transfer it
+        JOIN inventory_transfer_item iti ON iti.transfer_id = it.transferId
+        WHERE it.is_deleted = 0 AND iti.is_deleted = 0
+
+        UNION ALL
+
+        SELECT
+            iti.transferItemId  AS entryid,
+            'Transfer-Out'      AS type,
+            it.source_warehouse_id AS warehouse_id,
+            iti.productId       AS productid,
+            iti.quantity,
+            DATE(it.transfer_date) AS date,
+            iti.creationDate,
+            it.transferId       AS keyid,
+            3                   AS sort_order
+        FROM inventory_transfer it
+        JOIN inventory_transfer_item iti ON iti.transfer_id = it.transferId
+        WHERE it.is_deleted = 0 AND iti.is_deleted = 0
+
+        UNION ALL
+
+        SELECT
+            ioe.entryid,
+            'Outward'           AS type,
+            oi.warehouse_id,
+            ioe.productid,
+            ioe.quantity,
+            DATE(oi.date)       AS date,
+            ioe.creationDate,
+            oi.outwardid        AS keyid,
+            4                   AS sort_order
+        FROM outward_inventory oi
+        JOIN outwardinventory_entry oie ON oi.outwardid = oie.outwardid
+        JOIN inward_outward_entries ioe ON oie.entryid  = ioe.entryid
+        WHERE oi.is_deleted = 0 AND ioe.is_deleted = 0
+
+        UNION ALL
+
+        SELECT
+            ldi.lostdamagedid   AS entryid,
+            'Lost-Damaged'      AS type,
+            ldi.warehousename   AS warehouse_id,
+            ldi.productid,
+            ldi.quantity,
+            DATE(ldi.date)      AS date,
+            ldi.creationDate,
+            ldi.lostdamagedid   AS keyid,
+            5                   AS sort_order
+        FROM lost_damaged_inventory ldi
+        WHERE ldi.is_deleted = 0
+
+    ) src;
+
+    /* =====================================================
+       Calculate running cumulative closing stock.
+       Each row's closing stock = all +qty up to this row
+       minus all -qty up to this row (partitioned by
+       warehouse + product, ordered by row_num ASC).
+    ===================================================== */
+    CREATE TEMPORARY TABLE IF NOT EXISTS tmp_closing (
+        entryid      BIGINT,
+        type         VARCHAR(20),
+        closingstock DOUBLE,
+        PRIMARY KEY (entryid, type)   -- composite: same entryid exists for Transfer-In and Transfer-Out
+    );
+    TRUNCATE TABLE tmp_closing;
+
+    INSERT INTO tmp_closing (entryid, type, closingstock)
+    SELECT
+        entryid,
+        type,
+        SUM(CASE WHEN type IN ('Inward', 'Transfer-In')              THEN quantity ELSE 0 END)
+            OVER (PARTITION BY warehouse_id, productid ORDER BY row_num
+                  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+        -
+        SUM(CASE WHEN type IN ('Transfer-Out', 'Outward', 'Lost-Damaged') THEN quantity ELSE 0 END)
+            OVER (PARTITION BY warehouse_id, productid ORDER BY row_num
+                  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+        AS closingstock
+    FROM tmp_ledger;
+
+    /* =====================================================
+       Write back to source tables.
+       JOIN on both entryid AND type to handle the shared
+       transferItemId between Transfer-In and Transfer-Out.
+    ===================================================== */
+
+    -- Inward entries
+    UPDATE inward_outward_entries ioe
+    JOIN tmp_closing tc ON tc.entryid = ioe.entryid AND tc.type = 'Inward'
+    SET ioe.closingstock = tc.closingstock
+    WHERE ioe.closingstock <> tc.closingstock OR ioe.closingstock IS NULL;
+
+    -- Outward entries
+    UPDATE inward_outward_entries ioe
+    JOIN tmp_closing tc ON tc.entryid = ioe.entryid AND tc.type = 'Outward'
+    SET ioe.closingstock = tc.closingstock
+    WHERE ioe.closingstock <> tc.closingstock OR ioe.closingstock IS NULL;
+
+    -- Transfer-In → target_closing_stock
+    UPDATE inventory_transfer_item iti
+    JOIN tmp_closing tc ON tc.entryid = iti.transferItemId AND tc.type = 'Transfer-In'
+    SET iti.target_closing_stock = tc.closingstock
+    WHERE iti.target_closing_stock <> tc.closingstock OR iti.target_closing_stock IS NULL;
+
+    -- Transfer-Out → source_closing_stock
+    UPDATE inventory_transfer_item iti
+    JOIN tmp_closing tc ON tc.entryid = iti.transferItemId AND tc.type = 'Transfer-Out'
+    SET iti.source_closing_stock = tc.closingstock
+    WHERE iti.source_closing_stock <> tc.closingstock OR iti.source_closing_stock IS NULL;
+
+    -- Lost-Damaged entries
+    UPDATE lost_damaged_inventory ldi
+    JOIN tmp_closing tc ON tc.entryid = ldi.lostdamagedid AND tc.type = 'Lost-Damaged'
+    SET ldi.closingstock = tc.closingstock
+    WHERE ldi.closingstock <> tc.closingstock OR ldi.closingstock IS NULL;
+
+    DROP TEMPORARY TABLE IF EXISTS tmp_ledger;
+    DROP TEMPORARY TABLE IF EXISTS tmp_closing;
+
+END //
+DELIMITER ;
 
 
 
@@ -668,123 +830,6 @@ GROUP BY o.buildingTypeId,
         o.productId,
         o.product_name,
         o.category_name;
-
--- backfill closing stock
-
-DROP PROCEDURE IF EXISTS update_closing_stock;
-
-DELIMITER //
-
-CREATE PROCEDURE update_closing_stock()
-BEGIN
-    /* =====================================================
-       TEMP TABLE
-       ===================================================== */
-    CREATE TEMPORARY TABLE IF NOT EXISTS TempCumulativeStock (
-        entryid BIGINT,
-        type VARCHAR(20),
-        oldClosingStock DOUBLE,
-        calculatedClosingStock DOUBLE
-    );
-
-    TRUNCATE TABLE TempCumulativeStock;
-
-    /* =====================================================
-       RECOMPUTE CLOSING STOCK SEQUENTIALLY
-       ===================================================== */
-    INSERT INTO TempCumulativeStock (
-        entryid,
-        type,
-        oldClosingStock,
-        calculatedClosingStock
-    )
-    SELECT
-        sr.entryid,
-        sr.type,
-        sr.oldClosingStock,
-
-        /* ---- running inward ---- */
-        SUM(
-            CASE
-                WHEN sr.type = 'Inward' THEN sr.quantity
-                ELSE 0
-            END
-        ) OVER (
-            PARTITION BY sr.warehouse_id, sr.productid
-            ORDER BY sr.row_num
-            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-        )
-        -
-        /* ---- running outward + lost ---- */
-        SUM(
-            CASE
-                WHEN sr.type IN ('Outward', 'Lost-Damaged') THEN sr.quantity
-                ELSE 0
-            END
-        ) OVER (
-            PARTITION BY sr.warehouse_id, sr.productid
-            ORDER BY sr.row_num
-            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-        )
-        AS calculatedClosingStock
-
-    FROM (
-        SELECT
-            ai.entryid,
-            ai.type,
-            ai.date,
-            ai.warehouse_id,
-            ai.productid,
-            ai.quantity,
-            ai.closingstock AS oldClosingStock,
-            ROW_NUMBER() OVER (
-                PARTITION BY ai.warehouse_id, ai.productid
-                ORDER BY
-                    ai.date ASC,
-                    ai.type ASC,
-                    ai.keyid ASC,
-                    ai.entryid ASC
-            ) AS row_num
-        FROM all_inventory ai
-    ) sr;
-
-    /* =====================================================
-       UPDATE INWARD / OUTWARD ENTRIES
-       ===================================================== */
-    UPDATE inward_outward_entries e
-    JOIN TempCumulativeStock tcs
-        ON e.entryid = tcs.entryid
-    SET e.closingstock = tcs.calculatedClosingStock
-    WHERE tcs.oldClosingStock <> tcs.calculatedClosingStock;
-
-    /* =====================================================
-       UPDATE TRANSFER - CREDIT SIDE (INWARD)
-       ===================================================== */
-    UPDATE inventory_transfer_item iti
-    JOIN TempCumulativeStock tcs
-        ON iti.transferItemId = tcs.entryid
-    SET iti.target_closing_stock = tcs.calculatedClosingStock
-    WHERE tcs.type = 'Inward'
-      AND iti.target_closing_stock <> tcs.calculatedClosingStock;
-
-    /* =====================================================
-       UPDATE TRANSFER - DEBIT SIDE (OUTWARD)
-       ===================================================== */
-    UPDATE inventory_transfer_item iti
-    JOIN TempCumulativeStock tcs
-        ON iti.transferItemId = tcs.entryid
-    SET iti.source_closing_stock = tcs.calculatedClosingStock
-    WHERE tcs.type = 'Outward'
-      AND iti.source_closing_stock <> tcs.calculatedClosingStock;
-
-    /* =====================================================
-       CLEANUP
-       ===================================================== */
-    DROP TEMPORARY TABLE IF EXISTS TempCumulativeStock;
-
-END //
-
-DELIMITER ;
 
 /* =====================================================
    SAFE INDEX CREATION (IGNORE IF ALREADY EXISTS)
