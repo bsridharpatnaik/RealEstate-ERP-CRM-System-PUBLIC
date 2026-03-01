@@ -60,18 +60,22 @@ public class AllInventoryController {
     private Pageable adjustSorting(Pageable pageable) {
         List<Order> orders = pageable.getSort().stream().collect(Collectors.toList());
 
-        if (orders.isEmpty()) {
+        boolean dateAsc = orders.stream().anyMatch(
+                order -> order.getProperty().equals("date") && order.getDirection().isAscending()
+        );
+
+        if (dateAsc) {
             orders = Arrays.asList(
-                    Order.asc("id")    // ← view's id already encodes correct date+sort_order+entryid sequence
+                    Order.asc("date"),
+                    Order.asc("sortOrder"),
+                    Order.asc("entryid")
             );
         } else {
-            boolean dateAsc = orders.stream().anyMatch(order -> order.getProperty().equals("date") && order.getDirection().isAscending());
-
-            if (dateAsc) {
-                orders = Arrays.asList(Order.desc("id"));  // reverse = oldest first
-            } else {
-                orders = Arrays.asList(Order.asc("id"));   // newest first (default)
-            }
+            orders = Arrays.asList(
+                    Order.desc("date"),
+                    Order.desc("sortOrder"),
+                    Order.desc("entryid")
+            );
         }
 
         return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
