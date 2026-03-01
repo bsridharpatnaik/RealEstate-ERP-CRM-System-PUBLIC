@@ -43,6 +43,9 @@ public class AllInventoryTransactions implements Serializable {
 	@JsonDeserialize(using = ToUpperCaseDeserializer.class)
 	String type;
 
+	@Column(name = "sort_order")
+	Integer sortOrder;
+
 	@Column(name = "keyid")
 	Long keyid;
 

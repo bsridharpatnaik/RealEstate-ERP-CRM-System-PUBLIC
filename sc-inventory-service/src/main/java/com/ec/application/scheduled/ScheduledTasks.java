@@ -70,8 +70,9 @@ public class ScheduledTasks {
         for (String tenantName : tenants) {
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
             log.info("Update ClosingStock being triggered for tenant " + tenantName);
-            allInventoryService.updateAllInventoryTable();
             allInventoryService.updateClosingStock();
+            allInventoryService.updateAllInventoryTable();
+
             com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
         }
     }

@@ -55,8 +55,8 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 			" product_name," +
 			"        measurementunit," +
 			"        ai1.warehousename," +
-			"SUM(IF(type='Inward',quantity,0)) as total_inward," +
-			"SUM(IF(type='Outward',quantity,0)) as total_outward," +
+			"SUM(IF(type IN ('Inward','Transfer-In'),quantity,0)) as total_inward," +
+			"SUM(IF(type IN ('Outward','Transfer-Out'),quantity,0)) as total_outward," +
 			"SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged" +
 			" FROM all_inventory ai1" +
 			"    WHERE date>=:startDate AND date<=:endDate" +
