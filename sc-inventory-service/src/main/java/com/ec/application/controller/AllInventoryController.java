@@ -58,40 +58,19 @@ public class AllInventoryController {
     }
 
     private Pageable adjustSorting(Pageable pageable) {
-        // Get the current sorting orders
         List<Order> orders = pageable.getSort().stream().collect(Collectors.toList());
 
         if (orders.isEmpty()) {
-            // If no sorting is provided, use the default sorting
             orders = Arrays.asList(
-                    Order.desc("date"),
-                    Order.desc("type"),
-                    Order.asc("keyid")
+                    Order.asc("id")    // ← view's id already encodes correct date+sort_order+entryid sequence
             );
         } else {
-            // Check if sorting by date is specified
             boolean dateAsc = orders.stream().anyMatch(order -> order.getProperty().equals("date") && order.getDirection().isAscending());
-            boolean dateDesc = orders.stream().anyMatch(order -> order.getProperty().equals("date") && order.getDirection().isDescending());
 
             if (dateAsc) {
-                orders = Arrays.asList(
-                        Order.asc("date"),
-                        Order.asc("type"),
-                        Order.desc("keyid")
-                );
-            } else if (dateDesc) {
-                orders = Arrays.asList(
-                        Order.desc("date"),
-                        Order.desc("type"),
-                        Order.asc("keyid")
-                );
+                orders = Arrays.asList(Order.desc("id"));  // reverse = oldest first
             } else {
-                // If no date sorting is found, use the default sorting
-                orders = Arrays.asList(
-                        Order.desc("date"),
-                        Order.desc("type"),
-                        Order.asc("keyid")
-                );
+                orders = Arrays.asList(Order.asc("id"));   // newest first (default)
             }
         }
 
