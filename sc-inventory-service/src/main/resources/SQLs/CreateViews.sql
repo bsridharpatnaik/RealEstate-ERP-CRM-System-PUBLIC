@@ -8,6 +8,16 @@ CREATE TABLE IF NOT EXISTS execution_history (
     UNIQUE KEY uk_execution_history_procedure (procedure_name)
 );
 
+-- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries
+use iseries;
+
+CREATE TABLE IF NOT EXISTS execution_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    procedure_name VARCHAR(255) NOT NULL,
+    last_execution DATETIME NOT NULL DEFAULT '2010-01-01 00:00:00',
+    UNIQUE KEY uk_execution_history_procedure (procedure_name)
+);
+
 
 CREATE OR REPLACE VIEW all_inventory_view AS
 SELECT
@@ -15,7 +25,7 @@ SELECT
         ORDER BY
             q.date        DESC,
             q.sort_order  DESC,
-            q.entryid     DESC
+            q.entryid     ASC     -- ← ASC
     ) AS id,
     q.type,
     q.keyid,
@@ -31,7 +41,7 @@ SELECT
         ELSE 0
     END) OVER (
         PARTITION BY q.warehouse_id, q.productid
-        ORDER BY q.date ASC, q.sort_order ASC, q.entryid DESC
+        ORDER BY q.date ASC, q.sort_order ASC, q.entryid ASC      -- ← ASC
         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
     ) AS closingstock,
 
@@ -183,6 +193,7 @@ FROM (
 ) q
 LEFT JOIN contacts c ON c.contactid = q.contactid;
 
+
 DROP PROCEDURE IF EXISTS update_closing_stock;
 DELIMITER //
 
@@ -228,30 +239,26 @@ BEGIN
             ROW_NUMBER() OVER (
                 PARTITION BY ai.warehouse_id, ai.productid
                 ORDER BY
-                    ai.date ASC,
-                    ai.sort_order ASC,   -- must match view's sort_order column
-                    ai.keyid ASC,
-                    ai.entryid ASC
+                    ai.date       ASC,
+                    ai.sort_order ASC,
+                    ai.entryid    ASC    -- ← ASC to match view
             ) AS row_num
         FROM all_inventory ai
     ) sr;
 
-    /* Update inward/outward entries */
     UPDATE inward_outward_entries e
     JOIN TempCumulativeStock tcs ON e.entryid = tcs.entryid
     SET e.closingstock = tcs.calculatedClosingStock
     WHERE tcs.oldClosingStock <> tcs.calculatedClosingStock;
 
-    /* Update transfer credit (Transfer-In) */
     UPDATE inventory_transfer_item iti
-    JOIN TempCumulativeStock tcs ON iti.transferItemId = tcs.entryid
+    JOIN TempCumulativeStock tcs ON iti.transferItemId = tcs.entryid / 2
     SET iti.target_closing_stock = tcs.calculatedClosingStock
     WHERE tcs.type = 'Transfer-In'
       AND iti.target_closing_stock <> tcs.calculatedClosingStock;
 
-    /* Update transfer debit (Transfer-Out) */
     UPDATE inventory_transfer_item iti
-    JOIN TempCumulativeStock tcs ON iti.transferItemId = tcs.entryid
+    JOIN TempCumulativeStock tcs ON iti.transferItemId = (tcs.entryid - 1) / 2
     SET iti.source_closing_stock = tcs.calculatedClosingStock
     WHERE tcs.type = 'Transfer-Out'
       AND iti.source_closing_stock <> tcs.calculatedClosingStock;
@@ -260,6 +267,7 @@ BEGIN
 END //
 
 DELIMITER ;
+
 
 DROP PROCEDURE IF EXISTS update_all_inventory;
 
@@ -338,7 +346,7 @@ proc_end: BEGIN
         productid,
         product_name,
         quantity,
-        sort_order,          -- ← ADDED
+        sort_order,
         type,
         warehouse_id,
         warehousename
@@ -361,7 +369,7 @@ proc_end: BEGIN
         productid,
         product_name,
         quantity,
-        sort_order,          -- ← ADDED
+        sort_order,
         type,
         warehouse_id,
         warehousename
