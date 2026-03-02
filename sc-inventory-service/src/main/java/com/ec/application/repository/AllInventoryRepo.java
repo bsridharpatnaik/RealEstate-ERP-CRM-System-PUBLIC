@@ -34,59 +34,61 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 /*
 	@Query("select ai.entryid as entryid, ai.closingStock as aiClosingStock,iol.closingStock as iolClosingStock from AllInventoryTransactions ai  JOIN InwardOutwardList iol on iol.entryid=ai.entryid and iol.closingStock!=ai.closingStock")
 	List<AllInventoryAndInwardOutwardListProjection> findClosingStockNotMatched();*/
-	
+
 	@Query(value="SELECT " +
 			"t2.id," +
-			"    t1.month," +
+			"t1.month," +
 			"t1.product_name," +
-			"    t1.measurementunit," +
-			"    t1.category_name," +
-			"    t1.warehousename," +
-			"    IF(total_inward-total_outward-total_lost_damaged=closing_stock,0,(t2.closing_stock+total_outward+total_lost_damaged-total_inward)) as opening_stock," +
-			"    t1.total_inward," +
-			"    total_outward," +
-			"    total_lost_damaged," +
-			"    t2.closing_stock" +
+			"t1.measurementunit," +
+			"t1.category_name," +
+			"t1.warehousename," +
+			"(t2.closing_stock - t1.total_inward - t1.total_transfer_in + t1.total_outward + t1.total_transfer_out + t1.total_lost_damaged) as opening_stock," +
+			"t1.total_inward," +
+			"t1.total_transfer_in," +
+			"t1.total_outward," +
+			"t1.total_transfer_out," +
+			"t1.total_lost_damaged," +
+			"t2.closing_stock" +
 			" FROM" +
-			" (" +
-			"SELECT" +
+			" (SELECT" +
 			" DATE_FORMAT(date,'%Y-%m') as month," +
 			" category_name," +
 			" product_name," +
-			"        measurementunit," +
-			"        ai1.warehousename," +
-			"SUM(IF(type IN ('Inward','Transfer-In'),quantity,0)) as total_inward," +
-			"SUM(IF(type IN ('Outward','Transfer-Out'),quantity,0)) as total_outward," +
-			"SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged" +
+			" measurementunit," +
+			" ai1.warehousename," +
+			" SUM(IF(type='Inward',quantity,0)) as total_inward," +
+			" SUM(IF(type='Transfer-In',quantity,0)) as total_transfer_in," +
+			" SUM(IF(type='Outward',quantity,0)) as total_outward," +
+			" SUM(IF(type='Transfer-Out',quantity,0)) as total_transfer_out," +
+			" SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged" +
 			" FROM all_inventory ai1" +
-			"    WHERE date>=:startDate AND date<=:endDate" +
+			" WHERE date>=:startDate AND date<=:endDate" +
 			" GROUP BY month,category_name,product_name,measurementunit,ai1.warehousename" +
-			" ORDER BY month,category_name,product_name,measurementunit, ai1.warehousename" +
+			" ORDER BY month,category_name,product_name,measurementunit,ai1.warehousename" +
 			") AS t1" +
 			" INNER JOIN" +
-			" (" +
-			" SELECT" +
-			"    DATE_FORMAT(date,'%Y-%m') as month," +
+			" (SELECT" +
+			" DATE_FORMAT(date,'%Y-%m') as month," +
 			" ai.id," +
 			" ai.closingStock AS closing_stock," +
-			"    ai.product_name," +
+			" ai.product_name," +
 			" ai.category_name," +
 			" ai.warehousename" +
 			" FROM all_inventory ai" +
 			" INNER JOIN (" +
-			" SELECT" +
-			" DATE_FORMAT(date,'%Y-%m') as month," +
-			"product_name," +
-			"category_name," +
-			"warehousename," +
-			"MIN(id) AS id" +
-			" FROM all_inventory" +
-			"        WHERE date>=:startDate AND date<=:endDate" +
-			"        GROUP BY month,product_name,category_name,warehousename" +
-			" ) latest ON latest.id = ai.id" +
-			" ) as t2 ON t1.month=t2.month AND t1.category_name=t2.category_name AND t1.product_name=t2.product_name AND t1.warehousename=t2.warehousename" +
-			" ORDER BY t1.month desc,product_name,warehousename",nativeQuery = true)
-	ArrayList<InventoryReportByDate> getFilteredTransactionReport(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
+			" SELECT DATE_FORMAT(date,'%Y-%m') as month, product_name, category_name, warehousename," +
+			" SUBSTRING_INDEX(GROUP_CONCAT(id ORDER BY date DESC, sort_order DESC, entryid DESC), ',', 1) AS id" +  // ← removed duplicate 'ai.' alias
+			" FROM all_inventory" +                                                                                  // ← removed duplicate 'ai' alias
+			" WHERE date>=:startDate AND date<=:endDate" +
+			" GROUP BY month,product_name,category_name,warehousename" +
+			" ) latest ON latest.id = ai.id" +                                                                       // ← closing paren added here
+			" ) as t2 ON t1.month=t2.month AND t1.category_name=t2.category_name" +
+			" AND t1.product_name=t2.product_name AND t1.warehousename=t2.warehousename" +
+			" ORDER BY t1.month desc,product_name,warehousename",
+			nativeQuery = true)
+	ArrayList<InventoryReportByDate> getFilteredTransactionReport(
+			@Param("startDate") Date startDate,
+			@Param("endDate") Date endDate);
 
 	@Query("SELECT a FROM AllInventoryTransactions a WHERE a.productId IN :productIds ORDER BY a.id")
 	List<AllInventoryTransactions> findInwardOutwardByProductIds(@Param("productIds") List<Long> productIds);

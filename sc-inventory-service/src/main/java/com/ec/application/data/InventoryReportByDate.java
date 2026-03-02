@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonPropertyOrder(
         { "Year-Month", "Category", "Item Name", "UOM", "Warehouse", "Opening Stock",
-                "Inward Qty","Outward Qty","Lost-Damaged Qty", "Closing Stock"})
+                "Inward Qty", "Transfer-In Qty", "Outward Qty", "Transfer-Out Qty", "Lost-Damaged Qty", "Closing Stock"})
 public interface InventoryReportByDate {
 
     @JsonIgnore
@@ -36,9 +36,17 @@ public interface InventoryReportByDate {
     @JsonSerialize(using = com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
     Double getTotal_inward();
 
+    @JsonProperty("Transfer-In Qty")
+    @JsonSerialize(using = com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
+    Double getTotal_transfer_in();
+
     @JsonProperty("Outward Qty")
     @JsonSerialize(using = com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
     Double getTotal_outward();
+
+    @JsonProperty("Transfer-Out Qty")
+    @JsonSerialize(using = com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
+    Double getTotal_transfer_out();
 
     @JsonProperty("Lost-Damaged Qty")
     @JsonSerialize(using = com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer.class)
