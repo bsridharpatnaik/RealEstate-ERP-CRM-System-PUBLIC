@@ -19,7 +19,7 @@ import lombok.Data;
 
 @Entity
 @Table(name = "contacts")
-@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE)
+@Where(clause = ReusableFields.SOFT_DELETED_CLAUSE + " AND is_system_contact = false")
 @Data
 @Audited
 @EntityListeners({AuditingEntityListener.class, MultiTableSyncListener.class})

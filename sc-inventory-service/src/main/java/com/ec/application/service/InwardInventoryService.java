@@ -79,6 +79,9 @@ public class InwardInventoryService {
     @Autowired
     MrnService mrnService;
 
+    @Autowired
+    SystemContactRepo systemContactRepo;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     public List<PoDropdownItem> getPendingPoDropdown() {
@@ -837,5 +840,127 @@ public class InwardInventoryService {
                     )
             );
         }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public InwardInventory createOpeningStockInward(OpeningStockInwardDTO dto) throws Exception {
+        log.info("Invoked createOpeningStockInward for tenant={}", ThreadLocalStorage.getTenantName());
+
+        if (dto.getInwardDate() == null)
+            throw new IllegalArgumentException("inwardDate is required.");
+
+        if (dto.getLineItems() == null || dto.getLineItems().isEmpty())
+            throw new IllegalArgumentException("At least one line item is required.");
+
+        // --- Duplicate check within the request ---
+        long duplicateCount = dto.getLineItems().stream()
+                .collect(Collectors.groupingBy(
+                        li -> li.getProductName().trim().toLowerCase()
+                                + "_" + li.getWarehouseName().trim().toLowerCase(),
+                        counting()))
+                .values().stream()
+                .filter(count -> count > 1)
+                .count();
+
+        if (duplicateCount > 0)
+            throw new IllegalArgumentException(
+                    "Duplicate product-warehouse combination found in request. " +
+                            "Each product must appear once per warehouse.");
+
+        // --- COLLECT ALL ERRORS FIRST before any processing ---
+        List<String> errors = new ArrayList<>();
+
+        for (OpeningStockInwardDTO.OpeningStockLineItem lineItem : dto.getLineItems()) {
+
+            if (lineItem.getProductName() == null || lineItem.getProductName().trim().isEmpty()) {
+                errors.add("productName cannot be blank.");
+                continue;
+            }
+            if (lineItem.getWarehouseName() == null || lineItem.getWarehouseName().trim().isEmpty()) {
+                errors.add("warehouseName cannot be blank for product: " + lineItem.getProductName());
+                continue;
+            }
+            if (lineItem.getQuantity() == null || lineItem.getQuantity() <= 0) {
+                errors.add("quantity must be greater than zero for product: " + lineItem.getProductName());
+                continue;
+            }
+
+            Product product = productRepo.findByProductName(lineItem.getProductName().trim());
+            if (product == null) {
+                errors.add("Product not found: '" + lineItem.getProductName() + "'");
+                continue;
+            }
+
+            List<Warehouse> warehouses = warehouseRepo.findByName(lineItem.getWarehouseName().trim());
+            if (warehouses == null || warehouses.isEmpty()) {
+                errors.add("Warehouse not found: '" + lineItem.getWarehouseName() + "'");
+                continue;
+            }
+
+            int existingCount = inwardInventoryRepo.countOpeningStockForProductAndWarehouse(
+                    product.getProductName(), warehouses.get(0).getWarehouseName());
+            if (existingCount > 0) {
+                errors.add("Opening stock already exists for product '" + lineItem.getProductName() +
+                        "' in warehouse '" + lineItem.getWarehouseName() + "'");
+            }
+        }
+
+        // --- If any errors, throw them ALL at once before touching any data ---
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Opening stock creation failed with " + errors.size() + " error(s):\n" +
+                            String.join("\n", errors));
+        }
+
+        // --- All validations passed — now resolve and build line items ---
+        SystemContact systemContact = systemContactRepo.findByNameIgnoreCase("OPENING STOCK")
+                .orElseThrow(() -> new IllegalStateException(
+                        "Opening Stock system contact not found for this tenant."));
+
+        Supplier supplier = supplierRepo.findByIdUnfiltered(systemContact.getContactId())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Could not load Opening Stock contact as Supplier reference."));
+
+        Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
+
+        for (OpeningStockInwardDTO.OpeningStockLineItem lineItem : dto.getLineItems()) {
+            Product product = productRepo.findByProductName(lineItem.getProductName().trim());
+            List<Warehouse> warehouses = warehouseRepo.findByName(lineItem.getWarehouseName().trim());
+            Warehouse warehouse = warehouses.get(0);
+
+            InwardOutwardList iol = new InwardOutwardList();
+            iol.setProduct(product);
+            iol.setWarehouse(warehouse);
+            iol.setQuantity(lineItem.getQuantity());
+            iol.setLineItemCode(null);
+            inwardOutwardListSet.add(iol);
+        }
+
+        InwardInventory inwardInventory = new InwardInventory();
+        inwardInventory.setDate(dto.getInwardDate());
+        inwardInventory.setSupplier(supplier);
+        inwardInventory.setInvoiceReceived(false);
+        inwardInventory.setCreatedFromPO(false);
+        inwardInventory.setPurchaseOrderNo(null);
+        inwardInventory.setPurchaseOrderDate(null);
+        inwardInventory.setVehicleNo(null);
+        inwardInventory.setSupplierSlipNo(null);
+        inwardInventory.setChallanNo(null);
+        inwardInventory.setChallanDate(null);
+        inwardInventory.setBillNo(null);
+        inwardInventory.setBillDate(null);
+        inwardInventory.setAdditionalInfo("Opening Stock Entry");
+        inwardInventory.setOurSlipNo(mrnService.getNextMrn().toString());
+        inwardInventory.setInwardOutwardList(inwardOutwardListSet);
+
+        updateStockForCreateInwardInventory(inwardInventory);
+        inwardInventoryRepo.save(inwardInventory);
+
+        log.info("Opening stock inward created. InwardId={}, MRN={}, Products={}",
+                inwardInventory.getInwardId(),
+                inwardInventory.getOurSlipNo(),
+                inwardInventory.getInwardOutwardList().size());
+
+        return inwardInventory;
     }
 }

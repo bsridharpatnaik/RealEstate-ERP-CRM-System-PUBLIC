@@ -52,11 +52,6 @@ public class ContactMappedSuperClass {
 	@Column(name = "emailId", nullable = true, length = 255)
 	private String emailId;
 
-	@NotBlank(message = "contactType is required")
-	@Pattern(
-			regexp = "(?i)SUPPLIER|CONTRACTOR",
-			message = "contactType must be SUPPLIER or CONTRACTOR"
-	)
 	@Column(name = "contactType", nullable = true, length = 255)
 	private String contactType;
 
@@ -128,4 +123,7 @@ public class ContactMappedSuperClass {
 	@Column(name = "lastModifiedDate", nullable = true)
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	protected Date lastModifiedDate;
+
+	@Column(name = "is_system_contact", nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
+	private boolean isSystemContact = false;
 }

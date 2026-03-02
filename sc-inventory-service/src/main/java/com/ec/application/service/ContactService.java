@@ -34,6 +34,7 @@ public class ContactService {
 
     private final CommonUtils utilObj = new CommonUtils();
     private static final Set<String> ALLOWED_CONTACT_TYPES = new HashSet<>(Arrays.asList("SUPPLIER", "CONTRACTOR"));
+    private static final String OPENING_STOCK_CONTACT_NAME = "OPENING STOCK";
     private final Logger log = LoggerFactory.getLogger(ContactService.class);
 
     public Contact createContact(Contact payload) throws Exception {
@@ -42,6 +43,9 @@ public class ContactService {
         exitIfMobileNoExists(payload);
         if (payload.getMobileNo() == null)
             exitIfNameExists(payload);
+        if (OPENING_STOCK_CONTACT_NAME.equalsIgnoreCase(payload.getName().trim())) {
+            payload.setSystemContact(true);
+        }
         contactRepo.save(payload);
         return payload;
     }

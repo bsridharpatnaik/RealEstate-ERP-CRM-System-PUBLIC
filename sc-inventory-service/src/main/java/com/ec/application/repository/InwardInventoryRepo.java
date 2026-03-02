@@ -34,4 +34,17 @@ public interface InwardInventoryRepo extends BaseRepository<InwardInventory, Lon
 	//year(e.eventDate) = ?1 and month(e.eventDate) = ?2"
 	@Query(value="SELECT i from InwardInventory i WHERE year(i.date)=year(current_date) AND month(date)=month(current_date)")
     List<InwardInventory> getCurrentMonthData();
+
+	/**
+	 * Checks if an opening stock inward already exists for a given
+	 * product + warehouse combination (identified by supplier name = 'OPENING STOCK')
+	 */
+	@Query("SELECT COUNT(ii) FROM InwardInventory ii " +
+			"JOIN ii.inwardOutwardList iol " +
+			"WHERE UPPER(ii.supplier.name) = 'OPENING STOCK' " +
+			"AND iol.product.productName = :productName " +
+			"AND iol.warehouse.warehouseName = :warehouseName")
+	int countOpeningStockForProductAndWarehouse(
+			@Param("productName") String productName,
+			@Param("warehouseName") String warehouseName);
 }

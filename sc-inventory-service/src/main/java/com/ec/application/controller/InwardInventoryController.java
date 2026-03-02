@@ -116,6 +116,16 @@ public class InwardInventoryController {
         return iiService.updateInwardInventory(id, payload);
     }
 
+    /**
+     * BACKDOOR — Opening stock seeding. Not linked to UI.
+     * Use via Postman only. No @CheckAuthority intentionally.
+     */
+    @PostMapping("/opening-stock")
+    @ResponseStatus(HttpStatus.CREATED)
+    public InwardInventory createOpeningStockInward(@RequestBody OpeningStockInwardDTO payload) throws Exception {
+        return iiService.createOpeningStockInward(payload);
+    }
+
     @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
