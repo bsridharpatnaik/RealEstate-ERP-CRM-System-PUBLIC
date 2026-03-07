@@ -27,9 +27,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Service to generate a Purchase Order PDF from a PurchaseOrder domain object.
- *
+ * <p>
  * Usage (inject this bean and call generatePdf):
- *   byte[] pdfBytes = purchaseOrderPdfService.generatePdf(purchaseOrder);
+ * byte[] pdfBytes = purchaseOrderPdfService.generatePdf(purchaseOrder);
  */
 @Service
 @UseDefaultTenant
@@ -47,6 +47,8 @@ public class PurchaseOrderPdfService {
         CURRENCY_FORMAT.setMinimumFractionDigits(2);
         CURRENCY_FORMAT.setMaximumFractionDigits(2);
     }
+
+    private static final java.text.SimpleDateFormat DATE_FORMAT = new java.text.SimpleDateFormat("dd/MM/yyyy");
 
     // -----------------------------------------------------------------------
     // Public API
@@ -75,7 +77,7 @@ public class PurchaseOrderPdfService {
 
     private void addHeader(Document document, PurchaseOrder po) throws DocumentException {
         Font companyFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, BaseColor.BLACK);
-        Font smallFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+        Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
 
         PdfPTable headerTable = new PdfPTable(2);
         headerTable.setWidthPercentage(100);
@@ -133,7 +135,7 @@ public class PurchaseOrderPdfService {
     }
 
     private void addVendorAndPoDetails(Document document, PurchaseOrder po) throws DocumentException {
-        Font bold   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
+        Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
         Font normal = FontFactory.getFont(FontFactory.HELVETICA, 9);
 
         PdfPTable mainTable = new PdfPTable(2);
@@ -147,14 +149,14 @@ public class PurchaseOrderPdfService {
 
         Supplier s = po.getSupplier();
         left.addElement(new Paragraph("PO No: " + po.getPurchaseOrderId(), normal));
-        left.addElement(new Paragraph("PO Date: " + po.getPoDate(), normal));
+        left.addElement(new Paragraph("PO Date: " + DATE_FORMAT.format(po.getPoDate()), normal));
         left.addElement(new Paragraph("Status: " + po.getStatus(), normal));
         left.addElement(new Paragraph(" "));
         left.addElement(new Paragraph(s.getName(), bold));
         if (notBlank(s.getAddr_line1())) left.addElement(new Paragraph(s.getAddr_line1(), normal));
         if (notBlank(s.getAddr_line2())) left.addElement(new Paragraph(s.getAddr_line2(), normal));
         left.addElement(new Paragraph(join(", ", s.getCity(), s.getState(), s.getZip()), normal));
-        if (notBlank(s.getGstNumber()))  left.addElement(new Paragraph("GSTIN: " + s.getGstNumber(), normal));
+        if (notBlank(s.getGstNumber())) left.addElement(new Paragraph("GSTIN: " + s.getGstNumber(), normal));
         if (notBlank(s.getContactPerson()))
             left.addElement(new Paragraph("Contact: " + s.getContactPerson()
                     + (notBlank(s.getMobileNo()) ? " | " + s.getMobileNo() : ""), normal));
@@ -171,11 +173,11 @@ public class PurchaseOrderPdfService {
         heading.setPadding(4f);
         accountTable.addCell(heading);
 
-        addAccountRow(accountTable, "A/C Name",   s.getAccountName(),   normal);
-        addAccountRow(accountTable, "Bank Name",  s.getBankName(),      normal);
-        addAccountRow(accountTable, "Branch",     s.getBranchName(),    normal);
-        addAccountRow(accountTable, "A/C No",     s.getAccountNumber(), normal);
-        addAccountRow(accountTable, "IFSC Code",  s.getIfscCode(),      normal);
+        addAccountRow(accountTable, "A/C Name", s.getAccountName(), normal);
+        addAccountRow(accountTable, "Bank Name", s.getBankName(), normal);
+        addAccountRow(accountTable, "Branch", s.getBranchName(), normal);
+        addAccountRow(accountTable, "A/C No", s.getAccountNumber(), normal);
+        addAccountRow(accountTable, "IFSC Code", s.getIfscCode(), normal);
 
         PdfPCell right = new PdfPCell(accountTable);
         right.setPadding(4);
@@ -186,8 +188,8 @@ public class PurchaseOrderPdfService {
 
     private void addSubjectAndIntro(Document document, PurchaseOrder po) throws DocumentException {
         Font subjectFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-        Font boldFont    = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
-        Font normalFont  = FontFactory.getFont(FontFactory.HELVETICA, 9);
+        Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
+        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
 
         String subjectText = notBlank(po.getSubject())
                 ? po.getSubject()
@@ -218,15 +220,15 @@ public class PurchaseOrderPdfService {
         table.setWidths(new float[]{2.8f, 0.9f, 0.9f, 1.1f, 1.1f, 0.9f, 1.1f, 0.8f, 1.0f, 1.3f});
 
         addHeaderCell(table, "Code & Description", headerFont);
-        addHeaderCell(table, "Qty",                headerFont);
-        addHeaderCell(table, "UOM",                headerFont);
-        addHeaderCell(table, "Rate \u20B9",        headerFont);
-        addHeaderCell(table, "Total \u20B9",       headerFont);
-        addHeaderCell(table, "Discount \u20B9",    headerFont);
-        addHeaderCell(table, "Taxable \u20B9",     headerFont);
-        addHeaderCell(table, "GST %",              headerFont);
-        addHeaderCell(table, "GST Amt \u20B9",     headerFont);
-        addHeaderCell(table, "Amt Incl Tax \u20B9",headerFont);
+        addHeaderCell(table, "Qty", headerFont);
+        addHeaderCell(table, "UOM", headerFont);
+        addHeaderCell(table, "Rate \u20B9", headerFont);
+        addHeaderCell(table, "Total \u20B9", headerFont);
+        addHeaderCell(table, "Discount \u20B9", headerFont);
+        addHeaderCell(table, "Taxable \u20B9", headerFont);
+        addHeaderCell(table, "GST %", headerFont);
+        addHeaderCell(table, "GST Amt \u20B9", headerFont);
+        addHeaderCell(table, "Amt Incl Tax \u20B9", headerFont);
 
         List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
         for (PurchaseOrderLine line : lines) {
@@ -234,25 +236,25 @@ public class PurchaseOrderPdfService {
             String desc = product.getProductName()
                     + (notBlank(product.getProductCode()) ? "\n[" + product.getProductCode() + "]" : "")
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
-                       ? "\n" + line.getSpecification() : "");
+                    ? "\n" + line.getSpecification() : "");
 
-            double qty       = line.getQuantity();
-            double rate      = line.getRate();
-            double total     = qty * rate;
-            double gstPct    = line.getGstPercent();
-            double gstAmt    = total * gstPct / 100.0;
+            double qty = line.getQuantity();
+            double rate = line.getRate();
+            double total = qty * rate;
+            double gstPct = line.getGstPercent();
+            double gstAmt = total * gstPct / 100.0;
             double amtInclTax = total + gstAmt;
 
-            addBodyCell(table, desc,                                    normalFont);
-            addBodyCell(table, fmt(qty),                                normalFont);
-            addBodyCell(table, product.getMeasurementUnit(),            normalFont);
-            addBodyCell(table, fmt(rate),                               normalFont);
-            addBodyCell(table, fmt(total),                              normalFont);
-            addBodyCell(table, "0.00",                                  normalFont);
-            addBodyCell(table, fmt(total),                              normalFont);
-            addBodyCell(table, fmt(gstPct) + "%",                       normalFont);
-            addBodyCell(table, fmt(gstAmt),                             normalFont);
-            addBodyCell(table, fmt(amtInclTax),                        normalFont);
+            addBodyCell(table, desc, normalFont);
+            addBodyCell(table, fmt(qty), normalFont);
+            addBodyCell(table, product.getMeasurementUnit(), normalFont);
+            addBodyCell(table, fmt(rate), normalFont);
+            addBodyCell(table, fmt(total), normalFont);
+            addBodyCell(table, "0.00", normalFont);
+            addBodyCell(table, fmt(total), normalFont);
+            addBodyCell(table, fmt(gstPct) + "%", normalFont);
+            addBodyCell(table, fmt(gstAmt), normalFont);
+            addBodyCell(table, fmt(amtInclTax), normalFont);
         }
 
         // TOTAL row
@@ -278,9 +280,12 @@ public class PurchaseOrderPdfService {
         charges.setHorizontalAlignment(Element.ALIGN_RIGHT);
         charges.setSpacingBefore(0f);
 
-        charges.addCell(new Phrase("Freight Charges",           normal)); charges.addCell(new Phrase("0.00", normal));
-        charges.addCell(new Phrase("Loading & Packing Charges", normal)); charges.addCell(new Phrase("0.00", normal));
-        charges.addCell(new Phrase("Insurance Charges",         normal)); charges.addCell(new Phrase("0.00", normal));
+        charges.addCell(new Phrase("Freight Charges", normal));
+        charges.addCell(new Phrase("", normal));
+        charges.addCell(new Phrase("Loading & Packing Charges", normal));
+        charges.addCell(new Phrase("", normal));
+        charges.addCell(new Phrase("Insurance Charges", normal));
+        charges.addCell(new Phrase("", normal));
 
         document.add(charges);
     }
@@ -409,28 +414,44 @@ public class PurchaseOrderPdfService {
         return CURRENCY_FORMAT.format(value);
     }
 
-    /** Very simple number-to-words for Indian currency (up to crores). */
+    /**
+     * Very simple number-to-words for Indian currency (up to crores).
+     */
     private String numberToWords(double amount) {
         long n = Math.round(amount);
         if (n == 0) return "ZERO";
 
-        String[] ones  = {"", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
-                          "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE", "THIRTEEN",
-                          "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN"};
-        String[] tens  = {"", "", "TWENTY", "THIRTY", "FORTY", "FIFTY",
-                          "SIXTY", "SEVENTY", "EIGHTY", "NINETY"};
+        String[] ones = {"", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
+                "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE", "THIRTEEN",
+                "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN"};
+        String[] tens = {"", "", "TWENTY", "THIRTY", "FORTY", "FIFTY",
+                "SIXTY", "SEVENTY", "EIGHTY", "NINETY"};
 
         StringBuilder sb = new StringBuilder();
-        if (n >= 10_000_000) { sb.append(twoDigits(n / 10_000_000, ones, tens)).append(" CRORE "); n %= 10_000_000; }
-        if (n >= 100_000)    { sb.append(twoDigits(n / 100_000, ones, tens)).append(" LAKH ");   n %= 100_000; }
-        if (n >= 1_000)      { sb.append(twoDigits(n / 1_000, ones, tens)).append(" THOUSAND "); n %= 1_000; }
-        if (n >= 100)        { sb.append(ones[(int)(n / 100)]).append(" HUNDRED ");               n %= 100; }
-        if (n > 0)           { sb.append(twoDigits(n, ones, tens)); }
+        if (n >= 10_000_000) {
+            sb.append(twoDigits(n / 10_000_000, ones, tens)).append(" CRORE ");
+            n %= 10_000_000;
+        }
+        if (n >= 100_000) {
+            sb.append(twoDigits(n / 100_000, ones, tens)).append(" LAKH ");
+            n %= 100_000;
+        }
+        if (n >= 1_000) {
+            sb.append(twoDigits(n / 1_000, ones, tens)).append(" THOUSAND ");
+            n %= 1_000;
+        }
+        if (n >= 100) {
+            sb.append(ones[(int) (n / 100)]).append(" HUNDRED ");
+            n %= 100;
+        }
+        if (n > 0) {
+            sb.append(twoDigits(n, ones, tens));
+        }
         return sb.toString().trim();
     }
 
     private String twoDigits(long n, String[] ones, String[] tens) {
         if (n < 20) return ones[(int) n];
-        return tens[(int)(n / 10)] + (n % 10 != 0 ? " " + ones[(int)(n % 10)] : "");
+        return tens[(int) (n / 10)] + (n % 10 != 0 ? " " + ones[(int) (n % 10)] : "");
     }
 }

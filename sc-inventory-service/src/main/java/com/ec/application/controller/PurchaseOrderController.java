@@ -136,7 +136,7 @@ public class PurchaseOrderController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        String filename = "PO-" + po.getPurchaseOrderId() + ".pdf";
+        String filename = po.getPurchaseOrderId() + ".pdf";
 
         StreamingResponseBody stream = outputStream -> {
             try {
