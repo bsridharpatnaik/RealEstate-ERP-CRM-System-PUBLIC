@@ -12,13 +12,17 @@ import com.itextpdf.text.pdf.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 /**
@@ -33,6 +37,8 @@ public class PurchaseOrderPdfService {
 
     private static final NumberFormat CURRENCY_FORMAT =
             NumberFormat.getNumberInstance(new Locale("en", "IN"));
+
+    private final Logger log = LoggerFactory.getLogger(PurchaseOrderPdfService.class);
 
     @Autowired
     PurchaseOrderRepo purchaseOrderRepo;
@@ -103,11 +109,14 @@ public class PurchaseOrderPdfService {
         right.setVerticalAlignment(Element.ALIGN_MIDDLE);
         right.setHorizontalAlignment(Element.ALIGN_RIGHT);
         try {
-            Image logo = Image.getInstance("asset/image/logo/logo.png");
+            ClassPathResource logoResource = new ClassPathResource("sc-login-logo.png");
+            byte[] logoBytes = org.apache.commons.io.IOUtils.toByteArray(logoResource.getInputStream());
+            Image logo = Image.getInstance(logoBytes);
             logo.scaleToFit(90f, 40f);
             logo.setAlignment(Element.ALIGN_RIGHT);
             right.addElement(logo);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("Could not load logo for PDF: {}", e.getMessage());
             Paragraph fb = new Paragraph(firm.getFirmName(), companyFont);
             fb.setAlignment(Element.ALIGN_RIGHT);
             right.addElement(fb);

@@ -2,10 +2,8 @@ package com.ec.application.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.servlet.config.annotation.*;
 
 import com.ec.application.multitenant.TenantNameInterceptor;
 
@@ -16,7 +14,7 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter implements WebMvcConfi
 
 	@Autowired
 	private TenantNameInterceptor tenantNameInterceptor;
-	
+
 	@Override
 	public void configurePathMatch(PathMatchConfigurer configurer)
 	{
@@ -27,6 +25,18 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter implements WebMvcConfi
 	public void addInterceptors(InterceptorRegistry registry)
 	{
 		registry.addInterceptor(tenantNameInterceptor);
+	}
+
+	@Override
+	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(5);
+		executor.setMaxPoolSize(20);
+		executor.setQueueCapacity(100);
+		executor.setThreadNamePrefix("mvc-async-");
+		executor.initialize();
+		configurer.setTaskExecutor(executor);
+		configurer.setDefaultTimeout(60_000);
 	}
 
 }
