@@ -13,8 +13,10 @@ import com.ec.application.model.IndentStatusHistory;
 import com.ec.application.model.PurchaseOrder;
 import com.ec.application.model.PurchaseOrderStatusHistory;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.service.PurchaseOrderPdfService;
 import com.ec.application.service.PurchaseOrderService;
 import com.ec.application.service.PurchaseOrderStatusHistoryService;
+import com.itextpdf.text.DocumentException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +25,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +44,7 @@ public class PurchaseOrderController {
     private final PurchaseOrderService purchaseOrderService;
     private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
     private final SchemaConfig schemaConfig;
+    private final PurchaseOrderPdfService purchaseOrderPdfService;
 
 
     private static final Logger log =
@@ -117,6 +122,40 @@ public class PurchaseOrderController {
                         HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=purchase-orders.xlsx"
                 )
+                .body(stream);
+    }
+
+    @GetMapping(value = "/print-po/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<StreamingResponseBody> printPOAsPdf(@PathVariable String id) {
+        String tenant = schemaConfig.getMasterSchema();
+        PurchaseOrder po;
+        try {
+            po = purchaseOrderService.getPurchaseOrderWithInit(id);
+        } catch (Exception e) {
+            log.error("Failed to fetch PO ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        String filename = "PO-" + po.getPurchaseOrderId() + ".pdf";
+
+        StreamingResponseBody stream = outputStream -> {
+            try {
+                ThreadLocalStorage.setTenantName(tenant != null ? tenant : "masterschema");
+                purchaseOrderPdfService.generatePdf(po, outputStream);
+                outputStream.flush();
+
+            } catch (DocumentException e) {
+                log.error("iText PDF generation failed for PO ", e);
+            } catch (IOException e) {
+                log.error("IO error writing PDF for PO ", e);
+            } finally {
+                ThreadLocalStorage.setTenantName(null);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.APPLICATION_PDF)
                 .body(stream);
     }
 
