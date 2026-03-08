@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import javax.transaction.Transactional;
 
@@ -58,10 +60,14 @@ public class FileHandlingService {
     public ResponseEntity<Resource> downloadFile(String fileId) throws Exception {
         try {
             DBFile dbFile = dbFileStorageService.getFile(fileId);
+            String rawName = dbFile.getFileName() != null ? dbFile.getFileName() : "download";
+            String encodedName = URLEncoder.encode(rawName, StandardCharsets.UTF_8.name())
+                    .replace("+", "%20");
+
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(dbFile.getFileType()))
                     .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename=\"" + dbFile.getFileName() + "\"")
+                            "attachment; filename*=UTF-8''" + encodedName)
                     .body(new ByteArrayResource(dbFile.getData()));
         } catch (Exception e) {
             log.error("Error downloading file", e);
