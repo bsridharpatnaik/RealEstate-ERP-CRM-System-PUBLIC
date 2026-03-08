@@ -165,6 +165,7 @@ public class PurchaseOrderPdfService {
         // ---- RIGHT: Vendor Account Details
         PdfPTable accountTable = new PdfPTable(2);
         accountTable.setWidthPercentage(100);
+        accountTable.setWidths(new float[]{1.2f, 2f}); // ← label col smaller, value col wider
 
         PdfPCell heading = new PdfPCell(new Phrase("Vendor Account Details", bold));
         heading.setColspan(2);
@@ -267,6 +268,7 @@ public class PurchaseOrderPdfService {
         PdfPCell totalVal = new PdfPCell(new Phrase(fmt(po.getGrandTotal()), headerFont));
         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalVal.setPadding(4f);
+        totalVal.setNoWrap(true); // ← add this
         table.addCell(totalVal);
 
         document.add(table);
@@ -315,6 +317,7 @@ public class PurchaseOrderPdfService {
         PdfPCell totalVal = new PdfPCell(new Phrase(fmt(po.getGrandTotal()), headerFont));
         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalVal.setPadding(4f);
+        totalVal.setNoWrap(true); // ← add here too
         table.addCell(totalVal);
 
         document.add(table);
@@ -328,38 +331,39 @@ public class PurchaseOrderPdfService {
         termsTitle.setSpacingBefore(8f);
         document.add(termsTitle);
 
-        document.add(new Paragraph("* 100% Advance payment.", smallFont));
-        document.add(new Paragraph("* Immediate delivery.", smallFont));
-        document.add(new Paragraph("* Material will not be accepted without original copy of invoice.", smallFont));
-        document.add(new Paragraph("* Unloaded weight/qty at our site will be final for payment/invoice.", smallFont));
-
         if (notBlank(po.getNotes())) {
             document.add(new Paragraph("* " + po.getNotes(), smallFont));
         }
 
-        PdfPTable signTable = new PdfPTable(3);
+        // ---- Signature Section ----
+        Paragraph sigTitle = new Paragraph("Authorisation", labelFont);
+        sigTitle.setSpacingBefore(12f);
+        sigTitle.setSpacingAfter(6f);
+        document.add(sigTitle);
+
+        // Main signature table: 5 columns (Role | Name | Designation | Date | Signature)
+        PdfPTable signTable = new PdfPTable(5);
         signTable.setWidthPercentage(100);
-        signTable.setSpacingBefore(12f);
+        signTable.setWidths(new float[]{2f, 2.5f, 2.5f, 2f, 2.5f});
+        signTable.setSpacingBefore(4f);
 
-        PdfPCell empty = new PdfPCell(new Phrase(""));
-        empty.setBorder(Rectangle.NO_BORDER);
-        signTable.addCell(empty);
-        signTable.addCell(empty);
+        // ---- Header Row ----
+        addSignHeader(signTable, "Role",        labelFont);
+        addSignHeader(signTable, "Name",        labelFont);
+        addSignHeader(signTable, "Designation", labelFont);
+        addSignHeader(signTable, "Date",        labelFont);
+        addSignHeader(signTable, "Signature",   labelFont);
 
-        PdfPCell forCompany = new PdfPCell(
-                new Phrase("For " + po.getFirm().getFirmName(), smallFont));
-        forCompany.setBorder(Rectangle.NO_BORDER);
-        forCompany.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        signTable.addCell(forCompany);
+        // ---- Prepared By (1 row) ----
+        addSignRow(signTable, "Prepared By", "", "", "", smallFont);
 
-        signTable.addCell(empty);
-        signTable.addCell(empty);
+        // ---- Checked By (1 row) ----
+        addSignRow(signTable, "Checked By", "", "", "", smallFont);
 
-        PdfPCell authSign = new PdfPCell(new Phrase("Authorised Signatory", smallFont));
-        authSign.setBorder(Rectangle.NO_BORDER);
-        authSign.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        authSign.setPaddingTop(20f);
-        signTable.addCell(authSign);
+        // ---- Approved By (3 rows) ----
+        addSignRow(signTable, "Approved By (1)", "", "", "", smallFont);
+        addSignRow(signTable, "Approved By (2)", "", "", "", smallFont);
+        addSignRow(signTable, "Approved By (3)", "", "", "", smallFont);
 
         document.add(signTable);
     }
@@ -367,6 +371,50 @@ public class PurchaseOrderPdfService {
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    private void addSignHeader(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setBackgroundColor(new BaseColor(230, 230, 230));
+        cell.setPadding(5f);
+        table.addCell(cell);
+    }
+
+    private void addSignRow(PdfPTable table, String role, String name,
+                            String designation, String date, Font font) {
+        // Role cell (slightly shaded to distinguish)
+        PdfPCell roleCell = new PdfPCell(new Phrase(role, font));
+        roleCell.setBackgroundColor(new BaseColor(245, 245, 245));
+        roleCell.setPadding(5f);
+        roleCell.setMinimumHeight(35f);
+        roleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        table.addCell(roleCell);
+
+        // Name
+        PdfPCell nameCell = new PdfPCell(new Phrase(name, font));
+        nameCell.setPadding(5f);
+        nameCell.setMinimumHeight(35f);
+        table.addCell(nameCell);
+
+        // Designation
+        PdfPCell desigCell = new PdfPCell(new Phrase(designation, font));
+        desigCell.setPadding(5f);
+        desigCell.setMinimumHeight(35f);
+        table.addCell(desigCell);
+
+        // Date
+        PdfPCell dateCell = new PdfPCell(new Phrase(date, font));
+        dateCell.setPadding(5f);
+        dateCell.setMinimumHeight(35f);
+        table.addCell(dateCell);
+
+        // Signature (intentionally blank for handwriting)
+        PdfPCell signCell = new PdfPCell(new Phrase("", font));
+        signCell.setPadding(5f);
+        signCell.setMinimumHeight(35f);
+        table.addCell(signCell);
+    }
 
     private void addHeaderCell(PdfPTable table, String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
@@ -388,10 +436,15 @@ public class PurchaseOrderPdfService {
 
     private void addAccountRow(PdfPTable table, String label, String value, Font font) {
         PdfPCell k = new PdfPCell(new Phrase(label, font));
-        k.setPadding(3f);
-        PdfPCell v = new PdfPCell(new Phrase(value != null ? value : "-", font));
-        v.setPadding(3f);
+        k.setPadding(5f);
+        k.setMinimumHeight(22f); // ← add this
+        k.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(k);
+
+        PdfPCell v = new PdfPCell(new Phrase(value != null ? value : "", font)); // use "" instead of "-"
+        v.setPadding(5f);
+        v.setMinimumHeight(22f); // ← add this
+        v.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(v);
     }
 
