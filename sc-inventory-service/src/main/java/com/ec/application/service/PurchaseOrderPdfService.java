@@ -336,34 +336,24 @@ public class PurchaseOrderPdfService {
         }
 
         // ---- Signature Section ----
-        Paragraph sigTitle = new Paragraph("Authorisation", labelFont);
-        sigTitle.setSpacingBefore(12f);
-        sigTitle.setSpacingAfter(6f);
-        document.add(sigTitle);
-
-        // Main signature table: 5 columns (Role | Name | Designation | Date | Signature)
-        PdfPTable signTable = new PdfPTable(5);
+        // ---- Signature Section ----
+        PdfPTable signTable = new PdfPTable(3);
         signTable.setWidthPercentage(100);
-        signTable.setWidths(new float[]{2f, 2.5f, 2.5f, 2f, 2.5f});
-        signTable.setSpacingBefore(4f);
+        signTable.setWidths(new float[]{1f, 1f, 1f});
+        signTable.setSpacingBefore(40f); // space after T&C
 
-        // ---- Header Row ----
-        addSignHeader(signTable, "Role",        labelFont);
-        addSignHeader(signTable, "Name",        labelFont);
-        addSignHeader(signTable, "Designation", labelFont);
-        addSignHeader(signTable, "Date",        labelFont);
-        addSignHeader(signTable, "Signature",   labelFont);
+// ROW 1: blank space for actual signature
+        PdfPCell blankLeft = makeBlankSignCell();
+        PdfPCell blankMid  = makeBlankSignCell();
+        PdfPCell blankRight = makeBlankSignCell();
+        signTable.addCell(blankLeft);
+        signTable.addCell(blankMid);
+        signTable.addCell(blankRight);
 
-        // ---- Prepared By (1 row) ----
-        addSignRow(signTable, "Prepared By", "", "", "", smallFont);
-
-        // ---- Checked By (1 row) ----
-        addSignRow(signTable, "Checked By", "", "", "", smallFont);
-
-        // ---- Approved By (3 rows) ----
-        addSignRow(signTable, "Approved By (1)", "", "", "", smallFont);
-        addSignRow(signTable, "Approved By (2)", "", "", "", smallFont);
-        addSignRow(signTable, "Approved By (3)", "", "", "", smallFont);
+// ROW 2: labels
+        signTable.addCell(makeSignLabelCell("Prepared By", labelFont));
+        signTable.addCell(makeSignLabelCell("Checked By",  labelFont));
+        signTable.addCell(makeSignLabelCell("Authorised By", labelFont));
 
         document.add(signTable);
     }
@@ -371,6 +361,22 @@ public class PurchaseOrderPdfService {
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    private PdfPCell makeBlankSignCell() {
+        PdfPCell cell = new PdfPCell(new Phrase(""));
+        cell.setBorder(Rectangle.BOTTOM); // only bottom border — like a signature line
+        cell.setMinimumHeight(50f);       // space to sign
+        cell.setPadding(5f);
+        return cell;
+    }
+
+    private PdfPCell makeSignLabelCell(String label, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(label, font));
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPaddingTop(4f);
+        return cell;
+    }
 
     private void addSignHeader(PdfPTable table, String text, Font font) {
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
