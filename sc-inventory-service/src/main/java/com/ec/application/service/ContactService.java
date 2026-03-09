@@ -174,7 +174,9 @@ public class ContactService {
     }
 
     private void exitIfMobileNoExists(Contact payload) throws Exception {
-        if (payload.getMobileNo() != null && contactRepo.getCountByMobileNo(payload.getMobileNo()) > 0)
+
+        if (payload.getMobileNo() != null && !payload.getMobileNo().trim().isEmpty()
+                && contactRepo.getCountByMobileNo(payload.getMobileNo()) > 0)
             throw new Exception("Contact already exists by Mobile Number.");
     }
 }

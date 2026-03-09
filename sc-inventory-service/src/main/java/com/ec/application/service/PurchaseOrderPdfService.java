@@ -339,21 +339,40 @@ public class PurchaseOrderPdfService {
         // ---- Signature Section ----
         PdfPTable signTable = new PdfPTable(3);
         signTable.setWidthPercentage(100);
-        signTable.setWidths(new float[]{1f, 1f, 1f});
-        signTable.setSpacingBefore(40f); // space after T&C
+        signTable.setSpacingBefore(8f);  // reduced from 12f
 
-// ROW 1: blank space for actual signature
-        PdfPCell blankLeft = makeBlankSignCell();
-        PdfPCell blankMid  = makeBlankSignCell();
-        PdfPCell blankRight = makeBlankSignCell();
+        Font signFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+
+// Signature space row (blank, gives room to sign)
+        PdfPCell blankLeft   = new PdfPCell(new Phrase(" ", signFont));
+        PdfPCell blankMiddle = new PdfPCell(new Phrase(" ", signFont));
+        PdfPCell blankRight  = new PdfPCell(new Phrase(" ", signFont));
+        blankLeft.setBorder(Rectangle.NO_BORDER);
+        blankMiddle.setBorder(Rectangle.NO_BORDER);
+        blankRight.setBorder(Rectangle.NO_BORDER);
+        blankLeft.setMinimumHeight(30f);   // controlled space, not 20pt padding
+        blankMiddle.setMinimumHeight(30f);
+        blankRight.setMinimumHeight(30f);
         signTable.addCell(blankLeft);
-        signTable.addCell(blankMid);
+        signTable.addCell(blankMiddle);
         signTable.addCell(blankRight);
 
-// ROW 2: labels
-        signTable.addCell(makeSignLabelCell("Prepared By", labelFont));
-        signTable.addCell(makeSignLabelCell("Checked By",  labelFont));
-        signTable.addCell(makeSignLabelCell("Authorised By", labelFont));
+// Label row
+        PdfPCell preparedBy = new PdfPCell(new Phrase("Prepared By", signFont));
+        preparedBy.setBorder(Rectangle.NO_BORDER);
+        preparedBy.setHorizontalAlignment(Element.ALIGN_LEFT);
+
+        PdfPCell checkedBy = new PdfPCell(new Phrase("", signFont));
+        checkedBy.setBorder(Rectangle.NO_BORDER);
+        checkedBy.setHorizontalAlignment(Element.ALIGN_CENTER);
+
+        PdfPCell authorisedBy = new PdfPCell(new Phrase("Authorised By", signFont));
+        authorisedBy.setBorder(Rectangle.NO_BORDER);
+        authorisedBy.setHorizontalAlignment(Element.ALIGN_RIGHT);
+
+        signTable.addCell(preparedBy);
+        signTable.addCell(checkedBy);
+        signTable.addCell(authorisedBy);
 
         document.add(signTable);
     }
