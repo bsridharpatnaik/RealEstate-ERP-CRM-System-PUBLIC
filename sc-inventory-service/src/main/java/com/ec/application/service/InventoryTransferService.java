@@ -119,15 +119,14 @@ public class InventoryTransferService {
         transfer.setItems(successfulItems);
         if (!successfulItems.isEmpty()) {
             withTenant(masterSchema, () -> inventoryTransferRepository.save(transfer));
-        }
+            withTenant(sourceTenant, () -> inventoryTransferRepository.save(copyForTenant(transfer)));
 
-        withTenant(sourceTenant, () -> inventoryTransferRepository.save(copyForTenant(transfer)));
-
-        if (!sourceTenant.equals(targetTenant)) {
-            withTenant(targetTenant, () -> {
-                inventoryTransferRepository.save(copyForTenant(transfer));
-                return null;
-            });
+            if (!sourceTenant.equals(targetTenant)) {
+                withTenant(targetTenant, () -> {
+                    inventoryTransferRepository.save(copyForTenant(transfer));
+                    return null;
+                });
+            }
         }
         boolean fullySuccessful = itemResults.stream().allMatch(TransferItemResult::isSuccess);
         return new InventoryTransferResult(transfer.getTransferId(), fullySuccessful, itemResults);

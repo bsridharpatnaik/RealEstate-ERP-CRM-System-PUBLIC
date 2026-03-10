@@ -1,6 +1,7 @@
 package com.ec.application.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -39,7 +40,7 @@ public class WarehouseService {
     }
 
     public Warehouse updateWarehouse(Long id, Warehouse payload) throws Exception {
-        if (payload.getWarehouseName() == null || payload.getWarehouseName().trim() == "")
+        if (payload.getWarehouseName() == null || payload.getWarehouseName().trim().isEmpty())
             throw new Exception("Warehouse Name cannot be empty.");
         payload.setWarehouseName(payload.getWarehouseName().trim());
         Optional<Warehouse> warehouseOpt = warehouseRepo.findById(id);
@@ -48,7 +49,7 @@ public class WarehouseService {
 
         Warehouse warehouse = warehouseOpt.get();
 
-        if (warehouse.getWarehouseName() != payload.getWarehouseName()
+        if (!Objects.equals(warehouse.getWarehouseName(), payload.getWarehouseName())
                 && warehouseRepo.countByName(payload.getWarehouseName()) > 0)
             throw new Exception("Warehouse already exists!");
 
