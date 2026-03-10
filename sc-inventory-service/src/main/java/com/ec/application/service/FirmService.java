@@ -97,9 +97,6 @@ public class FirmService {
         if (isBlank(payload.getFirmName()))
             missing.add("Firm Name");
 
-        if (isBlank(payload.getFirmGstNumber()))
-            missing.add("Firm GST Number");
-
         if (isBlank(payload.getFirmContactNumber()))
             missing.add("Firm Contact Number");
 
