@@ -40,6 +40,7 @@ public class PurchaseOrderLine extends ReusableFields {
 
     private Double quantity;
     private Double rate;
+    private Double discountPercent;
     private Double gstPercent;
     private Double netRate;
     private Double totalAmount;

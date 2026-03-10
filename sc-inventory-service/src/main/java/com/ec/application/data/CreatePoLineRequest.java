@@ -17,6 +17,7 @@ public class CreatePoLineRequest {
     @JsonDeserialize(using = ToTitleCaseDeserializer.class)
     private String specification;
     private Double rate;
+    private Double discountPercent;
     private Double gstPercent;
     private Double netRate;
     private Double totalAmount;

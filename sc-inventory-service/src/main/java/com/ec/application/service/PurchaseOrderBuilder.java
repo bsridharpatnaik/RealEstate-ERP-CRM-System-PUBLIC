@@ -56,6 +56,7 @@ public class PurchaseOrderBuilder {
         line.setProduct(productService.findSingleProduct(itemReq.getProductId()));
         line.setGstPercent(itemReq.getGstPercent());
         line.setRate(itemReq.getRate());
+        line.setDiscountPercent(itemReq.getDiscountPercent());
         line.setGrade(itemReq.getGrade());
         line.setNetRate(itemReq.getNetRate());
         line.setSpecification(itemReq.getSpecification());

@@ -239,20 +239,23 @@ public class PurchaseOrderPdfService {
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
                     ? "\n" + line.getSpecification() : "");
 
-            double qty = line.getQuantity();
-            double rate = line.getRate();
-            double total = qty * rate;
-            double gstPct = line.getGstPercent();
-            double gstAmt = total * gstPct / 100.0;
-            double amtInclTax = total + gstAmt;
+            double qty          = line.getQuantity()       != null ? line.getQuantity()       : 0.0;
+            double rate         = line.getRate()           != null ? line.getRate()           : 0.0;
+            double discPct      = line.getDiscountPercent()!= null ? line.getDiscountPercent(): 0.0;
+            double gstPct       = line.getGstPercent()     != null ? line.getGstPercent()     : 0.0;
+            double grossTotal   = qty * rate;                          // rate × qty, before discount
+            double discountAmt  = grossTotal * discPct / 100.0;        // discount ₹ — derived for display
+            double taxable      = line.getNetRate()        != null ? line.getNetRate()        : 0.0;  // stored
+            double gstAmt       = taxable * gstPct / 100.0;            // derived for display
+            double amtInclTax   = line.getTotalAmount()    != null ? line.getTotalAmount()    : 0.0;  // stored
 
             addBodyCell(table, desc, normalFont);
             addBodyCell(table, fmt(qty), normalFont);
             addBodyCell(table, product.getMeasurementUnit(), normalFont);
             addBodyCell(table, fmt(rate), normalFont);
-            addBodyCell(table, fmt(total), normalFont);
-            addBodyCell(table, "0.00", normalFont);
-            addBodyCell(table, fmt(total), normalFont);
+            addBodyCell(table, fmt(grossTotal), normalFont);
+            addBodyCell(table, fmt(discountAmt), normalFont);
+            addBodyCell(table, fmt(taxable), normalFont);
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, fmt(gstAmt), normalFont);
             addBodyCell(table, fmt(amtInclTax), normalFont);
