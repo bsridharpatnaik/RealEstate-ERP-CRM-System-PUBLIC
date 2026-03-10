@@ -84,6 +84,7 @@ public class PurchaseOrderSpecification {
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereDirectFieldContains(PurchaseOrder_.SUBJECT, globalSearch));
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldContains(PurchaseOrder_.FIRM, Firm_.FIRM_NAME, globalSearch));
             internalSpec = specbldr.specOrCondition(internalSpec, specbldr.whereChildFieldContains(PurchaseOrder_.SUPPLIER, Supplier_.NAME, globalSearch));
+            internalSpec = specbldr.specOrCondition(internalSpec, specbldr.wherePurchanseOrderContainsProductName(productNames, PurchaseOrder_.LINES));
             finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
         }
 
