@@ -102,6 +102,9 @@ public class PurchaseOrder extends ReusableFields {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "d MMM yyyy h:mm a")
     private Date lastStatusUpdatedAt;
 
+    @Column(name = "override_phone_number", length = 35)
+    private String overridePhoneNumber;
+
     @Transient
     Boolean approvalAllowed;
 

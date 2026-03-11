@@ -45,4 +45,10 @@ public class PurchaseOrderValidator {
             );
         }
     }
+
+    public void validateOverridePhoneNumber(String overridePhoneNumber) throws Exception {
+        if (overridePhoneNumber != null && overridePhoneNumber.length() > 35) {
+            throw new Exception("Override Phone Number cannot exceed 35 characters.");
+        }
+    }
 }

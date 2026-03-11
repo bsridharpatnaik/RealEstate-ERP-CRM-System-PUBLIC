@@ -108,8 +108,11 @@ public class PurchaseOrderPdfService {
         if (notBlank(firm.getCity()) || notBlank(firm.getState()))
             left.addElement(new Paragraph(
                     join(", ", firm.getCity(), firm.getState(), firm.getZip()), smallFont));
-        if (notBlank(firm.getFirmContactNumber()))
-            left.addElement(new Paragraph("Phone: " + firm.getFirmContactNumber(), smallFont));
+        String phoneToShow = notBlank(po.getOverridePhoneNumber())
+                ? po.getOverridePhoneNumber()
+                : firm.getFirmContactNumber();
+        if (notBlank(phoneToShow))
+            left.addElement(new Paragraph("Phone: " + phoneToShow, smallFont));
         if (notBlank(firm.getFirmEmail()))
             left.addElement(new Paragraph("Email: " + firm.getFirmEmail(), smallFont));
         if (notBlank(firm.getFirmGstNumber()))

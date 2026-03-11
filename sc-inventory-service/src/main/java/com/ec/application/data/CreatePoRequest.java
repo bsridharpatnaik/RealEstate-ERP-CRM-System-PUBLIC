@@ -10,6 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.NonNull;
 
+import javax.persistence.Column;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,7 +27,8 @@ public class CreatePoRequest {
     @JsonDeserialize(using= ToSentenceCaseDeserializer.class)
     private String notes;
     private Double grandTotal;
-
+    @Column(length = 35)
+    private String overridePhoneNumber;
     /** One entry = one PO line */
     private List<CreatePoLineRequest> lineItems;
     @NonNull
