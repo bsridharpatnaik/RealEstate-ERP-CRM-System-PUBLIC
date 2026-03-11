@@ -30,6 +30,9 @@ import org.springframework.stereotype.Service;
  * <p>
  * Usage (inject this bean and call generatePdf):
  * byte[] pdfBytes = purchaseOrderPdfService.generatePdf(purchaseOrder);
+ * <p>
+ * Role-based visibility: inventory-executive users will see the PDF with all
+ * money-related fields (rates, amounts, totals) blanked out.
  */
 @Service
 @UseDefaultTenant
@@ -43,19 +46,27 @@ public class PurchaseOrderPdfService {
     @Autowired
     PurchaseOrderRepo purchaseOrderRepo;
 
+    @Autowired
+    UserDetailsService userDetailsService;
+
     static {
         CURRENCY_FORMAT.setMinimumFractionDigits(2);
         CURRENCY_FORMAT.setMaximumFractionDigits(2);
     }
 
-    private static final java.text.SimpleDateFormat DATE_FORMAT = new java.text.SimpleDateFormat("dd/MM/yyyy");
+    private static final java.text.SimpleDateFormat DATE_FORMAT =
+            new java.text.SimpleDateFormat("dd/MM/yyyy");
 
     // -----------------------------------------------------------------------
     // Public API
     // -----------------------------------------------------------------------
 
     public void generatePdf(PurchaseOrder po, OutputStream outputStream)
-            throws DocumentException, IOException {
+            throws Exception {
+
+        // Resolve once: inventory-executives must not see any monetary values
+        boolean hideMoneyFields = userDetailsService.isInventoryExecutive();
+
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
         PdfWriter.getInstance(document, outputStream);
         document.open();
@@ -63,9 +74,9 @@ public class PurchaseOrderPdfService {
         addHeader(document, po);
         addVendorAndPoDetails(document, po);
         addSubjectAndIntro(document, po);
-        addItemsTable(document, po);
+        addItemsTable(document, po, hideMoneyFields);
         addChargesSection(document);
-        addPriceTable(document, po);
+        addPriceTable(document, po, hideMoneyFields);
         addTermsAndSignatures(document, po);
 
         document.close();
@@ -165,7 +176,7 @@ public class PurchaseOrderPdfService {
         // ---- RIGHT: Vendor Account Details
         PdfPTable accountTable = new PdfPTable(2);
         accountTable.setWidthPercentage(100);
-        accountTable.setWidths(new float[]{1.2f, 2f}); // ← label col smaller, value col wider
+        accountTable.setWidths(new float[]{1.2f, 2f});
 
         PdfPCell heading = new PdfPCell(new Phrase("Vendor Account Details", bold));
         heading.setColspan(2);
@@ -210,7 +221,14 @@ public class PurchaseOrderPdfService {
         document.add(intro);
     }
 
-    private void addItemsTable(Document document, PurchaseOrder po) throws DocumentException {
+    /**
+     * Renders the line-items table.
+     *
+     * @param hideMoneyFields when true, all monetary columns (rate, amounts, totals)
+     *                        are rendered as blank — headers and values alike.
+     */
+    private void addItemsTable(Document document, PurchaseOrder po, boolean hideMoneyFields)
+            throws DocumentException {
         Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
@@ -220,16 +238,17 @@ public class PurchaseOrderPdfService {
         table.setSpacingAfter(0f);
         table.setWidths(new float[]{2.8f, 0.9f, 0.9f, 1.1f, 1.1f, 0.9f, 1.1f, 0.8f, 1.0f, 1.3f});
 
+        // Column headers — money columns blanked for executives
         addHeaderCell(table, "Code & Description", headerFont);
         addHeaderCell(table, "Qty", headerFont);
         addHeaderCell(table, "UOM", headerFont);
-        addHeaderCell(table, "Rate \u20B9", headerFont);
-        addHeaderCell(table, "Total \u20B9", headerFont);
-        addHeaderCell(table, "Discount \u20B9", headerFont);
-        addHeaderCell(table, "Taxable \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Rate \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Discount \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Taxable \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
-        addHeaderCell(table, "GST Amt \u20B9", headerFont);
-        addHeaderCell(table, "Amt Incl Tax \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
 
         List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
         for (PurchaseOrderLine line : lines) {
@@ -239,26 +258,26 @@ public class PurchaseOrderPdfService {
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
                     ? "\n" + line.getSpecification() : "");
 
-            double qty          = line.getQuantity()       != null ? line.getQuantity()       : 0.0;
-            double rate         = line.getRate()           != null ? line.getRate()           : 0.0;
-            double discPct      = line.getDiscountPercent()!= null ? line.getDiscountPercent(): 0.0;
-            double gstPct       = line.getGstPercent()     != null ? line.getGstPercent()     : 0.0;
-            double grossTotal   = qty * rate;                          // rate × qty, before discount
-            double discountAmt  = grossTotal * discPct / 100.0;        // discount ₹ — derived for display
-            double taxable      = line.getNetRate()        != null ? line.getNetRate()        : 0.0;  // stored
-            double gstAmt       = taxable * gstPct / 100.0;            // derived for display
-            double amtInclTax   = line.getTotalAmount()    != null ? line.getTotalAmount()    : 0.0;  // stored
+            double qty        = line.getQuantity()        != null ? line.getQuantity()        : 0.0;
+            double rate       = line.getRate()            != null ? line.getRate()            : 0.0;
+            double discPct    = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
+            double gstPct     = line.getGstPercent()      != null ? line.getGstPercent()      : 0.0;
+            double grossTotal = qty * rate;
+            double discountAmt = grossTotal * discPct / 100.0;
+            double taxable    = line.getNetRate()         != null ? line.getNetRate()         : 0.0;
+            double gstAmt     = taxable * gstPct / 100.0;
+            double amtInclTax = line.getTotalAmount()     != null ? line.getTotalAmount()     : 0.0;
 
             addBodyCell(table, desc, normalFont);
             addBodyCell(table, fmt(qty), normalFont);
             addBodyCell(table, product.getMeasurementUnit(), normalFont);
-            addBodyCell(table, fmt(rate), normalFont);
-            addBodyCell(table, fmt(grossTotal), normalFont);
-            addBodyCell(table, fmt(discountAmt), normalFont);
-            addBodyCell(table, fmt(taxable), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : fmt(grossTotal), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : fmt(discountAmt), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : fmt(taxable), normalFont);
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
-            addBodyCell(table, fmt(gstAmt), normalFont);
-            addBodyCell(table, fmt(amtInclTax), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : fmt(amtInclTax), normalFont);
         }
 
         // TOTAL row
@@ -268,10 +287,11 @@ public class PurchaseOrderPdfService {
         totalLabel.setPadding(4f);
         table.addCell(totalLabel);
 
-        PdfPCell totalVal = new PdfPCell(new Phrase(fmt(po.getGrandTotal()), headerFont));
+        PdfPCell totalVal = new PdfPCell(
+                new Phrase(hideMoneyFields ? "" : fmt(po.getGrandTotal()), headerFont));
         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalVal.setPadding(4f);
-        totalVal.setNoWrap(true); // ← add this
+        totalVal.setNoWrap(true);
         table.addCell(totalVal);
 
         document.add(table);
@@ -295,7 +315,13 @@ public class PurchaseOrderPdfService {
         document.add(charges);
     }
 
-    private void addPriceTable(Document document, PurchaseOrder po) throws DocumentException {
+    /**
+     * Renders the grand-total summary row beneath the charges section.
+     *
+     * @param hideMoneyFields when true, amount-in-words and grand total are blanked.
+     */
+    private void addPriceTable(Document document, PurchaseOrder po, boolean hideMoneyFields)
+            throws DocumentException {
         Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
 
         PdfPTable table = new PdfPTable(10);
@@ -303,7 +329,9 @@ public class PurchaseOrderPdfService {
         table.setSpacingBefore(0f);
         table.setSpacingAfter(0f);
 
-        String amountInWords = numberToWords(po.getGrandTotal()) + " RUPEES ONLY";
+        String amountInWords = hideMoneyFields
+                ? ""
+                : numberToWords(po.getGrandTotal()) + " RUPEES ONLY";
 
         PdfPCell wordsCell = new PdfPCell(new Phrase(amountInWords.toUpperCase(), headerFont));
         wordsCell.setColspan(6);
@@ -317,10 +345,11 @@ public class PurchaseOrderPdfService {
         totalLabel.setPadding(4f);
         table.addCell(totalLabel);
 
-        PdfPCell totalVal = new PdfPCell(new Phrase(fmt(po.getGrandTotal()), headerFont));
+        PdfPCell totalVal = new PdfPCell(
+                new Phrase(hideMoneyFields ? "" : fmt(po.getGrandTotal()), headerFont));
         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalVal.setPadding(4f);
-        totalVal.setNoWrap(true); // ← add here too
+        totalVal.setNoWrap(true);
         table.addCell(totalVal);
 
         document.add(table);
@@ -339,28 +368,27 @@ public class PurchaseOrderPdfService {
         }
 
         // ---- Signature Section ----
-        // ---- Signature Section ----
         PdfPTable signTable = new PdfPTable(3);
         signTable.setWidthPercentage(100);
-        signTable.setSpacingBefore(8f);  // reduced from 12f
+        signTable.setSpacingBefore(8f);
 
         Font signFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
 
-// Signature space row (blank, gives room to sign)
+        // Signature space row (blank, gives room to sign)
         PdfPCell blankLeft   = new PdfPCell(new Phrase(" ", signFont));
         PdfPCell blankMiddle = new PdfPCell(new Phrase(" ", signFont));
         PdfPCell blankRight  = new PdfPCell(new Phrase(" ", signFont));
         blankLeft.setBorder(Rectangle.NO_BORDER);
         blankMiddle.setBorder(Rectangle.NO_BORDER);
         blankRight.setBorder(Rectangle.NO_BORDER);
-        blankLeft.setMinimumHeight(30f);   // controlled space, not 20pt padding
+        blankLeft.setMinimumHeight(30f);
         blankMiddle.setMinimumHeight(30f);
         blankRight.setMinimumHeight(30f);
         signTable.addCell(blankLeft);
         signTable.addCell(blankMiddle);
         signTable.addCell(blankRight);
 
-// Label row
+        // Label row
         PdfPCell preparedBy = new PdfPCell(new Phrase("Prepared By", signFont));
         preparedBy.setBorder(Rectangle.NO_BORDER);
         preparedBy.setHorizontalAlignment(Element.ALIGN_LEFT);
@@ -386,8 +414,8 @@ public class PurchaseOrderPdfService {
 
     private PdfPCell makeBlankSignCell() {
         PdfPCell cell = new PdfPCell(new Phrase(""));
-        cell.setBorder(Rectangle.BOTTOM); // only bottom border — like a signature line
-        cell.setMinimumHeight(50f);       // space to sign
+        cell.setBorder(Rectangle.BOTTOM);
+        cell.setMinimumHeight(50f);
         cell.setPadding(5f);
         return cell;
     }
@@ -411,7 +439,6 @@ public class PurchaseOrderPdfService {
 
     private void addSignRow(PdfPTable table, String role, String name,
                             String designation, String date, Font font) {
-        // Role cell (slightly shaded to distinguish)
         PdfPCell roleCell = new PdfPCell(new Phrase(role, font));
         roleCell.setBackgroundColor(new BaseColor(245, 245, 245));
         roleCell.setPadding(5f);
@@ -419,25 +446,21 @@ public class PurchaseOrderPdfService {
         roleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(roleCell);
 
-        // Name
         PdfPCell nameCell = new PdfPCell(new Phrase(name, font));
         nameCell.setPadding(5f);
         nameCell.setMinimumHeight(35f);
         table.addCell(nameCell);
 
-        // Designation
         PdfPCell desigCell = new PdfPCell(new Phrase(designation, font));
         desigCell.setPadding(5f);
         desigCell.setMinimumHeight(35f);
         table.addCell(desigCell);
 
-        // Date
         PdfPCell dateCell = new PdfPCell(new Phrase(date, font));
         dateCell.setPadding(5f);
         dateCell.setMinimumHeight(35f);
         table.addCell(dateCell);
 
-        // Signature (intentionally blank for handwriting)
         PdfPCell signCell = new PdfPCell(new Phrase("", font));
         signCell.setPadding(5f);
         signCell.setMinimumHeight(35f);
@@ -465,13 +488,13 @@ public class PurchaseOrderPdfService {
     private void addAccountRow(PdfPTable table, String label, String value, Font font) {
         PdfPCell k = new PdfPCell(new Phrase(label, font));
         k.setPadding(5f);
-        k.setMinimumHeight(22f); // ← add this
+        k.setMinimumHeight(22f);
         k.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(k);
 
-        PdfPCell v = new PdfPCell(new Phrase(value != null ? value : "", font)); // use "" instead of "-"
+        PdfPCell v = new PdfPCell(new Phrase(value != null ? value : "", font));
         v.setPadding(5f);
-        v.setMinimumHeight(22f); // ← add this
+        v.setMinimumHeight(22f);
         v.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(v);
     }

@@ -34,6 +34,7 @@ public class IndentStatusHistory {
 
     private String changedBy;
 
+    @Column(columnDefinition = "TEXT")
     private String changeMessage;
 
     @OneToMany(

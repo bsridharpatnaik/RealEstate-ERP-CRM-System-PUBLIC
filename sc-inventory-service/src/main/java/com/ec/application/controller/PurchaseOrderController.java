@@ -148,6 +148,8 @@ public class PurchaseOrderController {
                 log.error("iText PDF generation failed for PO ", e);
             } catch (IOException e) {
                 log.error("IO error writing PDF for PO ", e);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             } finally {
                 ThreadLocalStorage.setTenantName(null);
             }

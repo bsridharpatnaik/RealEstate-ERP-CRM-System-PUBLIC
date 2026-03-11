@@ -33,6 +33,7 @@ public class PurchaseOrderStatusHistory {
 
     private String changedBy;
 
+    @Column(columnDefinition = "TEXT")
     private String changeMessage;
 
     @OneToMany(
