@@ -39,6 +39,7 @@ public class PurchaseOrderBuilder {
         po.setLastStatusUpdatedAt(new Date());
         po.setSubject(request.getSubject());
         po.setOverridePhoneNumber(request.getOverridePhoneNumber());
+        po.setOverrideEmail(request.getOverrideEmail());
         for (CreatePoLineRequest itemReq : request.getLineItems()) {
             po.getLines().add(buildPoLine(po, itemReq));
         }

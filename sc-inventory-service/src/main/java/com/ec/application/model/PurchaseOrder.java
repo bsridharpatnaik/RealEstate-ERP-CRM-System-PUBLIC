@@ -105,6 +105,9 @@ public class PurchaseOrder extends ReusableFields {
     @Column(name = "override_phone_number", length = 35)
     private String overridePhoneNumber;
 
+    @Column(name = "override_email", length = 100)
+    private String overrideEmail;
+
     @Transient
     Boolean approvalAllowed;
 

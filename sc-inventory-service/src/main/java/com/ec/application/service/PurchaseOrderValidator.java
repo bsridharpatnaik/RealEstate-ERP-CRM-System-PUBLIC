@@ -51,4 +51,8 @@ public class PurchaseOrderValidator {
             throw new Exception("Override Phone Number cannot exceed 35 characters.");
         }
     }
+    public void validateOverrideEmail(String overrideEmail) throws Exception {
+        if (overrideEmail != null && overrideEmail.length() > 100)
+            throw new Exception("Override Email cannot exceed 100 characters.");
+    }
 }

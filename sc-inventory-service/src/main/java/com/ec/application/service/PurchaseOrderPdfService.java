@@ -113,8 +113,11 @@ public class PurchaseOrderPdfService {
                 : firm.getFirmContactNumber();
         if (notBlank(phoneToShow))
             left.addElement(new Paragraph("Phone: " + phoneToShow, smallFont));
-        if (notBlank(firm.getFirmEmail()))
-            left.addElement(new Paragraph("Email: " + firm.getFirmEmail(), smallFont));
+        String emailToShow = notBlank(po.getOverrideEmail())
+                ? po.getOverrideEmail()
+                : firm.getFirmEmail();
+        if (notBlank(emailToShow))
+            left.addElement(new Paragraph("Email: " + emailToShow, smallFont));
         if (notBlank(firm.getFirmGstNumber()))
             left.addElement(new Paragraph("GSTIN: " + firm.getFirmGstNumber(), smallFont));
         headerTable.addCell(left);
@@ -390,6 +393,18 @@ public class PurchaseOrderPdfService {
         signTable.addCell(blankLeft);
         signTable.addCell(blankMiddle);
         signTable.addCell(blankRight);
+
+        PdfPCell creatorNameCell = new PdfPCell(new Phrase(po.getCreatedBy() != null ? po.getCreatedBy() : "", signFont));
+        creatorNameCell.setBorder(Rectangle.NO_BORDER);
+        creatorNameCell.setPadding(2f);
+        signTable.addCell(creatorNameCell);
+
+        PdfPCell emptyMiddle = new PdfPCell(new Phrase("", signFont));
+        emptyMiddle.setBorder(Rectangle.NO_BORDER);
+        PdfPCell emptyRight = new PdfPCell(new Phrase("", signFont));
+        emptyRight.setBorder(Rectangle.NO_BORDER);
+        signTable.addCell(emptyMiddle);
+        signTable.addCell(emptyRight);
 
         // Label row
         PdfPCell preparedBy = new PdfPCell(new Phrase("Prepared By", signFont));

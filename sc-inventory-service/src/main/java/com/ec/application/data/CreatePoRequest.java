@@ -29,6 +29,7 @@ public class CreatePoRequest {
     private Double grandTotal;
     @Column(length = 35)
     private String overridePhoneNumber;
+    private String overrideEmail;
     /** One entry = one PO line */
     private List<CreatePoLineRequest> lineItems;
     @NonNull

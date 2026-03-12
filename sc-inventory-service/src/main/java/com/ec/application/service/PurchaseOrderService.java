@@ -79,6 +79,7 @@ public class PurchaseOrderService extends ReusableFields {
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
         validator.validateOverridePhoneNumber(request.getOverridePhoneNumber());
+        validator.validateOverrideEmail(request.getOverrideEmail());
         PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
