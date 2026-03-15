@@ -23,6 +23,9 @@ public class DashboardProductStockDTO {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double totalStock;   // sum across all tenants
 
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double totalDeadStock;
+
     private List<TenantStockDTO> tenantWiseStock; // for pie chart
 }
 

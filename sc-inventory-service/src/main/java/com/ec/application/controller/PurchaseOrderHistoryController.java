@@ -1,5 +1,6 @@
 package com.ec.application.controller;
 
+import com.ec.application.data.PoLineRateHistoryDTO;
 import com.ec.application.data.PreviousPurchaseRateDTO;
 import com.ec.application.data.PriceScatterPointDTO;
 import com.ec.application.service.PurchaseOrderHistoryPriceService;
@@ -26,5 +27,10 @@ public class PurchaseOrderHistoryController {
     @GetMapping("/price-trend/scatter")
     public List<PriceScatterPointDTO> getScatterTrend(@RequestParam("productId") Long productId) {
         return historyService.getScatterTrend(productId);
+    }
+
+    @GetMapping("/po-rates")
+    public List<PoLineRateHistoryDTO> getRatesForPO(@RequestParam("poNumber") String poNumber) {
+        return historyService.getRatesForAllProductsInPO(poNumber);
     }
 }

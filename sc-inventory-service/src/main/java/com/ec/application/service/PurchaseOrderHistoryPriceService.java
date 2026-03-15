@@ -1,8 +1,11 @@
 package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.POStatusConstants;
+import com.ec.application.data.PoLineRateHistoryDTO;
 import com.ec.application.data.PreviousPurchaseRateDTO;
 import com.ec.application.data.PriceScatterPointDTO;
+import com.ec.application.model.PurchaseOrderLine;
 import com.ec.application.repository.PurchaseOrderLineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -51,5 +54,32 @@ public class PurchaseOrderHistoryPriceService {
     public List<PriceScatterPointDTO> getScatterTrend(Long productId) {
         List<PreviousPurchaseRateDTO> raw = getPreviousRates(productId);
         return buildScatterPoints(raw);
+    }
+
+    @UseDefaultTenant
+    @Transactional(readOnly = true)
+    public List<PoLineRateHistoryDTO> getRatesForAllProductsInPO(String poNumber) {
+        List<PurchaseOrderLine> lines = poLineRepo.findLinesByPoNumber(poNumber);
+
+        if (lines == null || lines.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Pageable top15 = PageRequest.of(0, 15);
+
+        return lines.stream()
+                .map(line -> {
+                    Long productId = line.getProduct().getProductId();
+                    List<PreviousPurchaseRateDTO> rates = poLineRepo.findPreviousRates(
+                            productId, STATUS_CANCELLED, top15
+                    );
+                    return new PoLineRateHistoryDTO(
+                            productId,
+                            line.getProduct().getProductName(),
+                            line.getProduct().getProductCode(),
+                            rates != null ? rates : Collections.emptyList()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }

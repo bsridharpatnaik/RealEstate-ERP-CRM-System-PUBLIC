@@ -24,4 +24,13 @@ public interface PurchaseOrderLineRepository
                     "ORDER BY CAST(SUBSTRING(po.purchaseOrderId, LOCATE('-', po.purchaseOrderId) + 1) AS integer) DESC"
     )
     List<PreviousPurchaseRateDTO> findPreviousRates(@Param("productId") Long productId, @Param("cancelledStatus") String cancelledStatus, Pageable pageable);
+
+    @Query(
+            "SELECT pol FROM PurchaseOrderLine pol " +
+                    "JOIN FETCH pol.product " +
+                    "JOIN pol.purchaseOrder po " +
+                    "WHERE po.purchaseOrderId = :poNumber " +
+                    "AND po.isDeleted = false"
+    )
+    List<PurchaseOrderLine> findLinesByPoNumber(@Param("poNumber") String poNumber);
 }

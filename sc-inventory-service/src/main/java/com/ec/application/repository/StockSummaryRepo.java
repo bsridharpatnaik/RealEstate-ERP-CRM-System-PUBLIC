@@ -49,4 +49,15 @@ public interface StockSummaryRepo
     List<Object[]> fetchTenantWiseStockForProducts(@Param("productIds") List<Long> productIds);
 
 
+    @Query(
+            "SELECT s.productId, s.tenantSchema, SUM(s.quantityInHand) " +
+                    "FROM StockSummary s " +
+                    "WHERE s.productId IN :productIds " +
+                    "AND s.warehouseName = :warehouseName " +
+                    "GROUP BY s.productId, s.tenantSchema"
+    )
+    List<Object[]> fetchTenantWiseDeadStockForProducts(
+            @Param("productIds") List<Long> productIds,
+            @Param("warehouseName") String warehouseName
+    );
 }
