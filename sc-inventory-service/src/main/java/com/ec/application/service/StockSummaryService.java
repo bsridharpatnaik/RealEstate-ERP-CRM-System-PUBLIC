@@ -3,6 +3,7 @@ package com.ec.application.service;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.StockSummarySpecification;
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.Product;
@@ -32,6 +33,7 @@ public class StockSummaryService {
     private final PopulateDropdownService populateDropdownService;
     private final JobExecutionLogRepository jobExecutionLogRepo;
     private final ProductService productService;
+    private final SchemaConfig schemaConfig;
 
     Logger log = LoggerFactory.getLogger(StockSummaryService.class);
 
@@ -53,6 +55,9 @@ public class StockSummaryService {
             return Collections.emptyList();
         }
 
+        // All tenant names from config (excluding master)
+        List<String> allTenants = schemaConfig.getNonMasterSchemaList();
+
         Map<Long, Product> productMap = new HashMap<>();
         List<Long> productIds = new ArrayList<>();
         for (Product p : dashboardProducts) {
@@ -65,56 +70,48 @@ public class StockSummaryService {
         // productId → tenantSchema → TenantStockDTO (for merging dead stock in)
         Map<Long, Map<String, TenantStockDTO>> tenantMap = new HashMap<>();
 
-        // ── Regular stock ───────────────────────────────────────────
-        List<Object[]> rows = stockSummaryRepo.fetchTenantWiseStockForProducts(productIds);
+        // ── Pre-initialise every product with ALL tenants at zero ──────────
+        for (Product p : dashboardProducts) {
+            DashboardProductStockDTO dto = new DashboardProductStockDTO();
+            dto.setProductId(p.getProductId());
+            dto.setProductCode(p.getProductCode());
+            dto.setProductName(p.getProductName());
+            dto.setMeasurementUnit(p.getMeasurementUnit());
+            dto.setTotalStock(0.0);
+            dto.setTotalDeadStock(0.0);
+            dto.setTenantWiseStock(new ArrayList<>());
+            dtoMap.put(p.getProductId(), dto);
 
+            Map<String, TenantStockDTO> tenantEntries = new LinkedHashMap<>();
+            for (String tenant : allTenants) {
+                TenantStockDTO tenantStock = new TenantStockDTO(tenant, 0.0, 0.0);
+                dto.getTenantWiseStock().add(tenantStock);
+                tenantEntries.put(tenant, tenantStock);
+            }
+            tenantMap.put(p.getProductId(), tenantEntries);
+        }
+
+        // ── Regular stock — update matching tenant entries ─────────────────
+        List<Object[]> rows = stockSummaryRepo.fetchTenantWiseStockForProducts(productIds);
         for (Object[] row : rows) {
-            Long productId  = (Long)   row[0];
-            String tenant   = (String) row[1];
-            Double qty      = (Double) row[2];
+            Long productId = (Long)   row[0];
+            String tenant  = (String) row[1];
+            Double qty     = (Double) row[2];
 
             DashboardProductStockDTO dto = dtoMap.get(productId);
-            if (dto == null) {
-                Product p = productMap.get(productId);
-                dto = new DashboardProductStockDTO();
-                dto.setProductId(productId);
-                dto.setProductCode(p.getProductCode());
-                dto.setProductName(p.getProductName());
-                dto.setMeasurementUnit(p.getMeasurementUnit());
-                dto.setTotalStock(0.0);
-                dto.setTotalDeadStock(0.0);
-                dto.setTenantWiseStock(new ArrayList<>());
-                dtoMap.put(productId, dto);
-                tenantMap.put(productId, new HashMap<>());
-            }
+            if (dto == null) continue;
 
-            TenantStockDTO tenantStock = new TenantStockDTO(tenant, qty, 0.0);
-            dto.getTenantWiseStock().add(tenantStock);
-            dto.setTotalStock(dto.getTotalStock() + qty);
-            tenantMap.get(productId).put(tenant, tenantStock);
-        }
-
-        // ── Zero-stock products ─────────────────────────────────────
-        for (Product p : dashboardProducts) {
-            if (!dtoMap.containsKey(p.getProductId())) {
-                DashboardProductStockDTO dto = new DashboardProductStockDTO();
-                dto.setProductId(p.getProductId());
-                dto.setProductCode(p.getProductCode());
-                dto.setProductName(p.getProductName());
-                dto.setMeasurementUnit(p.getMeasurementUnit());
-                dto.setTotalStock(0.0);
-                dto.setTotalDeadStock(0.0);
-                dto.setTenantWiseStock(new ArrayList<>());
-                dtoMap.put(p.getProductId(), dto);
-                tenantMap.put(p.getProductId(), new HashMap<>());
+            TenantStockDTO tenantStock = tenantMap.get(productId).get(tenant);
+            if (tenantStock != null) {
+                tenantStock.setQuantity(qty);
+                dto.setTotalStock(dto.getTotalStock() + qty);
             }
         }
 
-        // ── Dead stock — merge into existing TenantStockDTO entries ─ ✅ NEW
+        // ── Dead stock — update matching tenant entries ────────────────────
         List<Object[]> deadRows = stockSummaryRepo.fetchTenantWiseDeadStockForProducts(
                 productIds, ProjectConstants.deadStockWarehouseName
         );
-
         for (Object[] row : deadRows) {
             Long productId = (Long)   row[0];
             String tenant  = (String) row[1];
@@ -123,17 +120,10 @@ public class StockSummaryService {
             DashboardProductStockDTO dto = dtoMap.get(productId);
             if (dto == null) continue;
 
-            dto.setTotalDeadStock(dto.getTotalDeadStock() + deadQty);
-
             TenantStockDTO tenantStock = tenantMap.get(productId).get(tenant);
             if (tenantStock != null) {
-                // Tenant already exists from regular stock — just set dead stock on it
                 tenantStock.setDeadStock(deadQty);
-            } else {
-                // Tenant has dead stock but no regular stock — add a new entry
-                TenantStockDTO newEntry = new TenantStockDTO(tenant, 0.0, deadQty);
-                dto.getTenantWiseStock().add(newEntry);
-                tenantMap.get(productId).put(tenant, newEntry);
+                dto.setTotalDeadStock(dto.getTotalDeadStock() + deadQty);
             }
         }
 
