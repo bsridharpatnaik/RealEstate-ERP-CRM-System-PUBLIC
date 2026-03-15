@@ -215,6 +215,41 @@ public class InwardInventoryService {
         }
 
 
+        // ✅ VALIDATE INDENT QUANTITY LIMIT FOR PO-LINKED INWARDS
+        if (Boolean.TRUE.equals(inward.getCreatedFromPO())) {
+            for (InwardOutwardList io : inward.getInwardOutwardList()) {
+                String lineItemCode = io.getLineItemCode();
+                Long productId = io.getProduct().getProductId();
+                Double newQty = qtyByProductId.get(productId);
+                Double oldQty = oldQuantityMap.get(lineItemCode);
+
+                // Only validate if quantity is actually increasing
+                if (newQty != null && oldQty != null && newQty > oldQty) {
+                    List<IndentsForInwardView> lineItemDetails =
+                            indentsForInwardViewRepository.getLineItemDetails(
+                                    lineItemCode, ThreadLocalStorage.getTenantName()
+                            );
+
+                    if (!lineItemDetails.isEmpty()) {
+                        IndentsForInwardView view = lineItemDetails.get(0);
+                        double indentQty = view.getQuantity();
+                        double alreadyInwarded = view.getTotalInwardQuantity(); // includes THIS inward
+                        // Subtract this inward's old qty because the view already counts it,
+                        // then add the new qty to check the resulting total
+                        double allowedQty = indentQty - alreadyInwarded + oldQty;
+
+                        if (newQty > allowedQty) {
+                            throw new IllegalArgumentException(
+                                    "Quantity for line item " + lineItemCode +
+                                            " exceeds indent quantity. Allowed: " + allowedQty +
+                                            ", Requested: " + newQty
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
         // -------------------------------------------------
         // 5️⃣ Update quantities + stock adjustment
         // -------------------------------------------------

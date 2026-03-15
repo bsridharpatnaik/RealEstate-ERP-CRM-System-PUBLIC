@@ -8,16 +8,6 @@ CREATE TABLE IF NOT EXISTS execution_history (
     UNIQUE KEY uk_execution_history_procedure (procedure_name)
 );
 
--- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries
-use iseries;
-
-CREATE TABLE IF NOT EXISTS execution_history (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    procedure_name VARCHAR(255) NOT NULL,
-    last_execution DATETIME NOT NULL DEFAULT '2010-01-01 00:00:00',
-    UNIQUE KEY uk_execution_history_procedure (procedure_name)
-);
-
 
 CREATE OR REPLACE VIEW all_inventory_view AS
 SELECT

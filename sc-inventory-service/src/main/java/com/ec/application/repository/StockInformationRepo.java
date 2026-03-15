@@ -11,10 +11,11 @@ import java.util.List;
 
 @Repository
 public interface StockInformationRepo extends BaseRepository<StockInformationFromView, Long> {
-    
+
     @Query(value="select " +
             "ai1.ProductId as productId, " +
             "        ai1.Product_name as product_name, " +
+            "        p.product_code, " +          // ✅ ADD THIS
             "        p.reorderQuantity, " +
             "        p.measurementUnit, " +
             "        c.category_name, " +
@@ -30,13 +31,14 @@ public interface StockInformationRepo extends BaseRepository<StockInformationFro
             "(SELECT " +
             "Productid, " +
             "        warehouse_id, " +
-            "        MIN(id) as id " +
+            "        MAX(id) as id " +
             "FROM all_inventory ai " +
             "    WHERE ai.date<=:maxDate " +
             "    GROUP BY Productid,warehouse_id " +
             "    ) AS ai2  ON ai1.id=ai2.id " +
             "INNER JOIN Product p on p.productId=ai1.ProductId " +
             "INNER JOIN Category c on p.categoryId=c.categoryId " +
-            "GROUP BY ai1.ProductId,ai1.Product_name,p.reorderQuantity,p.measurementUnit,c.category_name", nativeQuery = true)
+            "GROUP BY ai1.ProductId,ai1.Product_name,p.product_code,p.reorderQuantity,p.measurementUnit,c.category_name",  // ✅ ADD p.product_code here too
+            nativeQuery = true)
     List<StockInformationFromView> getHistoricalStock(@Param("maxDate") Date maxDate);
 }

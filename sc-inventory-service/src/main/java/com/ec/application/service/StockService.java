@@ -141,15 +141,26 @@ public class StockService {
     private StockInformationV2 convertToPageAndSort(List<StockInformationFromView> filteredData, Pageable page) {
         StockInformationV2 returnData = new StockInformationV2();
 
-        // Step 1: Collect all ProductIds from the filtered data
         List<Long> productIds = filteredData.stream()
                 .map(StockInformationFromView::getProductId)
                 .collect(Collectors.toList());
-        List<AllInventoryTransactions> allInventoryTransactions = allInventoryRepo.findInwardOutwardByProductIds(productIds);
+
+        // ✅ ADD THIS GUARD — prevents "IN ()" SQL syntax error when filteredData is empty
+        List<AllInventoryTransactions> allInventoryTransactions =
+                productIds.isEmpty()
+                        ? Collections.emptyList()
+                        : allInventoryRepo.findInwardOutwardByProductIds(productIds);
+
         Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
                 .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
+
         Page<StockInformationFromView> convertedList = convertListStockToPages(sortStockInformationsList(filteredData, page.getSort()), page);
-        returnData.setStockInformation(convertedList.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()))));
+
+        // ✅ Also guard the null case in the map lookup (same pattern as non-historical path)
+        returnData.setStockInformation(convertedList.map(si ->
+                convertToDTO(si, transactionsMap.get(si.getProductId()) == null
+                        ? new ArrayList<>()
+                        : transactionsMap.get(si.getProductId()))));
         return returnData;
     }
 
