@@ -126,7 +126,10 @@ public class PurchaseOrderController {
     }
 
     @GetMapping(value = "/print-po/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<StreamingResponseBody> printPOAsPdf(@PathVariable String id) {
+    public ResponseEntity<StreamingResponseBody> printPOAsPdf(
+            @PathVariable String id,
+            @RequestParam(value = "hideMoneyFields", required = false, defaultValue = "false") boolean hideMoneyFields
+    ) {
         String tenant = schemaConfig.getMasterSchema();
         PurchaseOrder po;
         try {
@@ -141,9 +144,8 @@ public class PurchaseOrderController {
         StreamingResponseBody stream = outputStream -> {
             try {
                 ThreadLocalStorage.setTenantName(tenant != null ? tenant : "masterschema");
-                purchaseOrderPdfService.generatePdf(po, outputStream);
+                purchaseOrderPdfService.generatePdf(po, outputStream, hideMoneyFields);
                 outputStream.flush();
-
             } catch (DocumentException e) {
                 log.error("iText PDF generation failed for PO ", e);
             } catch (IOException e) {

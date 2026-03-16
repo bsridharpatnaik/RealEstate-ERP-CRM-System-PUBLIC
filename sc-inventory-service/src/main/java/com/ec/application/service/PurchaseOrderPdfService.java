@@ -57,6 +57,28 @@ public class PurchaseOrderPdfService {
     private static final java.text.SimpleDateFormat DATE_FORMAT =
             new java.text.SimpleDateFormat("dd/MM/yyyy");
 
+
+    // New overload — called by controller with explicit flag
+    public void generatePdf(PurchaseOrder po, OutputStream outputStream, boolean forceHideMoneyFields)
+            throws Exception {
+        // If forceHideMoneyFields is true (manager chose "without rates"),
+        // OR the current user is an executive, hide money fields
+        boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isInventoryExecutive();
+
+        Document document = new Document(PageSize.A4, 36, 36, 36, 36);
+        PdfWriter.getInstance(document, outputStream);
+        document.open();
+
+        addHeader(document, po);
+        addVendorAndPoDetails(document, po);
+        addSubjectAndIntro(document, po);
+        addItemsTable(document, po, hideMoneyFields);
+        addChargesSection(document);
+        addPriceTable(document, po, hideMoneyFields);
+        addTermsAndSignatures(document, po);
+
+        document.close();
+    }
     // -----------------------------------------------------------------------
     // Public API
     // -----------------------------------------------------------------------
@@ -264,15 +286,15 @@ public class PurchaseOrderPdfService {
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
                     ? "\n" + line.getSpecification() : "");
 
-            double qty        = line.getQuantity()        != null ? line.getQuantity()        : 0.0;
-            double rate       = line.getRate()            != null ? line.getRate()            : 0.0;
-            double discPct    = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
-            double gstPct     = line.getGstPercent()      != null ? line.getGstPercent()      : 0.0;
+            double qty = line.getQuantity() != null ? line.getQuantity() : 0.0;
+            double rate = line.getRate() != null ? line.getRate() : 0.0;
+            double discPct = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
+            double gstPct = line.getGstPercent() != null ? line.getGstPercent() : 0.0;
             double grossTotal = qty * rate;
             double discountAmt = grossTotal * discPct / 100.0;
-            double taxable    = line.getNetRate()         != null ? line.getNetRate()         : 0.0;
-            double gstAmt     = taxable * gstPct / 100.0;
-            double amtInclTax = line.getTotalAmount()     != null ? line.getTotalAmount()     : 0.0;
+            double taxable = line.getNetRate() != null ? line.getNetRate() : 0.0;
+            double gstAmt = taxable * gstPct / 100.0;
+            double amtInclTax = line.getTotalAmount() != null ? line.getTotalAmount() : 0.0;
 
             addBodyCell(table, desc, normalFont);
             addBodyCell(table, fmt(qty), normalFont);
@@ -381,9 +403,9 @@ public class PurchaseOrderPdfService {
         Font signFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
 
         // Signature space row (blank, gives room to sign)
-        PdfPCell blankLeft   = new PdfPCell(new Phrase(" ", signFont));
+        PdfPCell blankLeft = new PdfPCell(new Phrase(" ", signFont));
         PdfPCell blankMiddle = new PdfPCell(new Phrase(" ", signFont));
-        PdfPCell blankRight  = new PdfPCell(new Phrase(" ", signFont));
+        PdfPCell blankRight = new PdfPCell(new Phrase(" ", signFont));
         blankLeft.setBorder(Rectangle.NO_BORDER);
         blankMiddle.setBorder(Rectangle.NO_BORDER);
         blankRight.setBorder(Rectangle.NO_BORDER);
