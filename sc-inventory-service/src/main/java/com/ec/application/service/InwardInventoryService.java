@@ -27,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.InwardInventorySpecification;
+import org.springframework.context.ApplicationEventPublisher;
+import com.ec.application.indentpo.InwardSyncEvent;
 
 @Service
 @Transactional
@@ -69,6 +71,9 @@ public class InwardInventoryService {
 
     @Autowired
     IndentInventoryAsyncUpdater indentInventoryAsyncUpdater;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
     PurchaseOrderShortClosedViewRepo purchaseOrderShortClosedViewRepo;
@@ -163,7 +168,7 @@ public class InwardInventoryService {
         }
 
         IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, inwardInventory.getPurchaseOrderNo(), deltas);
-        indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "create");
+        applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "create"));
         return inwardInventory;
     }
 
@@ -312,7 +317,7 @@ public class InwardInventoryService {
 
             if (!deltas.isEmpty()) {
                 IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inward.getDate(), ThreadLocalStorage.getTenantName(), inward.getInwardId(), InwardActionType.UPDATE, inward.getPurchaseOrderNo(), deltas);
-                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "update");
+                applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "update"));
             }
         }
         return inward;
@@ -609,10 +614,7 @@ public class InwardInventoryService {
                         deltas
                 );
 
-                indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(
-                        syncDTO,
-                        "reject-inward"
-                );
+                applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "reject-inward"));
             }
         }
     }
