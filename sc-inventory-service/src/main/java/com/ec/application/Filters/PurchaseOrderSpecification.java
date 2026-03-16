@@ -36,7 +36,7 @@ public class PurchaseOrderSpecification {
         List<String> statusChangedTo = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedTo");
         List<String> statusChangedAfterDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedAfterDate");
         List<String> statusChangedBeforeDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
-
+        List<String> isSpecialPo = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "isSpecialPo");
 
         Specification<PurchaseOrder> finalSpec = null;
 
@@ -73,6 +73,12 @@ public class PurchaseOrderSpecification {
             String staleBucketKey = staleBuckets.get(0); // single-select UI
             Date cutoffDate = resolveCutoffDate(staleBucketKey);
             finalSpec = specbldr.specAndCondition(finalSpec, specbldr.wherePOLastStatusUpdatedBefore((cutoffDate)));
+        }
+
+        if (isSpecialPo != null && !isSpecialPo.isEmpty()) {
+            boolean splFlag = Boolean.parseBoolean(isSpecialPo.get(0));
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    (root, query, cb) -> cb.equal(root.get("isSpecialPo"), splFlag));
         }
 
         if (globalSearch != null && !globalSearch.isEmpty()) {

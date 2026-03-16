@@ -40,6 +40,7 @@ public class PurchaseOrderBuilder {
         po.setSubject(request.getSubject());
         po.setOverridePhoneNumber(request.getOverridePhoneNumber());
         po.setOverrideEmail(request.getOverrideEmail());
+        po.setSpecialPo(request.isSpecialPo());
         for (CreatePoLineRequest itemReq : request.getLineItems()) {
             po.getLines().add(buildPoLine(po, itemReq));
         }

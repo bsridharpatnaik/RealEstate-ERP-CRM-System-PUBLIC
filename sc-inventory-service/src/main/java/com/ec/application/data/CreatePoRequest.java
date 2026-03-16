@@ -30,6 +30,7 @@ public class CreatePoRequest {
     @Column(length = 35)
     private String overridePhoneNumber;
     private String overrideEmail;
+    private boolean specialPo = false;
     /** One entry = one PO line */
     private List<CreatePoLineRequest> lineItems;
     @NonNull
