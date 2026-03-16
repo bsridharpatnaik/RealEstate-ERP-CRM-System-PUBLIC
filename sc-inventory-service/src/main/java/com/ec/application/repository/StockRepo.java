@@ -85,4 +85,7 @@ public interface StockRepo extends BaseRepository<Stock, Long> {
 
     @Query(value = "SELECT m from Stock m where m.lastModifiedDate>=:lastSyncTime")
     List<Stock> findStocksUpdatedAfter(Date lastSyncTime);
+
+    @Query("SELECT m FROM Stock m WHERE m.product.productId = :productId")
+    List<Stock> findStockByProductIdExcludingDeadStock(@Param("productId") Long productId);
 }

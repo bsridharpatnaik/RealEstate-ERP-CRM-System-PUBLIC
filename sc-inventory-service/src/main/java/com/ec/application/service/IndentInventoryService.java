@@ -120,16 +120,16 @@ public class IndentInventoryService {
     private void exitIfReadOnly(String tenantName) throws Exception {
         UserReturnData currentUser = userDetailsService.getCurrentUser();
         boolean readOnly = true;
-        for(UserTenantMapping ut : currentUser.getTenantList()){
-            if(ut.getTenant().getName().equalsIgnoreCase(tenantName)){
-                if(ut.getAuthorization().equals(AuthorizationEnum.FullAccess)){
+        for (UserTenantMapping ut : currentUser.getTenantList()) {
+            if (ut.getTenant().getName().equalsIgnoreCase(tenantName)) {
+                if (ut.getAuthorization().equals(AuthorizationEnum.FullAccess)) {
                     readOnly = false;
                     break;
                 }
             }
         }
 
-        if(readOnly)
+        if (readOnly)
             throw new Exception("User not allowed to add/modify data for this project");
     }
 
@@ -678,6 +678,7 @@ public class IndentInventoryService {
 
         // 2. Fetch dead stock in one go
         Map<Long, DeadStockDTOForIndent> deadStocks = deadStockService.fetchDeadStockForProductIds(new ArrayList<>(productIds));
+        Map<Long, CurrentStockDTOForIndent> currentStocks = deadStockService.fetchCurrentStockForProductIds(new ArrayList<>(productIds));
 
         // 3. Flatten
         for (IndentInventory indent : indents) {
@@ -689,7 +690,8 @@ public class IndentInventoryService {
                 Product p = line.getProduct();
                 Category c = p.getCategory();
                 DeadStockDTOForIndent deadStock = deadStocks.getOrDefault(p.getProductId(), new DeadStockDTOForIndent(0.0, Collections.emptyList()));
-                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock);
+                CurrentStockDTOForIndent currentStock = currentStocks.getOrDefault(p.getProductId(), new CurrentStockDTOForIndent(0.0, Collections.emptyList()));
+                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock, currentStock);
                 result.add(dto);
             }
         }

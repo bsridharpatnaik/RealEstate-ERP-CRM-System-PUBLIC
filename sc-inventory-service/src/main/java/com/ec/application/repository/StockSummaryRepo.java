@@ -60,4 +60,9 @@ public interface StockSummaryRepo
             @Param("productIds") List<Long> productIds,
             @Param("warehouseName") String warehouseName
     );
+
+    // Fetch all stock rows (non-dead-stock warehouses) for given productIds
+    @Query("SELECT d FROM StockSummary d WHERE d.productId IN :productIds")
+    List<StockSummary> fetchTotalStockByProductIdsExcludingWarehouse(
+            @Param("productIds") List<Long> productIds);
 }

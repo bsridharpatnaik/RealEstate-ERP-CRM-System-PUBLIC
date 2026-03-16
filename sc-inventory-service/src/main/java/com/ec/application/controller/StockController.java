@@ -67,6 +67,11 @@ public class StockController {
         return stockService.getStockDropdownValues();
     }
 
+    @GetMapping("/current-stock")
+    public CurrentStockForIndentDTO getCurrentStockForIndent(@RequestParam Long productId) {
+        return stockService.fetchCurrentStockForProduct(productId);
+    }
+
     @ExceptionHandler(
             {JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)

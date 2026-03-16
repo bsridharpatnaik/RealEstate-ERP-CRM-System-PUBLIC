@@ -105,6 +105,34 @@ public class DeadStockService {
         return result;
     }
 
+    public Map<Long, CurrentStockDTOForIndent> fetchCurrentStockForProductIds(List<Long> productIds) {
+        Map<Long, CurrentStockDTOForIndent> result = new HashMap<>();
+
+        if (productIds == null || productIds.isEmpty()) return Collections.emptyMap();
+
+        for (Long id : productIds) {
+            CurrentStockDTOForIndent dto = new CurrentStockDTOForIndent();
+            dto.setTotalCurrentStock(0.0);
+            dto.setDetailedCurrentStock(new ArrayList<>());
+            result.put(id, dto);
+        }
+
+        List<StockSummary> summaries = stockSummaryRepo
+                .fetchTotalStockByProductIdsExcludingWarehouse(productIds);
+
+        for (StockSummary summary : summaries) {
+            CurrentStockDTOForIndent dto = result.get(summary.getProductId());
+            if (dto == null) continue;
+
+            Map<String, Double> detail = new LinkedHashMap<>();
+            detail.put(summary.getTenantSchema(), round2(summary.getQuantityInHand()));
+            dto.getDetailedCurrentStock().add(detail);
+            dto.setTotalCurrentStock(round2(dto.getTotalCurrentStock() + summary.getQuantityInHand()));
+        }
+
+        return result;
+    }
+
     private double round2(Double value) {
         if (value == null) return 0.0;
         return BigDecimal.valueOf(value)

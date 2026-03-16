@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -238,6 +240,39 @@ public class StockService {
             System.out.println("Sorting failed");
             return stockInformationsList;
         }
+    }
+
+    public CurrentStockForIndentDTO fetchCurrentStockForProduct(Long productId) {
+        CurrentStockForIndentDTO dto = new CurrentStockForIndentDTO();
+        dto.setTotalCurrentStock(0.0);
+        dto.setWarehouseWiseStock(new ArrayList<>());
+
+        if (productId == null) return dto;
+
+        List<Stock> stocks = stockRepo.findStockByProductIdExcludingDeadStock(productId);
+
+        if (stocks == null || stocks.isEmpty()) return dto;
+
+        double total = 0.0;
+        List<Map<String, Double>> breakdown = new ArrayList<>();
+
+        for (Stock stock : stocks) {
+            double qty = stock.getQuantityInHand() == null ? 0.0 : stock.getQuantityInHand();
+            if (qty == 0.0) continue; // skip zero-stock warehouses
+            Map<String, Double> entry = new LinkedHashMap<>();
+            entry.put(stock.getWarehouse().getWarehouseName(), round2(qty));
+            breakdown.add(entry);
+            total += qty;
+        }
+
+        dto.setTotalCurrentStock(round2(total));
+        dto.setWarehouseWiseStock(breakdown);
+        return dto;
+    }
+
+    private double round2(Double value) {
+        if (value == null) return 0.0;
+        return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
     private List<StockInformationFromView> filterStockInformation(List<StockInformationFromView> dbData, FilterDataList filterDataList) {
