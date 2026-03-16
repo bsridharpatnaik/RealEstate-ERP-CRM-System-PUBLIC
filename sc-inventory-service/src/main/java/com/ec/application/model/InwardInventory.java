@@ -48,6 +48,9 @@ public class InwardInventory extends ReusableFields implements Cloneable {
     @Column(nullable = false)
     private Boolean invoiceReceived;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean isSampleInward = false;
+
     private String purchaseOrderNo;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")

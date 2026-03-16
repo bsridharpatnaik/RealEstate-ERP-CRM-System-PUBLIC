@@ -37,6 +37,8 @@ public class InwardInventoryData {
 
     String ourSlipNo;
 
+    private Boolean isSampleInward = false;
+
     @JsonDeserialize(using = ToSentenceCaseDeserializer.class)
     String additionalInfo;
 

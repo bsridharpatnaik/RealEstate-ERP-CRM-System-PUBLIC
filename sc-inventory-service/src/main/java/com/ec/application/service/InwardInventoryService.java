@@ -638,6 +638,9 @@ public class InwardInventoryService {
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setIsSampleInward(
+                iiData.getIsSampleInward() != null && iiData.getIsSampleInward()
+        );
         inwardInventory.setCreatedFromPO(false);
     }
 
@@ -675,11 +678,25 @@ public class InwardInventoryService {
 
     private void validateInputs(InwardInventoryData iiData) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-
+        boolean isSampleInward = Boolean.TRUE.equals(iiData.getIsSampleInward());
 
         for (ProductWithQuantity productWithQuantity : iiData.getProductWithQuantities()) {
             if (!productRepo.existsById(productWithQuantity.getProductId()))
                 throw new Exception("Product not found with ID " + productWithQuantity.getProductId());
+
+            // Guard: regular direct inward must only use unmanaged products.
+            // Sample inward is exempt — it can receive any product without a PO.
+            if (!isSampleInward) {
+                Product product = productRepo.findById(productWithQuantity.getProductId())
+                        .orElseThrow(() -> new Exception("Product not found"));
+                if (Boolean.TRUE.equals(product.getIsManagedInventory())) {
+                    throw new Exception(
+                            "Product '" + product.getProductName() + "' is a managed inventory product " +
+                                    "and cannot be inwarded directly without a Purchase Order. " +
+                                    "Use 'Sample Inward' if this is a sample receipt."
+                    );
+                }
+            }
 
             if (!warehouseRepo.existsById(productWithQuantity.getWarehouseId()))
                 throw new Exception("Warehouse not found");
