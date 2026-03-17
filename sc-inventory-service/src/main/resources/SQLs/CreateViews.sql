@@ -1,4 +1,4 @@
--- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries
+-- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries, smartcity
 use iseries;
 
 CREATE TABLE IF NOT EXISTS execution_history (
