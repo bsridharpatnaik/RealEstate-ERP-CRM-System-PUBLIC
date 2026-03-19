@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,8 +32,18 @@ public class PurchaseOrderHistoryPriceService {
     @Transactional(readOnly = true)
     public List<PreviousPurchaseRateDTO> getPreviousRates(Long productId) {
         Pageable top15 = PageRequest.of(0, 15);
-        List<PreviousPurchaseRateDTO> result = poLineRepo.findPreviousRates(productId, STATUS_CANCELLED, top15);
-        return result != null ? result : Collections.emptyList();
+        List<Object[]> rows = poLineRepo.findPreviousRates(productId, STATUS_CANCELLED, top15);
+        if (rows == null) return Collections.emptyList();
+
+        return rows.stream().map(row -> {
+            PreviousPurchaseRateDTO dto = new PreviousPurchaseRateDTO();
+            dto.setPurchaseOrderId((String) row[0]);
+            dto.setPoDate((Date) row[1]);
+            dto.setSupplierName((String) row[2]);
+            dto.setQuantity(row[3] != null ? ((Number) row[3]).doubleValue() : null);
+            dto.setRate(row[4] != null ? ((Number) row[4]).doubleValue() : null);
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     public List<PriceScatterPointDTO> buildScatterPoints(List<PreviousPurchaseRateDTO> rates) {
@@ -70,14 +81,12 @@ public class PurchaseOrderHistoryPriceService {
         return lines.stream()
                 .map(line -> {
                     Long productId = line.getProduct().getProductId();
-                    List<PreviousPurchaseRateDTO> rates = poLineRepo.findPreviousRates(
-                            productId, STATUS_CANCELLED, top15
-                    );
+                    List<PreviousPurchaseRateDTO> rates = getPreviousRates(productId);
                     return new PoLineRateHistoryDTO(
                             productId,
                             line.getProduct().getProductName(),
                             line.getProduct().getProductCode(),
-                            rates != null ? rates : Collections.emptyList()
+                            rates
                     );
                 })
                 .collect(Collectors.toList());

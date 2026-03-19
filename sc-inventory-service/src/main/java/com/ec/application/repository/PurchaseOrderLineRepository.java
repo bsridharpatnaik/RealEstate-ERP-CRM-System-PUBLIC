@@ -13,9 +13,7 @@ public interface PurchaseOrderLineRepository
         extends JpaRepository<PurchaseOrderLine, Long> {
 
     @Query(
-            "SELECT new com.ec.application.data.PreviousPurchaseRateDTO(" +
-                    "   po.purchaseOrderId, po.poDate, s.name, pol.rate" +
-                    ") " +
+            "SELECT po.purchaseOrderId, po.poDate, s.name, pol.quantity, pol.rate " +
                     "FROM PurchaseOrderLine pol " +
                     "JOIN pol.purchaseOrder po " +
                     "JOIN po.supplier s " +
@@ -23,7 +21,7 @@ public interface PurchaseOrderLineRepository
                     "AND po.status <> :cancelledStatus " +
                     "ORDER BY CAST(SUBSTRING(po.purchaseOrderId, LOCATE('-', po.purchaseOrderId) + 1) AS integer) DESC"
     )
-    List<PreviousPurchaseRateDTO> findPreviousRates(@Param("productId") Long productId, @Param("cancelledStatus") String cancelledStatus, Pageable pageable);
+    List<Object[]> findPreviousRates(@Param("productId") Long productId, @Param("cancelledStatus") String cancelledStatus, Pageable pageable);
 
     @Query(
             "SELECT pol FROM PurchaseOrderLine pol " +
