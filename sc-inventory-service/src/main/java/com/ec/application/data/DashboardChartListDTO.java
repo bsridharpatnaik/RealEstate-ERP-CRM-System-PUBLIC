@@ -9,9 +9,11 @@ public class DashboardChartListDTO {
     DashboardChartDTO approvedIndents;
     DashboardChartDTO poCompletedIndents;
     DashboardChartDTO closedIndents;
+    DashboardChartDTO cancelledIndents;
     DashboardChartDTO poCreated;
     DashboardChartDTO poCompleted;
     DashboardChartDTO poShortClosed;
+    DashboardChartDTO poCancelled;
     DashboardChartDTO awaitingApprovalIndents;
     DashboardChartDTO zeroPOIndents;
     DashboardChartDTO partialPOIndents;
@@ -22,16 +24,20 @@ public class DashboardChartListDTO {
 
     public DashboardChartListDTO(DashboardChartDTO newIndents, DashboardChartDTO approvedIndents,
                                  DashboardChartDTO poCompletedIndents, DashboardChartDTO closedIndents,
+                                 DashboardChartDTO cancelledIndents,
                                  DashboardChartDTO poCreated, DashboardChartDTO poCompleted, DashboardChartDTO poShortClosed,
+                                 DashboardChartDTO poCancelled,
                                  DashboardChartDTO awaitingApprovalIndents, DashboardChartDTO zeroPOIndents, DashboardChartDTO partialPOIndents,
                                  DashboardChartDTO inwardPartialIndents, DashboardChartDTO statusNewPO, DashboardChartDTO statusPartialPO) {
         this.newIndents = newIndents;
         this.approvedIndents = approvedIndents;
         this.poCompletedIndents = poCompletedIndents;
         this.closedIndents = closedIndents;
+        this.cancelledIndents = cancelledIndents;
         this.poCreated = poCreated;
         this.poCompleted = poCompleted;
         this.poShortClosed = poShortClosed;
+        this.poCancelled = poCancelled;
         this.awaitingApprovalIndents = awaitingApprovalIndents;
         this.zeroPOIndents = zeroPOIndents;
         this.partialPOIndents = partialPOIndents;

@@ -63,7 +63,8 @@ public class IndentStatusHistoryService {
                 IndentStatusConstants.STATUS_NEW,
                 IndentStatusConstants.STATUS_APPROVED,
                 IndentStatusConstants.STATUS_PO_COMPLETED,
-                IndentStatusConstants.STATUS_CLOSED
+                IndentStatusConstants.STATUS_CLOSED,
+                IndentStatusConstants.STATUS_CANCELLED
         );
 
         List<StatusGroupCountDTO> rows = indentStatusHistoryRepo.fetchIndentDashboardData(statuses, startDate, endDate);

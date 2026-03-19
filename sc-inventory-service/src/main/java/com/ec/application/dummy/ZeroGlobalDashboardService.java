@@ -32,11 +32,13 @@ public class ZeroGlobalDashboardService {
                 createEmptyDashboardChart(),  // approvedIndents
                 createEmptyDashboardChart(),  // poCompletedIndents
                 createEmptyDashboardChart(),  // closedIndents
+                createEmptyDashboardChart(),  // cancelledIndents
 
                 // PO (TIME-SLICED / HISTORY) - All zeros
                 createEmptyDashboardChart(),  // poCreated
                 createEmptyDashboardChart(),  // poCompleted
                 createEmptyDashboardChart(),  // poShortClosed
+                createEmptyDashboardChart(),  // poCancelled
 
                 // INDENT (STATIC / CURRENT STATE) - All zeros
                 createEmptyDashboardChart(),  // awaitingApprovalIndents

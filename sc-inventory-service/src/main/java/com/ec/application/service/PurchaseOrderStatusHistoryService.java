@@ -64,7 +64,8 @@ public class PurchaseOrderStatusHistoryService {
         List<String> statuses = Arrays.asList(
                 POStatusConstants.STATUS_NEW,
                 POStatusConstants.STATUS_COMPLETED,
-                POStatusConstants.STATUS_SHORT_CLOSED
+                POStatusConstants.STATUS_SHORT_CLOSED,
+                POStatusConstants.STATUS_CANCELLED
         );
 
         List<StatusGroupCountDTO> rows = purchaseOrderStatusHistoryRepo.fetchPODashboardData(statuses, startDate, endDate);

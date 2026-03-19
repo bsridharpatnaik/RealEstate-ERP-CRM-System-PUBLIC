@@ -82,11 +82,13 @@ public class GlobalDashboardService {
                 indentSlicedDashboards.get(IndentStatusConstants.STATUS_APPROVED),
                 indentSlicedDashboards.get(IndentStatusConstants.STATUS_PO_COMPLETED),
                 indentSlicedDashboards.get(IndentStatusConstants.STATUS_CLOSED),
+                indentSlicedDashboards.get(IndentStatusConstants.STATUS_CANCELLED),
 
                 // -------- PO (TIME-SLICED / HISTORY) --------
                 poSlicedDashboards.get(POStatusConstants.STATUS_NEW),
                 poSlicedDashboards.get(POStatusConstants.STATUS_COMPLETED),
                 poSlicedDashboards.get(POStatusConstants.STATUS_SHORT_CLOSED),
+                poSlicedDashboards.get(POStatusConstants.STATUS_CANCELLED),
 
                 // -------- INDENT (STATIC / CURRENT STATE) --------
                 indentStaticDashboards.get(IndentStatusConstants.STATUS_NEW),            // Awaiting Approval

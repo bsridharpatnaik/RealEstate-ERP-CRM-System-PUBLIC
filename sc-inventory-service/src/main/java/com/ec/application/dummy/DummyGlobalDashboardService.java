@@ -49,11 +49,13 @@ public class DummyGlobalDashboardService {
                 generateRandomDashboardChart(30, 150),  // approvedIndents
                 generateRandomDashboardChart(20, 100),  // poCompletedIndents
                 generateRandomDashboardChart(40, 180),  // closedIndents
+                generateRandomDashboardChart(5, 30),    // cancelledIndents
 
                 // PO (TIME-SLICED / HISTORY)
                 generateRandomDashboardChart(35, 160),  // poCreated
                 generateRandomDashboardChart(25, 120),  // poCompleted
                 generateRandomDashboardChart(10, 50),   // poShortClosed
+                generateRandomDashboardChart(5, 25),    // poCancelled
 
                 // INDENT (STATIC / CURRENT STATE)
                 generateRandomDashboardChart(15, 80),   // awaitingApprovalIndents
