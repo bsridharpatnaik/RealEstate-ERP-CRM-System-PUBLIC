@@ -32,6 +32,9 @@ public class InventoryNotificationService {
     @Autowired
     WarehouseRepo warehouseRepo;
 
+    @Autowired
+    ProductTenantConfigService productTenantConfigService;
+
     Logger log = LoggerFactory.getLogger(InventoryNotificationService.class);
 
     final String lowStock = "lowStock";
@@ -43,7 +46,8 @@ public class InventoryNotificationService {
     @Transactional(rollbackOn = Exception.class)
     public void checkStockAndPushLowStockNotification(Product product) {
         Double currentStock = stockService.findTotalStockForProduct(product.getProductId());
-        Double reorderQuantity = product.getReorderQuantity();
+        // Use tenant-specific override if set, otherwise fall back to global reorder level
+        Double reorderQuantity = productTenantConfigService.getEffectiveReorderLevel(product);
         currentStock = currentStock == null ? 0 : currentStock;
         reorderQuantity = reorderQuantity == null ? 0 : reorderQuantity;
         if (currentStock <= reorderQuantity && reorderQuantity > 0)

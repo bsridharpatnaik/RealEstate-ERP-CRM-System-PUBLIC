@@ -20,8 +20,10 @@ import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.data.ProductCreateData;
+import com.ec.application.data.ProductTenantConfigDTO;
 import com.ec.application.model.Product;
 import com.ec.application.service.ProductService;
+import com.ec.application.service.ProductTenantConfigService;
 import com.ec.application.Filters.FilterDataList;
 
 @RestController
@@ -29,6 +31,9 @@ import com.ec.application.Filters.FilterDataList;
 public class ProductController {
     @Autowired
     ProductService productService;
+
+    @Autowired
+    ProductTenantConfigService productTenantConfigService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
@@ -92,6 +97,37 @@ public class ProductController {
     @GetMapping("/categorynames")
     public List<IdNameProjections> getCategoryNamesforDropdown() {
         return productService.getIdAndNamesForCategoryDropdown();
+    }
+
+    /** GET tenant-specific reorder level config for a product */
+    @GetMapping("/{id}/tenant-config")
+    public ResponseEntity<ProductTenantConfigDTO> getTenantConfig(@PathVariable Long id) throws Exception {
+        Product product = productService.findSingleProduct(id);
+        return ResponseEntity.ok(
+                productTenantConfigService.getConfig(id, product.getReorderQuantity())
+        );
+    }
+
+    /** PUT — save or update tenant-specific reorder level override */
+    @PutMapping("/{id}/tenant-config")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    public ResponseEntity<ProductTenantConfigDTO> saveTenantConfig(
+            @PathVariable Long id,
+            @RequestBody ProductTenantConfigDTO payload) throws Exception {
+        Product product = productService.findSingleProduct(id);
+        return ResponseEntity.ok(
+                productTenantConfigService.saveOverride(id, payload.getOverrideReorderLevel(), product.getReorderQuantity())
+        );
+    }
+
+    /** DELETE — remove tenant-specific reorder level override, revert to global */
+    @DeleteMapping("/{id}/tenant-config")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    public ResponseEntity<Void> removeTenantConfig(@PathVariable Long id) {
+        productTenantConfigService.removeOverride(id);
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(

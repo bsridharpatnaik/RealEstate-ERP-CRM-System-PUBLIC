@@ -27,5 +27,10 @@ public class DashboardProductStockDTO {
     private Double totalDeadStock;
 
     private List<TenantStockDTO> tenantWiseStock; // for pie chart
+
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double reorderLevel;        // effective value: tenant override ?? global
+
+    private Boolean reorderOverridden;  // true when tenant override is active
 }
 

@@ -34,6 +34,7 @@ public class StockSummaryService {
     private final JobExecutionLogRepository jobExecutionLogRepo;
     private final ProductService productService;
     private final SchemaConfig schemaConfig;
+    private final ProductTenantConfigService productTenantConfigService;
 
     Logger log = LoggerFactory.getLogger(StockSummaryService.class);
 
@@ -125,6 +126,22 @@ public class StockSummaryService {
                 tenantStock.setDeadStock(deadQty);
                 dto.setTotalDeadStock(dto.getTotalDeadStock() + deadQty);
             }
+        }
+
+        // ── Enrich with effective reorder level (1 batch query) ───────────
+        Map<Long, Double> effectiveReorderLevels =
+                productTenantConfigService.getEffectiveReorderLevels(dashboardProducts);
+
+        for (Product p : dashboardProducts) {
+            DashboardProductStockDTO dto = dtoMap.get(p.getProductId());
+            if (dto == null) continue;
+            Double effective = effectiveReorderLevels.get(p.getProductId());
+            dto.setReorderLevel(effective);
+            // Mark as overridden if tenant value differs from global
+            Double global = p.getReorderQuantity();
+            dto.setReorderOverridden(
+                effective != null && global != null && !effective.equals(global)
+            );
         }
 
         return new ArrayList<>(dtoMap.values());
