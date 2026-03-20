@@ -1,30 +1,49 @@
 package com.ec.application.service;
 
-import com.ec.application.aspects.UseDefaultTenant;
-import com.ec.application.data.ProductTenantConfigDTO;
+import com.ec.application.config.SchemaConfig;
+import com.ec.application.data.AllTenantReorderConfigDTO;
 import com.ec.application.model.Product;
 import com.ec.application.model.ProductTenantConfig;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.ProductTenantConfigRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Manages tenant-specific reorder level overrides stored in each tenant's
+ * product_tenant_config table.
+ *
+ * IMPORTANT — why @UseDefaultTenant was removed:
+ *   @UseDefaultTenant forced ALL queries to the master schema.  Overrides must
+ *   live in each tenant's own schema, not the master schema.
+ *
+ * Schema-switching pattern used here:
+ *   1. Caller sets ThreadLocalStorage.setTenantName(tenant) BEFORE calling
+ *      TenantSchemaExecutor methods.
+ *   2. TenantSchemaExecutor methods use @Transactional(REQUIRES_NEW), which
+ *      causes Spring to open a brand-new transaction and acquire a fresh
+ *      connection.  AbstractRoutingDataSource.determineCurrentLookupKey()
+ *      is called at connection-acquisition time and reads the ThreadLocal that
+ *      the caller just set — so the correct schema is used.
+ *   3. The original ThreadLocal value is always restored in a finally block.
+ */
 @Service
 @RequiredArgsConstructor
-@UseDefaultTenant
 public class ProductTenantConfigService {
 
     private final ProductTenantConfigRepository configRepo;
+    private final SchemaConfig schemaConfig;
+    private final TenantSchemaExecutor tenantSchemaExecutor;
+
+    // ── Used by scheduled/notification services (tenant already in ThreadLocal) ─
 
     /**
-     * Returns the effective reorder level for a product:
-     * tenant override if set, otherwise the global product value.
+     * Returns the effective reorder level for the CURRENTLY active tenant context.
+     * Called from services (InventoryNotificationService, StockSummaryService) that
+     * already have the correct tenant set in ThreadLocal.
      */
     public Double getEffectiveReorderLevel(Product product) {
         return configRepo.findByProductId(product.getProductId())
@@ -34,8 +53,20 @@ public class ProductTenantConfigService {
     }
 
     /**
-     * Returns a map of productId → effectiveReorderLevel for a batch of products.
-     * Efficient: single query for all overrides, then falls back to global values.
+     * Batch override map — single query returning only entries that have an override.
+     * Keys not present in the map have no override (caller falls back to global value).
+     * Used by StockService to avoid N+1 queries when building the stock list.
+     */
+    public Map<Long, Double> getOverrideMap(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) return Collections.emptyMap();
+        return configRepo.findByProductIds(productIds).stream()
+                .filter(c -> c.getReorderLevel() != null)
+                .collect(Collectors.toMap(ProductTenantConfig::getProductId,
+                                         ProductTenantConfig::getReorderLevel));
+    }
+
+    /**
+     * Batch version — single query for all overrides in the current tenant schema.
      */
     public Map<Long, Double> getEffectiveReorderLevels(List<Product> products) {
         if (products == null || products.isEmpty()) return Collections.emptyMap();
@@ -44,57 +75,89 @@ public class ProductTenantConfigService {
                 .map(Product::getProductId)
                 .collect(Collectors.toList());
 
-        // Fetch all overrides in one query
         Map<Long, Double> overrides = configRepo.findByProductIds(productIds).stream()
                 .filter(c -> c.getReorderLevel() != null)
                 .collect(Collectors.toMap(ProductTenantConfig::getProductId,
                                          ProductTenantConfig::getReorderLevel));
 
-        // Resolve: override first, fall back to global
         return products.stream().collect(Collectors.toMap(
                 Product::getProductId,
                 p -> overrides.getOrDefault(p.getProductId(), p.getReorderQuantity())
         ));
     }
 
+    // ── Cross-tenant management APIs (called from ProductController) ─────────────
+
     /**
-     * Get current tenant config for a product (for display in UI).
+     * Returns the reorder-level config for ALL non-master tenants for a given product.
+     * Each tenant schema is queried in isolation via TenantSchemaExecutor (REQUIRES_NEW).
      */
-    public ProductTenantConfigDTO getConfig(Long productId, Double globalReorderQuantity) {
-        Optional<ProductTenantConfig> config = configRepo.findByProductId(productId);
-        ProductTenantConfigDTO dto = new ProductTenantConfigDTO();
-        dto.setProductId(productId);
-        dto.setGlobalReorderLevel(globalReorderQuantity);
-        if (config.isPresent() && config.get().getReorderLevel() != null) {
-            dto.setOverrideReorderLevel(config.get().getReorderLevel());
-            dto.setIsOverridden(true);
-        } else {
-            dto.setOverrideReorderLevel(null);
-            dto.setIsOverridden(false);
+    public List<AllTenantReorderConfigDTO> getAllTenantConfigs(Long productId, Double globalReorderLevel) {
+        List<String> tenants = schemaConfig.getNonMasterSchemaList();
+        List<AllTenantReorderConfigDTO> result = new ArrayList<>();
+
+        String originalTenant = ThreadLocalStorage.getTenantName();
+        try {
+            for (String tenantSchema : tenants) {
+                String tenantCode = schemaConfig.getSchemaCode(tenantSchema);
+
+                // Must set ThreadLocal BEFORE the REQUIRES_NEW call; the routing
+                // DataSource reads it when it acquires the connection for the new tx.
+                ThreadLocalStorage.setTenantName(tenantSchema);
+
+                Optional<ProductTenantConfig> config =
+                        tenantSchemaExecutor.findConfigInCurrentTenant(productId);
+
+                Double override = config
+                        .map(ProductTenantConfig::getReorderLevel)
+                        .filter(v -> v != null)
+                        .orElse(null);
+
+                result.add(new AllTenantReorderConfigDTO(
+                        tenantSchema, tenantCode, globalReorderLevel, override, override != null));
+            }
+        } finally {
+            ThreadLocalStorage.setTenantName(originalTenant);
         }
-        return dto;
+        return result;
     }
 
     /**
-     * Save or update the tenant-specific reorder level override.
+     * Saves the reorder-level override for one specific tenant.
      */
-    @Transactional
-    public ProductTenantConfigDTO saveOverride(Long productId, Double reorderLevel, Double globalReorderQuantity) {
-        ProductTenantConfig config = configRepo.findByProductId(productId)
-                .orElse(new ProductTenantConfig(productId, null));
-        config.setReorderLevel(reorderLevel);
-        configRepo.save(config);
-        return getConfig(productId, globalReorderQuantity);
+    public void saveOverrideForTenant(Long productId, String tenantName, Double reorderLevel) {
+        validateTenant(tenantName);
+        String originalTenant = ThreadLocalStorage.getTenantName();
+        try {
+            ThreadLocalStorage.setTenantName(tenantName);
+            tenantSchemaExecutor.saveConfigInCurrentTenant(productId, reorderLevel);
+        } finally {
+            ThreadLocalStorage.setTenantName(originalTenant);
+        }
     }
 
     /**
-     * Remove the tenant-specific override — product falls back to global value.
+     * Removes the override for one specific tenant (falls back to global reorder level).
      */
-    @Transactional
-    public void removeOverride(Long productId) {
-        configRepo.findByProductId(productId).ifPresent(config -> {
-            config.setReorderLevel(null);
-            configRepo.save(config);
-        });
+    public void removeOverrideForTenant(Long productId, String tenantName) {
+        validateTenant(tenantName);
+        String originalTenant = ThreadLocalStorage.getTenantName();
+        try {
+            ThreadLocalStorage.setTenantName(tenantName);
+            tenantSchemaExecutor.removeConfigInCurrentTenant(productId);
+        } finally {
+            ThreadLocalStorage.setTenantName(originalTenant);
+        }
+    }
+
+    // ── Internal ─────────────────────────────────────────────────────────────────
+
+    private void validateTenant(String tenantName) {
+        if (!schemaConfig.isValidSchema(tenantName)) {
+            throw new IllegalArgumentException("Unknown tenant schema: " + tenantName);
+        }
+        if (schemaConfig.getMasterSchema().equalsIgnoreCase(tenantName)) {
+            throw new IllegalArgumentException("Cannot set reorder override on master schema");
+        }
     }
 }

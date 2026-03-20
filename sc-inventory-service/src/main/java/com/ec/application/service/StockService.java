@@ -72,6 +72,9 @@ public class StockService {
     InventoryNotificationService inventoryNotificationService;
 
     @Autowired
+    ProductTenantConfigService productTenantConfigService;
+
+    @Autowired
     AllInventoryRepo allInventoryRepo;
 
     @Autowired
@@ -107,8 +110,11 @@ public class StockService {
         Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
                 .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
 
+        // Batch-fetch tenant reorder overrides in one query (avoids N+1 per row)
+        Map<Long, Double> overrideMap = productTenantConfigService.getOverrideMap(productIds);
+
         // This wasted 5 hours for me. There can be records that have entry in stock but there may be zero inward/outward records. May be after adding inward, they deleted it.
-        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.get(si.getProductId()) == null ? new ArrayList<>() : transactionsMap.get(si.getProductId())));
+        Page<StockInformationDTO> map = list.map(si -> convertToDTO(si, transactionsMap.getOrDefault(si.getProductId(), new ArrayList<>()), overrideMap));
         stockInformation.setStockInformation(map);
         return stockInformation;
     }
@@ -156,13 +162,14 @@ public class StockService {
         Map<Long, List<AllInventoryTransactions>> transactionsMap = allInventoryTransactions.stream()
                 .collect(Collectors.groupingBy(AllInventoryTransactions::getProductId));
 
+        // Batch-fetch tenant reorder overrides in one query (avoids N+1 per row)
+        Map<Long, Double> overrideMap = productTenantConfigService.getOverrideMap(productIds);
+
         Page<StockInformationFromView> convertedList = convertListStockToPages(sortStockInformationsList(filteredData, page.getSort()), page);
 
         // ✅ Also guard the null case in the map lookup (same pattern as non-historical path)
         returnData.setStockInformation(convertedList.map(si ->
-                convertToDTO(si, transactionsMap.get(si.getProductId()) == null
-                        ? new ArrayList<>()
-                        : transactionsMap.get(si.getProductId()))));
+                convertToDTO(si, transactionsMap.getOrDefault(si.getProductId(), new ArrayList<>()), overrideMap)));
         return returnData;
     }
 
@@ -315,7 +322,9 @@ public class StockService {
     }
 
 
-    private StockInformationDTO convertToDTO(StockInformationFromView si, List<AllInventoryTransactions> aiList) {
+    private StockInformationDTO convertToDTO(StockInformationFromView si,
+                                             List<AllInventoryTransactions> aiList,
+                                             Map<Long, Double> overrideMap) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             StockInformationDTO dto = new StockInformationDTO();
@@ -325,12 +334,16 @@ public class StockService {
             dto.setLastInwardDate(getLastInwardDate(aiList));
             dto.setCategoryName(si.getCategoryName());
             dto.setProductId(si.getProductId());
-            dto.setStockStatus(si.getStockStatus());
             dto.setMeasurementUnit(si.getMeasurementUnit());
             dto.setProductName(si.getProductName());
             dto.setProductCode(si.getProductCode());
-            dto.setReorderQuantity(si.getReorderQuantity());
+            // Use pre-fetched override map — no per-row DB call
+            Double effectiveReorder = overrideMap.getOrDefault(si.getProductId(), si.getReorderQuantity());
+            dto.setReorderQuantity(effectiveReorder);
             dto.setTotalQuantityInHand(si.getTotalQuantityInHand());
+            // Recompute status using tenant-specific reorder level (DB view uses global value)
+            String computedStatus = (si.getTotalQuantityInHand() != null && si.getTotalQuantityInHand() <= effectiveReorder) ? "Low" : "High";
+            dto.setStockStatus(computedStatus);
             dto.setInwardOutwardHistory(aiList);
             return dto;
         } catch (Exception e) {

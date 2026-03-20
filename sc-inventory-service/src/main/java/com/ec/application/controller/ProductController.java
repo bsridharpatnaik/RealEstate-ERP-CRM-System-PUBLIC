@@ -19,8 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.data.IdNameAndUnit;
+import com.ec.application.data.AllTenantReorderConfigDTO;
 import com.ec.application.data.ProductCreateData;
-import com.ec.application.data.ProductTenantConfigDTO;
+import com.ec.application.data.TenantReorderSaveRequest;
 import com.ec.application.model.Product;
 import com.ec.application.service.ProductService;
 import com.ec.application.service.ProductTenantConfigService;
@@ -99,34 +100,45 @@ public class ProductController {
         return productService.getIdAndNamesForCategoryDropdown();
     }
 
-    /** GET tenant-specific reorder level config for a product */
-    @GetMapping("/{id}/tenant-config")
-    public ResponseEntity<ProductTenantConfigDTO> getTenantConfig(@PathVariable Long id) throws Exception {
+    /**
+     * GET all tenants' reorder-level configs for a product.
+     * No tenant-id header needed — loops all tenant schemas internally.
+     * Response: List<AllTenantReorderConfigDTO>
+     */
+    @GetMapping("/{id}/all-tenant-reorder-configs")
+    public ResponseEntity<List<AllTenantReorderConfigDTO>> getAllTenantReorderConfigs(
+            @PathVariable Long id) throws Exception {
         Product product = productService.findSingleProduct(id);
         return ResponseEntity.ok(
-                productTenantConfigService.getConfig(id, product.getReorderQuantity())
+                productTenantConfigService.getAllTenantConfigs(id, product.getReorderQuantity())
         );
     }
 
-    /** PUT — save or update tenant-specific reorder level override */
-    @PutMapping("/{id}/tenant-config")
+    /**
+     * PUT — save (upsert) reorder-level override for one specific tenant.
+     * Body: { "tenantName": "drgtrdcntr", "reorderLevel": 50.0 }
+     */
+    @PutMapping("/{id}/tenant-reorder-config")
     @CheckAuthority
     @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
-    public ResponseEntity<ProductTenantConfigDTO> saveTenantConfig(
+    public ResponseEntity<Void> saveTenantReorderConfig(
             @PathVariable Long id,
-            @RequestBody ProductTenantConfigDTO payload) throws Exception {
-        Product product = productService.findSingleProduct(id);
-        return ResponseEntity.ok(
-                productTenantConfigService.saveOverride(id, payload.getOverrideReorderLevel(), product.getReorderQuantity())
-        );
+            @RequestBody TenantReorderSaveRequest request) {
+        productTenantConfigService.saveOverrideForTenant(id, request.getTenantName(), request.getReorderLevel());
+        return ResponseEntity.ok().build();
     }
 
-    /** DELETE — remove tenant-specific reorder level override, revert to global */
-    @DeleteMapping("/{id}/tenant-config")
+    /**
+     * DELETE — remove reorder-level override for one specific tenant.
+     * After deletion the tenant falls back to the global Product.reorderQuantity.
+     */
+    @DeleteMapping("/{id}/tenant-reorder-config/{tenantName}")
     @CheckAuthority
     @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
-    public ResponseEntity<Void> removeTenantConfig(@PathVariable Long id) {
-        productTenantConfigService.removeOverride(id);
+    public ResponseEntity<Void> removeTenantReorderConfig(
+            @PathVariable Long id,
+            @PathVariable String tenantName) {
+        productTenantConfigService.removeOverrideForTenant(id, tenantName);
         return ResponseEntity.ok().build();
     }
 
