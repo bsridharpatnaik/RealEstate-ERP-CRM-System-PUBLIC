@@ -190,6 +190,12 @@ public class PurchaseOrderPdfService {
         left.addElement(new Paragraph("PO No: " + po.getPurchaseOrderId(), normal));
         left.addElement(new Paragraph("PO Date: " + DATE_FORMAT.format(po.getPoDate()), normal));
         left.addElement(new Paragraph("Status: " + po.getStatus(), normal));
+        if (po.getNeedByDate() != null) {
+            left.addElement(new Paragraph("Expected Delivery: " + DATE_FORMAT.format(po.getNeedByDate()), normal));
+        }
+        if (po.getPriority() != null) {
+            left.addElement(new Paragraph("Priority: " + po.getPriority(), normal));
+        }
         left.addElement(new Paragraph(" "));
         left.addElement(new Paragraph(s.getName(), bold));
         if (notBlank(s.getAddr_line1())) left.addElement(new Paragraph(s.getAddr_line1(), normal));
@@ -260,11 +266,11 @@ public class PurchaseOrderPdfService {
         Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
-        PdfPTable table = new PdfPTable(10);
+        PdfPTable table = new PdfPTable(11);
         table.setWidthPercentage(100);
         table.setSpacingBefore(8f);
         table.setSpacingAfter(0f);
-        table.setWidths(new float[]{2.8f, 0.9f, 0.9f, 1.1f, 1.1f, 0.9f, 1.1f, 0.8f, 1.0f, 1.3f});
+        table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 1.0f, 0.75f, 0.95f, 1.2f, 1.0f});
 
         // Column headers — money columns blanked for executives
         addHeaderCell(table, "Code & Description", headerFont);
@@ -277,6 +283,7 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
+        addHeaderCell(table, "Exp. Date", headerFont);
 
         List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
         for (PurchaseOrderLine line : lines) {
@@ -295,6 +302,7 @@ public class PurchaseOrderPdfService {
             double taxable = line.getNetRate() != null ? line.getNetRate() : 0.0;
             double gstAmt = taxable * gstPct / 100.0;
             double amtInclTax = line.getTotalAmount() != null ? line.getTotalAmount() : 0.0;
+            String expDate = line.getNeedByDate() != null ? DATE_FORMAT.format(line.getNeedByDate()) : "-";
 
             addBodyCell(table, desc, normalFont);
             addBodyCell(table, fmt(qty), normalFont);
@@ -306,11 +314,12 @@ public class PurchaseOrderPdfService {
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(amtInclTax), normalFont);
+            addBodyCell(table, expDate, normalFont);
         }
 
-        // TOTAL row
+        // TOTAL row (spans 10 cols + 1 value col)
         PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL \u20B9", headerFont));
-        totalLabel.setColspan(9);
+        totalLabel.setColspan(10);
         totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalLabel.setPadding(4f);
         table.addCell(totalLabel);
@@ -362,7 +371,7 @@ public class PurchaseOrderPdfService {
                 : numberToWords(po.getGrandTotal()) + " RUPEES ONLY";
 
         PdfPCell wordsCell = new PdfPCell(new Phrase(amountInWords.toUpperCase(), headerFont));
-        wordsCell.setColspan(6);
+        wordsCell.setColspan(7);
         wordsCell.setHorizontalAlignment(Element.ALIGN_LEFT);
         wordsCell.setPadding(4f);
         table.addCell(wordsCell);

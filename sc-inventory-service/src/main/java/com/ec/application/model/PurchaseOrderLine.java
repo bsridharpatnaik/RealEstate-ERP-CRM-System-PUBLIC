@@ -1,7 +1,9 @@
 package com.ec.application.model;
 
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,6 +11,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,4 +52,14 @@ public class PurchaseOrderLine extends ReusableFields {
     @JsonIgnoreProperties("poLine")
     @OneToMany(mappedBy = "poLine", cascade = CascadeType.ALL)
     private List<PurchaseOrderIndentRef> indentRefs = new ArrayList<>();
+
+    /**
+     * Per-line expected delivery date derived from the linked indent line item.
+     * Not persisted — populated at query time by PurchaseOrderService.
+     * @JsonProperty forces Jackson to include this @Transient field in serialization.
+     */
+    @Transient
+    @JsonProperty("needByDate")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    private Date needByDate;
 }

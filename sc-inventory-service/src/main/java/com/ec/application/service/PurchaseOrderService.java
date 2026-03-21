@@ -11,7 +11,9 @@ import com.ec.application.data.*;
 import com.ec.application.enricher.PurchaseOrderUiEnricher;
 import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
 import com.ec.application.model.*;
+import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
+import java.util.stream.Collectors;
 import com.ec.application.util.PurchaseOrderPriceMasker;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
@@ -74,6 +76,9 @@ public class PurchaseOrderService extends ReusableFields {
 
     @Autowired
     UserDetailsService userDetailsService;
+
+    @Autowired
+    IndentInventoryListRepo indentInventoryListRepo;
 
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
@@ -169,6 +174,47 @@ public class PurchaseOrderService extends ReusableFields {
             if (line.getProduct() != null) {
                 line.getProduct().getProductName();
             }
+        }
+
+        // Populate transient needByDate from linked indent line items (PO-level + per-line)
+        try {
+            java.util.List<String> lineItemCodes = po.getLines().stream()
+                    .flatMap(line -> line.getIndentRefs().stream())
+                    .map(ref -> ref.getIndentLineItemCode())
+                    .filter(code -> code != null && !code.isEmpty())
+                    .collect(Collectors.toList());
+            if (!lineItemCodes.isEmpty()) {
+                java.util.List<IndentInventoryList> lineItems =
+                        indentInventoryListRepo.findByLineItemCodeIn(lineItemCodes);
+
+                // Build map: lineItemCode → IndentInventoryList for fast lookup
+                java.util.Map<String, IndentInventoryList> lineItemMap = lineItems.stream()
+                        .collect(Collectors.toMap(
+                                IndentInventoryList::getLineItemCode,
+                                li -> li,
+                                (a, b) -> a));
+
+                // Set per-line needByDate (earliest date across all linked indent refs for the line)
+                for (PurchaseOrderLine line : po.getLines()) {
+                    java.util.Date lineEarliest = line.getIndentRefs().stream()
+                            .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
+                            .filter(li -> li != null && li.getNeedByDate() != null)
+                            .map(IndentInventoryList::getNeedByDate)
+                            .min(java.util.Comparator.naturalOrder())
+                            .orElse(null);
+                    line.setNeedByDate(lineEarliest);
+                }
+
+                // Set PO-level needByDate (earliest across all lines)
+                java.util.Date earliest = lineItems.stream()
+                        .filter(li -> li.getNeedByDate() != null)
+                        .map(IndentInventoryList::getNeedByDate)
+                        .min(java.util.Comparator.naturalOrder())
+                        .orElse(null);
+                po.setNeedByDate(earliest);
+            }
+        } catch (Exception e) {
+            // Non-critical — just skip if it fails
         }
 
         // MASK PRICE FIELDS

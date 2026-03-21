@@ -111,6 +111,18 @@ public class PurchaseOrder extends ReusableFields {
     @Column(name = "override_email", length = 100)
     private String overrideEmail;
 
+    /** Nightly-computed priority: CRITICAL, HIGH, MEDIUM, NORMAL (null = no expected date set). */
+    @Column(name = "priority", length = 20)
+    private String priority;
+
+    /** Days remaining to the earliest open-indent expected date (negative = overdue, null = no expected date). */
+    @Column(name = "days_to_deadline")
+    private Integer daysToDeadline;
+
+    /** Earliest needByDate across all linked open indent line items — populated at query time, not persisted. */
+    @Transient
+    private java.util.Date needByDate;
+
     @Transient
     Boolean approvalAllowed;
 

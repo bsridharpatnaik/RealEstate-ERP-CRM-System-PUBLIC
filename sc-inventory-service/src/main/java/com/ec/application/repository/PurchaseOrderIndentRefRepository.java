@@ -1,0 +1,28 @@
+package com.ec.application.repository;
+
+import com.ec.application.model.PurchaseOrderIndentRef;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface PurchaseOrderIndentRefRepository extends JpaRepository<PurchaseOrderIndentRef, Long> {
+
+    /**
+     * For all active PO lines belonging to non-cancelled / non-completed POs,
+     * return the indent line item codes so we can look up needByDate on
+     * IndentInventoryList.
+     *
+     * @param excludedStatuses PO statuses that are considered "closed" (e.g. CANCELLED, SHORT CLOSE, COMPLETE INWARD)
+     */
+    @Query(
+        "SELECT ref FROM PurchaseOrderIndentRef ref " +
+        "JOIN ref.poLine pol " +
+        "JOIN pol.purchaseOrder po " +
+        "WHERE po.isDeleted = false " +
+        "AND po.status NOT IN :excludedStatuses"
+    )
+    List<PurchaseOrderIndentRef> findAllForOpenPurchaseOrders(
+            @Param("excludedStatuses") List<String> excludedStatuses);
+}

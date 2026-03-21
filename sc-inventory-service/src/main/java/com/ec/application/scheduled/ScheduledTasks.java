@@ -37,6 +37,9 @@ public class ScheduledTasks {
     @Autowired
     StockSyncJob stockSyncJob;
 
+    @Autowired
+    PriorityComputeService priorityComputeService;
+
  /*   //@Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
         log.info("Sending Stock Notification Email in evening");
@@ -63,6 +66,23 @@ public class ScheduledTasks {
     public void sendIOStats() throws Exception {
         smsService.sendIOStats();
     }*/
+
+    /** Runs at midnight IST (18:30 UTC) every day. Recomputes PO priority from indent expected dates. */
+    @Scheduled(cron = "0 30 18 * * *")
+    public void computePoPriority() {
+        List<String> tenants = schemaConfig.getNonMasterSchemaList();
+        for (String tenantName : tenants) {
+            try {
+                com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
+                log.info("Computing PO priority for tenant {}", tenantName);
+                priorityComputeService.recomputeAllPriorities();
+            } catch (Exception e) {
+                log.error("Error computing PO priority for tenant {}: {}", tenantName, e.getMessage());
+            } finally {
+                com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
+            }
+        }
+    }
 
     @Scheduled(cron = "0 0 * * * *")
     public void updateClosingStock() throws Exception {

@@ -2,12 +2,13 @@ package com.ec.application.enricher;
 
 import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.model.IndentInventory;
+import com.ec.application.model.IndentInventoryList;
 import com.ec.application.service.UserDetailsService;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Date;
 
 @Component
 public class IndentInventoryUiEnricher {
@@ -18,12 +19,22 @@ public class IndentInventoryUiEnricher {
     public void enrich(IndentInventory indent) {
         if (indent == null) return;
 
+        // Approval flag
         try {
             boolean allowed = userDetailsService.isAdminOrManager() && IndentStatusConstants.STATUS_NEW.equals(indent.getIndentStatus());
             indent.setApprovalAllowed(allowed);
         } catch (Exception e) {
-            // fail-safe: UI flag should never break response
             indent.setApprovalAllowed(false);
+        }
+
+        // Compute effective needByDate = minimum across all active line item dates
+        if (indent.getInventoryList() != null) {
+            Date minDate = indent.getInventoryList().stream()
+                    .filter(li -> li != null && !li.isDeleted() && li.getNeedByDate() != null)
+                    .map(IndentInventoryList::getNeedByDate)
+                    .min(Date::compareTo)
+                    .orElse(null);
+            indent.setNeedByDate(minDate);
         }
     }
 

@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;  // ADD THIS IMPORT
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -60,6 +62,10 @@ public class IndentInventoryList extends ReusableFields {
 
     @Column(name = "remarks")
     String remarks;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @Column(name = "need_by_date", nullable = true)
+    private Date needByDate;
 
     @Column(name = "measurement_unit")
     String measurementUnit;
