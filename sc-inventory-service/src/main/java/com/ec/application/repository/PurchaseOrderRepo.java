@@ -69,6 +69,10 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
     @Query("select po from PurchaseOrder po where po.purchaseOrderId in :ids")
     List<PurchaseOrder> findWithDetailsByIdIn(@Param("ids") List<String> ids);
 
+    /** All non-deleted POs whose status is not in the excluded list (i.e. all open POs). */
+    @Query("SELECT po FROM PurchaseOrder po WHERE po.isDeleted = false AND po.status NOT IN :excludedStatuses")
+    List<PurchaseOrder> findAllOpenPurchaseOrders(@Param("excludedStatuses") List<String> excludedStatuses);
+
     // Single PO with details
     @EntityGraph(attributePaths = {
             "supplier",

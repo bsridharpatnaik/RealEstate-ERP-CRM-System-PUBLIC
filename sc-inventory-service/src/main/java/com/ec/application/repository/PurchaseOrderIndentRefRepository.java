@@ -25,4 +25,13 @@ public interface PurchaseOrderIndentRefRepository extends JpaRepository<Purchase
     )
     List<PurchaseOrderIndentRef> findAllForOpenPurchaseOrders(
             @Param("excludedStatuses") List<String> excludedStatuses);
+
+    /** Fetch all indent refs whose parent PO is in the given ID list. */
+    @Query(
+        "SELECT ref FROM PurchaseOrderIndentRef ref " +
+        "JOIN ref.poLine pol " +
+        "JOIN pol.purchaseOrder po " +
+        "WHERE po.purchaseOrderId IN :poIds"
+    )
+    List<PurchaseOrderIndentRef> findByPurchaseOrderIdIn(@Param("poIds") List<String> poIds);
 }

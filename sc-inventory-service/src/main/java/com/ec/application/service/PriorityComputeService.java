@@ -55,20 +55,36 @@ public class PriorityComputeService {
     private IndentInventoryListRepo indentInventoryListRepo;
 
     /**
-     * Recompute priority for ALL open purchase orders in the current tenant schema.
-     * Called by the nightly scheduler and after inward completion.
+     * Recompute priority for ALL open purchase orders.
+     * Called by the hourly scheduler and the manual /po-prioritize endpoint.
+     *
+     * <p>Flow:
+     * <ol>
+     *   <li>Fetch every non-closed PO.</li>
+     *   <li>Fetch all indent refs for those POs (in one query).</li>
+     *   <li>Bulk-load the referenced indent line items.</li>
+     *   <li>For each open PO — compute priority from the earliest open line-item
+     *       needByDate, or null-out all fields when no date is available.</li>
+     * </ol>
      */
     public void recomputeAllPriorities() {
         log.info("PriorityComputeService: starting priority computation");
 
-        // 1. Load all PO→indent-line-item references for open POs
-        List<PurchaseOrderIndentRef> allRefs = poIndentRefRepo.findAllForOpenPurchaseOrders(CLOSED_STATUSES);
-        if (allRefs.isEmpty()) {
-            log.info("PriorityComputeService: no open PO refs found, nothing to compute");
+        // 1. All open (non-closed) POs — these are the authoritative set
+        List<PurchaseOrder> openPOs = purchaseOrderRepo.findAllOpenPurchaseOrders(CLOSED_STATUSES);
+        if (openPOs.isEmpty()) {
+            log.info("PriorityComputeService: no open POs found, nothing to compute");
             return;
         }
 
-        // 2. Group refs by PO id
+        List<String> openPoIds = openPOs.stream()
+                .map(PurchaseOrder::getPurchaseOrderId)
+                .collect(Collectors.toList());
+
+        // 2. Fetch indent refs for those POs (single bulk query)
+        List<PurchaseOrderIndentRef> allRefs = poIndentRefRepo.findByPurchaseOrderIdIn(openPoIds);
+
+        // 3. Group refs by PO id → list of indent line item codes
         Map<String, List<String>> poToLineItemCodes = new HashMap<>();
         for (PurchaseOrderIndentRef ref : allRefs) {
             String poId = ref.getPoLine().getPurchaseOrder().getPurchaseOrderId();
@@ -76,48 +92,45 @@ public class PriorityComputeService {
                     .add(ref.getIndentLineItemCode());
         }
 
-        // 3. Bulk-load all referenced indent line items
+        // 4. Bulk-load all referenced indent line items
         Set<String> allLineItemCodes = poToLineItemCodes.values().stream()
                 .flatMap(Collection::stream)
                 .collect(Collectors.toSet());
 
-        List<IndentInventoryList> lineItems =
-                indentInventoryListRepo.findByLineItemCodeIn(allLineItemCodes);
+        Map<String, IndentInventoryList> lineItemMap = Collections.emptyMap();
+        if (!allLineItemCodes.isEmpty()) {
+            lineItemMap = indentInventoryListRepo.findByLineItemCodeIn(allLineItemCodes)
+                    .stream()
+                    // Only open line items with a date contribute to priority
+                    .filter(li -> li.getNeedByDate() != null)
+                    .filter(li -> li.getLineItemStatus() == null ||
+                                  OPEN_LINE_ITEM_STATUSES.stream()
+                                      .anyMatch(s -> s.equalsIgnoreCase(li.getLineItemStatus())))
+                    .collect(Collectors.toMap(
+                            IndentInventoryList::getLineItemCode,
+                            li -> li,
+                            (a, b) -> a
+                    ));
+        }
 
-        // 4. Keep only open (not fully received) items that have a needByDate
-        Map<String, IndentInventoryList> lineItemMap = lineItems.stream()
-                .filter(li -> li.getNeedByDate() != null)
-                .filter(li -> li.getLineItemStatus() == null ||
-                              OPEN_LINE_ITEM_STATUSES.stream()
-                                  .anyMatch(s -> s.equalsIgnoreCase(li.getLineItemStatus())))
-                .collect(Collectors.toMap(
-                        IndentInventoryList::getLineItemCode,
-                        li -> li,
-                        (a, b) -> a   // keep first if duplicate
-                ));
-
-        // 5. For each PO, find earliest needByDate and persist priority
+        // 5. Recompute and persist priority for EVERY open PO
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        final Map<String, IndentInventoryList> lineItemMapFinal = lineItemMap;
 
-        Map<String, PurchaseOrder> poCache = new HashMap<>();
-
-        for (Map.Entry<String, List<String>> entry : poToLineItemCodes.entrySet()) {
-            String poId = entry.getKey();
-            List<String> codes = entry.getValue();
+        for (PurchaseOrder po : openPOs) {
+            String poId = po.getPurchaseOrderId();
+            List<String> codes = poToLineItemCodes.getOrDefault(poId, Collections.emptyList());
 
             Date earliestNeedByDate = codes.stream()
-                    .map(lineItemMap::get)
+                    .map(lineItemMapFinal::get)
                     .filter(Objects::nonNull)
                     .map(IndentInventoryList::getNeedByDate)
                     .filter(Objects::nonNull)
                     .min(Comparator.naturalOrder())
                     .orElse(null);
 
-            PurchaseOrder po = poCache.computeIfAbsent(poId, id ->
-                    purchaseOrderRepo.findById(id).orElse(null));
-            if (po == null) continue;
-
             if (earliestNeedByDate == null) {
+                // No date available — clear all priority fields
                 po.setPriority(null);
                 po.setDaysToDeadline(null);
                 po.setNeedByDate(null);
@@ -125,11 +138,10 @@ public class PriorityComputeService {
                 LocalDate deadline = earliestNeedByDate.toInstant()
                         .atZone(ZoneId.of("Asia/Kolkata"))
                         .toLocalDate();
-                long days = java.time.temporal.ChronoUnit.DAYS.between(today, deadline);
-                int daysInt = (int) days;
+                int daysInt = (int) java.time.temporal.ChronoUnit.DAYS.between(today, deadline);
 
-                po.setDaysToDeadline(daysInt);
                 po.setNeedByDate(earliestNeedByDate);
+                po.setDaysToDeadline(daysInt);
                 if (daysInt <= 3) {
                     po.setPriority("CRITICAL");
                 } else if (daysInt <= 7) {
@@ -143,8 +155,7 @@ public class PriorityComputeService {
             purchaseOrderRepo.save(po);
         }
 
-        log.info("PriorityComputeService: completed priority computation for {} POs",
-                poToLineItemCodes.size());
+        log.info("PriorityComputeService: completed priority computation for {} open POs", openPOs.size());
     }
 
     /**
