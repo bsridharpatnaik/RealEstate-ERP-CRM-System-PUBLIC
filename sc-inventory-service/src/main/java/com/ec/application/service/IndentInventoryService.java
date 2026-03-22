@@ -445,16 +445,37 @@ public class IndentInventoryService {
 
 
     @Transactional(rollbackFor = Exception.class)
-    public void deleteInwardInventoryById(String id) throws Exception {
+    public void deleteInwardInventoryById(String id, String remarks) throws Exception {
         IndentInventory indentInventory = validateAndGetIndentInventoryForModification(id);
         exitIfReadOnly(indentInventory.getTenant());
         String action = indentValidationService.validateBeforeDelete(indentInventory);
-        if (action.equalsIgnoreCase("DELETE")) {
-            indentInventoryRepo.softDelete(indentInventory);
-        }
+        String currentUser = userDetailsService.getCurrentUser().getUsername();
+
         if (action.equalsIgnoreCase("CANCEL")) {
-            indentStatusHistoryService.logStatusChange(indentInventory, indentInventory.getIndentStatus(), IndentStatusConstants.STATUS_CANCELLED, userDetailsService.getCurrentUser().getUsername(), "Indent cancelled by " + userDetailsService.getCurrentUser().getUsername(), null);
+            indentStatusHistoryService.logStatusChange(
+                    indentInventory,
+                    indentInventory.getIndentStatus(),
+                    IndentStatusConstants.STATUS_CANCELLED,
+                    currentUser,
+                    "Indent cancelled by " + currentUser,
+                    null);
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
+            indentInventory.setLastStatusUpdatedAt(new Date());
+            indentInventoryRepo.save(indentInventory);
+
+        } else if (action.equalsIgnoreCase("REJECT")) {
+            String message = "Indent rejected by " + currentUser;
+            if (remarks != null && !remarks.trim().isEmpty()) {
+                message += ". Reason: " + remarks;
+            }
+            indentStatusHistoryService.logStatusChange(
+                    indentInventory,
+                    indentInventory.getIndentStatus(),
+                    IndentStatusConstants.STATUS_REJECTED,
+                    currentUser,
+                    message,
+                    null);
+            indentInventory.setIndentStatus(IndentStatusConstants.STATUS_REJECTED);
             indentInventory.setLastStatusUpdatedAt(new Date());
             indentInventoryRepo.save(indentInventory);
         }

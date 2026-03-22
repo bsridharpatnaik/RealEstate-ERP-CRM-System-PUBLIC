@@ -70,9 +70,11 @@ public class IndentInventoryController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
-    public ResponseEntity<?> deleteIndentInventoryById(@PathVariable String id) throws Exception {
-
-        iiService.deleteInwardInventoryById(id);
+    public ResponseEntity<?> deleteIndentInventoryById(
+            @PathVariable String id,
+            @RequestBody(required = false) Map<String, String> body) throws Exception {
+        String remarks = (body != null) ? body.get("remarks") : null;
+        iiService.deleteInwardInventoryById(id, remarks);
         return ResponseEntity.ok("Entity deleted");
     }
 

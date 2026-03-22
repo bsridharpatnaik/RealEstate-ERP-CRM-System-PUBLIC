@@ -15,6 +15,7 @@ public class IndentStatusConstants {
     public static final String STATUS_INWARD_PARTIAL = "INWARD PARTIAL";
     public static final String STATUS_CLOSED = "CLOSED";
     public static final String STATUS_CANCELLED = "CANCELLED";
+    public static final String STATUS_REJECTED  = "REJECTED";
 
     public static List<String> getAllStatuses() {
         return Arrays.stream(IndentStatusConstants.class.getDeclaredFields())
@@ -32,8 +33,8 @@ public class IndentStatusConstants {
     public static List<String> getTerminalStatuses() {
         return Arrays.asList(
                 IndentStatusConstants.STATUS_CLOSED,
-                IndentStatusConstants.STATUS_CANCELLED
-                // add more if needed
+                IndentStatusConstants.STATUS_CANCELLED,
+                IndentStatusConstants.STATUS_REJECTED
         );
     }
 }

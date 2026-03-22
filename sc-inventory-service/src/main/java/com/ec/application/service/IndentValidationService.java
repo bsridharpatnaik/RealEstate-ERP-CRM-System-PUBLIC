@@ -19,16 +19,17 @@ public class IndentValidationService {
         boolean isAdminOrManager = userDetailsService.isAdminOrManager();
         boolean isInventoryExecutive = userDetailsService.isInventoryExecutive();
 
-        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isInventoryExecutive) {
-            return "DELETE";
-        }
-        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isAdminOrManager) {
+        // Executive can cancel only NEW (pre-approval) indents
+        if (isInventoryExecutive && IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status)) {
             return "CANCEL";
-        }else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrManager) {
-            return "CANCEL";
-        } else {
-            throw new IllegalStateException("Indent cannot be deleted or cancelled in status: " + status + " by current user.");
         }
+
+        // Admin/Manager can reject any non-terminal indent
+        if (isAdminOrManager && !IndentStatusConstants.getTerminalStatuses().contains(status)) {
+            return "REJECT";
+        }
+
+        throw new IllegalStateException("Indent cannot be cancelled or rejected in status: " + status + " by current user.");
     }
 
     public void validateBeforeApprove(IndentInventory indentInventory) throws Exception {
