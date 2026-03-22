@@ -470,17 +470,50 @@ public class IndentInventoryService {
         exitIfReadOnly(indentInventory.getTenant());
         indentValidationService.validateBeforeUpdate(indentInventory);
         validateInputsForUpdate(payload);
+
+        // ── Capture before-state for history ──────────────────────────────
+        Date oldIndentDate = indentInventory.getIndentDate();
+        Map<String, Double> beforeQty     = new HashMap<>();
+        Map<String, String> beforeProduct = new HashMap<>();
+        Map<String, String> beforeRemarks = new HashMap<>();
+        Map<String, String> beforeSpec    = new HashMap<>();
+        for (IndentInventoryList item : indentInventory.getInventoryList()) {
+            if (!item.isDeleted()) {
+                String code = item.getLineItemCode();
+                beforeQty.put(code, item.getQuantity());
+                beforeProduct.put(code, item.getProduct().getProductName());
+                beforeRemarks.put(code, item.getRemarks());
+                beforeSpec.put(code, item.getSpecification());
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────
+
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
         indentInventory.setIndentDate(payload.getIndentDate());
 
         // Process and synchronize inventory list
         Set<IndentInventoryList> processedInventoryList = processInventoryListForUpdate(
                 payload.getInventoryList(),
-                indentInventory,  // CHANGED: Pass the object instead of ID
+                indentInventory,
                 indentInventory.getInventoryList()
         );
 
         syncInventoryList(indentInventory, processedInventoryList);
+
+        // ── Log edit history ───────────────────────────────────────────────
+        String changeMessage = buildEditChangeMessage(
+                oldIndentDate, payload.getIndentDate(),
+                beforeQty, beforeProduct, beforeRemarks, beforeSpec,
+                indentInventory.getInventoryList());
+        indentStatusHistoryService.logStatusChange(
+                indentInventory,
+                indentInventory.getIndentStatus(),
+                indentInventory.getIndentStatus(),
+                userDetailsService.getCurrentUser().getUsername(),
+                changeMessage,
+                null);
+        // ──────────────────────────────────────────────────────────────────
+
         indentInventoryRepo.save(indentInventory);
         return indentInventory;
     }
@@ -871,6 +904,67 @@ public class IndentInventoryService {
             return "'" + value;
         }
         return value;
+    }
+
+    private String buildEditChangeMessage(
+            Date oldDate, Date newDate,
+            Map<String, Double> beforeQty,
+            Map<String, String> beforeProduct,
+            Map<String, String> beforeRemarks,
+            Map<String, String> beforeSpec,
+            Set<IndentInventoryList> currentItems) {
+
+        List<String> changes = new ArrayList<>();
+
+        if (oldDate != null && newDate != null && !oldDate.equals(newDate)) {
+            changes.add("Indent date changed from " + oldDate + " to " + newDate);
+        }
+
+        Set<String> beforeCodes = beforeQty.keySet();
+        Set<String> afterCodes = currentItems.stream()
+                .filter(i -> !i.isDeleted())
+                .map(IndentInventoryList::getLineItemCode)
+                .collect(Collectors.toSet());
+
+        // Added items
+        for (IndentInventoryList item : currentItems) {
+            if (!item.isDeleted() && !beforeCodes.contains(item.getLineItemCode())) {
+                changes.add("Added: " + item.getProduct().getProductName()
+                        + " (Qty: " + item.getQuantity() + " " + item.getMeasurementUnit() + ")");
+            }
+        }
+
+        // Removed items
+        for (String code : beforeCodes) {
+            if (!afterCodes.contains(code)) {
+                changes.add("Removed: " + beforeProduct.get(code) + " [" + code + "]");
+            }
+        }
+
+        // Modified items
+        for (IndentInventoryList item : currentItems) {
+            String code = item.getLineItemCode();
+            if (!item.isDeleted() && beforeCodes.contains(code)) {
+                List<String> fieldChanges = new ArrayList<>();
+                if (!Objects.equals(beforeQty.get(code), item.getQuantity())) {
+                    fieldChanges.add("qty: " + beforeQty.get(code) + " → " + item.getQuantity());
+                }
+                if (!Objects.equals(beforeRemarks.get(code), item.getRemarks())) {
+                    fieldChanges.add("remarks updated");
+                }
+                if (!Objects.equals(beforeSpec.get(code), item.getSpecification())) {
+                    fieldChanges.add("specification updated");
+                }
+                if (!fieldChanges.isEmpty()) {
+                    changes.add("Updated: " + item.getProduct().getProductName()
+                            + " [" + code + "] — " + String.join(", ", fieldChanges));
+                }
+            }
+        }
+
+        return changes.isEmpty()
+                ? "Indent edited (no field changes detected)"
+                : "Indent edited — " + String.join("; ", changes);
     }
 
     private Specification<IndentInventory> buildIndentSpecification(FilterDataList filterDataList) throws Exception {
