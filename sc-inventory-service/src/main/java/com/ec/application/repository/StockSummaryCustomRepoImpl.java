@@ -307,6 +307,42 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 countRoot.get("measurementUnit")
         );
 
+        // Rebuild aggregate expressions on countRoot for HAVING conditions
+        Expression<Double> countDeadStockExpr = cb.sum(
+                cb.<Double>selectCase()
+                        .when(cb.equal(countRoot.get("warehouseName"), "Dead Stock Warehouse"),
+                                countRoot.<Double>get("quantityInHand"))
+                        .otherwise(0.0)
+        );
+        Expression<Double> countTotalStockExpr = cb.sum(countRoot.<Double>get("quantityInHand"));
+        Expression<Double> countReorderLevelExpr = cb.max(countRoot.<Double>get("reorderLevel"));
+
+        List<Predicate> countHavingPredicates = new ArrayList<>();
+        if (filters != null && filters.getFilterData() != null) {
+            for (FilterAttributeData fad : filters.getFilterData()) {
+                String havingAttr = fad.getAttrName();
+                List<String> havingValues = fad.getAttrValue();
+                if (havingValues == null || havingValues.isEmpty()) continue;
+                switch (havingAttr) {
+                    case "deadStockPresent":
+                        if (Boolean.parseBoolean(havingValues.get(0))) {
+                            countHavingPredicates.add(cb.greaterThan(countDeadStockExpr, 0.0));
+                        }
+                        break;
+                    case "lowStock":
+                        if (Boolean.parseBoolean(havingValues.get(0))) {
+                            countHavingPredicates.add(cb.isNotNull(countReorderLevelExpr));
+                            countHavingPredicates.add(
+                                    cb.lessThanOrEqualTo(countTotalStockExpr, countReorderLevelExpr));
+                        }
+                        break;
+                }
+            }
+        }
+        if (!countHavingPredicates.isEmpty()) {
+            countCq.having(cb.and(countHavingPredicates.toArray(new Predicate[0])));
+        }
+
         Long total = (long) em.createQuery(countCq).getResultList().size();
         return new PageImpl<>(content, pageable, total);
     }

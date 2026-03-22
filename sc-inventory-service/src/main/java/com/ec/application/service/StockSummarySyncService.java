@@ -136,6 +136,10 @@ public class StockSummarySyncService {
                     : globalDefaults.getOrDefault(productId, 0.0);
             effectiveLevels.put(productId, effective);
         }
+
+        // Switch back to master schema before persisting — @UseDefaultTenant on
+        // persistReorderLevels is bypassed (same-class call), so we set it manually.
+        ThreadLocalStorage.setTenantName(masterSchema);
         persistReorderLevels(tenantSchema, productIds, effectiveLevels);
 
         System.out.println("✅ Reorder level sync done for tenant: " + tenantSchema + " | Products: " + productIds.size());
