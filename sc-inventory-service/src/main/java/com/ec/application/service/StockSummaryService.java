@@ -1,27 +1,30 @@
 package com.ec.application.service;
 
 import com.ec.application.Filters.FilterDataList;
-import com.ec.application.Filters.StockSummarySpecification;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.Product;
-import com.ec.application.model.StockSummary;
 import com.ec.application.repository.JobExecutionLogRepository;
+import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockSummaryRepo;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import javax.persistence.EntityNotFoundException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -35,6 +38,7 @@ public class StockSummaryService {
     private final ProductService productService;
     private final SchemaConfig schemaConfig;
     private final ProductTenantConfigService productTenantConfigService;
+    private final ProductRepo productRepo;
 
     Logger log = LoggerFactory.getLogger(StockSummaryService.class);
 
@@ -47,6 +51,202 @@ public class StockSummaryService {
         returnData.setLastSyncDate(jobExecutionLogRepo.findLastSuccessfulRunTime("STOCK_SYNC"));
         return returnData;
     }
+
+    // ── Export ────────────────────────────────────────────────────────────────────
+
+    /**
+     * Streams a .xlsx file containing all rows matching the current filters.
+     * The Reorder Level column is highlighted yellow to indicate it is editable.
+     * The file can be downloaded, edited, and re-uploaded via importReorderLevels().
+     */
+    public void streamExportExcel(FilterDataList filterDataList, HttpServletResponse response) throws IOException {
+        // Fetch all matching rows (no pagination cap)
+        Page<StockSummaryAggregatedDTO> page =
+                stockSummaryRepo.fetchAggregatedStock(filterDataList, PageRequest.of(0, Integer.MAX_VALUE));
+        List<StockSummaryAggregatedDTO> rows = page.getContent();
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"stock-summary.xlsx\"");
+
+        // SXSSFWorkbook streams rows to disk — memory-safe for large result sets
+        try (SXSSFWorkbook wb = new SXSSFWorkbook(100)) {
+            Sheet sheet = wb.createSheet("Stock Summary");
+
+            // ── Styles ──────────────────────────────────────────────────────────
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle editableStyle = wb.createCellStyle();
+            editableStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+            editableStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle editableHeaderStyle = wb.createCellStyle();
+            Font editableHeaderFont = wb.createFont();
+            editableHeaderFont.setBold(true);
+            editableHeaderStyle.setFont(editableHeaderFont);
+            editableHeaderStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            editableHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // ── Header row ──────────────────────────────────────────────────────
+            String[] headers = {
+                "Tenant", "Product Code", "Product Name", "Measurement Unit",
+                "Reorder Level", "Current Stock", "Dead Stock", "Last Synced"
+            };
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                // Column 4 (Reorder Level) gets the yellow editable header style
+                cell.setCellStyle(i == 4 ? editableHeaderStyle : headerStyle);
+            }
+
+            // ── Data rows ───────────────────────────────────────────────────────
+            SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, hh:mm a");
+            sdf.setTimeZone(TimeZone.getTimeZone("Asia/Kolkata"));
+
+            int rowIdx = 1;
+            for (StockSummaryAggregatedDTO dto : rows) {
+                Row row = sheet.createRow(rowIdx++);
+
+                row.createCell(0).setCellValue(dto.getTenantSchema() != null ? dto.getTenantSchema() : "");
+                row.createCell(1).setCellValue(dto.getProductCode()   != null ? dto.getProductCode()   : "");
+                row.createCell(2).setCellValue(dto.getProductName()   != null ? dto.getProductName()   : "");
+                row.createCell(3).setCellValue(dto.getMeasurementUnit() != null ? dto.getMeasurementUnit() : "");
+
+                // Reorder Level — yellow background, numeric if present
+                Cell reorderCell = row.createCell(4);
+                reorderCell.setCellStyle(editableStyle);
+                if (dto.getReorderLevel() != null) {
+                    reorderCell.setCellValue(dto.getReorderLevel());
+                }
+
+                if (dto.getQuantityInHand() != null) row.createCell(5).setCellValue(dto.getQuantityInHand());
+                else row.createCell(5).setCellValue("");
+
+                if (dto.getDeadStock() != null) row.createCell(6).setCellValue(dto.getDeadStock());
+                else row.createCell(6).setCellValue("");
+
+                row.createCell(7).setCellValue(
+                    dto.getSyncedAt() != null ? sdf.format(dto.getSyncedAt()) : "");
+            }
+
+            wb.write(response.getOutputStream());
+            wb.dispose(); // remove temp files used by SXSSF
+        }
+    }
+
+    // ── Import ────────────────────────────────────────────────────────────────────
+
+    /**
+     * Parses the uploaded Excel file and updates the reorder level override
+     * in each tenant's product_tenant_config table.
+     *
+     * Expected column order (matches the export):
+     *   0: Tenant  |  1: Product Code  |  4: Reorder Level  (others are ignored)
+     *
+     * Returns a summary: { updated, skipped, errors }
+     */
+    public Map<String, Object> importReorderLevels(MultipartFile file) throws IOException {
+        int updated = 0;
+        int skipped = 0;
+        List<String> errors = new ArrayList<>();
+
+        try (XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = wb.getSheetAt(0);
+            int lastRow = sheet.getLastRowNum();
+
+            // Row 0 is the header — start at 1
+            for (int i = 1; i <= lastRow; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) { skipped++; continue; }
+
+                String tenantSchema = getCellString(row, 0);
+                String productCode  = getCellString(row, 1);
+                String reorderRaw   = getCellString(row, 4);
+
+                // Skip rows with missing key columns
+                if (tenantSchema == null || tenantSchema.trim().isEmpty() ||
+                        productCode == null || productCode.trim().isEmpty()) {
+                    skipped++;
+                    continue;
+                }
+
+                // Skip rows with no reorder level value
+                if (reorderRaw == null || reorderRaw.trim().isEmpty()) {
+                    skipped++;
+                    continue;
+                }
+
+                // Parse reorder level
+                double reorderLevel;
+                try {
+                    reorderLevel = Double.parseDouble(reorderRaw.trim());
+                } catch (NumberFormatException e) {
+                    errors.add("Row " + (i + 1) + ": Invalid reorder level value '" + reorderRaw + "'");
+                    skipped++;
+                    continue;
+                }
+
+                if (reorderLevel < 0) {
+                    errors.add("Row " + (i + 1) + ": Reorder level cannot be negative ('" + reorderRaw + "')");
+                    skipped++;
+                    continue;
+                }
+
+                // Validate tenant
+                if (!schemaConfig.isValidSchema(tenantSchema)) {
+                    errors.add("Row " + (i + 1) + ": Unknown tenant '" + tenantSchema + "'");
+                    skipped++;
+                    continue;
+                }
+
+                // Look up product by code (runs in master schema — products live there)
+                List<Product> products = productRepo.findByproductCode(productCode);
+                if (products == null || products.isEmpty()) {
+                    errors.add("Row " + (i + 1) + ": Product code '" + productCode + "' not found");
+                    skipped++;
+                    continue;
+                }
+                Long productId = products.get(0).getProductId();
+
+                // Save override in the tenant's product_tenant_config table
+                try {
+                    productTenantConfigService.saveOverrideForTenant(productId, tenantSchema, reorderLevel);
+                    updated++;
+                } catch (Exception e) {
+                    errors.add("Row " + (i + 1) + ": Failed to update product '" + productCode
+                               + "' for tenant '" + tenantSchema + "': " + e.getMessage());
+                    skipped++;
+                }
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("updated", updated);
+        result.put("skipped", skipped);
+        result.put("errors", errors);
+        return result;
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────────
+
+    /** Reads a cell as a String regardless of its type. */
+    private String getCellString(Row row, int col) {
+        Cell cell = row.getCell(col);
+        if (cell == null) return "";
+        switch (cell.getCellType()) {
+            case STRING:  return cell.getStringCellValue().trim();
+            case NUMERIC: return String.valueOf(cell.getNumericCellValue());
+            case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
+            default:      return "";
+        }
+    }
+
+    // ── Dashboard ─────────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<DashboardProductStockDTO> getDashboardProductStock() {
