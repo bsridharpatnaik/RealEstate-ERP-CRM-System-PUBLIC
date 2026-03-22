@@ -7,7 +7,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Executes ProductTenantConfig DB operations inside a fresh REQUIRES_NEW transaction.
@@ -47,6 +51,20 @@ public class TenantSchemaExecutor {
                 .orElse(new ProductTenantConfig(productId, null));
         config.setReorderLevel(reorderLevel);
         configRepo.save(config);
+    }
+
+    /**
+     * Batch query: returns all override entries for the given product IDs in
+     * whichever schema is currently set in ThreadLocal by the caller.
+     * Products with no override row are absent from the returned map.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Map<Long, Double> findOverridesForProducts(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) return Collections.emptyMap();
+        return configRepo.findByProductIds(productIds).stream()
+                .filter(c -> c.getReorderLevel() != null)
+                .collect(Collectors.toMap(ProductTenantConfig::getProductId,
+                                         ProductTenantConfig::getReorderLevel));
     }
 
     /**

@@ -128,7 +128,7 @@ public class PurchaseOrderStatusHistoryService {
 
             for (int i = 0; i < weeks.size(); i++) {
                 WeekBucket wb = weeks.get(i);
-                System.out.println("Checking status " + status + " changedAt " + changedAt + " for week " + wb.getLabel());
+                //System.out.println("Checking status " + status + " changedAt " + changedAt + " for week " + wb.getLabel());
 
                 if (!changedAt.before(wb.getStart()) && changedAt.before(wb.getEnd())) {
                     statusWeekCounts.get(status)[i]++;

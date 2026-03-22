@@ -62,6 +62,9 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                                 .otherwise(0.0)
                 );
 
+        Expression<Double> reorderLevelExpr =
+                cb.max(root.<Double>get("reorderLevel"));
+
     /* =========================
        FILTER HANDLING
        ========================= */
@@ -143,6 +146,17 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                             );
                         }
                         break;
+
+                    case "lowStock":
+                        boolean lowStock = Boolean.parseBoolean(values.get(0));
+                        if (lowStock) {
+                            // Only rows where reorder_level is set AND total qty <= reorder_level
+                            havingPredicates.add(cb.isNotNull(reorderLevelExpr));
+                            havingPredicates.add(
+                                    cb.lessThanOrEqualTo(totalStockExpr, reorderLevelExpr)
+                            );
+                        }
+                        break;
                 }
             }
         }
@@ -156,10 +170,11 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 root.get("productId"),
                 root.get("productCode"),
                 root.get("productName"),
-                totalStockExpr,                     // total stock
-                deadStockExpr,                      // dead stock
+                totalStockExpr,                        // total stock
+                deadStockExpr,                         // dead stock
                 root.get("measurementUnit"),
-                cb.greatest(root.<Date>get("syncedAt")) // latest sync
+                cb.greatest(root.<Date>get("syncedAt")), // latest sync
+                reorderLevelExpr                       // effective reorder level (MAX across warehouse rows)
         ));
 
     /* =========================

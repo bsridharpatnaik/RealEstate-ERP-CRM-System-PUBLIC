@@ -85,7 +85,7 @@ public class StockSummaryService {
 
             Map<String, TenantStockDTO> tenantEntries = new LinkedHashMap<>();
             for (String tenant : allTenants) {
-                TenantStockDTO tenantStock = new TenantStockDTO(tenant, 0.0, 0.0);
+                TenantStockDTO tenantStock = new TenantStockDTO(tenant, 0.0, 0.0, 0.0);
                 dto.getTenantWiseStock().add(tenantStock);
                 tenantEntries.put(tenant, tenantStock);
             }
@@ -128,20 +128,38 @@ public class StockSummaryService {
             }
         }
 
-        // ── Enrich with effective reorder level (1 batch query) ───────────
-        Map<Long, Double> effectiveReorderLevels =
-                productTenantConfigService.getEffectiveReorderLevels(dashboardProducts);
+        // ── Enrich each TenantStockDTO with its own effective reorder level ──
+        // Queries every tenant schema in turn so overrides are respected.
+        Map<String, Map<Long, Double>> reorderByTenant =
+                productTenantConfigService.getEffectiveReorderLevelsByTenant(dashboardProducts);
 
         for (Product p : dashboardProducts) {
             DashboardProductStockDTO dto = dtoMap.get(p.getProductId());
             if (dto == null) continue;
-            Double effective = effectiveReorderLevels.get(p.getProductId());
-            dto.setReorderLevel(effective);
-            // Mark as overridden if tenant value differs from global
-            Double global = p.getReorderQuantity();
-            dto.setReorderOverridden(
-                effective != null && global != null && !effective.equals(global)
-            );
+
+            Double globalReorderLevel = p.getReorderQuantity();
+            Double minEffective = null;
+            boolean anyOverridden = false;
+
+            for (TenantStockDTO tenantStock : dto.getTenantWiseStock()) {
+                Map<Long, Double> tenantLevels = reorderByTenant.get(tenantStock.getTenantSchema());
+                if (tenantLevels != null) {
+                    Double effective = tenantLevels.get(p.getProductId());
+                    tenantStock.setReorderLevel(effective);
+                    if (effective != null) {
+                        if (minEffective == null || effective < minEffective) {
+                            minEffective = effective;
+                        }
+                        if (globalReorderLevel != null && !effective.equals(globalReorderLevel)) {
+                            anyOverridden = true;
+                        }
+                    }
+                }
+            }
+
+            // Product-level: minimum effective across all tenants (most conservative threshold)
+            dto.setReorderLevel(minEffective != null ? minEffective : globalReorderLevel);
+            dto.setReorderOverridden(anyOverridden);
         }
 
         return new ArrayList<>(dtoMap.values());

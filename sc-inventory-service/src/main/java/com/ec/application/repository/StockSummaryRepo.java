@@ -5,9 +5,11 @@ import com.ec.application.data.ProductStockSumDTO;
 import com.ec.application.model.StockSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -65,4 +67,23 @@ public interface StockSummaryRepo
     @Query("SELECT d FROM StockSummary d WHERE d.productId IN :productIds")
     List<StockSummary> fetchTotalStockByProductIdsExcludingWarehouse(
             @Param("productIds") List<Long> productIds);
+
+    /**
+     * Bulk-update reorder_level for all warehouse rows of a (tenantSchema, productId) pair.
+     * Called by the hourly sync job.
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE StockSummary s SET s.reorderLevel = :reorderLevel " +
+           "WHERE s.tenantSchema = :tenantSchema AND s.productId = :productId")
+    void updateReorderLevel(@Param("tenantSchema") String tenantSchema,
+                            @Param("productId") Long productId,
+                            @Param("reorderLevel") Double reorderLevel);
+
+    /**
+     * Returns all distinct productIds that already have a stock_summary row for the given tenant.
+     * Used by the sync job to decide which products need a reorder-level update.
+     */
+    @Query("SELECT DISTINCT s.productId FROM StockSummary s WHERE s.tenantSchema = :tenantSchema")
+    List<Long> findDistinctProductIdsByTenantSchema(@Param("tenantSchema") String tenantSchema);
 }

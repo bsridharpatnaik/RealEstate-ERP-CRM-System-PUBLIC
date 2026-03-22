@@ -28,4 +28,8 @@ public class StockSummaryAggregatedDTO {
             timezone = "Asia/Kolkata"
     )
     private Date syncedAt;            // MAX
+
+    /** Effective reorder level (tenant override or global default), MAX across warehouse rows. */
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double reorderLevel;
 }

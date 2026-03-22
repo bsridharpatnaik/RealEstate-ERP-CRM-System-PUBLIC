@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
+import java.util.HashMap;
 
 /**
  * Manages tenant-specific reorder level overrides stored in each tenant's
@@ -84,6 +86,49 @@ public class ProductTenantConfigService {
                 Product::getProductId,
                 p -> overrides.getOrDefault(p.getProductId(), p.getReorderQuantity())
         ));
+    }
+
+    /**
+     * Cross-tenant bulk resolution — returns effective reorder level per tenant per product.
+     * Result: tenantSchema → (productId → effectiveReorderLevel)
+     *
+     * Switches into each tenant schema using TenantSchemaExecutor (REQUIRES_NEW) so every
+     * product_tenant_config query runs in the correct DB schema.
+     * The original ThreadLocal context is always restored in the finally block.
+     */
+    public Map<String, Map<Long, Double>> getEffectiveReorderLevelsByTenant(List<Product> products) {
+        if (products == null || products.isEmpty()) return Collections.emptyMap();
+
+        List<String> tenants = schemaConfig.getNonMasterSchemaList();
+        List<Long> productIds = products.stream()
+                .map(Product::getProductId)
+                .collect(Collectors.toList());
+
+        // Global defaults — used when a tenant has no override
+        Map<Long, Double> globalDefaults = products.stream()
+                .collect(Collectors.toMap(Product::getProductId,
+                                          p -> p.getReorderQuantity() != null ? p.getReorderQuantity() : 0.0,
+                                          (a, b) -> a));
+
+        String originalTenant = ThreadLocalStorage.getTenantName();
+        Map<String, Map<Long, Double>> result = new LinkedHashMap<>();
+        try {
+            for (String tenantSchema : tenants) {
+                ThreadLocalStorage.setTenantName(tenantSchema);
+                // REQUIRES_NEW picks up the ThreadLocal we just set
+                Map<Long, Double> overrides = tenantSchemaExecutor.findOverridesForProducts(productIds);
+
+                Map<Long, Double> effective = new HashMap<>();
+                for (Long productId : productIds) {
+                    Double override = overrides.get(productId);
+                    effective.put(productId, override != null ? override : globalDefaults.get(productId));
+                }
+                result.put(tenantSchema, effective);
+            }
+        } finally {
+            ThreadLocalStorage.setTenantName(originalTenant);
+        }
+        return result;
     }
 
     // ── Cross-tenant management APIs (called from ProductController) ─────────────

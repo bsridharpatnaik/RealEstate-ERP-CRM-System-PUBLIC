@@ -55,6 +55,14 @@ public class StockSummary extends ReusableFields {
     @Column(name="measurement_unit", length = 20)
     String measurementUnit;
 
+    /**
+     * Effective reorder level for this product in this tenant.
+     * Populated by the hourly sync job: tenant override if set, otherwise global Product.reorderQuantity.
+     * All warehouse rows for the same (tenantSchema, productId) carry the same value.
+     */
+    @Column(name = "reorder_level")
+    private Double reorderLevel;
+
     /** when sync job ran */
     @Temporal(TemporalType.TIMESTAMP)
     @JsonFormat(

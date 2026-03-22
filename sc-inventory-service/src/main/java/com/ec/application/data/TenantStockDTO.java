@@ -17,4 +17,7 @@ public class TenantStockDTO {
     private Double quantity;
     @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
     private Double deadStock;
+    /** Effective reorder level for this tenant (override if set, else global default). */
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double reorderLevel;
 }

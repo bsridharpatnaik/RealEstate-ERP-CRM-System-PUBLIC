@@ -91,7 +91,7 @@ public class DummyGlobalDashboardService {
             int numTenants = random(3, 5);
             for (int j = 0; j < numTenants; j++) {
                 double stock = randomDouble(50, 1000);
-                tenantStocks.add(new TenantStockDTO(TENANTS[j], stock, 0.0));
+                tenantStocks.add(new TenantStockDTO(TENANTS[j], stock, 0.0, 0.0));
                 totalStock += stock;
             }
 
