@@ -24,8 +24,8 @@ public class IndentValidationService {
             return "CANCEL";
         }
 
-        // Admin/Manager can reject any non-terminal indent
-        if (isAdminOrManager && !IndentStatusConstants.getTerminalStatuses().contains(status)) {
+        // Admin/Manager can reject only NEW indents (before approval)
+        if (isAdminOrManager && IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status)) {
             return "REJECT";
         }
 
