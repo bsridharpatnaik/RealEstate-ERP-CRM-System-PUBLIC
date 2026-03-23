@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 
 import com.ec.application.Filters.AllInventorySpecification;
@@ -12,6 +13,8 @@ import com.ec.application.Filters.FilterDataList;
 import com.ec.application.comparators.MonthlyReportComparator;
 import com.ec.application.data.*;
 import com.ec.application.repository.InventoryReportRepo;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -172,6 +175,71 @@ public class AllInventoryService {
             }
         }
         return returnData;
+    }
+
+    /**
+     * Exports inventory transactions matching the given filters as an Excel (.xlsx) file.
+     * Only human-readable columns are exported — primary keys and internal IDs are excluded.
+     */
+    public void exportToExcel(FilterDataList filterDataList, HttpServletResponse response) throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+        Specification<AllInventoryTransactions> spec = AllInventorySpecification.getSpecification(filterDataList);
+        Sort sort = Sort.by(Sort.Order.desc("date"), Sort.Order.desc("sortOrder"), Sort.Order.desc("entryid"));
+
+        List<AllInventoryTransactions> rows;
+        if (spec != null) {
+            rows = allInventoryRepo.findAll(spec, sort);
+        } else {
+            rows = allInventoryRepo.findAll(sort);
+        }
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"inventory-transactions.xlsx\"");
+
+        try (SXSSFWorkbook wb = new SXSSFWorkbook(100)) {
+            Sheet sheet = wb.createSheet("Inventory");
+
+            // Header style
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Header row — clean names only, no PKs
+            String[] headers = {
+                "Date", "Type", "Product Name", "Category",
+                "Warehouse", "Contact Name", "Unit", "Quantity", "Closing Stock"
+            };
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            int rowIdx = 1;
+            for (AllInventoryTransactions t : rows) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(t.getDate() != null ? sdf.format(t.getDate()) : "");
+                row.createCell(1).setCellValue(t.getType()          != null ? t.getType()          : "");
+                row.createCell(2).setCellValue(t.getProductName()   != null ? t.getProductName()   : "");
+                row.createCell(3).setCellValue(t.getCategoryName()  != null ? t.getCategoryName()  : "");
+                row.createCell(4).setCellValue(t.getWarehouseName() != null ? t.getWarehouseName() : "");
+                row.createCell(5).setCellValue(t.getName()          != null ? t.getName()          : "");
+                row.createCell(6).setCellValue(t.getMeasurementUnit() != null ? t.getMeasurementUnit() : "");
+                if (t.getQuantity()     != null) row.createCell(7).setCellValue(t.getQuantity());
+                else                             row.createCell(7).setCellValue("");
+                if (t.getClosingStock() != null) row.createCell(8).setCellValue(t.getClosingStock());
+                else                             row.createCell(8).setCellValue("");
+            }
+
+            wb.write(response.getOutputStream());
+            wb.dispose();
+        }
     }
 
     public void updateAllInventoryTable() {

@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.AllInventoryReturnData;
 import com.ec.application.service.AllInventoryService;
@@ -39,6 +41,12 @@ public class AllInventoryController {
     @ResponseStatus(HttpStatus.OK)
     public List<InventoryReportByDate> getInventoryReport(@RequestBody FilterDataList filterDataList) throws Exception {
         return allInventoryService.getInventoryReport(filterDataList);
+    }
+
+    @PostMapping("/export/excel")
+    public void exportToExcel(@RequestBody FilterDataList filterDataList,
+                              HttpServletResponse response) throws Exception {
+        allInventoryService.exportToExcel(filterDataList, response);
     }
 
     @GetMapping("/refresh")
