@@ -987,23 +987,4 @@ public class IndentInventoryService {
                 ? "Indent edited (no field changes detected)"
                 : "Indent edited — " + String.join("; ", changes);
     }
-
-    private Specification<IndentInventory> buildIndentSpecification(FilterDataList filterDataList) throws Exception {
-
-        Specification<IndentInventory> spec = IndentInventorySpecification.getSpecification(filterDataList);
-
-        String tenantName = tenantService.fetchTenantFromHeader();
-        UserReturnData currentUser = userDetailsService.getCurrentUser();
-
-        if (tenantName != null) {
-            spec = IndentInventorySpecification.getTenantSpecification(Collections.singletonList(tenantName), spec);
-        } else {
-            spec = IndentInventorySpecification.getTenantSpecification(currentUser.getAllowedTenants(), spec);
-        }
-        if (spec == null) {
-            spec = Specification.where(null);
-        }
-        return spec;
-    }
-
 }
