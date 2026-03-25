@@ -81,6 +81,18 @@ public interface StockSummaryRepo
                             @Param("reorderLevel") Double reorderLevel);
 
     /**
+     * Bulk-update measurement_unit for all warehouse rows of a (tenantSchema, productId) pair.
+     * Called by the hourly sync job to pick up Product-level measurement unit changes.
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE StockSummary s SET s.measurementUnit = :measurementUnit " +
+           "WHERE s.tenantSchema = :tenantSchema AND s.productId = :productId")
+    void updateMeasurementUnit(@Param("tenantSchema") String tenantSchema,
+                               @Param("productId") Long productId,
+                               @Param("measurementUnit") String measurementUnit);
+
+    /**
      * Returns all distinct productIds that already have a stock_summary row for the given tenant.
      * Used by the sync job to decide which products need a reorder-level update.
      */
