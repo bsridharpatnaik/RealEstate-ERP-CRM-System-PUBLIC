@@ -70,6 +70,15 @@ public class PurchaseOrder extends ReusableFields {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double grandTotal;
 
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double freightCharges;
+
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double freightGstPercent;
+
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double totalFreightCharges;
+
     private String shortCloseReason;
 
     @Column(name="notes", length = 2000)

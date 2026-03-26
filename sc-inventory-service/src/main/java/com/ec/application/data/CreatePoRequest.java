@@ -27,6 +27,9 @@ public class CreatePoRequest {
     @JsonDeserialize(using= ToSentenceCaseDeserializer.class)
     private String notes;
     private Double grandTotal;
+    private Double freightCharges;
+    private Double freightGstPercent;
+    private Double totalFreightCharges;
     @Column(length = 35)
     private String overridePhoneNumber;
     private String overrideEmail;

@@ -35,6 +35,9 @@ public class PurchaseOrderBuilder {
         po.setSupplier(supplierService.findSingleSupplier(request.getSupplierId()));
         po.setNotes(request.getNotes());
         po.setGrandTotal(request.getGrandTotal());
+        po.setFreightCharges(request.getFreightCharges());
+        po.setFreightGstPercent(request.getFreightGstPercent());
+        po.setTotalFreightCharges(request.getTotalFreightCharges());
         po.setStatus(POStatusConstants.STATUS_NEW);
         po.setLastStatusUpdatedAt(new Date());
         po.setSubject(request.getSubject());
