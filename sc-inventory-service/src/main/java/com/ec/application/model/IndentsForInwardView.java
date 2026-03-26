@@ -70,6 +70,9 @@ public class IndentsForInwardView {
     @Column(name = "remarks")
     private String remarks;
 
+    @Column(name = "specification")
+    private String specification;
+
     // ---------- Product ----------
     @Column(name = "product_name")
     private String productName;

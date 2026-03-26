@@ -36,6 +36,12 @@ public class InwardOutwardList extends ReusableFields {
 
     String lineItemCode;
 
+    @Column(name = "indent_remarks")
+    private String indentRemarks;
+
+    @Column(name = "indent_specification")
+    private String indentSpecification;
+
     @Transient
     private String indentId;
 

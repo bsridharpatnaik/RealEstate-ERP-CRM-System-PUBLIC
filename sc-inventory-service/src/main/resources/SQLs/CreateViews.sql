@@ -1251,6 +1251,7 @@ SELECT
     iie.purchaseOrderId,
     iie.quantity,
     iie.remarks,
+    iie.specification,
     po.po_date,
     po.purchase_order_id,
     po.grandTotal,

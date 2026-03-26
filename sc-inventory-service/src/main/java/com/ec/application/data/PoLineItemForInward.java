@@ -22,4 +22,6 @@ public class PoLineItemForInward {
     private Double pendingQuantity;
 
     private String remarks;
+
+    private String specification;
 }

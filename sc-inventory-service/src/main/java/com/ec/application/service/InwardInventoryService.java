@@ -142,6 +142,7 @@ public class InwardInventoryService {
         li.setMeasurementUnit(v.getMeasurementUnit());
         li.setOrderedQuantity(v.getQuantity());
         li.setRemarks(v.getRemarks());
+        li.setSpecification(v.getSpecification());
         return li;
     }
 
@@ -359,6 +360,8 @@ public class InwardInventoryService {
             inwardOutwardList.setQuantity(lineItem.getQuantityReceived());
             inwardOutwardList.setWarehouse(warehouseRepo.findById(lineItem.getWarehouseId()).get());
             inwardOutwardList.setLineItemCode(row.getLineItemCode());
+            inwardOutwardList.setIndentRemarks(row.getRemarks());
+            inwardOutwardList.setIndentSpecification(row.getSpecification());
             inwardOutwardListSet.add(inwardOutwardList);
         }
         return inwardOutwardListSet;
