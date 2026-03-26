@@ -814,6 +814,7 @@ public class IndentInventoryService {
                 "Quantity Received",
                 "Quantity Pending",
                 "Line Item Status",
+                "Specification",
                 "Remarks"
         };
 
@@ -892,23 +893,21 @@ public class IndentInventoryService {
                 );
 
                 // Quantities
-                row.createCell(col++).setCellValue(
-                        line.getQuantity() != null ? line.getQuantity() : 0.0
-                );
-                row.createCell(col++).setCellValue(
-                        line.getQuantityReceived() != null
-                                ? line.getQuantityReceived()
-                                : 0.0
-                );
-                row.createCell(col++).setCellValue(
-                        line.getQuantityPending() != null
-                                ? line.getQuantityPending()
-                                : 0.0
-                );
+                double qty = line.getQuantity() != null ? line.getQuantity() : 0.0;
+                double qtyReceived = line.getQuantityReceived() != null ? line.getQuantityReceived() : 0.0;
+                double qtyPending = line.getQuantityPending() != null
+                        ? line.getQuantityPending()
+                        : qty - qtyReceived;
+                row.createCell(col++).setCellValue(qty);
+                row.createCell(col++).setCellValue(qtyReceived);
+                row.createCell(col++).setCellValue(qtyPending);
 
-                // Status & remarks
+                // Status, specification & remarks
                 row.createCell(col++).setCellValue(
                         safeExcel(line.getLineItemStatus())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getSpecification())
                 );
                 row.createCell(col++).setCellValue(
                         safeExcel(line.getRemarks())
