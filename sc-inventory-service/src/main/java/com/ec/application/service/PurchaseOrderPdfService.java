@@ -9,6 +9,7 @@ import com.ec.application.model.Product;
 import com.ec.application.repository.PurchaseOrderRepo;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
+import com.itextpdf.tool.xml.XMLWorkerHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -66,7 +67,7 @@ public class PurchaseOrderPdfService {
         boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isInventoryExecutive();
 
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-        PdfWriter.getInstance(document, outputStream);
+        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
         document.open();
 
         addHeader(document, po);
@@ -75,7 +76,7 @@ public class PurchaseOrderPdfService {
         addItemsTable(document, po, hideMoneyFields);
         addChargesSection(document, po, hideMoneyFields);
         addPriceTable(document, po, hideMoneyFields);
-        addTermsAndSignatures(document, po);
+        addTermsAndSignatures(document, writer, po);
 
         document.close();
     }
@@ -90,7 +91,7 @@ public class PurchaseOrderPdfService {
         boolean hideMoneyFields = userDetailsService.isInventoryExecutive();
 
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-        PdfWriter.getInstance(document, outputStream);
+        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
         document.open();
 
         addHeader(document, po);
@@ -99,7 +100,7 @@ public class PurchaseOrderPdfService {
         addItemsTable(document, po, hideMoneyFields);
         addChargesSection(document, po, hideMoneyFields);
         addPriceTable(document, po, hideMoneyFields);
-        addTermsAndSignatures(document, po);
+        addTermsAndSignatures(document, writer, po);
 
         document.close();
     }
@@ -278,7 +279,7 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, "UOM", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Rate \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Discount \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Taxable \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
@@ -309,11 +310,7 @@ public class PurchaseOrderPdfService {
             addBodyCell(table, product.getMeasurementUnit(), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(grossTotal), normalFont);
-<<<<<<< Updated upstream
-            addBodyCell(table, hideMoneyFields ? "" : fmt(discountAmt), normalFont);
-=======
             addBodyCell(table, hideMoneyFields ? "" : (discPct > 0 ? (discPct % 1 == 0 ? String.valueOf((int) discPct) : fmt(discPct)) + "%" : "-"), normalFont);
->>>>>>> Stashed changes
             addBodyCell(table, hideMoneyFields ? "" : fmt(taxable), normalFont);
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
@@ -423,7 +420,7 @@ public class PurchaseOrderPdfService {
         document.add(table);
     }
 
-    private void addTermsAndSignatures(Document document, PurchaseOrder po) throws DocumentException {
+    private void addTermsAndSignatures(Document document, PdfWriter writer, PurchaseOrder po) throws DocumentException {
         Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
         Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.BLACK);
 
@@ -432,7 +429,18 @@ public class PurchaseOrderPdfService {
         document.add(termsTitle);
 
         if (notBlank(po.getNotes())) {
-            document.add(new Paragraph("* " + po.getNotes(), smallFont));
+            try {
+                String css = "body, p, li, ol, ul { font-size: 8pt; font-family: Helvetica, Arial, sans-serif; }"
+                           + "p  { margin: 1pt 0; }"
+                           + "ol, ul { margin: 0; padding-left: 14pt; }"
+                           + "li { margin: 1pt 0; }";
+                XMLWorkerHelper.getInstance().parseXHtml(
+                    writer, document,
+                    new java.io.ByteArrayInputStream(po.getNotes().getBytes("UTF-8")),
+                    new java.io.ByteArrayInputStream(css.getBytes("UTF-8")));
+            } catch (Exception e) {
+                // XMLWorker already rendered partial content — suppress fallback to avoid duplication
+            }
         }
 
         // ---- Signature Section ----

@@ -24,7 +24,6 @@ public class CreatePoRequest {
     private Long firmId;
     @JsonDeserialize(using= ToSentenceCaseDeserializer.class)
     private String subject;
-    @JsonDeserialize(using= ToSentenceCaseDeserializer.class)
     private String notes;
     private Double grandTotal;
     private Double freightCharges;

@@ -82,7 +82,7 @@ public class PurchaseOrder extends ReusableFields {
 
     private String shortCloseReason;
 
-    @Column(name="notes", length = 2000)
+    @Column(name="notes", columnDefinition = "TEXT")
     private String notes;
 
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
