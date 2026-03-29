@@ -393,7 +393,7 @@ public class PurchaseOrderPdfService {
         table.setSpacingBefore(0f);
         table.setSpacingAfter(0f);
 
-        String amountInWords = hideMoneyFields
+        String amountInWords = hideMoneyFields || po.getGrandTotal() == null
                 ? ""
                 : numberToWords(po.getGrandTotal()) + " RUPEES ONLY";
 
@@ -410,7 +410,7 @@ public class PurchaseOrderPdfService {
         table.addCell(totalLabel);
 
         PdfPCell totalVal = new PdfPCell(
-                new Phrase(hideMoneyFields ? "" : fmt(po.getGrandTotal()), headerFont));
+                new Phrase(hideMoneyFields || po.getGrandTotal() == null ? "" : fmt(po.getGrandTotal()), headerFont));
         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalVal.setPadding(4f);
         totalVal.setNoWrap(true);

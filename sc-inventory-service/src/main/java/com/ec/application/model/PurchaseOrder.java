@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.persistence.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
@@ -86,6 +87,7 @@ public class PurchaseOrder extends ReusableFields {
 
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("purchaseOrder")
+    @OrderBy("id ASC")
     private Set<PurchaseOrderLine> lines = new HashSet<>();
 
     @Column(name = "is_special_po", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import javax.persistence.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
@@ -73,6 +74,7 @@ public class IndentInventory extends ReusableFields implements Cloneable {
 
     @OneToMany(mappedBy = "indentInventory", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER, orphanRemoval = false)
     @JsonSerialize(using = ActiveIndentInventoryListSerializer.class)
+    @OrderBy("entryid ASC")
     private Set<IndentInventoryList> inventoryList = new HashSet<>();
 
     @OneToMany(
