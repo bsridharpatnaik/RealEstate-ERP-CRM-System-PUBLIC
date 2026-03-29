@@ -21,6 +21,7 @@ public class CreatePoLineRequest {
     private Double gstPercent;
     private Double netRate;
     private Double totalAmount;
+    private Double tolerancePercent = 0.0;
     /** One or more indent line items clubbed */
     private List<IndentLineRefRequest> indentRefs;
 }

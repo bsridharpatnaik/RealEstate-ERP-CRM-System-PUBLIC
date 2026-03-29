@@ -24,4 +24,8 @@ public class PoLineItemForInward {
     private String remarks;
 
     private String specification;
+
+    private Double tolerancePercent;
+
+    private Double maxAllowedQuantity;
 }

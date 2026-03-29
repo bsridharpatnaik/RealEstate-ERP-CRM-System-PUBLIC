@@ -267,11 +267,11 @@ public class PurchaseOrderPdfService {
         Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
-        PdfPTable table = new PdfPTable(11);
+        PdfPTable table = new PdfPTable(12);
         table.setWidthPercentage(100);
         table.setSpacingBefore(8f);
         table.setSpacingAfter(0f);
-        table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 1.0f, 0.75f, 0.95f, 1.2f, 1.0f});
+        table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 1.0f});
 
         // Column headers — money columns blanked for executives
         addHeaderCell(table, "Code & Description", headerFont);
@@ -280,6 +280,7 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, hideMoneyFields ? "" : "Rate \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
+        addHeaderCell(table, "Tolerance %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Taxable \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
@@ -297,13 +298,14 @@ public class PurchaseOrderPdfService {
             double qty = line.getQuantity() != null ? line.getQuantity() : 0.0;
             double rate = line.getRate() != null ? line.getRate() : 0.0;
             double discPct = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
+            double tolPct  = line.getTolerancePercent() != null ? line.getTolerancePercent() : 0.0;
             double gstPct = line.getGstPercent() != null ? line.getGstPercent() : 0.0;
             double grossTotal = qty * rate;
-            double discountAmt = grossTotal * discPct / 100.0;
             double taxable = line.getNetRate() != null ? line.getNetRate() : 0.0;
             double gstAmt = taxable * gstPct / 100.0;
             double amtInclTax = line.getTotalAmount() != null ? line.getTotalAmount() : 0.0;
             String expDate = line.getNeedByDate() != null ? DATE_FORMAT.format(line.getNeedByDate()) : "-";
+            String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : fmt(tolPct)) + "%" : "-";
 
             addBodyCell(table, desc, normalFont);
             addBodyCell(table, fmt(qty), normalFont);
@@ -311,6 +313,7 @@ public class PurchaseOrderPdfService {
             addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(grossTotal), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : (discPct > 0 ? (discPct % 1 == 0 ? String.valueOf((int) discPct) : fmt(discPct)) + "%" : "-"), normalFont);
+            addBodyCell(table, tolStr, normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(taxable), normalFont);
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
@@ -324,7 +327,7 @@ public class PurchaseOrderPdfService {
                 .sum();
 
         PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL \u20B9", headerFont));
-        totalLabel.setColspan(10);
+        totalLabel.setColspan(11);
         totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalLabel.setPadding(4f);
         table.addCell(totalLabel);

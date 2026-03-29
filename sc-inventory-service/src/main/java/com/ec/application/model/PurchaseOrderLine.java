@@ -48,6 +48,9 @@ public class PurchaseOrderLine extends ReusableFields {
     private Double netRate;
     private Double totalAmount;
 
+    @Column(name = "tolerance_percent")
+    private Double tolerancePercent = 0.0;
+
     /** Traceability */
     @JsonIgnoreProperties("poLine")
     @OneToMany(mappedBy = "poLine", cascade = CascadeType.ALL)

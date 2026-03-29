@@ -1260,7 +1260,10 @@ SELECT
     c.contactId AS supplier_id,
     c.name AS supplier_name,
 
-    COALESCE(iip.total_inward_quantity, 0) AS total_inward_quantity
+    COALESCE(iip.total_inward_quantity, 0) AS total_inward_quantity,
+
+    COALESCE(pol.quantity, iie.quantity)          AS poLineQuantity,
+    COALESCE(pol.tolerance_percent, 0)            AS tolerancePercent
 
 FROM masterschema.indent_inventory ii
 INNER JOIN masterschema.indent_inventory_entries iie
@@ -1280,6 +1283,10 @@ LEFT JOIN (
     GROUP BY indent_entry_id
 ) iip
 ON iie.entryid = iip.indent_entry_id
+
+LEFT JOIN masterschema.purchase_order_line pol
+    ON pol.po_id = po.id
+    AND pol.product_id = iie.productId
 
 WHERE
     iie.line_item_status IN ('PO Created', 'INWARD PARTIAL', 'INWARD COMPLETE')

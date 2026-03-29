@@ -143,6 +143,11 @@ public class InwardInventoryService {
         li.setOrderedQuantity(v.getQuantity());
         li.setRemarks(v.getRemarks());
         li.setSpecification(v.getSpecification());
+        double tolerancePct = v.getTolerancePercent() != null ? v.getTolerancePercent() : 0.0;
+        double poLineQty    = v.getPoLineQuantity()    != null ? v.getPoLineQuantity()    : v.getQuantity();
+        double maxAllowed   = poLineQty * (1 + tolerancePct / 100.0);
+        li.setTolerancePercent(tolerancePct);
+        li.setMaxAllowedQuantity(maxAllowed);
         return li;
     }
 
@@ -238,17 +243,21 @@ public class InwardInventoryService {
 
                     if (!lineItemDetails.isEmpty()) {
                         IndentsForInwardView view = lineItemDetails.get(0);
-                        double indentQty = view.getQuantity();
+                        double poLineQty       = view.getPoLineQuantity()    != null ? view.getPoLineQuantity()    : view.getQuantity();
+                        double tolerancePct    = view.getTolerancePercent()  != null ? view.getTolerancePercent()  : 0.0;
+                        double maxAllowed      = poLineQty * (1 + tolerancePct / 100.0);
                         double alreadyInwarded = view.getTotalInwardQuantity(); // includes THIS inward
                         // Subtract this inward's old qty because the view already counts it,
                         // then add the new qty to check the resulting total
-                        double allowedQty = indentQty - alreadyInwarded + oldQty;
+                        double allowedQty = maxAllowed - alreadyInwarded + oldQty;
 
                         if (newQty > allowedQty) {
                             throw new IllegalArgumentException(
-                                    "Quantity for line item " + lineItemCode +
-                                            " exceeds indent quantity. Allowed: " + allowedQty +
-                                            ", Requested: " + newQty
+                                    "Quantity for '" + view.getProductName() + "' (Line: " + lineItemCode + ")" +
+                                    " exceeds allowed limit. PO Qty: " + poLineQty +
+                                    ", Tolerance: " + tolerancePct + "%" +
+                                    ", Max Allowed: " + allowedQty +
+                                    ", Requested: " + newQty
                             );
                         }
                     }
