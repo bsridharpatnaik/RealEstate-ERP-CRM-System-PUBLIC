@@ -309,7 +309,11 @@ public class PurchaseOrderPdfService {
             addBodyCell(table, product.getMeasurementUnit(), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(grossTotal), normalFont);
+<<<<<<< Updated upstream
             addBodyCell(table, hideMoneyFields ? "" : fmt(discountAmt), normalFont);
+=======
+            addBodyCell(table, hideMoneyFields ? "" : (discPct > 0 ? (discPct % 1 == 0 ? String.valueOf((int) discPct) : fmt(discPct)) + "%" : "-"), normalFont);
+>>>>>>> Stashed changes
             addBodyCell(table, hideMoneyFields ? "" : fmt(taxable), normalFont);
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
