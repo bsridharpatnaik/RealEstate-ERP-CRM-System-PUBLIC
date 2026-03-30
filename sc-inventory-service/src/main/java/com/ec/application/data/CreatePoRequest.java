@@ -33,6 +33,7 @@ public class CreatePoRequest {
     private String overridePhoneNumber;
     private String overrideEmail;
     private boolean specialPo = false;
+    private String projectName;
     /** One entry = one PO line */
     private List<CreatePoLineRequest> lineItems;
     @NonNull

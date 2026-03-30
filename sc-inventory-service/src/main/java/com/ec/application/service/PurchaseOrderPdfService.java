@@ -191,6 +191,8 @@ public class PurchaseOrderPdfService {
         left.addElement(new Paragraph("PO No: " + po.getPurchaseOrderId(), normal));
         left.addElement(new Paragraph("PO Date: " + DATE_FORMAT.format(po.getPoDate()), normal));
         left.addElement(new Paragraph("Status: " + po.getStatus(), normal));
+        if (notBlank(po.getProjectName()))
+            left.addElement(new Paragraph("Project: " + po.getProjectName(), normal));
         if (po.getNeedByDate() != null) {
             left.addElement(new Paragraph("Expected Delivery: " + DATE_FORMAT.format(po.getNeedByDate()), normal));
         }

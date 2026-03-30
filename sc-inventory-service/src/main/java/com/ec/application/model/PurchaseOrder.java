@@ -122,6 +122,9 @@ public class PurchaseOrder extends ReusableFields {
     @Column(name = "override_email", length = 100)
     private String overrideEmail;
 
+    @Column(name = "project_name", length = 100)
+    private String projectName;
+
     /** Nightly-computed priority: CRITICAL, HIGH, MEDIUM, NORMAL (null = no expected date set). */
     @Column(name = "priority", length = 20)
     private String priority;

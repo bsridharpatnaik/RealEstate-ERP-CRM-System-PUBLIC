@@ -179,6 +179,11 @@ public class PurchaseOrderController {
         return ResponseEntity.ok("PO prioritization completed successfully");
     }
 
+    @GetMapping("/project-list")
+    public List<String> getProjectList() {
+        return schemaConfig.getNonMasterSchemaList();
+    }
+
     @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {
