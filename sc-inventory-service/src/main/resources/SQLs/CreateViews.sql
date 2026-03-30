@@ -1285,7 +1285,7 @@ LEFT JOIN (
 ON iie.entryid = iip.indent_entry_id
 
 LEFT JOIN masterschema.purchase_order_line pol
-    ON pol.po_id = po.id
+    ON pol.po_id = po.purchase_order_id
     AND pol.product_id = iie.productId
 
 WHERE

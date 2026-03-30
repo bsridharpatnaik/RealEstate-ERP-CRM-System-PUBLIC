@@ -144,8 +144,9 @@ public class InwardInventoryService {
         li.setRemarks(v.getRemarks());
         li.setSpecification(v.getSpecification());
         double tolerancePct = v.getTolerancePercent() != null ? v.getTolerancePercent() : 0.0;
-        double poLineQty    = v.getPoLineQuantity()    != null ? v.getPoLineQuantity()    : v.getQuantity();
-        double maxAllowed   = poLineQty * (1 + tolerancePct / 100.0);
+        double indentQty    = v.getQuantity() != null ? v.getQuantity() : 0.0;
+        // Option B: each indent line gets its own proportional tolerance budget
+        double maxAllowed   = indentQty * (1 + tolerancePct / 100.0);
         li.setTolerancePercent(tolerancePct);
         li.setMaxAllowedQuantity(maxAllowed);
         return li;
@@ -243,9 +244,10 @@ public class InwardInventoryService {
 
                     if (!lineItemDetails.isEmpty()) {
                         IndentsForInwardView view = lineItemDetails.get(0);
-                        double poLineQty       = view.getPoLineQuantity()    != null ? view.getPoLineQuantity()    : view.getQuantity();
+                        double indentQty       = view.getQuantity()          != null ? view.getQuantity()          : 0.0;
                         double tolerancePct    = view.getTolerancePercent()  != null ? view.getTolerancePercent()  : 0.0;
-                        double maxAllowed      = poLineQty * (1 + tolerancePct / 100.0);
+                        // Option B: tolerance budget is per-indent — indentQty × (1 + tolerance%)
+                        double maxAllowed      = indentQty * (1 + tolerancePct / 100.0);
                         double alreadyInwarded = view.getTotalInwardQuantity(); // includes THIS inward
                         // Subtract this inward's old qty because the view already counts it,
                         // then add the new qty to check the resulting total
@@ -254,7 +256,7 @@ public class InwardInventoryService {
                         if (newQty > allowedQty) {
                             throw new IllegalArgumentException(
                                     "Quantity for '" + view.getProductName() + "' (Line: " + lineItemCode + ")" +
-                                    " exceeds allowed limit. PO Qty: " + poLineQty +
+                                    " exceeds allowed limit. Indent Qty: " + indentQty +
                                     ", Tolerance: " + tolerancePct + "%" +
                                     ", Max Allowed: " + allowedQty +
                                     ", Requested: " + newQty
@@ -392,21 +394,30 @@ public class InwardInventoryService {
                 throw new IllegalArgumentException("Quantity received should be greater than zero for line item code: " + lineItem.getLineItemCode());
             }
 
-            Double poQuantity = pendingItemsForInward.stream()
+            IndentsForInwardView matchedView = pendingItemsForInward.stream()
                     .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
-                    .mapToDouble(IndentsForInwardView::getQuantity)
-                    .sum();
+                    .findFirst()
+                    .orElse(null);
 
-            Double inwardQuantity = pendingItemsForInward.stream()
+            double indentQty     = matchedView != null && matchedView.getQuantity()          != null ? matchedView.getQuantity()          : 0.0;
+            double tolerancePct  = matchedView != null && matchedView.getTolerancePercent()  != null ? matchedView.getTolerancePercent()  : 0.0;
+            double alreadyInwarded = pendingItemsForInward.stream()
                     .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
                     .mapToDouble(IndentsForInwardView::getTotalInwardQuantity)
                     .sum();
 
-            double allowedQuantity = poQuantity - inwardQuantity;
+            double maxAllowed    = indentQty * (1 + tolerancePct / 100.0);
+            double allowedQuantity = maxAllowed - alreadyInwarded;
 
             if (lineItem.getQuantityReceived() > allowedQuantity) {
-                throw new IllegalArgumentException("Quantity received for line item code " + lineItem.getLineItemCode() +
-                        " exceeds the allowed quantity for inward. Allowed quantity: " + allowedQuantity);
+                String productName = matchedView != null ? matchedView.getProductName() : lineItem.getLineItemCode();
+                throw new IllegalArgumentException(
+                        "Quantity received for '" + productName + "' (Line: " + lineItem.getLineItemCode() + ")" +
+                        " exceeds allowed limit." +
+                        " Indent Qty: " + indentQty +
+                        (tolerancePct > 0 ? ", Tolerance: " + tolerancePct + "%, Max Allowed: " + allowedQuantity : ", Max Allowed: " + allowedQuantity) +
+                        ", Requested: " + lineItem.getQuantityReceived()
+                );
             }
 
             if (!validLineItemCodes.contains(lineItem.getLineItemCode()))
