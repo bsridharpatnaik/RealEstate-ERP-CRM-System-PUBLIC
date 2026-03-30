@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import java.io.OutputStream;
 import java.util.*;
 
 import javax.persistence.EntityManager;
@@ -9,6 +10,9 @@ import javax.transaction.Transactional;
 
 import com.ec.application.aspects.UseDefaultTenant;
 import org.apache.commons.collections.ListUtils;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +79,56 @@ public class ContactService {
             return contactRepo.findAll(spec, pageable);
         else
             return contactRepo.findAll(pageable);
+    }
+
+    public void streamContactExcel(FilterDataList filterDataList, OutputStream os) throws Exception {
+        Specification<Contact> spec = ContactSpecifications.getSpecification(filterDataList);
+        List<Contact> contacts = spec != null ? contactRepo.findAll(spec) : contactRepo.findAll();
+
+        SXSSFWorkbook workbook = new SXSSFWorkbook(100);
+        Sheet sheet = workbook.createSheet("Contacts");
+
+        String[] columns = {
+                "Name", "Contact Type", "Mobile No", "Email", "GST Number",
+                "Contact Person", "Contact Person Mobile",
+                "Address Line 1", "Address Line 2", "City", "State", "PIN Code",
+                "Account Name", "Account Number", "Bank Name", "Branch Name", "IFSC Code"
+        };
+
+        Row header = sheet.createRow(0);
+        for (int i = 0; i < columns.length; i++) {
+            header.createCell(i).setCellValue(columns[i]);
+        }
+
+        int rowNum = 1;
+        for (Contact c : contacts) {
+            Row row = sheet.createRow(rowNum++);
+            int col = 0;
+            row.createCell(col++).setCellValue(safe(c.getName()));
+            row.createCell(col++).setCellValue(safe(c.getContactType()));
+            row.createCell(col++).setCellValue(safe(c.getMobileNo()));
+            row.createCell(col++).setCellValue(safe(c.getEmailId()));
+            row.createCell(col++).setCellValue(safe(c.getGstNumber()));
+            row.createCell(col++).setCellValue(safe(c.getContactPerson()));
+            row.createCell(col++).setCellValue(safe(c.getContactPersonMobileNo()));
+            row.createCell(col++).setCellValue(safe(c.getAddr_line1()));
+            row.createCell(col++).setCellValue(safe(c.getAddr_line2()));
+            row.createCell(col++).setCellValue(safe(c.getCity()));
+            row.createCell(col++).setCellValue(safe(c.getState()));
+            row.createCell(col++).setCellValue(safe(c.getZip()));
+            row.createCell(col++).setCellValue(safe(c.getAccountName()));
+            row.createCell(col++).setCellValue(safe(c.getAccountNumber()));
+            row.createCell(col++).setCellValue(safe(c.getBankName()));
+            row.createCell(col++).setCellValue(safe(c.getBranchName()));
+            row.createCell(col++).setCellValue(safe(c.getIfscCode()));
+        }
+
+        workbook.write(os);
+        workbook.dispose();
+    }
+
+    private String safe(String value) {
+        return value != null ? value : "";
     }
 
     public void deleteContact(Long id) throws Exception {
