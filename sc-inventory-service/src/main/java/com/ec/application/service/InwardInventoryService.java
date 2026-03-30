@@ -143,11 +143,15 @@ public class InwardInventoryService {
         li.setOrderedQuantity(v.getQuantity());
         li.setRemarks(v.getRemarks());
         li.setSpecification(v.getSpecification());
-        double tolerancePct = v.getTolerancePercent() != null ? v.getTolerancePercent() : 0.0;
-        double indentQty    = v.getQuantity() != null ? v.getQuantity() : 0.0;
-        // Option B: each indent line gets its own proportional tolerance budget
-        double maxAllowed   = indentQty * (1 + tolerancePct / 100.0);
+        double tolerancePct    = v.getTolerancePercent() != null ? v.getTolerancePercent() : 0.0;
+        double indentQty       = v.getQuantity() != null ? v.getQuantity() : 0.0;
+        double alreadyInwarded = v.getTotalInwardQuantity() != null ? v.getTotalInwardQuantity() : 0.0;
+        double pendingQty      = Math.max(indentQty - alreadyInwarded, 0.0);
+        // maxAllowed = pending qty + tolerance buffer (based on original ordered qty)
+        double maxAllowed      = pendingQty + (indentQty * tolerancePct / 100.0);
         li.setTolerancePercent(tolerancePct);
+        li.setTotalInwardQuantity(alreadyInwarded);
+        li.setPendingQuantity(pendingQty);
         li.setMaxAllowedQuantity(maxAllowed);
         return li;
     }

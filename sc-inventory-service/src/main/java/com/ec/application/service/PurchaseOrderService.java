@@ -4,6 +4,7 @@ import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.IndentInventorySpecification;
 import com.ec.application.Filters.PurchaseOrderSpecification;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.*;
@@ -80,6 +81,12 @@ public class PurchaseOrderService extends ReusableFields {
     @Autowired
     IndentInventoryListRepo indentInventoryListRepo;
 
+    @Autowired
+    FirmService firmService;
+
+    @Autowired
+    SupplierService supplierService;
+
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
@@ -92,6 +99,70 @@ public class PurchaseOrderService extends ReusableFields {
         String username = userDetailsService.getCurrentUser().getUsername();
         poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), username, buildPoCreationMessage(request, username), buildPoCreationRelations(request));
         return savedPO;
+    }
+
+    @Transactional
+    public PurchaseOrder updatePurchaseOrder(String id, UpdatePoRequest request) throws Exception {
+        validator.validateOverridePhoneNumber(request.getOverridePhoneNumber());
+        validator.validateOverrideEmail(request.getOverrideEmail());
+
+        PurchaseOrder po = purchaseOrderRepo.findById(id)
+                .orElseThrow(() -> new Exception("Purchase Order not found: " + id));
+
+        if (!POStatusConstants.STATUS_NEW.equals(po.getStatus())) {
+            throw new Exception("Purchase Order cannot be edited. Only POs in NEW status can be edited.");
+        }
+
+        // Update header fields
+        if (request.getSupplierId() != null) {
+            po.setSupplier(supplierService.findSingleSupplier(request.getSupplierId()));
+        }
+        if (request.getFirmId() != null) {
+            po.setFirm(firmService.findSingleFirm(request.getFirmId()));
+        }
+        po.setSubject(request.getSubject());
+        po.setNotes(request.getNotes());
+        po.setOverridePhoneNumber(request.getOverridePhoneNumber());
+        po.setOverrideEmail(request.getOverrideEmail());
+        po.setProjectName(request.getProjectName());
+        po.setSpecialPo(request.isSpecialPo());
+        po.setFreightCharges(request.getFreightCharges());
+        po.setFreightGstPercent(request.getFreightGstPercent());
+        po.setTotalFreightCharges(request.getTotalFreightCharges());
+        po.setGrandTotal(request.getGrandTotal());
+
+        if (request.getFileInformations() != null) {
+            po.setFileInformations(ReusableMethods.convertFilesListToSet(request.getFileInformations()));
+        }
+
+        // Update existing lines — quantity and indent refs are NOT changed
+        if (request.getLineUpdates() != null) {
+            Map<Long, UpdatePoLineRequest> lineUpdateMap = request.getLineUpdates().stream()
+                    .filter(u -> u.getLineId() != null)
+                    .collect(Collectors.toMap(UpdatePoLineRequest::getLineId, u -> u));
+
+            for (PurchaseOrderLine line : po.getLines()) {
+                UpdatePoLineRequest update = lineUpdateMap.get(line.getId());
+                if (update != null) {
+                    line.setRate(update.getRate());
+                    line.setDiscountPercent(update.getDiscountPercent());
+                    line.setTolerancePercent(update.getTolerancePercent() != null ? update.getTolerancePercent() : 0.0);
+                    line.setGstPercent(update.getGstPercent());
+                    line.setBrand(update.getBrand());
+                    line.setGrade(update.getGrade());
+                    line.setDiameter(update.getDiameter());
+                    line.setSpecification(update.getSpecification());
+                    line.setNetRate(update.getNetRate());
+                    line.setTotalAmount(update.getTotalAmount());
+                }
+            }
+        }
+
+        PurchaseOrder saved = purchaseOrderRepo.save(po);
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
+                "Purchase Order updated by " + username, null);
+        return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
     }
 
     @Transactional(readOnly = true)

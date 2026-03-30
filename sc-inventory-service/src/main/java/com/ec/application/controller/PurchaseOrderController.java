@@ -71,6 +71,13 @@ public class PurchaseOrderController {
         return purchaseOrderService.getPurchaseOrderWithInit(id);
     }
 
+    @PutMapping("/{id}")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    public PurchaseOrder updatePurchaseOrder(@PathVariable String id, @RequestBody UpdatePoRequest payload) throws Exception {
+        return purchaseOrderService.updatePurchaseOrder(id, payload);
+    }
+
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
     @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
