@@ -1234,20 +1234,16 @@ LEFT JOIN last_inward_dates lid ON ps.productId = lid.productId;
 CREATE OR REPLACE VIEW masterschema.IndentsForInward AS
 SELECT
     iie.line_item_code AS lineItemCode,
-
     ii.indent_id,
     ii.indent_date,
     ii.indent_status,
     ii.createdBy AS indentCreatedBy,
     ii.tenant,
-
     iie.line_item_status,
     iie.productId,
-
     p.product_name,
     p.product_code,
     p.measurementUnit,
-
     iie.purchaseOrderId,
     iie.quantity,
     iie.remarks,
@@ -1256,14 +1252,11 @@ SELECT
     po.purchase_order_id,
     po.grandTotal,
     po.status AS po_status,
-
     c.contactId AS supplier_id,
     c.name AS supplier_name,
-
     COALESCE(iip.total_inward_quantity, 0) AS total_inward_quantity,
-
-    COALESCE(pol.quantity, iie.quantity)          AS poLineQuantity,
-    COALESCE(pol.tolerance_percent, 0)            AS tolerancePercent
+    COALESCE(pol.quantity, iie.quantity)   AS poLineQuantity,
+    COALESCE(pol.tolerance_percent, 0)     AS tolerancePercent
 
 FROM masterschema.indent_inventory ii
 INNER JOIN masterschema.indent_inventory_entries iie
@@ -1274,20 +1267,14 @@ INNER JOIN masterschema.purchase_order po
     ON po.purchase_order_id = iie.purchaseOrderId
 INNER JOIN masterschema.contacts c
     ON po.supplier_id = c.contactId
-
 LEFT JOIN (
-    SELECT
-        indent_entry_id,
-        SUM(inward_quantity) AS total_inward_quantity
+    SELECT indent_entry_id, SUM(inward_quantity) AS total_inward_quantity
     FROM masterschema.indent_inward_mapping
     GROUP BY indent_entry_id
-) iip
-ON iie.entryid = iip.indent_entry_id
-
+) iip ON iie.entryid = iip.indent_entry_id
 LEFT JOIN masterschema.purchase_order_line pol
     ON pol.po_id = po.purchase_order_id
     AND pol.product_id = iie.productId
-
 WHERE
     iie.line_item_status IN ('PO Created', 'INWARD PARTIAL', 'INWARD COMPLETE')
     AND ii.is_deleted = 0
@@ -1295,6 +1282,9 @@ WHERE
     AND po.is_deleted = 0
     AND p.is_deleted = 0
     AND c.is_deleted = 0;
+
+
+
 
  SELECT COUNT(*) INTO @idx_exists
  FROM information_schema.statistics

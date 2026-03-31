@@ -30,6 +30,9 @@ public class Draft extends ReusableFields {
     @Column(name = "draft_type", length = 50, nullable = false)
     private String draftType;
 
+    @Column(name = "draft_name", length = 150)
+    private String draftName;
+
     @Column(name = "username", length = 50, nullable = false)
     String username;
 
