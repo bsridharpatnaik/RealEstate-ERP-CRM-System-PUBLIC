@@ -18,4 +18,6 @@ public class UpdatePoLineRequest {
     private String diameter;
     @JsonDeserialize(using = ToTitleCaseDeserializer.class)
     private String specification;
+    /** UUID of the DBFile used as a sample image for this line item */
+    private String sampleImageFileId;
 }

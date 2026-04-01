@@ -67,7 +67,7 @@ public class FileHandlingService {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(dbFile.getFileType()))
                     .header(HttpHeaders.CONTENT_DISPOSITION,
-                            "attachment; filename*=UTF-8''" + encodedName)
+                            "inline; filename*=UTF-8''" + encodedName)
                     .body(new ByteArrayResource(dbFile.getData()));
         } catch (Exception e) {
             log.error("Error downloading file", e);

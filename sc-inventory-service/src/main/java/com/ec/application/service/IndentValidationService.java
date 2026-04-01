@@ -32,8 +32,8 @@ public class IndentValidationService {
         // Admin/Manager can cancel an APPROVED indent if no POs have been created yet
         if (isAdminOrManager && IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status)) {
             boolean hasPo = indentInventory.getInventoryList().stream()
-                .anyMatch(item -> !IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(item.getIndentLineItemStatus())
-                               && !IndentLineItemStatusConstants.STATUS_SPLIT.equalsIgnoreCase(item.getIndentLineItemStatus()));
+                .anyMatch(item -> !IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(item.getLineItemStatus())
+                               && !IndentLineItemStatusConstants.STATUS_SPLIT.equalsIgnoreCase(item.getLineItemStatus()));
             if (!hasPo) {
                 return "CANCEL";
             }

@@ -82,10 +82,16 @@ public class PurchaseOrderService extends ReusableFields {
     IndentInventoryListRepo indentInventoryListRepo;
 
     @Autowired
+    com.ec.application.repository.DBFileRepository dbFileRepository;
+
+    @Autowired
     FirmService firmService;
 
     @Autowired
     SupplierService supplierService;
+
+    @Autowired
+    TenantService tenantService;
 
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
@@ -154,6 +160,7 @@ public class PurchaseOrderService extends ReusableFields {
                     line.setSpecification(update.getSpecification());
                     line.setNetRate(update.getNetRate());
                     line.setTotalAmount(update.getTotalAmount());
+                    line.setSampleImageFileId(update.getSampleImageFileId());
                 }
             }
         }
@@ -286,6 +293,19 @@ public class PurchaseOrderService extends ReusableFields {
             }
         } catch (Exception e) {
             // Non-critical — just skip if it fails
+        }
+
+        // Pre-fetch sample image bytes for PDF generation.
+        // Files are stored in master schema (FileHandlingService uses @UseDefaultTenant).
+        for (PurchaseOrderLine line : po.getLines()) {
+            if (line.getSampleImageFileId() != null) {
+                try {
+                    dbFileRepository.findById(line.getSampleImageFileId())
+                            .ifPresent(dbFile -> line.setSampleImageData(dbFile.getData()));
+                } catch (Exception ex) {
+                    // Non-critical — PDF will just show "-" for this line
+                }
+            }
         }
 
         // MASK PRICE FIELDS

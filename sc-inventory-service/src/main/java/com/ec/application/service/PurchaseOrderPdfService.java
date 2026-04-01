@@ -269,14 +269,27 @@ public class PurchaseOrderPdfService {
         Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
-        PdfPTable table = new PdfPTable(12);
+        List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
+
+        // Only show the image column when at least one line has an image
+        boolean hasImages = lines.stream()
+                .anyMatch(l -> l.getSampleImageData() != null && l.getSampleImageData().length > 0);
+        int numCols = hasImages ? 13 : 12;
+
+        PdfPTable table = new PdfPTable(numCols);
         table.setWidthPercentage(100);
         table.setSpacingBefore(8f);
         table.setSpacingAfter(0f);
-        table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 1.0f});
+
+        if (hasImages) {
+            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+        } else {
+            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+        }
 
         // Column headers — money columns blanked for executives
         addHeaderCell(table, "Code & Description", headerFont);
+        if (hasImages) addHeaderCell(table, "Sample Image", headerFont);
         addHeaderCell(table, "Qty", headerFont);
         addHeaderCell(table, "UOM", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Rate \u20B9", headerFont);
@@ -289,7 +302,6 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
         addHeaderCell(table, "Exp. Date", headerFont);
 
-        List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
         for (PurchaseOrderLine line : lines) {
             Product product = line.getProduct();
             String desc = product.getProductName()
@@ -310,6 +322,32 @@ public class PurchaseOrderPdfService {
             String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : fmt(tolPct)) + "%" : "-";
 
             addBodyCell(table, desc, normalFont);
+
+            // Sample image cell — only added when the column is shown
+            if (hasImages) {
+                PdfPCell imageCell = new PdfPCell();
+                imageCell.setPadding(4f);
+                imageCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                imageCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                boolean imageAdded = false;
+                byte[] imgBytes = line.getSampleImageData();
+                if (imgBytes != null && imgBytes.length > 0) {
+                    try {
+                        Image img = Image.getInstance(imgBytes);
+                        img.scaleToFit(58f, 58f);
+                        img.setAlignment(Image.ALIGN_CENTER);
+                        imageCell.addElement(img);
+                        imageAdded = true;
+                    } catch (Exception e) {
+                        log.warn("Could not embed sample image for line {}: {}", line.getId(), e.getMessage());
+                    }
+                }
+                if (!imageAdded) {
+                    imageCell.addElement(new Phrase("-", normalFont));
+                }
+                table.addCell(imageCell);
+            }
+
             addBodyCell(table, fmt(qty), normalFont);
             addBodyCell(table, product.getMeasurementUnit(), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
@@ -323,23 +361,17 @@ public class PurchaseOrderPdfService {
             addBodyCell(table, expDate, normalFont);
         }
 
-        // Line items subtotal (excludes freight — grand total is shown after charges section)
+        // Line items subtotal — single full-width cell to avoid narrow-column overflow
         double lineItemsSubtotal = lines.stream()
                 .mapToDouble(line -> line.getTotalAmount() != null ? line.getTotalAmount() : 0.0)
                 .sum();
 
-        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL \u20B9", headerFont));
-        totalLabel.setColspan(11);
-        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalLabel.setPadding(4f);
-        table.addCell(totalLabel);
-
-        PdfPCell totalVal = new PdfPCell(
-                new Phrase(hideMoneyFields ? "" : fmt(lineItemsSubtotal), headerFont));
-        totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalVal.setPadding(4f);
-        totalVal.setNoWrap(true);
-        table.addCell(totalVal);
+        String totalText = hideMoneyFields ? "TOTAL" : "TOTAL    " + fmt(lineItemsSubtotal);
+        PdfPCell totalCell = new PdfPCell(new Phrase(totalText, headerFont));
+        totalCell.setColspan(numCols);
+        totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        totalCell.setPadding(4f);
+        table.addCell(totalCell);
 
         document.add(table);
     }
@@ -358,7 +390,7 @@ public class PurchaseOrderPdfService {
         charges.setHorizontalAlignment(Element.ALIGN_RIGHT);
         charges.setSpacingBefore(0f);
 
-        PdfPCell fcLabel = new PdfPCell(new Phrase("Freight Charges \u20B9", normal));
+        PdfPCell fcLabel = new PdfPCell(new Phrase("Freight Charges", normal));
         fcLabel.setPadding(4f);
         charges.addCell(fcLabel);
         PdfPCell fcVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(freightCharges), normal));
@@ -374,7 +406,7 @@ public class PurchaseOrderPdfService {
         gstVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         charges.addCell(gstVal);
 
-        PdfPCell freightTotalLabel = new PdfPCell(new Phrase("Total Freight Charges \u20B9", bold));
+        PdfPCell freightTotalLabel = new PdfPCell(new Phrase("Total Freight Charges", bold));
         freightTotalLabel.setPadding(4f);
         charges.addCell(freightTotalLabel);
         PdfPCell freightTotalVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(totalFreight), bold));
