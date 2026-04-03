@@ -16,21 +16,21 @@ public class IndentValidationService {
 
     public String validateBeforeDelete(IndentInventory indentInventory) throws Exception {
         String status = indentInventory.getIndentStatus();
-        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
-        boolean isInventoryExecutive = userDetailsService.isInventoryExecutive();
+        boolean canManage = userDetailsService.canApproveRejectCancelIndent();
+        boolean isStoreIncharge = userDetailsService.isStoreIncharge();
 
-        // Executive can cancel only NEW (pre-approval) indents
-        if (isInventoryExecutive && IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status)) {
+        // Store Incharge can cancel only their own NEW (pre-approval) indents
+        if (isStoreIncharge && IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status)) {
             return "CANCEL";
         }
 
-        // Admin/Manager can reject only NEW indents (before approval)
-        if (isAdminOrManager && IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status)) {
+        // Admin / Purchase Manager / Project Manager can reject NEW indents (before approval)
+        if (canManage && IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status)) {
             return "REJECT";
         }
 
-        // Admin/Manager can cancel an APPROVED indent if no POs have been created yet
-        if (isAdminOrManager && IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status)) {
+        // Admin / Purchase Manager / Project Manager can cancel an APPROVED indent if no POs created yet
+        if (canManage && IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status)) {
             boolean hasPo = indentInventory.getInventoryList().stream()
                 .anyMatch(item -> !IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(item.getLineItemStatus())
                                && !IndentLineItemStatusConstants.STATUS_SPLIT.equalsIgnoreCase(item.getLineItemStatus()));
@@ -45,8 +45,8 @@ public class IndentValidationService {
 
     public void validateBeforeApprove(IndentInventory indentInventory) throws Exception {
         String status = indentInventory.getIndentStatus();
-        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
-        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isAdminOrManager) {
+        boolean canManage = userDetailsService.canApproveRejectCancelIndent();
+        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && canManage) {
             return;
         } else {
             throw new IllegalStateException("Indent cannot be approved in status: " + status + " by current user.");
@@ -55,26 +55,27 @@ public class IndentValidationService {
 
     public void validateBeforeUpdate(IndentInventory indentInventory) throws Exception {
         String status = indentInventory.getIndentStatus();
-        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
-        boolean isInventoryExecutive = userDetailsService.isInventoryExecutive();
+        boolean isAdminOrPurchaseManager = userDetailsService.isAdminOrPurchaseManager();
+        boolean isStoreIncharge = userDetailsService.isStoreIncharge();
 
-        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isInventoryExecutive) {
+        // Store Incharge can edit NEW indents; Admin/Purchase Manager can edit APPROVED indents
+        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isStoreIncharge) {
             return;
-        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrManager) {
+        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrPurchaseManager) {
             return;
         } else {
-            throw new IllegalStateException("Indent cannot be updated in status: " + status + "by current user.");
+            throw new IllegalStateException("Indent cannot be updated in status: " + status + " by current user.");
         }
     }
 
     public void validateBeforeSplit(IndentInventory indentInventory, IndentInventoryList lineItem) throws Exception {
         String indentStatus = indentInventory.getIndentStatus();
         String lineItemStatus = lineItem.getLineItemStatus();
-        boolean isAdminOrManager = userDetailsService.isAdminOrManager();
+        boolean isAdminOrPurchaseManager = userDetailsService.isAdminOrPurchaseManager();
 
         if (
                 (indentStatus.equalsIgnoreCase(IndentStatusConstants.STATUS_APPROVED) || indentStatus.equalsIgnoreCase(IndentStatusConstants.STATUS_PO_PARTIAL)) &&
-                 isAdminOrManager && IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(lineItemStatus)) {
+                 isAdminOrPurchaseManager && IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(lineItemStatus)) {
             return;
         } else {
             throw new IllegalStateException("Indent line item cannot be split in status: " + lineItemStatus + " by current user.");

@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
  * Usage (inject this bean and call generatePdf):
  * byte[] pdfBytes = purchaseOrderPdfService.generatePdf(purchaseOrder);
  * <p>
- * Role-based visibility: inventory-executive users will see the PDF with all
+ * Role-based visibility: project-manager and store-incharge will see the PDF with all
  * money-related fields (rates, amounts, totals) blanked out.
  */
 @Service
@@ -64,7 +64,7 @@ public class PurchaseOrderPdfService {
             throws Exception {
         // If forceHideMoneyFields is true (manager chose "without rates"),
         // OR the current user is an executive, hide money fields
-        boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isInventoryExecutive();
+        boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isPriceRestricted();
 
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
         PdfWriter writer = PdfWriter.getInstance(document, outputStream);
@@ -87,8 +87,8 @@ public class PurchaseOrderPdfService {
     public void generatePdf(PurchaseOrder po, OutputStream outputStream)
             throws Exception {
 
-        // Resolve once: inventory-executives must not see any monetary values
-        boolean hideMoneyFields = userDetailsService.isInventoryExecutive();
+        // Resolve once: price-restricted roles must not see any monetary values
+        boolean hideMoneyFields = userDetailsService.isPriceRestricted();
 
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
         PdfWriter writer = PdfWriter.getInstance(document, outputStream);

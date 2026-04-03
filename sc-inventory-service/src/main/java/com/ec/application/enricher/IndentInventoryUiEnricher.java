@@ -21,7 +21,7 @@ public class IndentInventoryUiEnricher {
 
         // Approval flag
         try {
-            boolean allowed = userDetailsService.isAdminOrManager() && IndentStatusConstants.STATUS_NEW.equals(indent.getIndentStatus());
+            boolean allowed = userDetailsService.canApproveRejectCancelIndent() && IndentStatusConstants.STATUS_NEW.equals(indent.getIndentStatus());
             indent.setApprovalAllowed(allowed);
         } catch (Exception e) {
             indent.setApprovalAllowed(false);

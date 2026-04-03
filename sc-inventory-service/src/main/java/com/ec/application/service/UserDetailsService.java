@@ -103,11 +103,30 @@ public class UserDetailsService {
                 .anyMatch(r -> r.equalsIgnoreCase(role));
     }
 
-    public boolean isAdminOrManager() throws Exception {
-        return (hasRole(RoleConstants.ADMIN) || hasRole(RoleConstants.INVENTORY_MANAGER));
+    /** Admin or Purchase Manager — full write access to PO, Indents, Global Config. */
+    public boolean isAdminOrPurchaseManager() throws Exception {
+        return (hasRole(RoleConstants.ADMIN) || hasRole(RoleConstants.PURCHASE_MANAGER));
     }
 
-    public boolean isInventoryExecutive() throws Exception {
-        return (hasRole(RoleConstants.INVENTORY_EXECUTIVE) && !hasRole(RoleConstants.INVENTORY_MANAGER) && !hasRole(RoleConstants.ADMIN));
+    /** Roles that can approve, reject, or cancel Indents. */
+    public boolean canApproveRejectCancelIndent() throws Exception {
+        return (hasRole(RoleConstants.ADMIN)
+                || hasRole(RoleConstants.PURCHASE_MANAGER)
+                || hasRole(RoleConstants.PROJECT_MANAGER));
+    }
+
+    /** Store Incharge — can create/edit own project indents and cancel NEW indents. */
+    public boolean isStoreIncharge() throws Exception {
+        return hasRole(RoleConstants.STORE_INCHARGE)
+                && !hasRole(RoleConstants.ADMIN)
+                && !hasRole(RoleConstants.PURCHASE_MANAGER);
+    }
+
+    /** Roles that must NOT see pricing/rate data anywhere in the system. */
+    public boolean isPriceRestricted() throws Exception {
+        return (hasRole(RoleConstants.PROJECT_MANAGER) || hasRole(RoleConstants.STORE_INCHARGE))
+                && !hasRole(RoleConstants.ADMIN)
+                && !hasRole(RoleConstants.PURCHASE_MANAGER)
+                && !hasRole(RoleConstants.MANAGEMENT);
     }
 }

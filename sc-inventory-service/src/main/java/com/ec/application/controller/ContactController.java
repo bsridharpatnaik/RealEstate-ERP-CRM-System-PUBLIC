@@ -2,7 +2,9 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.ContactExportDAO;
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -50,6 +52,7 @@ public class ContactController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     public Contact createCategory(@RequestBody Contact payload) throws Exception {
         return contactInfoService.createContact(payload);
     }
@@ -106,6 +109,7 @@ public class ContactController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception {
         contactInfoService.deleteContact(id);
         return ResponseEntity.ok("Contact Deleted sucessfully.");
@@ -113,6 +117,7 @@ public class ContactController {
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     public Contact updateContact(@PathVariable Long id, @RequestBody Contact payload) throws Exception {
         return contactInfoService.updateContact(id, payload);
     }

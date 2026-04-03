@@ -51,7 +51,7 @@ public class ProductController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) throws Exception {
         productService.deleteProduct(id);
         return ResponseEntity.ok("Entity deleted");
@@ -60,14 +60,14 @@ public class ProductController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public Product createProduct(@RequestBody ProductCreateData payload) throws Exception {
         return productService.createProduct(payload);
     }
 
     @PutMapping("/{id}")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public Product updateProduct(@PathVariable Long id, @RequestBody ProductCreateData Product) throws Exception {
         return productService.updateProduct(id, Product);
     }
@@ -120,7 +120,7 @@ public class ProductController {
      */
     @PutMapping("/{id}/tenant-reorder-config")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public ResponseEntity<Void> saveTenantReorderConfig(
             @PathVariable Long id,
             @RequestBody TenantReorderSaveRequest request) {
@@ -134,7 +134,7 @@ public class ProductController {
      */
     @DeleteMapping("/{id}/tenant-reorder-config/{tenantName}")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public ResponseEntity<Void> removeTenantReorderConfig(
             @PathVariable Long id,
             @PathVariable String tenantName) {

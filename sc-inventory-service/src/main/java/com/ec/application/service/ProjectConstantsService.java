@@ -70,10 +70,10 @@ public class ProjectConstantsService {
         for (String role : userReturnData.getRoles()) {
             if (role.toLowerCase().contains(RoleConstants.ADMIN))
                 return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString()).get().getValue());
-            else if (role.toLowerCase().contains(RoleConstants.INVENTORY_MANAGER))
+            else if (role.equalsIgnoreCase(RoleConstants.PURCHASE_MANAGER))
                 return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_MANAGER.toString()).get().getValue());
-            else if (role.toLowerCase().contains(RoleConstants.INVENTORY_EXECUTIVE))
-                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString()).get().getValue());;
+            else if (role.equalsIgnoreCase(RoleConstants.STORE_INCHARGE) || role.equalsIgnoreCase(RoleConstants.PROJECT_MANAGER) || role.equalsIgnoreCase(RoleConstants.MANAGEMENT))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString()).get().getValue());
         }
         return (long) 3;
     }

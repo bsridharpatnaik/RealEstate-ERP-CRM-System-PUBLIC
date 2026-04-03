@@ -2,7 +2,9 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -48,6 +50,7 @@ public class MachineryController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public ResponseEntity<?> deleteMachinery(@PathVariable Long id) throws Exception {
         machineryService.deleteMachinery(id);
         return ResponseEntity.ok("Entity deleted");
@@ -56,12 +59,14 @@ public class MachineryController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public Machinery createMachinery(@RequestBody Machinery payload) throws Exception {
         return machineryService.createMachinery(payload);
     }
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public Machinery updateMachinery(@PathVariable Long id, @RequestBody Machinery Machinery) throws Exception {
         return machineryService.updateMachinery(id, Machinery);
     }

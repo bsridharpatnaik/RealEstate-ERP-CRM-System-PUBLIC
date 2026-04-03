@@ -3,8 +3,10 @@ package com.ec.application.controller;
 import java.util.List;
 import java.util.Map;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.*;
 import com.ec.application.model.IndentInventory;
@@ -49,6 +51,7 @@ public class IndentInventoryController {
 
     @PostMapping("/create")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     @ResponseStatus(HttpStatus.CREATED)
     public IndentInventory createInwardInventory(@RequestBody IndentInventoryData payload) throws Exception {
         return iiService.createIndentInventory(payload);
@@ -69,7 +72,7 @@ public class IndentInventoryController {
     }
 
     @DeleteMapping(value = "/{id}")
-    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER, RoleConstants.STORE_INCHARGE})
     public ResponseEntity<?> deleteIndentInventoryById(
             @PathVariable String id,
             @RequestBody(required = false) Map<String, String> body) throws Exception {
@@ -80,6 +83,7 @@ public class IndentInventoryController {
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     public IndentInventory updateIndentInventoryById(@PathVariable String id, @RequestBody IndentInventoryData payload)
             throws Exception {
         return iiService.updateIndentInventory(payload, id);
@@ -99,6 +103,7 @@ public class IndentInventoryController {
     }
 
     @PatchMapping("/{indentId}/approve")
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER})
     public ResponseEntity<?> approveIndent(@PathVariable String indentId) {
         try {
             IndentInventory result = iiService.approveIndentInventory(indentId);
