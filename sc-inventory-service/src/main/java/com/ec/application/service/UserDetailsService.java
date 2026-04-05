@@ -108,6 +108,14 @@ public class UserDetailsService {
         return (hasRole(RoleConstants.ADMIN) || hasRole(RoleConstants.PURCHASE_MANAGER));
     }
 
+    /** Roles that can edit Indent records (NEW or APPROVED, before any PO is created).
+     *  Admin, Purchase Manager, and Project Manager — excludes Store Incharge for APPROVED edits. */
+    public boolean canEditIndentAsManager() throws Exception {
+        return (hasRole(RoleConstants.ADMIN)
+                || hasRole(RoleConstants.PURCHASE_MANAGER)
+                || hasRole(RoleConstants.PROJECT_MANAGER));
+    }
+
     /** Roles that can approve, reject, or cancel Indents. */
     public boolean canApproveRejectCancelIndent() throws Exception {
         return (hasRole(RoleConstants.ADMIN)

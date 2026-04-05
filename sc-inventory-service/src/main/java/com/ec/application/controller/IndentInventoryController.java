@@ -83,7 +83,7 @@ public class IndentInventoryController {
 
     @PutMapping("/{id}")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER, RoleConstants.STORE_INCHARGE})
     public IndentInventory updateIndentInventoryById(@PathVariable String id, @RequestBody IndentInventoryData payload)
             throws Exception {
         return iiService.updateIndentInventory(payload, id);

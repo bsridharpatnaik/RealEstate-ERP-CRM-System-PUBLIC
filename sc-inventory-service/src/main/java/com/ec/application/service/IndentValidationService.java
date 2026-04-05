@@ -55,15 +55,19 @@ public class IndentValidationService {
 
     public void validateBeforeUpdate(IndentInventory indentInventory) throws Exception {
         String status = indentInventory.getIndentStatus();
-        boolean isAdminOrPurchaseManager = userDetailsService.isAdminOrPurchaseManager();
+        boolean canEditAsManager = userDetailsService.canEditIndentAsManager(); // admin, purchase-manager, project-manager
         boolean isStoreIncharge = userDetailsService.isStoreIncharge();
 
-        // Store Incharge can edit NEW indents; Admin/Purchase Manager can edit APPROVED indents
-        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && isStoreIncharge) {
+        // NEW indents: admin, purchase-manager, project-manager, or store-incharge can edit
+        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && (canEditAsManager || isStoreIncharge)) {
             return;
-        } else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && isAdminOrPurchaseManager) {
+        }
+        // APPROVED indents (before any PO is created): admin, purchase-manager, project-manager can edit
+        // Store Incharge cannot edit once approved — they no longer own the record
+        else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && canEditAsManager) {
             return;
-        } else {
+        }
+        else {
             throw new IllegalStateException("Indent cannot be updated in status: " + status + " by current user.");
         }
     }
