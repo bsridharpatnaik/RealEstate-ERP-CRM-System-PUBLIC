@@ -466,17 +466,26 @@ public class PurchaseOrderPdfService {
         document.add(termsTitle);
 
         if (notBlank(po.getNotes())) {
-            try {
-                String css = "body, p, li, ol, ul { font-size: 8pt; font-family: Helvetica, Arial, sans-serif; }"
-                           + "p  { margin: 1pt 0; }"
-                           + "ol, ul { margin: 0; padding-left: 14pt; }"
-                           + "li { margin: 1pt 0; }";
-                XMLWorkerHelper.getInstance().parseXHtml(
-                    writer, document,
-                    new java.io.ByteArrayInputStream(po.getNotes().getBytes("UTF-8")),
-                    new java.io.ByteArrayInputStream(css.getBytes("UTF-8")));
-            } catch (Exception e) {
-                // XMLWorker already rendered partial content — suppress fallback to avoid duplication
+            String notes = po.getNotes().trim();
+            if (!notes.contains("<")) {
+                // Plain text — render directly with iText, no XMLWorker needed
+                for (String line : notes.split("\n")) {
+                    document.add(new Paragraph(line.trim(), smallFont));
+                }
+            } else {
+                // HTML content from rich text editor — use XMLWorker
+                try {
+                    String css = "body, p, li, ol, ul { font-size: 8pt; font-family: Helvetica, Arial, sans-serif; }"
+                               + "p  { margin: 1pt 0; }"
+                               + "ol, ul { margin: 0; padding-left: 14pt; }"
+                               + "li { margin: 1pt 0; }";
+                    XMLWorkerHelper.getInstance().parseXHtml(
+                        writer, document,
+                        new java.io.ByteArrayInputStream(notes.getBytes("UTF-8")),
+                        new java.io.ByteArrayInputStream(css.getBytes("UTF-8")));
+                } catch (Exception e) {
+                    // XMLWorker already rendered partial content — suppress fallback to avoid duplication
+                }
             }
         }
 

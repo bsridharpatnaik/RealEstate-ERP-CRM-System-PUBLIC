@@ -38,6 +38,7 @@ public class PurchaseOrderLine extends ReusableFields {
     private String brand;
     private String grade;
     private String diameter;
+    @Column(columnDefinition = "TEXT")
     private String specification;
 
     private Double quantity;
