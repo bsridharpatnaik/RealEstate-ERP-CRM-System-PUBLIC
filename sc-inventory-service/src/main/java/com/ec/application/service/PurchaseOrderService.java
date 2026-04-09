@@ -13,6 +13,7 @@ import com.ec.application.enricher.PurchaseOrderUiEnricher;
 import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
 import com.ec.application.model.*;
 import com.ec.application.repository.IndentInventoryListRepo;
+import com.ec.application.repository.PurchaseOrderCustomChargeRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
 import java.util.stream.Collectors;
 import com.ec.application.util.PurchaseOrderPriceMasker;
@@ -47,6 +48,9 @@ public class PurchaseOrderService extends ReusableFields {
 
     @Autowired
     PurchaseOrderRepo purchaseOrderRepo;
+
+    @Autowired
+    PurchaseOrderCustomChargeRepo customChargeRepo;
 
     @Autowired
     PurchaseOrderValidator validator;
@@ -136,6 +140,21 @@ public class PurchaseOrderService extends ReusableFields {
         po.setFreightGstPercent(request.getFreightGstPercent());
         po.setTotalFreightCharges(request.getTotalFreightCharges());
         po.setGrandTotal(request.getGrandTotal());
+
+        // Replace custom charges: delete old ones, add new ones
+        customChargeRepo.deleteByPurchaseOrderId(po.getPurchaseOrderId());
+        po.getCustomCharges().clear();
+        if (request.getCustomCharges() != null) {
+            for (CustomChargeRequest chargeReq : request.getCustomCharges()) {
+                PurchaseOrderCustomCharge charge = new PurchaseOrderCustomCharge();
+                charge.setPurchaseOrder(po);
+                charge.setChargeName(chargeReq.getChargeName());
+                charge.setChargeAmount(chargeReq.getChargeAmount());
+                charge.setChargeGstPercent(chargeReq.getChargeGstPercent());
+                charge.setTotalChargeAmount(chargeReq.getTotalChargeAmount());
+                po.getCustomCharges().add(charge);
+            }
+        }
 
         if (request.getFileInformations() != null) {
             po.setFileInformations(ReusableMethods.convertFilesListToSet(request.getFileInformations()));

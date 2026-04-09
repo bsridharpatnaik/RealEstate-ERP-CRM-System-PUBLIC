@@ -24,6 +24,7 @@ public class UpdatePoRequest {
     private boolean specialPo = false;
     private String projectName;
     private List<FileInformationDAO> fileInformations;
+    private List<CustomChargeRequest> customCharges;
     /** Rate/discount/gst updates per existing line — quantity and indent refs are NOT changed */
     private List<UpdatePoLineRequest> lineUpdates;
 }

@@ -5,9 +5,11 @@ import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.POStatusConstants;
 import com.ec.application.data.CreatePoLineRequest;
 import com.ec.application.data.CreatePoRequest;
+import com.ec.application.data.CustomChargeRequest;
 import com.ec.application.data.IndentLineRefRequest;
 import com.ec.application.model.IndentInventoryList;
 import com.ec.application.model.PurchaseOrder;
+import com.ec.application.model.PurchaseOrderCustomCharge;
 import com.ec.application.model.PurchaseOrderIndentRef;
 import com.ec.application.model.PurchaseOrderLine;
 import com.ec.application.repository.IndentInventoryListRepo;
@@ -48,6 +50,11 @@ public class PurchaseOrderBuilder {
         for (CreatePoLineRequest itemReq : request.getLineItems()) {
             po.getLines().add(buildPoLine(po, itemReq));
         }
+        if (request.getCustomCharges() != null) {
+            for (CustomChargeRequest chargeReq : request.getCustomCharges()) {
+                po.getCustomCharges().add(buildCustomCharge(po, chargeReq));
+            }
+        }
         if (request.getFileInformations() != null) {
             po.setFileInformations(ReusableMethods.convertFilesListToSet(request.getFileInformations()));
         } else {
@@ -78,6 +85,16 @@ public class PurchaseOrderBuilder {
             line.getIndentRefs().add(ref);
         }
         return line;
+    }
+
+    private PurchaseOrderCustomCharge buildCustomCharge(PurchaseOrder po, CustomChargeRequest req) {
+        PurchaseOrderCustomCharge charge = new PurchaseOrderCustomCharge();
+        charge.setPurchaseOrder(po);
+        charge.setChargeName(req.getChargeName());
+        charge.setChargeAmount(req.getChargeAmount());
+        charge.setChargeGstPercent(req.getChargeGstPercent());
+        charge.setTotalChargeAmount(req.getTotalChargeAmount());
+        return charge;
     }
 
     private PurchaseOrderIndentRef buildIndentRef(IndentLineRefRequest indentRef) {

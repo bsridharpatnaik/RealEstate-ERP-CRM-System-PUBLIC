@@ -90,6 +90,16 @@ public class PurchaseOrder extends ReusableFields {
     @OrderBy("id ASC")
     private Set<PurchaseOrderLine> lines = new HashSet<>();
 
+    @OneToMany(
+            mappedBy = "purchaseOrder",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
+    )
+    @JsonIgnoreProperties("purchaseOrder")
+    @OrderBy("id ASC")
+    private List<PurchaseOrderCustomCharge> customCharges = new ArrayList<>();
+
     @Column(name = "is_special_po", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean specialPo = false;
 

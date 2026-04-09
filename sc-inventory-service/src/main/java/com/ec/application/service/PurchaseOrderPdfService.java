@@ -3,6 +3,7 @@ package com.ec.application.service;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.model.Firm;
 import com.ec.application.model.PurchaseOrder;
+import com.ec.application.model.PurchaseOrderCustomCharge;
 import com.ec.application.model.PurchaseOrderLine;
 import com.ec.application.model.Supplier;
 import com.ec.application.model.Product;
@@ -385,34 +386,74 @@ public class PurchaseOrderPdfService {
         double freightGstPct = po.getFreightGstPercent() != null ? po.getFreightGstPercent() : 0.0;
         double totalFreight = po.getTotalFreightCharges() != null ? po.getTotalFreightCharges() : 0.0;
 
+        boolean hasCustomCharges = po.getCustomCharges() != null
+                && po.getCustomCharges().stream().anyMatch(c -> c.getChargeAmount() != null && c.getChargeAmount() > 0);
+
+        if (freightCharges <= 0 && !hasCustomCharges) return;
+
         PdfPTable charges = new PdfPTable(2);
         charges.setWidthPercentage(40);
         charges.setHorizontalAlignment(Element.ALIGN_RIGHT);
         charges.setSpacingBefore(0f);
 
-        PdfPCell fcLabel = new PdfPCell(new Phrase("Freight Charges", normal));
-        fcLabel.setPadding(4f);
-        charges.addCell(fcLabel);
-        PdfPCell fcVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(freightCharges), normal));
-        fcVal.setPadding(4f);
-        fcVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        charges.addCell(fcVal);
+        if (freightCharges > 0) {
+            PdfPCell fcLabel = new PdfPCell(new Phrase("Freight Charges", normal));
+            fcLabel.setPadding(4f);
+            charges.addCell(fcLabel);
+            PdfPCell fcVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(freightCharges), normal));
+            fcVal.setPadding(4f);
+            fcVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(fcVal);
 
-        PdfPCell gstLabel = new PdfPCell(new Phrase("Freight GST %", normal));
-        gstLabel.setPadding(4f);
-        charges.addCell(gstLabel);
-        PdfPCell gstVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(freightGstPct) + "%", normal));
-        gstVal.setPadding(4f);
-        gstVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        charges.addCell(gstVal);
+            PdfPCell gstLabel = new PdfPCell(new Phrase("Freight GST %", normal));
+            gstLabel.setPadding(4f);
+            charges.addCell(gstLabel);
+            PdfPCell gstVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(freightGstPct) + "%", normal));
+            gstVal.setPadding(4f);
+            gstVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(gstVal);
 
-        PdfPCell freightTotalLabel = new PdfPCell(new Phrase("Total Freight Charges", bold));
-        freightTotalLabel.setPadding(4f);
-        charges.addCell(freightTotalLabel);
-        PdfPCell freightTotalVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(totalFreight), bold));
-        freightTotalVal.setPadding(4f);
-        freightTotalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        charges.addCell(freightTotalVal);
+            PdfPCell freightTotalLabel = new PdfPCell(new Phrase("Total Freight Charges", bold));
+            freightTotalLabel.setPadding(4f);
+            charges.addCell(freightTotalLabel);
+            PdfPCell freightTotalVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(totalFreight), bold));
+            freightTotalVal.setPadding(4f);
+            freightTotalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(freightTotalVal);
+        }
+
+        if (hasCustomCharges) {
+            for (PurchaseOrderCustomCharge cc : po.getCustomCharges()) {
+                if (cc.getChargeAmount() == null || cc.getChargeAmount() <= 0) continue;
+                String name = notBlank(cc.getChargeName()) ? cc.getChargeName() : "Additional Charges";
+                double gstPct = cc.getChargeGstPercent() != null ? cc.getChargeGstPercent() : 0.0;
+                double total = cc.getTotalChargeAmount() != null ? cc.getTotalChargeAmount() : 0.0;
+
+                PdfPCell ccLabel = new PdfPCell(new Phrase(name, normal));
+                ccLabel.setPadding(4f);
+                charges.addCell(ccLabel);
+                PdfPCell ccVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(cc.getChargeAmount()), normal));
+                ccVal.setPadding(4f);
+                ccVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                charges.addCell(ccVal);
+
+                PdfPCell ccGstLabel = new PdfPCell(new Phrase(name + " GST %", normal));
+                ccGstLabel.setPadding(4f);
+                charges.addCell(ccGstLabel);
+                PdfPCell ccGstVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(gstPct) + "%", normal));
+                ccGstVal.setPadding(4f);
+                ccGstVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                charges.addCell(ccGstVal);
+
+                PdfPCell ccTotalLabel = new PdfPCell(new Phrase("Total " + name, bold));
+                ccTotalLabel.setPadding(4f);
+                charges.addCell(ccTotalLabel);
+                PdfPCell ccTotalVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(total), bold));
+                ccTotalVal.setPadding(4f);
+                ccTotalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                charges.addCell(ccTotalVal);
+            }
+        }
 
         document.add(charges);
     }
@@ -436,22 +477,22 @@ public class PurchaseOrderPdfService {
                 : numberToWords(po.getGrandTotal()) + " RUPEES ONLY";
 
         PdfPCell wordsCell = new PdfPCell(new Phrase(amountInWords.toUpperCase(), headerFont));
-        wordsCell.setColspan(7);
+        wordsCell.setColspan(5);
         wordsCell.setHorizontalAlignment(Element.ALIGN_LEFT);
         wordsCell.setPadding(4f);
         table.addCell(wordsCell);
 
         PdfPCell totalLabel = new PdfPCell(new Phrase("GRAND TOTAL \u20B9", headerFont));
-        totalLabel.setColspan(2);
+        totalLabel.setColspan(3);
         totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalLabel.setPadding(4f);
         table.addCell(totalLabel);
 
         PdfPCell totalVal = new PdfPCell(
                 new Phrase(hideMoneyFields || po.getGrandTotal() == null ? "" : fmt(po.getGrandTotal()), headerFont));
+        totalVal.setColspan(2);
         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalVal.setPadding(4f);
-        totalVal.setNoWrap(true);
         table.addCell(totalVal);
 
         document.add(table);
