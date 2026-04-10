@@ -2,6 +2,8 @@ package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.model.Firm;
+import com.ec.application.model.IndentInventory;
+import com.ec.application.model.IndentInventoryList;
 import com.ec.application.model.PurchaseOrder;
 import com.ec.application.model.PurchaseOrderCustomCharge;
 import com.ec.application.model.PurchaseOrderLine;
@@ -60,11 +62,16 @@ public class PurchaseOrderPdfService {
             new java.text.SimpleDateFormat("dd/MM/yyyy");
 
 
-    // New overload — called by controller with explicit flag
+    // Overload with explicit flag — no indents
     public void generatePdf(PurchaseOrder po, OutputStream outputStream, boolean forceHideMoneyFields)
             throws Exception {
-        // If forceHideMoneyFields is true (manager chose "without rates"),
-        // OR the current user is an executive, hide money fields
+        generatePdf(po, outputStream, forceHideMoneyFields, java.util.Collections.emptyList());
+    }
+
+    // Primary overload — called by controller with explicit flag and optional indents
+    public void generatePdf(PurchaseOrder po, OutputStream outputStream, boolean forceHideMoneyFields,
+                            List<IndentInventory> indents)
+            throws Exception {
         boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isPriceRestricted();
 
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
@@ -78,6 +85,10 @@ public class PurchaseOrderPdfService {
         addChargesSection(document, po, hideMoneyFields);
         addPriceTable(document, po, hideMoneyFields);
         addTermsAndSignatures(document, writer, po);
+
+        if (indents != null && !indents.isEmpty()) {
+            addIndentsSection(document, indents);
+        }
 
         document.close();
     }
@@ -581,6 +592,111 @@ public class PurchaseOrderPdfService {
         signTable.addCell(authorisedBy);
 
         document.add(signTable);
+    }
+
+    // -----------------------------------------------------------------------
+    // Indent section
+    // -----------------------------------------------------------------------
+
+    private void addIndentsSection(Document document, List<IndentInventory> indents)
+            throws DocumentException {
+        Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, BaseColor.BLACK);
+        Font indentHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.BLACK);
+        Font tableHeaderFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.BLACK);
+        Font normalFont       = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+
+        // Page-level section heading
+        Paragraph heading = new Paragraph("ASSOCIATED INDENTS", sectionTitleFont);
+        heading.setAlignment(Element.ALIGN_CENTER);
+        heading.setSpacingBefore(20f);
+        heading.setSpacingAfter(10f);
+        document.add(heading);
+
+        for (IndentInventory indent : indents) {
+            // ── Indent header info table ──────────────────────────────────
+            PdfPTable infoTable = new PdfPTable(4);
+            infoTable.setWidthPercentage(100);
+            infoTable.setWidths(new float[]{1f, 2f, 1f, 2f});
+            infoTable.setSpacingBefore(8f);
+            infoTable.setSpacingAfter(0f);
+
+            // Header spanning all 4 columns
+            PdfPCell indentHeading = new PdfPCell(
+                    new Phrase("Indent: " + (indent.getIndentId() != null ? indent.getIndentId() : "-"),
+                            indentHeaderFont));
+            indentHeading.setColspan(4);
+            indentHeading.setBackgroundColor(new BaseColor(210, 225, 245));
+            indentHeading.setPadding(5f);
+            infoTable.addCell(indentHeading);
+
+            addIndentInfoRow(infoTable, "Indent No", indent.getIndentId(), normalFont);
+            addIndentInfoRow(infoTable, "Date",
+                    indent.getIndentDate() != null ? DATE_FORMAT.format(indent.getIndentDate()) : "-",
+                    normalFont);
+            addIndentInfoRow(infoTable, "Status",
+                    indent.getIndentStatus() != null ? indent.getIndentStatus() : "-", normalFont);
+            addIndentInfoRow(infoTable, "Project",
+                    indent.getTenant() != null ? indent.getTenant() : "-", normalFont);
+
+            document.add(infoTable);
+
+            // ── Line items table ──────────────────────────────────────────
+            List<IndentInventoryList> lineItems = indent.getInventoryList() != null
+                    ? new ArrayList<>(indent.getInventoryList())
+                    : new ArrayList<>();
+
+            PdfPTable lineTable = new PdfPTable(8);
+            lineTable.setWidthPercentage(100);
+            lineTable.setWidths(new float[]{2.5f, 1.2f, 0.8f, 0.9f, 0.9f, 0.9f, 1.1f, 1.2f});
+            lineTable.setSpacingBefore(2f);
+            lineTable.setSpacingAfter(12f);
+
+            addHeaderCell(lineTable, "Product", tableHeaderFont);
+            addHeaderCell(lineTable, "Specification", tableHeaderFont);
+            addHeaderCell(lineTable, "UOM", tableHeaderFont);
+            addHeaderCell(lineTable, "Qty Ordered", tableHeaderFont);
+            addHeaderCell(lineTable, "Qty Received", tableHeaderFont);
+            addHeaderCell(lineTable, "Qty Pending", tableHeaderFont);
+            addHeaderCell(lineTable, "Need By Date", tableHeaderFont);
+            addHeaderCell(lineTable, "Status", tableHeaderFont);
+
+            if (lineItems.isEmpty()) {
+                PdfPCell noData = new PdfPCell(new Phrase("No line items", normalFont));
+                noData.setColspan(8);
+                noData.setPadding(6f);
+                noData.setHorizontalAlignment(Element.ALIGN_CENTER);
+                lineTable.addCell(noData);
+            } else {
+                for (IndentInventoryList item : lineItems) {
+                    String productName = item.getProduct() != null
+                            ? item.getProduct().getProductName()
+                              + (notBlank(item.getProduct().getProductCode())
+                                 ? "\n[" + item.getProduct().getProductCode() + "]" : "")
+                            : "-";
+                    addBodyCell(lineTable, productName, normalFont);
+                    addBodyCell(lineTable, notBlank(item.getSpecification()) ? item.getSpecification() : "-", normalFont);
+                    addBodyCell(lineTable, notBlank(item.getMeasurementUnit()) ? item.getMeasurementUnit() : "-", normalFont);
+                    addBodyCell(lineTable, item.getQuantity() != null ? fmt(item.getQuantity()) : "-", normalFont);
+                    addBodyCell(lineTable, item.getQuantityReceived() != null ? fmt(item.getQuantityReceived()) : "-", normalFont);
+                    addBodyCell(lineTable, item.getQuantityPending() != null ? fmt(item.getQuantityPending()) : "-", normalFont);
+                    addBodyCell(lineTable, item.getNeedByDate() != null ? DATE_FORMAT.format(item.getNeedByDate()) : "-", normalFont);
+                    addBodyCell(lineTable, notBlank(item.getLineItemStatus()) ? item.getLineItemStatus() : "-", normalFont);
+                }
+            }
+
+            document.add(lineTable);
+        }
+    }
+
+    private void addIndentInfoRow(PdfPTable table, String label, String value, Font font) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8)));
+        labelCell.setPadding(4f);
+        labelCell.setBackgroundColor(new BaseColor(245, 245, 245));
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(value != null ? value : "-", font));
+        valueCell.setPadding(4f);
+        table.addCell(valueCell);
     }
 
     // -----------------------------------------------------------------------

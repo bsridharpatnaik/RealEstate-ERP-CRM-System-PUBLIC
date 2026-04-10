@@ -9,6 +9,9 @@ import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.RoleConstants;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.*;
+import com.ec.application.repository.IndentInventoryRepo;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentStatusHistory;
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -42,12 +45,21 @@ public class IndentInventoryController {
     IndentInventoryService iiService;
 
     @Autowired
+    IndentInventoryRepo indentInventoryRepo;
+
+    @Autowired
     SchemaConfig schemaConfig;
 
     @Autowired
     private IndentStatusHistoryService indentStatusHistoryService;
 
     Logger log = LoggerFactory.getLogger(IndentInventoryController.class);
+
+    @GetMapping("/for-dropdown")
+    public List<IndentForDropdownDTO> getIndentsForDropdown() {
+        return indentInventoryRepo.findForDropdown(
+            PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "indentDate")));
+    }
 
     @PostMapping("/create")
     @CheckAuthority

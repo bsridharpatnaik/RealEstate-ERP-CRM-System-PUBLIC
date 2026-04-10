@@ -3,6 +3,7 @@ package com.ec.application.repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.data.ConsolidatedIndentLineDTO;
+import com.ec.application.data.IndentForDropdownDTO;
 import com.ec.application.data.StatusGroupCountDTO;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.InwardInventory;
@@ -66,6 +67,15 @@ public interface IndentInventoryRepo extends BaseRepository<IndentInventory, Str
             nativeQuery = true
     )
     List<Object[]> fetchStaleIndentBucketData(@Param("terminalStatuses") List<String> terminalStatuses);
+
+    @Query(
+        "SELECT new com.ec.application.data.IndentForDropdownDTO(" +
+        "    i.indentId, i.indentDate, i.indentStatus, i.tenant) " +
+        "FROM IndentInventory i " +
+        "WHERE i.isDeleted = false " +
+        "ORDER BY i.indentDate DESC"
+    )
+    List<IndentForDropdownDTO> findForDropdown(org.springframework.data.domain.Pageable pageable);
 
     // STEP 1: spec-aware, pagination-safe (NO EntityGraph)
     @Override
