@@ -42,6 +42,9 @@ public class PurchaseOrderHistoryPriceService {
             dto.setSupplierName((String) row[2]);
             dto.setQuantity(row[3] != null ? ((Number) row[3]).doubleValue() : null);
             dto.setRate(row[4] != null ? ((Number) row[4]).doubleValue() : null);
+            dto.setDiscountPercent(row[5] != null ? ((Number) row[5]).doubleValue() : null);
+            dto.setGstPercent(row[6] != null ? ((Number) row[6]).doubleValue() : null);
+            dto.setNetRate(row[7] != null ? ((Number) row[7]).doubleValue() : null);
             return dto;
         }).collect(Collectors.toList());
     }
