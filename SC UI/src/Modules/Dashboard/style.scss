@@ -1,0 +1,340 @@
+.dashboard-heading {
+  font-weight: bold;
+  font-size: 13px;
+  line-height: 28px;
+  color: #323c47;
+  margin-bottom: 12px;
+  height: 18px;
+}
+.title {
+  font-weight: bold;
+  font-size: 18px;
+  color: #323c47;
+  padding: 0px 0px 8px 0px;
+}
+.chart-wrapper {
+  height: calc(100% - 25px);
+  overflow: auto;
+  flex-grow: 1;
+}
+.top,
+.bottom {
+  display: flex;
+  height: 50% !important;
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    height: auto;
+  }
+  @media screen and (max-width: 425px) {
+    flex-direction: column;
+    height: auto;
+  }
+  padding: 12px;
+  
+  .chart {
+    height: calc(100% - 30px);
+    @media screen and (max-width: 425px) {
+      height: 320px;
+    }
+    @media screen and (max-width: 768px) {
+      height: 320px;
+    }
+    border-radius: 15px;
+    background: #fff;
+    margin-top: 12px;
+    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
+      0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: flex-end;
+  }
+  .chart-labels {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 12px;
+    height: 20px;
+    @media screen and (max-width: 768px) {
+      padding: 8px 12px;
+      height: 30px;
+    }
+    @media screen and (max-width: 425px) {
+      padding: 8px 12px;
+      height: 30px;
+    }
+    .chart-label-text {
+      font-size: 12px;
+      line-height: 22px;
+      color: #a2a2c3;
+    }
+    .chart-color {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .low {
+      .chart-color {
+        background-color: #ff808b;
+      }
+    }
+    .average {
+      margin: 0 8px;
+      .chart-color {
+        background-color: #4d4cac;
+      }
+    }
+    .high {
+      .chart-color {
+        background-color: #44c4a1;
+      }
+    }
+  }
+  .left {
+    width: calc(50% - 20px);
+    margin-right: 20px;
+    @media screen and (max-width: 768px) {
+      width: 100%;
+      margin-right: 20px;
+      margin-bottom: 12px;
+    } 
+    @media screen and (max-width: 425px) {
+      width: 100%;
+      margin-right: 20px;
+      margin-bottom: 12px;
+    } 
+  }
+  .right {
+    width: 50%;
+    @media screen and (max-width: 768px) {
+      width: 100%;
+    }
+    @media screen and (max-width: 425px) {
+      width: 100%;
+    }
+  }
+}
+.top {
+  height: calc(100vh - 310px - 48px);
+  @media screen and (max-width: 768px) {
+    height: auto;
+  }
+  @media screen and (max-width: 425px) {
+    height: auto;
+  }
+}
+.bottom {
+  height: 310px;
+  @media screen and (max-width: 768px) {
+    height: auto;
+  }
+  @media screen and (max-width: 425px) {
+    height: auto;
+  }
+  .left {
+    display: block;
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+    }
+    @media screen and (max-width: 425px) {
+      flex-direction: column;
+    }
+  }
+
+  .inward,
+  .iostats,
+  .sort-table {
+    width: 100%;
+    @media screen and (max-width: 768px) {
+      width: 100%;
+    }
+    @media screen and (max-width: 425px) {
+      width: 100%;
+    }
+  }
+  .notification {
+    &.iostats, &.sort-table {
+      // padding-right: 20px;
+      @media screen and (max-width: 768px) {
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+      @media screen and (max-width: 425px) {
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+    }
+    .notification-content {
+      overflow: auto;
+      td {
+        white-space: nowrap;
+      }
+    }
+  }
+}
+.dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  @media screen and (max-width: 768px) {
+    height: auto;
+    width: 100%;
+  }
+  @media screen and (max-width: 425px) {
+    height: auto;
+    width: 100%;
+  }
+  height: calc(100vh - 48px);
+  width: calc(100vw - 15vw);
+}
+.iostats {
+  a {
+    color: #ff808b;
+  }
+}
+.inward {
+  a {
+    color: #4d4cac;
+  }
+}
+.rent {
+  a {
+    color: #44c4a1;
+  }
+}
+.inward,
+.iostats,
+.sort-table,
+.rent {
+  .dashboard-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    a {
+      font-weight: bold;
+      font-size: 12px;
+      line-height: 22px;
+      text-decoration: none;
+    }
+  }
+  .notification-content {
+    padding-bottom: 0;
+  }
+  th {
+    font-weight: normal;
+    font-size: 12px;
+    color: #a2a2c3;
+  }
+  th,
+  td {
+    line-height: 21px;
+    color: #323c47;
+    height: 21px;
+  }
+  td {
+    font-weight: 300;
+    font-size: 14px;
+  }
+}
+.notification {
+  height: 100%;
+  .date {
+    font-size: 12px;
+    line-height: 20px;
+    color: #a2a2c3;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    .cancel {
+      color: #4d4cac;
+      position: absolute;
+      right: 0;
+      cursor: pointer;
+      .MuiSvgIcon-root {
+        font-size: 16px;
+      }
+    }
+  }
+  .item {
+    border-bottom: 1px solid rgba(161, 162, 195, 0.5);
+    margin-bottom: 12px;
+    &.last {
+      border: none;
+    }
+  }
+  .notification-text {
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 20px;
+    color: #323c47;
+    margin-bottom: 10px;
+  }
+  .notification-content {
+    background: #fff;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    padding: 12px;
+    overflow: auto;
+    height: calc(100% - 30px);
+    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
+      0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+  }
+}
+.dashboard-wrapper {
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+  }
+  scrollbar-width: thin;
+}
+
+.padding-0 {
+  padding: 0 !important;
+}
+
+#chartdiv {
+  height: 97% !important;
+}
+
+.notification-drawer {
+  width: 400px;
+  @media screen and (max-width: 768px) {
+    // height: 250px;
+    width: 100vw;
+  }
+  @media screen and (max-width: 425px) {
+    // height: 250px;
+    width: 100vw;
+  }
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 10px;
+}
+
+.notification-bell {
+  position: absolute;
+  right: 10px;
+  top: 40px;
+}
+
+.is-disabled {
+  color: #8989aa !important;
+}
+
+.radio-group.MuiFormGroup-root {
+  flex-direction: row;
+  &>label {
+    &>span{
+      font-size: 15px;
+    }
+  }
+}

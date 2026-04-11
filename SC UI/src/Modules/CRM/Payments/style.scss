@@ -1,0 +1,25 @@
+@import "./../../../scss/variables.scss";
+
+
+.Pending {
+  font-size: $font-normal;
+  justify-content: center;
+  color: #f9b571;
+  width: 90px;
+  height: 26px;
+  border-radius: 12px;
+  background: #fff8f0;
+  display: inline-flex;
+  align-items: center;
+}
+.Received {
+  font-size: $font-normal;
+  justify-content: center;
+  color: #44c4a1;
+  width: 90px;
+  height: 26px;
+  border-radius: 12px;
+  background: #ecf9f5;
+  display: inline-flex;
+  align-items: center;
+}

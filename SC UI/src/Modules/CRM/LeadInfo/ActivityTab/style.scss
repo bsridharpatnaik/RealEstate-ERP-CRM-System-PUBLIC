@@ -1,0 +1,87 @@
+@import "./../../../../scss/variables.scss";
+
+.activity-tab {
+  .right {
+    .MuiOutlinedInput-multiline {
+      height: 104px;
+      align-items: flex-start;
+    }
+  }
+  .MuiFormControl-root {
+    margin: 2px 0;
+    .MuiInputLabel-formControl {
+      font-weight: normal;
+      font-size: 14px;
+      text-align: left;
+      color: #323c47;
+    }
+    .MuiInputAdornment-root {
+      .MuiIconButton-label {
+        width: 24px;
+      }
+    }
+    .MuiAutocomplete-inputRoot {
+      padding: 4px 9px;
+    }
+  }
+  .flex {
+    display: flex;
+    .MuiAutocomplete-root {
+      width: 100%;
+    }
+    .MuiTextField-root {
+      padding-right: 20px;
+    }
+    &:last-child {
+      padding-right: 0;
+    }
+    .left,
+    .right {
+      width: 50%;
+    }
+  }
+  .width100 {
+    width: 100%;
+  }
+  .width30 {
+    justify-content: space-between;
+    .MuiFormControl-root {
+      width: 33%;
+    }
+  }
+
+  .MuiFilledInput-root {
+    background-color: white;
+  }
+  .MuiInputLabel-outlined.MuiInputLabel-shrink {
+    transform: translate(0px, 0px) scale(0.75);
+    position: static;
+    margin-bottom: 8px;
+  }
+  .MuiAutocomplete-inputRoot {
+    padding: 0;
+  }
+  .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-width: 1px;
+  }
+  .MuiOutlinedInput-notchedOutline {
+    border-radius: 6px;
+    border: 1px solid #a2a2c3;
+
+    legend {
+      display: none;
+    }
+  }
+
+  .button-section {
+    display: flex;
+    justify-content: flex-end;
+    .MuiButtonBase-root {
+      height: 38px;
+      width: 90px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #fff;
+    }
+  }
+}

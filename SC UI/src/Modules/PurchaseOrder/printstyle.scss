@@ -1,0 +1,21 @@
+// printstyle.scss
+// NOTE: indentPrint.js uses fully inline styles so ReactToPrint can carry
+// them into its iframe. This file only handles the visibility toggle.
+
+// Hide the print block from the normal page view
+.print-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+// Page size hint for the browser's print dialog
+@page {
+  size: A4 landscape;
+  margin: 12mm 10mm;
+}
+
+// When ReactToPrint triggers, it opens a new iframe — nothing here
+// needs to be shown/hidden in the main document at that point.

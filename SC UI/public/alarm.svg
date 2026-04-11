@@ -1,0 +1,9 @@
+<svg id="alarm" xmlns="http://www.w3.org/2000/svg" width="49" height="49" viewBox="0 0 49 49">
+  <path id="Path_102" data-name="Path 102" d="M0,241H5.838v2.871H0Zm0,0" transform="translate(0 -217.936)" fill="#fff"/>
+  <path id="Path_103" data-name="Path 103" d="M451,241h5.838v2.871H451Zm0,0" transform="translate(-407.838 -217.936)" fill="#fff"/>
+  <path id="Path_104" data-name="Path 104" d="M383.277,69.15l4.06-4.06,2.03,2.03-4.06,4.06Zm0,0" transform="translate(-346.596 -58.861)" fill="#fff"/>
+  <path id="Path_105" data-name="Path 105" d="M69.146,71.176l-4.06-4.06,2.03-2.03,4.06,4.06Zm0,0" transform="translate(-58.857 -58.857)" fill="#fff"/>
+  <path id="Path_106" data-name="Path 106" d="M241,0h2.871V5.838H241Zm0,0" transform="translate(-217.936)" fill="#fff"/>
+  <path id="Path_107" data-name="Path 107" d="M93.871,452A2.871,2.871,0,0,0,91,454.871v2.871h31.582v-2.871A2.871,2.871,0,0,0,119.711,452Zm0,0" transform="translate(-82.291 -408.742)" fill="#fff"/>
+  <path id="Path_108" data-name="Path 108" d="M121,133.92v15.887h25.84V133.92a12.92,12.92,0,0,0-25.84,0Zm11.484-4.307h2.871v8.613h-2.871Zm0,11.484h2.871v2.871h-2.871Zm0,0" transform="translate(-109.42 -109.42)" fill="#fff"/>
+</svg>

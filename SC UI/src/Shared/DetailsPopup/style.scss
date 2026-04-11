@@ -1,0 +1,39 @@
+.details-popup-dialog {
+  .details-popup-paper {
+    max-height: calc(100vh - 48px);
+    margin: 24px;
+  }
+
+  .details-popup-scroll {
+    max-height: calc(100vh - 48px);
+  }
+
+  .details-popup-back-bar {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+
+    .details-popup-back-btn {
+      padding: 4px;
+    }
+
+    .details-popup-back-label {
+      font-size: 14px;
+      margin-left: 4px;
+    }
+  }
+
+  .details-popup-content {
+    overflow: auto;
+    max-height: calc(100vh - 48px);
+
+    // Ensure detail-section inside popup takes full width and scrolls
+    .detail-section {
+      width: 100%;
+      margin: 0;
+      max-width: 100%;
+    }
+  }
+}

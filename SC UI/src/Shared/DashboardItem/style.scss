@@ -1,0 +1,273 @@
+@import "./../../scss/variables.scss";
+
+/* =============================
+   SIDE MENU ROOT
+============================= */
+
+.side-menu {
+  width: $side-menu_width;
+
+  &.close {
+    @media screen and (max-width: 768px),
+      screen and (max-width: 425px) {
+      display: none;
+    }
+  }
+
+  /* Nested Tree Groups */
+  .MuiTreeItem-group {
+    .MuiTreeItem-group {
+      margin-left: 0;
+
+      .MuiCollapse-wrapperInner {
+        margin-left: 0;
+      }
+    }
+  }
+
+  /* =============================
+     TENANT HEADER
+  ============================= */
+
+  .tennant {
+    height: 40px;
+    background: #323c47;
+    font-family: Montserrat;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 22px;
+    color: #fff;
+
+    display: flex;
+    padding-left: 20px;
+
+    a {
+      text-decoration: none;
+      color: white;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .MuiIconButton-root {
+      color: white;
+      padding-right: 8px;
+    }
+  }
+
+  /* =============================
+     WRAPPER
+  ============================= */
+
+  .side-menu-wrapper {
+    width: $side-menu_width;
+    background: #fff;
+    box-shadow: 0 3px 30px rgba(0, 0, 0, 0.05);
+
+    @media screen and (max-width: 768px) {
+      width: 45vw;
+    }
+
+    @media screen and (max-width: 425px) {
+      width: 65vw;
+    }
+  }
+
+  /* =============================
+     USER SECTION
+  ============================= */
+
+  .user {
+    padding: 10px;
+    box-shadow: 0 3px 30px rgba(0, 0, 0, 0.05);
+
+    display: flex;
+    align-items: center;
+
+    .user-image {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #323c47;
+
+      font-size: 16px;
+      font-weight: 500;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .user-name {
+      margin-left: 12px;
+      font-size: 15px;
+      line-height: 22px;
+      color: #323c47;
+      text-transform: capitalize;
+
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  /* =============================
+     LOGO
+  ============================= */
+
+  .logo {
+    background: #f8faf9;
+    box-shadow: 0 3px 30px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    text-align: center;
+
+    img {
+      width: 100%;
+    }
+  }
+
+  /* =============================
+     MOBILE CLOSE BUTTON
+  ============================= */
+
+  .sidebar-close-btn {
+    display: none;
+    margin: 2vh 0;
+
+    text-align: center;
+
+    button {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    @media screen and (max-width: 768px),
+      screen and (max-width: 425px) {
+      display: block;
+    }
+  }
+}
+
+/* =============================
+   TREE ITEM STYLING
+============================= */
+
+.dashboard-item {
+  .MuiTreeItem-content {
+    flex-direction: row-reverse;
+  }
+
+  &.Mui-selected {
+    > .MuiTreeItem-content {
+      border-right: 3px solid #5f8172;
+    }
+  }
+
+  &.Mui-expanded {
+    .MuiTreeItem-iconContainer {
+      color: #ff808b;
+    }
+  }
+
+  .MuiTreeItem-iconContainer {
+    margin-right: 15px;
+    color: #a2a2c3;
+
+    svg {
+      font-size: 22px;
+    }
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  .MuiTreeItem-label {
+    padding-left: 0;
+
+    &:hover {
+      background-color: transparent;
+
+      .name {
+        color: #323c47;
+      }
+    }
+  }
+
+  .menu-item {
+    padding: 8px 10px;
+
+    display: flex;
+    align-items: center;
+  }
+
+  .MuiCollapse-wrapperInner {
+    margin-left: 18px !important;
+  }
+
+  .icon {
+    margin-right: 13px;
+    color: #a2a2c3;
+  }
+
+  .name {
+    flex-grow: 1;
+    font-size: 14px;
+    font-weight: 600;
+
+    letter-spacing: 0.08em;
+    text-align: left;
+    color: #8989aa;
+  }
+}
+
+/* =============================
+   ACTIVE STATES
+============================= */
+
+.active {
+  .name {
+    color: #5f8172 !important;
+  }
+
+  .icon {
+    color: #5f8172;
+  }
+}
+
+.Mui-selected {
+  .MuiTreeItem-label {
+    background-color: transparent !important;
+  }
+
+  .icon {
+    color: #5f8172;
+  }
+}
+
+/* =============================
+   MOBILE BACKDROP
+============================= */
+
+@media screen and (max-width: 768px),
+  screen and (max-width: 425px) {
+
+  .side-menu.close {
+    display: none;
+  }
+
+  .side-menu-wrapper {
+    width: 65vw;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+
+    display: none;
+    z-index: 1;
+
+    &.active {
+      display: block;
+      background-color: #0000005c;
+      transition: background-color 0.2s ease-in-out;
+    }
+  }
+}

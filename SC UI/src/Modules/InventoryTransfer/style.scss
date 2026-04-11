@@ -1,0 +1,475 @@
+// Full white background for Inventory Transfer page (same as PO)
+.inventory-transfer-page {
+  background: #fff;
+  min-height: 100vh;
+
+  .header-info .add-button.MuiButton-root {
+    background: #3241a2 !important;
+    color: #fff !important;
+    &:hover {
+      background: #2a3590 !important;
+    }
+  }
+}
+
+// Filter UI: labels outside fields, layout (same design as PO / Indent filter)
+.it-filter {
+  .filter-heading {
+    justify-content: space-between;
+    padding: 12px 16px;
+    height: auto;
+    min-height: 44px;
+    border-bottom: none !important;
+
+    .filter-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: #000000 !important;
+      margin-right: auto;
+    }
+
+    .close-icon {
+      position: relative;
+      right: 0;
+      color: #666;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+  }
+
+  .filter-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px 16px;
+
+    .filter-field-label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      color: #323c47;
+      margin-bottom: 1px;
+    }
+
+    .filter-item {
+      min-width: 0;
+
+      .MuiTextField-root,
+      .MuiFormControl-root {
+        width: 100%;
+        margin-top: 0 !important;
+      }
+
+      .MuiOutlinedInput-root {
+        border-radius: 8px;
+        background-color: #ffffff;
+
+        fieldset {
+          border-color: #e0e0e0;
+        }
+
+        &:hover fieldset {
+          border-color: #bdbdbd;
+        }
+      }
+    }
+
+    .filter-dates {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+  }
+
+  .filter-bottom {
+    padding: 12px 16px;
+    border-top: none;
+    gap: 2px;
+
+    .grey.MuiButton-root {
+      background: #f5f5f5 !important;
+      color: #333 !important;
+      border-radius: 8px;
+    }
+
+    .blue.MuiButton-root {
+      background: #3f51b5 !important;
+      color: #fff !important;
+      border-radius: 8px;
+    }
+  }
+}
+
+// Inventory Transfer list table – same UI as PO list table
+.inventory-transfer-list-wrapper {
+  background: #fff;
+
+  .list-section {
+    box-shadow: none;
+    .filter-section {
+      .MuiTextField-root {
+        width: 400px;
+        max-width: 400px;
+      }
+      .top-button-wrapper {
+        .filterIcon.MuiButton-root,
+        .filter.MuiButton-root,
+        .download.MuiButton-root,
+        .refreshIcon.MuiButton-root {
+          text-transform: none !important;
+          height: 34px !important;
+          min-height: 34px !important;
+        }
+      }
+    }
+
+    .table-wrapper {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+
+      table {
+        width: 100%;
+        min-width: 1200px;
+        table-layout: fixed;
+        border-collapse: collapse;
+        border: none;
+
+        thead {
+          tr {
+            border-bottom: 1px solid #e0e0e0;
+          }
+          th {
+            background: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            color: #323c47;
+            padding: 12px 16px;
+            height: 48px;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+            white-space: nowrap;
+
+            &.sortable {
+              cursor: pointer;
+              span {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                .MuiSvgIcon-root {
+                  color: rgba(0, 0, 0, 0.35);
+                  font-size: 18px;
+                  flex-shrink: 0;
+                }
+              }
+            }
+          }
+        }
+
+        tbody {
+          tr {
+            border-bottom: 1px solid #eeeeee;
+            min-height: 48px;
+            transition: background-color 0.15s ease;
+            background: #fff;
+
+            &:last-child {
+              border-bottom: none;
+            }
+            &.clickable-row:hover {
+              background: #f5f5f5 !important;
+            }
+          }
+          td {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 400;
+            color: #323c47;
+            border: none;
+            vertical-align: middle;
+            height: 48px;
+            // Prevent long text from bleeding into next columns
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+
+        th, td {
+          min-width: 100px;
+        }
+
+        tbody tr td[colspan] {
+          padding: 24px 16px;
+          text-align: center;
+          color: #757575;
+          font-size: 13px;
+        }
+      }
+    }
+
+    .pagination-main {
+      padding-top: 8px;
+      border-top: none;
+      margin-top: 0;
+      .totalRecords {
+        padding-top: 8px;
+        font-size: 13px;
+        color: #616161;
+      }
+      .pagination {
+        padding-top: 8px;
+      }
+    }
+  }
+}
+
+.it-remarks-cell {
+  .it-remarks-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+}
+
+// Generic single-line ellipsis text used by conditional tooltips
+.it-remarks-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.project-cell {
+  display: flex;
+  flex-direction: column;
+  
+  .project-name {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .warehouse-name {
+    font-size: 0.875rem;
+    color: #666;
+    margin-top: 2px;
+  }
+}
+
+// Add Transfer form – same structure as Indent add (create-po-wrapper)
+.inventory-transfer-page .create-po-wrapper {
+  .create-po-content {
+    padding-top: 0;
+  }
+
+  .form-section {
+    background: transparent !important;
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+    padding-top: 0 !important;
+    &:first-of-type {
+      margin-top: 0 !important;
+    }
+  }
+
+  .po-action-buttons .blue.MuiButton-root {
+    background: #3241a2 !important;
+    &:hover {
+      background: #2a3590 !important;
+    }
+  }
+}
+
+// Products list – same styling as Indent inventories-list
+.inventory-transfer-page .create-po-wrapper .inventories-list {
+  margin-top: 0;
+
+  .inventory-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background-color: transparent;
+
+    .inventory-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-weight: 600;
+
+      .delete-icon {
+        color: #f44336;
+      }
+    }
+
+    .flex {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .MuiFormControl-root,
+      .MuiAutocomplete-root {
+        flex: 1;
+        min-width: 0;
+
+        &:nth-child(1) {
+          flex: 1.2;
+          min-width: 180px;
+        }
+        &:nth-child(2) {
+          flex: 0.9;
+          min-width: 130px;
+        }
+        &:nth-child(3) {
+          flex: 0.7;
+          min-width: 100px;
+        }
+        &:nth-child(4) {
+          flex: 0.7;
+          min-width: 100px;
+        }
+      }
+
+      .MuiTextField-root {
+        width: 100%;
+        padding-right: 0 !important;
+      }
+
+      .MuiAutocomplete-root .MuiTextField-root {
+        padding-right: 0 !important;
+      }
+    }
+  }
+}
+
+.trash-red-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
+
+.add-inventory-button-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  margin-bottom: 16px;
+
+  .MuiButton-root {
+    background: #f0f0f0 !important;
+    color: #000000 !important;
+    font-weight: 500 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 10px 24px !important;
+    min-height: 40px !important;
+    text-transform: none !important;
+    box-shadow: none !important;
+
+    &:hover {
+      background: #e8e8e8 !important;
+      color: #000000 !important;
+      box-shadow: none !important;
+    }
+
+    .button-label,
+    .MuiButton-label {
+      color: #000000 !important;
+      font-weight: 500 !important;
+      font-size: 14px !important;
+    }
+  }
+}
+
+.form-section {
+  margin-bottom: 32px;
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+  }
+
+  .flex {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+
+    > * {
+      flex: 1;
+      min-width: 200px;
+    }
+  }
+
+}
+
+.inventory-count-hoverable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.inventory-tooltip-content {
+  padding: 16px;
+  min-width: 250px;
+
+  .inventory-tooltip-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #424242;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+
+  .inventory-tooltip-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .inventory-tooltip-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .inventory-tooltip-name {
+        color: #424242;
+        font-size: 14px;
+        font-weight: 400;
+      }
+
+      .inventory-tooltip-code {
+        color: #666;
+        font-size: 12px;
+        margin-left: 4px;
+      }
+
+      .inventory-tooltip-quantity {
+        color: #9e9e9e;
+        font-size: 14px;
+        font-weight: 400;
+      }
+    }
+  }
+}
+
+// Filter section styling
+.filter-section {
+  .top-button-wrapper {
+    justify-content: flex-end !important;
+  }
+}

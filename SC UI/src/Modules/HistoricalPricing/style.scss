@@ -1,0 +1,129 @@
+.historical-pricing-page {
+  .header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .historical-pricing-download-btn {
+    display: flex;
+    align-items: center;
+    padding-top: 8px;
+  }
+
+  .historical-pricing-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+
+    .historical-pricing-indent-field {
+      min-width: 320px;
+      max-width: 480px;
+      flex: 1 1 320px;
+
+      .MuiInputBase-root {
+        min-height: 40px;
+        height: auto;
+        flex-wrap: wrap;
+      }
+
+      .MuiTextField-root {
+        min-width: 100%;
+        width: 100%;
+      }
+    }
+
+    .historical-pricing-inventory-name-field {
+      min-width: 400px;
+      max-width: 700px;
+      flex: 1 1 400px;
+
+      .MuiInputBase-root {
+        min-height: 40px;
+        height: auto;
+        flex-wrap: wrap;
+      }
+
+      .MuiTextField-root {
+        min-width: 100%;
+        width: 100%;
+      }
+    }
+  }
+
+  .historical-pricing-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0;
+
+    span {
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+
+  .historical-pricing-product-section {
+    margin-top: 28px;
+
+    .product-section-header {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(0, 0, 0, 0.8);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e0e0e0;
+
+      .product-code {
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 13px;
+      }
+    }
+  }
+
+  .historical-pricing-table {
+    margin-top: 8px;
+  }
+
+  .hp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th {
+      background-color: #f5f5f5;
+      text-align: left;
+      padding: 10px 12px;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #eeeeee;
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: #fafafa;
+    }
+
+    .hp-no-data {
+      text-align: center;
+      color: rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      font-style: italic;
+    }
+  }
+}

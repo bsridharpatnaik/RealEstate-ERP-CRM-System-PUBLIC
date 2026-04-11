@@ -1,0 +1,1499 @@
+.add {
+  padding: 20px !important;
+}
+
+// Add Purchase Order: plain div-like structure (no shadow, minimal padding)
+.list-section.add.create-po-wrapper {
+  box-shadow: none !important;
+  padding: 10px !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+// Step 1 Styles
+.step1-select-indents {
+  display: flex;
+  gap: 24px;
+  height: 100%;
+  min-height: 0;
+  align-items: flex-start;
+
+  .step1-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+
+    .step1-search-wrapper {
+      flex-shrink: 0;
+      margin-bottom: 12px;
+
+      .step1-search-input.MuiTextField-root {
+        .MuiOutlinedInput-root {
+          border-radius: 8px;
+          background-color: #ffffff;
+          border-color: #e0e0e0;
+
+          &:hover fieldset {
+            border-color: #bdbdbd;
+          }
+
+          &.Mui-focused fieldset {
+            border-color: #3f51b5;
+          }
+        }
+      }
+    }
+
+    .category-tabs-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      min-height: 40px;
+
+      .category-tabs-arrow {
+        position: absolute;
+        z-index: 10;
+        background-color: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 4px;
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 1);
+        }
+
+        &.category-tabs-arrow-left {
+          left: 4px;
+        }
+
+        &.category-tabs-arrow-right {
+          right: 4px;
+        }
+      }
+
+      .category-tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0;
+        padding: 8px 40px;
+        border-radius: 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        min-height: 40px;
+        align-items: center;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        
+        // Hide scrollbar but keep functionality
+        scrollbar-width: none; // Firefox
+        -ms-overflow-style: none; // IE and Edge
+
+        &::-webkit-scrollbar {
+          display: none; // Chrome, Safari, Opera
+        }
+
+        .category-tab {
+          padding: 8px 16px;
+          font-size: 13px;
+          color: #666;
+          cursor: pointer;
+          background-color: transparent;
+          border-radius: 3px;
+          white-space: nowrap;
+          transition: background-color 0.2s ease, box-shadow 0.2s ease;
+          user-select: none;
+          flex-shrink: 0;
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+          }
+
+          &.active {
+            background-color: #ffffff;
+            color: #333;
+          }
+
+          &.search-match {
+            box-shadow: 0 0 0 2px #ffc107;
+            background-color: #fffde7;
+
+            &.active {
+              background-color: #fff9c4;
+              box-shadow: 0 0 0 2px #ffc107;
+            }
+          }
+        }
+      }
+    }
+
+    .indent-table-wrapper {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+
+      table {
+        width: 100%;
+
+        .sortable-header {
+          cursor: pointer;
+          user-select: none;
+          white-space: nowrap;
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+          }
+
+          .sortable-header-content {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+          }
+
+          .sort-indicator {
+            color: rgba(0, 0, 0, 0.35);
+            font-size: 18px;
+            flex-shrink: 0;
+          }
+        }
+
+        tr.search-match-row {
+          background-color: #fffde7 !important;
+
+          &:hover {
+            background-color: #fff9c4 !important;
+          }
+        }
+
+        th {
+          background-color: #ffffff;
+          font-weight: 600;
+          font-size: 12px;
+          padding: 12px 8px;
+          white-space: nowrap;
+        }
+
+        td {
+          font-size: 12px;
+          padding: 8px;
+
+          .MuiTextField-root {
+            width: 150px;
+          }
+        }
+      }
+
+      .table-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 16px;
+        border-top: 1px solid #e0e0e0;
+        background-color: #fafafa;
+
+        .selected-count {
+          font-size: 12px;
+          color: #666;
+        }
+      }
+    }
+  }
+
+  .step1-side-panel {
+    width: 300px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-self: flex-start;
+    margin-top: 68px; // Aligns with table (category-tabs height: 8px padding + 40px min-height + 8px padding = 56px)
+    max-height: calc(100% - 56px); // Prevent side panel from exceeding available height
+    overflow: hidden; // Ensure the panel itself doesn't overflow
+
+    .indent-list-header {
+      padding: 16px;
+      font-weight: 600;
+      font-size: 14px;
+      border-bottom: 1px solid #e0e0e0;
+      background-color: #f5f5f5;
+      flex-shrink: 0; // Prevent header from shrinking
+    }
+
+    .indent-list-items {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      min-height: 0; // Allow scrolling
+
+      .empty-list {
+        text-align: center;
+        color: #999;
+        padding: 24px;
+        font-size: 13px;
+      }
+
+      .indent-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        margin-bottom: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background-color: #fafafa;
+
+        .item-info {
+          flex: 1;
+
+          .item-name {
+            font-weight: 500;
+            font-size: 13px;
+            margin-bottom: 4px;
+          }
+
+          .item-quantity {
+            font-size: 12px;
+            color: #666;
+          }
+        }
+
+        // Delete button: same black design as list action
+        .delete-button {
+          padding: 0 !important;
+          width: 18px;
+          height: 18px;
+          min-width: 18px;
+          color: #000000 !important;
+          background-color: transparent !important;
+          background: transparent !important;
+
+          &.MuiIconButton-root {
+            background-color: transparent !important;
+            background: transparent !important;
+            padding: 0 !important;
+          }
+
+          &:hover,
+          &:focus,
+          &:active,
+          &.Mui-focusVisible {
+            background-color: transparent !important;
+            background: transparent !important;
+          }
+
+          .MuiIconButton-root {
+            background-color: transparent !important;
+            background: transparent !important;
+          }
+
+          // Hide ripple effect
+          .MuiTouchRipple-root {
+            display: none !important;
+          }
+
+          .MuiSvgIcon-root {
+            color: #000000 !important;
+            width: 18px !important;
+            height: 18px !important;
+          }
+
+          svg {
+            fill: #000000 !important;
+            width: 18px !important;
+            height: 18px !important;
+            
+            // Remove background rectangle from SVG
+            rect {
+              fill: transparent !important;
+              display: none !important;
+            }
+            
+            path {
+              fill: #000000 !important;
+            }
+            g {
+              rect {
+                fill: transparent !important;
+                display: none !important;
+              }
+              path {
+                fill: #000000 !important;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Step 2 Styles
+.step2-fill-details {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+
+  .order-sections-container {
+    display: flex;
+    gap: 24px;
+    flex-shrink: 0;
+
+    .form-section {
+      flex: 1;
+      min-width: 0;
+      background-color: #f5f5f5;
+      padding: 16px;
+      border-radius: 4px;
+    }
+  }
+
+  .form-section {
+    flex-shrink: 0;
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #323c47;
+      margin-bottom: 16px;
+    }
+
+    .order-to-content,
+    .notes-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+
+      .or-separator {
+        font-size: 12px;
+        color: #999;
+        white-space: nowrap;
+      }
+
+      // Add New button: white background, dark text, rounded, subtle border
+      .MuiButton-root {
+        background: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #e0e0e0 !important;
+        border-radius: 10px !important;
+        padding: 10px 20px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        text-transform: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+
+        &:hover {
+          background: #f5f5f5 !important;
+          border-color: #d0d0d0 !important;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .MuiButton-label {
+          color: #333333 !important;
+          font-size: 14px !important;
+          font-weight: 500 !important;
+        }
+      }
+    }
+
+    .order-to-details,
+    .order-from-details {
+      margin-top: 16px;
+      padding: 16px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+
+      .detail-row {
+        display: flex;
+        margin-bottom: 8px;
+        font-size: 13px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .detail-label {
+          font-weight: 600;
+          min-width: 150px;
+          color: #323c47;
+        }
+
+        .detail-value {
+          color: #666;
+        }
+      }
+    }
+
+    .items-table-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+
+      // Delete button: same black design as list action
+      .delete-item-button {
+        padding: 0 !important;
+        width: 18px;
+        height: 18px;
+        min-width: 18px;
+        color: #000000 !important;
+        background-color: transparent !important;
+        background: transparent !important;
+
+        &.MuiIconButton-root {
+          background-color: transparent !important;
+          background: transparent !important;
+          padding: 0 !important;
+        }
+
+        &:hover,
+        &:focus,
+        &:active,
+        &.Mui-focusVisible {
+          background-color: transparent !important;
+          background: transparent !important;
+        }
+
+        .MuiIconButton-root {
+          background-color: transparent !important;
+          background: transparent !important;
+        }
+
+        // Hide ripple effect
+        .MuiTouchRipple-root {
+          display: none !important;
+        }
+
+        .MuiSvgIcon-root {
+          color: #000000 !important;
+          width: 18px !important;
+          height: 18px !important;
+        }
+
+        svg {
+          fill: #000000 !important;
+          width: 18px !important;
+          height: 18px !important;
+          
+          // Remove background rectangle from SVG (#fff2f3)
+          rect {
+            fill: transparent !important;
+            display: none !important;
+          }
+          
+          path {
+            fill: #000000 !important;
+          }
+          g {
+            rect {
+              fill: transparent !important;
+              display: none !important;
+            }
+            path {
+              fill: #000000 !important;
+            }
+          }
+        }
+      }
+
+      .table-scroll-container {
+        flex: 1;
+        overflow-x: auto;
+        overflow-y: auto;
+        min-height: 0;
+      }
+
+      table {
+        min-width: 1200px;
+        width: 100%;
+
+        th {
+          background-color: #ffffff;
+          font-weight: 600;
+          font-size: 12px;
+          padding: 12px 8px;
+          white-space: nowrap;
+        }
+
+        td {
+          font-size: 12px;
+          padding: 8px;
+
+          .MuiTextField-root {
+            width: 100%;
+            min-width: 80px;
+          }
+
+          // Allow text wrapping for inventory name column
+          &.inventory-name-cell {
+            min-width: 200px;
+            max-width: 200px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+
+            .rate-history-trigger {
+              display: inline;
+              border-bottom: 1.5px dashed #1976d2;
+              cursor: help;
+              padding-bottom: 1px;
+            }
+          }
+
+          // Make specification column wider
+          &.specification-cell {
+            min-width: 200px;
+            max-width: 200px;
+          }
+
+          // Make rate column wider
+          &.rate-cell {
+            min-width: 150px;
+            max-width: 150px;
+          }
+
+          &.calculated-cell {
+            text-align: right;
+            font-size: 12px;
+            color: #333333;
+          }
+        }
+      }
+
+      .table-total {
+        text-align: right;
+        padding: 16px;
+        font-size: 14px;
+        font-weight: 600;
+        border-top: 2px solid #e0e0e0;
+        background-color: #fafafa;
+        flex-shrink: 0;
+      }
+    }
+
+    // Make the Purchase order Items section flexible to take remaining space
+    &.items-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+  }
+}
+
+// Indent-style upload section (reused on PO Step 2)
+.trash-red-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
+
+.indent-upload-section {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #ffffff;
+
+  .upload-documents-heading {
+    font-weight: 600;
+    font-size: 14px;
+    color: #323c47;
+    margin-bottom: 16px;
+  }
+
+  .upload-controls {
+    .upload-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .upload-buttons-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+
+        .file-name-input-label {
+          display: inline-block;
+          cursor: pointer;
+
+          .file-name-input {
+            width: 250px;
+            height: 40px;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 7px;
+            background-color: #ffffff;
+            font-size: 14px;
+            color: #323c47;
+            outline: none;
+            cursor: pointer;
+
+            &:focus {
+              border-color: #5e81f4;
+            }
+
+            &::placeholder {
+              color: #999;
+            }
+          }
+        }
+
+        .blue.MuiButton-root {
+          min-width: 100px !important;
+          text-transform: none !important;
+          background: #3f51b5 !important;
+          color: #ffffff !important;
+
+          &:hover {
+            background: #303f9f !important;
+            color: #ffffff !important;
+          }
+
+          .MuiButton-label,
+          .button-label {
+            color: #ffffff !important;
+          }
+        }
+
+        .upload-thumbnails {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+          margin-left: 30px;
+
+          .upload-thumbnail {
+            width: 70px;
+            height: 70px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+
+            .thumbnail-remove {
+              position: absolute;
+              top: 4px;
+              right: 4px;
+              width: 24px;
+              height: 24px;
+              padding: 0;
+              background: rgba(255, 255, 255, 0.9);
+              border-radius: 50%;
+              z-index: 2;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+              &:hover {
+                background: rgba(255, 255, 255, 1);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+              }
+
+              svg {
+                width: 14px;
+                height: 14px;
+                color: #f44336;
+              }
+            }
+
+            .thumbnail-preview {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              background: #f9f9f9;
+
+              img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
+
+              .thumbnail-placeholder {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+
+                svg {
+                  opacity: 0.5;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .upload-hint {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+// Modal Styles
+.supplier-modal,
+.notes-modal {
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+
+    .close-button {
+      padding: 4px;
+    }
+  }
+}
+
+// Add New Supplier Modal – UI design (fields unchanged)
+.supplier-modal {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.supplier-modal-backdrop {
+  .MuiBackdrop-root {
+    background-color: transparent;
+  }
+}
+
+.supplier-modal .supplier-modal-title {
+  padding: 20px 24px 16px;
+  border-bottom: none;
+  background-color: #ffffff;
+  margin: 0;
+
+  .modal-header {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.02em;
+
+    .close-button {
+      padding: 6px;
+      margin: -6px -6px -6px 0;
+      color: #666;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.06);
+        color: #333;
+      }
+
+      .MuiSvgIcon-root {
+        font-size: 22px;
+      }
+    }
+  }
+}
+
+.supplier-modal .supplier-modal-content {
+  padding: 24px 24px 20px;
+  background-color: #ffffff;
+}
+
+.supplier-form {
+  .form-row {
+    display: flex;
+    gap: 24px;
+
+    .form-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    &.form-row-city-state-zip {
+      margin-top: 20px;
+      gap: 16px;
+
+      .supplier-field {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+
+    &.form-row-firm-address-desc .supplier-field .MuiTextField-root textarea {
+      min-height: 72px;
+    }
+
+    &.form-row:not(:first-child) {
+      margin-top: 20px;
+    }
+  }
+
+  // Label outside the field (above the input)
+  .supplier-field {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .supplier-field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .supplier-field .MuiTextField-root {
+    margin-bottom: 0;
+  }
+
+  .supplier-field .MuiFormControl-marginDense {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .MuiTextField-root {
+    .MuiOutlinedInput-root {
+      border-radius: 8px;
+      background-color: #ffffff;
+      font-size: 14px;
+
+      fieldset {
+        border-color: #e0e0e0;
+        border-width: 1px;
+      }
+
+      &:hover fieldset {
+        border-color: #bdbdbd;
+      }
+
+      &.Mui-focused fieldset {
+        border-width: 1.5px;
+        border-color: #3f51b5;
+      }
+    }
+
+    .MuiInputLabel-outlined {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .MuiFormHelperText-root {
+      font-size: 12px;
+    }
+  }
+}
+
+.supplier-modal .supplier-modal-actions {
+  padding: 16px 24px 20px;
+  border-top: none;
+  background-color: #ffffff;
+  gap: 12px;
+
+  .MuiButton-root {
+    min-width: 88px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-transform: none;
+  }
+
+  .MuiButton-outlined,
+  .MuiButton-text {
+    border: 1px solid #e0e0e0;
+    color: #444;
+    background-color: #f0f0f0;
+
+    &:hover {
+      background-color: #e5e5e5;
+    }
+  }
+
+  .MuiButton-containedPrimary {
+    background-color: #3f51b5;
+    box-shadow: none;
+
+    &:hover {
+      background-color: #303f9f;
+      box-shadow: none;
+    }
+  }
+}
+
+// Split dialog – buttons match Add New Supplier/Firm
+.split-dialog .split-dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 0;
+
+  .MuiButton-root {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    text-transform: none;
+  }
+
+  .MuiButton-outlined,
+  .MuiButton-text {
+    border: 1px solid #e0e0e0;
+    color: #444;
+    background-color: #f0f0f0;
+
+    &:hover {
+      background-color: #e5e5e5;
+    }
+  }
+
+  .MuiButton-containedPrimary {
+    background-color: #3f51b5;
+    box-shadow: none;
+
+    &:hover {
+      background-color: #303f9f;
+      box-shadow: none;
+    }
+  }
+}
+
+.notes-form {
+  padding: 8px 0;
+}
+
+// PO Rate History Tooltip
+.po-rate-history-tooltip {
+  padding: 12px 16px;
+  min-width: 320px;
+  max-width: 440px;
+
+  .po-rate-history-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #323c47;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .po-rate-history-loading,
+  .po-rate-history-empty {
+    font-size: 12px;
+    color: #999;
+    padding: 4px 0;
+    text-align: center;
+  }
+
+  .po-rate-history-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead tr {
+      background-color: #f5f5f5;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .po-rate-th {
+      padding: 7px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      text-align: left;
+
+      &.text-right {
+        text-align: right;
+      }
+    }
+
+    tbody tr {
+      &:not(:last-child) td {
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      &.latest-row {
+        background-color: #f0f4ff;
+      }
+    }
+
+    td {
+      padding: 7px 8px;
+      font-size: 12px;
+      color: #333;
+      vertical-align: middle;
+
+      &.po-rate-pono {
+        white-space: nowrap;
+        color: #1976d2;
+        font-weight: 500;
+        width: 100px;
+      }
+
+      &.po-rate-date {
+        white-space: nowrap;
+        color: #555;
+        width: 90px;
+      }
+
+      &.po-rate-supplier {
+        color: #444;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &.po-rate-qty {
+        text-align: right;
+        white-space: nowrap;
+        color: #555;
+        width: 50px;
+      }
+
+      &.po-rate-value {
+        white-space: nowrap;
+        font-weight: 500;
+        text-align: right;
+        color: #333;
+        width: 80px;
+      }
+
+      &.latest-rate {
+        color: #1565c0;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+// Step 3 Styles — Review PO
+.step3-review-po {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 16px 24px;
+  overflow-y: auto;
+  height: 100%;
+
+  .review-two-col {
+    display: flex;
+    gap: 20px;
+
+    > * {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .review-details-row {
+    margin-top: 0;
+  }
+
+  .review-card {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 16px;
+
+    .review-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #323c47;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e0e0e0;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .review-field-row {
+      display: flex;
+      margin-bottom: 10px;
+      font-size: 13px;
+      align-items: flex-start;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .review-field-label {
+        font-weight: 600;
+        min-width: 140px;
+        color: #555;
+        flex-shrink: 0;
+      }
+
+      .review-field-value {
+        color: #222;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .review-notes {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    }
+
+    .review-override-badge {
+      font-size: 10px;
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-weight: 600;
+    }
+
+    .review-doc-chip {
+      font-size: 12px;
+      background-color: #e3f2fd;
+      color: #1565c0;
+      border-radius: 4px;
+      padding: 2px 8px;
+      display: inline-block;
+    }
+  }
+
+  .review-doc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .review-doc-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background-color: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1565c0;
+
+      .review-doc-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .review-doc-name {
+        font-weight: 500;
+        word-break: break-all;
+      }
+    }
+  }
+
+  .review-no-docs {
+    font-size: 13px;
+    color: #999;
+    font-style: italic;
+  }
+
+  .review-items-card {
+    flex-shrink: 0;
+  }
+
+  .review-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 0;
+  }
+
+  .review-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1100px;
+    font-size: 12px;
+
+    th {
+      background-color: #f0f0f0;
+      font-weight: 600;
+      padding: 10px 8px;
+      white-space: nowrap;
+      border-bottom: 2px solid #ddd;
+      color: #323c47;
+      text-align: left;
+
+      &.text-right {
+        text-align: right;
+      }
+    }
+
+    td {
+      padding: 8px;
+      border-bottom: 1px solid #eeeeee;
+      vertical-align: top;
+      color: #333;
+
+      &.text-right {
+        text-align: right;
+      }
+
+      &.review-inventory-cell {
+        min-width: 180px;
+        max-width: 200px;
+        white-space: normal;
+        word-break: break-word;
+
+        .review-unit {
+          color: #888;
+          font-size: 11px;
+        }
+      }
+
+      &.review-spec-cell {
+        min-width: 160px;
+        max-width: 200px;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      &.review-total-cell {
+        font-weight: 600;
+      }
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background-color: #fafafa;
+    }
+  }
+
+  .review-grand-total {
+    text-align: right;
+    padding: 12px 8px 4px;
+    font-size: 14px;
+    color: #323c47;
+    border-top: 2px solid #e0e0e0;
+    margin-top: 8px;
+
+    strong {
+      font-size: 16px;
+      color: #1a237e;
+    }
+  }
+}
+
+// Create PO Wrapper
+.create-po-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+
+  .create-po-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+
+    // First row: heading + buttons — full-width divider close below
+    .create-po-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      border-bottom: 1px solid rgba(162, 162, 195, 0.5);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    // Heading: no overlap with back icon — reserve space for icon, align title left
+    .add-heading-wrapper {
+      border-bottom: none;
+      padding-left: 48px;
+      justify-content: flex-start;
+      min-height: 48px;
+    }
+
+    // Breadcrumbs: clear space below divider so they don’t sit under the line
+    .breadcrumbs {
+      padding-top: 4px;
+    }
+
+    .po-number-display {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #323c47;
+    }
+
+    .po-action-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+
+      // Cancel & Next: same size and font as list page "Add Purchase Order" button
+      .MuiButton-root {
+        height: 38px;
+        min-height: 38px;
+        padding: 6px 14px;
+        font-size: 10px;
+        font-weight: 500;
+        border-radius: 7px;
+        box-shadow: none;
+        text-transform: none;
+
+        &:hover {
+          box-shadow: none;
+        }
+
+        .button-label {
+          font-size: 12px !important;
+        }
+
+        .MuiButton-label {
+          font-size: 12px !important;
+        }
+      }
+
+      .grey.MuiButton-root {
+        background: #f5f5f5 !important;
+        color: #343334 !important;
+
+        &:hover {
+          background: #eeeeee !important;
+          color: #343334 !important;
+        }
+
+        .button-label {
+          color: #343334 !important;
+        }
+      }
+
+      .blue.MuiButton-root {
+        background: #3f51b5 !important;
+        color: #ffffff !important;
+
+        &:hover {
+          background: #303f9f !important;
+          color: #ffffff !important;
+        }
+
+        .MuiButton-label,
+        .button-label {
+          color: #ffffff !important;
+        }
+      }
+
+      /* Confirm button when form invalid: greyed out but still clickable */
+      .confirm-disabled.MuiButton-root {
+        cursor: pointer;
+        background: #b0b0b0 !important;
+        color: #666 !important;
+
+        &:hover {
+          background: #a0a0a0 !important;
+          color: #555 !important;
+        }
+      }
+    }
+  }
+
+  .create-po-content {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// ── Indent Review Step ────────────────────────────────────────────────────────
+.indent-review-wrapper {
+  .review-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #323c47;
+    margin-bottom: 4px;
+  }
+
+  .review-section-subtitle {
+    font-size: 13px;
+    color: #777;
+    margin: 0 0 8px;
+  }
+
+  .review-empty {
+    font-size: 13px;
+    color: #999;
+    font-style: italic;
+    padding: 8px 0;
+  }
+
+  .indent-review-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th {
+      background-color: #f0f0f0;
+      font-weight: 600;
+      padding: 9px 10px;
+      white-space: nowrap;
+      border-bottom: 2px solid #ddd;
+      color: #323c47;
+      text-align: left;
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eeeeee;
+      vertical-align: top;
+      color: #333;
+
+      &.text-right {
+        text-align: right;
+      }
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: #fafafa;
+    }
+  }
+
+  .review-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+  }
+}

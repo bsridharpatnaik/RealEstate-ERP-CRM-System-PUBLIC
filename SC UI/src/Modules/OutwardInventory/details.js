@@ -1,0 +1,502 @@
+import React from "react";
+import {
+  EditIcon,
+  DeleteIcon,
+  MoreIcon,
+  CloseIcon,
+} from "./../../Shared/Icons/Index.js";
+import IconButton from "@material-ui/core/IconButton";
+import Paper from "@material-ui/core/Paper";
+import { messages } from "./../../messages";
+import Popper from "@material-ui/core/Popper";
+import CommonDetails from "./../../Shared/Details";
+import ReturnProduct from "./ReturnProduct";
+import DeleteConfirm from "./../../Shared/DeleteConfirm";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
+import Typography from "@material-ui/core/Typography";
+import Box from "@material-ui/core/Box";
+import RejectProduct from "./rejectProduct";
+import { checkifDateLessThan, getRoleEditConstraintDays, canCreateInward } from "./../../helper";
+import DebitNotePrint from "./../../Shared/DebitNotePrint";
+import ReactToPrint from "react-to-print";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import Table from "@material-ui/core/Table";
+import TableBody from "@material-ui/core/TableBody";
+import TableCell from "@material-ui/core/TableCell";
+import TableHead from "@material-ui/core/TableHead";
+import TableRow from "@material-ui/core/TableRow";
+import Print from "./outwardPrint";
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <Typography
+      component="div"
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box p={3}>{children}</Box>}
+    </Typography>
+  );
+}
+
+class Details extends CommonDetails {
+  state = {
+    value: 0,
+    deleteConfirmOpen: false,
+    rejectopen: false,
+    anchorEl: null,
+  };
+  deleteRow = null;
+
+  componentDidMount() {
+    this.addRef = React.createRef();
+    this.addRejRef = React.createRef();
+    this.componentRef = React.createRef();
+    this.componentRef1 = React.createRef();
+    this.detailTabRef = React.createRef();
+  }
+
+  handleCloseMenu = () => {
+    this.setState({ anchorEl: null });
+  };
+
+  render() {
+    const data = this.props.data;
+    const days = getRoleEditConstraintDays();
+    const isUpdateEnable = checkifDateLessThan(data.date, days);
+    const canWrite = canCreateInward();
+    const hasReturn =
+      data.returnOutwardList && data.returnOutwardList.length > 0;
+    const hasReject =
+      data.rejectOutwardList && data.rejectOutwardList.length > 0;
+    return (
+      <div className="list-section detail-section outward-detail-section">
+        <DeleteConfirm
+          open={this.state.deleteConfirmOpen}
+          onConfirm={() => {
+            this.props.delete(this.deleteRow);
+            this.setState({ deleteConfirmOpen: false });
+          }}
+          onCancel={() => {
+            this.deleteRow = null;
+            this.setState({ deleteConfirmOpen: false });
+          }}
+        />
+        <div className="print-content">
+          <Print ref={(el) => (this.detailTabRef = el)} data={data} />
+        </div>
+        <div className="debit-note-contetn">
+          <DebitNotePrint
+            data={data}
+            ref={(el) => (this.componentRef = el)}
+            ourwardReject={true}
+          />
+          <DebitNotePrint
+            data={data}
+            ref={(el) => (this.componentRef1 = el)}
+            outwardReturn={true}
+          />
+        </div>
+
+        <div className="details-header">
+          {messages.common.details}
+          <div>
+            <IconButton
+              onClick={(event) =>
+                this.setState({ anchorEl: event.currentTarget })
+              }
+              className="back-icon"
+            >
+              {MoreIcon({ fontSize: "medium" })}
+            </IconButton>
+            <Menu
+              anchorEl={this.state.anchorEl}
+              keepMounted
+              open={Boolean(this.state.anchorEl)}
+              onClose={this.handleCloseMenu}
+              classes={{ paper: "detail-dropdown-menu" }}
+            >
+              <MenuItem onClick={() => this.handleCloseMenu()}>
+                <ReactToPrint
+                  trigger={() => {
+                    return <div>Print</div>;
+                  }}
+                  content={() => {
+                    return this.detailTabRef;
+                  }}
+                />
+              </MenuItem>
+              {hasReject ? (
+                <MenuItem onClick={() => this.handleCloseMenu()}>
+                  <ReactToPrint
+                    trigger={() => {
+                      return <div>Print Debit Note</div>;
+                    }}
+                    content={() => {
+                      return this.componentRef;
+                    }}
+                  />
+                </MenuItem>
+              ) : null}
+              {hasReturn ? (
+                <MenuItem onClick={() => this.handleCloseMenu()}>
+                  <ReactToPrint
+                    trigger={() => {
+                      return <div>Print Return Note</div>;
+                    }}
+                    content={() => {
+                      return this.componentRef1;
+                    }}
+                  />
+                </MenuItem>
+              ) : null}
+              {canWrite && (
+                <MenuItem
+                  disabled={isUpdateEnable}
+                  onClick={() => {
+                    this.handleCloseMenu();
+                    this.setState({ rejectopen: true });
+                  }}
+                >
+                  Add Reject
+                </MenuItem>
+              )}
+              {canWrite && (
+                <MenuItem
+                  disabled={isUpdateEnable}
+                  onClick={() => {
+                    this.handleCloseMenu();
+                    this.setState({ filterOpen: true });
+                  }}
+                >
+                  Add Return
+                </MenuItem>
+              )}
+            </Menu>
+
+            {this.state.rejectopen && (
+              <RejectProduct
+                data={data}
+                open={this.state.rejectopen}
+                closeDetails={() => {
+                  this.setState({ rejectopen: false });
+                  this.props.close(data);
+                }}
+                goToDetails={() => this.props.goToDetails()}
+                close={() => this.setState({ rejectopen: false })}
+              />
+            )}
+
+            {this.state.filterOpen && (
+              <ReturnProduct
+                data={data}
+                open={this.state.filterOpen}
+                closeDetails={() => {
+                  this.setState({ filterOpen: false });
+                  this.props.close(data);
+                }}
+                goToDetails={() => this.props.goToDetails()}
+                close={() => this.setState({ filterOpen: false })}
+              />
+            )}
+
+            {/* <IconButton
+              aria-label="add return"
+              title="Return Inventory"
+              onClick={() => {
+                this.setState({ filterOpen: true });
+              }}
+              className="back-icon"
+              innerRef={this.addRef}
+              disabled={isUpdateEnable}
+            >
+              <AddCircle />
+            </IconButton> */}
+            {/* <IconButton
+              aria-label="add reject"
+              title="Reject Inventory"
+              onClick={() => {
+                this.setState({ rejectopen: true });
+              }}
+              className="back-icon"
+              innerRef={this.addRejRef}
+            >
+              <ThumbDownIcon />
+            </IconButton> */}
+            {/* <Popper
+              open={this.state.filterOpen}
+              anchorEl={this.addRef && this.addRef.current}
+              placement="bottom-start"
+            >
+              <ReturnProduct
+                data={data}
+                closeDetails={() => {
+                  this.setState({ filterOpen: false });
+                  this.props.close(data);
+                }}
+                goToDetails={() => this.props.goToDetails()}
+                close={() => this.setState({ filterOpen: false })}
+              />
+            </Popper> */}
+            {/* <Popper
+              open={this.state.rejectopen}
+              anchorEl={this.addRejRef && this.addRejRef.current}
+              placement="bottom-start"
+            >
+              <RejectProduct
+                data={data}
+                closeDetails={() => {
+                  this.setState({ rejectopen: false });
+                  this.props.close(data);
+                }}
+                goToDetails={() => this.props.goToDetails()}
+                close={() => this.setState({ rejectopen: false })}
+              />
+            </Popper> */}
+            {canWrite && (
+              <IconButton
+                aria-label="back"
+                onClick={() => this.props.edit(data)}
+                className="back-icon"
+                disabled={isUpdateEnable}
+              >
+                {EditIcon({ fontSize: "medium" })}
+              </IconButton>
+            )}
+            {/* {hasReject ? (
+              <ReactToPrint
+                trigger={() => {
+                  return (
+                    <IconButton aria-label="print" className="back-icon">
+                      <GetAppRoundedIcon />
+                    </IconButton>
+                  );
+                }}
+                content={() => {
+                  return this.componentRef;
+                }}
+              />
+            ) : null}
+            {hasReturn ? (
+              <ReactToPrint
+                trigger={() => {
+                  return (
+                    <IconButton aria-label="print" className="back-icon">
+                      <GetAppRoundedIcon />
+                    </IconButton>
+                  );
+                }}
+                content={() => {
+                  return this.componentRef1;
+                }}
+              />
+            ) : null} */}
+            {/* <IconButton
+              aria-label="print"
+              onClick={() => window.print()}
+              className="back-icon"
+            >
+              <PrintIcon />
+            </IconButton> */}
+            {canWrite && (
+              <IconButton
+                aria-label="back"
+                disabled={isUpdateEnable}
+                onClick={() => {
+                  this.deleteRow = data;
+                  this.setState({ deleteConfirmOpen: true });
+                }}
+                className="back-icon"
+              >
+                {DeleteIcon({ fontSize: "medium" })}
+              </IconButton>
+            )}
+            <IconButton
+              aria-label="back"
+              onClick={() => this.props.close(data)}
+              className="back-icon"
+            >
+              <CloseIcon />
+            </IconButton>
+          </div>
+        </div>
+        <Tabs
+          indicatorColor="primary"
+          textColor="primary"
+          onChange={(e, value) => this.setState({ value: value })}
+          value={this.state.value}
+        >
+          <Tab label="Details" id="simple-tabpanel-0" />
+          <Tab label="History" id="simple-tabpanel-1" />
+        </Tabs>
+        <TabPanel value={this.state.value} index={1}>
+          <Paper elevation={0}>
+            {data.createdBy && (
+              <div className="detail-item">
+                <div className="label">Created By</div>
+                <div className="value">{data.createdBy}</div>
+              </div>
+            )}
+            {data.creationDate && (
+              <div className="detail-item">
+                <div className="label">Creation Date</div>
+                <div className="value">{data.creationDate}</div>
+              </div>
+            )}
+            {data.inwardOutwardList && data.inwardOutwardList[0] && (
+              <div className="detail-item">
+                <div className="label">Last Modified By</div>
+                <div className="value">
+                  {data.inwardOutwardList[0].lastModifiedBy}
+                </div>
+              </div>
+            )}
+            {data.inwardOutwardList && data.inwardOutwardList[0] && (
+              <div className="detail-item">
+                <div className="label">Last Modified On</div>
+                <div className="value">
+                  {data.inwardOutwardList[0].lastModifiedDate}
+                </div>
+              </div>
+            )}
+          </Paper>
+        </TabPanel>
+        <TabPanel value={this.state.value} index={0}>
+          <div className="details-print-content">
+            <Paper elevation={0}>
+              <div className="details-wrapper">
+                <div className="detail-item">
+                  <div className="label">{messages.common.contractor}</div>
+                  <div className="value">{data.contractor.name}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="label">{messages.common.warehouse}</div>
+                  <div className="value">{data.warehouse.warehouseName}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="label">{messages.common.location}</div>
+                  <div className="value">{data.usageLocation.locationName}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="label">{messages.common.finalLocation}</div>
+                  <div className="value">{data.usageArea.usageAreaName}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="label">{messages.fields.date}</div>
+                  <div className="value">{data.date}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="label">{messages.common.slipNo}</div>
+                  <div className="value">{data.slipNo}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="label">{messages.common.purpose}</div>
+                  <div className="value">{data.purpose}</div>
+                </div>
+              </div>
+              <div className="detail-item">
+                <div className="label">{messages.common.comment}</div>
+                <div className="value">{data.additionalInfo}</div>
+              </div>
+              {this.renderFileList(data.fileInformations)}
+            </Paper>
+            <h4 className="reject-stock">Outward Stock</h4>
+            <Paper elevation={0} className="table-wrapper">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{messages.common.inventory}</TableCell>
+                    <TableCell>{messages.common.unit}</TableCell>
+                    <TableCell>{messages.common.quantity}</TableCell>
+                    <TableCell>{messages.common.closingStock}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {data.inwardOutwardList.map((row) => (
+                    <TableRow key={row.productName}>
+                      <TableCell>{row.product.productName}</TableCell>
+                      <TableCell>{row.product.measurementUnit}</TableCell>
+                      <TableCell>{row.quantity}</TableCell>
+                      <TableCell>{row.closingStock}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+
+            {hasReturn ? (
+              <>
+                <h4 className="reject-stock">Outward Returned Stocks</h4>
+                <Paper elevation={0} className="table-wrapper">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{messages.fields.date}</TableCell>
+                        <TableCell>{messages.common.inventory}</TableCell>
+                        <TableCell>{messages.common.unit}</TableCell>
+                        <TableCell>{messages.common.oldquantity}</TableCell>
+                        <TableCell>
+                          {messages.common.returnedQauntity}
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {data.returnOutwardList.map((row) => (
+                        <TableRow key={row.productName}>
+                          <TableCell>{row.returnDate}</TableCell>
+                          <TableCell>{row.product.productName}</TableCell>
+                          <TableCell>{row.product.measurementUnit}</TableCell>
+                          <TableCell>{row.oldQuantity}</TableCell>
+                          <TableCell>{row.returnQuantity}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </>
+            ) : null}
+            {hasReject ? (
+              <>
+                <h4 className="reject-stock">Outward Rejected Stocks</h4>
+                <Paper elevation={0} className="table-wrapper">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{messages.fields.date}</TableCell>
+                        <TableCell>{messages.common.inventory}</TableCell>
+                        <TableCell>{messages.common.unit}</TableCell>
+                        <TableCell>{messages.common.oldquantity}</TableCell>
+                        <TableCell>
+                          {messages.common.returnedQauntity}
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {data.rejectOutwardList.map((row) => (
+                        <TableRow key={row.productName}>
+                          <TableCell>{row.rejectDate}</TableCell>
+                          <TableCell>{row.product.productName}</TableCell>
+                          <TableCell>{row.product.measurementUnit}</TableCell>
+                          <TableCell>{row.oldQuantity}</TableCell>
+                          <TableCell>{row.rejectQuantity}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </>
+            ) : null}
+          </div>
+        </TabPanel>
+      </div>
+    );
+  }
+}
+
+export default Details;

@@ -1,0 +1,511 @@
+@import "./../../../../scss/variables.scss";
+
+.activity-tab {
+  .right {
+    .MuiOutlinedInput-multiline {
+      height: 104px;
+      align-items: flex-start;
+    }
+  }
+  .MuiFormControl-root {
+    margin: 2px 0;
+    .MuiInputLabel-formControl {
+      font-weight: normal;
+      font-size: 14px;
+      text-align: left;
+      color: #323c47;
+    }
+    .MuiInputAdornment-root {
+      .MuiIconButton-label {
+        width: 24px;
+      }
+    }
+    .MuiAutocomplete-inputRoot {
+      padding: 4px 9px;
+    }
+  }
+  .flex {
+    display: flex;
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+    }
+    @media screen and (max-width: 425px) {
+      flex-direction: column;
+    }
+    .MuiAutocomplete-root {
+      width: 100%;
+    }
+    .MuiTextField-root {
+      padding-right: 20px;
+      @media screen and (max-width: 768px) {
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+      @media screen and (max-width: 425px) {
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+    }
+    .left {
+      width: 66.66%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+      }
+    }
+    .right {
+      width: 33.33%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+      }
+    }
+  }
+  .width30 {
+    justify-content: space-between;
+    .MuiFormControl-root {
+      width: 33%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+    }
+  }
+
+  .MuiFilledInput-root {
+    background-color: white;
+  }
+  .MuiInputLabel-outlined.MuiInputLabel-shrink {
+    transform: translate(0px, 0px) scale(0.75);
+    position: static;
+    margin-bottom: 8px;
+  }
+  .MuiAutocomplete-inputRoot {
+    padding: 0;
+  }
+  .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-width: 1px;
+  }
+  .MuiOutlinedInput-notchedOutline {
+    border-radius: 6px;
+    border: 1px solid #a2a2c3;
+
+    legend {
+      display: none;
+    }
+  }
+
+  .right {
+  .button-section {
+    display: flex;
+    justify-content: center;
+    margin-right:20px;
+    .MuiButtonBase-root {
+      height: 38px;
+      width: 100%;
+      font-weight: bold;
+      font-size: 18px;
+      color: #fff;
+      margin-right: 5px;
+      margin-left: 5px;
+    }
+  }
+}
+  background-color: #fff;
+  padding: 10px;
+}
+
+
+.schedules-main{
+  margin-top: 20px;
+  .schedule-header{
+    height: 40px;
+    margin-bottom: 10px;
+    .schedule-heading{
+      font-size: 18px;
+      position: relative;
+      top: 54%;
+    }
+    button{
+      float:right;
+      margin-right: 5px;
+    }
+  }
+  .schedule-content{
+    background-color: #fff;
+    border-radius: 20px;
+    .schedule{
+      padding: 10px;
+    display: flex;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    position: relative;
+      .schedule-left{
+        width: 60%;
+        .schedule-top{
+          display:flex;
+          margin-bottom: 10px;
+          .schedule-date{
+            color:rgba(0, 0, 0, 0.54);
+            font-size: 12px;
+          }
+          .schedule-status.pending{
+            color:#ff808b;
+            font-size: 12px;
+          }
+          .schedule-status.received{
+            color:#44c4a1;
+            font-size: 12px;
+          }
+        }
+        .schedule-bottom{
+          font-size: 14px;
+        }
+      }
+      .schedule-right{
+        width:40%;
+        text-align: center;
+        .schedule-amount{
+          margin-bottom: 10px;
+          text-align: center;
+          margin-right: 20%;
+          color: #44c4a1;
+          font-size: 16px;
+          font-weight: 600;
+        }
+        .schedule-mode{
+          border-radius: 30px;
+          background-color: #f9b571;
+          padding: 5px 10px 5px 10px;
+          color: #fff;
+          font-size: 12px;
+        }
+      }
+      .schedule-buttons{
+        top: 0px;
+        right: 8px;
+        position: absolute;
+        display: inherit;
+        .MuiSvgIcon-root{
+          width: 10px;
+        margin: 4px;
+        cursor: pointer;
+        }
+      }
+    }
+    .pending{
+      background-color: #FFF2F3;
+    }
+    .received{
+      background-color: #ECF9F5;
+    }
+}
+  }
+
+.main-properties {
+  .properties {
+    width: 100%;
+  }
+}
+
+.totalAmount {
+  width: 33%;
+  border-left: none !important;
+}
+
+.recievedAmount {
+  width: 33%;
+}
+
+.pendingAmount {
+  width: 33%;
+}
+
+.propertyDetails .leftPane {
+  width: 100% !important;
+}
+
+.paymentForm {
+  margin-top: 10px;
+}
+
+.button-section {
+  margin-top: 10px;
+    padding-right: 15px;
+}
+
+.customers-panel {
+  width: 50%;
+  // border-right: 1px solid rgba(0, 0, 0, 0.24);
+}
+
+.bank-panel {
+  width: 50%;
+  // border-right: 1px solid rgba(0, 0, 0, 0.24);
+}
+
+.w-100 {
+  width: 100% !important;
+}
+
+.w-50 {
+  width: 50% !important;
+}
+
+.d-flex {
+  display: flex !important;
+}
+
+.d-block {
+  display: block !important;
+}
+
+@import "./../../../../scss/variables.scss";
+
+.activity-tab {
+  .right {
+    .MuiOutlinedInput-multiline {
+      height: 104px;
+      align-items: flex-start;
+    }
+  }
+  .MuiFormControl-root {
+    margin: 2px 0;
+    .MuiInputLabel-formControl {
+      font-weight: normal;
+      font-size: 14px;
+      text-align: left;
+      color: #323c47;
+    }
+    .MuiInputAdornment-root {
+      .MuiIconButton-label {
+        width: 24px;
+      }
+    }
+    .MuiAutocomplete-inputRoot {
+      padding: 4px 9px;
+    }
+  }
+  .flex {
+    display: flex;
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+    }
+    @media screen and (max-width: 425px) {
+      flex-direction: column;
+    }
+    .MuiAutocomplete-root {
+      width: 100%;
+    }
+    .MuiTextField-root {
+      padding-right: 20px;
+      @media screen and (max-width: 768px) {
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+      @media screen and (max-width: 425px) {
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+    }
+    .left {
+      width: 66.66%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+      }
+    }
+    .right {
+      width: 33.33%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+      }
+    }
+  }
+  .width30 {
+    justify-content: space-between;
+    .MuiFormControl-root {
+      width: 33%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+        padding-right: 0px;
+        margin-bottom: 12px;
+      }
+    }
+  }
+
+  .MuiFilledInput-root {
+    background-color: white;
+  }
+  .MuiInputLabel-outlined.MuiInputLabel-shrink {
+    transform: translate(0px, 0px) scale(0.75);
+    position: static;
+    margin-bottom: 8px;
+  }
+  .MuiAutocomplete-inputRoot {
+    padding: 0;
+  }
+  .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-width: 1px;
+  }
+  .MuiOutlinedInput-notchedOutline {
+    border-radius: 6px;
+    border: 1px solid #a2a2c3;
+
+    legend {
+      display: none;
+    }
+  }
+
+  .right {
+  .button-section {
+    display: flex;
+    justify-content: center;
+    margin-right:20px;
+    .MuiButtonBase-root {
+      height: 38px;
+      width: 100%;
+      font-weight: bold;
+      font-size: 18px;
+      color: #fff;
+      margin-right: 5px;
+      margin-left: 5px;
+    }
+  }
+}
+  background-color: #fff;
+  padding: 10px;
+}
+
+
+.schedules-main{
+  .schedule-header{
+    height: 40px;
+    margin-bottom: 30px;
+    .schedule-heading{
+      font-size: 18px;
+    }
+    button{
+      float:right;
+      margin-right: 5px;
+    }
+  }
+  .schedule-content{
+    background-color: #fff;
+    border-radius: 20px;
+    
+    padding: 0px;
+    padding-right: 5px;
+    .schedule{
+      padding: 10px;
+    display: flex;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    position: relative;
+      .schedule-left{
+        width: 60%;
+        .schedule-top{
+          display:flex;
+          margin-bottom: 10px;
+          .schedule-date{
+            color:rgba(0, 0, 0, 0.54);
+            font-size: 12px;
+          }
+          .schedule-status.pending{
+            color:#ff808b;
+            font-size: 12px;
+          }
+          .schedule-status.received{
+            color:#44c4a1;
+            font-size: 12px;
+          }
+        }
+        .schedule-bottom{
+          font-size: 14px;
+        }
+      }
+      .schedule-right{
+        width:40%;
+        text-align: center;
+        .schedule-amount{
+          margin-bottom: 10px;
+          text-align: center;
+          margin-right: 20%;
+          color: #44c4a1;
+          font-size: 16px;
+          font-weight: 600;
+        }
+        .schedule-mode{
+          border-radius: 30px;
+          border: 1px solid #3aa589;
+          background-color: #fff;
+          color: #44c4a1;
+          font-size: 9px;
+          font-weight: 900;
+          padding: 9px;
+          width: 84px;
+          height: 31px;
+          top: 4px;
+          position: relative;
+        }
+      }
+      .schedule-buttons{
+        top: 0px;
+        right: 8px;
+        position: absolute;
+        display: inherit;
+        .MuiSvgIcon-root{
+          width: 10px;
+        margin: 4px;
+        cursor: pointer;
+        }
+      }
+    }
+    .pending{
+      background-color: #FFF2F3;
+    }
+    .received{
+      background-color: #ECF9F5;
+    }
+}
+  }
+
+.clearfix {
+  overflow: auto;
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.text-amount {
+  position: relative;
+  top: 3px;
+  left: 8px;
+}
+
+.schedules-main .schedule-content .pending {
+  margin-left: 7px
+}

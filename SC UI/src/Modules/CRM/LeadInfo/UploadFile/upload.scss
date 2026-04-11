@@ -1,0 +1,69 @@
+.Upload {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: flex-start;
+  text-align: left;
+  overflow: hidden;
+}
+
+.Files {
+  display: flex;
+  flex-wrap: wrap;
+}
+.upload-button {
+  display: flex;
+  align-items: center;
+  span {
+    margin-left: 8px;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 22px;
+    color: #323c47;
+  }
+}
+.icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  background: #fff2f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-file-input {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover {
+    background: rgba(25, 18, 10, 0.04);
+  }
+}
+.attach-text {
+  padding: 6px;
+}
+.custom-file-input input {
+  visibility: hidden;
+  width: 0;
+  height: 0;
+}
+.Title {
+  margin-bottom: 32px;
+  color: #555;
+}
+
+.Filename {
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #555;
+}
+
+.CheckIcon {
+  opacity: 0.5;
+  margin-left: 32px;
+}
+
+.ProgressWrapper {
+  margin: 5px;
+}

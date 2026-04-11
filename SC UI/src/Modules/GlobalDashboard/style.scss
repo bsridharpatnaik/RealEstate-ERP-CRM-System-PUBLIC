@@ -1,0 +1,656 @@
+.global-dashboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 48px);
+  width: 85vw;
+  @media screen and (max-width: 768px) {
+    min-height: unset;
+    width: 100%;
+    overflow-x: hidden;   // prevent any child (chart labels, wide tables) from causing page-level scroll
+  }
+  @media screen and (max-width: 425px) {
+    min-height: unset;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .top {
+    display: flex;
+    height: auto;
+    padding: 12px;
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+      height: auto;
+    }
+    @media screen and (max-width: 425px) {
+      flex-direction: column;
+      height: auto;
+    }
+    .left {
+      width: calc(30% - 20px);
+      margin-right: 20px;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+    }
+    .right {
+      width: 70%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+      }
+    }
+  }
+
+  .box {
+    background: #fff;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+  }
+
+  .leftPanel {
+    width: 100%;
+    height: 100%;
+    padding-left: 10px;
+    @media screen and (max-width: 768px) {
+      padding-bottom: 10px;
+    }
+    @media screen and (max-width: 425px) {
+      padding-bottom: 10px;
+    }
+    .pipeline .heading {
+      color: #ff808b;
+      font-size: 13px;
+    }
+    .activities .heading {
+      color: #44c4a1;
+      font-size: 13px;
+    }
+    .pipeline-detail {
+      display: flex;
+      margin-top: 8px;
+      color: #323c47;
+      font-size: 15px;
+      .header {
+        width: 60%;
+        cursor: pointer;
+      }
+      .count {
+        width: 20%;
+      }
+      .infoIcon {
+        width: 19%;
+        margin-top: -3px;
+        .MuiIconButton-root {
+          padding: 0 !important;
+        }
+      }
+      .selected {
+        width: 1%;
+      }
+    }
+    .pipeline-detail.urgent {
+      color: #d32f2f !important;
+      border-left: 3px solid #d32f2f;
+      padding-left: 6px;
+      .count {
+        color: #d32f2f;
+        font-weight: 600;
+      }
+      .infoIcon .MuiIconButton-root {
+        color: #d32f2f !important;
+      }
+    }
+
+    .pipeline-detail.active {
+      color: #5e81f4 !important;
+      .infoIcon {
+        width: 19%;
+        margin-top: -3px;
+        .MuiIconButton-root {
+          padding: 0 !important;
+          color: #5e81f4 !important;
+        }
+      }
+      .selected {
+        background-color: #5e81f4 !important;
+      }
+    }
+  }
+
+  .chartwrapper {
+    height: 380px;
+    overflow: hidden;
+    @media screen and (max-width: 768px) {
+      height: 210px;
+      overflow: hidden;
+    }
+    @media screen and (max-width: 425px) {
+      height: 210px;
+      overflow: hidden;
+    }
+    .topchart {
+      height: 10%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      @media screen and (max-width: 768px) {
+        flex-direction: column;
+        justify-content: unset;
+        align-items: unset;
+      }
+    }
+    .leftPanel.heading {
+      color: #323c47;
+      font-size: 15px;
+      width: unset;
+      height: unset;
+      @media screen and (max-width: 768px) {
+        padding: 5px 0px 0px 10px;
+      }
+    }
+    .rightPanel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      @media screen and (max-width: 768px) {
+        justify-content: flex-end;
+      }
+      .navigation-type {
+        color: #a2a2c3;
+        .fullform {
+          display: block;
+        }
+        .shortform {
+          display: none;
+        }
+        @media screen and (max-width: 768px) {
+          .fullform {
+            display: none;
+          }
+          .shortform {
+            display: block;
+          }
+        }
+      }
+      .month {
+        color: #a2a2c3;
+        font-size: 13px;
+      }
+    }
+    .chartDetail {
+      height: 90%;
+      @media screen and (max-width: 768px) {
+        height: auto;
+        padding-top: 10px;
+      }
+      @media screen and (max-width: 425px) {
+        height: auto;
+        padding-top: 10px;
+      }
+    }
+  }
+
+  .trend-row {
+    display: flex;
+    padding: 0 12px 12px;
+    gap: 12px;
+    height: auto;
+    min-height: 480px;
+    flex-shrink: 0;
+    @media screen and (max-width: 1024px) { min-height: auto; }
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+      min-height: auto;
+    }
+    @media screen and (max-width: 425px) {
+      flex-direction: column;
+      min-height: auto;
+    }
+  }
+
+  .trend-col {
+    width: 50%;
+    flex: 1 1 50%;
+    min-width: 0;
+    @media screen and (max-width: 768px) {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+    @media screen and (max-width: 425px) {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+  }
+
+  .stale-row {
+    display: flex;
+    padding: 0 12px 12px;
+    gap: 12px;
+    height: auto;
+    min-height: 480px;
+    flex-shrink: 0;
+    @media screen and (max-width: 1024px) { min-height: auto; }
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+      min-height: auto;
+    }
+    @media screen and (max-width: 425px) {
+      flex-direction: column;
+      min-height: auto;
+    }
+  }
+
+  .indent-trend-card {
+    background: #fff;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    .indent-trend-title {
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #323c47;
+    }
+    .stale-chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      padding-bottom: 8px;
+      max-height: 52px;
+      overflow: hidden;
+      @media screen and (max-width: 768px) { max-height: none; overflow: visible; }
+      .stale-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: #323c47;
+        .stale-legend-color {
+          width: 10px;
+          height: 10px;
+          border-radius: 2px;
+          flex-shrink: 0;
+        }
+        .stale-legend-label {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 130px;
+        }
+      }
+    }
+    .indent-trend-chart-wrap {
+      height: 400px;
+      overflow: hidden;
+      @media screen and (max-width: 1024px) { height: 300px; }
+      @media screen and (max-width: 768px)  { height: 220px; }
+    }
+    .indent-trend-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a2a2c3;
+      font-size: 14px;
+      padding: 24px;
+    }
+  }
+
+  .heatmap-section {
+    padding: 0 12px 12px;
+    height: auto;
+    min-height: 480px;
+    flex-shrink: 0;
+    @media screen and (max-width: 1024px) { min-height: auto; }
+    @media screen and (max-width: 768px)  { min-height: auto; }
+    @media screen and (max-width: 425px)  { min-height: auto; }
+  }
+
+  .heatmap-card {
+    background: #fff;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    .indent-trend-title {
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #323c47;
+    }
+    .heatmap-chart-wrap {
+      height: 400px;
+      overflow: hidden;
+      @media screen and (max-width: 1024px) { height: 300px; }
+      @media screen and (max-width: 768px)  { height: 220px; }
+    }
+    .indent-trend-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a2a2c3;
+      font-size: 14px;
+      padding: 24px;
+    }
+  }
+
+  .bottom {
+    display: flex;
+    height: auto;
+    padding: 12px;
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+      height: auto;
+    }
+    @media screen and (max-width: 425px) {
+      flex-direction: column;
+      height: auto;
+    }
+    .left {
+      width: 50%;
+      margin-right: 20px;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+    }
+    .right {
+      width: 50%;
+      @media screen and (max-width: 768px) {
+        width: 100%;
+      }
+      @media screen and (max-width: 425px) {
+        width: 100%;
+      }
+    }
+  }
+
+  .notification {
+    background: #fff;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    .dashboard-heading {
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 12px;
+      margin-left: 10px;
+      height: 18px;
+      padding-top: 5px;
+    }
+    .customer-pipeline {
+      color: #4d4cac;
+    }
+    .performer {
+      color: #f9b571;
+    }
+    .notification-content {
+      overflow: auto;
+      flex: 1;
+      box-shadow: none !important;
+      background: none !important;
+      border-radius: 0 !important;
+      td {
+        white-space: nowrap;
+      }
+    }
+    .notification-content.empty-table {
+      padding: 12px;
+      color: #a2a2c3;
+    }
+    th {
+      font-weight: normal;
+      font-size: 12px;
+      color: #a2a2c3;
+      line-height: 22px;
+      height: 35px;
+    }
+    td {
+      line-height: 22px;
+      font-size: 16px;
+      color: #323c47;
+      height: 35px;
+      font-weight: 300;
+    }
+    table tbody tr {
+      cursor: pointer;
+    }
+    table tbody tr.selected-row {
+      background-color: rgba(94, 129, 244, 0.08);
+    }
+  }
+
+  // Full-width stock table row
+  .stock-table-row {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .stock-table-card {
+    width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+
+    .stock-table-scroll-wrapper {
+      overflow-x: auto;   // horizontal scroll for many tenants
+      overflow-y: visible; // let page scroll vertically
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      @media screen and (max-width: 768px) {
+        // Mobile: only 4 cols (Product, Unit, Total, Dead) — no horizontal overflow needed
+        overflow-x: visible;
+      }
+    }
+
+    .stock-tenant-table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 600px;
+      font-size: 12px;
+      @media screen and (max-width: 768px) {
+        min-width: 0;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      thead tr th {
+        position: sticky;
+        top: 0;
+        background-color: #f5f5f5;
+        z-index: 2;
+        white-space: nowrap;
+        padding: 8px 10px;
+        border-bottom: 1px solid #ddd;
+        text-align: center;
+        font-weight: 600;
+        color: #323c47;
+        height: auto;
+        line-height: 1.4;
+      }
+
+      // First header row — tenant group headers have a bottom border separator
+      thead tr:first-child th {
+        border-bottom: 1px solid #ccc;
+      }
+
+      // Second header row
+      thead tr:last-child th {
+        top: 37px; // offset below first header row
+        border-bottom: 2px solid #bbb;
+        color: #666;
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      .tenant-group-header {
+        border-left: 2px solid #ddd;
+        border-right: 2px solid #ddd;
+        background-color: #eef2ff !important;
+        color: #3f51b5 !important;
+        font-size: 12px;
+      }
+
+      .sub-header {
+        background-color: #f0f4ff !important;
+
+        &:nth-child(odd) {
+          border-left: 2px solid #ddd;
+        }
+      }
+
+      // Sticky first two columns (Product Name + Unit)
+      .sticky-col {
+        position: sticky;
+        background-color: inherit;
+        z-index: 1;
+        white-space: nowrap;
+        text-align: left;
+        @media screen and (max-width: 768px) { position: static; }
+
+        &.col-name {
+          left: 0;
+          min-width: 180px;
+          max-width: 220px;
+          white-space: normal;
+          word-break: break-word;
+          z-index: 3;
+          @media screen and (max-width: 768px) {
+            min-width: 0;
+            width: 45%;
+            max-width: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+
+        &.col-unit {
+          left: 180px;
+          min-width: 60px;
+          z-index: 3;
+          @media screen and (max-width: 768px) { left: auto; min-width: 0; width: 15%; }
+        }
+
+        &.col-reorder {
+          left: 240px;
+          min-width: 100px;
+          text-align: right;
+          z-index: 3;
+        }
+      }
+
+      // Make sticky header cells also stay on top
+      thead .sticky-col {
+        z-index: 4 !important;
+        background-color: #f5f5f5 !important;
+      }
+
+      tbody tr {
+        cursor: default;
+
+        &:nth-child(even) {
+          background-color: #fafafa;
+        }
+
+        &:hover {
+          background-color: #f0f4ff;
+        }
+
+        td {
+          padding: 7px 10px;
+          border-bottom: 1px solid #eeeeee;
+          font-size: 12px;
+          color: #323c47;
+          font-weight: 300;
+          height: auto;
+          line-height: 1.4;
+          white-space: nowrap;
+          text-align: left;
+          @media screen and (max-width: 768px) { padding: 6px 6px; font-size: 11px; }
+
+          &.stock-val {
+            text-align: right;
+            color: #2e7d32;
+            font-weight: 500;
+          }
+
+          &.dead-stock-val {
+            text-align: right;
+            color: #c62828;
+            font-weight: 500;
+            border-right: 2px solid #ddd;
+          }
+        }
+
+        // Row highlighted when total stock is at or below reorder level
+        &.row-below-reorder {
+          background-color: #fff8e1 !important;
+
+          td {
+            color: #5d4037;
+          }
+
+          .sticky-col {
+            background-color: #fff8e1 !important;
+          }
+        }
+      }
+
+      // Reorder alert badge shown next to product name
+      .reorder-alert-badge {
+        margin-left: 5px;
+        color: #e65100;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: default;
+      }
+
+      // * indicator for tenant-overridden reorder level
+      .override-badge {
+        margin-left: 3px;
+        color: #1976d2;
+        font-size: 11px;
+        font-weight: bold;
+        cursor: default;
+        vertical-align: super;
+      }
+    }
+  }
+}
+
+.global-dashboard-wrapper {
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+  }
+  scrollbar-width: thin;
+}

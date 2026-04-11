@@ -1,0 +1,88 @@
+{
+  "homepage": "",
+  "name": "real-estate",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@amcharts/amcharts4": "^4.10.28",
+    "@date-io/moment": "1.x",
+    "@fortawesome/fontawesome-svg-core": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/react-fontawesome": "^0.2.1",
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.49",
+    "@material-ui/pickers": "^3.3.10",
+    "@syncfusion/ej2-react-dropdowns": "^20.2.39",
+    "axios": "^1.6.5",
+    "chart.js": "^3.7.1",
+    "chokidar": "^3.5.2",
+    "env-cmd": "^10.1.0",
+    "jquery": "^3.6.1",
+    "js-cookie": "^2.2.1",
+    "json-2-csv": "^3.17.1",
+    "moment": "^2.29.4",
+    "multiselect-react-dropdown": "^2.0.25",
+    "notistack": "^0.9.11",
+    "papaparse": "^5.4.1",
+    "react": "16.13.1",
+    "react-chartjs-2": "^4.1.0",
+    "react-dom": "16.13.1",
+    "react-horizontal-scrolling-menu": "^0.7.10",
+    "react-moment": "^0.9.7",
+    "react-overlay-loader": "^0.0.3",
+    "react-redux": "^7.2.2",
+    "react-router-dom": "^5.3.4",
+    "react-scripts": "^5.0.1",
+    "react-select": "^5.4.0",
+    "react-to-print": "^2.12.3",
+    "react-toastify": "^9.0.7",
+    "react-quill": "^2.0.0",
+    "recharts": "^2.10.4",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0",
+    "sass": "^1.70.0",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "generate-manifest": "node generate-manifest.js",
+    "start": "env-cmd -f .env react-scripts start",
+    "start-eg": "env-cmd -f .env.eg react-scripts start",
+    "start-pc": "env-cmd -f .env.pc react-scripts start",
+    "build": "env-cmd -f .env npm run generate-manifest -- .env && react-scripts build",
+    "build-eg": "env-cmd -f .env.eg npm run generate-manifest -- .env.eg && env-cmd -f .env.eg react-scripts build",
+    "build-pc": "env-cmd -f .env.pc npm run generate-manifest -- .env.pc && env-cmd -f .env.pc react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "proxy": "http://localhost:8090",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0",
+    "dotenv": "^8.2.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env",
+      "@babel/preset-react"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ]
+  }
+}
