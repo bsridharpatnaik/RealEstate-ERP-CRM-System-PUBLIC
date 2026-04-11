@@ -35,9 +35,6 @@ import {
   DeadStock,
   HistoricalPricing,
   Firm,
-  StockAgingReport,
-  ProjectMaterialStatus,
-  StockMovementReport,
 } from "./../index";
 import BOQReport from "../BOQReport";
 
@@ -94,9 +91,6 @@ class Home extends React.Component {
                 <Route path={appRoutes.boqStatus}>
                   <BOQStatus key={new Date()} {...props} />
                 </Route>
-                <Route path={appRoutes.projectMaterialStatus}>
-                  <ProjectMaterialStatus key={new Date()} {...props} />
-                </Route>
                 <Route path={"/boqReport"}>
                   <BOQReport key={new Date()} {...props} />
                 </Route>
@@ -147,12 +141,6 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.historicalPricing}>
                   <HistoricalPricing key={new Date()} {...props} />
-                </Route>
-                <Route path={appRoutes.stockAgingReport}>
-                  <StockAgingReport key={new Date()} {...props} />
-                </Route>
-                <Route path={appRoutes.stockMovementReport}>
-                  <StockMovementReport key={new Date()} {...props} />
                 </Route>
                 <Route path={"/inwardInventory"}>
                   <InwardInventory key={new Date()} {...props} />

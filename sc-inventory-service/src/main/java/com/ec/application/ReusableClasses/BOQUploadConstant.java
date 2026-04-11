@@ -9,5 +9,6 @@ public class BOQUploadConstant {
 	public static final String UPDATE = "update";
 	public static final String ADDITION="addition";
 	public static final String DELETION="deletion";
-	
+	public static final String UPSERT="upsert";
+
 }

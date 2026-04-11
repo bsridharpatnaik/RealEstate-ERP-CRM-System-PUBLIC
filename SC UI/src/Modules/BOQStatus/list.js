@@ -14,7 +14,7 @@ import Filter from "./filter";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
 import { Dialog, Slide } from "@material-ui/core";
 import Details from "./details";
-import { API } from "./../../axios";
+import { API, instance } from "./../../axios";
 import { param } from "jquery";
 // import OutwardInventory from "../OutwardInventory";
 
@@ -58,9 +58,6 @@ class List extends ListCommon {
   };
 
   url = apiEndpoints.getBOQStatusDetails;
-  exportUrl = exportURL.getBOQStatus;
-  exportFile = messages.exportFiles.BOQStatus;
-  ignoreQueryParamsExport = true;
   boqStatus = true;
 
   componentDidMount() {
@@ -231,6 +228,30 @@ class List extends ListCommon {
     // this.getBOQStatusAPI(value);
   }
 
+  async downloadStatusExcel() {
+    const params = new URLSearchParams();
+    this.buildingType.forEach(bt => params.append('buildingType', bt.name));
+    this.buildingUnit.forEach(bu => params.append('buildingUnit', bu.name));
+    if (this.filterData) {
+      const product = this.filterData.product;
+      const category = this.filterData.category;
+      const consumedPercentage = this.filterData.consumedPercentage;
+      if (product && product.length) product.forEach(p => params.append('product', p.name || p));
+      if (category && category.length) category.forEach(c => params.append('category', c.name || c));
+      if (consumedPercentage && consumedPercentage.length) consumedPercentage.forEach(s => params.append('consumedPercentage', s));
+    }
+    const url = apiEndpoints.exportBOQStatus + (params.toString() ? '?' + params.toString() : '');
+    try {
+      const response = await instance.get(url, { responseType: 'blob' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([response.data]));
+      link.download = 'BOQ_Status.xlsx';
+      link.click();
+    } catch (e) {
+      console.error('BOQ Status download failed', e);
+    }
+  }
+
   onHandleBuildingUnit(value) {
     this.buildingUnit = value;
     console.log('Building Unit: ', this.buildingUnit);
@@ -288,9 +309,12 @@ class List extends ListCommon {
             </form>
 
             <div className="top-button-wrapper">
-              {
-                this.showDownload &&
-                this.renderExport()}
+              <IconButtons
+                onClick={() => this.downloadStatusExcel()}
+                buttonClass="filterIcon"
+                label={"Download Excel"}
+                icon={"DownloadSVG"}
+              />
               <IconButtons
                 onClick={() => {
                   this.setState({ filterOpen: true });

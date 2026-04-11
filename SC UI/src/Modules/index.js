@@ -24,9 +24,6 @@ import InventoryTransfer from "./InventoryTransfer";
 import DeadStock from "./DeadStock";
 import HistoricalPricing from "./HistoricalPricing";
 import Firm from "./Firm";
-import StockAgingReport from "./StockAgingReport";
-import ProjectMaterialStatus from "./ProjectMaterialStatus";
-import StockMovementReport from "./StockMovementReport";
 export {
   User,
   Role,
@@ -54,7 +51,4 @@ export {
   DeadStock,
   HistoricalPricing,
   Firm,
-  StockAgingReport,
-  ProjectMaterialStatus,
-  StockMovementReport,
 };

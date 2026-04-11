@@ -136,21 +136,9 @@ function SideMenu(props) {
                     onClick={props.setSideBarValue}
                   />
                   <DashboardItem
-                    nodeId="130"
-                    labelText={messages.common.stockAgingReport}
-                    linkurl={appendURL(appRoutes.stockAgingReport)}
-                    onClick={props.setSideBarValue}
-                  />
-                  <DashboardItem
                     nodeId="15"
                     labelText={messages.common.allInventory}
                     linkurl="/allInventory"
-                    onClick={props.setSideBarValue}
-                  />
-                  <DashboardItem
-                    nodeId="151"
-                    labelText={messages.common.stockMovementReport}
-                    linkurl={appendURL(appRoutes.stockMovementReport)}
                     onClick={props.setSideBarValue}
                   />
                   <DashboardItem
@@ -247,12 +235,6 @@ function SideMenu(props) {
                     onClick={props.setSideBarValue}
                     labelText={"Status"}
                     linkurl={appendURL("/boqStatus")}
-                  />
-                  <DashboardItem
-                    nodeId="161"
-                    onClick={props.setSideBarValue}
-                    labelText={messages.common.projectMaterialStatus}
-                    linkurl={appendURL(appRoutes.projectMaterialStatus)}
                   />
                   {/* <DashboardItem
                     nodeId="16"
