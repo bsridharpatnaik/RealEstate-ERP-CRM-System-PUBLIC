@@ -1,126 +1,140 @@
 # ERP/CRM Project — Claude Code Context
 
 ## Project Overview
-This is a **Real Estate ERP/CRM System** for managing inventory, indents,
-purchase orders, inward/outward movements, and stock operations.
+
+Real Estate ERP/CRM system for managing:
+
+- inventory
+- indents
+- purchase orders
+- inward / outward movements
+- stock operations
+- real-estate project material workflows
+
+Primary goal: fast, safe, minimal-impact changes aligned with existing architecture.
 
 ---
 
-## Repo Structure (Single Repository)
+## Repository Root
 
-**Root Path:**
 `/Users/bsridharpatnaik/GitHub/RealEstate-ERP-CRM-System`
 
-### Backend — Spring Boot (Microservices)
-
-#### Inventory Service
-- **Path:** `sc-inventory-service/src`
-- **Tech:** Java, Spring Boot, JPA/Hibernate, MySQL (multi-tenant)
-- **Modules:** Inventory, Indents, Purchase Orders, Inward, Outward, Stock
-
-#### CRM Service
-- **Path:** `sc-crm-service/src`
-- **Tech:** Java, Spring Boot
-
-#### Common Service
-- **Path:** `sc-common-service/src`
-- **Purpose:** Shared utilities, configs, and common logic
-
 ---
 
-### Frontend — React
-- **Path:** `SC UI/src`
-- **Tech:** React (JavaScript/TypeScript)
-- **Modules:** Inventory UI, Indent management, PO screens, Stock dashboard
+## Active Scope (Default)
 
----
+Only analyze and modify these paths unless explicitly asked otherwise:
 
-## Scope Instructions
-
-> **Only consider the following paths:**
 - `sc-inventory-service/src`
 - `SC UI/src`
 
-> Do NOT read or suggest changes in:
+Ignore by default:
+
 - `sc-crm-service`
 - `sc-common-service`
-- any other directory under the repo  
-unless explicitly asked.
+- build folders
+- generated files
+- logs
+- unrelated directories
+
+Do not scan outside active scope unless required.
 
 ---
 
-## How to Respond to Requirements & Bugs
+# Project Structure
 
-When I describe a **requirement or bug**, always:
+## Backend
 
-1. **Understand the feature/issue** — ask clarifying questions if needed  
+### Inventory Service
 
-2. **Backend changes first**  
-   - Focus on `sc-inventory-service/src`  
-   - Identify controller, service, repository, and entity files  
-   - Show exact file paths relative to `sc-inventory-service/src`  
+Path: `sc-inventory-service/src`
 
-3. **Frontend changes next**  
-   - Focus on `SC UI/src`  
-   - Identify components, services, and API integrations  
-   - Show exact file paths relative to `SC UI/src`  
+Stack:
 
-4. **Keep changes in sync**  
-   - If backend API contract changes (request/response, endpoints),  
-     update frontend API calls accordingly  
+- Java
+- Spring Boot
+- JPA / Hibernate
+- MySQL
+- Multi-tenant architecture
 
-5. **Call out side effects**  
-   - DB schema changes  
-   - Config updates  
-   - New dependencies  
+Domains include:
+
+- Inventory
+- Indents
+- Purchase Orders
+- Inward
+- Outward
+- Stock
+
+## Frontend
+
+Path: `SC UI/src`
+
+Stack:
+
+- React
+- JavaScript / TypeScript
+
+Domains include:
+
+- Inventory UI
+- Indent management
+- Purchase Order screens
+- Stock dashboards
+- Forms / tables / reports
 
 ---
 
-## Architecture Notes
+# Core Working Rules
 
-- Backend is **multi-tenant** — schemas are prefixed per tenant  
-- Custom ID generation is used — do not assume auto-increment IDs  
-- PDF generation uses **iText** (purchase orders)  
-- Frontend communicates with backend via REST APIs  
-- Backend deployed on **Tomcat/VPS** — avoid changes that break WAR packaging  
+## General
+
+- Prefer understanding existing implementation before proposing new code.
+- Reuse existing patterns, naming style, and architecture.
+- Prefer minimal diffs over rewrites.
+- Modify existing files before creating new files.
+- Keep solutions production-safe and maintainable.
+- Avoid unnecessary complexity.
+
+## Never Do These Unless Asked
+
+- Introduce new frameworks
+- Add libraries
+- Refactor unrelated code
+- Rename working modules
+- Change API contracts unnecessarily
+- Change DB schema by assumption
+- Modify out-of-scope modules
 
 ---
 
-## Response Format Preference
+# Code Search Strategy
 
-- Show file paths clearly before each code block  
-- Prefer minimal diffs over full file rewrites  
-- If a change spans multiple files, list all affected files upfront  
-- Do not directly modify code. Show me the changes first. After approval, apply the changes.  
+For every task:
 
-## Important Constraints
+1. Start with Graphify outputs when useful.
+2. Search only in allowed paths.
+3. Find existing similar feature first.
+4. Reuse existing patterns.
+5. Expand search only if blocked.
+6. Avoid broad repo scans.
 
-- Do NOT introduce new frameworks or libraries unless asked
-- Do NOT refactor unrelated code
-- Do NOT change existing API contracts unless explicitly required
-- Do NOT assume DB schema changes unless specified
-- Prefer modifying existing files over creating new ones
+---
 
-## Graphify
+# Graphify
 
-This project has a Graphify knowledge graph at graphify-out/.
+Knowledge graph exists at:
 
-Rules:
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md first.
-- If graphify-out/wiki/index.md exists, prefer it over raw file scanning.
-- After code changes, rebuild graph:
+`graphify-out/`
 
+## Rules
+
+Before architecture or codebase questions:
+
+1. Read `graphify-out/GRAPH_REPORT.md`
+2. If available, prefer `graphify-out/wiki/index.md`
+
+After code changes in session, refresh graph:
+
+```bash
 python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
-
-## Response Style
-
-Default for all repo tasks:
-- concise
-- direct
-- implementation-first
-- minimal filler
-- short explanations unless requested
-- preserve technical accuracy
-- keep code unchanged unless editing requested
-- for feature requests: give exact files + changes first
-- for bugs: root cause first, then fix

@@ -155,7 +155,7 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         ") ioe_sum ON ioe_sum.id = bu.id " +
         "WHERE bu.is_deleted = 0 AND bu.usageLocationId = ?1 AND bu.productId = ?2",
         nativeQuery = true)
-    Object[] fetchAggregatedBOQAndOutward(Long usageLocationId, Long productId);
+    List<Object[]> fetchAggregatedBOQAndOutward(Long usageLocationId, Long productId);
 
     /**
      * Returns [boq_quantity, outward_quantity] for one specific (locationId, productId, finalLocationId).

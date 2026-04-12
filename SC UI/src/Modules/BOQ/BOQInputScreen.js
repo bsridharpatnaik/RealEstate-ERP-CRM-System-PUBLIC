@@ -4,17 +4,12 @@ import IconButton from '@material-ui/core/IconButton';
 import Button from '../../Shared/Button';
 import Select from 'react-select';
 import { useSnackbar } from "notistack";
-import { getToken } from "../../helper";
-import { store } from "../../index";
 import { apiEndpoints } from '../../endpoints';
 import "./LoadingSpinner.css";
 import { API } from "./../../axios";
-import axios from 'axios';
 import { DeleteIcon, RefreshIcon } from '../../Shared/Icons/Index';
 
 const BOQInputScreen = () => {
-  const token = getToken();
-  const states = store.getState();
   const fileInputRef = useRef(null);
 
   useEffect(() => { getBuildingTypeDD(); }, []);
@@ -209,7 +204,7 @@ const BOQInputScreen = () => {
     setIsLoading(true);
     setResponseStatus(false);
     const table = document.querySelector('table');
-    for (var i = 0, row; row = table.rows[i]; i++) {
+    for (var i = 1, row; row = table.rows[i]; i++) {
       const rowItem = table.rows[i].innerText;
       let splt = rowItem.split('\n').filter(e => e !== '\t' && e !== '' && e !== '\t\t\t\t\t\t\t');
       if (splt.length !== 0) {
@@ -282,18 +277,15 @@ const BOQInputScreen = () => {
   };
 
   const downloadSample = async () => {
-    try {
-      const response = await axios.get(apiEndpoints.downloadBOQSample, {
-        headers: { Authorization: 'Bearer ' + token, 'tenant-id': states.tennant.tennant_id },
-        responseType: 'blob'
-      });
-      const a = document.createElement('a');
-      a.href = window.URL.createObjectURL(new Blob([response.data]));
-      a.download = 'BOQ_Sample_Template.xlsx';
-      a.click();
-    } catch {
+    const response = await API.GETBlob(apiEndpoints.downloadBOQSample);
+    if (!response.success) {
       enqueueSnackbar('Failed to download template', { variant: 'error' });
+      return;
     }
+    const a = document.createElement('a');
+    a.href = window.URL.createObjectURL(new Blob([response.data]));
+    a.download = 'BOQ_Sample_Template.xlsx';
+    a.click();
   };
 
   const downloadExistingBOQ = async () => {
@@ -305,21 +297,17 @@ const BOQInputScreen = () => {
       enqueueSnackbar('Select only one Building Unit to download existing BOQ', { variant: 'warning' });
       return;
     }
-    try {
-      const response = await axios.get(
-        `${apiEndpoints.downloadExistingBOQ}?buildingTypeId=${buildingTypeDD.value}&buildingUnitId=${buildingUnitDD[0].value}`,
-        {
-          headers: { Authorization: 'Bearer ' + token, 'tenant-id': states.tennant.tennant_id },
-          responseType: 'blob'
-        }
-      );
-      const a = document.createElement('a');
-      a.href = window.URL.createObjectURL(new Blob([response.data]));
-      a.download = 'Existing_BOQ.xlsx';
-      a.click();
-    } catch {
+    const response = await API.GETBlob(
+      `${apiEndpoints.downloadExistingBOQ}?buildingTypeId=${buildingTypeDD.value}&buildingUnitId=${buildingUnitDD[0].value}`
+    );
+    if (!response.success) {
       enqueueSnackbar('Failed to download existing BOQ', { variant: 'error' });
+      return;
     }
+    const a = document.createElement('a');
+    a.href = window.URL.createObjectURL(new Blob([response.data]));
+    a.download = 'Existing_BOQ.xlsx';
+    a.click();
   };
 
   function LoadingSpinner() {

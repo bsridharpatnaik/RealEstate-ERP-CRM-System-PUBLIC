@@ -559,8 +559,10 @@ public class BOQService {
             Long productId = item.getProductId();
             Double newQty  = item.getQuantity();
 
-            // fetchAggregatedBOQAndOutward returns null row or zero totalBOQ when no BOQ record exists
-            Object[] row = bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
+            // native aggregate query always returns exactly one row; use List to avoid Object[] cast issues
+            List<Object[]> rows = bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
+            if (rows == null || rows.isEmpty()) continue;
+            Object[] row = rows.get(0);
             if (row == null) continue;
 
             double totalBOQ     = row[0] != null ? ((Number) row[0]).doubleValue() : 0;
