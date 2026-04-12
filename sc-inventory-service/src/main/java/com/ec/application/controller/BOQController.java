@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.data.BOQDashboardResponse;
 import com.ec.application.data.BOQDto;
 import com.ec.application.data.BOQInformation;
 import com.ec.application.data.BOQReportResponse;
@@ -65,6 +66,12 @@ public class BOQController {
     @GetMapping("/getboqquantity")
     public String getBoqQuantityForOutward(@RequestParam Long productId, @RequestParam Long locationId, @RequestParam Long finalLocationId) {
         return bOQService.getBoqQuantityForOutward(productId, locationId, finalLocationId);
+    }
+
+    @GetMapping("/boq-dashboard-summary")
+    @ResponseStatus(HttpStatus.OK)
+    public BOQDashboardResponse getBOQDashboardSummary() {
+        return bOQService.getBOQDashboardData();
     }
 
     @GetMapping("/download-sample")

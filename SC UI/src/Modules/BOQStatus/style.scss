@@ -36,3 +36,89 @@
   display: inline-flex;
   align-items: center;
 }
+
+// ── Summary cards ──────────────────────────────────────────────────────────
+.boq-summary-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.boq-summary-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px 24px;
+  min-width: 130px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #ccc;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.1s;
+  &:hover { box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); }
+  &.active { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+  .card-count { font-size: 26px; font-weight: 700; line-height: 1; }
+  .card-label { font-size: 11px; color: #888; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  &.total    { border-left-color: #5c6bc0; .card-count { color: #5c6bc0; } }
+  &.on-track { border-left-color: #44c4a1; .card-count { color: #44c4a1; } }
+  &.at-risk  { border-left-color: #f9a825; .card-count { color: #f9a825; } }
+  &.exceeded { border-left-color: #e57373; .card-count { color: #e57373; } }
+}
+
+// ── Quick filter chips ─────────────────────────────────────────────────────
+.boq-quick-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.boq-quick-filter-btn {
+  padding: 5px 16px;
+  border-radius: 20px;
+  border: 1.5px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+  outline: none;
+  &.on-track { color: #44c4a1; border-color: #44c4a1; &.active, &:hover { background: #44c4a1; color: #fff; } }
+  &.at-risk  { color: #f9a825; border-color: #f9a825; &.active, &:hover { background: #f9a825; color: #fff; } }
+  &.exceeded { color: #e57373; border-color: #e57373; &.active, &:hover { background: #e57373; color: #fff; } }
+  &.clear    { color: #888;    border-color: #ccc;    &:hover { background: #f5f5f5; } }
+}
+
+// ── Progress bar in status column ──────────────────────────────────────────
+.boq-progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 130px;
+  .boq-progress-bar {
+    flex: 1;
+    height: 7px;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    .boq-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+      &.on-track { background: #44c4a1; }
+      &.at-risk  { background: #f9a825; }
+      &.exceeded { background: #e57373; }
+    }
+  }
+  .boq-progress-label {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    &.on-track { color: #44c4a1; }
+    &.at-risk  { color: #f9a825; }
+    &.exceeded { color: #e57373; }
+  }
+}
+
+// ── Row color coding ───────────────────────────────────────────────────────
+tr.boq-row-on-track { background: rgba(68, 196, 161, 0.05); }
+tr.boq-row-at-risk  { background: rgba(249, 168, 37, 0.07); }
+tr.boq-row-exceeded { background: rgba(229, 115, 115, 0.08); }

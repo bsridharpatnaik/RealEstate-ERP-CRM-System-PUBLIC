@@ -137,6 +137,12 @@ export const canEditInventoryModules = () => {
   return role === "admin" || role === "purchase-manager";
 };
 
+export const canEditBOQ = () => {
+  const role = (getRole() || "").toLowerCase();
+  if (!role) return false;
+  return role === "admin" || role === "purchase-manager" || role === "project-manager";
+};
+
 /**
  * Contact module write access: admin, purchase-manager, store-incharge.
  */

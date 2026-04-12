@@ -235,6 +235,7 @@ export const apiEndpoints = {
   downloadBOQSample: "/api/inventory/boqupload/download-sample",
   downloadExistingBOQ: "/api/inventory/boqupload/download-existing",
   exportBOQStatus: "/api/inventory/boqupload/export-status",
+  boqDashboardStats: "/api/inventory/boqupload/boq-dashboard-summary",
   getOpenIndentsByCategory: "/api/inventory/indent/open-indents/by-category",
   splitIndent: "/api/inventory/indent/{indentid}/split",
   getSupplierNames: "/api/inventory/supplier/names",

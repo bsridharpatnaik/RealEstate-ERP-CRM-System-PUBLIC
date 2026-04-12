@@ -115,6 +115,14 @@ class Add extends AddForm {
             const p = this.state.noproduct;
             p[key].quantity = value;
             this.getCurrentStock(key);
+            const productId = this.state.noproduct[key].productId;
+            const boqRemaining = this.state.boqQuantity[productId];
+            if (boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
+              this.props.enqueueSnackbar(
+                `BOQ Warning: Quantity exceeds remaining BOQ (${boqRemaining} remaining)`,
+                { variant: "warning" }
+              );
+            }
           },
         })}
 

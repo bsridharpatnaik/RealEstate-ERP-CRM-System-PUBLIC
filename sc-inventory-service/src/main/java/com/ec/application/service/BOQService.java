@@ -21,6 +21,7 @@ import com.ec.application.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,9 @@ public class BOQService {
     private InwardOutwardListRepo inwardOutwardListRepo;
 
     Logger log = LoggerFactory.getLogger(BOQService.class);
+
+    @Value("${boq.enforcement.block:true}")
+    private boolean boqEnforcementBlock;
 
     public List<BOQUploadValidationResponse> boqUpload(BOQDto boqDto) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -494,6 +498,30 @@ public class BOQService {
                     .collect(Collectors.toList());
         }
 
+        // Compute summary counts (before statusGroup quick-filter so cards always show full breakdown)
+        // status = (outward-boq)/boq*100; consumed% = status+100
+        // on-track: consumed < 80%  → status < -20
+        // at-risk:  consumed 80-100% → -20 <= status <= 0
+        // exceeded: consumed > 100%  → status > 0
+        long onTrackCount  = allDtos.stream().filter(d -> d.getStatus() < -20).count();
+        long atRiskCount   = allDtos.stream().filter(d -> d.getStatus() >= -20 && d.getStatus() <= 0).count();
+        long exceededCount = allDtos.stream().filter(d -> d.getStatus() > 0).count();
+        long totalCount    = allDtos.size();
+
+        // Apply statusGroup quick-filter (card clicks)
+        List<String> statusGroupFilter = extractFilter(filterDataList, "statusGroup");
+        if (statusGroupFilter != null && !statusGroupFilter.isEmpty()) {
+            allDtos = allDtos.stream()
+                    .filter(d -> statusGroupFilter.stream().anyMatch(g -> {
+                        double s = d.getStatus();
+                        if ("onTrack".equalsIgnoreCase(g))   return s < -20;
+                        if ("atRisk".equalsIgnoreCase(g))    return s >= -20 && s <= 0;
+                        if ("exceeded".equalsIgnoreCase(g))  return s > 0;
+                        return false;
+                    }))
+                    .collect(Collectors.toList());
+        }
+
         // Sort, then paginate in Java
         sortDtos(allDtos, page.getSort());
         int total    = allDtos.size();
@@ -503,7 +531,109 @@ public class BOQService {
 
         BOQInformation result = new BOQInformation();
         result.setBoqstatusDto(new PageImpl<>(pageContent, page, total));
+        result.setTotalCount(totalCount);
+        result.setOnTrackCount(onTrackCount);
+        result.setAtRiskCount(atRiskCount);
+        result.setExceededCount(exceededCount);
         return result;
+    }
+
+    /**
+     * Checks BOQ enforcement for all line items in an outward entry.
+     * Rules:
+     *  - If no BOQ record exists for (usageLocationId, productId) → skip (no enforcement)
+     *  - If BOQ record exists and (currentOutward + newQty) / totalBOQ >= 1.0 → violation
+     *  - If boqEnforcementBlock=true → throws Exception listing all violating products
+     *  - If boqEnforcementBlock=false → logs warning only (frontend already warned user)
+     *
+     * @param usageLocationId  building unit (usageLocation) ID
+     * @param items            list of (productId, newQuantity) pairs
+     */
+    public void enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
+        log.info("Invoked enforceBOQLimits");
+        if (!boqEnforcementBlock) return;
+
+        List<String> violations = new ArrayList<>();
+
+        for (com.ec.application.data.ProductWithQuantity item : items) {
+            Long productId = item.getProductId();
+            Double newQty  = item.getQuantity();
+
+            // fetchAggregatedBOQAndOutward returns null row or zero totalBOQ when no BOQ record exists
+            Object[] row = bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
+            if (row == null) continue;
+
+            double totalBOQ     = row[0] != null ? ((Number) row[0]).doubleValue() : 0;
+            double totalOutward = row[1] != null ? ((Number) row[1]).doubleValue() : 0;
+
+            if (totalBOQ <= 0) continue; // no BOQ configured for this product+unit → skip
+
+            double afterQty       = totalOutward + newQty;
+            double consumedPercent = (afterQty / totalBOQ) * 100;
+
+            if (consumedPercent > 100) {
+                Product product = productRepository.findByProductId(productId);
+                String productName = product != null ? product.getProductName() : ("Product ID " + productId);
+                double remaining = Math.max(totalBOQ - totalOutward, 0);
+                violations.add(String.format(
+                    "%s: BOQ limit is %.2f, already consumed %.2f, remaining %.2f but requested %.2f",
+                    productName, totalBOQ, totalOutward, remaining, newQty
+                ));
+            }
+        }
+
+        if (!violations.isEmpty()) {
+            throw new Exception("BOQ limit exceeded for the following items — save blocked:\n" +
+                    String.join("\n", violations));
+        }
+    }
+
+    public BOQDashboardResponse getBOQDashboardData() {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+        List<Object[]> rawRows = bOQUploadRepository.fetchBOQStatusRows();
+        List<BOQStatusDto> allDtos = buildGroupedDtos(rawRows);
+
+        // Aggregate boq/outward quantities per product across all building units
+        Map<String, double[]> productAgg = new LinkedHashMap<>();
+        for (BOQStatusDto dto : allDtos) {
+            String key = dto.getProduct();
+            productAgg.computeIfAbsent(key, k -> new double[2]);
+            productAgg.get(key)[0] += dto.getBoqQuantity();
+            productAgg.get(key)[1] += dto.getOutwardQuantity();
+        }
+
+        long onTrackCount = 0, atRiskCount = 0, exceededCount = 0;
+        List<BOQDashboardItem> allItems = new ArrayList<>();
+
+        for (Map.Entry<String, double[]> entry : productAgg.entrySet()) {
+            double boq     = entry.getValue()[0];
+            double outward = entry.getValue()[1];
+            double consumed = boq > 0 ? Math.round((outward / boq * 100) * 100.0) / 100.0 : 0;
+            double status   = boq > 0 ? ((outward - boq) / boq * 100) : 0;
+
+            String bucket;
+            if (status > 0)        { bucket = "exceeded"; exceededCount++; }
+            else if (status >= -20) { bucket = "atRisk";   atRiskCount++; }
+            else                    { bucket = "onTrack";  onTrackCount++; }
+
+            allItems.add(new BOQDashboardItem(entry.getKey(), consumed, bucket));
+        }
+
+        // Chart items: only >= 70% consumed, sorted desc, top 15
+        List<BOQDashboardItem> chartItems = allItems.stream()
+                .filter(i -> i.getConsumedPercent() >= 70)
+                .sorted((a, b) -> Double.compare(b.getConsumedPercent(), a.getConsumedPercent()))
+                .limit(15)
+                .collect(Collectors.toList());
+
+        BOQDashboardResponse response = new BOQDashboardResponse();
+        response.setItems(chartItems);
+        response.setTotalCount(allItems.size());
+        response.setOnTrackCount(onTrackCount);
+        response.setAtRiskCount(atRiskCount);
+        response.setExceededCount(exceededCount);
+        return response;
     }
 
     public String getBoqQuantityForOutward(Long productId, Long locationId, Long finalLocationId) {
@@ -531,6 +661,8 @@ public class BOQService {
             double boqQty     = toDouble(r[10]);
             double outwardQty = toDouble(r[11]);
 
+            final Long fBuildingTypeId = buildingTypeId;
+            final Long fLocationId     = locationId;
             BOQStatusDto dto = dtoMap.computeIfAbsent(groupKey, k -> {
                 BOQStatusDto d = new BOQStatusDto();
                 d.setCategory((String) r[9]);
@@ -538,6 +670,8 @@ public class BOQService {
                 d.setBuildingUnit((String) r[4]);
                 d.setBoqQuantity(0.0);
                 d.setOutwardQuantity(0.0);
+                d.setBuildingTypeId(fBuildingTypeId);
+                d.setBuildingUnitId(fLocationId);
                 return d;
             });
             dto.setBoqQuantity(dto.getBoqQuantity() + boqQty);

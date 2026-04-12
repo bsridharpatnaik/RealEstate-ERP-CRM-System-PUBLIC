@@ -87,6 +87,9 @@ public class OutwardInventoryService {
     @Autowired
     ProjectConstantsService projectConstantsService;
 
+    @Autowired
+    BOQService boqService;
+
     Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -441,6 +444,9 @@ public class OutwardInventoryService {
             //if (productWithQuantity.getQuantity() <= 0)
             //	throw new Exception("Quantity should be greater than zero");
         }
+
+        // BOQ enforcement: block save if any product exceeds 100% BOQ consumption
+        boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities());
     }
 
     public OutwardInventory findOutwardnventory(Long id) throws Exception {

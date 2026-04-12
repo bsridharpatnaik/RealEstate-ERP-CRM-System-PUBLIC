@@ -16,6 +16,8 @@ import { Dialog, Slide } from "@material-ui/core";
 import Details from "./details";
 import { API, instance } from "./../../axios";
 import { param } from "jquery";
+import { canEditBOQ } from "./../../helper";
+import BOQEditModal from "./BOQEditModal";
 // import OutwardInventory from "../OutwardInventory";
 
 
@@ -23,7 +25,14 @@ class List extends ListCommon {
 
   filterData = {};
   title = messages.common.boqStatus;
-  state = { categoryArray: [], data: [], data2: [], options: [], options2: [], showDetails: false, key: 1 };
+  state = {
+    categoryArray: [], data: [], data2: [], options: [], options2: [],
+    showDetails: false, key: 1,
+    summary: { total: 0, onTrack: 0, atRisk: 0, exceeded: 0 },
+    quickFilter: null,
+    showBOQModal: false,
+    boqModalData: null,
+  };
   buildingTypeID = '';
   buildingUnitID = [];
   body = [];
@@ -61,10 +70,10 @@ class List extends ListCommon {
   boqStatus = true;
 
   componentDidMount() {
-    // this.search();
     this.filterRef = React.createRef();
     this.getOptions();
     this.getFiltersOptions();
+    this.search();
   }
 
   // CategoryArray = new Array();
@@ -188,6 +197,9 @@ class List extends ListCommon {
         }
       }
     }
+    if (this.state.quickFilter) {
+      params.filterData.push({ attrName: 'statusGroup', attrValue: [this.state.quickFilter] });
+    }
     return params;
   }
 
@@ -195,38 +207,55 @@ class List extends ListCommon {
     const params = this.prepareRequestBody();
     this.setState({ isLoading: true });
     const response = await this.getData(page, params);
-    console.log(response);
-    this.totalElements = response.data.boqstatusDto.totalElements;
-    console.log('totalElements: ', this.totalElements);
-    if (this.totalElements !== 0) {
-      this.showDownload = true;
-    }
-    else {
-      this.showDownload = false;
-    }
-
     if (response.success) {
+      const d = response.data;
+      this.totalElements = d.boqstatusDto.totalElements;
+      this.showDownload = this.totalElements !== 0;
       this.setState({
-        data: response.data.boqstatusDto.content,
-        pages: response.data.boqstatusDto.totalPages,
-        totalRecords: response.data.boqstatusDto.totalElements,
+        data: d.boqstatusDto.content,
+        pages: d.boqstatusDto.totalPages,
+        totalRecords: d.boqstatusDto.totalElements,
+        summary: {
+          total:    d.totalCount    || 0,
+          onTrack:  d.onTrackCount  || 0,
+          atRisk:   d.atRiskCount   || 0,
+          exceeded: d.exceededCount || 0,
+        },
       });
     }
   }
 
-  onHandleBuildingType(value) {
-    this.buildingType = [value];
-    if (value === null) {
-      this.buildingType = [];
-    }
-    console.log('Building Type: ', this.buildingType);
-    this.buildingTypeID = value;
-    this.getOptions()
-    if (value) {
-      this.getOptions2()
-    }
-    // this.getBOQStatusAPI(value);
+  setQuickFilter(filter) {
+    const next = this.state.quickFilter === filter ? null : filter;
+    this.setState({ quickFilter: next }, () => this.search(0));
   }
+
+  onHandleBuildingType(value) {
+    this.buildingType = value ? [value] : [];
+    this.buildingTypeID = value;
+    this.buildingUnit = [];
+    this.buildingUnitID = [];
+    this.setState({ options2: [] });
+    if (value) {
+      this.getOptions2();
+    }
+    this.search(0);
+  }
+
+  openEditModal = (row) => {
+    // If the row has exactly one detail location, pre-fill it
+    const detail = row.boqDetails && row.boqDetails.length === 1 ? row.boqDetails[0] : null;
+    this.setState({
+      showBOQModal: true,
+      boqModalData: {
+        buildingTypeId: row.buildingTypeId,
+        buildingUnitId: row.buildingUnitId,
+        productName: row.product,
+        finalLocation: detail ? detail.finalLocation : undefined,
+        quantity: detail ? detail.boqQuantity : undefined,
+      },
+    });
+  };
 
   async downloadStatusExcel() {
     const params = new URLSearchParams();
@@ -254,61 +283,66 @@ class List extends ListCommon {
 
   onHandleBuildingUnit(value) {
     this.buildingUnit = value;
-    console.log('Building Unit: ', this.buildingUnit);
-    let buildingUnitArray = new Array();
-    for (let i = 0; i < value.length; i++) {
-      buildingUnitArray.push(value[i].id);
-    }
-    this.buildingUnitID = buildingUnitArray;
-
-    // this.buildingUnitID = value;
-    // console.log(value);
-    // if(this.buildingUnitID.length===0){
-    //   this.showDownload = false;
-    //   console.log(this.showDownload);
-    // }
-
-    // console.log('this.buildingUnitID: ', this.buildingUnitID);
+    this.buildingUnitID = value.map(v => v.id);
+    this.search(0);
   }
 
   render() {
+    const { summary, quickFilter, showBOQModal, boqModalData } = this.state;
     return (
       <div className={this.state.showDetails ? "split" : ""}>
         <div className="list-section">
-          <div className="filter-section">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // this.getOptions2(0);
-              }}
-            >
-              {this.renderAutoCompleteBT(
-                this.state.options,
-                'Select Building Type',
-                (option) => {
-                  return option.name;
-                }
-              )}
-              total: {this.buildingTypeCount}
-            </form>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                this.search(0);
-              }}
-            >
-              {this.renderAutoCompleteBU(
-                this.state.options2,
-                'Select Building Unit',
-                (option) => {
-                  return option.name;
-                }
-              )}
-              total: {this.buildingUnitCount}
-            </form>
+          {/* Summary cards */}
+          <div className="boq-summary-cards">
+            <div className={`boq-summary-card total${!quickFilter ? ' active' : ''}`} onClick={() => this.setQuickFilter(null)}>
+              <div className="card-count">{summary.total}</div>
+              <div className="card-label">Total Items</div>
+            </div>
+            <div className={`boq-summary-card on-track${quickFilter === 'onTrack' ? ' active' : ''}`} onClick={() => this.setQuickFilter('onTrack')}>
+              <div className="card-count">{summary.onTrack}</div>
+              <div className="card-label">On Track (&lt;80%)</div>
+            </div>
+            <div className={`boq-summary-card at-risk${quickFilter === 'atRisk' ? ' active' : ''}`} onClick={() => this.setQuickFilter('atRisk')}>
+              <div className="card-count">{summary.atRisk}</div>
+              <div className="card-label">At Risk (80–100%)</div>
+            </div>
+            <div className={`boq-summary-card exceeded${quickFilter === 'exceeded' ? ' active' : ''}`} onClick={() => this.setQuickFilter('exceeded')}>
+              <div className="card-count">{summary.exceeded}</div>
+              <div className="card-label">Exceeded (&gt;100%)</div>
+            </div>
+          </div>
+
+          {/* Quick filter chips */}
+          <div className="boq-quick-filters">
+            <span style={{ fontSize: 12, color: '#888', marginRight: 4 }}>Filter:</span>
+            <button className={`boq-quick-filter-btn on-track${quickFilter === 'onTrack' ? ' active' : ''}`} onClick={() => this.setQuickFilter('onTrack')}>On Track</button>
+            <button className={`boq-quick-filter-btn at-risk${quickFilter === 'atRisk' ? ' active' : ''}`}  onClick={() => this.setQuickFilter('atRisk')}>At Risk</button>
+            <button className={`boq-quick-filter-btn exceeded${quickFilter === 'exceeded' ? ' active' : ''}`} onClick={() => this.setQuickFilter('exceeded')}>Exceeded</button>
+            {quickFilter && <button className="boq-quick-filter-btn clear" onClick={() => this.setQuickFilter(null)}>✕ Clear</button>}
+          </div>
+
+          <div className="filter-section">
+            {this.renderAutoCompleteBT(
+              this.state.options,
+              'Filter by Building Type',
+              (option) => option.name
+            )}
+            {this.renderAutoCompleteBU(
+              this.state.options2,
+              'Filter by Building Unit',
+              (option) => option.name
+            )}
 
             <div className="top-button-wrapper">
+              {canEditBOQ() && (
+                <IconButtons
+                  onClick={() => this.setState({ showBOQModal: true, boqModalData: null })}
+                  buttonClass="filterIcon"
+                  label={"Add BOQ Entry"}
+                  icon={"AddSVG"}
+                />
+              )}
               <IconButtons
                 onClick={() => this.downloadStatusExcel()}
                 buttonClass="filterIcon"
@@ -361,10 +395,21 @@ class List extends ListCommon {
               showDetail={(row) => {
                 this.showDetail(row)
               }}
+              canEditBOQ={canEditBOQ()}
+              onEditBOQ={(row) => this.openEditModal(row)}
             />
           )}
           {this.renderPagination()}
         </div>
+
+        <BOQEditModal
+          open={showBOQModal}
+          onClose={() => this.setState({ showBOQModal: false, boqModalData: null })}
+          initialData={boqModalData}
+          stockDropdowns={this.dropdowns}
+          onSaved={() => this.search(0)}
+        />
+
         <Slide
           direction="right"
           in={this.state.showDetails}

@@ -135,6 +135,29 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
     List<Object[]> fetchBOQStatusRows();
 
     /**
+     * Returns [total_boq_quantity, total_outward_quantity] aggregated across ALL final locations
+     * for a given (buildingUnit/usageLocation, product). Used for 100% BOQ enforcement check.
+     */
+    @Query(value =
+        "SELECT COALESCE(SUM(bu.quantity), 0) AS total_boq_qty, " +
+        "  COALESCE(SUM(ioe_sum.outward_qty), 0) AS total_outward_qty " +
+        "FROM BOQUpload bu " +
+        "LEFT JOIN ( " +
+        "  SELECT bu2.id, COALESCE(SUM(ioe.quantity), 0) AS outward_qty " +
+        "  FROM BOQUpload bu2 " +
+        "  LEFT JOIN outward_inventory oi ON oi.locationId = bu2.usageLocationId " +
+        "    AND oi.usageAreaId = bu2.locationId AND oi.is_deleted = 0 " +
+        "  LEFT JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid " +
+        "  LEFT JOIN inward_outward_entries ioe ON ioe.entryId = oie.entryId " +
+        "    AND ioe.productId = bu2.productId " +
+        "  WHERE bu2.is_deleted = 0 AND bu2.usageLocationId = ?1 AND bu2.productId = ?2 " +
+        "  GROUP BY bu2.id " +
+        ") ioe_sum ON ioe_sum.id = bu.id " +
+        "WHERE bu.is_deleted = 0 AND bu.usageLocationId = ?1 AND bu.productId = ?2",
+        nativeQuery = true)
+    Object[] fetchAggregatedBOQAndOutward(Long usageLocationId, Long productId);
+
+    /**
      * Returns [boq_quantity, outward_quantity] for one specific (locationId, productId, finalLocationId).
      */
     @Query(value =

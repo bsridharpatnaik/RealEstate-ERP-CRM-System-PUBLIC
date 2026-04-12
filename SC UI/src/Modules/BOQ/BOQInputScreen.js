@@ -1,812 +1,633 @@
-import React, { useState, useEffect, Children } from 'react'
-
+import React, { useState, useEffect, useRef } from 'react'
 import * as XLSX from 'xlsx'
-import IconButtons from '../../Shared/Button/IconButtons';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '../../Shared/Button';
-import { Input, TableBody, td, TableHead, TableRow, TableCell, Icon } from '@material-ui/core';
 import Select from 'react-select';
 import { useSnackbar } from "notistack";
-import { getToken, removeToken } from "../../helper";
+import { getToken } from "../../helper";
 import { store } from "../../index";
 import { apiEndpoints } from '../../endpoints';
 import "./LoadingSpinner.css";
-import LoadingOverlay from 'react-overlay-loader/lib/LoadingOverlay';
 import { API } from "./../../axios";
 import axios from 'axios';
 import { DeleteIcon, RefreshIcon } from '../../Shared/Icons/Index';
-import { color } from '@amcharts/amcharts4/core';
-import $ from 'jquery';
 
 const BOQInputScreen = () => {
   const token = getToken();
   const states = store.getState();
+  const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    getBuildingTypeDD();
-    // console.log(states.tennant.tennant_id);
-  }, []);
+  useEffect(() => { getBuildingTypeDD(); }, []);
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']
-  const [isLoading, setIsLoading] = useState(false);
-  const [isReset, setIsReset] = useState(false);
-  const excelDataM = new Array();
-  const [excelData, setExcelData] = useState(null);
-  const [excelFile, setExcelFile] = useState(null);
-  let [excelFileName, setExcelFileName] = useState("");
-  const [excelFileError, setExcelFileError] = useState(null);
-  const [buildingType, setBuildingType] = useState("");
-  const [buildingUnit, setBuildingUnit] = useState([]);
-  const [buildingUnitDD, setBuildingUnitDD] = useState("");
-  const [buildingTypeDD, setBuildingTypeDD] = useState("");
-  const [buildingUnitIds, setBuildingUnitIds] = useState([]);
-  const [buildingUnitNameforTable, setBuildingUnitNameforTable] = useState([]);
-  const bID = new Array();
-  const uID = new Array();
-  const buildingUnitName = new Array();
-  const [buildingTypeIdForPost, setBuildingTypeIdForPost] = useState('');
-  var buildingTypeId;
-  const [buildingUnitIdForPost, setBuildingUnitIdForPost] = useState([]);
-  let buildingUnitId = new Array();
-  var excelLength = 0;
-  var counter = 0;
-  let key = 0;
-  let key2 = 0;
-  let key3 = 0;
-  const p = [];
-  let td = [null];
-  let error = [null];
-  let tableData = [null];
-  const [dataErrorsHold, setDataErrorsHold] = useState('');
-  let dataErrors;
-  const [responseMsgHold, setResponseMsgHold] = useState('');
-  let responseMsg = '';
-  let responseMsgSet = new Set();
-  let responseMsgList = new Array();
-  let responseSNo;
-  const [responseStatus, setResponseStatus] = useState(true);
-  const [uploadMode, setUploadMode] = useState('new'); // 'new' = has Changes column, 'existing' = no Changes column (upsert)
-
-  const tableHeading = [
-    'S No.',
-    'Building Type',
-    'Building Unit',
-    'Inventory',
-    'Quantity',
-    'Final Location',
-    'Changes',
-    'Delete Record'
-  ]
-
-  let responseData = [{
-    "message": "",
-    "sno": "",
-    "columns": []
-  },];
-
-  // const [responseData, setResponseData] = useState(
-  //   [
-  //     {
-  //       "message": "",
-  //       "sno": "",
-  //       "columns": []
-  //     },
-  //   ]
-  // );
-
-  const actions = [
-    { label: "Add", value: 1 },
-    { label: "Edit", value: 2 },
-    { label: "Delete", value: 3 }
+  const fileType = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel'
   ];
 
-  const [buildingTypeData, setBuildingTypeData] = useState([
-    // { value: 0, label: 'No Data' }
-  ]);
+  const [isLoading, setIsLoading]                         = useState(false);
+  const [isReset, setIsReset]                             = useState(false);
+  const [excelData, setExcelData]                         = useState(null);
+  const [excelFile, setExcelFile]                         = useState(null);
+  const [selectedFileName, setSelectedFileName]           = useState('');
+  const [excelFileError, setExcelFileError]               = useState(null);
+  const [buildingType, setBuildingType]                   = useState('');
+  const [buildingUnit, setBuildingUnit]                   = useState([]);
+  const [buildingUnitDD, setBuildingUnitDD]               = useState('');
+  const [buildingTypeDD, setBuildingTypeDD]               = useState('');
+  const [buildingUnitIds, setBuildingUnitIds]             = useState([]);
+  const [buildingUnitNameforTable, setBuildingUnitNameforTable] = useState([]);
+  const [buildingTypeData, setBuildingTypeData]           = useState([]);
+  const [buildingUnitData, setBuildingUnitData]           = useState([]);
+  const [responseStatus, setResponseStatus]               = useState(true);
+  const [uploadMode, setUploadMode]                       = useState('new');
+  const [dragOver, setDragOver]                           = useState(false);
 
-  const [buildingUnitData, setBuildingUnitData] = useState([
-    // { value: 0, label: 'No Data' },
-  ]);
+  const tableHeading = [
+    'S No.', 'Building Type', 'Building Unit',
+    'Inventory', 'Quantity', 'Final Location', 'Changes', 'Delete'
+  ];
 
-  const buildingUnitDataArray = new Array();
-  const buildingUnitTypeArray = new Array();
+  let td = [null];
+  let key2 = 0;
+  let dataErrors;
+  let responseMsg = '';
+  let responseMsgSet = new Set();
+  let responseMsgList = [];
+  let responseData = [{ message: '', sno: '', columns: [] }];
+  var listOfCssIDs = [];
+  var listOfCssIDsAll = [];
 
+  const buildingSelected = buildingTypeDD && buildingUnitDD && buildingUnitDD.length > 0;
 
-
-  let addingResponse = [];
-  let resItKey = 0;
-  let tableId = [];
-  var listOfCssIDs = new Array();
-  var listOfCssIDsAll = new Array();
-
-  const iterateResponse = () => {
-    if (dataErrors !== null) {
-      for (let index = 0; index < responseData.length; index++) {
-        for (let index1 = 0; index1 < responseData[index].columns.length; index1++) {
-          listOfCssIDs.push(responseData[index].sno + responseData[index].columns[index1]);
-        }
-      }
-    } else {
-      console.log('no Errors');
-    }
-    console.log('responseIterate', listOfCssIDs);
-    iterateErrors();
-  }
-
-  const iterateErrors = () => {
-
-    for (let i = 0; i < listOfCssIDsAll.length; i++) {
-
-      if (listOfCssIDs.includes(listOfCssIDsAll[i])) {
-        var myDiv = document.getElementById(listOfCssIDsAll[i]);
-        myDiv.setAttribute("style", 'border: 2px solid rgba(255, 0, 0,0.7)');
-      } else {
-        var myDiv = document.getElementById(listOfCssIDsAll[i]);
-        myDiv.setAttribute("style", 'border: 1px solid rgba(0, 0, 0, 0.15)');
-      }
-    }
-  }
-
-  // const getBuildingTypeDD = async () => {
-  //   try {
-  //     var myHeaders = new Headers();
-  //     myHeaders.append("Authorization", "Bearer " + token.toString());
-  //     myHeaders.append("tenant-id", states.tennant.tennant_id);
-
-  //     var requestOptions = {
-  //       method: 'GET',
-  //       redirect: 'follow',
-  //       headers: myHeaders,
-  //     };
-  //     const response = await fetch("/ec-common-service"+apiEndpoints.buildingType, requestOptions);
-  //     const data = await response.json();
-  //     if (data) {
-  //       for (let i = 0; i < data.length; i++) {
-  //         const element = data[i];
-  //         buildingUnitTypeArray.push({ 'value': element.id, 'label': element.name })
-  //       }
-  //       setBuildingTypeData(buildingUnitTypeArray)
-  //     }
-  //     else {
-  //       setBuildingTypeData({ value: 0, label: 'No Data' });
-
-  //     }
-  //   }
-  //   catch (error) {
-  //     console.log(error);
-  //   }
-  //   console.log('buildingTypeData', buildingTypeData);
-  // };
+  // ── API calls ──────────────────────────────────────────────────────────────
 
   const getBuildingTypeDD = async () => {
     const response = await API.GET(apiEndpoints.buildingType);
-    console.log('getBuildingTypeDD response: ', response);
-    if (response.success) {
-      if (response.data) {
-        for (let i = 0; i < response.data.length; i++) {
-          const element = response.data[i];
-          buildingUnitTypeArray.push({ 'value': element.id, 'label': element.name })
-        }
-        setBuildingTypeData(buildingUnitTypeArray)
-      }
-
+    if (response.success && response.data) {
+      setBuildingTypeData(response.data.map(el => ({ value: el.id, label: el.name })));
     }
-  }
+  };
 
   const getBuildingUnitsDDAPI = async (ID) => {
     try {
       const response = await API.GET(apiEndpoints.getBuildingUnit + ID);
-      console.log('getBuildingUnitsDDAPI response: ', response);
       if (response.data) {
-        for (let i = 0; i < response.data.usageLocation.length; i++) {
-          const element = response.data.usageLocation[i];
-          buildingUnitDataArray.push({ 'value': element.id, 'label': element.name })
-        }
-        setBuildingUnitData(buildingUnitDataArray)
+        setBuildingUnitData(
+          response.data.usageLocation.map(el => ({ value: el.id, label: el.name }))
+        );
       }
+    } catch (e) { console.log(e); }
+  };
 
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
+  const handleSelectBuildingType = (e) => {
+    setBuildingUnitData([]);
+    setBuildingUnitDD('');
+    setBuildingUnit([]);
+    setBuildingUnitIds([]);
+    setBuildingType(e.label);
+    setBuildingTypeDD(e);
+    getBuildingUnitsDDAPI(e.value);
+    // Reset upload & preview
+    setExcelData(null);
+    setExcelFile(null);
+    setSelectedFileName('');
+    setExcelFileError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSelectBuildingUnit = (e) => {
+    setBuildingUnit(e.map(u => u.label));
+    setBuildingUnitDD(e);
+    setBuildingUnitIds(e.map(u => u.value));
+  };
+
+  const processFile = (file) => {
+    if (!file) return;
+    if (!fileType.includes(file.type)) {
+      setExcelFileError('Please select an Excel file (.xlsx or .xls)');
+      setExcelFile(null);
+      setSelectedFileName('');
+      return;
     }
-    catch (error) {
-      console.log(error);
+    setExcelFileError(null);
+    setSelectedFileName(file.name);
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onload = (e) => setExcelFile(e.target.result);
+  };
+
+  const fileHandler = (event) => processFile(event.target.files[0]);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    processFile(e.dataTransfer.files[0]);
+  };
+
+  const handlePreview = (e) => {
+    e.preventDefault();
+    if (!buildingSelected) {
+      enqueueSnackbar('Please select Building Type and Building Unit first', { variant: 'warning' });
+      return;
     }
-    console.log('buildingUnitsDataArray', buildingUnitDataArray);
-    console.log('buildingUnitsData', buildingUnitData);
+    if (!excelFile) {
+      enqueueSnackbar('Please select an Excel file first', { variant: 'warning' });
+      return;
+    }
+
+    const workbook = XLSX.read(excelFile, { type: 'buffer' });
+    const worksheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[worksheetName];
+    const data = XLSX.utils.sheet_to_json(worksheet);
+
+    function extractHeader(ws) {
+      const header = [];
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      const numCols = Math.min(range.e.c + 1, 5);
+      for (let i = 0; i < numCols; ++i) {
+        const cell = ws[`${XLSX.utils.encode_col(i)}1`];
+        header[i] = cell ? cell.h : '';
+      }
+      return header;
+    }
+
+    const heads = extractHeader(worksheet);
+    const isValidBase = heads[0] === 'Inventory' && heads[1] === 'Quantity' && heads[2] === 'FinalLocation';
+    if (!isValidBase) {
+      enqueueSnackbar('Headers not recognised. Please use the provided template.', { variant: 'error' });
+      return;
+    }
+
+    const mode = heads[3] === 'Changes' ? 'new' : 'existing';
+    setUploadMode(mode);
+
+    const excelDataM = [];
+    const buildingUnitName = [];
+    for (let i = 0; i < buildingUnitIds.length; i++) {
+      for (let j = 0; j < data.length; j++) {
+        buildingUnitName.push(buildingUnit[i]);
+        excelDataM.push(data[j]);
+      }
+    }
+    setBuildingUnitNameforTable(buildingUnitName);
+    setExcelData(excelDataM);
+  };
+
+  const iterateResponse = () => {
+    if (dataErrors !== null) {
+      for (let i = 0; i < responseData.length; i++) {
+        for (let j = 0; j < responseData[i].columns.length; j++) {
+          listOfCssIDs.push(responseData[i].sno + responseData[i].columns[j]);
+        }
+      }
+    }
+    for (let i = 0; i < listOfCssIDsAll.length; i++) {
+      const el = document.getElementById(listOfCssIDsAll[i]);
+      if (el) {
+        el.setAttribute('style', listOfCssIDs.includes(listOfCssIDsAll[i])
+          ? 'border: 2px solid rgba(255,0,0,0.7)'
+          : 'border: 1px solid rgba(0,0,0,0.15)');
+      }
+    }
   };
 
   const findindError = () => {
-    const table = document.querySelector("table");
+    const table = document.querySelector('table');
     for (var i = 0, row; row = table.rows[i]; i++) {
       for (var j = 0, col; col = row.cells[j]; j++) {
-        const cellItems = row.cells[j].id;
-        listOfCssIDsAll.push(cellItems);
+        listOfCssIDsAll.push(row.cells[j].id);
       }
     }
-    console.log('listOfCssIDsAll', listOfCssIDsAll);
-    iterateResponse()
-  }
-
+    iterateResponse();
+  };
 
   const postTable = async () => {
     setIsLoading(true);
     setResponseStatus(false);
-    const table = document.querySelector("table");
-    console.log("TableLength: ", table.rows.length);
+    const table = document.querySelector('table');
     for (var i = 0, row; row = table.rows[i]; i++) {
       const rowItem = table.rows[i].innerText;
-      // console.log('rowItem', rowItem);
-
-      let splt = rowItem.split('\n').filter(e => e != '\t').filter(e => e != '').filter(e => e != '\t\t\t\t\t\t\t');
-      console.log('split', splt);
-      // console.log('empty...'); 
+      let splt = rowItem.split('\n').filter(e => e !== '\t' && e !== '' && e !== '\t\t\t\t\t\t\t');
       if (splt.length !== 0) {
         for (let j = 0; j < buildingTypeData.length; j++) {
-          const typeId = buildingTypeData[j].label;
-          // console.log('typeId ==>', typeId, '-----', 'split BuildingUnit ==>', splt[1])
-          if (typeId === splt[1] && splt.length !== 0) {
-
-            // console.log('buildingTypeLoop', splt[1], buildingTypeData[j].value);
-            splt[1] = (buildingTypeData[j].value);
-            console.log('splt[1]', splt[1]);
-            // console.log('bID.length ',bID.length);
-          }
+          if (buildingTypeData[j].label === splt[1]) splt[1] = buildingTypeData[j].value;
         }
         for (let u = 0; u < buildingUnitData.length; u++) {
-          const unitId = buildingUnitData[u].label;
-
-          if (unitId === splt[2] && splt.length !== 0) {
-            // console.log('buildingUnitLoop', splt[2], buildingUnitData[u].value);
-            splt[2] = (buildingUnitData[u].value);
-            console.log('splt[2]', splt[2]);
-            // console.log('uID.length ', uID.length);
-          }
+          if (buildingUnitData[u].label === splt[2]) splt[2] = buildingUnitData[u].value;
         }
-
         td[key2++] = {
-          'sno': splt[0],
-          'buildingType': splt[1],
-          'buildingUnit': splt[2],
-          'inventory': splt[3],
-          'quantity': splt[4],
-          'location': splt[5],
-          'changes': uploadMode === 'existing' ? 'upsert' : splt[6]
+          sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
+          inventory: splt[3], quantity: splt[4], location: splt[5],
+          changes: uploadMode === 'existing' ? 'upsert' : splt[6]
         };
       }
-
     }
-    tableData = td;
-    console.log('tableData', tableData);
 
-    let body = { "upload": tableData };
-    console.log('body: ', body);
+    const body = { upload: td };
     for (let i = 0; i < body.upload.length; i++) {
-      const element = body.upload[i];
-      if (element === null) {
-        setExcelData(null);
-      }
+      if (body.upload[i] === null) { setExcelData(null); }
     }
 
     try {
       const response = await API.POST(apiEndpoints.BOQupload, body);
-      const data = await response.data;
-
-      console.log('postTable response: ', response);
+      const data = response.data;
       setIsLoading(false);
       if (response.success) {
         for (let i = 0; i < data.length; i++) {
           responseMsg = data[i].message;
           responseMsgSet.add(responseMsg);
-          responseSNo = data[i].sno;
-          // console.log('responseSNo:', responseSNo);
           dataErrors = data[i].columns;
-          // console.log('dataErrors:', dataErrors);
         }
-        console.log("responseMsgSet: ", responseMsgSet);
         responseMsgList = Array.from(responseMsgSet);
-        console.log("responseMsgList: ", responseMsgList);
-
         for (let j = 0; j < responseMsgList.length; j++) {
           const msg = responseMsgList[j];
-          console.log(msg);
           if (msg !== null) {
             if (msg !== 'Successfully done') {
-              enqueueSnackbar('Highlighted ' + msg, {
-                variant: "error",
-              });
-              // enqueueSnackbar('Highlighted row will be Overwritten', {
-              //   variant: "error",
-              // });
-            }
-            else {
-              enqueueSnackbar('Uploaded Successfully', {
-                variant: "success",
-              });
+              enqueueSnackbar('Highlighted ' + msg, { variant: 'error' });
+            } else {
+              enqueueSnackbar('BOQ uploaded successfully!', { variant: 'success' });
               setExcelData(null);
-              console.log('Excel Data at response', excelData);
             }
           } else {
-            enqueueSnackbar('Please Correct the Highlighted Fields', {
-              variant: "error",
-            });
+            enqueueSnackbar('Please correct the highlighted fields', { variant: 'error' });
           }
         }
-
-        // if (responseMsg !== null) {
-        //   if (responseMsg !== 'Successfully done') {
-        //     enqueueSnackbar('Highlighted ' + responseMsg, {
-        //       variant: "error",
-        //     });
-        //     // enqueueSnackbar('Highlighted row will be Overwritten', {
-        //     //   variant: "error",
-        //     // });
-        //   }
-        //   else {
-        //     enqueueSnackbar('Uploaded Successfully', {
-        //       variant: "success",
-        //     });
-        //     setExcelData(null);
-
-        //     console.log('Excel Data at response', excelData);
-        //   }
-        // } else {
-        //   enqueueSnackbar('Please Correct the Highlighted Fields', {
-        //     variant: "error",
-        //   });
-        // }
         responseData = data;
-        // setResponseData(data);
-
-        { dataErrors && (findindError()) };
+        if (dataErrors) findindError();
         setResponseStatus(true);
-        console.log('after', responseStatus);
       }
       if (response.errorMessage) {
-        enqueueSnackbar(response.errorMessage, {
-          variant: "error",
-        });
+        enqueueSnackbar(response.errorMessage, { variant: 'error' });
         setResponseStatus(true);
       }
-    }
-    catch (error) {
+    } catch (error) {
       setIsLoading(false);
       setResponseStatus(true);
-      console.log(error);
-      enqueueSnackbar('Something went wrong', {
-        variant: "error",
-      });
-      // setTimeout(function () {
-      //   enqueueSnackbar('Reloading in 3 Seconds', {
-      //     variant: "error",
-      //   });
-      // }, 1000);
-      // setTimeout(function () {
-      //   window.location.reload();
-      //   console.log('Page Reloaded');
-      // }, 4000);
+      enqueueSnackbar('Something went wrong', { variant: 'error' });
     }
-    console.log('responseData', responseData);
   };
 
-
-  const fileHandler = (event) => {
-    let selectedFile = event.target.files[0];
-    //just pass the selectedFile as parameter
-    setExcelFileName(selectedFile);
-    if (selectedFile) {
-      console.log(selectedFile.type);
-      if (selectedFile && fileType.includes(selectedFile.type)) {
-        let reader = new FileReader();
-        reader.readAsArrayBuffer(selectedFile);
-        reader.onload = (e) => {
-          setExcelFileError(null);
-          setExcelFile(e.target.result);
-        }
-      }
-      else {
-        setExcelFileError('Please Select Excel file type');
-        setExcelFile(null);
-      }
-    }
-    else {
-      console.log('please select your file')
-    }
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (excelFile !== null) {
-      const workbook = XLSX.read(excelFile, { type: 'buffer' });
-      const worksheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[worksheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet);
-
-      function extractHeader(ws) {
-        const header = [];
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        const numCols = Math.min(range.e.c + 1, 5);
-        for (let i = 0; i < numCols; ++i) {
-          const cell = ws[`${XLSX.utils.encode_col(i)}1`];
-          header[i] = cell ? cell.h : '';
-        }
-        return header;
-      }
-
-      const heads = extractHeader(worksheet);
-      console.log('heads', heads);
-
-      const isValidBase = heads[0] === "Inventory" && heads[1] === "Quantity" && heads[2] === "FinalLocation";
-      if (!isValidBase) {
-        enqueueSnackbar("The headers in your excel are not supported, Please use our provided Sample Excel", {
-          variant: "error",
-        });
-        return;
-      }
-
-      const mode = (heads[3] === "Changes") ? 'new' : 'existing';
-      setUploadMode(mode);
-
-      excelLength = data.length;
-      for (let i = 0; i < buildingUnitIds.length; i++) {
-        counter++;
-        for (let j = 0; j < data.length; j++) {
-          buildingUnitName.push(buildingUnit[i]);
-          excelDataM.push(data[j]);
-        }
-      }
-      setBuildingUnitNameforTable(buildingUnitName);
-      setExcelData(excelDataM);
-    }
-    else {
-      setExcelData(null);
-    }
-  }
-
-  const handleSelectBuildingType = (e) => {
-    setBuildingUnitData(null);
-    setBuildingUnitDD(null);
-    console.log('BuildingType', e);
-    setBuildingType(e.label);
-    console.log('buildingTypeName', buildingType);
-    setBuildingTypeDD(e);
-    for (let i = 0; i < buildingTypeData.length; i++) {
-      const element = buildingTypeData[i].label;
-      console.log('elementType', element)
-      if (element.includes(e.label)) {
-        buildingTypeId = e.value;
-      }
-    }
-    // buildingTypeId=e;
-    console.log('buildingTypeId', buildingTypeId);
-    if (e) {
-      getBuildingUnitsDDAPI(buildingTypeId);
-    }
-
-    // setBuildingTypeIdForPost(buildingTypeId);
-  }
-
-
-  const handleSelectBuildingUnit = (e) => {
-    console.log('BuildingUnit', e)
-    setBuildingUnit(e.map(e => e.label));
-    setBuildingUnitDD(e);
-    for (let i = 0; i < e.length; i++) {
-      buildingUnitId.push(e[i].value)
-    }
-    const form = document.querySelector("form");
-    console.log(form);
-    if (buildingUnitId) {
-      form.removeAttribute("hidden");
-    }
-    // if(buildingUnitId){
-    //   form.setAttribute("hidden");
-    // }
-    console.log('buildingUnitId:', buildingUnitId,);
-    setBuildingUnitIds(buildingUnitId);
-    setBuildingUnitIdForPost(buildingUnitId);
-  }
-
-
-  const Dropdown = ({ options }) => {
-    return (
-      <div className='form-group' style={{ 'marginTop': '20px' }}>
-        <p>Building Type</p>
-        <div className="dropdown">
-          <Select
-            options={options}
-            placeholder="Select Building Type"
-            value={buildingTypeDD}
-            onChange={handleSelectBuildingType}
-            isSearchable={true}
-          /></div>
-      </div>
-    );
+  const handleReset = () => {
+    setIsReset(true);
+    setExcelData(null);
+    setExcelFile(null);
+    setSelectedFileName('');
+    setExcelFileError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setTimeout(() => setIsReset(false), 500);
   };
-
-
-  const Dropdown2 = ({ options }) => {
-    return (
-      <div className="form-group" style={{ 'marginTop': '20px' }}>
-        <p>Building Unit</p>
-        <div className="dropdown">
-          <Select
-            options={options}
-            placeholder="Select Building Unit"
-            value={buildingUnitDD}
-            onChange={handleSelectBuildingUnit}
-            isSearchable={true}
-            isMulti
-          /></div>
-      </div>
-    );
-  };
-
 
   const downloadSample = async () => {
     try {
       const response = await axios.get(apiEndpoints.downloadBOQSample, {
-        headers: {
-          'Authorization': 'Bearer ' + token,
-          'tenant-id': states.tennant.tennant_id
-        },
+        headers: { Authorization: 'Bearer ' + token, 'tenant-id': states.tennant.tennant_id },
         responseType: 'blob'
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
       const a = document.createElement('a');
-      a.href = url;
+      a.href = window.URL.createObjectURL(new Blob([response.data]));
       a.download = 'BOQ_Sample_Template.xlsx';
-      document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
+    } catch {
       enqueueSnackbar('Failed to download template', { variant: 'error' });
     }
   };
 
   const downloadExistingBOQ = async () => {
     if (!buildingTypeDD || !buildingUnitDD || buildingUnitDD.length === 0) {
-      enqueueSnackbar('Please select Building Type and Building Unit first', { variant: 'error' });
+      enqueueSnackbar('Select Building Type and Building Unit first', { variant: 'warning' });
       return;
     }
     if (buildingUnitDD.length > 1) {
-      enqueueSnackbar('Please select only one Building Unit to download existing BOQ', { variant: 'error' });
+      enqueueSnackbar('Select only one Building Unit to download existing BOQ', { variant: 'warning' });
       return;
     }
     try {
-      const btId = buildingTypeDD.value;
-      const buId = buildingUnitDD[0].value;
       const response = await axios.get(
-        `${apiEndpoints.downloadExistingBOQ}?buildingTypeId=${btId}&buildingUnitId=${buId}`,
+        `${apiEndpoints.downloadExistingBOQ}?buildingTypeId=${buildingTypeDD.value}&buildingUnitId=${buildingUnitDD[0].value}`,
         {
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'tenant-id': states.tennant.tennant_id
-          },
+          headers: { Authorization: 'Bearer ' + token, 'tenant-id': states.tennant.tennant_id },
           responseType: 'blob'
         }
       );
-      const url = window.URL.createObjectURL(new Blob([response.data]));
       const a = document.createElement('a');
-      a.href = url;
+      a.href = window.URL.createObjectURL(new Blob([response.data]));
       a.download = 'Existing_BOQ.xlsx';
-      document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
+    } catch {
       enqueueSnackbar('Failed to download existing BOQ', { variant: 'error' });
     }
   };
 
-
-
-  const handleDeleteRow = () => {
-
-    $(".delete").click(function () {
-      var row = $(this).closest("tr");    // Finds the row
-      row.find(".row-data").empty().attr("contenteditable", "false");
-    });
-
-    var rowCount = $('.row-data').contents();
-    console.log('rowCount', rowCount.length);
-    if (rowCount.length == 0) {
-      setExcelData(null);
-    }
-
-    // const table = document.querySelector("table");
-    // // console.log("TableLength: ", table.rows.length);
-    // // for (var i = 0, row; row = table.rows[i]; i++) {
-    // //   const rowItem = table.rows[i].innerText;
-    // //   console.log('rowItem', rowItem.length);
-
-    // // }
-    // for (var i = 0, row; row = table.rows[i]; i++) {
-    //   for (var j = 0, col; col = row.cells[j]; j++) {
-    //     const cellItems = row.cells[j];
-    //     console.log(cellItems.length);
-    //     // if (!cellItems) {
-    //     //   setExcelData(null);
-    //     // }
-    //   }
-    // }
-
-    // setExcelData(null);
-
-    // console.log(data); 
-    // console.log(index);
-    // console.log(excelData);
-    // let newData = new Array();
-    // newData = (excelData.filter((v, i) => i !== index));
-    // console.log('newData: ', newData);
-
-    // else {
-    //   setExcelData(newData);
-    // }
-    // console.log(excelData);
-  }
-
   function LoadingSpinner() {
-    return (
-      <div className="spinner-container">
-        <div className="loading-spinner"></div>
-      </div>
-    );
+    return <div className="spinner-container"><div className="loading-spinner" /></div>;
   }
 
-  const handleReset = () => {
-    console.log('resetting..');
-    setIsReset(true);
-    setExcelData(null);
-    setTimeout(
-      function () {
-        setIsReset(false);
-      }, 1000);
-  }
-  // const hiddenFileInput = React.useRef(null);
-  // const handleClick = event => {
-  //   hiddenFileInput.current.click();
-  // };
+  // ── Styles ─────────────────────────────────────────────────────────────────
+
+  const s = {
+    page: { padding: '24px' },
+    pageHeader: { marginBottom: '24px' },
+    pageTitle: { fontSize: '20px', fontWeight: 600, color: '#333', margin: 0 },
+    pageSubtitle: { fontSize: '13px', color: '#888', marginTop: '4px' },
+    section: {
+      background: '#fff', border: '1px solid #e8e8e8', borderRadius: '8px',
+      padding: '20px 24px', marginBottom: '16px'
+    },
+    stepHeader: { display: 'flex', alignItems: 'center', marginBottom: '12px' },
+    stepBadge: {
+      width: '24px', height: '24px', borderRadius: '50%', background: '#1976d2',
+      color: '#fff', fontSize: '12px', fontWeight: 700,
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      marginRight: '10px', flexShrink: 0
+    },
+    stepBadgeDone: { background: '#44c4a1' },
+    stepTitle: { fontSize: '15px', fontWeight: 600, color: '#333' },
+    helpText: { fontSize: '12px', color: '#888', marginTop: '6px', lineHeight: 1.5 },
+    row: { display: 'flex', gap: '16px', flexWrap: 'wrap' },
+    col: { flex: '1', minWidth: '220px' },
+    label: { fontSize: '12px', fontWeight: 600, color: '#555', marginBottom: '6px' },
+    downloadBtn: {
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      padding: '8px 16px', borderRadius: '6px', border: '1px solid #1976d2',
+      background: '#fff', color: '#1976d2', cursor: 'pointer', fontSize: '13px',
+      fontWeight: 500, transition: 'all 0.2s'
+    },
+    dropZone: {
+      border: `2px dashed ${dragOver ? '#1976d2' : '#ccc'}`,
+      borderRadius: '8px', padding: '28px 20px', textAlign: 'center',
+      background: dragOver ? '#e3f2fd' : '#fafafa', cursor: 'pointer',
+      transition: 'all 0.2s'
+    },
+    dropZoneDisabled: { opacity: 0.5, cursor: 'not-allowed' },
+    dropIcon: { fontSize: '32px', marginBottom: '8px', color: '#aaa' },
+    fileSelected: {
+      display: 'inline-flex', alignItems: 'center', gap: '8px',
+      background: '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '6px',
+      padding: '6px 12px', fontSize: '13px', color: '#2e7d32', marginTop: '10px'
+    },
+    modeBadge: {
+      display: 'inline-block', padding: '2px 10px', borderRadius: '12px',
+      fontSize: '11px', fontWeight: 600, marginLeft: '10px'
+    },
+    modeBadgeNew:      { background: '#e3f2fd', color: '#1565c0' },
+    modeBadgeExisting: { background: '#f3e5f5', color: '#6a1b9a' },
+    previewHeader: {
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      marginBottom: '12px'
+    },
+    actionRow: { display: 'flex', gap: '12px', alignItems: 'center', marginTop: '16px' },
+  };
+
+  const stepDone1 = !!buildingSelected;
+  const stepDone2 = false; // download is optional, can't verify
+  const stepDone3 = !!excelData;
+
   return (
-    <div className="list-section">
-      <div className='filter-section' >
-        <div className="flex" style={{ "display": "flex", gap: "1rem" }}>
-          <div className="col-md-4">
-            <Dropdown options={buildingTypeData} />
-          </div>
-          <div className="col-md-4">
-            <Dropdown2 options={buildingUnitData} />
-          </div>
-          <div className="col-md-4"></div>
+    <div style={s.page}>
+
+      {/* Page header */}
+      <div style={s.pageHeader}>
+        <h2 style={s.pageTitle}>BOQ Upload</h2>
+        <p style={s.pageSubtitle}>
+          Upload Bill of Quantities for your project buildings. Follow the steps below.
+        </p>
+      </div>
+
+      {/* Step 1 — Select Building */}
+      <div style={s.section}>
+        <div style={s.stepHeader}>
+          <span style={{ ...s.stepBadge, ...(stepDone1 ? s.stepBadgeDone : {}) }}>1</span>
+          <span style={s.stepTitle}>Select Building</span>
         </div>
-
-        <div className='form-group' style={{ display: 'flex', gap: '1rem', marginTop: '8px' }}>
-          <IconButtons
-            icon={"DownloadSVG"}
-            buttonClass="filterIcon"
-            label={'Download Template'}
-            onClick={() => downloadSample()}
-          />
-          <IconButtons
-            icon={"DownloadSVG"}
-            buttonClass="filterIcon"
-            label={'Download Existing BOQ'}
-            onClick={() => downloadExistingBOQ()}
-          />
-        </div>
-
-        <form className='form'
-          autoComplete='off'
-          hidden
-          onSubmit={handleSubmit}
-        >
-          <br></br>
-          {isReset == true
-            ? LoadingSpinner()
-            :
-            // <div> 
-            <input
-              type="file"
-              className="file-control"
-              required
-              // ref={hiddenFileInput}
-              onChange={fileHandler}
-              style={{
-                //  display: 'none', 
-                color: 'blue'
-              }} />
-            // <button required for="file-control" onClick={handleClick}>{ excelFile ? "File Selected": "Select an excel"}</button>
-            //  </div>
-          }
-
-          {excelFileError
-            && <div className='text-danger'
-              style={{ 'marginTop': 5 + 'px' }}>
-              {excelFileError}
-            </div>}
-          <IconButtons
-            type='submit'
-            className='btn btn-success'
-            label={'UPLOAD'}
-            style={{ "marginTop": 5 + 'px' }}
-          /><IconButton
-            onClick={() => handleReset()}>
-            {RefreshIcon({ fontSize: "medium" })}
-          </IconButton>
-        </form>
-
-        {responseStatus === true
-          ? <div>
-            <br />
-            <Button
-              label={'SUBMIT'}
-              onClick={() => excelData
-                ? postTable()
-                : enqueueSnackbar('Please upload the Excel first', { variant: "error", })}
-            /></div>
-          : <div>
-            <br />
-            <Button
-              label={'SUBMIT'}
+        <div style={s.row}>
+          <div style={s.col}>
+            <div style={s.label}>Building Type <span style={{ color: 'red' }}>*</span></div>
+            <Select
+              options={buildingTypeData}
+              placeholder="Select Building Type"
+              value={buildingTypeDD}
+              onChange={handleSelectBuildingType}
+              isSearchable
             />
-          </div>}
-      </div>
-      <br></br>
-      <br></br>
-      {/* <br></br>
-      <br></br> */}
-      <div className='boq-table-wrapper'>
-        {isLoading === true && LoadingSpinner()}
-        {excelData === null ? <>Preview Here</>
-          : (
-            <div>
-              <form>
-                <table className='table' >
-                  <thead>
-                    <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'>{tableHeading[0]}</th>
-                    <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'>{tableHeading[1]}</th>
-                    <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'>{tableHeading[2]}</th>
-                    <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'>{tableHeading[3]}</th>
-                    <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'>{tableHeading[4]}</th>
-                    <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'>{tableHeading[5]}</th>
-                    {uploadMode === 'new' && <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'>{tableHeading[6]}</th>}
-                    <th style={{ border: "1px solid rgba(0, 0, 0, 0.5)" }} scope='col'><center>{tableHeading[7]}</center></th>
-                  </thead>
-                  <tbody>
-                    {excelData.map((individualExcelData, key) => (
-                      <tr key={key}>
-                        <td className='row-data' index={key} id={key + 1 + tableHeading[0]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }}><pre>{key + 1}</pre></td>
-                        <td className='row-data' index={key} id={key + 1 + tableHeading[1]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }}><pre>{buildingType}</pre></td>
-                        <td className='row-data' index={key} id={key + 1 + tableHeading[2]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }}><pre>{buildingUnitNameforTable[key]}</pre></td>
-                        <td className='row-data' index={key} id={key + 1 + tableHeading[3]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }} contenteditable='true'><pre>{individualExcelData.Inventory}</pre></td>
-                        <td className='row-data' index={key} id={key + 1 + tableHeading[4]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }} contenteditable='true'><pre>{individualExcelData.Quantity}</pre></td>
-                        <td className='row-data' index={key} id={key + 1 + tableHeading[5]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }} contenteditable='true'><pre>{individualExcelData.FinalLocation}</pre></td>
-                        {uploadMode === 'new' && <td className='row-data' index={key} id={key + 1 + tableHeading[6]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }} contenteditable='true'><pre>{individualExcelData.Changes}</pre></td>}
-                        <td className='row-data' index={key} id={key + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0, 0, 0, 0.15)' }}>
-                          <center>
-                            <IconButton
-                              className='delete'
-                              onClick={() => handleDeleteRow()}>
-                              {DeleteIcon({ fontSize: "medium" })}
-                            </IconButton>
-                          </center>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </form>
+          </div>
+          <div style={s.col}>
+            <div style={{ ...s.label, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Building Unit <span style={{ color: 'red' }}>*</span></span>
+              {buildingTypeDD && buildingUnitData.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '0', fontWeight: 500 }}
+                    onClick={() => handleSelectBuildingUnit(buildingUnitData)}
+                  >
+                    Select All
+                  </button>
+                  <span style={{ color: '#ccc' }}>|</span>
+                  <button
+                    type="button"
+                    style={{ fontSize: '11px', color: '#e57373', background: 'none', border: 'none', cursor: 'pointer', padding: '0', fontWeight: 500 }}
+                    onClick={() => handleSelectBuildingUnit([])}
+                  >
+                    Clear
+                  </button>
+                </>
+              )}
             </div>
-          )}
-        <br></br>
-        <br></br>
+            <Select
+              options={buildingUnitData || []}
+              placeholder={buildingTypeDD ? 'Select one or more units' : 'Select Building Type first'}
+              value={buildingUnitDD}
+              onChange={handleSelectBuildingUnit}
+              isSearchable
+              isMulti
+              isDisabled={!buildingTypeDD}
+            />
+          </div>
+        </div>
+        <p style={s.helpText}>
+          You can select multiple building units. The same BOQ data will be applied to each selected unit.
+        </p>
       </div>
+
+      {/* Step 2 — Get Template */}
+      <div style={s.section}>
+        <div style={s.stepHeader}>
+          <span style={s.stepBadge}>2</span>
+          <span style={s.stepTitle}>Get Template</span>
+        </div>
+        <div style={{ ...s.row, gap: '12px' }}>
+          <div>
+            <button style={s.downloadBtn} onClick={downloadSample}>
+              📥 Download New Template
+            </button>
+            <p style={{ ...s.helpText, marginTop: '4px' }}>
+              First time? Download this template, fill in your BOQ data, and upload.
+            </p>
+          </div>
+          <div>
+            <button
+              style={{ ...s.downloadBtn, borderColor: buildingSelected ? '#7b1fa2' : '#ccc', color: buildingSelected ? '#7b1fa2' : '#aaa' }}
+              onClick={downloadExistingBOQ}
+            >
+              📥 Download Existing BOQ
+            </button>
+            <p style={{ ...s.helpText, marginTop: '4px' }}>
+              Already have BOQ? Download, modify quantities, and re-upload.{' '}
+              {!buildingSelected && <span style={{ color: '#e57373' }}>Select a single building unit first.</span>}
+            </p>
+          </div>
+        </div>
+        <div style={{ ...s.helpText, marginTop: '12px', background: '#fff8e1', padding: '8px 12px', borderRadius: '6px', color: '#795548' }}>
+          💡 <strong>Changes column:</strong> Use <code>addition</code> to add new, <code>update</code> to change quantity,
+          or <code>deletion</code> to remove. Not needed when uploading existing BOQ — quantities are updated automatically.
+        </div>
+      </div>
+
+      {/* Step 3 — Upload */}
+      <div style={s.section}>
+        <div style={s.stepHeader}>
+          <span style={{ ...s.stepBadge, ...(stepDone3 ? s.stepBadgeDone : {}) }}>3</span>
+          <span style={s.stepTitle}>Upload &amp; Preview</span>
+        </div>
+
+        {!buildingSelected ? (
+          <div style={{ ...s.helpText, color: '#e57373', fontSize: '13px' }}>
+            ⚠ Complete Step 1 first — select a Building Type and at least one Building Unit.
+          </div>
+        ) : (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              style={{ display: 'none' }}
+              onChange={fileHandler}
+            />
+            <div
+              style={{ ...s.dropZone, ...(buildingSelected ? {} : s.dropZoneDisabled) }}
+              onClick={() => buildingSelected && fileInputRef.current.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+            >
+              <div style={s.dropIcon}>📂</div>
+              <div style={{ fontSize: '14px', color: '#555', fontWeight: 500 }}>
+                Click to select or drag &amp; drop your Excel file here
+              </div>
+              <div style={{ fontSize: '12px', color: '#aaa', marginTop: '4px' }}>
+                Supported: .xlsx, .xls
+              </div>
+            </div>
+
+            {selectedFileName && (
+              <div style={s.fileSelected}>
+                📎 {selectedFileName}
+              </div>
+            )}
+            {excelFileError && (
+              <div style={{ color: '#e57373', fontSize: '12px', marginTop: '6px' }}>
+                {excelFileError}
+              </div>
+            )}
+
+            <div style={s.actionRow}>
+              <Button
+                label="Preview"
+                onClick={handlePreview}
+                disabled={!excelFile}
+              />
+              <IconButton onClick={handleReset} title="Reset">
+                {RefreshIcon({ fontSize: 'medium' })}
+              </IconButton>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Preview & Submit */}
+      {excelData && (
+        <div style={s.section}>
+          <div style={s.previewHeader}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontSize: '15px', fontWeight: 600, color: '#333' }}>
+                Preview — {excelData.length} row{excelData.length !== 1 ? 's' : ''}
+              </span>
+              <span style={{
+                ...s.modeBadge,
+                ...(uploadMode === 'new' ? s.modeBadgeNew : s.modeBadgeExisting)
+              }}>
+                {uploadMode === 'new' ? 'New BOQ' : 'Modify Existing'}
+              </span>
+            </div>
+            <p style={{ ...s.helpText, margin: 0 }}>
+              Review the data below. Cells are editable. Red borders indicate errors from a previous submit attempt.
+            </p>
+          </div>
+
+          {isLoading && LoadingSpinner()}
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  {tableHeading.slice(0, 6).map((h, i) => (
+                    <th key={i} style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                  {uploadMode === 'new' && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[6]}</th>
+                  )}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[7]}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {excelData.map((row, idx) => (
+                  <tr key={idx}>
+                    <td className="row-data" id={idx + 1 + tableHeading[0]} style={{ border: '1px solid rgba(0,0,0,0.15)' }}><pre>{idx + 1}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[1]} style={{ border: '1px solid rgba(0,0,0,0.15)' }}><pre>{buildingType}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[2]} style={{ border: '1px solid rgba(0,0,0,0.15)' }}><pre>{buildingUnitNameforTable[idx]}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[3]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Inventory}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[4]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Quantity}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[5]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.FinalLocation}</pre></td>
+                    {uploadMode === 'new' && (
+                      <td className="row-data" id={idx + 1 + tableHeading[6]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
+                    )}
+                    <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
+                      <IconButton
+                        onClick={() => {
+                          setExcelData(prev => prev.filter((_, i) => i !== idx));
+                          setBuildingUnitNameforTable(prev => prev.filter((_, i) => i !== idx));
+                        }}
+                      >
+                        {DeleteIcon({ fontSize: 'medium' })}
+                      </IconButton>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            {responseStatus ? (
+              <Button
+                label="Submit BOQ"
+                onClick={() => postTable()}
+              />
+            ) : (
+              <Button label="Submitting…" />
+            )}
+            <span style={{ ...s.helpText, display: 'inline', marginLeft: '12px' }}>
+              This will save the BOQ data to the system.
+            </span>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
+  );
+};
 
 export default BOQInputScreen;
-
-
-
-

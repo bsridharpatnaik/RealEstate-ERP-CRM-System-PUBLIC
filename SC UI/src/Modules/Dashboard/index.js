@@ -10,25 +10,25 @@ import LineTrendChart from "./lineTrendChart";
 import Notification from "./notification";
 import SortTable from "./SortTable";
 import Stock from "./stock";
-import StockStatsChart from "./stockStatsChart";
+import BOQStatusChart from "./boqStatusChart";
 import "./style.scss";
 
 class Dashboard extends Component {
   state = {
     isIOStatsLoaded: false,
-    isStatsChartLoaded: false,
+    isBOQChartLoaded: false,
     notificationOpen: false,
     notificationLoaded: false,
     isIOTrendLoaded: false,
     ioStatsData: [],
-    statsChartData: [],
+    boqChartData: {},
     notifications: [],
     IOTrendData: [],
     isInward: true
   };
   async componentDidMount() {
     this.getIOStatsData();
-    this.getStatsChartData();
+    this.getBOQChartData();
     this.refreshNotification();
     this.getIOTrendData();
   }
@@ -47,11 +47,11 @@ class Dashboard extends Component {
       this.setState({ isIOStatsLoaded: true, ioStatsData: response.data });
     }
   }
-  async getStatsChartData() {
-    this.setState({ isStatsChartLoaded: false });
-    const response = await API.GET(apiEndpoints.stockstats);
+  async getBOQChartData() {
+    this.setState({ isBOQChartLoaded: false });
+    const response = await API.GET(apiEndpoints.boqDashboardStats);
     if (response.success) {
-      this.setState({ isStatsChartLoaded: true, statsChartData: response.data });
+      this.setState({ isBOQChartLoaded: true, boqChartData: response.data });
     }
   }
   async getIOTrendData() {
@@ -78,9 +78,9 @@ class Dashboard extends Component {
             />
           </div>
           <div className="right">
-            <StockStatsChart
-              data={this.state.statsChartData}
-              isLoaded={this.state.isStatsChartLoaded}
+            <BOQStatusChart
+              data={this.state.boqChartData}
+              isLoaded={this.state.isBOQChartLoaded}
             />
           </div>
         </div>
