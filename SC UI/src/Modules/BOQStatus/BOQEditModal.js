@@ -19,6 +19,8 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
 
   const [buildingTypeOptions, setBuildingTypeOptions] = useState([]);
   const [buildingUnitOptions, setBuildingUnitOptions] = useState([]);
+  const [productOptions, setProductOptions]           = useState([]);
+  const [locationOptions, setLocationOptions]         = useState([]);
   const [buildingType, setBuildingType]   = useState(null);
   const [buildingUnit, setBuildingUnit]   = useState(null);
   const [product, setProduct]             = useState(null);
@@ -26,11 +28,21 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
   const [quantity, setQuantity]           = useState('');
   const [saving, setSaving]               = useState(false);
 
-  // Load building types once
+  // Load building types, products and usage areas once
   useEffect(() => {
     API.GET(apiEndpoints.buildingType).then(r => {
       if (r.success) {
         setBuildingTypeOptions(r.data.map(d => ({ value: d.id, label: d.name })));
+      }
+    });
+    API.GET('/api/inventory/product/idandnames').then(r => {
+      if (r.success) {
+        setProductOptions(r.data.map(d => ({ value: d.id, label: d.name })));
+      }
+    });
+    API.GET('/api/inventory/usagearea/idandnames').then(r => {
+      if (r.success) {
+        setLocationOptions(r.data.map(d => ({ value: d.id, label: d.name })));
       }
     });
   }, []);
@@ -41,14 +53,12 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
 
     if (initialData) {
       // Pre-fill product
-      const productOpts = (stockDropdowns?.product || []).map(p => ({ value: p.id, label: p.name }));
-      const preProduct  = productOpts.find(o => o.label === initialData.productName) || null;
+      const preProduct = productOptions.find(o => o.label === initialData.productName) || null;
       setProduct(preProduct);
 
       // Pre-fill final location if single detail row
-      const locationOpts = (stockDropdowns?.usageArea || []).map(l => ({ value: l.id, label: l.name }));
       if (initialData.finalLocation) {
-        const preLocation = locationOpts.find(o => o.label === initialData.finalLocation) || null;
+        const preLocation = locationOptions.find(o => o.label === initialData.finalLocation) || null;
         setFinalLocation(preLocation);
         setQuantity(initialData.quantity !== undefined ? String(initialData.quantity) : '');
       } else {
@@ -77,7 +87,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       setFinalLocation(null);
       setQuantity('');
     }
-  }, [open, initialData, buildingTypeOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, initialData, buildingTypeOptions, productOptions, locationOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadBuildingUnits = async (btId, preSelectUnitId) => {
     const r = await API.GET(apiEndpoints.getBuildingUnit + btId);
@@ -132,8 +142,6 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
     }
   };
 
-  const productOptions  = (stockDropdowns?.product  || []).map(p => ({ value: p.id, label: p.name }));
-  const locationOptions = (stockDropdowns?.usageArea || []).map(l => ({ value: l.id, label: l.name }));
   const isEdit = !!initialData;
 
   return (
