@@ -851,7 +851,7 @@ class Details extends CommonDetails {
                             ? `${quantity} ${item.unit || ""}`.trim()
                             : "";
                           const details = [
-                            item.brand && `Brand: ${item.brand}`,
+                            item.brand && `Brand Name: ${item.brand}`,
                             item.grade && `Grade: ${item.grade}`,
                             item.diameter && `Diameter: ${item.diameter}`,
                             item.specification &&

@@ -308,7 +308,7 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
         addHeaderCell(table, "Tolerance %", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Taxable \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net Rate \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
@@ -318,8 +318,11 @@ public class PurchaseOrderPdfService {
             Product product = line.getProduct();
             String desc = product.getProductName()
                     + (notBlank(product.getProductCode()) ? "\n[" + product.getProductCode() + "]" : "")
+                    + (notBlank(line.getBrand())          ? "\nBrand Name: " + line.getBrand() : "")
+                    + (notBlank(line.getGrade())          ? "\nGrade: " + line.getGrade() : "")
+                    + (notBlank(line.getDiameter())       ? "\nDia: " + line.getDiameter() : "")
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
-                    ? "\n" + line.getSpecification() : "");
+                    ? "\nSpec: " + line.getSpecification() : "");
 
             double qty = line.getQuantity() != null ? line.getQuantity() : 0.0;
             double rate = line.getRate() != null ? line.getRate() : 0.0;
