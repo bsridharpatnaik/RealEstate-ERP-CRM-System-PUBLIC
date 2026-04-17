@@ -74,3 +74,4 @@ application-*.properties
 .Trashes
 ehthumbs.db
 Thumbs.db
+/SC UI/node_modules
