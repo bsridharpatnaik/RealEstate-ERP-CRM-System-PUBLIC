@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import com.ec.application.data.EmailConfigData;
+import com.ec.application.data.JobFailureAlertDTO;
 import com.ec.application.data.StockDiscrepancyRow;
 import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.model.StockValidation;
@@ -158,6 +159,38 @@ public class EmailHelper
 			log.info("Stock balance validation email sent to {}", validationEmailIds);
 		} catch (MessagingException e) {
 			log.error("Error sending stock balance validation email", e);
+			e.printStackTrace();
+		}
+	}
+
+	public void sendJobFailureAlert(List<JobFailureAlertDTO> failures, String jobName) throws Exception
+	{
+		EmailConfigData emailConfigData = emailService.getEmailConfig();
+		Properties props = getProperties();
+		Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(emailConfigData.mailUsername, emailConfigData.mailPassword);
+			}
+		});
+		MimeMessage message = new MimeMessage(session);
+		try {
+			MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+					StandardCharsets.UTF_8.name());
+			Map<String, Object> model = new HashMap<>();
+			model.put("failures", failures);
+			model.put("jobName", jobName);
+			model.put("currentDate", new Date().toString());
+			Template template = config.getTemplate("email-job-failure.ftl");
+			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
+			helper.setFrom(emailConfigData.mailUsername);
+			InternetAddress[] parse = InternetAddress.parse(validationEmailIds, true);
+			message.setRecipients(javax.mail.Message.RecipientType.TO, parse);
+			helper.setSubject("⚠ Job Failure: " + jobName + " (" + failures.size() + " failure(s)) - " + new Date());
+			helper.setText(html, true);
+			Transport.send(message);
+			log.info("Job failure alert sent for job: {}", jobName);
+		} catch (MessagingException e) {
+			log.error("Error sending job failure alert email", e);
 			e.printStackTrace();
 		}
 	}
