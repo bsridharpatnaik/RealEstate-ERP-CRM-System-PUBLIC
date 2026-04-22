@@ -1,0 +1,1141 @@
+// ── Indents tab ────────────────────────────────────────────────────────────
+
+.po-indents-loading,
+.po-indents-error,
+.po-indents-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.po-indents-error {
+  color: #c62828;
+}
+
+.po-indents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.po-indent-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+
+  .po-indent-card-header {
+    background: #e8f0fe;
+    padding: 10px 14px;
+    border-bottom: 1px solid #c5d5f5;
+  }
+
+  .po-indent-header-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .po-indent-header-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .po-indent-header-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  .po-indent-header-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.82);
+  }
+
+  .po-indent-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #9e9e9e;
+    color: #fff;
+
+    &.status-approved    { background: #388e3c; }
+    &.status-new         { background: #1976d2; }
+    &.status-po_partial  { background: #f57c00; }
+    &.status-po_completed { background: #388e3c; }
+    &.status-closed      { background: #616161; }
+    &.status-rejected    { background: #c62828; }
+    &.status-cancelled   { background: #9e9e9e; }
+  }
+
+  .po-indent-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .po-indent-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    th {
+      background: #f5f5f5;
+      padding: 9px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      border-bottom: 2px solid #e0e0e0;
+      white-space: nowrap;
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      color: rgba(0, 0, 0, 0.78);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #fafafa;
+    }
+
+    .po-indent-no-data {
+      text-align: center;
+      color: rgba(0, 0, 0, 0.4);
+      font-style: italic;
+      padding: 16px;
+    }
+
+    .po-indent-product-name {
+      font-weight: 500;
+    }
+
+    .po-indent-product-code {
+      font-size: 11px;
+      color: rgba(0, 0, 0, 0.5);
+      margin-top: 2px;
+    }
+
+    .po-indent-line-status {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #9e9e9e;
+      color: #fff;
+
+      &.status-pending     { background: #1976d2; }
+      &.status-partial     { background: #f57c00; }
+      &.status-completed   { background: #388e3c; }
+      &.status-closed      { background: #616161; }
+      &.status-cancelled   { background: #9e9e9e; }
+    }
+  }
+}
+
+// Style for Purchase Order page
+.purchase-order-page {
+  background: #fff;
+  min-height: 100vh;
+}
+
+// PO Priority badge
+.priority-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+
+  &.priority-badge-critical { background: #d32f2f; }
+  &.priority-badge-high     { background: #f57c00; }
+  &.priority-badge-medium   { background: #f9a825; color: #333; }
+  &.priority-badge-normal   { background: #388e3c; }
+}
+
+.notes-content {
+  font-size: 13px;
+  color: #333333;
+  line-height: 1.6;
+  white-space: pre-wrap;  // ← this is the fix
+}
+
+// SPL PO column in list table
+.spl-po-cell {
+  text-align: center !important;
+  width: 50px !important;
+  min-width: 50px !important;
+}
+
+.spl-po-check {
+  display: inline-block;
+  background-color: #f57c00;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 50%;
+}
+
+
+.purchase-order-list-wrapper {
+  .list-section {
+    box-shadow: none;
+    .filter-section {
+      .MuiTextField-root {
+        width: 400px;
+        max-width: 400px;
+        @media screen and (max-width: 768px) { width: 100%; max-width: 100%; }
+      }
+
+      // Add Purchase Order button: slightly bigger height than Filter/Download
+      .top-button-wrapper {
+        .filterIcon.MuiButton-root,
+        .filter.MuiButton-root,
+        .download.MuiButton-root,
+        .refreshIcon.MuiButton-root,
+        .add-button.MuiButton-root {
+          text-transform: none !important;
+        }
+        .filterIcon.MuiButton-root,
+        .filter.MuiButton-root,
+        .download.MuiButton-root,
+        .refreshIcon.MuiButton-root {
+          height: 34px !important;
+          min-height: 34px !important;
+        }
+        .add-button.MuiButton-root {
+          height: 38px !important;
+          min-height: 38px !important;
+          padding: 6px 14px !important;
+          background: #3f51b5 !important;
+          &:hover {
+            background: #303f9f !important;
+          }
+        }
+      }
+    }
+
+    .table-wrapper {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      overflow-x: auto;
+      background: #fff;
+
+      table {
+        width: 100%;
+        min-width: 1260px;
+        table-layout: fixed;
+        border-collapse: collapse;
+        border: none;
+
+        // Header row: subtle grey background, bolder text, sort icons
+        thead {
+          tr {
+            border-bottom: 1px solid #e0e0e0;
+          }
+          th {
+            background: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            color: #323c47;
+            padding: 12px 16px;
+            height: 48px;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+            white-space: nowrap;
+
+            &.sortable {
+              cursor: pointer;
+              span {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                .MuiSvgIcon-root {
+                  color: rgba(0, 0, 0, 0.35);
+                  font-size: 18px;
+                  flex-shrink: 0;
+                }
+              }
+            }
+          }
+        }
+
+        // Data rows: light row borders, all white
+        tbody {
+          tr {
+            border-bottom: 1px solid #eeeeee;
+            min-height: 48px;
+            transition: background-color 0.15s ease;
+            background: #fff;
+
+            &:last-child {
+              border-bottom: none;
+            }
+            &.clickable-row:hover {
+              background: #f5f5f5 !important;
+            }
+          }
+          td {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 400;
+            color: #323c47;
+            border: none;
+            vertical-align: middle;
+            height: 48px;
+          }
+        }
+
+        // Column widths
+        th, td {
+          &:nth-child(1) { // PO Number
+            min-width: 150px;
+            width: 150px;
+          }
+          &:nth-child(2) { // Date Creation
+            min-width: 180px;
+            width: 180px;
+          }
+          &:nth-child(3) { // Inventory Count
+            min-width: 140px;
+            width: 140px;
+            text-align: center;
+          }
+          &:nth-child(4) { // Supplier Name
+            min-width: 180px;
+            width: 180px;
+          }
+          &:nth-child(5) { // Created By
+            min-width: 150px;
+            width: 150px;
+          }
+          &:nth-child(6) { // PO Status
+            min-width: 150px;
+            width: 150px;
+          }
+        &:nth-child(7) { // Priority
+          min-width: 130px;
+          width: 130px;
+        }
+        &:nth-child(8) { // SPL
+          min-width: 60px;
+          width: 60px;
+          text-align: center;
+        }
+        }
+
+        // PO Status column: left-aligned header and badges
+        thead th:nth-child(6) {
+          text-align: left !important;
+        }
+        tbody td.po-status-cell {
+          padding: 12px 16px;
+          vertical-align: middle;
+          text-align: left !important;
+        }
+        tbody td.po-status-cell .po-status-cell-inner {
+          display: block;
+          width: 100%;
+          text-align: left;
+        }
+        tbody td.po-status-cell .status-badge {
+          display: inline-block;
+        }
+
+        // Action header and cells: centered, buttons close together
+        th.action {
+          min-width: 70px;
+          width: 70px;
+          text-align: center;
+          padding-right: 0;
+        }
+
+        // Action columns: black icons, right-aligned, close together
+        .action-view,
+        .action-delete {
+          width: 28px;
+          min-width: 28px;
+          padding: 0 2px;
+          text-align: center;
+          vertical-align: middle;
+
+          .MuiIconButton-root {
+            color: #000000 !important;
+            padding: 2px !important;
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            border-radius: 4px;
+            &:hover {
+              background-color: rgba(0, 0, 0, 0.06) !important;
+              color: #000000 !important;
+            }
+            &:disabled {
+              color: rgba(0, 0, 0, 0.26) !important;
+            }
+          }
+
+          .MuiSvgIcon-root {
+            color: #000000 !important;
+            width: 18px !important;
+            height: 18px !important;
+          }
+
+          svg {
+            fill: #000000 !important;
+            width: 18px !important;
+            height: 18px !important;
+            path { fill: #000000 !important; }
+            rect { fill: transparent !important; }
+            g path { fill: #000000 !important; }
+            g rect { fill: transparent !important; }
+          }
+        }
+
+        // Single action cell (when only View is shown): span both columns and center
+        .action-single {
+          text-align: center;
+          vertical-align: middle;
+          padding: 0;
+          .MuiIconButton-root {
+            color: #000000 !important;
+            padding: 2px !important;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 4px;
+            &:hover {
+              background-color: rgba(0, 0, 0, 0.06) !important;
+              color: #000000 !important;
+            }
+          }
+        }
+
+        // View: keep compact
+        .action-view {
+          padding-right: 0;
+
+          .MuiIconButton-root {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+          }
+          .MuiSvgIcon-root,
+          svg {
+            width: 18px !important;
+            height: 18px !important;
+          }
+        }
+        // Delete: noticeably larger than view
+        .action-delete {
+          padding-left: 0;
+
+          .MuiIconButton-root {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            padding: 6px !important;
+          }
+          .MuiSvgIcon-root,
+          svg {
+            width: 26px !important;
+            height: 26px !important;
+          }
+        }
+
+        // No-records row
+        tbody tr td[colspan] {
+          padding: 24px 16px;
+          text-align: center;
+          color: #757575;
+          font-size: 13px;
+        }
+
+        // Override for single action cell (it also has colspan)
+        tbody tr td.action-single[colspan] {
+          padding: 0;
+        }
+      }
+    }
+
+    // Table footer / pagination area: no divider, tight gap
+    .pagination-main {
+      padding-top: 8px;
+      border-top: none;
+      margin-top: 0;
+      .totalRecords {
+        padding-top: 8px;
+        font-size: 13px;
+        color: #616161;
+      }
+      .pagination {
+        padding-top: 8px;
+      }
+    }
+  }
+}
+
+// Status badge styles for Purchase Order
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+
+  // New/Created status (light blue)
+  &.status-new,
+  &.status-created {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+
+  // Cancelled status (light red/pink)
+  &.status-cancelled {
+    background-color: #fce4ec;
+    color: #c2185b;
+  }
+
+  // Complete Inward / Completed status (light green)
+  &.status-complete-inward,
+  &.status-completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  // Short Close status (light red/pink)
+  &.status-short-close {
+    background-color: #fce4ec;
+    color: #c2185b;
+  }
+
+  // Partial status (light yellow)
+  &.status-partial,
+  &.status-partial-inward {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+}
+
+.detail-content-panel{
+  padding: 0 !important; 
+  background-color: #f5f5f5;
+}
+
+.history-content-panel{
+  padding: 0 !important; 
+  background-color: #f5f5f5;
+}
+
+// Details component styles
+.purchase-order-detail-section {
+  font-size: 12px;
+  background-color: #f5f5f5;
+  padding: 0;
+  overflow-x: hidden;
+  box-shadow: none;
+  border: 1px solid #e0e0e0;
+  width: 100%;
+
+  .po-detail-card {
+    background-color: transparent;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .MuiTab-wrapper {
+    font-size: 12px !important;
+  }
+
+  .details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+
+    .po-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 14px;
+
+      .po-navigation {
+        display: flex;
+        gap: 4px;
+
+        .nav-arrow {
+          padding: 2px;
+          color: #666;
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+          }
+
+          .MuiSvgIcon-root {
+            font-size: 14px !important;
+            width: 14px !important;
+            height: 14px !important;
+          }
+        }
+      }
+    }
+
+    .po-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .po-tabs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px 8px;
+    background-color: #f5f5f5;
+    gap: 12px;
+
+    .po-tabs-container {
+      display: flex;
+      background-color: #F0F0F0;
+      border-radius: 8px;
+      padding: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      gap: 0;
+
+      .po-tab {
+        padding: 2px 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 6px;
+        color: #888888;
+        background-color: transparent;
+        transition: all 0.2s ease;
+        user-select: none;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+        &:first-child {
+          border-top-left-radius: 6px;
+          border-bottom-left-radius: 6px;
+        }
+
+        &:last-child {
+          border-top-right-radius: 6px;
+          border-bottom-right-radius: 6px;
+        }
+
+        &.active {
+          background-color: #ffffff;
+          color: #333333;
+          font-weight: 500;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        &:hover:not(.active) {
+          color: #666666;
+        }
+      }
+    }
+
+    .po-status-badge {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-block;
+      color: #333333;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+      &.status-new,
+      &.status-created {
+        background-color: #E8EAFE;
+        color: #333333;
+      }
+
+      &.status-cancelled {
+        background-color: #fce4ec;
+        color: #c2185b;
+      }
+
+      &.status-complete-inward,
+      &.status-completed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      &.status-short-close {
+        background-color: #fce4ec;
+        color: #c2185b;
+      }
+
+      &.status-partial,
+      &.status-partial-inward {
+        background-color: #fff3e0;
+        color: #f57c00;
+      }
+    }
+  }
+
+  .po-number {
+    font-size: 12px;
+    font-weight: 600;
+    color: #323c47;
+    background-color: #ffffff;
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+  }
+
+    .spl-po-badge {
+      display: inline-block;
+      background-color: #f57c00;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+  .detail-content {
+    padding: 12px 16px 16px;
+    background-color: #f5f5f5; /* greyish details section as in design - extends to edges */
+    overflow-x: hidden;
+
+    .detail-section-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+      gap: 12px 16px;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      margin-top: 0;
+      border-bottom: 1px solid #e8e8e8;
+
+      &:first-child {
+        margin-top: 0;
+        padding-top: 0;
+      }
+
+      .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #323c47;
+        margin-bottom: 10px;
+        margin-top: 0;
+        grid-column: 1 / -1;
+
+        &.purchase-orders-title {
+          font-size: 11px;
+          font-weight: 400;
+          color: #888888;
+        }
+      }
+
+      &:first-child .section-title {
+        margin-top: 0;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+
+        .detail-label {
+          font-weight: 400;
+          font-size: 11px !important;
+          color: #888888;
+          margin-bottom: 2px;
+          min-width: auto;
+        }
+
+        .detail-value {
+          color: #333333;
+          font-size: 12px !important;
+          font-weight: 600;
+        }
+      }
+
+      .inventory-table-wrapper {
+        grid-column: 1 / -1;
+        margin-top: 10px;
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 12px;
+        overflow-x: auto;
+        position: relative;
+
+
+        // Override Material-UI table styles
+        .MuiTable-root {
+          border-collapse: separate;
+          border-spacing: 0;
+        }
+
+        .MuiTableCell-root {
+          border-bottom: 1px dashed #e0e0e0 !important;
+          border-top: none !important;
+          border-left: none !important;
+          border-right: none !important;
+        }
+
+        .MuiTableHead-root .MuiTableCell-root {
+          border-bottom: 1px dashed #e0e0e0 !important;
+        }
+
+        .MuiTableBody-root .MuiTableRow-root:last-child .MuiTableCell-root {
+          border-bottom: 1px dashed #e0e0e0 !important;
+        }
+
+        table {
+          width: 100%;
+          min-width: 900px;
+          border: none;
+          border-radius: 0;
+          table-layout: auto;
+          border-collapse: separate;
+          border-spacing: 0;
+
+          th, td {
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: middle;
+            border-bottom: 1px dashed #e0e0e0 !important;
+            white-space: nowrap;
+          }
+
+          th {
+            background-color: transparent;
+            font-weight: 400;
+            font-size: 11px;
+            color: #888888;
+            border-bottom: 1px dashed #e0e0e0;
+          }
+
+          td {
+            font-size: 13px;
+            color: #333333;
+            background-color: #ffffff;
+            vertical-align: middle;
+            border-bottom: 1px dashed #e0e0e0;
+          }
+
+          // Remove alternating row colors - all white
+          tbody tr {
+            background-color: #ffffff;
+
+            &:last-child td {
+              border-bottom: 1px dashed #e0e0e0 !important;
+            }
+          }
+
+          // Inventory cell with two-line layout (allow wrapping unlike other cells)
+          .inventory-cell {
+            white-space: normal;
+            min-width: 160px;
+            
+            .inventory-name {
+              font-weight: 600;
+              color: #333333;
+              margin-bottom: 4px;
+            }
+
+            .inventory-details {
+              font-size: 11px;
+              font-weight: 400;
+              color: #888888;
+            }
+          }
+
+          // Net Rate cell - bold
+          .net-rate-cell {
+            font-weight: 600;
+            color: #333333;
+          }
+        }
+
+        .total-row-wrapper {
+          position: relative;
+          margin-top: 6px;
+          text-align: right;
+        }
+
+        .total-row {
+          display: inline-flex;
+          justify-content: flex-end;
+          align-items: center;
+          padding: 10px 12px 0;
+          margin: 0;
+          gap: 0;
+
+          .total-label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #333333;
+          }
+
+          .total-amount {
+            font-weight: 600;
+            font-size: 13px;
+            color: #333333;
+            margin-left: 6px;
+          }
+        }
+
+        // Status badge for table
+        .status-badge-table {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 400;
+          color: #333333;
+          background-color: #e8f5e9;
+
+          &.status-complete-inward,
+          &.status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+          }
+
+          &.status-partial,
+          &.status-partial-inward {
+            background-color: #fff3e0;
+            color: #f57c00;
+          }
+
+          &.status-cancelled,
+          &.status-short-close {
+            background-color: #fce4ec;
+            color: #c2185b;
+          }
+
+          &.status-new,
+          &.status-created {
+            background-color: #e3f2fd;
+            color: #1976d2;
+          }
+        }
+      }
+
+      // When money columns are hidden (e.g. inventory-executive role),
+      // table is narrow enough to not need horizontal scroll
+      .inventory-table-wrapper.no-money-columns {
+        table {
+          min-width: 0;
+        }
+      }
+
+      .notes-list {
+        grid-column: 1 / -1;
+        
+        .note-item {
+          padding: 8px 0;
+          font-size: 13px;
+          color: #666;
+          border-bottom: 1px solid #f0f0f0;
+
+          &:last-child {
+            border-bottom: none;
+          }
+        }
+      }
+    }
+  }
+
+  .history-content {
+    font-size: 13px;
+    padding: 20px 24px 24px;
+    background-color: #f5f5f5;
+
+    .history-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 13px;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .history-date-time {
+        font-weight: 600;
+        color: #323c47;
+        margin-bottom: 4px;
+      }
+
+      .history-description {
+        color: #666;
+      }
+
+      .history-relations {
+        margin-top: 12px;
+
+        .relations-table {
+          max-width: 400px;
+        }
+
+        .relation-link {
+          background: none;
+          border: none;
+          padding: 0;
+          color: #1976d2;
+          text-decoration: underline;
+          cursor: pointer;
+          font-size: inherit;
+
+          &:hover {
+            color: #1565c0;
+          }
+        }
+      }
+    }
+  }
+}
+
+.purchase-order-list-wrapper.split {
+  display: flex;
+  align-items: flex-start;
+  @media screen and (max-width: 768px) { flex-direction: column; }
+
+  .list-section {
+    height: auto;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    min-width: 400px;
+    box-shadow: none;
+    @media screen and (max-width: 768px) { min-width: 0; width: 100%; max-height: none; }
+  }
+
+  .detail-section {
+    height: auto;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    background-color: #ffffff;
+    border-left: 1px solid #e0e0e0;
+    box-shadow: none;
+    @media screen and (max-width: 768px) { min-width: 0; width: 100%; max-height: none; border-left: none; border-top: 1px solid #e0e0e0; }
+  }
+}
+
+// Filter UI: labels outside fields, two-column layout, clean design
+.po-filter {
+  .filter-heading {
+    justify-content: space-between;
+    padding: 12px 16px;
+    height: auto;
+    min-height: 44px;
+    border-bottom: none !important;
+
+    .filter-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: #000000 !important;
+      margin-right: auto;
+    }
+
+    .close-icon {
+      position: relative;
+      right: 0;
+      color: #666;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+  }
+
+  .filter-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 16px;
+    @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+
+    .filter-item-full {
+      grid-column: 1 / -1;
+    }
+
+    .filter-status-changed-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      align-items: start;
+      @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+    }
+
+    .filter-field-label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      color: #323c47;
+      margin-bottom: 1px;
+    }
+
+    .filter-item {
+      min-width: 0;
+
+      .MuiTextField-root,
+      .MuiFormControl-root {
+        width: 100%;
+        margin-top: 0 !important;
+      }
+
+      .MuiOutlinedInput-root {
+        border-radius: 8px;
+        background-color: #ffffff;
+
+        fieldset {
+          border-color: #e0e0e0;
+        }
+
+        &:hover fieldset {
+          border-color: #bdbdbd;
+        }
+      }
+    }
+  }
+
+  .filter-bottom {
+    padding: 12px 16px;
+    border-top: none;
+    gap: 2px;
+
+    .grey.MuiButton-root {
+      background: #f5f5f5 !important;
+      color: #333 !important;
+      border-radius: 8px;
+    }
+
+    .blue.MuiButton-root {
+      background: #3f51b5 !important;
+      color: #fff !important;
+      border-radius: 8px;
+    }
+  }
+}

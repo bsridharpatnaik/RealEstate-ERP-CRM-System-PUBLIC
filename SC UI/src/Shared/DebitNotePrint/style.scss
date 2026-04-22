@@ -1,0 +1,225 @@
+/* ─── Original MOR / legacy layout ─── */
+.debit-note {
+  display: none;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-top: -1px;
+
+    &.top-table {
+      margin-top: 0;
+    }
+  }
+
+  .width20 { width: 20%; }
+  .width40 { width: 40%; }
+
+  .rate, .amount { width: 20%; }
+  .middle { text-align: center; }
+  .no     { width: 35px; }
+  .date   { width: 100px; }
+  .quantity { width: 90px; }
+
+  .remarks, .rate, .amount { width: 20%; }
+
+  .footer {
+    border: 1px solid black;
+    border-top: none;
+    display: flex;
+    justify-content: space-between;
+    padding-top: 40px;
+  }
+
+  .align-right { text-align: right; }
+
+  td, th {
+    word-wrap: break-word;
+    border: 1px solid black;
+    white-space: normal;
+  }
+}
+
+/* ─── Professional layout (reject / return prints) ─── */
+.debit-note.dn-professional {
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  color: #1a1a1a;
+
+  /* override table styles from legacy block */
+  table {
+    border-collapse: collapse;
+    table-layout: auto;
+    margin-top: 0;
+  }
+
+  td, th {
+    border: 1px solid #c8cad8;
+    white-space: normal;
+  }
+
+  .logo-container {
+    text-align: center;
+    padding: 12px 0 8px;
+
+    .logo {
+      height: 50px;
+      width: auto;
+    }
+  }
+
+  .data {
+    width: 100%;
+  }
+
+  /* Title block */
+  .dn-title-block {
+    text-align: center;
+    border-bottom: 2px solid #1a1a2e;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  .dn-app-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: 1px;
+  }
+
+  .dn-tenant-name {
+    font-size: 12px;
+    color: #444;
+    margin: 2px 0;
+  }
+
+  .dn-doc-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #1a1a2e;
+    margin-top: 4px;
+  }
+
+  /* Info panel */
+  .dn-info-panel {
+    display: flex;
+    gap: 16px;
+    background: #f7f8fa;
+    border: 1px solid #d0d0d8;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+
+  .dn-info-col { flex: 1; }
+
+  .dn-info-row {
+    display: flex;
+    margin-bottom: 3px;
+    font-size: 10.5px;
+  }
+
+  .dn-label {
+    min-width: 120px;
+    font-weight: 600;
+    color: #555;
+  }
+
+  .dn-value { color: #1a1a1a; }
+
+  /* Section title bar */
+  .dn-section-title {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 4px 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 0;
+  }
+
+  /* Items table */
+  .dn-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+
+    thead tr {
+      background: #e8eaf2;
+    }
+
+    th {
+      border: 1px solid #b0b4c8;
+      padding: 5px 7px;
+      text-align: center;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: #1a1a2e;
+    }
+
+    td {
+      border: 1px solid #c8cad8;
+      padding: 4px 7px;
+      vertical-align: middle;
+      font-size: 10px;
+    }
+
+    tr:nth-child(even) td {
+      background: #fafbff;
+    }
+  }
+
+  .col-no      { width: 28px;  text-align: center; }
+  .col-date    { width: 75px; }
+  .col-desc    { min-width: 130px; }
+  .col-qty     { width: 70px;  text-align: center; }
+  .col-uom     { width: 48px;  text-align: center; }
+  .col-remarks { min-width: 80px; }
+
+  /* Professional footer */
+  .dn-footer {
+    border-top: 2px solid #1a1a2e;
+    display: flex;
+    justify-content: space-between;
+    padding-top: 36px;
+    margin-top: 14px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-align: center;
+
+    > div {
+      flex: 1;
+      border-right: 1px solid #d0d0d8;
+      padding: 0 8px;
+
+      &:last-child {
+        border-right: none;
+      }
+    }
+  }
+}
+
+/* ─── Print visibility ─── */
+@media print {
+  body > .debit-note {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  body > .debit-note * {
+    visibility: visible !important;
+  }
+
+  body > .debit-note.dn-professional {
+    display: flex !important;
+  }
+}
+
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}

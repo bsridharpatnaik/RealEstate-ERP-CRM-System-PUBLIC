@@ -1,0 +1,17 @@
+///fonts
+
+$font-normal: 14px;
+$font-heading: 18px;
+$font-button: 12px;
+$font-form: 13px;
+
+//heights
+$heading-info: 55px;
+
+//width
+$side-menu-width: 15vw;
+$page-width: calc(100vw - #{$side-menu-width});
+
+//box-shadow
+$box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2),
+  0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12);

@@ -1,0 +1,28 @@
+@import "./../../../scss/variables.scss";
+
+.status {
+  font-size: $font-normal;
+  width: 130px;
+  height: 30px;
+  border-radius: 18px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-transform: capitalize;
+  &.today {
+    color: #4d4cac;
+    background: #ededf7;
+  }
+  &.completed {
+    color: #44c4a1;
+    background: #ecf9f5;
+  }
+  &.pending {
+    color: #ff808b;
+    background: #fff2f3;
+  }
+  &.upcoming {
+    color: #f9b571;
+    background: #fff8f0;
+  }
+}

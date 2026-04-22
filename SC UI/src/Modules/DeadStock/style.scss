@@ -1,0 +1,185 @@
+// Full white background for Dead Stock page (same as PO)
+.dead-stock-page {
+  background: #fff;
+  min-height: 100vh;
+
+  .header-info .add-button.MuiButton-root {
+    background: #3241a2 !important;
+    color: #fff !important;
+    &:hover {
+      background: #2a3590 !important;
+    }
+  }
+}
+
+// Dead Stock list table – same UI as PO list table
+.dead-stock-list-wrapper {
+  background: #fff;
+
+  .list-section {
+    box-shadow: none;
+    .filter-section {
+      .MuiTextField-root {
+        width: 400px;
+        max-width: 400px;
+      }
+      .top-button-wrapper {
+        .filterIcon.MuiButton-root,
+        .filter.MuiButton-root {
+          text-transform: none !important;
+          height: 34px !important;
+          min-height: 34px !important;
+        }
+      }
+    }
+
+    .table-wrapper {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+
+      table {
+        width: 100%;
+        table-layout: auto;
+        border-collapse: collapse;
+        border: none;
+
+        thead {
+          tr {
+            border-bottom: 1px solid #e0e0e0;
+          }
+          th {
+            background: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            color: #323c47;
+            padding: 12px 16px;
+            height: 48px;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+            white-space: nowrap;
+
+            &.sortable {
+              cursor: pointer;
+              span {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                .MuiSvgIcon-root {
+                  color: rgba(0, 0, 0, 0.35);
+                  font-size: 18px;
+                  flex-shrink: 0;
+                }
+              }
+            }
+          }
+        }
+
+        tbody {
+          tr {
+            border-bottom: 1px solid #eeeeee;
+            transition: background-color 0.15s ease;
+            background: #fff;
+
+            &:last-child {
+              border-bottom: none;
+            }
+            &.clickable-row:hover {
+              background: #f5f5f5 !important;
+            }
+          }
+          td {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 400;
+            color: #323c47;
+            border: none;
+            vertical-align: middle;
+          }
+        }
+
+        th, td {
+          // Product Name – allow wrapping so long names show in full
+          &:nth-child(1) {
+            min-width: 180px;
+            white-space: normal;
+            word-break: break-word;
+          }
+          // Product Code
+          &:nth-child(2) { min-width: 130px; white-space: nowrap; }
+          // Project
+          &:nth-child(3) { min-width: 100px; white-space: nowrap; }
+          // Total Stock
+          &:nth-child(4) { min-width: 100px; white-space: nowrap; }
+          // Dead Stock
+          &:nth-child(5) { min-width: 100px; white-space: nowrap; }
+          // Measurement Unit
+          &:nth-child(6) { min-width: 110px; white-space: nowrap; }
+          // Last Updated
+          &:nth-child(7) { min-width: 160px; white-space: nowrap; }
+        }
+
+        tbody tr td[colspan] {
+          padding: 24px 16px;
+          text-align: center;
+          color: #757575;
+          font-size: 13px;
+        }
+      }
+    }
+
+    .pagination-main {
+      padding-top: 8px;
+      border-top: none;
+      margin-top: 0;
+      .totalRecords {
+        padding-top: 8px;
+        font-size: 13px;
+        color: #616161;
+      }
+      .pagination {
+        padding-top: 8px;
+      }
+    }
+  }
+}
+
+// Stock level indicator badges
+.stock-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72em;
+  font-weight: 600;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  &--low {
+    background-color: #fdecea;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+  }
+
+  &--ok {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+  }
+}
+
+.dead-stock-list {
+  .dead-stock-sync-message {
+    margin: 12px 0 16px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .filter-section {
+    .MuiTextField-root {
+      min-width: 250px;
+      max-width: 400px;
+    }
+  }
+}

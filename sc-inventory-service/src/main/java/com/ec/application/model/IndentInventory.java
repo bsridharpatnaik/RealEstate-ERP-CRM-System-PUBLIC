@@ -89,6 +89,9 @@ public class IndentInventory extends ReusableFields implements Cloneable {
     @Transient
     Boolean approvalAllowed;
 
+    @Transient
+    private List<String> poNumbers;
+
     @Column(
             name = "last_status_updated_at",
             nullable = false,

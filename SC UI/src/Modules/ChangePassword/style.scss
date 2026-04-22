@@ -1,0 +1,33 @@
+.change-password-modal {
+  .pswd-error {
+    font-size: 12px;
+    color: red;
+  }
+  .filter-heading {
+    display: flex;
+    justify-content: center;
+    align-self: center;
+    color: #5e81f4;
+    .filter-title {
+      font-weight: 600;
+    }
+    .close-icon {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+    }
+  }
+  .MuiButton-fullWidth {
+    margin-top: 15px;
+    min-height: 40px;
+    background-color: #5e81f4;
+    font-weight: 600;
+    &.Mui-disabled {
+      background-color: rgba(0, 0, 0, 0.12);
+    }
+    &:focus,
+    &:hover {
+      background-color: #3c62e0;
+    }
+  }
+}

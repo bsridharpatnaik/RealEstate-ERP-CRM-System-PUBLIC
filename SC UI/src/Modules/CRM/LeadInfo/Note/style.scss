@@ -1,0 +1,60 @@
+@import "./../../../../scss/variables.scss";
+.note {
+  border-radius: 7px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  background: white;
+  position: relative;
+  box-shadow: $box-shadow;
+
+  .view-attachment-btn {
+    margin-top: 12px;
+    font-weight: normal;
+    text-decoration: underline;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: left;
+    color: #4d4cac;
+    display: flex;
+    cursor: pointer;
+    .attach-icon {
+      path {
+        fill: #4d4cac;
+      }
+
+      width: 12px;
+      margin-right: 6px;
+    }
+  }
+  &.pinned {
+    background: #fff2f3;
+    .pin-icon {
+      width: 16px;
+    }
+  }
+  .pin-icon {
+    width: 20px;
+    margin-right: 10px;
+  }
+  .date {
+    font-size: 12px;
+    line-height: 22px;
+    color: #a2a2c3;
+  }
+  .note-content {
+    font-size: 14px;
+    line-height: 22px;
+    color: #323c47;
+  }
+  .actions {
+    position: absolute;
+    right: 8px;
+    top: 0px;
+    .MuiSvgIcon-root {
+      width: 10px;
+      margin: 4px;
+      cursor: pointer;
+    }
+  }
+}

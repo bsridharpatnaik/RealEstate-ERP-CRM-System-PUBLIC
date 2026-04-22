@@ -1,0 +1,148 @@
+.boq-table-wrapper {
+  height: calc(100vh - 70px - 200px - 52px);
+  .actions {
+    display: flex;
+    width: 200px;
+    justify-content: flex-end;
+    flex: 1 0 200px;
+    &.add {
+      button {
+        margin: 0 8px;
+      }
+    }
+    @media screen and (max-width: 768px) {
+      justify-content: flex-start;
+      margin: 5px 0px;
+    }
+    @media screen and (max-width: 425px) {
+      justify-content: flex-start;
+      margin: 5px 0px;
+    }
+  }
+  .nodata {
+    color: rgba(0, 0, 0, 0.2);
+    justify-content: center;
+  }
+  .no-border-select {
+    .MuiInput-underline:before {
+      border: none !important;
+      border-bottom: none !important;
+    }
+  }
+  .MuiButton-root.boq {
+    border-radius: 7px;
+    background: #5e81f4;
+    &.Mui-disabled {
+      background: rgba(0, 0, 0, 0.12);
+    }
+  }
+  .MuiButton-root.boq-save {
+    border-radius: 7px;
+    background: #f9b571;
+    &.Mui-disabled {
+      background: rgba(0, 0, 0, 0.12);
+    }
+  }
+  .MuiButton-root.boq-cancel {
+    border-radius: 7px;
+    background: #a2a2c3;
+    &.Mui-disabled {
+      background: rgba(0, 0, 0, 0.12);
+    }
+  }
+  .table-scroll-wrapper {
+    overflow: auto;
+    max-height: calc(100% - 40px - 56px);
+    margin-bottom: 8px;
+    padding: 2px;
+  }
+  .table-title {
+    font-weight: normal;
+    font-size: 14px;
+    color: #323c47;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 20px;
+  }
+  .table-row.inv {
+    display: flex;
+    margin: 8px 0;
+    border-radius: 15px;
+    align-items: center;
+    padding: 0 8px;
+    @media screen and (max-width: 768px) {
+      flex-wrap: wrap;
+    }
+    @media screen and (max-width: 425px) {
+      flex-wrap: wrap;
+    }
+  }
+  .boq-table-heading {
+    display: flex;
+    @media screen and (max-width: 768px) {
+      flex-wrap: wrap;
+    }
+    @media screen and (max-width: 425px) {
+      flex-wrap: wrap;
+    }
+    font-size: 12px;
+    line-height: 22px;
+    text-align: left;
+    color: #323c47;
+  }
+  .inv-name {
+    width: 100%;
+    margin: 0 8px;
+    @media screen and (max-width: 768px) {
+      width: 40%;
+      margin: 0px;
+    }
+    @media screen and (max-width: 425px) {
+      width: 40%;
+      margin: 0px;
+    }
+  }
+  .inv-unit {
+    width: 250px;
+    margin: 0 8px;
+    @media screen and (max-width: 768px) {
+      width: 30%;
+      margin: 0px;
+      padding-left: 10px;
+    }
+    @media screen and (max-width: 425px) {
+      width: 30%;
+      margin: 0px;
+      padding-left: 10px;
+    }
+  }
+  .inv-quantity {
+    width: 250px;
+    margin: 0 8px;
+    @media screen and (max-width: 768px) {
+      width: 30%;
+      margin: 0px;
+      padding-left: 10px;
+    }
+    @media screen and (max-width: 425px) {
+      width: 30%;
+      margin: 0px;
+      padding-left: 10px;
+    }
+  }
+  .table-row {
+    height: 50px;
+    @media screen and (max-width: 768px) {
+      height: auto;
+    }
+    @media screen and (max-width: 425px) {
+      height: auto;
+    }
+    background: #fff;
+    border-bottom: none;
+    box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
+      0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+  }
+}

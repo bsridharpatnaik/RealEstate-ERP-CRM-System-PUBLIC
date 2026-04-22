@@ -1,0 +1,1786 @@
+.filter-dates {
+  display: flex;
+}
+
+// Expected delivery date picker in Add Indent form
+.indent-header-fields {
+  padding: 12px 16px 0;
+  width: 220px;
+  @media screen and (max-width: 768px) { width: 100%; }
+
+  .MuiFormControl-root {
+    width: 100%;
+  }
+}
+
+// Per-line-item override date picker
+.item-need-by-date-wrapper {
+  flex: 0 0 180px;
+  width: 180px;
+
+  .MuiFormControl-root {
+    margin-top: 0;
+    margin-bottom: 0;
+    width: 100%;
+  }
+}
+
+// Days remaining badge
+.po-numbers-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.po-number-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e3f2fd;
+  color: #1565c0;
+  white-space: nowrap;
+}
+
+.days-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+
+  &.days-badge-critical  { background: #d32f2f; }
+  &.days-badge-high      { background: #f57c00; }
+  &.days-badge-medium    { background: #f9a825; color: #333; }
+  &.days-badge-normal    { background: #388e3c; }
+}
+
+// Full white background for Indent page (same as PO)
+.indent-page {
+  background: #fff;
+  min-height: 100vh;
+}
+
+// Add Indent: give content area top padding so "Indent Date" label is not clipped
+.indent-page .create-po-wrapper .create-po-content {
+  padding-top: 24px;
+}
+
+// Indent list table – same UI as PO list table
+.indent-list-wrapper {
+  background: #fff;
+
+  .list-section {
+    box-shadow: none;
+    background: #fff;
+    // Global indent: no Add button, so remove vertical line to the right of Download
+    .top-button-wrapper.global-indent-no-add .download.MuiButton-root::after {
+      display: none;
+    }
+    .filter-section {
+      .MuiTextField-root {
+        width: 400px;
+        max-width: 400px;
+        @media screen and (max-width: 768px) { width: 100%; max-width: 100%; }
+      }
+
+      .top-button-wrapper {
+        .filterIcon.MuiButton-root,
+        .filter.MuiButton-root,
+        .download.MuiButton-root,
+        .refreshIcon.MuiButton-root,
+        .add-button.MuiButton-root {
+          text-transform: none !important;
+        }
+        .filterIcon.MuiButton-root,
+        .filter.MuiButton-root,
+        .download.MuiButton-root,
+        .refreshIcon.MuiButton-root {
+          height: 34px !important;
+          min-height: 34px !important;
+        }
+        .add-button.MuiButton-root {
+          height: 38px !important;
+          min-height: 38px !important;
+          padding: 6px 14px !important;
+          background: #3f51b5 !important;
+          &:hover {
+            background: #303f9f !important;
+          }
+        }
+      }
+    }
+
+    .table-wrapper {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+
+      table {
+        width: 100%;
+        min-width: 1400px;
+        table-layout: fixed;
+        border-collapse: collapse;
+        border: none;
+
+        thead {
+          tr {
+            // Single 1px line via box-shadow for consistent rendering on large screens
+            box-shadow: 0 1px 0 0 #e0e0e0;
+          }
+          th {
+            background: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            color: #323c47;
+            padding: 12px 16px !important;
+            height: 48px !important;
+            border: none;
+            white-space: nowrap;
+            line-height: 1.4;
+
+            &.sortable {
+              cursor: pointer;
+              span {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                .MuiSvgIcon-root {
+                  color: rgba(0, 0, 0, 0.35);
+                  font-size: 18px;
+                  flex-shrink: 0;
+                }
+              }
+            }
+          }
+        }
+
+        tbody {
+          tr {
+            // Use box-shadow instead of border for consistent 1px row lines on all screen sizes
+            // (avoids sub-pixel border doubling/aliasing on large screens)
+            box-shadow: 0 1px 0 0 #eeeeee;
+            min-height: 48px !important;
+            transition: background-color 0.15s ease;
+            background: #fff;
+
+            &:last-child {
+              box-shadow: none;
+            }
+            &.clickable-row:hover {
+              background: #f5f5f5 !important;
+
+              td {
+                background: #f5f5f5 !important;
+              }
+            }
+          }
+          td {
+            font-size: 13px;
+            font-weight: 400;
+            color: #323c47;
+            border: none;
+            vertical-align: middle;
+            height: 48px !important;
+            line-height: 1.4;
+            box-sizing: border-box;
+
+            // Data cells only – action cell has its own padding
+            &:not(.action-cell) {
+              padding: 12px 16px !important;
+            }
+          }
+        }
+
+        th, td {
+          &:nth-child(1) {
+            min-width: 150px;
+            width: 150px;
+          }
+          &:nth-child(2) {
+            min-width: 180px;
+            width: 180px;
+          }
+          &:nth-child(3) {
+            min-width: 140px;
+            width: 140px;
+            text-align: center;
+          }
+          &:nth-child(4) {
+            min-width: 180px;
+            width: 180px;
+          }
+          &:nth-child(5) {
+            min-width: 150px;
+            width: 150px;
+          }
+          &:nth-child(6) {
+            min-width: 150px;
+            width: 150px;
+          }
+          &:nth-child(7) {
+            min-width: 160px;
+            width: 160px;
+          }
+          &:nth-child(8) {
+            min-width: 130px;
+            width: 130px;
+          }
+        }
+
+        th:nth-child(3) {
+          text-align: center !important;
+        }
+        tbody td:nth-child(3) {
+          text-align: center !important;
+        }
+
+        th.action {
+          min-width: 150px;
+          width: 150px;
+          text-align: right;
+          padding-right: 16px;
+        }
+
+        // Single action cell – icons evenly distributed
+        .action-cell {
+          padding: 0 8px !important;
+          height: 48px !important;
+          vertical-align: middle;
+          text-align: right;
+        }
+
+        .action-buttons-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: space-evenly;
+          width: 100%;
+          min-width: 120px;
+          height: 48px;
+          gap: 4px;
+
+          .action-btn.MuiIconButton-root {
+            color: #000000 !important;
+            padding: 6px !important;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            flex-shrink: 0;
+            border-radius: 4px;
+            &:hover {
+              background-color: rgba(0, 0, 0, 0.06) !important;
+              color: #000000 !important;
+            }
+            &:disabled {
+              color: rgba(0, 0, 0, 0.26) !important;
+            }
+          }
+
+          .MuiSvgIcon-root {
+            color: #000000 !important;
+            width: 18px !important;
+            height: 18px !important;
+          }
+
+          svg {
+            fill: #000000 !important;
+            width: 18px !important;
+            height: 18px !important;
+            path { fill: #000000 !important; }
+            rect { fill: transparent !important; }
+            g path { fill: #000000 !important; }
+            g rect { fill: transparent !important; }
+          }
+        }
+
+        tbody tr td[colspan] {
+          padding: 24px 16px;
+          text-align: center;
+          color: #757575;
+          font-size: 13px;
+        }
+      }
+    }
+
+    .pagination-main {
+      padding-top: 8px;
+      border-top: none;
+      margin-top: 0;
+      .totalRecords {
+        padding-top: 8px;
+        font-size: 13px;
+        color: #616161;
+      }
+      .pagination {
+        padding-top: 8px;
+      }
+    }
+  }
+}
+
+// Indent details dropdown – own class so InwardInventory’s .detail-dropdown-menu overrides don’t affect it
+.indent-detail-dropdown-menu {
+  .MuiListItem-button {
+    font-size: 12px;
+
+    div {
+      width: 100%;
+    }
+  }
+}
+
+.indent-list-wrapper.split {
+  display: flex;
+  align-items: flex-start;
+  @media screen and (max-width: 768px) { flex-direction: column; }
+
+  .list-section {
+    height: auto;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    min-width: 400px;
+    box-shadow: none;
+    @media screen and (max-width: 768px) { min-width: 0; width: 100%; max-height: none; }
+
+    .table-wrapper {
+      overflow-x: auto;
+      overflow-y: visible;
+      width: 100%;
+    }
+
+    table {
+      min-width: 1200px;
+    }
+  }
+
+  .detail-section {
+    height: auto;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    background-color: #ffffff;
+    border-left: 1px solid #e0e0e0;
+    box-shadow: none;
+    @media screen and (max-width: 768px) { min-width: 0; width: 100%; max-height: none; border-left: none; border-top: 1px solid #e0e0e0; }
+  }
+}
+
+// Legacy .split layout only – table styling comes from .indent-list-wrapper
+.split {
+  align-items: flex-start;
+  @media screen and (max-width: 768px) { flex-direction: column; }
+
+  .list-section {
+    height: auto;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    min-width: 400px;
+    @media screen and (max-width: 768px) { min-width: 0; width: 100%; max-height: none; }
+
+    .filter-section {
+      form {
+        .MuiAutocomplete-root {
+          min-width: 250px;
+          width: 100%;
+          max-width: 400px;
+        }
+      }
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      overflow-y: visible;
+      width: 100%;
+    }
+  }
+
+  .detail-section {
+    height: auto;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+  }
+}
+
+.inventories-list {
+  margin-top: 16px;
+  
+  .inventory-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background-color: #ffffff;
+
+    .inventory-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-weight: 600;
+
+      .delete-icon {
+        color: #f44336;
+      }
+    }
+
+    .flex {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .MuiFormControl-root,
+      .MuiAutocomplete-root {
+        flex: 1;
+        min-width: 0; // Prevents flex items from overflowing
+      }
+
+      // First row: Category Name, Inventory Name, Inventory Code – equal width
+      &.inventory-row-first {
+        flex-wrap: nowrap;
+        > * {
+          flex: 1 1 0%;
+          min-width: 100px;
+        }
+      }
+
+      // Second row: Quantity, Dead Stock, Measurement Unit – equal width (same as first row)
+        &.inventory-row-second {
+          flex-wrap: nowrap;
+          align-items: flex-start;
+          > * {
+            flex: 1 1 0%;
+            min-width: 80px;   // slightly reduced from 100px to fit 4 columns
+          }
+          .dead-stock-field-wrapper,
+          .current-stock-field-wrapper,           // ← ADD
+          .dead-stock-field-wrapper .MuiFormControl-root,
+          .current-stock-field-wrapper .MuiFormControl-root {   // ← ADD
+            min-width: 0;
+            width: 100%;
+          }
+        }
+
+        // Add alongside .dead-stock-field-wrapper rule
+        .current-stock-field-wrapper {
+          .MuiFormControl-root {
+            width: 100%;
+          }
+        }
+
+      .dead-stock-field-wrapper {
+        .MuiFormControl-root {
+          width: 100%;
+        }
+      }
+
+      .MuiTextField-root {
+        width: 100%;
+        padding-right: 0 !important; // Override App.scss padding to prevent overlap
+      }
+
+      .MuiAutocomplete-root {
+        .MuiTextField-root {
+          padding-right: 0 !important; // Override App.scss padding for autocomplete fields
+        }
+      }
+
+      @media screen and (max-width: 768px) {
+        flex-direction: column;
+        gap: 0;
+
+        .MuiFormControl-root,
+        .MuiAutocomplete-root,
+        .dead-stock-field-wrapper {
+          width: 100%;
+          margin-bottom: 16px;
+          flex: none;
+          min-width: 0;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+
+      @media screen and (max-width: 425px) {
+        flex-direction: column;
+        gap: 0;
+
+        .MuiFormControl-root,
+        .MuiAutocomplete-root,
+        .dead-stock-field-wrapper {
+          width: 100%;
+          margin-bottom: 16px;
+          flex: none;
+          min-width: 0;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+.trash-red-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
+
+.add-inventory-button-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  margin-bottom: 16px;
+
+  .MuiButton-root {
+    background: #f0f0f0 !important;
+    color: #000000 !important;
+    font-weight: 500 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 10px 24px !important;
+    min-height: 40px !important;
+    text-transform: none !important;
+    box-shadow: none !important;
+
+    .button-label,
+    .MuiButton-label {
+      color: #000000 !important;
+      font-weight: 500 !important;
+      font-size: 14px !important;
+    }
+
+    &:hover {
+      background: #e8e8e8 !important;
+      color: #000000 !important;
+      box-shadow: none !important;
+
+      .button-label,
+      .MuiButton-label {
+        color: #000000 !important;
+      }
+    }
+  }
+}
+
+.indent-action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  
+  .MuiButton-root {
+    .button-label {
+      font-size: 12px !important;
+    }
+  }
+}
+
+.list-section {
+  .filter-section {
+    .MuiTextField-root {
+      width: 400px;
+      max-width: 400px;
+      @media screen and (max-width: 768px) { width: 100%; max-width: 100%; }
+    }
+  }
+}
+
+table {
+  .action-view {
+    width: 28px;
+    padding: 0 2px;
+    
+    .MuiIconButton-root {
+      color: #000000 !important;
+      padding: 4px !important;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04) !important;
+      }
+      &:disabled {
+        color: rgba(0, 0, 0, 0.26) !important;
+      }
+    }
+    
+    .MuiSvgIcon-root {
+      width: 16px !important;
+      height: 16px !important;
+      color: #000000 !important;
+    }
+    
+    // Override SVG fill colors to make icons black
+    svg {
+      fill: #000000 !important;
+      width: 16px !important;
+      height: 16px !important;
+      path {
+        fill: #000000 !important;
+      }
+      rect {
+        fill: transparent !important;
+      }
+      g {
+        path {
+          fill: #000000 !important;
+        }
+        rect {
+          fill: transparent !important;
+        }
+      }
+    }
+  }
+  
+  .action-approve,
+  .action-edit,
+  .action-delete {
+    width: 32px;
+    padding: 0 2px;
+    
+    .MuiIconButton-root {
+      color: #000000 !important;
+      padding: 6px !important;
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04) !important;
+      }
+      &:disabled {
+        color: rgba(0, 0, 0, 0.26) !important;
+      }
+    }
+    
+    .MuiSvgIcon-root {
+      width: 20px !important;
+      height: 20px !important;
+      color: #000000 !important;
+    }
+    
+    // Override SVG fill colors to make icons black
+    svg {
+      fill: #000000 !important;
+      width: 20px !important;
+      height: 20px !important;
+      path {
+        fill: #000000 !important;
+      }
+      rect {
+        fill: transparent !important;
+      }
+      g {
+        path {
+          fill: #000000 !important;
+        }
+        rect {
+          fill: transparent !important;
+        }
+      }
+    }
+  }
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+
+  // Indent Status Styles
+  &.status-new {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+
+  &.status-approved {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.status-po-partial {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+
+  &.status-po-completed {
+    background-color: #c8e6c9;
+    color: #1b5e20;
+  }
+
+  &.status-cancelled {
+    background-color: #fce4ec;
+    color: #c2185b;
+  }
+
+  &.status-rejected {
+    background-color: #f3e5f5;
+    color: #6a1b9a;
+  }
+
+  // Line Item Status Styles
+  &.status-po-created {
+    background-color: #e1f5fe;
+    color: #0277bd;
+  }
+
+  &.status-split {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+  }
+
+  // Legacy status mappings (for backward compatibility)
+  &.status-indent-created {
+    background-color: #e3f2fd;
+    color: #1976d2;
+  }
+
+  &.status-indent-cancelled {
+    background-color: #fce4ec;
+    color: #c2185b;
+  }
+
+  &.status-po-cancelled {
+    background-color: #fce4ec;
+    color: #c2185b;
+  }
+
+  &.status-po-raised {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+
+  &.status-closed {
+    background-color: #eceff1;
+    color: #37474f;
+  }
+
+  &.status-inward-partial {
+    background-color: #fff3e0;
+    color: #f57c00;
+  }
+}
+
+// Indent details – same layout and styles as PO details
+.detail-content-panel {
+  padding: 0 !important;
+  background-color: #f5f5f5;
+}
+
+.history-content-panel {
+  padding: 0 !important;
+  background-color: #f5f5f5;
+}
+
+.indent-detail-section {
+  font-size: 12px;
+  background-color: #f5f5f5;
+  padding: 0;
+  overflow-x: hidden;
+  box-shadow: none;
+  border: 1px solid #e0e0e0;
+  width: 100%;
+
+  .po-detail-card {
+    background-color: transparent;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+
+    .po-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 14px;
+
+      .po-navigation {
+        display: flex;
+        gap: 4px;
+
+        .nav-arrow {
+          padding: 2px;
+          color: #666;
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+          }
+
+          .MuiSvgIcon-root {
+            font-size: 14px !important;
+            width: 14px !important;
+            height: 14px !important;
+          }
+        }
+      }
+    }
+
+    .po-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .po-tabs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px 8px;
+    background-color: #f5f5f5;
+    gap: 12px;
+
+    .po-tabs-container {
+      display: flex;
+      background-color: #f0f0f0;
+      border-radius: 8px;
+      padding: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      gap: 0;
+
+      .po-tab {
+        padding: 2px 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 6px;
+        color: #888888;
+        background-color: transparent;
+        transition: all 0.2s ease;
+        user-select: none;
+
+        &:first-child {
+          border-top-left-radius: 6px;
+          border-bottom-left-radius: 6px;
+        }
+
+        &:last-child {
+          border-top-right-radius: 6px;
+          border-bottom-right-radius: 6px;
+        }
+
+        &.active {
+          background-color: #ffffff;
+          color: #333333;
+          font-weight: 500;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        &:hover:not(.active) {
+          color: #666666;
+        }
+      }
+    }
+
+    .po-status-badge {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      display: inline-block;
+      color: #333333;
+
+      &.status-new,
+      &.status-created,
+      &.status-indent-created {
+        background-color: #e8eafe;
+        color: #333333;
+      }
+
+      &.status-approved,
+      &.status-po-created,
+      &.status-po-completed,
+      &.status-po-raised {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      &.status-cancelled {
+        background-color: #fce4ec;
+        color: #c2185b;
+      }
+
+      &.status-rejected {
+        background-color: #f3e5f5;
+        color: #6a1b9a;
+      }
+
+      &.status-po-partial,
+      &.status-split {
+        background-color: #fff3e0;
+        color: #f57c00;
+      }
+
+      &.status-closed {
+        background-color: #eceff1;
+        color: #37474f;
+      }
+
+      &.status-inward-partial {
+        background-color: #fff3e0;
+        color: #f57c00;
+      }
+    }
+  }
+
+  .po-number {
+    font-size: 12px;
+    font-weight: 600;
+    color: #323c47;
+    background-color: #ffffff;
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+  }
+
+  .detail-content {
+    padding: 12px 16px 16px;
+    background-color: #f5f5f5;
+    overflow-x: hidden;
+
+    .detail-section-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 16px;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      margin-top: 0;
+      border-bottom: 1px solid #e8e8e8;
+
+      &:first-child {
+        margin-top: 0;
+        padding-top: 0;
+      }
+
+      .section-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #323c47;
+        margin-bottom: 10px;
+        margin-top: 0;
+        grid-column: 1 / -1;
+
+        &.purchase-orders-title {
+          font-size: 11px;
+          font-weight: 400;
+          color: #888888;
+        }
+      }
+
+      &:first-child .section-title {
+        margin-top: 0;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+
+        .detail-label {
+          font-weight: 400;
+          font-size: 11px !important;
+          color: #888888;
+          margin-bottom: 2px;
+          min-width: auto;
+        }
+
+        .detail-value {
+          color: #333333;
+          font-size: 12px !important;
+          font-weight: 600;
+        }
+      }
+
+      .inventory-table-wrapper {
+        grid-column: 1 / -1;
+        margin-top: 10px;
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 12px;
+        overflow-x: auto;
+
+        .MuiTable-root {
+          width: auto;
+          border-collapse: separate;
+          border-spacing: 0;
+        }
+
+        .MuiTableCell-root {
+          border-bottom: 1px solid #e0e0e0 !important;
+          border-top: none !important;
+          border-left: none !important;
+          border-right: none !important;
+        }
+
+        table {
+          width: auto;
+          border: none;
+          table-layout: auto;
+          border-collapse: separate;
+          border-spacing: 0;
+
+          th,
+          td {
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: middle;
+            border-bottom: 1px solid #e0e0e0 !important;
+            white-space: nowrap;
+          }
+
+          th.inventory-name-col,
+          td.inventory-name-col {
+            min-width: 140px;
+            max-width: 200px;
+            width: 160px;
+            white-space: normal;
+            .inventory-name-truncate {
+              display: block;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              max-width: 160px;
+            }
+          }
+
+          th.inventory-code-col,
+          td.inventory-code-col {
+            width: 120px;
+          }
+
+          th.inventory-qty-col,
+          td.inventory-qty-col {
+            width: 100px;
+          }
+
+          th.inventory-spec-col,
+          td.inventory-spec-col {
+            width: 120px;
+            white-space: normal;
+            word-break: break-word;
+          }
+
+          th.inventory-remark-col,
+          td.inventory-remark-col {
+            width: 120px;
+            white-space: normal;
+            word-break: break-word;
+          }
+
+          th.inventory-expdate-col,
+          td.inventory-expdate-col {
+            width: 110px;
+          }
+
+          th.inventory-po-col,
+          td.inventory-po-col {
+            width: 120px;
+          }
+
+          th.inventory-lineitem-col,
+          td.inventory-lineitem-col {
+            width: 130px;
+          }
+
+          th.inventory-received-col,
+          td.inventory-received-col,
+          th.inventory-pending-col,
+          td.inventory-pending-col {
+            width: 120px;
+            text-align: right;
+          }
+
+          th.inventory-status-col,
+          td.inventory-status-col {
+            width: 100px;
+          }
+
+          th {
+            background-color: transparent;
+            font-weight: 400;
+            font-size: 11px;
+            color: #888888;
+            border-bottom: 1px solid #e0e0e0;
+          }
+
+          td {
+            font-size: 13px;
+            color: #333333;
+            background-color: #ffffff;
+            vertical-align: middle;
+          }
+
+          tbody tr {
+            background-color: #ffffff;
+          }
+        }
+
+        .status-badge-table {
+          display: inline-block;
+          max-width: 100%;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 400;
+          background-color: #e8f5e9;
+          color: #333333;
+          box-sizing: border-box;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+          &.status-cancelled {
+            background-color: #fce4ec;
+            color: #c2185b;
+          }
+
+          &.status-rejected {
+            background-color: #f3e5f5;
+            color: #6a1b9a;
+          }
+
+          &.status-new,
+          &.status-po-created {
+            background-color: #e3f2fd;
+            color: #1976d2;
+          }
+
+          &.status-split {
+            background-color: #fff3e0;
+            color: #f57c00;
+          }
+
+          &.status-closed {
+            background-color: #eceff1;
+            color: #37474f;
+          }
+
+          &.status-inward-partial {
+            background-color: #fff3e0;
+            color: #f57c00;
+          }
+        }
+      }
+    }
+  }
+
+  // Specific column widths for indent inventory table to avoid overlap
+  .inventory-table-wrapper {
+    overflow-x: auto;
+    .MuiTable-root {
+      width: auto;
+    }
+    table {
+      width: auto !important;   // prevent MUI stretching table to full panel width
+
+      th.inventory-name-col,
+      td.inventory-name-col {
+        min-width: 150px;
+        max-width: 220px;
+        width: 180px;
+      }
+
+      th.inventory-code-col,
+      td.inventory-code-col {
+        min-width: 120px;
+        max-width: 160px;
+        width: 130px;
+        white-space: nowrap;
+      }
+
+      th.inventory-qty-col,
+      td.inventory-qty-col {
+        min-width: 90px;
+        max-width: 120px;
+        width: 100px;
+        white-space: nowrap;
+        text-align: right;
+      }
+
+      th.inventory-spec-col,
+      td.inventory-spec-col {
+        min-width: 110px;
+        max-width: 160px;
+        width: 130px;
+      }
+
+      th.inventory-spec-col,
+      td.inventory-spec-col,
+      th.inventory-remark-col,
+      td.inventory-remark-col {
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      th.inventory-remark-col,
+      td.inventory-remark-col {
+        min-width: 110px;
+        max-width: 160px;
+        width: 130px;
+      }
+
+      th.inventory-expdate-col,
+      td.inventory-expdate-col {
+        min-width: 100px;
+        max-width: 130px;
+        width: 110px;
+        white-space: nowrap;
+      }
+
+      th.inventory-po-col,
+      td.inventory-po-col {
+        min-width: 110px;
+        max-width: 150px;
+        width: 120px;
+        white-space: nowrap;
+      }
+
+      th.inventory-lineitem-col,
+      td.inventory-lineitem-col {
+        min-width: 130px;
+        max-width: 180px;
+        width: 140px;
+        white-space: nowrap;
+      }
+
+      th.inventory-received-col,
+      td.inventory-received-col,
+      th.inventory-pending-col,
+      td.inventory-pending-col {
+        min-width: 110px;
+        max-width: 140px;
+        width: 120px;
+        white-space: nowrap;
+        text-align: right;
+      }
+
+      th.inventory-status-col,
+      td.inventory-status-col {
+        min-width: 100px;
+        max-width: 140px;
+        width: 110px;
+      }
+    }
+  }
+
+  .indent-detail-tab-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    margin-top: 0;
+    border-top: none;
+    background-color: #f5f5f5;
+
+    // pill buttons only in the bottom action bar
+    .indent-approve-btn.MuiButton-root {
+      height: 36px;
+      padding: 0 18px !important;
+      border-radius: 999px !important;
+      background: #dff2e1 !important;
+      border: 1px solid #b7dfbb !important;
+      box-shadow: none !important;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+
+      .button-label {
+        color: #2e7d32 !important;
+        font-weight: 700;
+      }
+
+      .MuiButton-startIcon {
+        color: #2e7d32 !important;
+        margin-right: 8px;
+
+        svg {
+          font-size: 18px;
+        }
+      }
+
+      &:hover {
+        background: #d3ecd6 !important;
+        box-shadow: none !important;
+      }
+    }
+
+    .indent-reject-btn.MuiButton-root {
+      height: 36px;
+      padding: 0 18px !important;
+      border-radius: 999px !important;
+      background: #f9d8e3 !important;
+      border: 1px solid #f3a9c2 !important;
+      box-shadow: none !important;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+
+      .button-label {
+        color: #c2185b !important;
+        font-weight: 700;
+      }
+
+      .MuiButton-startIcon {
+        color: #c2185b !important;
+        margin-right: 8px;
+
+        svg {
+          font-size: 18px;
+        }
+      }
+
+      &:hover {
+        background: #f7cbd9 !important;
+        box-shadow: none !important;
+      }
+    }
+  }
+
+  .history-content {
+    font-size: 13px;
+    padding: 20px 24px 24px;
+    background-color: #f5f5f5;
+
+    .history-loading,
+    .history-error,
+    .history-empty {
+      padding: 16px 0;
+      color: #666;
+    }
+
+    .history-error {
+      color: #c62828;
+    }
+
+    .history-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 13px;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .history-date-time {
+        font-weight: 600;
+        color: #323c47;
+        margin-bottom: 4px;
+      }
+
+      .history-description {
+        color: #666;
+        margin-bottom: 2px;
+      }
+
+      .history-changed-by {
+        font-size: 12px;
+        color: #888;
+      }
+
+      .history-relations {
+        margin-top: 12px;
+
+        .relations-table {
+          max-width: 400px;
+        }
+
+        .relation-link {
+          background: none;
+          border: none;
+          padding: 0;
+          color: #1976d2;
+          text-decoration: underline;
+          cursor: pointer;
+          font-size: inherit;
+
+          &:hover {
+            color: #1565c0;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Solid (non-pill) buttons for confirm dialogs
+.indent-approve-btn-solid.MuiButton-root {
+  background: #4caf50 !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+
+  .button-label {
+    color: #ffffff !important;
+    font-weight: 700;
+  }
+
+  &:hover {
+    background: #43a047 !important;
+  }
+}
+
+.indent-reject-btn-solid.MuiButton-root {
+  background: #e53935 !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+
+  .button-label {
+    color: #ffffff !important;
+    font-weight: 700;
+  }
+
+  &:hover {
+    background: #d32f2f !important;
+  }
+}
+
+.inventory-count-hoverable {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(94, 129, 244, 0.04) !important;
+
+    td {
+      background-color: rgba(94, 129, 244, 0.04) !important;
+    }
+  }
+}
+
+.inventory-tooltip-content {
+  padding: 16px;
+  min-width: 250px;
+  
+  .inventory-tooltip-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #424242;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  
+  .inventory-tooltip-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    
+    .inventory-tooltip-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      .inventory-tooltip-name {
+        color: #424242;
+        font-size: 14px;
+        font-weight: 400;
+      }
+      
+      .inventory-tooltip-quantity {
+        color: #9e9e9e;
+        font-size: 14px;
+        font-weight: 400;
+        text-align: right;
+      }
+    }
+  }
+}
+
+.indent-upload-section {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #ffffff;
+  
+  .upload-documents-heading {
+    font-weight: 600;
+    font-size: 14px;
+    color: #323c47;
+    margin-bottom: 16px;
+  }
+  
+  .upload-controls {
+    .upload-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      
+      .upload-buttons-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        
+        .file-name-input-label {
+          display: inline-block;
+          cursor: pointer;
+          
+          .file-name-input {
+            width: 250px;
+            height: 40px;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 7px;
+            background-color: #ffffff;
+            font-size: 14px;
+            color: #323c47;
+            outline: none;
+            cursor: pointer;
+            
+            &:focus {
+              border-color: #5e81f4;
+            }
+            
+            &::placeholder {
+              color: #999;
+            }
+          }
+        }
+        
+        .blue.MuiButton-root {
+          min-width: 100px !important;
+          text-transform: none !important;
+          background: #3f51b5 !important;
+          color: #ffffff !important;
+
+          &:hover {
+            background: #303f9f !important;
+            color: #ffffff !important;
+          }
+
+          .MuiButton-label,
+          .button-label {
+            color: #ffffff !important;
+          }
+        }
+
+        .upload-thumbnails {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 16px;
+          margin-left: 30px;
+          
+          .upload-thumbnail {
+            width: 70px;
+            height: 70px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+            
+            .thumbnail-remove {
+              position: absolute;
+              top: 4px;
+              right: 4px;
+              width: 24px;
+              height: 24px;
+              padding: 0;
+              background: rgba(255, 255, 255, 0.9);
+              border-radius: 50%;
+              z-index: 2;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+              
+              &:hover {
+                background: rgba(255, 255, 255, 1);
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+              }
+              
+              svg {
+                width: 14px;
+                height: 14px;
+                color: #f44336;
+              }
+            }
+            
+            .thumbnail-preview {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              background: #f9f9f9;
+              
+              img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+              }
+              
+              .thumbnail-placeholder {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+                
+                svg {
+                  opacity: 0.5;
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      .upload-hint {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+.quantity-field-wrapper {
+  position: relative;
+
+  &.quantity-error {
+    .MuiOutlinedInput-root fieldset {
+      border-color: #d32f2f !important;
+    }
+    .MuiOutlinedInput-root:hover fieldset {
+      border-color: #d32f2f !important;
+    }
+    .MuiInputLabel-root {
+      color: #d32f2f !important;
+    }
+  }
+
+  .quantity-error-msg {
+    color: #d32f2f;
+    font-size: 11px;
+    margin-top: 2px;
+    display: block;
+  }
+}
+
+// Filter UI: labels outside fields, two-column layout (same design as PO filter)
+.indent-filter {
+  .filter-heading {
+    justify-content: space-between;
+    padding: 12px 16px;
+    height: auto;
+    min-height: 44px;
+    border-bottom: none !important;
+
+    .filter-title {
+      font-weight: 700;
+      font-size: 18px;
+      color: #000000 !important;
+      margin-right: auto;
+    }
+
+    .close-icon {
+      position: relative;
+      right: 0;
+      color: #666;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+      }
+    }
+  }
+
+  .filter-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 16px;
+    @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+
+    .filter-field-label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      color: #323c47;
+      margin-bottom: 1px;
+    }
+
+    .filter-item {
+      min-width: 0;
+
+      .MuiTextField-root,
+      .MuiFormControl-root {
+        width: 100%;
+        margin-top: 0 !important;
+      }
+
+      .MuiOutlinedInput-root {
+        border-radius: 8px;
+        background-color: #ffffff;
+
+        fieldset {
+          border-color: #e0e0e0;
+        }
+
+        &:hover fieldset {
+          border-color: #bdbdbd;
+        }
+      }
+    }
+
+    .filter-dates {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .filter-status-changed-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      align-items: start;
+      @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+    }
+  }
+
+  .filter-bottom {
+    padding: 12px 16px;
+    border-top: none;
+    gap: 2px;
+
+    .grey.MuiButton-root {
+      background: #f5f5f5 !important;
+      color: #333 !important;
+      border-radius: 8px;
+    }
+
+    .blue.MuiButton-root {
+      background: #3f51b5 !important;
+      color: #fff !important;
+      border-radius: 8px;
+    }
+  }
+}

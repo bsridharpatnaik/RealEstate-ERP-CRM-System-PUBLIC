@@ -1,0 +1,26 @@
+.accordian {
+  .heading {
+    display: flex;
+    align-items: center;
+  }
+  .accordian-icon {
+    padding: 4px;
+    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    margin-right: 12px;
+    cursor: pointer;
+    transform: rotate(270deg);
+  }
+  .accordian-content {
+    transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+    overflow: hidden;
+  }
+  &.expand {
+    .accordian-content {
+      height: auto;
+      padding: 4px;
+    }
+    .accordian-icon {
+      transform: rotate(360deg);
+    }
+  }
+}

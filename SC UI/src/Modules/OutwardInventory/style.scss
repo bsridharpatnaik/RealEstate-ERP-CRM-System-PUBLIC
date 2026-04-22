@@ -1,0 +1,144 @@
+.filter-dates {
+  display: flex;
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    .MuiOutlinedInput-adornedStart {
+      padding-left: 0px;
+    }
+    .MuiInputBase-root {
+      width: 100%;
+    }
+  }
+  @media screen and (max-width: 425px) {
+    flex-direction: column;
+    .MuiOutlinedInput-adornedStart {
+      padding-left: 0px;
+    }
+    .MuiInputBase-root {
+      width: 100%;
+    }
+  }
+}
+.products-list {
+  margin-top: 16px;
+  .product-heading {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+.table-wrapper-inner {
+  margin: 10px;
+}
+.expanded-row {
+  background-color: #f8f8f8;
+  > td {
+    box-shadow: inset 0 3px 6px -3px rgba(0, 0, 0, 0.2);
+  }
+}
+
+// .table-returnOutwardlist {
+//   margin-top: 30px;
+// }
+
+// .product-container {
+//   width: 600px !important;
+// }
+
+// .reject-product {
+//   width: 700px !important;
+//   .product-item-wrapper {
+//     padding: 20px;
+//   }
+//   .product-item {
+//     justify-content: space-between;
+//     .product-item-first,
+//     .product-item-second,
+//     .product-item-third {
+//       width: 30%;
+//       margin: 0;
+//     }
+//   }
+// }
+
+// .product-item {
+//   display: flex;
+//   .product-item-first {
+//     width: 33%;
+//     margin-right: 3%;
+//     margin-left: 1%;
+//   }
+//   .product-item-second {
+//     width: 45%;
+//   }
+// }
+
+.add-returnproduct {
+  margin-left: 1% !important;
+  position: absolute !important;
+  left: 10px;
+  width: 40px !important;
+  height: 40px !important;
+}
+
+// .product-footer-container {
+//   .product-footer {
+//     .blue {
+//       left: 60%;
+//     }
+//     .grey {
+//       right: 8%;
+//       position: absolute !important;
+//     }
+//   }
+// }
+
+.outward-detail-section {
+  .MuiTabs-root {
+    .MuiTabs-flexContainer {
+      &::before {
+        content: "";
+        height: 2px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background: #eee;
+        bottom: 0;
+      }
+      .MuiTab-wrapper {
+        text-transform: capitalize;
+      }
+    }
+    .MuiTabs-indicator {
+      background-color: #33ac8c;
+    }
+  }
+  .MuiBox-root {
+    background: #f8f8f8;
+    padding: 0;
+    .MuiPaper-root {
+      padding: 20px 30px;
+      margin-bottom: 15px;
+      &.table-wrapper {
+        padding: 10px 0;
+        margin-bottom: 0;
+        .MuiTableCell-head {
+          color: #a2a2c3;
+        }
+        tbody {
+          tr {
+            &:last-child {
+              border-bottom: none;
+              td {
+                border-bottom: none;
+              }
+            }
+          }
+        }
+      }
+    }
+    h4.reject-stock {
+      margin: 15px 5px;
+    }
+  }
+}
