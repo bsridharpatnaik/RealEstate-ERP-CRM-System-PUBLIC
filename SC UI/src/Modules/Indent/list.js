@@ -68,6 +68,7 @@ class List extends ListCommon {
       "Expected Date",
       "Days Left",
       "Inventory Count",
+      "PO Numbers",
       "Status",
       "Created By",
     ],
@@ -78,6 +79,7 @@ class List extends ListCommon {
       "needByDate",
       "daysRemaining",
       "inventoryCount",
+      "poNumbers",
       "status",
       "createdBy",
     ],
@@ -129,6 +131,7 @@ class List extends ListCommon {
         inventoryItems: item.inventoryList,
         inventoryList: item.inventoryList,
         fileInformations: item.fileInformations,
+        poNumbers: item.poNumbers || [],
         approvalAllowed: item.approvalAllowed,
         projectName: getTenantName(item.tenant, allTenant),
         tenant: item.tenant, // keep raw code — used internally / sent to backend

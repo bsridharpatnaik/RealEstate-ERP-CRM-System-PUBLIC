@@ -52,7 +52,7 @@ class Table extends CommonTable {
     return (
       <tr>
         {headers.map((header, index) => {
-          const isInventoryCount = this.keys && this.keys[index] === "inventoryCount";
+          const isInventoryCount = this.keys && (this.keys[index] === "inventoryCount" || this.keys[index] === "poNumbers");
           return (
             <th
               key={index}
@@ -183,6 +183,19 @@ class Table extends CommonTable {
       return (
         <td data-label="Status">
           <span className={`status-badge ${statusClass}`}>{statusValue}</span>
+        </td>
+      );
+    } else if (key === "poNumbers") {
+      const poNums = row.poNumbers || [];
+      return (
+        <td data-label="PO Numbers">
+          {poNums.length > 0
+            ? <div className="po-numbers-cell">
+                {poNums.map((po) => (
+                  <span key={po} className="po-number-badge">{po}</span>
+                ))}
+              </div>
+            : "-"}
         </td>
       );
     } else if (key === "inventoryCount") {

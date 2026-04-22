@@ -108,7 +108,11 @@ class InwardInventoryForm extends AddForm {
         this.setState({
           selectedPO: {
             id: data.purchaseOrderNo,
-            name: data.purchaseOrderNo,
+            name: [
+              data.purchaseOrderNo,
+              data.purchaseOrderDate ? new Date(data.purchaseOrderDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+              data.supplier?.name || ''
+            ].filter(Boolean).join(' | '),
             poDate: data.purchaseOrderDate,
             supplierName: data.supplier?.name,
             ...data
@@ -360,7 +364,11 @@ class InwardInventoryForm extends AddForm {
           poOptions: validPOs
             .map(po => ({
               id: po.purchaseOrderNumber,
-              name: po.purchaseOrderNumber,
+              name: [
+                po.purchaseOrderNumber,
+                po.poDate ? new Date(po.poDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+                po.supplierName || ''
+              ].filter(Boolean).join(' | '),
               ...po
             }))
             .sort((a, b) => {
@@ -808,6 +816,11 @@ class InwardInventoryForm extends AddForm {
       return;
     }
 
+    if (!this.formData.fileInformations || this.formData.fileInformations.length === 0) {
+      this.props.enqueueSnackbar("Please upload at least one file", { variant: "error" });
+      return;
+    }
+
     // Block submission if any PO-linked line item exceeds its max allowed quantity
     if (!this.state.isDirectInward) {
       for (const product of Object.values(this.state.noproduct)) {
@@ -1000,7 +1013,7 @@ class InwardInventoryForm extends AddForm {
                           value: this.state.selectedPO,
                           disableClearable: true,
                           required: true,
-                          disabled: this.state.isLoadingPO,
+                          disabled: this.state.isLoadingPO || this.state.isEditMode,
                           getOption: (option) => option?.name || '',
                           onOpen: () => {},
                           onChange: (e, value) => {
