@@ -815,7 +815,8 @@ public class IndentInventoryService {
                 "Quantity Pending",
                 "Line Item Status",
                 "Specification",
-                "Remarks"
+                "Remarks",
+                "PO Number"
         };
 
         for (int i = 0; i < columns.length; i++) {
@@ -911,6 +912,9 @@ public class IndentInventoryService {
                 );
                 row.createCell(col++).setCellValue(
                         safeExcel(line.getRemarks())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getPurchaseOrderId())
                 );
             }
         }
