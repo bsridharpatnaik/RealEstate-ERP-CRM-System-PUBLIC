@@ -41,6 +41,9 @@ public class ScheduledTasks {
     @Autowired
     PriorityComputeService priorityComputeService;
 
+    @Autowired
+    StockBalanceValidationService stockBalanceValidationService;
+
  /*   //@Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
         log.info("Sending Stock Notification Email in evening");
@@ -75,6 +78,16 @@ public class ScheduledTasks {
     public void computePoPriority() {
         log.info("Scheduled PO priority recompute triggered");
         priorityComputeService.recomputeAllPriorities();
+    }
+
+    @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Kolkata")
+    public void runNightlyStockBalanceValidation() {
+        log.info("Nightly stock balance validation triggered");
+        try {
+            stockBalanceValidationService.runNightlyValidation();
+        } catch (Exception e) {
+            log.error("Nightly stock balance validation failed", e);
+        }
     }
 
     @Scheduled(cron = "0 0 * * * *")

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import com.ec.application.data.EmailConfigData;
+import com.ec.application.data.StockDiscrepancyRow;
 import com.ec.application.data.StockInformationExportDAO;
 import com.ec.application.model.StockValidation;
 import com.ec.application.service.EmailService;
@@ -45,8 +46,11 @@ public class EmailHelper
 	StockService stockService;
 	Logger log = LoggerFactory.getLogger(EmailHelper.class);
 	
-	@Value("${stock.notification.emailids}") 
+	@Value("${stock.notification.emailids}")
 	private String emailIds;
+
+	@Value("${stock.validation.emailids}")
+	private String validationEmailIds;
 	
 	public void sendEmailForMorningStockNottification(List<StockInformationExportDAO> dataForInsertList) throws Exception
 	{
@@ -124,6 +128,40 @@ public class EmailHelper
         }
 	}
 	
+	public void sendStockBalanceValidationEmail(List<StockDiscrepancyRow> discrepancies) throws Exception
+	{
+		EmailConfigData emailConfigData = emailService.getEmailConfig();
+		Properties props = getProperties();
+		Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+			protected PasswordAuthentication getPasswordAuthentication() {
+				return new PasswordAuthentication(emailConfigData.mailUsername, emailConfigData.mailPassword);
+			}
+		});
+		MimeMessage message = new MimeMessage(session);
+		try {
+			MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+					StandardCharsets.UTF_8.name());
+			Map<String, Object> model = new HashMap<>();
+			model.put("discrepancies", discrepancies);
+			model.put("currentDate", new Date().toString());
+			Template template = config.getTemplate("email-stock-balance-check.ftl");
+			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
+			helper.setFrom(emailConfigData.mailUsername);
+			InternetAddress[] parse = InternetAddress.parse(validationEmailIds, true);
+			message.setRecipients(javax.mail.Message.RecipientType.TO, parse);
+			String subject = discrepancies.isEmpty()
+					? "✅ Stock Balance OK - " + new Date()
+					: "⚠ Stock Balance Discrepancies Found (" + discrepancies.size() + ") - " + new Date();
+			helper.setSubject(subject);
+			helper.setText(html, true);
+			Transport.send(message);
+			log.info("Stock balance validation email sent to {}", validationEmailIds);
+		} catch (MessagingException e) {
+			log.error("Error sending stock balance validation email", e);
+			e.printStackTrace();
+		}
+	}
+
 	private Properties getProperties()
 	{
 		EmailConfigData emailConfigData = emailService.getEmailConfig();
