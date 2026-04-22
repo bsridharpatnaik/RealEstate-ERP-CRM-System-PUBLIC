@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.ec.application.ReusableClasses.ReusableMethods.resolveCutoffDate;
 
@@ -37,6 +38,7 @@ public class PurchaseOrderSpecification {
         List<String> statusChangedAfterDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedAfterDate");
         List<String> statusChangedBeforeDate = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
         List<String> isSpecialPo = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "isSpecialPo");
+        List<String> projectNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "projectNames");
 
         Specification<PurchaseOrder> finalSpec = null;
 
@@ -79,6 +81,24 @@ public class PurchaseOrderSpecification {
             boolean splFlag = Boolean.parseBoolean(isSpecialPo.get(0));
             finalSpec = specbldr.specAndCondition(finalSpec,
                     (root, query, cb) -> cb.equal(root.get("isSpecialPo"), splFlag));
+        }
+
+        if (projectNames != null && !projectNames.isEmpty()) {
+            boolean includeEmpty = projectNames.contains("EMPTY");
+            List<String> actualNames = projectNames.stream()
+                    .filter(p -> !"EMPTY".equals(p))
+                    .collect(Collectors.toList());
+            finalSpec = specbldr.specAndCondition(finalSpec, (root, query, cb) -> {
+                List<Predicate> orPreds = new ArrayList<>();
+                if (includeEmpty) {
+                    orPreds.add(cb.isNull(root.get("projectName")));
+                    orPreds.add(cb.equal(root.get("projectName"), ""));
+                }
+                if (!actualNames.isEmpty()) {
+                    orPreds.add(root.get("projectName").in(actualNames));
+                }
+                return cb.or(orPreds.toArray(new Predicate[0]));
+            });
         }
 
         if (globalSearch != null && !globalSearch.isEmpty()) {

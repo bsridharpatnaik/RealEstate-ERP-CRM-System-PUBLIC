@@ -1076,7 +1076,7 @@
     padding: 12px 16px;
     @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
 
-    > .filter-item:nth-child(n+3) {
+    .filter-item-full {
       grid-column: 1 / -1;
     }
 

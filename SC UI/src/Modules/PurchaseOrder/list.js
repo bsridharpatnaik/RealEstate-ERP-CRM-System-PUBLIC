@@ -70,20 +70,20 @@ class List extends ListCommon {
       "PO Number",
       "Date Creation",
       "Inventory Count",
+      "Project",
       "Supplier Name",
       "Created By",
       "PO Status",
-      "Priority",
       "SPL",
     ],
     keys: [
       "poNumber",
       "dateCreation",
       "inventoryCount",
+      "projectName",
       "supplierName",
       "createdBy",
       "poStatus",
-      "priority",
       "specialPo",
     ],
   };
@@ -101,8 +101,7 @@ class List extends ListCommon {
       supplierName: item.supplier ? item.supplier.name : "",
       createdBy: item.createdBy || "",
       poStatus: item.status || "",
-      priority: item.priority || null,
-      daysToDeadline: item.daysToDeadline ?? null,
+      projectName: item.projectName || null,
       specialPo: item.specialPo || false,
     }));
   }
@@ -137,20 +136,35 @@ class List extends ListCommon {
 
   async fetchDropdownOptions() {
     try {
-      const response = await API.POST(apiEndpoints.getPurchaseOrder, { filterData: [] });
-      if (response.success && response.data && response.data.poDropdown) {
-        this.setState({ filterOptions: response.data.poDropdown });
+      const [poRes, tenantsRes] = await Promise.all([
+        API.POST(apiEndpoints.getPurchaseOrder, { filterData: [] }),
+        API.GET(apiEndpoints.getTenants),
+      ]);
+
+      let filterOptions = {};
+      if (poRes.success && poRes.data && poRes.data.poDropdown) {
+        filterOptions = { ...poRes.data.poDropdown };
       }
+
+      if (tenantsRes.success && Array.isArray(tenantsRes.data)) {
+        const projectOptions = tenantsRes.data
+          .filter((t) => t.inventory === true)
+          .map((t) => { const name = t.name || t.tenantName || ""; return { name, id: name }; })
+          .filter((p) => p.name);
+        filterOptions.projects = [{ name: "No Project", id: "EMPTY" }, ...projectOptions];
+      }
+
+      this.setState({ filterOptions });
     } catch (error) {
       console.error("Error fetching dropdown options:", error);
-      // Set empty filter options on error to prevent crashes
       this.setState({
         filterOptions: {
           category: [],
           product: [],
           supplier: [],
           productCodes: [],
-          purchaseOrderStatus: []
+          purchaseOrderStatus: [],
+          projects: [],
         }
       });
     }
@@ -450,6 +464,17 @@ class List extends ListCommon {
           p && typeof p === "object" ? (p.id || p.name) : p
         ).filter(Boolean);
         params.filterData.push({ attrName: "priority", attrValue: priorityValues });
+      }
+
+      // Project filter
+      const projectNamesArr = Array.isArray(this.filterData.projectNames)
+        ? this.filterData.projectNames
+        : this.filterData.projectNames != null ? [this.filterData.projectNames] : [];
+      if (projectNamesArr.length > 0) {
+        const projectValues = projectNamesArr.map(p =>
+          p && typeof p === "object" ? p.id : p
+        ).filter(Boolean);
+        params.filterData.push({ attrName: "projectNames", attrValue: projectValues });
       }
     }
 

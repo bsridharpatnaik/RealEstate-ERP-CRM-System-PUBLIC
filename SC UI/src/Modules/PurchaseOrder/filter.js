@@ -96,8 +96,16 @@ class Filter extends CommonFilter {
               true
             )}
 
+            {this.renderAutoComplete(
+              "Project",
+              this.props.options?.projects || [],
+              "projectNames",
+              (option) => option.name,
+              true
+            )}
+
             {/* SPL PO Filter */}
-            <div className="filter-item">
+            <div className="filter-item filter-item-full">
               <span className="filter-field-label">SPL PO</span>
               <FormControlLabel
                 control={

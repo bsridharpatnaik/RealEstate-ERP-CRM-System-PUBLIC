@@ -157,6 +157,11 @@ class List extends ListCommon {
       clearSession("indentPresetFilterData");
     }
     this.filterRef = React.createRef();
+    if (this.props.isGlobal && Array.isArray(this.props.allTenant)) {
+      this.projectOptions = this.props.allTenant
+        .filter((t) => t.tenantCode && t.tenantName)
+        .map((t) => ({ name: t.tenantName, id: t.tenantCode }));
+    }
     this.search();
   }
 
@@ -383,6 +388,16 @@ class List extends ListCommon {
           attrValue: [this.filterData.statusChangedBeforeDate],
         });
       }
+
+      const tenantsArr = Array.isArray(this.filterData.tenants)
+        ? this.filterData.tenants
+        : this.filterData.tenants != null ? [this.filterData.tenants] : [];
+      if (tenantsArr.length > 0) {
+        const tenantValues = tenantsArr.map(t =>
+          t && typeof t === "object" ? t.id : t
+        ).filter(Boolean);
+        params.filterData.push({ attrName: "tenants", attrValue: tenantValues });
+      }
     }
 
     return params;
@@ -490,7 +505,7 @@ class List extends ListCommon {
         pages: data.indentInventories?.totalPages || 0,
         totalRecords: data.indentInventories?.totalElements || 0,
         options: options,
-        filterOptions: dropdowns,
+        filterOptions: { ...dropdowns, ...(this.projectOptions ? { projects: this.projectOptions } : {}) },
         pageno: page,
         sortkey: sortkey !== null ? sortkey : this.state.sortkey,
         sortby: sortby !== null ? sortby : this.state.sortby,
@@ -553,6 +568,7 @@ class List extends ListCommon {
               <Filter
                 filterData={this.filterData}
                 options={this.state.filterOptions}
+                isGlobal={this.props.isGlobal}
                 search={(data) => {
                   this.filterData = data;
                   this.search();

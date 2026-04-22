@@ -164,22 +164,10 @@ class Table extends CommonTable {
           {row["createdBy"]}
         </td>
       );
-    } else if (key === "priority") {
-      const priority = row["priority"];
-      const days = row["daysToDeadline"];
-      if (!priority) return <td data-label="Priority">-</td>;
-      let badgeClass = "priority-badge-normal";
-      if (priority === "CRITICAL") badgeClass = "priority-badge-critical";
-      else if (priority === "HIGH") badgeClass = "priority-badge-high";
-      else if (priority === "MEDIUM") badgeClass = "priority-badge-medium";
-      const daysLabel = days !== null && days !== undefined
-        ? (days < 0 ? ` (${Math.abs(days)}d overdue)` : ` (${days}d)`)
-        : "";
+    } else if (key === "projectName") {
       return (
-        <td data-label="Priority">
-          <span className={`priority-badge ${badgeClass}`}>
-            {priority}{daysLabel}
-          </span>
+        <td data-label="Project">
+          {row["projectName"] || "-"}
         </td>
       );
     } else if (key === "specialPo") {

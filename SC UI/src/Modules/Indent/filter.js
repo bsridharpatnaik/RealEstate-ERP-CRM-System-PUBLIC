@@ -74,6 +74,13 @@ class filter extends CommonFilter {
               {this.renderFilterDate("Status Changed After", "statusChangedAfterDate", false)}
               {this.renderFilterDate("Status Changed Before", "statusChangedBeforeDate", false)}
             </div>
+            {this.props.isGlobal && this.renderAutoComplete(
+              "Project",
+              this.props.options?.projects || [],
+              "tenants",
+              (option) => option.name,
+              true
+            )}
           </div>
         ) : null}
         {this.renderFooter()}
