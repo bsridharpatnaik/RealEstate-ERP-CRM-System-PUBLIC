@@ -1,5 +1,6 @@
 package com.ec.application.indentpo;
 
+import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.HistoryRelationType;
 import com.ec.application.constants.IndentLineItemStatusConstants;
@@ -12,6 +13,7 @@ import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.InwardSyncFailureRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
 import com.ec.application.service.*;
+import org.springframework.core.env.Environment;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +40,8 @@ public class IndentInventoryAsyncUpdater {
     private final InwardSyncFailureService inwardSyncFailureService;
     private final IndentStatusHistoryService indentStatusHistoryService;
     private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
+    private final EmailHelper emailHelper;
+    private final Environment environment;
 
     private static final Logger log = LoggerFactory.getLogger(IndentInventoryAsyncUpdater.class);
 
@@ -58,6 +63,27 @@ public class IndentInventoryAsyncUpdater {
         } catch (Exception ex) {
             log.error("[ASYNC-FAILURE] tenant={} inwardId={} action={}", tenantSchema, inwardId, actionType, ex);
             inwardSyncFailureService.recordFailure(dto, ex);
+            sendInwardSyncFailureAlert(tenantSchema, inwardId, actionType, ex);
+        } finally {
+            ThreadLocalStorage.setTenantName(null);
+        }
+    }
+
+    private void sendInwardSyncFailureAlert(String tenant, Long inwardId, InwardActionType actionType, Exception ex) {
+        boolean isProd = Arrays.stream(environment.getActiveProfiles())
+                .anyMatch(p -> p.contains("prod"));
+        if (!isProd) return;
+        try {
+            ThreadLocalStorage.setTenantName(tenant);
+            JobFailureAlertDTO alert = new JobFailureAlertDTO(
+                "Indent Sync After Inward", tenant,
+                ex.getMessage(),
+                "InwardId=" + inwardId + ", Action=" + actionType,
+                new Date()
+            );
+            emailHelper.sendJobFailureAlert(Collections.singletonList(alert), "Indent Sync After Inward");
+        } catch (Exception emailEx) {
+            log.error("Failed to send inward sync failure alert email", emailEx);
         } finally {
             ThreadLocalStorage.setTenantName(null);
         }

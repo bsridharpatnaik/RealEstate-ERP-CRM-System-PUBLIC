@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.model.StockValidation;
+import com.ec.application.service.StockBalanceValidationService;
 import com.ec.application.service.StockService;
 
 @RestController
@@ -21,6 +22,9 @@ public class AutomaticEmailController {
     @Autowired
     StockService stockService;
 
+    @Autowired
+    StockBalanceValidationService stockBalanceValidationService;
+
     @GetMapping("/stockupdate")
     public void sendEmail() throws Exception {
         stockService.sendStockNotificationEmail();
@@ -29,5 +33,10 @@ public class AutomaticEmailController {
     @GetMapping("/stockvalidation")
     public void sendStockValidationEmail() throws Exception {
         stockService.sendStockValidationEmail();
+    }
+
+    @GetMapping("/stockbalancecheck")
+    public void runStockBalanceCheck() throws Exception {
+        stockBalanceValidationService.runNightlyValidation();
     }
 }

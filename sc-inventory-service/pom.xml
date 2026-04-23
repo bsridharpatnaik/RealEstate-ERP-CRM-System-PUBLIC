@@ -274,7 +274,7 @@
                     <include>**/*.png</include>
                     <include>**/*.jpg</include>
                     <include>**/*.xml</include>
-                    <!-- Include other resource files if needed -->
+                    <include>**/*.ftl</include>
                 </includes>
             </resource>
             <resource>
