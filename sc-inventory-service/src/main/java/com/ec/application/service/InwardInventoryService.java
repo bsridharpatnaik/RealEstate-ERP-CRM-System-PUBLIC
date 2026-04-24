@@ -168,6 +168,11 @@ public class InwardInventoryService {
             throw new IllegalArgumentException("No pending inward items found for the provided Purchase Order Number - " + iiData.getPoNumber());
         }
 
+        Date poDate = pendingItemsForInward.get(0).getPoDate();
+        if (poDate != null && iiData.getInwardDate().before(poDate)) {
+            throw new IllegalArgumentException("Inward date cannot be earlier than the PO date (" + new java.text.SimpleDateFormat("dd-MM-yyyy").format(poDate) + ").");
+        }
+
         validateInputsFromPO(iiData, pendingItemsForInward);
         setFieldsFromPO(inwardInventory, iiData, pendingItemsForInward);
         updateStockForCreateInwardInventory(inwardInventory);
@@ -204,6 +209,14 @@ public class InwardInventoryService {
         Map<String, Double> oldQuantityMap = new HashMap<>();
         for (InwardOutwardList io : inward.getInwardOutwardList()) {
             oldQuantityMap.put(io.getLineItemCode(), io.getQuantity());
+        }
+
+        if (data.getInwardDate() != null) {
+            if (Boolean.TRUE.equals(inward.getCreatedFromPO()) && inward.getPurchaseOrderDate() != null
+                    && data.getInwardDate().before(inward.getPurchaseOrderDate())) {
+                throw new IllegalArgumentException("Inward date cannot be earlier than the PO date (" + new java.text.SimpleDateFormat("dd-MM-yyyy").format(inward.getPurchaseOrderDate()) + ").");
+            }
+            inward.setDate(data.getInwardDate());
         }
 
         inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());

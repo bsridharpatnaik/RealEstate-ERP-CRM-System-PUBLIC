@@ -59,7 +59,7 @@ class Step3ReviewPO extends Component {
   }
 
   render() {
-    const { orderTo, orderFrom, poSubject, isSpecialPo, noteText, projectName, overridePhoneNumber, overrideEmail, fileInformations, freightCharges, freightGstPercent, customCharges } = this.props;
+    const { orderTo, orderFrom, poSubject, isSpecialPo, noteText, projectName, overridePhoneNumber, overrideEmail, fileInformations, freightCharges, freightGstPercent, customCharges, poDate } = this.props;
     const lineItems = this.computeLineItems();
     const lineItemsTotal = lineItems.reduce((sum, item) => sum + (item.totalAmt || 0), 0);
     const fc = parseFloat(freightCharges || 0);
@@ -142,6 +142,12 @@ class Step3ReviewPO extends Component {
         {/* ── PO Details ── */}
         <div className="review-card">
           <div className="review-card-title">PO Details</div>
+          {poDate && (
+            <div className="review-field-row">
+              <span className="review-field-label">PO Date</span>
+              <span className="review-field-value">{poDate}</span>
+            </div>
+          )}
           <div className="review-field-row">
             <span className="review-field-label">Subject</span>
             <span className="review-field-value">{this.formatValue(poSubject)}</span>

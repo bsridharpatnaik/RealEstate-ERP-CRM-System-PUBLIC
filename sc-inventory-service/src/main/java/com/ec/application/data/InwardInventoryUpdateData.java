@@ -41,6 +41,10 @@ public class InwardInventoryUpdateData {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @JsonDeserialize(using = DateDeserializers.DateDeserializer.class)
+    Date inwardDate;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @JsonDeserialize(using = DateDeserializers.DateDeserializer.class)
     Date challanDate;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
