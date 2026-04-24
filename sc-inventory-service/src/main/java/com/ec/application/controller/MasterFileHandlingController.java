@@ -4,12 +4,14 @@ import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.model.FileInformation;
 import com.ec.application.service.FileHandlingService;
+import com.ec.application.service.FileMigrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.Map;
 
 /**
  * File upload/download endpoint that always operates in the master schema.
@@ -28,6 +30,9 @@ public class MasterFileHandlingController {
     @Autowired
     FileHandlingService fileHandlingService;
 
+    @Autowired
+    FileMigrationService fileMigrationService;
+
     @PostMapping("/upload")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @CheckAuthority
@@ -38,5 +43,11 @@ public class MasterFileHandlingController {
     @GetMapping("/download/{fileId}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileId) throws Exception {
         return fileHandlingService.downloadFile(fileId);
+    }
+
+    // ONE-TIME migration endpoint — remove after running
+    @GetMapping("/admin/migrate-files")
+    public ResponseEntity<Map<String, Object>> migrateFiles() {
+        return ResponseEntity.ok(fileMigrationService.migrateAll());
     }
 }

@@ -100,6 +100,25 @@ class Details extends CommonDetails {
     statusHistoryError: null,
     statusHistoryIndentId: null,
   };
+
+  async download(file) {
+    this.setState({ isLoading: true });
+    const response = await API.GET(apiEndpoints.masterFileDownload + file.fileUUId, {
+      responseType: "blob",
+    });
+    this.setState({ isLoading: false });
+    if (response.status === 200) {
+      var a = document.createElement("a");
+      var url = window.URL.createObjectURL(response.data);
+      a.href = url;
+      a.download = file.fileName;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    }
+  }
+
   deleteRow = null;
 
   componentDidMount() {

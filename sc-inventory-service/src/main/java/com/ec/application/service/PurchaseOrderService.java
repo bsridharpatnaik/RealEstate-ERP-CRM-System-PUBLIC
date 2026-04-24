@@ -86,7 +86,7 @@ public class PurchaseOrderService extends ReusableFields {
     IndentInventoryListRepo indentInventoryListRepo;
 
     @Autowired
-    com.ec.application.repository.DBFileRepository dbFileRepository;
+    DBFileStorageService dbFileStorageService;
 
     @Autowired
     FirmService firmService;
@@ -319,8 +319,8 @@ public class PurchaseOrderService extends ReusableFields {
         for (PurchaseOrderLine line : po.getLines()) {
             if (line.getSampleImageFileId() != null) {
                 try {
-                    dbFileRepository.findById(line.getSampleImageFileId())
-                            .ifPresent(dbFile -> line.setSampleImageData(dbFile.getData()));
+                    byte[] bytes = dbFileStorageService.getFileBytes(line.getSampleImageFileId());
+                    line.setSampleImageData(bytes);
                 } catch (Exception ex) {
                     // Non-critical — PDF will just show "-" for this line
                 }

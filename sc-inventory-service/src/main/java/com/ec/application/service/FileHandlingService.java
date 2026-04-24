@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -8,7 +9,7 @@ import javax.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -64,11 +65,13 @@ public class FileHandlingService {
             String encodedName = URLEncoder.encode(rawName, StandardCharsets.UTF_8.name())
                     .replace("+", "%20");
 
+            InputStream stream = dbFileStorageService.getFileStream(fileId);
+
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(dbFile.getFileType()))
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             "inline; filename*=UTF-8''" + encodedName)
-                    .body(new ByteArrayResource(dbFile.getData()));
+                    .body(new InputStreamResource(stream));
         } catch (Exception e) {
             log.error("Error downloading file", e);
             throw new Exception("Error downloading file");
@@ -80,11 +83,9 @@ public class FileHandlingService {
             return false;
         }
 
-        // Check if filename contains any non-ASCII characters
         boolean containsNonAscii = !Normalizer.normalize(fileName, Normalizer.Form.NFD)
                 .matches("\\A\\p{ASCII}*\\z");
 
-        // Check if filename contains any special characters except spaces, dots, hyphens, and underscores
         boolean containsSpecialChars = !fileName.matches("[a-zA-Z0-9\\s._-]+");
 
         if (containsNonAscii || containsSpecialChars) {

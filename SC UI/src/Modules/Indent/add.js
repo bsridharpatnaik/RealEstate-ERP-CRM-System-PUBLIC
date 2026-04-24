@@ -1038,7 +1038,7 @@ renderCurrentStockField(key) {
     this.setState({ isFileUploading: true });
 
     try {
-      const response = await API.POST(apiEndpoints.fileUpload, formData);
+      const response = await API.POST(apiEndpoints.masterFileUpload, formData);
       if (response.success) {
         if (!this.formData.fileInformations) {
           this.formData.fileInformations = [];
