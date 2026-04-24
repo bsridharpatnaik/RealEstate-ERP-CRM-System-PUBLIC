@@ -20,6 +20,9 @@ import { apiEndpoints } from "./../../../endpoints";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Popover from "@material-ui/core/Popover";
+import moment from "moment";
+import DatePicker from "./../../../Shared/Date";
+import { constants } from "./../../../messages";
 
 class Step2FillDetails extends React.Component {
   lineFileInputRefs = {};
@@ -964,6 +967,18 @@ handleAddFirm = async (firm) => {
               />
             </div>
           </div>
+          {/* PO Date — admin only */}
+          {this.props.isAdmin && (
+            <div style={{ marginTop: "12px" }}>
+              <label style={{ fontSize: "13px", color: "#555", marginBottom: "2px", display: "block" }}>PO Date</label>
+              <DatePicker
+                label="PO Date"
+                maxDate={moment()}
+                defaultValue={this.props.poDate}
+                onChange={(date) => this.props.onPoDateChange && this.props.onPoDateChange(date)}
+              />
+            </div>
+          )}
           {/* Project (optional) */}
           <div style={{ marginTop: "12px" }}>
             <Autocomplete

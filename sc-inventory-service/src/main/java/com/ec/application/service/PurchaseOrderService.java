@@ -102,6 +102,7 @@ public class PurchaseOrderService extends ReusableFields {
         validator.validateIndentLineItems(request.getLineItems());
         validator.validateOverridePhoneNumber(request.getOverridePhoneNumber());
         validator.validateOverrideEmail(request.getOverrideEmail());
+        validatePoDateBackdating(request.getPoDate());
         PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
@@ -343,6 +344,28 @@ public class PurchaseOrderService extends ReusableFields {
             throw new IllegalArgumentException("Purchase Order Number cannot be null");
         poLifecycleManager.shortClosePo(request);
         return purchaseOrderRepo.findByIdWithDetails(request.getPurchaseOrderNo()).get();
+    }
+
+    private void validatePoDateBackdating(Date poDate) throws Exception {
+        if (poDate == null) return;
+        Calendar todayCal = Calendar.getInstance();
+        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+        todayCal.set(Calendar.MINUTE, 0);
+        todayCal.set(Calendar.SECOND, 0);
+        todayCal.set(Calendar.MILLISECOND, 0);
+        Calendar poCal = Calendar.getInstance();
+        poCal.setTime(poDate);
+        poCal.set(Calendar.HOUR_OF_DAY, 0);
+        poCal.set(Calendar.MINUTE, 0);
+        poCal.set(Calendar.SECOND, 0);
+        poCal.set(Calendar.MILLISECOND, 0);
+        if (poCal.before(todayCal)) {
+            boolean isAdmin = userDetailsService.getCurrentUser().getRoles().stream()
+                    .anyMatch(r -> r.toLowerCase().contains(RoleConstants.ADMIN));
+            if (!isAdmin) {
+                throw new IllegalArgumentException("Only admin users can create backdated Purchase Orders.");
+            }
+        }
     }
 
     private String buildPoCreationMessage(CreatePoRequest request, String username) {

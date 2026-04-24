@@ -18,6 +18,7 @@ import Step3ReviewPO from "./add/step3ReviewPO";
 //misc
 import { apiEndpoints } from "./../../endpoints";
 import { messages, constants } from "./../../messages";
+import { getRole } from "./../../helper";
 import Button from "./../../Shared/Button";
 import trashRedIcon from "./../../Shared/Icons/trash-red.png";
 import Dialog from "@material-ui/core/Dialog";
@@ -47,6 +48,7 @@ class Add extends AddForm {
     showOverridePhoneEmail: false,
     projectName: "",
     isSpecialPo: false,
+    poDate: moment().format(constants.dateFormat),
     freightCharges: "",
     freightGstPercent: 18,
     customCharges: [],
@@ -491,7 +493,7 @@ class Add extends AddForm {
 
     // Prepare payload matching API structure
     const payload = {
-      poDate: moment().format(constants.dateFormat),
+      poDate: this.state.poDate,
       supplierId: this.state.orderTo?.id || null,
       firmId: this.state.orderFrom?.id || null,
       subject: this.state.poSubject || "",
@@ -1039,6 +1041,9 @@ class Add extends AddForm {
               onProjectNameChange={(val) => this.setState({ projectName: val })}
               isSpecialPo={this.state.isSpecialPo}
                 onIsSpecialPoChange={(val) => this.setState({ isSpecialPo: val })}
+              poDate={this.state.poDate}
+              onPoDateChange={(date) => this.setState({ poDate: date })}
+              isAdmin={(getRole() || "").toLowerCase() === "admin"}
               freightCharges={this.state.freightCharges}
               freightGstPercent={this.state.freightGstPercent}
               onFreightChargesChange={(val) => this.setState({ freightCharges: val })}
@@ -1057,6 +1062,7 @@ class Add extends AddForm {
               orderFrom={this.state.orderFrom}
               poSubject={this.state.poSubject}
               isSpecialPo={this.state.isSpecialPo}
+              poDate={this.state.poDate}
               items={this.state.items}
               noteText={this.state.noteText}
               projectName={this.state.projectName}
