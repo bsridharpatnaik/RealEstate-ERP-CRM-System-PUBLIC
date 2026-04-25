@@ -45,9 +45,14 @@ public class MasterFileHandlingController {
         return fileHandlingService.downloadFile(fileId);
     }
 
-    // ONE-TIME migration endpoint — remove after running
-    @GetMapping("/admin/migrate-files")
-    public ResponseEntity<Map<String, Object>> migrateFiles() {
-        return ResponseEntity.ok(fileMigrationService.migrateAll());
+    // ONE-TIME migration endpoints — remove after migration is complete
+    @PostMapping("/admin/migrate-files/start")
+    public ResponseEntity<Map<String, Object>> startMigration() {
+        return ResponseEntity.ok(fileMigrationService.startMigration());
+    }
+
+    @GetMapping("/admin/migrate-files/status")
+    public ResponseEntity<Map<String, Object>> migrationStatus() {
+        return ResponseEntity.ok(fileMigrationService.getStatus());
     }
 }
