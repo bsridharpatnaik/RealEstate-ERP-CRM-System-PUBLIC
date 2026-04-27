@@ -48,12 +48,16 @@ public class CheckBeforeDeleteService {
     @Autowired
     InventoryMonthPriceMappingRepository inventoryMonthPriceMappingRepository;
 
+    @Autowired
+    PurchaseOrderRepo purchaseOrderRepo;
+
     Logger log = LoggerFactory.getLogger(ContactService.class);
 
     public boolean isContactUsed(Long contactId) throws Exception {
         if (outwardInventoryRepo.contractorUsageCount(contactId) > 0
                 || machineryOnRentRepo.supplierUsageCount(contactId) > 0
-                || inwardInventoryRepo.supplierUsageCount(contactId) > 0)
+                || inwardInventoryRepo.supplierUsageCount(contactId) > 0
+                || purchaseOrderRepo.supplierUsageCount(contactId) > 0)
             return true;
         else
             return false;

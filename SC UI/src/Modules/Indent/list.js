@@ -447,6 +447,8 @@ class List extends ListCommon {
 
   async search(page = 0, sortkey = null, sortby = null) {
     this.page = page;
+    if (sortkey !== null) this.sortkey = sortkey;
+    if (sortby !== null) this.sortby = sortby;
     if (this.inputRef && this.inputRef.current) {
       this.inputRef.current.value = page + 1;
     }
@@ -456,12 +458,11 @@ class List extends ListCommon {
     params.size = noOfRecords;
 
     let sortParam = "";
-    if (sortkey || this.sortkey) {
-      let sortkeyValue = sortkey || this.sortkey;
-      sortkeyValue = this.replaceSortKey(sortkeyValue);
+    if (this.sortkey) {
+      let sortkeyValue = this.replaceSortKey(this.sortkey);
       sortParam = "&sort=" + sortkeyValue;
-      if (sortby || this.sortby) {
-        sortParam += "," + (sortby || this.sortby);
+      if (this.sortby) {
+        sortParam += "," + this.sortby;
       }
     }
 

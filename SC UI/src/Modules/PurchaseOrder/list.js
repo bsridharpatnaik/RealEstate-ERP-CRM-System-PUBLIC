@@ -417,10 +417,10 @@ class List extends ListCommon {
         ? this.filterData.suppliers
         : this.filterData.suppliers != null ? [this.filterData.suppliers] : [];
       if (suppliersArr.length > 0) {
-        const supplierIds = suppliersArr.map(supplier =>
-          supplier && typeof supplier === "object" ? supplier.id : supplier
+        const supplierNames = suppliersArr.map(supplier =>
+          supplier && typeof supplier === "object" ? supplier.name : supplier
         ).filter(Boolean);
-        params.filterData.push({ attrName: "suppliers", attrValue: supplierIds });
+        params.filterData.push({ attrName: "suppliers", attrValue: supplierNames });
       }
 
       if (this.filterData.staleBuckets && this.filterData.staleBuckets.id) {
@@ -618,18 +618,19 @@ class List extends ListCommon {
 
   async search(page = 0, sortkey = null, sortby = null) {
     this.page = page;
+    if (sortkey !== null) this.sortkey = sortkey;
+    if (sortby !== null) this.sortby = sortby;
     if (this.inputRef && this.inputRef.current) {
       this.inputRef.current.value = page + 1;
     }
 
     const params = this.prepareRequestBody();
     let sortParam = "";
-    if (sortkey || this.sortkey) {
-      let sortkeyValue = sortkey || this.sortkey;
-      sortkeyValue = this.replaceSortKey(sortkeyValue);
+    if (this.sortkey) {
+      let sortkeyValue = this.replaceSortKey(this.sortkey);
       sortParam = "&sort=" + sortkeyValue;
-      if (sortby || this.sortby) {
-        sortParam += "," + (sortby || this.sortby);
+      if (this.sortby) {
+        sortParam += "," + this.sortby;
       }
     }
 

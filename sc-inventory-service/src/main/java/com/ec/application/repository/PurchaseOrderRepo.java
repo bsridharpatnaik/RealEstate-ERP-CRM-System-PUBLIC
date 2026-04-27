@@ -83,4 +83,7 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
     })
     @Query("select po from PurchaseOrder po where po.purchaseOrderId = :id")
     Optional<PurchaseOrder> findByIdWithDetails(@Param("id") String id);
+
+    @Query("SELECT COUNT(p) FROM PurchaseOrder p WHERE p.supplier.contactId = :id")
+    int supplierUsageCount(@Param("id") Long id);
 }
