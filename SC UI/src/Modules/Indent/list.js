@@ -340,7 +340,7 @@ class List extends ListCommon {
       }
 
       if (this.filterData.productCodes && this.filterData.productCodes.length > 0) {
-        const value = this.filterData.productCodes.map((v) => v.id);
+        const value = this.filterData.productCodes.map((v) => v.name);
         params.filterData.push({ attrName: "productCodes", attrValue: value });
       }
 

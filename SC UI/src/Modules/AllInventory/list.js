@@ -75,7 +75,9 @@ typeoptions = [
     this.monthlyReportFilterData.EndDate = moment().format("DD-MM-YYYY");
   }
 
-  async search(page = 0) {
+  async search(page = 0, sortkey = null, sortby = null) {
+    if (sortkey !== null) this.sortkey = sortkey;
+    if (sortby !== null) this.sortby = sortby;
     this.setState({ isLoading: true });
     const params = this.prepareRequestBody();
     const response = await this.getData(page, params);

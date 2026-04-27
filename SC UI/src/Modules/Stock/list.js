@@ -104,7 +104,9 @@ class List extends ListCommon {
     }
     return params;
   }
-  async search(page = 0) {
+  async search(page = 0, sortkey = null, sortby = null) {
+    if (sortkey !== null) this.sortkey = sortkey;
+    if (sortby !== null) this.sortby = sortby;
     const params = this.prepareRequestBody();
     this.setState({ isLoading: true });
 
