@@ -11,6 +11,7 @@ import Table from "./../../Shared/Table";
 import TenantReorderConfig from "./TenantReorderConfig";
 //misc
 import { apiEndpoints, exportURL } from "./../../endpoints";
+import * as XLSX from "xlsx";
 import { getCategories } from "./../../actions/categories";
 import { messages } from "./../../messages";
 import { API } from "./../../axios";
@@ -59,7 +60,28 @@ class List extends ListCommon {
     return params;
   }
   getExportData(response) {
-    return response.data.content;
+    return response.data.content.map((item) => ({
+      "Product Name": item.productName,
+      "Product Code": item.productCode,
+      "Description": item.productDescription,
+      "Reorder Level": item.reorderQuantity,
+      "Measurement Unit": item.measurementUnit,
+      "Category": item.category?.categoryName || "",
+      "Managed Inventory": item.isManagedInventory ? "Yes" : "No",
+    }));
+  }
+
+  async exportToCSV() {
+    const response = await this.getExportAPIData();
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage, { variant: "error" });
+      return;
+    }
+    const data = this.getExportData(response);
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Products");
+    XLSX.writeFile(wb, "product.xlsx");
   }
   async getCategory() {
     const response = await API.GET(apiEndpoints.getCategoryNames);
