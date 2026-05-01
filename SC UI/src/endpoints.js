@@ -290,6 +290,7 @@ export const exportURL = {
   getExistingPrices: "/api/inventory/inventorypricing?size=" + exportPageSize,
   getContact: "/api/inventory/contact/export",
   getStock: "/api/inventory/stock/export",
+  stockExportExcel: "/api/inventory/stock/export/excel",
   getBOQStatus:"/api/inventory/boqupload/get_boq_status_details",
   getInwardInventory: "/api/inventory/inward/export",
   getIndent: "/inventory/indent/export",

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.ProductIdAndStockProjection;
 import com.ec.application.service.StockService;
@@ -47,6 +48,12 @@ public class StockController {
     public <T> List<T> returnAllStockForExport(@RequestBody FilterDataList filterDataList)
             throws Exception {
         return stockService.findStockForAllForExport(filterDataList);
+    }
+
+    @PostMapping("/export/excel")
+    public void exportStockToExcel(@RequestBody FilterDataList filterDataList,
+                                   HttpServletResponse response) throws Exception {
+        stockService.streamStockExcel(filterDataList, response);
     }
 
     @PostMapping("/current")

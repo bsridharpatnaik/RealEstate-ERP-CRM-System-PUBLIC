@@ -15,6 +15,7 @@ import IconButtons from "./../../Shared/Button/IconButtons.js";
 import { Slide } from "@material-ui/core";
 import Details from "./details";
 import { API } from "./../../axios";
+import { triggerBlobDownload } from "./../../helper";
 
 class List extends ListCommon {
   filterData = {};
@@ -62,6 +63,16 @@ class List extends ListCommon {
   }
   getExportData(response) {
     return response.data;
+  }
+
+  async exportToCSV() {
+    const params = this.prepareRequestBody();
+    const response = await API.POSTBlob(exportURL.stockExportExcel, params);
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage || "Export failed", { variant: "error" });
+      return;
+    }
+    triggerBlobDownload(response.data, "stock-export.xlsx");
   }
 
   scrollBottom() {
