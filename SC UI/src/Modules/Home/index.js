@@ -29,6 +29,7 @@ import {
   ChangePassword,
   BOQ,
   BOQStatus,
+  BOQHistory,
   Indent,
   PurchaseOrder,
   InventoryTransfer,
@@ -90,6 +91,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.boqStatus}>
                   <BOQStatus key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.boqHistory}>
+                  <BOQHistory key={new Date()} {...props} />
                 </Route>
                 <Route path={"/boqReport"}>
                   <BOQReport key={new Date()} {...props} />

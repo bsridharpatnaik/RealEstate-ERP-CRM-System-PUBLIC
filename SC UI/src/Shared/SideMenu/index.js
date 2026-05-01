@@ -236,6 +236,12 @@ function SideMenu(props) {
                     labelText={"Status"}
                     linkurl={appendURL("/boqStatus")}
                   />
+                  <DashboardItem
+                    nodeId="16"
+                    onClick={props.setSideBarValue}
+                    labelText={"History"}
+                    linkurl={appendURL("/boqHistory")}
+                  />
                   {/* <DashboardItem
                     nodeId="16"
                     onClick={props.setSideBarValue}

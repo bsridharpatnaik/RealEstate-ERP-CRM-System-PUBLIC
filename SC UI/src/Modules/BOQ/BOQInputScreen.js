@@ -38,10 +38,11 @@ const BOQInputScreen = () => {
   const [responseStatus, setResponseStatus]               = useState(true);
   const [uploadMode, setUploadMode]                       = useState('new');
   const [dragOver, setDragOver]                           = useState(false);
+  const [hasCategory, setHasCategory]                     = useState(false);
 
   const tableHeading = [
     'S No.', 'Building Type', 'Building Unit',
-    'Inventory', 'Quantity', 'Final Location', 'Changes', 'Delete'
+    'Category', 'Inventory', 'Unit', 'Quantity', 'Final Location', 'Changes', 'Delete'
   ];
 
   let td = [null];
@@ -91,6 +92,7 @@ const BOQInputScreen = () => {
     setExcelFile(null);
     setSelectedFileName('');
     setExcelFileError(null);
+    setHasCategory(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -137,7 +139,8 @@ const BOQInputScreen = () => {
     const workbook = XLSX.read(excelFile, { type: 'buffer' });
     const worksheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[worksheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet);
+    const data = XLSX.utils.sheet_to_json(worksheet)
+      .filter(row => row.Inventory && String(row.Inventory).trim() !== '');
 
     function extractHeader(ws) {
       const header = [];
@@ -151,13 +154,18 @@ const BOQInputScreen = () => {
     }
 
     const heads = extractHeader(worksheet);
-    const isValidBase = heads[0] === 'Inventory' && heads[1] === 'Quantity' && heads[2] === 'FinalLocation';
-    if (!isValidBase) {
+    // New template: Category | Inventory | Unit | Quantity | FinalLocation | Changes?
+    // Old template (backwards compat): Inventory | Quantity | FinalLocation | Changes?
+    const newFormat = heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && heads[4] === 'FinalLocation';
+    const oldFormat = heads[0] === 'Inventory' && heads[1] === 'Quantity' && heads[2] === 'FinalLocation';
+    if (!newFormat && !oldFormat) {
       enqueueSnackbar('Headers not recognised. Please use the provided template.', { variant: 'error' });
       return;
     }
 
-    const mode = heads[3] === 'Changes' ? 'new' : 'existing';
+    setHasCategory(newFormat);
+    const mode = newFormat ? (heads[5] === 'Changes' ? 'new' : 'existing')
+                           : (heads[3] === 'Changes' ? 'new' : 'existing');
     setUploadMode(mode);
 
     const excelDataM = [];
@@ -214,7 +222,13 @@ const BOQInputScreen = () => {
         for (let u = 0; u < buildingUnitData.length; u++) {
           if (buildingUnitData[u].label === splt[2]) splt[2] = buildingUnitData[u].value;
         }
-        td[key2++] = {
+        // New format: sno(0) BT(1) BU(2) Category(3) Inventory(4) Unit(5) Qty(6) Loc(7) Changes(8)
+        // Old format: sno(0) BT(1) BU(2) Inventory(3) Qty(4) Loc(5) Changes(6)
+        td[key2++] = hasCategory ? {
+          sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
+          inventory: splt[4], quantity: splt[6], location: splt[7],
+          changes: uploadMode === 'existing' ? 'upsert' : splt[8]
+        } : {
           sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
           inventory: splt[3], quantity: splt[4], location: splt[5],
           changes: uploadMode === 'existing' ? 'upsert' : splt[6]
@@ -272,6 +286,7 @@ const BOQInputScreen = () => {
     setExcelFile(null);
     setSelectedFileName('');
     setExcelFileError(null);
+    setHasCategory(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     setTimeout(() => setIsReset(false), 500);
   };
@@ -562,13 +577,26 @@ const BOQInputScreen = () => {
             <table className="table">
               <thead>
                 <tr>
-                  {tableHeading.slice(0, 6).map((h, i) => (
+                  {/* S No, Building Type, Building Unit */}
+                  {tableHeading.slice(0, 3).map((h, i) => (
                     <th key={i} style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
-                  {uploadMode === 'new' && (
-                    <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[6]}</th>
+                  {/* Category and Unit cols — only when new-format file */}
+                  {hasCategory && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[3]}</th>
                   )}
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[7]}</th>
+                  {/* Inventory */}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[4]}</th>
+                  {hasCategory && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[5]}</th>
+                  )}
+                  {/* Quantity, Final Location */}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[6]}</th>
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[7]}</th>
+                  {uploadMode === 'new' && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[8]}</th>
+                  )}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[9]}</th>
                 </tr>
               </thead>
               <tbody>
@@ -577,13 +605,19 @@ const BOQInputScreen = () => {
                     <td className="row-data" id={idx + 1 + tableHeading[0]} style={{ border: '1px solid rgba(0,0,0,0.15)' }}><pre>{idx + 1}</pre></td>
                     <td className="row-data" id={idx + 1 + tableHeading[1]} style={{ border: '1px solid rgba(0,0,0,0.15)' }}><pre>{buildingType}</pre></td>
                     <td className="row-data" id={idx + 1 + tableHeading[2]} style={{ border: '1px solid rgba(0,0,0,0.15)' }}><pre>{buildingUnitNameforTable[idx]}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[3]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Inventory}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[4]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Quantity}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[5]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.FinalLocation}</pre></td>
-                    {uploadMode === 'new' && (
-                      <td className="row-data" id={idx + 1 + tableHeading[6]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
+                    {hasCategory && (
+                      <td className="row-data" id={idx + 1 + tableHeading[3]} style={{ border: '1px solid rgba(0,0,0,0.15)', color: '#888' }}><pre>{row.Category}</pre></td>
                     )}
-                    <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
+                    <td className="row-data" id={idx + 1 + tableHeading[4]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Inventory}</pre></td>
+                    {hasCategory && (
+                      <td className="row-data" id={idx + 1 + tableHeading[5]} style={{ border: '1px solid rgba(0,0,0,0.15)', color: '#888' }}><pre>{row.Unit || '—'}</pre></td>
+                    )}
+                    <td className="row-data" id={idx + 1 + tableHeading[6]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Quantity}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.FinalLocation}</pre></td>
+                    {uploadMode === 'new' && (
+                      <td className="row-data" id={idx + 1 + tableHeading[8]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
+                    )}
+                    <td className="row-data" id={idx + 1 + tableHeading[9]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
                       <IconButton
                         onClick={() => {
                           setExcelData(prev => prev.filter((_, i) => i !== idx));

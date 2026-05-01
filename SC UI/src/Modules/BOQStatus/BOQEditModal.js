@@ -19,31 +19,38 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
 
   const [buildingTypeOptions, setBuildingTypeOptions] = useState([]);
   const [buildingUnitOptions, setBuildingUnitOptions] = useState([]);
+  const [allProductOptions, setAllProductOptions]     = useState([]);
   const [productOptions, setProductOptions]           = useState([]);
+  const [categoryOptions, setCategoryOptions]         = useState([]);
   const [locationOptions, setLocationOptions]         = useState([]);
   const [buildingType, setBuildingType]   = useState(null);
   const [buildingUnit, setBuildingUnit]   = useState(null);
+  const [category, setCategory]           = useState(null);
   const [product, setProduct]             = useState(null);
+  const [unit, setUnit]                   = useState('');
   const [finalLocation, setFinalLocation] = useState(null);
   const [quantity, setQuantity]           = useState('');
   const [saving, setSaving]               = useState(false);
 
-  // Load building types, products and usage areas once
+  // Load building types, categories, products and usage areas once
   useEffect(() => {
     API.GET(apiEndpoints.buildingType).then(r => {
-      if (r.success) {
-        setBuildingTypeOptions(r.data.map(d => ({ value: d.id, label: d.name })));
-      }
+      if (r.success) setBuildingTypeOptions(r.data.map(d => ({ value: d.id, label: d.name })));
     });
-    API.GET('/api/inventory/product/idandnames').then(r => {
+    API.GET('/api/inventory/category/idandnames').then(r => {
+      if (r.success) setCategoryOptions(r.data.map(d => ({ value: d.id, label: d.name })));
+    });
+    API.GET('/api/inventory/product').then(r => {
       if (r.success) {
-        setProductOptions(r.data.map(d => ({ value: d.id, label: d.name })));
+        const opts = r.data
+          .map(d => ({ value: d.ProductId, label: d.productName, unit: d.measurementUnit || '' }))
+          .sort((a, b) => a.label.localeCompare(b.label));
+        setAllProductOptions(opts);
+        setProductOptions(opts);
       }
     });
     API.GET('/api/inventory/usagearea/idandnames').then(r => {
-      if (r.success) {
-        setLocationOptions(r.data.map(d => ({ value: d.id, label: d.name })));
-      }
+      if (r.success) setLocationOptions(r.data.map(d => ({ value: d.id, label: d.name })));
     });
   }, []);
 
@@ -55,6 +62,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       // Pre-fill product
       const preProduct = productOptions.find(o => o.label === initialData.productName) || null;
       setProduct(preProduct);
+      setUnit(preProduct ? (preProduct.unit || '') : '');
 
       // Pre-fill final location if single detail row
       if (initialData.finalLocation) {
@@ -83,7 +91,10 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       setBuildingType(null);
       setBuildingUnit(null);
       setBuildingUnitOptions([]);
+      setCategory(null);
       setProduct(null);
+      setUnit('');
+      setProductOptions(allProductOptions);
       setFinalLocation(null);
       setQuantity('');
     }
@@ -106,6 +117,27 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
     setBuildingUnit(null);
     setBuildingUnitOptions([]);
     if (opt) loadBuildingUnits(opt.value);
+  };
+
+  const handleCategoryChange = async (opt) => {
+    setCategory(opt);
+    setProduct(null);
+    setUnit('');
+    if (!opt) {
+      setProductOptions(allProductOptions);
+      return;
+    }
+    const r = await API.GET('/api/inventory/product?categoryId=' + opt.value);
+    if (r.success && r.data) {
+      setProductOptions(r.data.map(d => ({ value: d.ProductId, label: d.productName })));
+    } else {
+      setProductOptions(allProductOptions);
+    }
+  };
+
+  const handleProductChange = (opt) => {
+    setProduct(opt);
+    setUnit(opt ? (opt.unit || '') : '');
   };
 
   const handleSave = async () => {
@@ -178,14 +210,31 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
           </div>
 
           <div>
+            <label style={labelStyle}>Category <span style={{ fontSize: '11px', color: '#888', fontWeight: 400 }}>(optional — filters products below)</span></label>
+            <Select
+              options={categoryOptions}
+              value={category}
+              onChange={handleCategoryChange}
+              placeholder="All categories"
+              isSearchable
+              isClearable
+            />
+          </div>
+
+          <div>
             <label style={labelStyle}>Product / Inventory <span style={{ color: 'red' }}>*</span></label>
             <Select
               options={productOptions}
               value={product}
-              onChange={setProduct}
-              placeholder="Select Product"
+              onChange={handleProductChange}
+              placeholder={category ? 'Select Product (filtered by category)' : 'Select Product'}
               isSearchable
             />
+            {unit && (
+              <div style={{ marginTop: '6px', fontSize: '12px', color: '#1976d2' }}>
+                Unit of Measure: <strong>{unit}</strong>
+              </div>
+            )}
           </div>
 
           <div>

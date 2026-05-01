@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -50,6 +51,15 @@ public class BOQService {
 
     @Autowired
     private InwardOutwardListRepo inwardOutwardListRepo;
+
+    @Autowired
+    private CategoryRepo categoryRepository;
+
+    @Autowired
+    private BOQHistoryService boqHistoryService;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
 
     Logger log = LoggerFactory.getLogger(BOQService.class);
 
@@ -96,10 +106,24 @@ public class BOQService {
     }
 
 
+    private String resolveCurrentUser() {
+        try {
+            return userDetailsService.getCurrentUser().getUsername();
+        } catch (Exception e) {
+            return "System";
+        }
+    }
+
     private void addBoqRecords(BOQUploadDto upload, Product product, UsageArea location, BOQUpload boqUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (boqUpload == null) {
-            save(upload.getBuildingType(), upload.getBuildingUnit(), location.getUsageAreaId(), product.getProductId(), upload.getQuantity(), upload.getSno(), upload.getChanges());
+            BOQUpload saved = saveAndReturn(upload.getBuildingType(), upload.getBuildingUnit(),
+                    location.getUsageAreaId(), product.getProductId(), upload.getQuantity(),
+                    upload.getSno(), upload.getChanges());
+            if (saved != null) {
+                boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
+                        Double.parseDouble(upload.getQuantity()));
+            }
         }
     }
 
@@ -107,11 +131,11 @@ public class BOQService {
     private void deleteBoqQuantity(BOQUploadDto upload, BOQUpload boqUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (boqUpload != null) {
-
+            double oldQty = boqUpload.getQuantity();
             boqUpload.setQuantity(0);
             boqUpload.setChanges(upload.getChanges());
             bOQUploadRepository.softDelete(boqUpload);
-
+            boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0);
         }
     }
 
@@ -119,15 +143,23 @@ public class BOQService {
     private void updateBoqQuantity(BOQUploadDto upload, BOQUpload boqUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (boqUpload != null) {
+            double oldQty = boqUpload.getQuantity();
+            double newQty = Double.parseDouble(upload.getQuantity());
             boqUpload.setChanges(upload.getChanges());
-            boqUpload.setQuantity(Double.parseDouble(upload.getQuantity()));
+            boqUpload.setQuantity(newQty);
             bOQUploadRepository.save(boqUpload);
-
+            if (oldQty != newQty) {
+                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty);
+            }
         }
     }
 
 
     private void save(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, int sNo, String changes) {
+        saveAndReturn(buildingTypeId, buildingUnit, usageAreaId, productId, quantity, sNo, changes);
+    }
+
+    private BOQUpload saveAndReturn(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, int sNo, String changes) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUpload boqUpload = new BOQUpload();
 
@@ -146,53 +178,130 @@ public class BOQService {
         boqUpload.setSno(sNo);
 
         boqUpload.setUsageLocation(usageLocationRepository.findByLocationId((long) buildingUnit));
-        bOQUploadRepository.save(boqUpload);
+        return bOQUploadRepository.save(boqUpload);
     }
 
 
     public byte[] generateSampleExcel() throws IOException {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        List<String> productNames = productRepository.findIdAndNames()
-                .stream().map(IdNameProjections::getName).sorted().collect(Collectors.toList());
+
+        List<Product> allProducts = productRepository.findAll()
+                .stream().sorted(Comparator.comparing(Product::getProductName)).collect(Collectors.toList());
+
+        // Group products by category for cascading dropdown
+        Map<String, List<Product>> byCategory = new LinkedHashMap<>();
+        for (Product p : allProducts) {
+            if (p.getCategory() != null) {
+                byCategory.computeIfAbsent(p.getCategory().getCategoryName(), k -> new ArrayList<>()).add(p);
+            }
+        }
+        List<String> sortedCategoryNames = byCategory.keySet().stream().sorted().collect(Collectors.toList());
         List<String> locationNames = locationRepository.getNames();
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("BOQ Template");
             Row header = sheet.createRow(0);
-            header.createCell(0).setCellValue("Inventory");
-            header.createCell(1).setCellValue("Quantity");
-            header.createCell(2).setCellValue("FinalLocation");
-            header.createCell(3).setCellValue("Changes");
+            // Col 0: Category  Col 1: Inventory  Col 2: Unit (VLOOKUP, read-only)
+            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Changes
+            header.createCell(0).setCellValue("Category");
+            header.createCell(1).setCellValue("Inventory");
+            header.createCell(2).setCellValue("Unit");
+            header.createCell(3).setCellValue("Quantity");
+            header.createCell(4).setCellValue("FinalLocation");
+            header.createCell(5).setCellValue("Changes");
 
-            Sheet productSheet = workbook.createSheet("Products");
-            for (int i = 0; i < productNames.size(); i++) {
-                productSheet.createRow(i).createCell(0).setCellValue(productNames.get(i));
+            // Hidden: Categories — col A = display name, col B = named range key for INDIRECT
+            Sheet categorySheet = workbook.createSheet("Categories");
+            Map<String, Integer> usedRangeNames = new HashMap<>();
+            List<String> rangeKeys = new ArrayList<>();
+            for (int i = 0; i < sortedCategoryNames.size(); i++) {
+                String catName = sortedCategoryNames.get(i);
+                String rangeKey = uniqueRangeName(toRangeName(catName), usedRangeNames);
+                rangeKeys.add(rangeKey);
+                Row r = categorySheet.createRow(i);
+                r.createCell(0).setCellValue(catName);
+                r.createCell(1).setCellValue(rangeKey);
             }
-            workbook.setSheetHidden(workbook.getSheetIndex("Products"), true);
+            workbook.setSheetHidden(workbook.getSheetIndex("Categories"), true);
 
+            // Hidden: CategoryProducts — one column per category; named range per column
+            Sheet catProdSheet = workbook.createSheet("CategoryProducts");
+            for (int ci = 0; ci < sortedCategoryNames.size(); ci++) {
+                String catName = sortedCategoryNames.get(ci);
+                List<String> prods = byCategory.get(catName).stream()
+                        .map(Product::getProductName).sorted().collect(Collectors.toList());
+                String colLetter = CellReference.convertNumToColString(ci);
+                for (int ri = 0; ri < prods.size(); ri++) {
+                    Row row = catProdSheet.getRow(ri);
+                    if (row == null) row = catProdSheet.createRow(ri);
+                    row.createCell(ci).setCellValue(prods.get(ri));
+                }
+                Name nr = workbook.createName();
+                nr.setNameName(rangeKeys.get(ci));
+                nr.setRefersToFormula("CategoryProducts!$" + colLetter + "$1:$" + colLetter + "$" + prods.size());
+            }
+            workbook.setSheetHidden(workbook.getSheetIndex("CategoryProducts"), true);
+
+            // Hidden: ProductUnits — col A = product name, col B = unit (for VLOOKUP in Unit column)
+            Sheet puSheet = workbook.createSheet("ProductUnits");
+            for (int i = 0; i < allProducts.size(); i++) {
+                Row r = puSheet.createRow(i);
+                r.createCell(0).setCellValue(allProducts.get(i).getProductName());
+                String mu = allProducts.get(i).getMeasurementUnit();
+                r.createCell(1).setCellValue(mu != null ? mu : "");
+            }
+            workbook.setSheetHidden(workbook.getSheetIndex("ProductUnits"), true);
+
+            // Named range covering all products — used by Inventory dropdown when no category is selected
+            int puSize = allProducts.size();
+            Name allProductsRange = workbook.createName();
+            allProductsRange.setNameName("AllProducts");
+            allProductsRange.setRefersToFormula("ProductUnits!$A$1:$A$" + puSize);
+
+            // Hidden: Locations
             Sheet locationSheet = workbook.createSheet("Locations");
             for (int i = 0; i < locationNames.size(); i++) {
                 locationSheet.createRow(i).createCell(0).setCellValue(locationNames.get(i));
             }
             workbook.setSheetHidden(workbook.getSheetIndex("Locations"), true);
 
+            // Unit VLOOKUP formula for data rows (auto-populates when Inventory is selected)
+            for (int r = 1; r <= 1000; r++) {
+                Row dataRow = sheet.createRow(r);
+                dataRow.createCell(2).setCellFormula(
+                    "IFERROR(VLOOKUP(B" + (r + 1) + ",ProductUnits!$A$1:$B$" + puSize + ",2,FALSE),\"\")");
+            }
+
             DataValidationHelper dvHelper = sheet.getDataValidationHelper();
 
-            DataValidation pv = dvHelper.createValidation(
-                    dvHelper.createFormulaListConstraint("Products!$A$1:$A$" + productNames.size()),
+            // Category dropdown (col 0)
+            DataValidation catv = dvHelper.createValidation(
+                    dvHelper.createFormulaListConstraint("Categories!$A$1:$A$" + sortedCategoryNames.size()),
                     new CellRangeAddressList(1, 1000, 0, 0));
-            pv.setShowErrorBox(true);
+            catv.setShowErrorBox(true);
+            sheet.addValidationData(catv);
+
+            // Inventory cascading dropdown (col 1)
+            // No category selected → AllProducts (all inventory); category selected → filtered named range
+            // A2 is relative — Excel adjusts per row (A3 for row 3, A4 for row 4, etc.)
+            DataValidation pv = dvHelper.createValidation(
+                    dvHelper.createFormulaListConstraint(
+                        "INDIRECT(IF(A2=\"\",\"AllProducts\",VLOOKUP(A2,Categories!$A$1:$B$" + sortedCategoryNames.size() + ",2,0)))"),
+                    new CellRangeAddressList(1, 1000, 1, 1));
+            pv.setShowErrorBox(false);
             sheet.addValidationData(pv);
 
+            // FinalLocation dropdown (col 4)
             DataValidation lv = dvHelper.createValidation(
                     dvHelper.createFormulaListConstraint("Locations!$A$1:$A$" + locationNames.size()),
-                    new CellRangeAddressList(1, 1000, 2, 2));
+                    new CellRangeAddressList(1, 1000, 4, 4));
             lv.setShowErrorBox(true);
             sheet.addValidationData(lv);
 
+            // Changes dropdown (col 5)
             DataValidation cv = dvHelper.createValidation(
                     dvHelper.createExplicitListConstraint(new String[]{"addition", "update", "deletion"}),
-                    new CellRangeAddressList(1, 1000, 3, 3));
+                    new CellRangeAddressList(1, 1000, 5, 5));
             cv.setShowErrorBox(true);
             sheet.addValidationData(cv);
 
@@ -208,23 +317,78 @@ public class BOQService {
         List<BOQUpload> boqList = bOQUploadRepository
                 .findByBuildingTypeTypeIdAndUsageLocationLocationId(buildingTypeId, buildingUnitId);
 
-        List<String> productNames = productRepository.findIdAndNames()
-                .stream().map(IdNameProjections::getName).sorted().collect(Collectors.toList());
+        List<Product> allProducts = productRepository.findAll()
+                .stream().sorted(Comparator.comparing(Product::getProductName)).collect(Collectors.toList());
+
+        Map<String, List<Product>> byCategory = new LinkedHashMap<>();
+        for (Product p : allProducts) {
+            if (p.getCategory() != null) {
+                byCategory.computeIfAbsent(p.getCategory().getCategoryName(), k -> new ArrayList<>()).add(p);
+            }
+        }
+        List<String> sortedCategoryNames = byCategory.keySet().stream().sorted().collect(Collectors.toList());
         List<String> locationNames = locationRepository.getNames();
 
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Existing BOQ");
             Row header = sheet.createRow(0);
-            header.createCell(0).setCellValue("Inventory");
-            header.createCell(1).setCellValue("Quantity");
-            header.createCell(2).setCellValue("FinalLocation");
+            // Col 0: Category  Col 1: Inventory  Col 2: Unit (pre-filled, reference only)
+            // Col 3: Quantity  Col 4: FinalLocation
+            header.createCell(0).setCellValue("Category");
+            header.createCell(1).setCellValue("Inventory");
+            header.createCell(2).setCellValue("Unit");
+            header.createCell(3).setCellValue("Quantity");
+            header.createCell(4).setCellValue("FinalLocation");
 
-            Sheet productSheet = workbook.createSheet("Products");
-            for (int i = 0; i < productNames.size(); i++) {
-                productSheet.createRow(i).createCell(0).setCellValue(productNames.get(i));
+            // Hidden: Categories — col A = display name, col B = named range key
+            Sheet categorySheet = workbook.createSheet("Categories");
+            Map<String, Integer> usedRangeNames = new HashMap<>();
+            List<String> rangeKeys = new ArrayList<>();
+            for (int i = 0; i < sortedCategoryNames.size(); i++) {
+                String catName = sortedCategoryNames.get(i);
+                String rangeKey = uniqueRangeName(toRangeName(catName), usedRangeNames);
+                rangeKeys.add(rangeKey);
+                Row r = categorySheet.createRow(i);
+                r.createCell(0).setCellValue(catName);
+                r.createCell(1).setCellValue(rangeKey);
             }
-            workbook.setSheetHidden(workbook.getSheetIndex("Products"), true);
+            workbook.setSheetHidden(workbook.getSheetIndex("Categories"), true);
 
+            // Hidden: CategoryProducts — one column per category with named ranges
+            Sheet catProdSheet = workbook.createSheet("CategoryProducts");
+            for (int ci = 0; ci < sortedCategoryNames.size(); ci++) {
+                String catName = sortedCategoryNames.get(ci);
+                List<String> prods = byCategory.get(catName).stream()
+                        .map(Product::getProductName).sorted().collect(Collectors.toList());
+                String colLetter = CellReference.convertNumToColString(ci);
+                for (int ri = 0; ri < prods.size(); ri++) {
+                    Row row = catProdSheet.getRow(ri);
+                    if (row == null) row = catProdSheet.createRow(ri);
+                    row.createCell(ci).setCellValue(prods.get(ri));
+                }
+                Name nr = workbook.createName();
+                nr.setNameName(rangeKeys.get(ci));
+                nr.setRefersToFormula("CategoryProducts!$" + colLetter + "$1:$" + colLetter + "$" + prods.size());
+            }
+            workbook.setSheetHidden(workbook.getSheetIndex("CategoryProducts"), true);
+
+            // Hidden: ProductUnits — for VLOOKUP in Unit column
+            Sheet puSheet = workbook.createSheet("ProductUnits");
+            for (int i = 0; i < allProducts.size(); i++) {
+                Row r = puSheet.createRow(i);
+                r.createCell(0).setCellValue(allProducts.get(i).getProductName());
+                String mu = allProducts.get(i).getMeasurementUnit();
+                r.createCell(1).setCellValue(mu != null ? mu : "");
+            }
+            workbook.setSheetHidden(workbook.getSheetIndex("ProductUnits"), true);
+
+            // Named range covering all products — used when no category selected
+            int puSize = allProducts.size();
+            Name allProductsRange = workbook.createName();
+            allProductsRange.setNameName("AllProducts");
+            allProductsRange.setRefersToFormula("ProductUnits!$A$1:$A$" + puSize);
+
+            // Hidden: Locations
             Sheet locationSheet = workbook.createSheet("Locations");
             for (int i = 0; i < locationNames.size(); i++) {
                 locationSheet.createRow(i).createCell(0).setCellValue(locationNames.get(i));
@@ -234,24 +398,49 @@ public class BOQService {
             DataValidationHelper dvHelper = sheet.getDataValidationHelper();
             int lastRow = Math.max(boqList.size(), 1000);
 
-            DataValidation pv = dvHelper.createValidation(
-                    dvHelper.createFormulaListConstraint("Products!$A$1:$A$" + productNames.size()),
+            // Unit VLOOKUP formula for all data rows — auto-updates when Inventory changes
+            for (int r = 1; r <= lastRow; r++) {
+                Row dataRow = sheet.getRow(r);
+                if (dataRow == null) dataRow = sheet.createRow(r);
+                dataRow.createCell(2).setCellFormula(
+                    "IFERROR(VLOOKUP(B" + (r + 1) + ",ProductUnits!$A$1:$B$" + puSize + ",2,FALSE),\"\")");
+            }
+
+            // Category dropdown (col 0)
+            DataValidation catv = dvHelper.createValidation(
+                    dvHelper.createFormulaListConstraint("Categories!$A$1:$A$" + sortedCategoryNames.size()),
                     new CellRangeAddressList(1, lastRow, 0, 0));
-            pv.setShowErrorBox(true);
+            catv.setShowErrorBox(true);
+            sheet.addValidationData(catv);
+
+            // Inventory cascading dropdown (col 1)
+            // No category → AllProducts; category selected → filtered named range
+            DataValidation pv = dvHelper.createValidation(
+                    dvHelper.createFormulaListConstraint(
+                        "INDIRECT(IF(A2=\"\",\"AllProducts\",VLOOKUP(A2,Categories!$A$1:$B$" + sortedCategoryNames.size() + ",2,0)))"),
+                    new CellRangeAddressList(1, lastRow, 1, 1));
+            pv.setShowErrorBox(false);
             sheet.addValidationData(pv);
 
+            // FinalLocation dropdown (col 4)
             DataValidation lv = dvHelper.createValidation(
                     dvHelper.createFormulaListConstraint("Locations!$A$1:$A$" + locationNames.size()),
-                    new CellRangeAddressList(1, lastRow, 2, 2));
+                    new CellRangeAddressList(1, lastRow, 4, 4));
             lv.setShowErrorBox(true);
             sheet.addValidationData(lv);
 
+            // Pre-fill data rows from existing BOQ (col 2/Unit is driven by formula, not hardcoded)
             int rowIdx = 1;
             for (BOQUpload b : boqList) {
-                Row row = sheet.createRow(rowIdx++);
-                row.createCell(0).setCellValue(b.getProduct().getProductName());
-                row.createCell(1).setCellValue(b.getQuantity());
-                row.createCell(2).setCellValue(b.getLocation().getUsageAreaName());
+                Row row = sheet.getRow(rowIdx++);
+                if (row == null) row = sheet.createRow(rowIdx - 1);
+                String categoryName = (b.getProduct().getCategory() != null)
+                        ? b.getProduct().getCategory().getCategoryName() : "";
+                row.createCell(0).setCellValue(categoryName);
+                row.createCell(1).setCellValue(b.getProduct().getProductName());
+                // col 2 already has VLOOKUP formula — do not overwrite
+                row.createCell(3).setCellValue(b.getQuantity());
+                row.createCell(4).setCellValue(b.getLocation().getUsageAreaName());
             }
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -264,13 +453,37 @@ public class BOQService {
     private void upsertBoqRecord(BOQUploadDto upload, Product product, UsageArea location, BOQUpload boqUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (boqUpload == null) {
-            save(upload.getBuildingType(), upload.getBuildingUnit(), location.getUsageAreaId(),
-                    product.getProductId(), upload.getQuantity(), upload.getSno(), BOQUploadConstant.UPDATE);
+            BOQUpload saved = saveAndReturn(upload.getBuildingType(), upload.getBuildingUnit(),
+                    location.getUsageAreaId(), product.getProductId(), upload.getQuantity(),
+                    upload.getSno(), BOQUploadConstant.UPDATE);
+            if (saved != null) {
+                boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
+                        Double.parseDouble(upload.getQuantity()));
+            }
         } else {
-            boqUpload.setQuantity(Double.parseDouble(upload.getQuantity()));
+            double oldQty = boqUpload.getQuantity();
+            double newQty = Double.parseDouble(upload.getQuantity());
+            boqUpload.setQuantity(newQty);
             boqUpload.setChanges(BOQUploadConstant.UPDATE);
             bOQUploadRepository.save(boqUpload);
+            if (oldQty != newQty) {
+                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty);
+            }
         }
+    }
+
+
+    /** Converts a category display name into a valid Excel named range identifier. */
+    private String toRangeName(String name) {
+        String result = name.replaceAll("[^a-zA-Z0-9]", "_");
+        if (result.isEmpty() || Character.isDigit(result.charAt(0))) result = "Cat_" + result;
+        return result;
+    }
+
+    /** Returns a unique range name, appending a suffix if the base name was already used. */
+    private String uniqueRangeName(String base, Map<String, Integer> used) {
+        if (!used.containsKey(base)) { used.put(base, 1); return base; }
+        int n = used.get(base) + 1; used.put(base, n); return base + "_" + n;
     }
 
 

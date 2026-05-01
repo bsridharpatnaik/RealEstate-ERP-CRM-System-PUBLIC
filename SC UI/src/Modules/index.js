@@ -18,6 +18,7 @@ import BuildingType from "./BuildingType";
 import ChangePassword from "./ChangePassword";
 import BOQ from "./BOQ";
 import BOQStatus from "./BOQStatus";
+import BOQHistory from "./BOQHistory";
 import Indent from "./Indent";
 import PurchaseOrder from "./PurchaseOrder";
 import InventoryTransfer from "./InventoryTransfer";
@@ -45,6 +46,7 @@ export {
   ChangePassword,
   BOQ,
   BOQStatus,
+  BOQHistory,
   Indent,
   PurchaseOrder,
   InventoryTransfer,
