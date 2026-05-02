@@ -137,7 +137,7 @@ class InwardInventoryForm extends AddForm {
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
-              quantity: item.quantity,
+              quantity: "",
               warehouseId: item.warehouse?.warehouseId || null,
               lineItemCode: item.lineItemCode
             };
@@ -419,7 +419,7 @@ class InwardInventoryForm extends AddForm {
             tolerancePercent: tolPct,
             pendingQuantity: pendingQty,
             maxAllowedQuantity: item.maxAllowedQuantity != null ? item.maxAllowedQuantity : pendingQty + (poQty * tolPct / 100),
-            quantity: pendingQty,
+            quantity: "",
             warehouseId: null,
             lineItemCode: item.lineItemCode
           };

@@ -141,6 +141,7 @@ class TextField extends Component {
         {...textFieldProps}
         multiline={this.props.multiline}
         onKeyPress={this.props.validation ? (e) => this.keyPress(e) : null}
+        onWheel={props.type === "number" ? (e) => e.target.blur() : undefined}
         helperText={this.props.helperText !== undefined ? this.props.helperText : (this.state.error && this.props.errorMessage)}
         error={this.props.error !== undefined ? this.props.error : this.state.error}
         placeholder={this.props.placeholderText}
