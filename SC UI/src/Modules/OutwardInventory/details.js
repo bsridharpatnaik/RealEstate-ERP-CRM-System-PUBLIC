@@ -18,6 +18,8 @@ import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import RejectProduct from "./rejectProduct";
 import { checkifDateLessThan, getRoleEditConstraintDays, canCreateInward } from "./../../helper";
+import Tooltip from "@material-ui/core/Tooltip";
+import WarningRoundedIcon from "@material-ui/icons/WarningRounded";
 import DebitNotePrint from "./../../Shared/DebitNotePrint";
 import ReactToPrint from "react-to-print";
 import Menu from "@material-ui/core/Menu";
@@ -370,6 +372,13 @@ class Details extends CommonDetails {
         <TabPanel value={this.state.value} index={0}>
           <div className="details-print-content">
             <Paper elevation={0}>
+              {data.hasBOQ !== true && (
+                <div style={{ padding: '10px 16px 0' }}>
+                  <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
+                    <WarningRoundedIcon style={{ color: '#e65100', fontSize: '22px', cursor: 'default' }} />
+                  </Tooltip>
+                </div>
+              )}
               <div className="details-wrapper">
                 <div className="detail-item">
                   <div className="label">{messages.common.contractor}</div>

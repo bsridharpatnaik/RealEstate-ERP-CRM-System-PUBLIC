@@ -33,6 +33,7 @@ public final class OutwardInventorySpecification
 				"showOnlyReturned");
 		List<String> showOnlyRejected = SpecificationsBuilder.fetchValueFromFilterList(filterDataList,
 				"showOnlyRejected");
+		List<String> boqBypassed = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "boqBypassed");
 		Specification<OutwardInventory> finalSpec = null;
 		List<String> textSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "textSearch");
 
@@ -95,6 +96,16 @@ public final class OutwardInventorySpecification
 						CriteriaBuilder cb) -> cb.greaterThan(cb.size(root.get(OutwardInventory_.RETURN_OUTWARD_LIST)),
 								0);
 				// cb.like(root.get(childTable).get(childFiledName), "%" + name + "%");
+				finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
+			}
+		}
+
+		if (boqBypassed != null && boqBypassed.size() == 1)
+		{
+			if (boqBypassed.get(0).toLowerCase().equals("true"))
+			{
+				Specification<OutwardInventory> internalSpec = (Root<OutwardInventory> root, CriteriaQuery<?> query,
+						CriteriaBuilder cb) -> cb.isNull(root.get(OutwardInventory_.HAS_BO_Q));
 				finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
 			}
 		}

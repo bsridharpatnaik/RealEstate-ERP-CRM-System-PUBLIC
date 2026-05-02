@@ -762,10 +762,17 @@ public class BOQService {
      * @param usageLocationId  building unit (usageLocation) ID
      * @param items            list of (productId, newQuantity) pairs
      */
-    public void enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
+    /**
+     * Enforces BOQ limits for outward inventory and also returns whether ALL products
+     * in the list have a BOQ configured (totalBOQ > 0) for the given usageLocation.
+     *
+     * @return true if every product has BOQ > 0, false if any product has no BOQ
+     */
+    public boolean enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
         log.info("Invoked enforceBOQLimits");
-        if (!boqEnforcementBlock) return;
+        if (usageLocationId == null || items == null || items.isEmpty()) return false;
 
+        boolean allHaveBOQ = true;
         List<String> violations = new ArrayList<>();
 
         for (com.ec.application.data.ProductWithQuantity item : items) {
@@ -774,26 +781,29 @@ public class BOQService {
 
             // native aggregate query always returns exactly one row; use List to avoid Object[] cast issues
             List<Object[]> rows = bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
-            if (rows == null || rows.isEmpty()) continue;
+            if (rows == null || rows.isEmpty()) { allHaveBOQ = false; continue; }
             Object[] row = rows.get(0);
-            if (row == null) continue;
+            if (row == null) { allHaveBOQ = false; continue; }
 
             double totalBOQ     = row[0] != null ? ((Number) row[0]).doubleValue() : 0;
             double totalOutward = row[1] != null ? ((Number) row[1]).doubleValue() : 0;
 
-            if (totalBOQ <= 0) continue; // no BOQ configured for this product+unit → skip
+            if (totalBOQ <= 0) { allHaveBOQ = false; continue; } // no BOQ configured for this product+unit
 
-            double afterQty       = totalOutward + newQty;
-            double consumedPercent = (afterQty / totalBOQ) * 100;
+            // BOQ exists — now check consumption limits (only when enforcement is enabled)
+            if (boqEnforcementBlock) {
+                double afterQty        = totalOutward + newQty;
+                double consumedPercent = (afterQty / totalBOQ) * 100;
 
-            if (consumedPercent > 100) {
-                Product product = productRepository.findByProductId(productId);
-                String productName = product != null ? product.getProductName() : ("Product ID " + productId);
-                double remaining = Math.max(totalBOQ - totalOutward, 0);
-                violations.add(String.format(
-                    "%s: BOQ limit is %.2f, already consumed %.2f, remaining %.2f but requested %.2f",
-                    productName, totalBOQ, totalOutward, remaining, newQty
-                ));
+                if (consumedPercent > 100) {
+                    Product product = productRepository.findByProductId(productId);
+                    String productName = product != null ? product.getProductName() : ("Product ID " + productId);
+                    double remaining = Math.max(totalBOQ - totalOutward, 0);
+                    violations.add(String.format(
+                        "%s: BOQ limit is %.2f, already consumed %.2f, remaining %.2f but requested %.2f",
+                        productName, totalBOQ, totalOutward, remaining, newQty
+                    ));
+                }
             }
         }
 
@@ -801,6 +811,8 @@ public class BOQService {
             throw new Exception("BOQ limit exceeded for the following items — save blocked:\n" +
                     String.join("\n", violations));
         }
+
+        return allHaveBOQ;
     }
 
     public BOQDashboardResponse getBOQDashboardData() {
