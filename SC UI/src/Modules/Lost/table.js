@@ -30,6 +30,11 @@ class Table extends CommonTable {
       return (
         <td data-label={"Quantity"}>{`${row.product.measurementUnit}`}</td>
       );
+    } else if (key === "entryType") {
+      const label = row.entryType === "EXCESS_FOUND" ? "Excess Found" : "Lost / Damaged";
+      return (
+        <td data-label="Type">{label}</td>
+      );
     } else if (key === "id") {
       return (
         <td data-label={messages.common.id}>

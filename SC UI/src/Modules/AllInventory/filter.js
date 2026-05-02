@@ -8,6 +8,7 @@ typeoptions = [
     { name: "Transfer Out", value: "Transfer-Out" },
     { name: "Outward",      value: "Outward" },
     { name: "Lost/Damaged", value: "Lost-Damaged" },
+    { name: "Excess Found", value: "Excess-Found" },
     { name: "All",          value: "" },
 ];
   renderFilter() {

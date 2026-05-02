@@ -26,7 +26,7 @@ SELECT
     q.quantity,
 
     SUM(CASE
-        WHEN q.type IN ('Inward', 'Transfer-In')                   THEN  q.quantity
+        WHEN q.type IN ('Inward', 'Transfer-In', 'Excess-Found')   THEN  q.quantity
         WHEN q.type IN ('Transfer-Out', 'Outward', 'Lost-Damaged') THEN -q.quantity
         ELSE 0
     END) OVER (
@@ -178,7 +178,32 @@ FROM (
     JOIN Product p    ON p.productid    = ldi.productid
     JOIN Category cat ON cat.categoryid = p.categoryid
     JOIN Warehouse w  ON w.warehouse_id = ldi.warehousename
-    WHERE ldi.is_deleted = 0
+    WHERE ldi.is_deleted = 0 AND (ldi.entry_type = 'LOST_DAMAGED' OR ldi.entry_type IS NULL)
+
+    UNION ALL
+
+    /* === EXCESS FOUND — sort_order 5 === */
+    SELECT
+        'Excess-Found'          AS type,
+        ldi.lostdamagedid       AS keyid,
+        ldi.lostdamagedid       AS entryid,
+        DATE(ldi.date)          AS date,
+        NULL                    AS contactid,
+        ldi.productid,
+        ldi.quantity,
+        ldi.creationDate,
+        ldi.lastModifiedDate,
+        p.product_name,
+        cat.category_name,
+        p.measurementunit,
+        w.warehouse_id,
+        w.warehousename,
+        5                       AS sort_order
+    FROM lost_damaged_inventory ldi
+    JOIN Product p    ON p.productid    = ldi.productid
+    JOIN Category cat ON cat.categoryid = p.categoryid
+    JOIN Warehouse w  ON w.warehouse_id = ldi.warehousename
+    WHERE ldi.is_deleted = 0 AND ldi.entry_type = 'EXCESS_FOUND'
 
 ) q
 LEFT JOIN contacts c ON c.contactid = q.contactid;
@@ -203,7 +228,7 @@ BEGIN
         sr.type,
         sr.oldClosingStock,
         SUM(
-            CASE WHEN sr.type IN ('Inward', 'Transfer-In') THEN sr.quantity ELSE 0 END
+            CASE WHEN sr.type IN ('Inward', 'Transfer-In', 'Excess-Found') THEN sr.quantity ELSE 0 END
         ) OVER (
             PARTITION BY sr.warehouse_id, sr.productid
             ORDER BY sr.row_num
@@ -621,10 +646,11 @@ SELECT
     t1.measurementunit,
     t1.category_name,
     t1.warehousename,
-    IF(total_inward-total_outward-total_lost_damaged=closing_stock,0,(t2.closing_stock+total_outward+total_lost_damaged-total_inward)) as opening_stock,
+    IF(total_inward+total_excess_found-total_outward-total_lost_damaged=closing_stock,0,(t2.closing_stock+total_outward+total_lost_damaged-total_inward-total_excess_found)) as opening_stock,
     t1.total_inward,
     total_outward,
     total_lost_damaged,
+    total_excess_found,
     t2.closing_stock
 FROM
 (
@@ -636,7 +662,8 @@ FROM
         ai1.warehousename,
 		SUM(IF(type='Inward',quantity,0)) as total_inward,
 		SUM(IF(type='Outward',quantity,0)) as total_outward,
-		SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged
+		SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged,
+		SUM(IF(type='Excess-Found',quantity,0)) as total_excess_found
 	FROM all_inventory ai1
 	GROUP BY month,category_name,product_name,measurementunit,ai1.warehousename
 	ORDER BY month,category_name,product_name,measurementunit, ai1.warehousename

@@ -5,6 +5,10 @@ import { connect } from "react-redux";
 //third party
 import { withSnackbar } from "notistack";
 import EditForm from "./../../Shared/EditForm";
+import FormControl from "@material-ui/core/FormControl";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Radio from "@material-ui/core/Radio";
 //misc
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
@@ -16,7 +20,7 @@ class Edit extends EditForm {
   updateUrl = apiEndpoints.individualLost;
   title = messages.common.lost;
 
-  state = { isLoaded: false };
+  state = { isLoaded: false, entryType: "LOST_DAMAGED" };
 
   componentDidMount() {
     this.updateUrl = this.updateUrl + this.props.id;
@@ -49,9 +53,11 @@ class Edit extends EditForm {
       this.formData["Additional Comments"] = data["Additional Comments"];
       this.formData.date = data.date;
       this.formData.fileInformations = data.fileInformations;
+      this.formData.entryType = data.entryType || "LOST_DAMAGED";
       this.setState({
         isLoaded: true,
         closing: response.data.closingStock,
+        entryType: data.entryType || "LOST_DAMAGED",
       });
     }
   }
@@ -69,8 +75,11 @@ class Edit extends EditForm {
         warehouseId
     );
     if (response.success) {
-      let closing = this.state.closing;
-      closing = Number(response.data) - Number(this.state.data.quantity);
+      const qty = Number(this.formData.quantity) || 0;
+      const currentStock = Number(response.data);
+      const closing = this.formData.entryType === "EXCESS_FOUND"
+        ? currentStock + qty
+        : currentStock - qty;
       this.setState({ closing: closing });
     }
   }
@@ -80,6 +89,14 @@ class Edit extends EditForm {
         {this.renderHeading()}
         {this.state.isLoaded && (
           <form onSubmit={(e) => this.update(e)}>
+            <div className="flex">
+              <FormControl component="fieldset">
+                <RadioGroup row value={this.state.entryType}>
+                  <FormControlLabel value="LOST_DAMAGED" control={<Radio color="primary" disabled />} label="Lost / Damaged" />
+                  <FormControlLabel value="EXCESS_FOUND" control={<Radio color="primary" disabled />} label="Excess Found" />
+                </RadioGroup>
+              </FormControl>
+            </div>
             <div class="flex">
             {this.renderAutoComplete({
               fieldname: "warehouseId",
@@ -160,7 +177,7 @@ class Edit extends EditForm {
               })}
               {this.renderTextField({
                 fieldname: "theftLocation",
-                placeholder: "Location",
+                placeholder: this.state.entryType === "EXCESS_FOUND" ? "Remarks" : "Location",
                 required: true,
                 disabled: !this.isAdmin,
               })}

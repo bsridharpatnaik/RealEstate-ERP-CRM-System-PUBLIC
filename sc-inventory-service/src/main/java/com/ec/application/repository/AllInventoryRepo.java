@@ -42,12 +42,13 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 			"t1.measurementunit," +
 			"t1.category_name," +
 			"t1.warehousename," +
-			"(t2.closing_stock - t1.total_inward - t1.total_transfer_in + t1.total_outward + t1.total_transfer_out + t1.total_lost_damaged) as opening_stock," +
+			"(t2.closing_stock - t1.total_inward - t1.total_transfer_in - t1.total_excess_found + t1.total_outward + t1.total_transfer_out + t1.total_lost_damaged) as opening_stock," +
 			"t1.total_inward," +
 			"t1.total_transfer_in," +
 			"t1.total_outward," +
 			"t1.total_transfer_out," +
 			"t1.total_lost_damaged," +
+			"t1.total_excess_found," +
 			"t2.closing_stock" +
 			" FROM" +
 			" (SELECT" +
@@ -60,7 +61,8 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 			" SUM(IF(type='Transfer-In',quantity,0)) as total_transfer_in," +
 			" SUM(IF(type='Outward',quantity,0)) as total_outward," +
 			" SUM(IF(type='Transfer-Out',quantity,0)) as total_transfer_out," +
-			" SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged" +
+			" SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged," +
+			" SUM(IF(type='Excess-Found',quantity,0)) as total_excess_found" +
 			" FROM all_inventory ai1" +
 			" WHERE date>=:startDate AND date<=:endDate" +
 			" GROUP BY month,category_name,product_name,measurementunit,ai1.warehousename" +

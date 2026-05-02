@@ -6,6 +6,10 @@ import { connect } from "react-redux";
 import { withSnackbar } from "notistack";
 import AddForm from "./../../Shared/AddForm";
 import { API } from "./../../axios";
+import FormControl from "@material-ui/core/FormControl";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Radio from "@material-ui/core/Radio";
 
 //misc
 import { apiEndpoints } from "./../../endpoints";
@@ -16,7 +20,13 @@ import moment from "moment";
 class Add extends AddForm {
   title = messages.common.lost;
   addurl = apiEndpoints.createLost;
-  state = { closing: null };
+  state = { closing: null, entryType: "LOST_DAMAGED" };
+
+  constructor(props) {
+    super(props);
+    this.formData = this.formData || {};
+    this.formData.entryType = "LOST_DAMAGED";
+  }
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch(fetchUnit());
@@ -35,8 +45,11 @@ class Add extends AddForm {
         warehouseId
     );
     if (response.success) {
-      let closing = this.state.closing;
-      closing = Number(response.data) - Number(this.formData.quantity);
+      const qty = Number(this.formData.quantity) || 0;
+      const currentStock = Number(response.data);
+      const closing = this.formData.entryType === "EXCESS_FOUND"
+        ? currentStock + qty
+        : currentStock - qty;
       this.setState({ closing: closing });
     }
   }
@@ -59,6 +72,21 @@ class Add extends AddForm {
       <div className="list-section add">
         {this.renderHeading()}
         <form onSubmit={(e) => this.add(e)}>
+          <div className="flex">
+            <FormControl component="fieldset">
+              <RadioGroup
+                row
+                value={this.state.entryType}
+                onChange={(e) => {
+                  this.formData.entryType = e.target.value;
+                  this.setState({ entryType: e.target.value }, () => this.getCurrentStock());
+                }}
+              >
+                <FormControlLabel value="LOST_DAMAGED" control={<Radio color="primary" />} label="Lost / Damaged" />
+                <FormControlLabel value="EXCESS_FOUND" control={<Radio color="primary" />} label="Excess Found" />
+              </RadioGroup>
+            </FormControl>
+          </div>
          <div class="flex">
           {this.renderAutoComplete({
             fieldname: "warehouseId",
@@ -130,7 +158,7 @@ class Add extends AddForm {
             })}
             {this.renderTextField({
               fieldname: "theftLocation",
-              placeholder: "Location",
+              placeholder: this.state.entryType === "EXCESS_FOUND" ? "Remarks" : "Location",
               required: true,
             })}
           </div>

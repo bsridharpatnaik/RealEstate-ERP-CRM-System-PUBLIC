@@ -33,6 +33,7 @@ class List extends ListCommon {
     headers: [
       messages.common.id,
       messages.fields.date,
+      "Type",
       messages.common.warehouse,
       messages.common.inventory,
       "Quantity",
@@ -42,6 +43,7 @@ class List extends ListCommon {
     keys: [
       "id",
       "date",
+      "entryType",
       "warehouse",
       "product",
       "quantity",

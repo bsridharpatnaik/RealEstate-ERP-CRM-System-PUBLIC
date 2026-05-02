@@ -60,8 +60,10 @@ public class LostDamagedInventoryService {
         populateData(lostDamagedInventory, payload);
         Double closingStock = adjustStockBeforeCreate(payload);
         lostDamagedInventory.setClosingStock(closingStock);
+        String addedNotifType = "EXCESS_FOUND".equals(lostDamagedInventory.getEntryType())
+                ? "excessfoundadded" : "lostdamagedadded";
         inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),
-                lostDamagedInventory.getWarehouse().getWarehouseName(), "lostdamagedadded",
+                lostDamagedInventory.getWarehouse().getWarehouseName(), addedNotifType,
                 lostDamagedInventory.getQuantity());
         return lostDamagedInventoryRepo.save(lostDamagedInventory);
     }
@@ -84,7 +86,8 @@ public class LostDamagedInventoryService {
     private Double adjustStockBeforeCreate(CreateLostOrDamagedInventoryData payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Long warehouseId = warehouseRepo.findById(payload.getWarehouseId()).get().getWarehouseId();
-        return stockService.updateStock(payload.getProductId(), warehouseId, payload.getQuantity(), "outward");
+        String operation = "EXCESS_FOUND".equals(payload.getEntryType()) ? "inward" : "outward";
+        return stockService.updateStock(payload.getProductId(), warehouseId, payload.getQuantity(), operation);
     }
 
     private void populateData(LostDamagedInventory lostDamagedInventory, CreateLostOrDamagedInventoryData payload)
@@ -97,6 +100,7 @@ public class LostDamagedInventoryService {
         lostDamagedInventory.setWarehouse(warehouseRepo.findById(payload.getWarehouseId()).get());
         lostDamagedInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
         lostDamagedInventory.setAdditionalComment(payload.getAdditionalComment());
+        lostDamagedInventory.setEntryType(payload.getEntryType() != null ? payload.getEntryType() : "LOST_DAMAGED");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -111,10 +115,13 @@ public class LostDamagedInventoryService {
         AdjustStockBeforeDelete(lostDamagedInventory);
         populateData(lostDamagedInventory, payload);
         lostDamagedInventory.setClosingStock(adjustStockBeforeCreate(payload));
-        if (!oldStock.equals(lostDamagedInventory.getQuantity()))
+        if (!oldStock.equals(lostDamagedInventory.getQuantity())) {
+            String modifiedNotifType = "EXCESS_FOUND".equals(lostDamagedInventory.getEntryType())
+                    ? "excessfoundmodified" : "lostdamagedmodified";
             inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),
-                    lostDamagedInventory.getWarehouse().getWarehouseName(), "lostdamagedmodified",
+                    lostDamagedInventory.getWarehouse().getWarehouseName(), modifiedNotifType,
                     lostDamagedInventory.getQuantity());
+        }
 
         return lostDamagedInventoryRepo.save(lostDamagedInventory);
     }
@@ -152,8 +159,9 @@ public class LostDamagedInventoryService {
     @Transactional(rollbackFor = Exception.class)
     private void AdjustStockBeforeDelete(LostDamagedInventory lostDamagedInventory) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        String reverseOp = "EXCESS_FOUND".equals(lostDamagedInventory.getEntryType()) ? "outward" : "inward";
         stockService.updateStock(lostDamagedInventory.getProduct().getProductId(),
-                lostDamagedInventory.getWarehouse().getWarehouseId(), lostDamagedInventory.getQuantity(), "inward");
+                lostDamagedInventory.getWarehouse().getWarehouseId(), lostDamagedInventory.getQuantity(), reverseOp);
     }
 
     public Page<LostDamagedInventory> findAll(Pageable pageable) {

@@ -75,6 +75,19 @@ public class LostDamagedInventory extends ReusableFields
 
 	String additionalComment;
 
+	@Column(name = "entry_type", nullable = false)
+	private String entryType = "LOST_DAMAGED";
+
+	public String getEntryType()
+	{
+		return entryType;
+	}
+
+	public void setEntryType(String entryType)
+	{
+		this.entryType = entryType;
+	}
+
 	public Long getLostdamagedid()
 	{
 		return lostdamagedid;

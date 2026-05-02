@@ -121,7 +121,11 @@ class Details extends CommonDetails {
           <div className="details-main-content">
             <div className="details-wrapper">
               <div className="detail-item">
-                <div className="label">{messages.fields.location}</div>
+                <div className="label">Type</div>
+                <div className="value">{data.entryType === "EXCESS_FOUND" ? "Excess Found" : "Lost / Damaged"}</div>
+              </div>
+              <div className="detail-item">
+                <div className="label">{data.entryType === "EXCESS_FOUND" ? "Remarks" : messages.fields.location}</div>
                 <div className="value">{data.locationOfTheft}</div>
               </div>
               <div className="detail-item">
