@@ -16,6 +16,7 @@ import { messages } from "./../../messages";
 import CheckIcon from "@material-ui/icons/Check";
 import { withSnackbar } from "notistack";
 import { connect } from "react-redux";
+import { canEditBOQ } from "../../helper";
 import Pagination from "@material-ui/lab/Pagination";
 import AddIcon from "@material-ui/icons/Add";
 import Autocomplete from "@material-ui/lab/Autocomplete";
@@ -68,6 +69,7 @@ class BOQTable extends Component {
   }
   renderRow(row, index) {
     const isEditRow = this.state.editRow === row;
+    const hasAccess = canEditBOQ();
     return (
       <div key={index} className="table-row inv">
         <div className="inv-name">{row.product.productName}</div>
@@ -89,38 +91,40 @@ class BOQTable extends Component {
           )}
         </div>
         <div className="inv-unit">{row.product.measurementUnit}</div>
-        <div className="actions">
-          <IconButton
-            aria-label="back"
-            onClick={() => {
-              if (isEditRow) {
-                this.updateBOQ();
-              } else {
-                this.editQuantity = null;
-                this.setState({ editRow: row });
-                this.clearAdd();
-              }
-            }}
-            className="back-icon"
-          >
-            {isEditRow ? <CheckIcon /> : EditIcon({ fontSize: "medium" })}
-          </IconButton>
-          <IconButton
-            aria-label="back"
-            onClick={() => {
-              if (isEditRow) {
-                this.setState({ editRow: null });
-                this.clearAdd();
-              } else {
-                this.deleteRow = row;
-                this.setState({ deleteConfirmOpen: true });
-              }
-            }}
-            className="back-icon"
-          >
-            {isEditRow ? <CloseIcon /> : DeleteIcon({ fontSize: "medium" })}
-          </IconButton>
-        </div>
+        {hasAccess && (
+          <div className="actions">
+            <IconButton
+              aria-label="back"
+              onClick={() => {
+                if (isEditRow) {
+                  this.updateBOQ();
+                } else {
+                  this.editQuantity = null;
+                  this.setState({ editRow: row });
+                  this.clearAdd();
+                }
+              }}
+              className="back-icon"
+            >
+              {isEditRow ? <CheckIcon /> : EditIcon({ fontSize: "medium" })}
+            </IconButton>
+            <IconButton
+              aria-label="back"
+              onClick={() => {
+                if (isEditRow) {
+                  this.setState({ editRow: null });
+                  this.clearAdd();
+                } else {
+                  this.deleteRow = row;
+                  this.setState({ deleteConfirmOpen: true });
+                }
+              }}
+              className="back-icon"
+            >
+              {isEditRow ? <CloseIcon /> : DeleteIcon({ fontSize: "medium" })}
+            </IconButton>
+          </div>
+        )}
       </div>
     );
   }
@@ -253,17 +257,19 @@ class BOQTable extends Component {
 
         <div className="table-title">
           Statistics
-          <Button
-            color="primary"
-            variant="contained"
-            buttonClass={"boq"}
-            disabled={this.state.isAdd}
-            onClick={() => {
-              this.getProductListType();
-              this.setState({ isAdd: true, editRow: null });
-            }}
-            label={"Add"}
-          ></Button>
+          {canEditBOQ() && (
+            <Button
+              color="primary"
+              variant="contained"
+              buttonClass={"boq"}
+              disabled={this.state.isAdd}
+              onClick={() => {
+                this.getProductListType();
+                this.setState({ isAdd: true, editRow: null });
+              }}
+              label={"Add"}
+            ></Button>
+          )}
         </div>
 
         <div className="table-scroll-wrapper">

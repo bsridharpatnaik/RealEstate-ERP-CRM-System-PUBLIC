@@ -8,6 +8,7 @@ import { apiEndpoints } from '../../endpoints';
 import "./LoadingSpinner.css";
 import { API } from "./../../axios";
 import { DeleteIcon, RefreshIcon } from '../../Shared/Icons/Index';
+import { canEditBOQ } from '../../helper';
 
 const BOQInputScreen = () => {
   const fileInputRef = useRef(null);
@@ -389,8 +390,23 @@ const BOQInputScreen = () => {
   const stepDone2 = false; // download is optional, can't verify
   const stepDone3 = !!excelData;
 
+  const hasEditAccess = canEditBOQ();
+
   return (
     <div style={s.page}>
+
+      {/* Access guard banner */}
+      {!hasEditAccess && (
+        <div style={{
+          background: '#fff3e0', border: '1px solid #ffb300', borderRadius: '8px',
+          padding: '14px 20px', marginBottom: '20px', color: '#e65100', fontWeight: 500, fontSize: '14px'
+        }}>
+          ⚠️ You do not have permission to upload or edit BOQ. This action is restricted to Project Managers and Admins only.
+        </div>
+      )}
+
+      {/* Wrap entire form — disable interaction for unauthorised users */}
+      <div style={hasEditAccess ? {} : { pointerEvents: 'none', opacity: 0.55 }}>
 
       {/* Page header */}
       <div style={s.pageHeader}>
@@ -648,6 +664,8 @@ const BOQInputScreen = () => {
           </div>
         </div>
       )}
+
+      </div> {/* end hasEditAccess wrapper */}
     </div>
   );
 };

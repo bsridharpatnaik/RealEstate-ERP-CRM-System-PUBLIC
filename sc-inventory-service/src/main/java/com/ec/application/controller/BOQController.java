@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.data.BOQDashboardResponse;
 import com.ec.application.data.BOQDto;
 import com.ec.application.data.BOQInformation;
@@ -40,7 +41,7 @@ public class BOQController {
 
     @PostMapping("/boq_upload")
     @ResponseStatus(HttpStatus.CREATED)
-    @CheckAuthority
+    @AllowOnly(roles = {"admin", "project-manager"})
     public List<BOQUploadValidationResponse> boqUpload(@RequestBody BOQDto boqDto) throws Exception {
         return bOQService.boqUpload(boqDto);
     }

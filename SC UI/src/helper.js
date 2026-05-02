@@ -140,7 +140,7 @@ export const canEditInventoryModules = () => {
 export const canEditBOQ = () => {
   const role = (getRole() || "").toLowerCase();
   if (!role) return false;
-  return role === "admin" || role === "purchase-manager" || role === "project-manager";
+  return role === "admin" || role === "project-manager";
 };
 
 /**
