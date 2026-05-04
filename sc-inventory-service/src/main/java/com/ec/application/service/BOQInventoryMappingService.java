@@ -41,6 +41,12 @@ public class BOQInventoryMappingService {
     @Autowired
     ProductRepo pRepo;
 
+    @Autowired
+    BOQHistoryService boqHistoryService;
+
+    @Autowired
+    UserDetailsService userDetailsService;
+
     Logger log = LoggerFactory.getLogger(BOQInventoryMappingService.class);
 
     public void createNewBOQ(BOQCreateRequestData payload) throws Exception {
@@ -50,14 +56,17 @@ public class BOQInventoryMappingService {
         BOQInventoryMapping bim = new BOQInventoryMapping();
         setFields(bim, payload);
         bimRepo.save(bim);
+        boqHistoryService.recordFromMapping("Added", resolveCurrentUser(), bim, null, bim.getQuantity(), payload.getRemark());
     }
 
     public BOQInventoryMapping updateBOQ(BOQUpdateRequestData payload, Long id) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validateUpdatePayload(payload, id);
         BOQInventoryMapping bim = bimRepo.findById(id).get();
+        Double oldQty = bim.getQuantity();
         bim.setQuantity(payload.getQuantity());
         bimRepo.save(bim);
+        boqHistoryService.recordFromMapping("Updated", resolveCurrentUser(), bim, oldQty, payload.getQuantity(), payload.getRemark());
         return bim;
     }
 
@@ -113,6 +122,9 @@ public class BOQInventoryMappingService {
 
         if (payload.getQuantity() == 0)
             throw new Exception("Quantity cannot be zero or empty. Please input valid quantity");
+
+        if (payload.getRemark() == null || payload.getRemark().trim().isEmpty())
+            throw new Exception("Remark is mandatory. Please enter a change comment.");
     }
 
     private void setFields(BOQInventoryMapping bim, BOQCreateRequestData payload) {
@@ -170,6 +182,9 @@ public class BOQInventoryMappingService {
         }
         if (payload.getQuantity() == 0)
             throw new Exception("Quantity cannot be zero or empty. Please input valid quantity");
+
+        if (payload.getRemark() == null || payload.getRemark().trim().isEmpty())
+            throw new Exception("Remark is mandatory. Please enter a change comment.");
     }
 
     public List<IdNameProjections> getProductListForDropdown(BOQLocationTypeEnum boqType, Long id) throws Exception {
@@ -201,5 +216,13 @@ public class BOQInventoryMappingService {
                 finalList.add(i);
         }
         return finalList;
+    }
+
+    private String resolveCurrentUser() {
+        try {
+            return userDetailsService.getCurrentUser().getUsername();
+        } catch (Exception e) {
+            return "System";
+        }
     }
 }

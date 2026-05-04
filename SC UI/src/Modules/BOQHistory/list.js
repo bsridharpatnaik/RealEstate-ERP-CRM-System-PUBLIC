@@ -21,12 +21,12 @@ class List extends ListCommon {
     headers: [
       'Change Date Time', 'Building Type', 'Building Unit',
       'Product', 'Category', 'Final Location',
-      'Old Qty', 'New Qty', 'Changed By', 'Change Type',
+      'Old Qty', 'New Qty', 'Changed By', 'Change Type', 'Remark',
     ],
     keys: [
       'changeDateTime', 'buildingTypeName', 'usageLocationName',
       'productName', 'categoryName', 'finalLocationName',
-      'oldQuantity', 'newQuantity', 'changedBy', 'changeType',
+      'oldQuantity', 'newQuantity', 'changedBy', 'changeType', 'remark',
     ],
   };
 
@@ -69,6 +69,7 @@ class List extends ListCommon {
           newQuantity:       row.newQuantity,
           changedBy:         row.changedBy  || '',
           changeType:        row.changeType || '',
+          remark:            row.remark     || '',
         })),
         pages:        paged.totalPages    || 0,
         totalRecords: paged.totalElements || 0,

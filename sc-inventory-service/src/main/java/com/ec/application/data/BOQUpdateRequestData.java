@@ -7,4 +7,5 @@ public class BOQUpdateRequestData
 {
 	Long productId;
 	Double quantity;
+	String remark;
 }

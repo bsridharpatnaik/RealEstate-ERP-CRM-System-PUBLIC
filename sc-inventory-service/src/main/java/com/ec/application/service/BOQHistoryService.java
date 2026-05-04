@@ -3,6 +3,7 @@ package com.ec.application.service;
 import com.ec.application.Filters.BOQHistorySpecifications;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.model.BOQHistory;
+import com.ec.application.model.BOQInventoryMapping;
 import com.ec.application.model.BOQUpload;
 import com.ec.application.repository.BOQHistoryRepository;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -33,10 +34,10 @@ public class BOQHistoryService {
     private static final SimpleDateFormat DATE_FMT = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
     /**
-     * Record a BOQ change. Caller is responsible for only calling when quantity actually changed.
+     * Record a BOQ change from Excel upload path.
      */
     public void record(String changeType, String changedBy, BOQUpload boqUpload,
-                       Double oldQuantity, Double newQuantity) {
+                       Double oldQuantity, Double newQuantity, String remark) {
         try {
             BOQHistory h = new BOQHistory();
             h.setChangeDateTime(new Date());
@@ -48,9 +49,33 @@ public class BOQHistoryService {
             h.setFinalLocation(boqUpload.getLocation());
             h.setOldQuantity(oldQuantity);
             h.setNewQuantity(newQuantity);
+            h.setRemark(remark != null && !remark.trim().isEmpty() ? remark : null);
             boqHistoryRepository.save(h);
         } catch (Exception e) {
             log.error("Failed to save BOQ history record: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Record a BOQ change from the popup add/edit path (BOQInventoryMapping).
+     */
+    public void recordFromMapping(String changeType, String changedBy, BOQInventoryMapping mapping,
+                                  Double oldQuantity, Double newQuantity, String remark) {
+        try {
+            BOQHistory h = new BOQHistory();
+            h.setChangeDateTime(new Date());
+            h.setChangeType(changeType);
+            h.setChangedBy(changedBy);
+            h.setBuildingType(mapping.getBuildingType());
+            h.setUsageLocation(mapping.getLocation());
+            h.setProduct(mapping.getProduct());
+            h.setFinalLocation(null);
+            h.setOldQuantity(oldQuantity);
+            h.setNewQuantity(newQuantity);
+            h.setRemark(remark != null && !remark.trim().isEmpty() ? remark : null);
+            boqHistoryRepository.save(h);
+        } catch (Exception e) {
+            log.error("Failed to save BOQ history record (mapping): " + e.getMessage());
         }
     }
 
@@ -79,7 +104,7 @@ public class BOQHistoryService {
             String[] headers = {
                 "Change DateTime", "Building Type", "Building Unit",
                 "Product", "Category", "Final Location",
-                "Old Qty", "New Qty", "Changed By", "Change Type"
+                "Old Qty", "New Qty", "Changed By", "Change Type", "Remark"
             };
 
             Row headerRow = sheet.createRow(0);
@@ -103,6 +128,7 @@ public class BOQHistoryService {
                 r.createCell(7).setCellValue(h.getNewQuantity() != null ? h.getNewQuantity() : 0);
                 r.createCell(8).setCellValue(h.getChangedBy() != null ? h.getChangedBy() : "");
                 r.createCell(9).setCellValue(h.getChangeType() != null ? h.getChangeType() : "");
+                r.createCell(10).setCellValue(h.getRemark() != null ? h.getRemark() : "");
             }
 
             for (int i = 0; i < headers.length; i++) {

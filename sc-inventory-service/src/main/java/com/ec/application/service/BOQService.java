@@ -122,7 +122,7 @@ public class BOQService {
                     upload.getSno(), upload.getChanges());
             if (saved != null) {
                 boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
-                        Double.parseDouble(upload.getQuantity()));
+                        Double.parseDouble(upload.getQuantity()), upload.getRemark());
             }
         }
     }
@@ -135,7 +135,7 @@ public class BOQService {
             boqUpload.setQuantity(0);
             boqUpload.setChanges(upload.getChanges());
             bOQUploadRepository.softDelete(boqUpload);
-            boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0);
+            boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0, upload.getRemark());
         }
     }
 
@@ -149,7 +149,7 @@ public class BOQService {
             boqUpload.setQuantity(newQty);
             bOQUploadRepository.save(boqUpload);
             if (oldQty != newQty) {
-                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty);
+                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty, upload.getRemark());
             }
         }
     }
@@ -202,13 +202,14 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("BOQ Template");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (VLOOKUP, read-only)
-            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Changes
+            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Changes  Col 6: Remark (optional)
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
             header.createCell(4).setCellValue("FinalLocation");
             header.createCell(5).setCellValue("Changes");
+            header.createCell(6).setCellValue("Remark");
 
             // Hidden: Categories — col A = display name, col B = named range key for INDIRECT
             Sheet categorySheet = workbook.createSheet("Categories");
@@ -333,12 +334,13 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("Existing BOQ");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (pre-filled, reference only)
-            // Col 3: Quantity  Col 4: FinalLocation
+            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Remark (optional)
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
             header.createCell(4).setCellValue("FinalLocation");
+            header.createCell(5).setCellValue("Remark");
 
             // Hidden: Categories — col A = display name, col B = named range key
             Sheet categorySheet = workbook.createSheet("Categories");
@@ -458,7 +460,7 @@ public class BOQService {
                     upload.getSno(), BOQUploadConstant.UPDATE);
             if (saved != null) {
                 boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
-                        Double.parseDouble(upload.getQuantity()));
+                        Double.parseDouble(upload.getQuantity()), upload.getRemark());
             }
         } else {
             double oldQty = boqUpload.getQuantity();
@@ -467,7 +469,7 @@ public class BOQService {
             boqUpload.setChanges(BOQUploadConstant.UPDATE);
             bOQUploadRepository.save(boqUpload);
             if (oldQty != newQty) {
-                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty);
+                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty, upload.getRemark());
             }
         }
     }
@@ -504,6 +506,15 @@ public class BOQService {
                     validateInventoryLocationChanges(listboqBoqUploadResponses, upload, isInventoryExist, isLocationExist);
                 } else if (!upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPSERT)) {
                     validateChanges(listboqBoqUploadResponses, upload, listOfBOQUpload);
+                }
+                if (upload.getRemark() == null || upload.getRemark().trim().isEmpty()) {
+                    BOQUploadValidationResponse remarkError = new BOQUploadValidationResponse();
+                    List<String> cols = new ArrayList<>();
+                    cols.add(BOQUploadConstant.REMARK);
+                    remarkError.setSno(upload.getSno());
+                    remarkError.setColumns(cols);
+                    remarkError.setMessage("Remark is mandatory");
+                    listboqBoqUploadResponses.add(remarkError);
                 }
             } catch (Exception e) {
                 validateBOQQuantity(listboqBoqUploadResponses, upload);
