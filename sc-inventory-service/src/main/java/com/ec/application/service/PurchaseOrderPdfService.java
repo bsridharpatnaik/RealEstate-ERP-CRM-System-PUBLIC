@@ -12,7 +12,6 @@ import com.ec.application.model.Product;
 import com.ec.application.repository.PurchaseOrderRepo;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
-import com.itextpdf.tool.xml.XMLWorkerHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -528,18 +527,9 @@ public class PurchaseOrderPdfService {
                     document.add(new Paragraph(line.trim(), smallFont));
                 }
             } else {
-                // HTML content from rich text editor — use XMLWorker
-                try {
-                    String css = "body, p, li, ol, ul { font-size: 8pt; font-family: Helvetica, Arial, sans-serif; }"
-                               + "p  { margin: 1pt 0; }"
-                               + "ol, ul { margin: 0; padding-left: 14pt; }"
-                               + "li { margin: 1pt 0; }";
-                    XMLWorkerHelper.getInstance().parseXHtml(
-                        writer, document,
-                        new java.io.ByteArrayInputStream(notes.getBytes("UTF-8")),
-                        new java.io.ByteArrayInputStream(css.getBytes("UTF-8")));
-                } catch (Exception e) {
-                    // XMLWorker already rendered partial content — suppress fallback to avoid duplication
+                // HTML content from rich text editor — strip tags and render as plain text
+                for (String line : htmlToPlainLines(notes)) {
+                    document.add(new Paragraph(line, smallFont));
                 }
             }
         }
@@ -791,6 +781,43 @@ public class PurchaseOrderPdfService {
         v.setMinimumHeight(22f);
         v.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(v);
+    }
+
+    private List<String> htmlToPlainLines(String html) {
+        String text = html
+            // block-level tags → newline
+            .replaceAll("(?i)<br\\s*/?>", "\n")
+            .replaceAll("(?i)</p>",       "\n")
+            .replaceAll("(?i)</li>",      "\n")
+            .replaceAll("(?i)</div>",     "\n")
+            // common HTML entities
+            .replace("&nbsp;",   " ")
+            .replace("&amp;",    "&")
+            .replace("&lt;",     "<")
+            .replace("&gt;",     ">")
+            .replace("&quot;",   "\"")
+            .replace("&apos;",   "'")
+            .replace("&ndash;",  "–")
+            .replace("&mdash;",  "—")
+            .replace("&ldquo;",  "“")
+            .replace("&rdquo;",  "”")
+            .replace("&lsquo;",  "‘")
+            .replace("&rsquo;",  "’")
+            .replace("&bull;",   "•")
+            .replace("&hellip;", "…")
+            // strip all remaining tags
+            .replaceAll("<[^>]+>", "")
+            // numeric entities
+            .replaceAll("&#160;", " ");
+
+        List<String> lines = new java.util.ArrayList<>();
+        for (String line : text.split("\n")) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty()) {
+                lines.add(trimmed);
+            }
+        }
+        return lines;
     }
 
     private boolean notBlank(String s) {
