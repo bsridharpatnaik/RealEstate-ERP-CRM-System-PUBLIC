@@ -800,10 +800,10 @@ class Add extends AddForm {
       return;
     }
 
-    // Validate file type (JPG, PNG only)
-    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    // Validate file type (JPG, PNG, PDF only)
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      this.props.enqueueSnackbar("Only JPG and PNG files are allowed", {
+      this.props.enqueueSnackbar("Only JPG, PNG and PDF files are allowed", {
         variant: "error",
       });
       this.setState({ selectedFileName: "", selectedFilePreview: null });
@@ -908,7 +908,7 @@ class Add extends AddForm {
                 ref={this.fileInputRef}
                 type="file"
                 id="po-file-upload"
-                accept="image/jpeg,image/jpg,image/png"
+                accept="image/jpeg,image/jpg,image/png,application/pdf"
                 onChange={(e) => this.handleFileSelect(e)}
                 style={{ display: "none" }}
               />
@@ -983,7 +983,7 @@ class Add extends AddForm {
               </div>
             </div>
             <div className="upload-hint">
-              Upload a file here, Max 2 MB allow (JPG, PNG only)
+              Upload a file here, Max 2 MB allow (JPG, PNG, PDF only)
             </div>
           </div>
         </div>
