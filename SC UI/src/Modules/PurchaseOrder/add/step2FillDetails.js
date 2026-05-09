@@ -346,9 +346,9 @@ const firmDetails = {
       inputEl.value = "";
       return;
     }
-    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
-      this.props.enqueueSnackbar && this.props.enqueueSnackbar("Only JPG and PNG files are allowed", { variant: "error" });
+      this.props.enqueueSnackbar && this.props.enqueueSnackbar("Only JPG, PNG and PDF files are allowed", { variant: "error" });
       inputEl.value = "";
       return;
     }
@@ -1188,7 +1188,7 @@ handleAddFirm = async (firm) => {
                           <>
                             <input
                               type="file"
-                              accept="image/jpeg,image/jpg,image/png"
+                              accept="image/jpeg,image/jpg,image/png,application/pdf"
                               style={{ display: "none" }}
                               ref={(el) => { this.lineFileInputRefs[index] = el; }}
                               onChange={(e) => this.handleLineImageUpload(index, e)}

@@ -82,6 +82,7 @@ public class PurchaseOrder extends ReusableFields {
 
     private String shortCloseReason;
 
+    @Lob
     @Column(name="notes", columnDefinition = "TEXT")
     private String notes;
 
