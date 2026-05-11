@@ -242,7 +242,7 @@
 
       table {
         width: 100%;
-        min-width: 1260px;
+        min-width: 1280px;
         table-layout: fixed;
         border-collapse: collapse;
         border: none;
@@ -302,6 +302,9 @@
             border: none;
             vertical-align: middle;
             height: 48px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
         }
 
@@ -320,27 +323,27 @@
             width: 140px;
             text-align: center;
           }
-          &:nth-child(4) { // Supplier Name
+          &:nth-child(4) { // Project
             min-width: 180px;
             width: 180px;
           }
-          &:nth-child(5) { // Created By
+          &:nth-child(5) { // Supplier Name
+            min-width: 200px;
+            width: 200px;
+          }
+          &:nth-child(6) { // Created By
             min-width: 150px;
             width: 150px;
           }
-          &:nth-child(6) { // PO Status
+          &:nth-child(7) { // PO Status
             min-width: 150px;
             width: 150px;
           }
-        &:nth-child(7) { // Priority
-          min-width: 130px;
-          width: 130px;
-        }
-        &:nth-child(8) { // SPL
-          min-width: 60px;
-          width: 60px;
-          text-align: center;
-        }
+          &:nth-child(8) { // SPL
+            min-width: 60px;
+            width: 60px;
+            text-align: center;
+          }
         }
 
         // PO Status column: left-aligned header and badges
