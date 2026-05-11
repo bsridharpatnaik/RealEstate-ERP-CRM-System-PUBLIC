@@ -1,0 +1,177 @@
+.product-merge-page {
+  padding: 20px 24px;
+
+  .header-info {
+    margin-bottom: 20px;
+  }
+
+  .merge-container {
+    padding: 24px;
+    width: 100%;
+  }
+
+  .merge-content {
+    padding: 16px 0;
+  }
+
+  .merge-step {
+    padding: 8px 0;
+  }
+
+  // ── Step 0: Product selectors ─────────────────────────────────────────────
+
+  .merge-product-selectors {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 24px 0;
+  }
+
+  .merge-product-card {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px !important;
+
+    &.source-card {
+      border-top: 3px solid #c62828;
+    }
+
+    &.target-card {
+      border-top: 3px solid #2e7d32;
+    }
+  }
+
+  .merge-arrow {
+    font-size: 28px;
+    color: #9e9e9e;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    padding-bottom: 4px;
+  }
+
+  .card-label {
+    font-weight: 600;
+    margin-bottom: 14px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+  }
+
+  .source-label {
+    color: #c62828;
+  }
+
+  .target-label {
+    color: #2e7d32;
+  }
+
+  .product-info-box {
+    margin-top: 14px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 13px;
+
+    div {
+      margin-bottom: 4px;
+      &:last-child { margin-bottom: 0; }
+    }
+
+    span {
+      font-weight: 600;
+      margin-right: 6px;
+    }
+  }
+
+  // ── Errors & actions ──────────────────────────────────────────────────────
+
+  .merge-error {
+    margin: 12px 0;
+    font-size: 14px;
+  }
+
+  .merge-actions {
+    margin-top: 20px;
+  }
+
+  // ── Preview tables ────────────────────────────────────────────────────────
+
+  .preview-table-wrapper {
+    overflow-x: auto;
+    margin: 8px 0 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+
+    table {
+      table-layout: auto;
+      width: 100%;
+    }
+
+    td, th {
+      word-break: break-word;
+      white-space: normal;
+    }
+  }
+
+  .result-table-wrapper {
+    margin: 8px 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+
+    table {
+      table-layout: fixed;
+      width: 100%;
+    }
+
+    td, th {
+      word-break: break-word;
+      white-space: normal;
+    }
+
+    td:first-child,
+    th:first-child {
+      width: 140px;
+    }
+  }
+
+  // ── Confirm section ───────────────────────────────────────────────────────
+
+  .confirm-section {
+    margin-top: 20px;
+    padding: 16px;
+    background: #fff3e0;
+    border-radius: 4px;
+    border-left: 4px solid #ff9800;
+  }
+
+  .confirm-warning {
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.8;
+
+    code {
+      background: #ffe0b2;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+  }
+
+  .confirm-input {
+    margin-top: 8px;
+  }
+
+  // ── In-progress ───────────────────────────────────────────────────────────
+
+  .merge-in-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+  }
+}

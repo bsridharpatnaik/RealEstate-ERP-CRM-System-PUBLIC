@@ -271,6 +271,8 @@ export const apiEndpoints = {
   getPurchaseOrderPreviousRates: (productId) =>
     `/api/inventory/purchase-orders/previous-rates?productId=${productId}`,
   getProductForDropdown: "/api/inventory/product?size=5000",
+  productMergePreview: "/api/inventory/product/merge/preview",
+  productMergeExecute: "/api/inventory/product/merge/execute",
   // Inventory configuration / project-level constants
   inventoryProjectConstants: "/api/inventory/project-constants",
   getGlobalDashboardCharts: (startDate, endDate) =>
@@ -349,4 +351,5 @@ export const appRoutes = {
   purchaseOrder: "/purchaseOrder",
   historicalPricing: "/historicalPricing",
   globalDashboard: "/globalDashboard",
+  productMerge: "/productMerge",
 };

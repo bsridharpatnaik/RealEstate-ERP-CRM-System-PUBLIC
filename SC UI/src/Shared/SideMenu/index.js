@@ -507,6 +507,12 @@ function SideMenu(props) {
   }}
   linkurl={appRoutes.user}
 />
+    <DashboardItem
+  nodeId="52"
+  labelText="Merge Products"
+  onClick={props.setSideBarValue}
+  linkurl={appRoutes.productMerge}
+/>
   </DashboardItem>
 )}
             <DashboardItem

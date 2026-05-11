@@ -36,6 +36,7 @@ import {
   DeadStock,
   HistoricalPricing,
   Firm,
+  ProductMerge,
 } from "./../index";
 import BOQReport from "../BOQReport";
 
@@ -112,6 +113,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={"/firm"}>
                   <Firm key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.productMerge}>
+                  <ProductMerge key={new Date()} {...props} />
                 </Route>
                 <Route path={"/inventory"}>
                   <Product key={new Date()} {...props} />

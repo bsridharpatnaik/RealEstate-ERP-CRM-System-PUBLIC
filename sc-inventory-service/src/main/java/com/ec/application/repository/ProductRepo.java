@@ -84,4 +84,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 //	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
 //	List<IdNameProjections> findIdAndMeasurementUnitNames(long productId);
+
+	@Query(value = "SELECT * FROM Product WHERE productId = :productId", nativeQuery = true)
+	java.util.Optional<Product> findByIdIncludingDeleted(@Param("productId") Long productId);
 }
