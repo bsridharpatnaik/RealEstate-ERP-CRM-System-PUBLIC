@@ -68,6 +68,10 @@ class Table extends CommonTable {
           </div>
         </td>
       );
+    } else if (key === 'boqQuantity' || key === 'outwardQuantity') {
+      const val = row[key];
+      const display = val !== null && val !== undefined ? Number(val).toFixed(2) : '—';
+      return <td data-label={key}>{display}</td>;
     } else {
       return super.renderCell(key, row, headerIndex);
     }

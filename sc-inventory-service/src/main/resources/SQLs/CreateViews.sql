@@ -1327,3 +1327,20 @@ WHERE
  PREPARE stmt FROM @sql;
  EXECUTE stmt;
  DEALLOCATE PREPARE stmt;
+
+
+ -- BOQUpload: filter by is_deleted + JOIN columns
+ CREATE INDEX idx_boqupload_active
+   ON BOQUpload (is_deleted, buildingTypeId, usageLocationId, locationId, productId);
+
+ -- outward_inventory: JOIN condition in subquery
+ CREATE INDEX idx_outward_inv_join
+   ON outward_inventory (is_deleted, locationId, usageAreaId);
+
+ -- outwardinventory_entry: JOIN on outwardid
+ CREATE INDEX idx_oie_outwardid
+   ON outwardinventory_entry (outwardid);
+
+ -- inward_outward_entries: JOIN on entryId + productId filter
+ CREATE INDEX idx_ioe_entry_product
+   ON inward_outward_entries (entryId, productId);
