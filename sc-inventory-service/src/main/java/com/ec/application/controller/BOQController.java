@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -107,6 +108,13 @@ public class BOQController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Existing_BOQ.xlsx\"")
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(excel);
+    }
+
+    @DeleteMapping("/boq_upload/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @CheckAuthority
+    public void deleteBOQEntry(@PathVariable("id") int id) {
+        bOQService.deleteBoqById(id);
     }
 
     @ExceptionHandler(

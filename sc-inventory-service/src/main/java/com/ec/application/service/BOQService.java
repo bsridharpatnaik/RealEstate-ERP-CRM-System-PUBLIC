@@ -155,6 +155,15 @@ public class BOQService {
     }
 
 
+    public void deleteBoqById(int id) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        BOQUpload boqUpload = bOQUploadRepository.findByIntId(id)
+                .orElseThrow(() -> new RuntimeException("BOQ record not found: " + id));
+        double oldQty = boqUpload.getQuantity();
+        bOQUploadRepository.softDelete(boqUpload);
+        boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0, null);
+    }
+
     private void save(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, int sNo, String changes) {
         saveAndReturn(buildingTypeId, buildingUnit, usageAreaId, productId, quantity, sNo, changes);
     }
@@ -557,7 +566,7 @@ public class BOQService {
             if (boqUpload == null) {
 
                 BOQUploadValidationResponse boqUploadResponse = setInventoryQuantityChangesLocation(upload);
-                boqUploadResponse.setMessage("record not exist");
+                boqUploadResponse.setMessage("record not found for deletion");
                 listboqBoqUploadResponses.add(boqUploadResponse);
             }
         }
@@ -916,6 +925,7 @@ public class BOQService {
             dto.setOutwardQuantity(dto.getOutwardQuantity() + outwardQty);
 
             BOQStatusDetailsDto detail = new BOQStatusDetailsDto();
+            detail.setBoqUploadId(toLong(r[0]));
             detail.setFinalLocation((String) r[6]);
             detail.setBoqQuantity(boqQty);
             detail.setOutwardQuantity(outwardQty);

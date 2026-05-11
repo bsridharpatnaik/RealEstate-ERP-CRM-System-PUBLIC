@@ -157,6 +157,9 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         nativeQuery = true)
     List<Object[]> fetchAggregatedBOQAndOutward(Long usageLocationId, Long productId);
 
+    @Query("SELECT b FROM BOQUpload b WHERE b.id = :id")
+    java.util.Optional<BOQUpload> findByIntId(@Param("id") int id);
+
     /**
      * Returns [boq_quantity, outward_quantity] for one specific (locationId, productId, finalLocationId).
      */

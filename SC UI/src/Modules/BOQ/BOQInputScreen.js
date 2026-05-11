@@ -146,7 +146,7 @@ const BOQInputScreen = () => {
     function extractHeader(ws) {
       const header = [];
       const range = XLSX.utils.decode_range(ws['!ref']);
-      const numCols = Math.min(range.e.c + 1, 5);
+      const numCols = range.e.c + 1;
       for (let i = 0; i < numCols; ++i) {
         const cell = ws[`${XLSX.utils.encode_col(i)}1`];
         header[i] = cell ? cell.h : '';
@@ -259,7 +259,7 @@ const BOQInputScreen = () => {
           const msg = responseMsgList[j];
           if (msg !== null) {
             if (msg !== 'Successfully done') {
-              enqueueSnackbar('Highlighted ' + msg, { variant: 'error' });
+              enqueueSnackbar('Upload blocked — ' + msg + '. Check highlighted rows.', { variant: 'error' });
             } else {
               enqueueSnackbar('BOQ uploaded successfully!', { variant: 'success' });
               setExcelData(null);

@@ -3,9 +3,13 @@ package com.ec.application.data;
 public class BOQStatusDetailsDto {
 
     private BOQStatusDetailsMapKey BOQStatusDetailsMapKey;
+    private Long boqUploadId;
     private String finalLocation;
     private Double boqQuantity;
     private Double outwardQuantity;
+
+    public Long getBoqUploadId() { return boqUploadId; }
+    public void setBoqUploadId(Long boqUploadId) { this.boqUploadId = boqUploadId; }
 
     public String getFinalLocation() {
         return finalLocation;

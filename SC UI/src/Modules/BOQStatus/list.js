@@ -12,7 +12,11 @@ import { messages } from "./../../messages";
 import Popper from "@material-ui/core/Popper";
 import Filter from "./filter";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
-import { Dialog, Slide } from "@material-ui/core";
+import {
+  Dialog, Slide, DialogTitle, DialogContent, DialogContentText,
+  DialogActions, Button, Table as MuiTable, TableHead, TableRow,
+  TableCell, TableBody, CircularProgress,
+} from "@material-ui/core";
 import Details from "./details";
 import { API, instance } from "./../../axios";
 import { param } from "jquery";
@@ -32,6 +36,12 @@ class List extends ListCommon {
     quickFilter: null,
     showBOQModal: false,
     boqModalData: null,
+    showDeleteConfirm: false,
+    deleteTarget: null,
+    deleteInProgress: false,
+    selectedRowIds: [],
+    showBulkDeleteConfirm: false,
+    bulkDeleteInProgress: false,
   };
   buildingTypeID = '';
   buildingUnitID = [];
@@ -215,6 +225,7 @@ class List extends ListCommon {
         data: d.boqstatusDto.content,
         pages: d.boqstatusDto.totalPages,
         totalRecords: d.boqstatusDto.totalElements,
+        selectedRowIds: [],
         summary: {
           total:    d.totalCount    || 0,
           onTrack:  d.onTrackCount  || 0,
@@ -257,6 +268,72 @@ class List extends ListCommon {
     });
   };
 
+  handleDeleteBOQ = (row) => {
+    this.setState({ showDeleteConfirm: true, deleteTarget: row });
+  };
+
+  executeDelete = async () => {
+    const { deleteTarget } = this.state;
+    if (!deleteTarget || !deleteTarget.boqDetails) return;
+    const idsToDelete = deleteTarget.boqDetails.filter(d => d.boqUploadId);
+    if (idsToDelete.length === 0) {
+      this.props.enqueueSnackbar('Delete not available — please restart the backend service.', { variant: 'error' });
+      return;
+    }
+    this.setState({ deleteInProgress: true });
+    let allOk = true;
+    for (const detail of idsToDelete) {
+      const res = await API.DELETE(apiEndpoints.deleteBOQEntry + detail.boqUploadId);
+      if (!res.success) {
+        allOk = false;
+        this.props.enqueueSnackbar('Failed to delete entry: ' + detail.finalLocation, { variant: 'error' });
+      }
+    }
+    this.setState({ showDeleteConfirm: false, deleteTarget: null, deleteInProgress: false });
+    if (allOk) {
+      this.props.enqueueSnackbar('BOQ entry deleted successfully', { variant: 'success' });
+    }
+    this.search(0);
+  };
+
+  handleSelectRow = (rowId) => {
+    this.setState(prev => {
+      const ids = prev.selectedRowIds.includes(rowId)
+        ? prev.selectedRowIds.filter(id => id !== rowId)
+        : [...prev.selectedRowIds, rowId];
+      return { selectedRowIds: ids };
+    });
+  };
+
+  handleSelectAll = (checked) => {
+    const ids = checked ? (this.state.data || []).map(r => r.id) : [];
+    this.setState({ selectedRowIds: ids });
+  };
+
+  executeBulkDelete = async () => {
+    const { selectedRowIds, data } = this.state;
+    const selectedRows = (data || []).filter(r => selectedRowIds.includes(r.id));
+    const allDetails = selectedRows.flatMap(r => r.boqDetails || []).filter(d => d.boqUploadId);
+    if (allDetails.length === 0) {
+      this.props.enqueueSnackbar('No deletable entries found — restart backend if issue persists.', { variant: 'error' });
+      return;
+    }
+    this.setState({ bulkDeleteInProgress: true });
+    let allOk = true;
+    for (const detail of allDetails) {
+      const res = await API.DELETE(apiEndpoints.deleteBOQEntry + detail.boqUploadId);
+      if (!res.success) {
+        allOk = false;
+        this.props.enqueueSnackbar('Failed to delete: ' + detail.finalLocation, { variant: 'error' });
+      }
+    }
+    this.setState({ showBulkDeleteConfirm: false, bulkDeleteInProgress: false, selectedRowIds: [] });
+    if (allOk) {
+      this.props.enqueueSnackbar(`${selectedRows.length} BOQ entry(s) deleted successfully`, { variant: 'success' });
+    }
+    this.search(0);
+  };
+
   async downloadStatusExcel() {
     const params = new URLSearchParams();
     this.buildingType.forEach(bt => params.append('buildingType', bt.name));
@@ -288,7 +365,10 @@ class List extends ListCommon {
   }
 
   render() {
-    const { summary, quickFilter, showBOQModal, boqModalData } = this.state;
+    const { summary, quickFilter, showBOQModal, boqModalData,
+            showDeleteConfirm, deleteTarget, deleteInProgress,
+            selectedRowIds, showBulkDeleteConfirm, bulkDeleteInProgress } = this.state;
+    const hasSelection = selectedRowIds.length > 0;
     return (
       <div className={this.state.showDetails ? "split" : ""}>
         <div className="list-section">
@@ -342,6 +422,17 @@ class List extends ListCommon {
                   label={"Add BOQ Entry"}
                   icon={"AddSVG"}
                 />
+              )}
+              {canEditBOQ() && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  disabled={!hasSelection}
+                  onClick={() => this.setState({ showBulkDeleteConfirm: true })}
+                  style={{ marginLeft: 8, textTransform: 'none', height: 36 }}
+                >
+                  {`Delete Selected${hasSelection ? ` (${selectedRowIds.length})` : ''}`}
+                </Button>
               )}
               <IconButtons
                 onClick={() => this.downloadStatusExcel()}
@@ -397,10 +488,92 @@ class List extends ListCommon {
               }}
               canEditBOQ={canEditBOQ()}
               onEditBOQ={(row) => this.openEditModal(row)}
+              onDeleteBOQ={(row) => this.handleDeleteBOQ(row)}
+              selectedRowIds={selectedRowIds}
+              onSelectRow={(id) => this.handleSelectRow(id)}
+              onSelectAll={(checked) => this.handleSelectAll(checked)}
             />
           )}
           {this.renderPagination()}
         </div>
+
+        {/* Delete confirmation dialog */}
+        <Dialog open={showDeleteConfirm} onClose={() => !deleteInProgress && this.setState({ showDeleteConfirm: false, deleteTarget: null })}>
+          <DialogTitle>Delete BOQ Entry</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This will permanently delete the following BOQ record(s) for{' '}
+              <strong>{deleteTarget && deleteTarget.product}</strong>
+              {' '}({deleteTarget && deleteTarget.buildingUnit}):
+            </DialogContentText>
+            {deleteTarget && deleteTarget.boqDetails && (
+              <MuiTable size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell><strong>Final Location</strong></TableCell>
+                    <TableCell align="right"><strong>BOQ Qty</strong></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {deleteTarget.boqDetails.map((d, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{d.finalLocation || '—'}</TableCell>
+                      <TableCell align="right">{d.boqQuantity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </MuiTable>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ showDeleteConfirm: false, deleteTarget: null })} disabled={deleteInProgress}>
+              Cancel
+            </Button>
+            <Button onClick={this.executeDelete} color="secondary" variant="contained" disabled={deleteInProgress}>
+              {deleteInProgress ? <CircularProgress size={18} /> : 'Delete'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Bulk delete confirmation dialog */}
+        <Dialog open={showBulkDeleteConfirm} onClose={() => !bulkDeleteInProgress && this.setState({ showBulkDeleteConfirm: false })}>
+          <DialogTitle>Delete Selected BOQ Entries</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This will permanently delete all BOQ records for the{' '}
+              <strong>{selectedRowIds.length}</strong> selected item(s).
+              This action cannot be undone.
+            </DialogContentText>
+            <MuiTable size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Product</strong></TableCell>
+                  <TableCell><strong>Building Unit</strong></TableCell>
+                  <TableCell align="right"><strong>BOQ Qty</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(this.state.data || [])
+                  .filter(r => selectedRowIds.includes(r.id))
+                  .map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell>{r.product}</TableCell>
+                      <TableCell>{r.buildingUnit}</TableCell>
+                      <TableCell align="right">{r.boqQuantity}</TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </MuiTable>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ showBulkDeleteConfirm: false })} disabled={bulkDeleteInProgress}>
+              Cancel
+            </Button>
+            <Button onClick={this.executeBulkDelete} color="secondary" variant="contained" disabled={bulkDeleteInProgress}>
+              {bulkDeleteInProgress ? <CircularProgress size={18} /> : `Delete ${selectedRowIds.length} Item(s)`}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <BOQEditModal
           open={showBOQModal}
