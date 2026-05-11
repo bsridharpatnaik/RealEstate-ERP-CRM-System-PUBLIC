@@ -229,6 +229,7 @@ export const apiEndpoints = {
     "/api/crm/customer/paymentstatus/bydealid/{leadid}",
 
   BOQupload: "/api/inventory/boqupload/boq_upload",
+  deleteBOQEntry: "/api/inventory/boqupload/boq_upload/",
   getBOQStatusDetails: "/api/inventory/boqupload/get_boq_status_details?size=" + noOfRecords,
   getBuildingUnit: "/api/inventory/boqupload/get_buildingunit_by_buildingtypeid/",
   getBOQReport: "/api/inventory/boqupload/get_boq_report",

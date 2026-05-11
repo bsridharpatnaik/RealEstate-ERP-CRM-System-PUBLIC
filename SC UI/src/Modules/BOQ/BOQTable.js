@@ -16,14 +16,16 @@ import { messages } from "./../../messages";
 import CheckIcon from "@material-ui/icons/Check";
 import { withSnackbar } from "notistack";
 import { connect } from "react-redux";
+import { canEditBOQ } from "../../helper";
 import Pagination from "@material-ui/lab/Pagination";
 import AddIcon from "@material-ui/icons/Add";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import Skeleton from "@material-ui/lab/Skeleton";
 
 class BOQTable extends Component {
-  state = { editRow: null, inventory: null, quantity: null, addQuantity: null };
+  state = { editRow: null, inventory: null, quantity: null, addQuantity: null, addRemark: '' };
   editQuantity;
+  editRemark = '';
   async deleteBOQ() {
     const response = await API.DELETE(
       apiEndpoints.deleteBOQ + this.deleteRow.entryId
@@ -34,13 +36,17 @@ class BOQTable extends Component {
   }
   async updateBOQ() {
     if (!this.editQuantity) {
-      this.props.enqueueSnackbar("Enter Quantity", {
-        variant: "error",
-      });
+      this.props.enqueueSnackbar("Enter Quantity", { variant: "error" });
+      return;
+    }
+    if (!this.editRemark || !this.editRemark.trim()) {
+      this.props.enqueueSnackbar("Remark is mandatory", { variant: "error" });
+      return;
     }
     const params = {
       productId: this.state.editRow.product.productId,
       quantity: Number(this.editQuantity),
+      remark: this.editRemark || '',
     };
     const response = await API.PUT(
       apiEndpoints.deleteBOQ + this.state.editRow.entryId,
@@ -68,6 +74,7 @@ class BOQTable extends Component {
   }
   renderRow(row, index) {
     const isEditRow = this.state.editRow === row;
+    const hasAccess = canEditBOQ();
     return (
       <div key={index} className="table-row inv">
         <div className="inv-name">{row.product.productName}</div>
@@ -89,38 +96,53 @@ class BOQTable extends Component {
           )}
         </div>
         <div className="inv-unit">{row.product.measurementUnit}</div>
-        <div className="actions">
-          <IconButton
-            aria-label="back"
-            onClick={() => {
-              if (isEditRow) {
-                this.updateBOQ();
-              } else {
-                this.editQuantity = null;
-                this.setState({ editRow: row });
-                this.clearAdd();
-              }
-            }}
-            className="back-icon"
-          >
-            {isEditRow ? <CheckIcon /> : EditIcon({ fontSize: "medium" })}
-          </IconButton>
-          <IconButton
-            aria-label="back"
-            onClick={() => {
-              if (isEditRow) {
-                this.setState({ editRow: null });
-                this.clearAdd();
-              } else {
-                this.deleteRow = row;
-                this.setState({ deleteConfirmOpen: true });
-              }
-            }}
-            className="back-icon"
-          >
-            {isEditRow ? <CloseIcon /> : DeleteIcon({ fontSize: "medium" })}
-          </IconButton>
+        <div className="inv-remark" style={{ flex: 1, minWidth: '120px', padding: '0 4px' }}>
+          {isEditRow ? (
+            <TF
+              variant="standard"
+              className="no-border-select"
+              margin="dense"
+              fullWidth
+              placeholderText={"Change comment *"}
+              onChange={(e) => (this.editRemark = e)}
+            />
+          ) : null}
         </div>
+        {hasAccess && (
+          <div className="actions">
+            <IconButton
+              aria-label="back"
+              onClick={() => {
+                if (isEditRow) {
+                  this.updateBOQ();
+                } else {
+                  this.editQuantity = null;
+                  this.editRemark = '';
+                  this.setState({ editRow: row });
+                  this.clearAdd();
+                }
+              }}
+              className="back-icon"
+            >
+              {isEditRow ? <CheckIcon /> : EditIcon({ fontSize: "medium" })}
+            </IconButton>
+            <IconButton
+              aria-label="back"
+              onClick={() => {
+                if (isEditRow) {
+                  this.setState({ editRow: null });
+                  this.clearAdd();
+                } else {
+                  this.deleteRow = row;
+                  this.setState({ deleteConfirmOpen: true });
+                }
+              }}
+              className="back-icon"
+            >
+              {isEditRow ? <CloseIcon /> : DeleteIcon({ fontSize: "medium" })}
+            </IconButton>
+          </div>
+        )}
       </div>
     );
   }
@@ -136,6 +158,7 @@ class BOQTable extends Component {
       quantity: Number(this.state.addQuantity),
       id: id,
       boqType: this.props.selectedUnit ? "BuildingUnit" : "BuildingType",
+      remark: this.state.addRemark || '',
     };
     const response = await API.POST(apiEndpoints.boqadd, params);
     if (response.success) {
@@ -147,7 +170,7 @@ class BOQTable extends Component {
     }
   }
   clearAdd() {
-    this.setState({ addQuantity: null, inventory: null, isAdd: false });
+    this.setState({ addQuantity: null, inventory: null, isAdd: false, addRemark: '' });
   }
   renderAdd() {
     return (
@@ -200,12 +223,23 @@ class BOQTable extends Component {
             }
           />
         </div>
+        <div className="inv-remark" style={{ flex: 1, minWidth: '120px', padding: '0 4px' }}>
+          <TF
+            variant="standard"
+            className="no-border-select"
+            margin="dense"
+            required
+            fullWidth
+            placeholderText={"Change comment *"}
+            onChange={(e) => this.setState({ addRemark: e })}
+          />
+        </div>
         <div className="actions add">
           <Button
             label="Save"
             buttonClass="boq-save"
             onClick={() => this.add()}
-            disabled={!(this.state.inventory && this.state.addQuantity)}
+            disabled={!(this.state.inventory && this.state.addQuantity && this.state.addRemark && this.state.addRemark.trim())}
           />
           <Button
             label="Cancel"
@@ -253,17 +287,19 @@ class BOQTable extends Component {
 
         <div className="table-title">
           Statistics
-          <Button
-            color="primary"
-            variant="contained"
-            buttonClass={"boq"}
-            disabled={this.state.isAdd}
-            onClick={() => {
-              this.getProductListType();
-              this.setState({ isAdd: true, editRow: null });
-            }}
-            label={"Add"}
-          ></Button>
+          {canEditBOQ() && (
+            <Button
+              color="primary"
+              variant="contained"
+              buttonClass={"boq"}
+              disabled={this.state.isAdd}
+              onClick={() => {
+                this.getProductListType();
+                this.setState({ isAdd: true, editRow: null });
+              }}
+              label={"Add"}
+            ></Button>
+          )}
         </div>
 
         <div className="table-scroll-wrapper">
@@ -272,6 +308,7 @@ class BOQTable extends Component {
               <div className="inv-name">Inventory</div>
               <div className="inv-quantity">Inventory Limit</div>
               <div className="inv-unit">Measurement Unit</div>
+              <div className="inv-remark" style={{ flex: 1, minWidth: '120px', padding: '0 4px' }}>Remark</div>
               <div className="actions">
                 <div />
               </div>

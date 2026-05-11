@@ -78,6 +78,13 @@ class filter extends CommonFilter {
               undefined,
               false
             )}
+            {this.renderAutoComplete(
+              "BOQ Bypassed",
+              this.invoiceOptions,
+              "boqBypassed",
+              undefined,
+              false
+            )}
           </div>
         ) : null}
         {this.renderFooter()}

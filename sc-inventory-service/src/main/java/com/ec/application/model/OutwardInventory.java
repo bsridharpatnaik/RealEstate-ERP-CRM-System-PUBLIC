@@ -100,10 +100,23 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	{ @JoinColumn(name = "rejectentryid", referencedColumnName = "rejectentryid") })
 	Set<RejectOutwardList> rejectOutwardList = new HashSet<>();
 
+	@Column(name = "has_boq")
+	private Boolean hasBOQ;
+
 	@Override
 	public Object clone() throws CloneNotSupportedException
 	{
 		return super.clone();
+	}
+
+	public Boolean getHasBOQ()
+	{
+		return hasBOQ;
+	}
+
+	public void setHasBOQ(Boolean hasBOQ)
+	{
+		this.hasBOQ = hasBOQ;
 	}
 
 	public Set<RejectOutwardList> getRejectOutwardList()

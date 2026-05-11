@@ -43,6 +43,9 @@ public class BOQHistory {
     @Column(name = "newQuantity")
     private Double newQuantity;
 
+    @Column(name = "remark", length = 500)
+    private String remark;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -72,4 +75,7 @@ public class BOQHistory {
 
     public Double getNewQuantity() { return newQuantity; }
     public void setNewQuantity(Double newQuantity) { this.newQuantity = newQuantity; }
+
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
 }

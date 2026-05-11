@@ -8,6 +8,7 @@ import { apiEndpoints } from '../../endpoints';
 import "./LoadingSpinner.css";
 import { API } from "./../../axios";
 import { DeleteIcon, RefreshIcon } from '../../Shared/Icons/Index';
+import { canEditBOQ } from '../../helper';
 
 const BOQInputScreen = () => {
   const fileInputRef = useRef(null);
@@ -42,7 +43,7 @@ const BOQInputScreen = () => {
 
   const tableHeading = [
     'S No.', 'Building Type', 'Building Unit',
-    'Category', 'Inventory', 'Unit', 'Quantity', 'Final Location', 'Changes', 'Delete'
+    'Category', 'Inventory', 'Unit', 'Quantity', 'Final Location', 'Changes', 'Remark', 'Delete'
   ];
 
   let td = [null];
@@ -145,7 +146,7 @@ const BOQInputScreen = () => {
     function extractHeader(ws) {
       const header = [];
       const range = XLSX.utils.decode_range(ws['!ref']);
-      const numCols = Math.min(range.e.c + 1, 5);
+      const numCols = range.e.c + 1;
       for (let i = 0; i < numCols; ++i) {
         const cell = ws[`${XLSX.utils.encode_col(i)}1`];
         header[i] = cell ? cell.h : '';
@@ -222,16 +223,18 @@ const BOQInputScreen = () => {
         for (let u = 0; u < buildingUnitData.length; u++) {
           if (buildingUnitData[u].label === splt[2]) splt[2] = buildingUnitData[u].value;
         }
-        // New format: sno(0) BT(1) BU(2) Category(3) Inventory(4) Unit(5) Qty(6) Loc(7) Changes(8)
-        // Old format: sno(0) BT(1) BU(2) Inventory(3) Qty(4) Loc(5) Changes(6)
+        // New format: sno(0) BT(1) BU(2) Category(3) Inventory(4) Unit(5) Qty(6) Loc(7) [Changes(8)] Remark(8|9)
+        // Old format: sno(0) BT(1) BU(2) Inventory(3) Qty(4) Loc(5) [Changes(6)] Remark(6|7)
         td[key2++] = hasCategory ? {
           sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
           inventory: splt[4], quantity: splt[6], location: splt[7],
-          changes: uploadMode === 'existing' ? 'upsert' : splt[8]
+          changes: uploadMode === 'existing' ? 'upsert' : splt[8],
+          remark: uploadMode === 'existing' ? (splt[8] || '') : (splt[9] || '')
         } : {
           sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
           inventory: splt[3], quantity: splt[4], location: splt[5],
-          changes: uploadMode === 'existing' ? 'upsert' : splt[6]
+          changes: uploadMode === 'existing' ? 'upsert' : splt[6],
+          remark: uploadMode === 'existing' ? (splt[6] || '') : (splt[7] || '')
         };
       }
     }
@@ -256,7 +259,7 @@ const BOQInputScreen = () => {
           const msg = responseMsgList[j];
           if (msg !== null) {
             if (msg !== 'Successfully done') {
-              enqueueSnackbar('Highlighted ' + msg, { variant: 'error' });
+              enqueueSnackbar('Upload blocked — ' + msg + '. Check highlighted rows.', { variant: 'error' });
             } else {
               enqueueSnackbar('BOQ uploaded successfully!', { variant: 'success' });
               setExcelData(null);
@@ -389,8 +392,23 @@ const BOQInputScreen = () => {
   const stepDone2 = false; // download is optional, can't verify
   const stepDone3 = !!excelData;
 
+  const hasEditAccess = canEditBOQ();
+
   return (
     <div style={s.page}>
+
+      {/* Access guard banner */}
+      {!hasEditAccess && (
+        <div style={{
+          background: '#fff3e0', border: '1px solid #ffb300', borderRadius: '8px',
+          padding: '14px 20px', marginBottom: '20px', color: '#e65100', fontWeight: 500, fontSize: '14px'
+        }}>
+          ⚠️ You do not have permission to upload or edit BOQ. This action is restricted to Project Managers and Admins only.
+        </div>
+      )}
+
+      {/* Wrap entire form — disable interaction for unauthorised users */}
+      <div style={hasEditAccess ? {} : { pointerEvents: 'none', opacity: 0.55 }}>
 
       {/* Page header */}
       <div style={s.pageHeader}>
@@ -596,7 +614,8 @@ const BOQInputScreen = () => {
                   {uploadMode === 'new' && (
                     <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[8]}</th>
                   )}
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[9]}</th>
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[9]}</th>
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[10]}</th>
                 </tr>
               </thead>
               <tbody>
@@ -617,7 +636,8 @@ const BOQInputScreen = () => {
                     {uploadMode === 'new' && (
                       <td className="row-data" id={idx + 1 + tableHeading[8]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
                     )}
-                    <td className="row-data" id={idx + 1 + tableHeading[9]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
+                    <td className="row-data" id={idx + 1 + tableHeading[9]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Remark || ''}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[10]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
                       <IconButton
                         onClick={() => {
                           setExcelData(prev => prev.filter((_, i) => i !== idx));
@@ -648,6 +668,8 @@ const BOQInputScreen = () => {
           </div>
         </div>
       )}
+
+      </div> {/* end hasEditAccess wrapper */}
     </div>
   );
 };

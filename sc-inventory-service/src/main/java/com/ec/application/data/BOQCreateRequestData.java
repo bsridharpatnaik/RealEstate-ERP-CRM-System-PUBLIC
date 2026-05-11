@@ -11,4 +11,5 @@ public class BOQCreateRequestData
 	Long productId;
 	Double quantity;
 	Long id;
+	String remark;
 }

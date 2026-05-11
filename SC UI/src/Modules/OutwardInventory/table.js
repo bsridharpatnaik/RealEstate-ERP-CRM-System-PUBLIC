@@ -7,6 +7,8 @@ import "./style.scss";
 import CommonTable from "./../../Shared/Table";
 import { messages } from "./../../messages";
 import Button from "@material-ui/core/Button";
+import Tooltip from "@material-ui/core/Tooltip";
+import WarningRoundedIcon from "@material-ui/icons/WarningRounded";
 import { checkifDateLessThan, getRoleEditConstraintDays } from "./../../helper";
 
 class Table extends CommonTable {
@@ -28,23 +30,28 @@ class Table extends CommonTable {
     } else if (key === "usageArea") {
       return <td data-label={messages.common.finalLocation}>{`${row["usageArea"]["usageAreaName"]}`}</td>;
     } else if (key === "outwardid") {
+      const noBOQ = row.hasBOQ !== true;
       return (
         <td data-label='ID'>
-        <Button 
-        
-          color="primary"
-          onClick={() => {
-            this.hideedit = true;
-            this.hidedelete = true;
-            this.props.showDetail(row);
-            this.setState({
-              headers: [messages.common.id, messages.fields.date, "Contractor"],
-              keys: ["outwardid", "date", "contractor"],
-            });
-          }}
-        >
-          {`${row["outwardid"]}`}
-        </Button>
+          <Button
+            color="primary"
+            onClick={() => {
+              this.hideedit = true;
+              this.hidedelete = true;
+              this.props.showDetail(row);
+              this.setState({
+                headers: [messages.common.id, messages.fields.date, "Contractor"],
+                keys: ["outwardid", "date", "contractor"],
+              });
+            }}
+          >
+            {`${row["outwardid"]}`}
+          </Button>
+          {noBOQ && (
+            <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
+              <WarningRoundedIcon style={{ color: '#e65100', fontSize: '18px', verticalAlign: 'middle', marginLeft: '6px', cursor: 'default' }} />
+            </Tooltip>
+          )}
         </td>
       );
     } else {

@@ -122,7 +122,7 @@ public class BOQService {
                     upload.getSno(), upload.getChanges());
             if (saved != null) {
                 boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
-                        Double.parseDouble(upload.getQuantity()));
+                        Double.parseDouble(upload.getQuantity()), upload.getRemark());
             }
         }
     }
@@ -135,7 +135,7 @@ public class BOQService {
             boqUpload.setQuantity(0);
             boqUpload.setChanges(upload.getChanges());
             bOQUploadRepository.softDelete(boqUpload);
-            boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0);
+            boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0, upload.getRemark());
         }
     }
 
@@ -149,11 +149,20 @@ public class BOQService {
             boqUpload.setQuantity(newQty);
             bOQUploadRepository.save(boqUpload);
             if (oldQty != newQty) {
-                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty);
+                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty, upload.getRemark());
             }
         }
     }
 
+
+    public void deleteBoqById(int id) {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+        BOQUpload boqUpload = bOQUploadRepository.findByIntId(id)
+                .orElseThrow(() -> new RuntimeException("BOQ record not found: " + id));
+        double oldQty = boqUpload.getQuantity();
+        bOQUploadRepository.softDelete(boqUpload);
+        boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0, null);
+    }
 
     private void save(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, int sNo, String changes) {
         saveAndReturn(buildingTypeId, buildingUnit, usageAreaId, productId, quantity, sNo, changes);
@@ -202,13 +211,14 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("BOQ Template");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (VLOOKUP, read-only)
-            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Changes
+            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Changes  Col 6: Remark (optional)
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
             header.createCell(4).setCellValue("FinalLocation");
             header.createCell(5).setCellValue("Changes");
+            header.createCell(6).setCellValue("Remark");
 
             // Hidden: Categories — col A = display name, col B = named range key for INDIRECT
             Sheet categorySheet = workbook.createSheet("Categories");
@@ -333,12 +343,13 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("Existing BOQ");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (pre-filled, reference only)
-            // Col 3: Quantity  Col 4: FinalLocation
+            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Remark (optional)
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
             header.createCell(4).setCellValue("FinalLocation");
+            header.createCell(5).setCellValue("Remark");
 
             // Hidden: Categories — col A = display name, col B = named range key
             Sheet categorySheet = workbook.createSheet("Categories");
@@ -458,7 +469,7 @@ public class BOQService {
                     upload.getSno(), BOQUploadConstant.UPDATE);
             if (saved != null) {
                 boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
-                        Double.parseDouble(upload.getQuantity()));
+                        Double.parseDouble(upload.getQuantity()), upload.getRemark());
             }
         } else {
             double oldQty = boqUpload.getQuantity();
@@ -467,7 +478,7 @@ public class BOQService {
             boqUpload.setChanges(BOQUploadConstant.UPDATE);
             bOQUploadRepository.save(boqUpload);
             if (oldQty != newQty) {
-                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty);
+                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty, upload.getRemark());
             }
         }
     }
@@ -504,6 +515,15 @@ public class BOQService {
                     validateInventoryLocationChanges(listboqBoqUploadResponses, upload, isInventoryExist, isLocationExist);
                 } else if (!upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPSERT)) {
                     validateChanges(listboqBoqUploadResponses, upload, listOfBOQUpload);
+                }
+                if (upload.getRemark() == null || upload.getRemark().trim().isEmpty()) {
+                    BOQUploadValidationResponse remarkError = new BOQUploadValidationResponse();
+                    List<String> cols = new ArrayList<>();
+                    cols.add(BOQUploadConstant.REMARK);
+                    remarkError.setSno(upload.getSno());
+                    remarkError.setColumns(cols);
+                    remarkError.setMessage("Remark is mandatory");
+                    listboqBoqUploadResponses.add(remarkError);
                 }
             } catch (Exception e) {
                 validateBOQQuantity(listboqBoqUploadResponses, upload);
@@ -546,7 +566,7 @@ public class BOQService {
             if (boqUpload == null) {
 
                 BOQUploadValidationResponse boqUploadResponse = setInventoryQuantityChangesLocation(upload);
-                boqUploadResponse.setMessage("record not exist");
+                boqUploadResponse.setMessage("record not found for deletion");
                 listboqBoqUploadResponses.add(boqUploadResponse);
             }
         }
@@ -762,10 +782,17 @@ public class BOQService {
      * @param usageLocationId  building unit (usageLocation) ID
      * @param items            list of (productId, newQuantity) pairs
      */
-    public void enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
+    /**
+     * Enforces BOQ limits for outward inventory and also returns whether ALL products
+     * in the list have a BOQ configured (totalBOQ > 0) for the given usageLocation.
+     *
+     * @return true if every product has BOQ > 0, false if any product has no BOQ
+     */
+    public boolean enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
         log.info("Invoked enforceBOQLimits");
-        if (!boqEnforcementBlock) return;
+        if (usageLocationId == null || items == null || items.isEmpty()) return false;
 
+        boolean allHaveBOQ = true;
         List<String> violations = new ArrayList<>();
 
         for (com.ec.application.data.ProductWithQuantity item : items) {
@@ -774,26 +801,29 @@ public class BOQService {
 
             // native aggregate query always returns exactly one row; use List to avoid Object[] cast issues
             List<Object[]> rows = bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
-            if (rows == null || rows.isEmpty()) continue;
+            if (rows == null || rows.isEmpty()) { allHaveBOQ = false; continue; }
             Object[] row = rows.get(0);
-            if (row == null) continue;
+            if (row == null) { allHaveBOQ = false; continue; }
 
             double totalBOQ     = row[0] != null ? ((Number) row[0]).doubleValue() : 0;
             double totalOutward = row[1] != null ? ((Number) row[1]).doubleValue() : 0;
 
-            if (totalBOQ <= 0) continue; // no BOQ configured for this product+unit → skip
+            if (totalBOQ <= 0) { allHaveBOQ = false; continue; } // no BOQ configured for this product+unit
 
-            double afterQty       = totalOutward + newQty;
-            double consumedPercent = (afterQty / totalBOQ) * 100;
+            // BOQ exists — now check consumption limits (only when enforcement is enabled)
+            if (boqEnforcementBlock) {
+                double afterQty        = totalOutward + newQty;
+                double consumedPercent = (afterQty / totalBOQ) * 100;
 
-            if (consumedPercent > 100) {
-                Product product = productRepository.findByProductId(productId);
-                String productName = product != null ? product.getProductName() : ("Product ID " + productId);
-                double remaining = Math.max(totalBOQ - totalOutward, 0);
-                violations.add(String.format(
-                    "%s: BOQ limit is %.2f, already consumed %.2f, remaining %.2f but requested %.2f",
-                    productName, totalBOQ, totalOutward, remaining, newQty
-                ));
+                if (consumedPercent > 100) {
+                    Product product = productRepository.findByProductId(productId);
+                    String productName = product != null ? product.getProductName() : ("Product ID " + productId);
+                    double remaining = Math.max(totalBOQ - totalOutward, 0);
+                    violations.add(String.format(
+                        "%s: BOQ limit is %.2f, already consumed %.2f, remaining %.2f but requested %.2f",
+                        productName, totalBOQ, totalOutward, remaining, newQty
+                    ));
+                }
             }
         }
 
@@ -801,6 +831,8 @@ public class BOQService {
             throw new Exception("BOQ limit exceeded for the following items — save blocked:\n" +
                     String.join("\n", violations));
         }
+
+        return allHaveBOQ;
     }
 
     public BOQDashboardResponse getBOQDashboardData() {
@@ -893,6 +925,7 @@ public class BOQService {
             dto.setOutwardQuantity(dto.getOutwardQuantity() + outwardQty);
 
             BOQStatusDetailsDto detail = new BOQStatusDetailsDto();
+            detail.setBoqUploadId(toLong(r[0]));
             detail.setFinalLocation((String) r[6]);
             detail.setBoqQuantity(boqQty);
             detail.setOutwardQuantity(outwardQty);

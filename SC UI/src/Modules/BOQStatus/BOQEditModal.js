@@ -30,6 +30,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
   const [unit, setUnit]                   = useState('');
   const [finalLocation, setFinalLocation] = useState(null);
   const [quantity, setQuantity]           = useState('');
+  const [remark, setRemark]               = useState('');
   const [saving, setSaving]               = useState(false);
 
   // Load building types, categories, products and usage areas once
@@ -59,8 +60,8 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
     if (!open) return;
 
     if (initialData) {
-      // Pre-fill product
-      const preProduct = productOptions.find(o => o.label === initialData.productName) || null;
+      // Pre-fill product — search allProductOptions so category filter doesn't interfere
+      const preProduct = allProductOptions.find(o => o.label === initialData.productName) || null;
       setProduct(preProduct);
       setUnit(preProduct ? (preProduct.unit || '') : '');
 
@@ -73,6 +74,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
         setFinalLocation(null);
         setQuantity('');
       }
+      setRemark('');
 
       // Pre-fill building type then unit
       if (initialData.buildingTypeId && buildingTypeOptions.length > 0) {
@@ -97,8 +99,9 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       setProductOptions(allProductOptions);
       setFinalLocation(null);
       setQuantity('');
+      setRemark('');
     }
-  }, [open, initialData, buildingTypeOptions, productOptions, locationOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, initialData, buildingTypeOptions, allProductOptions, locationOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadBuildingUnits = async (btId, preSelectUnitId) => {
     const r = await API.GET(apiEndpoints.getBuildingUnit + btId);
@@ -141,8 +144,8 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
   };
 
   const handleSave = async () => {
-    if (!buildingType || !buildingUnit || !product || !finalLocation || !quantity) {
-      enqueueSnackbar('Please fill all required fields', { variant: 'warning' });
+    if (!buildingType || !buildingUnit || !product || !finalLocation || !quantity || !remark.trim()) {
+      enqueueSnackbar('Please fill all required fields including Remark', { variant: 'warning' });
       return;
     }
     setSaving(true);
@@ -155,6 +158,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
         location: finalLocation.label,
         quantity: String(quantity),
         changes: 'upsert',
+        remark: remark.trim(),
       }]
     };
     const r = await API.POST(apiEndpoints.BOQupload, body);
@@ -258,6 +262,21 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
               size="small"
               fullWidth
               inputProps={{ min: 0 }}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Remark <span style={{ color: 'red' }}>*</span></label>
+            <TextField
+              value={remark}
+              onChange={e => setRemark(e.target.value)}
+              variant="outlined"
+              size="small"
+              fullWidth
+              multiline
+              minRows={2}
+              inputProps={{ maxLength: 500 }}
+              placeholder="Reason for change…"
             />
           </div>
 

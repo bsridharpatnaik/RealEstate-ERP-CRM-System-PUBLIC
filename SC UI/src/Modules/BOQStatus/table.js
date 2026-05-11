@@ -8,7 +8,9 @@ import CommonTable from "./../../Shared/Table";
 import { messages } from "./../../messages";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
+import Checkbox from "@material-ui/core/Checkbox";
 import EditIcon from "@material-ui/icons/Edit";
+import DeleteIcon from "@material-ui/icons/Delete";
 
 class Table extends CommonTable {
 
@@ -71,10 +73,39 @@ class Table extends CommonTable {
     }
   }
 
+  renderHeader() {
+    const canEdit = this.props.canEditBOQ;
+    const rows = this.state.rows || [];
+    const selectedRowIds = this.props.selectedRowIds || [];
+    const allSelected = rows.length > 0 && rows.every(r => selectedRowIds.includes(r.id));
+    const someSelected = rows.some(r => selectedRowIds.includes(r.id));
+    return (
+      <tr>
+        {canEdit && (
+          <th style={{ width: 40 }}>
+            <Checkbox
+              size="small"
+              checked={allSelected}
+              indeterminate={someSelected && !allSelected}
+              onChange={(e) => this.props.onSelectAll(e.target.checked)}
+            />
+          </th>
+        )}
+        {this.state.headers.map((header, index) => (
+          <th key={index} onClick={() => this.sort(index)} className="sortable">
+            <span>{header}</span>
+          </th>
+        ))}
+        {canEdit && <th className="action">Actions</th>}
+      </tr>
+    );
+  }
+
   renderBody() {
     const rows = this.state.rows || [];
     const keys = this.state.keys;
     const canEdit = this.props.canEditBOQ;
+    const selectedRowIds = this.props.selectedRowIds || [];
     if (rows.length === 0) {
       return (
         <tr>
@@ -84,11 +115,21 @@ class Table extends CommonTable {
     }
     return rows.map((row, index) => {
       const cls = this.getStatusClass(row.status || 0);
+      const isSelected = selectedRowIds.includes(row.id);
       return (
         <tr
           key={index}
-          className={`${index === rows.length - 1 ? "row last" : "row"} boq-row-${cls}`}
+          className={`${index === rows.length - 1 ? "row last" : "row"} boq-row-${cls}${isSelected ? ' boq-row-selected' : ''}`}
         >
+          {canEdit && (
+            <td style={{ width: 40 }}>
+              <Checkbox
+                size="small"
+                checked={isSelected}
+                onChange={() => this.props.onSelectRow(row.id)}
+              />
+            </td>
+          )}
           {keys.map((key, idx) => this.renderCell(key, row, idx))}
           {canEdit && (
             <td data-label="Actions" style={{ whiteSpace: 'nowrap' }}>
@@ -99,9 +140,15 @@ class Table extends CommonTable {
               >
                 <EditIcon fontSize="small" />
               </IconButton>
+              <IconButton
+                size="small"
+                title="Delete BOQ"
+                onClick={() => this.props.onDeleteBOQ(row)}
+              >
+                <DeleteIcon fontSize="small" style={{ color: '#c62828' }} />
+              </IconButton>
             </td>
           )}
-          {this.renderAction(row)}
         </tr>
       );
     });

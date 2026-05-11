@@ -96,9 +96,10 @@ public class OutwardInventoryService {
     public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception {
         log.info("Invoked createOutwardnventory with payload -" + oiData.toString());
         OutwardInventory outwardInventory = new OutwardInventory();
-        validateInputs(oiData);
+        boolean allHaveBOQ = validateInputs(oiData);
         exitIfNotAuthorized(outwardInventory, oiData, APICallTypeForAuthorization.Create);
         setFields(outwardInventory, oiData);
+        outwardInventory.setHasBOQ(allHaveBOQ ? true : null);
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
         return outwardInventory;
@@ -221,12 +222,13 @@ public class OutwardInventoryService {
         Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
         if (!outwardInventoryOpt.isPresent())
             throw new Exception("Inventory Entry with ID not found");
-        validateInputs(iiData);
+        boolean allHaveBOQ = validateInputs(iiData);
         OutwardInventory outwardInventory = outwardInventoryOpt.get();
         exitIfNotAuthorized(outwardInventory, iiData, APICallTypeForAuthorization.Update);
         exitIfReturnExists(outwardInventory, iiData);
         OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
         setFields(outwardInventory, iiData);
+        outwardInventory.setHasBOQ(allHaveBOQ ? true : null);
         modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
         removeOrphans(oldOutwardInventory);
         outwardInventoryRepo.save(outwardInventory);
@@ -421,7 +423,7 @@ public class OutwardInventoryService {
         log.info("Exited setFields");
     }
 
-    private void validateInputs(OutwardInventoryData oiData) throws Exception {
+    private boolean validateInputs(OutwardInventoryData oiData) throws Exception {
         log.info("Invoked validateInputs");
         if (!locationRepo.existsById(oiData.getUsageLocationId()))
             throw new Exception("Usage Location not found.");
@@ -446,7 +448,8 @@ public class OutwardInventoryService {
         }
 
         // BOQ enforcement: block save if any product exceeds 100% BOQ consumption
-        boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities());
+        // returns true only if ALL products have BOQ configured
+        return boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities());
     }
 
     public OutwardInventory findOutwardnventory(Long id) throws Exception {
