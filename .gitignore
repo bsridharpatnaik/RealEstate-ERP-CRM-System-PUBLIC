@@ -75,3 +75,4 @@ application-*.properties
 ehthumbs.db
 Thumbs.db
 /SC UI/node_modules
+/.claude
