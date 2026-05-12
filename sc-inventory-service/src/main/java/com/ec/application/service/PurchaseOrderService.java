@@ -83,6 +83,9 @@ public class PurchaseOrderService extends ReusableFields {
     UserDetailsService userDetailsService;
 
     @Autowired
+    ActivityLogService activityLogService;
+
+    @Autowired
     IndentInventoryListRepo indentInventoryListRepo;
 
     @Autowired
@@ -109,6 +112,9 @@ public class PurchaseOrderService extends ReusableFields {
         draftService.deleteDraftForUser("PO");
         String username = userDetailsService.getCurrentUser().getUsername();
         poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), username, buildPoCreationMessage(request, username), buildPoCreationRelations(request));
+        String activityUser = resolveCurrentUser();
+        activityLogService.record("CREATED", "PURCHASE_ORDER", savedPO.getPurchaseOrderId(),
+                "Purchase Order " + savedPO.getPurchaseOrderId() + " created by " + activityUser, activityUser);
         return savedPO;
     }
 
@@ -189,6 +195,9 @@ public class PurchaseOrderService extends ReusableFields {
         String username = userDetailsService.getCurrentUser().getUsername();
         poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
                 "Purchase Order updated by " + username, null);
+        String activityUser = resolveCurrentUser();
+        activityLogService.record("UPDATED", "PURCHASE_ORDER", saved.getPurchaseOrderId(),
+                "Purchase Order " + saved.getPurchaseOrderId() + " updated by " + activityUser, activityUser);
         return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
     }
 
@@ -361,6 +370,11 @@ public class PurchaseOrderService extends ReusableFields {
             throw new IllegalArgumentException("Purchase Order Number cannot be null");
         poLifecycleManager.shortClosePo(request);
         return purchaseOrderRepo.findByIdWithDetails(request.getPurchaseOrderNo()).get();
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     private void validatePoDateBackdating(Date poDate) throws Exception {

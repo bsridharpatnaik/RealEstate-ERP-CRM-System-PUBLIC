@@ -45,6 +45,8 @@ public class InventoryTransferService {
     private final WarehouseRepo warehouseRepo;
     private final InventoryTransferMapper inventoryTransferMapper;
     private final PopulateDropdownService populateDropdownService;
+    private final UserDetailsService userDetailsService;
+    private final ActivityLogService activityLogService;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -127,6 +129,16 @@ public class InventoryTransferService {
                     return null;
                 });
             }
+        }
+        if (!successfulItems.isEmpty()) {
+            String transferUser = resolveCurrentUser();
+            String logTenant = dto.getSourceTenant();
+            withTenant(logTenant, () -> {
+                activityLogService.record("CREATED", "INVENTORY_TRANSFER", String.valueOf(transfer.getTransferId()),
+                        "Inventory transfer " + transfer.getTransferId() + " from " + dto.getSourceTenant()
+                        + " to " + dto.getTargetTenant() + " (" + successfulItems.size() + " item(s)) by " + transferUser, transferUser);
+                return null;
+            });
         }
         boolean fullySuccessful = itemResults.stream().allMatch(TransferItemResult::isSuccess);
         return new InventoryTransferResult(transfer.getTransferId(), fullySuccessful, itemResults);
@@ -289,6 +301,11 @@ public class InventoryTransferService {
     private void replaceTenantNamesForSuncity(CreateTransferDTO transfer) {
         transfer.setSourceTenant(transfer.getSourceTenant());
         transfer.setTargetTenant(transfer.getTargetTenant());
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     /* =====================================================

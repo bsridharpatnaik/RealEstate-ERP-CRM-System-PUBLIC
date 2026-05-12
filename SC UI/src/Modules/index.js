@@ -19,6 +19,7 @@ import ChangePassword from "./ChangePassword";
 import BOQ from "./BOQ";
 import BOQStatus from "./BOQStatus";
 import BOQHistory from "./BOQHistory";
+import Activity from "./Activity";
 import Indent from "./Indent";
 import PurchaseOrder from "./PurchaseOrder";
 import InventoryTransfer from "./InventoryTransfer";
@@ -48,6 +49,7 @@ export {
   BOQ,
   BOQStatus,
   BOQHistory,
+  Activity,
   Indent,
   PurchaseOrder,
   InventoryTransfer,

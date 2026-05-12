@@ -71,6 +71,9 @@ public class IndentInventoryService {
     @Autowired
     IndentStatusHistoryService indentStatusHistoryService;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
     List<String> indentPOEligibleStatuses = Arrays.asList(
             IndentStatusConstants.STATUS_APPROVED,
             IndentStatusConstants.STATUS_PO_PARTIAL,
@@ -114,7 +117,15 @@ public class IndentInventoryService {
         indentStatusHistoryService.logStatusChange(indentInventory, null, IndentStatusConstants.STATUS_NEW, userDetailsService.getCurrentUser().getUsername(), "Indent created by " + userDetailsService.getCurrentUser().getUsername(), null);
         draftService.deleteDraftForUser("INDENT");
         indentInventoryUiEnricher.enrich(indentInventory);
+        activityLogService.record("CREATED", "INDENT", indentInventory.getIndentId(),
+                "Indent " + indentInventory.getIndentId() + " created with " + indentInventory.getInventoryList().size() + " line item(s)",
+                resolveCurrentUser());
         return indentInventory;
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     private void exitIfReadOnly(String tenantName) throws Exception {
@@ -462,6 +473,8 @@ public class IndentInventoryService {
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
             indentInventory.setLastStatusUpdatedAt(new Date());
             indentInventoryRepo.save(indentInventory);
+            activityLogService.record("CANCELLED", "INDENT", id,
+                    "Indent " + id + " cancelled by " + currentUser, currentUser);
 
         } else if (action.equalsIgnoreCase("REJECT")) {
             String message = "Indent rejected by " + currentUser;
@@ -478,6 +491,8 @@ public class IndentInventoryService {
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_REJECTED);
             indentInventory.setLastStatusUpdatedAt(new Date());
             indentInventoryRepo.save(indentInventory);
+            activityLogService.record("DELETED", "INDENT", id,
+                    "Indent " + id + " rejected by " + currentUser, currentUser);
         }
     }
 
@@ -536,6 +551,8 @@ public class IndentInventoryService {
         // ──────────────────────────────────────────────────────────────────
 
         indentInventoryRepo.save(indentInventory);
+        activityLogService.record("UPDATED", "INDENT", id,
+                "Indent " + id + " updated by " + resolveCurrentUser(), resolveCurrentUser());
         return indentInventory;
     }
 
@@ -627,6 +644,8 @@ public class IndentInventoryService {
         originalItem.setDeleted(true);
         // Save changes
         indentInventoryRepo.save(indentInventory);
+        activityLogService.record("SPLIT", "INDENT", indentId,
+                "Indent " + indentId + " line item split by " + resolveCurrentUser(), resolveCurrentUser());
         return indentInventory;
     }
 
@@ -639,6 +658,8 @@ public class IndentInventoryService {
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventory.setLastStatusUpdatedAt(new Date());
         indentInventoryRepo.save(indentInventory);
+        activityLogService.record("APPROVED", "INDENT", id,
+                "Indent " + id + " approved by " + resolveCurrentUser(), resolveCurrentUser());
         return indentInventory;
     }
 

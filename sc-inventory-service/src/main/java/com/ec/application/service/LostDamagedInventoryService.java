@@ -50,6 +50,12 @@ public class LostDamagedInventoryService {
     @Autowired
     InventoryNotificationService inventoryNotificationService;
 
+    @Autowired
+    UserDetailsService userDetailsService;
+
+    @Autowired
+    ActivityLogService activityLogService;
+
     Logger log = LoggerFactory.getLogger(LostDamagedInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -65,7 +71,11 @@ public class LostDamagedInventoryService {
         inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),
                 lostDamagedInventory.getWarehouse().getWarehouseName(), addedNotifType,
                 lostDamagedInventory.getQuantity());
-        return lostDamagedInventoryRepo.save(lostDamagedInventory);
+        LostDamagedInventory saved = lostDamagedInventoryRepo.save(lostDamagedInventory);
+        String createUser = resolveCurrentUser();
+        activityLogService.record("CREATED", "LOST_DAMAGED", String.valueOf(saved.getLostdamagedid()),
+                "Lost/Damaged entry " + saved.getLostdamagedid() + " (" + saved.getEntryType() + ") created by " + createUser, createUser);
+        return saved;
     }
 
     public LostDamagedReturnData findFiilteredostDamagedList(FilterDataList filterDataList, Pageable pageable)
@@ -123,7 +133,11 @@ public class LostDamagedInventoryService {
                     lostDamagedInventory.getQuantity());
         }
 
-        return lostDamagedInventoryRepo.save(lostDamagedInventory);
+        LostDamagedInventory updated = lostDamagedInventoryRepo.save(lostDamagedInventory);
+        String updateUser = resolveCurrentUser();
+        activityLogService.record("UPDATED", "LOST_DAMAGED", String.valueOf(id),
+                "Lost/Damaged entry " + id + " updated by " + updateUser, updateUser);
+        return updated;
     }
 
     private void validatePayload(CreateLostOrDamagedInventoryData payload) throws Exception {
@@ -154,6 +168,14 @@ public class LostDamagedInventoryService {
         LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
         AdjustStockBeforeDelete(lostDamagedInventory);
         lostDamagedInventoryRepo.softDeleteById(id);
+        String deleteUser = resolveCurrentUser();
+        activityLogService.record("DELETED", "LOST_DAMAGED", String.valueOf(id),
+                "Lost/Damaged entry " + id + " deleted by " + deleteUser, deleteUser);
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     @Transactional(rollbackFor = Exception.class)

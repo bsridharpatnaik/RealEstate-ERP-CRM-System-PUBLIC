@@ -87,6 +87,12 @@ public class InwardInventoryService {
     @Autowired
     SystemContactRepo systemContactRepo;
 
+    @Autowired
+    UserDetailsService userDetailsService;
+
+    @Autowired
+    ActivityLogService activityLogService;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
     public List<PoDropdownItem> getPendingPoDropdown() {
@@ -185,6 +191,10 @@ public class InwardInventoryService {
 
         IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, inwardInventory.getPurchaseOrderNo(), deltas);
         applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "create"));
+        String createUser = resolveCurrentUser();
+        activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
+                "Inward " + inwardInventory.getInwardId() + " created from PO " + iiData.getPoNumber()
+                + " with " + inwardInventory.getInwardOutwardList().size() + " line(s) by " + createUser, createUser);
         return inwardInventory;
     }
 
@@ -328,6 +338,23 @@ public class InwardInventoryService {
             io.setQuantity(newQty);
         }
         inwardInventoryRepo.save(inward);
+
+        String updateUser = resolveCurrentUser();
+        boolean anyLineChanged = false;
+        for (InwardOutwardList io : inward.getInwardOutwardList()) {
+            Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+            if (oldQty != null && Double.compare(oldQty, io.getQuantity()) != 0) {
+                String productName = io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode();
+                activityLogService.record("UPDATED", "INWARD", String.valueOf(inwardId),
+                        "Inward " + inwardId + " line '" + productName + "' qty changed from " + oldQty + " to " + io.getQuantity() + " by " + updateUser,
+                        updateUser);
+                anyLineChanged = true;
+            }
+        }
+        if (!anyLineChanged) {
+            activityLogService.record("UPDATED", "INWARD", String.valueOf(inwardId),
+                    "Inward " + inwardId + " updated by " + updateUser, updateUser);
+        }
 
         // -------------------------------------------------
         // Trigger async indent / PO reconciliation
@@ -496,6 +523,10 @@ public class InwardInventoryService {
         setFieldsForInward(inwardInventory, iiData);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
+        String directCreateUser = resolveCurrentUser();
+        activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
+                "Inward " + inwardInventory.getInwardId() + " created with "
+                + inwardInventory.getInwardOutwardList().size() + " line(s) by " + directCreateUser, directCreateUser);
         return inwardInventory;
     }
 
@@ -852,6 +883,9 @@ public class InwardInventoryService {
             indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "delete");
         }
         inwardInventoryRepo.softDeleteById(id);
+        String deleteUser = resolveCurrentUser();
+        activityLogService.record("DELETED", "INWARD", String.valueOf(id),
+                "Inward " + id + " deleted by " + deleteUser, deleteUser);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -1055,6 +1089,15 @@ public class InwardInventoryService {
                 inwardInventory.getOurSlipNo(),
                 inwardInventory.getInwardOutwardList().size());
 
+        String openingUser = resolveCurrentUser();
+        activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
+                "Opening stock inward " + inwardInventory.getInwardId() + " created with "
+                + inwardInventory.getInwardOutwardList().size() + " line(s) by " + openingUser, openingUser);
         return inwardInventory;
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 }

@@ -2,6 +2,7 @@ package com.ec.application.scheduled;
 
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.service.ActivityLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -25,16 +27,25 @@ public class AuditCleanupScheduler {
     @Autowired
     private SchemaConfig schemaConfig;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     // Runs daily at 3:30 AM IST
     @Scheduled(cron = "0 30 3 * * *", zone = "Asia/Kolkata")
     public void purgeOldAuditRecords() {
         long cutoffEpochMs = Instant.now().minus(RETAIN_DAYS, ChronoUnit.DAYS).toEpochMilli();
         log.info("Starting daily audit purge. Removing records older than {} days.", RETAIN_DAYS);
 
+        Date cutoffDate = new Date(cutoffEpochMs);
+
         for (String schema : schemaConfig.getSchemaList()) {
             ThreadLocalStorage.setTenantName(schema);
             try {
                 purgeForSchema(cutoffEpochMs);
+                int activityDeleted = activityLogService.purgeOlderThan(cutoffDate);
+                if (activityDeleted > 0) {
+                    log.info("Deleted {} activity_log rows in schema: {}", activityDeleted, schema);
+                }
             } catch (Exception e) {
                 log.error("Audit purge failed for schema: {}", schema, e);
             } finally {

@@ -90,6 +90,9 @@ public class OutwardInventoryService {
     @Autowired
     BOQService boqService;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
     Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -102,6 +105,10 @@ public class OutwardInventoryService {
         outwardInventory.setHasBOQ(allHaveBOQ ? true : null);
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
+        String createUser = resolveCurrentUser();
+        activityLogService.record("CREATED", "OUTWARD", String.valueOf(outwardInventory.getOutwardId()),
+                "Outward " + outwardInventory.getOutwardId() + " created with "
+                + outwardInventory.getInwardOutwardList().size() + " line(s) by " + createUser, createUser);
         return outwardInventory;
     }
 
@@ -232,6 +239,26 @@ public class OutwardInventoryService {
         modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
         removeOrphans(oldOutwardInventory);
         outwardInventoryRepo.save(outwardInventory);
+
+        String updateUser = resolveCurrentUser();
+        Map<Long, Double> oldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
+                .collect(Collectors.toMap(io -> io.getProduct().getProductId(), InwardOutwardList::getQuantity, (a, b) -> a));
+        boolean anyLineChanged = false;
+        for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
+            Double oldQty = oldQtyMap.get(io.getProduct().getProductId());
+            if (oldQty == null || Double.compare(oldQty, io.getQuantity()) != 0) {
+                String productName = io.getProduct() != null ? io.getProduct().getProductName() : String.valueOf(io.getProduct().getProductId());
+                activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
+                        "Outward " + id + " line '" + productName + "' qty changed from "
+                        + (oldQty != null ? oldQty : "N/A") + " to " + io.getQuantity() + " by " + updateUser,
+                        updateUser);
+                anyLineChanged = true;
+            }
+        }
+        if (!anyLineChanged) {
+            activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
+                    "Outward " + id + " updated by " + updateUser, updateUser);
+        }
         return outwardInventory;
 
     }
@@ -575,6 +602,9 @@ public class OutwardInventoryService {
         updateStockBeforeDelete(outwardInventory);
         removeOrphans(outwardInventory);
         outwardInventoryRepo.softDeleteById(id);
+        String deleteUser = resolveCurrentUser();
+        activityLogService.record("DELETED", "OUTWARD", String.valueOf(id),
+                "Outward " + id + " deleted by " + deleteUser, deleteUser);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -641,6 +671,11 @@ public class OutwardInventoryService {
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot DELETE inventory record with date older than " + daysEditAllowed + " days.");
         }
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     public Pageable modifyPageable(Pageable pageable) {
