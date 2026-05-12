@@ -293,6 +293,7 @@ public class PurchaseOrderService extends ReusableFields {
                                 (a, b) -> a));
 
                 // Set per-line needByDate (earliest date across all linked indent refs for the line)
+                // and balanceQuantity for PARTIAL POs
                 for (PurchaseOrderLine line : po.getLines()) {
                     java.util.Date lineEarliest = line.getIndentRefs().stream()
                             .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
@@ -301,6 +302,22 @@ public class PurchaseOrderService extends ReusableFields {
                             .min(java.util.Comparator.naturalOrder())
                             .orElse(null);
                     line.setNeedByDate(lineEarliest);
+
+                    if (POStatusConstants.STATUS_PARTIAL.equals(po.getStatus())) {
+                        double received = line.getIndentRefs().stream()
+                                .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
+                                .filter(li -> li != null && li.getQuantityReceived() != null)
+                                .mapToDouble(IndentInventoryList::getQuantityReceived)
+                                .sum();
+                        line.setReceivedQuantity(received > 0 ? received : null);
+
+                        double balance = line.getIndentRefs().stream()
+                                .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
+                                .filter(li -> li != null && li.getQuantityPending() != null)
+                                .mapToDouble(IndentInventoryList::getQuantityPending)
+                                .sum();
+                        line.setBalanceQuantity(balance > 0 ? balance : null);
+                    }
                 }
 
                 // Set PO-level needByDate (earliest across all lines)

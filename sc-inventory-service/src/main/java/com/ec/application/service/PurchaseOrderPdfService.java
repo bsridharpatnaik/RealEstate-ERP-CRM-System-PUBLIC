@@ -285,7 +285,7 @@ public class PurchaseOrderPdfService {
         // Only show the image column when at least one line has an image
         boolean hasImages = lines.stream()
                 .anyMatch(l -> l.getSampleImageData() != null && l.getSampleImageData().length > 0);
-        int numCols = hasImages ? 13 : 12;
+        int numCols = hasImages ? 12 : 11;
 
         PdfPTable table = new PdfPTable(numCols);
         table.setWidthPercentage(100);
@@ -293,9 +293,9 @@ public class PurchaseOrderPdfService {
         table.setSpacingAfter(0f);
 
         if (hasImages) {
-            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f});
         } else {
-            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f});
         }
 
         // Column headers — money columns blanked for executives
@@ -311,7 +311,6 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
-        addHeaderCell(table, "Exp. Date", headerFont);
 
         for (PurchaseOrderLine line : lines) {
             Product product = line.getProduct();
@@ -372,7 +371,6 @@ public class PurchaseOrderPdfService {
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(amtInclTax), normalFont);
-            addBodyCell(table, expDate, normalFont);
         }
 
         // Line items subtotal — single full-width cell to avoid narrow-column overflow

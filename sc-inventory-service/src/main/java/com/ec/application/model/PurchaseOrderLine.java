@@ -1,10 +1,12 @@
 package com.ec.application.model;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -77,4 +79,14 @@ public class PurchaseOrderLine extends ReusableFields {
     @Transient
     @JsonIgnore
     private byte[] sampleImageData;
+
+    @Transient
+    @JsonProperty("receivedQuantity")
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double receivedQuantity;
+
+    @Transient
+    @JsonProperty("balanceQuantity")
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double balanceQuantity;
 }

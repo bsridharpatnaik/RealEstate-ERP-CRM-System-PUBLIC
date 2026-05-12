@@ -841,6 +841,8 @@ class Details extends CommonDetails {
                           {hasImages && <TableCell style={{ textAlign: 'center' }}>Sample Image</TableCell>}
                           <TableCell>Status</TableCell>
                           <TableCell>Exp. Date</TableCell>
+                          {data.status === "PARTIAL" && <TableCell style={{ whiteSpace: 'nowrap' }}>Received Qty</TableCell>}
+                          {data.status === "PARTIAL" && <TableCell style={{ whiteSpace: 'nowrap' }}>Balance Qty</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Rate</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Discount</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Tolerance %</TableCell>
@@ -914,6 +916,16 @@ class Details extends CommonDetails {
                                 </span>
                               </TableCell>
                               <TableCell>{item.needByDate || "-"}</TableCell>
+                              {data.status === "PARTIAL" && (
+                                <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                  {item.receivedQuantity != null ? Number(item.receivedQuantity).toFixed(2) : "-"}
+                                </TableCell>
+                              )}
+                              {data.status === "PARTIAL" && (
+                                <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                  {item.balanceQuantity != null ? Number(item.balanceQuantity).toFixed(2) : "-"}
+                                </TableCell>
+                              )}
                               {showMoneyFields && (
                                 <>
                                   <TableCell style={{ whiteSpace: 'nowrap' }}>

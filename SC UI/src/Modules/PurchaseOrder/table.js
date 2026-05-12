@@ -154,7 +154,7 @@ class Table extends CommonTable {
       );
     } else if (key === "supplierName") {
       return (
-        <td data-label="Supplier Name">
+        <td data-label="Supplier Name" title={row["supplierName"]}>
           {row["supplierName"]}
         </td>
       );
