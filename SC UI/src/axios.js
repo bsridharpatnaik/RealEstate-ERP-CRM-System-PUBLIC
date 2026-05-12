@@ -38,6 +38,7 @@ export const API = {
       checkToken(error);
       return {
         success: false,
+        status: error?.response?.status,
         errorMessage:
           error &&
           error.response &&

@@ -374,10 +374,10 @@ class List extends ListCommon {
         ? this.filterData.productNames
         : this.filterData.productNames != null ? [this.filterData.productNames] : [];
       if (productNamesArr.length > 0) {
-        const productIds = productNamesArr.map(product =>
-          product && typeof product === "object" ? product.id : product
+        const productNames = productNamesArr.map(product =>
+          product && typeof product === "object" ? product.name : product
         ).filter(Boolean);
-        params.filterData.push({ attrName: "productNames", attrValue: productIds });
+        params.filterData.push({ attrName: "productNames", attrValue: productNames });
       }
 
       const productCodesArr = Array.isArray(this.filterData.productCodes)
