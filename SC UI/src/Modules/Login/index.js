@@ -151,9 +151,16 @@ function Login(props) {
           }
         });
       } else {
-        enqueueSnackbar(messages.common.loginFailure, {
-          variant: "error",
-        });
+        const status = response.status;
+        let msg;
+        if (status === 401 || status === 403) {
+          msg = messages.common.loginFailure;
+        } else if (!status) {
+          msg = "Unable to reach server. Please check your connection.";
+        } else {
+          msg = `Something went wrong. Please try again later. (Error ${status})`;
+        }
+        enqueueSnackbar(msg, { variant: "error" });
       }
     });
     return false;

@@ -98,4 +98,36 @@ public interface StockSummaryRepo
      */
     @Query("SELECT DISTINCT s.productId FROM StockSummary s WHERE s.tenantSchema = :tenantSchema")
     List<Long> findDistinctProductIdsByTenantSchema(@Param("tenantSchema") String tenantSchema);
+
+    /**
+     * Returns all distinct warehouseIds that already have a stock_summary row for the given tenant.
+     * Used by the sync job to pick up warehouse renames.
+     */
+    @Query("SELECT DISTINCT s.warehouseId FROM StockSummary s WHERE s.tenantSchema = :tenantSchema")
+    List<Long> findDistinctWarehouseIdsByTenantSchema(@Param("tenantSchema") String tenantSchema);
+
+    /**
+     * Bulk-update productName and productCode for all warehouse rows of a (tenantSchema, productId) pair.
+     * Called by the sync job to pick up product renames.
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE StockSummary s SET s.productName = :productName, s.productCode = :productCode " +
+           "WHERE s.tenantSchema = :tenantSchema AND s.productId = :productId")
+    void updateProductDetails(@Param("tenantSchema") String tenantSchema,
+                              @Param("productId") Long productId,
+                              @Param("productName") String productName,
+                              @Param("productCode") String productCode);
+
+    /**
+     * Bulk-update warehouseName for all product rows of a (tenantSchema, warehouseId) pair.
+     * Called by the sync job to pick up warehouse renames.
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE StockSummary s SET s.warehouseName = :warehouseName " +
+           "WHERE s.tenantSchema = :tenantSchema AND s.warehouseId = :warehouseId")
+    void updateWarehouseName(@Param("tenantSchema") String tenantSchema,
+                             @Param("warehouseId") Long warehouseId,
+                             @Param("warehouseName") String warehouseName);
 }

@@ -31,4 +31,7 @@ public interface WarehouseRepo extends BaseRepository<Warehouse, Long>
 	boolean existsByWarehouseNameIgnoreCase(String warehouseName);
 
 	long countByWarehouseNameIgnoreCase(String warehouseName);
+
+	@Query("SELECT w FROM Warehouse w WHERE w.warehouseId IN :ids")
+	List<Warehouse> findByWarehouseIdIn(@Param("ids") List<Long> ids);
 }
