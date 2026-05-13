@@ -18,6 +18,7 @@ import RejectProduct from "./rejectProduct";
 import { checkifDateLessThan, getRoleEditConstraintDays, canCreateInward } from "./../../helper";
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
+import { checkifDateLessThan, getRoleEditConstraintDays, getRoleRejectReturnConstraintDays, canCreateInward } from "./../../helper";
 import DebitNotePrint from "./../../Shared/DebitNotePrint";
 import ReactToPrint from "react-to-print";
 import Table from "@material-ui/core/Table";
@@ -111,6 +112,8 @@ class Details extends CommonDetails {
     const isFromRelation = fromRelation === true;
     const days = getRoleEditConstraintDays();
     const isUpdateEnable = checkifDateLessThan(data.date, days);
+    const rejectReturnDays = getRoleRejectReturnConstraintDays();
+    const isRejectReturnDisabled = checkifDateLessThan(data.date, rejectReturnDays);
     const canWrite = canCreateInward();
     const hasReject = data.rejectInwardList && data.rejectInwardList.length;
     return (
@@ -191,7 +194,7 @@ content={() => this.detailTabRef.current}
                   ) : null}
                   {canWrite && (
                     <MenuItem
-                      disabled={isUpdateEnable}
+                      disabled={isRejectReturnDisabled}
                       onClick={() => {
                         this.handleCloseMenu();
                         this.setState({ rejectopen: true });

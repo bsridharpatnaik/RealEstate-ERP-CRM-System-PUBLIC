@@ -12,6 +12,7 @@ const userKey = `${mainKey}ecUserName`;
 // Stores per-role inventory edit day limits coming from backend
 // Example payload: { adminDays: 7, managerDays: 5, generalDays: 3 }
 const inventoryEditDaysKey = `${mainKey}InventoryEditDays`;
+const rejectReturnDaysKey = `${mainKey}RejectReturnDays`;
 
 let _isAdmin;
 
@@ -61,6 +62,29 @@ const getInventoryEditDaysFromCookie = () => {
   } catch (e) {
     return null;
   }
+};
+
+export const setRejectReturnDays = ({ adminDays, managerDays, generalDays }) => {
+  const payload = {
+    adminDays: typeof adminDays === "number" ? adminDays : 90,
+    managerDays: typeof managerDays === "number" ? managerDays : 90,
+    generalDays: typeof generalDays === "number" ? generalDays : 90,
+  };
+  Cookies.set(rejectReturnDaysKey, JSON.stringify(payload));
+};
+
+export const getRoleRejectReturnConstraintDays = () => {
+  const role = (getRole() || "").toLowerCase();
+  let config = { adminDays: 90, managerDays: 90, generalDays: 90 };
+  try {
+    const value = Cookies.get(rejectReturnDaysKey);
+    if (value) config = JSON.parse(value);
+  } catch (e) {}
+
+  if (!role) return config.generalDays;
+  if (role === "admin") return config.adminDays;
+  if (role === "purchase-manager") return config.managerDays;
+  return config.generalDays;
 };
 
 export const getRoleEditConstraintDays = () => {

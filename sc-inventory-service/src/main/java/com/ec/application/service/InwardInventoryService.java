@@ -595,7 +595,7 @@ public class InwardInventoryService {
                         new Exception("Inward Inventory not found with id=" + inwardId)
                 );
 
-        editAuthorizationService.validateUpdateDates(ii.getDate(), ii.getDate());
+        editAuthorizationService.validateRejectReturnDate(ii.getDate());
 
         // ------------------------------------------------
         // Capture old quantities for async delta sync

@@ -140,9 +140,18 @@ function Login(props) {
               const managerDays = getValueByKey("INVENTORY_ALLOWED_DAYS_MANAGER");
               const generalDays = getValueByKey("INVENTORY_ALLOWED_DAYS_EXECUTIVE");
 
+              const rejectReturnAdminDays = getValueByKey("INVENTORY_REJECT_RETURN_DAYS_ADMIN");
+              const rejectReturnManagerDays = getValueByKey("INVENTORY_REJECT_RETURN_DAYS_MANAGER");
+              const rejectReturnGeneralDays = getValueByKey("INVENTORY_REJECT_RETURN_DAYS_EXECUTIVE");
+
               // Lazy import to avoid circular deps at top-level
-              const { setInventoryEditDays } = await import("./../../helper");
+              const { setInventoryEditDays, setRejectReturnDays } = await import("./../../helper");
               setInventoryEditDays({ adminDays, managerDays, generalDays });
+              setRejectReturnDays({
+                adminDays: rejectReturnAdminDays,
+                managerDays: rejectReturnManagerDays,
+                generalDays: rejectReturnGeneralDays,
+              });
             }
 
             history.push(appRoutes.globalDashboard);
