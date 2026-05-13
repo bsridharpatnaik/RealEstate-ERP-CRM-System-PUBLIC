@@ -15,7 +15,6 @@ import Tab from "@material-ui/core/Tab";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import RejectProduct from "./rejectProduct";
-import { checkifDateLessThan, getRoleEditConstraintDays, canCreateInward } from "./../../helper";
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
 import { checkifDateLessThan, getRoleEditConstraintDays, getRoleRejectReturnConstraintDays, canCreateInward } from "./../../helper";
@@ -89,7 +88,7 @@ class Details extends CommonDetails {
   };
 
   handlePrevious = () => {
-    const { currentIndex, allEntries, onNavigate } = this.props;
+    const { currentIndex, onNavigate } = this.props;
     if (currentIndex > 0 && onNavigate) {
       onNavigate(currentIndex - 1);
     }

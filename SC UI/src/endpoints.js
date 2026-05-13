@@ -355,6 +355,7 @@ export const appRoutes = {
   boqStatus: "/boqStatus",
   boqHistory: "/boqHistory",
   activityLog: "/activityLog",
+  projectActivityLog: "/projectActivityLog",
   purchaseOrder: "/purchaseOrder",
   historicalPricing: "/historicalPricing",
   globalDashboard: "/globalDashboard",

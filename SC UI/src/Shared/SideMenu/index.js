@@ -347,6 +347,12 @@ function SideMenu(props) {
                     labelText={messages.common.role}
                     linkurl={appendURL("/role")}
                   /> */}
+                    <DashboardItem
+                      nodeId="54"
+                      labelText="Activity Log"
+                      onClick={props.setSideBarValue}
+                      linkurl={appendURL(appRoutes.projectActivityLog)}
+                    />
                   </DashboardItem>
                 )}
                 {isCRM && (
@@ -513,6 +519,12 @@ function SideMenu(props) {
   labelText="Merge Products"
   onClick={props.setSideBarValue}
   linkurl={appRoutes.productMerge}
+/>
+    <DashboardItem
+  nodeId="53"
+  labelText="Activity Log"
+  onClick={props.setSideBarValue}
+  linkurl={appRoutes.activityLog}
 />
   </DashboardItem>
 )}

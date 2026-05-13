@@ -106,8 +106,8 @@ public class OutwardInventoryService {
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
         String createUser = resolveCurrentUser();
-        activityLogService.record("CREATED", "OUTWARD", String.valueOf(outwardInventory.getOutwardId()),
-                "Outward " + outwardInventory.getOutwardId() + " created with "
+        activityLogService.record("CREATED", "OUTWARD", String.valueOf(outwardInventory.getOutwardid()),
+                "Outward " + outwardInventory.getOutwardid() + " created with "
                 + outwardInventory.getInwardOutwardList().size() + " line(s) by " + createUser, createUser);
         return outwardInventory;
     }

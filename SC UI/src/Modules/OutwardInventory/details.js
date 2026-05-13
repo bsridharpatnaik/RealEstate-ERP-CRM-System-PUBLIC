@@ -17,7 +17,6 @@ import Tab from "@material-ui/core/Tab";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import RejectProduct from "./rejectProduct";
-import { checkifDateLessThan, getRoleEditConstraintDays, canCreateInward } from "./../../helper";
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
 import { checkifDateLessThan, getRoleEditConstraintDays, getRoleRejectReturnConstraintDays, canCreateInward } from "./../../helper";
@@ -80,9 +79,9 @@ class Details extends CommonDetails {
 
   async loadHistory() {
     const { data } = this.props;
-    if (!data || !data.outwardId) return;
+    if (!data || !data.outwardid) return;
     this.setState({ historyLoading: true });
-    const r = await API.GET(apiEndpoints.activityLogByEntity('OUTWARD', data.outwardId));
+    const r = await API.GET(apiEndpoints.activityLogByEntity('OUTWARD', data.outwardid));
     if (r.success) {
       this.setState({ historyLogs: r.data || [] });
     }

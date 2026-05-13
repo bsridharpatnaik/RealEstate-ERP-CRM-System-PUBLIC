@@ -1,5 +1,6 @@
 package com.ec.application.Filters;
 
+import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.model.ActivityLog;
 import org.springframework.data.jpa.domain.Specification;
 

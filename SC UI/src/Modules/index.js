@@ -20,6 +20,7 @@ import BOQ from "./BOQ";
 import BOQStatus from "./BOQStatus";
 import BOQHistory from "./BOQHistory";
 import Activity from "./Activity";
+import ProjectActivity from "./Activity/projectIndex";
 import Indent from "./Indent";
 import PurchaseOrder from "./PurchaseOrder";
 import InventoryTransfer from "./InventoryTransfer";
@@ -50,6 +51,7 @@ export {
   BOQStatus,
   BOQHistory,
   Activity,
+  ProjectActivity,
   Indent,
   PurchaseOrder,
   InventoryTransfer,
