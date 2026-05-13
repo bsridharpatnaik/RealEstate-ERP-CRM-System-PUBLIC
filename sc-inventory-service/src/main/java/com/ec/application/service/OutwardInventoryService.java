@@ -634,12 +634,19 @@ public class OutwardInventoryService {
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot edit inventory record with date older than " + daysEditAllowed + " days.");
         }
-        if (action.equals(APICallTypeForAuthorization.Delete) || action.equals(APICallTypeForAuthorization.Reject)) {
+        if (action.equals(APICallTypeForAuthorization.Delete)) {
             Long daysDifference = ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date());
             Long daysEditAllowed = projectConstantsService.getInventoryEditDaysForCurrentUser();
 
             if (daysDifference > daysEditAllowed)
                 throw new Exception("Cannot DELETE inventory record with date older than " + daysEditAllowed + " days.");
+        }
+        if (action.equals(APICallTypeForAuthorization.Reject)) {
+            Long daysDifference = ReusableMethods.daysBetweenTwoDates(outwardInventory.getDate(), new Date());
+            Long daysAllowed = projectConstantsService.getRejectReturnDaysForCurrentUser();
+
+            if (daysDifference > daysAllowed)
+                throw new Exception("Cannot add reject/return for record older than " + daysAllowed + " days.");
         }
     }
 

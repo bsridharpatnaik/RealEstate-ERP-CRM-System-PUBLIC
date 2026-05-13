@@ -17,7 +17,7 @@ import Tab from "@material-ui/core/Tab";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import RejectProduct from "./rejectProduct";
-import { checkifDateLessThan, getRoleEditConstraintDays, canCreateInward } from "./../../helper";
+import { checkifDateLessThan, getRoleEditConstraintDays, getRoleRejectReturnConstraintDays, canCreateInward } from "./../../helper";
 import Tooltip from "@material-ui/core/Tooltip";
 import WarningRoundedIcon from "@material-ui/icons/WarningRounded";
 import DebitNotePrint from "./../../Shared/DebitNotePrint";
@@ -72,6 +72,8 @@ class Details extends CommonDetails {
     const data = this.props.data;
     const days = getRoleEditConstraintDays();
     const isUpdateEnable = checkifDateLessThan(data.date, days);
+    const rejectReturnDays = getRoleRejectReturnConstraintDays();
+    const isRejectReturnDisabled = checkifDateLessThan(data.date, rejectReturnDays);
     const canWrite = canCreateInward();
     const hasReturn =
       data.returnOutwardList && data.returnOutwardList.length > 0;
@@ -160,7 +162,7 @@ class Details extends CommonDetails {
               ) : null}
               {canWrite && (
                 <MenuItem
-                  disabled={isUpdateEnable}
+                  disabled={isRejectReturnDisabled}
                   onClick={() => {
                     this.handleCloseMenu();
                     this.setState({ rejectopen: true });
@@ -171,7 +173,7 @@ class Details extends CommonDetails {
               )}
               {canWrite && (
                 <MenuItem
-                  disabled={isUpdateEnable}
+                  disabled={isRejectReturnDisabled}
                   onClick={() => {
                     this.handleCloseMenu();
                     this.setState({ filterOpen: true });
