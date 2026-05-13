@@ -496,12 +496,18 @@ public class PurchaseOrderService extends ReusableFields {
                     "PO Number",
                     "PO Date",
                     "PO Status",
+                    "Project",
 
                     "Supplier",
                     "Firm",
 
                     "Product",
+                    "Brand",
+                    "Grade",
+                    "Specification",
                     "Quantity",
+                    "Received Quantity",
+                    "Remaining Quantity",
                     "Rate",
                     "GST %",
                     "Net Rate",
@@ -535,6 +541,23 @@ public class PurchaseOrderService extends ReusableFields {
                     List<PurchaseOrder> purchaseOrders =
                             purchaseOrderRepo.findWithDetailsByIdIn(poIds);
 
+                    // Collect all indent line item codes in this page for batch fetch
+                    List<String> lineItemCodes = purchaseOrders.stream()
+                            .flatMap(po -> po.getLines().stream())
+                            .flatMap(line -> line.getIndentRefs() == null
+                                    ? java.util.stream.Stream.empty()
+                                    : line.getIndentRefs().stream())
+                            .map(PurchaseOrderIndentRef::getIndentLineItemCode)
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .collect(Collectors.toList());
+
+                    Map<String, IndentInventoryList> indentLineMap = new HashMap<>();
+                    if (!lineItemCodes.isEmpty()) {
+                        indentInventoryListRepo.findByLineItemCodeIn(lineItemCodes)
+                                .forEach(il -> indentLineMap.put(il.getLineItemCode(), il));
+                    }
+
                     // ===== Flatten PO → Lines =====
                     for (PurchaseOrder po : purchaseOrders) {
 
@@ -556,7 +579,7 @@ public class PurchaseOrderService extends ReusableFields {
                                 // Still export line even if no indent
                                 Row row = sheet.createRow(rowNum++);
                                 writePoRow(row, po, supplierName, firmName,
-                                        line, "", "");
+                                        line, "", "", null);
                             } else {
                                 for (PurchaseOrderIndentRef ref : line.getIndentRefs()) {
                                     Row row = sheet.createRow(rowNum++);
@@ -567,7 +590,8 @@ public class PurchaseOrderService extends ReusableFields {
                                             firmName,
                                             line,
                                             extractIndentId(ref.getIndentLineItemCode()),
-                                            ref.getIndentLineItemCode()
+                                            ref.getIndentLineItemCode(),
+                                            indentLineMap.get(ref.getIndentLineItemCode())
                                     );
                                 }
                             }
@@ -598,7 +622,8 @@ public class PurchaseOrderService extends ReusableFields {
             String firmName,
             PurchaseOrderLine line,
             String indentNo,
-            String indentLineItemCode) {
+            String indentLineItemCode,
+            IndentInventoryList indentLineItem) {
 
         int col = 0;
 
@@ -606,24 +631,31 @@ public class PurchaseOrderService extends ReusableFields {
         row.createCell(col++).setCellValue(
                 po.getPoDate() != null ? po.getPoDate().toString() : ""
         );
-        row.createCell(col++).setCellValue(
-                safeExcel(po.getStatus())
-        );
+        row.createCell(col++).setCellValue(safeExcel(po.getStatus()));
+        row.createCell(col++).setCellValue(safeExcel(po.getProjectName()));
 
         row.createCell(col++).setCellValue(safeExcel(supplierName));
         row.createCell(col++).setCellValue(safeExcel(firmName));
 
         row.createCell(col++).setCellValue(
-                safeExcel(
-                        line.getProduct() != null
-                                ? line.getProduct().getProductName()
-                                : ""
-                )
+                safeExcel(line.getProduct() != null ? line.getProduct().getProductName() : "")
         );
+        row.createCell(col++).setCellValue(safeExcel(line.getBrand()));
+        row.createCell(col++).setCellValue(safeExcel(line.getGrade()));
+        row.createCell(col++).setCellValue(safeExcel(line.getSpecification()));
 
         row.createCell(col++).setCellValue(
                 line.getQuantity() != null ? line.getQuantity() : 0.0
         );
+        row.createCell(col++).setCellValue(
+                indentLineItem != null && indentLineItem.getQuantityReceived() != null
+                        ? indentLineItem.getQuantityReceived() : 0.0
+        );
+        row.createCell(col++).setCellValue(
+                indentLineItem != null && indentLineItem.getQuantityPending() != null
+                        ? indentLineItem.getQuantityPending() : 0.0
+        );
+
         row.createCell(col++).setCellValue(
                 line.getRate() != null ? line.getRate() : 0.0
         );

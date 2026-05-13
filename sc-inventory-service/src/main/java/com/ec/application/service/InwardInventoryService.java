@@ -871,7 +871,8 @@ public class InwardInventoryService {
 
         InwardInventory inwardInventory = inwardInventoryOpt.get();
         editAuthorizationService.validateDeleteDate(inwardInventory.getDate());
-        if (purchaseOrderShortClosedViewRepo.existsById(inwardInventory.getPurchaseOrderNo())) {
+        if (inwardInventory.getPurchaseOrderNo() != null &&
+                purchaseOrderShortClosedViewRepo.existsById(inwardInventory.getPurchaseOrderNo())) {
             throw new Exception("Cannot delete inward inventory linked to a short closed purchase order.");
         }
 

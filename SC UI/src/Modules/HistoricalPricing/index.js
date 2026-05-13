@@ -209,11 +209,12 @@ class HistoricalPricing extends Common {
   formatNum = (val) =>
     val != null ? Number(val).toFixed(2) : "-";
 
-  perUnitNetRate = (r) => {
-    if (r.netRate != null && r.quantity != null && r.quantity !== 0) {
-      return Number(r.netRate / r.quantity).toFixed(2);
-    }
-    return "-";
+  computeNetRate = (r) => {
+    if (r.rate == null) return "-";
+    let net = r.rate;
+    if (r.discountPercent) net = net * (1 - r.discountPercent / 100);
+    if (r.gstPercent) net = net * (1 + r.gstPercent / 100);
+    return Number(net).toFixed(2);
   };
 
   downloadExcel = () => {
@@ -240,7 +241,7 @@ class HistoricalPricing extends Common {
         r.rate != null ? Number(r.rate).toFixed(2) : "-",
         r.discountPercent != null ? Number(r.discountPercent).toFixed(2) : "-",
         r.gstPercent != null ? Number(r.gstPercent).toFixed(2) : "-",
-        this.perUnitNetRate(r),
+        this.computeNetRate(r),
       ]);
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
@@ -298,7 +299,7 @@ class HistoricalPricing extends Common {
                       <td>{this.formatNum(r.rate)}</td>
                       <td>{this.formatNum(r.discountPercent)}</td>
                       <td>{this.formatNum(r.gstPercent)}</td>
-                      <td>{this.perUnitNetRate(r)}</td>
+                      <td>{this.computeNetRate(r)}</td>
                     </tr>
                   ))
                 )}
