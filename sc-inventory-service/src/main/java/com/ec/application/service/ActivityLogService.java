@@ -102,6 +102,10 @@ public class ActivityLogService {
         }
     }
 
+    public List<ActivityLog> getByEntity(String entityType, String entityId) {
+        return activityLogRepository.findByEntityTypeAndEntityIdOrderByActivityTimeDesc(entityType, entityId);
+    }
+
     public int purgeOlderThan(Date cutoff) {
         return activityLogRepository.deleteByActivityTimeBefore(cutoff);
     }

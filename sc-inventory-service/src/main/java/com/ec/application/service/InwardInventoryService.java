@@ -572,6 +572,11 @@ public class InwardInventoryService {
             }
         }
 
+        String rejectUser = resolveCurrentUser();
+        activityLogService.record("REJECTED", "INWARD", String.valueOf(inwardId),
+                "Inward " + inwardId + " rejected " + rd.getProductWithQuantities().size() + " item(s) by " + rejectUser,
+                rejectUser);
+
         return inwardInventoryRepo.findById(inwardId).get();
     }
 

@@ -16,6 +16,8 @@ import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import RejectProduct from "./rejectProduct";
 import { checkifDateLessThan, getRoleEditConstraintDays, canCreateInward } from "./../../helper";
+import { API } from "./../../axios";
+import { apiEndpoints } from "./../../endpoints";
 import DebitNotePrint from "./../../Shared/DebitNotePrint";
 import ReactToPrint from "react-to-print";
 import Table from "@material-ui/core/Table";
@@ -29,6 +31,14 @@ import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
 import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 import PrintIcon from "@material-ui/icons/Print";
 import Print from "./inwardPrint";
+const ACTION_BADGE_STYLES = {
+  CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
+  UPDATED:     { color: '#e65100', background: '#fff3e0' },
+  DELETED:     { color: '#c62828', background: '#ffebee' },
+  REJECTED:    { color: '#6a1b9a', background: '#f3e5f5' },
+  RETURNED:    { color: '#0d47a1', background: '#e3f2fd' },
+};
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -51,6 +61,8 @@ class Details extends CommonDetails {
     deleteConfirmOpen: false,
     rejectopen: false,
     anchorEl: null,
+    historyLogs: [],
+    historyLoading: false,
   };
   detailTabRef = React.createRef();
   deleteRow = null;
@@ -58,6 +70,17 @@ class Details extends CommonDetails {
   componentDidMount() {
     this.addRejRef = React.createRef();
     this.componentRef = React.createRef();
+  }
+
+  async loadHistory() {
+    const { data } = this.props;
+    if (!data || !data.inwardId) return;
+    this.setState({ historyLoading: true });
+    const r = await API.GET(apiEndpoints.activityLogByEntity('INWARD', data.inwardId));
+    if (r.success) {
+      this.setState({ historyLogs: r.data || [] });
+    }
+    this.setState({ historyLoading: false });
   }
 
   handleCloseMenu = () => {
@@ -248,7 +271,10 @@ content={() => this.detailTabRef.current}
         <Tabs
           indicatorColor="primary"
           textColor="primary"
-          onChange={(e, value) => this.setState({ value: value })}
+          onChange={(e, value) => {
+            this.setState({ value });
+            if (value === 1) this.loadHistory();
+          }}
           value={this.state.value}
         >
           <Tab label="Details" id="simple-tabpanel-0" />
@@ -459,33 +485,42 @@ content={() => this.detailTabRef.current}
         </TabPanel>
         <TabPanel value={this.state.value} index={1}>
           <Paper elevation={0}>
-            {data.createdBy && (
-              <div className="detail-item">
-                <div className="label">Created By</div>
-                <div className="value">{data.createdBy}</div>
-              </div>
-            )}
-            {data.creationDate && (
-              <div className="detail-item">
-                <div className="label">Creation Date</div>
-                <div className="value">{data.creationDate}</div>
-              </div>
-            )}
-            {data.inwardOutwardList && data.inwardOutwardList[0] && (
-              <div className="detail-item">
-                <div className="label">Last Modified By</div>
-                <div className="value">
-                  {data.inwardOutwardList[0].lastModifiedBy}
-                </div>
-              </div>
-            )}
-            {data.inwardOutwardList && data.inwardOutwardList[0] && (
-              <div className="detail-item">
-                <div className="label">Last Modified On</div>
-                <div className="value">
-                  {data.inwardOutwardList[0].lastModifiedDate}
-                </div>
-              </div>
+            {this.state.historyLoading ? (
+              <div style={{ padding: '16px', color: '#666' }}>Loading history...</div>
+            ) : this.state.historyLogs.length === 0 ? (
+              <div style={{ padding: '16px', color: '#999' }}>No history available.</div>
+            ) : (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Action</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell>By</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {this.state.historyLogs.map((log, i) => (
+                    <TableRow key={i}>
+                      <TableCell style={{ whiteSpace: 'nowrap', fontSize: '12px' }}>
+                        {log.activityTime ? new Date(log.activityTime).toLocaleString() : ''}
+                      </TableCell>
+                      <TableCell>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '12px',
+                          ...ACTION_BADGE_STYLES[log.action]
+                        }}>
+                          {log.action}
+                        </span>
+                      </TableCell>
+                      <TableCell style={{ fontSize: '13px', wordBreak: 'break-word', maxWidth: '300px' }}>
+                        {log.description}
+                      </TableCell>
+                      <TableCell style={{ fontSize: '12px' }}>{log.performedBy}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </Paper>
         </TabPanel>

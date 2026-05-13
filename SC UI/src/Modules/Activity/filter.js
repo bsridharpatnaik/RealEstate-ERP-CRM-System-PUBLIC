@@ -35,6 +35,7 @@ class ActivityFilter extends CommonFilter {
             )}
             {this.renderTextField('Entity ID', 'entityId')}
             {this.renderTextField('Performed By', 'performedBy')}
+            {this.renderTextField('Project (Schema)', 'tenantSchema')}
           </div>
         ) : null}
         {this.renderFooter()}

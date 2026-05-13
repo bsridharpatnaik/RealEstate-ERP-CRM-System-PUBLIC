@@ -164,6 +164,13 @@ public class OutwardInventoryService {
                 addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
                         productWithQuantity.getRemarks());
         }
+
+        String actionUser = resolveCurrentUser();
+        String actionType = type.equals("return") ? "RETURNED" : "REJECTED";
+        activityLogService.record(actionType, "OUTWARD", String.valueOf(outwardId),
+                "Outward " + outwardId + " " + type + " " + rd.getProductWithQuantities().size() + " item(s) by " + actionUser,
+                actionUser);
+
         return outwardInventoryRepo.findById(outwardId).get();
     }
 

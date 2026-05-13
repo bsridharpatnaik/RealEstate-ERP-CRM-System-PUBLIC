@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long>,
         JpaSpecificationExecutor<ActivityLog> {
@@ -17,4 +18,8 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long>,
     @Modifying
     @Query("DELETE FROM ActivityLog a WHERE a.activityTime < :cutoff")
     int deleteByActivityTimeBefore(@Param("cutoff") Date cutoff);
+
+    List<ActivityLog> findByIdGreaterThanOrderByIdAsc(Long id);
+
+    List<ActivityLog> findByEntityTypeAndEntityIdOrderByActivityTimeDesc(String entityType, String entityId);
 }

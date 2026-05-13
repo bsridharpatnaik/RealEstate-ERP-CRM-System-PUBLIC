@@ -43,6 +43,9 @@ class ActivityTable extends CommonTable {
         </td>
       );
     }
+    if (key === 'tenantSchema') {
+      return <td data-label="Project" style={{ whiteSpace: 'nowrap' }}>{row.tenantSchema}</td>;
+    }
     return super.renderCell(key, row);
   }
 

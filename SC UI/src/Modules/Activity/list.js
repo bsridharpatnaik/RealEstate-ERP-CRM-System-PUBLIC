@@ -15,14 +15,14 @@ class List extends ListCommon {
   sortkey = 'activityTime';
   sortby = 'desc';
 
-  state = { data: [], pages: 0, totalRecords: 0, isLoading: false, filterOpen: false };
+  state = { data: [], pages: 0, totalRecords: 0, isLoading: false, filterOpen: false, syncing: false };
 
   tableData = {
-    headers: ['Time', 'Action', 'Entity Type', 'Entity ID', 'Description', 'Performed By'],
-    keys: ['activityTime', 'action', 'entityType', 'entityId', 'description', 'performedBy'],
+    headers: ['Time', 'Project', 'Action', 'Entity Type', 'Entity ID', 'Description', 'Performed By'],
+    keys: ['activityTime', 'tenantSchema', 'action', 'entityType', 'entityId', 'description', 'performedBy'],
   };
 
-  url = apiEndpoints.activityLogList;
+  url = apiEndpoints.activityLogGlobalList;
 
   componentDidMount() {
     this.filterRef = React.createRef();
@@ -58,17 +58,30 @@ class List extends ListCommon {
   }
 
   async exportExcel() {
-    const r = await API.POSTBlob(apiEndpoints.activityLogExport, this.prepareRequestBody());
+    const r = await API.POSTBlob(apiEndpoints.activityLogGlobalExport, this.prepareRequestBody());
     if (r.success) {
       const url = window.URL.createObjectURL(new Blob([r.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'Activity_Log.xlsx');
+      link.setAttribute('download', 'Global_Activity_Log.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
     } else {
       this.props.enqueueSnackbar(r.errorMessage || 'Export failed', { variant: 'error' });
+    }
+  }
+
+  async triggerSync() {
+    this.setState({ syncing: true });
+    try {
+      const r = await API.POST(apiEndpoints.activityLogGlobalSync, {});
+      this.props.enqueueSnackbar(r.data || 'Sync triggered', { variant: 'info' });
+      setTimeout(() => this.search(0), 3000);
+    } catch (e) {
+      this.props.enqueueSnackbar('Sync failed', { variant: 'error' });
+    } finally {
+      this.setState({ syncing: false });
     }
   }
 
@@ -78,6 +91,12 @@ class List extends ListCommon {
         <div className="filter-section">
           <div />
           <div className="top-button-wrapper" style={{ display: 'flex', gap: '8px' }}>
+            <IconButtons
+              onClick={() => this.triggerSync()}
+              buttonClass="filterIcon"
+              label={this.state.syncing ? 'Syncing...' : 'Sync Now'}
+              icon="RefreshSVG"
+            />
             <IconButtons
               onClick={() => this.exportExcel()}
               buttonClass="filterIcon"
