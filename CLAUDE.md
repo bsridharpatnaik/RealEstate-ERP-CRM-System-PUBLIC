@@ -66,6 +66,24 @@ Domains include:
 - Outward
 - Stock
 
+---
+
+## Multi-Tenant Schema Rules
+
+**Critical — understand before debugging any data issue:**
+
+| Entity | Schema |
+|---|---|
+| `IndentInventory`, `IndentInventoryList` | **Master schema** (`@UseDefaultTenant` on `IndentInventoryService`) |
+| `PurchaseOrder`, `PurchaseOrderLine` | **Master schema** (`@UseDefaultTenant` on `PurchaseOrderService`, `PurchaseOrderLifecycleManager`) |
+| `IndentStatusUpdater` | **Master schema** (`@UseDefaultTenant` at class level) |
+| Inward, Outward, Stock, LostDamaged, MOR, InventoryTransfer | **Project (tenant) schema** |
+| Activity logs | **Project schema** (per-tenant) + synced to master `global_activity_log` |
+
+**Do NOT assume all entities are in project schema.** Indents and POs are global (master schema) entities accessible across all projects. Inward/Outward/Stock are project-specific.
+
+When a tenant context issue is suspected — check which schema the entity lives in first.
+
 ## Frontend
 
 Path: `SC UI/src`

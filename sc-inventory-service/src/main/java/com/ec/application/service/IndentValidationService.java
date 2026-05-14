@@ -77,12 +77,24 @@ public class IndentValidationService {
         String lineItemStatus = lineItem.getLineItemStatus();
         boolean isAdminOrPurchaseManager = userDetailsService.isAdminOrPurchaseManager();
 
-        if (
-                (indentStatus.equalsIgnoreCase(IndentStatusConstants.STATUS_APPROVED) || indentStatus.equalsIgnoreCase(IndentStatusConstants.STATUS_PO_PARTIAL)) &&
-                 isAdminOrPurchaseManager && IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(lineItemStatus)) {
+        // Block on terminal indent statuses only
+        boolean indentTerminal = IndentStatusConstants.getTerminalStatuses().stream()
+                .anyMatch(s -> s.equalsIgnoreCase(indentStatus));
+        boolean lineItemStatusAllowed = IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(lineItemStatus);
+
+        if (!indentTerminal && isAdminOrPurchaseManager && lineItemStatusAllowed) {
             return;
-        } else {
-            throw new IllegalStateException("Indent line item cannot be split in status: " + lineItemStatus + " by current user.");
         }
+
+        if (indentTerminal) {
+            throw new IllegalStateException(
+                "Split not allowed: indent is in terminal status '" + indentStatus + "'.");
+        }
+        if (!isAdminOrPurchaseManager) {
+            throw new IllegalStateException(
+                "Split not allowed: current user does not have required role (Admin or Purchase Manager).");
+        }
+        throw new IllegalStateException(
+            "Split not allowed: line item is in status '" + lineItemStatus + "'. Only NEW line items can be split.");
     }
 }
