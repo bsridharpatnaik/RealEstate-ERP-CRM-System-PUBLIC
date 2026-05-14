@@ -192,7 +192,7 @@ class DebitNotePrint extends Component {
       rightRows = [
         { label: "Outward Date",  value: data.date },
         { label: "Slip No",       value: data.slipNo },
-        { label: "Building Unit", value: data.usageLocation?.locationName },
+        { label: "Structure", value: data.usageLocation?.locationName },
       ];
     }
 

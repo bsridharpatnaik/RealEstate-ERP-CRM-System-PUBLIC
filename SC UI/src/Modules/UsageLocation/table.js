@@ -11,7 +11,7 @@ class Table extends CommonTable {
   renderCell(key, row,index) {
     if (key === "buildingType") {
       const value = row["buildingType"] ? row["buildingType"]["typeName"] : "";
-      return <td data-label={'Building Type'}>{value}</td>;
+      return <td data-label={'Structure Type'}>{value}</td>;
     } else {
       return super.renderCell(key, row,index);
     }

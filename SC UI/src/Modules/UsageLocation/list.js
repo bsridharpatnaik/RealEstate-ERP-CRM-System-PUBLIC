@@ -21,7 +21,7 @@ class List extends ListCommon {
     headers: [
       messages.common.location,
       messages.common.description,
-      "Building Type",
+      "Structure Type",
     ],
     keys: ["locationName", "locationDescription", "buildingType"],
   };

@@ -19,8 +19,8 @@ class List extends ListCommon {
 
   tableData = {
     headers: [
-      'Change Date Time', 'Building Type', 'Building Unit',
-      'Product', 'Category', 'Final Location',
+      'Change Date Time', 'Structure Type', 'Structure',
+      'Product', 'Category', 'Work Area',
       'Old Qty', 'New Qty', 'Changed By', 'Change Type', 'Remark',
     ],
     keys: [

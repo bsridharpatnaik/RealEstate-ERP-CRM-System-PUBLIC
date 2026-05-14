@@ -55,9 +55,9 @@ public class BuildingTypeService {
     private void validatePayload(BuildingType payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (payload.getTypeName() == null)
-            throw new Exception("Building Type name cannot be null or empty");
+            throw new Exception("Structure Type name cannot be null or empty");
         if (payload.getTypeName().trim() == null || payload.getTypeName().trim() == "")
-            throw new Exception("Building Type name cannot be null or empty");
+            throw new Exception("Structure Type name cannot be null or empty");
 
     }
 

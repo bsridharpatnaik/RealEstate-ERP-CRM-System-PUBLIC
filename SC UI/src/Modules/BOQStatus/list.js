@@ -405,12 +405,12 @@ class List extends ListCommon {
           <div className="filter-section">
             {this.renderAutoCompleteBT(
               this.state.options,
-              'Filter by Building Type',
+              'Filter by Structure Type',
               (option) => option.name
             )}
             {this.renderAutoCompleteBU(
               this.state.options2,
-              'Filter by Building Unit',
+              'Filter by Structure',
               (option) => option.name
             )}
 
@@ -510,7 +510,7 @@ class List extends ListCommon {
               <MuiTable size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Final Location</strong></TableCell>
+                    <TableCell><strong>Work Area</strong></TableCell>
                     <TableCell align="right"><strong>BOQ Qty</strong></TableCell>
                   </TableRow>
                 </TableHead>
@@ -548,7 +548,7 @@ class List extends ListCommon {
               <TableHead>
                 <TableRow>
                   <TableCell><strong>Product</strong></TableCell>
-                  <TableCell><strong>Building Unit</strong></TableCell>
+                  <TableCell><strong>Structure</strong></TableCell>
                   <TableCell align="right"><strong>BOQ Qty</strong></TableCell>
                 </TableRow>
               </TableHead>

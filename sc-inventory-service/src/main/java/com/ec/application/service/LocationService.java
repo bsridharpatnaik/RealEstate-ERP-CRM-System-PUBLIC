@@ -59,11 +59,11 @@ public class LocationService {
     private void validatePayload(UsageLocationData payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (payload.getLocationName().trim() == "" || payload.getLocationName() == null)
-            throw new Exception("Building Unit name cannot be empty");
+            throw new Exception("Structure name cannot be empty");
 
         if (payload.getTypeId() != null) {
             if (!buildingTypeRepo.existsById(payload.getTypeId()))
-                throw new Exception("Building Type not found with building type ID");
+                throw new Exception("Structure Type not found with building type ID");
         }
     }
 

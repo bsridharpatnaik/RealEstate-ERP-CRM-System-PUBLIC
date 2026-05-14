@@ -37,7 +37,7 @@ class Print extends Component {
               <span className="mis-value">{data.usageLocation?.locationName || "-"}</span>
             </div>
             <div className="mis-info-row">
-              <span className="mis-label">Final Location:</span>
+              <span className="mis-label">Work Area:</span>
               <span className="mis-value">{data.usageArea?.usageAreaName || "-"}</span>
             </div>
           </div>

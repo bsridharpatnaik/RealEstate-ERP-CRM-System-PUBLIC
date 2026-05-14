@@ -191,23 +191,23 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           <div>
-            <label style={labelStyle}>Building Type <span style={{ color: 'red' }}>*</span></label>
+            <label style={labelStyle}>Structure Type <span style={{ color: 'red' }}>*</span></label>
             <Select
               options={buildingTypeOptions}
               value={buildingType}
               onChange={handleBuildingTypeChange}
-              placeholder="Select Building Type"
+              placeholder="Select Structure Type"
               isSearchable
             />
           </div>
 
           <div>
-            <label style={labelStyle}>Building Unit <span style={{ color: 'red' }}>*</span></label>
+            <label style={labelStyle}>Structure <span style={{ color: 'red' }}>*</span></label>
             <Select
               options={buildingUnitOptions}
               value={buildingUnit}
               onChange={setBuildingUnit}
-              placeholder={buildingType ? 'Select Building Unit' : 'Select Building Type first'}
+              placeholder={buildingType ? 'Select Structure' : 'Select Structure Type first'}
               isDisabled={!buildingType}
               isSearchable
             />
@@ -242,12 +242,12 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
           </div>
 
           <div>
-            <label style={labelStyle}>Final Location <span style={{ color: 'red' }}>*</span></label>
+            <label style={labelStyle}>Work Area <span style={{ color: 'red' }}>*</span></label>
             <Select
               options={locationOptions}
               value={finalLocation}
               onChange={setFinalLocation}
-              placeholder="Select Final Location"
+              placeholder="Select Work Area"
               isSearchable
             />
           </div>

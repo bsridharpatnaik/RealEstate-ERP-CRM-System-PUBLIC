@@ -53,13 +53,13 @@ class Add extends AddForm {
             return;
           }
           if (!this.formData.usageLocationId) {
-            this.props.enqueueSnackbar("Select Building Unit first", {
+            this.props.enqueueSnackbar("Select Structure first", {
               variant: "error",
             });
             return;
           }
           if (!this.formData.usageAreaId) {
-            this.props.enqueueSnackbar("Select Final Location first", {
+            this.props.enqueueSnackbar("Select Work Area first", {
               variant: "error",
             });
             return;

@@ -12,8 +12,8 @@ class BOQHistoryFilter extends CommonFilter {
           <div className="filter-content">
             {this.renderFilterDate('Start Date', 'startDate')}
             {this.renderFilterDate('End Date', 'endDate')}
-            {this.renderTextField('Building Type', 'buildingType')}
-            {this.renderTextField('Building Unit', 'buildingUnit')}
+            {this.renderTextField('Structure Type', 'buildingType')}
+            {this.renderTextField('Structure', 'buildingUnit')}
             {this.renderTextField('Inventory', 'inventory')}
             {this.renderAutoComplete(
               'Change Type',
