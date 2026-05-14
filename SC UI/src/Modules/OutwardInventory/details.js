@@ -8,7 +8,7 @@ import {
 import IconButton from "@material-ui/core/IconButton";
 import Paper from "@material-ui/core/Paper";
 import { messages } from "./../../messages";
-import Popper from "@material-ui/core/Popper";
+
 import CommonDetails from "./../../Shared/Details";
 import ReturnProduct from "./ReturnProduct";
 import DeleteConfirm from "./../../Shared/DeleteConfirm";
@@ -32,6 +32,7 @@ import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Print from "./outwardPrint";
+import { renderActivityDescription } from '../Activity/renderActivityDescription';
 
 const ACTION_BADGE_STYLES = {
   CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
@@ -396,8 +397,8 @@ class Details extends CommonDetails {
                           {log.action}
                         </span>
                       </TableCell>
-                      <TableCell style={{ fontSize: '13px', wordBreak: 'break-word', maxWidth: '300px' }}>
-                        {log.description}
+                      <TableCell style={{ fontSize: '13px', maxWidth: '360px' }}>
+                        {renderActivityDescription(log.description)}
                       </TableCell>
                       <TableCell style={{ fontSize: '12px' }}>{log.performedBy}</TableCell>
                     </TableRow>

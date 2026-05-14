@@ -186,7 +186,7 @@ class ProductMerge extends Component {
   }
 
   renderStep1() {
-    const { preview, sourceProduct, targetProduct, confirmText, error, loading } = this.state;
+    const { preview, sourceProduct, confirmText, error, loading } = this.state;
     if (!preview) return null;
 
     return (

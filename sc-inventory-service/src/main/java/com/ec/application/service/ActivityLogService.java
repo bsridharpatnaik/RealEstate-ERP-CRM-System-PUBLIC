@@ -3,6 +3,7 @@ package com.ec.application.service;
 import com.ec.application.Filters.ActivityLogSpecification;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.model.ActivityLog;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.ActivityLogRepository;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -29,15 +29,19 @@ public class ActivityLogService {
     @Autowired
     private ActivityLogRepository activityLogRepository;
 
+    @Autowired
+    private ActivityLogWriter activityLogWriter;
+
     /**
-     * Record an activity asynchronously. Tenant context is propagated via TenantAwareTaskDecorator.
-     * performedBy must be resolved on the calling thread before this method is invoked.
+     * Captures the current tenant synchronously on the calling thread (before any
+     * @UseDefaultTenant aspect can poison ThreadLocal), then delegates the actual
+     * DB write to an async bean with the tenant passed explicitly.
      * Never throws — failures are swallowed so the main operation is never affected.
      */
-    @Async
     public void record(String action, String entityType, String entityId,
                        String description, String performedBy) {
         try {
+            String tenant = ThreadLocalStorage.getTenantName();
             ActivityLog entry = new ActivityLog();
             entry.setActivityTime(new Date());
             entry.setAction(action);
@@ -45,9 +49,9 @@ public class ActivityLogService {
             entry.setEntityId(entityId);
             entry.setDescription(description);
             entry.setPerformedBy(performedBy != null ? performedBy : "System");
-            activityLogRepository.save(entry);
+            activityLogWriter.saveAsync(entry, tenant);
         } catch (Exception e) {
-            log.error("Failed to save activity log [{} {} {}]: {}", action, entityType, entityId, e.getMessage());
+            log.error("Failed to submit activity log [{} {} {}]: {}", action, entityType, entityId, e.getMessage());
         }
     }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import CommonTable from '../../Shared/Table';
 import { messages } from '../../messages';
+import { renderActivityDescription } from './renderActivityDescription';
 
 const ACTION_COLORS = {
   CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
@@ -38,8 +39,8 @@ class ActivityTable extends CommonTable {
     }
     if (key === 'description') {
       return (
-        <td data-label="Description" style={{ maxWidth: '320px', wordBreak: 'break-word' }}>
-          {row.description}
+        <td data-label="Description" style={{ maxWidth: '360px' }}>
+          {renderActivityDescription(row.description)}
         </td>
       );
     }

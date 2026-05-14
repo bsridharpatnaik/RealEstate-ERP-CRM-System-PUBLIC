@@ -4,7 +4,7 @@ import Popper from '@material-ui/core/Popper';
 
 import ListCommon from '../../Shared/List';
 import Table from './table';
-import Filter from './filter';
+import Filter from './projectFilter';
 import IconButtons from '../../Shared/Button/IconButtons';
 import { API } from '../../axios';
 import { apiEndpoints } from '../../endpoints';

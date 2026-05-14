@@ -12,7 +12,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.ReusableClasses.ReusableMethods;
+import java.util.Collections;
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
 import com.ec.application.data.LostDamagedReturnData;
 import com.ec.application.model.LostDamagedInventory;
@@ -73,8 +75,12 @@ public class LostDamagedInventoryService {
                 lostDamagedInventory.getQuantity());
         LostDamagedInventory saved = lostDamagedInventoryRepo.save(lostDamagedInventory);
         String createUser = resolveCurrentUser();
-        activityLogService.record("CREATED", "LOST_DAMAGED", String.valueOf(saved.getLostdamagedid()),
-                "Lost/Damaged entry " + saved.getLostdamagedid() + " (" + saved.getEntryType() + ") created by " + createUser, createUser);
+        String createProduct = saved.getProduct() != null ? saved.getProduct().getProductName() : "Unknown";
+        activityLogService.record("CREATED", saved.getEntryType(), String.valueOf(saved.getLostdamagedid()),
+                ActivityLogDescription.withItems(saved.getEntryType() + " entry " + saved.getLostdamagedid()
+                        + " created by " + createUser,
+                        Collections.singletonList(ActivityLogDescription.item(createProduct, saved.getQuantity()))),
+                createUser);
         return saved;
     }
 
@@ -135,8 +141,11 @@ public class LostDamagedInventoryService {
 
         LostDamagedInventory updated = lostDamagedInventoryRepo.save(lostDamagedInventory);
         String updateUser = resolveCurrentUser();
-        activityLogService.record("UPDATED", "LOST_DAMAGED", String.valueOf(id),
-                "Lost/Damaged entry " + id + " updated by " + updateUser, updateUser);
+        String updProduct = updated.getProduct() != null ? updated.getProduct().getProductName() : "Unknown";
+        activityLogService.record("UPDATED", updated.getEntryType(), String.valueOf(id),
+                ActivityLogDescription.withItems(updated.getEntryType() + " entry " + id + " updated by " + updateUser,
+                        Collections.singletonList(ActivityLogDescription.itemChanged(updProduct, oldStock, updated.getQuantity()))),
+                updateUser);
         return updated;
     }
 
@@ -169,14 +178,15 @@ public class LostDamagedInventoryService {
         AdjustStockBeforeDelete(lostDamagedInventory);
         lostDamagedInventoryRepo.softDeleteById(id);
         String deleteUser = resolveCurrentUser();
-        activityLogService.record("DELETED", "LOST_DAMAGED", String.valueOf(id),
-                "Lost/Damaged entry " + id + " deleted by " + deleteUser, deleteUser);
+        activityLogService.record("DELETED", lostDamagedInventory.getEntryType(), String.valueOf(id),
+                lostDamagedInventory.getEntryType() + " entry " + id + " deleted by " + deleteUser, deleteUser);
     }
 
     private String resolveCurrentUser() {
         try { return userDetailsService.getCurrentUser().getUsername(); }
         catch (Exception e) { return "System"; }
     }
+
 
     @Transactional(rollbackFor = Exception.class)
     private void AdjustStockBeforeDelete(LostDamagedInventory lostDamagedInventory) throws Exception {

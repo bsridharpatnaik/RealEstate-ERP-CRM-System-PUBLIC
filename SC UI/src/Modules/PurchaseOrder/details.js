@@ -4,14 +4,11 @@ import CommonDetails from "./../../Shared/Details";
 import IconButton from "@material-ui/core/IconButton";
 import { messages } from "./../../messages";
 import {
-  EditIcon,
-  DeleteIcon,
   MoreIcon,
   CloseIcon,
 } from "./../../Shared/Icons/Index.js";
 import DeleteConfirm from "./../../Shared//DeleteConfirm";
 import ShortCloseConfirm from "./../../Shared/ShortCloseConfirm";
-import ReactToPrint from "react-to-print";
 import Print from "./purchaseOrderPrint";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
@@ -305,7 +302,7 @@ class Details extends CommonDetails {
   // ─── Navigation ────────────────────────────────────────────────────────────
 
   handlePrevious = () => {
-    const { currentIndex, allEntries, onNavigate } = this.props;
+    const { currentIndex, onNavigate } = this.props;
     if (currentIndex > 0 && onNavigate) onNavigate(currentIndex - 1);
   };
 

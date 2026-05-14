@@ -6,11 +6,11 @@ const ACTIONS = [
 ];
 
 const ENTITY_TYPES = [
-  'INDENT', 'PURCHASE_ORDER', 'INWARD', 'OUTWARD',
+  'INWARD', 'OUTWARD',
   'LOST_DAMAGED', 'EXCESS_FOUND', 'MACHINERY_ON_RENT', 'INVENTORY_TRANSFER',
 ];
 
-class ActivityFilter extends CommonFilter {
+class ProjectActivityFilter extends CommonFilter {
   renderFilter() {
     return (
       <div className="filter-container">
@@ -35,13 +35,6 @@ class ActivityFilter extends CommonFilter {
             )}
             {this.renderTextField('Entity ID', 'entityId')}
             {this.renderTextField('Performed By', 'performedBy')}
-            {this.renderAutoComplete(
-              'Project',
-              this.props.options?.projects || [],
-              'tenantSchema',
-              (o) => o.name,
-              true
-            )}
           </div>
         ) : null}
         {this.renderFooter()}
@@ -50,4 +43,4 @@ class ActivityFilter extends CommonFilter {
   }
 }
 
-export default ActivityFilter;
+export default ProjectActivityFilter;

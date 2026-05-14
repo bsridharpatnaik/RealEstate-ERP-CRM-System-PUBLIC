@@ -24,6 +24,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.InwardInventorySpecification;
@@ -192,9 +193,15 @@ public class InwardInventoryService {
         IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, inwardInventory.getPurchaseOrderNo(), deltas);
         applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "create"));
         String createUser = resolveCurrentUser();
+        List<Map<String, Object>> createItems = inwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(
+                        io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode(),
+                        io.getQuantity()))
+                .collect(Collectors.toList());
         activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
-                "Inward " + inwardInventory.getInwardId() + " created from PO " + iiData.getPoNumber()
-                + " with " + inwardInventory.getInwardOutwardList().size() + " line(s) by " + createUser, createUser);
+                ActivityLogDescription.withItems("Inward " + inwardInventory.getInwardId()
+                        + " created from PO " + iiData.getPoNumber() + " by " + createUser, createItems),
+                createUser);
         return inwardInventory;
     }
 
@@ -340,20 +347,22 @@ public class InwardInventoryService {
         inwardInventoryRepo.save(inward);
 
         String updateUser = resolveCurrentUser();
-        boolean anyLineChanged = false;
+        List<Map<String, Object>> changedItems = ActivityLogDescription.list();
         for (InwardOutwardList io : inward.getInwardOutwardList()) {
             Double oldQty = oldQuantityMap.get(io.getLineItemCode());
             if (oldQty != null && Double.compare(oldQty, io.getQuantity()) != 0) {
                 String productName = io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode();
-                activityLogService.record("UPDATED", "INWARD", String.valueOf(inwardId),
-                        "Inward " + inwardId + " line '" + productName + "' qty changed from " + oldQty + " to " + io.getQuantity() + " by " + updateUser,
-                        updateUser);
-                anyLineChanged = true;
+                changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty, io.getQuantity()));
             }
         }
-        if (!anyLineChanged) {
+        if (!changedItems.isEmpty()) {
             activityLogService.record("UPDATED", "INWARD", String.valueOf(inwardId),
-                    "Inward " + inwardId + " updated by " + updateUser, updateUser);
+                    ActivityLogDescription.withItems("Inward " + inwardId + " updated by " + updateUser, changedItems),
+                    updateUser);
+        } else {
+            activityLogService.record("UPDATED", "INWARD", String.valueOf(inwardId),
+                    ActivityLogDescription.of("Inward " + inwardId + " updated by " + updateUser),
+                    updateUser);
         }
 
         // -------------------------------------------------
@@ -524,9 +533,15 @@ public class InwardInventoryService {
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
         String directCreateUser = resolveCurrentUser();
+        List<Map<String, Object>> directItems = inwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(
+                        io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode(),
+                        io.getQuantity()))
+                .collect(Collectors.toList());
         activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
-                "Inward " + inwardInventory.getInwardId() + " created with "
-                + inwardInventory.getInwardOutwardList().size() + " line(s) by " + directCreateUser, directCreateUser);
+                ActivityLogDescription.withItems("Inward " + inwardInventory.getInwardId()
+                        + " created by " + directCreateUser, directItems),
+                directCreateUser);
         return inwardInventory;
     }
 
@@ -573,8 +588,15 @@ public class InwardInventoryService {
         }
 
         String rejectUser = resolveCurrentUser();
+        List<Map<String, Object>> rejectItems = rd.getProductWithQuantities().stream()
+                .map(pwq -> {
+                    String name = productRepo.findById(pwq.getProductId())
+                            .map(p -> p.getProductName()).orElse("ID:" + pwq.getProductId());
+                    return ActivityLogDescription.item(name, pwq.getQuantity());
+                })
+                .collect(Collectors.toList());
         activityLogService.record("REJECTED", "INWARD", String.valueOf(inwardId),
-                "Inward " + inwardId + " rejected " + rd.getProductWithQuantities().size() + " item(s) by " + rejectUser,
+                ActivityLogDescription.withItems("Inward " + inwardId + " rejected by " + rejectUser, rejectItems),
                 rejectUser);
 
         return inwardInventoryRepo.findById(inwardId).get();
@@ -1096,9 +1118,15 @@ public class InwardInventoryService {
                 inwardInventory.getInwardOutwardList().size());
 
         String openingUser = resolveCurrentUser();
+        List<Map<String, Object>> openingItems = inwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(
+                        io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode(),
+                        io.getQuantity()))
+                .collect(Collectors.toList());
         activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
-                "Opening stock inward " + inwardInventory.getInwardId() + " created with "
-                + inwardInventory.getInwardOutwardList().size() + " line(s) by " + openingUser, openingUser);
+                ActivityLogDescription.withItems("Opening stock inward " + inwardInventory.getInwardId()
+                        + " created by " + openingUser, openingItems),
+                openingUser);
         return inwardInventory;
     }
 
@@ -1106,4 +1134,5 @@ public class InwardInventoryService {
         try { return userDetailsService.getCurrentUser().getUsername(); }
         catch (Exception e) { return "System"; }
     }
+
 }

@@ -41,6 +41,15 @@ import {
 import TextField from "@material-ui/core/TextField";
 import Button from "./../../Shared/Button";
 
+const INDENT_ACTION_STYLES = {
+  CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
+  UPDATED:     { color: '#e65100', background: '#fff3e0' },
+  APPROVED:    { color: '#1565c0', background: '#e3f2fd' },
+  CANCELLED:   { color: '#c62828', background: '#ffebee' },
+  DELETED:     { color: '#c62828', background: '#ffebee' },
+  SPLIT:       { color: '#4e342e', background: '#efebe9' },
+};
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -99,6 +108,8 @@ class Details extends CommonDetails {
     statusHistoryLoading: false,
     statusHistoryError: null,
     statusHistoryIndentId: null,
+    activityLogs: [],
+    activityLoading: false,
   };
 
   async download(file) {
@@ -134,6 +145,7 @@ class Details extends CommonDetails {
       });
       if (this.state.value === 1) {
         this.fetchStatusHistory();
+        this.loadActivityLog();
       }
     }
   }
@@ -168,9 +180,22 @@ class Details extends CommonDetails {
     }
   };
 
+  loadActivityLog = async () => {
+    const data = this.props.data;
+    const indentId = data?.indentId;
+    if (!indentId) return;
+    this.setState({ activityLoading: true });
+    const r = await API.GET(apiEndpoints.activityLogByEntity('INDENT', indentId));
+    if (r.success) {
+      this.setState({ activityLogs: r.data || [] });
+    }
+    this.setState({ activityLoading: false });
+  };
+
   handleHistoryTabClick = () => {
     this.setState({ value: 1 });
     this.fetchStatusHistory();
+    this.loadActivityLog();
   };
 
   handleCloseMenu = () => {
@@ -259,7 +284,7 @@ class Details extends CommonDetails {
   };
 
   handlePrevious = () => {
-    const { currentIndex, allEntries, onNavigate } = this.props;
+    const { currentIndex, onNavigate } = this.props;
     if (currentIndex > 0 && onNavigate) onNavigate(currentIndex - 1);
   };
 
@@ -665,6 +690,50 @@ class Details extends CommonDetails {
                 ))
               ) : (
                 <div className="history-empty">No history available</div>
+              )}
+            </div>
+
+            {/* Activity Log section */}
+            <div style={{ marginTop: '24px', borderTop: '1px solid #e0e0e0', paddingTop: '16px' }}>
+              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '12px', color: '#444' }}>
+                Activity Log
+              </div>
+              {this.state.activityLoading ? (
+                <div className="history-loading">Loading activity log...</div>
+              ) : this.state.activityLogs.length === 0 ? (
+                <div className="history-empty">No activity recorded.</div>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Action</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell>By</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {this.state.activityLogs.map((log, i) => (
+                      <TableRow key={i}>
+                        <TableCell style={{ whiteSpace: 'nowrap', fontSize: '12px' }}>
+                          {log.activityTime ? new Date(log.activityTime).toLocaleString() : ''}
+                        </TableCell>
+                        <TableCell>
+                          <span style={{
+                            padding: '2px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '12px',
+                            ...INDENT_ACTION_STYLES[log.action]
+                          }}>
+                            {log.action}
+                          </span>
+                        </TableCell>
+                        <TableCell style={{ fontSize: '13px', wordBreak: 'break-word', maxWidth: '280px' }}>
+                          {log.description}
+                        </TableCell>
+                        <TableCell style={{ fontSize: '12px' }}>{log.performedBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
             </div>
           </TabPanel>

@@ -1,5 +1,5 @@
 //react
-import React, { useEffect } from "react";
+import React from "react";
 //third party
 import Drawer from "@material-ui/core/Drawer";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
@@ -46,13 +46,13 @@ function SideMenu(props) {
     tennant = selectenant[0] ? selectenant[0] : tennant;
   }
   const isCRM =
-    eval(tennant?.crm ?? false) &&
+    (tennant?.crm === true || tennant?.crm === "true") &&
     (currentUserRole.toLowerCase().indexOf("crm") > -1 ||
       currentUserRole.toLowerCase().indexOf("crm-manager") > -1 ||
       currentUserRole.toLowerCase().indexOf("admin") > -1);
   const _role = currentUserRole.toLowerCase();
   const isInventory =
-    eval(tennant?.inventory ?? false) &&
+    (tennant?.inventory === true || tennant?.inventory === "true") &&
     (_role === "admin" ||
       _role === "purchase-manager" ||
       _role === "management" ||

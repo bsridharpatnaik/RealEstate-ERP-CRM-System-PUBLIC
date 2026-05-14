@@ -31,6 +31,7 @@ import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
 import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 import PrintIcon from "@material-ui/icons/Print";
 import Print from "./inwardPrint";
+import { renderActivityDescription } from '../Activity/renderActivityDescription';
 const ACTION_BADGE_STYLES = {
   CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
   UPDATED:     { color: '#e65100', background: '#fff3e0' },
@@ -515,8 +516,8 @@ content={() => this.detailTabRef.current}
                           {log.action}
                         </span>
                       </TableCell>
-                      <TableCell style={{ fontSize: '13px', wordBreak: 'break-word', maxWidth: '300px' }}>
-                        {log.description}
+                      <TableCell style={{ fontSize: '13px', maxWidth: '360px' }}>
+                        {renderActivityDescription(log.description)}
                       </TableCell>
                       <TableCell style={{ fontSize: '12px' }}>{log.performedBy}</TableCell>
                     </TableRow>

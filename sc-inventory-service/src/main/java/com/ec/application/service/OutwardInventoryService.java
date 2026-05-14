@@ -18,6 +18,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO2;
@@ -106,9 +107,15 @@ public class OutwardInventoryService {
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
         String createUser = resolveCurrentUser();
+        List<Map<String, Object>> createItems = outwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(
+                        io.getProduct() != null ? io.getProduct().getProductName() : "Unknown",
+                        io.getQuantity()))
+                .collect(Collectors.toList());
         activityLogService.record("CREATED", "OUTWARD", String.valueOf(outwardInventory.getOutwardid()),
-                "Outward " + outwardInventory.getOutwardid() + " created with "
-                + outwardInventory.getInwardOutwardList().size() + " line(s) by " + createUser, createUser);
+                ActivityLogDescription.withItems("Outward " + outwardInventory.getOutwardid()
+                        + " created by " + createUser, createItems),
+                createUser);
         return outwardInventory;
     }
 
@@ -167,8 +174,15 @@ public class OutwardInventoryService {
 
         String actionUser = resolveCurrentUser();
         String actionType = type.equals("return") ? "RETURNED" : "REJECTED";
+        List<Map<String, Object>> actionItems = rd.getProductWithQuantities().stream()
+                .map(pwq -> {
+                    String name = productRepo.findById(pwq.getProductId())
+                            .map(p -> p.getProductName()).orElse("ID:" + pwq.getProductId());
+                    return ActivityLogDescription.item(name, pwq.getQuantity());
+                })
+                .collect(Collectors.toList());
         activityLogService.record(actionType, "OUTWARD", String.valueOf(outwardId),
-                "Outward " + outwardId + " " + type + " " + rd.getProductWithQuantities().size() + " item(s) by " + actionUser,
+                ActivityLogDescription.withItems("Outward " + outwardId + " " + type + " by " + actionUser, actionItems),
                 actionUser);
 
         return outwardInventoryRepo.findById(outwardId).get();
@@ -250,21 +264,22 @@ public class OutwardInventoryService {
         String updateUser = resolveCurrentUser();
         Map<Long, Double> oldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
                 .collect(Collectors.toMap(io -> io.getProduct().getProductId(), InwardOutwardList::getQuantity, (a, b) -> a));
-        boolean anyLineChanged = false;
+        List<Map<String, Object>> changedItems = ActivityLogDescription.list();
         for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
             Double oldQty = oldQtyMap.get(io.getProduct().getProductId());
             if (oldQty == null || Double.compare(oldQty, io.getQuantity()) != 0) {
                 String productName = io.getProduct() != null ? io.getProduct().getProductName() : String.valueOf(io.getProduct().getProductId());
-                activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
-                        "Outward " + id + " line '" + productName + "' qty changed from "
-                        + (oldQty != null ? oldQty : "N/A") + " to " + io.getQuantity() + " by " + updateUser,
-                        updateUser);
-                anyLineChanged = true;
+                changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty != null ? oldQty : 0, io.getQuantity()));
             }
         }
-        if (!anyLineChanged) {
+        if (!changedItems.isEmpty()) {
             activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
-                    "Outward " + id + " updated by " + updateUser, updateUser);
+                    ActivityLogDescription.withItems("Outward " + id + " updated by " + updateUser, changedItems),
+                    updateUser);
+        } else {
+            activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
+                    ActivityLogDescription.of("Outward " + id + " updated by " + updateUser),
+                    updateUser);
         }
         return outwardInventory;
 
@@ -727,4 +742,5 @@ public class OutwardInventoryService {
         }
         return inwardOutwardListSet;
     }
+
 }

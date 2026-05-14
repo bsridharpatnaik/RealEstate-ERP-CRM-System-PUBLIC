@@ -15,7 +15,7 @@ class List extends ListCommon {
   sortkey = 'activityTime';
   sortby = 'desc';
 
-  state = { data: [], pages: 0, totalRecords: 0, isLoading: false, filterOpen: false, syncing: false };
+  state = { data: [], pages: 0, totalRecords: 0, isLoading: false, filterOpen: false, syncing: false, tenantOptions: [] };
 
   tableData = {
     headers: ['Time', 'Project', 'Action', 'Entity Type', 'Entity ID', 'Description', 'Performed By'],
@@ -27,6 +27,18 @@ class List extends ListCommon {
   componentDidMount() {
     this.filterRef = React.createRef();
     this.search();
+    this.fetchTenants();
+  }
+
+  async fetchTenants() {
+    const res = await API.GET(apiEndpoints.getTenants);
+    if (res.success && Array.isArray(res.data)) {
+      const tenantOptions = res.data
+        .filter((t) => t.inventory === true)
+        .map((t) => ({ name: t.tenantName || t.name || '', id: t.tenantCode }))
+        .filter((t) => t.name && t.id);
+      this.setState({ tenantOptions });
+    }
   }
 
   prepareRequestBody() {
@@ -35,6 +47,14 @@ class List extends ListCommon {
       for (const field in this.filterData) {
         const value = this.filterData[field];
         if (value === undefined || value === null || value === '') continue;
+
+        if (field === 'tenantSchema') {
+          const arr = Array.isArray(value) ? value : [value];
+          const codes = arr.map((p) => (p && typeof p === 'object' ? p.id : p)).filter(Boolean);
+          if (codes.length > 0) params.filterData.push({ attrName: 'tenantSchema', attrValue: codes });
+          continue;
+        }
+
         params.filterData.push({
           attrName: field,
           attrValue: Array.isArray(value) ? value.map(String) : [String(value)],
@@ -121,6 +141,7 @@ class List extends ListCommon {
         >
           <Filter
             filterData={this.filterData}
+            options={{ projects: this.state.tenantOptions }}
             search={(data) => {
               this.filterData = data;
               this.setState({ filterOpen: false });

@@ -48,7 +48,7 @@ public class ActivityLogGlobalSyncOrchestrator {
         jobRepo.save(job);
 
         try {
-            for (String tenant : schemaConfig.getNonMasterSchemaList()) {
+            for (String tenant : schemaConfig.getSchemaList()) {
                 try {
                     log.info("Starting activity log sync for tenant {}", tenant);
                     syncService.syncSingleTenant(tenant);
