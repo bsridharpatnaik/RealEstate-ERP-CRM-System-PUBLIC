@@ -76,7 +76,8 @@ function SideMenu(props) {
     props.history.location.pathname === "/historicalPricing" ||
     props.history.location.pathname === "/user" ||
     props.history.location.pathname === "/firm" ||
-    props.history.location.pathname === appRoutes.productMerge
+    props.history.location.pathname === appRoutes.productMerge ||
+    props.history.location.pathname === appRoutes.activityLog
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
