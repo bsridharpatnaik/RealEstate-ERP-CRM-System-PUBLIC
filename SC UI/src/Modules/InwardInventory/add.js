@@ -137,7 +137,7 @@ class InwardInventoryForm extends AddForm {
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
-              quantity: "",
+              quantity: item.quantity || "",
               warehouseId: item.warehouse?.warehouseId || null,
               lineItemCode: item.lineItemCode
             };

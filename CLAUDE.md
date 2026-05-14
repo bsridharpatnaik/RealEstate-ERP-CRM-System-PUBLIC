@@ -169,11 +169,26 @@ Full activity log system — per-project logs synced to a global cross-tenant lo
 
 ### Critical Bug — Tenant Context
 
-**Root cause**: `ProductService` is `@UseDefaultTenant` at class level. Any call to it (e.g. `findSingleProduct()` inside `populateData()`) sets `ThreadLocalStorage` to master schema. By the time `activityLogService.record()` was submitted to the async executor, `TenantAwareTaskDecorator` captured master schema → log saved to wrong place.
+**Root cause**: `ProductService` is `@UseDefaultTenant` at class level. Any call to it (e.g. `findSingleProduct()` inside `populateData()`) permanently sets `ThreadLocalStorage` to master schema for the rest of the request thread. Any subsequent `activityLogService.record()` call reads master from ThreadLocal → log saved to master.
 
-**Fix**: `ActivityLogService.record()` is now synchronous — captures tenant at call site before any `@UseDefaultTenant` fires. Delegates actual async DB write to `ActivityLogWriter.saveAsync(entry, tenant)` with tenant passed explicitly. No reliance on `TenantAwareTaskDecorator` for this flow.
+**Fix — `TenantAspect.java`**: Changed from `@Before` to `@Around`. Now saves the original tenant before switching to master, and restores it in `finally` after the annotated method returns. This means `@UseDefaultTenant` only affects the duration of the annotated method — not the rest of the calling thread.
 
-**Do NOT** put `@Async` back on `ActivityLogService.record()`. Keep it synchronous.
+```java
+@Around("@annotation(UseDefaultTenant) || @within(UseDefaultTenant)")
+public Object applyDefaultTenant(ProceedingJoinPoint pjp) throws Throwable {
+    String originalTenant = ThreadLocalStorage.getTenantName();
+    tenantService.setDefaultTenant();
+    try {
+        return pjp.proceed();
+    } finally {
+        ThreadLocalStorage.setTenantName(originalTenant);
+    }
+}
+```
+
+**Do NOT** revert this to `@Before`. The save/restore is essential.
+
+`ActivityLogService.record()` is synchronous (no `@Async`). It reads tenant from ThreadLocal (now correct after the aspect fix) and delegates the actual async DB write to `ActivityLogWriter.saveAsync(entry, tenant)` with tenant passed explicitly as a safety net.
 
 ---
 

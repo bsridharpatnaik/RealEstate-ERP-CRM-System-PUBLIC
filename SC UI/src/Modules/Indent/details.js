@@ -694,14 +694,13 @@ class Details extends CommonDetails {
             </div>
 
             {/* Activity Log section */}
+            {this.state.activityLogs.length > 0 && (
             <div style={{ marginTop: '24px', borderTop: '1px solid #e0e0e0', paddingTop: '16px' }}>
               <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '12px', color: '#444' }}>
                 Activity Log
               </div>
               {this.state.activityLoading ? (
                 <div className="history-loading">Loading activity log...</div>
-              ) : this.state.activityLogs.length === 0 ? (
-                <div className="history-empty">No activity recorded.</div>
               ) : (
                 <Table size="small">
                   <TableHead>
@@ -736,6 +735,7 @@ class Details extends CommonDetails {
                 </Table>
               )}
             </div>
+            )}
           </TabPanel>
         </div>
         <DeleteConfirm

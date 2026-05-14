@@ -11,6 +11,19 @@ const ACTION_COLORS = {
   SHORT_CLOSED:{ color: '#0d47a1', background: '#e3f2fd' },
   APPROVED:    { color: '#1565c0', background: '#e3f2fd' },
   SPLIT:       { color: '#4e342e', background: '#efebe9' },
+  RETURNED:    { color: '#00695c', background: '#e0f2f1' },
+  REJECTED:    { color: '#b71c1c', background: '#ffcdd2' },
+};
+
+const ENTITY_ROW_COLORS = {
+  INWARD:             '#f3faf3',
+  OUTWARD:            '#fff8f0',
+  INDENT:             '#f0f4ff',
+  PURCHASE_ORDER:     '#fdf5ff',
+  LOST_DAMAGED:       '#fff3f3',
+  EXCESS_FOUND:       '#fce4ec',
+  MACHINERY_ON_RENT:  '#fffde7',
+  INVENTORY_TRANSFER: '#f0f9ff',
 };
 
 class ActivityTable extends CommonTable {
@@ -61,7 +74,11 @@ class ActivityTable extends CommonTable {
       );
     }
     return rows.map((row, index) => (
-      <tr key={index} className={index === rows.length - 1 ? 'row last' : 'row'}>
+      <tr
+        key={index}
+        className={index === rows.length - 1 ? 'row last' : 'row'}
+        style={{ background: ENTITY_ROW_COLORS[row.entityType] || '#ffffff' }}
+      >
         {keys.map((key) => this.renderCell(key, row))}
       </tr>
     ));
