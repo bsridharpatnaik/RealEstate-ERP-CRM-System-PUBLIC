@@ -348,12 +348,12 @@ function SideMenu(props) {
                     labelText={messages.common.role}
                     linkurl={appendURL("/role")}
                   /> */}
-                    <DashboardItem
+                    {username === 'sridhar' && <DashboardItem
                       nodeId="54"
                       labelText="Activity Log"
                       onClick={props.setSideBarValue}
                       linkurl={appendURL(appRoutes.projectActivityLog)}
-                    />
+                    />}
                   </DashboardItem>
                 )}
                 {isCRM && (
@@ -515,18 +515,18 @@ function SideMenu(props) {
   }}
   linkurl={appRoutes.user}
 />
-    <DashboardItem
+    {username === 'sridhar' && <DashboardItem
   nodeId="52"
   labelText="Merge Products"
   onClick={props.setSideBarValue}
   linkurl={appRoutes.productMerge}
-/>
-    <DashboardItem
+/>}
+    {username === 'sridhar' && <DashboardItem
   nodeId="53"
   labelText="Activity Log"
   onClick={props.setSideBarValue}
   linkurl={appRoutes.activityLog}
-/>
+/>}
   </DashboardItem>
 )}
             <DashboardItem
