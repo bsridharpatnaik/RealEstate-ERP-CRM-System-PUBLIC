@@ -102,8 +102,8 @@ public class BOQHistoryService {
             headerStyle.setFont(font);
 
             String[] headers = {
-                "Change DateTime", "Building Type", "Building Unit",
-                "Product", "Category", "Final Location",
+                "Change DateTime", "Structure Type", "Structure",
+                "Product", "Category", "Work Area",
                 "Old Qty", "New Qty", "Changed By", "Change Type", "Remark"
             };
 

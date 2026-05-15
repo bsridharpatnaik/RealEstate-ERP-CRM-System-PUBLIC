@@ -42,8 +42,8 @@ const BOQInputScreen = () => {
   const [hasCategory, setHasCategory]                     = useState(false);
 
   const tableHeading = [
-    'S No.', 'Building Type', 'Building Unit',
-    'Category', 'Inventory', 'Unit', 'Quantity', 'Final Location', 'Changes', 'Remark', 'Delete'
+    'S No.', 'Structure Type', 'Structure',
+    'Category', 'Inventory', 'Unit', 'Quantity', 'Work Area', 'Changes', 'Remark', 'Delete'
   ];
 
   let td = [null];
@@ -129,7 +129,7 @@ const BOQInputScreen = () => {
   const handlePreview = (e) => {
     e.preventDefault();
     if (!buildingSelected) {
-      enqueueSnackbar('Please select Building Type and Building Unit first', { variant: 'warning' });
+      enqueueSnackbar('Please select Structure Type and Structure first', { variant: 'warning' });
       return;
     }
     if (!excelFile) {
@@ -155,10 +155,12 @@ const BOQInputScreen = () => {
     }
 
     const heads = extractHeader(worksheet);
-    // New template: Category | Inventory | Unit | Quantity | FinalLocation | Changes?
-    // Old template (backwards compat): Inventory | Quantity | FinalLocation | Changes?
-    const newFormat = heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && heads[4] === 'FinalLocation';
-    const oldFormat = heads[0] === 'Inventory' && heads[1] === 'Quantity' && heads[2] === 'FinalLocation';
+    // New template: Category | Inventory | Unit | Quantity | Work Area (or FinalLocation) | Changes?
+    // Old template (backwards compat): Inventory | Quantity | Work Area (or FinalLocation) | Changes?
+    const isWorkAreaCol4 = heads[4] === 'Work Area' || heads[4] === 'FinalLocation';
+    const isWorkAreaCol2 = heads[2] === 'Work Area' || heads[2] === 'FinalLocation';
+    const newFormat = heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && isWorkAreaCol4;
+    const oldFormat = heads[0] === 'Inventory' && heads[1] === 'Quantity' && isWorkAreaCol2;
     if (!newFormat && !oldFormat) {
       enqueueSnackbar('Headers not recognised. Please use the provided template.', { variant: 'error' });
       return;
@@ -308,11 +310,11 @@ const BOQInputScreen = () => {
 
   const downloadExistingBOQ = async () => {
     if (!buildingTypeDD || !buildingUnitDD || buildingUnitDD.length === 0) {
-      enqueueSnackbar('Select Building Type and Building Unit first', { variant: 'warning' });
+      enqueueSnackbar('Select Structure Type and Structure first', { variant: 'warning' });
       return;
     }
     if (buildingUnitDD.length > 1) {
-      enqueueSnackbar('Select only one Building Unit to download existing BOQ', { variant: 'warning' });
+      enqueueSnackbar('Select only one Structure to download existing BOQ', { variant: 'warning' });
       return;
     }
     const response = await API.GETBlob(
@@ -426,10 +428,10 @@ const BOQInputScreen = () => {
         </div>
         <div style={s.row}>
           <div style={s.col}>
-            <div style={s.label}>Building Type <span style={{ color: 'red' }}>*</span></div>
+            <div style={s.label}>Structure Type <span style={{ color: 'red' }}>*</span></div>
             <Select
               options={buildingTypeData}
-              placeholder="Select Building Type"
+              placeholder="Select Structure Type"
               value={buildingTypeDD}
               onChange={handleSelectBuildingType}
               isSearchable
@@ -437,7 +439,7 @@ const BOQInputScreen = () => {
           </div>
           <div style={s.col}>
             <div style={{ ...s.label, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>Building Unit <span style={{ color: 'red' }}>*</span></span>
+              <span>Structure <span style={{ color: 'red' }}>*</span></span>
               {buildingTypeDD && buildingUnitData.length > 0 && (
                 <>
                   <button
@@ -460,7 +462,7 @@ const BOQInputScreen = () => {
             </div>
             <Select
               options={buildingUnitData || []}
-              placeholder={buildingTypeDD ? 'Select one or more units' : 'Select Building Type first'}
+              placeholder={buildingTypeDD ? 'Select one or more units' : 'Select Structure Type first'}
               value={buildingUnitDD}
               onChange={handleSelectBuildingUnit}
               isSearchable
@@ -517,7 +519,7 @@ const BOQInputScreen = () => {
 
         {!buildingSelected ? (
           <div style={{ ...s.helpText, color: '#e57373', fontSize: '13px' }}>
-            ⚠ Complete Step 1 first — select a Building Type and at least one Building Unit.
+            ⚠ Complete Step 1 first — select a Structure Type and at least one Structure.
           </div>
         ) : (
           <>
@@ -595,7 +597,7 @@ const BOQInputScreen = () => {
             <table className="table">
               <thead>
                 <tr>
-                  {/* S No, Building Type, Building Unit */}
+                  {/* S No, Structure Type, Structure */}
                   {tableHeading.slice(0, 3).map((h, i) => (
                     <th key={i} style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
@@ -608,7 +610,7 @@ const BOQInputScreen = () => {
                   {hasCategory && (
                     <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[5]}</th>
                   )}
-                  {/* Quantity, Final Location */}
+                  {/* Quantity, Work Area */}
                   <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[6]}</th>
                   <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[7]}</th>
                   {uploadMode === 'new' && (
@@ -632,7 +634,7 @@ const BOQInputScreen = () => {
                       <td className="row-data" id={idx + 1 + tableHeading[5]} style={{ border: '1px solid rgba(0,0,0,0.15)', color: '#888' }}><pre>{row.Unit || '—'}</pre></td>
                     )}
                     <td className="row-data" id={idx + 1 + tableHeading[6]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Quantity}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.FinalLocation}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row['Work Area'] || row.FinalLocation}</pre></td>
                     {uploadMode === 'new' && (
                       <td className="row-data" id={idx + 1 + tableHeading[8]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
                     )}

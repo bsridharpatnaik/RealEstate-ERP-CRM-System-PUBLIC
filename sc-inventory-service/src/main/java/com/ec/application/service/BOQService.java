@@ -211,12 +211,12 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("BOQ Template");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (VLOOKUP, read-only)
-            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Changes  Col 6: Remark (optional)
+            // Col 3: Quantity  Col 4: Work Area  Col 5: Changes  Col 6: Remark (optional)
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
-            header.createCell(4).setCellValue("FinalLocation");
+            header.createCell(4).setCellValue("Work Area");
             header.createCell(5).setCellValue("Changes");
             header.createCell(6).setCellValue("Remark");
 
@@ -343,12 +343,12 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("Existing BOQ");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (pre-filled, reference only)
-            // Col 3: Quantity  Col 4: FinalLocation  Col 5: Remark (optional)
+            // Col 3: Quantity  Col 4: Work Area  Col 5: Remark (optional)
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
-            header.createCell(4).setCellValue("FinalLocation");
+            header.createCell(4).setCellValue("Work Area");
             header.createCell(5).setCellValue("Remark");
 
             // Hidden: Categories — col A = display name, col B = named range key
@@ -978,9 +978,9 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("BOQ Status");
 
             String[] headers = {
-                "Building Unit", "Category", "Product",
+                "Structure", "Category", "Product",
                 "Total BOQ Qty", "Total Outward Qty", "Status (%)", "Status Bucket",
-                "Final Location", "Final Loc BOQ Qty", "Final Loc Outward Qty"
+                "Work Area", "Work Area BOQ Qty", "Work Area Outward Qty"
             };
             Row headerRow = sheet.createRow(0);
             CellStyle headerStyle = workbook.createCellStyle();

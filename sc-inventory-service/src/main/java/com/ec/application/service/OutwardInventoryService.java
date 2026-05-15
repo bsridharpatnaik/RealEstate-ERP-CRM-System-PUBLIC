@@ -475,13 +475,13 @@ public class OutwardInventoryService {
     private boolean validateInputs(OutwardInventoryData oiData) throws Exception {
         log.info("Invoked validateInputs");
         if (!locationRepo.existsById(oiData.getUsageLocationId()))
-            throw new Exception("Usage Location not found.");
+            throw new Exception("Structure not found.");
         if (!contractorRepo.existsById(oiData.getContractorId()))
             throw new Exception("Contractor not found.");
         if (!warehouseRepo.existsById(oiData.getWarehouseId()))
             throw new Exception("Contractor not found.");
         if (!usageAreaRepo.existsById(oiData.getUsageAreaId()))
-            throw new Exception("Usage Area not found.");
+            throw new Exception("Work Area not found.");
 
         Long duplicateProductIdCount = oiData.getProductWithQuantities().stream()
                 .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()

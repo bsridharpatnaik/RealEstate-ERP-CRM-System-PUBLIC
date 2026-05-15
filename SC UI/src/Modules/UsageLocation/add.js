@@ -56,12 +56,12 @@ class Add extends AddForm {
                   }}
                 />
               }
-              label={"Tag to Building Type"}
+              label={"Tag to Structure Type"}
             />
             {this.state.isTag &&
               this.renderAutoComplete({
                 fieldname: "typeId",
-                placeholder: "Building Type",
+                placeholder: "Structure Type",
                 options: this.state.options,
                 multiple: false,
                 disabled: !this.state.isTag,

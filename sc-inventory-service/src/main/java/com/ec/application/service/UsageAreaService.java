@@ -43,13 +43,13 @@ public class UsageAreaService {
             usageAreaRepo.save(payload);
             return payload;
         } else {
-            throw new Exception("Final Location already exists!");
+            throw new Exception("Work Area already exists!");
         }
     }
 
     private void validatePayload(UsageArea payload) throws Exception {
         if (payload.getUsageAreaName() == null || payload.getUsageAreaName().trim() == "")
-            throw new Exception("Final Location name cannot be empty!");
+            throw new Exception("Work Area name cannot be empty!");
 
     }
 

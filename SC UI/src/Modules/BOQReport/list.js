@@ -27,8 +27,8 @@ class List extends ListCommon {
   state = { data: [], options: [], showDetails: false, key: 1 };
   tableData = {
     headers: [
-      "Building Type",
-      "Building Unit",
+      "Structure Type",
+      "Structure",
       "Inventory",
       "BOQ Quantity",
       "Outward Quantity",
