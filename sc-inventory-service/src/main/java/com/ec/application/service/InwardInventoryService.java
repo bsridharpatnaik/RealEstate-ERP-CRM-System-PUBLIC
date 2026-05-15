@@ -199,8 +199,8 @@ public class InwardInventoryService {
                         io.getQuantity()))
                 .collect(Collectors.toList());
         activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
-                ActivityLogDescription.withItems("Inward " + inwardInventory.getInwardId()
-                        + " created from PO " + iiData.getPoNumber() + " by " + createUser, createItems),
+                ActivityLogDescription.withItemsAndType("Inward " + inwardInventory.getInwardId()
+                        + " created from PO " + iiData.getPoNumber() + " by " + createUser, "From PO", createItems),
                 createUser);
         return inwardInventory;
     }
@@ -538,9 +538,10 @@ public class InwardInventoryService {
                         io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode(),
                         io.getQuantity()))
                 .collect(Collectors.toList());
+        String directInwardType = Boolean.TRUE.equals(iiData.getIsSampleInward()) ? "Sample Inward" : "Direct Inward";
         activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
-                ActivityLogDescription.withItems("Inward " + inwardInventory.getInwardId()
-                        + " created by " + directCreateUser, directItems),
+                ActivityLogDescription.withItemsAndType("Inward " + inwardInventory.getInwardId()
+                        + " created by " + directCreateUser, directInwardType, directItems),
                 directCreateUser);
         return inwardInventory;
     }
@@ -1124,8 +1125,8 @@ public class InwardInventoryService {
                         io.getQuantity()))
                 .collect(Collectors.toList());
         activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
-                ActivityLogDescription.withItems("Opening stock inward " + inwardInventory.getInwardId()
-                        + " created by " + openingUser, openingItems),
+                ActivityLogDescription.withItemsAndType("Opening stock inward " + inwardInventory.getInwardId()
+                        + " created by " + openingUser, "Opening Stock", openingItems),
                 openingUser);
         return inwardInventory;
     }

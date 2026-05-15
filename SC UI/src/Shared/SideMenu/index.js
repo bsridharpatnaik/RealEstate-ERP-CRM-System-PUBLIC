@@ -176,6 +176,7 @@ function SideMenu(props) {
                     linkurl={appendURL("/lost")}
                   />
 
+                  {/* Pricing menu hidden — not in use
                   <DashboardItem
                       nodeId="19"
                       labelText={messages.common.pricingHeader}
@@ -193,6 +194,7 @@ function SideMenu(props) {
                         linkurl={appendURL("/pricingReport")}
                     ></DashboardItem>
                   </DashboardItem>
+                  */}
                 </DashboardItem>
               )}
 

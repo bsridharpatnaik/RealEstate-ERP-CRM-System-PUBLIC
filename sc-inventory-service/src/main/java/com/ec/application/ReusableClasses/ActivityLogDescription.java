@@ -29,6 +29,23 @@ public final class ActivityLogDescription {
         }
     }
 
+    /** Summary + inward type badge + items — INWARD CREATE */
+    public static String withItemsAndType(String summary, String inwardType, List<Map<String, Object>> items) {
+        try {
+            Map<String, Object> d = new LinkedHashMap<>();
+            d.put("summary", summary);
+            if (inwardType != null && !inwardType.isEmpty()) {
+                d.put("inwardType", inwardType);
+            }
+            if (items != null && !items.isEmpty()) {
+                d.put("items", items);
+            }
+            return mapper.writeValueAsString(d);
+        } catch (Exception e) {
+            return summary;
+        }
+    }
+
     /** Summary + items — CREATE, REJECT, RETURN */
     public static String withItems(String summary, List<Map<String, Object>> items) {
         try {

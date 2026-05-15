@@ -67,7 +67,7 @@ export const messages = {
     productCode: "Product Code",
     mor: "MOR",
     allInventory: "All Inventory",
-    lost: "Lost/Excess",
+    lost: "Stock Adjustment",
     addProduct: "Add Inventory",
     zip: "ZIP / Postal Code",
     upload: "Upload",

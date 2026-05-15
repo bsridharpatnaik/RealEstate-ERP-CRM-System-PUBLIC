@@ -20,20 +20,49 @@ const tdStyle = {
  * If description is a JSON object with an `items` array, renders a mini-table.
  * Falls back to plain text for old-format entries.
  */
+const INWARD_TYPE_STYLES = {
+  'From PO':        { color: '#1565c0', background: '#e3f2fd' },
+  'Sample Inward':  { color: '#6a1b9a', background: '#f3e5f5' },
+  'Direct Inward':  { color: '#2e7d32', background: '#e8f5e9' },
+  'Opening Stock':  { color: '#e65100', background: '#fff3e0' },
+};
+
 export function renderActivityDescription(description) {
   if (!description) return null;
   try {
     const parsed = JSON.parse(description);
-    const { summary, items } = parsed;
+    const { summary, items, inwardType } = parsed;
+
+    const typeBadge = inwardType ? (() => {
+      const s = INWARD_TYPE_STYLES[inwardType] || { color: '#555', background: '#f0f0f0' };
+      return (
+        <span style={{
+          ...s,
+          display: 'inline-block',
+          padding: '1px 8px',
+          borderRadius: '10px',
+          fontSize: '11px',
+          fontWeight: 600,
+          marginBottom: '4px',
+        }}>{inwardType}</span>
+      );
+    })() : null;
 
     if (!items || items.length === 0) {
-      return <span>{summary || description}</span>;
+      return (
+        <div>
+          {typeBadge}
+          {typeBadge && <br />}
+          <span>{summary || description}</span>
+        </div>
+      );
     }
 
     const isChange = items[0].hasOwnProperty('oldQty');
 
     return (
       <div>
+        {typeBadge && <div style={{ marginBottom: '4px' }}>{typeBadge}</div>}
         <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>{summary}</div>
         <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '200px' }}>
           <thead>

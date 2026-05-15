@@ -9,10 +9,13 @@ const ACTION_COLORS = {
   DELETED:     { color: '#c62828', background: '#ffebee' },
   CANCELLED:   { color: '#6a1a6a', background: '#f9e5f9' },
   SHORT_CLOSED:{ color: '#0d47a1', background: '#e3f2fd' },
-  APPROVED:    { color: '#1565c0', background: '#e3f2fd' },
-  SPLIT:       { color: '#4e342e', background: '#efebe9' },
-  RETURNED:    { color: '#00695c', background: '#e0f2f1' },
-  REJECTED:    { color: '#b71c1c', background: '#ffcdd2' },
+  APPROVED:       { color: '#1565c0', background: '#e3f2fd' },
+  SPLIT:          { color: '#4e342e', background: '#efebe9' },
+  RETURNED:       { color: '#00695c', background: '#e0f2f1' },
+  REJECTED:       { color: '#b71c1c', background: '#ffcdd2' },
+  LOW_STOCK:      { color: '#e65100', background: '#fff3e0' },
+  OUT_OF_STOCK:   { color: '#b71c1c', background: '#ffebee' },
+  STOCK_RESTORED: { color: '#2e7d32', background: '#e8f5e9' },
 };
 
 const ENTITY_ROW_COLORS = {
@@ -24,6 +27,7 @@ const ENTITY_ROW_COLORS = {
   EXCESS_FOUND:       '#fce4ec',
   MACHINERY_ON_RENT:  '#fffde7',
   INVENTORY_TRANSFER: '#f0f9ff',
+  STOCK_ALERT:        '#fffde7',
 };
 
 class ActivityTable extends CommonTable {

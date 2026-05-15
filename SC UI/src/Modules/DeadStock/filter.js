@@ -28,7 +28,7 @@ class Filter extends CommonFilter {
               true
             )}
             {this.renderAutoComplete(
-              "Tenant",
+              "Project",
               this.props.options?.tenants || [],
               "tenants",
               (option) => (typeof option === "object" && option?.name != null ? option.name : String(option ?? "")),
