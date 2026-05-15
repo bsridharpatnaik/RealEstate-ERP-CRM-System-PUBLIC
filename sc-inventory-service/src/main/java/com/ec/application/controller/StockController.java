@@ -79,6 +79,11 @@ public class StockController {
         return stockService.fetchCurrentStockForProduct(productId);
     }
 
+    @GetMapping("/all-products-stock")
+    public List<AllProductsStockSummaryDTO> getAllProductsStockSummary() {
+        return stockService.fetchAllProductsStockSummary();
+    }
+
     @ExceptionHandler(
             {JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
