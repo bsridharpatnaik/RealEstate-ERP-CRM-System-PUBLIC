@@ -282,6 +282,35 @@ public class StockService {
         return dto;
     }
 
+    public List<AllProductsStockSummaryDTO> fetchAllProductsStockSummary() {
+        List<Stock> allStocks = stockRepo.findAllActiveStockExcludingDeadStockWarehouse();
+        Map<Long, AllProductsStockSummaryDTO> productMap = new LinkedHashMap<>();
+
+        for (Stock stock : allStocks) {
+            double qty = stock.getQuantityInHand() == null ? 0.0 : stock.getQuantityInHand();
+            if (qty <= 0) continue;
+
+            Long productId = stock.getProduct().getProductId();
+            productMap.computeIfAbsent(productId, id -> {
+                AllProductsStockSummaryDTO dto = new AllProductsStockSummaryDTO();
+                dto.setProductId(productId);
+                dto.setProductName(stock.getProduct().getProductName());
+                dto.setMeasurementUnit(stock.getProduct().getMeasurementUnit());
+                dto.setWarehouseStocks(new ArrayList<>());
+                return dto;
+            });
+
+            productMap.get(productId).getWarehouseStocks().add(
+                new AllProductsStockSummaryDTO.WarehouseStockEntry(
+                    stock.getWarehouse().getWarehouseId(),
+                    stock.getWarehouse().getWarehouseName(),
+                    round2(qty)
+                )
+            );
+        }
+        return new ArrayList<>(productMap.values());
+    }
+
     private double round2(Double value) {
         if (value == null) return 0.0;
         return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();

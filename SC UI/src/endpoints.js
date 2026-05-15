@@ -93,6 +93,7 @@ export const apiEndpoints = {
   pricingReportLocationsDropdowns: "/api/inventory/inventoryusage/dropdown",
   pricingReportMonthsDropdowns: (locationId) => "/api/inventory/inventoryusage/" + locationId,
   pricingReportData: "/api/inventory/inventoryusage",
+  getAllProductsStockSummary: "/api/inventory/stock/all-products-stock",
   getCurrentStock: "/api/inventory/stock/current?",
   getInventoryTransferCurrentStock: "/api/inventory/inventory-transfer/current-stock?",
   getBoqQuantity: "/api/inventory/boqupload/getboqquantity?",

@@ -31,11 +31,23 @@ class Add extends AddForm {
     noproduct: {},
     currentStock: {},
     boqQuantity: {},
+    allProductsStockMap: {},
+    selectedWarehouseId: null,
   };
   key = 1;
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch(fetchUnit());
+    this.fetchAllProductsStock();
+  }
+
+  async fetchAllProductsStock() {
+    const response = await API.GET(apiEndpoints.getAllProductsStockSummary);
+    if (response.success && Array.isArray(response.data)) {
+      const stockMap = {};
+      response.data.forEach(item => { stockMap[item.productId] = item; });
+      this.setState({ allProductsStockMap: stockMap });
+    }
   }
   
   renderProductAddButton() {
@@ -87,12 +99,55 @@ class Add extends AddForm {
           disableClearable: true,
           required: true,
           getOption: (option) => {
-            return option["name"];
+            const { allProductsStockMap, selectedWarehouseId } = this.state;
+            const stockInfo = allProductsStockMap[option.id];
+            if (stockInfo && selectedWarehouseId) {
+              const entry = stockInfo.warehouseStocks.find(
+                ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
+              );
+              const stock = entry ? Number(entry.stock.toFixed(2)) : 0;
+              return `${option.name} (${stock} ${stockInfo.measurementUnit || ''})`;
+            }
+            return option.name;
           },
           onChange: (e, value) => {
             const p = this.state.noproduct;
             p[key].productId = value.id || "";
             if (value) {
+              const { allProductsStockMap, selectedWarehouseId } = this.state;
+              const stockInfo = allProductsStockMap[value.id];
+              if (selectedWarehouseId) {
+                if (!stockInfo || stockInfo.warehouseStocks.length === 0) {
+                  this.props.enqueueSnackbar(
+                    `${value.name} is out of stock in all warehouses`,
+                    { variant: "warning" }
+                  );
+                } else {
+                  const entry = stockInfo.warehouseStocks.find(
+                    ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
+                  );
+                  const stockInWarehouse = entry ? entry.stock : 0;
+                  if (stockInWarehouse <= 0) {
+                    const otherWarehouses = stockInfo.warehouseStocks.filter(ws => ws.stock > 0);
+                    const selectedWarehouse = (this.props.dropdowns.warehouse || []).find(
+                      w => Number(w.id) === Number(selectedWarehouseId)
+                    );
+                    const warehouseName = selectedWarehouse ? selectedWarehouse.name : selectedWarehouseId;
+                    if (otherWarehouses.length > 0) {
+                      const otherNames = otherWarehouses.map(ws => ws.warehouseName).join(', ');
+                      this.props.enqueueSnackbar(
+                        `${value.name} does not have stock in warehouse ${warehouseName}. It has stock in warehouse(s) - ${otherNames}`,
+                        { variant: "warning" }
+                      );
+                    } else {
+                      this.props.enqueueSnackbar(
+                        `${value.name} is out of stock in all warehouses`,
+                        { variant: "warning" }
+                      );
+                    }
+                  }
+                }
+              }
               this.getCurrentStock(key);
               this.getBoqQuantity(key);
             }
@@ -114,8 +169,22 @@ class Add extends AddForm {
           onChange: (value) => {
             const p = this.state.noproduct;
             p[key].quantity = value;
-            this.getCurrentStock(key);
             const productId = this.state.noproduct[key].productId;
+            const { allProductsStockMap, selectedWarehouseId } = this.state;
+            const stockInfo = allProductsStockMap[productId];
+            if (stockInfo && selectedWarehouseId) {
+              const entry = stockInfo.warehouseStocks.find(
+                ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
+              );
+              const stockInWarehouse = entry ? entry.stock : 0;
+              if (stockInWarehouse > 0 && Number(value) > stockInWarehouse) {
+                this.props.enqueueSnackbar(
+                  `Quantity cannot exceed available stock of ${stockInWarehouse} ${stockInfo.measurementUnit || ''}`,
+                  { variant: "error" }
+                );
+              }
+            }
+            this.getCurrentStock(key);
             const boqRemaining = this.state.boqQuantity[productId];
             if (boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
               this.props.enqueueSnackbar(
@@ -280,6 +349,7 @@ class Add extends AddForm {
               onChange: (e, value) => {
                 if (value) {
                   this.formData.warehouseId = value.id;
+                  this.setState({ selectedWarehouseId: value.id });
                 }
               },
             })}
