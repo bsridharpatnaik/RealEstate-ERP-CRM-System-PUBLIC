@@ -942,6 +942,7 @@ public class BOQService {
                 d.setCategory((String) r[9]);
                 d.setProduct((String) r[8]);
                 d.setBuildingUnit((String) r[4]);
+                d.setBuildingType((String) r[2]);
                 d.setBoqQuantity(0.0);
                 d.setOutwardQuantity(0.0);
                 d.setBuildingTypeId(fBuildingTypeId);
@@ -956,6 +957,9 @@ public class BOQService {
             detail.setFinalLocation((String) r[6]);
             detail.setBoqQuantity(boqQty);
             detail.setOutwardQuantity(outwardQty);
+            double detailStatus = boqQty > 0 ? Math.round(((outwardQty - boqQty) / boqQty * 100) * 100.0) / 100.0 : 0.0;
+            detail.setStatus(detailStatus);
+            detail.setStatusBucket(computeStatusBucket(detailStatus));
             detailMap.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(detail);
         }
 

@@ -135,7 +135,7 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         "INNER JOIN usage_area ua ON ua.usageAreaId = bu.locationId " +
         "INNER JOIN Product p ON p.productId = bu.productId " +
         "INNER JOIN Category c ON c.categoryId = p.categoryId " +
-        "WHERE bu.is_deleted = 0 " +
+        "WHERE bu.is_deleted = 0 AND ul.is_deleted = 0 " +
         "ORDER BY btype.building_type, ul.location_name, c.category_name, p.product_name",
         nativeQuery = true)
     List<Object[]> fetchBOQStatusRows();

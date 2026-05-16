@@ -59,6 +59,7 @@ class List extends ListCommon {
     headers: [
       messages.common.id,
       messages.common.category,
+      messages.common.buildingType,
       messages.common.location,
       messages.common.inventory,
       messages.common.boqQuantity,
@@ -68,6 +69,7 @@ class List extends ListCommon {
     keys: [
       "id",
       "category",
+      "buildingType",
       "buildingUnit",
       "product",
       "boqQuantity",
