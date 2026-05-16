@@ -9,6 +9,7 @@ import "./LoadingSpinner.css";
 import { API } from "./../../axios";
 import { DeleteIcon, RefreshIcon } from '../../Shared/Icons/Index';
 import { canEditBOQ } from '../../helper';
+import BOQUIEntry from './BOQUIEntry';
 
 const BOQInputScreen = () => {
   const fileInputRef = useRef(null);
@@ -40,6 +41,7 @@ const BOQInputScreen = () => {
   const [uploadMode, setUploadMode]                       = useState('new');
   const [dragOver, setDragOver]                           = useState(false);
   const [hasCategory, setHasCategory]                     = useState(false);
+  const [uiMode, setUiMode]                               = useState(false);
 
   const tableHeading = [
     'S No.', 'Structure Type', 'Structure',
@@ -421,12 +423,52 @@ const BOQInputScreen = () => {
       <div style={hasEditAccess ? {} : { pointerEvents: 'none', opacity: 0.55 }}>
 
       {/* Page header */}
-      <div style={s.pageHeader}>
-        <h2 style={s.pageTitle}>BOQ Upload</h2>
-        <p style={s.pageSubtitle}>
-          Upload Bill of Quantities for your project buildings. Follow the steps below.
-        </p>
+      <div style={{ ...s.pageHeader, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h2 style={s.pageTitle}>BOQ Upload</h2>
+          <p style={s.pageSubtitle}>
+            {uiMode
+              ? 'Enter BOQ data directly using dropdowns and save to one or more structures.'
+              : 'Upload Bill of Quantities for your project buildings. Follow the steps below.'}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            style={{
+              padding: '7px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 500,
+              border: `1px solid ${uiMode ? '#ccc' : '#1976d2'}`,
+              background: uiMode ? '#f5f5f5' : '#fff',
+              color: uiMode ? '#888' : '#1976d2', cursor: 'pointer',
+            }}
+            onClick={() => setUiMode(false)}
+          >
+            📂 Excel Upload
+          </button>
+          <button
+            style={{
+              padding: '7px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 500,
+              border: `1px solid ${!uiMode ? '#ccc' : '#1976d2'}`,
+              background: !uiMode ? '#f5f5f5' : '#e3f2fd',
+              color: !uiMode ? '#888' : '#1976d2', cursor: 'pointer',
+            }}
+            onClick={() => setUiMode(true)}
+          >
+            🖊 Add from UI
+          </button>
+        </div>
       </div>
+
+      {/* UI Entry Mode */}
+      {uiMode && (
+        <div style={s.section}>
+          <BOQUIEntry
+            buildingTypeData={buildingTypeData}
+            onDone={() => setUiMode(false)}
+          />
+        </div>
+      )}
+
+      {!uiMode && (<>
 
       {/* Step 1 — Select Building */}
       <div style={s.section}>
@@ -678,6 +720,8 @@ const BOQInputScreen = () => {
           </div>
         </div>
       )}
+
+      </>)} {/* end !uiMode */}
 
       </div> {/* end hasEditAccess wrapper */}
     </div>

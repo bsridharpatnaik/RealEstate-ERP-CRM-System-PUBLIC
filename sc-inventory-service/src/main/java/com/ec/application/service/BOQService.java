@@ -66,6 +66,10 @@ public class BOQService {
     @Value("${boq.enforcement.block:true}")
     private boolean boqEnforcementBlock;
 
+    public List<BOQUpload> getBOQByUnit(long locationId) {
+        return bOQUploadRepository.findByUsageLocationLocationId(locationId);
+    }
+
     public List<BOQUploadValidationResponse> boqUpload(BOQDto boqDto) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUploadValidationResponse bOQUploadValidationResponse = new BOQUploadValidationResponse();

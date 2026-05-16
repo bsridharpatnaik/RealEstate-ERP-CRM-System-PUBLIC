@@ -237,6 +237,7 @@ export const apiEndpoints = {
   downloadBOQSample: "/api/inventory/boqupload/download-sample",
   downloadExistingBOQ: "/api/inventory/boqupload/download-existing",
   exportBOQStatus: "/api/inventory/boqupload/export-status",
+  boqUploadByUnit: "/api/inventory/boqupload/byunit/",
   boqDashboardStats: "/api/inventory/boqupload/boq-dashboard-summary",
   boqHistoryList: "/api/inventory/boqhistory/list?size=" + noOfRecords,
   boqHistoryExport: "/api/inventory/boqhistory/export",
