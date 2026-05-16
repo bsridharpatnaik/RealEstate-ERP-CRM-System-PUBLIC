@@ -42,7 +42,7 @@ public class BOQController {
 
     @PostMapping("/boq_upload")
     @ResponseStatus(HttpStatus.CREATED)
-    //@AllowOnly(roles = {"admin", "project-manager"})
+    @AllowOnly(roles = {"admin", "project-manager"})
     public List<BOQUploadValidationResponse> boqUpload(@RequestBody BOQDto boqDto) throws Exception {
         return bOQService.boqUpload(boqDto);
     }

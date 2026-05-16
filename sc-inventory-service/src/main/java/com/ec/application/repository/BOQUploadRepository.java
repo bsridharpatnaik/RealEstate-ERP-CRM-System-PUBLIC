@@ -108,6 +108,10 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
      * Columns: id, buildingTypeId, building_type, location_id, location_name,
      *          final_location_id, final_location_name, productId, product_name,
      *          category_name, boq_quantity, outward_quantity
+     *
+     * Uses a correlated subquery for outward aggregation so MySQL only scans
+     * outward_inventory rows that match each BOQ row's (locationId, usageAreaId, productId)
+     * instead of materializing the entire outward join upfront.
      */
     @Query(value =
         "SELECT bu.id, bu.buildingTypeId, btype.building_type, " +
@@ -115,24 +119,22 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         "  bu.locationId AS final_location_id, ua.usagearea_name AS final_location_name, " +
         "  bu.productId, p.product_name, c.category_name, " +
         "  bu.quantity AS boq_quantity, " +
-        "  COALESCE(oa.outward_quantity, 0) AS outward_quantity " +
+        "  COALESCE((" +
+        "    SELECT SUM(ioe.quantity) " +
+        "    FROM outward_inventory oi " +
+        "    INNER JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid " +
+        "    INNER JOIN inward_outward_entries ioe ON ioe.entryId = oie.entryId " +
+        "    WHERE oi.is_deleted = 0 " +
+        "      AND oi.locationId = bu.usageLocationId " +
+        "      AND oi.usageAreaId = bu.locationId " +
+        "      AND ioe.productId = bu.productId " +
+        "  ), 0) AS outward_quantity " +
         "FROM BOQUpload bu " +
         "INNER JOIN building_type btype ON bu.buildingTypeId = btype.typeId " +
         "INNER JOIN Usage_Location ul ON bu.usageLocationId = ul.locationId " +
         "INNER JOIN usage_area ua ON ua.usageAreaId = bu.locationId " +
         "INNER JOIN Product p ON p.productId = bu.productId " +
         "INNER JOIN Category c ON c.categoryId = p.categoryId " +
-        "LEFT JOIN ( " +
-        "  SELECT oi.locationId, oi.usageAreaId, ioe.productId, " +
-        "         SUM(ioe.quantity) AS outward_quantity " +
-        "  FROM outward_inventory oi " +
-        "  INNER JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid " +
-        "  INNER JOIN inward_outward_entries ioe ON ioe.entryId = oie.entryId " +
-        "  WHERE oi.is_deleted = 0 " +
-        "  GROUP BY oi.locationId, oi.usageAreaId, ioe.productId " +
-        ") oa ON oa.locationId = bu.usageLocationId " +
-        "  AND oa.usageAreaId = bu.locationId " +
-        "  AND oa.productId = bu.productId " +
         "WHERE bu.is_deleted = 0 " +
         "ORDER BY btype.building_type, ul.location_name, c.category_name, p.product_name",
         nativeQuery = true)
@@ -179,4 +181,10 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         "GROUP BY bu.quantity",
         nativeQuery = true)
     List<Object[]> fetchBOQAndOutwardForProduct(Long locationId, Long productId, Long finalLocationId);
+
+    @Query("SELECT COUNT(b) FROM BOQUpload b WHERE b.location.usageAreaId = :id AND b.isDeleted = false")
+    int usageAreaBoqCount(@Param("id") Long id);
+
+    @Query("SELECT COUNT(b) FROM BOQUpload b WHERE b.usageLocation.locationId = :id AND b.isDeleted = false")
+    int locationBoqCount(@Param("id") Long id);
 }
