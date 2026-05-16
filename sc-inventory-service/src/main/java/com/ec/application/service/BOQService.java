@@ -69,12 +69,17 @@ public class BOQService {
     public List<BOQUploadValidationResponse> boqUpload(BOQDto boqDto) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUploadValidationResponse bOQUploadValidationResponse = new BOQUploadValidationResponse();
+        normalizeUploadStrings(boqDto);
         List<BOQUploadValidationResponse> listBOQUploadResponse = validateUploadedBOQ(boqDto);
         try {
             if (listBOQUploadResponse.isEmpty()) {
                 boqDto.getUpload().forEach(upload -> {
-                    Product product = productRepository.findByProductName(upload.getInventory());
-                    UsageArea location = locationRepository.findByUsageAreaName(upload.getLocation());
+                    Product product = productRepository.findByProductNameTrimmed(upload.getInventory());
+                    UsageArea location = locationRepository.findByUsageAreaNameTrimmed(upload.getLocation());
+                    if (product == null || location == null) {
+                        log.warn("Skipping upload row sno={} — product or location not found after validation passed", upload.getSno());
+                        return;
+                    }
                     BOQUpload boqUpload = bOQUploadRepository.findByUsageLocationLocationIdAndLocationUsageAreaIdAndProductProductId(upload.getBuildingUnit(), location.getUsageAreaId(), product.getProductId());
                     bOQDetailsModification(upload, product, location, boqUpload);
                 });
@@ -498,23 +503,42 @@ public class BOQService {
     }
 
 
+    private void normalizeUploadStrings(BOQDto boqDto) {
+        if (boqDto == null || boqDto.getUpload() == null) return;
+        boqDto.getUpload().forEach(upload -> {
+            if (upload.getInventory() != null) upload.setInventory(upload.getInventory().trim());
+            if (upload.getLocation() != null)  upload.setLocation(upload.getLocation().trim());
+            if (upload.getChanges() != null)   upload.setChanges(upload.getChanges().trim());
+            if (upload.getRemark() != null)    upload.setRemark(upload.getRemark().trim());
+        });
+    }
+
     private List<BOQUploadValidationResponse> validateUploadedBOQ(BOQDto boqDto) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         List<BOQUploadValidationResponse> listboqBoqUploadResponses = new ArrayList<>();
-        List<BOQUpload> listOfBOQUpload = bOQUploadRepository.findAll();
         boqDto.getUpload().forEach(upload -> {
-            boolean isInventoryExist = productRepository.existsByProductName(upload.getInventory());
-            boolean isLocationExist = locationRepository.existsByUsageAreaName(upload.getLocation());
+            boolean isInventoryExist = upload.getInventory() != null && productRepository.existsByProductNameTrimmed(upload.getInventory());
+            boolean isLocationExist = upload.getLocation() != null && locationRepository.existsByUsageAreaNameTrimmed(upload.getLocation());
+
+            // Validate quantity separately so a parse failure doesn't mask other errors
+            boolean isQuantityValid = true;
             try {
-                double doublQuantity = Double.parseDouble(upload.getQuantity());
-                boolean isValidChanges = upload.getChanges().equalsIgnoreCase(BOQUploadConstant.ADDITION)
+                Double.parseDouble(upload.getQuantity());
+            } catch (NumberFormatException e) {
+                isQuantityValid = false;
+                validateBOQQuantity(listboqBoqUploadResponses, upload);
+            }
+
+            if (isQuantityValid) {
+                boolean isValidChanges = upload.getChanges() != null && (
+                        upload.getChanges().equalsIgnoreCase(BOQUploadConstant.ADDITION)
                         || upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPDATE)
                         || upload.getChanges().equalsIgnoreCase(BOQUploadConstant.DELETION)
-                        || upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPSERT);
+                        || upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPSERT));
                 if (!isInventoryExist || !isLocationExist || !isValidChanges) {
                     validateInventoryLocationChanges(listboqBoqUploadResponses, upload, isInventoryExist, isLocationExist);
                 } else if (!upload.getChanges().equalsIgnoreCase(BOQUploadConstant.UPSERT)) {
-                    validateChanges(listboqBoqUploadResponses, upload, listOfBOQUpload);
+                    validateChanges(listboqBoqUploadResponses, upload);
                 }
                 if (upload.getRemark() == null || upload.getRemark().trim().isEmpty()) {
                     BOQUploadValidationResponse remarkError = new BOQUploadValidationResponse();
@@ -525,8 +549,6 @@ public class BOQService {
                     remarkError.setMessage("Remark is mandatory");
                     listboqBoqUploadResponses.add(remarkError);
                 }
-            } catch (Exception e) {
-                validateBOQQuantity(listboqBoqUploadResponses, upload);
             }
         });
 
@@ -545,10 +567,15 @@ public class BOQService {
     }
 
 
-    private void validateChanges(List<BOQUploadValidationResponse> listboqBoqUploadResponses, BOQUploadDto upload, List<BOQUpload> listOfBOQUpload) {
+    private void validateChanges(List<BOQUploadValidationResponse> listboqBoqUploadResponses, BOQUploadDto upload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        Product product = productRepository.findByProductName(upload.getInventory());
-        UsageArea location = locationRepository.findByUsageAreaName(upload.getLocation());
+        Product product = productRepository.findByProductNameTrimmed(upload.getInventory());
+        UsageArea location = locationRepository.findByUsageAreaNameTrimmed(upload.getLocation());
+        if (product == null || location == null) {
+            log.warn("validateChanges: product or location lookup returned null for sno={} inventory='{}' location='{}' — skipping existence check",
+                    upload.getSno(), upload.getInventory(), upload.getLocation());
+            return;
+        }
         BOQUpload boqUpload = bOQUploadRepository.findByUsageLocationLocationIdAndLocationUsageAreaIdAndProductProductId(upload.getBuildingUnit(), (long) location.getUsageAreaId(), (long) product.getProductId());
         if (upload.getChanges().equalsIgnoreCase(BOQUploadConstant.ADDITION)) {
             if (boqUpload != null) {

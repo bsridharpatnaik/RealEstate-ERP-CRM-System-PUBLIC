@@ -40,10 +40,9 @@ export const API = {
         success: false,
         status: error?.response?.status,
         errorMessage:
-          error &&
-          error.response &&
-          error.response.data &&
-          error.response.data.message,
+          error?.response?.data?.message ||
+          error?.response?.data?.apierror?.message ||
+          error?.response?.data?.apierror?.debugMessage,
       };
     }
   },

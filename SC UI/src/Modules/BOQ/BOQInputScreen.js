@@ -215,41 +215,51 @@ const BOQInputScreen = () => {
     setIsLoading(true);
     setResponseStatus(false);
     const table = document.querySelector('table');
+    const cellText = (row, idx) => (row.cells[idx] ? row.cells[idx].innerText.trim() : '');
     for (var i = 1, row; row = table.rows[i]; i++) {
-      const rowItem = table.rows[i].innerText;
-      let splt = rowItem.split('\n').filter(e => e !== '\t' && e !== '' && e !== '\t\t\t\t\t\t\t');
-      if (splt.length !== 0) {
-        for (let j = 0; j < buildingTypeData.length; j++) {
-          if (buildingTypeData[j].label === splt[1]) splt[1] = buildingTypeData[j].value;
-        }
-        for (let u = 0; u < buildingUnitData.length; u++) {
-          if (buildingUnitData[u].label === splt[2]) splt[2] = buildingUnitData[u].value;
-        }
-        // New format: sno(0) BT(1) BU(2) Category(3) Inventory(4) Unit(5) Qty(6) Loc(7) [Changes(8)] Remark(8|9)
-        // Old format: sno(0) BT(1) BU(2) Inventory(3) Qty(4) Loc(5) [Changes(6)] Remark(6|7)
-        td[key2++] = hasCategory ? {
-          sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
-          inventory: splt[4], quantity: splt[6], location: splt[7],
-          changes: uploadMode === 'existing' ? 'upsert' : splt[8],
-          remark: uploadMode === 'existing' ? (splt[8] || '') : (splt[9] || '')
-        } : {
-          sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
-          inventory: splt[3], quantity: splt[4], location: splt[5],
-          changes: uploadMode === 'existing' ? 'upsert' : splt[6],
-          remark: uploadMode === 'existing' ? (splt[6] || '') : (splt[7] || '')
-        };
+      if (row.cells.length === 0) continue;
+
+      // Resolve building type/unit labels → IDs
+      let btVal = cellText(row, 1);
+      let buVal = cellText(row, 2);
+      for (let j = 0; j < buildingTypeData.length; j++) {
+        if (buildingTypeData[j].label === btVal) { btVal = buildingTypeData[j].value; break; }
       }
+      for (let u = 0; u < buildingUnitData.length; u++) {
+        if (buildingUnitData[u].label === buVal) { buVal = buildingUnitData[u].value; break; }
+      }
+
+      // Read columns by fixed DOM index — immune to empty cells
+      // hasCategory:  0=SNo 1=BT 2=BU 3=Category 4=Inventory 5=Unit 6=Qty 7=Loc [8=Changes] 9|8=Remark
+      // no category:  0=SNo 1=BT 2=BU 3=Inventory 4=Qty 5=Loc [6=Changes] 7|6=Remark
+      td[key2++] = hasCategory ? {
+        sno:         cellText(row, 0),
+        buildingType: btVal,
+        buildingUnit: buVal,
+        inventory:   cellText(row, 4),
+        quantity:    cellText(row, 6),
+        location:    cellText(row, 7),
+        changes:     uploadMode === 'existing' ? 'upsert' : cellText(row, 8),
+        remark:      uploadMode === 'existing' ? cellText(row, 8) : cellText(row, 9),
+      } : {
+        sno:         cellText(row, 0),
+        buildingType: btVal,
+        buildingUnit: buVal,
+        inventory:   cellText(row, 3),
+        quantity:    cellText(row, 4),
+        location:    cellText(row, 5),
+        changes:     uploadMode === 'existing' ? 'upsert' : cellText(row, 6),
+        remark:      uploadMode === 'existing' ? cellText(row, 6) : cellText(row, 7),
+      };
     }
 
-    const body = { upload: td };
-    for (let i = 0; i < body.upload.length; i++) {
-      if (body.upload[i] === null) { setExcelData(null); }
-    }
+    const body = { upload: td.filter(Boolean) };
 
     try {
       const response = await API.POST(apiEndpoints.BOQupload, body);
       const data = response.data;
       setIsLoading(false);
+      setResponseStatus(true);
       if (response.success) {
         for (let i = 0; i < data.length; i++) {
           responseMsg = data[i].message;
@@ -272,11 +282,9 @@ const BOQInputScreen = () => {
         }
         responseData = data;
         if (dataErrors) findindError();
-        setResponseStatus(true);
       }
-      if (response.errorMessage) {
-        enqueueSnackbar(response.errorMessage, { variant: 'error' });
-        setResponseStatus(true);
+      if (!response.success) {
+        enqueueSnackbar(response.errorMessage || 'Upload failed. Please try again.', { variant: 'error' });
       }
     } catch (error) {
       setIsLoading(false);

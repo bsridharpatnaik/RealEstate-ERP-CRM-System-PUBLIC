@@ -146,7 +146,7 @@ public class ProductService {
             throw new Exception("Product with same Name already exists");
         }
 
-        product.setProductName(payload.getProductName());
+        product.setProductName(payload.getProductName().trim());
         product.setProductDescription(payload.getProductDescription());
         product.setMeasurementUnit(payload.getMeasurementUnit());
         product.setCategory(category);

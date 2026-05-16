@@ -30,10 +30,10 @@ public interface UsageAreaRepo extends BaseRepository<UsageArea, Long>
 	@Query(value="SELECT m from UsageArea m where usageAreaName LIKE %:name%")
 	ArrayList<UsageArea> findByPartialName(@Param("name") String name);
 
-	@Query(value="SELECT usageAreaId as id,usageAreaName as name from UsageArea m  order by name")
+	@Query(value="SELECT usageAreaId as id,usageAreaName as name from UsageArea m where m.isDeleted = false order by name")
 	List<IdNameProjections> findIdAndNames();
 
-	@Query(value="SELECT usageAreaName as name from UsageArea m order by usageAreaName")
+	@Query(value="SELECT usageAreaName as name from UsageArea m where m.isDeleted = false order by usageAreaName")
 	List<String> getNames();
 
 	@Query(value="SELECT count(m) from UsageArea m where m.usageAreaId=:id")
@@ -44,6 +44,12 @@ public interface UsageAreaRepo extends BaseRepository<UsageArea, Long>
 	UsageArea findByUsageAreaId(long usageAreaId);
 
 	boolean existsByUsageAreaNameAndIsDeleted(String location, boolean b);
+
+	@Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM UsageArea m WHERE TRIM(m.usageAreaName) = TRIM(:name) AND m.isDeleted = false")
+	boolean existsByUsageAreaNameTrimmed(@Param("name") String name);
+
+	@Query("SELECT m FROM UsageArea m WHERE TRIM(m.usageAreaName) = TRIM(:name) AND m.isDeleted = false")
+	UsageArea findByUsageAreaNameTrimmed(@Param("name") String name);
 
 	
 }
