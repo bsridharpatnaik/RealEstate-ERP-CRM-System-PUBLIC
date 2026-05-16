@@ -170,7 +170,7 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
      * Returns [boq_quantity, outward_quantity] for one specific (locationId, productId, finalLocationId).
      */
     @Query(value =
-        "SELECT bu.quantity AS boq_quantity, COALESCE(SUM(ioe.quantity), 0) AS outward_quantity " +
+        "SELECT bu.quantity AS boq_quantity, COALESCE(SUM(ioe.quantity), 0) AS outward_quantity, bu.wastage_percent AS wastage_percent " +
         "FROM BOQUpload bu " +
         "LEFT JOIN outward_inventory oi ON oi.locationId = bu.usageLocationId " +
         "  AND oi.usageAreaId = bu.locationId AND oi.is_deleted = 0 " +
@@ -178,7 +178,7 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         "LEFT JOIN inward_outward_entries ioe ON ioe.entryId = oie.entryId " +
         "  AND ioe.productId = bu.productId " +
         "WHERE bu.is_deleted = 0 AND bu.usageLocationId = ?1 AND bu.productId = ?2 AND bu.locationId = ?3 " +
-        "GROUP BY bu.quantity",
+        "GROUP BY bu.quantity, bu.wastage_percent",
         nativeQuery = true)
     List<Object[]> fetchBOQAndOutwardForProduct(Long locationId, Long productId, Long finalLocationId);
 

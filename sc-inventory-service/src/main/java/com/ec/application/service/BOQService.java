@@ -128,7 +128,7 @@ public class BOQService {
         if (boqUpload == null) {
             BOQUpload saved = saveAndReturn(upload.getBuildingType(), upload.getBuildingUnit(),
                     location.getUsageAreaId(), product.getProductId(), upload.getQuantity(),
-                    upload.getSno(), upload.getChanges());
+                    upload.getWastagePercent(), upload.getSno(), upload.getChanges());
             if (saved != null) {
                 boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
                         Double.parseDouble(upload.getQuantity()), upload.getRemark());
@@ -154,8 +154,10 @@ public class BOQService {
         if (boqUpload != null) {
             double oldQty = boqUpload.getQuantity();
             double newQty = Double.parseDouble(upload.getQuantity());
+            double newWastage = parseWastage(upload.getWastagePercent());
             boqUpload.setChanges(upload.getChanges());
             boqUpload.setQuantity(newQty);
+            boqUpload.setWastagePercent(newWastage);
             bOQUploadRepository.save(boqUpload);
             if (oldQty != newQty) {
                 boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty, upload.getRemark());
@@ -173,11 +175,11 @@ public class BOQService {
         boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0, null);
     }
 
-    private void save(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, int sNo, String changes) {
-        saveAndReturn(buildingTypeId, buildingUnit, usageAreaId, productId, quantity, sNo, changes);
+    private void save(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, String wastagePercent, int sNo, String changes) {
+        saveAndReturn(buildingTypeId, buildingUnit, usageAreaId, productId, quantity, wastagePercent, sNo, changes);
     }
 
-    private BOQUpload saveAndReturn(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, int sNo, String changes) {
+    private BOQUpload saveAndReturn(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, String wastagePercent, int sNo, String changes) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUpload boqUpload = new BOQUpload();
 
@@ -190,8 +192,8 @@ public class BOQService {
         Product product = productRepository.findByProductId(productId);
         boqUpload.setProduct(product);
 
-        double doublQquntity = Double.parseDouble(quantity);
-        boqUpload.setQuantity(doublQquntity);
+        boqUpload.setQuantity(Double.parseDouble(quantity));
+        boqUpload.setWastagePercent(parseWastage(wastagePercent));
         boqUpload.setChanges(changes);
         boqUpload.setSno(sNo);
 
@@ -220,14 +222,15 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("BOQ Template");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (VLOOKUP, read-only)
-            // Col 3: Quantity  Col 4: Work Area  Col 5: Changes  Col 6: Remark (optional)
+            // Col 3: Quantity  Col 4: Wastage (%)  Col 5: Work Area  Col 6: Changes  Col 7: Remark
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
-            header.createCell(4).setCellValue("Work Area");
-            header.createCell(5).setCellValue("Changes");
-            header.createCell(6).setCellValue("Remark");
+            header.createCell(4).setCellValue("Wastage (%)");
+            header.createCell(5).setCellValue("Work Area");
+            header.createCell(6).setCellValue("Changes");
+            header.createCell(7).setCellValue("Remark");
 
             // Hidden: Categories — col A = display name, col B = named range key for INDIRECT
             Sheet categorySheet = workbook.createSheet("Categories");
@@ -310,17 +313,17 @@ public class BOQService {
             pv.setShowErrorBox(false);
             sheet.addValidationData(pv);
 
-            // FinalLocation dropdown (col 4)
+            // FinalLocation dropdown (col 5 — shifted by Wastage column)
             DataValidation lv = dvHelper.createValidation(
                     dvHelper.createFormulaListConstraint("Locations!$A$1:$A$" + locationNames.size()),
-                    new CellRangeAddressList(1, 1000, 4, 4));
+                    new CellRangeAddressList(1, 1000, 5, 5));
             lv.setShowErrorBox(true);
             sheet.addValidationData(lv);
 
-            // Changes dropdown (col 5)
+            // Changes dropdown (col 6 — shifted by Wastage column)
             DataValidation cv = dvHelper.createValidation(
                     dvHelper.createExplicitListConstraint(new String[]{"addition", "update", "deletion"}),
-                    new CellRangeAddressList(1, 1000, 5, 5));
+                    new CellRangeAddressList(1, 1000, 6, 6));
             cv.setShowErrorBox(true);
             sheet.addValidationData(cv);
 
@@ -352,13 +355,14 @@ public class BOQService {
             Sheet sheet = workbook.createSheet("Existing BOQ");
             Row header = sheet.createRow(0);
             // Col 0: Category  Col 1: Inventory  Col 2: Unit (pre-filled, reference only)
-            // Col 3: Quantity  Col 4: Work Area  Col 5: Remark (optional)
+            // Col 3: Quantity  Col 4: Wastage (%)  Col 5: Work Area  Col 6: Remark
             header.createCell(0).setCellValue("Category");
             header.createCell(1).setCellValue("Inventory");
             header.createCell(2).setCellValue("Unit");
             header.createCell(3).setCellValue("Quantity");
-            header.createCell(4).setCellValue("Work Area");
-            header.createCell(5).setCellValue("Remark");
+            header.createCell(4).setCellValue("Wastage (%)");
+            header.createCell(5).setCellValue("Work Area");
+            header.createCell(6).setCellValue("Remark");
 
             // Hidden: Categories — col A = display name, col B = named range key
             Sheet categorySheet = workbook.createSheet("Categories");
@@ -442,10 +446,10 @@ public class BOQService {
             pv.setShowErrorBox(false);
             sheet.addValidationData(pv);
 
-            // FinalLocation dropdown (col 4)
+            // FinalLocation dropdown (col 5 — shifted by Wastage column)
             DataValidation lv = dvHelper.createValidation(
                     dvHelper.createFormulaListConstraint("Locations!$A$1:$A$" + locationNames.size()),
-                    new CellRangeAddressList(1, lastRow, 4, 4));
+                    new CellRangeAddressList(1, lastRow, 5, 5));
             lv.setShowErrorBox(true);
             sheet.addValidationData(lv);
 
@@ -460,7 +464,8 @@ public class BOQService {
                 row.createCell(1).setCellValue(b.getProduct().getProductName());
                 // col 2 already has VLOOKUP formula — do not overwrite
                 row.createCell(3).setCellValue(b.getQuantity());
-                row.createCell(4).setCellValue(b.getLocation().getUsageAreaName());
+                row.createCell(4).setCellValue(b.getWastagePercent());
+                row.createCell(5).setCellValue(b.getLocation().getUsageAreaName());
             }
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -475,7 +480,7 @@ public class BOQService {
         if (boqUpload == null) {
             BOQUpload saved = saveAndReturn(upload.getBuildingType(), upload.getBuildingUnit(),
                     location.getUsageAreaId(), product.getProductId(), upload.getQuantity(),
-                    upload.getSno(), BOQUploadConstant.UPDATE);
+                    upload.getWastagePercent(), upload.getSno(), BOQUploadConstant.UPDATE);
             if (saved != null) {
                 boqHistoryService.record("Added", resolveCurrentUser(), saved, null,
                         Double.parseDouble(upload.getQuantity()), upload.getRemark());
@@ -483,7 +488,9 @@ public class BOQService {
         } else {
             double oldQty = boqUpload.getQuantity();
             double newQty = Double.parseDouble(upload.getQuantity());
+            double newWastage = parseWastage(upload.getWastagePercent());
             boqUpload.setQuantity(newQty);
+            boqUpload.setWastagePercent(newWastage);
             boqUpload.setChanges(BOQUploadConstant.UPDATE);
             bOQUploadRepository.save(boqUpload);
             if (oldQty != newQty) {
@@ -918,10 +925,22 @@ public class BOQService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         List<Object[]> rows = bOQUploadRepository.fetchBOQAndOutwardForProduct(locationId, productId, finalLocationId);
         if (rows.isEmpty()) return "NA";
-        Object[] row      = rows.get(0);
-        double boqQty     = toDouble(row[0]);
-        double outwardQty = toDouble(row[1]);
-        return String.valueOf(boqQty - outwardQty);
+        Object[] row        = rows.get(0);
+        double boqQty       = toDouble(row[0]);
+        double outwardQty   = toDouble(row[1]);
+        double wastage      = toDouble(row[2]);
+        double effectiveBoq = boqQty * (1 + wastage / 100.0);
+        return String.valueOf(effectiveBoq - outwardQty);
+    }
+
+    private double parseWastage(String wastagePercent) {
+        if (wastagePercent == null || wastagePercent.trim().isEmpty()) return 0.0;
+        try {
+            double v = Double.parseDouble(wastagePercent.trim());
+            return v < 0 ? 0.0 : v;
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
     }
 
     // ── grouping helper (shared by fetch and export) ─────────────────────────

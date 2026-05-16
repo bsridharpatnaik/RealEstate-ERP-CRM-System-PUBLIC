@@ -14,6 +14,7 @@ const newRow = () => ({
   product: null,
   workArea: null,
   quantity: '',
+  wastagePercent: '0',
   remark: '',
 });
 
@@ -138,9 +139,13 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
   // ── Save ──────────────────────────────────────────────────────────────────
 
   const handleSave = async () => {
-    const badRows = rows.filter(r => !r.product || !r.workArea || !r.quantity || isNaN(Number(r.quantity)) || Number(r.quantity) <= 0 || !r.remark?.trim());
+    const badRows = rows.filter(r =>
+      !r.product || !r.workArea || !r.quantity || isNaN(Number(r.quantity)) || Number(r.quantity) <= 0 ||
+      isNaN(Number(r.wastagePercent)) || Number(r.wastagePercent) < 0 ||
+      !r.remark?.trim()
+    );
     if (badRows.length > 0) {
-      enqueueSnackbar('Fill Product, Work Area, Quantity and Remark for every row.', { variant: 'warning' });
+      enqueueSnackbar('Fill Product, Work Area, Quantity, Wastage % and Remark for every row.', { variant: 'warning' });
       return;
     }
     const validTargets = targets.filter(t => t.buildingType && t.buildingUnit);
@@ -160,6 +165,7 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
         inventory: r.product.label,
         location: r.workArea.label,
         quantity: String(r.quantity),
+        wastagePercent: String(r.wastagePercent || '0'),
         changes: 'upsert',
         remark: r.remark || '',
       }));
@@ -259,6 +265,7 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
               <th style={s.th}>Product / Inventory <span style={{ color: 'red' }}>*</span></th>
               <th style={s.th}>Work Area <span style={{ color: 'red' }}>*</span></th>
               <th style={{ ...s.th, width: 110 }}>Quantity <span style={{ color: 'red' }}>*</span></th>
+              <th style={{ ...s.th, width: 100 }}>Wastage % <span style={{ color: 'red' }}>*</span></th>
               <th style={s.th}>Remark <span style={{ color: 'red' }}>*</span></th>
               <th style={{ ...s.th, width: 40 }}></th>
             </tr>
@@ -315,6 +322,17 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
                     variant="outlined"
                     size="small"
                     inputProps={{ min: 0, style: { width: '80px' } }}
+                  />
+                </td>
+
+                <td style={s.td}>
+                  <TextField
+                    type="number"
+                    value={row.wastagePercent}
+                    onChange={e => updateRow(row.id, 'wastagePercent', e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    inputProps={{ min: 0, max: 100, style: { width: '70px' } }}
                   />
                 </td>
 

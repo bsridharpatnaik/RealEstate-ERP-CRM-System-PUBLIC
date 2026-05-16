@@ -41,11 +41,12 @@ const BOQInputScreen = () => {
   const [uploadMode, setUploadMode]                       = useState('new');
   const [dragOver, setDragOver]                           = useState(false);
   const [hasCategory, setHasCategory]                     = useState(false);
+  const [hasWastage, setHasWastage]                       = useState(false);
   const [uiMode, setUiMode]                               = useState(false);
 
   const tableHeading = [
     'S No.', 'Structure Type', 'Structure',
-    'Category', 'Inventory', 'Unit', 'Quantity', 'Work Area', 'Changes', 'Remark', 'Delete'
+    'Category', 'Inventory', 'Unit', 'Quantity', 'Wastage (%)', 'Work Area', 'Changes', 'Remark', 'Delete'
   ];
 
   let td = [null];
@@ -96,6 +97,7 @@ const BOQInputScreen = () => {
     setSelectedFileName('');
     setExcelFileError(null);
     setHasCategory(false);
+    setHasWastage(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -159,18 +161,24 @@ const BOQInputScreen = () => {
     const heads = extractHeader(worksheet);
     // New template: Category | Inventory | Unit | Quantity | Work Area (or FinalLocation) | Changes?
     // Old template (backwards compat): Inventory | Quantity | Work Area (or FinalLocation) | Changes?
+    const isWorkAreaCol5 = heads[5] === 'Work Area' || heads[5] === 'FinalLocation';
     const isWorkAreaCol4 = heads[4] === 'Work Area' || heads[4] === 'FinalLocation';
     const isWorkAreaCol2 = heads[2] === 'Work Area' || heads[2] === 'FinalLocation';
-    const newFormat = heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && isWorkAreaCol4;
+    // New template with wastage: Category | Inventory | Unit | Quantity | Wastage (%) | Work Area | Changes | Remark
+    const newFormatWithWastage = heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && heads[4] === 'Wastage (%)' && isWorkAreaCol5;
+    // New template without wastage (backwards compat): Category | Inventory | Unit | Quantity | Work Area ...
+    const newFormat = !newFormatWithWastage && heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && isWorkAreaCol4;
     const oldFormat = heads[0] === 'Inventory' && heads[1] === 'Quantity' && isWorkAreaCol2;
-    if (!newFormat && !oldFormat) {
+    if (!newFormatWithWastage && !newFormat && !oldFormat) {
       enqueueSnackbar('Headers not recognised. Please use the provided template.', { variant: 'error' });
       return;
     }
 
-    setHasCategory(newFormat);
-    const mode = newFormat ? (heads[5] === 'Changes' ? 'new' : 'existing')
-                           : (heads[3] === 'Changes' ? 'new' : 'existing');
+    setHasCategory(newFormatWithWastage || newFormat);
+    setHasWastage(newFormatWithWastage);
+    const mode = newFormatWithWastage ? (heads[6] === 'Changes' ? 'new' : 'existing')
+               : newFormat            ? (heads[5] === 'Changes' ? 'new' : 'existing')
+                                      : (heads[3] === 'Changes' ? 'new' : 'existing');
     setUploadMode(mode);
 
     const excelDataM = [];
@@ -232,26 +240,39 @@ const BOQInputScreen = () => {
       }
 
       // Read columns by fixed DOM index — immune to empty cells
-      // hasCategory:  0=SNo 1=BT 2=BU 3=Category 4=Inventory 5=Unit 6=Qty 7=Loc [8=Changes] 9|8=Remark
-      // no category:  0=SNo 1=BT 2=BU 3=Inventory 4=Qty 5=Loc [6=Changes] 7|6=Remark
-      td[key2++] = hasCategory ? {
-        sno:         cellText(row, 0),
-        buildingType: btVal,
-        buildingUnit: buVal,
-        inventory:   cellText(row, 4),
-        quantity:    cellText(row, 6),
-        location:    cellText(row, 7),
-        changes:     uploadMode === 'existing' ? 'upsert' : cellText(row, 8),
-        remark:      uploadMode === 'existing' ? cellText(row, 8) : cellText(row, 9),
+      // hasCategory+hasWastage: 0=SNo 1=BT 2=BU 3=Cat 4=Inv 5=Unit 6=Qty 7=Wastage 8=Loc [9=Changes] 10|9=Remark
+      // hasCategory (no wastage):              0=SNo 1=BT 2=BU 3=Cat 4=Inv 5=Unit 6=Qty 7=Loc [8=Changes] 9|8=Remark
+      // no category:                           0=SNo 1=BT 2=BU 3=Inv 4=Qty 5=Loc [6=Changes] 7|6=Remark
+      td[key2++] = hasCategory ? (hasWastage ? {
+        sno:           cellText(row, 0),
+        buildingType:  btVal,
+        buildingUnit:  buVal,
+        inventory:     cellText(row, 4),
+        quantity:      cellText(row, 6),
+        wastagePercent: cellText(row, 7),
+        location:      cellText(row, 8),
+        changes:       uploadMode === 'existing' ? 'upsert' : cellText(row, 9),
+        remark:        uploadMode === 'existing' ? cellText(row, 9) : cellText(row, 10),
       } : {
-        sno:         cellText(row, 0),
-        buildingType: btVal,
-        buildingUnit: buVal,
-        inventory:   cellText(row, 3),
-        quantity:    cellText(row, 4),
-        location:    cellText(row, 5),
-        changes:     uploadMode === 'existing' ? 'upsert' : cellText(row, 6),
-        remark:      uploadMode === 'existing' ? cellText(row, 6) : cellText(row, 7),
+        sno:           cellText(row, 0),
+        buildingType:  btVal,
+        buildingUnit:  buVal,
+        inventory:     cellText(row, 4),
+        quantity:      cellText(row, 6),
+        wastagePercent: '0',
+        location:      cellText(row, 7),
+        changes:       uploadMode === 'existing' ? 'upsert' : cellText(row, 8),
+        remark:        uploadMode === 'existing' ? cellText(row, 8) : cellText(row, 9),
+      }) : {
+        sno:           cellText(row, 0),
+        buildingType:  btVal,
+        buildingUnit:  buVal,
+        inventory:     cellText(row, 3),
+        quantity:      cellText(row, 4),
+        wastagePercent: '0',
+        location:      cellText(row, 5),
+        changes:       uploadMode === 'existing' ? 'upsert' : cellText(row, 6),
+        remark:        uploadMode === 'existing' ? cellText(row, 6) : cellText(row, 7),
       };
     }
 
@@ -302,6 +323,7 @@ const BOQInputScreen = () => {
     setSelectedFileName('');
     setExcelFileError(null);
     setHasCategory(false);
+    setHasWastage(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     setTimeout(() => setIsReset(false), 500);
   };
@@ -660,14 +682,19 @@ const BOQInputScreen = () => {
                   {hasCategory && (
                     <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[5]}</th>
                   )}
-                  {/* Quantity, Work Area */}
+                  {/* Quantity */}
                   <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[6]}</th>
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[7]}</th>
-                  {uploadMode === 'new' && (
-                    <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[8]}</th>
+                  {/* Wastage (%) — only when template has wastage column */}
+                  {hasWastage && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[7]}</th>
                   )}
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[9]}</th>
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[10]}</th>
+                  {/* Work Area */}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[8]}</th>
+                  {uploadMode === 'new' && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[9]}</th>
+                  )}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[10]}</th>
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[11]}</th>
                 </tr>
               </thead>
               <tbody>
@@ -684,12 +711,15 @@ const BOQInputScreen = () => {
                       <td className="row-data" id={idx + 1 + tableHeading[5]} style={{ border: '1px solid rgba(0,0,0,0.15)', color: '#888' }}><pre>{row.Unit || '—'}</pre></td>
                     )}
                     <td className="row-data" id={idx + 1 + tableHeading[6]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Quantity}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row['Work Area'] || row.FinalLocation}</pre></td>
-                    {uploadMode === 'new' && (
-                      <td className="row-data" id={idx + 1 + tableHeading[8]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
+                    {hasWastage && (
+                      <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row['Wastage (%)'] ?? '0'}</pre></td>
                     )}
-                    <td className="row-data" id={idx + 1 + tableHeading[9]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Remark || ''}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[10]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
+                    <td className="row-data" id={idx + 1 + tableHeading[8]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row['Work Area'] || row.FinalLocation}</pre></td>
+                    {uploadMode === 'new' && (
+                      <td className="row-data" id={idx + 1 + tableHeading[9]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
+                    )}
+                    <td className="row-data" id={idx + 1 + tableHeading[10]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Remark || ''}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[11]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
                       <IconButton
                         onClick={() => {
                           setExcelData(prev => prev.filter((_, i) => i !== idx));
