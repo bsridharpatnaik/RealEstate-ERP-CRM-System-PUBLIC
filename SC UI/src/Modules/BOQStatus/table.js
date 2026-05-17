@@ -91,6 +91,24 @@ class Table extends CommonTable {
           </div>
         </td>
       );
+    } else if (key === 'workAreaCount') {
+      const count = (row.boqDetails || []).length;
+      return (
+        <td data-label="Work Areas" style={{ textAlign: 'center' }}>
+          <span style={{
+            display: 'inline-block',
+            minWidth: 24,
+            padding: '1px 8px',
+            borderRadius: 12,
+            background: '#e3f2fd',
+            color: '#1565c0',
+            fontWeight: 600,
+            fontSize: 12,
+          }}>
+            {count}
+          </span>
+        </td>
+      );
     } else if (key === 'boqQuantity' || key === 'outwardQuantity') {
       const val = row[key];
       const display = val !== null && val !== undefined ? Number(val).toFixed(2) : '—';

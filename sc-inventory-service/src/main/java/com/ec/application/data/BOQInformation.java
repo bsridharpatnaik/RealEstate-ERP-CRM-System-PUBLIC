@@ -12,5 +12,6 @@ public class BOQInformation {
 	 long onTrackCount;
 	 long atRiskCount;
 	 long exceededCount;
+	 long uniqueProductCount;
 
 }

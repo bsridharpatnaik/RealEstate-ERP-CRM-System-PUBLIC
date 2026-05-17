@@ -31,7 +31,7 @@ class List extends ListCommon {
   state = {
     categoryArray: [], data: [], data2: [], options: [], options2: [],
     key: 1,
-    summary: { total: 0, onTrack: 0, atRisk: 0, exceeded: 0 },
+    summary: { total: 0, uniqueProducts: 0, onTrack: 0, atRisk: 0, exceeded: 0 },
     quickFilter: null,
     showBOQModal: false,
     boqModalData: null,
@@ -62,6 +62,7 @@ class List extends ListCommon {
       messages.common.buildingType,
       messages.common.location,
       messages.common.inventory,
+      "Work Areas",
       messages.common.boqQuantity,
       messages.common.outwardQuantity,
       messages.common.boqStatus,
@@ -72,6 +73,7 @@ class List extends ListCommon {
       "buildingType",
       "buildingUnit",
       "product",
+      "workAreaCount",
       "boqQuantity",
       "outwardQuantity",
       "status",
@@ -220,10 +222,11 @@ class List extends ListCommon {
         totalRecords: d.boqstatusDto.totalElements,
         selectedRowIds: [],
         summary: {
-          total:    d.totalCount    || 0,
-          onTrack:  d.onTrackCount  || 0,
-          atRisk:   d.atRiskCount   || 0,
-          exceeded: d.exceededCount || 0,
+          total:          d.totalCount          || 0,
+          uniqueProducts: d.uniqueProductCount  || 0,
+          onTrack:        d.onTrackCount        || 0,
+          atRisk:         d.atRiskCount         || 0,
+          exceeded:       d.exceededCount       || 0,
         },
       });
     }
@@ -252,11 +255,13 @@ class List extends ListCommon {
     this.setState({
       showBOQModal: true,
       boqModalData: {
-        buildingTypeId: row.buildingTypeId,
-        buildingUnitId: row.buildingUnitId,
-        productName: row.product,
-        finalLocation: detail ? detail.finalLocation : undefined,
-        quantity: detail ? detail.boqQuantity : undefined,
+        buildingTypeId:   row.buildingTypeId,
+        buildingTypeName: row.buildingType,
+        buildingUnitId:   row.buildingUnitId,
+        buildingUnitName: row.buildingUnit,
+        productName:      row.product,
+        finalLocation:    detail ? detail.finalLocation : undefined,
+        quantity:         detail ? detail.boqQuantity : undefined,
       },
     });
   };
@@ -265,11 +270,13 @@ class List extends ListCommon {
     this.setState({
       showBOQModal: true,
       boqModalData: {
-        buildingTypeId: parentRow.buildingTypeId,
-        buildingUnitId: parentRow.buildingUnitId,
-        productName: parentRow.product,
-        finalLocation: detail.finalLocation,
-        quantity: detail.boqQuantity,
+        buildingTypeId:   parentRow.buildingTypeId,
+        buildingTypeName: parentRow.buildingType,
+        buildingUnitId:   parentRow.buildingUnitId,
+        buildingUnitName: parentRow.buildingUnit,
+        productName:      parentRow.product,
+        finalLocation:    detail.finalLocation,
+        quantity:         detail.boqQuantity,
       },
     });
   };
@@ -394,6 +401,10 @@ class List extends ListCommon {
             <div className={`boq-summary-card total${!quickFilter ? ' active' : ''}`} onClick={() => this.setQuickFilter(null)}>
               <div className="card-count">{summary.total}</div>
               <div className="card-label">Total Items</div>
+            </div>
+            <div className="boq-summary-card" style={{ cursor: 'default' }}>
+              <div className="card-count">{summary.uniqueProducts}</div>
+              <div className="card-label">Unique Products</div>
             </div>
             <div className={`boq-summary-card on-track${quickFilter === 'onTrack' ? ' active' : ''}`} onClick={() => this.setQuickFilter('onTrack')}>
               <div className="card-count">{summary.onTrack}</div>

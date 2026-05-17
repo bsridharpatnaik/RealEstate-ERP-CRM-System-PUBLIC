@@ -790,10 +790,11 @@ public class BOQService {
         // on-track: consumed < 80%  → status < -20
         // at-risk:  consumed 80-100% → -20 <= status <= 0
         // exceeded: consumed > 100%  → status > 0
-        long onTrackCount  = allDtos.stream().filter(d -> d.getStatus() < -20).count();
-        long atRiskCount   = allDtos.stream().filter(d -> d.getStatus() >= -20 && d.getStatus() <= 0).count();
-        long exceededCount = allDtos.stream().filter(d -> d.getStatus() > 0).count();
-        long totalCount    = allDtos.size();
+        long onTrackCount      = allDtos.stream().filter(d -> d.getStatus() < -20).count();
+        long atRiskCount       = allDtos.stream().filter(d -> d.getStatus() >= -20 && d.getStatus() <= 0).count();
+        long exceededCount     = allDtos.stream().filter(d -> d.getStatus() > 0).count();
+        long totalCount        = allDtos.size();
+        long uniqueProductCount = allDtos.stream().map(BOQStatusDto::getProduct).filter(Objects::nonNull).distinct().count();
 
         // Apply statusGroup quick-filter (card clicks)
         List<String> statusGroupFilter = extractFilter(filterDataList, "statusGroup");
@@ -822,6 +823,7 @@ public class BOQService {
         result.setOnTrackCount(onTrackCount);
         result.setAtRiskCount(atRiskCount);
         result.setExceededCount(exceededCount);
+        result.setUniqueProductCount(uniqueProductCount);
         return result;
     }
 
