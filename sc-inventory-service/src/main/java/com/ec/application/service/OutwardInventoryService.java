@@ -286,11 +286,11 @@ public class OutwardInventoryService {
         outwardInventoryRepo.save(outwardInventory);
 
         String updateUser = resolveCurrentUser();
-        Map<Long, Double> oldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
+        Map<Long, Double> savedOldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
                 .collect(Collectors.toMap(io -> io.getProduct().getProductId(), InwardOutwardList::getQuantity, (a, b) -> a));
         List<Map<String, Object>> changedItems = ActivityLogDescription.list();
         for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
-            Double oldQty = oldQtyMap.get(io.getProduct().getProductId());
+            Double oldQty = savedOldQtyMap.get(io.getProduct().getProductId());
             if (oldQty == null || Double.compare(oldQty, io.getQuantity()) != 0) {
                 String productName = io.getProduct() != null ? io.getProduct().getProductName() : String.valueOf(io.getProduct().getProductId());
                 changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty != null ? oldQty : 0, io.getQuantity()));

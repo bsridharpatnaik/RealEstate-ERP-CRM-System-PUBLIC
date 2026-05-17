@@ -104,7 +104,7 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
         if (!isCreateUrl) return true;
 
         String key = request.getHeader("X-Idempotency-Key");
-        if (key == null || key.isBlank()) return true;
+        if (key == null || key.trim().isEmpty()) return true;
 
         if (idempotencyService.isDuplicate(key)) {
             response.setStatus(HttpServletResponse.SC_OK);
