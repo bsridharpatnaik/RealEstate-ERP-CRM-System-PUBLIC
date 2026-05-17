@@ -25,10 +25,14 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
     BOQUpload findByUsageLocationLocationIdAndLocationUsageAreaIdAndProductProductId(long buildingUnit,
                                                                                      long usageAreaId, long productId);
 
+    /** Finds a BOQ record regardless of soft-delete state — used only by upsert to reactivate deleted records. */
+    @Query(value = "SELECT * FROM BOQUpload WHERE usageLocationId = ?1 AND locationId = ?2 AND productId = ?3 LIMIT 1", nativeQuery = true)
+    BOQUpload findIncludingDeletedByLocationAndAreaAndProduct(long buildingUnit, long usageAreaId, long productId);
+
     @Query(value = "Select * from BOQUpload b where b.buildingTypeId=?1 and b.usageLocationId=?2", nativeQuery = true)
     List<BOQUpload> findBOQQuantity(long buildingTypeId, long buildingUnitId);
 
-    @Query(value = "Select Sum(quantity),buildingTypeId, usageLocationId from BOQUpload b where b.productId=?1 and b.buildingTypeId=?2 and b.usageLocationId=?3", nativeQuery = true)
+    @Query(value = "Select Sum(quantity),buildingTypeId, usageLocationId from BOQUpload b where b.productId=?1 and b.buildingTypeId=?2 and b.usageLocationId=?3 and b.is_deleted=false", nativeQuery = true)
     Double findQuantityByProductProductId(long productId, long buildingTypeId, long buildingUnitId);
 
     @Query(value = "Select DISTINCT(productId), buildingTypeId,usageLocationId from BOQUpload b where is_deleted=false", nativeQuery = true)
