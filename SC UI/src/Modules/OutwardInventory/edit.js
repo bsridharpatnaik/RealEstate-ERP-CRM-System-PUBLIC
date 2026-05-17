@@ -6,6 +6,10 @@ import { connect } from "react-redux";
 import { withSnackbar } from "notistack";
 import EditForm from "./../../Shared/EditForm";
 import { API } from "./../../axios";
+import {
+  Dialog, DialogTitle, DialogContent, DialogContentText,
+  DialogActions, Button as MuiButton,
+} from "@material-ui/core";
 
 //misc
 import { apiEndpoints } from "./../../endpoints";
@@ -25,6 +29,7 @@ class Edit extends EditForm {
     noproduct: {},
     currentStock: {},
     boqQuantity: {},
+    boqViolationDialog: { open: false, violations: [] },
   };
   key = 1;
 
@@ -227,8 +232,19 @@ class Edit extends EditForm {
 
     params.productWithQuantities = Object.values(this.state.noproduct);
     const response = await API.PUT(this.updateUrl, params);
-    this.showToaster(response);
     this.setState({ isUpdating: false });
+
+    if (response.success) {
+      this.showToaster(response);
+    } else {
+      const msg = response.errorMessage || '';
+      if (msg.startsWith('BOQ_LIMIT_EXCEEDED:')) {
+        const violations = msg.replace('BOQ_LIMIT_EXCEEDED:', '').split('|').filter(Boolean);
+        this.setState({ boqViolationDialog: { open: true, violations } });
+      } else {
+        this.showToaster(response);
+      }
+    }
   }
   async updateStockInfo(id) {
     const params = {};
@@ -352,6 +368,44 @@ class Edit extends EditForm {
             {this.renderFooter()}
           </form>
         )}
+
+        {/* BOQ violation dialog */}
+        <Dialog
+          open={this.state.boqViolationDialog.open}
+          onClose={() => this.setState({ boqViolationDialog: { open: false, violations: [] } })}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Limit Exceeded — Save Blocked</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 12 }}>
+              The following products exceed their BOQ limit (including wastage allowance).
+            </DialogContentText>
+            {this.state.boqViolationDialog.violations.map((v, i) => {
+              const parts = v.split(':');
+              const product = parts[0] || v;
+              const detail  = parts.slice(1).join(':').trim();
+              return (
+                <div key={i} style={{
+                  background: '#fff8f8', border: '1px solid #ffcdd2', borderRadius: 6,
+                  padding: '8px 12px', marginBottom: 8,
+                  borderBottom: i < this.state.boqViolationDialog.violations.length - 1 ? '1px solid #ffcdd2' : 'none',
+                }}>
+                  <strong style={{ color: '#c62828' }}>{product}</strong>
+                  {detail && <div style={{ fontSize: 12, color: '#555', marginTop: 2 }}>{detail}</div>}
+                </div>
+              );
+            })}
+          </DialogContent>
+          <DialogActions>
+            <MuiButton
+              variant="contained" color="primary"
+              onClick={() => this.setState({ boqViolationDialog: { open: false, violations: [] } })}
+            >
+              OK
+            </MuiButton>
+          </DialogActions>
+        </Dialog>
       </div>
     );
   }

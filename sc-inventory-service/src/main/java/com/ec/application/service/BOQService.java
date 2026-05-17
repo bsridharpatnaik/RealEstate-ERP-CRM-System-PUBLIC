@@ -840,6 +840,7 @@ public class BOQService {
      */
     public boolean enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
         log.info("Invoked enforceBOQLimits");
+        if (!boqEnforcementBlock) return false; // enforcement disabled — skip all DB queries
         if (usageLocationId == null || items == null || items.isEmpty()) return false;
 
         boolean allHaveBOQ = true;
@@ -861,18 +862,16 @@ public class BOQService {
             if (effectiveBOQ <= 0) { allHaveBOQ = false; continue; } // no BOQ configured for this product+unit
 
             // BOQ exists — check consumption against wastage-adjusted ceiling
-            if (boqEnforcementBlock) {
-                double afterQty   = totalOutward + newQty;
-                double remaining  = Math.max(effectiveBOQ - totalOutward, 0);
+            double afterQty   = totalOutward + newQty;
+            double remaining  = Math.max(effectiveBOQ - totalOutward, 0);
 
-                if (afterQty > effectiveBOQ) {
-                    Product product = productRepository.findByProductId(productId);
-                    String productName = product != null ? product.getProductName() : ("Product ID " + productId);
-                    violations.add(String.format(
-                        "%s: effective BOQ (with wastage) is %.2f, already consumed %.2f, remaining %.2f, requested %.2f",
-                        productName, effectiveBOQ, totalOutward, remaining, newQty
-                    ));
-                }
+            if (afterQty > effectiveBOQ) {
+                Product product = productRepository.findByProductId(productId);
+                String productName = product != null ? product.getProductName() : ("Product ID " + productId);
+                violations.add(String.format(
+                    "%s: effective BOQ (with wastage) is %.2f, already consumed %.2f, remaining %.2f, requested %.2f",
+                    productName, effectiveBOQ, totalOutward, remaining, newQty
+                ));
             }
         }
 
@@ -948,7 +947,7 @@ public class BOQService {
         if (wastagePercent == null || wastagePercent.trim().isEmpty()) return 0.0;
         try {
             double v = Double.parseDouble(wastagePercent.trim());
-            return v < 0 ? 0.0 : v;
+            return v < 0 ? 0.0 : Math.min(v, 100.0);
         } catch (NumberFormatException e) {
             return 0.0;
         }
@@ -1130,16 +1129,19 @@ public class BOQService {
     }
 
     private String computeStatusBucket(double status) {
-        if (status <= 10)  return "0-10 %";
-        if (status <= 20)  return "10-20 %";
-        if (status <= 30)  return "20-30 %";
-        if (status <= 40)  return "30-40 %";
-        if (status <= 50)  return "40-50 %";
-        if (status <= 60)  return "50-60 %";
-        if (status <= 70)  return "60-70 %";
-        if (status <= 80)  return "70-80 %";
-        if (status <= 90)  return "80-90 %";
-        if (status <= 100) return "90-100 %";
+        // status = (outward - boq) / boq * 100  → negative when under-consumed
+        // consumed% = status + 100
+        double consumed = status + 100.0;
+        if (consumed <= 10)  return "0-10 %";
+        if (consumed <= 20)  return "10-20 %";
+        if (consumed <= 30)  return "20-30 %";
+        if (consumed <= 40)  return "30-40 %";
+        if (consumed <= 50)  return "40-50 %";
+        if (consumed <= 60)  return "50-60 %";
+        if (consumed <= 70)  return "60-70 %";
+        if (consumed <= 80)  return "70-80 %";
+        if (consumed <= 90)  return "80-90 %";
+        if (consumed <= 100) return "90-100 %";
         return "above 100 %";
     }
 

@@ -161,6 +161,10 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       enqueueSnackbar('Please fill all required fields including Remark', { variant: 'warning' });
       return;
     }
+    if (wastagePercent !== '' && (isNaN(Number(wastagePercent)) || Number(wastagePercent) < 0 || Number(wastagePercent) > 100)) {
+      enqueueSnackbar('Wastage % must be between 0 and 100', { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     const body = {
       upload: [{
