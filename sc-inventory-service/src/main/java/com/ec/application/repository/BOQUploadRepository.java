@@ -25,10 +25,14 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
     BOQUpload findByUsageLocationLocationIdAndLocationUsageAreaIdAndProductProductId(long buildingUnit,
                                                                                      long usageAreaId, long productId);
 
+    /** Finds a BOQ record regardless of soft-delete state — used only by upsert to reactivate deleted records. */
+    @Query(value = "SELECT * FROM BOQUpload WHERE usageLocationId = ?1 AND locationId = ?2 AND productId = ?3 LIMIT 1", nativeQuery = true)
+    BOQUpload findIncludingDeletedByLocationAndAreaAndProduct(long buildingUnit, long usageAreaId, long productId);
+
     @Query(value = "Select * from BOQUpload b where b.buildingTypeId=?1 and b.usageLocationId=?2", nativeQuery = true)
     List<BOQUpload> findBOQQuantity(long buildingTypeId, long buildingUnitId);
 
-    @Query(value = "Select Sum(quantity),buildingTypeId, usageLocationId from BOQUpload b where b.productId=?1 and b.buildingTypeId=?2 and b.usageLocationId=?3", nativeQuery = true)
+    @Query(value = "Select Sum(quantity),buildingTypeId, usageLocationId from BOQUpload b where b.productId=?1 and b.buildingTypeId=?2 and b.usageLocationId=?3 and b.is_deleted=false", nativeQuery = true)
     Double findQuantityByProductProductId(long productId, long buildingTypeId, long buildingUnitId);
 
     @Query(value = "Select DISTINCT(productId), buildingTypeId,usageLocationId from BOQUpload b where is_deleted=false", nativeQuery = true)
@@ -164,6 +168,29 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         "WHERE bu.is_deleted = 0 AND bu.usageLocationId = ?1 AND bu.productId = ?2",
         nativeQuery = true)
     List<Object[]> fetchAggregatedBOQAndOutward(Long usageLocationId, Long productId);
+
+    /**
+     * Returns [effective_boq_qty, total_outward_quantity] for a specific (usageLocation, product, usageArea).
+     * Used for strict work-area BOQ enforcement — only considers BOQ rows matching the exact work area.
+     */
+    @Query(value =
+        "SELECT COALESCE(SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent, 0) / 100)), 0) AS effective_boq_qty, " +
+        "  COALESCE(SUM(ioe_sum.outward_qty), 0) AS total_outward_qty " +
+        "FROM BOQUpload bu " +
+        "LEFT JOIN ( " +
+        "  SELECT bu2.id, COALESCE(SUM(ioe.quantity), 0) AS outward_qty " +
+        "  FROM BOQUpload bu2 " +
+        "  LEFT JOIN outward_inventory oi ON oi.locationId = bu2.usageLocationId " +
+        "    AND oi.usageAreaId = bu2.locationId AND oi.is_deleted = 0 " +
+        "  LEFT JOIN outwardinventory_entry oie ON oie.outwardid = oi.outwardid " +
+        "  LEFT JOIN inward_outward_entries ioe ON ioe.entryId = oie.entryId " +
+        "    AND ioe.productId = bu2.productId " +
+        "  WHERE bu2.is_deleted = 0 AND bu2.usageLocationId = ?1 AND bu2.productId = ?2 AND bu2.locationId = ?3 " +
+        "  GROUP BY bu2.id " +
+        ") ioe_sum ON ioe_sum.id = bu.id " +
+        "WHERE bu.is_deleted = 0 AND bu.usageLocationId = ?1 AND bu.productId = ?2 AND bu.locationId = ?3",
+        nativeQuery = true)
+    List<Object[]> fetchAggregatedBOQAndOutwardByWorkArea(Long usageLocationId, Long productId, Long usageAreaId);
 
     @Query("SELECT b FROM BOQUpload b WHERE b.id = :id")
     java.util.Optional<BOQUpload> findByIntId(@Param("id") int id);

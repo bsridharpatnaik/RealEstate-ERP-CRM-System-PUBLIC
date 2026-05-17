@@ -78,6 +78,7 @@ const SourceCopyDialog = ({
           product: productOpt,
           workArea: workAreaOpt,
           quantity: String(item.quantity || ''),
+          wastagePercent: String(item.wastagePercent || '0'),
           remark: '',
           source: unit.label,
         });
@@ -172,6 +173,7 @@ const SourceCopyDialog = ({
                     <th style={th}>Product / Inventory</th>
                     <th style={th}>Work Area</th>
                     <th style={{ ...th, width: 100 }}>Quantity</th>
+                    <th style={{ ...th, width: 100 }}>Wastage %</th>
                     <th style={th}>Structure</th>
                     <th style={{ ...th, width: 80 }}></th>
                   </tr>
@@ -182,6 +184,7 @@ const SourceCopyDialog = ({
                       <td style={td}>{row.product?.label || '—'}</td>
                       <td style={td}>{row.workArea?.label || '—'}</td>
                       <td style={td}>{row.quantity}</td>
+                      <td style={td}>{row.wastagePercent || '0'}</td>
                       <td style={{ ...td, textAlign: 'center' }}>
                         <Button size="small" color="secondary" onClick={() => removeRow(row._copyId)}>
                           Remove
