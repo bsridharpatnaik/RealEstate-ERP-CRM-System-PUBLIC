@@ -5,6 +5,23 @@ import { appRoutes } from "./endpoints";
 export const instance = axios.create({
   baseURL: process.env.REACT_APP_BASE_URL,
 });
+
+// Idempotency key store: url -> { key, createdAt }
+// Key is reused for retries of the same URL within the window; cleared on
+// success so the next intentional create gets a fresh key.
+const _idempotencyKeys = new Map();
+const IDEMPOTENCY_WINDOW_MS = 30_000;
+
+function _getOrCreateIdempotencyKey(url) {
+  const now = Date.now();
+  const existing = _idempotencyKeys.get(url);
+  if (existing && now - existing.createdAt < IDEMPOTENCY_WINDOW_MS) {
+    return existing.key;
+  }
+  const key = `${now}-${Math.random().toString(36).substr(2, 9)}`;
+  _idempotencyKeys.set(url, { key, createdAt: now });
+  return key;
+}
 instance.interceptors.request.use(function (config) {
   const token = getToken();
   if (token) {
@@ -31,11 +48,22 @@ const checkToken = (error) => {
 export const API = {
   POST: async (url, params, config = {}) => {
     try {
-      const response = await instance.post(url, params, config);
-
+      const idempotencyKey = _getOrCreateIdempotencyKey(url);
+      const mergedConfig = {
+        ...config,
+        headers: {
+          ...(config.headers || {}),
+          "X-Idempotency-Key": idempotencyKey,
+        },
+      };
+      const response = await instance.post(url, params, mergedConfig);
+      // Clear key on success so the next intentional submission gets a fresh key.
+      _idempotencyKeys.delete(url);
       return { data: response.data, success: true };
     } catch (error) {
       checkToken(error);
+      // Do NOT clear key on failure — allows the user to retry with the same key
+      // so the backend (which only marks on success) will process the retry.
       return {
         success: false,
         status: error?.response?.status,

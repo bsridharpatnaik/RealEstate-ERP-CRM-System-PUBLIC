@@ -16,6 +16,8 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
     @Autowired
     private IdempotencyService idempotencyService;
 
+    private static final String KEY_ATTR = "idempotency_key";
+
     /**
      * Exhaustive list of POST endpoints that create new records.
      * Only these URLs are subject to idempotency checking.
@@ -82,7 +84,10 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
             "/boq/create",
 
             // File upload (creates a file record)
-            "/file/upload"
+            "/file/upload",
+
+            // Master-file upload (PO line-item attachments, indent attachments)
+            "/master-file/upload"
 
             // NOTE: /drafts (POST) and /boqupload/boq_upload are intentionally excluded —
             // drafts are overwritten by design and BOQ upload is a bulk import, not a single create.
@@ -108,7 +113,22 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        idempotencyService.markProcessed(key);
+        // Store key to mark after successful completion — do NOT mark here,
+        // so failed requests can be retried with the same key.
+        request.setAttribute(KEY_ATTR, key);
         return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+                                Object handler, Exception ex) {
+        String key = (String) request.getAttribute(KEY_ATTR);
+        if (key == null) return;
+
+        // Only mark as processed if the request completed successfully (2xx) with no exception.
+        // This ensures failed requests can be safely retried with the same idempotency key.
+        if (ex == null && response.getStatus() >= 200 && response.getStatus() < 300) {
+            idempotencyService.markProcessed(key);
+        }
     }
 }
