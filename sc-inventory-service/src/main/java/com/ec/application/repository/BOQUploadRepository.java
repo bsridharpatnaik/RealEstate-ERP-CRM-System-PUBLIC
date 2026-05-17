@@ -141,11 +141,12 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
     List<Object[]> fetchBOQStatusRows();
 
     /**
-     * Returns [total_boq_quantity, total_outward_quantity] aggregated across ALL final locations
-     * for a given (buildingUnit/usageLocation, product). Used for 100% BOQ enforcement check.
+     * Returns [effective_boq_qty, total_outward_quantity] aggregated across ALL final locations
+     * for a given (buildingUnit/usageLocation, product). Used for BOQ enforcement check.
+     * effective_boq_qty = SUM(quantity * (1 + wastage_percent/100)) — wastage already baked in.
      */
     @Query(value =
-        "SELECT COALESCE(SUM(bu.quantity), 0) AS total_boq_qty, " +
+        "SELECT COALESCE(SUM(bu.quantity * (1 + COALESCE(bu.wastage_percent, 0) / 100)), 0) AS effective_boq_qty, " +
         "  COALESCE(SUM(ioe_sum.outward_qty), 0) AS total_outward_qty " +
         "FROM BOQUpload bu " +
         "LEFT JOIN ( " +

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,6 +94,7 @@ public class OutwardInventoryService {
     Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
     public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception {
         log.info("Invoked createOutwardnventory with payload -" + oiData.toString());
         OutwardInventory outwardInventory = new OutwardInventory();
@@ -217,6 +219,7 @@ public class OutwardInventoryService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
     public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception {
         log.info("Invoked updateOutwardnventory");
         Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
@@ -565,6 +568,7 @@ public class OutwardInventoryService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
     public void deleteOutwardInventoryById(Long id) throws Exception {
         log.info("Invoked deleteOutwardInventoryById");
         Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);

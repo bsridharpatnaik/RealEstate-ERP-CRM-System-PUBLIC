@@ -42,7 +42,7 @@ const BOQInputScreen = () => {
   const [dragOver, setDragOver]                           = useState(false);
   const [hasCategory, setHasCategory]                     = useState(false);
   const [hasWastage, setHasWastage]                       = useState(false);
-  const [uiMode, setUiMode]                               = useState(false);
+  const [uiMode, setUiMode]                               = useState(true);
 
   const tableHeading = [
     'S No.', 'Structure Type', 'Structure',

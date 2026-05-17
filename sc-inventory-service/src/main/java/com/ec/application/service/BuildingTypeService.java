@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -36,6 +38,7 @@ public class BuildingTypeService {
         return buildingTypeRepo.findAll(pageable);
     }
 
+    @CacheEvict(value = "refBuildingTypes", allEntries = true)
     public BuildingType createBuildingType(BuildingType payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
@@ -61,6 +64,7 @@ public class BuildingTypeService {
 
     }
 
+    @CacheEvict(value = "refBuildingTypes", allEntries = true)
     public BuildingType updateBuildingType(Long id, BuildingType payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
@@ -90,6 +94,7 @@ public class BuildingTypeService {
         return types.get();
     }
 
+    @CacheEvict(value = "refBuildingTypes", allEntries = true)
     public void deleteBuildingType(Long id) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (!checkBeforeDeleteService.isBuildingTypeUsed(id))
@@ -98,6 +103,7 @@ public class BuildingTypeService {
             throw new Exception("Cannot delete BuildingType. BuildingType already assigned to Bulding Unit");
     }
 
+    @Cacheable(value = "refBuildingTypes", key = "'all'")
     public List<IdNameProjections> findIdAndNames() {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         return buildingTypeRepo.findIdAndNames();

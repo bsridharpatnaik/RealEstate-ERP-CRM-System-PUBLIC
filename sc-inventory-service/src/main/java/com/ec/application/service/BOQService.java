@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -66,10 +68,23 @@ public class BOQService {
     @Value("${boq.enforcement.block:true}")
     private boolean boqEnforcementBlock;
 
+    /** Cached fetch of all BOQ status rows — 2-min TTL, evicted on any BOQ or outward change. */
+    @Cacheable(value = "boqStatusRows", key = "'all'")
+    public List<Object[]> getCachedBOQStatusRows() {
+        log.info("Fetching BOQ status rows from DB (cache miss)");
+        return bOQUploadRepository.fetchBOQStatusRows();
+    }
+
+    @CacheEvict(value = "boqStatusRows", allEntries = true)
+    public void evictBOQStatusCache() {
+        log.info("BOQ status rows cache evicted");
+    }
+
     public List<BOQUpload> getBOQByUnit(long locationId) {
         return bOQUploadRepository.findByUsageLocationLocationId(locationId);
     }
 
+    @CacheEvict(value = "boqStatusRows", allEntries = true)
     public List<BOQUploadValidationResponse> boqUpload(BOQDto boqDto) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUploadValidationResponse bOQUploadValidationResponse = new BOQUploadValidationResponse();
@@ -166,6 +181,7 @@ public class BOQService {
     }
 
 
+    @CacheEvict(value = "boqStatusRows", allEntries = true)
     public void deleteBoqById(int id) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         BOQUpload boqUpload = bOQUploadRepository.findByIntId(id)
@@ -741,7 +757,7 @@ public class BOQService {
     public BOQInformation fetchBoqStatusInformationv2(BOQStatusFilterDataList filterDataList, Pageable page) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 
-        List<Object[]> rawRows = bOQUploadRepository.fetchBOQStatusRows();
+        List<Object[]> rawRows = getCachedBOQStatusRows();
 
         // Extract per-field filter values from the request
         List<String> buildingTypeFilter = extractFilter(filterDataList, "buildingType");
@@ -810,21 +826,15 @@ public class BOQService {
     }
 
     /**
-     * Checks BOQ enforcement for all line items in an outward entry.
+     * Enforces BOQ limits for outward inventory.
+     * Effective BOQ ceiling = SUM(quantity * (1 + wastage%/100)) across all work areas — computed in SQL.
      * Rules:
-     *  - If no BOQ record exists for (usageLocationId, productId) → skip (no enforcement)
-     *  - If BOQ record exists and (currentOutward + newQty) / totalBOQ >= 1.0 → violation
-     *  - If boqEnforcementBlock=true → throws Exception listing all violating products
-     *  - If boqEnforcementBlock=false → logs warning only (frontend already warned user)
+     *  - No BOQ record for (usageLocationId, productId) → skip enforcement, mark allHaveBOQ=false
+     *  - BOQ exists and (currentOutward + newQty) > effectiveBOQ:
+     *      boqEnforcementBlock=true  → collect violation, throw after all products checked
+     *      boqEnforcementBlock=false → skip (frontend already showed warning)
      *
-     * @param usageLocationId  building unit (usageLocation) ID
-     * @param items            list of (productId, newQuantity) pairs
-     */
-    /**
-     * Enforces BOQ limits for outward inventory and also returns whether ALL products
-     * in the list have a BOQ configured (totalBOQ > 0) for the given usageLocation.
-     *
-     * @return true if every product has BOQ > 0, false if any product has no BOQ
+     * @return true if every product has effective BOQ > 0, false if any product has no BOQ
      */
     public boolean enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
         log.info("Invoked enforceBOQLimits");
@@ -843,31 +853,29 @@ public class BOQService {
             Object[] row = rows.get(0);
             if (row == null) { allHaveBOQ = false; continue; }
 
-            double totalBOQ     = row[0] != null ? ((Number) row[0]).doubleValue() : 0;
+            double effectiveBOQ = row[0] != null ? ((Number) row[0]).doubleValue() : 0;
             double totalOutward = row[1] != null ? ((Number) row[1]).doubleValue() : 0;
 
-            if (totalBOQ <= 0) { allHaveBOQ = false; continue; } // no BOQ configured for this product+unit
+            if (effectiveBOQ <= 0) { allHaveBOQ = false; continue; } // no BOQ configured for this product+unit
 
-            // BOQ exists — now check consumption limits (only when enforcement is enabled)
+            // BOQ exists — check consumption against wastage-adjusted ceiling
             if (boqEnforcementBlock) {
-                double afterQty        = totalOutward + newQty;
-                double consumedPercent = (afterQty / totalBOQ) * 100;
+                double afterQty   = totalOutward + newQty;
+                double remaining  = Math.max(effectiveBOQ - totalOutward, 0);
 
-                if (consumedPercent > 100) {
+                if (afterQty > effectiveBOQ) {
                     Product product = productRepository.findByProductId(productId);
                     String productName = product != null ? product.getProductName() : ("Product ID " + productId);
-                    double remaining = Math.max(totalBOQ - totalOutward, 0);
                     violations.add(String.format(
-                        "%s: BOQ limit is %.2f, already consumed %.2f, remaining %.2f but requested %.2f",
-                        productName, totalBOQ, totalOutward, remaining, newQty
+                        "%s: effective BOQ (with wastage) is %.2f, already consumed %.2f, remaining %.2f, requested %.2f",
+                        productName, effectiveBOQ, totalOutward, remaining, newQty
                     ));
                 }
             }
         }
 
         if (!violations.isEmpty()) {
-            throw new Exception("BOQ limit exceeded for the following items — save blocked:\n" +
-                    String.join("\n", violations));
+            throw new Exception("BOQ_LIMIT_EXCEEDED:" + String.join("|", violations));
         }
 
         return allHaveBOQ;
@@ -876,7 +884,7 @@ public class BOQService {
     public BOQDashboardResponse getBOQDashboardData() {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 
-        List<Object[]> rawRows = bOQUploadRepository.fetchBOQStatusRows();
+        List<Object[]> rawRows = getCachedBOQStatusRows();
         List<BOQStatusDto> allDtos = buildGroupedDtos(rawRows);
 
         // Aggregate boq/outward quantities per product across all building units
@@ -921,6 +929,7 @@ public class BOQService {
         return response;
     }
 
+    @Cacheable(value = "boqOutwardQty", key = "#productId + ':' + #locationId + ':' + #finalLocationId")
     public String getBoqQuantityForOutward(Long productId, Long locationId, Long finalLocationId) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         List<Object[]> rows = bOQUploadRepository.fetchBOQAndOutwardForProduct(locationId, productId, finalLocationId);
@@ -1011,7 +1020,7 @@ public class BOQService {
                                         List<String> statusBuckets) throws IOException {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
 
-        List<Object[]> rawRows = bOQUploadRepository.fetchBOQStatusRows();
+        List<Object[]> rawRows = getCachedBOQStatusRows();
 
         List<Object[]> filtered = rawRows.stream()
                 .filter(r -> matchesContains((String) r[2], buildingTypes))

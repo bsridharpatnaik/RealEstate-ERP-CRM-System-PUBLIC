@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IconButton, TextField } from '@material-ui/core';
 import DeleteOutlineIcon from '@material-ui/icons/DeleteOutline';
+import FileCopyOutlined from '@material-ui/icons/FileCopyOutlined';
 import Select from 'react-select';
 import { useSnackbar } from 'notistack';
 import { API } from '../../axios';
@@ -39,12 +40,24 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
   const [productsByCategory, setProductsByCategory] = useState({});
   const [workAreaOptions, setWorkAreaOptions]       = useState([]);
   const [rows, setRows]                             = useState([newRow()]);
+  const [draftLoaded, setDraftLoaded]               = useState(false);
   const [targets, setTargets]                       = useState([newTarget()]);
   const [showCopyDialog, setShowCopyDialog]         = useState(false);
   const [saving, setSaving]                         = useState(false);
-  const [bulkRemark, setBulkRemark]                 = useState('');
+  const [previewMode, setPreviewMode]               = useState(false);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem('boq_ui_draft');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.rows) && parsed.rows.length > 0) {
+          setRows(parsed.rows.map(r => ({ ...r, id: ++_rowCounter })));
+          setDraftLoaded(true);
+        }
+      }
+    } catch (_) {}
+
     API.GET(apiEndpoints.getCategoryIdAndNames).then(r => {
       if (r.success) setCategoryOptions(r.data.map(d => ({ value: d.id, label: d.name })));
     });
@@ -63,6 +76,21 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
       if (r.success) setWorkAreaOptions(r.data.map(d => ({ value: d.id, label: d.name })));
     });
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('boq_ui_draft', JSON.stringify({ rows }));
+  }, [rows]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (rows.some(r => r.product || r.workArea || r.quantity)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [rows]);
 
   const getProductOptions = (row) => {
     if (!row.category) return allProductOptions;
@@ -99,6 +127,19 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
 
   const addRow = () => setRows(prev => [...prev, newRow()]);
 
+  const duplicateRow = (id) => setRows(prev => {
+    const idx = prev.findIndex(r => r.id === id);
+    if (idx === -1) return prev;
+    const copy = { ...prev[idx], id: ++_rowCounter };
+    return [...prev.slice(0, idx + 1), copy, ...prev.slice(idx + 1)];
+  });
+
+  const startFresh = () => {
+    localStorage.removeItem('boq_ui_draft');
+    setRows([newRow()]);
+    setDraftLoaded(false);
+  };
+
   const handleCopiedRows = (copiedRows) => {
     setRows(prev => {
       const nonEmpty = prev.filter(r => r.product || r.workArea || r.quantity);
@@ -131,14 +172,14 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
       t.id !== targetId ? t : { ...t, buildingUnit: opt }
     ));
 
-  const applyBulkRemark = () => {
-    if (!bulkRemark.trim()) return;
-    setRows(prev => prev.map(r => ({ ...r, remark: bulkRemark.trim() })));
+  const applyRemarkToAll = (remark) => {
+    if (!remark.trim()) return;
+    setRows(prev => prev.map(r => ({ ...r, remark: remark.trim() })));
   };
 
-  // ── Save ──────────────────────────────────────────────────────────────────
+  // ── Preview & Save ────────────────────────────────────────────────────────
 
-  const handleSave = async () => {
+  const handlePreviewAndSave = () => {
     const badRows = rows.filter(r =>
       !r.product || !r.workArea || !r.quantity || isNaN(Number(r.quantity)) || Number(r.quantity) <= 0 ||
       isNaN(Number(r.wastagePercent)) || Number(r.wastagePercent) < 0 ||
@@ -153,7 +194,11 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
       enqueueSnackbar('Select at least one target Structure Type and Structure.', { variant: 'warning' });
       return;
     }
+    setPreviewMode(true);
+  };
 
+  const handleConfirmSave = async () => {
+    const validTargets = targets.filter(t => t.buildingType && t.buildingUnit);
     setSaving(true);
     let allOk = true;
 
@@ -192,6 +237,7 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
         `BOQ saved to ${validTargets.length} structure${validTargets.length > 1 ? 's' : ''} successfully!`,
         { variant: 'success' }
       );
+      localStorage.removeItem('boq_ui_draft');
       onDone();
     }
   };
@@ -227,6 +273,125 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
     hint: { fontSize: '12px', color: '#888' },
   };
 
+  // ── Preview panel ─────────────────────────────────────────────────────────
+
+  const renderPreview = () => {
+    const validTargets = targets.filter(t => t.buildingType && t.buildingUnit);
+
+    // Group rows by work area name, sorted alphabetically
+    const groups = {};
+    rows.forEach(r => {
+      const key = r.workArea?.label || '(No Work Area)';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    const sortedGroups = Object.keys(groups).sort();
+
+    const pTh = {
+      background: '#f0f4f8', padding: '8px 12px', border: '1px solid #dde3ea',
+      fontWeight: 600, fontSize: '12px', textAlign: 'left', whiteSpace: 'nowrap',
+    };
+    const pTd = { padding: '7px 12px', border: '1px solid #e8edf2', fontSize: '13px' };
+    const groupHdr = {
+      background: '#e8f0fe', padding: '8px 12px', fontWeight: 600, fontSize: '13px',
+      color: '#1565c0', borderLeft: '3px solid #1976d2',
+    };
+
+    return (
+      <div>
+        {/* Summary header */}
+        <div style={{ background: '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '8px', padding: '14px 18px', marginBottom: '20px' }}>
+          <div style={{ fontWeight: 600, fontSize: '14px', color: '#2e7d32', marginBottom: '8px' }}>
+            Review before saving — {rows.length} row{rows.length !== 1 ? 's' : ''} across {sortedGroups.length} work area{sortedGroups.length !== 1 ? 's' : ''}
+          </div>
+          <div style={{ fontSize: '13px', color: '#555' }}>
+            <strong>Target structure{validTargets.length > 1 ? 's' : ''}:</strong>{' '}
+            {validTargets.map(t => `${t.buildingType.label} › ${t.buildingUnit.label}`).join(', ')}
+          </div>
+        </div>
+
+        {/* Grouped table */}
+        <div style={{ overflowX: 'auto', border: '1px solid #e8edf2', borderRadius: '6px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <thead>
+              <tr>
+                <th style={{ ...pTh, width: 36 }}>#</th>
+                <th style={pTh}>Product / Inventory</th>
+                <th style={{ ...pTh, width: 90 }}>Qty</th>
+                <th style={{ ...pTh, width: 90 }}>Wastage %</th>
+                <th style={pTh}>Remark</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedGroups.map(groupName => (
+                <React.Fragment key={groupName}>
+                  <tr>
+                    <td colSpan={5} style={groupHdr}>
+                      {groupName}
+                      <span style={{ fontWeight: 400, fontSize: '12px', marginLeft: '8px', color: '#1976d2' }}>
+                        ({groups[groupName].length} item{groups[groupName].length !== 1 ? 's' : ''})
+                      </span>
+                    </td>
+                  </tr>
+                  {groups[groupName].map((row, idx) => (
+                    <tr key={row.id} style={{ background: idx % 2 === 0 ? '#fff' : '#fafbfd' }}>
+                      <td style={{ ...pTd, color: '#999', textAlign: 'center' }}>{idx + 1}</td>
+                      <td style={pTd}>
+                        {row.product?.label}
+                        {row.product?.unit && (
+                          <span style={{ color: '#1976d2', fontSize: '11px', marginLeft: '6px' }}>
+                            ({row.product.unit})
+                          </span>
+                        )}
+                      </td>
+                      <td style={pTd}>{row.quantity}</td>
+                      <td style={pTd}>{row.wastagePercent || '0'}</td>
+                      <td style={{ ...pTd, color: '#555' }}>{row.remark}</td>
+                    </tr>
+                  ))}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Preview actions */}
+        <div style={{ display: 'flex', gap: '12px', marginTop: '24px', alignItems: 'center' }}>
+          <button
+            style={{ ...s.btn, ...s.btnPrimary, opacity: saving ? 0.7 : 1 }}
+            onClick={handleConfirmSave}
+            disabled={saving}
+          >
+            {saving ? 'Saving…' : '✓ Confirm & Save'}
+          </button>
+          <button
+            style={{ ...s.btn, ...s.btnCancel }}
+            onClick={() => setPreviewMode(false)}
+            disabled={saving}
+          >
+            ← Back to Edit
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  if (previewMode) {
+    return (
+      <div>
+        {renderPreview()}
+        <SourceCopyDialog
+          open={showCopyDialog}
+          onClose={() => setShowCopyDialog(false)}
+          buildingTypeData={buildingTypeData}
+          allProductOptions={allProductOptions}
+          workAreaOptions={workAreaOptions}
+          onCopy={handleCopiedRows}
+        />
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Toolbar */}
@@ -234,23 +399,14 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
         <button style={s.btn} onClick={() => setShowCopyDialog(true)}>
           📋 Copy from Existing BOQ
         </button>
-        <button style={s.btn} onClick={addRow}>
-          + Add Row
-        </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-          <TextField
-            value={bulkRemark}
-            onChange={e => setBulkRemark(e.target.value)}
-            placeholder="Remark for all rows…"
-            variant="outlined"
-            size="small"
-            inputProps={{ style: { width: '220px', fontSize: '13px' } }}
-          />
-          <button style={s.btn} onClick={applyBulkRemark} title="Apply this remark to all rows">
-            Apply to All
-          </button>
-        </div>
       </div>
+
+      {draftLoaded && (
+        <div style={{ background: '#fff8e1', border: '1px solid #ffe082', borderRadius: '6px', padding: '8px 14px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px' }}>
+          <span>📋 Draft from your previous session has been loaded.</span>
+          <button style={{ ...s.btn, ...s.btnCancel, padding: '3px 10px', fontSize: '12px' }} onClick={startFresh}>Start Fresh</button>
+        </div>
+      )}
 
       {/* Editable table */}
       <div style={{ overflowX: 'auto' }}>
@@ -319,6 +475,7 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
                     type="number"
                     value={row.quantity}
                     onChange={e => updateRow(row.id, 'quantity', e.target.value)}
+                    onWheel={e => e.target.blur()}
                     variant="outlined"
                     size="small"
                     inputProps={{ min: 0, style: { width: '80px' } }}
@@ -330,24 +487,44 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
                     type="number"
                     value={row.wastagePercent}
                     onChange={e => updateRow(row.id, 'wastagePercent', e.target.value)}
+                    onWheel={e => e.target.blur()}
                     variant="outlined"
                     size="small"
                     inputProps={{ min: 0, max: 100, style: { width: '70px' } }}
                   />
                 </td>
 
-                <td style={{ ...s.td, minWidth: '160px' }}>
-                  <TextField
-                    value={row.remark}
-                    onChange={e => updateRow(row.id, 'remark', e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    placeholder="Required"
-                  />
+                <td style={{ ...s.td, minWidth: '180px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <TextField
+                      value={row.remark}
+                      onChange={e => updateRow(row.id, 'remark', e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      placeholder="Required"
+                    />
+                    {row.remark?.trim() && (
+                      <IconButton
+                        size="small"
+                        title="Apply this remark to all rows"
+                        onClick={() => applyRemarkToAll(row.remark)}
+                        style={{ flexShrink: 0, color: '#1976d2' }}
+                      >
+                        <span style={{ fontSize: '14px', lineHeight: 1 }}>⇩</span>
+                      </IconButton>
+                    )}
+                  </div>
                 </td>
 
-                <td style={{ ...s.td, textAlign: 'center' }}>
+                <td style={{ ...s.td, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => duplicateRow(row.id)}
+                    title="Duplicate row"
+                  >
+                    <FileCopyOutlined fontSize="small" style={{ color: '#1976d2' }} />
+                  </IconButton>
                   <IconButton
                     size="small"
                     onClick={() => deleteRow(row.id)}
@@ -424,13 +601,21 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
       {/* Actions */}
       <div style={s.actions}>
         <button
-          style={{ ...s.btn, ...s.btnPrimary, opacity: saving ? 0.7 : 1 }}
-          onClick={handleSave}
-          disabled={saving}
+          style={{ ...s.btn, ...s.btnPrimary }}
+          onClick={handlePreviewAndSave}
         >
-          {saving ? 'Saving…' : 'Save BOQ'}
+          Preview &amp; Save →
         </button>
-        <button style={{ ...s.btn, ...s.btnCancel }} onClick={onDone}>
+        <button
+          style={{ ...s.btn, ...s.btnCancel }}
+          onClick={() => {
+            if (rows.some(r => r.product || r.workArea || r.quantity)) {
+              if (window.confirm('You have unsaved changes. Leave anyway?')) onDone();
+            } else {
+              onDone();
+            }
+          }}
+        >
           Cancel
         </button>
       </div>

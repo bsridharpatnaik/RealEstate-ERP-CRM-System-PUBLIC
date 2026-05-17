@@ -23,7 +23,7 @@ const SourceCopyDialog = ({
   allProductOptions, workAreaOptions, onCopy,
 }) => {
   const [buildingType, setBuildingType]       = useState(null);
-  const [buildingUnit, setBuildingUnit]       = useState(null);
+  const [buildingUnit, setBuildingUnit]       = useState([]);
   const [unitOptions, setUnitOptions]         = useState([]);
   const [preview, setPreview]                 = useState([]);
   const [loading, setLoading]                 = useState(false);
@@ -31,7 +31,7 @@ const SourceCopyDialog = ({
 
   const reset = () => {
     setBuildingType(null);
-    setBuildingUnit(null);
+    setBuildingUnit([]);
     setUnitOptions([]);
     setPreview([]);
     setLoaded(false);
@@ -39,7 +39,7 @@ const SourceCopyDialog = ({
 
   const handleBTChange = async (opt) => {
     setBuildingType(opt);
-    setBuildingUnit(null);
+    setBuildingUnit([]);
     setPreview([]);
     setLoaded(false);
     if (!opt) { setUnitOptions([]); return; }
@@ -56,26 +56,35 @@ const SourceCopyDialog = ({
   };
 
   const handleLoad = async () => {
-    if (!buildingUnit) return;
+    if (!buildingUnit.length) return;
     setLoading(true);
-    const r = await API.GET(apiEndpoints.boqUploadByUnit + buildingUnit.value);
+    const allRows = [];
+    const seen = new Set();
+    let globalIdx = 0;
+    for (const unit of buildingUnit) {
+      const r = await API.GET(apiEndpoints.boqUploadByUnit + unit.value);
+      if (!r.success) continue;
+      for (const item of (r.data || [])) {
+        const productOpt = allProductOptions.find(p => p.label === item.product?.productName)
+          || (item.product ? { value: item.product.productId, label: item.product.productName } : null);
+        const workAreaOpt = workAreaOptions.find(w => w.label === item.location?.usageAreaName)
+          || (item.location ? { value: item.location.usageAreaId, label: item.location.usageAreaName } : null);
+        const dedupeKey = `${productOpt?.label || ''}__${workAreaOpt?.label || ''}`;
+        if (seen.has(dedupeKey)) continue;
+        seen.add(dedupeKey);
+        allRows.push({
+          _copyId: `copy_${item.id}_${globalIdx++}`,
+          category: null,
+          product: productOpt,
+          workArea: workAreaOpt,
+          quantity: String(item.quantity || ''),
+          remark: '',
+          source: unit.label,
+        });
+      }
+    }
     setLoading(false);
-    if (!r.success) return;
-    const rows = (r.data || []).map((item, idx) => {
-      const productOpt = allProductOptions.find(p => p.label === item.product?.productName)
-        || (item.product ? { value: item.product.productId, label: item.product.productName } : null);
-      const workAreaOpt = workAreaOptions.find(w => w.label === item.location?.usageAreaName)
-        || (item.location ? { value: item.location.usageAreaId, label: item.location.usageAreaName } : null);
-      return {
-        _copyId: `copy_${item.id}_${idx}`,
-        category: null,
-        product: productOpt,
-        workArea: workAreaOpt,
-        quantity: String(item.quantity || ''),
-        remark: '',
-      };
-    });
-    setPreview(rows);
+    setPreview(allRows);
     setLoaded(true);
   };
 
@@ -121,8 +130,9 @@ const SourceCopyDialog = ({
               options={unitOptions}
               value={buildingUnit}
               onChange={handleBUChange}
-              placeholder={buildingType ? 'Select Structure' : 'Select Type first'}
+              placeholder={buildingType ? 'Select one or more structures' : 'Select Type first'}
               isDisabled={!buildingType}
+              isMulti
               isSearchable
               {...selectPortal}
             />
@@ -130,12 +140,12 @@ const SourceCopyDialog = ({
           <div>
             <button
               onClick={handleLoad}
-              disabled={!buildingUnit || loading}
+              disabled={!buildingUnit.length || loading}
               style={{
                 padding: '8px 20px', borderRadius: '6px', fontSize: '13px', fontWeight: 500,
-                border: '1px solid #1976d2', cursor: buildingUnit ? 'pointer' : 'not-allowed',
-                background: buildingUnit ? '#1976d2' : '#e0e0e0',
-                color: buildingUnit ? '#fff' : '#999',
+                border: '1px solid #1976d2', cursor: buildingUnit.length ? 'pointer' : 'not-allowed',
+                background: buildingUnit.length ? '#1976d2' : '#e0e0e0',
+                color: buildingUnit.length ? '#fff' : '#999',
               }}
             >
               {loading ? 'Loading…' : 'Load BOQ'}
@@ -162,6 +172,7 @@ const SourceCopyDialog = ({
                     <th style={th}>Product / Inventory</th>
                     <th style={th}>Work Area</th>
                     <th style={{ ...th, width: 100 }}>Quantity</th>
+                    <th style={th}>Structure</th>
                     <th style={{ ...th, width: 80 }}></th>
                   </tr>
                 </thead>
