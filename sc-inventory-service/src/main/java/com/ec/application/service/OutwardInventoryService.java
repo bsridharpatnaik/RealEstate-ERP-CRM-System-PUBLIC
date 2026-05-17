@@ -242,10 +242,7 @@ public class OutwardInventoryService {
             double oldQty   = oldQtyMap.getOrDefault(item.getProductId(), 0.0);
             double delta    = item.getQuantity() - oldQty;
             if (delta > 0) {
-                ProductWithQuantity d = new ProductWithQuantity();
-                d.setProductId(item.getProductId());
-                d.setQuantity(delta);
-                deltaItems.add(d);
+                deltaItems.add(new ProductWithQuantity(item.getProductId(), delta));
             }
         }
         if (!deltaItems.isEmpty()) {
