@@ -1,0 +1,201 @@
+@import "./../../scss/variables.scss";
+.password-edit {
+  display: flex;
+  .password-checkbox {
+    width: 215px;
+  }
+}
+.radio.MuiFormGroup-root {
+  flex-direction: row;
+}
+
+.customer {
+  font-size: $font-normal;
+  color: #4d4cac;
+  width: 130px;
+  height: 30px;
+  border-radius: 18px;
+  background: #ededf7;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+.supplier {
+  font-size: $font-normal;
+  justify-content: center;
+  color: #f9b571;
+  width: 130px;
+  height: 30px;
+  border-radius: 18px;
+  background: #fff8f0;
+  display: inline-flex;
+  align-items: center;
+}
+.contractor {
+  font-size: $font-normal;
+  justify-content: center;
+  color: #44c4a1;
+  width: 130px;
+  height: 30px;
+  border-radius: 18px;
+  background: #ecf9f5;
+  display: inline-flex;
+  align-items: center;
+}
+.split {
+  .filter-section .MuiTextField-root {
+    width: 100%;
+  }
+
+  .detail-section {
+    .detail-item * {
+      font-size: 14px !important;
+    }
+    .contact-name {
+      color: #5e81f4;
+      padding: 0 40px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .Mui-selected {
+      color: #44c4a1;
+    }
+    .PrivateTabIndicator-colorPrimary-239 {
+      background-color: #44c4a1;
+    }
+    .MuiTab-wrapper {
+      font-weight: normal;
+      font-size: $font-normal;
+      line-height: 22px;
+      text-align: left;
+    }
+  }
+}
+.history {
+  border-radius: 7px;
+  background: transparent;
+  border: 2px solid #f4f5f5;
+  padding: 0 20px;
+  .history-details {
+    border-bottom: 1px solid #a2a2c3;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  &:last-child {
+    border-bottom: none;
+  }
+}
+.filter-mobile-contact {
+  display: flex;
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+  }
+  @media screen and (max-width: 425px) {
+    flex-direction: column;
+  }
+  .filter-item {
+    width: 100%;
+    .MuiInputBase-root {
+      width: 100%;
+    }
+    &:first-child {
+      margin-right: 20px;
+    }
+  }
+}
+
+@media screen and (max-width: 600px) {
+  table {
+    border: 0;
+  }
+
+  table caption {
+    font-size: 1.3em;
+  }
+  
+  table thead {
+    border: none;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+  }
+  
+  table tr {
+    border-bottom: 3px solid #ddd;
+    display: block;
+    margin-bottom: .625em;
+  }
+  
+  table td {
+    border-bottom: 1px solid #ddd;
+    display: block;
+    font-size: .8em;
+    text-align: right;
+  }
+  
+  table td::before {
+    /*
+    * aria-label has no advantage, it won't be read inside a table
+    content: attr(aria-label);
+    */
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  table td:last-child {
+    border-bottom: 0;
+  }
+
+  .warehouse-cell {
+    display: flex;
+    align-items: center;
+  }
+  
+  .expand-icon {
+    margin-right: 8px; /* Adjust margin as needed */
+  }
+  
+  .empty-icon-placeholder {
+    width: 24px; /* Same width as the icon */
+    height: 24px; /* Same height as the icon */
+    display: inline-block;
+  }
+  .accordion-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: #007bff;
+  }
+  
+  .accordion-icon {
+    margin-right: 8px;
+    font-size: 20px;
+  }
+  
+  .expandable-button {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .empty-icon-placeholder {
+    width: 24px; /* Same width as the icon */
+    height: 24px; /* Same height as the icon */
+    display: inline-block;
+  }
+  
+}

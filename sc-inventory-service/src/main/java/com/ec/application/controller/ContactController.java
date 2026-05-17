@@ -2,8 +2,18 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
+import com.ec.application.config.SchemaConfig;
+import com.ec.application.data.ContactExportDAO;
+import com.ec.application.multitenant.ThreadLocalStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Direction;
@@ -34,9 +44,15 @@ public class ContactController {
     @Autowired
     ContactService contactInfoService;
 
+    @Autowired
+    SchemaConfig schemaConfig;
+
+    Logger log = LoggerFactory.getLogger(ContactController.class);
+
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     public Contact createCategory(@RequestBody Contact payload) throws Exception {
         return contactInfoService.createContact(payload);
     }
@@ -73,8 +89,27 @@ public class ContactController {
         return apiError;
     }
 
+    @PostMapping(value = "/export/excel", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<StreamingResponseBody> exportContactsExcel(@RequestBody(required = false) FilterDataList filterDataList) {
+        String tenant = schemaConfig.getMasterSchema();
+        StreamingResponseBody stream = outputStream -> {
+            try {
+                ThreadLocalStorage.setTenantName(tenant);
+                contactInfoService.streamContactExcel(filterDataList, outputStream);
+            } catch (Exception e) {
+                log.error("Contact Excel export failed", e);
+            } finally {
+                ThreadLocalStorage.setTenantName(null);
+            }
+        };
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=contacts-export.xlsx")
+                .body(stream);
+    }
+
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     public ResponseEntity<?> deleteContact(@PathVariable Long id) throws Exception {
         contactInfoService.deleteContact(id);
         return ResponseEntity.ok("Contact Deleted sucessfully.");
@@ -82,6 +117,7 @@ public class ContactController {
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     public Contact updateContact(@PathVariable Long id, @RequestBody Contact payload) throws Exception {
         return contactInfoService.updateContact(id, payload);
     }

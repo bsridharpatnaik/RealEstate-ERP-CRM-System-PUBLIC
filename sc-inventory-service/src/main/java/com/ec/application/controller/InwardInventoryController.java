@@ -2,7 +2,9 @@ package com.ec.application.controller;
 
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +51,7 @@ public class InwardInventoryController {
 
     @PostMapping("/create/from-po")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     @ResponseStatus(HttpStatus.CREATED)
     public InwardInventory createInwardInventory(@RequestBody InwardFromPODTO payload) throws Exception {
         return iiService.createInwardnventory(payload);
@@ -82,6 +85,7 @@ public class InwardInventoryController {
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     public InwardInventory setRejectInwardInventory(@PathVariable Long id,
                                                     @RequestBody ReturnRejectInwardOutwardData rd) throws Exception {
         return iiService.addRejectInwardEntry(rd, id);
@@ -94,6 +98,7 @@ public class InwardInventoryController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     public ResponseEntity<?> deleteInwardInventoryById(@PathVariable Long id) throws Exception {
 
         iiService.deleteInwardInventoryById(id);
@@ -103,6 +108,7 @@ public class InwardInventoryController {
 
     @PostMapping("/create")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     @ResponseStatus(HttpStatus.CREATED)
     public InwardInventory createInwardInventory(@RequestBody InwardInventoryData payload) throws Exception {
 
@@ -111,6 +117,7 @@ public class InwardInventoryController {
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     public InwardInventory updateInwardInventoryById(@PathVariable long id, @RequestBody InwardInventoryUpdateData payload)
             throws Exception {
         return iiService.updateInwardInventory(id, payload);

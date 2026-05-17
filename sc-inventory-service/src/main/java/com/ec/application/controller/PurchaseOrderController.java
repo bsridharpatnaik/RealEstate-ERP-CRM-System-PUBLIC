@@ -13,6 +13,8 @@ import com.ec.application.model.IndentStatusHistory;
 import com.ec.application.model.PurchaseOrder;
 import com.ec.application.model.PurchaseOrderStatusHistory;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.repository.IndentInventoryRepo;
+import com.ec.application.repository.PurchaseOrderIndentRefRepository;
 import com.ec.application.service.PriorityComputeService;
 import com.ec.application.service.PurchaseOrderPdfService;
 import com.ec.application.service.PurchaseOrderService;
@@ -33,8 +35,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/purchase-order")
@@ -47,6 +54,8 @@ public class PurchaseOrderController {
     private final SchemaConfig schemaConfig;
     private final PurchaseOrderPdfService purchaseOrderPdfService;
     private final PriorityComputeService priorityComputeService;
+    private final PurchaseOrderIndentRefRepository purchaseOrderIndentRefRepository;
+    private final IndentInventoryRepo indentInventoryRepo;
 
 
     private static final Logger log =
@@ -54,7 +63,7 @@ public class PurchaseOrderController {
 
     @PostMapping("/create")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     @ResponseStatus(HttpStatus.CREATED)
     public PurchaseOrder createPurchaseOrder(@RequestBody CreatePoRequest payload) throws Exception {
         return purchaseOrderService.createPurchaseOrder(payload);
@@ -71,9 +80,16 @@ public class PurchaseOrderController {
         return purchaseOrderService.getPurchaseOrderWithInit(id);
     }
 
+    @PutMapping("/{id}")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder updatePurchaseOrder(@PathVariable String id, @RequestBody UpdatePoRequest payload) throws Exception {
+        return purchaseOrderService.updatePurchaseOrder(id, payload);
+    }
+
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public ResponseEntity<?> cancelPurchaseOrderById(@PathVariable String id) throws Exception {
         purchaseOrderService.cancelPurchaseOrderById(id);
         return ResponseEntity.ok("Entity deleted");
@@ -127,10 +143,46 @@ public class PurchaseOrderController {
                 .body(stream);
     }
 
+    @GetMapping("/{id}/indents")
+    public List<IndentInventory> getIndentsForPo(@PathVariable String id) {
+        return getPoFilteredIndents(id);
+    }
+
+    /**
+     * Fetches all indents linked to the given PO and trims each indent's
+     * inventoryList to only the line items that are actually part of this PO
+     * (matched via PurchaseOrderIndentRef.indentLineItemCode).
+     */
+    private List<IndentInventory> getPoFilteredIndents(String poId) {
+        List<String> indentIds = purchaseOrderIndentRefRepository.findDistinctIndentNosByPoId(poId);
+        if (indentIds.isEmpty()) return Collections.emptyList();
+
+        List<IndentInventory> indents = indentInventoryRepo.findWithDetailsByIndentIdIn(indentIds);
+
+        // Build a map: indentNo → Set of line-item codes that belong to this PO
+        Map<String, Set<String>> allowedByIndent = new HashMap<>();
+        purchaseOrderIndentRefRepository.findByPurchaseOrderIdIn(Collections.singletonList(poId))
+                .forEach(ref -> allowedByIndent
+                        .computeIfAbsent(ref.getIndentNo(), k -> new HashSet<>())
+                        .add(ref.getIndentLineItemCode()));
+
+        // Filter each indent's inventoryList to only PO-linked items
+        indents.forEach(indent -> {
+            Set<String> allowed = allowedByIndent.getOrDefault(indent.getIndentId(), Collections.emptySet());
+            Set<com.ec.application.model.IndentInventoryList> filtered = indent.getInventoryList().stream()
+                    .filter(item -> allowed.contains(item.getLineItemCode()))
+                    .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+            indent.setInventoryList(filtered);
+        });
+
+        return indents;
+    }
+
     @GetMapping(value = "/print-po/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<StreamingResponseBody> printPOAsPdf(
             @PathVariable String id,
-            @RequestParam(value = "hideMoneyFields", required = false, defaultValue = "false") boolean hideMoneyFields
+            @RequestParam(value = "hideMoneyFields", required = false, defaultValue = "false") boolean hideMoneyFields,
+            @RequestParam(value = "includeIndents", required = false, defaultValue = "false") boolean includeIndents
     ) {
         String tenant = schemaConfig.getMasterSchema();
         PurchaseOrder po;
@@ -141,12 +193,22 @@ public class PurchaseOrderController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
+        List<IndentInventory> indents = Collections.emptyList();
+        if (includeIndents) {
+            try {
+                indents = getPoFilteredIndents(id);
+            } catch (Exception e) {
+                log.warn("Failed to fetch indents for PO {}: {}", id, e.getMessage());
+            }
+        }
+
+        final List<IndentInventory> indentsForPrint = indents;
         String filename = po.getPurchaseOrderId() + ".pdf";
 
         StreamingResponseBody stream = outputStream -> {
             try {
                 ThreadLocalStorage.setTenantName(tenant != null ? tenant : "masterschema");
-                purchaseOrderPdfService.generatePdf(po, outputStream, hideMoneyFields);
+                purchaseOrderPdfService.generatePdf(po, outputStream, hideMoneyFields, indentsForPrint);
                 outputStream.flush();
             } catch (DocumentException e) {
                 log.error("iText PDF generation failed for PO ", e);
@@ -168,15 +230,20 @@ public class PurchaseOrderController {
     /**
      * Manually triggers PO priority recomputation.
      * POs live in the master schema — @UseDefaultTenant on this class sets the correct schema context.
-     * Accessible only to ADMIN and INVENTORY_MANAGER roles.
+     * Accessible only to ADMIN and PURCHASE_MANAGER roles.
      */
     @PostMapping("/po-prioritize")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public ResponseEntity<String> triggerPoPrioritization() {
         log.info("Manual PO priority recompute triggered");
         priorityComputeService.recomputeAllPriorities();
         return ResponseEntity.ok("PO prioritization completed successfully");
+    }
+
+    @GetMapping("/project-list")
+    public List<String> getProjectList() {
+        return schemaConfig.getNonMasterSchemaList();
     }
 
     @ExceptionHandler({JpaSystemException.class})

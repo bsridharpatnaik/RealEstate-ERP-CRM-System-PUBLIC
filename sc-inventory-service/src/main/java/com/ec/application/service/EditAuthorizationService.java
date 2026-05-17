@@ -29,6 +29,14 @@ public class EditAuthorizationService {
         validateDate(entityDate, "Cannot delete inward inventory created more than ");
     }
 
+    public void validateRejectReturnDate(Date entityDate) throws Exception {
+        Long allowedDays = projectConstantsService.getRejectReturnDaysForCurrentUser();
+        long diff = ReusableMethods.daysBetweenTwoDates(entityDate, new Date());
+        if (diff > allowedDays) {
+            throw new IllegalStateException("Cannot add reject/return for record older than " + allowedDays + " days.");
+        }
+    }
+
     // -------------------------
     // Common internal method
     // -------------------------

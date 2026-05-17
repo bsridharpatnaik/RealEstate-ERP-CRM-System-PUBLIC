@@ -1,0 +1,32 @@
+.home {
+  display: flex;
+  background-color: #f8f8f8;
+  min-height: 100vh;
+  @media screen and (max-width: 768px) {
+    display: block;
+    min-height: auto;
+  }
+  @media screen and (max-width: 425px) {
+    display: block;
+    min-height: auto;
+  }
+  main {
+    width: 100%;
+  }
+  .mobile-header {
+    display: none;
+    padding: 5px 15px;
+    background-color: #323c47;
+    align-items: center;
+    justify-content: space-between;
+    .MuiIconButton-root {
+      color: #fff;
+    }
+    @media screen and (max-width: 768px) {
+      display: flex;
+    }
+    @media screen and (max-width: 425px) {
+      display: flex;
+    }
+  }
+}

@@ -142,6 +142,17 @@ public class InwardInventoryService {
         li.setMeasurementUnit(v.getMeasurementUnit());
         li.setOrderedQuantity(v.getQuantity());
         li.setRemarks(v.getRemarks());
+        li.setSpecification(v.getSpecification());
+        double tolerancePct    = v.getTolerancePercent() != null ? v.getTolerancePercent() : 0.0;
+        double indentQty       = v.getQuantity() != null ? v.getQuantity() : 0.0;
+        double alreadyInwarded = v.getTotalInwardQuantity() != null ? v.getTotalInwardQuantity() : 0.0;
+        double pendingQty      = Math.max(indentQty - alreadyInwarded, 0.0);
+        // maxAllowed = pending qty + tolerance buffer (based on original ordered qty)
+        double maxAllowed      = pendingQty + (indentQty * tolerancePct / 100.0);
+        li.setTolerancePercent(tolerancePct);
+        li.setTotalInwardQuantity(alreadyInwarded);
+        li.setPendingQuantity(pendingQty);
+        li.setMaxAllowedQuantity(maxAllowed);
         return li;
     }
 
@@ -155,6 +166,11 @@ public class InwardInventoryService {
 
         if (pendingItemsForInward.isEmpty()) {
             throw new IllegalArgumentException("No pending inward items found for the provided Purchase Order Number - " + iiData.getPoNumber());
+        }
+
+        Date poDate = pendingItemsForInward.get(0).getPoDate();
+        if (poDate != null && iiData.getInwardDate().before(poDate)) {
+            throw new IllegalArgumentException("Inward date cannot be earlier than the PO date (" + new java.text.SimpleDateFormat("dd-MM-yyyy").format(poDate) + ").");
         }
 
         validateInputsFromPO(iiData, pendingItemsForInward);
@@ -193,6 +209,14 @@ public class InwardInventoryService {
         Map<String, Double> oldQuantityMap = new HashMap<>();
         for (InwardOutwardList io : inward.getInwardOutwardList()) {
             oldQuantityMap.put(io.getLineItemCode(), io.getQuantity());
+        }
+
+        if (data.getInwardDate() != null) {
+            if (Boolean.TRUE.equals(inward.getCreatedFromPO()) && inward.getPurchaseOrderDate() != null
+                    && data.getInwardDate().before(inward.getPurchaseOrderDate())) {
+                throw new IllegalArgumentException("Inward date cannot be earlier than the PO date (" + new java.text.SimpleDateFormat("dd-MM-yyyy").format(inward.getPurchaseOrderDate()) + ").");
+            }
+            inward.setDate(data.getInwardDate());
         }
 
         inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());
@@ -237,17 +261,22 @@ public class InwardInventoryService {
 
                     if (!lineItemDetails.isEmpty()) {
                         IndentsForInwardView view = lineItemDetails.get(0);
-                        double indentQty = view.getQuantity();
+                        double indentQty       = view.getQuantity()          != null ? view.getQuantity()          : 0.0;
+                        double tolerancePct    = view.getTolerancePercent()  != null ? view.getTolerancePercent()  : 0.0;
+                        // Option B: tolerance budget is per-indent — indentQty × (1 + tolerance%)
+                        double maxAllowed      = indentQty * (1 + tolerancePct / 100.0);
                         double alreadyInwarded = view.getTotalInwardQuantity(); // includes THIS inward
                         // Subtract this inward's old qty because the view already counts it,
                         // then add the new qty to check the resulting total
-                        double allowedQty = indentQty - alreadyInwarded + oldQty;
+                        double allowedQty = maxAllowed - alreadyInwarded + oldQty;
 
                         if (newQty > allowedQty) {
                             throw new IllegalArgumentException(
-                                    "Quantity for line item " + lineItemCode +
-                                            " exceeds indent quantity. Allowed: " + allowedQty +
-                                            ", Requested: " + newQty
+                                    "Quantity for '" + view.getProductName() + "' (Line: " + lineItemCode + ")" +
+                                    " exceeds allowed limit. Indent Qty: " + indentQty +
+                                    ", Tolerance: " + tolerancePct + "%" +
+                                    ", Max Allowed: " + allowedQty +
+                                    ", Requested: " + newQty
                             );
                         }
                     }
@@ -359,6 +388,8 @@ public class InwardInventoryService {
             inwardOutwardList.setQuantity(lineItem.getQuantityReceived());
             inwardOutwardList.setWarehouse(warehouseRepo.findById(lineItem.getWarehouseId()).get());
             inwardOutwardList.setLineItemCode(row.getLineItemCode());
+            inwardOutwardList.setIndentRemarks(row.getRemarks());
+            inwardOutwardList.setIndentSpecification(row.getSpecification());
             inwardOutwardListSet.add(inwardOutwardList);
         }
         return inwardOutwardListSet;
@@ -380,21 +411,30 @@ public class InwardInventoryService {
                 throw new IllegalArgumentException("Quantity received should be greater than zero for line item code: " + lineItem.getLineItemCode());
             }
 
-            Double poQuantity = pendingItemsForInward.stream()
+            IndentsForInwardView matchedView = pendingItemsForInward.stream()
                     .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
-                    .mapToDouble(IndentsForInwardView::getQuantity)
-                    .sum();
+                    .findFirst()
+                    .orElse(null);
 
-            Double inwardQuantity = pendingItemsForInward.stream()
+            double indentQty     = matchedView != null && matchedView.getQuantity()          != null ? matchedView.getQuantity()          : 0.0;
+            double tolerancePct  = matchedView != null && matchedView.getTolerancePercent()  != null ? matchedView.getTolerancePercent()  : 0.0;
+            double alreadyInwarded = pendingItemsForInward.stream()
                     .filter(e -> e.getLineItemCode().equalsIgnoreCase(lineItem.getLineItemCode()))
                     .mapToDouble(IndentsForInwardView::getTotalInwardQuantity)
                     .sum();
 
-            double allowedQuantity = poQuantity - inwardQuantity;
+            double maxAllowed    = indentQty * (1 + tolerancePct / 100.0);
+            double allowedQuantity = maxAllowed - alreadyInwarded;
 
             if (lineItem.getQuantityReceived() > allowedQuantity) {
-                throw new IllegalArgumentException("Quantity received for line item code " + lineItem.getLineItemCode() +
-                        " exceeds the allowed quantity for inward. Allowed quantity: " + allowedQuantity);
+                String productName = matchedView != null ? matchedView.getProductName() : lineItem.getLineItemCode();
+                throw new IllegalArgumentException(
+                        "Quantity received for '" + productName + "' (Line: " + lineItem.getLineItemCode() + ")" +
+                        " exceeds allowed limit." +
+                        " Indent Qty: " + indentQty +
+                        (tolerancePct > 0 ? ", Tolerance: " + tolerancePct + "%, Max Allowed: " + allowedQuantity : ", Max Allowed: " + allowedQuantity) +
+                        ", Requested: " + lineItem.getQuantityReceived()
+                );
             }
 
             if (!validLineItemCodes.contains(lineItem.getLineItemCode()))
@@ -519,7 +559,7 @@ public class InwardInventoryService {
                         new Exception("Inward Inventory not found with id=" + inwardId)
                 );
 
-        editAuthorizationService.validateUpdateDates(ii.getDate(), ii.getDate());
+        editAuthorizationService.validateRejectReturnDate(ii.getDate());
 
         // ------------------------------------------------
         // Capture old quantities for async delta sync
@@ -795,7 +835,8 @@ public class InwardInventoryService {
 
         InwardInventory inwardInventory = inwardInventoryOpt.get();
         editAuthorizationService.validateDeleteDate(inwardInventory.getDate());
-        if (purchaseOrderShortClosedViewRepo.existsById(inwardInventory.getPurchaseOrderNo())) {
+        if (inwardInventory.getPurchaseOrderNo() != null &&
+                purchaseOrderShortClosedViewRepo.existsById(inwardInventory.getPurchaseOrderNo())) {
             throw new Exception("Cannot delete inward inventory linked to a short closed purchase order.");
         }
 

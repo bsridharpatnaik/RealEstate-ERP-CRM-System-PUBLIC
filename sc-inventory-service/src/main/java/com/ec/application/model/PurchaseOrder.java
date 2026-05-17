@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.persistence.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import com.ec.application.Deserializers.ActiveIndentInventoryListSerializer;
@@ -70,14 +71,35 @@ public class PurchaseOrder extends ReusableFields {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double grandTotal;
 
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double freightCharges;
+
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double freightGstPercent;
+
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double totalFreightCharges;
+
     private String shortCloseReason;
 
-    @Column(name="notes", length = 2000)
+    @Lob
+    @Column(name="notes", columnDefinition = "TEXT")
     private String notes;
 
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("purchaseOrder")
+    @OrderBy("id ASC")
     private Set<PurchaseOrderLine> lines = new HashSet<>();
+
+    @OneToMany(
+            mappedBy = "purchaseOrder",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.EAGER
+    )
+    @JsonIgnoreProperties("purchaseOrder")
+    @OrderBy("id ASC")
+    private List<PurchaseOrderCustomCharge> customCharges = new ArrayList<>();
 
     @Column(name = "is_special_po", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean specialPo = false;
@@ -110,6 +132,9 @@ public class PurchaseOrder extends ReusableFields {
 
     @Column(name = "override_email", length = 100)
     private String overrideEmail;
+
+    @Column(name = "project_name", length = 100)
+    private String projectName;
 
     /** Nightly-computed priority: CRITICAL, HIGH, MEDIUM, NORMAL (null = no expected date set). */
     @Column(name = "priority", length = 20)

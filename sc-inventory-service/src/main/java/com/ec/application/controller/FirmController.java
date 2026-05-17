@@ -39,14 +39,14 @@ public class FirmController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     @CheckAuthority
     public Firm createFirm(@RequestBody Firm payload) throws Exception {
         return firmService.createFirm(payload);
     }
 
     @PutMapping("/{id}")
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.INVENTORY_MANAGER})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     @CheckAuthority
     public Firm updateFirm(@PathVariable Long id, @RequestBody Firm Firm) throws Exception {
         return firmService.updateFirm(id, Firm);

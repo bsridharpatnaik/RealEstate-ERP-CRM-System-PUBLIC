@@ -1,0 +1,21 @@
+{
+  "name": "Mahavir Group",
+  "short_name": "Mahavir Group",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "description": "ERP & CRM system for Mahavir Group, India",
+  "icons": [
+    {
+      "src": "sc-login-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "sc-login-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

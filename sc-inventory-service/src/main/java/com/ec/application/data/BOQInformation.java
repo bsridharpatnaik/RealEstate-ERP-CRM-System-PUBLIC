@@ -7,6 +7,11 @@ import lombok.Data;
 @Data
 public class BOQInformation {
 
-	 Page<BOQStatusDto> boqstatusDto; 
-	 
+	 Page<BOQStatusDto> boqstatusDto;
+	 long totalCount;
+	 long onTrackCount;
+	 long atRiskCount;
+	 long exceededCount;
+	 long uniqueProductCount;
+
 }

@@ -24,13 +24,17 @@ public class CreatePoRequest {
     private Long firmId;
     @JsonDeserialize(using= ToSentenceCaseDeserializer.class)
     private String subject;
-    @JsonDeserialize(using= ToSentenceCaseDeserializer.class)
     private String notes;
     private Double grandTotal;
+    private Double freightCharges;
+    private Double freightGstPercent;
+    private Double totalFreightCharges;
     @Column(length = 35)
     private String overridePhoneNumber;
     private String overrideEmail;
     private boolean specialPo = false;
+    private String projectName;
+    private List<CustomChargeRequest> customCharges;
     /** One entry = one PO line */
     private List<CreatePoLineRequest> lineItems;
     @NonNull

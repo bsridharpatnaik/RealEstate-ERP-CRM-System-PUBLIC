@@ -7,6 +7,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+
 import com.ec.application.ReusableClasses.*;
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.data.*;
@@ -277,6 +282,35 @@ public class StockService {
         return dto;
     }
 
+    public List<AllProductsStockSummaryDTO> fetchAllProductsStockSummary() {
+        List<Stock> allStocks = stockRepo.findAllActiveStockExcludingDeadStockWarehouse();
+        Map<Long, AllProductsStockSummaryDTO> productMap = new LinkedHashMap<>();
+
+        for (Stock stock : allStocks) {
+            double qty = stock.getQuantityInHand() == null ? 0.0 : stock.getQuantityInHand();
+            if (qty <= 0) continue;
+
+            Long productId = stock.getProduct().getProductId();
+            productMap.computeIfAbsent(productId, id -> {
+                AllProductsStockSummaryDTO dto = new AllProductsStockSummaryDTO();
+                dto.setProductId(productId);
+                dto.setProductName(stock.getProduct().getProductName());
+                dto.setMeasurementUnit(stock.getProduct().getMeasurementUnit());
+                dto.setWarehouseStocks(new ArrayList<>());
+                return dto;
+            });
+
+            productMap.get(productId).getWarehouseStocks().add(
+                new AllProductsStockSummaryDTO.WarehouseStockEntry(
+                    stock.getWarehouse().getWarehouseId(),
+                    stock.getWarehouse().getWarehouseName(),
+                    round2(qty)
+                )
+            );
+        }
+        return new ArrayList<>(productMap.values());
+    }
+
     private double round2(Double value) {
         if (value == null) return 0.0;
         return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
@@ -482,6 +516,69 @@ public class StockService {
                 }
             }
             return (List<T>) exportData;
+        }
+    }
+
+    private String safe(Object val) {
+        return val != null ? val.toString() : "";
+    }
+
+    public void streamStockExcel(FilterDataList filterDataList, HttpServletResponse response) throws Exception {
+        log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+        StockInformationV2 stockData = fetchStockInformation(
+                PageRequest.of(0, Integer.MAX_VALUE), filterDataList);
+
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"stock-export.xlsx\"");
+
+        try (SXSSFWorkbook wb = new SXSSFWorkbook(100)) {
+            Sheet sheet = wb.createSheet("Stock");
+
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            String[] headers = {
+                "Product Name", "Product Code", "Category",
+                "Total Stock", "Warehouse", "Warehouse Stock",
+                "Unit", "Reorder Quantity", "Stock Status", "Last Inward Date"
+            };
+            Row headerRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowIdx = 1;
+            for (StockInformationDTO dto : stockData.getStockInformation()) {
+                for (SingleStockInformationDTO sInfo : dto.getDetailedStock()) {
+                    Row row = sheet.createRow(rowIdx++);
+                    row.createCell(0).setCellValue(safe(dto.getProductName()));
+                    row.createCell(1).setCellValue(safe(dto.getProductCode()));
+                    row.createCell(2).setCellValue(safe(dto.getCategoryName()));
+                    if (dto.getTotalQuantityInHand() != null)
+                        row.createCell(3).setCellValue(dto.getTotalQuantityInHand());
+                    else row.createCell(3).setCellValue("");
+                    row.createCell(4).setCellValue(safe(sInfo.getWarehouseName()));
+                    if (sInfo.getQuantityInHand() != null)
+                        row.createCell(5).setCellValue(sInfo.getQuantityInHand());
+                    else row.createCell(5).setCellValue("");
+                    row.createCell(6).setCellValue(safe(dto.getMeasurementUnit()));
+                    if (dto.getReorderQuantity() != null)
+                        row.createCell(7).setCellValue(dto.getReorderQuantity());
+                    else row.createCell(7).setCellValue("");
+                    row.createCell(8).setCellValue(safe(dto.getStockStatus()));
+                    row.createCell(9).setCellValue(safe(dto.getLastInwardDate()));
+                }
+            }
+
+            wb.write(response.getOutputStream());
+            wb.dispose();
         }
     }
 

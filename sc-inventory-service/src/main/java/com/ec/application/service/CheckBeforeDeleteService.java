@@ -46,14 +46,21 @@ public class CheckBeforeDeleteService {
     BOQInventoryMappingRepo bimRepo;
 
     @Autowired
+    BOQUploadRepository boqUploadRepository;
+
+    @Autowired
     InventoryMonthPriceMappingRepository inventoryMonthPriceMappingRepository;
+
+    @Autowired
+    PurchaseOrderRepo purchaseOrderRepo;
 
     Logger log = LoggerFactory.getLogger(ContactService.class);
 
     public boolean isContactUsed(Long contactId) throws Exception {
         if (outwardInventoryRepo.contractorUsageCount(contactId) > 0
                 || machineryOnRentRepo.supplierUsageCount(contactId) > 0
-                || inwardInventoryRepo.supplierUsageCount(contactId) > 0)
+                || inwardInventoryRepo.supplierUsageCount(contactId) > 0
+                || purchaseOrderRepo.supplierUsageCount(contactId) > 0)
             return true;
         else
             return false;
@@ -98,7 +105,8 @@ public class CheckBeforeDeleteService {
     public boolean isLocationUsed(Long locationId) throws Exception {
         if (machineryOnRentRepo.locationUsageCount(locationId) > 0
                 || outwardInventoryRepo.locationUsageCount(locationId) > 0
-                || bimRepo.locationUsageCount(locationId) > 0)
+                || bimRepo.locationUsageCount(locationId) > 0
+                || boqUploadRepository.locationBoqCount(locationId) > 0)
             return true;
         else
             return false;
@@ -115,14 +123,16 @@ public class CheckBeforeDeleteService {
     }
 
     public boolean isUsageAreaUsed(Long id) {
-        if (outwardInventoryRepo.usageAreaUsageCount(id) > 0)
+        if (outwardInventoryRepo.usageAreaUsageCount(id) > 0 || boqUploadRepository.usageAreaBoqCount(id) > 0)
             return true;
         else
             return false;
     }
 
     public boolean isSupplierUsed(Long id) {
-        if (inwardInventoryRepo.supplierUsageCount(id) > 0 || machineryOnRentRepo.supplierUsageCount(id) > 0)
+        if (inwardInventoryRepo.supplierUsageCount(id) > 0
+                || machineryOnRentRepo.supplierUsageCount(id) > 0
+                || purchaseOrderRepo.supplierUsageCount(id) > 0)
             return true;
         else
             return false;

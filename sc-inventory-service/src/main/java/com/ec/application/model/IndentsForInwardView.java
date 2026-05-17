@@ -70,6 +70,9 @@ public class IndentsForInwardView {
     @Column(name = "remarks")
     private String remarks;
 
+    @Column(name = "specification")
+    private String specification;
+
     // ---------- Product ----------
     @Column(name = "product_name")
     private String productName;
@@ -107,4 +110,11 @@ public class IndentsForInwardView {
     // ---------- Inward Aggregation ----------
     @Column(name = "total_inward_quantity")
     private Double totalInwardQuantity;
+
+    // ---------- PO Line Tolerance ----------
+    @Column(name = "poLineQuantity")
+    private Double poLineQuantity;
+
+    @Column(name = "tolerancePercent")
+    private Double tolerancePercent;
 }

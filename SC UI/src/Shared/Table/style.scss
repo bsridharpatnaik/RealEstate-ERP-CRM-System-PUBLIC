@@ -1,0 +1,53 @@
+@import "./../../scss//variables.scss";
+table {
+  min-width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+  .MuiIconButton-root {
+    padding: 4px;
+  }
+  th,
+  td {
+    font-weight: bold;
+    font-size: 14px;
+    text-align: left;
+    color: #a2a2c3;
+    height: 32px;
+    padding: 0 4px;
+    color: #323c47;
+    white-space: nowrap;
+  }
+  .sortable {
+    span {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+  }
+  tr {
+    border-bottom: 1px solid #a2a2c3;
+  }
+  tr.last,
+  tr.expand {
+    border: none;
+  }
+  .expand-icon {
+    display: flex;
+    align-items: center;
+  }
+  td {
+    color: #323c47;
+    font-weight: normal;
+  }
+  .action-delete,
+  .action-edit {
+    width: 36px;
+    .MuiSvgIcon-root {
+      width: 1.2em;
+      height: 1.2em;
+    }
+  }
+  .action {
+    text-align: center;
+  }
+}

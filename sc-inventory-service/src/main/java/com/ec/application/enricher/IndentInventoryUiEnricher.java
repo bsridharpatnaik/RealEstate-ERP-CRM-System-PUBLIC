@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class IndentInventoryUiEnricher {
@@ -21,10 +23,20 @@ public class IndentInventoryUiEnricher {
 
         // Approval flag
         try {
-            boolean allowed = userDetailsService.isAdminOrManager() && IndentStatusConstants.STATUS_NEW.equals(indent.getIndentStatus());
+            boolean allowed = userDetailsService.canApproveRejectCancelIndent() && IndentStatusConstants.STATUS_NEW.equals(indent.getIndentStatus());
             indent.setApprovalAllowed(allowed);
         } catch (Exception e) {
             indent.setApprovalAllowed(false);
+        }
+
+        // Collect unique PO numbers from line items
+        if (indent.getInventoryList() != null) {
+            List<String> poNums = indent.getInventoryList().stream()
+                    .filter(li -> li != null && !li.isDeleted() && li.getPurchaseOrderId() != null)
+                    .map(IndentInventoryList::getPurchaseOrderId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            indent.setPoNumbers(poNums);
         }
 
         // Compute effective needByDate = minimum across all active line item dates

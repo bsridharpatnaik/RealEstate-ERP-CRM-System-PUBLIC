@@ -13,7 +13,8 @@ public interface PurchaseOrderLineRepository
         extends JpaRepository<PurchaseOrderLine, Long> {
 
     @Query(
-            "SELECT po.purchaseOrderId, po.poDate, s.name, pol.quantity, pol.rate " +
+            "SELECT po.purchaseOrderId, po.poDate, s.name, pol.quantity, pol.rate, " +
+                    "pol.discountPercent, pol.gstPercent, pol.netRate " +
                     "FROM PurchaseOrderLine pol " +
                     "JOIN pol.purchaseOrder po " +
                     "JOIN po.supplier s " +

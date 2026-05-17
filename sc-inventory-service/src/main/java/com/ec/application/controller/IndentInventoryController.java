@@ -3,10 +3,15 @@ package com.ec.application.controller;
 import java.util.List;
 import java.util.Map;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.*;
+import com.ec.application.repository.IndentInventoryRepo;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import com.ec.application.model.IndentInventory;
 import com.ec.application.model.IndentStatusHistory;
 import com.ec.application.multitenant.ThreadLocalStorage;
@@ -40,6 +45,9 @@ public class IndentInventoryController {
     IndentInventoryService iiService;
 
     @Autowired
+    IndentInventoryRepo indentInventoryRepo;
+
+    @Autowired
     SchemaConfig schemaConfig;
 
     @Autowired
@@ -47,8 +55,15 @@ public class IndentInventoryController {
 
     Logger log = LoggerFactory.getLogger(IndentInventoryController.class);
 
+    @GetMapping("/for-dropdown")
+    public List<IndentForDropdownDTO> getIndentsForDropdown() {
+        return indentInventoryRepo.findForDropdown(
+            PageRequest.of(0, 1000, Sort.by(Sort.Direction.DESC, "indentDate")));
+    }
+
     @PostMapping("/create")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.STORE_INCHARGE})
     @ResponseStatus(HttpStatus.CREATED)
     public IndentInventory createInwardInventory(@RequestBody IndentInventoryData payload) throws Exception {
         return iiService.createIndentInventory(payload);
@@ -69,7 +84,7 @@ public class IndentInventoryController {
     }
 
     @DeleteMapping(value = "/{id}")
-    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER, RoleConstants.STORE_INCHARGE})
     public ResponseEntity<?> deleteIndentInventoryById(
             @PathVariable String id,
             @RequestBody(required = false) Map<String, String> body) throws Exception {
@@ -80,6 +95,7 @@ public class IndentInventoryController {
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER, RoleConstants.STORE_INCHARGE})
     public IndentInventory updateIndentInventoryById(@PathVariable String id, @RequestBody IndentInventoryData payload)
             throws Exception {
         return iiService.updateIndentInventory(payload, id);
@@ -99,6 +115,7 @@ public class IndentInventoryController {
     }
 
     @PatchMapping("/{indentId}/approve")
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER})
     public ResponseEntity<?> approveIndent(@PathVariable String indentId) {
         try {
             IndentInventory result = iiService.approveIndentInventory(indentId);

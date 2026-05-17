@@ -40,6 +40,17 @@ INSERT INTO `common`.`tenant`
 VALUES
 ('iseries', 0, 1, 'I-SERIES/SCHOOL');
 
+INSERT INTO `common`.`tenant`
+(`name`,
+`is_crm`,
+`is_inventory`,
+`tenant_long_name`)
+VALUES
+('dextension',
+0,
+1,
+"D Extension");
+
 INSERT INTO `common`.`user_role`
 (`user_id`,
 `role_name`)

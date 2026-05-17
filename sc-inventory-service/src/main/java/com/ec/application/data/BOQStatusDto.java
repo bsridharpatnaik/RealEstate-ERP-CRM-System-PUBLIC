@@ -14,4 +14,8 @@ public class BOQStatusDto {
 	private String buildingUnit;
 	private List<BOQStatusDetailsDto> boqDetails;
 	private Double status;
+	private String statusBucket;
+	private Long buildingTypeId;
+	private Long buildingUnitId;
+	private String buildingType;
 }

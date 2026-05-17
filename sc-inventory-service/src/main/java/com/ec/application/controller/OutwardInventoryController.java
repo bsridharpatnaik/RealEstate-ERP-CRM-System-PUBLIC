@@ -3,7 +3,9 @@ package com.ec.application.controller;
 import java.text.ParseException;
 import java.util.List;
 
+import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +41,7 @@ public class OutwardInventoryController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     public OutwardInventory createOutwardInventory(@RequestBody OutwardInventoryData payload) throws Exception {
         return oiService.createOutwardnventory(payload);
     }
@@ -51,6 +54,7 @@ public class OutwardInventoryController {
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     public OutwardInventory setReturnOutwardInventory(@PathVariable Long id,
                                                       @RequestBody ReturnRejectInwardOutwardData rd, @RequestParam String type) throws Exception {
         if (type == null)
@@ -85,6 +89,7 @@ public class OutwardInventoryController {
 
     @DeleteMapping(value = "/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     public ResponseEntity<?> deleteOutwardInventoryById(@PathVariable Long id) throws Exception {
 
         oiService.deleteOutwardInventoryById(id);
@@ -93,6 +98,7 @@ public class OutwardInventoryController {
 
     @PutMapping("/{id}")
     @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.STORE_INCHARGE})
     public OutwardInventory updateOutwardInventory(@RequestBody OutwardInventoryData payload, @PathVariable Long id)
             throws Exception {
 

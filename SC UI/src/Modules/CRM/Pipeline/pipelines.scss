@@ -1,0 +1,402 @@
+.pipeline-container {
+    width: 100%;
+    border-radius: 15px;
+    background: #fff;
+    padding: 28px;
+    overflow: auto;
+    max-height: calc(100% - 70px);
+    @media screen and (max-width: 768px) {
+        padding: 12px;
+        max-height: unset;
+    }
+    @media screen and (max-width: 425px) {
+        padding: 12px;
+        max-height: unset;
+    }
+
+    .pipeline-header{
+        display: flex;
+        width: 98%;   
+        @media screen and (max-width: 768px) {
+            width: 100%;
+            flex-direction: column;
+        } 
+        @media screen and (max-width: 425px) {
+            width: 100%;
+            flex-direction: column;
+        } 
+        .pipeline-stagnated{
+            width: 40%; 
+            @media screen and (max-width: 768px) {
+                width: 100%;
+            }    
+            @media screen and (max-width: 425px) {
+                width: 100%;
+            }    
+            font-size: 15px;
+            color: #A2A2C3;                     
+            .stagnated-item{
+                font-size: 14px;
+                color: black;
+                display:inline-flex;
+                margin-right:25px;
+                margin-bottom:20px;
+                @media screen and (max-width: 768px) {
+                    margin-right: 5px;
+                    margin-bottom: 15px;
+                }
+                @media screen and (max-width: 425px) {
+                    margin-right: 5px;
+                    margin-bottom: 15px;
+                }
+                .staginated-text{
+                    margin-top: 3px;
+                    margin-left: 10px;
+                    font-size: 14px;
+                }
+                .staginated-image svg{
+                    font-size:1.2rem;
+                }
+                }
+        }
+
+        .pipeline-filter {
+            margin-left: auto;
+            @media screen and (max-width: 768px) {
+                margin-left: 0px;
+                margin-bottom: 12px;
+            }
+            @media screen and (max-width: 425px) {
+                margin-left: 0px;
+                margin-bottom: 12px;
+            }
+            margin-top: 4px;
+        }
+        
+        .sentiment-customer{
+            width: 25%;
+            font-size:15px;
+            color:#A2A2C3;   
+            @media screen and (max-width: 768px) {
+                width: 100%;
+            }          
+            @media screen and (max-width: 425px) {
+                width: 100%;
+            }          
+            .sentiment-item {
+                font-size: 14px;
+                color: black;
+                display:inline-flex;
+                margin-right:30px;
+                margin-bottom:20px;
+                .sentiment-text {
+                    font-size:15px;
+                    margin-left:5px;
+                }
+            }
+            
+            .sentiment-itemimage {
+                width:4px;                
+            }
+            .green {
+                background-color: #44C4A1;
+            }
+            
+            .orange {
+                background-color: #F9B571;
+            }
+            
+            .red {
+                background-color: #FF808B;
+            }
+        }
+    }
+    .pipeline-wrapper {
+        display: flex;
+        margin-left: -20px;
+        margin-right: -20px;
+        .status-navigation {
+            button {
+                padding: 0px;
+                margin-top: 15px;
+            }
+            &:last-child {
+                margin-left: -20px;
+            }
+        }
+        .pipeline-total{
+            display:flex;
+            margin-top: 10px;
+            .pipeline-total-item{
+                width:25%;
+                margin-left: 5px;
+                color: #A2A2C3;
+            }
+        }
+    
+        .pipeline-types {
+            width: 100%;
+            display: flex;
+            @media screen and (max-width: 768px) {
+                flex-direction: column;
+                display: none;
+            }
+            @media screen and (max-width: 425px) {
+                flex-direction: column;
+            }
+            .status-item {
+                width:25%;
+                border-radius: 10px;
+                text-align: center;
+                margin-right: 20px;
+                background-color: #5E81F4;
+                color: #fff;
+                padding: 22px;
+                font-size: 18px;
+                @media screen and (max-width: 768px) {
+                    width: 100%;
+                    padding: 15px;
+                    margin-bottom: 12px;
+                }
+                @media screen and (max-width: 425px) {
+                    width: 100%;
+                    padding: 15px;
+                    margin-bottom: 12px;
+                }
+            }
+        }
+    
+        .pipeline-types-menu {
+            width: 100%;
+            display: none;
+            @media screen and (max-width: 768px) {
+                flex-direction: column;
+                display: flex;
+            }
+            @media screen and (max-width: 425px) {
+                flex-direction: column;
+            }
+            .status-item {
+                width:25%;
+                border-radius: 10px;
+                text-align: center;
+                margin-right: 20px;
+                background-color: #5E81F4;
+                color: #fff;
+                padding: 22px;
+                font-size: 18px;
+                @media screen and (max-width: 768px) {
+                    width: 100%;
+                    padding: 15px;
+                    margin-bottom: 12px;
+                }
+                @media screen and (max-width: 425px) {
+                    width: 100%;
+                    padding: 15px;
+                    margin-bottom: 12px;
+                }
+            }
+        }
+    
+        .pipeline-details {
+            width: 100%;
+            display: flex;
+            @media screen and (max-width: 768px) {
+                flex-wrap: wrap;
+            }
+            @media screen and (max-width: 425px) {
+                flex-wrap: wrap;
+            }
+            margin-top: 20px;
+            .pipeline-itemlist {
+                width:25%;
+                @media screen and (max-width: 768px) {
+                    width: 100%;
+                }
+                @media screen and (max-width: 425px) {
+                    width: 100%;
+                }
+                .PastActivity{
+                    background-color:#FFF2F3;
+                }
+                .TodaysActivity{
+                    background-color: #EDEDF7;
+                }
+                .UpcomingActivity{
+                    background-color: #ECF9F5;
+                }
+                .Completed{
+                    background-color: #FFF8F0;
+                }
+                .pipeline-item {
+                    border-radius: 10px;
+                    padding: 0px;
+                    margin-right:20px;
+                    min-height: 60px;
+                    display:flex;
+                    margin-bottom: 20px;
+                    cursor: pointer;
+                    @media screen and (max-width: 768px) {
+                        margin-right: 0px;
+                    }
+                    @media screen and (max-width: 425px) {
+                        margin-right: 0px;
+                    }
+                    .pipeline-item-right {
+                        width: 5px;
+                        border-radius: 5px;
+                    }
+                    .GREEN {
+                        background-color: #44C4A1;
+                    }
+                    
+                    .ORANGE {
+                        background-color: #F9B571;
+                    }
+                    
+                    .RED {
+                        background-color: #FF808B;
+                    }
+                    .pipeline-item-left {
+                        margin-left:4px;
+                        width:100%;
+                    .pipeline-item-first {
+                        display:inline-block;                    
+                        margin-bottom:20px;
+                        margin-top:8px;
+                        width:100%;
+                        .pipeline-item-name {
+                            font-weight:500;
+                            float:left;
+                            color: #323C47;
+                        }
+                        .pipeline-item-image {
+                            font-weight: 500;     
+                            margin-right: 5px;
+                            float:right;           
+                        }
+                    }
+                    .pipeline-item-second { 
+                        margin-bottom: 25px;
+                        .pipeline-item-mobile{
+                            margin-right:15px;
+                            font-size:14px;
+                            float:left;
+                            color: #323C47;
+                        }             
+                        .pipeline-item-status {                                          
+                            font-size: 11px;
+                            margin-right:5px;
+                            float:right;   
+                            font-weight: bold;  
+                            span {
+                                text-align: right !important;
+                            }       
+                        }
+                        .PastActivityText{
+                            color:#FF808B;
+                            margin-left: 29px;
+                        }
+                        .TodaysActivityText{
+                            color: #6956CF;
+                            margin-left: 12px;
+                        }
+                        .UpcomingActivityText{
+                            color: #44C4A1;                        
+                        }
+                        .CompletedText {
+                            color: #F9B571;
+                            margin-left: 37px;
+                        }
+                    }
+                }
+                }
+            }
+        }
+    }
+    
+}
+
+.triangle {
+    width: 0px;
+    height: 0px;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 15px solid #44C4A1;
+    border-radius: 3px;
+    margin-top: 2px;
+}
+
+.square {
+    width: 14px;
+    background-color: #F9B571;
+    height: 15px;
+    border-radius: 3px;
+    margin-top: 3px;
+}
+
+.circle {
+    width: 16px;
+    background-color: #FF808B;
+    height: 17px;
+    border-radius: 8px;
+    margin-top:2px;
+}
+
+.text-header{
+    margin-bottom:10px;
+    font-size:15px;
+}
+
+
+.pipeline-filter-container
+{  
+    width: 1000px !important;
+    @media screen and (max-width: 768px) {
+        margin-left: 0px!important;
+    }
+    @media screen and (max-width: 425px) {
+        margin-left: 0px!important;
+    }
+
+    .pipeline-filter-row
+    {
+        display:flex;
+        @media screen and (max-width: 768px) {
+            flex-direction: column;    
+        }
+        @media screen and (max-width: 425px) {
+            flex-direction: column;    
+        }
+        .filter-dates{
+            width:33%;
+            margin-right:10px;
+            @media screen and (max-width: 768px) {
+                width: 100%;
+                margin-right: 0px;
+            }
+            @media screen and (max-width: 425px) {
+                width: 100%;
+                margin-right: 0px;
+            }
+            .MuiIconButton-root{
+                padding: 4px !important;
+            }
+        }
+        .filter-item{
+            width:33%;
+            margin-right:10px;
+            @media screen and (max-width: 768px) {
+                width: 100%;
+                margin-right: 0px;
+            }
+            @media screen and (max-width: 425px) {
+                width: 100%;
+                margin-right: 0px;
+            }
+            .MuiOutlinedInput-adornedStart {
+                padding-left: 0px;
+            }
+        }
+    }
+}

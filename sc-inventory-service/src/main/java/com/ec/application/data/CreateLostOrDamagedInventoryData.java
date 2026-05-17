@@ -33,6 +33,18 @@ public class CreateLostOrDamagedInventoryData
 
 	String additionalComment;
 
+	String entryType = "LOST_DAMAGED";
+
+	public String getEntryType()
+	{
+		return entryType;
+	}
+
+	public void setEntryType(String entryType)
+	{
+		this.entryType = entryType;
+	}
+
 	public String getAdditionalComment()
 	{
 		return additionalComment;

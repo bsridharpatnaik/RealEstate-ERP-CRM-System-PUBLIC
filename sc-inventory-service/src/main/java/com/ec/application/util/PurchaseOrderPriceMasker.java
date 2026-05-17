@@ -20,7 +20,7 @@ public class PurchaseOrderPriceMasker {
      * Mask price fields for a single PurchaseOrder
      */
     public void mask(PurchaseOrder po) throws Exception {
-        if (po == null || !userDetailsService.isInventoryExecutive()) {
+        if (po == null || !userDetailsService.isPriceRestricted()) {
             return;
         }
 
@@ -38,7 +38,7 @@ public class PurchaseOrderPriceMasker {
      * Mask price fields for a collection of PurchaseOrders
      */
     public void mask(Collection<PurchaseOrder> purchaseOrders) throws Exception {
-        if (purchaseOrders == null || !userDetailsService.isInventoryExecutive()) {
+        if (purchaseOrders == null || !userDetailsService.isPriceRestricted()) {
             return;
         }
 
@@ -52,7 +52,7 @@ public class PurchaseOrderPriceMasker {
      * Mask price fields for a Spring Page
      */
     public void mask(Page<PurchaseOrder> page) throws Exception {
-        if (page == null || !userDetailsService.isInventoryExecutive()) {
+        if (page == null || !userDetailsService.isPriceRestricted()) {
             return;
         }
         mask(page.getContent());

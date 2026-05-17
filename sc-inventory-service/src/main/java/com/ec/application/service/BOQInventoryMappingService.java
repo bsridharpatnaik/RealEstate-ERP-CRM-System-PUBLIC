@@ -41,6 +41,12 @@ public class BOQInventoryMappingService {
     @Autowired
     ProductRepo pRepo;
 
+    @Autowired
+    BOQHistoryService boqHistoryService;
+
+    @Autowired
+    UserDetailsService userDetailsService;
+
     Logger log = LoggerFactory.getLogger(BOQInventoryMappingService.class);
 
     public void createNewBOQ(BOQCreateRequestData payload) throws Exception {
@@ -50,14 +56,17 @@ public class BOQInventoryMappingService {
         BOQInventoryMapping bim = new BOQInventoryMapping();
         setFields(bim, payload);
         bimRepo.save(bim);
+        boqHistoryService.recordFromMapping("Added", resolveCurrentUser(), bim, null, bim.getQuantity(), payload.getRemark());
     }
 
     public BOQInventoryMapping updateBOQ(BOQUpdateRequestData payload, Long id) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validateUpdatePayload(payload, id);
         BOQInventoryMapping bim = bimRepo.findById(id).get();
+        Double oldQty = bim.getQuantity();
         bim.setQuantity(payload.getQuantity());
         bimRepo.save(bim);
+        boqHistoryService.recordFromMapping("Updated", resolveCurrentUser(), bim, oldQty, payload.getQuantity(), payload.getRemark());
         return bim;
     }
 
@@ -71,7 +80,7 @@ public class BOQInventoryMappingService {
     public Page<BOQInventoryMapping> getBOQByType(Long id, Pageable pageable) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (!btRepo.existsById(id))
-            throw new Exception("Building Type record not found with ID - " + id);
+            throw new Exception("Structure Type record not found with ID - " + id);
 
         Page<BOQInventoryMapping> bimList = bimRepo.getBIMbyType(id, pageable);
         return bimList;
@@ -80,7 +89,7 @@ public class BOQInventoryMappingService {
     public Page<BOQInventoryMapping> getBOQByLocation(Long id, Pageable pageable) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (!lRepo.existsById(id))
-            throw new Exception("Building Unit record not found with ID - " + id);
+            throw new Exception("Structure record not found with ID - " + id);
 
         Page<BOQInventoryMapping> bimList = bimRepo.getBIMbyLocation(id, pageable);
         return bimList;
@@ -113,6 +122,9 @@ public class BOQInventoryMappingService {
 
         if (payload.getQuantity() == 0)
             throw new Exception("Quantity cannot be zero or empty. Please input valid quantity");
+
+        if (payload.getRemark() == null || payload.getRemark().trim().isEmpty())
+            throw new Exception("Remark is mandatory. Please enter a change comment.");
     }
 
     private void setFields(BOQInventoryMapping bim, BOQCreateRequestData payload) {
@@ -135,12 +147,12 @@ public class BOQInventoryMappingService {
             BuildingType bt = btRepo.findById(payload.getId()).get();
             List<BOQInventoryMapping> bimList = bimRepo.findByBuildingTypeAndProduct(bt, payload.getProductId());
             if (bimList.size() > 0)
-                throw new Exception("Inventory already exists for Building Type -" + bt.getTypeName());
+                throw new Exception("Inventory already exists for Structure Type -" + bt.getTypeName());
         } else if (payload.getBoqType().equals(BOQLocationTypeEnum.BuildingUnit)) {
             UsageLocation ul = lRepo.findById(payload.getId()).get();
             List<BOQInventoryMapping> bimList = bimRepo.findByLocationProduct(ul, payload.getProductId());
             if (bimList.size() > 0)
-                throw new Exception("Inventory already exists for Building Unit -" + ul.getLocationName());
+                throw new Exception("Inventory already exists for Structure -" + ul.getLocationName());
         }
     }
 
@@ -161,15 +173,18 @@ public class BOQInventoryMappingService {
 
         if (payload.getBoqType().equals(BOQLocationTypeEnum.BuildingType)) {
             if (!btRepo.existsById(payload.getId()))
-                throw new Exception("Building Type not found with ID -" + payload.getId());
+                throw new Exception("Structure Type not found with ID -" + payload.getId());
         } else if (payload.getBoqType().equals(BOQLocationTypeEnum.BuildingUnit)) {
             if (!lRepo.existsById(payload.getId()))
-                throw new Exception("Building Unit not found with ID -" + payload.getId());
+                throw new Exception("Structure not found with ID -" + payload.getId());
         } else {
             throw new Exception("Unknown type for field boqtype");
         }
         if (payload.getQuantity() == 0)
             throw new Exception("Quantity cannot be zero or empty. Please input valid quantity");
+
+        if (payload.getRemark() == null || payload.getRemark().trim().isEmpty())
+            throw new Exception("Remark is mandatory. Please enter a change comment.");
     }
 
     public List<IdNameProjections> getProductListForDropdown(BOQLocationTypeEnum boqType, Long id) throws Exception {
@@ -179,11 +194,11 @@ public class BOQInventoryMappingService {
         List<IdNameProjections> finalList = new ArrayList<IdNameProjections>();
         if (boqType.equals(BOQLocationTypeEnum.BuildingType)) {
             if (!btRepo.existsById(id))
-                throw new Exception("Building Type not found with ID - " + id);
+                throw new Exception("Structure Type not found with ID - " + id);
             usedProductList = bimRepo.findUsedProductListForType(id);
         } else if (boqType.equals(BOQLocationTypeEnum.BuildingUnit)) {
             if (!lRepo.existsById(id))
-                throw new Exception("Building Unit not found with ID - " + id);
+                throw new Exception("Structure not found with ID - " + id);
             usedProductList = bimRepo.findUsedProductListForUnit(id);
         }
         if (usedProductList == null)
@@ -201,5 +216,13 @@ public class BOQInventoryMappingService {
                 finalList.add(i);
         }
         return finalList;
+    }
+
+    private String resolveCurrentUser() {
+        try {
+            return userDetailsService.getCurrentUser().getUsername();
+        } catch (Exception e) {
+            return "System";
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.IndentInventorySpecification;
 import com.ec.application.Filters.PurchaseOrderSpecification;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.*;
@@ -12,6 +13,7 @@ import com.ec.application.enricher.PurchaseOrderUiEnricher;
 import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
 import com.ec.application.model.*;
 import com.ec.application.repository.IndentInventoryListRepo;
+import com.ec.application.repository.PurchaseOrderCustomChargeRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
 import java.util.stream.Collectors;
 import com.ec.application.util.PurchaseOrderPriceMasker;
@@ -48,6 +50,9 @@ public class PurchaseOrderService extends ReusableFields {
     PurchaseOrderRepo purchaseOrderRepo;
 
     @Autowired
+    PurchaseOrderCustomChargeRepo customChargeRepo;
+
+    @Autowired
     PurchaseOrderValidator validator;
 
     @Autowired
@@ -80,11 +85,24 @@ public class PurchaseOrderService extends ReusableFields {
     @Autowired
     IndentInventoryListRepo indentInventoryListRepo;
 
+    @Autowired
+    DBFileStorageService dbFileStorageService;
+
+    @Autowired
+    FirmService firmService;
+
+    @Autowired
+    SupplierService supplierService;
+
+    @Autowired
+    TenantService tenantService;
+
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
         validator.validateIndentLineItems(request.getLineItems());
         validator.validateOverridePhoneNumber(request.getOverridePhoneNumber());
         validator.validateOverrideEmail(request.getOverrideEmail());
+        validatePoDateBackdating(request.getPoDate());
         PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);
@@ -92,6 +110,86 @@ public class PurchaseOrderService extends ReusableFields {
         String username = userDetailsService.getCurrentUser().getUsername();
         poStatusHistoryService.logStatusChange(savedPO, null, savedPO.getStatus(), username, buildPoCreationMessage(request, username), buildPoCreationRelations(request));
         return savedPO;
+    }
+
+    @Transactional
+    public PurchaseOrder updatePurchaseOrder(String id, UpdatePoRequest request) throws Exception {
+        validator.validateOverridePhoneNumber(request.getOverridePhoneNumber());
+        validator.validateOverrideEmail(request.getOverrideEmail());
+
+        PurchaseOrder po = purchaseOrderRepo.findById(id)
+                .orElseThrow(() -> new Exception("Purchase Order not found: " + id));
+
+        if (!POStatusConstants.STATUS_NEW.equals(po.getStatus())) {
+            throw new Exception("Purchase Order cannot be edited. Only POs in NEW status can be edited.");
+        }
+
+        // Update header fields
+        if (request.getSupplierId() != null) {
+            po.setSupplier(supplierService.findSingleSupplier(request.getSupplierId()));
+        }
+        if (request.getFirmId() != null) {
+            po.setFirm(firmService.findSingleFirm(request.getFirmId()));
+        }
+        po.setSubject(request.getSubject());
+        po.setNotes(request.getNotes());
+        po.setOverridePhoneNumber(request.getOverridePhoneNumber());
+        po.setOverrideEmail(request.getOverrideEmail());
+        po.setProjectName(request.getProjectName());
+        po.setSpecialPo(request.isSpecialPo());
+        po.setFreightCharges(request.getFreightCharges());
+        po.setFreightGstPercent(request.getFreightGstPercent());
+        po.setTotalFreightCharges(request.getTotalFreightCharges());
+        po.setGrandTotal(request.getGrandTotal());
+
+        // Replace custom charges: delete old ones, add new ones
+        customChargeRepo.deleteByPurchaseOrderId(po.getPurchaseOrderId());
+        po.getCustomCharges().clear();
+        if (request.getCustomCharges() != null) {
+            for (CustomChargeRequest chargeReq : request.getCustomCharges()) {
+                PurchaseOrderCustomCharge charge = new PurchaseOrderCustomCharge();
+                charge.setPurchaseOrder(po);
+                charge.setChargeName(chargeReq.getChargeName());
+                charge.setChargeAmount(chargeReq.getChargeAmount());
+                charge.setChargeGstPercent(chargeReq.getChargeGstPercent());
+                charge.setTotalChargeAmount(chargeReq.getTotalChargeAmount());
+                po.getCustomCharges().add(charge);
+            }
+        }
+
+        if (request.getFileInformations() != null) {
+            po.setFileInformations(ReusableMethods.convertFilesListToSet(request.getFileInformations()));
+        }
+
+        // Update existing lines — quantity and indent refs are NOT changed
+        if (request.getLineUpdates() != null) {
+            Map<Long, UpdatePoLineRequest> lineUpdateMap = request.getLineUpdates().stream()
+                    .filter(u -> u.getLineId() != null)
+                    .collect(Collectors.toMap(UpdatePoLineRequest::getLineId, u -> u));
+
+            for (PurchaseOrderLine line : po.getLines()) {
+                UpdatePoLineRequest update = lineUpdateMap.get(line.getId());
+                if (update != null) {
+                    line.setRate(update.getRate());
+                    line.setDiscountPercent(update.getDiscountPercent());
+                    line.setTolerancePercent(update.getTolerancePercent() != null ? update.getTolerancePercent() : 0.0);
+                    line.setGstPercent(update.getGstPercent());
+                    line.setBrand(update.getBrand());
+                    line.setGrade(update.getGrade());
+                    line.setDiameter(update.getDiameter());
+                    line.setSpecification(update.getSpecification());
+                    line.setNetRate(update.getNetRate());
+                    line.setTotalAmount(update.getTotalAmount());
+                    line.setSampleImageFileId(update.getSampleImageFileId());
+                }
+            }
+        }
+
+        PurchaseOrder saved = purchaseOrderRepo.save(po);
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
+                "Purchase Order updated by " + username, null);
+        return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
     }
 
     @Transactional(readOnly = true)
@@ -217,6 +315,19 @@ public class PurchaseOrderService extends ReusableFields {
             // Non-critical — just skip if it fails
         }
 
+        // Pre-fetch sample image bytes for PDF generation.
+        // Files are stored in master schema (FileHandlingService uses @UseDefaultTenant).
+        for (PurchaseOrderLine line : po.getLines()) {
+            if (line.getSampleImageFileId() != null) {
+                try {
+                    byte[] bytes = dbFileStorageService.getFileBytes(line.getSampleImageFileId());
+                    line.setSampleImageData(bytes);
+                } catch (Exception ex) {
+                    // Non-critical — PDF will just show "-" for this line
+                }
+            }
+        }
+
         // MASK PRICE FIELDS
         purchaseOrderPriceMasker.mask(po);
         return po;
@@ -233,6 +344,28 @@ public class PurchaseOrderService extends ReusableFields {
             throw new IllegalArgumentException("Purchase Order Number cannot be null");
         poLifecycleManager.shortClosePo(request);
         return purchaseOrderRepo.findByIdWithDetails(request.getPurchaseOrderNo()).get();
+    }
+
+    private void validatePoDateBackdating(Date poDate) throws Exception {
+        if (poDate == null) return;
+        Calendar todayCal = Calendar.getInstance();
+        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+        todayCal.set(Calendar.MINUTE, 0);
+        todayCal.set(Calendar.SECOND, 0);
+        todayCal.set(Calendar.MILLISECOND, 0);
+        Calendar poCal = Calendar.getInstance();
+        poCal.setTime(poDate);
+        poCal.set(Calendar.HOUR_OF_DAY, 0);
+        poCal.set(Calendar.MINUTE, 0);
+        poCal.set(Calendar.SECOND, 0);
+        poCal.set(Calendar.MILLISECOND, 0);
+        if (poCal.before(todayCal)) {
+            boolean isAdmin = userDetailsService.getCurrentUser().getRoles().stream()
+                    .anyMatch(r -> r.toLowerCase().contains(RoleConstants.ADMIN));
+            if (!isAdmin) {
+                throw new IllegalArgumentException("Only admin users can create backdated Purchase Orders.");
+            }
+        }
     }
 
     private String buildPoCreationMessage(CreatePoRequest request, String username) {
@@ -332,12 +465,18 @@ public class PurchaseOrderService extends ReusableFields {
                     "PO Number",
                     "PO Date",
                     "PO Status",
+                    "Project",
 
                     "Supplier",
                     "Firm",
 
                     "Product",
+                    "Brand",
+                    "Grade",
+                    "Specification",
                     "Quantity",
+                    "Received Quantity",
+                    "Remaining Quantity",
                     "Rate",
                     "GST %",
                     "Net Rate",
@@ -371,6 +510,23 @@ public class PurchaseOrderService extends ReusableFields {
                     List<PurchaseOrder> purchaseOrders =
                             purchaseOrderRepo.findWithDetailsByIdIn(poIds);
 
+                    // Collect all indent line item codes in this page for batch fetch
+                    List<String> lineItemCodes = purchaseOrders.stream()
+                            .flatMap(po -> po.getLines().stream())
+                            .flatMap(line -> line.getIndentRefs() == null
+                                    ? java.util.stream.Stream.empty()
+                                    : line.getIndentRefs().stream())
+                            .map(PurchaseOrderIndentRef::getIndentLineItemCode)
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .collect(Collectors.toList());
+
+                    Map<String, IndentInventoryList> indentLineMap = new HashMap<>();
+                    if (!lineItemCodes.isEmpty()) {
+                        indentInventoryListRepo.findByLineItemCodeIn(lineItemCodes)
+                                .forEach(il -> indentLineMap.put(il.getLineItemCode(), il));
+                    }
+
                     // ===== Flatten PO → Lines =====
                     for (PurchaseOrder po : purchaseOrders) {
 
@@ -392,7 +548,7 @@ public class PurchaseOrderService extends ReusableFields {
                                 // Still export line even if no indent
                                 Row row = sheet.createRow(rowNum++);
                                 writePoRow(row, po, supplierName, firmName,
-                                        line, "", "");
+                                        line, "", "", null);
                             } else {
                                 for (PurchaseOrderIndentRef ref : line.getIndentRefs()) {
                                     Row row = sheet.createRow(rowNum++);
@@ -403,7 +559,8 @@ public class PurchaseOrderService extends ReusableFields {
                                             firmName,
                                             line,
                                             extractIndentId(ref.getIndentLineItemCode()),
-                                            ref.getIndentLineItemCode()
+                                            ref.getIndentLineItemCode(),
+                                            indentLineMap.get(ref.getIndentLineItemCode())
                                     );
                                 }
                             }
@@ -434,7 +591,8 @@ public class PurchaseOrderService extends ReusableFields {
             String firmName,
             PurchaseOrderLine line,
             String indentNo,
-            String indentLineItemCode) {
+            String indentLineItemCode,
+            IndentInventoryList indentLineItem) {
 
         int col = 0;
 
@@ -442,24 +600,31 @@ public class PurchaseOrderService extends ReusableFields {
         row.createCell(col++).setCellValue(
                 po.getPoDate() != null ? po.getPoDate().toString() : ""
         );
-        row.createCell(col++).setCellValue(
-                safeExcel(po.getStatus())
-        );
+        row.createCell(col++).setCellValue(safeExcel(po.getStatus()));
+        row.createCell(col++).setCellValue(safeExcel(po.getProjectName()));
 
         row.createCell(col++).setCellValue(safeExcel(supplierName));
         row.createCell(col++).setCellValue(safeExcel(firmName));
 
         row.createCell(col++).setCellValue(
-                safeExcel(
-                        line.getProduct() != null
-                                ? line.getProduct().getProductName()
-                                : ""
-                )
+                safeExcel(line.getProduct() != null ? line.getProduct().getProductName() : "")
         );
+        row.createCell(col++).setCellValue(safeExcel(line.getBrand()));
+        row.createCell(col++).setCellValue(safeExcel(line.getGrade()));
+        row.createCell(col++).setCellValue(safeExcel(line.getSpecification()));
 
         row.createCell(col++).setCellValue(
                 line.getQuantity() != null ? line.getQuantity() : 0.0
         );
+        row.createCell(col++).setCellValue(
+                indentLineItem != null && indentLineItem.getQuantityReceived() != null
+                        ? indentLineItem.getQuantityReceived() : 0.0
+        );
+        row.createCell(col++).setCellValue(
+                indentLineItem != null && indentLineItem.getQuantityPending() != null
+                        ? indentLineItem.getQuantityPending() : 0.0
+        );
+
         row.createCell(col++).setCellValue(
                 line.getRate() != null ? line.getRate() : 0.0
         );

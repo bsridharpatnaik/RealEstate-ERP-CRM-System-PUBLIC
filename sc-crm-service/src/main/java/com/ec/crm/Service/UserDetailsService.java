@@ -161,6 +161,7 @@ public class UserDetailsService {
         Map<Long, String> userIdMap = new HashMap<>();
         for (UserReturnData ud : userList) {
             userIdMap.put(ud.getId(), ud.getUsername());
+            log.info("### UserDetailsService - fetchUserListAsMap - userId: " + ud.getId() + ", username: " + ud.getUsername());
         }
         return userIdMap;
     }

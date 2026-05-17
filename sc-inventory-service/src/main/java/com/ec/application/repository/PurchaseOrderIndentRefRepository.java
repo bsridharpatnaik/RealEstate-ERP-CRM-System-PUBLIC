@@ -34,4 +34,14 @@ public interface PurchaseOrderIndentRefRepository extends JpaRepository<Purchase
         "WHERE po.purchaseOrderId IN :poIds"
     )
     List<PurchaseOrderIndentRef> findByPurchaseOrderIdIn(@Param("poIds") List<String> poIds);
+
+    /** Return distinct indent IDs linked to a specific PO (for print-with-indents). */
+    @Query(
+        "SELECT DISTINCT ref.indentNo FROM PurchaseOrderIndentRef ref " +
+        "JOIN ref.poLine pol " +
+        "JOIN pol.purchaseOrder po " +
+        "WHERE po.purchaseOrderId = :poId " +
+        "AND ref.isDeleted = false"
+    )
+    List<String> findDistinctIndentNosByPoId(@Param("poId") String poId);
 }

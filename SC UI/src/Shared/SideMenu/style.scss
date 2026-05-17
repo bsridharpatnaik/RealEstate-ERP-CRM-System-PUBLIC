@@ -1,0 +1,151 @@
+@import "./../../scss/variables.scss";
+.side-menu {
+  &.close {
+    @media screen and (max-width: 768px) {
+      display: none;
+    }
+    @media screen and (max-width: 425px) {
+      display: none;
+    }
+  }
+  .MuiTreeItem-group .MuiTreeItem-group {
+    margin-left: 0;
+    .MuiCollapse-wrapperInner {
+      margin-left: 0;
+    }
+  }
+  .tennant {
+    height: 40px;
+    background: #323c47;
+    font-family: Montserrat;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 22px;
+    text-align: left;
+    color: #fff;
+    display: flex;
+    padding-left: 20px;
+    a {
+      text-decoration: none;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .MuiIconButton-root {
+      color: white;
+      padding-right: 8px;
+    }
+  }
+
+  width: $side-menu_width;
+
+  .side-menu-wrapper {
+    @media screen and (max-width: 768px) {
+      width: 45vw;
+    }
+    @media screen and (max-width: 425px) {
+      width: 65vw;
+    }
+    width: $side-menu_width;
+    background: #fff;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+
+  }
+
+  .user {
+    padding: 10px;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+
+    display: flex;
+    align-items: center;
+    .user-image {
+      border-radius: 50%;
+      text-transform: uppercase;
+      width: 36px;
+      height: 36px;
+      background: #323c47;
+      font-weight: 500;
+      font-size: 16px;
+      color: #fff;
+    }
+    .user-name {
+      font-size: 15px;
+      line-height: 22px;
+      text-align: left;
+      color: #323c47;
+      margin-left: 12px;
+      text-transform: capitalize;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  .logo {
+    background: #f8faf9;
+    box-shadow: 0px 3px 30px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    text-align: center;
+    img {
+      width: 100%;
+
+    }
+  }
+  .sidebar-close-btn {
+    display: none;
+    @media screen and (max-width: 768px) {
+      display: block;
+    }
+    @media screen and (max-width: 425px) {
+      display: block;
+    }
+    text-align: center;
+    margin: 2vh 0vh;
+    button {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+}
+@media screen and (max-width: 768px) {
+  .side-menu.close {
+    display: none;
+  }
+  .side-menu-wrapper {
+    width: 65vw;
+  }
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    display: none;
+    z-index: 1;
+    &.active {
+      display: block;
+      background-color: #0000005c;
+      transition: background-color 0.2s ease-in-out;
+    }
+}
+}
+@media screen and (max-width: 425px) {
+  .side-menu.close {
+    display: none;
+  }
+  .side-menu-wrapper {
+    width: 65vw;
+  }
+  .sidebar-backdrop {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    display: none;
+    z-index: 1;
+    &.active {
+      display: block;
+      background-color: #0000005c;
+      transition: background-color 0.2s ease-in-out;
+    }
+  }
+}

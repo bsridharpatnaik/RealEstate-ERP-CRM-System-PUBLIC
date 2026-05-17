@@ -1,0 +1,47 @@
+@import "./../../scss/variables.scss";
+.download {
+  background: #fff8f0 !important;
+  &:hover {
+    background: #fff8f0 !important;
+  }
+}
+
+.filterIcon,
+.filter {
+  background: #ededf7 !important;
+  &:hover {
+    background: #ededf7 !important;
+  }
+}
+
+.download.MuiButton-root,
+.filterIcon.MuiButton-root,
+.filter.MuiButton-root {
+  .button-label {
+    color: #323c47;
+  }
+  &:hover {
+    .button-label {
+      color: #323c47;
+    }
+  }
+}
+
+.App {
+  .MuiButton-root {
+    height: 40px;
+    border-radius: 7px;
+    font-size: $font-button;
+  }
+  .MuiButton-startIcon {
+    svg {
+      width: 16px;
+    }
+  }
+}
+.grey.MuiButton-root {
+  background: #a2a2c3 !important;
+}
+.blue.MuiButton-root {
+  background: #5e81f4;
+}

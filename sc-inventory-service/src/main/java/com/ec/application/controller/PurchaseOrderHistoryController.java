@@ -1,5 +1,7 @@
 package com.ec.application.controller;
 
+import com.ec.application.aspects.AllowOnly;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.PoLineRateHistoryDTO;
 import com.ec.application.data.PreviousPurchaseRateDTO;
 import com.ec.application.data.PriceScatterPointDTO;
@@ -20,6 +22,7 @@ public class PurchaseOrderHistoryController {
     private PurchaseOrderHistoryPriceService historyService;
 
     @GetMapping("/previous-rates")
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.MANAGEMENT})
     public List<PreviousPurchaseRateDTO> getPreviousRates(@RequestParam("productId") Long productId) {
         return historyService.getPreviousRates(productId);
     }

@@ -1,0 +1,7 @@
+// printstyle.scss
+// indentPrint.js now renders null and uses window.open() for printing.
+// No print-specific CSS needed here anymore.
+
+@page {
+  margin: 12mm 10mm;
+}

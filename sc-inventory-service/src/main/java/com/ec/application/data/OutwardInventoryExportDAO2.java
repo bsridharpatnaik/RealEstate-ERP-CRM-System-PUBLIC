@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonPropertyOrder(
         {"Outward ID", "Outward Date", "Slip No", "Category", "Inventory", "Measurement Unit", "Opening Stock", "Quantity",
-                "Closing Stock", "Warehouse", "Contractor", "Building Unit", "Final Location"})
+                "Closing Stock", "Warehouse", "Contractor", "Structure", "Work Area"})
 public class OutwardInventoryExportDAO2 {
     @JsonProperty("Outward ID")
     Long outwardid;
@@ -54,10 +54,10 @@ public class OutwardInventoryExportDAO2 {
     @JsonProperty("Contractor")
     String contractor;
 
-    @JsonProperty("Building Unit")
+    @JsonProperty("Structure")
     String usageArea;
 
-    @JsonProperty("Final Location")
+    @JsonProperty("Work Area")
     String usageLocation;
 
     @JsonProperty("Comment")

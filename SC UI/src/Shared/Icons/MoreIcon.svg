@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="24" height="24">
+	<style>
+		tspan { white-space:pre }
+		.shp0 { fill: #fff8f0 } 
+		.shp1 { fill: #f9b571 } 
+	</style>
+	<g id="Group 2358">
+		<g id="Group 2351">
+			<path id="Rectangle 419" class="shp0" d="M7 0L37 0C40.87 0 44 3.13 44 7L44 37C44 40.87 40.87 44 37 44L7 44C3.13 44 0 40.87 0 37L0 7C0 3.13 3.13 0 7 0Z" />
+		</g>
+		<g id="more">
+			<g id="Group 2353">
+				<g id="Group 2352">
+					<path id="Ellipse 38" class="shp1" d="M22.5 16C21.12 16 20 14.88 20 13.5C20 12.12 21.12 11 22.5 11C23.88 11 25 12.12 25 13.5C25 14.88 23.88 16 22.5 16Z" />
+				</g>
+			</g>
+			<g id="Group 2355">
+				<g id="Group 2354">
+					<path id="Ellipse 39" class="shp1" d="M22.5 24.75C21.12 24.75 20 23.63 20 22.25C20 20.87 21.12 19.75 22.5 19.75C23.88 19.75 25 20.87 25 22.25C25 23.63 23.88 24.75 22.5 24.75Z" />
+				</g>
+			</g>
+			<g id="Group 2357">
+				<g id="Group 2356">
+					<path id="Ellipse 40" class="shp1" d="M22.5 33.5C21.12 33.5 20 32.38 20 31C20 29.62 21.12 28.5 22.5 28.5C23.88 28.5 25 29.62 25 31C25 32.38 23.88 33.5 22.5 33.5Z" />
+				</g>
+			</g>
+		</g>
+	</g>
+</svg>

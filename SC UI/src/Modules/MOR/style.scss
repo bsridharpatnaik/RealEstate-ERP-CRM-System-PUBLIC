@@ -1,0 +1,16 @@
+.custom-mor-options {
+  width: 100%;
+  margin-top: 32px;
+  margin-left: 20px;
+  @media screen and (max-width: 768px) {
+    margin: 0px;
+  }
+  @media screen and (max-width: 425px) {
+    margin: 0px;
+  }
+}
+.mode-radio {
+  justify-content: space-around;
+  height: 100%;
+  width: 225px;
+}

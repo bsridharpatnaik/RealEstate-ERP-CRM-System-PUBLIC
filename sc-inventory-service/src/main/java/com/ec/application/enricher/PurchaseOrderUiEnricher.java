@@ -20,7 +20,7 @@ public class PurchaseOrderUiEnricher {
         if (po == null) return;
 
         try {
-            boolean allowed = userDetailsService.isAdminOrManager() && POStatusConstants.STATUS_NEW.equals(po.getStatus());
+            boolean allowed = userDetailsService.isAdminOrPurchaseManager() && POStatusConstants.STATUS_NEW.equals(po.getStatus());
             po.setApprovalAllowed(true);
             po.setCancellationAllowed(true);
         } catch (Exception e) {

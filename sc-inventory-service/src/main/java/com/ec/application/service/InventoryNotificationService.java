@@ -42,6 +42,8 @@ public class InventoryNotificationService {
     final String outwardModified = "outwardStockModified";
     final String lostDamagedModified = "lostDamagedStockModified";
     final String lostDamagedAdded = "lostDamagedStockAdded";
+    final String excessFoundAdded = "excessFoundStockAdded";
+    final String excessFoundModified = "excessFoundStockModified";
 
     @Transactional(rollbackOn = Exception.class)
     public void checkStockAndPushLowStockNotification(Product product) {
@@ -83,6 +85,12 @@ public class InventoryNotificationService {
 
             case "lostdamagedadded":
                 return lostDamagedAdded;
+
+            case "excessfoundadded":
+                return excessFoundAdded;
+
+            case "excessfoundmodified":
+                return excessFoundModified;
         }
         return "";
     }

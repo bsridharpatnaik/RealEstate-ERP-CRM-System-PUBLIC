@@ -2,7 +2,10 @@ package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.model.Firm;
+import com.ec.application.model.IndentInventory;
+import com.ec.application.model.IndentInventoryList;
 import com.ec.application.model.PurchaseOrder;
+import com.ec.application.model.PurchaseOrderCustomCharge;
 import com.ec.application.model.PurchaseOrderLine;
 import com.ec.application.model.Supplier;
 import com.ec.application.model.Product;
@@ -31,7 +34,7 @@ import org.springframework.stereotype.Service;
  * Usage (inject this bean and call generatePdf):
  * byte[] pdfBytes = purchaseOrderPdfService.generatePdf(purchaseOrder);
  * <p>
- * Role-based visibility: inventory-executive users will see the PDF with all
+ * Role-based visibility: project-manager and store-incharge will see the PDF with all
  * money-related fields (rates, amounts, totals) blanked out.
  */
 @Service
@@ -58,24 +61,33 @@ public class PurchaseOrderPdfService {
             new java.text.SimpleDateFormat("dd/MM/yyyy");
 
 
-    // New overload — called by controller with explicit flag
+    // Overload with explicit flag — no indents
     public void generatePdf(PurchaseOrder po, OutputStream outputStream, boolean forceHideMoneyFields)
             throws Exception {
-        // If forceHideMoneyFields is true (manager chose "without rates"),
-        // OR the current user is an executive, hide money fields
-        boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isInventoryExecutive();
+        generatePdf(po, outputStream, forceHideMoneyFields, java.util.Collections.emptyList());
+    }
+
+    // Primary overload — called by controller with explicit flag and optional indents
+    public void generatePdf(PurchaseOrder po, OutputStream outputStream, boolean forceHideMoneyFields,
+                            List<IndentInventory> indents)
+            throws Exception {
+        boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isPriceRestricted();
 
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-        PdfWriter.getInstance(document, outputStream);
+        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
         document.open();
 
         addHeader(document, po);
         addVendorAndPoDetails(document, po);
         addSubjectAndIntro(document, po);
         addItemsTable(document, po, hideMoneyFields);
-        addChargesSection(document);
+        addChargesSection(document, po, hideMoneyFields);
         addPriceTable(document, po, hideMoneyFields);
-        addTermsAndSignatures(document, po);
+        addTermsAndSignatures(document, writer, po);
+
+        if (indents != null && !indents.isEmpty()) {
+            addIndentsSection(document, indents);
+        }
 
         document.close();
     }
@@ -86,20 +98,20 @@ public class PurchaseOrderPdfService {
     public void generatePdf(PurchaseOrder po, OutputStream outputStream)
             throws Exception {
 
-        // Resolve once: inventory-executives must not see any monetary values
-        boolean hideMoneyFields = userDetailsService.isInventoryExecutive();
+        // Resolve once: price-restricted roles must not see any monetary values
+        boolean hideMoneyFields = userDetailsService.isPriceRestricted();
 
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-        PdfWriter.getInstance(document, outputStream);
+        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
         document.open();
 
         addHeader(document, po);
         addVendorAndPoDetails(document, po);
         addSubjectAndIntro(document, po);
         addItemsTable(document, po, hideMoneyFields);
-        addChargesSection(document);
+        addChargesSection(document, po, hideMoneyFields);
         addPriceTable(document, po, hideMoneyFields);
-        addTermsAndSignatures(document, po);
+        addTermsAndSignatures(document, writer, po);
 
         document.close();
     }
@@ -190,6 +202,8 @@ public class PurchaseOrderPdfService {
         left.addElement(new Paragraph("PO No: " + po.getPurchaseOrderId(), normal));
         left.addElement(new Paragraph("PO Date: " + DATE_FORMAT.format(po.getPoDate()), normal));
         left.addElement(new Paragraph("Status: " + po.getStatus(), normal));
+        if (notBlank(po.getProjectName()))
+            left.addElement(new Paragraph("Project: " + po.getProjectName(), normal));
         if (po.getNeedByDate() != null) {
             left.addElement(new Paragraph("Expected Delivery: " + DATE_FORMAT.format(po.getNeedByDate()), normal));
         }
@@ -266,50 +280,94 @@ public class PurchaseOrderPdfService {
         Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
 
-        PdfPTable table = new PdfPTable(11);
+        List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
+
+        // Only show the image column when at least one line has an image
+        boolean hasImages = lines.stream()
+                .anyMatch(l -> l.getSampleImageData() != null && l.getSampleImageData().length > 0);
+        int numCols = hasImages ? 13 : 12;
+
+        PdfPTable table = new PdfPTable(numCols);
         table.setWidthPercentage(100);
         table.setSpacingBefore(8f);
         table.setSpacingAfter(0f);
-        table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 1.0f, 0.75f, 0.95f, 1.2f, 1.0f});
+
+        if (hasImages) {
+            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+        } else {
+            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+        }
 
         // Column headers — money columns blanked for executives
         addHeaderCell(table, "Code & Description", headerFont);
+        if (hasImages) addHeaderCell(table, "Sample Image", headerFont);
         addHeaderCell(table, "Qty", headerFont);
         addHeaderCell(table, "UOM", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Rate \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Discount \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Taxable \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
+        addHeaderCell(table, "Tolerance %", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net Rate \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
         addHeaderCell(table, "Exp. Date", headerFont);
 
-        List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
         for (PurchaseOrderLine line : lines) {
             Product product = line.getProduct();
             String desc = product.getProductName()
                     + (notBlank(product.getProductCode()) ? "\n[" + product.getProductCode() + "]" : "")
+                    + (notBlank(line.getBrand())          ? "\nBrand Name: " + line.getBrand() : "")
+                    + (notBlank(line.getGrade())          ? "\nGrade: " + line.getGrade() : "")
+                    + (notBlank(line.getDiameter())       ? "\nDia: " + line.getDiameter() : "")
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
-                    ? "\n" + line.getSpecification() : "");
+                    ? "\nSpec: " + line.getSpecification() : "");
 
             double qty = line.getQuantity() != null ? line.getQuantity() : 0.0;
             double rate = line.getRate() != null ? line.getRate() : 0.0;
             double discPct = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
+            double tolPct  = line.getTolerancePercent() != null ? line.getTolerancePercent() : 0.0;
             double gstPct = line.getGstPercent() != null ? line.getGstPercent() : 0.0;
             double grossTotal = qty * rate;
-            double discountAmt = grossTotal * discPct / 100.0;
             double taxable = line.getNetRate() != null ? line.getNetRate() : 0.0;
             double gstAmt = taxable * gstPct / 100.0;
             double amtInclTax = line.getTotalAmount() != null ? line.getTotalAmount() : 0.0;
             String expDate = line.getNeedByDate() != null ? DATE_FORMAT.format(line.getNeedByDate()) : "-";
+            String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : fmt(tolPct)) + "%" : "-";
 
             addBodyCell(table, desc, normalFont);
+
+            // Sample image cell — only added when the column is shown
+            if (hasImages) {
+                PdfPCell imageCell = new PdfPCell();
+                imageCell.setPadding(4f);
+                imageCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                imageCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                boolean imageAdded = false;
+                byte[] imgBytes = line.getSampleImageData();
+                if (imgBytes != null && imgBytes.length > 0) {
+                    try {
+                        Image img = Image.getInstance(imgBytes);
+                        img.scaleToFit(58f, 58f);
+                        img.setAlignment(Image.ALIGN_CENTER);
+                        imageCell.addElement(img);
+                        imageAdded = true;
+                    } catch (Exception e) {
+                        log.warn("Could not embed sample image for line {}: {}", line.getId(), e.getMessage());
+                    }
+                }
+                if (!imageAdded) {
+                    imageCell.addElement(new Phrase("-", normalFont));
+                }
+                table.addCell(imageCell);
+            }
+
             addBodyCell(table, fmt(qty), normalFont);
             addBodyCell(table, product.getMeasurementUnit(), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(grossTotal), normalFont);
-            addBodyCell(table, hideMoneyFields ? "" : fmt(discountAmt), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : (discPct > 0 ? (discPct % 1 == 0 ? String.valueOf((int) discPct) : fmt(discPct)) + "%" : "-"), normalFont);
+            addBodyCell(table, tolStr, normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(taxable), normalFont);
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
@@ -317,37 +375,98 @@ public class PurchaseOrderPdfService {
             addBodyCell(table, expDate, normalFont);
         }
 
-        // TOTAL row (spans 10 cols + 1 value col)
-        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL \u20B9", headerFont));
-        totalLabel.setColspan(10);
-        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalLabel.setPadding(4f);
-        table.addCell(totalLabel);
+        // Line items subtotal — single full-width cell to avoid narrow-column overflow
+        double lineItemsSubtotal = lines.stream()
+                .mapToDouble(line -> line.getTotalAmount() != null ? line.getTotalAmount() : 0.0)
+                .sum();
 
-        PdfPCell totalVal = new PdfPCell(
-                new Phrase(hideMoneyFields ? "" : fmt(po.getGrandTotal()), headerFont));
-        totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalVal.setPadding(4f);
-        totalVal.setNoWrap(true);
-        table.addCell(totalVal);
+        String totalText = hideMoneyFields ? "TOTAL" : "TOTAL    " + fmt(lineItemsSubtotal);
+        PdfPCell totalCell = new PdfPCell(new Phrase(totalText, headerFont));
+        totalCell.setColspan(numCols);
+        totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        totalCell.setPadding(4f);
+        table.addCell(totalCell);
 
         document.add(table);
     }
 
-    private void addChargesSection(Document document) throws DocumentException {
+    private void addChargesSection(Document document, PurchaseOrder po, boolean hideMoneyFields)
+            throws DocumentException {
         Font normal = FontFactory.getFont(FontFactory.HELVETICA, 8);
+        Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
+
+        double freightCharges = po.getFreightCharges() != null ? po.getFreightCharges() : 0.0;
+        double freightGstPct = po.getFreightGstPercent() != null ? po.getFreightGstPercent() : 0.0;
+        double totalFreight = po.getTotalFreightCharges() != null ? po.getTotalFreightCharges() : 0.0;
+
+        boolean hasCustomCharges = po.getCustomCharges() != null
+                && po.getCustomCharges().stream().anyMatch(c -> c.getChargeAmount() != null && c.getChargeAmount() > 0);
+
+        if (freightCharges <= 0 && !hasCustomCharges) return;
 
         PdfPTable charges = new PdfPTable(2);
         charges.setWidthPercentage(40);
         charges.setHorizontalAlignment(Element.ALIGN_RIGHT);
         charges.setSpacingBefore(0f);
 
-        charges.addCell(new Phrase("Freight Charges", normal));
-        charges.addCell(new Phrase("", normal));
-        charges.addCell(new Phrase("Loading & Packing Charges", normal));
-        charges.addCell(new Phrase("", normal));
-        charges.addCell(new Phrase("Insurance Charges", normal));
-        charges.addCell(new Phrase("", normal));
+        if (freightCharges > 0) {
+            PdfPCell fcLabel = new PdfPCell(new Phrase("Freight Charges", normal));
+            fcLabel.setPadding(4f);
+            charges.addCell(fcLabel);
+            PdfPCell fcVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(freightCharges), normal));
+            fcVal.setPadding(4f);
+            fcVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(fcVal);
+
+            PdfPCell gstLabel = new PdfPCell(new Phrase("Freight GST %", normal));
+            gstLabel.setPadding(4f);
+            charges.addCell(gstLabel);
+            PdfPCell gstVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(freightGstPct) + "%", normal));
+            gstVal.setPadding(4f);
+            gstVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(gstVal);
+
+            PdfPCell freightTotalLabel = new PdfPCell(new Phrase("Total Freight Charges", bold));
+            freightTotalLabel.setPadding(4f);
+            charges.addCell(freightTotalLabel);
+            PdfPCell freightTotalVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(totalFreight), bold));
+            freightTotalVal.setPadding(4f);
+            freightTotalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(freightTotalVal);
+        }
+
+        if (hasCustomCharges) {
+            for (PurchaseOrderCustomCharge cc : po.getCustomCharges()) {
+                if (cc.getChargeAmount() == null || cc.getChargeAmount() <= 0) continue;
+                String name = notBlank(cc.getChargeName()) ? cc.getChargeName() : "Additional Charges";
+                double gstPct = cc.getChargeGstPercent() != null ? cc.getChargeGstPercent() : 0.0;
+                double total = cc.getTotalChargeAmount() != null ? cc.getTotalChargeAmount() : 0.0;
+
+                PdfPCell ccLabel = new PdfPCell(new Phrase(name, normal));
+                ccLabel.setPadding(4f);
+                charges.addCell(ccLabel);
+                PdfPCell ccVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(cc.getChargeAmount()), normal));
+                ccVal.setPadding(4f);
+                ccVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                charges.addCell(ccVal);
+
+                PdfPCell ccGstLabel = new PdfPCell(new Phrase(name + " GST %", normal));
+                ccGstLabel.setPadding(4f);
+                charges.addCell(ccGstLabel);
+                PdfPCell ccGstVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(gstPct) + "%", normal));
+                ccGstVal.setPadding(4f);
+                ccGstVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                charges.addCell(ccGstVal);
+
+                PdfPCell ccTotalLabel = new PdfPCell(new Phrase("Total " + name, bold));
+                ccTotalLabel.setPadding(4f);
+                charges.addCell(ccTotalLabel);
+                PdfPCell ccTotalVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : fmt(total), bold));
+                ccTotalVal.setPadding(4f);
+                ccTotalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                charges.addCell(ccTotalVal);
+            }
+        }
 
         document.add(charges);
     }
@@ -366,33 +485,33 @@ public class PurchaseOrderPdfService {
         table.setSpacingBefore(0f);
         table.setSpacingAfter(0f);
 
-        String amountInWords = hideMoneyFields
+        String amountInWords = hideMoneyFields || po.getGrandTotal() == null
                 ? ""
                 : numberToWords(po.getGrandTotal()) + " RUPEES ONLY";
 
         PdfPCell wordsCell = new PdfPCell(new Phrase(amountInWords.toUpperCase(), headerFont));
-        wordsCell.setColspan(7);
+        wordsCell.setColspan(5);
         wordsCell.setHorizontalAlignment(Element.ALIGN_LEFT);
         wordsCell.setPadding(4f);
         table.addCell(wordsCell);
 
-        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL \u20B9", headerFont));
+        PdfPCell totalLabel = new PdfPCell(new Phrase("GRAND TOTAL \u20B9", headerFont));
         totalLabel.setColspan(3);
         totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalLabel.setPadding(4f);
         table.addCell(totalLabel);
 
         PdfPCell totalVal = new PdfPCell(
-                new Phrase(hideMoneyFields ? "" : fmt(po.getGrandTotal()), headerFont));
+                new Phrase(hideMoneyFields || po.getGrandTotal() == null ? "" : fmt(po.getGrandTotal()), headerFont));
+        totalVal.setColspan(2);
         totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalVal.setPadding(4f);
-        totalVal.setNoWrap(true);
         table.addCell(totalVal);
 
         document.add(table);
     }
 
-    private void addTermsAndSignatures(Document document, PurchaseOrder po) throws DocumentException {
+    private void addTermsAndSignatures(Document document, PdfWriter writer, PurchaseOrder po) throws DocumentException {
         Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
         Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.BLACK);
 
@@ -401,7 +520,18 @@ public class PurchaseOrderPdfService {
         document.add(termsTitle);
 
         if (notBlank(po.getNotes())) {
-            document.add(new Paragraph("* " + po.getNotes(), smallFont));
+            String notes = po.getNotes().trim();
+            if (!notes.contains("<")) {
+                // Plain text — render directly with iText, no XMLWorker needed
+                for (String line : notes.split("\n")) {
+                    document.add(new Paragraph(line.trim(), smallFont));
+                }
+            } else {
+                // HTML content from rich text editor — strip tags and render as plain text
+                for (String line : htmlToPlainLines(notes)) {
+                    document.add(new Paragraph(line, smallFont));
+                }
+            }
         }
 
         // ---- Signature Section ----
@@ -455,6 +585,111 @@ public class PurchaseOrderPdfService {
         signTable.addCell(authorisedBy);
 
         document.add(signTable);
+    }
+
+    // -----------------------------------------------------------------------
+    // Indent section
+    // -----------------------------------------------------------------------
+
+    private void addIndentsSection(Document document, List<IndentInventory> indents)
+            throws DocumentException {
+        Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, BaseColor.BLACK);
+        Font indentHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.BLACK);
+        Font tableHeaderFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.BLACK);
+        Font normalFont       = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+
+        // Page-level section heading
+        Paragraph heading = new Paragraph("ASSOCIATED INDENTS", sectionTitleFont);
+        heading.setAlignment(Element.ALIGN_CENTER);
+        heading.setSpacingBefore(20f);
+        heading.setSpacingAfter(10f);
+        document.add(heading);
+
+        for (IndentInventory indent : indents) {
+            // ── Indent header info table ──────────────────────────────────
+            PdfPTable infoTable = new PdfPTable(4);
+            infoTable.setWidthPercentage(100);
+            infoTable.setWidths(new float[]{1f, 2f, 1f, 2f});
+            infoTable.setSpacingBefore(8f);
+            infoTable.setSpacingAfter(0f);
+
+            // Header spanning all 4 columns
+            PdfPCell indentHeading = new PdfPCell(
+                    new Phrase("Indent: " + (indent.getIndentId() != null ? indent.getIndentId() : "-"),
+                            indentHeaderFont));
+            indentHeading.setColspan(4);
+            indentHeading.setBackgroundColor(new BaseColor(210, 225, 245));
+            indentHeading.setPadding(5f);
+            infoTable.addCell(indentHeading);
+
+            addIndentInfoRow(infoTable, "Indent No", indent.getIndentId(), normalFont);
+            addIndentInfoRow(infoTable, "Date",
+                    indent.getIndentDate() != null ? DATE_FORMAT.format(indent.getIndentDate()) : "-",
+                    normalFont);
+            addIndentInfoRow(infoTable, "Status",
+                    indent.getIndentStatus() != null ? indent.getIndentStatus() : "-", normalFont);
+            addIndentInfoRow(infoTable, "Project",
+                    indent.getTenant() != null ? indent.getTenant() : "-", normalFont);
+
+            document.add(infoTable);
+
+            // ── Line items table ──────────────────────────────────────────
+            List<IndentInventoryList> lineItems = indent.getInventoryList() != null
+                    ? new ArrayList<>(indent.getInventoryList())
+                    : new ArrayList<>();
+
+            PdfPTable lineTable = new PdfPTable(8);
+            lineTable.setWidthPercentage(100);
+            lineTable.setWidths(new float[]{2.5f, 1.2f, 0.8f, 0.9f, 0.9f, 0.9f, 1.1f, 1.2f});
+            lineTable.setSpacingBefore(2f);
+            lineTable.setSpacingAfter(12f);
+
+            addHeaderCell(lineTable, "Product", tableHeaderFont);
+            addHeaderCell(lineTable, "Specification", tableHeaderFont);
+            addHeaderCell(lineTable, "UOM", tableHeaderFont);
+            addHeaderCell(lineTable, "Qty Ordered", tableHeaderFont);
+            addHeaderCell(lineTable, "Qty Received", tableHeaderFont);
+            addHeaderCell(lineTable, "Qty Pending", tableHeaderFont);
+            addHeaderCell(lineTable, "Need By Date", tableHeaderFont);
+            addHeaderCell(lineTable, "Status", tableHeaderFont);
+
+            if (lineItems.isEmpty()) {
+                PdfPCell noData = new PdfPCell(new Phrase("No line items", normalFont));
+                noData.setColspan(8);
+                noData.setPadding(6f);
+                noData.setHorizontalAlignment(Element.ALIGN_CENTER);
+                lineTable.addCell(noData);
+            } else {
+                for (IndentInventoryList item : lineItems) {
+                    String productName = item.getProduct() != null
+                            ? item.getProduct().getProductName()
+                              + (notBlank(item.getProduct().getProductCode())
+                                 ? "\n[" + item.getProduct().getProductCode() + "]" : "")
+                            : "-";
+                    addBodyCell(lineTable, productName, normalFont);
+                    addBodyCell(lineTable, notBlank(item.getSpecification()) ? item.getSpecification() : "-", normalFont);
+                    addBodyCell(lineTable, notBlank(item.getMeasurementUnit()) ? item.getMeasurementUnit() : "-", normalFont);
+                    addBodyCell(lineTable, item.getQuantity() != null ? fmt(item.getQuantity()) : "-", normalFont);
+                    addBodyCell(lineTable, item.getQuantityReceived() != null ? fmt(item.getQuantityReceived()) : "-", normalFont);
+                    addBodyCell(lineTable, item.getQuantityPending() != null ? fmt(item.getQuantityPending()) : "-", normalFont);
+                    addBodyCell(lineTable, item.getNeedByDate() != null ? DATE_FORMAT.format(item.getNeedByDate()) : "-", normalFont);
+                    addBodyCell(lineTable, notBlank(item.getLineItemStatus()) ? item.getLineItemStatus() : "-", normalFont);
+                }
+            }
+
+            document.add(lineTable);
+        }
+    }
+
+    private void addIndentInfoRow(PdfPTable table, String label, String value, Font font) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8)));
+        labelCell.setPadding(4f);
+        labelCell.setBackgroundColor(new BaseColor(245, 245, 245));
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(value != null ? value : "-", font));
+        valueCell.setPadding(4f);
+        table.addCell(valueCell);
     }
 
     // -----------------------------------------------------------------------
@@ -546,6 +781,43 @@ public class PurchaseOrderPdfService {
         v.setMinimumHeight(22f);
         v.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(v);
+    }
+
+    private List<String> htmlToPlainLines(String html) {
+        String text = html
+            // block-level tags → newline
+            .replaceAll("(?i)<br\\s*/?>", "\n")
+            .replaceAll("(?i)</p>",       "\n")
+            .replaceAll("(?i)</li>",      "\n")
+            .replaceAll("(?i)</div>",     "\n")
+            // common HTML entities
+            .replace("&nbsp;",   " ")
+            .replace("&amp;",    "&")
+            .replace("&lt;",     "<")
+            .replace("&gt;",     ">")
+            .replace("&quot;",   "\"")
+            .replace("&apos;",   "'")
+            .replace("&ndash;",  "–")
+            .replace("&mdash;",  "—")
+            .replace("&ldquo;",  "“")
+            .replace("&rdquo;",  "”")
+            .replace("&lsquo;",  "‘")
+            .replace("&rsquo;",  "’")
+            .replace("&bull;",   "•")
+            .replace("&hellip;", "…")
+            // strip all remaining tags
+            .replaceAll("<[^>]+>", "")
+            // numeric entities
+            .replaceAll("&#160;", " ");
+
+        List<String> lines = new java.util.ArrayList<>();
+        for (String line : text.split("\n")) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty()) {
+                lines.add(trimmed);
+            }
+        }
+        return lines;
     }
 
     private boolean notBlank(String s) {

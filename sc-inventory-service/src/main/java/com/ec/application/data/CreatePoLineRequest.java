@@ -21,6 +21,9 @@ public class CreatePoLineRequest {
     private Double gstPercent;
     private Double netRate;
     private Double totalAmount;
+    private Double tolerancePercent = 0.0;
     /** One or more indent line items clubbed */
     private List<IndentLineRefRequest> indentRefs;
+    /** UUID of the DBFile used as a sample image for this line item */
+    private String sampleImageFileId;
 }

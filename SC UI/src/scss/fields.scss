@@ -1,0 +1,23 @@
+@import "./variables.scss";
+.MuiAutocomplete-option {
+  font-size: $font-form !important;
+}
+.MuiAutocomplete-inputRoot[class*="MuiOutlinedInput-root"] {
+  padding: 1px !important;
+  font-size: $font-form !important;
+}
+.MuiOutlinedInput-input {
+  padding: 12px !important;
+  font-size: $font-form !important;
+}
+.MuiOutlinedInput-multiline {
+  padding: 1px !important;
+  font-size: $font-form !important;
+}
+.MuiChip-root {
+  height: 26px !important;
+}
+.MuiInputLabel-outlined {
+  background: white;
+  padding: 0 4px !important;
+}

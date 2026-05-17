@@ -130,7 +130,7 @@ public class MachineryOnRentService {
 
         if (payload.getLocationId() != null)
             if (!locationRepo.existsById(payload.getLocationId()))
-                throw new Exception("Building Unit not found with ID - " + payload.getLocationId());
+                throw new Exception("Structure not found with ID - " + payload.getLocationId());
 
         if (payload.getMode().equals(MORRentModeEnum.Daily))
             if (payload.getStartDate() == null || payload.getEndDate() == null)

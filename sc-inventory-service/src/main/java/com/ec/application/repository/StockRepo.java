@@ -88,4 +88,7 @@ public interface StockRepo extends BaseRepository<Stock, Long> {
 
     @Query("SELECT m FROM Stock m WHERE m.product.productId = :productId")
     List<Stock> findStockByProductIdExcludingDeadStock(@Param("productId") Long productId);
+
+    @Query("SELECT m FROM Stock m WHERE m.warehouse.warehouseName != 'Dead Stock Warehouse'")
+    List<Stock> findAllActiveStockExcludingDeadStockWarehouse();
 }

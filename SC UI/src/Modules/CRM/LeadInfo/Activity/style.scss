@@ -1,0 +1,157 @@
+@import "./../../../../scss/variables.scss";
+
+.activity {
+  border-radius: 7px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  background: white;
+  box-shadow: $box-shadow;
+
+  .activity-content-description {
+    word-break: break-word;
+  }
+  .MuiTextField-root {
+    height: 45px;
+    .MuiOutlinedInput-multiline {
+      padding: 13px;
+    }
+  }
+  .date-user-section {
+    display: flex;
+    @media screen and (max-width: 768px) {
+      flex-wrap: wrap;
+    }
+    @media screen and (max-width: 425px) {
+      flex-wrap: wrap;
+    }
+    .follow-up-icon,
+    .user-icon {
+      margin-left: 16px;
+      width: 18px;
+    }
+    .user,
+    .follow-up {
+      font-weight: normal;
+      font-size: 12px;
+      line-height: 22px;
+      text-align: left;
+      color: #a2a2c3;
+    }
+  }
+  .revert-button {
+    font-weight: 500;
+    text-decoration: underline;
+    position: absolute;
+    right: 0;
+    top: 0;
+    text-transform: uppercase;
+    cursor: pointer;
+
+    font-size: 14px;
+    line-height: 22px;
+    text-align: left;
+    color: #ff808b;
+    opacity: 0.8;
+  }
+  .flex {
+    display: flex;
+    &.button {
+      justify-content: flex-end;
+    }
+    &.reschedule {
+      justify-content: space-between;
+      align-items: center;
+
+      .time {
+        margin-left: 16px;
+      }
+      .blue {
+        width: 90px;
+        height: 36px;
+      }
+      .MuiInputAdornment-root {
+        .MuiIconButton-label {
+          width: 24px;
+        }
+      }
+    }
+    .checkbox {
+      margin: 0px;
+      margin-left: 16px;
+
+      .MuiCheckbox-root {
+        padding: 1px;
+      }
+      .MuiTypography-body1 {
+        font-weight: 300;
+        font-size: 14px;
+        line-height: 22px;
+        text-align: left;
+        color: #323c47;
+      }
+      .MuiCheckbox-colorPrimary.Mui-checked {
+        color: #44c4a1;
+      }
+    }
+  }
+  .content-activitytype {
+    margin-top: 10px;
+    margin-bottom: 6px;
+    .title-heading {
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 22px;
+      color: #ff808b;
+    }
+  }
+  .activity-content {
+    margin-left: 10px;
+    width: 100%;
+    position: relative;
+  }
+  &.pinned {
+    background: #fff2f3;
+  }
+
+  .title {
+    font-size: 14px;
+    line-height: 22px;
+    color: #323c47;
+  }
+  .activity-icon {
+    width: 20px;
+    margin-right: 5px;
+  }
+  .date {
+    font-size: 12px;
+    line-height: 22px;
+    color: #a2a2c3;
+  }
+  .activity-content {
+    font-size: 14px;
+    line-height: 22px;
+    color: #323c47;
+    opacity: 0.8;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .tag {
+    border-radius: 13px;
+    background: #ededf7;
+    font-size: 12px;
+    color: #a2a2c3;
+    padding: 6px 14px;
+    line-height: 100%;
+    margin: 3px;
+  }
+  .closing-comment {
+    font-size: 12px;
+    line-height: 22px;
+    color: #323c47;
+    opacity: 0.8;
+    margin-top: 8px;
+  }
+}

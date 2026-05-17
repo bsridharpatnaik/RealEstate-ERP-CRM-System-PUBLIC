@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class ReusableFields implements Serializable {
 
-    public static final String SOFT_DELETED_CLAUSE = "is_deleted = 'false'";
+    public static final String SOFT_DELETED_CLAUSE = "is_deleted = false";
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;

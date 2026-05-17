@@ -2,6 +2,7 @@ package com.ec.application.model;
 
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -12,9 +13,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "purchase_order_line")
@@ -39,6 +38,7 @@ public class PurchaseOrderLine extends ReusableFields {
     private String brand;
     private String grade;
     private String diameter;
+    @Column(columnDefinition = "TEXT")
     private String specification;
 
     private Double quantity;
@@ -47,6 +47,13 @@ public class PurchaseOrderLine extends ReusableFields {
     private Double gstPercent;
     private Double netRate;
     private Double totalAmount;
+
+    @Column(name = "tolerance_percent")
+    private Double tolerancePercent = 0.0;
+
+    /** UUID of the DBFile used as a sample image for this line item. */
+    @Column(name = "sample_image_file_uuid")
+    private String sampleImageFileId;
 
     /** Traceability */
     @JsonIgnoreProperties("poLine")
@@ -62,4 +69,12 @@ public class PurchaseOrderLine extends ReusableFields {
     @JsonProperty("needByDate")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date needByDate;
+
+    /**
+     * Raw image bytes pre-fetched in tenant context by PurchaseOrderService.
+     * Used only by PurchaseOrderPdfService — never serialised to JSON.
+     */
+    @Transient
+    @JsonIgnore
+    private byte[] sampleImageData;
 }

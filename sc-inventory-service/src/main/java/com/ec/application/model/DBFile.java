@@ -15,20 +15,14 @@ public class DBFile {
     private String id;
 
     private String fileName;
-
     private String fileType;
+    private String bucketName;
 
-    @Lob
-    private byte[] data;
+    public DBFile() {}
 
-    
-    public DBFile() {
-
-    }
-
-    public DBFile(String fileName, String fileType, byte[] data) {
+    public DBFile(String fileName, String fileType, String bucketName) {
         this.fileName = fileName;
         this.fileType = fileType;
-        this.data = data;
+        this.bucketName = bucketName;
     }
 }

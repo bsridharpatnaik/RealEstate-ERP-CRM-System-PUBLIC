@@ -16,4 +16,7 @@ public class PreviousPurchaseRateDTO {
     private String supplierName;
     private Double quantity;
     private Double rate;
+    private Double discountPercent;
+    private Double gstPercent;
+    private Double netRate;
 }

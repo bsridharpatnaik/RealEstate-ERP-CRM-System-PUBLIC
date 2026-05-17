@@ -13,6 +13,8 @@ public class BOQUploadDto {
 	private String quantity; 
 	private String location;
 	private String changes;
-	
-	
+
+	private String wastagePercent;
+
+	private String remark;
 }

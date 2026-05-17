@@ -8,10 +8,12 @@ import com.ec.application.model.ProductTenantConfig;
 import com.ec.application.model.StockSummary;
 import com.ec.application.model.Stock;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.model.Warehouse;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.ProductTenantConfigRepository;
 import com.ec.application.repository.StockSummaryRepo;
 import com.ec.application.repository.StockRepo;
+import com.ec.application.repository.WarehouseRepo;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ public class StockSummarySyncService {
     private final StockRepo stockRepo;
     private final ProductRepo productRepo;
     private final ProductTenantConfigRepository configRepo;
+    private final WarehouseRepo warehouseRepo;
     private final SchemaConfig schemaConfig;
     private final TenantService tenantService;
 
@@ -82,6 +85,15 @@ public class StockSummarySyncService {
 
             // ---------- Step 5: Always sync reorder levels (runs even when no stock changed) ----------
             syncReorderLevels(tenantSchema, masterSchema);
+
+            // ---------- Step 6: Always sync measurement units (runs even when no stock changed) ----------
+            syncMeasurementUnits(tenantSchema, masterSchema);
+
+            // ---------- Step 7: Always sync product name/code (picks up product renames) ----------
+            syncProductDetails(tenantSchema, masterSchema);
+
+            // ---------- Step 8: Always sync warehouse names (picks up warehouse renames) ----------
+            syncWarehouseNames(tenantSchema, masterSchema);
 
         } catch (Exception e) {
             System.out.println("Stock sync FAILED for tenant: " + tenantSchema);
@@ -160,6 +172,124 @@ public class StockSummarySyncService {
         }
     }
 
+    /**
+     * Syncs measurement_unit for every (tenantSchema, productId) row in stock_summary.
+     * Always executed — measurement unit can change on the Product independently of stock movements.
+     *
+     * Logic:
+     *  1. From MASTER: get all productIds that already have a stock_summary row for this tenant.
+     *  2. From MASTER: load current Product.measurementUnit for those products.
+     *  3. Bulk-update stock_summary.measurement_unit in MASTER.
+     */
+    private void syncMeasurementUnits(String tenantSchema, String masterSchema) {
+        System.out.println("🔄 Syncing measurement units for tenant: " + tenantSchema);
+
+        // Step 1: productIds with existing stock rows (MASTER)
+        ThreadLocalStorage.setTenantName(masterSchema);
+        List<Long> productIds = stockSummaryRepo.findDistinctProductIdsByTenantSchema(tenantSchema);
+        if (productIds.isEmpty()) {
+            System.out.println("No stock rows for tenant: " + tenantSchema + " — skipping measurement unit sync");
+            return;
+        }
+
+        // Step 2: current measurement units from Product (MASTER — Products live in master schema)
+        List<Product> products = productRepo.findByProductIdIn(productIds);
+        Map<Long, String> measurementUnits = products.stream()
+                .collect(Collectors.toMap(
+                        Product::getProductId,
+                        p -> p.getMeasurementUnit() != null ? p.getMeasurementUnit() : ""
+                ));
+
+        // Step 3: persist in MASTER
+        persistMeasurementUnits(tenantSchema, productIds, measurementUnits);
+
+        System.out.println("✅ Measurement unit sync done for tenant: " + tenantSchema + " | Products: " + productIds.size());
+    }
+
+    /**
+     * Persists computed measurement units into stock_summary (MASTER schema).
+     * Runs in its own transaction so @Modifying queries are committed.
+     */
+    @UseDefaultTenant
+    @Transactional
+    void persistMeasurementUnits(String tenantSchema, List<Long> productIds, Map<Long, String> measurementUnits) {
+        for (Long productId : productIds) {
+            String unit = measurementUnits.get(productId);
+            if (unit != null) {
+                stockSummaryRepo.updateMeasurementUnit(tenantSchema, productId, unit);
+            }
+        }
+    }
+
+    private void syncProductDetails(String tenantSchema, String masterSchema) {
+        System.out.println("🔄 Syncing product details for tenant: " + tenantSchema);
+
+        ThreadLocalStorage.setTenantName(masterSchema);
+        List<Long> productIds = stockSummaryRepo.findDistinctProductIdsByTenantSchema(tenantSchema);
+        if (productIds.isEmpty()) {
+            System.out.println("No stock rows for tenant: " + tenantSchema + " — skipping product detail sync");
+            return;
+        }
+
+        List<Product> products = productRepo.findByProductIdIn(productIds);
+        Map<Long, Product> productMap = products.stream()
+                .collect(Collectors.toMap(Product::getProductId, p -> p));
+
+        persistProductDetails(tenantSchema, productIds, productMap);
+
+        System.out.println("✅ Product detail sync done for tenant: " + tenantSchema + " | Products: " + productIds.size());
+    }
+
+    @UseDefaultTenant
+    @Transactional
+    void persistProductDetails(String tenantSchema, List<Long> productIds, Map<Long, Product> productMap) {
+        for (Long productId : productIds) {
+            Product p = productMap.get(productId);
+            if (p != null) {
+                stockSummaryRepo.updateProductDetails(
+                        tenantSchema, productId,
+                        p.getProductName() != null ? p.getProductName() : "",
+                        p.getProductCode() != null ? p.getProductCode() : ""
+                );
+            }
+        }
+    }
+
+    private void syncWarehouseNames(String tenantSchema, String masterSchema) {
+        System.out.println("🔄 Syncing warehouse names for tenant: " + tenantSchema);
+
+        ThreadLocalStorage.setTenantName(masterSchema);
+        List<Long> warehouseIds = stockSummaryRepo.findDistinctWarehouseIdsByTenantSchema(tenantSchema);
+        if (warehouseIds.isEmpty()) {
+            System.out.println("No stock rows for tenant: " + tenantSchema + " — skipping warehouse name sync");
+            return;
+        }
+
+        ThreadLocalStorage.setTenantName(tenantSchema);
+        List<Warehouse> warehouses = warehouseRepo.findByWarehouseIdIn(warehouseIds);
+        Map<Long, String> warehouseNameMap = warehouses.stream()
+                .collect(Collectors.toMap(
+                        Warehouse::getWarehouseId,
+                        w -> w.getWarehouseName() != null ? w.getWarehouseName() : ""
+                ));
+
+        ThreadLocalStorage.setTenantName(masterSchema);
+        persistWarehouseNames(tenantSchema, warehouseIds, warehouseNameMap);
+
+        System.out.println("✅ Warehouse name sync done for tenant: " + tenantSchema + " | Warehouses: " + warehouseIds.size());
+    }
+
+    @UseDefaultTenant
+    @Transactional
+    void persistWarehouseNames(String tenantSchema, List<Long> warehouseIds, Map<Long, String> warehouseNameMap) {
+        for (Long warehouseId : warehouseIds) {
+            String name = warehouseNameMap.get(warehouseId);
+            if (name != null) {
+                stockSummaryRepo.updateWarehouseName(tenantSchema, warehouseId, name);
+            }
+        }
+    }
+
     // ------------------------------------------------------------
     // MASTER schema operation
     // ------------------------------------------------------------
@@ -179,6 +309,7 @@ public class StockSummarySyncService {
         // ---------- UPDATE ----------
         StockSummary summary = existing.get(0);
         summary.setQuantityInHand(stock.getQuantityInHand());
+        summary.setMeasurementUnit(stock.getMeasurementUnit());
         summary.setSyncedAt(syncedAt);
         stockSummaryRepo.save(summary);
         System.out.println("✏️ Updated StockSummary | Product: " + stock.getProductId());

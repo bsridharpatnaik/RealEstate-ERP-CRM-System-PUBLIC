@@ -36,6 +36,9 @@ public class ProjectConstantsService {
             addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString(), 30);
             addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_MANAGER.toString(), 30);
             addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString(), 7);
+            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_REJECT_RETURN_DAYS_ADMIN.toString(), 90);
+            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_REJECT_RETURN_DAYS_MANAGER.toString(), 90);
+            addDefaultProjectConstants(ConstantKeysEnum.INVENTORY_REJECT_RETURN_DAYS_EXECUTIVE.toString(), 90);
             ThreadLocalStorage.setTenantName(null);
         }
 
@@ -65,15 +68,28 @@ public class ProjectConstantsService {
         return projectConstantsRepo.save(constant);
     }
 
+    public Long getRejectReturnDaysForCurrentUser() throws Exception {
+        UserReturnData userReturnData = userDetailsService.getCurrentUser();
+        for (String role : userReturnData.getRoles()) {
+            if (role.toLowerCase().contains(RoleConstants.ADMIN))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_REJECT_RETURN_DAYS_ADMIN.toString()).get().getValue());
+            else if (role.equalsIgnoreCase(RoleConstants.PURCHASE_MANAGER))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_REJECT_RETURN_DAYS_MANAGER.toString()).get().getValue());
+            else if (role.equalsIgnoreCase(RoleConstants.STORE_INCHARGE) || role.equalsIgnoreCase(RoleConstants.PROJECT_MANAGER) || role.equalsIgnoreCase(RoleConstants.MANAGEMENT))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_REJECT_RETURN_DAYS_EXECUTIVE.toString()).get().getValue());
+        }
+        return (long) 3;
+    }
+
     public Long getInventoryEditDaysForCurrentUser() throws Exception {
         UserReturnData userReturnData = userDetailsService.getCurrentUser();
         for (String role : userReturnData.getRoles()) {
             if (role.toLowerCase().contains(RoleConstants.ADMIN))
                 return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_ADMIN.toString()).get().getValue());
-            else if (role.toLowerCase().contains(RoleConstants.INVENTORY_MANAGER))
+            else if (role.equalsIgnoreCase(RoleConstants.PURCHASE_MANAGER))
                 return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_MANAGER.toString()).get().getValue());
-            else if (role.toLowerCase().contains(RoleConstants.INVENTORY_EXECUTIVE))
-                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString()).get().getValue());;
+            else if (role.equalsIgnoreCase(RoleConstants.STORE_INCHARGE) || role.equalsIgnoreCase(RoleConstants.PROJECT_MANAGER) || role.equalsIgnoreCase(RoleConstants.MANAGEMENT))
+                return Long.valueOf(projectConstantsRepo.findByKey(ConstantKeysEnum.INVENTORY_ALLOWED_DAYS_EXECUTIVE.toString()).get().getValue());
         }
         return (long) 3;
     }
