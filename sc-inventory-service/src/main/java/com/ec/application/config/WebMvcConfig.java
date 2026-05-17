@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.servlet.config.annotation.*;
 
+import com.ec.application.multitenant.IdempotencyInterceptor;
 import com.ec.application.multitenant.TenantNameInterceptor;
 
 @SuppressWarnings("deprecation")
@@ -14,6 +15,9 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter implements WebMvcConfi
 
 	@Autowired
 	private TenantNameInterceptor tenantNameInterceptor;
+
+	@Autowired
+	private IdempotencyInterceptor idempotencyInterceptor;
 
 	@Override
 	public void configurePathMatch(PathMatchConfigurer configurer)
@@ -25,6 +29,7 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter implements WebMvcConfi
 	public void addInterceptors(InterceptorRegistry registry)
 	{
 		registry.addInterceptor(tenantNameInterceptor);
+		registry.addInterceptor(idempotencyInterceptor);
 	}
 
 	@Override
