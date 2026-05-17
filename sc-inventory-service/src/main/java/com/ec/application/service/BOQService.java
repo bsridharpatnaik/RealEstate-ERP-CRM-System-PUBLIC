@@ -936,11 +936,12 @@ public class BOQService {
         List<Object[]> rows = bOQUploadRepository.fetchBOQAndOutwardForProduct(locationId, productId, finalLocationId);
         if (rows.isEmpty()) return "NA";
         Object[] row        = rows.get(0);
-        double boqQty       = toDouble(row[0]);
-        double outwardQty   = toDouble(row[1]);
-        double wastage      = toDouble(row[2]);
-        double effectiveBoq = boqQty * (1 + wastage / 100.0);
-        return String.valueOf(effectiveBoq - outwardQty);
+        double boqQty     = toDouble(row[0]);
+        double outwardQty = toDouble(row[1]);
+        // Return remaining based on BASE BOQ (not effective BOQ with wastage).
+        // Wastage is only an enforcement ceiling — display always shows remaining against base.
+        // e.g. BOQ=150, wastage=10% → remaining shown = 150 - consumed (can go negative when wastage used).
+        return String.valueOf(boqQty - outwardQty);
     }
 
     private double parseWastage(String wastagePercent) {

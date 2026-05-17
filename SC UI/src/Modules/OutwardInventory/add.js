@@ -192,8 +192,11 @@ class Add extends AddForm {
             this.getCurrentStock(key);
             const boqRemaining = this.state.boqQuantity[productId];
             if (boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
+              const inWastage = Number(boqRemaining) < 0;
               this.props.enqueueSnackbar(
-                `BOQ Warning: Quantity exceeds remaining BOQ (${boqRemaining} remaining)`,
+                inWastage
+                  ? `BOQ Warning: Already in wastage buffer. Base BOQ fully consumed (${Math.abs(boqRemaining)} over base BOQ).`
+                  : `BOQ Warning: Quantity exceeds base BOQ remaining (${boqRemaining} remaining). Wastage allowance may still permit save.`,
                 { variant: "warning" }
               );
             }
