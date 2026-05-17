@@ -270,7 +270,7 @@ class Add extends AddForm {
       let value = 0;
       if (boqResponse.success && boqResponse.data != null && boqResponse.data !== "" && String(boqResponse.data).toUpperCase() !== "NA") {
         const num = Number(boqResponse.data);
-        value = Number.isFinite(num) ? num : 0;
+        value = Number.isFinite(num) ? Math.round(num * 100) / 100 : 0;
       }
       boqQuantity[productIdKey] = value;
       this.setState({ boqQuantity });

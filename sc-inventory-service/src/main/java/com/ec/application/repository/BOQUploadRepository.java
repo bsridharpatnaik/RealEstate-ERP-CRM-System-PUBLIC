@@ -143,10 +143,10 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
     /**
      * Returns [effective_boq_qty, total_outward_quantity] aggregated across ALL final locations
      * for a given (buildingUnit/usageLocation, product). Used for BOQ enforcement check.
-     * effective_boq_qty = SUM(quantity * (1 + wastage_percent/100)) — wastage already baked in.
+     * effective_boq_qty = SUM(quantity * (1 + wastagePercent/100)) — wastage already baked in.
      */
     @Query(value =
-        "SELECT COALESCE(SUM(bu.quantity * (1 + COALESCE(bu.wastage_percent, 0) / 100)), 0) AS effective_boq_qty, " +
+        "SELECT COALESCE(SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent, 0) / 100)), 0) AS effective_boq_qty, " +
         "  COALESCE(SUM(ioe_sum.outward_qty), 0) AS total_outward_qty " +
         "FROM BOQUpload bu " +
         "LEFT JOIN ( " +
@@ -171,7 +171,7 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
      * Returns [boq_quantity, outward_quantity] for one specific (locationId, productId, finalLocationId).
      */
     @Query(value =
-        "SELECT bu.quantity AS boq_quantity, COALESCE(SUM(ioe.quantity), 0) AS outward_quantity, bu.wastage_percent AS wastage_percent " +
+        "SELECT bu.quantity AS boq_quantity, COALESCE(SUM(ioe.quantity), 0) AS outward_quantity, bu.wastagePercent AS wastage_percent " +
         "FROM BOQUpload bu " +
         "LEFT JOIN outward_inventory oi ON oi.locationId = bu.usageLocationId " +
         "  AND oi.usageAreaId = bu.locationId AND oi.is_deleted = 0 " +
@@ -179,7 +179,7 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         "LEFT JOIN inward_outward_entries ioe ON ioe.entryId = oie.entryId " +
         "  AND ioe.productId = bu.productId " +
         "WHERE bu.is_deleted = 0 AND bu.usageLocationId = ?1 AND bu.productId = ?2 AND bu.locationId = ?3 " +
-        "GROUP BY bu.quantity, bu.wastage_percent",
+        "GROUP BY bu.quantity, bu.wastagePercent",
         nativeQuery = true)
     List<Object[]> fetchBOQAndOutwardForProduct(Long locationId, Long productId, Long finalLocationId);
 
