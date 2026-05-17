@@ -13,6 +13,10 @@ import { messages } from "./../../messages";
 import DeleteIcon from "@material-ui/icons/Delete";
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
+import {
+  Dialog, DialogTitle, DialogContent, DialogContentText,
+  DialogActions, Button as MuiButton,
+} from "@material-ui/core";
 
 //style
 import "./style.scss";
@@ -33,6 +37,7 @@ class Add extends AddForm {
     boqQuantity: {},
     allProductsStockMap: {},
     selectedWarehouseId: null,
+    boqViolationDialog: { open: false, violations: [] },
   };
   key = 1;
   componentDidMount() {
@@ -187,8 +192,11 @@ class Add extends AddForm {
             this.getCurrentStock(key);
             const boqRemaining = this.state.boqQuantity[productId];
             if (boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
+              const inWastage = Number(boqRemaining) < 0;
               this.props.enqueueSnackbar(
-                `BOQ Warning: Quantity exceeds remaining BOQ (${boqRemaining} remaining)`,
+                inWastage
+                  ? `BOQ Warning: Already in wastage buffer. Base BOQ fully consumed (${Math.abs(boqRemaining)} over base BOQ).`
+                  : `BOQ Warning: Quantity exceeds base BOQ remaining (${boqRemaining} remaining). Wastage allowance may still permit save.`,
                 { variant: "warning" }
               );
             }
@@ -265,7 +273,7 @@ class Add extends AddForm {
       let value = 0;
       if (boqResponse.success && boqResponse.data != null && boqResponse.data !== "" && String(boqResponse.data).toUpperCase() !== "NA") {
         const num = Number(boqResponse.data);
-        value = Number.isFinite(num) ? num : 0;
+        value = Number.isFinite(num) ? Math.round(num * 100) / 100 : 0;
       }
       boqQuantity[productIdKey] = value;
       this.setState({ boqQuantity });
@@ -298,8 +306,19 @@ class Add extends AddForm {
 
     params.productWithQuantities = Object.values(this.state.noproduct);
     const response = await API.POST(this.addurl, params);
-    this.showToaster(response);
     this.setState({ isAdding: false });
+
+    if (response.success) {
+      this.showToaster(response);
+    } else {
+      const msg = response.errorMessage || '';
+      if (msg.startsWith('BOQ_LIMIT_EXCEEDED:')) {
+        const violations = msg.replace('BOQ_LIMIT_EXCEEDED:', '').split('|').filter(Boolean);
+        this.setState({ boqViolationDialog: { open: true, violations } });
+      } else {
+        this.showToaster(response);
+      }
+    }
   }
   async updateStockInfo(id) {
     const params = {};
@@ -431,6 +450,51 @@ class Add extends AddForm {
 
           {this.renderFooter()}
         </form>
+
+        {/* BOQ violation dialog */}
+        <Dialog
+          open={this.state.boqViolationDialog.open}
+          onClose={() => this.setState({ boqViolationDialog: { open: false, violations: [] } })}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Limit Exceeded — Save Blocked</DialogTitle>
+          <DialogContent>
+            <DialogContentText style={{ marginBottom: 12 }}>
+              The following products exceed their BOQ limit (including wastage allowance).
+              Reduce the quantities and try again.
+            </DialogContentText>
+            <div style={{ border: '1px solid #ffcdd2', borderRadius: 6, background: '#fff8f8' }}>
+              {this.state.boqViolationDialog.violations.map((v, i) => {
+                const parts = v.split(':');
+                const productName = parts[0]?.trim();
+                const detail = parts.slice(1).join(':').trim();
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      padding: '10px 14px',
+                      borderBottom: i < this.state.boqViolationDialog.violations.length - 1 ? '1px solid #ffcdd2' : 'none',
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, color: '#c62828', fontSize: 13 }}>{productName}</div>
+                    <div style={{ fontSize: 12, color: '#555', marginTop: 2 }}>{detail}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <MuiButton
+              onClick={() => this.setState({ boqViolationDialog: { open: false, violations: [] } })}
+              color="secondary"
+              variant="contained"
+            >
+              Close &amp; Correct
+            </MuiButton>
+          </DialogActions>
+        </Dialog>
+
       </div>
     );
   }

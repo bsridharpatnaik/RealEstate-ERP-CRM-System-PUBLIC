@@ -1344,3 +1344,22 @@ WHERE
  -- inward_outward_entries: JOIN on entryId + productId filter
  CREATE INDEX idx_ioe_entry_product
    ON inward_outward_entries (entryId, productId);
+
+
+-- =====================================================
+-- REFRESH OPTIMIZER STATISTICS
+-- Must run after any dump restore. Without this, MySQL
+-- thinks all tables have ~1 row and picks terrible join
+-- order, causing BOQ status queries to take 50+ seconds.
+-- Safe to re-run anytime — takes <1s per schema.
+-- =====================================================
+ANALYZE TABLE
+    BOQUpload,
+    building_type,
+    Usage_Location,
+    usage_area,
+    Product,
+    Category,
+    outward_inventory,
+    outwardinventory_entry,
+    inward_outward_entries;

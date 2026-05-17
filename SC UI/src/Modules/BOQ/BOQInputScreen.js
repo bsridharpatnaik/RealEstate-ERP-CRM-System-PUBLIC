@@ -9,6 +9,7 @@ import "./LoadingSpinner.css";
 import { API } from "./../../axios";
 import { DeleteIcon, RefreshIcon } from '../../Shared/Icons/Index';
 import { canEditBOQ } from '../../helper';
+import BOQUIEntry from './BOQUIEntry';
 
 const BOQInputScreen = () => {
   const fileInputRef = useRef(null);
@@ -40,10 +41,13 @@ const BOQInputScreen = () => {
   const [uploadMode, setUploadMode]                       = useState('new');
   const [dragOver, setDragOver]                           = useState(false);
   const [hasCategory, setHasCategory]                     = useState(false);
+  const [hasWastage, setHasWastage]                       = useState(false);
+  const [uiMode, setUiMode]                               = useState(true);
+  const [uiEntryKey, setUiEntryKey]                       = useState(0);
 
   const tableHeading = [
     'S No.', 'Structure Type', 'Structure',
-    'Category', 'Inventory', 'Unit', 'Quantity', 'Work Area', 'Changes', 'Remark', 'Delete'
+    'Category', 'Inventory', 'Unit', 'Quantity', 'Wastage (%)', 'Work Area', 'Changes', 'Remark', 'Delete'
   ];
 
   let td = [null];
@@ -94,6 +98,7 @@ const BOQInputScreen = () => {
     setSelectedFileName('');
     setExcelFileError(null);
     setHasCategory(false);
+    setHasWastage(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -157,18 +162,24 @@ const BOQInputScreen = () => {
     const heads = extractHeader(worksheet);
     // New template: Category | Inventory | Unit | Quantity | Work Area (or FinalLocation) | Changes?
     // Old template (backwards compat): Inventory | Quantity | Work Area (or FinalLocation) | Changes?
+    const isWorkAreaCol5 = heads[5] === 'Work Area' || heads[5] === 'FinalLocation';
     const isWorkAreaCol4 = heads[4] === 'Work Area' || heads[4] === 'FinalLocation';
     const isWorkAreaCol2 = heads[2] === 'Work Area' || heads[2] === 'FinalLocation';
-    const newFormat = heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && isWorkAreaCol4;
+    // New template with wastage: Category | Inventory | Unit | Quantity | Wastage (%) | Work Area | Changes | Remark
+    const newFormatWithWastage = heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && heads[4] === 'Wastage (%)' && isWorkAreaCol5;
+    // New template without wastage (backwards compat): Category | Inventory | Unit | Quantity | Work Area ...
+    const newFormat = !newFormatWithWastage && heads[0] === 'Category' && heads[1] === 'Inventory' && heads[2] === 'Unit' && heads[3] === 'Quantity' && isWorkAreaCol4;
     const oldFormat = heads[0] === 'Inventory' && heads[1] === 'Quantity' && isWorkAreaCol2;
-    if (!newFormat && !oldFormat) {
+    if (!newFormatWithWastage && !newFormat && !oldFormat) {
       enqueueSnackbar('Headers not recognised. Please use the provided template.', { variant: 'error' });
       return;
     }
 
-    setHasCategory(newFormat);
-    const mode = newFormat ? (heads[5] === 'Changes' ? 'new' : 'existing')
-                           : (heads[3] === 'Changes' ? 'new' : 'existing');
+    setHasCategory(newFormatWithWastage || newFormat);
+    setHasWastage(newFormatWithWastage);
+    const mode = newFormatWithWastage ? (heads[6] === 'Changes' ? 'new' : 'existing')
+               : newFormat            ? (heads[5] === 'Changes' ? 'new' : 'existing')
+                                      : (heads[3] === 'Changes' ? 'new' : 'existing');
     setUploadMode(mode);
 
     const excelDataM = [];
@@ -215,41 +226,64 @@ const BOQInputScreen = () => {
     setIsLoading(true);
     setResponseStatus(false);
     const table = document.querySelector('table');
+    const cellText = (row, idx) => (row.cells[idx] ? row.cells[idx].innerText.trim() : '');
     for (var i = 1, row; row = table.rows[i]; i++) {
-      const rowItem = table.rows[i].innerText;
-      let splt = rowItem.split('\n').filter(e => e !== '\t' && e !== '' && e !== '\t\t\t\t\t\t\t');
-      if (splt.length !== 0) {
-        for (let j = 0; j < buildingTypeData.length; j++) {
-          if (buildingTypeData[j].label === splt[1]) splt[1] = buildingTypeData[j].value;
-        }
-        for (let u = 0; u < buildingUnitData.length; u++) {
-          if (buildingUnitData[u].label === splt[2]) splt[2] = buildingUnitData[u].value;
-        }
-        // New format: sno(0) BT(1) BU(2) Category(3) Inventory(4) Unit(5) Qty(6) Loc(7) [Changes(8)] Remark(8|9)
-        // Old format: sno(0) BT(1) BU(2) Inventory(3) Qty(4) Loc(5) [Changes(6)] Remark(6|7)
-        td[key2++] = hasCategory ? {
-          sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
-          inventory: splt[4], quantity: splt[6], location: splt[7],
-          changes: uploadMode === 'existing' ? 'upsert' : splt[8],
-          remark: uploadMode === 'existing' ? (splt[8] || '') : (splt[9] || '')
-        } : {
-          sno: splt[0], buildingType: splt[1], buildingUnit: splt[2],
-          inventory: splt[3], quantity: splt[4], location: splt[5],
-          changes: uploadMode === 'existing' ? 'upsert' : splt[6],
-          remark: uploadMode === 'existing' ? (splt[6] || '') : (splt[7] || '')
-        };
+      if (row.cells.length === 0) continue;
+
+      // Resolve building type/unit labels → IDs
+      let btVal = cellText(row, 1);
+      let buVal = cellText(row, 2);
+      for (let j = 0; j < buildingTypeData.length; j++) {
+        if (buildingTypeData[j].label === btVal) { btVal = buildingTypeData[j].value; break; }
       }
+      for (let u = 0; u < buildingUnitData.length; u++) {
+        if (buildingUnitData[u].label === buVal) { buVal = buildingUnitData[u].value; break; }
+      }
+
+      // Read columns by fixed DOM index — immune to empty cells
+      // hasCategory+hasWastage: 0=SNo 1=BT 2=BU 3=Cat 4=Inv 5=Unit 6=Qty 7=Wastage 8=Loc [9=Changes] 10|9=Remark
+      // hasCategory (no wastage):              0=SNo 1=BT 2=BU 3=Cat 4=Inv 5=Unit 6=Qty 7=Loc [8=Changes] 9|8=Remark
+      // no category:                           0=SNo 1=BT 2=BU 3=Inv 4=Qty 5=Loc [6=Changes] 7|6=Remark
+      td[key2++] = hasCategory ? (hasWastage ? {
+        sno:           cellText(row, 0),
+        buildingType:  btVal,
+        buildingUnit:  buVal,
+        inventory:     cellText(row, 4),
+        quantity:      cellText(row, 6),
+        wastagePercent: cellText(row, 7),
+        location:      cellText(row, 8),
+        changes:       uploadMode === 'existing' ? 'upsert' : cellText(row, 9),
+        remark:        uploadMode === 'existing' ? cellText(row, 9) : cellText(row, 10),
+      } : {
+        sno:           cellText(row, 0),
+        buildingType:  btVal,
+        buildingUnit:  buVal,
+        inventory:     cellText(row, 4),
+        quantity:      cellText(row, 6),
+        wastagePercent: '0',
+        location:      cellText(row, 7),
+        changes:       uploadMode === 'existing' ? 'upsert' : cellText(row, 8),
+        remark:        uploadMode === 'existing' ? cellText(row, 8) : cellText(row, 9),
+      }) : {
+        sno:           cellText(row, 0),
+        buildingType:  btVal,
+        buildingUnit:  buVal,
+        inventory:     cellText(row, 3),
+        quantity:      cellText(row, 4),
+        wastagePercent: '0',
+        location:      cellText(row, 5),
+        changes:       uploadMode === 'existing' ? 'upsert' : cellText(row, 6),
+        remark:        uploadMode === 'existing' ? cellText(row, 6) : cellText(row, 7),
+      };
     }
 
-    const body = { upload: td };
-    for (let i = 0; i < body.upload.length; i++) {
-      if (body.upload[i] === null) { setExcelData(null); }
-    }
+    const body = { upload: td.filter(Boolean) };
 
     try {
       const response = await API.POST(apiEndpoints.BOQupload, body);
       const data = response.data;
       setIsLoading(false);
+      setResponseStatus(true);
       if (response.success) {
         for (let i = 0; i < data.length; i++) {
           responseMsg = data[i].message;
@@ -272,11 +306,9 @@ const BOQInputScreen = () => {
         }
         responseData = data;
         if (dataErrors) findindError();
-        setResponseStatus(true);
       }
-      if (response.errorMessage) {
-        enqueueSnackbar(response.errorMessage, { variant: 'error' });
-        setResponseStatus(true);
+      if (!response.success) {
+        enqueueSnackbar(response.errorMessage || 'Upload failed. Please try again.', { variant: 'error' });
       }
     } catch (error) {
       setIsLoading(false);
@@ -292,6 +324,7 @@ const BOQInputScreen = () => {
     setSelectedFileName('');
     setExcelFileError(null);
     setHasCategory(false);
+    setHasWastage(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
     setTimeout(() => setIsReset(false), 500);
   };
@@ -413,12 +446,53 @@ const BOQInputScreen = () => {
       <div style={hasEditAccess ? {} : { pointerEvents: 'none', opacity: 0.55 }}>
 
       {/* Page header */}
-      <div style={s.pageHeader}>
-        <h2 style={s.pageTitle}>BOQ Upload</h2>
-        <p style={s.pageSubtitle}>
-          Upload Bill of Quantities for your project buildings. Follow the steps below.
-        </p>
+      <div style={{ ...s.pageHeader, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h2 style={s.pageTitle}>BOQ Upload</h2>
+          <p style={s.pageSubtitle}>
+            {uiMode
+              ? 'Enter BOQ data directly using dropdowns and save to one or more structures.'
+              : 'Upload Bill of Quantities for your project buildings. Follow the steps below.'}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            style={{
+              padding: '7px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 500,
+              border: `1px solid ${uiMode ? '#ccc' : '#1976d2'}`,
+              background: uiMode ? '#f5f5f5' : '#fff',
+              color: uiMode ? '#888' : '#1976d2', cursor: 'pointer',
+            }}
+            onClick={() => setUiMode(false)}
+          >
+            📂 Excel Upload
+          </button>
+          <button
+            style={{
+              padding: '7px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 500,
+              border: `1px solid ${!uiMode ? '#ccc' : '#1976d2'}`,
+              background: !uiMode ? '#f5f5f5' : '#e3f2fd',
+              color: !uiMode ? '#888' : '#1976d2', cursor: 'pointer',
+            }}
+            onClick={() => setUiMode(true)}
+          >
+            🖊 Add from UI
+          </button>
+        </div>
       </div>
+
+      {/* UI Entry Mode */}
+      {uiMode && (
+        <div style={s.section}>
+          <BOQUIEntry
+            key={uiEntryKey}
+            buildingTypeData={buildingTypeData}
+            onDone={() => setUiEntryKey(k => k + 1)}
+          />
+        </div>
+      )}
+
+      {!uiMode && (<>
 
       {/* Step 1 — Select Building */}
       <div style={s.section}>
@@ -610,14 +684,19 @@ const BOQInputScreen = () => {
                   {hasCategory && (
                     <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[5]}</th>
                   )}
-                  {/* Quantity, Work Area */}
+                  {/* Quantity */}
                   <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[6]}</th>
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[7]}</th>
-                  {uploadMode === 'new' && (
-                    <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[8]}</th>
+                  {/* Wastage (%) — only when template has wastage column */}
+                  {hasWastage && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[7]}</th>
                   )}
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[9]}</th>
-                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[10]}</th>
+                  {/* Work Area */}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', whiteSpace: 'nowrap' }}>{tableHeading[8]}</th>
+                  {uploadMode === 'new' && (
+                    <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[9]}</th>
+                  )}
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)' }}>{tableHeading[10]}</th>
+                  <th style={{ border: '1px solid rgba(0,0,0,0.5)', textAlign: 'center' }}>{tableHeading[11]}</th>
                 </tr>
               </thead>
               <tbody>
@@ -634,12 +713,15 @@ const BOQInputScreen = () => {
                       <td className="row-data" id={idx + 1 + tableHeading[5]} style={{ border: '1px solid rgba(0,0,0,0.15)', color: '#888' }}><pre>{row.Unit || '—'}</pre></td>
                     )}
                     <td className="row-data" id={idx + 1 + tableHeading[6]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Quantity}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row['Work Area'] || row.FinalLocation}</pre></td>
-                    {uploadMode === 'new' && (
-                      <td className="row-data" id={idx + 1 + tableHeading[8]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
+                    {hasWastage && (
+                      <td className="row-data" id={idx + 1 + tableHeading[7]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row['Wastage (%)'] ?? '0'}</pre></td>
                     )}
-                    <td className="row-data" id={idx + 1 + tableHeading[9]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Remark || ''}</pre></td>
-                    <td className="row-data" id={idx + 1 + tableHeading[10]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
+                    <td className="row-data" id={idx + 1 + tableHeading[8]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row['Work Area'] || row.FinalLocation}</pre></td>
+                    {uploadMode === 'new' && (
+                      <td className="row-data" id={idx + 1 + tableHeading[9]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Changes}</pre></td>
+                    )}
+                    <td className="row-data" id={idx + 1 + tableHeading[10]} style={{ border: '1px solid rgba(0,0,0,0.15)' }} contentEditable="true"><pre>{row.Remark || ''}</pre></td>
+                    <td className="row-data" id={idx + 1 + tableHeading[11]} style={{ border: '1px solid rgba(0,0,0,0.15)', textAlign: 'center' }}>
                       <IconButton
                         onClick={() => {
                           setExcelData(prev => prev.filter((_, i) => i !== idx));
@@ -670,6 +752,8 @@ const BOQInputScreen = () => {
           </div>
         </div>
       )}
+
+      </>)} {/* end !uiMode */}
 
       </div> {/* end hasEditAccess wrapper */}
     </div>

@@ -55,8 +55,10 @@ public class BOQUpload extends ReusableFields {
 	{ "hibernateLazyInitializer", "handler" })
 	UsageLocation usageLocation;
 	
-    private double quantity; 
-	
+    private double quantity;
+
+	private double wastagePercent;
+
 	private String changes;
 	
 	
@@ -97,6 +99,12 @@ public class BOQUpload extends ReusableFields {
 	}
 	public void setQuantity(double quantity) {
 		this.quantity = quantity;
+	}
+	public double getWastagePercent() {
+		return wastagePercent;
+	}
+	public void setWastagePercent(double wastagePercent) {
+		this.wastagePercent = wastagePercent;
 	}
 	public String getChanges() {
 		return changes;

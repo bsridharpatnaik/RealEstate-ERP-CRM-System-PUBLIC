@@ -30,6 +30,7 @@ import com.ec.application.data.BOQInformation;
 import com.ec.application.data.BOQReportResponse;
 import com.ec.application.data.BOQUploadValidationResponse;
 import com.ec.application.data.UsageLocationResponse;
+import com.ec.application.model.BOQUpload;
 import com.ec.application.service.BOQService;
 import com.ec.application.Filters.BOQStatusFilterDataList;
 
@@ -108,6 +109,12 @@ public class BOQController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Existing_BOQ.xlsx\"")
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(excel);
+    }
+
+    @GetMapping("/byunit/{locationId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BOQUpload> getBOQByUnit(@PathVariable("locationId") long locationId) {
+        return bOQService.getBOQByUnit(locationId);
     }
 
     @DeleteMapping("/boq_upload/{id}")

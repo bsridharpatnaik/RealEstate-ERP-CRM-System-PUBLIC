@@ -7,6 +7,9 @@ public class BOQStatusDetailsDto {
     private String finalLocation;
     private Double boqQuantity;
     private Double outwardQuantity;
+    private Double status;
+    private String statusBucket;
+    private Double wastagePercent;
 
     public Long getBoqUploadId() { return boqUploadId; }
     public void setBoqUploadId(Long boqUploadId) { this.boqUploadId = boqUploadId; }
@@ -43,6 +46,15 @@ public class BOQStatusDetailsDto {
     public void setBOQStatusDetailsMapKey(BOQStatusDetailsMapKey bOQStatusDetailsMapKey) {
         BOQStatusDetailsMapKey = bOQStatusDetailsMapKey;
     }
+
+    public Double getStatus() { return status; }
+    public void setStatus(Double status) { this.status = status; }
+
+    public String getStatusBucket() { return statusBucket; }
+    public void setStatusBucket(String statusBucket) { this.statusBucket = statusBucket; }
+
+    public Double getWastagePercent() { return wastagePercent; }
+    public void setWastagePercent(Double wastagePercent) { this.wastagePercent = wastagePercent; }
 
     public BOQStatusDetailsDto() {
         super();

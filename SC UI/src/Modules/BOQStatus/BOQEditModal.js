@@ -30,6 +30,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
   const [unit, setUnit]                   = useState('');
   const [finalLocation, setFinalLocation] = useState(null);
   const [quantity, setQuantity]           = useState('');
+  const [wastagePercent, setWastagePercent] = useState('');
   const [remark, setRemark]               = useState('');
   const [saving, setSaving]               = useState(false);
 
@@ -60,28 +61,37 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
     if (!open) return;
 
     if (initialData) {
-      // Pre-fill product — search allProductOptions so category filter doesn't interfere
+      // Pre-fill product — search by name (same as product lookup)
       const preProduct = allProductOptions.find(o => o.label === initialData.productName) || null;
       setProduct(preProduct);
       setUnit(preProduct ? (preProduct.unit || '') : '');
 
-      // Pre-fill final location if single detail row
+      // Pre-fill final location — trim both sides to avoid whitespace mismatches
       if (initialData.finalLocation) {
-        const preLocation = locationOptions.find(o => o.label === initialData.finalLocation) || null;
+        const needle = initialData.finalLocation.trim();
+        const preLocation = locationOptions.find(o => o.label.trim() === needle) || null;
         setFinalLocation(preLocation);
         setQuantity(initialData.quantity !== undefined ? String(initialData.quantity) : '');
+        setWastagePercent(initialData.wastagePercent != null && initialData.wastagePercent > 0
+          ? String(initialData.wastagePercent) : '');
       } else {
         setFinalLocation(null);
         setQuantity('');
+        setWastagePercent('');
       }
       setRemark('');
 
-      // Pre-fill building type then unit
-      if (initialData.buildingTypeId && buildingTypeOptions.length > 0) {
-        const preType = buildingTypeOptions.find(o => o.value === initialData.buildingTypeId) || null;
+      // Pre-fill building type: match by name first (robust), fall back to numeric ID
+      if (buildingTypeOptions.length > 0) {
+        const preType = buildingTypeOptions.find(o => o.label === initialData.buildingTypeName)
+          || buildingTypeOptions.find(o => Number(o.value) === Number(initialData.buildingTypeId))
+          || null;
         setBuildingType(preType);
         if (preType) {
-          loadBuildingUnits(initialData.buildingTypeId, initialData.buildingUnitId);
+          loadBuildingUnits(preType.value, initialData.buildingUnitId, initialData.buildingUnitName);
+        } else {
+          setBuildingUnit(null);
+          setBuildingUnitOptions([]);
         }
       } else {
         setBuildingType(null);
@@ -99,17 +109,20 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       setProductOptions(allProductOptions);
       setFinalLocation(null);
       setQuantity('');
+      setWastagePercent('');
       setRemark('');
     }
   }, [open, initialData, buildingTypeOptions, allProductOptions, locationOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadBuildingUnits = async (btId, preSelectUnitId) => {
+  const loadBuildingUnits = async (btId, preSelectUnitId, preSelectUnitName) => {
     const r = await API.GET(apiEndpoints.getBuildingUnit + btId);
     if (r.success) {
       const opts = r.data.usageLocation.map(u => ({ value: u.id, label: u.name }));
       setBuildingUnitOptions(opts);
-      if (preSelectUnitId) {
-        const preUnit = opts.find(o => o.value === preSelectUnitId) || null;
+      if (preSelectUnitId || preSelectUnitName) {
+        const preUnit = opts.find(o => o.label === preSelectUnitName)
+          || opts.find(o => Number(o.value) === Number(preSelectUnitId))
+          || null;
         setBuildingUnit(preUnit);
       }
     }
@@ -119,7 +132,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
     setBuildingType(opt);
     setBuildingUnit(null);
     setBuildingUnitOptions([]);
-    if (opt) loadBuildingUnits(opt.value);
+    if (opt) loadBuildingUnits(opt.value, null, null);
   };
 
   const handleCategoryChange = async (opt) => {
@@ -148,6 +161,10 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       enqueueSnackbar('Please fill all required fields including Remark', { variant: 'warning' });
       return;
     }
+    if (wastagePercent !== '' && (isNaN(Number(wastagePercent)) || Number(wastagePercent) < 0 || Number(wastagePercent) > 100)) {
+      enqueueSnackbar('Wastage % must be between 0 and 100', { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     const body = {
       upload: [{
@@ -157,6 +174,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
         inventory: product.label,
         location: finalLocation.label,
         quantity: String(quantity),
+        wastagePercent: wastagePercent !== '' ? String(wastagePercent) : '0',
         changes: 'upsert',
         remark: remark.trim(),
       }]
@@ -262,6 +280,25 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
               size="small"
               fullWidth
               inputProps={{ min: 0 }}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>
+              Wastage %
+              <span style={{ fontSize: '11px', color: '#888', fontWeight: 400, marginLeft: 6 }}>
+                (optional — effective BOQ = quantity × (1 + wastage/100))
+              </span>
+            </label>
+            <TextField
+              type="number"
+              value={wastagePercent}
+              onChange={e => setWastagePercent(e.target.value)}
+              variant="outlined"
+              size="small"
+              fullWidth
+              inputProps={{ min: 0, max: 100, step: 0.01 }}
+              placeholder="0"
             />
           </div>
 

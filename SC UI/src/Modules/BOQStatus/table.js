@@ -6,13 +6,19 @@ import "./style.scss";
 //misc
 import CommonTable from "./../../Shared/Table";
 import { messages } from "./../../messages";
-import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import Checkbox from "@material-ui/core/Checkbox";
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
+import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 
 class Table extends CommonTable {
+
+  state = {
+    ...(super.state || {}),
+    expandedRowId: null,
+  };
 
   // status = (outward - boq) / boq * 100
   // consumed% = status + 100
@@ -25,26 +31,43 @@ class Table extends CommonTable {
     return "on-track";
   }
 
+  toggleExpand = (id) => {
+    this.setState(prev => ({
+      expandedRowId: prev.expandedRowId === id ? null : id,
+    }));
+  };
+
+  getStatusBucketColor(statusBucket) {
+    if (!statusBucket) return '#888';
+    const s = statusBucket.toLowerCase();
+    if (s.includes('on track')) return '#2e7d32';
+    if (s.includes('at risk'))  return '#e65100';
+    if (s.includes('exceeded')) return '#c62828';
+    return '#555';
+  }
+
+  getStatusBucketBg(statusBucket) {
+    if (!statusBucket) return '#f5f5f5';
+    const s = statusBucket.toLowerCase();
+    if (s.includes('on track')) return '#e8f5e9';
+    if (s.includes('at risk'))  return '#fff3e0';
+    if (s.includes('exceeded')) return '#ffebee';
+    return '#f5f5f5';
+  }
+
   renderCell(key, row, headerIndex) {
     if (key === "id") {
+      const expanded = this.state.expandedRowId === row.id;
       return (
-        <td data-label={messages.common.id}>
-          <Button
-            color="primary"
-            onClick={() => {
-              this.props.showDetail(row);
-              this.setState({
-                headers: [
-                  messages.common.id,
-                  messages.common.inventory,
-                  messages.common.boqQuantity,
-                ],
-                keys: ["id", "product", "boqQuantity"],
-              });
-            }}
+        <td data-label={messages.common.id} style={{ whiteSpace: 'nowrap' }}>
+          <IconButton
+            size="small"
+            onClick={() => this.toggleExpand(row.id)}
+            title={expanded ? 'Collapse details' : 'Expand details'}
           >
-            {`${row["id"]}`}
-          </Button>
+            {expanded ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
+          </IconButton>
+          <span style={{ marginLeft: 4, verticalAlign: 'middle' }}>{row["id"]}</span>
         </td>
       );
     } else if (key === "status") {
@@ -68,6 +91,24 @@ class Table extends CommonTable {
           </div>
         </td>
       );
+    } else if (key === 'workAreaCount') {
+      const count = (row.boqDetails || []).length;
+      return (
+        <td data-label="Work Areas" style={{ textAlign: 'center' }}>
+          <span style={{
+            display: 'inline-block',
+            minWidth: 24,
+            padding: '1px 8px',
+            borderRadius: 12,
+            background: '#e3f2fd',
+            color: '#1565c0',
+            fontWeight: 600,
+            fontSize: 12,
+          }}>
+            {count}
+          </span>
+        </td>
+      );
     } else if (key === 'boqQuantity' || key === 'outwardQuantity') {
       const val = row[key];
       const display = val !== null && val !== undefined ? Number(val).toFixed(2) : '—';
@@ -75,6 +116,87 @@ class Table extends CommonTable {
     } else {
       return super.renderCell(key, row, headerIndex);
     }
+  }
+
+  renderExpansionRow(row, colSpan) {
+    const details = row.boqDetails || [];
+    const canEdit = this.props.canEditBOQ;
+    return (
+      <tr key={`expand-${row.id}`} className="boq-expansion-row">
+        <td colSpan={colSpan} style={{ padding: 0, borderTop: '1px solid #e0e0e0' }}>
+          <div style={{ background: '#f9f9f9', padding: '12px 24px' }}>
+            {details.length === 0 ? (
+              <span style={{ color: '#888', fontSize: 13 }}>No work-area details available.</span>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #ddd' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Work Area</th>
+                    <th style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 600, color: '#555' }}>BOQ Qty</th>
+                    <th style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Wastage %</th>
+                    <th style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Consumed Qty</th>
+                    <th style={{ textAlign: 'center', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Status</th>
+                    {canEdit && <th style={{ width: 80 }}></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {details.map((d, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
+                      <td style={{ padding: '5px 10px' }}>{d.finalLocation || '—'}</td>
+                      <td style={{ padding: '5px 10px', textAlign: 'right' }}>
+                        {d.boqQuantity != null ? Number(d.boqQuantity).toFixed(2) : '—'}
+                      </td>
+                      <td style={{ padding: '5px 10px', textAlign: 'right' }}>
+                        {d.wastagePercent != null && d.wastagePercent > 0
+                          ? `${Number(d.wastagePercent).toFixed(2)}%`
+                          : <span style={{ color: '#bbb' }}>—</span>
+                        }
+                      </td>
+                      <td style={{ padding: '5px 10px', textAlign: 'right' }}>
+                        {d.outwardQuantity != null ? Number(d.outwardQuantity).toFixed(2) : '—'}
+                      </td>
+                      <td style={{ padding: '5px 10px', textAlign: 'center' }}>
+                        {d.statusBucket ? (
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '2px 10px',
+                            borderRadius: 12,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: this.getStatusBucketColor(d.statusBucket),
+                            background: this.getStatusBucketBg(d.statusBucket),
+                          }}>
+                            {d.statusBucket}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      {canEdit && (
+                        <td style={{ padding: '3px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                          <IconButton
+                            size="small"
+                            title="Edit this work area entry"
+                            onClick={() => this.props.onEditDetail(row, d)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            title="Delete this work area entry"
+                            onClick={() => this.props.onDeleteDetail(d)}
+                          >
+                            <DeleteIcon fontSize="small" style={{ color: '#c62828' }} />
+                          </IconButton>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
   }
 
   renderHeader() {
@@ -95,7 +217,7 @@ class Table extends CommonTable {
             />
           </th>
         )}
-        {this.state.headers.map((header, index) => (
+        {(this.state.headers || []).map((header, index) => (
           <th key={index} onClick={() => this.sort(index)} className="sortable">
             <span>{header}</span>
           </th>
@@ -107,22 +229,29 @@ class Table extends CommonTable {
 
   renderBody() {
     const rows = this.state.rows || [];
-    const keys = this.state.keys;
+    const keys = this.state.keys || [];
     const canEdit = this.props.canEditBOQ;
     const selectedRowIds = this.props.selectedRowIds || [];
+    // colSpan = keys + checkbox col + actions col (both only when canEdit)
+    const colSpan = keys.length + (canEdit ? 2 : 0);
+
     if (rows.length === 0) {
       return (
         <tr>
-          <td colSpan={keys.length + (canEdit ? 2 : 1)}>{messages.common.noRecords}</td>
+          <td colSpan={colSpan + (canEdit ? 0 : 1)}>{messages.common.noRecords}</td>
         </tr>
       );
     }
-    return rows.map((row, index) => {
+
+    const result = [];
+    rows.forEach((row, index) => {
       const cls = this.getStatusClass(row.status || 0);
       const isSelected = selectedRowIds.includes(row.id);
-      return (
+      const isExpanded = this.state.expandedRowId === row.id;
+
+      result.push(
         <tr
-          key={index}
+          key={`row-${index}`}
           className={`${index === rows.length - 1 ? "row last" : "row"} boq-row-${cls}${isSelected ? ' boq-row-selected' : ''}`}
         >
           {canEdit && (
@@ -139,14 +268,7 @@ class Table extends CommonTable {
             <td data-label="Actions" style={{ whiteSpace: 'nowrap' }}>
               <IconButton
                 size="small"
-                title="Edit BOQ"
-                onClick={() => this.props.onEditBOQ(row)}
-              >
-                <EditIcon fontSize="small" />
-              </IconButton>
-              <IconButton
-                size="small"
-                title="Delete BOQ"
+                title="Delete all work-area entries for this product"
                 onClick={() => this.props.onDeleteBOQ(row)}
               >
                 <DeleteIcon fontSize="small" style={{ color: '#c62828' }} />
@@ -155,7 +277,13 @@ class Table extends CommonTable {
           )}
         </tr>
       );
+
+      if (isExpanded) {
+        result.push(this.renderExpansionRow(row, colSpan));
+      }
     });
+
+    return result;
   }
 }
 

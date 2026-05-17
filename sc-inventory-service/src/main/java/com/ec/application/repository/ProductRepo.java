@@ -76,6 +76,12 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	boolean existsByProductNameAndIsDeleted(String inventory, boolean b);
 
+	@Query("SELECT CASE WHEN COUNT(m) > 0 THEN true ELSE false END FROM Product m WHERE TRIM(m.productName) = TRIM(:name) AND m.isDeleted = false")
+	boolean existsByProductNameTrimmed(@Param("name") String name);
+
+	@Query("SELECT m FROM Product m WHERE TRIM(m.productName) = TRIM(:name) AND m.isDeleted = false")
+	Product findByProductNameTrimmed(@Param("name") String name);
+
 	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
 	List<IdNameProjections> findIdAndMeasurementUnitNames(@Param("id") long id);
 

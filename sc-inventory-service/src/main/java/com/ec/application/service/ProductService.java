@@ -15,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -60,6 +63,10 @@ public class ProductService {
         return productRepo.findAll(pageable);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "refProducts",   allEntries = true),
+        @CacheEvict(value = "refCategories", allEntries = true)
+    })
     public Product createProduct(ProductCreateData payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
@@ -129,6 +136,10 @@ public class ProductService {
             throw new Exception("Product Name should not exceed 50 characters. Please provide valid product name.");
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "refProducts",   allEntries = true),
+        @CacheEvict(value = "refCategories", allEntries = true)
+    })
     public Product updateProduct(Long id, ProductCreateData payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
@@ -146,7 +157,7 @@ public class ProductService {
             throw new Exception("Product with same Name already exists");
         }
 
-        product.setProductName(payload.getProductName());
+        product.setProductName(payload.getProductName().trim());
         product.setProductDescription(payload.getProductDescription());
         product.setMeasurementUnit(payload.getMeasurementUnit());
         product.setCategory(category);
@@ -209,6 +220,7 @@ public class ProductService {
         return names;
     }
 
+    @Cacheable(value = "refCategories", key = "'all'")
     public List<IdNameProjections> getIdAndNamesForCategoryDropdown() {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         List<IdNameProjections> categoryNamesForDropdown = categoryRepo.findIdAndNames();
@@ -220,6 +232,7 @@ public class ProductService {
         return productRepo.getProductMeasurementUnit();
     }
 
+    @Cacheable(value = "refProducts", key = "#isManagedInventory + ':' + #categoryId")
     public List<IdNameAndUnit> getProducts(Boolean isManagedInventory, Long categoryId) {
         return productRepo.getProducts(isManagedInventory, categoryId);
     }

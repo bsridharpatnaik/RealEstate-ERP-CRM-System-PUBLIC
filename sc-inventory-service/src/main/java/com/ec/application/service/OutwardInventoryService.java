@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +98,7 @@ public class OutwardInventoryService {
     Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
     public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception {
         log.info("Invoked createOutwardnventory with payload -" + oiData.toString());
         OutwardInventory outwardInventory = new OutwardInventory();
@@ -245,13 +247,35 @@ public class OutwardInventoryService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
     public OutwardInventory updateOutwardnventory(OutwardInventoryData iiData, Long id) throws Exception {
         log.info("Invoked updateOutwardnventory");
         Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);
         if (!outwardInventoryOpt.isPresent())
             throw new Exception("Inventory Entry with ID not found");
-        boolean allHaveBOQ = validateInputs(iiData);
         OutwardInventory outwardInventory = outwardInventoryOpt.get();
+
+        // Validate non-BOQ fields
+        boolean allHaveBOQ = validateInputs(iiData, true);
+
+        // BOQ enforcement for update: use delta quantities (newQty - oldQty) to avoid
+        // double-counting existing outward quantities that are still in the DB at validation time.
+        // Only products with a net increase need to be checked.
+        Map<Long, Double> oldQtyMap = new HashMap<>();
+        for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
+            oldQtyMap.put(io.getProduct().getProductId(), io.getQuantity());
+        }
+        List<ProductWithQuantity> deltaItems = new ArrayList<>();
+        for (ProductWithQuantity item : iiData.getProductWithQuantities()) {
+            double oldQty   = oldQtyMap.getOrDefault(item.getProductId(), 0.0);
+            double delta    = item.getQuantity() - oldQty;
+            if (delta > 0) {
+                deltaItems.add(new ProductWithQuantity(item.getProductId(), delta));
+            }
+        }
+        if (!deltaItems.isEmpty()) {
+            allHaveBOQ = boqService.enforceBOQLimits(iiData.getUsageLocationId(), deltaItems);
+        }
         exitIfNotAuthorized(outwardInventory, iiData, APICallTypeForAuthorization.Update);
         exitIfReturnExists(outwardInventory, iiData);
         OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
@@ -473,13 +497,21 @@ public class OutwardInventoryService {
     }
 
     private boolean validateInputs(OutwardInventoryData oiData) throws Exception {
+        return validateInputs(oiData, false);
+    }
+
+    /**
+     * @param skipBoq when true, skips BOQ enforcement (caller handles it separately,
+     *                e.g. update path uses delta quantities to avoid double-counting)
+     */
+    private boolean validateInputs(OutwardInventoryData oiData, boolean skipBoq) throws Exception {
         log.info("Invoked validateInputs");
         if (!locationRepo.existsById(oiData.getUsageLocationId()))
             throw new Exception("Structure not found.");
         if (!contractorRepo.existsById(oiData.getContractorId()))
             throw new Exception("Contractor not found.");
         if (!warehouseRepo.existsById(oiData.getWarehouseId()))
-            throw new Exception("Contractor not found.");
+            throw new Exception("Warehouse not found.");
         if (!usageAreaRepo.existsById(oiData.getUsageAreaId()))
             throw new Exception("Work Area not found.");
 
@@ -492,9 +524,9 @@ public class OutwardInventoryService {
         for (ProductWithQuantity productWithQuantity : oiData.getProductWithQuantities()) {
             if (!productRepo.existsById(productWithQuantity.getProductId()))
                 throw new Exception("Product not found.");
-            //if (productWithQuantity.getQuantity() <= 0)
-            //	throw new Exception("Quantity should be greater than zero");
         }
+
+        if (skipBoq) return false;
 
         // BOQ enforcement: block save if any product exceeds 100% BOQ consumption
         // returns true only if ALL products have BOQ configured
@@ -614,6 +646,7 @@ public class OutwardInventoryService {
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
     public void deleteOutwardInventoryById(Long id) throws Exception {
         log.info("Invoked deleteOutwardInventoryById");
         Optional<OutwardInventory> outwardInventoryOpt = outwardInventoryRepo.findById(id);

@@ -13,11 +13,10 @@ import Popper from "@material-ui/core/Popper";
 import Filter from "./filter";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
 import {
-  Dialog, Slide, DialogTitle, DialogContent, DialogContentText,
+  Dialog, DialogTitle, DialogContent, DialogContentText,
   DialogActions, Button, Table as MuiTable, TableHead, TableRow,
   TableCell, TableBody, CircularProgress,
 } from "@material-ui/core";
-import Details from "./details";
 import { API, instance } from "./../../axios";
 import { param } from "jquery";
 import { canEditBOQ } from "./../../helper";
@@ -31,13 +30,14 @@ class List extends ListCommon {
   title = messages.common.boqStatus;
   state = {
     categoryArray: [], data: [], data2: [], options: [], options2: [],
-    showDetails: false, key: 1,
-    summary: { total: 0, onTrack: 0, atRisk: 0, exceeded: 0 },
+    key: 1,
+    summary: { total: 0, uniqueProducts: 0, onTrack: 0, atRisk: 0, exceeded: 0 },
     quickFilter: null,
     showBOQModal: false,
     boqModalData: null,
     showDeleteConfirm: false,
     deleteTarget: null,
+    deleteSingleDetail: false,
     deleteInProgress: false,
     selectedRowIds: [],
     showBulkDeleteConfirm: false,
@@ -59,8 +59,10 @@ class List extends ListCommon {
     headers: [
       messages.common.id,
       messages.common.category,
+      messages.common.buildingType,
       messages.common.location,
       messages.common.inventory,
+      "Work Areas",
       messages.common.boqQuantity,
       messages.common.outwardQuantity,
       messages.common.boqStatus,
@@ -68,8 +70,10 @@ class List extends ListCommon {
     keys: [
       "id",
       "category",
+      "buildingType",
       "buildingUnit",
       "product",
+      "workAreaCount",
       "boqQuantity",
       "outwardQuantity",
       "status",
@@ -149,15 +153,6 @@ class List extends ListCommon {
     return this.dataExport;
   }
 
-  scrollBottom() {
-    window.scrollTo(0, document.body.scrollHeight);
-  }
-
-  showDetail = (row) => {
-    this.setState({ showDetails: true, selectedData: row });
-    this.scrollBottom()
-  }
-
   prepareRequestBody() {
     let params;
     params = {};
@@ -227,10 +222,11 @@ class List extends ListCommon {
         totalRecords: d.boqstatusDto.totalElements,
         selectedRowIds: [],
         summary: {
-          total:    d.totalCount    || 0,
-          onTrack:  d.onTrackCount  || 0,
-          atRisk:   d.atRiskCount   || 0,
-          exceeded: d.exceededCount || 0,
+          total:          d.totalCount          || 0,
+          uniqueProducts: d.uniqueProductCount  || 0,
+          onTrack:        d.onTrackCount        || 0,
+          atRisk:         d.atRiskCount         || 0,
+          exceeded:       d.exceededCount       || 0,
         },
       });
     }
@@ -259,13 +255,42 @@ class List extends ListCommon {
     this.setState({
       showBOQModal: true,
       boqModalData: {
-        buildingTypeId: row.buildingTypeId,
-        buildingUnitId: row.buildingUnitId,
-        productName: row.product,
-        finalLocation: detail ? detail.finalLocation : undefined,
-        quantity: detail ? detail.boqQuantity : undefined,
+        buildingTypeId:   row.buildingTypeId,
+        buildingTypeName: row.buildingType,
+        buildingUnitId:   row.buildingUnitId,
+        buildingUnitName: row.buildingUnit,
+        productName:      row.product,
+        finalLocation:    detail ? detail.finalLocation : undefined,
+        quantity:         detail ? detail.boqQuantity : undefined,
+        wastagePercent:   detail ? detail.wastagePercent : undefined,
       },
     });
+  };
+
+  openEditDetail = (parentRow, detail) => {
+    this.setState({
+      showBOQModal: true,
+      boqModalData: {
+        buildingTypeId:   parentRow.buildingTypeId,
+        buildingTypeName: parentRow.buildingType,
+        buildingUnitId:   parentRow.buildingUnitId,
+        buildingUnitName: parentRow.buildingUnit,
+        productName:      parentRow.product,
+        finalLocation:    detail.finalLocation,
+        quantity:         detail.boqQuantity,
+        wastagePercent:   detail.wastagePercent,
+      },
+    });
+  };
+
+  handleDeleteDetail = (detail) => {
+    // Wrap the single detail into the same confirm flow used for parent-row delete
+    const syntheticRow = {
+      product: detail.finalLocation,
+      buildingUnit: '',
+      boqDetails: [detail],
+    };
+    this.setState({ showDeleteConfirm: true, deleteTarget: syntheticRow, deleteSingleDetail: true });
   };
 
   handleDeleteBOQ = (row) => {
@@ -289,7 +314,7 @@ class List extends ListCommon {
         this.props.enqueueSnackbar('Failed to delete entry: ' + detail.finalLocation, { variant: 'error' });
       }
     }
-    this.setState({ showDeleteConfirm: false, deleteTarget: null, deleteInProgress: false });
+    this.setState({ showDeleteConfirm: false, deleteTarget: null, deleteSingleDetail: false, deleteInProgress: false });
     if (allOk) {
       this.props.enqueueSnackbar('BOQ entry deleted successfully', { variant: 'success' });
     }
@@ -370,7 +395,7 @@ class List extends ListCommon {
             selectedRowIds, showBulkDeleteConfirm, bulkDeleteInProgress } = this.state;
     const hasSelection = selectedRowIds.length > 0;
     return (
-      <div className={this.state.showDetails ? "split" : ""}>
+      <div>
         <div className="list-section">
 
           {/* Summary cards */}
@@ -378,6 +403,10 @@ class List extends ListCommon {
             <div className={`boq-summary-card total${!quickFilter ? ' active' : ''}`} onClick={() => this.setQuickFilter(null)}>
               <div className="card-count">{summary.total}</div>
               <div className="card-label">Total Items</div>
+            </div>
+            <div className="boq-summary-card" style={{ cursor: 'default' }}>
+              <div className="card-count">{summary.uniqueProducts}</div>
+              <div className="card-label">Unique Products</div>
             </div>
             <div className={`boq-summary-card on-track${quickFilter === 'onTrack' ? ' active' : ''}`} onClick={() => this.setQuickFilter('onTrack')}>
               <div className="card-count">{summary.onTrack}</div>
@@ -483,12 +512,10 @@ class List extends ListCommon {
                 this.sortkey = sortkey;
                 this.search();
               }}
-              showDetail={(row) => {
-                this.showDetail(row)
-              }}
               canEditBOQ={canEditBOQ()}
-              onEditBOQ={(row) => this.openEditModal(row)}
               onDeleteBOQ={(row) => this.handleDeleteBOQ(row)}
+              onEditDetail={(parentRow, detail) => this.openEditDetail(parentRow, detail)}
+              onDeleteDetail={(detail) => this.handleDeleteDetail(detail)}
               selectedRowIds={selectedRowIds}
               onSelectRow={(id) => this.handleSelectRow(id)}
               onSelectAll={(checked) => this.handleSelectAll(checked)}
@@ -498,15 +525,18 @@ class List extends ListCommon {
         </div>
 
         {/* Delete confirmation dialog */}
-        <Dialog open={showDeleteConfirm} onClose={() => !deleteInProgress && this.setState({ showDeleteConfirm: false, deleteTarget: null })}>
-          <DialogTitle>Delete BOQ Entry</DialogTitle>
+        <Dialog open={showDeleteConfirm} onClose={() => !deleteInProgress && this.setState({ showDeleteConfirm: false, deleteTarget: null, deleteSingleDetail: false })}>
+          <DialogTitle>{this.state.deleteSingleDetail ? 'Delete Work Area Entry' : 'Delete BOQ Entry'}</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              This will permanently delete the following BOQ record(s) for{' '}
-              <strong>{deleteTarget && deleteTarget.product}</strong>
-              {' '}({deleteTarget && deleteTarget.buildingUnit}):
+              {this.state.deleteSingleDetail
+                ? <>This will permanently delete the BOQ entry for work area <strong>{deleteTarget && deleteTarget.product}</strong>. This cannot be undone.</>
+                : <>This will permanently delete the following BOQ record(s) for{' '}
+                    <strong>{deleteTarget && deleteTarget.product}</strong>
+                    {' '}({deleteTarget && deleteTarget.buildingUnit}):</>
+              }
             </DialogContentText>
-            {deleteTarget && deleteTarget.boqDetails && (
+            {deleteTarget && deleteTarget.boqDetails && !this.state.deleteSingleDetail && (
               <MuiTable size="small">
                 <TableHead>
                   <TableRow>
@@ -583,22 +613,6 @@ class List extends ListCommon {
           onSaved={() => this.search(0)}
         />
 
-        <Slide
-          direction="right"
-          in={this.state.showDetails}
-          mountOnEnter
-          unmountOnExit
-          timeout={{ exit: 0 }}
-        >
-          <Details
-            data={this.state.selectedData}
-            edit={this.props.edit}
-            delete={(row) => this.delete(row)}
-            close={() =>
-              this.setState({ showDetails: false, key: this.state.key + 1 })
-            }
-          />
-        </Slide>
       </div>
     );
   }

@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -37,9 +39,11 @@ public class UsageAreaService {
         return usageAreaRepo.findAll(pageable);
     }
 
+    @CacheEvict(value = "refWorkAreas", allEntries = true)
     public UsageArea createUsageArea(UsageArea payload) throws Exception {
         validatePayload(payload);
-        if (!usageAreaRepo.existsByUsageAreaName(payload.getUsageAreaName().trim())) {
+        payload.setUsageAreaName(payload.getUsageAreaName().trim());
+        if (!usageAreaRepo.existsByUsageAreaName(payload.getUsageAreaName())) {
             usageAreaRepo.save(payload);
             return payload;
         } else {
@@ -53,6 +57,7 @@ public class UsageAreaService {
 
     }
 
+    @CacheEvict(value = "refWorkAreas", allEntries = true)
     public UsageArea updateUsageArea(Long id, UsageArea payload) throws Exception {
         validatePayload(payload);
         Optional<UsageArea> UsageAreaForUpdateOpt = usageAreaRepo.findById(id);
@@ -60,6 +65,7 @@ public class UsageAreaService {
 
         UsageArea newUsageArea = new UsageArea();
         newUsageArea = payload;
+        newUsageArea.setUsageAreaName(newUsageArea.getUsageAreaName().trim());
         if (!usageAreaRepo.existsByUsageAreaName(newUsageArea.getUsageAreaName())
                 && !newUsageArea.getUsageAreaName().equalsIgnoreCase(UsageAreaForUpdate.getUsageAreaName())) {
             UsageAreaForUpdate.setUsageAreaName(newUsageArea.getUsageAreaName());
@@ -80,6 +86,7 @@ public class UsageAreaService {
         return UsageAreas.get();
     }
 
+    @CacheEvict(value = "refWorkAreas", allEntries = true)
     public void deleteUsageArea(Long id) throws Exception {
         if (!checkBeforeDeleteService.isUsageAreaUsed(id))
             usageAreaRepo.softDeleteById(id);
@@ -87,8 +94,8 @@ public class UsageAreaService {
             throw new Exception("Cannot delete usageArea. UsageArea already in use.");
     }
 
+    @Cacheable(value = "refWorkAreas", key = "'all'")
     public List<IdNameProjections> findIdAndNames() {
-        // TODO Auto-generated method stub
         return usageAreaRepo.findIdAndNames();
     }
 

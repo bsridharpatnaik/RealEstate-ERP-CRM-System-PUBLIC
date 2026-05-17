@@ -116,7 +116,7 @@ class Table extends React.Component {
     this.props.search(this.sortKey, this.sortBy);
   }
   renderHeader() {
-    const headers = this.state.headers;
+    const headers = this.state.headers || [];
     return (
       <tr>
         {headers.map((header, index) => (
@@ -146,7 +146,7 @@ class Table extends React.Component {
   }
   renderCell(key, row, name) {
     const value = row[key] !== null ? row[key] : "";
-    return <td data-label={this.state.headers[name]||key}>{`${value}`}</td>;
+    return <td data-label={(this.state.headers || [])[name] || key}>{`${value}`}</td>;
   }
   renderAction(row) {
     const customActions = this.props.customActions || [];
@@ -198,7 +198,7 @@ class Table extends React.Component {
   }
   renderBody() {
     const rows = this.state.rows || [];
-    const keys = this.state.keys;
+    const keys = this.state.keys || [];
     if (rows.length === 0) {
       return (
         <tr>
