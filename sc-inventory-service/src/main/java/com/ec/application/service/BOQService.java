@@ -848,7 +848,7 @@ public class BOQService {
      *
      * @return true if every product has effective BOQ > 0, false if any product has no BOQ
      */
-    public boolean enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items) throws Exception {
+    public boolean enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items, Long usageAreaId) throws Exception {
         log.info("Invoked enforceBOQLimits");
         if (!boqEnforcementBlock) return false; // enforcement disabled — skip all DB queries
         if (usageLocationId == null || items == null || items.isEmpty()) return false;
@@ -860,8 +860,10 @@ public class BOQService {
             Long productId = item.getProductId();
             Double newQty  = item.getQuantity();
 
-            // native aggregate query always returns exactly one row; use List to avoid Object[] cast issues
-            List<Object[]> rows = bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
+            // use work-area-strict query when usageAreaId is provided
+            List<Object[]> rows = (usageAreaId != null)
+                ? bOQUploadRepository.fetchAggregatedBOQAndOutwardByWorkArea(usageLocationId, productId, usageAreaId)
+                : bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
             if (rows == null || rows.isEmpty()) { allHaveBOQ = false; continue; }
             Object[] row = rows.get(0);
             if (row == null) { allHaveBOQ = false; continue; }
