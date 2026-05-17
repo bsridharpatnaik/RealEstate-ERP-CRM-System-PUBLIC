@@ -30,6 +30,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
   const [unit, setUnit]                   = useState('');
   const [finalLocation, setFinalLocation] = useState(null);
   const [quantity, setQuantity]           = useState('');
+  const [wastagePercent, setWastagePercent] = useState('');
   const [remark, setRemark]               = useState('');
   const [saving, setSaving]               = useState(false);
 
@@ -71,9 +72,12 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
         const preLocation = locationOptions.find(o => o.label.trim() === needle) || null;
         setFinalLocation(preLocation);
         setQuantity(initialData.quantity !== undefined ? String(initialData.quantity) : '');
+        setWastagePercent(initialData.wastagePercent != null && initialData.wastagePercent > 0
+          ? String(initialData.wastagePercent) : '');
       } else {
         setFinalLocation(null);
         setQuantity('');
+        setWastagePercent('');
       }
       setRemark('');
 
@@ -105,6 +109,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
       setProductOptions(allProductOptions);
       setFinalLocation(null);
       setQuantity('');
+      setWastagePercent('');
       setRemark('');
     }
   }, [open, initialData, buildingTypeOptions, allProductOptions, locationOptions]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -165,6 +170,7 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
         inventory: product.label,
         location: finalLocation.label,
         quantity: String(quantity),
+        wastagePercent: wastagePercent !== '' ? String(wastagePercent) : '0',
         changes: 'upsert',
         remark: remark.trim(),
       }]
@@ -270,6 +276,25 @@ const BOQEditModal = ({ open, onClose, initialData, onSaved, stockDropdowns }) =
               size="small"
               fullWidth
               inputProps={{ min: 0 }}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>
+              Wastage %
+              <span style={{ fontSize: '11px', color: '#888', fontWeight: 400, marginLeft: 6 }}>
+                (optional — effective BOQ = quantity × (1 + wastage/100))
+              </span>
+            </label>
+            <TextField
+              type="number"
+              value={wastagePercent}
+              onChange={e => setWastagePercent(e.target.value)}
+              variant="outlined"
+              size="small"
+              fullWidth
+              inputProps={{ min: 0, max: 100, step: 0.01 }}
+              placeholder="0"
             />
           </div>
 

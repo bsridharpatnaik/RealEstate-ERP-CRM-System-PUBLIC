@@ -133,6 +133,7 @@ class Table extends CommonTable {
                   <tr style={{ borderBottom: '1px solid #ddd' }}>
                     <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Work Area</th>
                     <th style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 600, color: '#555' }}>BOQ Qty</th>
+                    <th style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Wastage %</th>
                     <th style={{ textAlign: 'right', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Consumed Qty</th>
                     <th style={{ textAlign: 'center', padding: '6px 10px', fontWeight: 600, color: '#555' }}>Status</th>
                     {canEdit && <th style={{ width: 80 }}></th>}
@@ -144,6 +145,12 @@ class Table extends CommonTable {
                       <td style={{ padding: '5px 10px' }}>{d.finalLocation || '—'}</td>
                       <td style={{ padding: '5px 10px', textAlign: 'right' }}>
                         {d.boqQuantity != null ? Number(d.boqQuantity).toFixed(2) : '—'}
+                      </td>
+                      <td style={{ padding: '5px 10px', textAlign: 'right' }}>
+                        {d.wastagePercent != null && d.wastagePercent > 0
+                          ? `${Number(d.wastagePercent).toFixed(2)}%`
+                          : <span style={{ color: '#bbb' }}>—</span>
+                        }
                       </td>
                       <td style={{ padding: '5px 10px', textAlign: 'right' }}>
                         {d.outwardQuantity != null ? Number(d.outwardQuantity).toFixed(2) : '—'}

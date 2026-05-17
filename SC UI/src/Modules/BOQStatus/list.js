@@ -262,6 +262,7 @@ class List extends ListCommon {
         productName:      row.product,
         finalLocation:    detail ? detail.finalLocation : undefined,
         quantity:         detail ? detail.boqQuantity : undefined,
+        wastagePercent:   detail ? detail.wastagePercent : undefined,
       },
     });
   };
@@ -277,6 +278,7 @@ class List extends ListCommon {
         productName:      parentRow.product,
         finalLocation:    detail.finalLocation,
         quantity:         detail.boqQuantity,
+        wastagePercent:   detail.wastagePercent,
       },
     });
   };

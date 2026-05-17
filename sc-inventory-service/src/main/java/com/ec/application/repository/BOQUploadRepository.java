@@ -128,7 +128,8 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
         "      AND oi.locationId = bu.usageLocationId " +
         "      AND oi.usageAreaId = bu.locationId " +
         "      AND ioe.productId = bu.productId " +
-        "  ), 0) AS outward_quantity " +
+        "  ), 0) AS outward_quantity, " +
+        "  bu.wastagePercent AS wastage_percent " +
         "FROM BOQUpload bu " +
         "INNER JOIN building_type btype ON bu.buildingTypeId = btype.typeId " +
         "INNER JOIN Usage_Location ul ON bu.usageLocationId = ul.locationId " +

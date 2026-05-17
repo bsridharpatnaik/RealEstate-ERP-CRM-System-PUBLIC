@@ -994,6 +994,7 @@ public class BOQService {
             double detailStatus = boqQty > 0 ? Math.round(((outwardQty - boqQty) / boqQty * 100) * 100.0) / 100.0 : 0.0;
             detail.setStatus(detailStatus);
             detail.setStatusBucket(computeStatusBucket(detailStatus));
+            detail.setWastagePercent(toDouble(r[12]));
             detailMap.computeIfAbsent(groupKey, k -> new ArrayList<>()).add(detail);
         }
 

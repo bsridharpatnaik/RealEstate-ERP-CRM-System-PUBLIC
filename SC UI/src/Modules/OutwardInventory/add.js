@@ -305,7 +305,9 @@ class Add extends AddForm {
     const response = await API.POST(this.addurl, params);
     this.setState({ isAdding: false });
 
-    if (!response.success) {
+    if (response.success) {
+      this.showToaster(response);
+    } else {
       const msg = response.errorMessage || '';
       if (msg.startsWith('BOQ_LIMIT_EXCEEDED:')) {
         const violations = msg.replace('BOQ_LIMIT_EXCEEDED:', '').split('|').filter(Boolean);
