@@ -43,6 +43,7 @@ const BOQInputScreen = () => {
   const [hasCategory, setHasCategory]                     = useState(false);
   const [hasWastage, setHasWastage]                       = useState(false);
   const [uiMode, setUiMode]                               = useState(true);
+  const [uiEntryKey, setUiEntryKey]                       = useState(0);
 
   const tableHeading = [
     'S No.', 'Structure Type', 'Structure',
@@ -484,8 +485,9 @@ const BOQInputScreen = () => {
       {uiMode && (
         <div style={s.section}>
           <BOQUIEntry
+            key={uiEntryKey}
             buildingTypeData={buildingTypeData}
-            onDone={() => setUiMode(false)}
+            onDone={() => setUiEntryKey(k => k + 1)}
           />
         </div>
       )}
