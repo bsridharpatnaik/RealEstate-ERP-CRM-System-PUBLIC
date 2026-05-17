@@ -69,7 +69,7 @@ public class BOQService {
     private boolean boqEnforcementBlock;
 
     /** Cached fetch of all BOQ status rows — 2-min TTL, evicted on any BOQ or outward change. */
-    @Cacheable(value = "boqStatusRows", key = "'all'")
+    @Cacheable(value = "boqStatusRows", key = "T(com.ec.application.multitenant.ThreadLocalStorage).getTenantName() + ':all'")
     public List<Object[]> getCachedBOQStatusRows() {
         log.info("Fetching BOQ status rows from DB (cache miss)");
         return bOQUploadRepository.fetchBOQStatusRows();
@@ -109,10 +109,11 @@ public class BOQService {
                 return listBOQUploadResponse;
             }
         } catch (Exception e) {
+            log.error("Unexpected error during BOQ upload", e);
             bOQUploadValidationResponse.setMessage("Error while uploading the boq details");
             listBOQUploadResponse.add(bOQUploadValidationResponse);
         }
-        return new ArrayList<BOQUploadValidationResponse>();
+        return listBOQUploadResponse;
     }
 
 
@@ -168,13 +169,14 @@ public class BOQService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         if (boqUpload != null) {
             double oldQty = boqUpload.getQuantity();
+            double oldWastage = boqUpload.getWastagePercent();
             double newQty = Double.parseDouble(upload.getQuantity());
             double newWastage = parseWastage(upload.getWastagePercent());
             boqUpload.setChanges(upload.getChanges());
             boqUpload.setQuantity(newQty);
             boqUpload.setWastagePercent(newWastage);
             bOQUploadRepository.save(boqUpload);
-            if (oldQty != newQty) {
+            if (oldQty != newQty || oldWastage != newWastage) {
                 boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty, upload.getRemark());
             }
         }
@@ -188,7 +190,7 @@ public class BOQService {
                 .orElseThrow(() -> new RuntimeException("BOQ record not found: " + id));
         double oldQty = boqUpload.getQuantity();
         bOQUploadRepository.softDelete(boqUpload);
-        boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0, null);
+        boqHistoryService.record("Deleted", resolveCurrentUser(), boqUpload, oldQty, 0.0, "Deleted via UI");
     }
 
     private void save(long buildingTypeId, long buildingUnit, long usageAreaId, long productId, String quantity, String wastagePercent, int sNo, String changes) {
@@ -338,7 +340,7 @@ public class BOQService {
 
             // Changes dropdown (col 6 — shifted by Wastage column)
             DataValidation cv = dvHelper.createValidation(
-                    dvHelper.createExplicitListConstraint(new String[]{"addition", "update", "deletion"}),
+                    dvHelper.createExplicitListConstraint(new String[]{"addition", "update", "deletion", "upsert"}),
                     new CellRangeAddressList(1, 1000, 6, 6));
             cv.setShowErrorBox(true);
             sheet.addValidationData(cv);
@@ -493,7 +495,15 @@ public class BOQService {
 
     private void upsertBoqRecord(BOQUploadDto upload, Product product, UsageArea location, BOQUpload boqUpload) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
-        if (boqUpload == null) {
+
+        // For upsert, also check soft-deleted records so we can reactivate instead of creating duplicates.
+        BOQUpload target = boqUpload;
+        if (target == null) {
+            target = bOQUploadRepository.findIncludingDeletedByLocationAndAreaAndProduct(
+                    upload.getBuildingUnit(), location.getUsageAreaId(), product.getProductId());
+        }
+
+        if (target == null) {
             BOQUpload saved = saveAndReturn(upload.getBuildingType(), upload.getBuildingUnit(),
                     location.getUsageAreaId(), product.getProductId(), upload.getQuantity(),
                     upload.getWastagePercent(), upload.getSno(), BOQUploadConstant.UPDATE);
@@ -502,15 +512,16 @@ public class BOQService {
                         Double.parseDouble(upload.getQuantity()), upload.getRemark());
             }
         } else {
-            double oldQty = boqUpload.getQuantity();
+            double oldQty = target.getQuantity();
             double newQty = Double.parseDouble(upload.getQuantity());
             double newWastage = parseWastage(upload.getWastagePercent());
-            boqUpload.setQuantity(newQty);
-            boqUpload.setWastagePercent(newWastage);
-            boqUpload.setChanges(BOQUploadConstant.UPDATE);
-            bOQUploadRepository.save(boqUpload);
+            target.setDeleted(false);
+            target.setQuantity(newQty);
+            target.setWastagePercent(newWastage);
+            target.setChanges(BOQUploadConstant.UPDATE);
+            bOQUploadRepository.save(target);
             if (oldQty != newQty) {
-                boqHistoryService.record("Updated", resolveCurrentUser(), boqUpload, oldQty, newQty, upload.getRemark());
+                boqHistoryService.record("Updated", resolveCurrentUser(), target, oldQty, newQty, upload.getRemark());
             }
         }
     }
@@ -649,7 +660,7 @@ public class BOQService {
             columnName.add(BOQUploadConstant.INVENTORY);
         if (!existLocation)
             columnName.add(BOQUploadConstant.FINAL_LOCATION);
-        if (upload.getChanges().isEmpty()) {
+        if (upload.getChanges() == null || upload.getChanges().isEmpty()) {
             columnName.add(BOQUploadConstant.CHANGES);
         } else {
             boolean isValidAction = upload.getChanges().equalsIgnoreCase(BOQUploadConstant.ADDITION)
@@ -743,7 +754,6 @@ public class BOQService {
             Optional<UsageLocation> usageLocation = usageLocationRepository.findById(buildingUnit.longValue());
             bOQReportDto.setBoqQuantity(boqQuantity);
             bOQReportDto.setInventory(mapProductName.get(productId));
-            bOQReportDto.setBoqQuantity(boqQuantity);
             bOQReportDto.setBuildingType(building.get().getTypeName());
             bOQReportDto.setBuildingUnit(usageLocation.get().getLocationName());
             bOQReportDto.setOutwardQuantity(outwardQuantity);
@@ -930,7 +940,7 @@ public class BOQService {
         return response;
     }
 
-    @Cacheable(value = "boqOutwardQty", key = "#productId + ':' + #locationId + ':' + #finalLocationId")
+    @Cacheable(value = "boqOutwardQty", key = "T(com.ec.application.multitenant.ThreadLocalStorage).getTenantName() + ':' + #productId + ':' + #locationId + ':' + #finalLocationId")
     public String getBoqQuantityForOutward(Long productId, Long locationId, Long finalLocationId) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         List<Object[]> rows = bOQUploadRepository.fetchBOQAndOutwardForProduct(locationId, productId, finalLocationId);

@@ -94,7 +94,7 @@ public class UsageAreaService {
             throw new Exception("Cannot delete usageArea. UsageArea already in use.");
     }
 
-    @Cacheable(value = "refWorkAreas", key = "'all'")
+    @Cacheable(value = "refWorkAreas", key = "T(com.ec.application.multitenant.ThreadLocalStorage).getTenantName() + ':all'")
     public List<IdNameProjections> findIdAndNames() {
         return usageAreaRepo.findIdAndNames();
     }

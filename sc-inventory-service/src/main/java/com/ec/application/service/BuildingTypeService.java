@@ -103,7 +103,7 @@ public class BuildingTypeService {
             throw new Exception("Cannot delete BuildingType. BuildingType already assigned to Bulding Unit");
     }
 
-    @Cacheable(value = "refBuildingTypes", key = "'all'")
+    @Cacheable(value = "refBuildingTypes", key = "T(com.ec.application.multitenant.ThreadLocalStorage).getTenantName() + ':all'")
     public List<IdNameProjections> findIdAndNames() {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         return buildingTypeRepo.findIdAndNames();
