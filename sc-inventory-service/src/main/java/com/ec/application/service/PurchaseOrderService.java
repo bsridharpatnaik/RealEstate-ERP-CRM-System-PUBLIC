@@ -142,8 +142,6 @@ public class PurchaseOrderService extends ReusableFields {
         po.setTotalFreightCharges(request.getTotalFreightCharges());
         po.setGrandTotal(request.getGrandTotal());
 
-        // Replace custom charges: delete old ones, add new ones
-        customChargeRepo.deleteByPurchaseOrderId(po.getPurchaseOrderId());
         po.getCustomCharges().clear();
         if (request.getCustomCharges() != null) {
             for (CustomChargeRequest chargeReq : request.getCustomCharges()) {
