@@ -108,6 +108,12 @@ public final class OutwardInventorySpecification
 						CriteriaBuilder cb) -> cb.isNull(root.get(OutwardInventory_.HAS_BO_Q));
 				finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
 			}
+			else if (boqBypassed.get(0).toLowerCase().equals("false"))
+			{
+				Specification<OutwardInventory> internalSpec = (Root<OutwardInventory> root, CriteriaQuery<?> query,
+						CriteriaBuilder cb) -> cb.isNotNull(root.get(OutwardInventory_.HAS_BO_Q));
+				finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
+			}
 		}
 
 		if (textSearch != null && textSearch.size() > 0) {
