@@ -367,8 +367,6 @@ public class IndentInventoryService {
 
             if (!productOpt.isPresent())
                 throw new Exception("Product not found with ID " + dto.getProductId());
-            else if (productOpt.get().getIsManagedInventory() == false)
-                throw new Exception("Product with ID " + dto.getProductId() + x);
             if (dto.getQuantity() <= 0)
                 throw new Exception("Quantity cannot be less than or equal to zero");
         }

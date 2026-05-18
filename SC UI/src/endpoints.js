@@ -47,7 +47,7 @@ export const apiEndpoints = {
     return baseUrl;
   },
   getProductForIndentByCategory: (categoryId) =>
-    `/api/inventory/product?isManagedInventory=true&categoryId=${categoryId}`,
+    `/api/inventory/product?categoryId=${categoryId}`,
   createProduct: "/api/inventory/product/create",
   individualProduct: "/api/inventory/product/",
   getAllTenantReorderConfigs: (id) => `/api/inventory/product/${id}/all-tenant-reorder-configs`,

@@ -138,7 +138,7 @@ class Edit extends EditForm {
   }
 
   async fetchProducts() {
-    const response = await API.GET(apiEndpoints.getProductForIndentWithManagedInventory(true));
+    const response = await API.GET(apiEndpoints.getProductForIndentWithManagedInventory());
     if (response.success && Array.isArray(response.data)) {
       const transformedProducts = response.data.map((product) => ({
         id: product.productId,
