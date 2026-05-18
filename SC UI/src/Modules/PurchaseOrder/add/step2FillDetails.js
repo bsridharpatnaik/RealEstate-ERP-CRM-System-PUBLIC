@@ -979,7 +979,7 @@ handleAddFirm = async (firm) => {
               />
             </div>
           )}
-          {/* Project (optional) */}
+          {/* Project (required) */}
           <div style={{ marginTop: "12px" }}>
             <Autocomplete
               options={this.state.projectList}
@@ -988,7 +988,7 @@ handleAddFirm = async (firm) => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Project (optional)"
+                  label="Project *"
                   size="small"
                   variant="outlined"
                   placeholder="Select project"

@@ -106,6 +106,8 @@ public class PurchaseOrderService extends ReusableFields {
         validator.validateOverridePhoneNumber(request.getOverridePhoneNumber());
         validator.validateOverrideEmail(request.getOverrideEmail());
         validatePoDateBackdating(request.getPoDate());
+        if (request.getProjectName() == null || request.getProjectName().trim().isEmpty())
+            throw new Exception("Project is a mandatory field");
         PurchaseOrder po = poBuilder.buildPurchaseOrder(request);
         PurchaseOrder savedPO = purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(savedPO, POIndentUpdateAction.CREATE_PO);

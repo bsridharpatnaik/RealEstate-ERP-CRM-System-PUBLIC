@@ -245,6 +245,7 @@ class Add extends AddForm {
       return (
         !this.state.orderTo ||
         !this.state.orderFrom ||
+        !this.state.projectName ||
         this.state.items.length === 0 ||
         hasMissingRate
       );
@@ -257,6 +258,7 @@ class Add extends AddForm {
     if (this.state.isAdding) return "Please wait...";
     if (!this.state.orderTo) return "Please select Order To supplier";
     if (!this.state.orderFrom) return "Please select Order From firm";
+    if (!this.state.projectName) return "Please select a Project";
     if (this.state.items.length === 0) return "Please add at least one item";
     const hasMissingRate = this.state.items.some(
       (item) =>

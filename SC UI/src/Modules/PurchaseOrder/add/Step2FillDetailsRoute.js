@@ -111,6 +111,7 @@ class Step2FillDetailsRoute extends AddForm {
     if (this.state.isAdding) return "Please wait...";
     if (!this.state.orderTo) return "Please select Order To supplier";
     if (!this.state.orderFrom) return "Please select Order From firm";
+    if (!this.state.projectName) return "Please select a Project";
     if (this.state.items.length === 0) return "Please add at least one item";
     const hasMissingRate = this.state.items.some(
       (item) =>
@@ -174,6 +175,10 @@ class Step2FillDetailsRoute extends AddForm {
       this.props.enqueueSnackbar("Please select Order From firm", {
         variant: "error",
       });
+      return;
+    }
+    if (!this.state.projectName) {
+      this.props.enqueueSnackbar("Please select a Project", { variant: "error" });
       return;
     }
     if (this.state.items.length === 0) {
