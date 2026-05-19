@@ -166,6 +166,7 @@ public class InwardInventoryService {
         li.setTotalInwardQuantity(alreadyInwarded);
         li.setPendingQuantity(pendingQty);
         li.setMaxAllowedQuantity(maxAllowed);
+        productRepo.findById(v.getProductId()).ifPresent(p -> li.setIsExpirable(p.getIsExpirable()));
         return li;
     }
 

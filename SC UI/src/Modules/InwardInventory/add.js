@@ -431,7 +431,8 @@ class InwardInventoryForm extends AddForm {
             maxAllowedQuantity: item.maxAllowedQuantity != null ? item.maxAllowedQuantity : pendingQty + (poQty * tolPct / 100),
             quantity: "",
             warehouseId: null,
-            lineItemCode: item.lineItemCode
+            lineItemCode: item.lineItemCode,
+            isExpirable: item.isExpirable || false,
           };
         });
 
@@ -538,6 +539,8 @@ class InwardInventoryForm extends AddForm {
                     p[key].unit = value?.measurementUnit || "";
                     p[key].isExpirable = value?.isExpirable || false;
                     p[key].selectedProduct = value;
+                    p[key].expiryDate = null;
+                    this.formData[`expiryDate_${key}`] = null;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
                         this.getCurrentStock(key);
@@ -565,6 +568,8 @@ class InwardInventoryForm extends AddForm {
                     p[key].unit = value?.measurementUnit || "";
                     p[key].isExpirable = value?.isExpirable || false;
                     p[key].selectedProduct = value;
+                    p[key].expiryDate = null;
+                    this.formData[`expiryDate_${key}`] = null;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
                         this.getCurrentStock(key);
@@ -632,22 +637,24 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Expiry Date (required if expirable) */}
-              <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {this.renderDate({
-                  fieldname: `expiryDate_${key}`,
-                  label: product.isExpirable ? "Expiry Date *" : "Expiry Date",
-                  value: product.expiryDate || null,
-                  onChange: () => {
-                    const p = this.state.noproduct;
-                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                    this.setState({ noproduct: { ...p } });
-                  },
-                })}
-                {product.isExpirable && (
+              {/* Expiry Date - only shown for expirable products */}
+              {product.isExpirable && (
+                <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  {this.renderDate({
+                    fieldname: `expiryDate_${key}`,
+                    label: "Expiry Date *",
+                    emptyDate: true,
+                    type: "date",
+                    value: product.expiryDate || null,
+                    onChange: () => {
+                      const p = this.state.noproduct;
+                      p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                      this.setState({ noproduct: { ...p } });
+                    },
+                  })}
                   <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required for this product</span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -834,19 +841,24 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Expiry Date */}
-              <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {this.renderDate({
-                  fieldname: `expiryDate_${key}`,
-                  label: "Expiry Date",
-                  value: product.expiryDate || null,
-                  onChange: () => {
-                    const p = this.state.noproduct;
-                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                    this.setState({ noproduct: { ...p } });
-                  },
-                })}
-              </div>
+              {/* Expiry Date - only shown for expirable products */}
+              {product.isExpirable && (
+                <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  {this.renderDate({
+                    fieldname: `expiryDate_${key}`,
+                    label: "Expiry Date *",
+                    emptyDate: true,
+                    type: "date",
+                    value: product.expiryDate || null,
+                    onChange: () => {
+                      const p = this.state.noproduct;
+                      p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                      this.setState({ noproduct: { ...p } });
+                    },
+                  })}
+                  <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required for this product</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -894,15 +906,13 @@ class InwardInventoryForm extends AddForm {
       return;
     }
 
-    if (this.state.isDirectInward) {
-      for (const product of Object.values(this.state.noproduct)) {
-        if (product.isExpirable && !product.expiryDate) {
-          this.props.enqueueSnackbar(
-            `Expiry date is required for "${product.productName || 'product'}".`,
-            { variant: "error" }
-          );
-          return;
-        }
+    for (const product of Object.values(this.state.noproduct)) {
+      if (product.isExpirable && !product.expiryDate) {
+        this.props.enqueueSnackbar(
+          `Expiry date is required for "${product.productName || 'product'}".`,
+          { variant: "error" }
+        );
+        return;
       }
     }
 

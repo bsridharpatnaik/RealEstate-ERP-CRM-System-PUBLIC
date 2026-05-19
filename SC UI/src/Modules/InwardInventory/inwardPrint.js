@@ -110,6 +110,8 @@ class Print extends Component {
               <th className="col-desc">DESCRIPTION</th>
               <th className="col-uom">UOM</th>
               <th className="col-qty">QUANTITY</th>
+              <th className="col-brand">BRAND</th>
+              <th className="col-expiry">EXPIRY DATE</th>
             </tr>
           </thead>
           <tbody>
@@ -129,6 +131,8 @@ class Print extends Component {
                 </td>
                 <td className="col-uom">{item.product.measurementUnit}</td>
                 <td className="col-qty">{item.quantity}</td>
+                <td className="col-brand">{item.brand || '-'}</td>
+                <td className="col-expiry">{item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('en-GB') : '-'}</td>
               </tr>
             ))}
           </tbody>

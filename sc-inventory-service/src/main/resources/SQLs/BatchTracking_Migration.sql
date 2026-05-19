@@ -54,7 +54,32 @@ CREATE TABLE IF NOT EXISTS outward_batch_consumption (
     last_modified_date DATETIME
 );
 
--- 6. Create batch_write_off table
+-- 6. Update stockInformation view to include warehouseId in detailedStock JSON
+-- (required for the batch tracking Batches tab warehouse selector)
+CREATE OR REPLACE VIEW stockInformation as
+    SELECT
+        p.productId as productId,
+        p.product_name,
+        p.product_code,
+        p.reorderQuantity,
+        p.measurementUnit,
+        c.category_name,
+        ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
+        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
+        JSON_ARRAYAGG(JSON_OBJECT(
+            'warehouseId', w.warehouse_id,
+            'warehouseName', w.warehouseName,
+            'quantityInHand', s.quantityInHand,
+            'measurementUnit', p.measurementUnit
+            )) as detailedStock
+    FROM Stock s
+    INNER JOIN Product p on p.productId=s.productId
+    INNER JOIN Category c on p.categoryId=c.categoryId
+    INNER JOIN Warehouse w on w.warehouse_id = s.warehouseId
+    WHERE s.is_deleted=0
+    GROUP BY p.productId,p.product_name,p.product_code,p.reorderQuantity,p.measurementUnit,c.category_name;
+
+-- 7. Create batch_write_off table
 CREATE TABLE IF NOT EXISTS batch_write_off (
     write_off_id     BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     batch_id         BIGINT NOT NULL,

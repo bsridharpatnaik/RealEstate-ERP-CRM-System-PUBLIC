@@ -1176,9 +1176,10 @@ CREATE OR REPLACE VIEW stockInformation as
         ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
         CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
         JSON_ARRAYAGG(JSON_OBJECT(
-			'warehouseName',w.warehouseName,
-            'quantityInHand',s.quantityInHand,
-            'measurementUnit',p.measurementUnit
+			'warehouseId', w.warehouse_id,
+			'warehouseName', w.warehouseName,
+            'quantityInHand', s.quantityInHand,
+            'measurementUnit', p.measurementUnit
             )) as detailedStock
 	FROM Stock s
 	INNER JOIN Product p on p.productId=s.productId

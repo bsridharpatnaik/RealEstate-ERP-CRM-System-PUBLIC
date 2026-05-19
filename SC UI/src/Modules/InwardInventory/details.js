@@ -431,6 +431,8 @@ content={() => this.detailTabRef.current}
                     <TableCell>{messages.common.unit}</TableCell>
                     <TableCell>{messages.common.quantity}</TableCell>
                     <TableCell>{messages.common.closingStock}</TableCell>
+                    <TableCell>Brand</TableCell>
+                    <TableCell>Expiry Date</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -472,6 +474,8 @@ content={() => this.detailTabRef.current}
                       <TableCell>{row.product.measurementUnit}</TableCell>
                       <TableCell>{row.quantity}</TableCell>
                       <TableCell>{row.closingStock}</TableCell>
+                      <TableCell>{row.brand || '—'}</TableCell>
+                      <TableCell>{row.expiryDate ? new Date(row.expiryDate).toLocaleDateString('en-GB') : '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -28,4 +28,6 @@ public class PoLineItemForInward {
     private Double tolerancePercent;
 
     private Double maxAllowedQuantity;
+
+    private Boolean isExpirable;
 }

@@ -227,8 +227,8 @@ class Details extends Component {
                 >
                   <option value="">Select warehouse...</option>
                   {data.detailedStock.map((item, idx) => (
-                    <option key={idx} value={item.warehouse?.warehouseId}>
-                      {item.warehouse?.warehouseName || item.warehouseName || 'Unknown'}
+                    <option key={idx} value={item.warehouseId}>
+                      {item.warehouseName || 'Unknown'}
                     </option>
                   ))}
                 </select>
