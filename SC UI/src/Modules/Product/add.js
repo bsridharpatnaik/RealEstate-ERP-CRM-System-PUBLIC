@@ -70,6 +70,7 @@ class Add extends AddForm {
           <div class="flex flex-space-between">
             {this.renderToggle('Show in Dashboard', 'showOnDashboard')}
             {this.renderToggle('Is Managed Inventory', 'isManagedInventory')}
+            {this.renderToggle('Track Expiry Date', 'isExpirable')}
             {this.renderFooter()}
           </div>
         </form>

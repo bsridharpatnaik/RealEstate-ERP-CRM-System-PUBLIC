@@ -31,6 +31,7 @@ class Table extends CommonTable {
       return <td data-label={messages.common.finalLocation}>{`${row["usageArea"]["usageAreaName"]}`}</td>;
     } else if (key === "outwardid") {
       const noBOQ = row.hasBOQ !== true;
+      const hasFifoOverride = row.hasFifoOverride === true;
       return (
         <td data-label='ID'>
           <Button
@@ -50,6 +51,11 @@ class Table extends CommonTable {
           {noBOQ && (
             <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
               <WarningRoundedIcon style={{ color: '#e65100', fontSize: '18px', verticalAlign: 'middle', marginLeft: '6px', cursor: 'default' }} />
+            </Tooltip>
+          )}
+          {hasFifoOverride && (
+            <Tooltip title="FIFO Override — batch selection was manually overridden" arrow>
+              <WarningRoundedIcon style={{ color: '#1565c0', fontSize: '18px', verticalAlign: 'middle', marginLeft: '4px', cursor: 'default' }} />
             </Tooltip>
           )}
         </td>

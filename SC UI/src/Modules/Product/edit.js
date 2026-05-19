@@ -35,6 +35,7 @@ class Edit extends EditForm {
       this.formData.categoryId = data.category.categoryId;
       this.formData.showOnDashboard = data.showOnDashboard;
       this.formData.isManagedInventory = data.isManagedInventory !== undefined ? data.isManagedInventory : true;
+      this.formData.isExpirable = data.isExpirable || false;
       this.setState({ isLoaded: true });
     }
   }
@@ -85,6 +86,7 @@ class Edit extends EditForm {
             <div class="flex flex-space-between">
               {this.renderToggle('Show in Dashboard', 'showOnDashboard')}
               {this.renderToggle('Is Managed Inventory', 'isManagedInventory')}
+              {this.renderToggle('Track Expiry Date', 'isExpirable')}
               {this.renderFooter()}
             </div>
           </form>

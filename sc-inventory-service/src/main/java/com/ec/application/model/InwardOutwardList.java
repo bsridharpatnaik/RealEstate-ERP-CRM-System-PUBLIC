@@ -8,8 +8,11 @@ import org.hibernate.envers.Audited;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import java.util.Date;
 
 @Entity
 @Table(name = "inward_outward_entries")
@@ -44,6 +47,13 @@ public class InwardOutwardList extends ReusableFields {
 
     @Transient
     private String indentId;
+
+    @Column(name = "brand")
+    private String brand;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @Column(name = "expiry_date")
+    private Date expiryDate;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "warehouse_id", nullable = false)

@@ -103,6 +103,9 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	@Column(name = "has_boq")
 	private Boolean hasBOQ;
 
+	@Column(name = "has_fifo_override", columnDefinition = "boolean default false")
+	private Boolean hasFifoOverride = false;
+
 	@Override
 	public Object clone() throws CloneNotSupportedException
 	{
@@ -117,6 +120,16 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	public void setHasBOQ(Boolean hasBOQ)
 	{
 		this.hasBOQ = hasBOQ;
+	}
+
+	public Boolean getHasFifoOverride()
+	{
+		return hasFifoOverride;
+	}
+
+	public void setHasFifoOverride(Boolean hasFifoOverride)
+	{
+		this.hasFifoOverride = hasFifoOverride;
 	}
 
 	public Set<RejectOutwardList> getRejectOutwardList()

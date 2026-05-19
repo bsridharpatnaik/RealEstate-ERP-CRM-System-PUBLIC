@@ -331,6 +331,7 @@ class InwardInventoryForm extends AddForm {
           measurementUnit: product.measurementUnit,
           productCode: product.productCode,
           isManagedInventory: product.isManagedInventory,
+          isExpirable: product.isExpirable || false,
         }));
 
       // In edit mode, also include existing products from the inward data
@@ -535,6 +536,7 @@ class InwardInventoryForm extends AddForm {
                     p[key].productId = value?.id || "";
                     p[key].productCode = value?.productCode || "";
                     p[key].unit = value?.measurementUnit || "";
+                    p[key].isExpirable = value?.isExpirable || false;
                     p[key].selectedProduct = value;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
@@ -561,6 +563,7 @@ class InwardInventoryForm extends AddForm {
                     p[key].productId = value?.id || "";
                     p[key].productCode = value?.productCode || "";
                     p[key].unit = value?.measurementUnit || "";
+                    p[key].isExpirable = value?.isExpirable || false;
                     p[key].selectedProduct = value;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
@@ -612,6 +615,38 @@ class InwardInventoryForm extends AddForm {
                   disabled: true,
                   skipAdd: true,
                 })}
+              </div>
+
+              {/* Brand (optional) */}
+              <div style={{ width: '150px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                {this.renderTextField({
+                  fieldname: `brand_${key}`,
+                  placeholder: "Brand (optional)",
+                  skipAdd: true,
+                  value: product.brand || '',
+                  onChange: (value) => {
+                    const p = this.state.noproduct;
+                    p[key].brand = value;
+                    this.setState({ noproduct: { ...p } });
+                  },
+                })}
+              </div>
+
+              {/* Expiry Date (required if expirable) */}
+              <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                {this.renderDate({
+                  fieldname: `expiryDate_${key}`,
+                  label: product.isExpirable ? "Expiry Date *" : "Expiry Date",
+                  value: product.expiryDate || null,
+                  onChange: () => {
+                    const p = this.state.noproduct;
+                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                    this.setState({ noproduct: { ...p } });
+                  },
+                })}
+                {product.isExpirable && (
+                  <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required for this product</span>
+                )}
               </div>
             </div>
           </div>
@@ -783,6 +818,35 @@ class InwardInventoryForm extends AddForm {
                   skipAdd: true,
                 })}
               </div>
+
+              {/* Brand (optional) */}
+              <div style={{ width: '150px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
+                {this.renderTextField({
+                  fieldname: `brand_${key}`,
+                  placeholder: "Brand (optional)",
+                  skipAdd: true,
+                  value: product.brand || '',
+                  onChange: (value) => {
+                    const p = this.state.noproduct;
+                    p[key].brand = value;
+                    this.setState({ noproduct: { ...p } });
+                  },
+                })}
+              </div>
+
+              {/* Expiry Date */}
+              <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                {this.renderDate({
+                  fieldname: `expiryDate_${key}`,
+                  label: "Expiry Date",
+                  value: product.expiryDate || null,
+                  onChange: () => {
+                    const p = this.state.noproduct;
+                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                    this.setState({ noproduct: { ...p } });
+                  },
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -828,6 +892,18 @@ class InwardInventoryForm extends AddForm {
     if (!this.formData.fileInformations || this.formData.fileInformations.length === 0) {
       this.props.enqueueSnackbar("Please upload at least one file", { variant: "error" });
       return;
+    }
+
+    if (this.state.isDirectInward) {
+      for (const product of Object.values(this.state.noproduct)) {
+        if (product.isExpirable && !product.expiryDate) {
+          this.props.enqueueSnackbar(
+            `Expiry date is required for "${product.productName || 'product'}".`,
+            { variant: "error" }
+          );
+          return;
+        }
+      }
     }
 
     const noChallan = !this.formData.challanNo || !this.formData.challanNo.trim();
@@ -896,7 +972,9 @@ class InwardInventoryForm extends AddForm {
         productWithQuantities: Object.values(this.state.noproduct).map(product => ({
           warehouseId: product.warehouseId,
           productId: product.productId,
-          quantity: product.quantity
+          quantity: product.quantity,
+          brand: product.brand || null,
+          expiryDate: product.expiryDate || null,
         })),
         fileInformations: this.formData.fileInformations || [],
         invoiceReceived: this.formData.invoiceReceived || false,
@@ -931,7 +1009,9 @@ class InwardInventoryForm extends AddForm {
         lineItems: Object.values(this.state.noproduct).map(item => ({
           lineItemCode: item.lineItemCode,
           quantityReceived: item.quantity,
-          warehouseId: item.warehouseId
+          warehouseId: item.warehouseId,
+          brand: item.brand || null,
+          expiryDate: item.expiryDate || null,
         }))
       };
     }

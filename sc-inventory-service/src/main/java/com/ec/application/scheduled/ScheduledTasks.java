@@ -56,6 +56,9 @@ public class ScheduledTasks {
     @Autowired
     Environment environment;
 
+    @Autowired
+    com.ec.application.service.BatchTrackingService batchTrackingService;
+
  /*   //@Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
         log.info("Sending Stock Notification Email in evening");
@@ -90,6 +93,22 @@ public class ScheduledTasks {
     public void computePoPriority() {
         log.info("Scheduled PO priority recompute triggered");
         priorityComputeService.recomputeAllPriorities();
+    }
+
+    @Scheduled(cron = "0 0 7 * * *", zone = "Asia/Kolkata")
+    public void processExpiryAlerts() {
+        log.info("Expiry alert job triggered");
+        List<String> tenants = schemaConfig.getNonMasterSchemaList();
+        for (String tenantName : tenants) {
+            com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
+            try {
+                batchTrackingService.processExpiryAlerts();
+            } catch (Exception e) {
+                log.error("Expiry alert processing failed for tenant: {}", tenantName, e);
+            } finally {
+                com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
+            }
+        }
     }
 
     @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Kolkata")

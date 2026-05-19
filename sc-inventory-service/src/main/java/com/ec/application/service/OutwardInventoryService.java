@@ -29,7 +29,9 @@ import com.ec.application.data.ReturnOutwardInventoryData;
 import com.ec.application.data.ReturnRejectInwardOutwardData;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.InwardOutwardListRepo;
+import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.LocationRepo;
+import com.ec.application.repository.OutwardBatchConsumptionRepository;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
@@ -95,6 +97,12 @@ public class OutwardInventoryService {
     @Autowired
     ActivityLogService activityLogService;
 
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
+
+    @Autowired
+    OutwardBatchConsumptionRepository outwardBatchConsumptionRepository;
+
     Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
 
     @Transactional(rollbackFor = Exception.class)
@@ -118,6 +126,7 @@ public class OutwardInventoryService {
                 ActivityLogDescription.withItems("Outward " + outwardInventory.getOutwardid()
                         + " created by " + createUser, createItems),
                 createUser);
+        consumeBatchesForOutward(outwardInventory, oiData);
         return outwardInventory;
     }
 
@@ -776,4 +785,86 @@ public class OutwardInventoryService {
         return inwardOutwardListSet;
     }
 
+    private void consumeBatchesForOutward(OutwardInventory outwardInventory, OutwardInventoryData oiData) {
+        Long warehouseId = outwardInventory.getWarehouse().getWarehouseId();
+        boolean anyOverride = false;
+
+        Map<Long, ProductWithQuantity> pwqByProductId = oiData.getProductWithQuantities().stream()
+                .collect(Collectors.toMap(ProductWithQuantity::getProductId, p -> p));
+
+        for (InwardOutwardList iol : outwardInventory.getInwardOutwardList()) {
+            Long productId = iol.getProduct().getProductId();
+            Double qtyToConsume = iol.getQuantity();
+            ProductWithQuantity pwq = pwqByProductId.get(productId);
+            Long overrideBatchId = pwq != null ? pwq.getOverrideBatchId() : null;
+            String overrideComment = pwq != null ? pwq.getOverrideComment() : null;
+
+            if (overrideBatchId != null) {
+                InventoryBatch batch = inventoryBatchRepository.findById(overrideBatchId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Batch not found with ID: " + overrideBatchId));
+
+                if (batch.getQtyRemaining() < qtyToConsume) {
+                    throw new IllegalArgumentException(
+                            "Batch " + overrideBatchId + " does not have enough quantity. " +
+                            "Available: " + batch.getQtyRemaining() + ", Requested: " + qtyToConsume);
+                }
+
+                List<InventoryBatch> fifoBatches = inventoryBatchRepository
+                        .findAvailableBatchesFifoOrder(productId, warehouseId);
+                boolean isFifoOverride = fifoBatches.isEmpty() ||
+                        !fifoBatches.get(0).getBatchId().equals(overrideBatchId);
+
+                if (isFifoOverride && (overrideComment == null || overrideComment.trim().isEmpty())) {
+                    throw new IllegalArgumentException(
+                            "A comment is required when overriding FIFO batch selection for product: " +
+                            iol.getProduct().getProductName());
+                }
+
+                batch.setQtyRemaining(batch.getQtyRemaining() - qtyToConsume);
+                inventoryBatchRepository.save(batch);
+
+                OutwardBatchConsumption consumption = new OutwardBatchConsumption();
+                consumption.setOutwardId(outwardInventory.getOutwardid());
+                consumption.setBatch(batch);
+                consumption.setProductId(productId);
+                consumption.setWarehouseId(warehouseId);
+                consumption.setQtyConsumed(qtyToConsume);
+                consumption.setFifoOverridden(isFifoOverride);
+                consumption.setOverrideComment(isFifoOverride ? overrideComment : null);
+                outwardBatchConsumptionRepository.save(consumption);
+
+                if (isFifoOverride) anyOverride = true;
+            } else {
+                // FIFO: consume from oldest batches first
+                List<InventoryBatch> fifoBatches = inventoryBatchRepository
+                        .findAvailableBatchesFifoOrder(productId, warehouseId);
+
+                double remaining = qtyToConsume;
+                for (InventoryBatch batch : fifoBatches) {
+                    if (remaining <= 0) break;
+                    double consume = Math.min(remaining, batch.getQtyRemaining());
+                    batch.setQtyRemaining(batch.getQtyRemaining() - consume);
+                    inventoryBatchRepository.save(batch);
+
+                    OutwardBatchConsumption consumption = new OutwardBatchConsumption();
+                    consumption.setOutwardId(outwardInventory.getOutwardid());
+                    consumption.setBatch(batch);
+                    consumption.setProductId(productId);
+                    consumption.setWarehouseId(warehouseId);
+                    consumption.setQtyConsumed(consume);
+                    consumption.setFifoOverridden(false);
+                    outwardBatchConsumptionRepository.save(consumption);
+
+                    remaining -= consume;
+                }
+                // remaining > 0 means pre-feature stock with no batch records — silently skip
+            }
+        }
+
+        if (anyOverride) {
+            outwardInventory.setHasFifoOverride(true);
+            outwardInventoryRepo.save(outwardInventory);
+        }
+    }
 }

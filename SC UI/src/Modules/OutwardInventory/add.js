@@ -38,6 +38,7 @@ class Add extends AddForm {
     allProductsStockMap: {},
     selectedWarehouseId: null,
     boqViolationDialog: { open: false, violations: [] },
+    availableBatches: {}, // productId → [batch]
   };
   key = 1;
   componentDidMount() {
@@ -155,6 +156,7 @@ class Add extends AddForm {
               }
               this.getCurrentStock(key);
               this.getBoqQuantity(key);
+              this.fetchBatchesForProduct(value.id, this.formData.warehouseId);
             }
           },
         })}
@@ -216,6 +218,63 @@ class Add extends AddForm {
           disabled: true,
           value: this.state.boqQuantity[this.state.noproduct[key].productId],
         })}
+
+        {/* Override FIFO batch selection */}
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: '200px' }}>
+          <label style={{ fontSize: '12px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <input
+              type="checkbox"
+              checked={!!this.state.noproduct[key].overrideFifo}
+              onChange={(e) => {
+                const p = this.state.noproduct;
+                p[key].overrideFifo = e.target.checked;
+                if (!e.target.checked) {
+                  p[key].overrideBatchId = null;
+                  p[key].overrideComment = null;
+                }
+                this.setState({ noproduct: { ...p } });
+              }}
+            />
+            Override FIFO batch
+          </label>
+          {this.state.noproduct[key].overrideFifo && (() => {
+            const productId = this.state.noproduct[key].productId;
+            const batches = this.state.availableBatches[productId] || [];
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <select
+                  style={{ padding: '4px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  value={this.state.noproduct[key].overrideBatchId || ''}
+                  onChange={(e) => {
+                    const p = this.state.noproduct;
+                    p[key].overrideBatchId = e.target.value ? parseInt(e.target.value) : null;
+                    this.setState({ noproduct: { ...p } });
+                  }}
+                >
+                  <option value="">Select batch...</option>
+                  {batches.map(b => (
+                    <option key={b.batchId} value={b.batchId}>
+                      {b.brand || 'No brand'} | Recv: {b.receivedDate ? new Date(b.receivedDate).toLocaleDateString('en-GB') : '-'} | Qty: {b.qtyRemaining}
+                      {b.expiryDate ? ` | Exp: ${new Date(b.expiryDate).toLocaleDateString('en-GB')}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="Reason for override (required) *"
+                  style={{ padding: '4px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
+                  value={this.state.noproduct[key].overrideComment || ''}
+                  onChange={(e) => {
+                    const p = this.state.noproduct;
+                    p[key].overrideComment = e.target.value;
+                    this.setState({ noproduct: { ...p } });
+                  }}
+                />
+              </div>
+            );
+          })()}
+        </div>
+
         <IconButton
           aria-label="back"
           onClick={() => {
@@ -230,6 +289,16 @@ class Add extends AddForm {
       </div>
     );
   }
+  async fetchBatchesForProduct(productId, warehouseId) {
+    if (!productId || !warehouseId) return;
+    const response = await API.GET(apiEndpoints.getBatchesForProduct(productId, warehouseId));
+    if (response.success && Array.isArray(response.data)) {
+      const batches = this.state.availableBatches;
+      batches[productId] = response.data.filter(b => b.qtyRemaining > 0);
+      this.setState({ availableBatches: { ...batches } });
+    }
+  }
+
   async getCurrentStock(index) {
     const warehouseId = this.formData.warehouseId;
     const productId = this.state.noproduct[index].productId;
@@ -301,10 +370,29 @@ class Add extends AddForm {
       });
       return;
     }
+    // Validate override: if overrideFifo is checked, batch + comment are required
+    for (const product of Object.values(this.state.noproduct)) {
+      if (product.overrideFifo) {
+        if (!product.overrideBatchId) {
+          this.props.enqueueSnackbar("Please select a batch for FIFO override.", { variant: "error" });
+          return;
+        }
+        if (!product.overrideComment || !product.overrideComment.trim()) {
+          this.props.enqueueSnackbar("A reason is required when overriding FIFO batch selection.", { variant: "error" });
+          return;
+        }
+      }
+    }
+
     const params = this.formData;
     this.setState({ isAdding: true });
 
-    params.productWithQuantities = Object.values(this.state.noproduct);
+    params.productWithQuantities = Object.values(this.state.noproduct).map(p => ({
+      productId: p.productId,
+      quantity: p.quantity,
+      overrideBatchId: p.overrideFifo ? (p.overrideBatchId || null) : null,
+      overrideComment: p.overrideFifo ? (p.overrideComment || null) : null,
+    }));
     const response = await API.POST(this.addurl, params);
     this.setState({ isAdding: false });
 

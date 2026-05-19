@@ -60,6 +60,9 @@ public class Product extends ReusableFields {
     @Column(name = "show_on_dashboard")
     Boolean showOnDashboard;
 
+    @Column(name = "is_expirable", columnDefinition = "boolean default false")
+    Boolean isExpirable = false;
+
     @PrePersist
     public void assignProductCode() {
         if (this.productCode == null) {

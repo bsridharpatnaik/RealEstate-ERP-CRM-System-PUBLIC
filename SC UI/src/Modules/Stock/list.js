@@ -20,7 +20,7 @@ import { triggerBlobDownload } from "./../../helper";
 class List extends ListCommon {
   filterData = {};
   title = messages.common.stock;
-  state = { data: [], options: [], showDetails: false, key: 1 };
+  state = { data: [], options: [], showDetails: false, key: 1, expiryTiles: null };
   tableData = {
     headers: [
       messages.common.id,
@@ -53,6 +53,14 @@ class List extends ListCommon {
     this.search();
     this.filterRef = React.createRef();
     this.getOptions();
+    this.loadExpiryTiles();
+  }
+
+  async loadExpiryTiles() {
+    const response = await API.GET(apiEndpoints.getExpiryTiles);
+    if (response.success) {
+      this.setState({ expiryTiles: response.data });
+    }
   }
   async getOptions() {
     const response = await API.GET(apiEndpoints.stockDropdown);
@@ -181,6 +189,22 @@ class List extends ListCommon {
               />
             </Popper>
           </div>
+          {this.state.expiryTiles && (
+            <div style={{ display: 'flex', gap: '12px', margin: '12px 0', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '140px', padding: '12px 16px', borderRadius: '6px', backgroundColor: '#fff3e0', border: '1px solid #ffcc80' }}>
+                <div style={{ fontSize: '11px', color: '#e65100', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Expiring in 30 days</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#e65100' }}>{this.state.expiryTiles.expiring30Days}</div>
+              </div>
+              <div style={{ flex: 1, minWidth: '140px', padding: '12px 16px', borderRadius: '6px', backgroundColor: '#fff8e1', border: '1px solid #ffe082' }}>
+                <div style={{ fontSize: '11px', color: '#f57f17', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Expiring in 31–60 days</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57f17' }}>{this.state.expiryTiles.expiring60Days}</div>
+              </div>
+              <div style={{ flex: 1, minWidth: '140px', padding: '12px 16px', borderRadius: '6px', backgroundColor: '#ffebee', border: '1px solid #ef9a9a' }}>
+                <div style={{ fontSize: '11px', color: '#c62828', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Expired stock</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#c62828' }}>{this.state.expiryTiles.expiredCount}</div>
+              </div>
+            </div>
+          )}
           {this.state.isLoading ? (
             this.renderLoader()
           ) : (

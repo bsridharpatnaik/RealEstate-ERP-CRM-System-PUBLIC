@@ -13,6 +13,9 @@ import com.ec.application.indentpo.IndentInventoryAsyncUpdater;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.*;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +96,9 @@ public class InwardInventoryService {
 
     @Autowired
     ActivityLogService activityLogService;
+
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
 
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
 
@@ -184,6 +190,7 @@ public class InwardInventoryService {
         setFieldsFromPO(inwardInventory, iiData, pendingItemsForInward);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
+        createBatchesForInward(inwardInventory);
         List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
 
         for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
@@ -429,12 +436,18 @@ public class InwardInventoryService {
             }
             IndentsForInwardView row = rowsWithLineItemCode.get(0);
             Product product = productRepo.findById(row.getProductId()).get();
+            if (Boolean.TRUE.equals(product.getIsExpirable()) && lineItem.getExpiryDate() == null) {
+                throw new IllegalArgumentException(
+                        "Expiry date is required for expirable product: '" + product.getProductName() + "'");
+            }
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(lineItem.getQuantityReceived());
             inwardOutwardList.setWarehouse(warehouseRepo.findById(lineItem.getWarehouseId()).get());
             inwardOutwardList.setLineItemCode(row.getLineItemCode());
             inwardOutwardList.setIndentRemarks(row.getRemarks());
             inwardOutwardList.setIndentSpecification(row.getSpecification());
+            inwardOutwardList.setBrand(lineItem.getBrand());
+            inwardOutwardList.setExpiryDate(lineItem.getExpiryDate());
             inwardOutwardListSet.add(inwardOutwardList);
         }
         return inwardOutwardListSet;
@@ -559,6 +572,7 @@ public class InwardInventoryService {
                 ActivityLogDescription.withItemsAndType("Inward " + inwardInventory.getInwardId()
                         + " created by " + directCreateUser, directInwardType, directItems),
                 directCreateUser);
+        createBatchesForInward(inwardInventory);
         return inwardInventory;
     }
 
@@ -766,8 +780,14 @@ public class InwardInventoryService {
         for (ProductWithQuantity productWithQuantity : productWithQuantities) {
             InwardOutwardList inwardOutwardList = new InwardOutwardList();
             Product product = productRepo.findById(productWithQuantity.getProductId()).get();
+            if (Boolean.TRUE.equals(product.getIsExpirable()) && productWithQuantity.getExpiryDate() == null) {
+                throw new IllegalArgumentException(
+                        "Expiry date is required for expirable product: '" + product.getProductName() + "'");
+            }
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
+            inwardOutwardList.setBrand(productWithQuantity.getBrand());
+            inwardOutwardList.setExpiryDate(productWithQuantity.getExpiryDate());
             inwardOutwardListSet.add(inwardOutwardList);
             inwardOutwardList.setWarehouse(warehouseRepo.findById(productWithQuantity.getWarehouseId()).get());
         }
@@ -986,6 +1006,21 @@ public class InwardInventoryService {
             snap.getLines().add(line);
         }
         return snap;
+    }
+
+    private void createBatchesForInward(InwardInventory inwardInventory) {
+        for (InwardOutwardList iol : inwardInventory.getInwardOutwardList()) {
+            InventoryBatch batch = new InventoryBatch();
+            batch.setProduct(iol.getProduct());
+            batch.setWarehouse(iol.getWarehouse());
+            batch.setInwardId(inwardInventory.getInwardId());
+            batch.setBrand(iol.getBrand());
+            batch.setExpiryDate(iol.getExpiryDate());
+            batch.setReceivedDate(inwardInventory.getDate());
+            batch.setQtyReceived(iol.getQuantity());
+            batch.setQtyRemaining(iol.getQuantity());
+            inventoryBatchRepository.save(batch);
+        }
     }
 
     private IndentsForInwardView fetchPoLine(String lineItemCode, String tenant) {
