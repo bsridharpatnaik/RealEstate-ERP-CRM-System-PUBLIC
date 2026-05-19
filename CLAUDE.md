@@ -123,6 +123,7 @@ Domains include:
 - Change API contracts unnecessarily
 - Change DB schema by assumption
 - Modify out-of-scope modules
+- **Commit or push code** — always show changes and wait for explicit approval before running any `git commit` or `git push`
 
 ---
 
