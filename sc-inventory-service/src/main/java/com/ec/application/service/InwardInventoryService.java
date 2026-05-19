@@ -236,6 +236,13 @@ public class InwardInventoryService {
             inward.setDate(data.getInwardDate());
         }
 
+        boolean noChallanUpd = data.getChallanNo() == null || data.getChallanNo().trim().isEmpty();
+        boolean noBillUpd = data.getBillNo() == null || data.getBillNo().trim().isEmpty();
+        if (noChallanUpd && noBillUpd) {
+            if (data.getNoChallanBillReason() == null || data.getNoChallanBillReason().trim().isEmpty())
+                throw new Exception("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
+
         inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());
         inward.setVehicleNo(data.getVehicleNo());
         inward.setSupplierSlipNo(data.getSupplierSlipNo());
@@ -246,6 +253,7 @@ public class InwardInventoryService {
         inward.setBillNo(data.getBillNo());
         inward.setChallanDate(data.getChallanDate());
         inward.setBillDate(data.getBillDate());
+        inward.setNoChallanBillReason(data.getNoChallanBillReason());
 
         if (data.getFileInformations() != null) {
             inward.setFileInformations(ReusableMethods.convertFilesListToSet(data.getFileInformations()));
@@ -404,6 +412,7 @@ public class InwardInventoryService {
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setNoChallanBillReason(iiData.getNoChallanBillReason());
         inwardInventory.setInwardOutwardList(fetchInwardOutwardListFromPOLine(iiData.getLineItems(), pendingItemsForInward));
         inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         inwardInventory.setCreatedFromPO(true);
@@ -483,6 +492,13 @@ public class InwardInventoryService {
 
         if (duplicateProductIdCount > 0)
             throw new IllegalArgumentException("Inventory List should be Unique. Same line item added multiple times.");
+
+        boolean noChallanPO = iiData.getChallanNo() == null || iiData.getChallanNo().trim().isEmpty();
+        boolean noBillPO = iiData.getBillNo() == null || iiData.getBillNo().trim().isEmpty();
+        if (noChallanPO && noBillPO) {
+            if (iiData.getNoChallanBillReason() == null || iiData.getNoChallanBillReason().trim().isEmpty())
+                throw new IllegalArgumentException("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -737,6 +753,7 @@ public class InwardInventoryService {
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setNoChallanBillReason(iiData.getNoChallanBillReason());
         inwardInventory.setIsSampleInward(
                 iiData.getIsSampleInward() != null && iiData.getIsSampleInward()
         );
@@ -803,6 +820,13 @@ public class InwardInventoryService {
 
         if (!supplierRepo.existsById(iiData.getSupplierId()))
             throw new Exception("Supplier not found with ID");
+
+        boolean noChallan = iiData.getChallanNo() == null || iiData.getChallanNo().trim().isEmpty();
+        boolean noBill = iiData.getBillNo() == null || iiData.getBillNo().trim().isEmpty();
+        if (noChallan && noBill) {
+            if (iiData.getNoChallanBillReason() == null || iiData.getNoChallanBillReason().trim().isEmpty())
+                throw new Exception("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
 
         Long duplicateProductIdCount = iiData.getProductWithQuantities().stream()
                 .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()

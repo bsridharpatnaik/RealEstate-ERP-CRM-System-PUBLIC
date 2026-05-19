@@ -29,6 +29,7 @@ public final class InwardInventorySpecification
 				"showOnlyRejected");
 		List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
 		List<String> textSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "textSearch");
+		List<String> missingChallanBill = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "missingChallanBill");
 		Specification<InwardInventory> finalSpec = null;
 
 		if (startDates != null && startDates.size() > 0)
@@ -91,6 +92,16 @@ public final class InwardInventorySpecification
 				finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
 			}
 		}
+
+		if (missingChallanBill != null && missingChallanBill.size() == 1 && missingChallanBill.get(0).equalsIgnoreCase("true")) {
+			Specification<InwardInventory> internalSpec = (Root<InwardInventory> root, CriteriaQuery<?> query,
+					CriteriaBuilder cb) -> cb.and(
+						cb.or(cb.isNull(root.get("challanNo")), cb.equal(cb.trim(root.get("challanNo")), "")),
+						cb.or(cb.isNull(root.get("billNo")), cb.equal(cb.trim(root.get("billNo")), ""))
+					);
+			finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
+		}
+
 		return finalSpec;
 	}
 

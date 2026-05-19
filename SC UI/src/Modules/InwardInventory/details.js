@@ -382,6 +382,30 @@ content={() => this.detailTabRef.current}
                   <div className="label">{"Bill No"}</div>
                   <div className="value">{data.billNo}</div>
                 </div>
+                {(!data.challanNo || !data.challanNo.trim()) && (!data.billNo || !data.billNo.trim()) && (
+                  <div className="detail-item">
+                    <div className="label">{"Doc Status"}</div>
+                    <div className="value">
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#b71c1c',
+                        backgroundColor: '#ffebee',
+                        border: '1px solid #b71c1c',
+                      }}>
+                        No Challan / Bill
+                      </span>
+                      {data.noChallanBillReason && (
+                        <div style={{ marginTop: '4px', fontSize: '12px', color: '#555' }}>
+                          Reason: {data.noChallanBillReason}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="detail-item">
                   <div className="label">{"Bill Date"}</div>
                   <div className="value">{data.billDate}</div>

@@ -59,6 +59,13 @@ class filter extends CommonFilter {
               undefined,
               false
             )}
+            {this.renderAutoComplete(
+              "Missing Challan/Bill",
+              this.invoiceOptions,
+              "missingChallanBill",
+              undefined,
+              false
+            )}
           </div>
         ) : null}
         {this.renderFooter()}

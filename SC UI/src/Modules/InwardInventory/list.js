@@ -49,7 +49,8 @@ class List extends ListCommon {
       "Challan Date",
       "Bill No",
       "Bill Date",
-        "Inward Type",
+      "Doc Status",
+      "Inward Type",
       "Created By",
     ],
     keys: [
@@ -61,6 +62,7 @@ class List extends ListCommon {
       "challanDate",
       "billNo",
       "billDate",
+      "missingChallanBillFlag",
       "inwardType",
       "createdBy",
     ],
@@ -102,7 +104,7 @@ class List extends ListCommon {
             ["productNames", "supplierNames", "warehouseNames", "categoryNames"].includes(field)
           ) {
             value = value.map((v) => v.name);
-          } else if (["startDate", "endDate", "showOnlyRejected", "textSearch"].includes(field)) {
+          } else if (["startDate", "endDate", "showOnlyRejected", "textSearch", "missingChallanBill"].includes(field)) {
             value = [value];
           }
           params.filterData.push({

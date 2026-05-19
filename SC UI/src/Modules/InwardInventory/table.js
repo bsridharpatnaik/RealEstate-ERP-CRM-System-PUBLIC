@@ -58,6 +58,29 @@ class Table extends CommonTable {
         </td>
       );
 
+    } else if (key === "missingChallanBillFlag") {
+      const missing = (!row.challanNo || !row.challanNo.trim()) && (!row.billNo || !row.billNo.trim());
+      if (!missing) return <td data-label="Doc Status"></td>;
+      return (
+        <td data-label="Doc Status">
+          <span
+            title={row.noChallanBillReason || ''}
+            style={{
+              display: 'inline-block',
+              padding: '3px 10px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#b71c1c',
+              backgroundColor: '#ffebee',
+              border: '1px solid #b71c1c',
+              whiteSpace: 'nowrap',
+              cursor: row.noChallanBillReason ? 'help' : 'default',
+            }}>
+            No Challan/Bill
+          </span>
+        </td>
+      );
     } else if (key === "inwardId") {
       return (
         <td data-label={messages.common.id}>

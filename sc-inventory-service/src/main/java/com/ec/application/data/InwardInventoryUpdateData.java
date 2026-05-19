@@ -39,6 +39,8 @@ public class InwardInventoryUpdateData {
 
     String billNo;
 
+    String noChallanBillReason;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @JsonDeserialize(using = DateDeserializers.DateDeserializer.class)
     Date inwardDate;
