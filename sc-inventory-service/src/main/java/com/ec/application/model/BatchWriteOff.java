@@ -28,6 +28,9 @@ public class BatchWriteOff extends ReusableFields {
     @Column(name = "product_id", nullable = false)
     private Long productId;
 
+    @Column(name = "product_name")
+    private String productName;
+
     @Column(name = "warehouse_id", nullable = false)
     private Long warehouseId;
 
@@ -37,7 +40,7 @@ public class BatchWriteOff extends ReusableFields {
     @Column(name = "reason", nullable = false, length = 500)
     private String reason;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy", timezone = "Asia/Kolkata")
     @Column(name = "write_off_date", nullable = false)
     private Date writeOffDate;
 

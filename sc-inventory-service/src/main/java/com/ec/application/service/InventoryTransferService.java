@@ -10,6 +10,7 @@ import com.ec.application.exception.InsufficientStockException;
 import com.ec.application.mapper.InventoryTransferMapper;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.InventoryTransferRepository;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.WarehouseRepo;
@@ -45,8 +46,7 @@ public class InventoryTransferService {
     private final WarehouseRepo warehouseRepo;
     private final InventoryTransferMapper inventoryTransferMapper;
     private final PopulateDropdownService populateDropdownService;
-    private final UserDetailsService userDetailsService;
-    private final ActivityLogService activityLogService;
+    private final InventoryBatchRepository inventoryBatchRepository;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -100,9 +100,28 @@ public class InventoryTransferService {
                     item.setTargetClosingStock(targetClosingStock);
                     successfulItems.add(item);
                     itemResults.add(new TransferItemResult(item.getProductId(), true, "Transfer successful"));
+
+                    // SPLIT BATCHES: deduct from source, create in target (#6) — best-effort
+                    List<TransferredBatchData> transferredBatches = new ArrayList<>();
+                    try {
+                        withTenant(sourceTenant, () -> {
+                            transferredBatches.addAll(deductSourceBatchesForTransfer(
+                                    item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity()));
+                            return null;
+                        });
+                        withTenant(targetTenant, () -> {
+                            createTargetBatchesForTransfer(
+                                    item.getProductId(), targetWarehouse.getWarehouseId(), transferredBatches);
+                            return null;
+                        });
+                    } catch (Exception batchEx) {
+                        log.error("Batch split failed for transfer productId={}, error={}",
+                                item.getProductId(), batchEx.getMessage());
+                    }
+
                 } catch (Exception creditEx) {
 
-                    // 3️⃣ COMPENSATE DEBIT
+                    // COMPENSATE DEBIT
                     withTenant(sourceTenant, () -> {
                         stockService.updateStock(item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity(), "inward");
                         return null;
@@ -129,16 +148,6 @@ public class InventoryTransferService {
                     return null;
                 });
             }
-        }
-        if (!successfulItems.isEmpty()) {
-            String transferUser = resolveCurrentUser();
-            String logTenant = dto.getSourceTenant();
-            withTenant(logTenant, () -> {
-                activityLogService.record("CREATED", "INVENTORY_TRANSFER", String.valueOf(transfer.getTransferId()),
-                        "Inventory transfer " + transfer.getTransferId() + " from " + dto.getSourceTenant()
-                        + " to " + dto.getTargetTenant() + " (" + successfulItems.size() + " item(s)) by " + transferUser, transferUser);
-                return null;
-            });
         }
         boolean fullySuccessful = itemResults.stream().allMatch(TransferItemResult::isSuccess);
         return new InventoryTransferResult(transfer.getTransferId(), fullySuccessful, itemResults);
@@ -303,9 +312,66 @@ public class InventoryTransferService {
         transfer.setTargetTenant(transfer.getTargetTenant());
     }
 
-    private String resolveCurrentUser() {
-        try { return userDetailsService.getCurrentUser().getUsername(); }
-        catch (Exception e) { return "System"; }
+    /* =====================================================
+       BATCH SPLIT HELPERS (#6)
+       ===================================================== */
+
+    private List<TransferredBatchData> deductSourceBatchesForTransfer(
+            Long productId, Long sourceWarehouseId, Double qtyToTransfer) {
+
+        List<InventoryBatch> fifoBatches = inventoryBatchRepository
+                .findAvailableBatchesFifoOrder(productId, sourceWarehouseId);
+
+        double totalBatchQty = fifoBatches.stream().mapToDouble(InventoryBatch::getQtyRemaining).sum();
+        // Pre-feature stock consumed silently first (true FIFO)
+        double preFeatureStock = Math.max(qtyToTransfer - totalBatchQty, 0.0);
+        double remaining = qtyToTransfer - preFeatureStock;
+
+        List<TransferredBatchData> transferred = new ArrayList<>();
+        for (InventoryBatch batch : fifoBatches) {
+            if (remaining <= 0) break;
+            double consume = Math.min(remaining, batch.getQtyRemaining());
+            batch.setQtyRemaining(batch.getQtyRemaining() - consume);
+            inventoryBatchRepository.save(batch);
+            transferred.add(new TransferredBatchData(
+                    batch.getBatchId(), batch.getBrand(), batch.getExpiryDate(),
+                    batch.getReceivedDate(), consume));
+            remaining -= consume;
+        }
+        return transferred;
+    }
+
+    private void createTargetBatchesForTransfer(
+            Long productId, Long targetWarehouseId, List<TransferredBatchData> transferredBatches) {
+
+        for (TransferredBatchData td : transferredBatches) {
+            InventoryBatch targetBatch = new InventoryBatch();
+            targetBatch.setInwardId(0L); // sentinel: transfer-origin batch
+            targetBatch.setProduct(productRepo.findById(productId).orElseThrow());
+            targetBatch.setWarehouse(warehouseRepo.findById(targetWarehouseId).orElseThrow());
+            targetBatch.setBrand(td.brand);
+            targetBatch.setExpiryDate(td.expiryDate);
+            targetBatch.setReceivedDate(td.receivedDate);
+            targetBatch.setQtyReceived(td.qty);
+            targetBatch.setQtyRemaining(td.qty);
+            inventoryBatchRepository.save(targetBatch);
+        }
+    }
+
+    private static class TransferredBatchData {
+        final Long batchId;
+        final String brand;
+        final Date expiryDate;
+        final Date receivedDate;
+        final double qty;
+
+        TransferredBatchData(Long batchId, String brand, Date expiryDate, Date receivedDate, double qty) {
+            this.batchId = batchId;
+            this.brand = brand;
+            this.expiryDate = expiryDate;
+            this.receivedDate = receivedDate;
+            this.qty = qty;
+        }
     }
 
     /* =====================================================

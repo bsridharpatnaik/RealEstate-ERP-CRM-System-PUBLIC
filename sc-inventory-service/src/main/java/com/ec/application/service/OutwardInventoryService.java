@@ -19,7 +19,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO2;
@@ -95,9 +94,6 @@ public class OutwardInventoryService {
     BOQService boqService;
 
     @Autowired
-    ActivityLogService activityLogService;
-
-    @Autowired
     InventoryBatchRepository inventoryBatchRepository;
 
     @Autowired
@@ -116,16 +112,6 @@ public class OutwardInventoryService {
         outwardInventory.setHasBOQ(allHaveBOQ ? true : null);
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
-        String createUser = resolveCurrentUser();
-        List<Map<String, Object>> createItems = outwardInventory.getInwardOutwardList().stream()
-                .map(io -> ActivityLogDescription.item(
-                        io.getProduct() != null ? io.getProduct().getProductName() : "Unknown",
-                        io.getQuantity()))
-                .collect(Collectors.toList());
-        activityLogService.record("CREATED", "OUTWARD", String.valueOf(outwardInventory.getOutwardid()),
-                ActivityLogDescription.withItems("Outward " + outwardInventory.getOutwardid()
-                        + " created by " + createUser, createItems),
-                createUser);
         consumeBatchesForOutward(outwardInventory, oiData);
         return outwardInventory;
     }
@@ -182,20 +168,6 @@ public class OutwardInventoryService {
                 addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
                         productWithQuantity.getRemarks());
         }
-
-        String actionUser = resolveCurrentUser();
-        String actionType = type.equals("return") ? "RETURNED" : "REJECTED";
-        List<Map<String, Object>> actionItems = rd.getProductWithQuantities().stream()
-                .map(pwq -> {
-                    String name = productRepo.findById(pwq.getProductId())
-                            .map(p -> p.getProductName()).orElse("ID:" + pwq.getProductId());
-                    return ActivityLogDescription.item(name, pwq.getQuantity());
-                })
-                .collect(Collectors.toList());
-        activityLogService.record(actionType, "OUTWARD", String.valueOf(outwardId),
-                ActivityLogDescription.withItems("Outward " + outwardId + " " + type + " by " + actionUser, actionItems),
-                actionUser);
-
         return outwardInventoryRepo.findById(outwardId).get();
     }
 
@@ -283,37 +255,18 @@ public class OutwardInventoryService {
             }
         }
         if (!deltaItems.isEmpty()) {
-            allHaveBOQ = boqService.enforceBOQLimits(iiData.getUsageLocationId(), deltaItems, iiData.getUsageAreaId());
+            allHaveBOQ = boqService.enforceBOQLimits(iiData.getUsageLocationId(), deltaItems);
         }
         exitIfNotAuthorized(outwardInventory, iiData, APICallTypeForAuthorization.Update);
         exitIfReturnExists(outwardInventory, iiData);
         OutwardInventory oldOutwardInventory = (OutwardInventory) outwardInventory.clone();
+        reverseBatchConsumptions(id);
         setFields(outwardInventory, iiData);
         outwardInventory.setHasBOQ(allHaveBOQ ? true : null);
         modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
         removeOrphans(oldOutwardInventory);
         outwardInventoryRepo.save(outwardInventory);
-
-        String updateUser = resolveCurrentUser();
-        Map<Long, Double> savedOldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
-                .collect(Collectors.toMap(io -> io.getProduct().getProductId(), InwardOutwardList::getQuantity, (a, b) -> a));
-        List<Map<String, Object>> changedItems = ActivityLogDescription.list();
-        for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
-            Double oldQty = savedOldQtyMap.get(io.getProduct().getProductId());
-            if (oldQty == null || Double.compare(oldQty, io.getQuantity()) != 0) {
-                String productName = io.getProduct() != null ? io.getProduct().getProductName() : String.valueOf(io.getProduct().getProductId());
-                changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty != null ? oldQty : 0, io.getQuantity()));
-            }
-        }
-        if (!changedItems.isEmpty()) {
-            activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
-                    ActivityLogDescription.withItems("Outward " + id + " updated by " + updateUser, changedItems),
-                    updateUser);
-        } else {
-            activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
-                    ActivityLogDescription.of("Outward " + id + " updated by " + updateUser),
-                    updateUser);
-        }
+        consumeBatchesForOutward(outwardInventory, iiData);
         return outwardInventory;
 
     }
@@ -539,7 +492,7 @@ public class OutwardInventoryService {
 
         // BOQ enforcement: block save if any product exceeds 100% BOQ consumption
         // returns true only if ALL products have BOQ configured
-        return boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities(), oiData.getUsageAreaId());
+        return boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities());
     }
 
     public OutwardInventory findOutwardnventory(Long id) throws Exception {
@@ -663,12 +616,10 @@ public class OutwardInventoryService {
             throw new Exception("Outward Inventory with ID not found");
         OutwardInventory outwardInventory = outwardInventoryOpt.get();
         exitIfNotAuthorized(outwardInventory, null, APICallTypeForAuthorization.Delete);
+        reverseBatchConsumptions(id);
         updateStockBeforeDelete(outwardInventory);
         removeOrphans(outwardInventory);
         outwardInventoryRepo.softDeleteById(id);
-        String deleteUser = resolveCurrentUser();
-        activityLogService.record("DELETED", "OUTWARD", String.valueOf(id),
-                "Outward " + id + " deleted by " + deleteUser, deleteUser);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -744,11 +695,6 @@ public class OutwardInventoryService {
         }
     }
 
-    private String resolveCurrentUser() {
-        try { return userDetailService.getCurrentUser().getUsername(); }
-        catch (Exception e) { return "System"; }
-    }
-
     public Pageable modifyPageable(Pageable pageable) {
         Sort sort = pageable.getSort();
         Sort newSort = sort;
@@ -800,7 +746,8 @@ public class OutwardInventoryService {
             String overrideComment = pwq != null ? pwq.getOverrideComment() : null;
 
             if (overrideBatchId != null) {
-                InventoryBatch batch = inventoryBatchRepository.findById(overrideBatchId)
+                // Override: consume from the specified batch (with pessimistic lock, #3)
+                InventoryBatch batch = inventoryBatchRepository.findByIdLocked(overrideBatchId)
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "Batch not found with ID: " + overrideBatchId));
 
@@ -810,8 +757,9 @@ public class OutwardInventoryService {
                             "Available: " + batch.getQtyRemaining() + ", Requested: " + qtyToConsume);
                 }
 
+                // Check if this is a genuine FIFO override (not the oldest batch)
                 List<InventoryBatch> fifoBatches = inventoryBatchRepository
-                        .findAvailableBatchesFifoOrder(productId, warehouseId);
+                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId);
                 boolean isFifoOverride = fifoBatches.isEmpty() ||
                         !fifoBatches.get(0).getBatchId().equals(overrideBatchId);
 
@@ -836,11 +784,18 @@ public class OutwardInventoryService {
 
                 if (isFifoOverride) anyOverride = true;
             } else {
-                // FIFO: consume from oldest batches first
+                // True FIFO (#1): old (pre-feature) stock consumed first, then tracked batches
                 List<InventoryBatch> fifoBatches = inventoryBatchRepository
-                        .findAvailableBatchesFifoOrder(productId, warehouseId);
+                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId); // pessimistic lock (#3)
 
-                double remaining = qtyToConsume;
+                double totalBatchQty = fifoBatches.stream()
+                        .mapToDouble(InventoryBatch::getQtyRemaining).sum();
+
+                // Pre-feature stock quantity is whatever qty exceeds total tracked batch qty
+                double preFeatureStock = Math.max(qtyToConsume - totalBatchQty, 0.0);
+                // Amount to draw from tracked batches after silently consuming old stock
+                double remaining = qtyToConsume - preFeatureStock;
+
                 for (InventoryBatch batch : fifoBatches) {
                     if (remaining <= 0) break;
                     double consume = Math.min(remaining, batch.getQtyRemaining());
@@ -858,7 +813,7 @@ public class OutwardInventoryService {
 
                     remaining -= consume;
                 }
-                // remaining > 0 means pre-feature stock with no batch records — silently skip
+                // Any remaining preFeatureStock or leftover is silently consumed (no batch record)
             }
         }
 
@@ -866,5 +821,17 @@ public class OutwardInventoryService {
             outwardInventory.setHasFifoOverride(true);
             outwardInventoryRepo.save(outwardInventory);
         }
+    }
+
+    // Reverse all batch consumptions for an outward — restores qtyRemaining on each batch (#4)
+    private void reverseBatchConsumptions(Long outwardId) {
+        List<OutwardBatchConsumption> consumptions =
+                outwardBatchConsumptionRepository.findByOutwardIdOrderByIdAsc(outwardId);
+        for (OutwardBatchConsumption c : consumptions) {
+            InventoryBatch batch = c.getBatch();
+            batch.setQtyRemaining(batch.getQtyRemaining() + c.getQtyConsumed());
+            inventoryBatchRepository.save(batch);
+        }
+        outwardBatchConsumptionRepository.deleteByOutwardId(outwardId);
     }
 }

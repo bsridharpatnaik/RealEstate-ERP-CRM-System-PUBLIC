@@ -11,6 +11,6 @@ public class WriteOffRequestDTO {
     private Double quantity;
     private String reason;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy", timezone = "Asia/Kolkata")
     private Date writeOffDate;
 }

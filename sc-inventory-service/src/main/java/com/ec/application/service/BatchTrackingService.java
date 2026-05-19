@@ -79,6 +79,7 @@ public class BatchTrackingService {
         BatchWriteOff writeOff = new BatchWriteOff();
         writeOff.setBatch(batch);
         writeOff.setProductId(batch.getProduct().getProductId());
+        writeOff.setProductName(batch.getProduct().getProductName());
         writeOff.setWarehouseId(batch.getWarehouse().getWarehouseId());
         writeOff.setQuantity(request.getQuantity());
         writeOff.setReason(request.getReason().trim());

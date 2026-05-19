@@ -39,6 +39,14 @@ class Add extends AddForm {
     selectedWarehouseId: null,
     boqViolationDialog: { open: false, violations: [] },
     availableBatches: {}, // productId → [batch]
+    fifoConfirmModal: {
+      open: false,
+      productKey: null,
+      selectedBatchId: null,
+      fifoBatch: null,
+      input: '',
+      error: '',
+    },
   };
   key = 1;
   componentDidMount() {
@@ -246,9 +254,33 @@ class Add extends AddForm {
                   style={{ padding: '4px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
                   value={this.state.noproduct[key].overrideBatchId || ''}
                   onChange={(e) => {
-                    const p = this.state.noproduct;
-                    p[key].overrideBatchId = e.target.value ? parseInt(e.target.value) : null;
-                    this.setState({ noproduct: { ...p } });
+                    const selectedId = e.target.value ? parseInt(e.target.value) : null;
+                    if (!selectedId) {
+                      const p = this.state.noproduct;
+                      p[key].overrideBatchId = null;
+                      this.setState({ noproduct: { ...p } });
+                      return;
+                    }
+                    const fifoBatch = batches[0];
+                    const isNonFifo = fifoBatch && fifoBatch.batchId !== selectedId;
+                    if (isNonFifo) {
+                      // Non-FIFO selection — require expiry date confirmation
+                      this.setState({
+                        fifoConfirmModal: {
+                          open: true,
+                          productKey: key,
+                          selectedBatchId: selectedId,
+                          fifoBatch,
+                          input: '',
+                          error: '',
+                        },
+                      });
+                    } else {
+                      // FIFO-correct selection — set directly, no confirmation needed
+                      const p = this.state.noproduct;
+                      p[key].overrideBatchId = selectedId;
+                      this.setState({ noproduct: { ...p } });
+                    }
                   }}
                 >
                   <option value="">Select batch...</option>
@@ -262,6 +294,7 @@ class Add extends AddForm {
                 <input
                   type="text"
                   placeholder="Reason for override (required) *"
+                  maxLength={500}
                   style={{ padding: '4px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
                   value={this.state.noproduct[key].overrideComment || ''}
                   onChange={(e) => {
@@ -583,7 +616,110 @@ class Add extends AddForm {
           </DialogActions>
         </Dialog>
 
+        {/* FIFO override confirmation modal */}
+        {this.renderFifoConfirmModal()}
+
       </div>
+    );
+  }
+
+  renderFifoConfirmModal() {
+    const { fifoConfirmModal } = this.state;
+    if (!fifoConfirmModal.open) return null;
+
+    const { fifoBatch, input, error } = fifoConfirmModal;
+
+    // Determine what the user must enter and how to display it
+    const useExpiry = !!(fifoBatch && fifoBatch.expiryDate);
+    const confirmDate = useExpiry
+      ? new Date(fifoBatch.expiryDate).toLocaleDateString('en-GB')   // DD/MM/YYYY
+      : new Date(fifoBatch.receivedDate).toLocaleDateString('en-GB');
+    const confirmLabel = useExpiry ? 'expiry date' : 'received date';
+    const confirmPlaceholder = 'DD/MM/YYYY';
+
+    const handleConfirm = () => {
+      const trimmed = input.trim().replace(/-/g, '/');
+      if (trimmed !== confirmDate) {
+        this.setState({
+          fifoConfirmModal: {
+            ...fifoConfirmModal,
+            error: `Date does not match. Expected: ${confirmDate}`,
+          },
+        });
+        return;
+      }
+      // Confirmed — apply the override
+      const p = this.state.noproduct;
+      p[fifoConfirmModal.productKey].overrideBatchId = fifoConfirmModal.selectedBatchId;
+      this.setState({
+        noproduct: { ...p },
+        fifoConfirmModal: { open: false, productKey: null, selectedBatchId: null, fifoBatch: null, input: '', error: '' },
+      });
+    };
+
+    const handleCancel = () => {
+      this.setState({
+        fifoConfirmModal: { open: false, productKey: null, selectedBatchId: null, fifoBatch: null, input: '', error: '' },
+      });
+    };
+
+    return (
+      <Dialog open maxWidth="xs" fullWidth>
+        <DialogTitle style={{ background: '#fff3e0', color: '#e65100', fontSize: 16 }}>
+          ⚠ FIFO Override — Confirmation Required
+        </DialogTitle>
+        <DialogContent style={{ paddingTop: 16 }}>
+          <div style={{ marginBottom: 12, fontSize: 13, color: '#333' }}>
+            You are skipping the oldest available batch:
+          </div>
+          <div style={{
+            background: '#fff8e1', border: '1px solid #ffe082', borderRadius: 6,
+            padding: '10px 14px', marginBottom: 16, fontSize: 13,
+          }}>
+            <div><strong>Brand:</strong> {fifoBatch.brand || '—'}</div>
+            <div><strong>Received:</strong> {fifoBatch.receivedDate ? new Date(fifoBatch.receivedDate).toLocaleDateString('en-GB') : '—'}</div>
+            {fifoBatch.expiryDate && (
+              <div><strong>Expiry:</strong> {new Date(fifoBatch.expiryDate).toLocaleDateString('en-GB')}</div>
+            )}
+            <div><strong>Qty remaining:</strong> {fifoBatch.qtyRemaining}</div>
+          </div>
+          <div style={{ fontSize: 13, marginBottom: 8, color: '#555' }}>
+            To confirm, enter the <strong>{confirmLabel}</strong> of the skipped batch ({confirmPlaceholder}):
+          </div>
+          <input
+            type="text"
+            autoFocus
+            placeholder={confirmPlaceholder}
+            value={input}
+            maxLength={10}
+            style={{
+              width: '100%', padding: '8px 10px', fontSize: 14,
+              border: error ? '1px solid #c62828' : '1px solid #ccc',
+              borderRadius: 4, boxSizing: 'border-box',
+              letterSpacing: 2,
+            }}
+            onChange={(e) =>
+              this.setState({ fifoConfirmModal: { ...fifoConfirmModal, input: e.target.value, error: '' } })
+            }
+            onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm(); }}
+          />
+          {error && (
+            <div style={{ color: '#c62828', fontSize: 12, marginTop: 6 }}>{error}</div>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={handleCancel} style={{ color: '#757575' }}>
+            Cancel
+          </MuiButton>
+          <MuiButton
+            onClick={handleConfirm}
+            variant="contained"
+            style={{ background: '#e65100', color: '#fff' }}
+          >
+            Confirm Override
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     );
   }
 }

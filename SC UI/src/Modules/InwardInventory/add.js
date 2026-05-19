@@ -18,12 +18,6 @@ import { fetchUnit } from "./../../actions/measurementUnit";
 //misc
 import IconButton from "@material-ui/core/IconButton";
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-import MuiButton from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
 import moment from "moment";
 import { getRoleEditConstraintDays } from "./../../helper";
 
@@ -42,10 +36,8 @@ class InwardInventoryForm extends AddForm {
     selectedPO: null,
     selectedSupplier: null,
     isDirectInward: true,
-    isSampleInward: false,
+    isSampleInward: false,     // NEW: tracks sample inward mode
     isEditMode: false,
-    showNoChallanBillPopup: false,
-    noChallanBillPopupReason: '',
     isLoaded: false,
     isProductsLoaded: false,
     createdFromPO: false,
@@ -58,7 +50,6 @@ class InwardInventoryForm extends AddForm {
       supplierSlipNo: '',
       challanNo: '',
       billNo: '',
-      noChallanBillReason: '',
       additionalInfo: '',
       challanDate: null,
       billDate: null,
@@ -146,7 +137,7 @@ class InwardInventoryForm extends AddForm {
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
-              quantity: item.quantity || "",
+              quantity: "",
               warehouseId: item.warehouse?.warehouseId || null,
               lineItemCode: item.lineItemCode
             };
@@ -431,8 +422,7 @@ class InwardInventoryForm extends AddForm {
             maxAllowedQuantity: item.maxAllowedQuantity != null ? item.maxAllowedQuantity : pendingQty + (poQty * tolPct / 100),
             quantity: "",
             warehouseId: null,
-            lineItemCode: item.lineItemCode,
-            isExpirable: item.isExpirable || false,
+            lineItemCode: item.lineItemCode
           };
         });
 
@@ -539,8 +529,6 @@ class InwardInventoryForm extends AddForm {
                     p[key].unit = value?.measurementUnit || "";
                     p[key].isExpirable = value?.isExpirable || false;
                     p[key].selectedProduct = value;
-                    p[key].expiryDate = null;
-                    this.formData[`expiryDate_${key}`] = null;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
                         this.getCurrentStock(key);
@@ -568,8 +556,6 @@ class InwardInventoryForm extends AddForm {
                     p[key].unit = value?.measurementUnit || "";
                     p[key].isExpirable = value?.isExpirable || false;
                     p[key].selectedProduct = value;
-                    p[key].expiryDate = null;
-                    this.formData[`expiryDate_${key}`] = null;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
                         this.getCurrentStock(key);
@@ -637,24 +623,22 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Expiry Date - only shown for expirable products */}
-              {product.isExpirable && (
-                <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  {this.renderDate({
-                    fieldname: `expiryDate_${key}`,
-                    label: "Expiry Date *",
-                    emptyDate: true,
-                    type: "date",
-                    value: product.expiryDate || null,
-                    onChange: () => {
-                      const p = this.state.noproduct;
-                      p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                      this.setState({ noproduct: { ...p } });
-                    },
-                  })}
+              {/* Expiry Date (required if expirable) */}
+              <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                {this.renderDate({
+                  fieldname: `expiryDate_${key}`,
+                  label: product.isExpirable ? "Expiry Date *" : "Expiry Date",
+                  value: product.expiryDate || null,
+                  onChange: () => {
+                    const p = this.state.noproduct;
+                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                    this.setState({ noproduct: { ...p } });
+                  },
+                })}
+                {product.isExpirable && (
                   <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required for this product</span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
@@ -841,24 +825,19 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Expiry Date - only shown for expirable products */}
-              {product.isExpirable && (
-                <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  {this.renderDate({
-                    fieldname: `expiryDate_${key}`,
-                    label: "Expiry Date *",
-                    emptyDate: true,
-                    type: "date",
-                    value: product.expiryDate || null,
-                    onChange: () => {
-                      const p = this.state.noproduct;
-                      p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                      this.setState({ noproduct: { ...p } });
-                    },
-                  })}
-                  <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required for this product</span>
-                </div>
-              )}
+              {/* Expiry Date */}
+              <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                {this.renderDate({
+                  fieldname: `expiryDate_${key}`,
+                  label: "Expiry Date",
+                  value: product.expiryDate || null,
+                  onChange: () => {
+                    const p = this.state.noproduct;
+                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                    this.setState({ noproduct: { ...p } });
+                  },
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -906,21 +885,17 @@ class InwardInventoryForm extends AddForm {
       return;
     }
 
-    for (const product of Object.values(this.state.noproduct)) {
-      if (product.isExpirable && !product.expiryDate) {
-        this.props.enqueueSnackbar(
-          `Expiry date is required for "${product.productName || 'product'}".`,
-          { variant: "error" }
-        );
-        return;
+    // Validate expiry date for expirable products (direct inward only — PO validates server-side too)
+    if (this.state.isDirectInward) {
+      for (const product of Object.values(this.state.noproduct)) {
+        if (product.isExpirable && !product.expiryDate) {
+          this.props.enqueueSnackbar(
+            `Expiry date is required for "${product.productName || 'product'}".`,
+            { variant: "error" }
+          );
+          return;
+        }
       }
-    }
-
-    const noChallan = !this.formData.challanNo || !this.formData.challanNo.trim();
-    const noBill = !this.formData.billNo || !this.formData.billNo.trim();
-    if (noChallan && noBill && (!this.formData.noChallanBillReason || !this.formData.noChallanBillReason.trim())) {
-      this.setState({ showNoChallanBillPopup: true, noChallanBillPopupReason: '' });
-      return;
     }
 
     // Block submission if any PO-linked line item exceeds its max allowed quantity
@@ -968,7 +943,6 @@ class InwardInventoryForm extends AddForm {
         billNo: this.formData.billNo,
         challanDate: this.formData.challanDate || null,
         billDate: this.formData.billDate || null,
-        noChallanBillReason: this.formData.noChallanBillReason || null,
         fileInformations: this.formData.fileInformations || []
       };
     } else if (this.state.isDirectInward) {
@@ -995,8 +969,7 @@ class InwardInventoryForm extends AddForm {
         challanNo: this.formData.challanNo,
         challanDate: this.formData.challanDate || null,
         billNo: this.formData.billNo,
-        billDate: this.formData.billDate || null,
-        noChallanBillReason: this.formData.noChallanBillReason || null
+        billDate: this.formData.billDate || null
       };
     } else {
       // PO Inward
@@ -1013,7 +986,6 @@ class InwardInventoryForm extends AddForm {
         challanNo: this.formData.challanNo,
         challanDate: this.formData.challanDate || null,
         billDate: this.formData.billDate || null,
-        noChallanBillReason: this.formData.noChallanBillReason || null,
         additionalInfo: this.formData.additionalInfo,
         fileInformations: this.formData.fileInformations || [],
         lineItems: Object.values(this.state.noproduct).map(item => ({
@@ -1056,50 +1028,6 @@ class InwardInventoryForm extends AddForm {
       });
       this.setState({ currentStock });
     }
-  }
-
-  handleNoChallanBillSubmit = async () => {
-    const reason = this.state.noChallanBillPopupReason;
-    if (!reason || !reason.trim()) {
-      this.props.enqueueSnackbar("Reason is required.", { variant: "error" });
-      return;
-    }
-    this.formData.noChallanBillReason = reason;
-    this.setState({ showNoChallanBillPopup: false }, () => {
-      this.add({ preventDefault: () => {} });
-    });
-  };
-
-  renderNoChallanBillPopup() {
-    return (
-      <Dialog open={this.state.showNoChallanBillPopup} maxWidth="sm" fullWidth>
-        <DialogTitle>Challan / Bill No. Missing</DialogTitle>
-        <DialogContent>
-          <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px' }}>
-            Neither Challan No. nor Bill No. has been entered. Please provide a reason.
-          </p>
-          <TextField
-            label="Reason *"
-            multiline
-            rows={3}
-            variant="outlined"
-            fullWidth
-            inputProps={{ maxLength: 500 }}
-            value={this.state.noChallanBillPopupReason}
-            onChange={(e) => this.setState({ noChallanBillPopupReason: e.target.value })}
-            helperText={`${(this.state.noChallanBillPopupReason || '').length}/500`}
-          />
-        </DialogContent>
-        <DialogActions>
-          <MuiButton onClick={() => this.setState({ showNoChallanBillPopup: false })} color="default">
-            Cancel
-          </MuiButton>
-          <MuiButton onClick={this.handleNoChallanBillSubmit} color="primary" variant="contained">
-            Submit
-          </MuiButton>
-        </DialogActions>
-      </Dialog>
-    );
   }
 
   renderFooter() {
@@ -1387,7 +1315,6 @@ class InwardInventoryForm extends AddForm {
             </form>
           );
         })()}
-      {this.renderNoChallanBillPopup()}
       </div>
     );
   }

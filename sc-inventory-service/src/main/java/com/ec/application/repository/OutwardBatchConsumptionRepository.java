@@ -10,4 +10,6 @@ import java.util.List;
 public interface OutwardBatchConsumptionRepository extends JpaRepository<OutwardBatchConsumption, Long> {
 
     List<OutwardBatchConsumption> findByOutwardIdOrderByIdAsc(Long outwardId);
+
+    void deleteByOutwardId(Long outwardId);
 }
