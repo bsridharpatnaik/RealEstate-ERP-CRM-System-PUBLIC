@@ -249,6 +249,7 @@ export const apiEndpoints = {
   activityLogGlobalSync: "/api/inventory/activity-log/global/sync",
   getOpenIndentsByCategory: "/api/inventory/indent/open-indents/by-category",
   splitIndent: "/api/inventory/indent/{indentid}/split",
+  cancelIndentLineItem: (indentId, lineItemCode) => `/api/inventory/indent/${indentId}/lineitem/cancel?lineItemCode=${encodeURIComponent(lineItemCode)}`,
   getSupplierNames: "/api/inventory/supplier/names",
   getFirmIdAndNames: "/api/inventory/firm/idandnames",
   getFirm: "/api/inventory/firm?size=" + noOfRecords,

@@ -34,6 +34,8 @@ public class IndentCompletionEvaluator {
 
         boolean anyInward = indent.getInventoryList().stream().anyMatch(li ->
                 IndentLineItemStatusConstants.STATUS_INWARD_PARTIAL.equals(li.getLineItemStatus())
+                || (IndentLineItemStatusConstants.STATUS_SHORT_CLOSED.equals(li.getLineItemStatus())
+                        && li.getQuantityReceived() != null && li.getQuantityReceived() > 0)
         );
 
         boolean poComplete = indent.getInventoryList().stream().allMatch(li ->

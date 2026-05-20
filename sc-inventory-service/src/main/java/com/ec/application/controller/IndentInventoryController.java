@@ -114,6 +114,18 @@ public class IndentInventoryController {
         }
     }
 
+    @PatchMapping("/{indentId}/lineitem/cancel")
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER, RoleConstants.STORE_INCHARGE})
+    public ResponseEntity<?> cancelLineItem(@PathVariable String indentId, @RequestParam String lineItemCode) {
+        try {
+            IndentInventory result = iiService.cancelLineItem(indentId, lineItemCode);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiOnlyMessageAndCodeError(400, e.getMessage()));
+        }
+    }
+
     @PatchMapping("/{indentId}/approve")
     @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.PROJECT_MANAGER})
     public ResponseEntity<?> approveIndent(@PathVariable String indentId) {

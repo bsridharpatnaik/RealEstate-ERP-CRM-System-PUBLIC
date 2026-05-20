@@ -1289,6 +1289,15 @@ table {
         max-width: 140px;
         width: 110px;
       }
+
+      th.inventory-action-col,
+      td.inventory-action-col {
+        width: 48px;
+        min-width: 48px;
+        max-width: 48px;
+        padding: 4px 8px !important;
+        text-align: center;
+      }
     }
   }
 
