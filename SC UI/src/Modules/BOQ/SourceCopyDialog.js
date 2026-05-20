@@ -28,6 +28,7 @@ const SourceCopyDialog = ({
   const [preview, setPreview]                 = useState([]);
   const [loading, setLoading]                 = useState(false);
   const [loaded, setLoaded]                   = useState(false);
+  const [categoryFilter, setCategoryFilter]   = useState([]);
 
   const reset = () => {
     setBuildingType(null);
@@ -35,6 +36,7 @@ const SourceCopyDialog = ({
     setUnitOptions([]);
     setPreview([]);
     setLoaded(false);
+    setCategoryFilter([]);
   };
 
   const handleBTChange = async (opt) => {
@@ -87,12 +89,21 @@ const SourceCopyDialog = ({
     setLoading(false);
     setPreview(allRows);
     setLoaded(true);
+    setCategoryFilter([]);
   };
 
   const removeRow = (copyId) => setPreview(prev => prev.filter(r => r._copyId !== copyId));
 
+  const categoryOptions = [...new Map(
+    preview.filter(r => r.category).map(r => [r.category, { value: r.category, label: r.category }])
+  ).values()].sort((a, b) => a.label.localeCompare(b.label));
+
+  const visibleRows = categoryFilter.length > 0
+    ? preview.filter(r => categoryFilter.some(f => f.value === r.category))
+    : preview;
+
   const handleConfirm = () => {
-    onCopy(preview);
+    onCopy(visibleRows);
     reset();
     onClose();
   };
@@ -162,8 +173,22 @@ const SourceCopyDialog = ({
 
         {preview.length > 0 && (
           <>
+            {categoryOptions.length > 0 && (
+              <div style={{ marginBottom: '12px' }}>
+                <label style={labelStyle}>Filter by Category</label>
+                <Select
+                  options={categoryOptions}
+                  value={categoryFilter}
+                  onChange={val => setCategoryFilter(val || [])}
+                  placeholder="All categories"
+                  isMulti
+                  isSearchable
+                  {...selectPortal}
+                />
+              </div>
+            )}
             <div style={{ fontSize: '13px', color: '#555', marginBottom: '8px' }}>
-              <strong>{preview.length}</strong> row{preview.length !== 1 ? 's' : ''} found.
+              Showing <strong>{visibleRows.length}</strong> of <strong>{preview.length}</strong> row{preview.length !== 1 ? 's' : ''}.
               Remove any you don't want to copy.
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -179,7 +204,7 @@ const SourceCopyDialog = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {preview.map(row => (
+                  {visibleRows.map(row => (
                     <tr key={row._copyId}>
                       <td style={td}>{row.category ? `${row.category} — ${row.product?.label || '—'}` : (row.product?.label || '—')}</td>
                       <td style={td}>{row.workArea?.label || '—'}</td>
@@ -205,9 +230,9 @@ const SourceCopyDialog = ({
           onClick={handleConfirm}
           color="primary"
           variant="contained"
-          disabled={preview.length === 0}
+          disabled={visibleRows.length === 0}
         >
-          Copy {preview.length > 0 ? preview.length : ''} Row{preview.length !== 1 ? 's' : ''} to Preview
+          Copy {visibleRows.length > 0 ? visibleRows.length : ''} Row{visibleRows.length !== 1 ? 's' : ''} to Preview
         </Button>
       </DialogActions>
     </Dialog>

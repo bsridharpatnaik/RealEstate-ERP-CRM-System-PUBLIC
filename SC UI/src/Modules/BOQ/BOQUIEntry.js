@@ -141,9 +141,17 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
   };
 
   const handleCopiedRows = (copiedRows) => {
+    const resolvedRows = copiedRows.map(r => {
+      const categoryOpt = r.category
+        ? categoryOptions.find(c => c.label === r.category) || null
+        : null;
+      return { ...r, category: categoryOpt };
+    });
+    const uniqueCategoryIds = [...new Set(resolvedRows.filter(r => r.category).map(r => r.category.value))];
+    uniqueCategoryIds.forEach(id => loadProductsForCategory(id));
     setRows(prev => {
       const nonEmpty = prev.filter(r => r.product || r.workArea || r.quantity);
-      return [...nonEmpty, ...copiedRows.map(r => ({ ...r, id: ++_rowCounter }))];
+      return [...nonEmpty, ...resolvedRows.map(r => ({ ...r, id: ++_rowCounter }))];
     });
   };
 
