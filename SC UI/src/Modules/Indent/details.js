@@ -90,6 +90,9 @@ class Details extends CommonDetails {
     approveConfirmOpen: false,
     rejectConfirmOpen: false,
     cancelConfirmOpen: false,
+    cancelLineItemConfirmOpen: false,
+    cancelLineItemCode: null,
+    isCancellingLineItem: false,
     anchorEl: null,
     isApproving: false,
     isRejecting: false,
@@ -239,6 +242,25 @@ class Details extends CommonDetails {
       needByDate: data.needByDate || null,
     };
     if (this.props.onResubmit) this.props.onResubmit(prefillData);
+  };
+
+  handleCancelLineItem = async () => {
+    const { cancelLineItemCode } = this.state;
+    const data = this.props.data;
+    if (!data || !data.indentId || !cancelLineItemCode) {
+      this.props.enqueueSnackbar("Invalid data", { variant: "error" });
+      return;
+    }
+    this.setState({ isCancellingLineItem: true, cancelLineItemConfirmOpen: false });
+    const url = apiEndpoints.cancelIndentLineItem(data.indentId, cancelLineItemCode);
+    const response = await API.PATCH(url);
+    if (response.success) {
+      this.props.enqueueSnackbar("Line item cancelled successfully", { variant: "success" });
+      if (this.props.goToDetails) this.props.goToDetails();
+    } else {
+      this.props.enqueueSnackbar(response.errorMessage || "Failed to cancel line item", { variant: "error" });
+    }
+    this.setState({ isCancellingLineItem: false, cancelLineItemCode: null });
   };
 
   handleCancel = async () => {
@@ -492,6 +514,7 @@ class Details extends CommonDetails {
                             </>
                           )}
                           <TableCell className="inventory-status-col">Status</TableCell>
+                          <TableCell className="inventory-action-col">Action</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -549,6 +572,22 @@ class Details extends CommonDetails {
                                   <StatusBadgeWithTooltip lineItemStatus={lineItemStatus} statusClass={statusClass} />
                                 ) : "-";
                               })()}
+                            </TableCell>
+                            <TableCell className="inventory-action-col">
+                              {item.lineItemStatus === "NEW" && (
+                                <Tooltip title="Cancel line item" placement="top">
+                                  <span>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => this.setState({ cancelLineItemConfirmOpen: true, cancelLineItemCode: item.lineItemCode })}
+                                      disabled={this.state.isCancellingLineItem}
+                                      style={{ color: "#e53935" }}
+                                    >
+                                      <CloseIconMui style={{ fontSize: 18 }} />
+                                    </IconButton>
+                                  </span>
+                                </Tooltip>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -713,6 +752,18 @@ class Details extends CommonDetails {
           <DialogActions>
             <Button buttonClass="grey" label="No" onClick={() => this.setState({ cancelConfirmOpen: false })} />
             <Button buttonClass="indent-reject-btn-solid" label={this.state.isCancelling ? "Cancelling..." : "Yes, Cancel"} onClick={this.handleCancel} disabled={this.state.isCancelling} startIcon={<CloseIconMui />} />
+          </DialogActions>
+        </Dialog>
+
+        {/* Cancel line item dialog */}
+        <Dialog open={this.state.cancelLineItemConfirmOpen} onClose={() => this.setState({ cancelLineItemConfirmOpen: false, cancelLineItemCode: null })} maxWidth="xs" aria-labelledby="cancel-lineitem-dialog-title" className="indent-cancel-confirm-dialog">
+          <DialogTitle id="cancel-lineitem-dialog-title">Cancel Line Item</DialogTitle>
+          <DialogContent dividers>
+            Are you sure you want to cancel line item <strong>{this.state.cancelLineItemCode}</strong>? This action cannot be undone.
+          </DialogContent>
+          <DialogActions>
+            <Button buttonClass="grey" label="No" onClick={() => this.setState({ cancelLineItemConfirmOpen: false, cancelLineItemCode: null })} />
+            <Button buttonClass="indent-reject-btn-solid" label={this.state.isCancellingLineItem ? "Cancelling..." : "Yes, Cancel"} onClick={this.handleCancelLineItem} disabled={this.state.isCancellingLineItem} startIcon={<CloseIconMui />} />
           </DialogActions>
         </Dialog>
       </div>

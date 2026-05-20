@@ -11,6 +11,8 @@ import com.ec.application.data.*;
 import com.ec.application.enricher.IndentInventoryUiEnricher;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.indentpo.IndentCompletionEvaluator;
+import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.util.LineItemCodeGenerator;
@@ -70,6 +72,12 @@ public class IndentInventoryService {
 
     @Autowired
     IndentStatusHistoryService indentStatusHistoryService;
+
+    @Autowired
+    IndentInventoryListRepo indentInventoryListRepo;
+
+    @Autowired
+    IndentCompletionEvaluator indentCompletionEvaluator;
 
     List<String> indentPOEligibleStatuses = Arrays.asList(
             IndentStatusConstants.STATUS_APPROVED,
@@ -989,5 +997,39 @@ public class IndentInventoryService {
         return changes.isEmpty()
                 ? "Indent edited (no field changes detected)"
                 : "Indent edited — " + String.join("; ", changes);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public IndentInventory cancelLineItem(String indentId, String lineItemCode) throws Exception {
+        IndentInventory indent = indentInventoryRepo.findById(indentId)
+                .orElseThrow(() -> new Exception("Indent not found: " + indentId));
+        IndentInventoryList line = indent.getInventoryList().stream()
+                .filter(li -> li.getLineItemCode().equals(lineItemCode))
+                .findFirst()
+                .orElseThrow(() -> new Exception("Line item not found: " + lineItemCode));
+        if (!IndentLineItemStatusConstants.CANCEL_ALLOWED_STATUSES.contains(line.getLineItemStatus())) {
+            throw new Exception("Line item cannot be cancelled in status: " + line.getLineItemStatus());
+        }
+        String prevLineStatus = line.getLineItemStatus();
+        line.setLineItemStatus(IndentLineItemStatusConstants.STATUS_CANCELLED);
+        indentInventoryListRepo.save(line);
+        indentStatusHistoryService.logStatusChange(indent, null, null,
+                userDetailsService.getCurrentUser().getUsername(),
+                "Line item " + lineItemCode + " cancelled by user.", null);
+
+        boolean allCancelled = indent.getInventoryList().stream()
+                .allMatch(li -> IndentLineItemStatusConstants.STATUS_CANCELLED.equals(li.getLineItemStatus()));
+        if (allCancelled) {
+            String oldIndentStatus = indent.getIndentStatus();
+            indent.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
+            indent.setLastStatusUpdatedAt(new Date());
+            indentStatusHistoryService.logStatusChange(indent, oldIndentStatus, IndentStatusConstants.STATUS_CANCELLED,
+                    userDetailsService.getCurrentUser().getUsername(),
+                    "Indent auto-cancelled as all line items were cancelled.", null);
+            indentInventoryRepo.save(indent);
+        } else {
+            indentCompletionEvaluator.evaluate(indent);
+        }
+        return indentInventoryRepo.findById(indentId).get();
     }
 }

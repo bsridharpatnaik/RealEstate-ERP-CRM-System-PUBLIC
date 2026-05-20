@@ -74,7 +74,7 @@ const SourceCopyDialog = ({
         seen.add(dedupeKey);
         allRows.push({
           _copyId: `copy_${item.id}_${globalIdx++}`,
-          category: null,
+          category: item.product?.category?.categoryName || null,
           product: productOpt,
           workArea: workAreaOpt,
           quantity: String(item.quantity || ''),
@@ -181,7 +181,7 @@ const SourceCopyDialog = ({
                 <tbody>
                   {preview.map(row => (
                     <tr key={row._copyId}>
-                      <td style={td}>{row.product?.label || '—'}</td>
+                      <td style={td}>{row.category ? `${row.category} — ${row.product?.label || '—'}` : (row.product?.label || '—')}</td>
                       <td style={td}>{row.workArea?.label || '—'}</td>
                       <td style={td}>{row.quantity}</td>
                       <td style={td}>{row.wastagePercent || '0'}</td>
