@@ -31,6 +31,8 @@ class List extends ListCommon {
       "Reorder Level",
       messages.fields.measurementUnit,
       messages.fields.categoryName,
+      "Managed Inventory",
+      "Can Expire",
     ],
     keys: [
       "productName",
@@ -39,6 +41,8 @@ class List extends ListCommon {
       "reorderQuantity",
       "measurementUnit",
       "category",
+      "isManagedInventory",
+      "isExpirable",
     ],
   };
   // For product listing, don't send isManagedInventory parameter to get both true and false results
@@ -68,6 +72,7 @@ class List extends ListCommon {
       "Measurement Unit": item.measurementUnit,
       "Category": item.category?.categoryName || "",
       "Managed Inventory": item.isManagedInventory ? "Yes" : "No",
+      "Can Expire": item.isExpirable ? "Yes" : "No",
     }));
   }
 
@@ -96,8 +101,12 @@ class List extends ListCommon {
     if (response.success) {
       let data = response.data.content;
       data = data.map((item) => {
-        let category = item.category.categoryName;
-        return { ...item, category: category };
+        return {
+          ...item,
+          category: item.category.categoryName,
+          isManagedInventory: item.isManagedInventory ? "Yes" : "No",
+          isExpirable: item.isExpirable ? "Yes" : "No",
+        };
       });
       this.setState({
         data: data,

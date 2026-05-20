@@ -12,6 +12,10 @@ import { apiEndpoints } from "./../../endpoints";
 import { messages } from "./../../messages";
 import Button from "./../../Shared/Button";
 import CloseIcon from "@material-ui/icons/Close";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
 //style
 import "./style.scss";
 import { fetchUnit } from "./../../actions/measurementUnit";
@@ -43,6 +47,13 @@ class InwardInventoryForm extends AddForm {
     createdFromPO: false,
     originalSupplierId: null,
     formKey: 0,
+    batchSplitModal: {
+      open: false,
+      productKey: null,
+      productName: '',
+      totalQty: 0,
+      entries: [{ qty: '', expiryDate: '', brand: '' }]
+    },
     // Store form field values in state for React to track changes
     formValues: {
       ourSlipNo: '',
@@ -134,6 +145,7 @@ class InwardInventoryForm extends AddForm {
               productCode: item.product.productCode,
               productName: item.product.productName,
               measurementUnit: item.product.measurementUnit,
+              isExpirable: item.product.isExpirable || false,
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
@@ -201,6 +213,7 @@ class InwardInventoryForm extends AddForm {
             productName: item.product.productName,
             unit: item.product.measurementUnit,
             measurementUnit: item.product.measurementUnit,
+            isExpirable: item.product.isExpirable || false,
             poQuantity: item.poQuantity,
             lineItemCode: item.lineItemCode,
             selectedProduct: {
@@ -416,6 +429,7 @@ class InwardInventoryForm extends AddForm {
             productCode: item.productCode,
             productName: item.productName,
             measurementUnit: item.measurementUnit,
+            isExpirable: item.isExpirable || false,
             poQuantity: poQty,
             tolerancePercent: tolPct,
             pendingQuantity: pendingQty,
@@ -436,6 +450,172 @@ class InwardInventoryForm extends AddForm {
       this.setState({ isLoadingPO: false });
       this.props.enqueueSnackbar("Failed to load PO details", { variant: "error" });
     }
+  }
+
+  openBatchSplitModal(key) {
+    const product = this.state.noproduct[key];
+    const totalQty = parseFloat(product.quantity) || 0;
+    const existing = product.batchSplits && product.batchSplits.length > 0
+      ? product.batchSplits.map(s => ({
+          qty: s.qty || '',
+          expiryDate: s.expiryDate ? s.expiryDate.split('-').reverse().join('-') : '',
+          brand: s.brand || ''
+        }))
+      : [{ qty: '', expiryDate: '', brand: '' }];
+    this.setState({
+      batchSplitModal: {
+        open: true,
+        productKey: key,
+        productName: product.productName || product.selectedProduct?.name || 'Product',
+        totalQty,
+        entries: existing
+      }
+    });
+  }
+
+  closeBatchSplitModal() {
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, open: false } }));
+  }
+
+  updateBatchEntry(idx, field, value) {
+    const entries = [...this.state.batchSplitModal.entries];
+    entries[idx] = { ...entries[idx], [field]: value };
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries } }));
+  }
+
+  addBatchEntry() {
+    const entries = [...this.state.batchSplitModal.entries, { qty: '', expiryDate: '', brand: '' }];
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries } }));
+  }
+
+  removeBatchEntry(idx) {
+    const entries = this.state.batchSplitModal.entries.filter((_, i) => i !== idx);
+    this.setState(prev => ({
+      batchSplitModal: {
+        ...prev.batchSplitModal,
+        entries: entries.length > 0 ? entries : [{ qty: '', expiryDate: '', brand: '' }]
+      }
+    }));
+  }
+
+  fillRemaining() {
+    const { entries, totalQty } = this.state.batchSplitModal;
+    const allocated = entries.slice(0, -1).reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
+    const remaining = Math.round((totalQty - allocated) * 1000) / 1000;
+    if (remaining <= 0) return;
+    const newEntries = [...entries];
+    newEntries[newEntries.length - 1] = { ...newEntries[newEntries.length - 1], qty: remaining };
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries: newEntries } }));
+  }
+
+  confirmBatchSplits() {
+    const { productKey, entries } = this.state.batchSplitModal;
+    const p = this.state.noproduct;
+    p[productKey].batchSplits = entries.map(e => ({
+      qty: parseFloat(e.qty) || 0,
+      expiryDate: e.expiryDate ? e.expiryDate.split('-').reverse().join('-') : null,
+      brand: e.brand || null
+    }));
+    this.setState({ noproduct: { ...p } });
+    this.closeBatchSplitModal();
+  }
+
+  renderBatchSplitModal() {
+    const { batchSplitModal } = this.state;
+    if (!batchSplitModal.open) return null;
+    const { entries, totalQty, productName } = batchSplitModal;
+    const allocated = entries.reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
+    const remaining = Math.round((totalQty - allocated) * 1000) / 1000;
+    const isExact = Math.abs(remaining) < 0.001;
+    const isOver = remaining < -0.001;
+    const pct = totalQty > 0 ? Math.min((allocated / totalQty) * 100, 100) : 0;
+    const barColor = isOver ? '#c62828' : isExact ? '#2e7d32' : '#1976d2';
+    const canConfirm = isExact && entries.every(e => parseFloat(e.qty) > 0 && e.expiryDate);
+
+    return (
+      <Dialog open maxWidth="sm" fullWidth onClose={() => this.closeBatchSplitModal()}>
+        <DialogTitle disableTypography>
+          <div style={{ fontWeight: 600, fontSize: '16px' }}>Set Batch Splits</div>
+          <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>{productName}</div>
+        </DialogTitle>
+        <DialogContent>
+          <div style={{ display: 'flex', gap: '24px', marginBottom: '10px', fontSize: '13px' }}>
+            <span>Total: <strong>{totalQty}</strong></span>
+            <span>Allocated: <strong style={{ color: isOver ? '#c62828' : isExact ? '#2e7d32' : '#1976d2' }}>{Math.round(allocated * 1000) / 1000}</strong></span>
+            <span>Remaining: <strong style={{ color: remaining > 0.001 ? '#e65100' : isOver ? '#c62828' : '#2e7d32' }}>{remaining}</strong></span>
+          </div>
+          <div style={{ height: '6px', borderRadius: '3px', background: '#e0e0e0', marginBottom: '16px' }}>
+            <div style={{ height: '100%', borderRadius: '3px', width: `${pct}%`, background: barColor, transition: 'width 0.2s, background 0.2s' }} />
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ background: '#f5f5f5' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'left', width: '80px' }}>Qty *</th>
+                <th style={{ padding: '6px 8px', textAlign: 'left', width: '145px' }}>Expiry Date *</th>
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Brand</th>
+                <th style={{ width: '30px' }} />
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '4px 8px' }}>
+                    <input type="number" min="0" step="any" value={entry.qty}
+                      onChange={e => this.updateBatchEntry(idx, 'qty', e.target.value)}
+                      style={{ width: '70px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
+                      placeholder="0" />
+                  </td>
+                  <td style={{ padding: '4px 8px' }}>
+                    <input type="date" value={entry.expiryDate || ''}
+                      onChange={e => this.updateBatchEntry(idx, 'expiryDate', e.target.value)}
+                      style={{ width: '135px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
+                      min={new Date().toISOString().split('T')[0]} />
+                  </td>
+                  <td style={{ padding: '4px 8px' }}>
+                    <input type="text" value={entry.brand || ''}
+                      onChange={e => this.updateBatchEntry(idx, 'brand', e.target.value)}
+                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
+                      placeholder="Optional" />
+                  </td>
+                  <td style={{ padding: '4px 4px', textAlign: 'center' }}>
+                    {entries.length > 1 && (
+                      <button type="button" onClick={() => this.removeBatchEntry(idx)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c62828', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}>×</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="button" onClick={() => this.addBatchEntry()}
+              style={{ fontSize: '12px', color: '#1976d2', background: 'none', border: '1px dashed #1976d2', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer' }}>
+              + Add Batch
+            </button>
+            {remaining > 0.001 && (
+              <button type="button" onClick={() => this.fillRemaining()}
+                style={{ fontSize: '12px', color: '#e65100', background: 'none', border: '1px dashed #e65100', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer' }}>
+                Fill Remaining ({remaining})
+              </button>
+            )}
+          </div>
+          {isOver && <div style={{ color: '#c62828', fontSize: '12px', marginTop: '8px' }}>Allocated exceeds total by {Math.round(Math.abs(remaining) * 1000) / 1000} units.</div>}
+          {!canConfirm && !isOver && !isExact && allocated > 0 && (
+            <div style={{ color: '#888', fontSize: '12px', marginTop: '6px' }}>Allocate all {totalQty} units and set expiry dates to confirm.</div>
+          )}
+        </DialogContent>
+        <DialogActions style={{ padding: '12px 16px' }}>
+          <button type="button" onClick={() => this.closeBatchSplitModal()}
+            style={{ padding: '6px 16px', background: 'none', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', marginRight: '8px' }}>
+            Cancel
+          </button>
+          <button type="button" disabled={!canConfirm} onClick={() => this.confirmBatchSplits()}
+            style={{ padding: '6px 20px', background: canConfirm ? '#2e7d32' : '#e0e0e0', color: canConfirm ? '#fff' : '#999', border: 'none', borderRadius: '4px', cursor: canConfirm ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 600 }}>
+            Confirm
+          </button>
+        </DialogActions>
+      </Dialog>
+    );
   }
 
   renderProduct(key) {
@@ -608,37 +788,66 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Brand (optional) */}
-              <div style={{ width: '150px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `brand_${key}`,
-                  placeholder: "Brand (optional)",
-                  skipAdd: true,
-                  value: product.brand || '',
-                  onChange: (value) => {
-                    const p = this.state.noproduct;
-                    p[key].brand = value;
-                    this.setState({ noproduct: { ...p } });
-                  },
-                })}
-              </div>
-
-              {/* Expiry Date (required if expirable) */}
-              <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {this.renderDate({
-                  fieldname: `expiryDate_${key}`,
-                  label: product.isExpirable ? "Expiry Date *" : "Expiry Date",
-                  value: product.expiryDate || null,
-                  onChange: () => {
-                    const p = this.state.noproduct;
-                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                    this.setState({ noproduct: { ...p } });
-                  },
-                })}
-                {product.isExpirable && (
-                  <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required for this product</span>
-                )}
-              </div>
+              {/* Batch splits for expirable products (add mode) OR brand+expiry for non-expirable */}
+              {!isEditMode && product.isExpirable ? (
+                <div style={{ width: '200px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                  {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>
+                        ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
+                      </span>
+                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                        style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 0', textDecoration: 'underline' }}>
+                        Edit Batches
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                        disabled={!product.quantity}
+                        style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
+                        Set Batches *
+                      </button>
+                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Expiry required</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Brand (optional) */}
+                  <div style={{ width: '150px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                    {this.renderTextField({
+                      fieldname: `brand_${key}`,
+                      placeholder: "Brand (optional)",
+                      skipAdd: true,
+                      value: product.brand || '',
+                      onChange: (value) => {
+                        const p = this.state.noproduct;
+                        p[key].brand = value;
+                        this.setState({ noproduct: { ...p } });
+                      },
+                    })}
+                  </div>
+                  {/* Expiry Date — only for expirable products in edit mode */}
+                  {product.isExpirable && (
+                    <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      {this.renderDate({
+                        fieldname: `expiryDate_${key}`,
+                        label: isEditMode ? "New Expiry Date" : "Expiry Date",
+                        value: product.expiryDate || null,
+                        onChange: () => {
+                          const p = this.state.noproduct;
+                          p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                          this.setState({ noproduct: { ...p } });
+                        },
+                      })}
+                      {isEditMode && (
+                        <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required if increasing qty</span>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
@@ -810,34 +1019,66 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Brand (optional) */}
-              <div style={{ width: '150px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `brand_${key}`,
-                  placeholder: "Brand (optional)",
-                  skipAdd: true,
-                  value: product.brand || '',
-                  onChange: (value) => {
-                    const p = this.state.noproduct;
-                    p[key].brand = value;
-                    this.setState({ noproduct: { ...p } });
-                  },
-                })}
-              </div>
-
-              {/* Expiry Date */}
-              <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {this.renderDate({
-                  fieldname: `expiryDate_${key}`,
-                  label: "Expiry Date",
-                  value: product.expiryDate || null,
-                  onChange: () => {
-                    const p = this.state.noproduct;
-                    p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                    this.setState({ noproduct: { ...p } });
-                  },
-                })}
-              </div>
+              {/* Batch splits for expirable products OR brand+expiry for non-expirable */}
+              {!isEditMode && product.isExpirable ? (
+                <div style={{ width: '200px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
+                  {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>
+                        ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
+                      </span>
+                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                        style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 0', textDecoration: 'underline' }}>
+                        Edit Batches
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                        disabled={!product.quantity}
+                        style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
+                        Set Batches *
+                      </button>
+                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Expiry required</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {/* Brand (optional) */}
+                  <div style={{ width: '150px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
+                    {this.renderTextField({
+                      fieldname: `brand_${key}`,
+                      placeholder: "Brand (optional)",
+                      skipAdd: true,
+                      value: product.brand || '',
+                      onChange: (value) => {
+                        const p = this.state.noproduct;
+                        p[key].brand = value;
+                        this.setState({ noproduct: { ...p } });
+                      },
+                    })}
+                  </div>
+                  {/* Expiry Date — only for expirable products in edit mode */}
+                  {product.isExpirable && (
+                    <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                      {this.renderDate({
+                        fieldname: `expiryDate_${key}`,
+                        label: isEditMode ? "New Expiry Date" : "Expiry Date",
+                        value: product.expiryDate || null,
+                        onChange: () => {
+                          const p = this.state.noproduct;
+                          p[key].expiryDate = this.formData[`expiryDate_${key}`];
+                          this.setState({ noproduct: { ...p } });
+                        },
+                      })}
+                      {isEditMode && (
+                        <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required if increasing qty</span>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -885,12 +1126,54 @@ class InwardInventoryForm extends AddForm {
       return;
     }
 
-    // Validate expiry date for expirable products (direct inward only — PO validates server-side too)
-    if (this.state.isDirectInward) {
+    // Validate batch splits for expirable products (create mode)
+    if (!this.state.isEditMode) {
       for (const product of Object.values(this.state.noproduct)) {
-        if (product.isExpirable && !product.expiryDate) {
+        if (!product.isExpirable) continue;
+        const splits = product.batchSplits;
+        if (!splits || splits.length === 0 || !splits[0].qty) {
           this.props.enqueueSnackbar(
-            `Expiry date is required for "${product.productName || 'product'}".`,
+            `Batch splits with expiry dates are required for "${product.productName || product.selectedProduct?.name || 'product'}". Click "Set Batches".`,
+            { variant: "error" }
+          );
+          return;
+        }
+        const splitSum = splits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+        const totalQty = parseFloat(product.quantity) || 0;
+        if (Math.abs(splitSum - totalQty) > 0.001) {
+          this.props.enqueueSnackbar(
+            `Batch split totals (${splitSum}) must equal quantity (${totalQty}) for "${product.productName || product.selectedProduct?.name}".`,
+            { variant: "error" }
+          );
+          return;
+        }
+        if (splits.some(b => !b.expiryDate)) {
+          this.props.enqueueSnackbar(
+            `All batch splits must have an expiry date for "${product.productName || product.selectedProduct?.name}".`,
+            { variant: "error" }
+          );
+          return;
+        }
+      }
+    }
+
+    // Validate batch splits for PO inward expirable products (create mode)
+    if (!this.state.isEditMode && !this.state.isDirectInward) {
+      for (const item of Object.values(this.state.noproduct)) {
+        if (!item.isExpirable) continue;
+        const splits = item.batchSplits;
+        if (!splits || splits.length === 0 || !splits[0].qty) {
+          this.props.enqueueSnackbar(
+            `Batch splits with expiry dates are required for "${item.productName}". Click "Set Batches".`,
+            { variant: "error" }
+          );
+          return;
+        }
+        const splitSum = splits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+        const totalQty = parseFloat(item.quantity) || 0;
+        if (Math.abs(splitSum - totalQty) > 0.001) {
+          this.props.enqueueSnackbar(
+            `Batch split totals (${splitSum}) must equal quantity (${totalQty}) for "${item.productName}".`,
             { variant: "error" }
           );
           return;
@@ -932,7 +1215,9 @@ class InwardInventoryForm extends AddForm {
         supplierId: supplierIdToSend,
         productWithQuantities: Object.values(this.state.noproduct).map(product => ({
           productId: product.productId,
-          quantity: product.quantity
+          quantity: product.quantity,
+          expiryDate: product.expiryDate || null,
+          batchSplits: product.isExpirable && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
         })),
         vehicleNo: this.formData.vehicleNo,
         supplierSlipNo: this.formData.supplierSlipNo,
@@ -957,8 +1242,9 @@ class InwardInventoryForm extends AddForm {
           warehouseId: product.warehouseId,
           productId: product.productId,
           quantity: product.quantity,
-          brand: product.brand || null,
-          expiryDate: product.expiryDate || null,
+          brand: product.isExpirable && product.batchSplits ? null : (product.brand || null),
+          expiryDate: product.isExpirable && product.batchSplits ? null : (product.expiryDate || null),
+          batchSplits: product.isExpirable && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
         })),
         fileInformations: this.formData.fileInformations || [],
         invoiceReceived: this.formData.invoiceReceived || false,
@@ -992,8 +1278,9 @@ class InwardInventoryForm extends AddForm {
           lineItemCode: item.lineItemCode,
           quantityReceived: item.quantity,
           warehouseId: item.warehouseId,
-          brand: item.brand || null,
-          expiryDate: item.expiryDate || null,
+          brand: item.isExpirable && item.batchSplits ? null : (item.brand || null),
+          expiryDate: item.isExpirable && item.batchSplits ? null : (item.expiryDate || null),
+          batchSplits: item.isExpirable && item.batchSplits && item.batchSplits.length > 0 ? item.batchSplits : null,
         }))
       };
     }
@@ -1066,6 +1353,7 @@ class InwardInventoryForm extends AddForm {
 
     return (
       <div className="list-section add">
+        {this.renderBatchSplitModal()}
         {this.renderHeading()}
         {this.state.isEditMode && !this.state.isLoaded && (
           <div className="loading-section" style={{ textAlign: 'center', padding: '20px' }}>

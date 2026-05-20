@@ -6,6 +6,7 @@ import org.springframework.lang.NonNull;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class ProductWithQuantity {
@@ -24,6 +25,9 @@ public class ProductWithQuantity {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     Date expiryDate;
+
+    // Multiple batch splits (expirable products) — if set, overrides single expiryDate
+    List<InwardBatchSplit> batchSplits;
 
     // Outward FIFO override fields (nullable — only set during outward, ignored elsewhere)
     Long overrideBatchId;

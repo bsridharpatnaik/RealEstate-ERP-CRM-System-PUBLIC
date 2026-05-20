@@ -86,10 +86,30 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
     @Query("SELECT b FROM InventoryBatch b WHERE b.batchId = :id AND b.isDeleted = false")
     Optional<InventoryBatch> findByIdLocked(@Param("id") Long id);
 
-    // Find batch by inward + product — used when rejecting an inward to reduce batch qty (#5)
+    // Find batch by inward + product (single, legacy — prefer findAllByInwardIdAndProductId)
     @Query("SELECT b FROM InventoryBatch b WHERE b.inwardId = :inwardId " +
            "AND b.product.productId = :productId AND b.isDeleted = false")
     Optional<InventoryBatch> findByInwardIdAndProductId(
             @Param("inwardId") Long inwardId,
             @Param("productId") Long productId);
+
+    // All batches for an inward + product — supports multiple splits per line
+    @Query("SELECT b FROM InventoryBatch b WHERE b.inwardId = :inwardId " +
+           "AND b.product.productId = :productId AND b.isDeleted = false " +
+           "ORDER BY b.batchId ASC")
+    List<InventoryBatch> findAllByInwardIdAndProductId(
+            @Param("inwardId") Long inwardId,
+            @Param("productId") Long productId);
+
+    // All batches for an inward — used during delete/zeroing
+    @Query("SELECT b FROM InventoryBatch b WHERE b.inwardId = :inwardId AND b.isDeleted = false")
+    List<InventoryBatch> findAllByInwardId(@Param("inwardId") Long inwardId);
+
+    // Total tracked qty for a product+warehouse — used to compute untracked stock during split
+    @Query("SELECT COALESCE(SUM(b.qtyRemaining), 0.0) FROM InventoryBatch b " +
+           "WHERE b.product.productId = :productId AND b.warehouse.warehouseId = :warehouseId " +
+           "AND b.isDeleted = false")
+    Double sumQtyRemainingByProductAndWarehouse(
+            @Param("productId") Long productId,
+            @Param("warehouseId") Long warehouseId);
 }

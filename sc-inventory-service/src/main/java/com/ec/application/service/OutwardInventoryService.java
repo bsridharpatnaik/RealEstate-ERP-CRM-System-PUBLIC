@@ -784,16 +784,28 @@ public class OutwardInventoryService {
 
                 if (isFifoOverride) anyOverride = true;
             } else {
-                // True FIFO (#1): old (pre-feature) stock consumed first, then tracked batches
+                // True FIFO: old (pre-feature) stock consumed first, then tracked batches
                 List<InventoryBatch> fifoBatches = inventoryBatchRepository
-                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId); // pessimistic lock (#3)
+                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId); // pessimistic lock
 
                 double totalBatchQty = fifoBatches.stream()
                         .mapToDouble(InventoryBatch::getQtyRemaining).sum();
 
-                // Pre-feature stock quantity is whatever qty exceeds total tracked batch qty
+                // For expirable products: block if ANY untracked stock exists, not just demand-based.
+                // Stock was already deducted before this method, so reconstruct original stock.
+                if (Boolean.TRUE.equals(iol.getProduct().getIsExpirable())) {
+                    Double currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
+                    double originalStock = (currentStock != null ? currentStock : 0.0) + qtyToConsume;
+                    double untrackedStock = originalStock - totalBatchQty;
+                    if (untrackedStock > 0.001) {
+                        throw new IllegalArgumentException(
+                            "Product '" + iol.getProduct().getProductName() + "' has " +
+                            String.format("%.3f", untrackedStock) +
+                            " units of untracked stock. Go to Stock → Batches tab and split existing stock into batches first.");
+                    }
+                }
+
                 double preFeatureStock = Math.max(qtyToConsume - totalBatchQty, 0.0);
-                // Amount to draw from tracked batches after silently consuming old stock
                 double remaining = qtyToConsume - preFeatureStock;
 
                 for (InventoryBatch batch : fifoBatches) {
@@ -813,7 +825,7 @@ public class OutwardInventoryService {
 
                     remaining -= consume;
                 }
-                // Any remaining preFeatureStock or leftover is silently consumed (no batch record)
+                // Any pre-feature stock is silently consumed (no batch record) — only for non-expirable products
             }
         }
 

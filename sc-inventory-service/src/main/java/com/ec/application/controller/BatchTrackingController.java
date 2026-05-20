@@ -1,5 +1,6 @@
 package com.ec.application.controller;
 
+import com.ec.application.data.StockSplitRequest;
 import com.ec.application.data.StockTilesDTO;
 import com.ec.application.data.WriteOffRequestDTO;
 import com.ec.application.model.BatchWriteOff;
@@ -48,5 +49,19 @@ public class BatchTrackingController {
     @GetMapping("/stock/tiles/expiry")
     public ResponseEntity<StockTilesDTO> getExpiryTiles() {
         return ResponseEntity.ok(batchTrackingService.getStockTiles());
+    }
+
+    @PostMapping("/stock/{productId}/split-existing")
+    public ResponseEntity<?> splitExistingStock(
+            @PathVariable Long productId,
+            @RequestBody StockSplitRequest request) {
+        try {
+            List<InventoryBatch> result = batchTrackingService.splitExistingStock(productId, request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 }

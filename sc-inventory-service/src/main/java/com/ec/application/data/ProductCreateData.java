@@ -24,4 +24,5 @@ public class ProductCreateData {
     String measurementUnit;
     Boolean showOnDashboard;
     Boolean isManagedInventory;
+    Boolean isExpirable;
 }

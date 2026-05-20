@@ -99,6 +99,7 @@ public class ProductService {
         } else {
             product.setIsManagedInventory(payload.getIsManagedInventory());
         }
+        product.setIsExpirable(Boolean.TRUE.equals(payload.getIsExpirable()));
         return product;
     }
 
@@ -164,6 +165,7 @@ public class ProductService {
         product.setReorderQuantity(payload.getReorderQuantity());
         product.setShowOnDashboard(Boolean.TRUE.equals(payload.getShowOnDashboard()));
         product.setIsManagedInventory(payload.getIsManagedInventory() == null || payload.getIsManagedInventory());
+        product.setIsExpirable(Boolean.TRUE.equals(payload.getIsExpirable()));
 
         return productRepo.save(product);
     }

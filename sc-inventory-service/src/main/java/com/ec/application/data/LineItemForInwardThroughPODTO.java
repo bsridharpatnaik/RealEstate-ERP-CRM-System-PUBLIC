@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,5 +23,7 @@ public class LineItemForInwardThroughPODTO {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     Date expiryDate;
-}
 
+    // Multiple batch splits — if set, overrides single expiryDate for expirable products
+    List<InwardBatchSplit> batchSplits;
+}

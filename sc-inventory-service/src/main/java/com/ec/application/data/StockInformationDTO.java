@@ -19,6 +19,7 @@ public class StockInformationDTO {
     String categoryName;
     Double totalQuantityInHand;
     String stockStatus;
+    Boolean isExpirable;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") // Adjusted to match DATE type
     Date lastInwardDate;
     List<SingleStockInformationDTO> detailedStock;

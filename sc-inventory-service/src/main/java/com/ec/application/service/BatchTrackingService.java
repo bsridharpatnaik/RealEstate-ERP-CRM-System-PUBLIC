@@ -1,13 +1,18 @@
 package com.ec.application.service;
 
+import com.ec.application.data.StockSplitRequest;
 import com.ec.application.data.StockTilesDTO;
 import com.ec.application.data.WriteOffRequestDTO;
 import com.ec.application.model.BatchWriteOff;
 import com.ec.application.model.InventoryBatch;
 import com.ec.application.model.InventoryNotification;
+import com.ec.application.model.Product;
+import com.ec.application.model.Warehouse;
 import com.ec.application.repository.BatchWriteOffRepository;
 import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.InventoryNotificationRepo;
+import com.ec.application.repository.ProductRepo;
+import com.ec.application.repository.WarehouseRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -40,6 +46,12 @@ public class BatchTrackingService {
 
     @Autowired
     InventoryNotificationRepo inventoryNotificationRepo;
+
+    @Autowired
+    ProductRepo productRepo;
+
+    @Autowired
+    WarehouseRepo warehouseRepo;
 
     @Transactional(rollbackFor = Exception.class)
     public BatchWriteOff writeOffBatch(Long batchId, WriteOffRequestDTO request) throws Exception {
@@ -119,6 +131,60 @@ public class BatchTrackingService {
 
     public List<BatchWriteOff> getWriteOffHistory(Long batchId) {
         return batchWriteOffRepository.findByBatch_BatchIdOrderByWriteOffDateDesc(batchId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public List<InventoryBatch> splitExistingStock(Long productId, StockSplitRequest request) throws Exception {
+        if (request.getWarehouseId() == null)
+            throw new IllegalArgumentException("Warehouse is required.");
+        if (request.getBatches() == null || request.getBatches().isEmpty())
+            throw new IllegalArgumentException("At least one batch entry is required.");
+
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new Exception("Product not found: " + productId));
+        if (!Boolean.TRUE.equals(product.getIsExpirable()))
+            throw new IllegalArgumentException("Stock split is only allowed for expirable products.");
+
+        Warehouse warehouse = warehouseRepo.findById(request.getWarehouseId())
+                .orElseThrow(() -> new Exception("Warehouse not found: " + request.getWarehouseId()));
+
+        Double currentStock = stockService.findStockForProductWarehouse(productId, request.getWarehouseId());
+        if (currentStock == null) currentStock = 0.0;
+
+        Double trackedQty = inventoryBatchRepository.sumQtyRemainingByProductAndWarehouse(productId, request.getWarehouseId());
+        if (trackedQty == null) trackedQty = 0.0;
+
+        double untrackedQty = currentStock - trackedQty;
+        if (untrackedQty < 0.001)
+            throw new IllegalArgumentException("No untracked stock remaining — all " + currentStock + " units are already in batches.");
+
+        double requestTotal = request.getBatches().stream()
+                .mapToDouble(e -> e.getQty() != null ? e.getQty() : 0.0)
+                .sum();
+        if (Math.abs(requestTotal - untrackedQty) > 0.001)
+            throw new IllegalArgumentException(
+                "Batch quantities (" + requestTotal + ") must equal untracked stock (" + untrackedQty + "). Difference: " + Math.abs(requestTotal - untrackedQty));
+
+        Date today = new Date();
+        List<InventoryBatch> created = new ArrayList<>();
+        for (StockSplitRequest.BatchEntry entry : request.getBatches()) {
+            if (entry.getQty() == null || entry.getQty() <= 0)
+                throw new IllegalArgumentException("Each batch quantity must be greater than zero.");
+            if (entry.getExpiryDate() == null)
+                throw new IllegalArgumentException("Expiry date is required for each batch.");
+
+            InventoryBatch batch = new InventoryBatch();
+            batch.setProduct(product);
+            batch.setWarehouse(warehouse);
+            batch.setInwardId(-1L);
+            batch.setBrand(entry.getBrand());
+            batch.setExpiryDate(entry.getExpiryDate());
+            batch.setReceivedDate(today);
+            batch.setQtyReceived(entry.getQty());
+            batch.setQtyRemaining(entry.getQty());
+            created.add(inventoryBatchRepository.save(batch));
+        }
+        return created;
     }
 
     @Transactional(rollbackFor = Exception.class)
