@@ -347,8 +347,8 @@ public class InventoryTransferService {
         for (TransferredBatchData td : transferredBatches) {
             InventoryBatch targetBatch = new InventoryBatch();
             targetBatch.setInwardId(0L); // sentinel: transfer-origin batch
-            targetBatch.setProduct(productRepo.findById(productId).orElseThrow());
-            targetBatch.setWarehouse(warehouseRepo.findById(targetWarehouseId).orElseThrow());
+            targetBatch.setProduct(productRepo.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId)));
+            targetBatch.setWarehouse(warehouseRepo.findById(targetWarehouseId).orElseThrow(() -> new IllegalArgumentException("Warehouse not found: " + targetWarehouseId)));
             targetBatch.setBrand(td.brand);
             targetBatch.setExpiryDate(td.expiryDate);
             targetBatch.setReceivedDate(td.receivedDate);

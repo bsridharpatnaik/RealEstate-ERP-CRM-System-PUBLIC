@@ -255,7 +255,7 @@ public class OutwardInventoryService {
             }
         }
         if (!deltaItems.isEmpty()) {
-            allHaveBOQ = boqService.enforceBOQLimits(iiData.getUsageLocationId(), deltaItems);
+            allHaveBOQ = boqService.enforceBOQLimits(iiData.getUsageLocationId(), deltaItems, iiData.getUsageAreaId());
         }
         exitIfNotAuthorized(outwardInventory, iiData, APICallTypeForAuthorization.Update);
         exitIfReturnExists(outwardInventory, iiData);
@@ -492,7 +492,7 @@ public class OutwardInventoryService {
 
         // BOQ enforcement: block save if any product exceeds 100% BOQ consumption
         // returns true only if ALL products have BOQ configured
-        return boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities());
+        return boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities(), oiData.getUsageAreaId());
     }
 
     public OutwardInventory findOutwardnventory(Long id) throws Exception {
