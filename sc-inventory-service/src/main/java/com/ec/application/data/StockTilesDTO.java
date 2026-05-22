@@ -6,10 +6,19 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class StockTilesDTO {
 
+    // Expiry
     private long expiring30Days;
     private long expiring60Days;
     private long expiredCount;
+
+    // Stock status
+    private long lowStockCount;
+    private long highStockCount;
+
+    // Material aging (days since last inward, product still has stock)
+    private long aging30Days;
+    private long aging60Days;
+    private long aging90Days;
 }

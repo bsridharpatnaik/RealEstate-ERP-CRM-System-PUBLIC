@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -88,6 +90,9 @@ public class StockService {
     @Autowired
     ActiveProfileService activeProfileService;
 
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
+
     Logger log = LoggerFactory.getLogger(StockService.class);
 
     public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) throws ParseException {
@@ -98,6 +103,52 @@ public class StockService {
         }
 
         Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
+
+        // Expiry tile filter — fetch matching productIds from batch repo and restrict spec
+        List<String> expiryFilter = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "expiryFilter");
+        if (expiryFilter != null && !expiryFilter.isEmpty()) {
+            LocalDate today = LocalDate.now();
+            ZoneId zone = ZoneId.systemDefault();
+            Date now = Date.from(today.atStartOfDay(zone).toInstant());
+            String filterType = expiryFilter.get(0);
+
+            if ("lowStock".equals(filterType)) {
+                Specification<StockInformationFromView> s = (root, q, cb) -> cb.equal(root.get("stockStatus"), "Low");
+                spec = (spec == null) ? s : spec.and(s);
+            } else if ("highStock".equals(filterType)) {
+                Specification<StockInformationFromView> s = (root, q, cb) -> cb.equal(root.get("stockStatus"), "High");
+                spec = (spec == null) ? s : spec.and(s);
+            } else {
+                List<Long> expiryProductIds;
+                if ("expiring30".equals(filterType)) {
+                    Date in30 = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
+                    expiryProductIds = inventoryBatchRepository.findProductIdsExpiringBetween(now, in30);
+                } else if ("expiring60".equals(filterType)) {
+                    Date in30 = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
+                    Date in60 = Date.from(today.plusDays(60).atStartOfDay(zone).toInstant());
+                    expiryProductIds = inventoryBatchRepository.findProductIdsExpiringBetween(in30, in60);
+                } else if ("expired".equals(filterType)) {
+                    expiryProductIds = inventoryBatchRepository.findProductIdsWithExpiredStock(now);
+                } else if ("aging30".equals(filterType)) {
+                    Date cutoff = Date.from(today.minusDays(30).atStartOfDay(zone).toInstant());
+                    expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
+                } else if ("aging60".equals(filterType)) {
+                    Date cutoff = Date.from(today.minusDays(60).atStartOfDay(zone).toInstant());
+                    expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
+                } else if ("aging90".equals(filterType)) {
+                    Date cutoff = Date.from(today.minusDays(90).atStartOfDay(zone).toInstant());
+                    expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
+                } else {
+                    expiryProductIds = Collections.emptyList();
+                }
+                final List<Long> finalIds = expiryProductIds;
+                Specification<StockInformationFromView> idSpec = expiryProductIds.isEmpty()
+                        ? (root, query, cb) -> cb.disjunction()
+                        : (root, query, cb) -> root.get("productId").in(finalIds);
+                spec = (spec == null) ? idSpec : spec.and(idSpec);
+            }
+        }
+
         Page<StockInformationFromView> list = (spec == null) ? siRepo.findAll(page) : siRepo.findAll(spec, page);
 
         // Fetch all ProductIds in the current page
@@ -362,8 +413,18 @@ public class StockService {
         try {
             ObjectMapper mapper = new ObjectMapper();
             StockInformationDTO dto = new StockInformationDTO();
-            dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
-            }));
+            List<SingleStockInformationDTO> detailedStocks = mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
+            });
+            // Hydrate null warehouseIds — view may return null if Warehouse PK column alias differs
+            for (SingleStockInformationDTO ds : detailedStocks) {
+                if (ds.getWarehouseId() == null && ds.getWarehouseName() != null) {
+                    List<com.ec.application.model.Warehouse> matches = warehouseRepo.findByName(ds.getWarehouseName());
+                    if (!matches.isEmpty()) {
+                        ds.setWarehouseId(matches.get(0).getWarehouseId());
+                    }
+                }
+            }
+            dto.setDetailedStock(detailedStocks);
             dto.updateDetailedStock(dto.getDetailedStock(), getStockAgingData(aiList, dto.getDetailedStock()));
             dto.setLastInwardDate(getLastInwardDate(aiList));
             dto.setCategoryName(si.getCategoryName());

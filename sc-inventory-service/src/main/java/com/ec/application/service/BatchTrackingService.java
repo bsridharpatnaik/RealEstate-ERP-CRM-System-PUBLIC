@@ -8,11 +8,19 @@ import com.ec.application.model.InventoryBatch;
 import com.ec.application.model.InventoryNotification;
 import com.ec.application.model.Product;
 import com.ec.application.model.Warehouse;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.Filters.StockInformationSpecification;
+import com.ec.application.model.StockInformationFromView;
+import com.ec.application.repository.AllInventoryRepo;
 import com.ec.application.repository.BatchWriteOffRepository;
 import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.InventoryNotificationRepo;
 import com.ec.application.repository.ProductRepo;
+import com.ec.application.repository.StockInformationRepo;
 import com.ec.application.repository.WarehouseRepo;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +60,12 @@ public class BatchTrackingService {
 
     @Autowired
     WarehouseRepo warehouseRepo;
+
+    @Autowired
+    StockInformationRepo stockInformationRepo;
+
+    @Autowired
+    AllInventoryRepo allInventoryRepo;
 
     @Transactional(rollbackFor = Exception.class)
     public BatchWriteOff writeOffBatch(Long batchId, WriteOffRequestDTO request) throws Exception {
@@ -118,15 +132,38 @@ public class BatchTrackingService {
 
     public StockTilesDTO getStockTiles() {
         LocalDate today = LocalDate.now();
-        Date now = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date in30 = Date.from(today.plusDays(30).atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date in60 = Date.from(today.plusDays(60).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        ZoneId zone = ZoneId.systemDefault();
+        Date now  = Date.from(today.atStartOfDay(zone).toInstant());
+        Date in30 = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
+        Date in60 = Date.from(today.plusDays(60).atStartOfDay(zone).toInstant());
 
+        // Expiry
         long expiring30 = inventoryBatchRepository.countDistinctProductsExpiringBetween(now, in30);
         long expiring60 = inventoryBatchRepository.countDistinctProductsExpiringBetween(in30, in60);
-        long expired = inventoryBatchRepository.countDistinctProductsExpired(now);
+        long expired    = inventoryBatchRepository.countDistinctProductsExpired(now);
 
-        return new StockTilesDTO(expiring30, expiring60, expired);
+        // Stock status
+        long lowStock  = stockInformationRepo.countByStockStatus("Low");
+        long highStock = stockInformationRepo.countByStockStatus("High");
+
+        // Aging: products with no inward in last N days that still have stock
+        Date cutoff30 = Date.from(today.minusDays(30).atStartOfDay(zone).toInstant());
+        Date cutoff60 = Date.from(today.minusDays(60).atStartOfDay(zone).toInstant());
+        Date cutoff90 = Date.from(today.minusDays(90).atStartOfDay(zone).toInstant());
+        long aging30  = allInventoryRepo.countAgingProducts(cutoff30);
+        long aging60  = allInventoryRepo.countAgingProducts(cutoff60);
+        long aging90  = allInventoryRepo.countAgingProducts(cutoff90);
+
+        StockTilesDTO dto = new StockTilesDTO();
+        dto.setExpiring30Days(expiring30);
+        dto.setExpiring60Days(expiring60);
+        dto.setExpiredCount(expired);
+        dto.setLowStockCount(lowStock);
+        dto.setHighStockCount(highStock);
+        dto.setAging30Days(aging30);
+        dto.setAging60Days(aging60);
+        dto.setAging90Days(aging90);
+        return dto;
     }
 
     public List<BatchWriteOff> getWriteOffHistory(Long batchId) {

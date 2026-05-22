@@ -49,7 +49,7 @@ class Details extends Component {
     const data = this.props.data;
     if (!selectedWarehouseId) return 0;
     const warehouseStock = (data.detailedStock || []).find(
-      s => s.warehouse?.warehouseId === selectedWarehouseId
+      s => s.warehouseId === selectedWarehouseId
     )?.quantityInHand || 0;
     const trackedQty = batches.reduce((sum, b) => sum + (b.qtyRemaining || 0), 0);
     return Math.max(parseFloat((warehouseStock - trackedQty).toFixed(4)), 0);
@@ -362,12 +362,14 @@ class Details extends Component {
           >
             History
           </button>
-          <button
-            className={`tab-button ${this.state.activeTab === 'batches' ? 'active' : ''}`}
-            onClick={() => this.handleTabChange('batches')}
-          >
-            Batches
-          </button>
+          {data.isExpirable && (
+            <button
+              className={`tab-button ${this.state.activeTab === 'batches' ? 'active' : ''}`}
+              onClick={() => this.handleTabChange('batches')}
+            >
+              Batches
+            </button>
+          )}
         </div>
         <div className="content-container">
           {this.state.activeTab === 'details' && (
@@ -494,8 +496,8 @@ class Details extends Component {
                 >
                   <option value="">Select warehouse...</option>
                   {data.detailedStock.map((item, idx) => (
-                    <option key={idx} value={item.warehouse?.warehouseId}>
-                      {item.warehouse?.warehouseName || item.warehouseName || 'Unknown'}
+                    <option key={idx} value={item.warehouseId}>
+                      {item.warehouseName || 'Unknown'}
                     </option>
                   ))}
                 </select>

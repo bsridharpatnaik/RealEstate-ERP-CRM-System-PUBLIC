@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 public interface StockInformationRepo extends BaseRepository<StockInformationFromView, Long> {
@@ -41,4 +42,8 @@ public interface StockInformationRepo extends BaseRepository<StockInformationFro
             "GROUP BY ai1.ProductId,ai1.Product_name,p.product_code,p.reorderQuantity,p.measurementUnit,c.category_name",  // ✅ ADD p.product_code here too
             nativeQuery = true)
     List<StockInformationFromView> getHistoricalStock(@Param("maxDate") Date maxDate);
+
+    long countByStockStatus(String stockStatus);
+
+    long countByStockStatusAndProductIdIn(String stockStatus, List<Long> productIds);
 }

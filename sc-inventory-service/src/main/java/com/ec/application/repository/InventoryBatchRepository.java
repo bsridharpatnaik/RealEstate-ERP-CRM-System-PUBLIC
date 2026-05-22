@@ -53,11 +53,23 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
            "AND b.isDeleted = false AND b.expiryDate BETWEEN :from AND :to")
     Long countDistinctProductsExpiringBetween(@Param("from") Date from, @Param("to") Date to);
 
+    @Query("SELECT COUNT(DISTINCT b.product.productId) FROM InventoryBatch b " +
+           "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
+           "AND b.isDeleted = false AND b.expiryDate BETWEEN :from AND :to " +
+           "AND b.product.productId IN :ids")
+    Long countDistinctProductsExpiringBetweenIn(@Param("from") Date from, @Param("to") Date to, @Param("ids") List<Long> ids);
+
     // Count distinct products with expired stock
     @Query("SELECT COUNT(DISTINCT b.product.productId) FROM InventoryBatch b " +
            "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
            "AND b.isDeleted = false AND b.expiryDate <= :today")
     Long countDistinctProductsExpired(@Param("today") Date today);
+
+    @Query("SELECT COUNT(DISTINCT b.product.productId) FROM InventoryBatch b " +
+           "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
+           "AND b.isDeleted = false AND b.expiryDate <= :today " +
+           "AND b.product.productId IN :ids")
+    Long countDistinctProductsExpiredIn(@Param("today") Date today, @Param("ids") List<Long> ids);
 
     // Product IDs expiring within N days (for tile filter)
     @Query("SELECT DISTINCT b.product.productId FROM InventoryBatch b " +

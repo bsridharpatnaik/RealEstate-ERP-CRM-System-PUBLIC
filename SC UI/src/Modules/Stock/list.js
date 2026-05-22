@@ -20,7 +20,7 @@ import { triggerBlobDownload } from "./../../helper";
 class List extends ListCommon {
   filterData = {};
   title = messages.common.stock;
-  state = { data: [], options: [], showDetails: false, key: 1, expiryTiles: null };
+  state = { data: [], options: [], showDetails: false, key: 1, expiryTiles: null, expiryFilter: null };
   tableData = {
     headers: [
       messages.common.id,
@@ -123,6 +123,12 @@ class List extends ListCommon {
         }
       }
     }
+    if (this.state.expiryFilter) {
+      params.filterData.push({
+        attrName: "expiryFilter",
+        attrValue: [this.state.expiryFilter],
+      });
+    }
     return params;
   }
   async search(page = 0, sortkey = null, sortby = null) {
@@ -189,22 +195,49 @@ class List extends ListCommon {
               />
             </Popper>
           </div>
-          {this.state.expiryTiles && (
-            <div style={{ display: 'flex', gap: '12px', margin: '12px 0', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '140px', padding: '12px 16px', borderRadius: '6px', backgroundColor: '#fff3e0', border: '1px solid #ffcc80' }}>
-                <div style={{ fontSize: '11px', color: '#e65100', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Expiring in 30 days</div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#e65100' }}>{this.state.expiryTiles.expiring30Days}</div>
+          {this.state.expiryTiles && (() => {
+            const t = this.state.expiryTiles;
+            const tiles = [
+              { key: 'expiring30', label: 'Expiring ≤30d',   count: t.expiring30Days, color: '#e65100', bg: '#fff3e0', border: '#ffcc80' },
+              { key: 'expiring60', label: 'Expiring 31–60d', count: t.expiring60Days, color: '#f57f17', bg: '#fff8e1', border: '#ffe082' },
+              { key: 'expired',    label: 'Expired',          count: t.expiredCount,   color: '#c62828', bg: '#ffebee', border: '#ef9a9a' },
+              { key: 'lowStock',   label: 'Low Stock',        count: t.lowStockCount,  color: '#1565c0', bg: '#e3f2fd', border: '#90caf9' },
+              { key: 'highStock',  label: 'High Stock',       count: t.highStockCount, color: '#2e7d32', bg: '#e8f5e9', border: '#a5d6a7' },
+              { key: 'aging30',    label: 'Aging 30d+',       count: t.aging30Days,    color: '#6a1b9a', bg: '#f3e5f5', border: '#ce93d8' },
+              { key: 'aging60',    label: 'Aging 60d+',       count: t.aging60Days,    color: '#4a148c', bg: '#ede7f6', border: '#b39ddb' },
+              { key: 'aging90',    label: 'Aging 90d+',       count: t.aging90Days,    color: '#311b92', bg: '#e8eaf6', border: '#9fa8da' },
+            ];
+            return (
+              <div style={{ display: 'flex', gap: '8px', margin: '10px 0', flexWrap: 'wrap' }}>
+                {tiles.map(({ key, label, count, color, bg, border }) => {
+                  const active = this.state.expiryFilter === key;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => {
+                        const next = active ? null : key;
+                        this.setState({ expiryFilter: next }, () => this.search(0));
+                      }}
+                      style={{
+                        flex: '1 1 100px', minWidth: '90px', maxWidth: '160px',
+                        padding: '6px 10px', borderRadius: '5px',
+                        backgroundColor: bg,
+                        border: `${active ? '2px' : '1px'} solid ${active ? color : border}`,
+                        cursor: 'pointer',
+                        boxShadow: active ? `0 0 0 2px ${color}30` : 'none',
+                        transition: 'border 0.15s, box-shadow 0.15s',
+                        position: 'relative',
+                      }}
+                    >
+                      <div style={{ fontSize: '10px', color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color, lineHeight: 1.2 }}>{count}</div>
+                      {active && <div style={{ position: 'absolute', top: '4px', right: '6px', fontSize: '10px', color, fontWeight: 700 }}>✕</div>}
+                    </div>
+                  );
+                })}
               </div>
-              <div style={{ flex: 1, minWidth: '140px', padding: '12px 16px', borderRadius: '6px', backgroundColor: '#fff8e1', border: '1px solid #ffe082' }}>
-                <div style={{ fontSize: '11px', color: '#f57f17', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Expiring in 31–60 days</div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#f57f17' }}>{this.state.expiryTiles.expiring60Days}</div>
-              </div>
-              <div style={{ flex: 1, minWidth: '140px', padding: '12px 16px', borderRadius: '6px', backgroundColor: '#ffebee', border: '1px solid #ef9a9a' }}>
-                <div style={{ fontSize: '11px', color: '#c62828', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Expired stock</div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#c62828' }}>{this.state.expiryTiles.expiredCount}</div>
-              </div>
-            </div>
-          )}
+            );
+          })()}
           {this.state.isLoading ? (
             this.renderLoader()
           ) : (

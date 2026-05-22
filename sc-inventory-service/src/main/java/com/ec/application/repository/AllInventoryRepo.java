@@ -94,4 +94,41 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 
 	@Query("SELECT a FROM AllInventoryTransactions a WHERE a.productId IN :productIds ORDER BY a.id")
 	List<AllInventoryTransactions> findInwardOutwardByProductIds(@Param("productIds") List<Long> productIds);
+
+	// Aging with product ID filter
+	@Query("SELECT COUNT(DISTINCT a.productId) FROM AllInventoryTransactions a " +
+		"WHERE a.type = 'Inward' " +
+		"AND a.productId NOT IN (" +
+		"  SELECT DISTINCT b.productId FROM AllInventoryTransactions b " +
+		"  WHERE b.type = 'Inward' AND b.date > :cutoffDate" +
+		") " +
+		"AND a.productId IN :ids " +
+		"AND a.productId IN (" +
+		"  SELECT s.product.productId FROM Stock s WHERE s.quantityInHand > 0" +
+		")")
+	long countAgingProductsIn(@Param("cutoffDate") Date cutoffDate, @Param("ids") List<Long> ids);
+
+	// Aging: count products whose last inward date is on or before cutoffDate AND still have stock
+	@Query("SELECT COUNT(DISTINCT a.productId) FROM AllInventoryTransactions a " +
+		"WHERE a.type = 'Inward' " +
+		"AND a.productId NOT IN (" +
+		"  SELECT DISTINCT b.productId FROM AllInventoryTransactions b " +
+		"  WHERE b.type = 'Inward' AND b.date > :cutoffDate" +
+		") " +
+		"AND a.productId IN (" +
+		"  SELECT s.product.productId FROM Stock s WHERE s.quantityInHand > 0" +
+		")")
+	long countAgingProducts(@Param("cutoffDate") Date cutoffDate);
+
+	// Aging: product IDs for filtering stock list (only products with stock > 0)
+	@Query("SELECT DISTINCT a.productId FROM AllInventoryTransactions a " +
+		"WHERE a.type = 'Inward' " +
+		"AND a.productId NOT IN (" +
+		"  SELECT DISTINCT b.productId FROM AllInventoryTransactions b " +
+		"  WHERE b.type = 'Inward' AND b.date > :cutoffDate" +
+		") " +
+		"AND a.productId IN (" +
+		"  SELECT s.product.productId FROM Stock s WHERE s.quantityInHand > 0" +
+		")")
+	List<Long> findAgingProductIds(@Param("cutoffDate") Date cutoffDate);
 }
