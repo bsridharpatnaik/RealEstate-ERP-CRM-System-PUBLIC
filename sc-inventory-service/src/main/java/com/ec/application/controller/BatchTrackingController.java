@@ -1,5 +1,6 @@
 package com.ec.application.controller;
 
+import com.ec.application.Filters.FilterDataList;
 import com.ec.application.data.StockSplitRequest;
 import com.ec.application.data.StockTilesDTO;
 import com.ec.application.data.WriteOffRequestDTO;
@@ -46,9 +47,10 @@ public class BatchTrackingController {
         return ResponseEntity.ok(batchTrackingService.getBatchesForProduct(productId, warehouseId));
     }
 
-    @GetMapping("/stock/tiles/expiry")
-    public ResponseEntity<StockTilesDTO> getExpiryTiles() {
-        return ResponseEntity.ok(batchTrackingService.getStockTiles());
+    @PostMapping("/stock/tiles/expiry")
+    public ResponseEntity<StockTilesDTO> getExpiryTiles(
+            @RequestBody(required = false) FilterDataList filterDataList) {
+        return ResponseEntity.ok(batchTrackingService.getStockTiles(filterDataList));
     }
 
     @PostMapping("/stock/{productId}/split-existing")

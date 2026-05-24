@@ -130,29 +130,60 @@ public class BatchTrackingService {
         return batches;
     }
 
-    public StockTilesDTO getStockTiles() {
+    public StockTilesDTO getStockTiles(FilterDataList filterDataList) {
         LocalDate today = LocalDate.now();
         ZoneId zone = ZoneId.systemDefault();
-        Date now  = Date.from(today.atStartOfDay(zone).toInstant());
-        Date in30 = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
-        Date in60 = Date.from(today.plusDays(60).atStartOfDay(zone).toInstant());
-
-        // Expiry
-        long expiring30 = inventoryBatchRepository.countDistinctProductsExpiringBetween(now, in30);
-        long expiring60 = inventoryBatchRepository.countDistinctProductsExpiringBetween(in30, in60);
-        long expired    = inventoryBatchRepository.countDistinctProductsExpired(now);
-
-        // Stock status
-        long lowStock  = stockInformationRepo.countByStockStatus("Low");
-        long highStock = stockInformationRepo.countByStockStatus("High");
-
-        // Aging: products with no inward in last N days that still have stock
+        Date now      = Date.from(today.atStartOfDay(zone).toInstant());
+        Date in30     = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
+        Date in60     = Date.from(today.plusDays(60).atStartOfDay(zone).toInstant());
         Date cutoff30 = Date.from(today.minusDays(30).atStartOfDay(zone).toInstant());
         Date cutoff60 = Date.from(today.minusDays(60).atStartOfDay(zone).toInstant());
         Date cutoff90 = Date.from(today.minusDays(90).atStartOfDay(zone).toInstant());
-        long aging30  = allInventoryRepo.countAgingProducts(cutoff30);
-        long aging60  = allInventoryRepo.countAgingProducts(cutoff60);
-        long aging90  = allInventoryRepo.countAgingProducts(cutoff90);
+
+        // Determine whether a meaningful filter is present
+        boolean hasFilter = filterDataList != null
+                && filterDataList.getFilterData() != null
+                && filterDataList.getFilterData().stream()
+                        .anyMatch(f -> f.getAttrName() != null
+                                && !f.getAttrName().equals("expiryFilter")
+                                && f.getAttrValue() != null
+                                && !f.getAttrValue().isEmpty());
+
+        long expiring30, expiring60, expired, lowStock, highStock, aging30, aging60, aging90;
+
+        if (!hasFilter) {
+            // Global (unfiltered) counts
+            expiring30 = inventoryBatchRepository.countDistinctProductsExpiringBetween(now, in30);
+            expiring60 = inventoryBatchRepository.countDistinctProductsExpiringBetween(in30, in60);
+            expired    = inventoryBatchRepository.countDistinctProductsExpired(now);
+            lowStock   = stockInformationRepo.countByStockStatus("Low");
+            highStock  = stockInformationRepo.countByStockStatus("High");
+            aging30    = allInventoryRepo.countAgingProducts(cutoff30);
+            aging60    = allInventoryRepo.countAgingProducts(cutoff60);
+            aging90    = allInventoryRepo.countAgingProducts(cutoff90);
+        } else {
+            Specification<StockInformationFromView> spec =
+                    StockInformationSpecification.getSpecification(filterDataList);
+
+            List<Long> filteredIds = (spec != null)
+                    ? stockInformationRepo.findAll(spec).stream()
+                            .map(StockInformationFromView::getProductId)
+                            .collect(Collectors.toList())
+                    : new ArrayList<>();
+
+            if (filteredIds.isEmpty()) {
+                return new StockTilesDTO(); // all zeros
+            }
+
+            expiring30 = inventoryBatchRepository.countDistinctProductsExpiringBetweenIn(now, in30, filteredIds);
+            expiring60 = inventoryBatchRepository.countDistinctProductsExpiringBetweenIn(in30, in60, filteredIds);
+            expired    = inventoryBatchRepository.countDistinctProductsExpiredIn(now, filteredIds);
+            lowStock   = stockInformationRepo.countByStockStatusAndProductIdIn("Low", filteredIds);
+            highStock  = stockInformationRepo.countByStockStatusAndProductIdIn("High", filteredIds);
+            aging30    = allInventoryRepo.countAgingProductsIn(cutoff30, filteredIds);
+            aging60    = allInventoryRepo.countAgingProductsIn(cutoff60, filteredIds);
+            aging90    = allInventoryRepo.countAgingProductsIn(cutoff90, filteredIds);
+        }
 
         StockTilesDTO dto = new StockTilesDTO();
         dto.setExpiring30Days(expiring30);

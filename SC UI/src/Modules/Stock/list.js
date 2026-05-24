@@ -57,7 +57,10 @@ class List extends ListCommon {
   }
 
   async loadExpiryTiles() {
-    const response = await API.GET(apiEndpoints.getExpiryTiles);
+    const body = this.prepareRequestBody();
+    // Strip expiryFilter so tile counts reflect regular filters only (not circular)
+    const tileBody = { filterData: (body.filterData || []).filter(f => f.attrName !== 'expiryFilter') };
+    const response = await API.POST(apiEndpoints.getExpiryTiles, tileBody);
     if (response.success) {
       this.setState({ expiryTiles: response.data });
     }
@@ -145,6 +148,7 @@ class List extends ListCommon {
         pages: response.data.stockInformation.totalPages,
         totalRecords: response.data.stockInformation.totalElements,
       });
+      this.loadExpiryTiles();
     }
   }
 
