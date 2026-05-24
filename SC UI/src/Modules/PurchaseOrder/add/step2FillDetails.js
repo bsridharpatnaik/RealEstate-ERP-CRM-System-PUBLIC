@@ -725,7 +725,7 @@ handleAddFirm = async (firm) => {
         />
 
         {/* Order To and Order From Sections - Side by Side */}
-        <div className="order-sections-container">
+        {!this.props.addLinesMode && <div className="order-sections-container">
           {/* Order To Section */}
           <div className="form-section">
             <h3 className="section-title">Order To</h3>
@@ -937,11 +937,11 @@ handleAddFirm = async (firm) => {
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* Purchase Order Subject */}
         {/* Purchase Order Subject + SPL PO inline */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div style={{ flex: 1 }}>
               <h3 className="section-title">Purchase order Subject</h3>
@@ -996,7 +996,7 @@ handleAddFirm = async (firm) => {
               )}
             />
           </div>
-        </div>
+        </div>}
         {/* Purchase Order Items Table */}
         <div className="form-section items-section">
           <h3 className="section-title">Purchase order Items</h3>
@@ -1227,7 +1227,7 @@ handleAddFirm = async (firm) => {
 
 
         {/* Freight Charges Section */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <h3 className="section-title">Freight Charges</h3>
           <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
             <div style={{ flex: "1", minWidth: "160px" }}>
@@ -1280,10 +1280,10 @@ handleAddFirm = async (firm) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Custom / Additional Charges Section */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
             <h3 className="section-title" style={{ margin: 0 }}>Additional Charges</h3>
             <button
@@ -1371,15 +1371,15 @@ handleAddFirm = async (firm) => {
               </div>
             );
           })}
-        </div>
+        </div>}
 
         {/* Notes Section */}
-        {this.props.fileArea ? (
+        {!this.props.addLinesMode && (this.props.fileArea ? (
           <div className="form-section">
             {this.props.fileArea}
           </div>
-        ) : null}
-        <div className="form-section">
+        ) : null)}
+        {!this.props.addLinesMode && <div className="form-section">
           <h3 className="section-title">Notes</h3>
           <ReactQuill
             value={this.props.noteText}
@@ -1395,7 +1395,7 @@ handleAddFirm = async (firm) => {
             placeholder="Enter notes..."
             style={{ background: '#fff' }}
           />
-        </div>
+        </div>}
       </div>
     );
   }

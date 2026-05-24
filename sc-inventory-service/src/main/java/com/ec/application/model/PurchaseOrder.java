@@ -86,7 +86,7 @@ public class PurchaseOrder extends ReusableFields {
     @Column(name="notes", columnDefinition = "TEXT")
     private String notes;
 
-    @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("purchaseOrder")
     @OrderBy("id ASC")
     private Set<PurchaseOrderLine> lines = new HashSet<>();

@@ -262,6 +262,9 @@ export const apiEndpoints = {
   printPurchaseOrder: (poId, hideMoneyFields = false, includeIndents = false) =>
     `/api/inventory/purchase-order/print-po/${poId}?hideMoneyFields=${hideMoneyFields}&includeIndents=${includeIndents}`,
   getIndentsForPo: (poId) => `/api/inventory/purchase-order/${poId}/indents`,
+  addPOLine: (poId) => `/api/inventory/purchase-order/${poId}/line`,
+  addPOLines: (poId) => `/api/inventory/purchase-order/${poId}/lines`,
+  removePOLine: (poId, lineId) => `/api/inventory/purchase-order/${poId}/line/${lineId}`,
   getIndentsForDropdown: "/api/inventory/indent/for-dropdown",
   getInventoryTransfer: "/api/inventory/inventory-transfer?size=" + noOfRecords,
   createInventoryTransfer: "/api/inventory/inventory-transfer/create",

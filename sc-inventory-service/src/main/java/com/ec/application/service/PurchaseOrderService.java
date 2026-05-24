@@ -10,10 +10,12 @@ import com.ec.application.config.SchemaConfig;
 import com.ec.application.constants.*;
 import com.ec.application.data.*;
 import com.ec.application.enricher.PurchaseOrderUiEnricher;
+import com.ec.application.indentpo.PurchaseOrderCompletionEvaluator;
 import com.ec.application.indentpo.PurchaseOrderLifecycleManager;
 import com.ec.application.model.*;
 import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.PurchaseOrderCustomChargeRepo;
+import com.ec.application.repository.PurchaseOrderLineRepository;
 import com.ec.application.repository.PurchaseOrderRepo;
 import java.util.stream.Collectors;
 import com.ec.application.util.PurchaseOrderPriceMasker;
@@ -96,6 +98,12 @@ public class PurchaseOrderService extends ReusableFields {
 
     @Autowired
     TenantService tenantService;
+
+    @Autowired
+    PurchaseOrderCompletionEvaluator poCompletionEvaluator;
+
+    @Autowired
+    PurchaseOrderLineRepository purchaseOrderLineRepository;
 
     @Transactional
     public PurchaseOrder createPurchaseOrder(CreatePoRequest request) throws Exception {
@@ -290,7 +298,7 @@ public class PurchaseOrderService extends ReusableFields {
                                 li -> li,
                                 (a, b) -> a));
 
-                // Set per-line needByDate (earliest date across all linked indent refs for the line)
+                // Set per-line needByDate and lineItemStatus from linked indent line items
                 for (PurchaseOrderLine line : po.getLines()) {
                     java.util.Date lineEarliest = line.getIndentRefs().stream()
                             .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
@@ -299,6 +307,21 @@ public class PurchaseOrderService extends ReusableFields {
                             .min(java.util.Comparator.naturalOrder())
                             .orElse(null);
                     line.setNeedByDate(lineEarliest);
+
+                    // Derive line status from its first indent ref (most lines have one ref).
+                    // If multiple refs, take the most "advanced" status to reflect true state.
+                    String lineStatus = line.getIndentRefs().stream()
+                            .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
+                            .filter(li -> li != null)
+                            .map(IndentInventoryList::getLineItemStatus)
+                            .reduce(null, (acc, s) -> {
+                                if (acc == null) return s;
+                                // Precedence: INWARD_COMPLETE > INWARD_PARTIAL > SHORT_CLOSED > CANCELLED > PO_CREATED > NEW
+                                int accRank = statusRank(acc);
+                                int sRank = statusRank(s);
+                                return sRank > accRank ? s : acc;
+                            });
+                    line.setLineItemStatus(lineStatus);
                 }
 
                 // Set PO-level needByDate (earliest across all lines)
@@ -329,6 +352,153 @@ public class PurchaseOrderService extends ReusableFields {
         // MASK PRICE FIELDS
         purchaseOrderPriceMasker.mask(po);
         return po;
+    }
+
+    /**
+     * Adds a new line item to an existing PO.
+     * Allowed for POs in NEW or PARTIAL status only.
+     * The supplied indent line item must be in NEW status (not yet linked to any PO).
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public PurchaseOrder addLineItem(String poId, CreatePoLineRequest req) throws Exception {
+        PurchaseOrder po = purchaseOrderRepo.findById(poId)
+                .orElseThrow(() -> new Exception("Purchase Order not found: " + poId));
+
+        validator.validateAddLineToPO(po);
+        validator.validateIndentLineItems(Collections.singletonList(req));
+
+        PurchaseOrderLine newLine = poBuilder.buildPoLine(po, req);
+        po.getLines().add(newLine);
+
+        recalculateGrandTotal(po);
+
+        PurchaseOrder saved = purchaseOrderRepo.save(po);
+
+        // Update indent statuses for newly added line
+        for (PurchaseOrderIndentRef ref : newLine.getIndentRefs()) {
+            indentStatusUpdater.markIndentLineAsPOCreated(ref.getIndentLineItemCode(), saved.getPurchaseOrderId());
+        }
+
+        String username = userDetailsService.getCurrentUser().getUsername();
+        String productDesc = req.getProductId() != null ? "productId=" + req.getProductId() : "new item";
+        poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
+                "Line item added to PO by " + username + " (" + productDesc + ")", null);
+
+        return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
+    }
+
+    /**
+     * Adds multiple new line items to an existing PO in a single transaction.
+     * Each line is validated and its linked indent line is marked as PO CREATED.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public PurchaseOrder addLineItems(String poId, List<CreatePoLineRequest> reqs) throws Exception {
+        if (reqs == null || reqs.isEmpty()) {
+            throw new Exception("At least one line item is required.");
+        }
+        PurchaseOrder po = purchaseOrderRepo.findById(poId)
+                .orElseThrow(() -> new Exception("Purchase Order not found: " + poId));
+
+        validator.validateAddLineToPO(po);
+        validator.validateIndentLineItems(reqs);
+
+        List<PurchaseOrderLine> newLines = new ArrayList<>();
+        for (CreatePoLineRequest req : reqs) {
+            PurchaseOrderLine newLine = poBuilder.buildPoLine(po, req);
+            po.getLines().add(newLine);
+            newLines.add(newLine);
+        }
+
+        recalculateGrandTotal(po);
+        PurchaseOrder saved = purchaseOrderRepo.save(po);
+
+        // Update indent statuses for all newly added lines
+        for (PurchaseOrderLine newLine : newLines) {
+            for (PurchaseOrderIndentRef ref : newLine.getIndentRefs()) {
+                indentStatusUpdater.markIndentLineAsPOCreated(ref.getIndentLineItemCode(), saved.getPurchaseOrderId());
+            }
+        }
+
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
+                newLines.size() + " line item(s) added to PO by " + username, null);
+
+        return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
+    }
+
+    /**
+     * Removes an open line item from an existing PO.
+     * The line's linked indent item must be in PO CREATED status (no inward started).
+     * Cannot remove the last remaining line on a PO.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public PurchaseOrder removeLineItem(String poId, Long lineId) throws Exception {
+        PurchaseOrder po = purchaseOrderRepo.findById(poId)
+                .orElseThrow(() -> new Exception("Purchase Order not found: " + poId));
+
+        // Block terminal-status POs
+        validator.validateAddLineToPO(po); // reuses terminal-status check
+
+        // Find the target line
+        PurchaseOrderLine lineToRemove = po.getLines().stream()
+                .filter(l -> l.getId().equals(lineId))
+                .findFirst()
+                .orElseThrow(() -> new Exception("PO line not found: " + lineId));
+
+        // Must not be the last line
+        if (po.getLines().size() <= 1) {
+            throw new Exception("Cannot remove the last line item from a Purchase Order.");
+        }
+
+        // Validate indent line statuses allow removal
+        validator.validateLineRemovable(lineToRemove);
+
+        // Revert indent statuses BEFORE removing from set (so refs are still accessible)
+        for (PurchaseOrderIndentRef ref : lineToRemove.getIndentRefs()) {
+            indentStatusUpdater.revertIndentLineToNew(ref.getIndentLineItemCode(), poId);
+        }
+
+        // Remove from PO — orphanRemoval will delete from DB on save
+        po.getLines().remove(lineToRemove);
+
+        recalculateGrandTotal(po);
+
+        PurchaseOrder saved = purchaseOrderRepo.save(po);
+
+        // Re-evaluate PO header status (may flip PARTIAL→NEW if this was the last active line)
+        poCompletionEvaluator.evaluate(saved);
+
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
+                "Line item (ID: " + lineId + ") removed from PO by " + username, null);
+
+        return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
+    }
+
+    /** Returns an integer rank for indent line item status (higher = more advanced). */
+    private int statusRank(String status) {
+        if (status == null) return 0;
+        switch (status) {
+            case "NEW":             return 1;
+            case "PO CREATED":      return 2;
+            case "CANCELLED":       return 3;
+            case "SHORT CLOSED":    return 4;
+            case "INWARD PARTIAL":  return 5;
+            case "INWARD COMPLETE": return 6;
+            default:                return 1;
+        }
+    }
+
+    /** Recomputes PO grand total = sum of line totals + freight + custom charges. */
+    private void recalculateGrandTotal(PurchaseOrder po) {
+        double linesTotal = po.getLines().stream()
+                .mapToDouble(l -> l.getTotalAmount() != null ? l.getTotalAmount() : 0.0)
+                .sum();
+        double freightTotal = po.getTotalFreightCharges() != null ? po.getTotalFreightCharges() : 0.0;
+        double customTotal = po.getCustomCharges().stream()
+                .mapToDouble(c -> c.getTotalChargeAmount() != null ? c.getTotalChargeAmount() : 0.0)
+                .sum();
+        po.setGrandTotal(linesTotal + freightTotal + customTotal);
     }
 
     @Transactional(rollbackFor = Exception.class)

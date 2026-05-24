@@ -5,6 +5,7 @@ import { Slide } from "@material-ui/core";
 //components
 import List from "./list";
 import Add from "./add";
+import AddLinesToPO from "./addLinesToPO";
 import Common from "./../../Shared/CommonIndex";
 import Button from "./../../Shared/Button";
 //misc
@@ -21,6 +22,8 @@ class PurchaseOrder extends Common {
     editData: null,
     draftId: null,
     draftData: null,
+    addLinesToPo: false,
+    addLinesToPoId: null,
   };
   title = messages.common.purchaseOrder;
 
@@ -63,6 +66,9 @@ class PurchaseOrder extends Common {
               onAddFromDraft={(draftId, draftData) => {
                 this.setState({ add: true, list: false, editData: null, draftId, draftData });
               }}
+              onAddLineToPO={(poId) => {
+                this.setState({ addLinesToPo: true, list: false, addLinesToPoId: poId });
+              }}
             />
           </div>
         </Slide>
@@ -84,6 +90,23 @@ class PurchaseOrder extends Common {
                 this.setState({ add: false, list: true, editData: null, draftId: null, draftData: null });
               }}
               dropdowns={{}}
+            />
+          </div>
+        </Slide>
+        <Slide
+          direction="left"
+          in={this.state.addLinesToPo}
+          mountOnEnter
+          unmountOnExit
+          timeout={{ exit: 0 }}
+          appear={false}
+        >
+          <div>
+            <AddLinesToPO
+              poId={this.state.addLinesToPoId}
+              back={() => {
+                this.setState({ addLinesToPo: false, list: true, addLinesToPoId: null });
+              }}
             />
           </div>
         </Slide>

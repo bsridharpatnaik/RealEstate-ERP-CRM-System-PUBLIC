@@ -304,6 +304,10 @@ class List extends ListCommon {
         close={commonClose}
         onOpenRelation={commonRelation}
         fromRelation={fromRelation}
+        onAddLineToPO={(poId) => {
+          commonClose();
+          this.props.onAddLineToPO && this.props.onAddLineToPO(poId);
+        }}
       />
     );
   };

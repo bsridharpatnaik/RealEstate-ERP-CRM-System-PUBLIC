@@ -32,6 +32,8 @@ import Button from "@material-ui/core/Button";
 import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
 import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 import PrintIcon from "@material-ui/icons/Print";
+import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import AddIcon from "@material-ui/icons/Add";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { withSnackbar } from "notistack";
 import { canEditInventoryModules, canViewMoneyFields, getRole } from "./../../helper";
@@ -74,6 +76,12 @@ class Details extends CommonDetails {
     statusHistoryPoId: null,
     lineImageUrls: {},  // lineId → object-URL for sample images (loaded via axios to carry auth headers)
     lightboxUrl: null,  // URL of image to show in lightbox, null = closed
+    // local PO data override — refreshed after add/remove line operations
+    localData: null,
+    // Remove line
+    removeLineConfirmOpen: false,
+    lineToRemove: null,
+    removeLineLoading: false,
   };
 
   async download(file) {
@@ -302,6 +310,42 @@ class Details extends CommonDetails {
     this.setState({ shortCloseConfirmOpen: false });
   };
 
+  // ─── Remove line ────────────────────────────────────────────────────────────
+
+  openRemoveLineConfirm = (line) => {
+    this.setState({ removeLineConfirmOpen: true, lineToRemove: line });
+  };
+
+  closeRemoveLineConfirm = () => {
+    this.setState({ removeLineConfirmOpen: false, lineToRemove: null });
+  };
+
+  handleRemoveLine = async () => {
+    const data = this.getEffectiveData();
+    const { lineToRemove } = this.state;
+    if (!data || !lineToRemove) return;
+    this.setState({ removeLineLoading: true });
+    try {
+      const url = apiEndpoints.removePOLine(data.purchaseOrderId, lineToRemove.id);
+      const response = await API.DELETE(url);
+      if (response.success) {
+        this.props.enqueueSnackbar("Line item removed successfully", { variant: "success" });
+        this.setState({ removeLineConfirmOpen: false, lineToRemove: null, localData: response.data });
+        if (this.props.onRefresh) this.props.onRefresh();
+      } else {
+        this.props.enqueueSnackbar(response.errorMessage || "Failed to remove line item", { variant: "error" });
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("An error occurred while removing the line item", { variant: "error" });
+    } finally {
+      this.setState({ removeLineLoading: false });
+    }
+  };
+
+
+  /** Returns localData if set (after add/remove), otherwise falls back to props.data. */
+  getEffectiveData = () => this.state.localData || this.props.data;
+
   // ─── Navigation ────────────────────────────────────────────────────────────
 
   handlePrevious = () => {
@@ -491,7 +535,7 @@ class Details extends CommonDetails {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   render() {
-    const data = this.props.data;
+    const data = this.getEffectiveData();
     if (!data) return null;
 
     const { currentIndex = 0, allEntries = [], fromRelation } = this.props;
@@ -824,8 +868,21 @@ class Details extends CommonDetails {
               {/* Line items */}
               {items.length > 0 && (
                 <div className="detail-section-group">
-                  <h3 className="section-title purchase-orders-title">
-                    Purchase Orders
+                  <h3 className="section-title purchase-orders-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span>Purchase Orders</span>
+                    {canEditInventoryModules() &&
+                      (data.status === "NEW" || data.status === "PARTIAL") && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<AddIcon />}
+                        onClick={() => this.props.onAddLineToPO && this.props.onAddLineToPO(data.purchaseOrderId)}
+                        style={{ fontSize: 12 }}
+                      >
+                        Add Line
+                      </Button>
+                    )}
                   </h3>
                   <div
                     className={
@@ -839,7 +896,7 @@ class Details extends CommonDetails {
                         <TableRow>
                           <TableCell>Inventory</TableCell>
                           {hasImages && <TableCell style={{ textAlign: 'center' }}>Sample Image</TableCell>}
-                          <TableCell>Status</TableCell>
+                          <TableCell>Line Status</TableCell>
                           <TableCell>Exp. Date</TableCell>
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Rate</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Discount</TableCell>}
@@ -847,6 +904,10 @@ class Details extends CommonDetails {
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Rate</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>GST %</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Total</TableCell>}
+                          {canEditInventoryModules() &&
+                            (data.status === "NEW" || data.status === "PARTIAL") && (
+                            <TableCell style={{ whiteSpace: 'nowrap', width: 48 }}></TableCell>
+                          )}
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -881,6 +942,14 @@ class Details extends CommonDetails {
 
                           const status = data.status || "Complete Inward";
 
+                          const lineStatus = item.lineItemStatus || data.status || "";
+                          const isRemovable = canEditInventoryModules() &&
+                            (data.status === "NEW" || data.status === "PARTIAL") &&
+                            lineStatus === "PO CREATED";
+                          const isRemoveBlocked = canEditInventoryModules() &&
+                            (data.status === "NEW" || data.status === "PARTIAL") &&
+                            lineStatus === "INWARD PARTIAL";
+
                           return (
                             <TableRow key={index}>
                               <TableCell className="inventory-cell">
@@ -906,11 +975,11 @@ class Details extends CommonDetails {
                               )}
                               <TableCell>
                                 <span
-                                  className={`status-badge-table status-${status
+                                  className={`status-badge-table status-${(lineStatus)
                                     .toLowerCase()
                                     .replace(/\s+/g, "-")}`}
                                 >
-                                  {status}
+                                  {lineStatus || "-"}
                                 </span>
                               </TableCell>
                               <TableCell>{item.needByDate || "-"}</TableCell>
@@ -939,6 +1008,25 @@ class Details extends CommonDetails {
                                     Rs. {totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </TableCell>
                                 </>
+                              )}
+                              {canEditInventoryModules() &&
+                                (data.status === "NEW" || data.status === "PARTIAL") && (
+                                <TableCell style={{ padding: "0 4px" }}>
+                                  {isRemovable ? (
+                                    <IconButton
+                                      size="small"
+                                      title="Remove this line item"
+                                      onClick={() => this.openRemoveLineConfirm(item)}
+                                      style={{ color: "#c62828" }}
+                                    >
+                                      <DeleteOutlineIcon fontSize="small" />
+                                    </IconButton>
+                                  ) : isRemoveBlocked ? (
+                                    <IconButton size="small" disabled title="Inward already started — cannot remove">
+                                      <DeleteOutlineIcon fontSize="small" />
+                                    </IconButton>
+                                  ) : null}
+                                </TableCell>
                               )}
                             </TableRow>
                           );
@@ -1100,6 +1188,35 @@ class Details extends CommonDetails {
           onCancel={this.handleShortCloseCancel}
           onConfirm={this.handleShortClose}
         />
+
+        {/* ── Remove Line Confirmation ── */}
+        <Dialog
+          open={this.state.removeLineConfirmOpen}
+          onClose={this.closeRemoveLineConfirm}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle>Remove Line Item</DialogTitle>
+          <DialogContent>
+            <p style={{ margin: 0, fontSize: 14 }}>
+              This will remove the selected line item and revert the linked indent back to
+              <strong> NEW</strong> status. This action cannot be undone. Continue?
+            </p>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.closeRemoveLineConfirm} disabled={this.state.removeLineLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={this.handleRemoveLine}
+              color="secondary"
+              variant="contained"
+              disabled={this.state.removeLineLoading}
+            >
+              {this.state.removeLineLoading ? <CircularProgress size={18} /> : "Remove"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Image lightbox */}
         {this.state.lightboxUrl && (
