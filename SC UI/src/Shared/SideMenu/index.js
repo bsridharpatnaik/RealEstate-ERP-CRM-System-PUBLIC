@@ -69,7 +69,7 @@ function SideMenu(props) {
     props.history.location.pathname === "/category" ||
     props.history.location.pathname === "/machinery" ||
     props.history.location.pathname === "/inventoryTransfer" ||
-    props.history.location.pathname === "/deadStock" ||
+    props.history.location.pathname === "/stockSummary" ||
     props.history.location.pathname === "/purchaseOrder" ||
     props.history.location.pathname === "/globalIndent" ||
     props.history.location.pathname === "/contact" ||
@@ -450,7 +450,7 @@ function SideMenu(props) {
   labelText={messages.common.stockSummary}
   labelIcon={InventoryIcon}
   onClick={props.setSideBarValue}
-  linkurl="/deadStock"
+  linkurl="/stockSummary"
 />
             <DashboardItem
               nodeId="39"

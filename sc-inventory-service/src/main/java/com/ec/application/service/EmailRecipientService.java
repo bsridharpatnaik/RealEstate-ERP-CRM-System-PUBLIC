@@ -35,6 +35,7 @@ public class EmailRecipientService {
             seedIfAbsent(DAILY_STOCK_REPORT, "info@mahavirgroupindia.com");
             seedIfAbsent(DAILY_STOCK_REPORT, "purchase@mahavirgroupindia.com");
             seedIfAbsent(DAILY_STOCK_REPORT, "sridhar@mahavirgroupindia.com");
+            seedIfAbsent(DAILY_STOCK_REPORT, "purchasemanager@mahavirgroupindia.com");
             log.info("Email recipient defaults seeded for type: {}", DAILY_STOCK_REPORT);
         } finally {
             ThreadLocalStorage.setTenantName(null);

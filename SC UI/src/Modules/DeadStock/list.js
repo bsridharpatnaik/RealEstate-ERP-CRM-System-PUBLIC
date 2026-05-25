@@ -10,6 +10,8 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import Button from "@material-ui/core/Button";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -27,7 +29,7 @@ import IconButtons from "./../../Shared/Button/IconButtons";
 import { apiEndpoints, noOfRecords } from "./../../endpoints";
 import { messages } from "./../../messages";
 import { API } from "./../../axios";
-import { getTenantName } from "./../../helper";
+import { getTenantName, triggerBlobDownload } from "./../../helper";
 import { connect } from "react-redux";
 import "./style.scss";
 
@@ -46,6 +48,8 @@ class List extends ListCommon {
     lastSyncDate: null,
     isExporting: false,
     isImporting: false,
+    exportMenuAnchor: null,
+    isDownloadingReport: false,
     importGuideOpen: false,
     importResultOpen: false,
     importResult: null,
@@ -273,6 +277,21 @@ class List extends ListCommon {
     }
   };
 
+  handleDownloadReport = async () => {
+    this.setState({ isDownloadingReport: true, exportMenuAnchor: null });
+    try {
+      const response = await API.GETBlob(apiEndpoints.downloadStockReport);
+      if (response.success) {
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        triggerBlobDownload(response.data, `Stock_Report_${dateStr}.xlsx`);
+      } else {
+        this.props.enqueueSnackbar("Report download failed. Please try again.", { variant: "error" });
+      }
+    } finally {
+      this.setState({ isDownloadingReport: false });
+    }
+  };
+
   handleImportClick = () => {
     this.setState({ importGuideOpen: true });
   };
@@ -309,7 +328,7 @@ class List extends ListCommon {
 
   render() {
     const formatted = this.formatLastSync();
-    const { isExporting, isImporting, importGuideOpen, importResultOpen, importResult } = this.state;
+    const { isExporting, isImporting, importGuideOpen, importResultOpen, importResult, exportMenuAnchor, isDownloadingReport } = this.state;
     return (
       <div className="dead-stock-list-wrapper">
         {/* Hidden file input for import */}
@@ -341,13 +360,25 @@ class List extends ListCommon {
               <Button
                 variant="outlined"
                 size="small"
-                onClick={this.handleExport}
-                disabled={isExporting}
+                onClick={(e) => this.setState({ exportMenuAnchor: e.currentTarget })}
+                disabled={isExporting || isDownloadingReport}
                 style={{ marginRight: 8 }}
-                startIcon={isExporting ? <CircularProgress size={14} /> : null}
+                startIcon={(isExporting || isDownloadingReport) ? <CircularProgress size={14} /> : null}
               >
-                {isExporting ? "Exporting…" : "Export"}
+                {isExporting ? "Exporting…" : isDownloadingReport ? "Downloading…" : "Export ▾"}
               </Button>
+              <Menu
+                anchorEl={exportMenuAnchor}
+                open={Boolean(exportMenuAnchor)}
+                onClose={() => this.setState({ exportMenuAnchor: null })}
+              >
+                <MenuItem onClick={() => { this.setState({ exportMenuAnchor: null }); this.handleExport(); }}>
+                  List
+                </MenuItem>
+                <MenuItem onClick={this.handleDownloadReport}>
+                  Report
+                </MenuItem>
+              </Menu>
               <Button
                 variant="outlined"
                 size="small"
