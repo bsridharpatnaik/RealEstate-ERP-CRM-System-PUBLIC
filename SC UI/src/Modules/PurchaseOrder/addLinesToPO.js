@@ -19,7 +19,25 @@ class AddLinesToPO extends React.Component {
     selectedIndents: [],
     items: [],
     isAdding: false,
+    existingPoLines: [],
+    isLoadingExistingLines: true,
   };
+
+  componentDidMount() {
+    if (this.props.poId) {
+      API.GET(apiEndpoints.getPurchaseOrderDetail(this.props.poId)).then((res) => {
+        if (res.success && res.data && Array.isArray(res.data.lines)) {
+          this.setState({ existingPoLines: res.data.lines, isLoadingExistingLines: false });
+        } else {
+          this.setState({ isLoadingExistingLines: false });
+        }
+      }).catch(() => {
+        this.setState({ isLoadingExistingLines: false });
+      });
+    } else {
+      this.setState({ isLoadingExistingLines: false });
+    }
+  }
 
   handleNext = () => {
     if (this.state.selectedIndents.length === 0) {
@@ -59,7 +77,26 @@ class AddLinesToPO extends React.Component {
       };
     });
 
-    this.setState({ currentStep: 2, items });
+    // Flag items whose productId already exists in the PO — they will be clubbed
+    const { existingPoLines } = this.state;
+    const itemsWithClubFlag = items.map((item) => {
+      if (!item.productId) return item;
+      const match = existingPoLines.find(
+        (l) => l.product && String(l.product.productId) === String(item.productId)
+      );
+      if (match) {
+        return {
+          ...item,
+          willBeClubbed: true,
+          rate: match.rate != null ? String(match.rate) : item.rate,
+          discount: match.discountPercent != null ? String(match.discountPercent) : item.discount,
+          gst: match.gstPercent != null ? String(match.gstPercent) : item.gst,
+        };
+      }
+      return { ...item, willBeClubbed: false };
+    });
+
+    this.setState({ currentStep: 2, items: itemsWithClubFlag });
   };
 
   handlePrevious = () => {
@@ -69,7 +106,7 @@ class AddLinesToPO extends React.Component {
   handleConfirm = async () => {
     const { items } = this.state;
     const missingRate = items.find(
-      (item) => !item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0
+      (item) => !item.willBeClubbed && (!item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0)
     );
     if (missingRate) {
       this.props.enqueueSnackbar("Rate is required for all items", { variant: "error" });
@@ -158,18 +195,21 @@ class AddLinesToPO extends React.Component {
   }
 
   renderHeaderActions() {
-    const { currentStep, isAdding } = this.state;
+    const { currentStep, isAdding, isLoadingExistingLines } = this.state;
     const noSelection = this.state.selectedIndents.length === 0;
     if (currentStep === 1) {
       return (
         <div className="po-action-buttons">
           <Button onClick={this.props.back} buttonClass="grey" label="Cancel" />
-          <Button onClick={this.handleNext} buttonClass="blue" label="Next" disabled={noSelection} />
+          {isLoadingExistingLines
+            ? <CircularProgress size={24} style={{ marginLeft: 8 }} />
+            : <Button onClick={this.handleNext} buttonClass="blue" label="Next" disabled={noSelection} />
+          }
         </div>
       );
     }
     const missingRate = this.state.items.some(
-      (item) => !item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0
+      (item) => !item.willBeClubbed && (!item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0)
     );
     return (
       <div className="po-action-buttons">

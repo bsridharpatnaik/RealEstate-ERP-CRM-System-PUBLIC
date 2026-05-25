@@ -32,6 +32,9 @@ public class PurchaseOrderValidator {
         List<String> invalidItems = new ArrayList<>();
 
         for (CreatePoLineRequest lineItem : lineItems) {
+            if (lineItem.getIndentRefs() == null || lineItem.getIndentRefs().isEmpty()) {
+                continue; // no refs to validate — downstream will reject if needed
+            }
             for (IndentLineRefRequest indentRef : lineItem.getIndentRefs()) {
                 List<IndentInventoryList> items = indentInventoryListRepo.findByLineItemCode(indentRef.getIndentLineItemCode());
                 if (items.isEmpty())

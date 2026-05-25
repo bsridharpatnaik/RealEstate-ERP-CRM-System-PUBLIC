@@ -1128,42 +1128,59 @@ handleAddFirm = async (firm) => {
                         />
                       </TableCell>
                       <TableCell className="rate-cell">
-                        <TextField
-                          value={item.rate || ""}
-                          onChange={(e) =>
-                            this.handleItemChange(index, "rate", e.target.value)
-                          }
-                          size="small"
-                          variant="outlined"
-                          type="number"
-                          required
-                          inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                        />
+                        {item.willBeClubbed ? (
+                          <div style={{ fontSize: "12px" }}>
+                            <div>Rs. {item.rate}</div>
+                            <div style={{ color: "#1976d2", fontStyle: "italic", fontSize: "11px", marginTop: "2px" }}>
+                              Clubbed
+                            </div>
+                          </div>
+                        ) : (
+                          <TextField
+                            value={item.rate || ""}
+                            onChange={(e) =>
+                              this.handleItemChange(index, "rate", e.target.value)
+                            }
+                            size="small"
+                            variant="outlined"
+                            type="number"
+                            required
+                            inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          variant="outlined"
-                          placeholder="0"
-                          value={item.discount || ""}
-                          inputProps={{ min: 0, max: 100, step: 0.01 }}
-                          onChange={(e) => this.handleItemChange(index, "discount", e.target.value)}
-                          style={{ width: "80px" }}
-                        />
+                        {item.willBeClubbed ? (
+                          <span style={{ fontSize: "12px" }}>{item.discount || "0"}%</span>
+                        ) : (
+                          <TextField
+                            type="number"
+                            size="small"
+                            variant="outlined"
+                            placeholder="0"
+                            value={item.discount || ""}
+                            inputProps={{ min: 0, max: 100, step: 0.01 }}
+                            onChange={(e) => this.handleItemChange(index, "discount", e.target.value)}
+                            style={{ width: "80px" }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          value={item.gst ?? ""}
-                          onChange={(e) =>
-                            this.handleItemChange(index, "gst", e.target.value)
-                          }
-                          size="small"
-                          variant="outlined"
-                          type="number"
-                          placeholder="%"
-                          inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                        />
+                        {item.willBeClubbed ? (
+                          <span style={{ fontSize: "12px" }}>{item.gst || "0"}%</span>
+                        ) : (
+                          <TextField
+                            value={item.gst ?? ""}
+                            onChange={(e) =>
+                              this.handleItemChange(index, "gst", e.target.value)
+                            }
+                            size="small"
+                            variant="outlined"
+                            type="number"
+                            placeholder="%"
+                            inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell className="net-rate-cell calculated-cell">
                         {item.netRate ? `Rs. ${parseFloat(item.netRate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}

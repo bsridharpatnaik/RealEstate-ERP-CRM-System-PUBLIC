@@ -367,22 +367,61 @@ public class PurchaseOrderService extends ReusableFields {
         validator.validateAddLineToPO(po);
         validator.validateIndentLineItems(Collections.singletonList(req));
 
-        PurchaseOrderLine newLine = poBuilder.buildPoLine(po, req);
-        po.getLines().add(newLine);
+        List<String> processedCodes = new ArrayList<>();
+
+        Optional<PurchaseOrderLine> existing = po.getLines().stream()
+                .filter(l -> l.getProduct() != null
+                        && req.getProductId() != null
+                        && l.getProduct().getProductId().equals(req.getProductId()))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            PurchaseOrderLine line = existing.get();
+            if (req.getIndentRefs() == null || req.getIndentRefs().isEmpty()) {
+                throw new Exception("Indent refs are required when clubbing into an existing PO line.");
+            }
+            double newQty = (line.getQuantity() != null ? line.getQuantity() : 0)
+                    + (req.getQuantity() != null ? req.getQuantity() : 0);
+            line.setQuantity(newQty);
+            for (IndentLineRefRequest refReq : req.getIndentRefs()) {
+                List<IndentInventoryList> items =
+                        indentInventoryListRepo.findByLineItemCode(refReq.getIndentLineItemCode());
+                if (items.isEmpty())
+                    throw new Exception("Indent line item not found: " + refReq.getIndentLineItemCode());
+                IndentInventoryList refItem = items.get(0);
+                PurchaseOrderIndentRef ref = new PurchaseOrderIndentRef();
+                ref.setIndentLineItemCode(refItem.getLineItemCode());
+                ref.setIndentNo(refItem.getIndentInventory().getIndentId());
+                ref.setPoLine(line);
+                line.getIndentRefs().add(ref);
+                processedCodes.add(ref.getIndentLineItemCode());
+            }
+            double rate = line.getRate() != null ? line.getRate() : 0;
+            double disc = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0;
+            double gst = line.getGstPercent() != null ? line.getGstPercent() : 0;
+            double discountedRate = rate - (rate * disc / 100);
+            double netRate = discountedRate * newQty;
+            double totalAmount = netRate + (netRate * gst / 100);
+            line.setNetRate(netRate);
+            line.setTotalAmount(totalAmount);
+        } else {
+            PurchaseOrderLine newLine = poBuilder.buildPoLine(po, req);
+            po.getLines().add(newLine);
+            if (newLine.getIndentRefs() != null) {
+                newLine.getIndentRefs().forEach(r -> processedCodes.add(r.getIndentLineItemCode()));
+            }
+        }
 
         recalculateGrandTotal(po);
-
         PurchaseOrder saved = purchaseOrderRepo.save(po);
 
-        // Update indent statuses for newly added line
-        for (PurchaseOrderIndentRef ref : newLine.getIndentRefs()) {
-            indentStatusUpdater.markIndentLineAsPOCreated(ref.getIndentLineItemCode(), saved.getPurchaseOrderId());
+        for (String code : processedCodes) {
+            indentStatusUpdater.markIndentLineAsPOCreated(code, saved.getPurchaseOrderId());
         }
 
         String username = userDetailsService.getCurrentUser().getUsername();
-        String productDesc = req.getProductId() != null ? "productId=" + req.getProductId() : "new item";
         poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
-                "Line item added to PO by " + username + " (" + productDesc + ")", null);
+                processedCodes.size() + " indent(s) added/clubbed to PO by " + username, null);
 
         return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
     }
@@ -402,26 +441,71 @@ public class PurchaseOrderService extends ReusableFields {
         validator.validateAddLineToPO(po);
         validator.validateIndentLineItems(reqs);
 
-        List<PurchaseOrderLine> newLines = new ArrayList<>();
+        List<String> processedIndentCodes = new ArrayList<>();
+
         for (CreatePoLineRequest req : reqs) {
-            PurchaseOrderLine newLine = poBuilder.buildPoLine(po, req);
-            po.getLines().add(newLine);
-            newLines.add(newLine);
+            // Club into existing line if PO already has a line for this product
+            Optional<PurchaseOrderLine> existing = po.getLines().stream()
+                    .filter(l -> l.getProduct() != null
+                            && req.getProductId() != null
+                            && l.getProduct().getProductId().equals(req.getProductId()))
+                    .findFirst();
+
+            if (existing.isPresent()) {
+                PurchaseOrderLine line = existing.get();
+                if (req.getIndentRefs() == null || req.getIndentRefs().isEmpty()) {
+                    throw new Exception("Indent refs are required when clubbing into an existing PO line.");
+                }
+                double newQty = (line.getQuantity() != null ? line.getQuantity() : 0)
+                        + (req.getQuantity() != null ? req.getQuantity() : 0);
+                line.setQuantity(newQty);
+
+                if (req.getIndentRefs() != null) {
+                    for (IndentLineRefRequest refReq : req.getIndentRefs()) {
+                        List<IndentInventoryList> items =
+                                indentInventoryListRepo.findByLineItemCode(refReq.getIndentLineItemCode());
+                        if (items.isEmpty())
+                            throw new Exception("Indent line item not found: " + refReq.getIndentLineItemCode());
+                        IndentInventoryList refItem = items.get(0);
+                        PurchaseOrderIndentRef ref = new PurchaseOrderIndentRef();
+                        ref.setIndentLineItemCode(refItem.getLineItemCode());
+                        ref.setIndentNo(refItem.getIndentInventory().getIndentId());
+                        ref.setPoLine(line);
+                        line.getIndentRefs().add(ref);
+                        processedIndentCodes.add(ref.getIndentLineItemCode());
+                    }
+                }
+
+                // Recalculate totals using existing rate/discount/gst
+                double rate = line.getRate() != null ? line.getRate() : 0;
+                double disc = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0;
+                double gst = line.getGstPercent() != null ? line.getGstPercent() : 0;
+                double discountedRate = rate - (rate * disc / 100);
+                double netRate = discountedRate * newQty;
+                double totalAmount = netRate + (netRate * gst / 100);
+                line.setNetRate(netRate);
+                line.setTotalAmount(totalAmount);
+            } else {
+                // New product — create a fresh PO line
+                PurchaseOrderLine newLine = poBuilder.buildPoLine(po, req);
+                po.getLines().add(newLine);
+                if (newLine.getIndentRefs() != null) {
+                    newLine.getIndentRefs().forEach(r -> processedIndentCodes.add(r.getIndentLineItemCode()));
+                }
+            }
         }
 
         recalculateGrandTotal(po);
         PurchaseOrder saved = purchaseOrderRepo.save(po);
 
-        // Update indent statuses for all newly added lines
-        for (PurchaseOrderLine newLine : newLines) {
-            for (PurchaseOrderIndentRef ref : newLine.getIndentRefs()) {
-                indentStatusUpdater.markIndentLineAsPOCreated(ref.getIndentLineItemCode(), saved.getPurchaseOrderId());
-            }
+        // Mark all processed indent lines as PO_CREATED
+        for (String indentCode : processedIndentCodes) {
+            indentStatusUpdater.markIndentLineAsPOCreated(indentCode, saved.getPurchaseOrderId());
         }
 
         String username = userDetailsService.getCurrentUser().getUsername();
         poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
-                newLines.size() + " line item(s) added to PO by " + username, null);
+                processedIndentCodes.size() + " indent(s) added/clubbed to PO by " + username, null);
 
         return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
     }
