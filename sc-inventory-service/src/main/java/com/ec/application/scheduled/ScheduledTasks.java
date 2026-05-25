@@ -4,6 +4,7 @@ import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.config.SchemaConfig;
 import com.ec.application.data.JobFailureAlertDTO;
+import com.ec.application.data.ProjectStockEmailData;
 import com.ec.application.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,9 @@ public class ScheduledTasks {
     StockBalanceValidationService stockBalanceValidationService;
 
     @Autowired
+    StockEmailReportService stockEmailReportService;
+
+    @Autowired
     EmailHelper emailHelper;
 
     @Autowired
@@ -90,6 +94,32 @@ public class ScheduledTasks {
     public void computePoPriority() {
         log.info("Scheduled PO priority recompute triggered");
         priorityComputeService.recomputeAllPriorities();
+    }
+
+    @Scheduled(cron = "0 0 21 * * *", zone = "Asia/Kolkata")
+    public void sendDailyStockEmailReport() {
+        log.info("Daily stock email report triggered");
+        try {
+            List<String> tenants = schemaConfig.getNonMasterSchemaList();
+            List<ProjectStockEmailData> allProjects = new ArrayList<>();
+            for (String tenantName : tenants) {
+                com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
+                try {
+                    ProjectStockEmailData data = stockEmailReportService.collectTenantStockData(tenantName);
+                    allProjects.add(data);
+                } finally {
+                    com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
+                }
+            }
+            if (!allProjects.isEmpty()) {
+                byte[] excelBytes = stockEmailReportService.buildExcelBytes(allProjects);
+                emailHelper.sendDailyStockReport(allProjects, excelBytes);
+            } else {
+                log.info("No tenants found — skipping daily stock report");
+            }
+        } catch (Exception e) {
+            log.error("Daily stock email report failed", e);
+        }
     }
 
     @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Kolkata")
