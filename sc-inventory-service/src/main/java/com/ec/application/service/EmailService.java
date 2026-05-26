@@ -1,8 +1,6 @@
 package com.ec.application.service;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +12,6 @@ import com.ec.application.config.EmailConstants;
 import com.ec.application.data.EmailConfigData;
 
 @Service
-@Transactional
 public class EmailService {
 
     @Autowired
