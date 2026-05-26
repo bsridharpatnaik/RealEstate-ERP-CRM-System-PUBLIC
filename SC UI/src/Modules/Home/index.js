@@ -152,7 +152,7 @@ class Home extends React.Component {
                 <Route path={"/inventoryTransfer"}>
                   <InventoryTransfer key={new Date()} {...props} />
                 </Route>
-                <Route path={"/deadStock"}>
+                <Route path={"/stockSummary"}>
                   <DeadStock key={new Date()} {...props} />
                 </Route>
                 <Route path={appRoutes.historicalPricing}>

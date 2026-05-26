@@ -296,6 +296,7 @@ export const apiEndpoints = {
   getGlobalDashboardPOTrend: "/api/inventory/global-dashboard/po/trend",
   getGlobalDashboardSuppliersLeadTimeHeatmap: "/api/inventory/global-dashboard/suppliers/lead-time/heatmap",
   getGlobalDashboardStaleCharts: "/api/inventory/global-dashboard/stale-charts",
+  downloadStockReport: "/api/inventory/email/dailystockreport/download",
 };
 export const exportURL = {
   getAllInventoryTransactions:
