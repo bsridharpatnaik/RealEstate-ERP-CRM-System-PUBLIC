@@ -1,11 +1,15 @@
 package com.ec.application.ReusableClasses;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeSet;
 
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
@@ -23,8 +27,10 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
+import com.ec.application.data.ConsolidatedProductRow;
 import com.ec.application.data.EmailConfigData;
 import com.ec.application.data.JobFailureAlertDTO;
+import com.ec.application.data.ProductStockRow;
 import com.ec.application.data.ProjectStockEmailData;
 import com.ec.application.data.StockDiscrepancyRow;
 import com.ec.application.data.StockInformationExportDAO;
@@ -225,6 +231,37 @@ public class EmailHelper
 			model.put("projects", projects);
 			model.put("currentDate",
 					new java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a").format(new Date()));
+
+			// Build cross-project consolidated product table
+			List<String> projectNames = new ArrayList<>();
+			for (ProjectStockEmailData p : projects) projectNames.add(p.getProjectName());
+
+			TreeSet<String> allProductNames = new TreeSet<>();
+			for (ProjectStockEmailData p : projects) {
+				for (ProductStockRow r : p.getStockRows()) allProductNames.add(r.getProductName());
+				allProductNames.addAll(p.getZeroStockItems());
+			}
+
+			List<ConsolidatedProductRow> consolidatedRows = new ArrayList<>();
+			for (String productName : allProductNames) {
+				List<Double> qtys = new ArrayList<>();
+				double rowTotal = 0;
+				for (ProjectStockEmailData p : projects) {
+					double qty = p.getStockRows().stream()
+							.filter(r -> r.getProductName().equals(productName))
+							.mapToDouble(ProductStockRow::getTotalQty)
+							.findFirst().orElse(0.0);
+					qty = BigDecimal.valueOf(qty).setScale(2, RoundingMode.HALF_UP).doubleValue();
+					qtys.add(qty);
+					rowTotal += qty;
+				}
+				rowTotal = BigDecimal.valueOf(rowTotal).setScale(2, RoundingMode.HALF_UP).doubleValue();
+				consolidatedRows.add(new ConsolidatedProductRow(productName, qtys, rowTotal));
+			}
+
+			model.put("projectNames", projectNames);
+			model.put("consolidatedRows", consolidatedRows);
+
 			Template template = config.getTemplate("email-daily-stock.ftl");
 			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 
