@@ -30,9 +30,13 @@ public class ProductWithQuantity {
     List<InwardBatchSplit> batchSplits;
 
     // Outward FIFO override fields (nullable — only set during outward, ignored elsewhere)
+    // Legacy single-batch override (kept for backward compat)
     Long overrideBatchId;
 
     String overrideComment;
+
+    // Multi-batch override: explicit list of {batchId, qty} — takes precedence over overrideBatchId when set
+    List<BatchOverrideEntry> overrideBatches;
 
     public ProductWithQuantity() {}
 

@@ -67,6 +67,8 @@ class Details extends CommonDetails {
     anchorEl: null,
     historyLogs: [],
     historyLoading: false,
+    batchConsumptions: [],
+    batchConsumptionsLoaded: false,
   };
   deleteRow = null;
 
@@ -76,6 +78,7 @@ class Details extends CommonDetails {
     this.componentRef = React.createRef();
     this.componentRef1 = React.createRef();
     this.detailTabRef = React.createRef();
+    this.loadBatchConsumptions();
   }
 
   async loadHistory() {
@@ -87,6 +90,15 @@ class Details extends CommonDetails {
       this.setState({ historyLogs: r.data || [] });
     }
     this.setState({ historyLoading: false });
+  }
+
+  async loadBatchConsumptions() {
+    const { data } = this.props;
+    if (!data || !data.outwardid || this.state.batchConsumptionsLoaded) return;
+    const r = await API.GET(apiEndpoints.getOutwardBatchConsumptions(data.outwardid));
+    if (r.success) {
+      this.setState({ batchConsumptions: r.data || [], batchConsumptionsLoaded: true });
+    }
   }
 
   handleCloseMenu = () => {
@@ -477,6 +489,43 @@ class Details extends CommonDetails {
                 </TableBody>
               </Table>
             </Paper>
+
+            {/* Batch consumption section — shown when data available */}
+            {this.state.batchConsumptions.length > 0 && (
+              <>
+                <h4 className="reject-stock">Batch Usage</h4>
+                <Paper elevation={0} className="table-wrapper">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Batch #</TableCell>
+                        <TableCell>Expiry</TableCell>
+                        <TableCell>Brand</TableCell>
+                        <TableCell>Qty Consumed</TableCell>
+                        <TableCell>FIFO Override</TableCell>
+                        <TableCell>Override Reason</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.batchConsumptions.map((c) => (
+                        <TableRow key={c.id} style={c.fifoOverridden ? { backgroundColor: '#fff8e1' } : {}}>
+                          <TableCell>#{c.batch ? c.batch.batchId : '—'}</TableCell>
+                          <TableCell>{c.batch && c.batch.expiryDate ? c.batch.expiryDate.replace(/-/g, '/') : '—'}</TableCell>
+                          <TableCell>{c.batch && c.batch.brand ? c.batch.brand : '—'}</TableCell>
+                          <TableCell>{c.qtyConsumed}</TableCell>
+                          <TableCell>
+                            {c.fifoOverridden
+                              ? <span style={{ color: '#e65100', fontWeight: 600 }}>Yes</span>
+                              : <span style={{ color: '#2e7d32' }}>No</span>}
+                          </TableCell>
+                          <TableCell style={{ color: '#e65100' }}>{c.overrideComment || '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </>
+            )}
 
             {hasReturn ? (
               <>

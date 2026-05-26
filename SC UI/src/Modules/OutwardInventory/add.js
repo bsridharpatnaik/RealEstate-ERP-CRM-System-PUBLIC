@@ -39,6 +39,8 @@ class Add extends AddForm {
     selectedWarehouseId: null,
     boqViolationDialog: { open: false, violations: [] },
     availableBatches: {}, // productId → [batch]
+    batchPreviews: {},     // productKey → { batches: [], loading: false, error: null }
+    batchConfirmed: {},   // productKey → bool
     fifoConfirmModal: {
       open: false,
       productKey: null,
@@ -49,6 +51,8 @@ class Add extends AddForm {
     },
   };
   key = 1;
+  _boqWarnTimers = {}; // debounce timers for BOQ warnings, keyed by product row key
+
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch(fetchUnit());
@@ -165,6 +169,7 @@ class Add extends AddForm {
               this.getCurrentStock(key);
               this.getBoqQuantity(key);
               this.fetchBatchesForProduct(value.id, this.formData.warehouseId);
+              setTimeout(() => this.fetchBatchPreview(key), 100);
             }
           },
         })}
@@ -200,15 +205,25 @@ class Add extends AddForm {
               }
             }
             this.getCurrentStock(key);
+            this.fetchBatchPreview(key);
             const boqRemaining = this.state.boqQuantity[productId];
             if (boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
-              const inWastage = Number(boqRemaining) < 0;
-              this.props.enqueueSnackbar(
-                inWastage
-                  ? `BOQ Warning: Already in wastage buffer. Base BOQ fully consumed (${Math.abs(boqRemaining)} over base BOQ).`
-                  : `BOQ Warning: Quantity exceeds base BOQ remaining (${boqRemaining} remaining). Wastage allowance may still permit save.`,
-                { variant: "warning" }
-              );
+              clearTimeout(this._boqWarnTimers[key]);
+              this._boqWarnTimers[key] = setTimeout(() => {
+                const currentValue = this.state.noproduct[key]?.quantity;
+                const currentBoq = this.state.boqQuantity[productId];
+                if (currentBoq !== undefined && currentBoq !== null && Number(currentValue) > Number(currentBoq)) {
+                  const inWastage = Number(currentBoq) < 0;
+                  this.props.enqueueSnackbar(
+                    inWastage
+                      ? `BOQ Warning: Already in wastage buffer. Base BOQ fully consumed (${Math.abs(currentBoq)} over base BOQ).`
+                      : `BOQ Warning: Quantity exceeds base BOQ remaining (${currentBoq} remaining). Wastage allowance may still permit save.`,
+                    { variant: "warning" }
+                  );
+                }
+              }, 700);
+            } else {
+              clearTimeout(this._boqWarnTimers[key]);
             }
           },
         })}
@@ -227,86 +242,171 @@ class Add extends AddForm {
           value: this.state.boqQuantity[this.state.noproduct[key].productId],
         })}
 
-        {/* Override FIFO batch selection */}
-        <div style={{ display: 'flex', flexDirection: 'column', minWidth: '200px' }}>
-          <label style={{ fontSize: '12px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <input
-              type="checkbox"
-              checked={!!this.state.noproduct[key].overrideFifo}
-              onChange={(e) => {
-                const p = this.state.noproduct;
-                p[key].overrideFifo = e.target.checked;
-                if (!e.target.checked) {
-                  p[key].overrideBatchId = null;
-                  p[key].overrideComment = null;
-                }
-                this.setState({ noproduct: { ...p } });
-              }}
-            />
-            Override FIFO batch
-          </label>
-          {this.state.noproduct[key].overrideFifo && (() => {
-            const productId = this.state.noproduct[key].productId;
-            const batches = this.state.availableBatches[productId] || [];
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <select
-                  style={{ padding: '4px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
-                  value={this.state.noproduct[key].overrideBatchId || ''}
-                  onChange={(e) => {
-                    const selectedId = e.target.value ? parseInt(e.target.value) : null;
-                    if (!selectedId) {
-                      const p = this.state.noproduct;
-                      p[key].overrideBatchId = null;
-                      this.setState({ noproduct: { ...p } });
-                      return;
-                    }
-                    const fifoBatch = batches[0];
-                    const isNonFifo = fifoBatch && fifoBatch.batchId !== selectedId;
-                    if (isNonFifo) {
-                      // Non-FIFO selection — require expiry date confirmation
-                      this.setState({
-                        fifoConfirmModal: {
-                          open: true,
-                          productKey: key,
-                          selectedBatchId: selectedId,
-                          fifoBatch,
-                          input: '',
-                          error: '',
-                        },
-                      });
-                    } else {
-                      // FIFO-correct selection — set directly, no confirmation needed
-                      const p = this.state.noproduct;
-                      p[key].overrideBatchId = selectedId;
-                      this.setState({ noproduct: { ...p } });
-                    }
-                  }}
-                >
-                  <option value="">Select batch...</option>
-                  {batches.map(b => (
-                    <option key={b.batchId} value={b.batchId}>
-                      {b.brand || 'No brand'} | Recv: {b.receivedDate ? new Date(b.receivedDate).toLocaleDateString('en-GB') : '-'} | Qty: {b.qtyRemaining}
-                      {b.expiryDate ? ` | Exp: ${new Date(b.expiryDate).toLocaleDateString('en-GB')}` : ''}
-                    </option>
-                  ))}
-                </select>
+        {/* Batch preview + optional override */}
+        {(() => {
+          const productId = this.state.noproduct[key].productId;
+          const batches = this.state.availableBatches[productId] || [];
+          const preview = this.state.batchPreviews[key];
+          const overrideFifo = !!this.state.noproduct[key].overrideFifo;
+          const overrideBatches = this.state.noproduct[key].overrideBatches || [];
+          const outwardQty = parseFloat(this.state.noproduct[key].quantity) || 0;
+          const overrideTotal = overrideBatches.reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
+          const qtyMismatch = overrideFifo && outwardQty > 0 && Math.abs(overrideTotal - outwardQty) > 0.001;
+
+          if (!productId || batches.length === 0) return null;
+          return (
+            <div style={{ minWidth: '320px', maxWidth: '480px' }}>
+              {/* Preview panel — always shown when batches exist */}
+              <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', color: '#1565c0' }}>
+                Batch Consumption Preview {preview && preview.loading ? '(loading…)' : ''}
+              </div>
+              {preview && !preview.loading && preview.batches.length > 0 && (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', marginBottom: '6px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#e3f2fd' }}>
+                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9', textAlign: 'left' }}>Batch #</th>
+                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Expiry</th>
+                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Brand</th>
+                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Qty</th>
+                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>FIFO?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preview.batches.map((b, i) => (
+                      <tr key={i} style={{ backgroundColor: b.fifoOverridden ? '#fff8e1' : '#f1f8e9' }}>
+                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9' }}>#{b.batchId}</td>
+                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9', textAlign: 'center' }}>
+                          {b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}
+                        </td>
+                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9' }}>{b.brand || '—'}</td>
+                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9', textAlign: 'right' }}>{b.qtyConsumed}</td>
+                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9', textAlign: 'center' }}>
+                          {b.fifoOverridden
+                            ? <span style={{ color: '#e65100', fontWeight: 600 }}>No</span>
+                            : <span style={{ color: '#2e7d32' }}>✓</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {preview && !preview.loading && preview.error && (
+                <div style={{ fontSize: '11px', color: '#c62828', marginBottom: '6px' }}>{preview.error}</div>
+              )}
+
+              {/* Confirmation checkbox — shown only when preview has batches and no override */}
+              {preview && !preview.loading && preview.batches.length > 0 && !overrideFifo && (
+                <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px',
+                  padding: '5px 8px', backgroundColor: this.state.batchConfirmed[key] ? '#f1f8e9' : '#fff8e1',
+                  border: `1px solid ${this.state.batchConfirmed[key] ? '#a5d6a7' : '#ffe082'}`, borderRadius: '4px' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!this.state.batchConfirmed[key]}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      this.setState(prev => ({
+                        batchConfirmed: { ...prev.batchConfirmed, [key]: checked }
+                      }));
+                    }}
+                  />
+                  <span style={{ color: this.state.batchConfirmed[key] ? '#2e7d32' : '#795548' }}>
+                    I confirm the above batches are correct for this outward
+                  </span>
+                </label>
+              )}
+
+              {/* Override FIFO checkbox */}
+              <label style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                 <input
-                  type="text"
-                  placeholder="Reason for override (required) *"
-                  maxLength={500}
-                  style={{ padding: '4px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc' }}
-                  value={this.state.noproduct[key].overrideComment || ''}
+                  type="checkbox"
+                  checked={overrideFifo}
                   onChange={(e) => {
                     const p = this.state.noproduct;
-                    p[key].overrideComment = e.target.value;
-                    this.setState({ noproduct: { ...p } });
+                    p[key].overrideFifo = e.target.checked;
+                    if (!e.target.checked) {
+                      p[key].overrideBatches = null;
+                      p[key].overrideComment = null;
+                    } else {
+                      // Init overrideBatches from available batches (qty blank)
+                      p[key].overrideBatches = batches.map(b => ({ batchId: b.batchId, qty: '' }));
+                    }
+                    this.setState({ noproduct: { ...p } }, () => this.fetchBatchPreview(key));
                   }}
                 />
-              </div>
-            );
-          })()}
-        </div>
+                Override FIFO batch
+              </label>
+
+              {overrideFifo && (
+                <div style={{ border: '1px solid #ffe082', borderRadius: '4px', padding: '8px', backgroundColor: '#fffde7' }}>
+                  <div style={{ fontSize: '11px', color: '#795548', marginBottom: '6px' }}>
+                    Enter qty for each batch. Total must equal <strong>{outwardQty}</strong>. Leave batch at 0 to skip.
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', marginBottom: '6px' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#fff8e1' }}>
+                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082', textAlign: 'left' }}>Batch #</th>
+                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Expiry</th>
+                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Brand</th>
+                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Available</th>
+                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Qty *</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batches.map((b, i) => {
+                        const entry = overrideBatches.find(e => e.batchId === b.batchId) || { batchId: b.batchId, qty: '' };
+                        return (
+                          <tr key={b.batchId}>
+                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>#{b.batchId}</td>
+                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082', textAlign: 'center' }}>
+                              {b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}
+                            </td>
+                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>{b.brand || '—'}</td>
+                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082', textAlign: 'right' }}>{b.qtyRemaining}</td>
+                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max={b.qtyRemaining}
+                                step="any"
+                                style={{ width: '60px', padding: '2px 4px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '11px' }}
+                                value={entry.qty}
+                                onChange={(ev) => {
+                                  const p = this.state.noproduct;
+                                  const newBatches = batches.map(bt => {
+                                    const ex = (p[key].overrideBatches || []).find(e => e.batchId === bt.batchId) || { batchId: bt.batchId, qty: '' };
+                                    return bt.batchId === b.batchId ? { batchId: b.batchId, qty: ev.target.value } : ex;
+                                  });
+                                  p[key].overrideBatches = newBatches;
+                                  this.setState({ noproduct: { ...p } }, () => this.fetchBatchPreview(key));
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  <div style={{ fontSize: '11px', marginBottom: '4px', color: qtyMismatch ? '#c62828' : '#555' }}>
+                    Total assigned: <strong>{overrideTotal.toFixed(2)}</strong> / {outwardQty}
+                    {qtyMismatch && ' ⚠ Must equal outward quantity'}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Reason for override (required) *"
+                    maxLength={500}
+                    style={{ padding: '4px', fontSize: '12px', borderRadius: '4px', border: '1px solid #ccc', width: '100%', boxSizing: 'border-box' }}
+                    value={this.state.noproduct[key].overrideComment || ''}
+                    onChange={(e) => {
+                      const p = this.state.noproduct;
+                      p[key].overrideComment = e.target.value;
+                      this.setState({ noproduct: { ...p } });
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         <IconButton
           aria-label="back"
@@ -329,6 +429,42 @@ class Add extends AddForm {
       const batches = this.state.availableBatches;
       batches[productId] = response.data.filter(b => b.qtyRemaining > 0);
       this.setState({ availableBatches: { ...batches } });
+    }
+  }
+
+  async fetchBatchPreview(key) {
+    const product = this.state.noproduct[key];
+    const warehouseId = this.formData.warehouseId;
+    if (!product || !product.productId || !product.quantity || !warehouseId) return;
+
+    const overrideFifo = !!product.overrideFifo;
+    const overrideBatches = overrideFifo && product.overrideBatches
+      ? product.overrideBatches.filter(e => e.batchId && e.qty > 0)
+      : null;
+
+    // Only preview if qty > 0
+    if (parseFloat(product.quantity) <= 0) return;
+
+    this.setState(prev => ({
+      batchPreviews: { ...prev.batchPreviews, [key]: { batches: [], loading: true, error: null } },
+      batchConfirmed: { ...prev.batchConfirmed, [key]: false },
+    }));
+
+    const response = await API.POST(apiEndpoints.previewOutwardBatches, {
+      productId: product.productId,
+      warehouseId,
+      quantity: parseFloat(product.quantity),
+      overrideBatches: overrideBatches && overrideBatches.length > 0 ? overrideBatches : null,
+    });
+
+    if (response.success) {
+      this.setState(prev => ({
+        batchPreviews: { ...prev.batchPreviews, [key]: { batches: response.data.batches || [], loading: false, error: null } }
+      }));
+    } else {
+      this.setState(prev => ({
+        batchPreviews: { ...prev.batchPreviews, [key]: { batches: [], loading: false, error: response.errorMessage || 'Preview failed' } }
+      }));
     }
   }
 
@@ -403,11 +539,28 @@ class Add extends AddForm {
       });
       return;
     }
-    // Validate override: if overrideFifo is checked, batch + comment are required
+    // Validate batch confirmation for FIFO (non-override) products with preview loaded
+    for (const [k, product] of Object.entries(this.state.noproduct)) {
+      const preview = this.state.batchPreviews[k];
+      if (!product.overrideFifo && preview && preview.batches && preview.batches.length > 0) {
+        if (!this.state.batchConfirmed[k]) {
+          this.props.enqueueSnackbar("Please confirm the batch preview before saving.", { variant: "error" });
+          return;
+        }
+      }
+    }
+
+    // Validate override: if overrideFifo is checked, batches + comment are required
     for (const product of Object.values(this.state.noproduct)) {
       if (product.overrideFifo) {
-        if (!product.overrideBatchId) {
-          this.props.enqueueSnackbar("Please select a batch for FIFO override.", { variant: "error" });
+        const batches = (product.overrideBatches || []).filter(e => e.batchId && parseFloat(e.qty) > 0);
+        if (batches.length === 0) {
+          this.props.enqueueSnackbar("Please assign quantities to at least one batch for FIFO override.", { variant: "error" });
+          return;
+        }
+        const total = batches.reduce((s, e) => s + parseFloat(e.qty || 0), 0);
+        if (Math.abs(total - parseFloat(product.quantity)) > 0.001) {
+          this.props.enqueueSnackbar(`Override batch total (${total}) must equal outward quantity (${product.quantity}).`, { variant: "error" });
           return;
         }
         if (!product.overrideComment || !product.overrideComment.trim()) {
@@ -420,12 +573,17 @@ class Add extends AddForm {
     const params = this.formData;
     this.setState({ isAdding: true });
 
-    params.productWithQuantities = Object.values(this.state.noproduct).map(p => ({
-      productId: p.productId,
-      quantity: p.quantity,
-      overrideBatchId: p.overrideFifo ? (p.overrideBatchId || null) : null,
-      overrideComment: p.overrideFifo ? (p.overrideComment || null) : null,
-    }));
+    params.productWithQuantities = Object.values(this.state.noproduct).map(p => {
+      const overrideBatches = p.overrideFifo
+        ? (p.overrideBatches || []).filter(e => e.batchId && parseFloat(e.qty) > 0).map(e => ({ batchId: e.batchId, qty: parseFloat(e.qty) }))
+        : null;
+      return {
+        productId: p.productId,
+        quantity: p.quantity,
+        overrideBatches: overrideBatches && overrideBatches.length > 0 ? overrideBatches : null,
+        overrideComment: p.overrideFifo ? (p.overrideComment || null) : null,
+      };
+    });
     const response = await API.POST(this.addurl, params);
     this.setState({ isAdding: false });
 
@@ -617,7 +775,7 @@ class Add extends AddForm {
         </Dialog>
 
         {/* FIFO override confirmation modal */}
-        {this.renderFifoConfirmModal()}
+        {/* FIFO confirm modal removed — multi-batch qty table is the confirmation */}
 
       </div>
     );
@@ -632,8 +790,8 @@ class Add extends AddForm {
     // Determine what the user must enter and how to display it
     const useExpiry = !!(fifoBatch && fifoBatch.expiryDate);
     const confirmDate = useExpiry
-      ? new Date(fifoBatch.expiryDate).toLocaleDateString('en-GB')   // DD/MM/YYYY
-      : new Date(fifoBatch.receivedDate).toLocaleDateString('en-GB');
+      ? fifoBatch.expiryDate.replace(/-/g, '/')
+      : (fifoBatch.receivedDate ? fifoBatch.receivedDate.replace(/-/g, '/') : '');
     const confirmLabel = useExpiry ? 'expiry date' : 'received date';
     const confirmPlaceholder = 'DD/MM/YYYY';
 
@@ -677,9 +835,9 @@ class Add extends AddForm {
             padding: '10px 14px', marginBottom: 16, fontSize: 13,
           }}>
             <div><strong>Brand:</strong> {fifoBatch.brand || '—'}</div>
-            <div><strong>Received:</strong> {fifoBatch.receivedDate ? new Date(fifoBatch.receivedDate).toLocaleDateString('en-GB') : '—'}</div>
+            <div><strong>Received:</strong> {fifoBatch.receivedDate ? fifoBatch.receivedDate.replace(/-/g, '/') : '—'}</div>
             {fifoBatch.expiryDate && (
-              <div><strong>Expiry:</strong> {new Date(fifoBatch.expiryDate).toLocaleDateString('en-GB')}</div>
+              <div><strong>Expiry:</strong> {fifoBatch.expiryDate.replace(/-/g, '/')}</div>
             )}
             <div><strong>Qty remaining:</strong> {fifoBatch.qtyRemaining}</div>
           </div>

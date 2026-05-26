@@ -1,11 +1,15 @@
 package com.ec.application.controller;
 
 import com.ec.application.Filters.FilterDataList;
+import com.ec.application.data.BatchConsumptionPreviewDTO;
+import com.ec.application.data.OutwardBatchPreviewRequest;
 import com.ec.application.data.StockSplitRequest;
 import com.ec.application.data.StockTilesDTO;
 import com.ec.application.data.WriteOffRequestDTO;
 import com.ec.application.model.BatchWriteOff;
 import com.ec.application.model.InventoryBatch;
+import com.ec.application.model.OutwardBatchConsumption;
+import com.ec.application.repository.OutwardBatchConsumptionRepository;
 import com.ec.application.service.BatchTrackingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +24,9 @@ public class BatchTrackingController {
 
     @Autowired
     BatchTrackingService batchTrackingService;
+
+    @Autowired
+    OutwardBatchConsumptionRepository outwardBatchConsumptionRepository;
 
     @PostMapping("/batch/{batchId}/write-off")
     public ResponseEntity<?> writeOffBatch(
@@ -40,10 +47,29 @@ public class BatchTrackingController {
         return ResponseEntity.ok(batchTrackingService.getWriteOffHistory(batchId));
     }
 
+    @GetMapping("/outward/{outwardId}/batch-consumptions")
+    public ResponseEntity<List<OutwardBatchConsumption>> getBatchConsumptions(@PathVariable Long outwardId) {
+        return ResponseEntity.ok(outwardBatchConsumptionRepository.findByOutwardIdOrderByIdAsc(outwardId));
+    }
+
+    @PostMapping("/outward/preview-batches")
+    public ResponseEntity<?> previewBatchConsumption(@RequestBody OutwardBatchPreviewRequest request) {
+        try {
+            BatchConsumptionPreviewDTO result = batchTrackingService.previewBatchConsumption(
+                    request.getProductId(), request.getWarehouseId(),
+                    request.getQuantity(), request.getOverrideBatches());
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
     @GetMapping("/stock/{productId}/batches")
     public ResponseEntity<List<InventoryBatch>> getBatchesForProduct(
             @PathVariable Long productId,
-            @RequestParam Long warehouseId) {
+            @RequestParam(required = false) Long warehouseId) {
         return ResponseEntity.ok(batchTrackingService.getBatchesForProduct(productId, warehouseId));
     }
 

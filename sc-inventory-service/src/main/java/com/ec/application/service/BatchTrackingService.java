@@ -1,5 +1,7 @@
 package com.ec.application.service;
 
+import com.ec.application.data.BatchConsumptionPreviewDTO;
+import com.ec.application.data.BatchOverrideEntry;
 import com.ec.application.data.StockSplitRequest;
 import com.ec.application.data.StockTilesDTO;
 import com.ec.application.data.WriteOffRequestDTO;
@@ -83,9 +85,6 @@ public class BatchTrackingService {
         if (request.getReason() == null || request.getReason().trim().isEmpty()) {
             throw new IllegalArgumentException("Reason is required for write-off.");
         }
-        if (request.getWriteOffDate() == null) {
-            throw new IllegalArgumentException("Write-off date is required.");
-        }
 
         batch.setQtyRemaining(batch.getQtyRemaining() - request.getQuantity());
         inventoryBatchRepository.save(batch);
@@ -109,14 +108,16 @@ public class BatchTrackingService {
         writeOff.setWarehouseId(batch.getWarehouse().getWarehouseId());
         writeOff.setQuantity(request.getQuantity());
         writeOff.setReason(request.getReason().trim());
-        writeOff.setWriteOffDate(request.getWriteOffDate());
+        writeOff.setWriteOffDate(new Date());
         writeOff.setWrittenOffBy(currentUser);
 
         return batchWriteOffRepository.save(writeOff);
     }
 
     public List<InventoryBatch> getBatchesForProduct(Long productId, Long warehouseId) {
-        List<InventoryBatch> batches = inventoryBatchRepository.findAllBatchesForProduct(productId, warehouseId);
+        List<InventoryBatch> batches = warehouseId != null
+                ? inventoryBatchRepository.findAllBatchesForProduct(productId, warehouseId)
+                : inventoryBatchRepository.findAllBatchesForProductAllWarehouses(productId);
         LocalDate today = LocalDate.now();
         for (InventoryBatch batch : batches) {
             if (batch.getExpiryDate() != null) {
@@ -194,6 +195,73 @@ public class BatchTrackingService {
         dto.setAging30Days(aging30);
         dto.setAging60Days(aging60);
         dto.setAging90Days(aging90);
+        return dto;
+    }
+
+    /**
+     * Simulates batch consumption for an outward without persisting anything.
+     * Used by frontend to show a preview of which batches will be consumed.
+     */
+    @Transactional(readOnly = true)
+    public BatchConsumptionPreviewDTO previewBatchConsumption(
+            Long productId, Long warehouseId, Double qty,
+            List<BatchOverrideEntry> overrideBatches) throws Exception {
+
+        List<InventoryBatch> fifoBatches = inventoryBatchRepository
+                .findAvailableBatchesFifoOrder(productId, warehouseId);
+
+        List<BatchConsumptionPreviewDTO.BatchPreviewItem> items = new ArrayList<>();
+
+        if (overrideBatches != null && !overrideBatches.isEmpty()) {
+            // Multi-batch override: user specified exact batches + qtys
+            double totalOverride = overrideBatches.stream()
+                    .mapToDouble(e -> e.getQty() != null ? e.getQty() : 0).sum();
+            if (Math.abs(totalOverride - qty) > 0.001) {
+                throw new IllegalArgumentException(
+                    "Override batch quantities (" + totalOverride + ") must equal outward quantity (" + qty + ").");
+            }
+            List<Long> fifoBatchIds = fifoBatches.stream()
+                    .map(InventoryBatch::getBatchId).collect(Collectors.toList());
+            int fifoPtr = 0;
+            for (BatchOverrideEntry entry : overrideBatches) {
+                InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                        .orElseThrow(() -> new Exception("Batch not found: " + entry.getBatchId()));
+                boolean isFifoOrder = fifoPtr < fifoBatchIds.size()
+                        && fifoBatchIds.get(fifoPtr).equals(entry.getBatchId());
+                boolean fifoOverridden = !isFifoOrder;
+                BatchConsumptionPreviewDTO.BatchPreviewItem item = new BatchConsumptionPreviewDTO.BatchPreviewItem();
+                item.setBatchId(batch.getBatchId());
+                item.setBrand(batch.getBrand());
+                item.setExpiryDate(batch.getExpiryDate());
+                item.setReceivedDate(batch.getReceivedDate());
+                item.setQtyConsumed(entry.getQty());
+                item.setQtyAvailable(batch.getQtyRemaining());
+                item.setFifoOverridden(fifoOverridden);
+                items.add(item);
+                fifoPtr++;
+            }
+        } else {
+            // Pure FIFO: simulate consumption from oldest batches first
+            double remaining = qty;
+            for (InventoryBatch batch : fifoBatches) {
+                if (remaining <= 0) break;
+                double consume = Math.min(remaining, batch.getQtyRemaining());
+                BatchConsumptionPreviewDTO.BatchPreviewItem item = new BatchConsumptionPreviewDTO.BatchPreviewItem();
+                item.setBatchId(batch.getBatchId());
+                item.setBrand(batch.getBrand());
+                item.setExpiryDate(batch.getExpiryDate());
+                item.setReceivedDate(batch.getReceivedDate());
+                item.setQtyConsumed(consume);
+                item.setQtyAvailable(batch.getQtyRemaining());
+                item.setFifoOverridden(false);
+                items.add(item);
+                remaining -= consume;
+            }
+        }
+
+        BatchConsumptionPreviewDTO dto = new BatchConsumptionPreviewDTO();
+        dto.setProductId(productId);
+        dto.setBatches(items);
         return dto;
     }
 

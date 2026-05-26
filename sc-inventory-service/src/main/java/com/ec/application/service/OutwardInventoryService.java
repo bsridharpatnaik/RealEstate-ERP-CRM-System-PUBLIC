@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.data.BatchOverrideEntry;
 import com.ec.application.data.OutwardInventoryData;
 import com.ec.application.data.OutwardInventoryExportDAO2;
 import com.ec.application.data.ProductGroupedDAO;
@@ -745,44 +746,71 @@ public class OutwardInventoryService {
             Long overrideBatchId = pwq != null ? pwq.getOverrideBatchId() : null;
             String overrideComment = pwq != null ? pwq.getOverrideComment() : null;
 
-            if (overrideBatchId != null) {
-                // Override: consume from the specified batch (with pessimistic lock, #3)
-                InventoryBatch batch = inventoryBatchRepository.findByIdLocked(overrideBatchId)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Batch not found with ID: " + overrideBatchId));
+            List<BatchOverrideEntry> overrideBatches = pwq != null ? pwq.getOverrideBatches() : null;
+            boolean hasMultiOverride = overrideBatches != null && !overrideBatches.isEmpty();
+            boolean hasSingleOverride = overrideBatchId != null && !hasMultiOverride;
 
-                if (batch.getQtyRemaining() < qtyToConsume) {
+            if (hasMultiOverride || hasSingleOverride) {
+                // Validate reason
+                if (overrideComment == null || overrideComment.trim().isEmpty()) {
                     throw new IllegalArgumentException(
-                            "Batch " + overrideBatchId + " does not have enough quantity. " +
-                            "Available: " + batch.getQtyRemaining() + ", Requested: " + qtyToConsume);
-                }
-
-                // Check if this is a genuine FIFO override (not the oldest batch)
-                List<InventoryBatch> fifoBatches = inventoryBatchRepository
-                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId);
-                boolean isFifoOverride = fifoBatches.isEmpty() ||
-                        !fifoBatches.get(0).getBatchId().equals(overrideBatchId);
-
-                if (isFifoOverride && (overrideComment == null || overrideComment.trim().isEmpty())) {
-                    throw new IllegalArgumentException(
-                            "A comment is required when overriding FIFO batch selection for product: " +
+                            "A reason is required when overriding FIFO batch selection for product: " +
                             iol.getProduct().getProductName());
                 }
 
-                batch.setQtyRemaining(batch.getQtyRemaining() - qtyToConsume);
-                inventoryBatchRepository.save(batch);
+                // Normalise to a list for uniform processing
+                List<BatchOverrideEntry> entriesToProcess = new ArrayList<>();
+                if (hasMultiOverride) {
+                    double total = overrideBatches.stream()
+                            .mapToDouble(e -> e.getQty() != null ? e.getQty() : 0).sum();
+                    if (Math.abs(total - qtyToConsume) > 0.001) {
+                        throw new IllegalArgumentException(
+                                "Override batch quantities (" + total + ") must equal outward quantity (" +
+                                qtyToConsume + ") for product: " + iol.getProduct().getProductName());
+                    }
+                    entriesToProcess = overrideBatches;
+                } else {
+                    BatchOverrideEntry single = new BatchOverrideEntry();
+                    single.setBatchId(overrideBatchId);
+                    single.setQty(qtyToConsume);
+                    entriesToProcess.add(single);
+                }
 
-                OutwardBatchConsumption consumption = new OutwardBatchConsumption();
-                consumption.setOutwardId(outwardInventory.getOutwardid());
-                consumption.setBatch(batch);
-                consumption.setProductId(productId);
-                consumption.setWarehouseId(warehouseId);
-                consumption.setQtyConsumed(qtyToConsume);
-                consumption.setFifoOverridden(isFifoOverride);
-                consumption.setOverrideComment(isFifoOverride ? overrideComment : null);
-                outwardBatchConsumptionRepository.save(consumption);
+                List<InventoryBatch> fifoBatches = inventoryBatchRepository
+                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId);
+                List<Long> fifoBatchIds = fifoBatches.stream()
+                        .map(InventoryBatch::getBatchId).collect(java.util.stream.Collectors.toList());
 
-                if (isFifoOverride) anyOverride = true;
+                int fifoPtr = 0;
+                for (BatchOverrideEntry entry : entriesToProcess) {
+                    InventoryBatch batch = inventoryBatchRepository.findByIdLocked(entry.getBatchId())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Batch not found with ID: " + entry.getBatchId()));
+                    if (batch.getQtyRemaining() < entry.getQty()) {
+                        throw new IllegalArgumentException(
+                                "Batch " + entry.getBatchId() + " does not have enough quantity. " +
+                                "Available: " + batch.getQtyRemaining() + ", Requested: " + entry.getQty());
+                    }
+                    boolean isFifoOrder = fifoPtr < fifoBatchIds.size()
+                            && fifoBatchIds.get(fifoPtr).equals(entry.getBatchId());
+                    boolean isFifoOverride = !isFifoOrder;
+
+                    batch.setQtyRemaining(batch.getQtyRemaining() - entry.getQty());
+                    inventoryBatchRepository.save(batch);
+
+                    OutwardBatchConsumption consumption = new OutwardBatchConsumption();
+                    consumption.setOutwardId(outwardInventory.getOutwardid());
+                    consumption.setBatch(batch);
+                    consumption.setProductId(productId);
+                    consumption.setWarehouseId(warehouseId);
+                    consumption.setQtyConsumed(entry.getQty());
+                    consumption.setFifoOverridden(isFifoOverride);
+                    consumption.setOverrideComment(isFifoOverride ? overrideComment : null);
+                    outwardBatchConsumptionRepository.save(consumption);
+
+                    if (isFifoOverride) anyOverride = true;
+                    fifoPtr++;
+                }
             } else {
                 // True FIFO: old (pre-feature) stock consumed first, then tracked batches
                 List<InventoryBatch> fifoBatches = inventoryBatchRepository

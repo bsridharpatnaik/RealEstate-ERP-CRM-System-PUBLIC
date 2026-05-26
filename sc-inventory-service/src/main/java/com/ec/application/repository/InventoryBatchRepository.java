@@ -19,7 +19,7 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
     @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
            "AND b.warehouse.warehouseId = :warehouseId " +
            "AND b.qtyRemaining > 0 AND b.isDeleted = false " +
-           "ORDER BY b.receivedDate ASC, b.batchId ASC")
+           "ORDER BY b.expiryDate ASC, b.batchId ASC")
     List<InventoryBatch> findAvailableBatchesFifoOrder(
             @Param("productId") Long productId,
             @Param("warehouseId") Long warehouseId);
@@ -28,10 +28,17 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
     @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
            "AND b.warehouse.warehouseId = :warehouseId " +
            "AND b.isDeleted = false " +
-           "ORDER BY b.receivedDate ASC, b.batchId ASC")
+           "ORDER BY b.expiryDate ASC, b.batchId ASC")
     List<InventoryBatch> findAllBatchesForProduct(
             @Param("productId") Long productId,
             @Param("warehouseId") Long warehouseId);
+
+    // All batches for a product across all warehouses
+    @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
+           "AND b.isDeleted = false " +
+           "ORDER BY b.expiryDate ASC, b.batchId ASC")
+    List<InventoryBatch> findAllBatchesForProductAllWarehouses(
+            @Param("productId") Long productId);
 
     // For expiry alerts — batches expiring within N days with qty remaining
     @Query("SELECT b FROM InventoryBatch b WHERE b.expiryDate IS NOT NULL " +
@@ -88,7 +95,7 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
     @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
            "AND b.warehouse.warehouseId = :warehouseId " +
            "AND b.qtyRemaining > 0 AND b.isDeleted = false " +
-           "ORDER BY b.receivedDate ASC, b.batchId ASC")
+           "ORDER BY b.expiryDate ASC, b.batchId ASC")
     List<InventoryBatch> findAvailableBatchesFifoOrderLocked(
             @Param("productId") Long productId,
             @Param("warehouseId") Long warehouseId);

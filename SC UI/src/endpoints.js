@@ -272,11 +272,15 @@ export const apiEndpoints = {
   getInventoryTransfer: "/api/inventory/inventory-transfer?size=" + noOfRecords,
   createInventoryTransfer: "/api/inventory/inventory-transfer/create",
   getDeadStock: "/api/inventory/dead-stock",
-  getBatchesForProduct: (productId, warehouseId) => `/api/inventory/stock/${productId}/batches?warehouseId=${warehouseId}`,
+  getBatchesForProduct: (productId, warehouseId) => warehouseId
+    ? `/api/inventory/stock/${productId}/batches?warehouseId=${warehouseId}`
+    : `/api/inventory/stock/${productId}/batches`,
   getExpiryTiles: "/api/inventory/stock/tiles/expiry",
   writeOffBatch: (batchId) => `/api/inventory/batch/${batchId}/write-off`,
   getBatchWriteOffHistory: (batchId) => `/api/inventory/batch/${batchId}/write-off/history`,
   splitExistingStock: (productId) => `/api/inventory/stock/${productId}/split-existing`,
+  getOutwardBatchConsumptions: (outwardId) => `/api/inventory/outward/${outwardId}/batch-consumptions`,
+  previewOutwardBatches: '/api/inventory/outward/preview-batches',
   getStockSummary: "/api/inventory/stock-summary",
   stockSummaryExport: "/api/inventory/stock-summary/export/excel",
   stockSummaryImport: "/api/inventory/stock-summary/import",
