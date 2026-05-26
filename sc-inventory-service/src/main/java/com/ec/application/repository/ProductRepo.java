@@ -55,7 +55,8 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 					") " +
 					"FROM Product m " +
 					"WHERE (:isManagedInventory IS NULL OR m.isManagedInventory = :isManagedInventory) " +
-					"AND (:categoryId IS NULL OR m.category.categoryId = :categoryId)"
+					"AND (:categoryId IS NULL OR m.category.categoryId = :categoryId) " +
+					"ORDER BY m.productName ASC"
 	)
 	List<IdNameAndUnit> getProducts(
 			@Param("isManagedInventory") Boolean isManagedInventory,

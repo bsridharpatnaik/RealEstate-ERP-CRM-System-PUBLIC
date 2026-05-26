@@ -27,7 +27,7 @@ SELECT
 
     SUM(CASE
         WHEN q.type IN ('Inward', 'Transfer-In', 'Excess-Found')   THEN  q.quantity
-        WHEN q.type IN ('Transfer-Out', 'Outward', 'Lost-Damaged') THEN -q.quantity
+        WHEN q.type IN ('Transfer-Out', 'Outward', 'Lost-Damaged', 'Write-Off') THEN -q.quantity
         ELSE 0
     END) OVER (
         PARTITION BY q.warehouse_id, q.productid
@@ -204,6 +204,31 @@ FROM (
     JOIN Category cat ON cat.categoryid = p.categoryid
     JOIN Warehouse w  ON w.warehouse_id = ldi.warehousename
     WHERE ldi.is_deleted = 0 AND ldi.entry_type = 'EXCESS_FOUND'
+
+    UNION ALL
+
+    /* === BATCH WRITE-OFF — sort_order 6 === */
+    SELECT
+        'Write-Off'             AS type,
+        bwo.write_off_id        AS keyid,
+        bwo.write_off_id        AS entryid,
+        DATE(bwo.write_off_date) AS date,
+        NULL                    AS contactid,
+        bwo.product_id          AS productid,
+        bwo.quantity,
+        bwo.creationDate,
+        bwo.lastModifiedDate,
+        p.product_name,
+        cat.category_name,
+        p.measurementunit,
+        w.warehouse_id,
+        w.warehousename,
+        6                       AS sort_order
+    FROM batch_write_off bwo
+    JOIN Product p    ON p.productid    = bwo.product_id
+    JOIN Category cat ON cat.categoryid = p.categoryid
+    JOIN Warehouse w  ON w.warehouse_id = bwo.warehouse_id
+    WHERE bwo.is_deleted = 0
 
 ) q
 LEFT JOIN contacts c ON c.contactid = q.contactid;

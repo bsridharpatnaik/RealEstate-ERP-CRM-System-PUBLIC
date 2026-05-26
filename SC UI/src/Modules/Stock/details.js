@@ -18,6 +18,7 @@ class Details extends Component {
     batchesLoading: false,
     writeOffForm: null,
     writeOffSubmitting: false,
+    stockAdjustments: {},
     splitFormOpen: false,
     splitEntries: [{ qty: '', expiryDate: '', brand: '' }],
     splitSubmitting: false,
@@ -45,12 +46,14 @@ class Details extends Component {
   }
 
   getUntrackedQty() {
-    const { selectedWarehouseId, batches } = this.state;
+    const { selectedWarehouseId, batches, stockAdjustments } = this.state;
     const data = this.props.data;
     if (!selectedWarehouseId) return 0;
-    const warehouseStock = (data.detailedStock || []).find(
+    const baseStock = (data.detailedStock || []).find(
       s => s.warehouseId === selectedWarehouseId
     )?.quantityInHand || 0;
+    const adjustment = stockAdjustments[selectedWarehouseId] || 0;
+    const warehouseStock = baseStock - adjustment;
     const trackedQty = batches.reduce((sum, b) => sum + (b.qtyRemaining || 0), 0);
     return Math.max(parseFloat((warehouseStock - trackedQty).toFixed(4)), 0);
   }
@@ -321,8 +324,15 @@ class Details extends Component {
     });
     this.setState({ writeOffSubmitting: false });
     if (response.success) {
-      this.setState({ writeOffForm: null });
-      const { selectedWarehouseId } = this.state;
+      const { selectedWarehouseId, stockAdjustments } = this.state;
+      const writtenQty = parseFloat(writeOffForm.quantity);
+      this.setState({
+        writeOffForm: null,
+        stockAdjustments: {
+          ...stockAdjustments,
+          [selectedWarehouseId]: (stockAdjustments[selectedWarehouseId] || 0) + writtenQty,
+        },
+      });
       const productId = this.props.data.productId;
       if (productId && selectedWarehouseId) {
         this.loadBatches(productId, selectedWarehouseId);
@@ -553,8 +563,8 @@ class Details extends Component {
                                     )}
                                   </td>
                                   <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.brand || <span style={{ color: '#bbb' }}>—</span>}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.receivedDate ? new Date(batch.receivedDate).toLocaleDateString('en-GB') : '—'}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.expiryDate ? new Date(batch.expiryDate).toLocaleDateString('en-GB') : <span style={{ color: '#bbb' }}>—</span>}</td>
+                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.receivedDate ? batch.receivedDate.replace(/-/g, '/') : '—'}</td>
+                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.expiryDate ? batch.expiryDate.replace(/-/g, '/') : <span style={{ color: '#bbb' }}>—</span>}</td>
                                   <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
                                     {batch.expiryDate ? (
                                       isExpired ? (
