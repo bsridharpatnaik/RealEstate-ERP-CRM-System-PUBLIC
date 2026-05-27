@@ -23,7 +23,7 @@ public class PurchaseOrderHistoryController {
 
     @GetMapping("/previous-rates")
     @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER, RoleConstants.MANAGEMENT})
-    public List<PreviousPurchaseRateDTO> getPreviousRates(@RequestParam("productId") Long productId) {
+    public List<PreviousPurchaseRateDTO>    getPreviousRates(@RequestParam("productId") Long productId) {
         return historyService.getPreviousRates(productId);
     }
 
