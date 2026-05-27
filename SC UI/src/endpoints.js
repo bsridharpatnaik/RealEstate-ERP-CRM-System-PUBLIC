@@ -49,6 +49,7 @@ export const apiEndpoints = {
   getProductForIndentByCategory: (categoryId) =>
     `/api/inventory/product?categoryId=${categoryId}`,
   createProduct: "/api/inventory/product/create",
+  importProducts: "/api/inventory/product/import",
   individualProduct: "/api/inventory/product/",
   getAllTenantReorderConfigs: (id) => `/api/inventory/product/${id}/all-tenant-reorder-configs`,
   saveTenantReorderConfig: (id) => `/api/inventory/product/${id}/tenant-reorder-config`,
