@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,11 +69,12 @@ public class AutomaticEmailController {
     public ResponseEntity<byte[]> downloadDailyStockReport() {
         try {
             List<String> tenants = schemaConfig.getNonMasterSchemaList();
+            Map<Long, Double> netRateMap = stockEmailReportService.fetchLatestNetRateMap();
             List<ProjectStockEmailData> allProjects = new ArrayList<>();
             for (String tenantName : tenants) {
                 ThreadLocalStorage.setTenantName(tenantName);
                 try {
-                    allProjects.add(stockEmailReportService.collectTenantStockData(tenantName));
+                    allProjects.add(stockEmailReportService.collectTenantStockData(tenantName, netRateMap));
                 } finally {
                     ThreadLocalStorage.setTenantName(null);
                 }
@@ -100,11 +102,12 @@ public class AutomaticEmailController {
     public String triggerDailyStockReport() {
         try {
             List<String> tenants = schemaConfig.getNonMasterSchemaList();
+            Map<Long, Double> netRateMap = stockEmailReportService.fetchLatestNetRateMap();
             List<ProjectStockEmailData> allProjects = new ArrayList<>();
             for (String tenantName : tenants) {
                 ThreadLocalStorage.setTenantName(tenantName);
                 try {
-                    allProjects.add(stockEmailReportService.collectTenantStockData(tenantName));
+                    allProjects.add(stockEmailReportService.collectTenantStockData(tenantName, netRateMap));
                 } finally {
                     ThreadLocalStorage.setTenantName(null);
                 }
