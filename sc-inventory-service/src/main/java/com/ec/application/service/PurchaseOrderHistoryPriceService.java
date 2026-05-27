@@ -8,8 +8,6 @@ import com.ec.application.data.PriceScatterPointDTO;
 import com.ec.application.model.PurchaseOrderLine;
 import com.ec.application.repository.PurchaseOrderLineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +29,7 @@ public class PurchaseOrderHistoryPriceService {
     @UseDefaultTenant
     @Transactional(readOnly = true)
     public List<PreviousPurchaseRateDTO> getPreviousRates(Long productId) {
-        Pageable top15 = PageRequest.of(0, 15);
-        List<Object[]> rows = poLineRepo.findPreviousRates(productId, STATUS_CANCELLED, top15);
+        List<Object[]> rows = poLineRepo.findPreviousRates(productId, STATUS_CANCELLED);
         if (rows == null) return Collections.emptyList();
 
         return rows.stream().map(row -> {
@@ -78,8 +75,6 @@ public class PurchaseOrderHistoryPriceService {
         if (lines == null || lines.isEmpty()) {
             return Collections.emptyList();
         }
-
-        Pageable top15 = PageRequest.of(0, 15);
 
         return lines.stream()
                 .map(line -> {

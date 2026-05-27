@@ -2,7 +2,6 @@ package com.ec.application.repository;
 
 import com.ec.application.data.PreviousPurchaseRateDTO;
 import com.ec.application.model.PurchaseOrderLine;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +21,20 @@ public interface PurchaseOrderLineRepository
                     "AND po.status <> :cancelledStatus " +
                     "ORDER BY CAST(SUBSTRING(po.purchaseOrderId, LOCATE('-', po.purchaseOrderId) + 1) AS integer) DESC"
     )
-    List<Object[]> findPreviousRates(@Param("productId") Long productId, @Param("cancelledStatus") String cancelledStatus, Pageable pageable);
+    List<Object[]> findPreviousRates(@Param("productId") Long productId, @Param("cancelledStatus") String cancelledStatus);
+
+    @Query(
+            value = "SELECT product_id, computed_net_rate FROM (" +
+                    "  SELECT pol.product_id," +
+                    "         pol.rate - (pol.rate * COALESCE(pol.discountPercent, 0) / 100.0) AS computed_net_rate," +
+                    "         ROW_NUMBER() OVER (PARTITION BY pol.product_id ORDER BY po.po_date DESC, pol.id DESC) AS rn" +
+                    "  FROM purchase_order_line pol" +
+                    "  INNER JOIN purchase_order po ON pol.po_id = po.purchase_order_id" +
+                    "  WHERE po.is_deleted = 0 AND po.status <> 'Cancelled' AND pol.is_deleted = 0" +
+                    ") ranked WHERE rn = 1",
+            nativeQuery = true
+    )
+    List<Object[]> findLatestNetRatePerProduct();
 
     @Query(
             "SELECT pol FROM PurchaseOrderLine pol " +

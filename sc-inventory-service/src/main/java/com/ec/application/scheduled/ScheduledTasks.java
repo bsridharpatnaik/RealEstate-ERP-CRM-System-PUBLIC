@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @EnableScheduling
@@ -101,11 +102,12 @@ public class ScheduledTasks {
         log.info("Daily stock email report triggered");
         try {
             List<String> tenants = schemaConfig.getNonMasterSchemaList();
+            Map<Long, Double> netRateMap = stockEmailReportService.fetchLatestNetRateMap();
             List<ProjectStockEmailData> allProjects = new ArrayList<>();
             for (String tenantName : tenants) {
                 com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
                 try {
-                    ProjectStockEmailData data = stockEmailReportService.collectTenantStockData(tenantName);
+                    ProjectStockEmailData data = stockEmailReportService.collectTenantStockData(tenantName, netRateMap);
                     allProjects.add(data);
                 } finally {
                     com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);

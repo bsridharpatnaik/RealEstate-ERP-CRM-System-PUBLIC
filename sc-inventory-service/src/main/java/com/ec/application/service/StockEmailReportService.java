@@ -1,9 +1,11 @@
 package com.ec.application.service;
 
+import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.data.ProductStockRow;
 import com.ec.application.data.ProjectStockEmailData;
 import com.ec.application.data.WarehouseStockRow;
 import com.ec.application.model.Stock;
+import com.ec.application.repository.PurchaseOrderLineRepository;
 import com.ec.application.repository.StockRepo;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
@@ -24,13 +26,31 @@ public class StockEmailReportService {
     @Autowired
     StockRepo stockRepo;
 
+    @Autowired
+    PurchaseOrderLineRepository purchaseOrderLineRepo;
+
     Logger log = LoggerFactory.getLogger(StockEmailReportService.class);
+
+    /**
+     * Loads latest net rate per product from master schema in one bulk query.
+     * Must be called before switching to tenant context — @UseDefaultTenant ensures master schema.
+     */
+    @UseDefaultTenant
+    public Map<Long, Double> fetchLatestNetRateMap() {
+        List<Object[]> rows = purchaseOrderLineRepo.findLatestNetRatePerProduct();
+        Map<Long, Double> map = new HashMap<>();
+        for (Object[] row : rows) {
+            if (row[1] != null)
+                map.put(((Number) row[0]).longValue(), ((Number) row[1]).doubleValue());
+        }
+        return map;
+    }
 
     /**
      * Collects stock data for the current tenant (ThreadLocalStorage must be set by caller).
      * Splits into non-zero stock rows (with warehouse breakdown) and zero-stock item names.
      */
-    public ProjectStockEmailData collectTenantStockData(String tenantName) {
+    public ProjectStockEmailData collectTenantStockData(String tenantName, Map<Long, Double> netRateMap) {
         List<Stock> stocks = stockRepo.findAllActiveStockExcludingDeadStockWarehouse();
 
         // Group all stock records by productId
@@ -56,6 +76,10 @@ public class StockEmailReportService {
                         ? first.getProduct().getCategory().getCategoryName() : "");
                 row.setTotalQty(totalQty);
                 row.setUnit(first.getProduct().getMeasurementUnit());
+
+                Double netRate = netRateMap.get(first.getProduct().getProductId());
+                row.setNetRate(netRate);
+                row.setTgv(netRate != null ? round2(netRate * totalQty) : null);
 
                 // Only include warehouses with qty > 0
                 List<WarehouseStockRow> whRows = productStocks.stream()
@@ -105,20 +129,26 @@ public class StockEmailReportService {
             sheet.setColumnWidth(1, 5500);  // Category / Warehouse
             sheet.setColumnWidth(2, 4000);  // Qty
             sheet.setColumnWidth(3, 3500);  // Unit
+            sheet.setColumnWidth(4, 5000);  // Net Rate
+            sheet.setColumnWidth(5, 5000);  // TGV
+            sheet.setColumnWidth(6, 7500);  // TGV (In Words)
 
             int r = 0;
 
             // ── Section 1: Stock Summary ──
             r = writeSectionHeader(sheet, r, "STOCK SUMMARY", sectionGreen);
-            r = writeColHeaders(sheet, r, colHeader, "Product", "Category", "Total Qty", "Unit");
+            r = writeColHeaders(sheet, r, colHeader,
+                    "Product", "Category", "Total Qty", "Unit", "Net Rate (Before GST)", "TGV", "TGV (In Words)");
             int altCount = 0;
             for (ProductStockRow row : project.getStockRows()) {
                 r = writeDataRow(sheet, r, altCount++ % 2 == 0 ? normal : alt,
                         row.getProductName(), row.getCategory(),
-                        String.valueOf(row.getTotalQty()), row.getUnit());
+                        String.valueOf(row.getTotalQty()), row.getUnit(),
+                        formatOrBlank(row.getNetRate()), formatOrBlank(row.getTgv()),
+                        toIndianDenomination(row.getTgv()));
             }
             if (project.getStockRows().isEmpty()) {
-                r = writeDataRow(sheet, r, normal, "No items in stock", "", "", "");
+                r = writeDataRow(sheet, r, normal, "No items in stock", "", "", "", "", "", "");
             }
             r += 2;
 
@@ -231,5 +261,25 @@ public class StockEmailReportService {
 
     private double round2(double value) {
         return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    private String formatOrBlank(Double value) {
+        return value != null ? String.valueOf(value) : "";
+    }
+
+    private String toIndianDenomination(Double value) {
+        if (value == null) return "";
+        long amount = Math.round(value);
+        if (amount == 0) return "0";
+        StringBuilder sb = new StringBuilder();
+        long crore    = amount / 10_000_000L;
+        long lakh     = (amount % 10_000_000L) / 100_000L;
+        long thousand = (amount % 100_000L)     / 1_000L;
+        long rest     = amount % 1_000L;
+        if (crore    > 0) sb.append(crore).append(" Crore ");
+        if (lakh     > 0) sb.append(lakh).append(" Lakh ");
+        if (thousand > 0) sb.append(thousand).append(" Thousand ");
+        if (rest     > 0) sb.append(rest);
+        return sb.toString().trim();
     }
 }

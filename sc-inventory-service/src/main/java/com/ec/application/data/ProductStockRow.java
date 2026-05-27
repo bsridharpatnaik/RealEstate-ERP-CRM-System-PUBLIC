@@ -13,4 +13,6 @@ public class ProductStockRow {
     private Double totalQty;
     private String unit;
     private List<WarehouseStockRow> warehouseBreakdown; // non-zero warehouses only
+    private Double netRate;
+    private Double tgv;
 }
