@@ -1,6 +1,7 @@
 package com.ec.application.model;
 
 import javax.persistence.*;
+import javax.persistence.EnumType;
 
 import com.ec.application.IDGenerator.ProductCodeGenerator;
 import com.ec.application.datasync.MultiTableSyncListener;
@@ -14,6 +15,7 @@ import org.hibernate.envers.Audited;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.ec.application.constants.BatchMode;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity(name = "Product")
@@ -60,8 +62,34 @@ public class Product extends ReusableFields {
     @Column(name = "show_on_dashboard")
     Boolean showOnDashboard;
 
-    @Column(name = "is_expirable", columnDefinition = "boolean default false")
-    Boolean isExpirable = false;
+    /**
+     * Replaced boolean isExpirable.
+     * NONE (default) = no batch tracking.
+     * BATCH_ONLY     = track brand/lot, expiry optional.
+     * BATCH_WITH_EXPIRY = track brand/lot + mandatory expiry, FEFO ordering.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "batch_mode", columnDefinition = "varchar(30) default 'NONE'")
+    BatchMode batchMode = BatchMode.NONE;
+
+    /** True when any batch tracking is active (BATCH_ONLY or BATCH_WITH_EXPIRY). */
+    public boolean isBatchTracked() {
+        return batchMode != null && batchMode != BatchMode.NONE;
+    }
+
+    /** True when expiry date is mandatory (BATCH_WITH_EXPIRY only). */
+    public boolean requiresExpiry() {
+        return batchMode == BatchMode.BATCH_WITH_EXPIRY;
+    }
+
+    /**
+     * Backward-compat shim — code that still reads isExpirable gets correct value.
+     * @deprecated use requiresExpiry() directly.
+     */
+    @Deprecated
+    public Boolean getIsExpirable() {
+        return requiresExpiry();
+    }
 
     @PrePersist
     public void assignProductCode() {

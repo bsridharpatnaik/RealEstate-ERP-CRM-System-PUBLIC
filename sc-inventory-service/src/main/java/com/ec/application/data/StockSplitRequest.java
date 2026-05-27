@@ -20,5 +20,7 @@ public class StockSplitRequest {
         private Date expiryDate;
 
         private String brand;
+
+        private String lotNumber;
     }
 }

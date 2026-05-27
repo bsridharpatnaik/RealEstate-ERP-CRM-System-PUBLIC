@@ -22,7 +22,7 @@ class Details extends Component {
     writeOffHistories: {},
     writeOffHistoryLoading: {},
     splitFormOpen: false,
-    splitEntries: [{ qty: '', expiryDate: '', brand: '' }],
+    splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }],
     splitSubmitting: false,
     splitError: null,
   };
@@ -62,7 +62,9 @@ class Details extends Component {
     )?.quantityInHand || 0;
     const adjustment = stockAdjustments[selectedWarehouseId] || 0;
     const warehouseStock = baseStock - adjustment;
-    const trackedQty = batches.reduce((sum, b) => sum + (b.qtyRemaining || 0), 0);
+    const trackedQty = batches
+      .filter(b => !selectedWarehouseId || b.warehouse?.warehouseId === selectedWarehouseId || b.warehouseId === selectedWarehouseId)
+      .reduce((sum, b) => sum + (b.qtyRemaining || 0), 0);
     return Math.max(parseFloat((warehouseStock - trackedQty).toFixed(4)), 0);
   }
 
@@ -80,14 +82,14 @@ class Details extends Component {
 
   addSplitEntry() {
     this.setState(prev => ({
-      splitEntries: [...prev.splitEntries, { qty: '', expiryDate: '', brand: '' }],
+      splitEntries: [...prev.splitEntries, { qty: '', expiryDate: '', brand: '', lotNumber: '' }],
       splitError: null,
     }));
   }
 
   removeSplitEntry(idx) {
     const entries = this.state.splitEntries.filter((_, i) => i !== idx);
-    this.setState({ splitEntries: entries.length > 0 ? entries : [{ qty: '', expiryDate: '', brand: '' }], splitError: null });
+    this.setState({ splitEntries: entries.length > 0 ? entries : [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }], splitError: null });
   }
 
   fillRemaining(idx) {
@@ -104,6 +106,8 @@ class Details extends Component {
   async submitSplit() {
     const { selectedWarehouseId, splitEntries } = this.state;
     const data = this.props.data;
+    const batchMode = data.batchMode || 'NONE';
+    const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
     const untrackedQty = this.getUntrackedQty();
     const total = this.getSplitTotal();
 
@@ -116,7 +120,7 @@ class Details extends Component {
         this.setState({ splitError: 'All batch quantities must be greater than zero.' });
         return;
       }
-      if (!e.expiryDate) {
+      if (requiresExpiry && !e.expiryDate) {
         this.setState({ splitError: 'Expiry date is required for every batch.' });
         return;
       }
@@ -129,12 +133,13 @@ class Details extends Component {
         qty: parseFloat(e.qty),
         expiryDate: e.expiryDate ? e.expiryDate.split('-').reverse().join('-') : null,
         brand: e.brand || null,
+        lotNumber: e.lotNumber || null,
       })),
     };
     const response = await API.POST(apiEndpoints.splitExistingStock(data.productId), payload);
     this.setState({ splitSubmitting: false });
     if (response.success) {
-      this.setState({ splitFormOpen: false, splitEntries: [{ qty: '', expiryDate: '', brand: '' }] });
+      this.setState({ splitFormOpen: false, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] });
       this.loadBatches(data.productId, selectedWarehouseId);
     } else {
       this.setState({ splitError: response.errorMessage || 'Split failed. Please try again.' });
@@ -143,6 +148,8 @@ class Details extends Component {
 
   renderSplitPanel(untrackedQty) {
     const { splitFormOpen, splitEntries, splitSubmitting, splitError } = this.state;
+    const batchMode = this.props.data.batchMode || 'NONE';
+    const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
     const total = this.getSplitTotal();
     const remaining = parseFloat((untrackedQty - total).toFixed(4));
     const isExact = Math.abs(remaining) <= 0.001;
@@ -161,7 +168,9 @@ class Details extends Component {
           <div style={{ fontSize: '12px', color: '#5d4037' }}>
             <strong>⚠ {untrackedQty} units untracked</strong>
             <span style={{ marginLeft: '8px', color: '#795548' }}>
-              Outward is blocked until all stock is split into batches with expiry dates.
+              {requiresExpiry
+                ? 'Outward is blocked until all stock is split into batches with expiry dates.'
+                : 'Outward is blocked until all stock is assigned to tracked batches.'}
             </span>
           </div>
           <button
@@ -170,7 +179,7 @@ class Details extends Component {
               background: '#e65100', color: 'white', border: 'none',
               borderRadius: '4px', cursor: 'pointer', whiteSpace: 'nowrap',
             }}
-            onClick={() => this.setState({ splitFormOpen: true, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '' }] })}
+            onClick={() => this.setState({ splitFormOpen: true, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] })}
           >
             Split Stock →
           </button>
@@ -228,8 +237,11 @@ class Details extends Component {
               <tr style={{ background: '#f5f5f5' }}>
                 <th style={{ padding: '5px 6px', border: '1px solid #ddd', width: '28px', textAlign: 'center' }}>#</th>
                 <th style={{ padding: '5px 6px', border: '1px solid #ddd', width: '90px' }}>Qty *</th>
-                <th style={{ padding: '5px 6px', border: '1px solid #ddd', width: '140px' }}>Expiry Date *</th>
-                <th style={{ padding: '5px 6px', border: '1px solid #ddd' }}>Brand (optional)</th>
+                {requiresExpiry && (
+                  <th style={{ padding: '5px 6px', border: '1px solid #ddd', width: '140px' }}>Expiry Date *</th>
+                )}
+                <th style={{ padding: '5px 6px', border: '1px solid #ddd' }}>Identifier (optional)</th>
+                <th style={{ padding: '5px 6px', border: '1px solid #ddd' }}>Lot / Batch No. (optional)</th>
                 <th style={{ padding: '5px 6px', border: '1px solid #ddd', width: '60px', textAlign: 'center' }}>Fill</th>
                 <th style={{ padding: '5px 6px', border: '1px solid #ddd', width: '30px' }}></th>
               </tr>
@@ -247,21 +259,32 @@ class Details extends Component {
                       placeholder="0"
                     />
                   </td>
-                  <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                    <input
-                      type="date"
-                      style={{ width: '100%', padding: '3px 5px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '12px', boxSizing: 'border-box' }}
-                      value={entry.expiryDate}
-                      onChange={e => this.updateSplitEntry(idx, 'expiryDate', e.target.value)}
-                    />
-                  </td>
+                  {requiresExpiry && (
+                    <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                      <input
+                        type="date"
+                        style={{ width: '100%', padding: '3px 5px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '12px', boxSizing: 'border-box' }}
+                        value={entry.expiryDate}
+                        onChange={e => this.updateSplitEntry(idx, 'expiryDate', e.target.value)}
+                      />
+                    </td>
+                  )}
                   <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
                     <input
                       type="text"
                       style={{ width: '100%', padding: '3px 5px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '12px', boxSizing: 'border-box' }}
                       value={entry.brand}
                       onChange={e => this.updateSplitEntry(idx, 'brand', e.target.value)}
-                      placeholder="e.g. ABC Corp"
+                      placeholder="e.g. Brand, Type, Grade"
+                    />
+                  </td>
+                  <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                    <input
+                      type="text"
+                      style={{ width: '100%', padding: '3px 5px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '12px', boxSizing: 'border-box' }}
+                      value={entry.lotNumber || ''}
+                      onChange={e => this.updateSplitEntry(idx, 'lotNumber', e.target.value)}
+                      placeholder="e.g. LOT-2024-01"
                     />
                   </td>
                   <td style={{ padding: '4px 6px', border: '1px solid #ddd', textAlign: 'center' }}>
@@ -389,7 +412,7 @@ class Details extends Component {
           >
             History
           </button>
-          {data.isExpirable && (
+          {data.batchMode && data.batchMode !== 'NONE' && (
             <button
               className={`tab-button ${this.state.activeTab === 'batches' ? 'active' : ''}`}
               onClick={() => this.handleTabChange('batches')}
@@ -523,7 +546,7 @@ class Details extends Component {
                   value={this.state.selectedWarehouseId || ''}
                   onChange={(e) => {
                     const warehouseId = e.target.value ? parseInt(e.target.value) : null;
-                    this.setState({ selectedWarehouseId: warehouseId, writeOffForm: null, splitFormOpen: false, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '' }] });
+                    this.setState({ selectedWarehouseId: warehouseId, writeOffForm: null, splitFormOpen: false, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] });
                   }}
                 >
                   <option value="">All warehouses</option>
@@ -541,26 +564,34 @@ class Details extends Component {
 
               {!this.state.batchesLoading && (() => {
                 const untrackedQty = this.getUntrackedQty();
-                const isExpirable = data.isExpirable;
+                const batchMode = data.batchMode || 'NONE';
+                const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
                 return (
                   <>
-                    {/* Split panel — only for expirable products with untracked stock */}
-                    {isExpirable && untrackedQty > 0.001 && this.renderSplitPanel(untrackedQty)}
+                    {/* Split panel — for all batch-tracked products with untracked stock */}
+                    {batchMode !== 'NONE' && untrackedQty > 0.001 && this.renderSplitPanel(untrackedQty)}
 
                     {(() => {
                       const visibleBatches = [...this.state.batches]
                         .filter(b => b.qtyRemaining > 0)
                         .filter(b => !this.state.selectedWarehouseId || b.warehouse?.warehouseId === this.state.selectedWarehouseId || b.warehouseId === this.state.selectedWarehouseId)
                         .sort((a, b) => {
-                          if (!a.expiryDate && !b.expiryDate) return 0;
-                          if (!a.expiryDate) return 1;
-                          if (!b.expiryDate) return -1;
-                          return a.expiryDate.localeCompare(b.expiryDate);
+                          // FEFO for BATCH_WITH_EXPIRY, FIFO by receivedDate for BATCH_ONLY
+                          if (requiresExpiry) {
+                            if (!a.expiryDate && !b.expiryDate) return 0;
+                            if (!a.expiryDate) return 1;
+                            if (!b.expiryDate) return -1;
+                            return a.expiryDate.localeCompare(b.expiryDate);
+                          } else {
+                            if (!a.receivedDate && !b.receivedDate) return 0;
+                            if (!a.receivedDate) return 1;
+                            if (!b.receivedDate) return -1;
+                            return a.receivedDate.localeCompare(b.receivedDate);
+                          }
                         });
                       return visibleBatches.length === 0 ? (
                       <div style={{ color: '#888', fontSize: '13px', padding: '8px 0' }}>
                         No batch records found.
-                        {!isExpirable && ' Batch tracking only applies to products with "Track Expiry Date" enabled.'}
                       </div>
                     ) : (
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
@@ -568,10 +599,11 @@ class Details extends Component {
                           <tr style={{ backgroundColor: '#f5f5f5' }}>
                             <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Batch</th>
                             <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Warehouse</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Brand</th>
+                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Identifier</th>
+                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Lot / Batch No.</th>
                             <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Received</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Expiry</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>Status</th>
+                            {requiresExpiry && <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Expiry</th>}
+                            {requiresExpiry && <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>Status</th>}
                             <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'right' }}>Qty Remaining</th>
                             <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>Action</th>
                           </tr>
@@ -596,20 +628,25 @@ class Details extends Component {
                                     )}
                                   </td>
                                   <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.warehouse?.warehouseName || '—'}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.brand || <span style={{ color: '#bbb' }}>—</span>}</td>
+                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.brand || <span style={{ color: '#bbb', fontSize: '11px' }}>—</span>}</td>
+                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.lotNumber || <span style={{ color: '#bbb' }}>—</span>}</td>
                                   <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.receivedDate ? batch.receivedDate.replace(/-/g, '/') : '—'}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.expiryDate ? batch.expiryDate.replace(/-/g, '/') : <span style={{ color: '#bbb' }}>—</span>}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
-                                    {batch.expiryDate ? (
-                                      isExpired ? (
-                                        <span style={{ background: '#ffcdd2', color: '#c62828', borderRadius: '3px', padding: '1px 6px', fontSize: '11px', fontWeight: 600 }}>Expired</span>
-                                      ) : isNearExpiry ? (
-                                        <span style={{ background: '#ffe0b2', color: '#e65100', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
-                                      ) : (
-                                        <span style={{ background: '#e8f5e9', color: '#2e7d32', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
-                                      )
-                                    ) : <span style={{ color: '#bbb', fontSize: '11px' }}>—</span>}
-                                  </td>
+                                  {requiresExpiry && (
+                                    <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.expiryDate ? batch.expiryDate.replace(/-/g, '/') : <span style={{ color: '#bbb' }}>—</span>}</td>
+                                  )}
+                                  {requiresExpiry && (
+                                    <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                      {batch.expiryDate ? (
+                                        isExpired ? (
+                                          <span style={{ background: '#ffcdd2', color: '#c62828', borderRadius: '3px', padding: '1px 6px', fontSize: '11px', fontWeight: 600 }}>Expired</span>
+                                        ) : isNearExpiry ? (
+                                          <span style={{ background: '#ffe0b2', color: '#e65100', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
+                                        ) : (
+                                          <span style={{ background: '#e8f5e9', color: '#2e7d32', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
+                                        )
+                                      ) : <span style={{ color: '#bbb', fontSize: '11px' }}>—</span>}
+                                    </td>
+                                  )}
                                   <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 600 }}>{batch.qtyRemaining}</td>
                                   <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
                                     {batch.qtyRemaining > 0 && (
@@ -624,7 +661,7 @@ class Details extends Component {
                                 </tr>
                                 {this.state.writeOffForm && this.state.writeOffForm.batchId === batch.batchId && (
                                   <tr>
-                                    <td colSpan="8" style={{ padding: '8px', backgroundColor: '#fafafa', border: '1px solid #ddd' }}>
+                                    <td colSpan={requiresExpiry ? 9 : 7} style={{ padding: '8px', backgroundColor: '#fafafa', border: '1px solid #ddd' }}>
                                       <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                                         <div>
                                           <div style={{ fontSize: '11px', marginBottom: '2px' }}>Quantity *</div>
@@ -662,7 +699,7 @@ class Details extends Component {
                                 {/* Write-off history for this batch */}
                                 {this.state.writeOffHistories[batch.batchId] && this.state.writeOffHistories[batch.batchId].length > 0 && (
                                   <tr>
-                                    <td colSpan="8" style={{ padding: '6px 8px', backgroundColor: '#fff8e1', border: '1px solid #ffe082' }}>
+                                    <td colSpan={requiresExpiry ? 9 : 7} style={{ padding: '6px 8px', backgroundColor: '#fff8e1', border: '1px solid #ffe082' }}>
                                       <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', color: '#e65100' }}>Write-off History</div>
                                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                                         <thead>
@@ -692,7 +729,8 @@ class Details extends Component {
                           })}
                         </tbody>
                       </table>
-                    )}
+                    );
+                  })()}
                   </>
                 );
               })()}

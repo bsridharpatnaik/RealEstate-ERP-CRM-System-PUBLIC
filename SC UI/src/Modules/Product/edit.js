@@ -17,6 +17,9 @@ class Edit extends EditForm {
   state = {
     data: {},
     isLoaded: false,
+    batchMode: 'NONE',
+    originalBatchMode: 'NONE',
+    batchModeChanged: false,
   };
 
   componentDidMount() {
@@ -35,9 +38,26 @@ class Edit extends EditForm {
       this.formData.categoryId = data.category.categoryId;
       this.formData.showOnDashboard = data.showOnDashboard;
       this.formData.isManagedInventory = data.isManagedInventory !== undefined ? data.isManagedInventory : true;
-      this.formData.isExpirable = data.isExpirable || false;
-      this.setState({ isLoaded: true });
+      // batchMode supersedes the old isExpirable boolean
+      this.formData.batchMode = data.batchMode || (data.isExpirable ? 'BATCH_WITH_EXPIRY' : 'NONE');
+      this.setState({ isLoaded: true, batchMode: this.formData.batchMode, originalBatchMode: this.formData.batchMode });
     }
+  }
+
+  async update(event) {
+    event.preventDefault();
+    if (this.state.batchModeChanged) {
+      const confirmed = window.confirm(
+        'Warning: Changing the batch tracking mode for an existing product may cause inconsistencies with existing inventory.\n\n' +
+        'Existing stock without batch data will remain untracked, and FIFO ordering may be affected for in-progress batches.\n\n' +
+        'Are you sure you want to continue?'
+      );
+      if (!confirmed) return;
+    }
+    this.setState({ isUpdating: true });
+    const response = await API.PUT(this.updateUrl, this.formData);
+    this.showToaster(response);
+    this.setState({ isUpdating: false });
   }
 
   render() {
@@ -86,7 +106,29 @@ class Edit extends EditForm {
             <div class="flex flex-space-between">
               {this.renderToggle('Show in Dashboard', 'showOnDashboard')}
               {this.renderToggle('Is Managed Inventory', 'isManagedInventory')}
-              {this.renderToggle('Track Expiry Date', 'isExpirable')}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px' }}>
+                <label style={{ fontSize: '12px', color: '#666', fontWeight: 500 }}>Batch Tracking</label>
+                <select
+                  style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+                  value={this.state.batchMode}
+                  onChange={(e) => {
+                    this.formData.batchMode = e.target.value;
+                    this.setState({
+                      batchMode: e.target.value,
+                      batchModeChanged: e.target.value !== this.state.originalBatchMode,
+                    });
+                  }}
+                >
+                  <option value="NONE">No Batch Tracking</option>
+                  <option value="BATCH_ONLY">Track by Identifier / Lot (no expiry)</option>
+                  <option value="BATCH_WITH_EXPIRY">Track by Identifier / Lot + Expiry Date</option>
+                </select>
+                {this.state.batchModeChanged && (
+                  <span style={{ fontSize: '11px', color: '#e65100', marginTop: '3px' }}>
+                    ⚠ Changing this may affect existing inventory records
+                  </span>
+                )}
+              </div>
               {this.renderFooter()}
             </div>
           </form>

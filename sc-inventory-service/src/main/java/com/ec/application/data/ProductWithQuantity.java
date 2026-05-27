@@ -38,6 +38,9 @@ public class ProductWithQuantity {
     // Multi-batch override: explicit list of {batchId, qty} — takes precedence over overrideBatchId when set
     List<BatchOverrideEntry> overrideBatches;
 
+    // Return batch entries: explicit list of {batchId, qty} — required when multiple batches were used in the original outward
+    List<BatchOverrideEntry> returnBatches;
+
     public ProductWithQuantity() {}
 
     public ProductWithQuantity(Long productId, Double quantity) {

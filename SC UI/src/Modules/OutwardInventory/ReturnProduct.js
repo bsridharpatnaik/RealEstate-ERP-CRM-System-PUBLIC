@@ -15,6 +15,7 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
+import moment from "moment";
 
 class ReturnProduct extends AddForm {
   sourceDetails = this.props?.data?.inwardOutwardList.map((item) => {
@@ -30,6 +31,8 @@ class ReturnProduct extends AddForm {
     noproduct: {},
     enableSave: true,
     currentsourceDetails: this.sourceDetails,
+    // batchConsumptions: { [productId]: [{ batchId, brand, lotNumber, expiryDate, qtyConsumed }] }
+    batchConsumptions: {},
   };
   key = 1;
 
@@ -42,6 +45,36 @@ class ReturnProduct extends AddForm {
     p[this.key++] = {};
     this.setState({ noproduct: { ...p } });
   }
+
+  /** Load batch consumptions for a product in this outward. Sets state.batchConsumptions[productId]. */
+  async loadBatchConsumptions(productId) {
+    if (!productId) return;
+    const outwardId = this.props?.data?.outwardid;
+    if (!outwardId) return;
+    try {
+      const response = await API.GET(apiEndpoints.getOutwardBatchConsumptions(outwardId));
+      if (response.success && Array.isArray(response.data)) {
+        // Filter to this product
+        const forProduct = response.data.filter((c) => c.productId === productId);
+        this.setState((prev) => ({
+          batchConsumptions: { ...prev.batchConsumptions, [productId]: forProduct },
+        }));
+      }
+    } catch (e) {
+      // ignore — batch selection UI just won't show
+    }
+  }
+
+  /**
+   * Returns true if the product used multiple distinct batches in the outward
+   * (i.e., batch selection is required for return).
+   */
+  hasMultipleBatches(productId) {
+    const consumptions = this.state.batchConsumptions[productId] || [];
+    const distinctBatches = new Set(consumptions.map((c) => c.batch?.batchId));
+    return distinctBatches.size > 1;
+  }
+
   checkValidation() {
     let isValid = this.key > 1 ? true : false;
     if (isValid) {
@@ -49,23 +82,27 @@ class ReturnProduct extends AddForm {
       if (val.length === 0) {
         isValid = false;
       }
-      Object.values(this.state.noproduct).map((item) => {
-        if (
-          item &&
-          item.productId &&
-          item.returnquantity &&
-          item.returnquantity > 0 &&
-          isValid
-        ) {
+      Object.values(this.state.noproduct).forEach((item) => {
+        if (item && item.productId && item.returnquantity && item.returnquantity > 0 && isValid) {
+          // If multiple batches, all batch return qty must be > 0
+          if (this.hasMultipleBatches(item.productId)) {
+            const batchEntries = item.batchReturnQtys || {};
+            const consumptions = this.state.batchConsumptions[item.productId] || [];
+            // Ensure at least one batch qty is specified
+            const hasAny = consumptions.some(
+              (c) => batchEntries[c.batch?.batchId] && batchEntries[c.batch?.batchId] > 0
+            );
+            if (!hasAny) isValid = false;
+          }
           isValid = true;
         } else {
           isValid = false;
         }
-        return null;
       });
     }
     this.setState({ enableSave: !isValid });
   }
+
   renderProductAddButton() {
     return (
       <Fab
@@ -86,7 +123,75 @@ class ReturnProduct extends AddForm {
     );
   }
 
+  renderBatchReturnSection(key, item) {
+    const productId = item.productId;
+    if (!productId) return null;
+    const consumptions = this.state.batchConsumptions[productId] || [];
+    if (!this.hasMultipleBatches(productId)) return null;
+
+    // Group consumptions by batchId (from nested batch object)
+    const batchMap = {};
+    consumptions.forEach((c) => {
+      const bId = c.batch?.batchId;
+      if (!bId) return;
+      if (!batchMap[bId]) {
+        batchMap[bId] = {
+          batchId: bId,
+          brand: c.batch?.brand,
+          lotNumber: c.batch?.lotNumber,
+          expiryDate: c.batch?.expiryDate,
+          totalConsumed: 0,
+        };
+      }
+      batchMap[bId].totalConsumed += c.qtyConsumed;
+    });
+
+    return (
+      <Grid item sm={12} style={{ marginTop: 8 }}>
+        <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+          Multiple batches used — specify return qty per batch:
+        </div>
+        {Object.values(batchMap).map((b) => {
+          const label = [
+            b.brand,
+            b.lotNumber,
+            b.expiryDate ? "Exp: " + moment(b.expiryDate).format("DD-MM-YYYY") : null,
+            `(available: ${b.totalConsumed})`,
+          ]
+            .filter(Boolean)
+            .join(" | ");
+          return (
+            <div key={b.batchId} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, minWidth: 220 }}>{label || `Batch #${b.batchId}`}</span>
+              <input
+                type="number"
+                min="0"
+                max={b.totalConsumed}
+                step="any"
+                placeholder="Return qty"
+                style={{
+                  padding: "4px 8px",
+                  border: "1px solid #ccc",
+                  borderRadius: 4,
+                  fontSize: 13,
+                  width: 100,
+                }}
+                onChange={(e) => {
+                  const p = this.state.noproduct;
+                  if (!p[key].batchReturnQtys) p[key].batchReturnQtys = {};
+                  p[key].batchReturnQtys[b.batchId] = parseFloat(e.target.value) || 0;
+                  this.setState({ noproduct: { ...p } }, () => this.checkValidation());
+                }}
+              />
+            </div>
+          );
+        })}
+      </Grid>
+    );
+  }
+
   renderProduct(key) {
+    const item = this.state.noproduct[key] || {};
     return (
       <Grid container className="product-item" spacing={3} key={key}>
         <Grid item sm={12} md={6}>
@@ -99,18 +204,21 @@ class ReturnProduct extends AddForm {
             getOption: (option) => {
               return option["name"];
             },
-            onChange: (e, item) => {
+            onChange: (e, selectedItem) => {
               const p = this.state.noproduct;
-              p[key].productId = item.value || "";
+              p[key].productId = selectedItem.value || "";
+              p[key].batchReturnQtys = {};
               this.setState({
                 currentsourceDetails: this.state.currentsourceDetails.filter(
-                  (x) => x.value !== item.value
+                  (x) => x.value !== selectedItem.value
                 ),
               });
-              if (item) {
-                p[key].quantity = item.quantity;
-                p[key].measurementUnit = item.measurementUnit;
+              if (selectedItem) {
+                p[key].quantity = selectedItem.quantity;
+                p[key].measurementUnit = selectedItem.measurementUnit;
               }
+              // Load batch consumptions for this product
+              this.loadBatchConsumptions(selectedItem.value);
               this.checkValidation();
             },
           })}
@@ -129,13 +237,7 @@ class ReturnProduct extends AddForm {
             },
           })}
         </Grid>
-        {/* {this.renderTextField({
-              fieldname: "ClosingStock",
-              placeholder: "Closing Stock",
-              type: "number",
-              disabled: true,
-              value: this.state.noproduct[key].quantity,
-            })} */}
+        {this.renderBatchReturnSection(key, item)}
         <Grid item container sm={12} md={12} justify="flex-end">
           <Link
             component="button"
@@ -201,7 +303,7 @@ class ReturnProduct extends AddForm {
             const response = await this.saveReturn();
             this.setState({ enableSave: false });
             this.submited = false;
-            if (response.success) {
+            if (response && response.success) {
               this.props.closeDetails();
               this.props.goToDetails();
             }
@@ -219,10 +321,17 @@ class ReturnProduct extends AddForm {
       return;
     }
     const data = Object.values(this.state.noproduct).map((item) => {
-      return {
+      const entry = {
         productId: item.productId,
         quantity: Number(item.returnquantity),
       };
+      // Include returnBatches if user specified per-batch qtys (multi-batch scenario)
+      if (item.batchReturnQtys && Object.keys(item.batchReturnQtys).length > 0) {
+        entry.returnBatches = Object.entries(item.batchReturnQtys)
+          .filter(([, qty]) => qty > 0)
+          .map(([batchId, qty]) => ({ batchId: Number(batchId), qty }));
+      }
+      return entry;
     });
 
     const params = {
@@ -248,14 +357,6 @@ class ReturnProduct extends AddForm {
 
   render() {
     return (
-      // <div class="filter-container product-container">
-      //   {this.renderHeader()}
-      //   {Object.keys(this.state.noproduct).map((key) =>
-      //     this.renderProduct(key)
-      //   )}
-      //   <div class="product-footer-container">{this.renderFooter()}</div>
-      // </div>
-
       <Dialog
         open={this.props.open}
         disableBackdropClick={false}

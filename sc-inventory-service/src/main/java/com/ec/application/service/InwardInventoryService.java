@@ -159,7 +159,10 @@ public class InwardInventoryService {
         li.setTotalInwardQuantity(alreadyInwarded);
         li.setPendingQuantity(pendingQty);
         li.setMaxAllowedQuantity(maxAllowed);
-        li.setIsExpirable(productRepo.findById(v.getProductId()).map(Product::getIsExpirable).orElse(false));
+        productRepo.findById(v.getProductId()).ifPresent(p -> {
+            li.setIsExpirable(p.getIsExpirable());
+            li.setBatchMode(p.getBatchMode());
+        });
         return li;
     }
 
@@ -403,11 +406,11 @@ public class InwardInventoryService {
             IndentsForInwardView row = rowsWithLineItemCode.get(0);
             Product product = productRepo.findById(row.getProductId()).get();
             boolean hasSplits = lineItem.getBatchSplits() != null && !lineItem.getBatchSplits().isEmpty();
-            if (Boolean.TRUE.equals(product.getIsExpirable())) {
-                if (!hasSplits && lineItem.getExpiryDate() == null)
+            if (product.isBatchTracked()) {
+                if (!hasSplits && product.requiresExpiry() && lineItem.getExpiryDate() == null)
                     throw new IllegalArgumentException(
-                            "Expiry date is required for expirable product: '" + product.getProductName() + "'");
-                if (hasSplits) validateBatchSplits(lineItem.getBatchSplits(), lineItem.getQuantityReceived(), product.getProductName());
+                            "Expiry date is required for product: '" + product.getProductName() + "'");
+                if (hasSplits) validateBatchSplits(lineItem.getBatchSplits(), lineItem.getQuantityReceived(), product.getProductName(), product.requiresExpiry());
             }
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(lineItem.getQuantityReceived());
@@ -740,11 +743,11 @@ public class InwardInventoryService {
             InwardOutwardList inwardOutwardList = new InwardOutwardList();
             Product product = productRepo.findById(productWithQuantity.getProductId()).get();
             boolean hasSplitsDirect = productWithQuantity.getBatchSplits() != null && !productWithQuantity.getBatchSplits().isEmpty();
-            if (Boolean.TRUE.equals(product.getIsExpirable())) {
-                if (!hasSplitsDirect && productWithQuantity.getExpiryDate() == null)
+            if (product.isBatchTracked()) {
+                if (!hasSplitsDirect && product.requiresExpiry() && productWithQuantity.getExpiryDate() == null)
                     throw new IllegalArgumentException(
-                            "Expiry date is required for expirable product: '" + product.getProductName() + "'");
-                if (hasSplitsDirect) validateBatchSplits(productWithQuantity.getBatchSplits(), productWithQuantity.getQuantity(), product.getProductName());
+                            "Expiry date is required for product: '" + product.getProductName() + "'");
+                if (hasSplitsDirect) validateBatchSplits(productWithQuantity.getBatchSplits(), productWithQuantity.getQuantity(), product.getProductName(), product.requiresExpiry());
             }
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
@@ -963,7 +966,7 @@ public class InwardInventoryService {
 
     private void createBatchesForInward(InwardInventory inwardInventory, Map<Long, List<InwardBatchSplit>> splitsByProductId) {
         for (InwardOutwardList iol : inwardInventory.getInwardOutwardList()) {
-            if (!Boolean.TRUE.equals(iol.getProduct().getIsExpirable())) continue;
+            if (!iol.getProduct().isBatchTracked()) continue;
             Long productId = iol.getProduct().getProductId();
             List<InwardBatchSplit> splits = splitsByProductId != null ? splitsByProductId.get(productId) : null;
             if (splits != null && !splits.isEmpty()) {
@@ -973,6 +976,7 @@ public class InwardInventoryService {
                     batch.setWarehouse(iol.getWarehouse());
                     batch.setInwardId(inwardInventory.getInwardId());
                     batch.setBrand(split.getBrand());
+                    batch.setLotNumber(split.getLotNumber());
                     batch.setExpiryDate(split.getExpiryDate());
                     batch.setReceivedDate(inwardInventory.getDate());
                     batch.setQtyReceived(split.getQty());
@@ -980,6 +984,8 @@ public class InwardInventoryService {
                     inventoryBatchRepository.save(batch);
                 }
             } else {
+                // Single-batch fallback (used only when NONE products have no splits,
+                // or legacy PO path without splits for batch-tracked product)
                 InventoryBatch batch = new InventoryBatch();
                 batch.setProduct(iol.getProduct());
                 batch.setWarehouse(iol.getWarehouse());
@@ -1029,7 +1035,7 @@ public class InwardInventoryService {
         }
     }
 
-    private void validateBatchSplits(List<InwardBatchSplit> splits, Double totalQty, String productName) {
+    private void validateBatchSplits(List<InwardBatchSplit> splits, Double totalQty, String productName, boolean requireExpiry) {
         double splitSum = splits.stream().mapToDouble(s -> s.getQty() != null ? s.getQty() : 0.0).sum();
         if (Math.abs(splitSum - totalQty) > 0.001)
             throw new IllegalArgumentException(
@@ -1038,7 +1044,7 @@ public class InwardInventoryService {
             if (split.getQty() == null || split.getQty() <= 0)
                 throw new IllegalArgumentException(
                         "Each batch split quantity must be greater than zero for product: '" + productName + "'");
-            if (split.getExpiryDate() == null)
+            if (requireExpiry && split.getExpiryDate() == null)
                 throw new IllegalArgumentException(
                         "Expiry date is required for each batch split of product: '" + productName + "'");
         }
@@ -1050,7 +1056,8 @@ public class InwardInventoryService {
 
         for (InwardOutwardList iol : inward.getInwardOutwardList()) {
             Long productId = iol.getProduct().getProductId();
-            if (!Boolean.TRUE.equals(iol.getProduct().getIsExpirable())) continue;
+            if (!iol.getProduct().isBatchTracked()) continue;
+            boolean requireExpiry = iol.getProduct().requiresExpiry();
 
             ProductAndQuantity paq = paqByProductId.get(productId);
             if (paq == null) continue;
@@ -1081,16 +1088,19 @@ public class InwardInventoryService {
                 }
             } else {
                 boolean hasSplits = paq.getBatchSplits() != null && !paq.getBatchSplits().isEmpty();
-                if (!hasSplits && paq.getExpiryDate() == null)
+                if (!hasSplits && requireExpiry && paq.getExpiryDate() == null)
                     throw new IllegalArgumentException(
-                            "Expiry date is required when increasing quantity for expirable product: '" + iol.getProduct().getProductName() + "'");
+                            "Expiry date is required when increasing quantity for product: '" + iol.getProduct().getProductName() + "'");
                 if (hasSplits) {
-                    validateBatchSplits(paq.getBatchSplits(), delta, iol.getProduct().getProductName());
+                    validateBatchSplits(paq.getBatchSplits(), delta, iol.getProduct().getProductName(), requireExpiry);
                     for (InwardBatchSplit split : paq.getBatchSplits()) {
                         InventoryBatch last = batches.get(batches.size() - 1);
-                        boolean sameExpiry = split.getExpiryDate() != null && last.getExpiryDate() != null
-                                && split.getExpiryDate().equals(last.getExpiryDate());
-                        if (sameExpiry) {
+                        // Merge into existing batch only if expiry AND brand AND lot match
+                        boolean sameBatch = split.getQty() != null
+                                && objectsEqual(split.getExpiryDate(), last.getExpiryDate())
+                                && objectsEqual(split.getBrand(), last.getBrand())
+                                && objectsEqual(split.getLotNumber(), last.getLotNumber());
+                        if (sameBatch) {
                             last.setQtyReceived(last.getQtyReceived() + split.getQty());
                             last.setQtyRemaining(last.getQtyRemaining() + split.getQty());
                             inventoryBatchRepository.save(last);
@@ -1098,6 +1108,7 @@ public class InwardInventoryService {
                             InventoryBatch nb = new InventoryBatch();
                             nb.setProduct(iol.getProduct()); nb.setWarehouse(iol.getWarehouse());
                             nb.setInwardId(inward.getInwardId()); nb.setBrand(split.getBrand());
+                            nb.setLotNumber(split.getLotNumber());
                             nb.setExpiryDate(split.getExpiryDate()); nb.setReceivedDate(inward.getDate());
                             nb.setQtyReceived(split.getQty()); nb.setQtyRemaining(split.getQty());
                             inventoryBatchRepository.save(nb);
@@ -1105,9 +1116,9 @@ public class InwardInventoryService {
                     }
                 } else {
                     InventoryBatch last = batches.get(batches.size() - 1);
-                    boolean sameExpiry = paq.getExpiryDate() != null && last.getExpiryDate() != null
-                            && paq.getExpiryDate().equals(last.getExpiryDate());
-                    if (sameExpiry) {
+                    boolean sameBatch = objectsEqual(paq.getExpiryDate(), last.getExpiryDate())
+                            && objectsEqual(paq.getBrand(), last.getBrand());
+                    if (sameBatch) {
                         last.setQtyReceived(last.getQtyReceived() + delta);
                         last.setQtyRemaining(last.getQtyRemaining() + delta);
                         inventoryBatchRepository.save(last);
@@ -1253,5 +1264,12 @@ public class InwardInventoryService {
                 inwardInventory.getInwardOutwardList().size());
 
         return inwardInventory;
+    }
+
+    /** Null-safe equals used when deciding whether to merge into existing batch. */
+    private static boolean objectsEqual(Object a, Object b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
     }
 }

@@ -90,7 +90,27 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
            "AND b.isDeleted = false AND b.expiryDate <= :today")
     List<Long> findProductIdsWithExpiredStock(@Param("today") Date today);
 
-    // Pessimistic-locked FIFO query — use during outward consumption to prevent race conditions (#3)
+    // ── BATCH_ONLY: FIFO by receivedDate (no expiry column required) ────────────
+
+    @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
+           "AND b.warehouse.warehouseId = :warehouseId " +
+           "AND b.qtyRemaining > 0 AND b.isDeleted = false " +
+           "ORDER BY b.receivedDate ASC, b.batchId ASC")
+    List<InventoryBatch> findAvailableBatchesFifoOrderByReceived(
+            @Param("productId") Long productId,
+            @Param("warehouseId") Long warehouseId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
+           "AND b.warehouse.warehouseId = :warehouseId " +
+           "AND b.qtyRemaining > 0 AND b.isDeleted = false " +
+           "ORDER BY b.receivedDate ASC, b.batchId ASC")
+    List<InventoryBatch> findAvailableBatchesFifoOrderByReceivedLocked(
+            @Param("productId") Long productId,
+            @Param("warehouseId") Long warehouseId);
+
+    // ── BATCH_WITH_EXPIRY: FEFO by expiryDate (pessimistic-locked for outward) ──
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
            "AND b.warehouse.warehouseId = :warehouseId " +

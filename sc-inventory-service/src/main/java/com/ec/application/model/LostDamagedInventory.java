@@ -78,6 +78,16 @@ public class LostDamagedInventory extends ReusableFields
 	@Column(name = "entry_type", nullable = false)
 	private String entryType = "LOST_DAMAGED";
 
+	/**
+	 * For LOST_DAMAGED: the specific batch the loss was deducted from.
+	 * For EXCESS_FOUND: the new batch that was created for this entry.
+	 * Nullable — null means product is not batch-tracked or legacy record.
+	 */
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "batch_id", nullable = true)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	private InventoryBatch batch;
+
 	public String getEntryType()
 	{
 		return entryType;
@@ -186,5 +196,15 @@ public class LostDamagedInventory extends ReusableFields
 	public void setLocationOfTheft(String locationOfTheft)
 	{
 		this.locationOfTheft = locationOfTheft;
+	}
+
+	public InventoryBatch getBatch()
+	{
+		return batch;
+	}
+
+	public void setBatch(InventoryBatch batch)
+	{
+		this.batch = batch;
 	}
 }

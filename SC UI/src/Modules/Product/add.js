@@ -70,7 +70,18 @@ class Add extends AddForm {
           <div class="flex flex-space-between">
             {this.renderToggle('Show in Dashboard', 'showOnDashboard')}
             {this.renderToggle('Is Managed Inventory', 'isManagedInventory')}
-            {this.renderToggle('Track Expiry Date', 'isExpirable')}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px' }}>
+              <label style={{ fontSize: '12px', color: '#666', fontWeight: 500 }}>Batch Tracking</label>
+              <select
+                style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+                defaultValue="NONE"
+                onChange={(e) => { this.formData.batchMode = e.target.value; }}
+              >
+                <option value="NONE">No Batch Tracking</option>
+                <option value="BATCH_ONLY">Track by Identifier / Lot (no expiry)</option>
+                <option value="BATCH_WITH_EXPIRY">Track by Identifier / Lot + Expiry Date</option>
+              </select>
+            </div>
             {this.renderFooter()}
           </div>
         </form>

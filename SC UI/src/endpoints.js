@@ -271,6 +271,7 @@ export const apiEndpoints = {
   getIndentsForDropdown: "/api/inventory/indent/for-dropdown",
   getInventoryTransfer: "/api/inventory/inventory-transfer?size=" + noOfRecords,
   createInventoryTransfer: "/api/inventory/inventory-transfer/create",
+  previewTransferBatches: "/api/inventory/inventory-transfer/preview-batches",
   getDeadStock: "/api/inventory/dead-stock",
   getBatchesForProduct: (productId, warehouseId) => warehouseId
     ? `/api/inventory/stock/${productId}/batches?warehouseId=${warehouseId}`

@@ -207,8 +207,13 @@ public class BatchTrackingService {
             Long productId, Long warehouseId, Double qty,
             List<BatchOverrideEntry> overrideBatches) throws Exception {
 
-        List<InventoryBatch> fifoBatches = inventoryBatchRepository
-                .findAvailableBatchesFifoOrder(productId, warehouseId);
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new Exception("Product not found: " + productId));
+
+        // FEFO for BATCH_WITH_EXPIRY; FIFO by receivedDate for BATCH_ONLY
+        List<InventoryBatch> fifoBatches = product.requiresExpiry()
+                ? inventoryBatchRepository.findAvailableBatchesFifoOrder(productId, warehouseId)
+                : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceived(productId, warehouseId);
 
         List<BatchConsumptionPreviewDTO.BatchPreviewItem> items = new ArrayList<>();
 
@@ -232,6 +237,7 @@ public class BatchTrackingService {
                 BatchConsumptionPreviewDTO.BatchPreviewItem item = new BatchConsumptionPreviewDTO.BatchPreviewItem();
                 item.setBatchId(batch.getBatchId());
                 item.setBrand(batch.getBrand());
+                item.setLotNumber(batch.getLotNumber());
                 item.setExpiryDate(batch.getExpiryDate());
                 item.setReceivedDate(batch.getReceivedDate());
                 item.setQtyConsumed(entry.getQty());
@@ -249,6 +255,7 @@ public class BatchTrackingService {
                 BatchConsumptionPreviewDTO.BatchPreviewItem item = new BatchConsumptionPreviewDTO.BatchPreviewItem();
                 item.setBatchId(batch.getBatchId());
                 item.setBrand(batch.getBrand());
+                item.setLotNumber(batch.getLotNumber());
                 item.setExpiryDate(batch.getExpiryDate());
                 item.setReceivedDate(batch.getReceivedDate());
                 item.setQtyConsumed(consume);
@@ -278,8 +285,8 @@ public class BatchTrackingService {
 
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new Exception("Product not found: " + productId));
-        if (!Boolean.TRUE.equals(product.getIsExpirable()))
-            throw new IllegalArgumentException("Stock split is only allowed for expirable products.");
+        if (!product.isBatchTracked())
+            throw new IllegalArgumentException("Stock split is only allowed for batch-tracked products (BATCH_ONLY or BATCH_WITH_EXPIRY).");
 
         Warehouse warehouse = warehouseRepo.findById(request.getWarehouseId())
                 .orElseThrow(() -> new Exception("Warehouse not found: " + request.getWarehouseId()));
@@ -301,12 +308,13 @@ public class BatchTrackingService {
             throw new IllegalArgumentException(
                 "Batch quantities (" + requestTotal + ") must equal untracked stock (" + untrackedQty + "). Difference: " + Math.abs(requestTotal - untrackedQty));
 
+        boolean requireExpiry = product.requiresExpiry();
         Date today = new Date();
         List<InventoryBatch> created = new ArrayList<>();
         for (StockSplitRequest.BatchEntry entry : request.getBatches()) {
             if (entry.getQty() == null || entry.getQty() <= 0)
                 throw new IllegalArgumentException("Each batch quantity must be greater than zero.");
-            if (entry.getExpiryDate() == null)
+            if (requireExpiry && entry.getExpiryDate() == null)
                 throw new IllegalArgumentException("Expiry date is required for each batch.");
 
             InventoryBatch batch = new InventoryBatch();
@@ -314,6 +322,7 @@ public class BatchTrackingService {
             batch.setWarehouse(warehouse);
             batch.setInwardId(-1L);
             batch.setBrand(entry.getBrand());
+            batch.setLotNumber(entry.getLotNumber());
             batch.setExpiryDate(entry.getExpiryDate());
             batch.setReceivedDate(today);
             batch.setQtyReceived(entry.getQty());

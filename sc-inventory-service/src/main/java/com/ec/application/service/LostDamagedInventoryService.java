@@ -17,7 +17,11 @@ import com.ec.application.ReusableClasses.ReusableMethods;
 import java.util.Collections;
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
 import com.ec.application.data.LostDamagedReturnData;
+import com.ec.application.model.InventoryBatch;
 import com.ec.application.model.LostDamagedInventory;
+import com.ec.application.model.Product;
+import com.ec.application.model.Warehouse;
+import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.LostDamagedInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockRepo;
@@ -53,6 +57,9 @@ public class LostDamagedInventoryService {
     InventoryNotificationService inventoryNotificationService;
 
     @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
+
+    @Autowired
     UserDetailsService userDetailsService;
 
     @Autowired
@@ -68,6 +75,11 @@ public class LostDamagedInventoryService {
         populateData(lostDamagedInventory, payload);
         Double closingStock = adjustStockBeforeCreate(payload);
         lostDamagedInventory.setClosingStock(closingStock);
+
+        // Batch handling
+        InventoryBatch batchRef = handleBatchOnCreate(lostDamagedInventory, payload);
+        lostDamagedInventory.setBatch(batchRef);
+
         String addedNotifType = "EXCESS_FOUND".equals(lostDamagedInventory.getEntryType())
                 ? "excessfoundadded" : "lostdamagedadded";
         inventoryNotificationService.pushQuantityEditedNotification(lostDamagedInventory.getProduct(),
@@ -82,6 +94,45 @@ public class LostDamagedInventoryService {
                         Collections.singletonList(ActivityLogDescription.item(createProduct, saved.getQuantity()))),
                 createUser);
         return saved;
+    }
+
+    /**
+     * Handles batch side-effects on create:
+     * - LOST_DAMAGED + batchId present: drain that specific batch's qtyRemaining.
+     * - EXCESS_FOUND + isBatchTracked: create a new InventoryBatch and return it.
+     * Returns the InventoryBatch reference to store on the entity (may be null).
+     */
+    private InventoryBatch handleBatchOnCreate(LostDamagedInventory entity,
+                                                CreateLostOrDamagedInventoryData payload) {
+        try {
+            Product product = entity.getProduct();
+            if (product == null || !product.isBatchTracked()) return null;
+
+            if ("LOST_DAMAGED".equals(payload.getEntryType()) && payload.getBatchId() != null) {
+                InventoryBatch batch = inventoryBatchRepository.findById(payload.getBatchId()).orElse(null);
+                if (batch != null) {
+                    double newQty = Math.max(0, batch.getQtyRemaining() - payload.getQuantity());
+                    batch.setQtyRemaining(newQty);
+                    return inventoryBatchRepository.save(batch);
+                }
+            } else if ("EXCESS_FOUND".equals(payload.getEntryType())) {
+                Warehouse warehouse = entity.getWarehouse();
+                InventoryBatch newBatch = new InventoryBatch();
+                newBatch.setProduct(product);
+                newBatch.setWarehouse(warehouse);
+                newBatch.setInwardId(0L); // sentinel: excess-found origin
+                newBatch.setBrand(payload.getBrand());
+                newBatch.setLotNumber(payload.getLotNumber());
+                newBatch.setExpiryDate(payload.getExpiryDate());
+                newBatch.setReceivedDate(new java.util.Date());
+                newBatch.setQtyReceived(payload.getQuantity());
+                newBatch.setQtyRemaining(payload.getQuantity());
+                return inventoryBatchRepository.save(newBatch);
+            }
+        } catch (Exception e) {
+            log.warn("Batch handling failed on LostDamaged create: {}", e.getMessage());
+        }
+        return null;
     }
 
     public LostDamagedReturnData findFiilteredostDamagedList(FilterDataList filterDataList, Pageable pageable)
@@ -129,8 +180,13 @@ public class LostDamagedInventoryService {
         LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
         Double oldStock = lostDamagedInventory.getQuantity();
         AdjustStockBeforeDelete(lostDamagedInventory);
+        reverseBatchOnDelete(lostDamagedInventory); // reverse old batch effect before re-applying
         populateData(lostDamagedInventory, payload);
         lostDamagedInventory.setClosingStock(adjustStockBeforeCreate(payload));
+
+        // Re-apply batch handling with new payload
+        InventoryBatch newBatchRef = handleBatchOnCreate(lostDamagedInventory, payload);
+        lostDamagedInventory.setBatch(newBatchRef);
         if (!oldStock.equals(lostDamagedInventory.getQuantity())) {
             String modifiedNotifType = "EXCESS_FOUND".equals(lostDamagedInventory.getEntryType())
                     ? "excessfoundmodified" : "lostdamagedmodified";
@@ -176,6 +232,7 @@ public class LostDamagedInventoryService {
             throw new Exception("Machinery On rent by ID " + id + " Not found");
         LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
         AdjustStockBeforeDelete(lostDamagedInventory);
+        reverseBatchOnDelete(lostDamagedInventory);
         lostDamagedInventoryRepo.softDeleteById(id);
         String deleteUser = resolveCurrentUser();
         activityLogService.record("DELETED", lostDamagedInventory.getEntryType(), String.valueOf(id),
@@ -187,6 +244,28 @@ public class LostDamagedInventoryService {
         catch (Exception e) { return "System"; }
     }
 
+
+    /**
+     * Reverses batch side-effects when deleting or updating a LostDamagedInventory entry.
+     * - LOST_DAMAGED: restore qty back to the referenced batch.
+     * - EXCESS_FOUND: zero out the created batch (soft-delete is handled by stock reversal; zeroing prevents double-counting).
+     */
+    private void reverseBatchOnDelete(LostDamagedInventory entity) {
+        try {
+            InventoryBatch batch = entity.getBatch();
+            if (batch == null) return;
+
+            if ("LOST_DAMAGED".equals(entity.getEntryType())) {
+                batch.setQtyRemaining(batch.getQtyRemaining() + entity.getQuantity());
+                inventoryBatchRepository.save(batch);
+            } else if ("EXCESS_FOUND".equals(entity.getEntryType())) {
+                batch.setQtyRemaining(0.0);
+                inventoryBatchRepository.save(batch);
+            }
+        } catch (Exception e) {
+            log.warn("Batch reversal failed on LostDamaged delete/update: {}", e.getMessage());
+        }
+    }
 
     @Transactional(rollbackFor = Exception.class)
     private void AdjustStockBeforeDelete(LostDamagedInventory lostDamagedInventory) throws Exception {

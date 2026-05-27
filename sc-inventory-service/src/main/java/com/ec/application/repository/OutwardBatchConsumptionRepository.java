@@ -11,5 +11,7 @@ public interface OutwardBatchConsumptionRepository extends JpaRepository<Outward
 
     List<OutwardBatchConsumption> findByOutwardIdOrderByIdAsc(Long outwardId);
 
+    List<OutwardBatchConsumption> findByOutwardIdAndProductIdOrderByIdAsc(Long outwardId, Long productId);
+
     void deleteByOutwardId(Long outwardId);
 }

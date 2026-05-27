@@ -36,6 +36,10 @@ public class InventoryBatch extends ReusableFields {
     @Column(name = "brand")
     private String brand;
 
+    /** Supplier lot / batch reference — useful for traceability in construction projects. */
+    @Column(name = "lot_number")
+    private String lotNumber;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @Column(name = "expiry_date")
     private Date expiryDate;

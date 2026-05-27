@@ -116,6 +116,17 @@ public final class OutwardInventorySpecification
 			}
 		}
 
+		List<String> fifoOverride = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "fifoOverride");
+		if (fifoOverride != null && fifoOverride.size() == 1)
+		{
+			if (fifoOverride.get(0).toLowerCase().equals("true"))
+			{
+				Specification<OutwardInventory> internalSpec = (Root<OutwardInventory> root, CriteriaQuery<?> query,
+						CriteriaBuilder cb) -> cb.isTrue(root.get(OutwardInventory_.HAS_FIFO_OVERRIDE));
+				finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
+			}
+		}
+
 		if (textSearch != null && textSearch.size() > 0) {
 			Specification<OutwardInventory> internalSpec = null;
 			internalSpec = specbldr.specOrCondition(internalSpec,specbldr.whereDirectFieldContains(OutwardInventory_.SLIP_NO,textSearch));

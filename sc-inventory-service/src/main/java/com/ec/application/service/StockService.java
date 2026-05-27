@@ -432,7 +432,10 @@ public class StockService {
             dto.setMeasurementUnit(si.getMeasurementUnit());
             dto.setProductName(si.getProductName());
             dto.setProductCode(si.getProductCode());
-            dto.setIsExpirable(productRepo.findById(si.getProductId()).map(p -> p.getIsExpirable()).orElse(false));
+            productRepo.findById(si.getProductId()).ifPresent(p -> {
+                dto.setIsExpirable(p.getIsExpirable());
+                dto.setBatchMode(p.getBatchMode());
+            });
             // Use pre-fetched override map — no per-row DB call
             Double effectiveReorder = overrideMap.getOrDefault(si.getProductId(), si.getReorderQuantity());
             dto.setReorderQuantity(effectiveReorder);

@@ -1,5 +1,6 @@
 package com.ec.application.data;
 
+import com.ec.application.constants.BatchMode;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -29,5 +30,7 @@ public class PoLineItemForInward {
 
     private Double maxAllowedQuantity;
 
+    /** Deprecated — kept for backward compat. Use batchMode instead. */
     private Boolean isExpirable;
+    private BatchMode batchMode;
 }

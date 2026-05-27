@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.constants.BatchMode;
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.repository.InventoryMonthPriceMappingRepository;
 import org.slf4j.Logger;
@@ -99,8 +100,15 @@ public class ProductService {
         } else {
             product.setIsManagedInventory(payload.getIsManagedInventory());
         }
-        product.setIsExpirable(Boolean.TRUE.equals(payload.getIsExpirable()));
+        product.setBatchMode(resolveBatchMode(payload));
         return product;
+    }
+
+    /** Resolves batchMode from payload. New field takes priority; falls back to legacy isExpirable. */
+    private BatchMode resolveBatchMode(ProductCreateData payload) {
+        if (payload.getBatchMode() != null) return payload.getBatchMode();
+        // Legacy fallback: isExpirable=true → BATCH_WITH_EXPIRY
+        return Boolean.TRUE.equals(payload.getIsExpirable()) ? BatchMode.BATCH_WITH_EXPIRY : BatchMode.NONE;
     }
 
     private void checkIfDashboardProductLimitReached(Product productForUpdate, ProductCreateData payload, String action) throws Exception {
@@ -165,7 +173,7 @@ public class ProductService {
         product.setReorderQuantity(payload.getReorderQuantity());
         product.setShowOnDashboard(Boolean.TRUE.equals(payload.getShowOnDashboard()));
         product.setIsManagedInventory(payload.getIsManagedInventory() == null || payload.getIsManagedInventory());
-        product.setIsExpirable(Boolean.TRUE.equals(payload.getIsExpirable()));
+        product.setBatchMode(resolveBatchMode(payload));
 
         return productRepo.save(product);
     }

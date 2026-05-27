@@ -164,7 +164,7 @@ public class OutwardInventoryService {
                     || !productRepo.existsById(productWithQuantity.getProductId()))
                 throw new Exception("Error fetching product details");
             if (type.equals("return"))
-                addReturnForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity());
+                addReturnForOutward(outwardId, productWithQuantity);
             else
                 addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
                         productWithQuantity.getRemarks());
@@ -173,8 +173,12 @@ public class OutwardInventoryService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private void addReturnForOutward(Long outwardId, Long productId, Double quantity) throws Exception {
+    private void addReturnForOutward(Long outwardId, ProductWithQuantity pwq) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
+
+        Long productId = pwq.getProductId();
+        Double quantity = pwq.getQuantity();
+        List<BatchOverrideEntry> returnBatches = pwq.getReturnBatches();
 
         OutwardInventory oi = outwardInventoryRepo.findById(outwardId).get();
         exitIfNotAuthorized(oi, null, APICallTypeForAuthorization.Reject);
@@ -202,6 +206,55 @@ public class OutwardInventoryService {
         oi.setInwardOutwardList(inwardOutwardListSet);
         outwardInventoryRepo.save(oi);
 
+        // Restore batch quantities
+        restoreBatchesForReturn(outwardId, productId, quantity, returnBatches);
+    }
+
+    /**
+     * Restore batches after a return.
+     * If returnBatches is provided (multi-batch scenario), restore each specified batch.
+     * Otherwise, auto-restore from OutwardBatchConsumption records (single-batch scenario).
+     */
+    private void restoreBatchesForReturn(Long outwardId, Long productId, Double quantity,
+                                         List<BatchOverrideEntry> returnBatches) {
+        try {
+            if (returnBatches != null && !returnBatches.isEmpty()) {
+                // User specified exactly which batches to restore
+                for (BatchOverrideEntry entry : returnBatches) {
+                    InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId()).orElse(null);
+                    if (batch != null && entry.getQty() != null && entry.getQty() > 0) {
+                        batch.setQtyRemaining(batch.getQtyRemaining() + entry.getQty());
+                        inventoryBatchRepository.save(batch);
+                    }
+                }
+            } else {
+                // Auto-restore: find all consumptions for this outward+product and restore proportionally
+                List<OutwardBatchConsumption> consumptions =
+                        outwardBatchConsumptionRepository.findByOutwardIdAndProductIdOrderByIdAsc(outwardId, productId);
+                if (consumptions.isEmpty()) return;
+
+                double totalConsumed = consumptions.stream().mapToDouble(OutwardBatchConsumption::getQtyConsumed).sum();
+                if (totalConsumed <= 0) return;
+
+                double remaining = quantity;
+                // Restore from most-recently-consumed first (LIFO restore)
+                List<OutwardBatchConsumption> reversed = new ArrayList<>(consumptions);
+                Collections.reverse(reversed);
+                for (OutwardBatchConsumption c : reversed) {
+                    if (remaining <= 0) break;
+                    double restoreQty = Math.min(remaining, c.getQtyConsumed());
+                    InventoryBatch batch = c.getBatch();
+                    if (batch != null) {
+                        batch.setQtyRemaining(batch.getQtyRemaining() + restoreQty);
+                        inventoryBatchRepository.save(batch);
+                    }
+                    remaining -= restoreQty;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Batch restore failed for return outwardId={}, productId={}: {}", outwardId, productId, e.getMessage());
+            // Best-effort — don't fail the return if batch restore fails
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -776,8 +829,9 @@ public class OutwardInventoryService {
                     entriesToProcess.add(single);
                 }
 
-                List<InventoryBatch> fifoBatches = inventoryBatchRepository
-                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId);
+                List<InventoryBatch> fifoBatches = iol.getProduct().requiresExpiry()
+                        ? inventoryBatchRepository.findAvailableBatchesFifoOrderLocked(productId, warehouseId)
+                        : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceivedLocked(productId, warehouseId);
                 List<Long> fifoBatchIds = fifoBatches.stream()
                         .map(InventoryBatch::getBatchId).collect(java.util.stream.Collectors.toList());
 
@@ -812,16 +866,17 @@ public class OutwardInventoryService {
                     fifoPtr++;
                 }
             } else {
-                // True FIFO: old (pre-feature) stock consumed first, then tracked batches
-                List<InventoryBatch> fifoBatches = inventoryBatchRepository
-                        .findAvailableBatchesFifoOrderLocked(productId, warehouseId); // pessimistic lock
+                // True FIFO/FEFO: auto-consume oldest batches first
+                List<InventoryBatch> fifoBatches = iol.getProduct().requiresExpiry()
+                        ? inventoryBatchRepository.findAvailableBatchesFifoOrderLocked(productId, warehouseId)
+                        : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceivedLocked(productId, warehouseId);
 
                 double totalBatchQty = fifoBatches.stream()
                         .mapToDouble(InventoryBatch::getQtyRemaining).sum();
 
-                // For expirable products: block if ANY untracked stock exists, not just demand-based.
+                // For batch-tracked products: block if ANY untracked stock exists.
                 // Stock was already deducted before this method, so reconstruct original stock.
-                if (Boolean.TRUE.equals(iol.getProduct().getIsExpirable())) {
+                if (iol.getProduct().isBatchTracked()) {
                     Double currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
                     double originalStock = (currentStock != null ? currentStock : 0.0) + qtyToConsume;
                     double untrackedStock = originalStock - totalBatchQty;

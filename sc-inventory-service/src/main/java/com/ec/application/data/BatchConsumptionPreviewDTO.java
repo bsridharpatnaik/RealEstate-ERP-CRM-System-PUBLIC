@@ -16,6 +16,7 @@ public class BatchConsumptionPreviewDTO {
     public static class BatchPreviewItem {
         private Long batchId;
         private String brand;
+        private String lotNumber;
 
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         private Date expiryDate;

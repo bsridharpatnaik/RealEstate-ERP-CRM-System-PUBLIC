@@ -85,6 +85,13 @@ class filter extends CommonFilter {
               undefined,
               false
             )}
+            {this.renderAutoComplete(
+              "FIFO Override",
+              this.invoiceOptions,
+              "fifoOverride",
+              undefined,
+              false
+            )}
           </div>
         ) : null}
         {this.renderFooter()}

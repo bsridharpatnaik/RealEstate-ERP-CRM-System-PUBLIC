@@ -52,7 +52,8 @@ class InwardInventoryForm extends AddForm {
       productKey: null,
       productName: '',
       totalQty: 0,
-      entries: [{ qty: '', expiryDate: '', brand: '' }]
+      batchMode: 'BATCH_WITH_EXPIRY',   // drives expiry required / lot number visibility
+      entries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }]
     },
     // Store form field values in state for React to track changes
     formValues: {
@@ -145,7 +146,7 @@ class InwardInventoryForm extends AddForm {
               productCode: item.product.productCode,
               productName: item.product.productName,
               measurementUnit: item.product.measurementUnit,
-              isExpirable: item.product.isExpirable || false,
+              batchMode: item.product.batchMode || 'NONE',
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
@@ -213,7 +214,7 @@ class InwardInventoryForm extends AddForm {
             productName: item.product.productName,
             unit: item.product.measurementUnit,
             measurementUnit: item.product.measurementUnit,
-            isExpirable: item.product.isExpirable || false,
+            batchMode: item.product.batchMode || 'NONE',
             poQuantity: item.poQuantity,
             lineItemCode: item.lineItemCode,
             selectedProduct: {
@@ -335,7 +336,7 @@ class InwardInventoryForm extends AddForm {
           measurementUnit: product.measurementUnit,
           productCode: product.productCode,
           isManagedInventory: product.isManagedInventory,
-          isExpirable: product.isExpirable || false,
+          batchMode: product.batchMode || 'NONE',
         }));
 
       // In edit mode, also include existing products from the inward data
@@ -429,7 +430,7 @@ class InwardInventoryForm extends AddForm {
             productCode: item.productCode,
             productName: item.productName,
             measurementUnit: item.measurementUnit,
-            isExpirable: item.isExpirable || false,
+            batchMode: item.batchMode || 'NONE',
             poQuantity: poQty,
             tolerancePercent: tolPct,
             pendingQuantity: pendingQty,
@@ -455,19 +456,22 @@ class InwardInventoryForm extends AddForm {
   openBatchSplitModal(key) {
     const product = this.state.noproduct[key];
     const totalQty = parseFloat(product.quantity) || 0;
+    const batchMode = product.batchMode || 'BATCH_WITH_EXPIRY';
     const existing = product.batchSplits && product.batchSplits.length > 0
       ? product.batchSplits.map(s => ({
           qty: s.qty || '',
           expiryDate: s.expiryDate ? s.expiryDate.split('-').reverse().join('-') : '',
-          brand: s.brand || ''
+          brand: s.brand || '',
+          lotNumber: s.lotNumber || ''
         }))
-      : [{ qty: '', expiryDate: '', brand: '' }];
+      : [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }];
     this.setState({
       batchSplitModal: {
         open: true,
         productKey: key,
         productName: product.productName || product.selectedProduct?.name || 'Product',
         totalQty,
+        batchMode,
         entries: existing
       }
     });
@@ -484,7 +488,7 @@ class InwardInventoryForm extends AddForm {
   }
 
   addBatchEntry() {
-    const entries = [...this.state.batchSplitModal.entries, { qty: '', expiryDate: '', brand: '' }];
+    const entries = [...this.state.batchSplitModal.entries, { qty: '', expiryDate: '', brand: '', lotNumber: '' }];
     this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries } }));
   }
 
@@ -493,7 +497,7 @@ class InwardInventoryForm extends AddForm {
     this.setState(prev => ({
       batchSplitModal: {
         ...prev.batchSplitModal,
-        entries: entries.length > 0 ? entries : [{ qty: '', expiryDate: '', brand: '' }]
+        entries: entries.length > 0 ? entries : [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }]
       }
     }));
   }
@@ -514,7 +518,8 @@ class InwardInventoryForm extends AddForm {
     p[productKey].batchSplits = entries.map(e => ({
       qty: parseFloat(e.qty) || 0,
       expiryDate: e.expiryDate ? e.expiryDate.split('-').reverse().join('-') : null,
-      brand: e.brand || null
+      brand: e.brand || null,
+      lotNumber: e.lotNumber || null,
     }));
     this.setState({ noproduct: { ...p } });
     this.closeBatchSplitModal();
@@ -523,20 +528,26 @@ class InwardInventoryForm extends AddForm {
   renderBatchSplitModal() {
     const { batchSplitModal } = this.state;
     if (!batchSplitModal.open) return null;
-    const { entries, totalQty, productName } = batchSplitModal;
+    const { entries, totalQty, productName, batchMode } = batchSplitModal;
+    const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
     const allocated = entries.reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
     const remaining = Math.round((totalQty - allocated) * 1000) / 1000;
     const isExact = Math.abs(remaining) < 0.001;
     const isOver = remaining < -0.001;
     const pct = totalQty > 0 ? Math.min((allocated / totalQty) * 100, 100) : 0;
     const barColor = isOver ? '#c62828' : isExact ? '#2e7d32' : '#1976d2';
-    const canConfirm = isExact && entries.every(e => parseFloat(e.qty) > 0 && e.expiryDate);
+    const canConfirm = isExact && entries.every(e =>
+      parseFloat(e.qty) > 0 && (!requiresExpiry || e.expiryDate)
+    );
+    const modalSubtitle = requiresExpiry
+      ? 'Track by Brand / Lot + Expiry Date'
+      : 'Track by Brand / Lot (no expiry)';
 
     return (
       <Dialog open maxWidth="sm" fullWidth onClose={() => this.closeBatchSplitModal()}>
         <DialogTitle disableTypography>
-          <div style={{ fontWeight: 600, fontSize: '16px' }}>Set Batch Splits</div>
-          <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>{productName}</div>
+          <div style={{ fontWeight: 600, fontSize: '16px' }}>Set Batches</div>
+          <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>{productName} — {modalSubtitle}</div>
         </DialogTitle>
         <DialogContent>
           <div style={{ display: 'flex', gap: '24px', marginBottom: '10px', fontSize: '13px' }}>
@@ -551,8 +562,11 @@ class InwardInventoryForm extends AddForm {
             <thead>
               <tr style={{ background: '#f5f5f5' }}>
                 <th style={{ padding: '6px 8px', textAlign: 'left', width: '80px' }}>Qty *</th>
-                <th style={{ padding: '6px 8px', textAlign: 'left', width: '145px' }}>Expiry Date *</th>
-                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Brand</th>
+                {requiresExpiry && (
+                  <th style={{ padding: '6px 8px', textAlign: 'left', width: '145px' }}>Expiry Date *</th>
+                )}
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Identifier</th>
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Lot / Batch No.</th>
                 <th style={{ width: '30px' }} />
               </tr>
             </thead>
@@ -565,15 +579,23 @@ class InwardInventoryForm extends AddForm {
                       style={{ width: '70px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
                       placeholder="0" />
                   </td>
-                  <td style={{ padding: '4px 8px' }}>
-                    <input type="date" value={entry.expiryDate || ''}
-                      onChange={e => this.updateBatchEntry(idx, 'expiryDate', e.target.value)}
-                      style={{ width: '135px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
-                      min={new Date().toISOString().split('T')[0]} />
-                  </td>
+                  {requiresExpiry && (
+                    <td style={{ padding: '4px 8px' }}>
+                      <input type="date" value={entry.expiryDate || ''}
+                        onChange={e => this.updateBatchEntry(idx, 'expiryDate', e.target.value)}
+                        style={{ width: '135px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
+                        min={new Date().toISOString().split('T')[0]} />
+                    </td>
+                  )}
                   <td style={{ padding: '4px 8px' }}>
                     <input type="text" value={entry.brand || ''}
                       onChange={e => this.updateBatchEntry(idx, 'brand', e.target.value)}
+                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
+                      placeholder="e.g. Brand, Type, Grade" />
+                  </td>
+                  <td style={{ padding: '4px 8px' }}>
+                    <input type="text" value={entry.lotNumber || ''}
+                      onChange={e => this.updateBatchEntry(idx, 'lotNumber', e.target.value)}
                       style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
                       placeholder="Optional" />
                   </td>
@@ -601,7 +623,11 @@ class InwardInventoryForm extends AddForm {
           </div>
           {isOver && <div style={{ color: '#c62828', fontSize: '12px', marginTop: '8px' }}>Allocated exceeds total by {Math.round(Math.abs(remaining) * 1000) / 1000} units.</div>}
           {!canConfirm && !isOver && !isExact && allocated > 0 && (
-            <div style={{ color: '#888', fontSize: '12px', marginTop: '6px' }}>Allocate all {totalQty} units and set expiry dates to confirm.</div>
+            <div style={{ color: '#888', fontSize: '12px', marginTop: '6px' }}>
+              {requiresExpiry
+                ? `Allocate all ${totalQty} units and set expiry dates to confirm.`
+                : `Allocate all ${totalQty} units to confirm.`}
+            </div>
           )}
         </DialogContent>
         <DialogActions style={{ padding: '12px 16px' }}>
@@ -707,7 +733,7 @@ class InwardInventoryForm extends AddForm {
                     p[key].productId = value?.id || "";
                     p[key].productCode = value?.productCode || "";
                     p[key].unit = value?.measurementUnit || "";
-                    p[key].isExpirable = value?.isExpirable || false;
+                    p[key].batchMode = value?.batchMode || 'NONE';
                     p[key].selectedProduct = value;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
@@ -734,7 +760,7 @@ class InwardInventoryForm extends AddForm {
                     p[key].productId = value?.id || "";
                     p[key].productCode = value?.productCode || "";
                     p[key].unit = value?.measurementUnit || "";
-                    p[key].isExpirable = value?.isExpirable || false;
+                    p[key].batchMode = value?.batchMode || 'NONE';
                     p[key].selectedProduct = value;
                     if (value) {
                       this.setState({ noproduct: { ...p } }, () => {
@@ -789,7 +815,7 @@ class InwardInventoryForm extends AddForm {
               </div>
 
               {/* Batch splits for expirable products (add mode) OR brand+expiry for non-expirable */}
-              {!isEditMode && product.isExpirable ? (
+              {!isEditMode && product.batchMode !== 'NONE' ? (
                 <div style={{ width: '200px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                   {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -808,7 +834,7 @@ class InwardInventoryForm extends AddForm {
                         style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
                         Set Batches *
                       </button>
-                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Expiry required</span>
+                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{product.batchMode === 'BATCH_WITH_EXPIRY' ? 'Expiry required' : 'Brand / Lot tracking'}</span>
                     </div>
                   )}
                 </div>
@@ -818,7 +844,7 @@ class InwardInventoryForm extends AddForm {
                   <div style={{ width: '150px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                     {this.renderTextField({
                       fieldname: `brand_${key}`,
-                      placeholder: "Brand (optional)",
+                      placeholder: "Identifier (optional)",
                       skipAdd: true,
                       value: product.brand || '',
                       onChange: (value) => {
@@ -828,8 +854,8 @@ class InwardInventoryForm extends AddForm {
                       },
                     })}
                   </div>
-                  {/* Expiry Date — only for expirable products in edit mode */}
-                  {product.isExpirable && (
+                  {/* Expiry Date — only for BATCH_WITH_EXPIRY products in edit mode */}
+                  {product.batchMode === 'BATCH_WITH_EXPIRY' && (
                     <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                       {this.renderDate({
                         fieldname: `expiryDate_${key}`,
@@ -1020,7 +1046,7 @@ class InwardInventoryForm extends AddForm {
               </div>
 
               {/* Batch splits for expirable products OR brand+expiry for non-expirable */}
-              {!isEditMode && product.isExpirable ? (
+              {!isEditMode && product.batchMode !== 'NONE' ? (
                 <div style={{ width: '200px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
                   {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -1039,7 +1065,7 @@ class InwardInventoryForm extends AddForm {
                         style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
                         Set Batches *
                       </button>
-                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Expiry required</span>
+                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{product.batchMode === 'BATCH_WITH_EXPIRY' ? 'Expiry required' : 'Brand / Lot tracking'}</span>
                     </div>
                   )}
                 </div>
@@ -1049,7 +1075,7 @@ class InwardInventoryForm extends AddForm {
                   <div style={{ width: '150px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
                     {this.renderTextField({
                       fieldname: `brand_${key}`,
-                      placeholder: "Brand (optional)",
+                      placeholder: "Identifier (optional)",
                       skipAdd: true,
                       value: product.brand || '',
                       onChange: (value) => {
@@ -1059,8 +1085,8 @@ class InwardInventoryForm extends AddForm {
                       },
                     })}
                   </div>
-                  {/* Expiry Date — only for expirable products in edit mode */}
-                  {product.isExpirable && (
+                  {/* Expiry Date — only for BATCH_WITH_EXPIRY products in edit mode */}
+                  {product.batchMode === 'BATCH_WITH_EXPIRY' && (
                     <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                       {this.renderDate({
                         fieldname: `expiryDate_${key}`,
@@ -1126,10 +1152,10 @@ class InwardInventoryForm extends AddForm {
       return;
     }
 
-    // Validate batch splits for expirable products (create mode)
+    // Validate batch splits for batch-tracked products (create mode)
     if (!this.state.isEditMode) {
       for (const product of Object.values(this.state.noproduct)) {
-        if (!product.isExpirable) continue;
+        if (product.batchMode === 'NONE') continue;
         const splits = product.batchSplits;
         if (!splits || splits.length === 0 || !splits[0].qty) {
           this.props.enqueueSnackbar(
@@ -1147,7 +1173,7 @@ class InwardInventoryForm extends AddForm {
           );
           return;
         }
-        if (splits.some(b => !b.expiryDate)) {
+        if (product.batchMode === 'BATCH_WITH_EXPIRY' && splits.some(b => !b.expiryDate)) {
           this.props.enqueueSnackbar(
             `All batch splits must have an expiry date for "${product.productName || product.selectedProduct?.name}".`,
             { variant: "error" }
@@ -1157,10 +1183,10 @@ class InwardInventoryForm extends AddForm {
       }
     }
 
-    // Validate batch splits for PO inward expirable products (create mode)
+    // Validate batch splits for PO inward batch-tracked products (create mode)
     if (!this.state.isEditMode && !this.state.isDirectInward) {
       for (const item of Object.values(this.state.noproduct)) {
-        if (!item.isExpirable) continue;
+        if (item.batchMode === 'NONE') continue;
         const splits = item.batchSplits;
         if (!splits || splits.length === 0 || !splits[0].qty) {
           this.props.enqueueSnackbar(
@@ -1217,7 +1243,7 @@ class InwardInventoryForm extends AddForm {
           productId: product.productId,
           quantity: product.quantity,
           expiryDate: product.expiryDate || null,
-          batchSplits: product.isExpirable && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
+          batchSplits: product.batchMode !== 'NONE' && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
         })),
         vehicleNo: this.formData.vehicleNo,
         supplierSlipNo: this.formData.supplierSlipNo,
@@ -1242,9 +1268,9 @@ class InwardInventoryForm extends AddForm {
           warehouseId: product.warehouseId,
           productId: product.productId,
           quantity: product.quantity,
-          brand: product.isExpirable && product.batchSplits ? null : (product.brand || null),
-          expiryDate: product.isExpirable && product.batchSplits ? null : (product.expiryDate || null),
-          batchSplits: product.isExpirable && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
+          brand: product.batchMode !== 'NONE' && product.batchSplits ? null : (product.brand || null),
+          expiryDate: product.batchMode !== 'NONE' && product.batchSplits ? null : (product.expiryDate || null),
+          batchSplits: product.batchMode !== 'NONE' && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
         })),
         fileInformations: this.formData.fileInformations || [],
         invoiceReceived: this.formData.invoiceReceived || false,
@@ -1278,9 +1304,9 @@ class InwardInventoryForm extends AddForm {
           lineItemCode: item.lineItemCode,
           quantityReceived: item.quantity,
           warehouseId: item.warehouseId,
-          brand: item.isExpirable && item.batchSplits ? null : (item.brand || null),
-          expiryDate: item.isExpirable && item.batchSplits ? null : (item.expiryDate || null),
-          batchSplits: item.isExpirable && item.batchSplits && item.batchSplits.length > 0 ? item.batchSplits : null,
+          brand: item.batchMode !== 'NONE' && item.batchSplits ? null : (item.brand || null),
+          expiryDate: item.batchMode !== 'NONE' && item.batchSplits ? null : (item.expiryDate || null),
+          batchSplits: item.batchMode !== 'NONE' && item.batchSplits && item.batchSplits.length > 0 ? item.batchSplits : null,
         }))
       };
     }

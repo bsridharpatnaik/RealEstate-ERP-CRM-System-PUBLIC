@@ -42,6 +42,10 @@ class Add extends AddForm {
     resultModalData: null,
     stockValidationErrors: {}, // Store stock validation errors by product key
     currentStocks: {}, // Store current stock values by product key
+    // Batch preview per product key: { [key]: [ {batchId, brand, lotNumber, expiryDate, qtyToTransfer, qtyAvailable} ] }
+    batchPreviews: {},
+    // Whether the user has toggled batch override for a product key
+    showBatchOverride: {},
   };
   _isMounted = false;
   key = 1;
@@ -203,6 +207,35 @@ class Add extends AddForm {
     }
   }
 
+  /** Fetch FIFO batch preview for a product in source warehouse. */
+  async fetchBatchPreview(key, productId, qty) {
+    const fromWarehouseId = this.formData.fromWarehouseId;
+    const fromProjectId = this.formData.fromProjectId;
+    if (!productId || !fromWarehouseId || !fromProjectId || !qty || qty <= 0) {
+      const batchPreviews = { ...this.state.batchPreviews };
+      delete batchPreviews[key];
+      this.setState({ batchPreviews });
+      return;
+    }
+    try {
+      const overrideEntries = this.state.products[key]?.overrideBatches || [];
+      const response = await API.POST(apiEndpoints.previewTransferBatches, {
+        sourceTenant: fromProjectId,
+        productId: productId,
+        sourceWarehouseId: fromWarehouseId,
+        qty: parseFloat(qty),
+        overrideBatches: overrideEntries.length > 0 ? overrideEntries : undefined,
+      });
+      if (response.success && Array.isArray(response.data)) {
+        const batchPreviews = { ...this.state.batchPreviews };
+        batchPreviews[key] = response.data;
+        this.setState({ batchPreviews });
+      }
+    } catch (e) {
+      // silently fail — batch preview is informational
+    }
+  }
+
   async fetchWarehousesForTenant(tenantCode, type) {
     if (!tenantCode) {
       return;
@@ -253,6 +286,9 @@ class Add extends AddForm {
     const productKeys = Object.keys(this.state.products).sort((a, b) => Number(a) - Number(b));
     const productNumber = productKeys.indexOf(key.toString()) + 1;
 
+    const batchPreview = this.state.batchPreviews[key] || [];
+    const showBatchOverride = this.state.showBatchOverride[key] || false;
+
     return (
       <div className="inventory-item" key={key}>
         <div className="inventory-item-header">
@@ -294,17 +330,19 @@ class Add extends AddForm {
               p[key].productCode = value?.productCode || "";
               p[key].measurementUnit = value?.measurementUnit || "";
               p[key].selectedProduct = value; // Store the full product object
-              
+              p[key].overrideBatches = []; // Clear overrides when product changes
+
               // Clear validation error for this product if product changes
               const errors = { ...this.state.stockValidationErrors };
               delete errors[key];
-              
+
               if (value) {
                 this.setState({ products: { ...p }, stockValidationErrors: errors });
                 // Fetch current stock immediately when product is selected (if warehouse is also selected)
                 if (this.formData.fromWarehouseId) {
                   const quantity = p[key].quantity ? parseFloat(p[key].quantity) : null;
                   await this.validateStockForProduct(key, value.id, quantity);
+                  await this.fetchBatchPreview(key, value.id, quantity);
                 }
               }
             },
@@ -329,6 +367,7 @@ class Add extends AddForm {
                 p[key].productCode = value.name || "";
                 p[key].measurementUnit = fullProduct?.measurementUnit || "";
                 p[key].selectedProduct = fullProduct || { id: value.id, name: value.name, productCode: value.name, measurementUnit: "" };
+                p[key].overrideBatches = [];
               } else {
                 p[key].productId = "";
                 p[key].productName = "";
@@ -336,17 +375,18 @@ class Add extends AddForm {
                 p[key].measurementUnit = "";
                 p[key].selectedProduct = null;
               }
-              
+
               // Clear validation error for this product if product changes
               const errors = { ...this.state.stockValidationErrors };
               delete errors[key];
-              
+
               if (value) {
                 this.setState({ products: { ...p }, stockValidationErrors: errors });
                 // Fetch current stock immediately when product is selected (if warehouse is also selected)
                 if (this.formData.fromWarehouseId) {
                   const quantity = p[key].quantity ? parseFloat(p[key].quantity) : null;
                   await this.validateStockForProduct(key, value.id, quantity);
+                  await this.fetchBatchPreview(key, value.id, quantity);
                 }
               }
             },
@@ -369,6 +409,7 @@ class Add extends AddForm {
               // Validate stock when quantity is entered
               if (value && p[key].productId && this.formData.fromWarehouseId) {
                 await this.validateStockForProduct(key, p[key].productId, parseFloat(value) || 0);
+                await this.fetchBatchPreview(key, p[key].productId, parseFloat(value) || 0);
               } else {
                 // Clear validation error if quantity is empty or product/warehouse not selected
                 const errors = { ...this.state.stockValidationErrors };
@@ -384,6 +425,132 @@ class Add extends AddForm {
             value: this.state.products[key]?.measurementUnit || "",
           })}
         </div>
+
+        {/* Batch preview — only shown when batch-tracked product has preview data */}
+        {batchPreview.length > 0 && (
+          <div style={{ marginTop: 8, padding: "8px 12px", background: "#f5f5f5", borderRadius: 4 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <span style={{ fontSize: 12, color: "#555", fontWeight: 500 }}>
+                Batch allocation (FIFO preview)
+              </span>
+              <button
+                type="button"
+                style={{
+                  fontSize: 11,
+                  color: "#1976d2",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+                onClick={() => {
+                  const showBatchOverride = { ...this.state.showBatchOverride };
+                  showBatchOverride[key] = !showBatchOverride[key];
+                  // Clear override entries when toggling off
+                  if (!showBatchOverride[key]) {
+                    const p = this.state.products;
+                    p[key].overrideBatches = [];
+                    this.setState({ products: { ...p } });
+                    this.fetchBatchPreview(key, p[key].productId, parseFloat(p[key].quantity) || 0);
+                  }
+                  this.setState({ showBatchOverride });
+                }}
+              >
+                {showBatchOverride ? "Use FIFO (reset)" : "Override batch selection"}
+              </button>
+            </div>
+
+            {!showBatchOverride && (
+              <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ color: "#888" }}>
+                    <th style={{ textAlign: "left", padding: "2px 6px" }}>Batch</th>
+                    <th style={{ textAlign: "right", padding: "2px 6px" }}>Available</th>
+                    <th style={{ textAlign: "right", padding: "2px 6px" }}>To Transfer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batchPreview.map((b, idx) => {
+                    const label = [b.brand, b.lotNumber, b.expiryDate ? moment(b.expiryDate).format("DD-MM-YYYY") : null]
+                      .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
+                    return (
+                      <tr key={idx}>
+                        <td style={{ padding: "2px 6px" }}>{label}</td>
+                        <td style={{ textAlign: "right", padding: "2px 6px" }}>{b.qtyAvailable}</td>
+                        <td style={{ textAlign: "right", padding: "2px 6px", fontWeight: 600 }}>{b.qtyToTransfer}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+
+            {showBatchOverride && (
+              <div>
+                <div style={{ fontSize: 11, color: "#e65100", marginBottom: 6 }}>
+                  Enter specific batch quantities. Total must equal transfer quantity.
+                </div>
+                {batchPreview.map((b, idx) => {
+                  const label = [b.brand, b.lotNumber, b.expiryDate ? moment(b.expiryDate).format("DD-MM-YYYY") : null]
+                    .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
+                  const overrides = this.state.products[key]?.overrideBatches || [];
+                  const entry = overrides.find((e) => e.batchId === b.batchId);
+                  return (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, flex: 1 }}>{label} (avail: {b.qtyAvailable})</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={b.qtyAvailable}
+                        step="any"
+                        placeholder="Qty"
+                        value={entry?.qty || ""}
+                        style={{
+                          padding: "4px 8px",
+                          border: "1px solid #ccc",
+                          borderRadius: 4,
+                          fontSize: 13,
+                          width: 80,
+                        }}
+                        onChange={(e) => {
+                          const p = this.state.products;
+                          if (!p[key].overrideBatches) p[key].overrideBatches = [];
+                          const existing = p[key].overrideBatches.findIndex((oe) => oe.batchId === b.batchId);
+                          const val = parseFloat(e.target.value) || 0;
+                          if (existing >= 0) {
+                            p[key].overrideBatches[existing].qty = val;
+                          } else {
+                            p[key].overrideBatches.push({ batchId: b.batchId, qty: val });
+                          }
+                          this.setState({ products: { ...p } });
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  style={{
+                    marginTop: 4,
+                    fontSize: 11,
+                    color: "#1976d2",
+                    background: "none",
+                    border: "1px solid #1976d2",
+                    borderRadius: 3,
+                    cursor: "pointer",
+                    padding: "2px 8px",
+                  }}
+                  onClick={() => {
+                    const p = this.state.products;
+                    this.fetchBatchPreview(key, p[key].productId, parseFloat(p[key].quantity) || 0);
+                  }}
+                >
+                  Preview override
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -457,10 +624,17 @@ class Add extends AddForm {
     }
 
     // Transform products data to match API payload structure
-    const items = Object.values(this.state.products).map((product) => ({
-      productId: product.productId,
-      quantity: parseFloat(product.quantity) || 0,
-    }));
+    const items = Object.values(this.state.products).map((product) => {
+      const item = {
+        productId: product.productId,
+        quantity: parseFloat(product.quantity) || 0,
+      };
+      // Include override batches if user specified them
+      if (product.overrideBatches && product.overrideBatches.length > 0) {
+        item.overrideBatches = product.overrideBatches.filter((e) => e.qty > 0);
+      }
+      return item;
+    });
 
     // Create product lookup for confirmation dialog
     const productLookup = {};
@@ -502,7 +676,7 @@ class Add extends AddForm {
       sourceWarehouseId: transferData.sourceWarehouseId,
       targetWarehouseId: transferData.targetWarehouseId,
       remarks: transferData.remarks,
-      items: transferData.items,
+      items: transferData.items, // already includes overrideBatches if set
     };
 
     try {
@@ -733,12 +907,13 @@ class Add extends AddForm {
                       selectedFromWarehouse: value,
                       stockValidationErrors: {} // Clear stock validation errors when warehouse changes
                     });
-                    // Fetch stock for all products when warehouse changes
+                    // Fetch stock + batch preview for all products when warehouse changes
                     const products = this.state.products;
                     for (const [key, product] of Object.entries(products)) {
                       if (product.productId) {
                         const quantity = product.quantity ? parseFloat(product.quantity) : null;
                         await this.validateStockForProduct(key, product.productId, quantity);
+                        await this.fetchBatchPreview(key, product.productId, quantity);
                       }
                     }
                   }

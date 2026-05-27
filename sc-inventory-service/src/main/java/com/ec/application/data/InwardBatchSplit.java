@@ -14,4 +14,6 @@ public class InwardBatchSplit {
     private Date expiryDate;
 
     private String brand;
+
+    private String lotNumber;
 }

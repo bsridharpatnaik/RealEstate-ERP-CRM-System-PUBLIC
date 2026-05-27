@@ -109,7 +109,38 @@ class Add extends AddForm {
     const selectedProducts = Object.keys(this.state.noproduct).map(index => this?.state?.noproduct?.[index]?.productId);
     const remainingProducts = (this.props.dropdowns?.product??[]).filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
     return (
-      <div className="flex" key={key}>
+      <div key={key} style={{
+        border: '1px solid #dce3ec', borderRadius: '8px', marginBottom: '12px',
+        overflow: 'hidden', backgroundColor: '#fff',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      }}>
+        {/* Card header — delete button lives here, clearly belongs to this product row */}
+        <div style={{
+          background: '#f5f7fa', borderBottom: '1px solid #dce3ec',
+          padding: '4px 8px 4px 14px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          minHeight: '32px',
+        }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Product
+          </span>
+          <IconButton
+            size="small"
+            title="Remove this product"
+            onClick={() => {
+              const p = this.state.noproduct;
+              delete p[key];
+              this.setState({ noproduct: { ...p } });
+            }}
+            style={{ color: '#e53935' }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </div>
+
+        {/* Input fields row */}
+        <div style={{ padding: '8px 12px 10px' }}>
+          <div className="flex">
         {this.renderAutoComplete({
           fieldname: "productId",
           placeholder: messages.common.inventory,
@@ -214,14 +245,16 @@ class Add extends AddForm {
                 const currentBoq = this.state.boqQuantity[productId];
                 if (currentBoq !== undefined && currentBoq !== null && Number(currentValue) > Number(currentBoq)) {
                   const inWastage = Number(currentBoq) < 0;
+                  // Dismiss any existing BOQ warning for this product row before showing new one
+                  this.props.closeSnackbar(`boq-warn-${key}`);
                   this.props.enqueueSnackbar(
                     inWastage
                       ? `BOQ Warning: Already in wastage buffer. Base BOQ fully consumed (${Math.abs(currentBoq)} over base BOQ).`
                       : `BOQ Warning: Quantity exceeds base BOQ remaining (${currentBoq} remaining). Wastage allowance may still permit save.`,
-                    { variant: "warning" }
+                    { variant: "warning", key: `boq-warn-${key}`, preventDuplicate: true }
                   );
                 }
-              }, 700);
+              }, 1500);
             } else {
               clearTimeout(this._boqWarnTimers[key]);
             }
@@ -241,8 +274,10 @@ class Add extends AddForm {
           disabled: true,
           value: this.state.boqQuantity[this.state.noproduct[key].productId],
         })}
+          </div>{/* end .flex inputs row */}
+        </div>{/* end inputs padding wrapper */}
 
-        {/* Batch preview + optional override */}
+        {/* Batch preview + optional override — below inputs, full width */}
         {(() => {
           const productId = this.state.noproduct[key].productId;
           const batches = this.state.availableBatches[productId] || [];
@@ -254,19 +289,23 @@ class Add extends AddForm {
           const qtyMismatch = overrideFifo && outwardQty > 0 && Math.abs(overrideTotal - outwardQty) > 0.001;
 
           if (!productId || batches.length === 0) return null;
+          // Derive whether expiry tracking is enabled from the available batch data
+          const requiresExpiry = batches.some(b => b.expiryDate != null);
           return (
-            <div style={{ minWidth: '320px', maxWidth: '480px' }}>
+            <div style={{ padding: '8px 12px 12px', borderTop: '1px dashed #e8edf2' }}>
               {/* Preview panel — always shown when batches exist */}
-              <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', color: '#1565c0' }}>
-                Batch Consumption Preview {preview && preview.loading ? '(loading…)' : ''}
+              <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '6px', color: '#1565c0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ background: '#e3f2fd', color: '#1565c0', borderRadius: '3px', padding: '1px 6px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Batch Preview</span>
+                {preview && preview.loading && <span style={{ color: '#90a4ae', fontWeight: 400 }}>loading…</span>}
               </div>
               {preview && !preview.loading && preview.batches.length > 0 && (
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', marginBottom: '6px' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#e3f2fd' }}>
                       <th style={{ padding: '3px 5px', border: '1px solid #90caf9', textAlign: 'left' }}>Batch #</th>
-                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Expiry</th>
-                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Brand</th>
+                      {requiresExpiry && <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Expiry</th>}
+                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Identifier</th>
+                      <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Lot #</th>
                       <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>Qty</th>
                       <th style={{ padding: '3px 5px', border: '1px solid #90caf9' }}>FIFO?</th>
                     </tr>
@@ -275,10 +314,13 @@ class Add extends AddForm {
                     {preview.batches.map((b, i) => (
                       <tr key={i} style={{ backgroundColor: b.fifoOverridden ? '#fff8e1' : '#f1f8e9' }}>
                         <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9' }}>#{b.batchId}</td>
-                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9', textAlign: 'center' }}>
-                          {b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}
-                        </td>
-                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9' }}>{b.brand || '—'}</td>
+                        {requiresExpiry && (
+                          <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9', textAlign: 'center' }}>
+                            {b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}
+                          </td>
+                        )}
+                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9' }}>{b.brand || <span style={{ color: '#bbb' }}>—</span>}</td>
+                        <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9' }}>{b.lotNumber || '—'}</td>
                         <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9', textAlign: 'right' }}>{b.qtyConsumed}</td>
                         <td style={{ padding: '3px 5px', border: '1px solid #c8e6c9', textAlign: 'center' }}>
                           {b.fifoOverridden
@@ -345,8 +387,9 @@ class Add extends AddForm {
                     <thead>
                       <tr style={{ backgroundColor: '#fff8e1' }}>
                         <th style={{ padding: '3px 5px', border: '1px solid #ffe082', textAlign: 'left' }}>Batch #</th>
-                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Expiry</th>
-                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Brand</th>
+                        {requiresExpiry && <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Expiry</th>}
+                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Identifier</th>
+                        <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Lot #</th>
                         <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Available</th>
                         <th style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>Qty *</th>
                       </tr>
@@ -357,10 +400,13 @@ class Add extends AddForm {
                         return (
                           <tr key={b.batchId}>
                             <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>#{b.batchId}</td>
-                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082', textAlign: 'center' }}>
-                              {b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}
-                            </td>
-                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>{b.brand || '—'}</td>
+                            {requiresExpiry && (
+                              <td style={{ padding: '3px 5px', border: '1px solid #ffe082', textAlign: 'center' }}>
+                                {b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}
+                              </td>
+                            )}
+                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>{b.brand || <span style={{ color: '#bbb' }}>—</span>}</td>
+                            <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>{b.lotNumber || '—'}</td>
                             <td style={{ padding: '3px 5px', border: '1px solid #ffe082', textAlign: 'right' }}>{b.qtyRemaining}</td>
                             <td style={{ padding: '3px 5px', border: '1px solid #ffe082' }}>
                               <input
@@ -407,18 +453,6 @@ class Add extends AddForm {
             </div>
           );
         })()}
-
-        <IconButton
-          aria-label="back"
-          onClick={() => {
-            const p = this.state.noproduct;
-            delete p[key];
-            this.setState({ noproduct: { ...p } });
-          }}
-          className="back-icon"
-        >
-          <DeleteIcon />
-        </IconButton>
       </div>
     );
   }
@@ -834,7 +868,8 @@ class Add extends AddForm {
             background: '#fff8e1', border: '1px solid #ffe082', borderRadius: 6,
             padding: '10px 14px', marginBottom: 16, fontSize: 13,
           }}>
-            <div><strong>Brand:</strong> {fifoBatch.brand || '—'}</div>
+            <div><strong>Identifier:</strong> {fifoBatch.brand || '—'}</div>
+            {fifoBatch.lotNumber && <div><strong>Lot / Batch No.:</strong> {fifoBatch.lotNumber}</div>}
             <div><strong>Received:</strong> {fifoBatch.receivedDate ? fifoBatch.receivedDate.replace(/-/g, '/') : '—'}</div>
             {fifoBatch.expiryDate && (
               <div><strong>Expiry:</strong> {fifoBatch.expiryDate.replace(/-/g, '/')}</div>

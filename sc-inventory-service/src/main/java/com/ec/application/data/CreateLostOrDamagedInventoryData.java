@@ -35,6 +35,17 @@ public class CreateLostOrDamagedInventoryData
 
 	String entryType = "LOST_DAMAGED";
 
+	// Lost/Damaged: user selects which batch the loss came from
+	Long batchId;
+
+	// Excess Found: user enters batch details for the new batch
+	String brand;
+
+	String lotNumber;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+	Date expiryDate;
+
 	public String getEntryType()
 	{
 		return entryType;
@@ -113,5 +124,45 @@ public class CreateLostOrDamagedInventoryData
 	public void setWarehouseId(Long warehouseId)
 	{
 		this.warehouseId = warehouseId;
+	}
+
+	public Long getBatchId()
+	{
+		return batchId;
+	}
+
+	public void setBatchId(Long batchId)
+	{
+		this.batchId = batchId;
+	}
+
+	public String getBrand()
+	{
+		return brand;
+	}
+
+	public void setBrand(String brand)
+	{
+		this.brand = brand;
+	}
+
+	public String getLotNumber()
+	{
+		return lotNumber;
+	}
+
+	public void setLotNumber(String lotNumber)
+	{
+		this.lotNumber = lotNumber;
+	}
+
+	public Date getExpiryDate()
+	{
+		return expiryDate;
+	}
+
+	public void setExpiryDate(Date expiryDate)
+	{
+		this.expiryDate = expiryDate;
 	}
 }
