@@ -407,10 +407,10 @@ class List extends ListCommon {
         ? this.filterData.categoryNames
         : this.filterData.categoryNames != null ? [this.filterData.categoryNames] : [];
       if (categoryNamesArr.length > 0) {
-        const categoryIds = categoryNamesArr.map(cat =>
-          cat && typeof cat === "object" ? cat.id : cat
+        const categoryValues = categoryNamesArr.map(cat =>
+          cat && typeof cat === "object" ? cat.name : cat
         ).filter(Boolean);
-        params.filterData.push({ attrName: "categoryNames", attrValue: categoryIds });
+        params.filterData.push({ attrName: "categoryNames", attrValue: categoryValues });
       }
 
       const suppliersArr = Array.isArray(this.filterData.suppliers)

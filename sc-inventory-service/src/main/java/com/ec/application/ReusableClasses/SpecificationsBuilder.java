@@ -233,9 +233,7 @@ public class SpecificationsBuilder<T> {
             Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
             query.distinct(true);
             Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
-            Predicate parentPredicate = parentExpression.in(productNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
+            return parentExpression.in(productNames);
         };
     }
 
@@ -247,9 +245,7 @@ public class SpecificationsBuilder<T> {
             Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
             query.distinct(true);
             Expression<String> parentExpression = productList.get(Product_.PRODUCT_CODE);
-            Predicate parentPredicate = parentExpression.in(productNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
+            return parentExpression.in(productNames);
         };
     }
 
@@ -262,9 +258,7 @@ public class SpecificationsBuilder<T> {
             Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
             query.distinct(true);
             Expression<String> parentExpression = categoryList.get(Category_.categoryName);
-            Predicate parentPredicate = parentExpression.in(categoryNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
+            return parentExpression.in(categoryNames);
         };
     }
 
