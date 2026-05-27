@@ -31,11 +31,29 @@ class RejectProduct extends AddForm {
     noproduct: {},
     enableSave: true,
     currentsourceDetails: this.sourceDetails,
+    inwardBatches: [],   // all InventoryBatch records for this inward
   };
   key = 1;
 
   componentDidMount() {
     this.addDefault();
+    this.loadInwardBatches();
+  }
+
+  async loadInwardBatches() {
+    const inwardId = this.props?.data?.inwardId;
+    if (!inwardId) return;
+    const r = await API.GET(apiEndpoints.getInwardBatches(inwardId));
+    if (r.success) {
+      this.setState({ inwardBatches: r.data || [] });
+    }
+  }
+
+  // Returns batches for a given productId (from loaded inward batches)
+  getBatchesForProduct(productId) {
+    return this.state.inwardBatches.filter(
+      (b) => b.product && b.product.productId === productId && b.qtyRemaining > 0
+    );
   }
 
   addDefault() {
@@ -49,14 +67,16 @@ class RejectProduct extends AddForm {
 
     const allValid =
       hasProducts &&
-      products.every(
-        (item) =>
-          item &&
-          item.productId &&
-          item.returnquantity &&
-          Number(item.returnquantity) > 0 &&
-          item.remarks
-      );
+      products.every((item) => {
+        if (!item || !item.productId || !item.remarks) return false;
+        const batches = this.getBatchesForProduct(item.productId);
+        if (batches.length > 1) {
+          // multi-batch: total qty must be > 0
+          const total = Object.values(item.batchQtys || {}).reduce((s, v) => s + (v || 0), 0);
+          return total > 0;
+        }
+        return item.returnquantity && Number(item.returnquantity) > 0;
+      });
 
     this.setState({ enableSave: !allValid });
   }
@@ -81,6 +101,11 @@ class RejectProduct extends AddForm {
   }
 
   renderProduct(key) {
+    const item = this.state.noproduct[key] || {};
+    const productId = item.productId;
+    const productBatches = productId ? this.getBatchesForProduct(productId) : [];
+    const hasMultipleBatches = productBatches.length > 1;
+
     return (
       <Grid container className="product-item" spacing={3} key={key}>
         <Grid item sm={12} md={6}>
@@ -102,6 +127,7 @@ class RejectProduct extends AddForm {
                     productId: "",
                     quantity: undefined,
                     measurementUnit: undefined,
+                    batchQtys: {},
                   };
                 }
                 this.setState({ noproduct: updatedProducts }, this.checkValidation);
@@ -115,6 +141,7 @@ class RejectProduct extends AddForm {
                 productId: item.value,
                 quantity: item.quantity,
                 measurementUnit: item.measurementUnit,
+                batchQtys: {},
               };
 
               this.setState(
@@ -129,24 +156,59 @@ class RejectProduct extends AddForm {
             },
           })}
         </Grid>
-        <Grid item sm={12} md={6}>
-          {this.renderTextField({
-            fieldname: `returnquantity_${key}`,
-            placeholder: "Return Quantity",
-            type: "number",
-            required: true,
-            validation: "nonegative",
-            onChange: (value) => {
-              const updatedProducts = { ...this.state.noproduct };
-              const existing = updatedProducts[key] || {};
-              updatedProducts[key] = {
-                ...existing,
-                returnquantity: value,
-              };
-              this.setState({ noproduct: updatedProducts }, this.checkValidation);
-            },
-          })}
-        </Grid>
+        {!hasMultipleBatches && (
+          <Grid item sm={12} md={6}>
+            {this.renderTextField({
+              fieldname: `returnquantity_${key}`,
+              placeholder: "Return Quantity",
+              type: "number",
+              required: true,
+              validation: "nonegative",
+              onChange: (value) => {
+                const updatedProducts = { ...this.state.noproduct };
+                const existing = updatedProducts[key] || {};
+                updatedProducts[key] = { ...existing, returnquantity: value };
+                this.setState({ noproduct: updatedProducts }, this.checkValidation);
+              },
+            })}
+          </Grid>
+        )}
+        {hasMultipleBatches && (
+          <Grid item sm={12} md={12}>
+            <div style={{ fontSize: '12px', color: '#555', marginBottom: '6px', marginTop: '4px' }}>
+              Multiple batches found — enter reject quantity per batch:
+            </div>
+            {productBatches.map((b) => (
+              <div key={b.batchId} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <div style={{ minWidth: '200px', fontSize: '13px' }}>
+                  <strong>#{b.batchId}</strong>
+                  {b.lotNumber ? ` · Lot: ${b.lotNumber}` : ''}
+                  {b.brand ? ` · ${b.brand}` : ''}
+                  <span style={{ color: '#666', marginLeft: '6px' }}>
+                    (avail: {b.qtyRemaining})
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  max={b.qtyRemaining}
+                  step="any"
+                  placeholder="Qty"
+                  style={{ width: '90px', padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    const updatedProducts = { ...this.state.noproduct };
+                    const existing = updatedProducts[key] || {};
+                    const batchQtys = { ...(existing.batchQtys || {}), [b.batchId]: val };
+                    const totalQty = Object.values(batchQtys).reduce((s, v) => s + (v || 0), 0);
+                    updatedProducts[key] = { ...existing, batchQtys, returnquantity: totalQty };
+                    this.setState({ noproduct: updatedProducts }, this.checkValidation);
+                  }}
+                />
+              </div>
+            ))}
+          </Grid>
+        )}
         <Grid item sm={12} md={12}>
           {this.renderTextArea({
             fieldname: `remarks_${key}`,
@@ -257,10 +319,18 @@ class RejectProduct extends AddForm {
       return;
     }
     const data = Object.values(this.state.noproduct).map((item) => {
+      const batches = this.getBatchesForProduct(item.productId);
+      const hasMultiple = batches.length > 1;
+      const overrideBatches = hasMultiple
+        ? Object.entries(item.batchQtys || {})
+            .filter(([, qty]) => qty > 0)
+            .map(([batchId, qty]) => ({ batchId: Number(batchId), qty }))
+        : undefined;
       return {
         productId: item.productId,
         quantity: Number(item.returnquantity),
         remarks: item.remarks,
+        ...(overrideBatches ? { overrideBatches } : {}),
       };
     });
 

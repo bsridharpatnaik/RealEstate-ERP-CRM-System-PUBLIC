@@ -21,6 +21,7 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
@@ -86,6 +87,7 @@ public class LostDamagedInventory extends ReusableFields
 	@ManyToOne(fetch = FetchType.EAGER)
 	@JoinColumn(name = "batch_id", nullable = true)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 	private InventoryBatch batch;
 
 	public String getEntryType()

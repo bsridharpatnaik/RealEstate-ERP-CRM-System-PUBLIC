@@ -574,7 +574,7 @@ public class InwardInventoryService {
 
             // ---------- Process only once per product ----------
             if (processedProductIds.add(pwq.getProductId())) {
-                addReturnForInward(inwardId, pwq.getProductId(), pwq.getQuantity(), pwq.getRemarks());
+                addReturnForInward(inwardId, pwq.getProductId(), pwq.getQuantity(), pwq.getRemarks(), pwq.getOverrideBatches());
             }
         }
 
@@ -586,7 +586,8 @@ public class InwardInventoryService {
             Long inwardId,
             Long productId,
             Double quantity,
-            String remarks
+            String remarks,
+            List<com.ec.application.data.BatchOverrideEntry> overrideBatches
     ) throws Exception {
 
         log.info("Invoked addReturnForInward");
@@ -635,17 +636,31 @@ public class InwardInventoryService {
         );
 
         // -----------------------------------------
-        // Reduce batch qty for rejected inward — drain from last batch first
         // -----------------------------------------
-        List<InventoryBatch> rejectBatches = inventoryBatchRepository.findAllByInwardIdAndProductId(inwardId, productId);
-        if (!rejectBatches.isEmpty()) {
-            double reduction = quantity;
-            for (int i = rejectBatches.size() - 1; i >= 0 && reduction > 0.001; i--) {
-                InventoryBatch rb = rejectBatches.get(i);
-                double actualReduce = Math.min(rb.getQtyRemaining(), reduction);
-                rb.setQtyRemaining(rb.getQtyRemaining() - actualReduce);
-                reduction -= actualReduce;
+        // Reduce batch qty for rejected inward
+        // If user specified batches (multi-batch inward) — drain those; else auto-drain last first
+        // -----------------------------------------
+        if (overrideBatches != null && !overrideBatches.isEmpty()) {
+            for (com.ec.application.data.BatchOverrideEntry entry : overrideBatches) {
+                InventoryBatch rb = inventoryBatchRepository.findById(entry.getBatchId())
+                        .orElseThrow(() -> new Exception("Batch not found: " + entry.getBatchId()));
+                if (entry.getQty() > rb.getQtyRemaining()) {
+                    throw new Exception("Reject quantity exceeds available qty in batch #" + entry.getBatchId());
+                }
+                rb.setQtyRemaining(rb.getQtyRemaining() - entry.getQty());
                 inventoryBatchRepository.save(rb);
+            }
+        } else {
+            List<InventoryBatch> rejectBatches = inventoryBatchRepository.findAllByInwardIdAndProductId(inwardId, productId);
+            if (!rejectBatches.isEmpty()) {
+                double reduction = quantity;
+                for (int i = rejectBatches.size() - 1; i >= 0 && reduction > 0.001; i--) {
+                    InventoryBatch rb = rejectBatches.get(i);
+                    double actualReduce = Math.min(rb.getQtyRemaining(), reduction);
+                    rb.setQtyRemaining(rb.getQtyRemaining() - actualReduce);
+                    reduction -= actualReduce;
+                    inventoryBatchRepository.save(rb);
+                }
             }
         }
 

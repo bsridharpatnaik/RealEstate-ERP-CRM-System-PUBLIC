@@ -64,6 +64,8 @@ class Details extends CommonDetails {
     anchorEl: null,
     historyLogs: [],
     historyLoading: false,
+    inwardBatches: [],
+    inwardBatchesLoaded: false,
   };
   detailTabRef = React.createRef();
   deleteRow = null;
@@ -71,6 +73,16 @@ class Details extends CommonDetails {
   componentDidMount() {
     this.addRejRef = React.createRef();
     this.componentRef = React.createRef();
+    this.loadInwardBatches();
+  }
+
+  async loadInwardBatches() {
+    const { data } = this.props;
+    if (!data || !data.inwardId || this.state.inwardBatchesLoaded) return;
+    const r = await API.GET(apiEndpoints.getInwardBatches(data.inwardId));
+    if (r.success) {
+      this.setState({ inwardBatches: r.data || [], inwardBatchesLoaded: true });
+    }
   }
 
   async loadHistory() {
@@ -481,6 +493,38 @@ content={() => this.detailTabRef.current}
                 </TableBody>
               </Table>
             </Paper>
+            {this.state.inwardBatches.length > 0 && (
+              <>
+                <h4 className="reject-stock">Batch Details</h4>
+                <Paper elevation={0} className="table-wrapper">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Product</TableCell>
+                        <TableCell>Lot / Identifier</TableCell>
+                        <TableCell>Brand</TableCell>
+                        <TableCell>Expiry Date</TableCell>
+                        <TableCell>Qty Received</TableCell>
+                        <TableCell>Qty Remaining</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.inwardBatches.map((b) => (
+                        <TableRow key={b.batchId}>
+                          <TableCell>{b.product ? b.product.productName : '—'}</TableCell>
+                          <TableCell>{b.lotNumber || '—'}</TableCell>
+                          <TableCell>{b.brand || '—'}</TableCell>
+                          <TableCell>{b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}</TableCell>
+                          <TableCell>{b.qtyReceived}</TableCell>
+                          <TableCell>{b.qtyRemaining}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </>
+            )}
+
             {hasReject ? (
               <>
                 <h4 className="reject-stock">Inward Rejected Stocks</h4>

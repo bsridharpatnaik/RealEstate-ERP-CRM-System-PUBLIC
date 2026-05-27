@@ -105,7 +105,7 @@ public class ProductService {
     }
 
     /** Resolves batchMode from payload. New field takes priority; falls back to legacy isExpirable. */
-    private BatchMode resolveBatchMode(ProductCreateData payload) {
+    private static BatchMode resolveBatchMode(ProductCreateData payload) {
         if (payload.getBatchMode() != null) return payload.getBatchMode();
         // Legacy fallback: isExpirable=true → BATCH_WITH_EXPIRY
         return Boolean.TRUE.equals(payload.getIsExpirable()) ? BatchMode.BATCH_WITH_EXPIRY : BatchMode.NONE;

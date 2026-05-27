@@ -281,6 +281,7 @@ export const apiEndpoints = {
   getBatchWriteOffHistory: (batchId) => `/api/inventory/batch/${batchId}/write-off/history`,
   splitExistingStock: (productId) => `/api/inventory/stock/${productId}/split-existing`,
   getOutwardBatchConsumptions: (outwardId) => `/api/inventory/outward/${outwardId}/batch-consumptions`,
+  getInwardBatches: (inwardId) => `/api/inventory/inward/${inwardId}/batches`,
   previewOutwardBatches: '/api/inventory/outward/preview-batches',
   getStockSummary: "/api/inventory/stock-summary",
   stockSummaryExport: "/api/inventory/stock-summary/export/excel",

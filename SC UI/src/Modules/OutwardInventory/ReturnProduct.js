@@ -84,17 +84,16 @@ class ReturnProduct extends AddForm {
       }
       Object.values(this.state.noproduct).forEach((item) => {
         if (item && item.productId && item.returnquantity && item.returnquantity > 0 && isValid) {
-          // If multiple batches, all batch return qty must be > 0
+          // If multiple batches, user must enter qty for at least one batch
           if (this.hasMultipleBatches(item.productId)) {
             const batchEntries = item.batchReturnQtys || {};
             const consumptions = this.state.batchConsumptions[item.productId] || [];
-            // Ensure at least one batch qty is specified
             const hasAny = consumptions.some(
               (c) => batchEntries[c.batch?.batchId] && batchEntries[c.batch?.batchId] > 0
             );
             if (!hasAny) isValid = false;
           }
-          isValid = true;
+          // isValid stays true if checks passed
         } else {
           isValid = false;
         }

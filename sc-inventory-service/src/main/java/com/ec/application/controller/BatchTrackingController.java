@@ -9,6 +9,7 @@ import com.ec.application.data.WriteOffRequestDTO;
 import com.ec.application.model.BatchWriteOff;
 import com.ec.application.model.InventoryBatch;
 import com.ec.application.model.OutwardBatchConsumption;
+import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.OutwardBatchConsumptionRepository;
 import com.ec.application.service.BatchTrackingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class BatchTrackingController {
 
     @Autowired
     OutwardBatchConsumptionRepository outwardBatchConsumptionRepository;
+
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
 
     @PostMapping("/batch/{batchId}/write-off")
     public ResponseEntity<?> writeOffBatch(
@@ -50,6 +54,11 @@ public class BatchTrackingController {
     @GetMapping("/outward/{outwardId}/batch-consumptions")
     public ResponseEntity<List<OutwardBatchConsumption>> getBatchConsumptions(@PathVariable Long outwardId) {
         return ResponseEntity.ok(outwardBatchConsumptionRepository.findByOutwardIdOrderByIdAsc(outwardId));
+    }
+
+    @GetMapping("/inward/{inwardId}/batches")
+    public ResponseEntity<List<InventoryBatch>> getBatchesForInward(@PathVariable Long inwardId) {
+        return ResponseEntity.ok(inventoryBatchRepository.findAllByInwardId(inwardId));
     }
 
     @PostMapping("/outward/preview-batches")
