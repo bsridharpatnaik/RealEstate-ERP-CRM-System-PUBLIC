@@ -92,6 +92,14 @@ class Details extends CommonDetails {
     this.setState({ historyLoading: false });
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.data?.outwardid !== this.props.data?.outwardid) {
+      this.setState({ batchConsumptions: [], batchConsumptionsLoaded: false }, () =>
+        this.loadBatchConsumptions()
+      );
+    }
+  }
+
   async loadBatchConsumptions() {
     const { data } = this.props;
     if (!data || !data.outwardid || this.state.batchConsumptionsLoaded) return;

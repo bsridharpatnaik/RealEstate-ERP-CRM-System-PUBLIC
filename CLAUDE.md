@@ -285,3 +285,13 @@ private String resolveCurrentUser() {
 ```
 
 Call it BEFORE `activityLogService.record()`. Username must be resolved on the calling thread.
+
+---
+
+## Local Database Access
+
+- **Host:** 127.0.0.1
+- **User:** root
+- **Password:** REDACTED
+- **Connect:** `mysql --user=root --password=REDACTED --host=127.0.0.1`
+- Tenant schemas named after tenant code (e.g. `drgtrdcntr`). Master schema: `masterschema`.
