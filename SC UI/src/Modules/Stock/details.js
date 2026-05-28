@@ -13,7 +13,7 @@ class Details extends Component {
     value: 0,
     expandedWarehouse: null,
     activeTab: 'details',
-    selectedWarehouseId: null,
+    splitFormOpenWarehouseId: null,   // null = no split form open; warehouseId = that section's form is open
     batches: [],
     batchesLoading: false,
     writeOffForm: null,
@@ -21,7 +21,6 @@ class Details extends Component {
     stockAdjustments: {},
     writeOffHistories: {},
     writeOffHistoryLoading: {},
-    splitFormOpen: false,
     splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }],
     splitSubmitting: false,
     splitError: null,
@@ -41,7 +40,7 @@ class Details extends Component {
   };
 
   async loadBatches(productId, warehouseId) {
-    this.setState({ batchesLoading: true, batches: [], splitFormOpen: false, splitError: null });
+    this.setState({ batchesLoading: true, batches: [], splitFormOpenWarehouseId: null, splitError: null });
     // warehouseId null = load all warehouses
     const response = await API.GET(apiEndpoints.getBatchesForProduct(productId, warehouseId || null));
     if (response.success) {
@@ -53,17 +52,16 @@ class Details extends Component {
     }
   }
 
-  getUntrackedQty() {
-    const { selectedWarehouseId, batches, stockAdjustments } = this.state;
+  getUntrackedQtyForWarehouse(warehouseId) {
+    const { batches, stockAdjustments } = this.state;
     const data = this.props.data;
-    if (!selectedWarehouseId) return 0;
     const baseStock = (data.detailedStock || []).find(
-      s => s.warehouseId === selectedWarehouseId
+      s => s.warehouseId === warehouseId
     )?.quantityInHand || 0;
-    const adjustment = stockAdjustments[selectedWarehouseId] || 0;
+    const adjustment = stockAdjustments[warehouseId] || 0;
     const warehouseStock = baseStock - adjustment;
     const trackedQty = batches
-      .filter(b => !selectedWarehouseId || b.warehouse?.warehouseId === selectedWarehouseId || b.warehouseId === selectedWarehouseId)
+      .filter(b => b.warehouse?.warehouseId === warehouseId || b.warehouseId === warehouseId)
       .reduce((sum, b) => sum + (b.qtyRemaining || 0), 0);
     return Math.max(parseFloat((warehouseStock - trackedQty).toFixed(4)), 0);
   }
@@ -93,7 +91,7 @@ class Details extends Component {
   }
 
   fillRemaining(idx) {
-    const untrackedQty = this.getUntrackedQty();
+    const untrackedQty = this.getUntrackedQtyForWarehouse(this.state.splitFormOpenWarehouseId);
     const otherSum = this.state.splitEntries.reduce((sum, e, i) => {
       if (i === idx) return sum;
       const v = parseFloat(e.qty);
@@ -104,11 +102,12 @@ class Details extends Component {
   }
 
   async submitSplit() {
-    const { selectedWarehouseId, splitEntries } = this.state;
+    const warehouseId = this.state.splitFormOpenWarehouseId;
+    const { splitEntries } = this.state;
     const data = this.props.data;
     const batchMode = data.batchMode || 'NONE';
     const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
-    const untrackedQty = this.getUntrackedQty();
+    const untrackedQty = this.getUntrackedQtyForWarehouse(warehouseId);
     const total = this.getSplitTotal();
 
     if (Math.abs(total - untrackedQty) > 0.001) {
@@ -128,7 +127,7 @@ class Details extends Component {
 
     this.setState({ splitSubmitting: true, splitError: null });
     const payload = {
-      warehouseId: selectedWarehouseId,
+      warehouseId: warehouseId,
       batches: splitEntries.map(e => ({
         qty: parseFloat(e.qty),
         expiryDate: e.expiryDate ? e.expiryDate.split('-').reverse().join('-') : null,
@@ -139,15 +138,16 @@ class Details extends Component {
     const response = await API.POST(apiEndpoints.splitExistingStock(data.productId), payload);
     this.setState({ splitSubmitting: false });
     if (response.success) {
-      this.setState({ splitFormOpen: false, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] });
-      this.loadBatches(data.productId, selectedWarehouseId);
+      this.setState({ splitFormOpenWarehouseId: null, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] });
+      this.loadBatches(data.productId, null);
     } else {
       this.setState({ splitError: response.errorMessage || 'Split failed. Please try again.' });
     }
   }
 
-  renderSplitPanel(untrackedQty) {
-    const { splitFormOpen, splitEntries, splitSubmitting, splitError } = this.state;
+  renderSplitPanel(untrackedQty, warehouseId) {
+    const { splitEntries, splitSubmitting, splitError } = this.state;
+    const splitFormOpen = this.state.splitFormOpenWarehouseId === warehouseId;
     const batchMode = this.props.data.batchMode || 'NONE';
     const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
     const total = this.getSplitTotal();
@@ -161,8 +161,8 @@ class Details extends Component {
     if (!splitFormOpen) {
       return (
         <div style={{
-          background: '#fff8e1', border: '1px solid #ffe082', borderRadius: '6px',
-          padding: '10px 14px', marginBottom: '12px',
+          background: '#fff8e1', border: '1px solid #ffe082',
+          padding: '10px 14px', marginBottom: '0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
         }}>
           <div style={{ fontSize: '12px', color: '#5d4037' }}>
@@ -179,7 +179,7 @@ class Details extends Component {
               background: '#e65100', color: 'white', border: 'none',
               borderRadius: '4px', cursor: 'pointer', whiteSpace: 'nowrap',
             }}
-            onClick={() => this.setState({ splitFormOpen: true, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] })}
+            onClick={() => this.setState({ splitFormOpenWarehouseId: warehouseId, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] })}
           >
             Split Stock →
           </button>
@@ -187,10 +187,14 @@ class Details extends Component {
       );
     }
 
+    const warehouseBatchesTracked = this.state.batches
+      .filter(b => b.warehouse?.warehouseId === warehouseId || b.warehouseId === warehouseId)
+      .reduce((s, b) => s + (b.qtyRemaining || 0), 0);
+
     return (
       <div style={{
-        background: '#fff', border: '2px solid #1565c0', borderRadius: '8px',
-        marginBottom: '16px', overflow: 'hidden',
+        background: '#fff', border: '2px solid #1565c0',
+        marginBottom: '0', overflow: 'hidden',
       }}>
         {/* Header */}
         <div style={{ background: '#1565c0', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -199,15 +203,15 @@ class Details extends Component {
           </div>
           <button
             style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}
-            onClick={() => this.setState({ splitFormOpen: false, splitError: null })}
+            onClick={() => this.setState({ splitFormOpenWarehouseId: null, splitError: null })}
           >×</button>
         </div>
 
         {/* Stats row */}
         <div style={{ display: 'flex', gap: '1px', background: '#e3f2fd', borderBottom: '1px solid #bbdefb' }}>
           {[
-            { label: 'Total Stock', value: (this.getUntrackedQty() + this.state.batches.reduce((s, b) => s + (b.qtyRemaining || 0), 0)).toFixed(2) },
-            { label: 'Already in Batches', value: this.state.batches.reduce((s, b) => s + (b.qtyRemaining || 0), 0).toFixed(2) },
+            { label: 'Total Stock', value: (untrackedQty + warehouseBatchesTracked).toFixed(2) },
+            { label: 'Already in Batches', value: warehouseBatchesTracked.toFixed(2) },
             { label: 'To Split', value: untrackedQty.toFixed(2), highlight: true },
           ].map(({ label, value, highlight }) => (
             <div key={label} style={{ flex: 1, padding: '8px 12px', background: highlight ? '#fff3e0' : 'white', textAlign: 'center' }}>
@@ -320,7 +324,7 @@ class Details extends Component {
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
             <button
               style={{ padding: '6px 16px', fontSize: '12px', background: '#757575', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-              onClick={() => this.setState({ splitFormOpen: false, splitError: null })}
+              onClick={() => this.setState({ splitFormOpenWarehouseId: null, splitError: null })}
             >Cancel</button>
             <button
               disabled={!isExact || splitSubmitting}
@@ -354,20 +358,19 @@ class Details extends Component {
     });
     this.setState({ writeOffSubmitting: false });
     if (response.success) {
-      const { selectedWarehouseId, stockAdjustments } = this.state;
+      const { stockAdjustments } = this.state;
+      const warehouseId = writeOffForm.warehouseId;
       const writtenQty = parseFloat(writeOffForm.quantity);
       this.setState({
         writeOffForm: null,
         stockAdjustments: {
           ...stockAdjustments,
-          [selectedWarehouseId]: (stockAdjustments[selectedWarehouseId] || 0) + writtenQty,
+          [warehouseId]: (stockAdjustments[warehouseId] || 0) + writtenQty,
         },
       });
       const productId = this.props.data.productId;
-      if (productId && selectedWarehouseId) {
-        this.loadBatches(productId, selectedWarehouseId);
-        this.loadWriteOffHistory(batchId);
-      }
+      this.loadBatches(productId, null);
+      this.loadWriteOffHistory(batchId);
     } else {
       alert(response.errorMessage || "Write-off failed.");
     }
@@ -538,199 +541,225 @@ class Details extends Component {
 
           {this.state.activeTab === 'batches' && (
             <div style={{ padding: '8px' }}>
-              {/* Warehouse filter (optional) */}
-              <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 'bold' }}>Warehouse:</label>
-                <select
-                  style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '13px' }}
-                  value={this.state.selectedWarehouseId || ''}
-                  onChange={(e) => {
-                    const warehouseId = e.target.value ? parseInt(e.target.value) : null;
-                    this.setState({ selectedWarehouseId: warehouseId, writeOffForm: null, splitFormOpen: false, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] });
-                  }}
-                >
-                  <option value="">All warehouses</option>
-                  {data.detailedStock.map((item, idx) => (
-                    <option key={idx} value={item.warehouseId}>
-                      {item.warehouseName || 'Unknown'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {this.state.batchesLoading && (
                 <div style={{ padding: '20px', textAlign: 'center', color: '#888', fontSize: '13px' }}>Loading batches…</div>
               )}
 
               {!this.state.batchesLoading && (() => {
-                const untrackedQty = this.getUntrackedQty();
                 const batchMode = data.batchMode || 'NONE';
                 const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
+
+                // Top banner — list all warehouses with untracked stock
+                const untrackedWarehouses = (data.detailedStock || []).filter(
+                  w => this.getUntrackedQtyForWarehouse(w.warehouseId) > 0.001
+                );
+
                 return (
                   <>
-                    {/* Split panel — for all batch-tracked products with untracked stock */}
-                    {batchMode !== 'NONE' && untrackedQty > 0.001 && this.renderSplitPanel(untrackedQty)}
-
-                    {(() => {
-                      const visibleBatches = [...this.state.batches]
-                        .filter(b => b.qtyRemaining > 0)
-                        .filter(b => !this.state.selectedWarehouseId || b.warehouse?.warehouseId === this.state.selectedWarehouseId || b.warehouseId === this.state.selectedWarehouseId)
-                        .sort((a, b) => {
-                          // FEFO for BATCH_WITH_EXPIRY, FIFO by receivedDate for BATCH_ONLY
-                          if (requiresExpiry) {
-                            if (!a.expiryDate && !b.expiryDate) return 0;
-                            if (!a.expiryDate) return 1;
-                            if (!b.expiryDate) return -1;
-                            return a.expiryDate.localeCompare(b.expiryDate);
-                          } else {
-                            if (!a.receivedDate && !b.receivedDate) return 0;
-                            if (!a.receivedDate) return 1;
-                            if (!b.receivedDate) return -1;
-                            return a.receivedDate.localeCompare(b.receivedDate);
-                          }
-                        });
-                      return visibleBatches.length === 0 ? (
-                      <div style={{ color: '#888', fontSize: '13px', padding: '8px 0' }}>
-                        No batch records found.
+                    {untrackedWarehouses.length > 0 && (
+                      <div style={{
+                        background: '#fff8e1', border: '1px solid #ffe082', borderRadius: '6px',
+                        padding: '8px 12px', marginBottom: '12px', fontSize: '12px', color: '#5d4037',
+                      }}>
+                        <strong>⚠ Untracked goods present in: </strong>
+                        {untrackedWarehouses.map(w => w.warehouseName).join(', ')}
                       </div>
-                    ) : (
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                        <thead>
-                          <tr style={{ backgroundColor: '#f5f5f5' }}>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Batch</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Warehouse</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Identifier</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Lot / Batch No.</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Received</th>
-                            {requiresExpiry && <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Expiry</th>}
-                            {requiresExpiry && <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>Status</th>}
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'right' }}>Qty Remaining</th>
-                            <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {visibleBatches.map((batch) => {
-                            const isExpired = batch.isExpired;
-                            const isNearExpiry = !isExpired && batch.daysUntilExpiry != null && batch.daysUntilExpiry <= 30;
-                            const rowStyle = isExpired
-                              ? { backgroundColor: '#ffebee' }
-                              : isNearExpiry
-                              ? { backgroundColor: '#fff8e1' }
-                              : {};
-                            const isSplitOrigin = batch.inwardId === -1;
-                            return (
-                              <React.Fragment key={batch.batchId}>
-                                <tr style={rowStyle}>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>
-                                    <span style={{ fontSize: '11px', color: '#999' }}>#{batch.batchId}</span>
-                                    {isSplitOrigin && (
-                                      <span style={{ marginLeft: '4px', fontSize: '10px', background: '#e3f2fd', color: '#1565c0', borderRadius: '3px', padding: '1px 4px' }}>split</span>
-                                    )}
-                                  </td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.warehouse?.warehouseName || '—'}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.brand || <span style={{ color: '#bbb', fontSize: '11px' }}>—</span>}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.lotNumber || <span style={{ color: '#bbb' }}>—</span>}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.receivedDate ? batch.receivedDate.replace(/-/g, '/') : '—'}</td>
-                                  {requiresExpiry && (
-                                    <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.expiryDate ? batch.expiryDate.replace(/-/g, '/') : <span style={{ color: '#bbb' }}>—</span>}</td>
-                                  )}
-                                  {requiresExpiry && (
-                                    <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
-                                      {batch.expiryDate ? (
-                                        isExpired ? (
-                                          <span style={{ background: '#ffcdd2', color: '#c62828', borderRadius: '3px', padding: '1px 6px', fontSize: '11px', fontWeight: 600 }}>Expired</span>
-                                        ) : isNearExpiry ? (
-                                          <span style={{ background: '#ffe0b2', color: '#e65100', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
-                                        ) : (
-                                          <span style={{ background: '#e8f5e9', color: '#2e7d32', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
-                                        )
-                                      ) : <span style={{ color: '#bbb', fontSize: '11px' }}>—</span>}
-                                    </td>
-                                  )}
-                                  <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 600 }}>{batch.qtyRemaining}</td>
-                                  <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
-                                    {batch.qtyRemaining > 0 && (
-                                      <button
-                                        style={{ padding: '3px 8px', fontSize: '11px', cursor: 'pointer', backgroundColor: '#e53935', color: 'white', border: 'none', borderRadius: '3px' }}
-                                        onClick={() => this.setState({ writeOffForm: { batchId: batch.batchId, quantity: '', reason: '' } })}
-                                      >
-                                        Write Off
-                                      </button>
-                                    )}
-                                  </td>
-                                </tr>
-                                {this.state.writeOffForm && this.state.writeOffForm.batchId === batch.batchId && (
-                                  <tr>
-                                    <td colSpan={requiresExpiry ? 9 : 7} style={{ padding: '8px', backgroundColor: '#fafafa', border: '1px solid #ddd' }}>
-                                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-                                        <div>
-                                          <div style={{ fontSize: '11px', marginBottom: '2px' }}>Quantity *</div>
-                                          <input type="number" style={{ padding: '4px', width: '80px', border: '1px solid #ccc', borderRadius: '3px' }}
-                                            value={this.state.writeOffForm.quantity}
-                                            onChange={e => this.setState({ writeOffForm: { ...this.state.writeOffForm, quantity: e.target.value } })}
-                                            max={batch.qtyRemaining} min="0" step="any"
-                                          />
-                                        </div>
-                                        <div style={{ flex: 1, minWidth: '160px' }}>
-                                          <div style={{ fontSize: '11px', marginBottom: '2px' }}>Reason *</div>
-                                          <input type="text" style={{ padding: '4px', width: '100%', border: '1px solid #ccc', borderRadius: '3px' }}
-                                            value={this.state.writeOffForm.reason}
-                                            onChange={e => this.setState({ writeOffForm: { ...this.state.writeOffForm, reason: e.target.value } })}
-                                            placeholder="Reason for write-off"
-                                          />
-                                        </div>
-                                        <button
-                                          style={{ padding: '4px 12px', backgroundColor: '#1565c0', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
-                                          disabled={this.state.writeOffSubmitting}
-                                          onClick={() => this.submitWriteOff(batch.batchId)}
-                                        >
-                                          {this.state.writeOffSubmitting ? 'Saving…' : 'Confirm'}
-                                        </button>
-                                        <button
-                                          style={{ padding: '4px 12px', backgroundColor: '#757575', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
-                                          onClick={() => this.setState({ writeOffForm: null })}
-                                        >
-                                          Cancel
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
+                    )}
+
+                    {/* Per-warehouse sections */}
+                    <div style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '2px' }}>
+                      {(data.detailedStock || []).map(warehouse => {
+                        const warehouseId = warehouse.warehouseId;
+                        const untrackedQty = this.getUntrackedQtyForWarehouse(warehouseId);
+                        const warehouseBatches = [...this.state.batches]
+                          .filter(b => b.qtyRemaining > 0)
+                          .filter(b => b.warehouse?.warehouseId === warehouseId || b.warehouseId === warehouseId)
+                          .sort((a, b) => {
+                            if (requiresExpiry) {
+                              if (!a.expiryDate && !b.expiryDate) return 0;
+                              if (!a.expiryDate) return 1;
+                              if (!b.expiryDate) return -1;
+                              return a.expiryDate.localeCompare(b.expiryDate);
+                            } else {
+                              if (!a.receivedDate && !b.receivedDate) return 0;
+                              if (!a.receivedDate) return 1;
+                              if (!b.receivedDate) return -1;
+                              return a.receivedDate.localeCompare(b.receivedDate);
+                            }
+                          });
+
+                        return (
+                          <div key={warehouseId} style={{
+                            marginBottom: '16px', border: '1px solid #e0e0e0',
+                            borderRadius: '6px', overflow: 'hidden',
+                          }}>
+                            {/* Warehouse header */}
+                            <div style={{
+                              background: '#f5f5f5', padding: '8px 12px',
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                              borderBottom: '1px solid #e0e0e0',
+                            }}>
+                              <span style={{ fontWeight: 600, fontSize: '13px' }}>📦 {warehouse.warehouseName}</span>
+                              <span style={{ color: '#666', fontSize: '12px' }}>
+                                Stock: <strong>{warehouse.quantityInHand}</strong> {data.measurementUnit || ''}
+                                {untrackedQty > 0.001 && (
+                                  <span style={{ marginLeft: '8px', color: '#e65100', fontWeight: 600 }}>
+                                    ({untrackedQty} untracked)
+                                  </span>
                                 )}
-                                {/* Write-off history for this batch */}
-                                {this.state.writeOffHistories[batch.batchId] && this.state.writeOffHistories[batch.batchId].length > 0 && (
-                                  <tr>
-                                    <td colSpan={requiresExpiry ? 9 : 7} style={{ padding: '6px 8px', backgroundColor: '#fff8e1', border: '1px solid #ffe082' }}>
-                                      <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', color: '#e65100' }}>Write-off History</div>
-                                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                                        <thead>
-                                          <tr style={{ backgroundColor: '#fff3e0' }}>
-                                            <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Date</th>
-                                            <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Qty</th>
-                                            <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Reason</th>
-                                            <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>By</th>
+                              </span>
+                            </div>
+
+                            {/* Split panel (if untracked) */}
+                            {batchMode !== 'NONE' && untrackedQty > 0.001 && this.renderSplitPanel(untrackedQty, warehouseId)}
+
+                            {/* Batch table */}
+                            {warehouseBatches.length === 0 ? (
+                              <div style={{ padding: '12px', color: '#aaa', fontSize: '12px', textAlign: 'center' }}>
+                                No tracked batches for this warehouse.
+                              </div>
+                            ) : (
+                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                <thead>
+                                  <tr style={{ backgroundColor: '#fafafa' }}>
+                                    <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Batch</th>
+                                    <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Identifier</th>
+                                    <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Lot / Batch No.</th>
+                                    <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Received</th>
+                                    {requiresExpiry && <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'left' }}>Expiry</th>}
+                                    {requiresExpiry && <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>Status</th>}
+                                    <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'right' }}>Qty Remaining</th>
+                                    <th style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {warehouseBatches.map((batch) => {
+                                    const isExpired = batch.isExpired;
+                                    const isNearExpiry = !isExpired && batch.daysUntilExpiry != null && batch.daysUntilExpiry <= 30;
+                                    const rowStyle = isExpired
+                                      ? { backgroundColor: '#ffebee' }
+                                      : isNearExpiry
+                                      ? { backgroundColor: '#fff8e1' }
+                                      : {};
+                                    const isSplitOrigin = batch.inwardId === -1;
+                                    return (
+                                      <React.Fragment key={batch.batchId}>
+                                        <tr style={rowStyle}>
+                                          <td style={{ padding: '6px', border: '1px solid #ddd' }}>
+                                            <span style={{ fontSize: '11px', color: '#999' }}>#{batch.batchId}</span>
+                                            {isSplitOrigin && (
+                                              <span
+                                                title="Batch created from untracked stock split — not linked to a specific inward receipt"
+                                                style={{ marginLeft: '4px', fontSize: '10px', background: '#e3f2fd', color: '#1565c0', borderRadius: '3px', padding: '1px 4px', cursor: 'default' }}
+                                              >split</span>
+                                            )}
+                                          </td>
+                                          <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.brand || <span style={{ color: '#bbb', fontSize: '11px' }}>—</span>}</td>
+                                          <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.lotNumber || <span style={{ color: '#bbb' }}>—</span>}</td>
+                                          <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.receivedDate ? batch.receivedDate.replace(/-/g, '/') : '—'}</td>
+                                          {requiresExpiry && (
+                                            <td style={{ padding: '6px', border: '1px solid #ddd' }}>{batch.expiryDate ? batch.expiryDate.replace(/-/g, '/') : <span style={{ color: '#bbb' }}>—</span>}</td>
+                                          )}
+                                          {requiresExpiry && (
+                                            <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                              {batch.expiryDate ? (
+                                                isExpired ? (
+                                                  <span style={{ background: '#ffcdd2', color: '#c62828', borderRadius: '3px', padding: '1px 6px', fontSize: '11px', fontWeight: 600 }}>Expired</span>
+                                                ) : isNearExpiry ? (
+                                                  <span style={{ background: '#ffe0b2', color: '#e65100', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
+                                                ) : (
+                                                  <span style={{ background: '#e8f5e9', color: '#2e7d32', borderRadius: '3px', padding: '1px 6px', fontSize: '11px' }}>{batch.daysUntilExpiry}d left</span>
+                                                )
+                                              ) : <span style={{ color: '#bbb', fontSize: '11px' }}>—</span>}
+                                            </td>
+                                          )}
+                                          <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 600 }}>{batch.qtyRemaining}</td>
+                                          <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                            {batch.qtyRemaining > 0 && (
+                                              <button
+                                                style={{ padding: '3px 8px', fontSize: '11px', cursor: 'pointer', backgroundColor: '#e53935', color: 'white', border: 'none', borderRadius: '3px' }}
+                                                onClick={() => this.setState({ writeOffForm: { batchId: batch.batchId, warehouseId: batch.warehouse?.warehouseId, quantity: '', reason: '' } })}
+                                              >
+                                                Write Off
+                                              </button>
+                                            )}
+                                          </td>
+                                        </tr>
+                                        {this.state.writeOffForm && this.state.writeOffForm.batchId === batch.batchId && (
+                                          <tr>
+                                            <td colSpan={requiresExpiry ? 8 : 6} style={{ padding: '8px', backgroundColor: '#fafafa', border: '1px solid #ddd' }}>
+                                              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                                                <div>
+                                                  <div style={{ fontSize: '11px', marginBottom: '2px' }}>Quantity *</div>
+                                                  <input type="number" style={{ padding: '4px', width: '80px', border: '1px solid #ccc', borderRadius: '3px' }}
+                                                    value={this.state.writeOffForm.quantity}
+                                                    onChange={e => this.setState({ writeOffForm: { ...this.state.writeOffForm, quantity: e.target.value } })}
+                                                    max={batch.qtyRemaining} min="0" step="any"
+                                                  />
+                                                </div>
+                                                <div style={{ flex: 1, minWidth: '160px' }}>
+                                                  <div style={{ fontSize: '11px', marginBottom: '2px' }}>Reason *</div>
+                                                  <input type="text" style={{ padding: '4px', width: '100%', border: '1px solid #ccc', borderRadius: '3px' }}
+                                                    value={this.state.writeOffForm.reason}
+                                                    onChange={e => this.setState({ writeOffForm: { ...this.state.writeOffForm, reason: e.target.value } })}
+                                                    placeholder="Reason for write-off"
+                                                  />
+                                                </div>
+                                                <button
+                                                  style={{ padding: '4px 12px', backgroundColor: '#1565c0', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
+                                                  disabled={this.state.writeOffSubmitting}
+                                                  onClick={() => this.submitWriteOff(batch.batchId)}
+                                                >
+                                                  {this.state.writeOffSubmitting ? 'Saving…' : 'Confirm'}
+                                                </button>
+                                                <button
+                                                  style={{ padding: '4px 12px', backgroundColor: '#757575', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '12px' }}
+                                                  onClick={() => this.setState({ writeOffForm: null })}
+                                                >
+                                                  Cancel
+                                                </button>
+                                              </div>
+                                            </td>
                                           </tr>
-                                        </thead>
-                                        <tbody>
-                                          {this.state.writeOffHistories[batch.batchId].map((wo, i) => (
-                                            <tr key={i}>
-                                              <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.writeOffDate ? wo.writeOffDate.replace(/-/g, '/') : '—'}</td>
-                                              <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.quantity}</td>
-                                              <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.reason}</td>
-                                              <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.writtenOffBy || '—'}</td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </td>
-                                  </tr>
-                                )}
-                              </React.Fragment>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    );
-                  })()}
+                                        )}
+                                        {/* Write-off history for this batch */}
+                                        {this.state.writeOffHistories[batch.batchId] && this.state.writeOffHistories[batch.batchId].length > 0 && (
+                                          <tr>
+                                            <td colSpan={requiresExpiry ? 8 : 6} style={{ padding: '6px 8px', backgroundColor: '#fff8e1', border: '1px solid #ffe082' }}>
+                                              <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '4px', color: '#e65100' }}>Write-off History</div>
+                                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                                                <thead>
+                                                  <tr style={{ backgroundColor: '#fff3e0' }}>
+                                                    <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Date</th>
+                                                    <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Qty</th>
+                                                    <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Reason</th>
+                                                    <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>By</th>
+                                                  </tr>
+                                                </thead>
+                                                <tbody>
+                                                  {this.state.writeOffHistories[batch.batchId].map((wo, i) => (
+                                                    <tr key={i}>
+                                                      <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.writeOffDate ? wo.writeOffDate.replace(/-/g, '/') : '—'}</td>
+                                                      <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.quantity}</td>
+                                                      <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.reason}</td>
+                                                      <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.writtenOffBy || '—'}</td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                              </table>
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </React.Fragment>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </>
                 );
               })()}

@@ -210,6 +210,7 @@ class List extends ListCommon {
               { key: 'aging30',    label: 'Aging 30d+',       count: t.aging30Days,    color: '#6a1b9a', bg: '#f3e5f5', border: '#ce93d8' },
               { key: 'aging60',    label: 'Aging 60d+',       count: t.aging60Days,    color: '#4a148c', bg: '#ede7f6', border: '#b39ddb' },
               { key: 'aging90',    label: 'Aging 90d+',       count: t.aging90Days,    color: '#311b92', bg: '#e8eaf6', border: '#9fa8da' },
+              { key: 'untracked',  label: 'Untracked',        count: t.untrackedCount, color: '#37474f', bg: '#eceff1', border: '#b0bec5' },
             ];
             return (
               <div style={{ display: 'flex', gap: '8px', margin: '10px 0', flexWrap: 'wrap' }}>

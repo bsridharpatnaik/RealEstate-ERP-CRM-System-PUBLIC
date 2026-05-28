@@ -151,4 +151,10 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
     Double sumQtyRemainingByProductAndWarehouse(
             @Param("productId") Long productId,
             @Param("warehouseId") Long warehouseId);
+
+    // Sum of qtyRemaining per product — for untracked stock tile
+    @Query("SELECT b.product.productId, COALESCE(SUM(b.qtyRemaining), 0.0) FROM InventoryBatch b " +
+           "WHERE b.product.productId IN :ids AND b.isDeleted = false " +
+           "GROUP BY b.product.productId")
+    List<Object[]> sumQtyRemainingGroupByProduct(@Param("ids") List<Long> ids);
 }

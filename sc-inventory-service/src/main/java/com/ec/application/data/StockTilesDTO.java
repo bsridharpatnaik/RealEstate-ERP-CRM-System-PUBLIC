@@ -21,4 +21,7 @@ public class StockTilesDTO {
     private long aging30Days;
     private long aging60Days;
     private long aging90Days;
+
+    // Batch-tracked products with stock not fully covered by inventory_batch records
+    private long untrackedCount;
 }

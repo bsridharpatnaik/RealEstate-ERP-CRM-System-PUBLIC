@@ -94,4 +94,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value = "SELECT * FROM Product WHERE productId = :productId", nativeQuery = true)
 	java.util.Optional<Product> findByIdIncludingDeleted(@Param("productId") Long productId);
+
+	@Query("SELECT p.productId FROM Product p WHERE p.batchMode != com.ec.application.constants.BatchMode.NONE AND p.isDeleted = false")
+	List<Long> findBatchTrackedProductIds();
 }

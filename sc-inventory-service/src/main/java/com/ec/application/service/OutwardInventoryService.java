@@ -835,6 +835,16 @@ public class OutwardInventoryService {
                 List<Long> fifoBatchIds = fifoBatches.stream()
                         .map(InventoryBatch::getBatchId).collect(java.util.stream.Collectors.toList());
 
+                // Pre-compute what pure FIFO would assign to each batch (for quantity-level override detection)
+                Map<Long, Double> fifoExpectedQty = new java.util.LinkedHashMap<>();
+                double fifoRemaining = qtyToConsume;
+                for (InventoryBatch fb : fifoBatches) {
+                    if (fifoRemaining <= 0) break;
+                    double fifoConsume = Math.min(fifoRemaining, fb.getQtyRemaining());
+                    fifoExpectedQty.put(fb.getBatchId(), fifoConsume);
+                    fifoRemaining -= fifoConsume;
+                }
+
                 int fifoPtr = 0;
                 for (BatchOverrideEntry entry : entriesToProcess) {
                     InventoryBatch batch = inventoryBatchRepository.findByIdLocked(entry.getBatchId())
@@ -847,7 +857,9 @@ public class OutwardInventoryService {
                     }
                     boolean isFifoOrder = fifoPtr < fifoBatchIds.size()
                             && fifoBatchIds.get(fifoPtr).equals(entry.getBatchId());
-                    boolean isFifoOverride = !isFifoOrder;
+                    Double expectedQty = fifoExpectedQty.get(entry.getBatchId());
+                    boolean isFifoQty = expectedQty != null && Math.abs(expectedQty - entry.getQty()) <= 0.001;
+                    boolean isFifoOverride = !isFifoOrder || !isFifoQty;
 
                     batch.setQtyRemaining(batch.getQtyRemaining() - entry.getQty());
                     inventoryBatchRepository.save(batch);

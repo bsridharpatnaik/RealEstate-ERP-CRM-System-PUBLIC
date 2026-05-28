@@ -46,4 +46,6 @@ public interface StockInformationRepo extends BaseRepository<StockInformationFro
     long countByStockStatus(String stockStatus);
 
     long countByStockStatusAndProductIdIn(String stockStatus, List<Long> productIds);
+
+    List<StockInformationFromView> findByProductIdInAndTotalQuantityInHandGreaterThan(List<Long> ids, Double qty);
 }

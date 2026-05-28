@@ -34,7 +34,9 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -131,6 +133,39 @@ public class BatchTrackingService {
         return batches;
     }
 
+    private long computeUntrackedCount(List<Long> restrictToIds) {
+        List<Long> batchTrackedIds = new ArrayList<>(productRepo.findBatchTrackedProductIds());
+        if (batchTrackedIds.isEmpty()) return 0;
+
+        if (restrictToIds != null) {
+            batchTrackedIds.retainAll(restrictToIds);
+            if (batchTrackedIds.isEmpty()) return 0;
+        }
+
+        List<StockInformationFromView> stockItems =
+                stockInformationRepo.findByProductIdInAndTotalQuantityInHandGreaterThan(batchTrackedIds, 0.0);
+        if (stockItems.isEmpty()) return 0;
+
+        List<Long> stockProductIds = stockItems.stream()
+                .map(StockInformationFromView::getProductId)
+                .collect(Collectors.toList());
+
+        List<Object[]> batchSums = inventoryBatchRepository.sumQtyRemainingGroupByProduct(stockProductIds);
+        Map<Long, Double> batchQtyMap = new HashMap<>();
+        for (Object[] row : batchSums) {
+            batchQtyMap.put(((Number) row[0]).longValue(), ((Number) row[1]).doubleValue());
+        }
+
+        long count = 0;
+        for (StockInformationFromView si : stockItems) {
+            double batchQty = batchQtyMap.getOrDefault(si.getProductId(), 0.0);
+            if (si.getTotalQuantityInHand() > batchQty + 0.001) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public StockTilesDTO getStockTiles(FilterDataList filterDataList) {
         LocalDate today = LocalDate.now();
         ZoneId zone = ZoneId.systemDefault();
@@ -150,7 +185,7 @@ public class BatchTrackingService {
                                 && f.getAttrValue() != null
                                 && !f.getAttrValue().isEmpty());
 
-        long expiring30, expiring60, expired, lowStock, highStock, aging30, aging60, aging90;
+        long expiring30, expiring60, expired, lowStock, highStock, aging30, aging60, aging90, untrackedCount;
 
         if (!hasFilter) {
             // Global (unfiltered) counts
@@ -162,6 +197,7 @@ public class BatchTrackingService {
             aging30    = allInventoryRepo.countAgingProducts(cutoff30);
             aging60    = allInventoryRepo.countAgingProducts(cutoff60);
             aging90    = allInventoryRepo.countAgingProducts(cutoff90);
+            untrackedCount = computeUntrackedCount(null);
         } else {
             Specification<StockInformationFromView> spec =
                     StockInformationSpecification.getSpecification(filterDataList);
@@ -184,6 +220,7 @@ public class BatchTrackingService {
             aging30    = allInventoryRepo.countAgingProductsIn(cutoff30, filteredIds);
             aging60    = allInventoryRepo.countAgingProductsIn(cutoff60, filteredIds);
             aging90    = allInventoryRepo.countAgingProductsIn(cutoff90, filteredIds);
+            untrackedCount = computeUntrackedCount(filteredIds);
         }
 
         StockTilesDTO dto = new StockTilesDTO();
@@ -195,6 +232,7 @@ public class BatchTrackingService {
         dto.setAging30Days(aging30);
         dto.setAging60Days(aging60);
         dto.setAging90Days(aging90);
+        dto.setUntrackedCount(untrackedCount);
         return dto;
     }
 
@@ -227,13 +265,26 @@ public class BatchTrackingService {
             }
             List<Long> fifoBatchIds = fifoBatches.stream()
                     .map(InventoryBatch::getBatchId).collect(Collectors.toList());
+
+            // Pre-compute what pure FIFO would assign to each batch (for quantity-level override detection)
+            Map<Long, Double> fifoExpectedQty = new HashMap<>();
+            double fifoRemaining = qty;
+            for (InventoryBatch fb : fifoBatches) {
+                if (fifoRemaining <= 0) break;
+                double fifoConsume = Math.min(fifoRemaining, fb.getQtyRemaining());
+                fifoExpectedQty.put(fb.getBatchId(), fifoConsume);
+                fifoRemaining -= fifoConsume;
+            }
+
             int fifoPtr = 0;
             for (BatchOverrideEntry entry : overrideBatches) {
                 InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
                         .orElseThrow(() -> new Exception("Batch not found: " + entry.getBatchId()));
                 boolean isFifoOrder = fifoPtr < fifoBatchIds.size()
                         && fifoBatchIds.get(fifoPtr).equals(entry.getBatchId());
-                boolean fifoOverridden = !isFifoOrder;
+                Double expectedQty = fifoExpectedQty.get(entry.getBatchId());
+                boolean isFifoQty = expectedQty != null && Math.abs(expectedQty - entry.getQty()) <= 0.001;
+                boolean fifoOverridden = !isFifoOrder || !isFifoQty;
                 BatchConsumptionPreviewDTO.BatchPreviewItem item = new BatchConsumptionPreviewDTO.BatchPreviewItem();
                 item.setBatchId(batch.getBatchId());
                 item.setBrand(batch.getBrand());

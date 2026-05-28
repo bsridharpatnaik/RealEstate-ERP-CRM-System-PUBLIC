@@ -138,6 +138,33 @@ public class StockService {
                 } else if ("aging90".equals(filterType)) {
                     Date cutoff = Date.from(today.minusDays(90).atStartOfDay(zone).toInstant());
                     expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
+                } else if ("untracked".equals(filterType)) {
+                    // Batch-tracked products where totalQuantityInHand > sum of batch qtyRemaining
+                    List<Long> batchTrackedIds = productRepo.findBatchTrackedProductIds();
+                    if (batchTrackedIds.isEmpty()) {
+                        expiryProductIds = Collections.emptyList();
+                    } else {
+                        List<StockInformationFromView> stockItems =
+                                siRepo.findByProductIdInAndTotalQuantityInHandGreaterThan(batchTrackedIds, 0.0);
+                        if (stockItems.isEmpty()) {
+                            expiryProductIds = Collections.emptyList();
+                        } else {
+                            List<Long> stockProductIds = stockItems.stream()
+                                    .map(StockInformationFromView::getProductId)
+                                    .collect(Collectors.toList());
+                            List<Object[]> batchSums =
+                                    inventoryBatchRepository.sumQtyRemainingGroupByProduct(stockProductIds);
+                            Map<Long, Double> batchQtyMap = new HashMap<>();
+                            for (Object[] row : batchSums) {
+                                batchQtyMap.put(((Number) row[0]).longValue(), ((Number) row[1]).doubleValue());
+                            }
+                            expiryProductIds = stockItems.stream()
+                                    .filter(si -> si.getTotalQuantityInHand() >
+                                            batchQtyMap.getOrDefault(si.getProductId(), 0.0) + 0.001)
+                                    .map(StockInformationFromView::getProductId)
+                                    .collect(Collectors.toList());
+                        }
+                    }
                 } else {
                     expiryProductIds = Collections.emptyList();
                 }
