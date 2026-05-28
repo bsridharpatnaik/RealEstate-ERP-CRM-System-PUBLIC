@@ -225,6 +225,18 @@ public class OutwardInventoryService {
                     if (batch != null && entry.getQty() != null && entry.getQty() > 0) {
                         batch.setQtyRemaining(batch.getQtyRemaining() + entry.getQty());
                         inventoryBatchRepository.save(batch);
+                        // #13: Reduce the corresponding consumption record so Batch Usage tab stays accurate
+                        List<OutwardBatchConsumption> cons = outwardBatchConsumptionRepository
+                                .findByOutwardIdAndBatch_BatchId(outwardId, entry.getBatchId());
+                        for (OutwardBatchConsumption c : cons) {
+                            double newQty = c.getQtyConsumed() - entry.getQty();
+                            if (newQty <= 0.001) {
+                                outwardBatchConsumptionRepository.delete(c);
+                            } else {
+                                c.setQtyConsumed(newQty);
+                                outwardBatchConsumptionRepository.save(c);
+                            }
+                        }
                     }
                 }
             } else {
@@ -248,12 +260,21 @@ public class OutwardInventoryService {
                         batch.setQtyRemaining(batch.getQtyRemaining() + restoreQty);
                         inventoryBatchRepository.save(batch);
                     }
+                    // #13: Update consumption record to reflect the partial return
+                    double newQty = c.getQtyConsumed() - restoreQty;
+                    if (newQty <= 0.001) {
+                        outwardBatchConsumptionRepository.delete(c);
+                    } else {
+                        c.setQtyConsumed(newQty);
+                        outwardBatchConsumptionRepository.save(c);
+                    }
                     remaining -= restoreQty;
                 }
             }
         } catch (Exception e) {
-            log.warn("Batch restore failed for return outwardId={}, productId={}: {}", outwardId, productId, e.getMessage());
-            // Best-effort — don't fail the return if batch restore fails
+            // #8: Rethrow — don't silently swallow; stock/batch divergence would corrupt future outwards
+            log.error("Batch restore failed for return outwardId={}, productId={}: {}", outwardId, productId, e.getMessage(), e);
+            throw new RuntimeException("Failed to restore batch quantities after return: " + e.getMessage(), e);
         }
     }
 
@@ -317,6 +338,7 @@ public class OutwardInventoryService {
         reverseBatchConsumptions(id);
         setFields(outwardInventory, iiData);
         outwardInventory.setHasBOQ(allHaveBOQ ? true : null);
+        outwardInventory.setHasFifoOverride(false);   // reset — consumeBatchesForOutward re-sets to true if needed
         modifyStockBeforeUpdate(oldOutwardInventory, outwardInventory);
         removeOrphans(oldOutwardInventory);
         outwardInventoryRepo.save(outwardInventory);
@@ -804,6 +826,12 @@ public class OutwardInventoryService {
             boolean hasSingleOverride = overrideBatchId != null && !hasMultiOverride;
 
             if (hasMultiOverride || hasSingleOverride) {
+                // #10: Skip batch processing entirely for non-batch-tracked products
+                if (!iol.getProduct().isBatchTracked()) {
+                    log.warn("Override batches ignored for non-batch-tracked product: {}", iol.getProduct().getProductName());
+                    continue;
+                }
+
                 // Validate reason
                 if (overrideComment == null || overrideComment.trim().isEmpty()) {
                     throw new IllegalArgumentException(
@@ -814,14 +842,26 @@ public class OutwardInventoryService {
                 // Normalise to a list for uniform processing
                 List<BatchOverrideEntry> entriesToProcess = new ArrayList<>();
                 if (hasMultiOverride) {
-                    double total = overrideBatches.stream()
-                            .mapToDouble(e -> e.getQty() != null ? e.getQty() : 0).sum();
+                    // #4: Filter out null/zero-qty entries (placeholders not yet filled in)
+                    List<BatchOverrideEntry> validEntries = overrideBatches.stream()
+                            .filter(e -> e.getQty() != null && e.getQty() > 0)
+                            .collect(Collectors.toList());
+                    // #3: Validate no duplicate batch IDs
+                    Set<Long> seenBatchIds = new HashSet<>();
+                    for (BatchOverrideEntry e : validEntries) {
+                        if (!seenBatchIds.add(e.getBatchId())) {
+                            throw new IllegalArgumentException(
+                                "Duplicate batch ID " + e.getBatchId() + " in override list for product: " +
+                                iol.getProduct().getProductName());
+                        }
+                    }
+                    double total = validEntries.stream().mapToDouble(BatchOverrideEntry::getQty).sum();
                     if (Math.abs(total - qtyToConsume) > 0.001) {
                         throw new IllegalArgumentException(
                                 "Override batch quantities (" + total + ") must equal outward quantity (" +
                                 qtyToConsume + ") for product: " + iol.getProduct().getProductName());
                     }
-                    entriesToProcess = overrideBatches;
+                    entriesToProcess = validEntries;
                 } else {
                     BatchOverrideEntry single = new BatchOverrideEntry();
                     single.setBatchId(overrideBatchId);
@@ -850,6 +890,13 @@ public class OutwardInventoryService {
                     InventoryBatch batch = inventoryBatchRepository.findByIdLocked(entry.getBatchId())
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "Batch not found with ID: " + entry.getBatchId()));
+                    // #2: Validate batch belongs to the outward's warehouse
+                    if (!batch.getWarehouse().getWarehouseId().equals(warehouseId)) {
+                        throw new IllegalArgumentException(
+                            "Batch " + entry.getBatchId() + " belongs to warehouse '" +
+                            batch.getWarehouse().getWarehouseName() +
+                            "' but outward is for a different warehouse.");
+                    }
                     if (batch.getQtyRemaining() < entry.getQty()) {
                         throw new IllegalArgumentException(
                                 "Batch " + entry.getBatchId() + " does not have enough quantity. " +

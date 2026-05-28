@@ -58,6 +58,7 @@ class Edit extends EditForm {
       this.formData.fileInformations = data.fileInformations;
 
       const currentStock = {};
+      this.originalQtyMap = {};   // track original qty per product for override preservation
       for (let i = 0; i < data.inwardOutwardList.length; i++) {
         const item = data.inwardOutwardList[i];
         const pid = item.product.productId;
@@ -66,6 +67,7 @@ class Edit extends EditForm {
           productId: pid,
         };
         currentStock[pid] = item.closingStock;
+        this.originalQtyMap[pid] = item.quantity;
         this.getBoqQuantity(pid);
       }
       this.oldStock = currentStock;
@@ -74,6 +76,17 @@ class Edit extends EditForm {
         noproduct: { ...p },
         currentStock: currentStock,
       });
+
+      // Load batch consumption data so overrides can be preserved when qty is unchanged
+      this.batchConsumptionData = {};
+      const bcResp = await API.GET(apiEndpoints.getOutwardBatchConsumptions(this.props.id));
+      if (bcResp.success) {
+        (bcResp.data || []).forEach(c => {
+          const pid = c.productId;
+          if (!this.batchConsumptionData[pid]) this.batchConsumptionData[pid] = [];
+          this.batchConsumptionData[pid].push(c);
+        });
+      }
     }
   }
   renderProduct(key) {
@@ -230,7 +243,26 @@ class Edit extends EditForm {
 
     const params = this.formData;
 
-    params.productWithQuantities = Object.values(this.state.noproduct);
+    // #7: Preserve batch override data when qty is unchanged for a product
+    params.productWithQuantities = Object.values(this.state.noproduct).map(p => {
+      const result = { ...p };
+      const originalQty = (this.originalQtyMap || {})[p.productId];
+      const consumptions = (this.batchConsumptionData || {})[p.productId] || [];
+      const hasOverride = consumptions.some(c => c.fifoOverridden);
+
+      if (hasOverride && originalQty != null && Math.abs(p.quantity - originalQty) <= 0.001) {
+        // Qty unchanged — re-send the same override batches so the re-created consumptions match
+        result.overrideBatches = consumptions.map(c => ({
+          batchId: c.batch ? c.batch.batchId : c.batchId,
+          qty: c.qtyConsumed,
+        }));
+        const comment = consumptions.find(c => c.overrideComment)?.overrideComment;
+        if (comment) result.overrideComment = comment;
+      }
+      // If qty changed: drop override — backend re-runs pure FIFO with new qty
+      return result;
+    });
+
     const response = await API.PUT(this.updateUrl, params);
     this.setState({ isUpdating: false });
 

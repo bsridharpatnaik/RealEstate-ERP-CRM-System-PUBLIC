@@ -93,7 +93,12 @@ class Details extends CommonDetails {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.data?.outwardid !== this.props.data?.outwardid) {
+    const prevId = prevProps.data?.outwardid;
+    const currId = this.props.data?.outwardid;
+    // Build a signature of product quantities to detect edits on the same outward
+    const sig = (d) => (d?.inwardOutwardList || [])
+      .map(i => `${i.product?.productId}:${i.quantity}`).sort().join(',');
+    if (prevId !== currId || sig(prevProps.data) !== sig(this.props.data)) {
       this.setState({ batchConsumptions: [], batchConsumptionsLoaded: false }, () =>
         this.loadBatchConsumptions()
       );
@@ -431,11 +436,22 @@ class Details extends CommonDetails {
         <TabPanel value={this.state.value} index={0}>
           <div className="details-print-content">
             <Paper elevation={0}>
-              {data.hasBOQ !== true && (
-                <div style={{ padding: '10px 16px 0' }}>
-                  <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
-                    <WarningRoundedIcon style={{ color: '#e65100', fontSize: '22px', cursor: 'default' }} />
-                  </Tooltip>
+              {(data.hasBOQ !== true || data.hasFifoOverride === true) && (
+                <div style={{ padding: '10px 16px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {data.hasBOQ !== true && (
+                    <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
+                      <WarningRoundedIcon style={{ color: '#e65100', fontSize: '22px', cursor: 'default' }} />
+                    </Tooltip>
+                  )}
+                  {data.hasFifoOverride === true && (
+                    <Tooltip title="FIFO batch order was manually overridden on this outward" arrow>
+                      <span style={{
+                        background: '#fff3e0', color: '#e65100', border: '1px solid #ffcc80',
+                        borderRadius: '4px', padding: '2px 8px', fontSize: '11px',
+                        fontWeight: 600, cursor: 'default',
+                      }}>⚡ FIFO Override</span>
+                    </Tooltip>
+                  )}
                 </div>
               )}
               <div className="details-wrapper">
