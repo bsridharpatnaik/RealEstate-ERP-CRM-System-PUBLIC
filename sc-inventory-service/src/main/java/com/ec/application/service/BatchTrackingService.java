@@ -2,6 +2,7 @@ package com.ec.application.service;
 
 import com.ec.application.data.BatchConsumptionPreviewDTO;
 import com.ec.application.data.BatchOverrideEntry;
+import com.ec.application.data.BatchUpdateRequestDTO;
 import com.ec.application.data.StockSplitRequest;
 import com.ec.application.data.StockTilesDTO;
 import com.ec.application.data.WriteOffRequestDTO;
@@ -325,6 +326,21 @@ public class BatchTrackingService {
 
     public List<BatchWriteOff> getWriteOffHistory(Long batchId) {
         return batchWriteOffRepository.findByBatch_BatchIdOrderByWriteOffDateDesc(batchId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public InventoryBatch updateBatch(Long batchId, BatchUpdateRequestDTO request) throws Exception {
+        InventoryBatch batch = inventoryBatchRepository.findById(batchId)
+                .orElseThrow(() -> new Exception("Batch not found with ID: " + batchId));
+
+        batch.setBrand(request.getBrand());
+        batch.setLotNumber(request.getLotNumber());
+        batch.setExpiryDate(request.getExpiryDate());
+        if (request.getReceivedDate() != null) {
+            batch.setReceivedDate(request.getReceivedDate());
+        }
+
+        return inventoryBatchRepository.save(batch);
     }
 
     @Transactional(rollbackFor = Exception.class)

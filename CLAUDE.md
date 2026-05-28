@@ -295,3 +295,178 @@ Call it BEFORE `activityLogService.record()`. Username must be resolved on the c
 - **Password:** REDACTED
 - **Connect:** `mysql --user=root --password=REDACTED --host=127.0.0.1`
 - Tenant schemas named after tenant code (e.g. `drgtrdcntr`). Master schema: `masterschema`.
+
+---
+
+# Batch Tracking Feature — Completed Work
+
+## What It Does
+
+Tracks physical batches of stock per warehouse. Enables FIFO/FEFO-based outward consumption, write-offs, split of untracked stock into batches, and editing of batch metadata. Lives in project (tenant) schema.
+
+---
+
+## Core Concepts
+
+### BatchMode enum
+```
+NONE            — product is not batch-tracked
+BATCH_ONLY      — tracked; FIFO ordering by receivedDate
+BATCH_WITH_EXPIRY — tracked; FEFO ordering by expiryDate
+```
+`isBatchTracked()` = mode is not NONE. UI shows Batches tab only when batchMode ≠ NONE.
+
+### InventoryBatch entity (`model/InventoryBatch.java`, table: `inventory_batch`)
+
+| Field | Notes |
+|---|---|
+| `batchId` | PK |
+| `product` | ManyToOne |
+| `warehouse` | ManyToOne |
+| `inwardId` | FK to inward; **-1 means created via stock split** (not linked to an inward) |
+| `brand` | Editable metadata — supplier brand / grade |
+| `lotNumber` | Editable metadata — supplier lot / batch reference |
+| `expiryDate` | Editable; `dd-MM-yyyy`; null OK for BATCH_ONLY |
+| `receivedDate` | Editable; `dd-MM-yyyy`; NOT NULL in DB |
+| `qtyReceived` | Set at creation; never changed |
+| `qtyRemaining` | Reduced by outward consumption and write-offs |
+| `isDeleted` (inherited) | Soft delete via `ReusableFields` |
+| `daysUntilExpiry`, `isExpired` | `@Transient` — computed at query time |
+
+### OutwardBatchConsumption entity (`model/OutwardBatchConsumption.java`, table: `outward_batch_consumption`)
+
+| Field | Notes |
+|---|---|
+| `outwardId` | FK to outward inventory header |
+| `productId` | Denormalised product ID |
+| `batch` | ManyToOne → InventoryBatch |
+| `qtyConsumed` | Qty taken from this batch for this outward line |
+| `fifoOverridden` | true if user manually picked batches instead of auto-FIFO/FEFO |
+| `overrideComment` | Reason for override (nullable) |
+
+### hasFifoOverride flag (`OutwardInventory.hasFifoOverride`)
+Boolean on the outward header. Set to `true` during save/update if ANY consumption row has `fifoOverridden = true`. Must be explicitly reset to `false` at start of update path — otherwise stale `true` persists.
+
+---
+
+## FIFO / FEFO Ordering Logic
+
+- `BATCH_ONLY` → order batches by `receivedDate` ASC (oldest first)
+- `BATCH_WITH_EXPIRY` → order batches by `expiryDate` ASC (nearest expiry first)
+- Override detection checks **both batch ID sequence AND qty per batch**. If user selects correct order but wrong quantities → still an override.
+
+### How `isFifoOverride` is determined (in both `OutwardInventoryService` and `BatchTrackingService`):
+1. Build `fifoBatchIds` list — sorted batch IDs in FIFO/FEFO order for that product+warehouse
+2. Build `fifoExpectedQty` map — how much each batch *should* contribute under pure FIFO (fills from oldest until qty met)
+3. For each override entry from user: check `!isFifoOrder || !isFifoQty`
+
+---
+
+## Untracked Stock
+
+Stock where `totalQuantityInHand > sum(batch.qtyRemaining)` for batch-tracked products. This happens when inward is done but batch details weren't entered, or qty was adjusted outside batch tracking.
+
+- **Blocking**: outward is blocked if any untracked stock exists in the target warehouse
+- **Resolution**: user must Split untracked stock into named batches via the Split panel
+- **Split batches** have `inwardId = -1` and show a "split" badge with tooltip in UI
+
+### Stock Tiles (`StockTilesDTO`)
+Returned by `BatchTrackingService.getStockTiles()`. Fields:
+- `expiredCount`, `nearExpiryCount` (30-day window), `untrackedCount`
+- All are clickable filter tiles on the Stock list page
+- `untrackedCount` uses `expiryFilter = "untracked"` in stock request body
+
+---
+
+## Key Backend Files
+
+| File | Role |
+|---|---|
+| `model/InventoryBatch.java` | Batch entity |
+| `model/OutwardBatchConsumption.java` | Per-outward batch consumption record |
+| `model/BatchWriteOff.java` | Write-off event record |
+| `service/BatchTrackingService.java` | Core logic: FIFO consumption, split, write-off, batch edit, tiles |
+| `service/OutwardInventoryService.java` | Calls batch tracking during create/update/return/delete of outwards |
+| `repository/InventoryBatchRepository.java` | Includes `sumQtyRemainingGroupByProduct`, `findAllByInwardId` |
+| `repository/OutwardBatchConsumptionRepository.java` | `deleteByOutwardId` (bulk JPQL `@Modifying`), `findByOutwardIdAndBatch_BatchId` |
+| `repository/ProductRepo.java` | `findBatchTrackedProductIds()` — returns IDs where batchMode ≠ NONE |
+| `repository/StockInformationRepo.java` | `findByProductIdInAndTotalQuantityInHandGreaterThan` |
+| `controller/BatchTrackingController.java` | All batch API endpoints |
+| `data/BatchUpdateRequestDTO.java` | `brand`, `lotNumber`, `expiryDate`, `receivedDate` for PUT /batch/{id} |
+| `data/WriteOffRequestDTO.java` | `quantity`, `reason`, `writeOffDate` |
+| `data/StockSplitRequest.java` | `warehouseId`, `batches[]` |
+| `data/StockTilesDTO.java` | `expiredCount`, `nearExpiryCount`, `untrackedCount` |
+
+---
+
+## API Endpoints (all under `/api/inventory`)
+
+| Method | Path | Description |
+|---|---|---|
+| `PUT` | `/batch/{batchId}` | Edit batch metadata (brand, lotNumber, expiryDate, receivedDate) |
+| `POST` | `/batch/{batchId}/write-off` | Write off qty from a batch |
+| `GET` | `/batch/{batchId}/write-off/history` | Write-off history for a batch |
+| `GET` | `/stock/{productId}/batches?warehouseId=` | Get batches; warehouseId optional (null = all warehouses) |
+| `POST` | `/stock/{productId}/split-existing` | Split untracked stock into batches |
+| `POST` | `/stock/tiles/expiry` | Get stock tile counts (expired / near-expiry / untracked) |
+| `GET` | `/outward/{outwardId}/batch-consumptions` | Get consumption records for an outward |
+| `GET` | `/inward/{inwardId}/batches` | Get batches created during an inward |
+| `POST` | `/outward/preview-batches` | Preview which batches FIFO would consume |
+
+---
+
+## Key Frontend Files
+
+| File | Role |
+|---|---|
+| `Modules/Stock/details.js` | Batches tab: per-warehouse sections, split form, write-off form, edit batch form |
+| `Modules/Stock/list.js` | Stock list with tile chips (expired / near-expiry / untracked) |
+| `Modules/OutwardInventory/add.js` | Batch override UI during outward creation |
+| `Modules/OutwardInventory/edit.js` | Preserves override batches when qty unchanged on edit |
+| `Modules/OutwardInventory/details.js` | Shows `⚡ FIFO Override` badge + batch consumption table |
+
+---
+
+## Frontend State in `Stock/details.js`
+
+| State key | Type | Purpose |
+|---|---|---|
+| `batches` | Array | All loaded batches for current product (all warehouses) |
+| `batchesLoading` | bool | Loading spinner |
+| `splitFormOpenWarehouseId` | null / warehouseId | Which warehouse's split form is open (null = none) |
+| `splitEntries` | Array | Rows in the split form `{ qty, expiryDate, brand, lotNumber }` |
+| `splitSubmitting` | bool | Split form submit in progress |
+| `splitError` | string / null | Validation error in split form |
+| `writeOffForm` | null / `{ batchId, warehouseId, quantity, reason }` | Active write-off row |
+| `writeOffSubmitting` | bool | Write-off in progress |
+| `writeOffHistories` | `{ [batchId]: [...] }` | Loaded write-off history per batch |
+| `editBatchForm` | null / `{ batchId, brand, lotNumber, expiryDate, receivedDate, submitting }` | Active edit row |
+| `stockAdjustments` | `{ [warehouseId]: number }` | Running write-off totals to keep untracked banner accurate without full reload |
+
+---
+
+## Date Format Convention
+
+Backend `InventoryBatch` serialises/deserialises dates as `dd-MM-yyyy`.
+Frontend `<input type="date">` requires `yyyy-MM-dd`.
+**Conversion helpers in `Stock/details.js`:**
+- `ddmmyyyyToInputDate(s)` — converts `dd-MM-yyyy` → `yyyy-MM-dd` (pre-populate form)
+- `toBackendDate = (s) => s.split('-').reverse().join('-')` — converts `yyyy-MM-dd` → `dd-MM-yyyy` (send to API)
+
+Same reverse-join pattern used in split form (`splitEntries` map before POST).
+
+---
+
+## Important Invariants / Known Bugs Fixed
+
+1. **`hasFifoOverride` must be reset to `false` before update** in `OutwardInventoryService` — otherwise a previously-overridden outward that is later edited to pure-FIFO will still show the override badge.
+
+2. **`deleteByOutwardId` must use bulk JPQL `@Modifying`** — entity-by-entity deletion caused `LazyInitializationException` on large outwards.
+
+3. **Return path must update `OutwardBatchConsumption` records** — `restoreBatchesForReturn` restores `qtyRemaining` on batches but must also reduce/delete the matching consumption records; otherwise Batch Usage display shows wrong figures.
+
+4. **FIFO override = order AND qty** — selecting correct batch order but wrong quantities is still an override. Both conditions checked: `!isFifoOrder || !isFifoQty`.
+
+5. **Edit page must reload batch consumptions** — `edit.js` loads `batchConsumptionData` from `/outward/{id}/batch-consumptions` on mount. If qty unchanged and override was present, re-sends `overrideBatches` in PUT payload to preserve it.
+
+6. **Untracked count circular dep** — `BatchTrackingService` already autowires `StockService`. Untracked filter logic in `StockService.expiryFilter` block calls repos directly (not BatchTrackingService) to avoid circular dependency.

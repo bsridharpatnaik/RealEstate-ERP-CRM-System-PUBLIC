@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.data.BatchConsumptionPreviewDTO;
+import com.ec.application.data.BatchUpdateRequestDTO;
 import com.ec.application.data.OutwardBatchPreviewRequest;
 import com.ec.application.data.StockSplitRequest;
 import com.ec.application.data.StockTilesDTO;
@@ -31,6 +32,20 @@ public class BatchTrackingController {
 
     @Autowired
     InventoryBatchRepository inventoryBatchRepository;
+
+    @PutMapping("/batch/{batchId}")
+    public ResponseEntity<?> updateBatch(
+            @PathVariable Long batchId,
+            @RequestBody BatchUpdateRequestDTO request) {
+        try {
+            InventoryBatch result = batchTrackingService.updateBatch(batchId, request);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
 
     @PostMapping("/batch/{batchId}/write-off")
     public ResponseEntity<?> writeOffBatch(

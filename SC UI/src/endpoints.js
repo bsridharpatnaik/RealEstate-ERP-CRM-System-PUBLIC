@@ -278,6 +278,7 @@ export const apiEndpoints = {
     ? `/api/inventory/stock/${productId}/batches?warehouseId=${warehouseId}`
     : `/api/inventory/stock/${productId}/batches`,
   getExpiryTiles: "/api/inventory/stock/tiles/expiry",
+  updateBatch: (batchId) => `/api/inventory/batch/${batchId}`,
   writeOffBatch: (batchId) => `/api/inventory/batch/${batchId}/write-off`,
   getBatchWriteOffHistory: (batchId) => `/api/inventory/batch/${batchId}/write-off/history`,
   splitExistingStock: (productId) => `/api/inventory/stock/${productId}/split-existing`,

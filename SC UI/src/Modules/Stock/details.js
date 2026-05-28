@@ -18,6 +18,7 @@ class Details extends Component {
     batchesLoading: false,
     writeOffForm: null,
     writeOffSubmitting: false,
+    editBatchForm: null,  // null or { batchId, brand, lotNumber, expiryDate, receivedDate, submitting }
     stockAdjustments: {},
     writeOffHistories: {},
     writeOffHistoryLoading: {},
@@ -343,6 +344,42 @@ class Details extends Component {
         </div>
       </div>
     );
+  }
+
+  // Convert "dd-MM-yyyy" (from backend) → "yyyy-MM-dd" (for <input type="date">)
+  ddmmyyyyToInputDate(ddmmyyyy) {
+    if (!ddmmyyyy) return '';
+    const parts = ddmmyyyy.split('-');
+    if (parts.length !== 3) return '';
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+
+  async submitEditBatch(batchId) {
+    const { editBatchForm } = this.state;
+    if (!editBatchForm || !editBatchForm.receivedDate) {
+      alert('Received date is required.');
+      return;
+    }
+    this.setState({ editBatchForm: { ...editBatchForm, submitting: true } });
+
+    // Convert yyyy-MM-dd → dd-MM-yyyy for backend
+    const toBackendDate = (isoDate) => isoDate ? isoDate.split('-').reverse().join('-') : null;
+
+    const payload = {
+      brand: editBatchForm.brand || null,
+      lotNumber: editBatchForm.lotNumber || null,
+      expiryDate: editBatchForm.expiryDate ? toBackendDate(editBatchForm.expiryDate) : null,
+      receivedDate: toBackendDate(editBatchForm.receivedDate),
+    };
+
+    const response = await API.PUT(apiEndpoints.updateBatch(batchId), payload);
+    if (response.success) {
+      this.setState({ editBatchForm: null });
+      this.loadBatches(this.props.data.productId, null);
+    } else {
+      this.setState({ editBatchForm: { ...editBatchForm, submitting: false } });
+      alert(response.errorMessage || 'Update failed. Please try again.');
+    }
   }
 
   async submitWriteOff(batchId) {
@@ -675,16 +712,98 @@ class Details extends Component {
                                           )}
                                           <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 600 }}>{batch.qtyRemaining}</td>
                                           <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                                            <button
+                                              style={{ padding: '3px 8px', fontSize: '11px', cursor: 'pointer', backgroundColor: '#1565c0', color: 'white', border: 'none', borderRadius: '3px', marginRight: '4px' }}
+                                              onClick={() => this.setState({
+                                                editBatchForm: {
+                                                  batchId: batch.batchId,
+                                                  brand: batch.brand || '',
+                                                  lotNumber: batch.lotNumber || '',
+                                                  expiryDate: this.ddmmyyyyToInputDate(batch.expiryDate),
+                                                  receivedDate: this.ddmmyyyyToInputDate(batch.receivedDate),
+                                                  submitting: false,
+                                                },
+                                                writeOffForm: null,
+                                              })}
+                                            >
+                                              Edit
+                                            </button>
                                             {batch.qtyRemaining > 0 && (
                                               <button
                                                 style={{ padding: '3px 8px', fontSize: '11px', cursor: 'pointer', backgroundColor: '#e53935', color: 'white', border: 'none', borderRadius: '3px' }}
-                                                onClick={() => this.setState({ writeOffForm: { batchId: batch.batchId, warehouseId: batch.warehouse?.warehouseId, quantity: '', reason: '' } })}
+                                                onClick={() => this.setState({ writeOffForm: { batchId: batch.batchId, warehouseId: batch.warehouse?.warehouseId, quantity: '', reason: '' }, editBatchForm: null })}
                                               >
                                                 Write Off
                                               </button>
                                             )}
                                           </td>
                                         </tr>
+                                        {this.state.editBatchForm && this.state.editBatchForm.batchId === batch.batchId && (() => {
+                                          const ef = this.state.editBatchForm;
+                                          return (
+                                            <tr>
+                                              <td colSpan={requiresExpiry ? 8 : 6} style={{ padding: '10px 12px', backgroundColor: '#e8f4fd', border: '1px solid #90caf9' }}>
+                                                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '8px', color: '#1565c0' }}>
+                                                  Edit Batch #{batch.batchId}
+                                                  <span style={{ fontWeight: 400, color: '#555', marginLeft: '8px', fontSize: '11px' }}>
+                                                    Note: changing Received / Expiry date affects future FIFO/FEFO order
+                                                  </span>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                                                  <div>
+                                                    <div style={{ fontSize: '11px', marginBottom: '2px' }}>Identifier (Brand)</div>
+                                                    <input type="text"
+                                                      style={{ padding: '4px 6px', width: '130px', border: '1px solid #90caf9', borderRadius: '3px', fontSize: '12px' }}
+                                                      value={ef.brand}
+                                                      onChange={e => this.setState({ editBatchForm: { ...ef, brand: e.target.value } })}
+                                                      placeholder="e.g. Brand / Grade"
+                                                    />
+                                                  </div>
+                                                  <div>
+                                                    <div style={{ fontSize: '11px', marginBottom: '2px' }}>Lot / Batch No.</div>
+                                                    <input type="text"
+                                                      style={{ padding: '4px 6px', width: '130px', border: '1px solid #90caf9', borderRadius: '3px', fontSize: '12px' }}
+                                                      value={ef.lotNumber}
+                                                      onChange={e => this.setState({ editBatchForm: { ...ef, lotNumber: e.target.value } })}
+                                                      placeholder="e.g. LOT-2024-01"
+                                                    />
+                                                  </div>
+                                                  <div>
+                                                    <div style={{ fontSize: '11px', marginBottom: '2px' }}>Received Date *</div>
+                                                    <input type="date"
+                                                      style={{ padding: '4px 6px', border: '1px solid #90caf9', borderRadius: '3px', fontSize: '12px' }}
+                                                      value={ef.receivedDate}
+                                                      onChange={e => this.setState({ editBatchForm: { ...ef, receivedDate: e.target.value } })}
+                                                    />
+                                                  </div>
+                                                  {requiresExpiry && (
+                                                    <div>
+                                                      <div style={{ fontSize: '11px', marginBottom: '2px' }}>Expiry Date</div>
+                                                      <input type="date"
+                                                        style={{ padding: '4px 6px', border: '1px solid #90caf9', borderRadius: '3px', fontSize: '12px' }}
+                                                        value={ef.expiryDate}
+                                                        onChange={e => this.setState({ editBatchForm: { ...ef, expiryDate: e.target.value } })}
+                                                      />
+                                                    </div>
+                                                  )}
+                                                  <button
+                                                    style={{ padding: '5px 14px', fontSize: '12px', fontWeight: 600, backgroundColor: '#1565c0', color: 'white', border: 'none', borderRadius: '3px', cursor: ef.submitting ? 'not-allowed' : 'pointer', opacity: ef.submitting ? 0.7 : 1 }}
+                                                    disabled={ef.submitting}
+                                                    onClick={() => this.submitEditBatch(batch.batchId)}
+                                                  >
+                                                    {ef.submitting ? 'Saving…' : 'Save'}
+                                                  </button>
+                                                  <button
+                                                    style={{ padding: '5px 12px', fontSize: '12px', backgroundColor: '#757575', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer' }}
+                                                    onClick={() => this.setState({ editBatchForm: null })}
+                                                  >
+                                                    Cancel
+                                                  </button>
+                                                </div>
+                                              </td>
+                                            </tr>
+                                          );
+                                        })()}
                                         {this.state.writeOffForm && this.state.writeOffForm.batchId === batch.batchId && (
                                           <tr>
                                             <td colSpan={requiresExpiry ? 8 : 6} style={{ padding: '8px', backgroundColor: '#fafafa', border: '1px solid #ddd' }}>
