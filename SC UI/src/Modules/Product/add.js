@@ -10,15 +10,38 @@ import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
 import { messages } from "./../../messages";
 import "./style.scss";
+
+const BATCH_OPTIONS = [
+  {
+    value: "NONE",
+    label: "No Tracking",
+    desc: "Basic products. No batch data captured.",
+  },
+  {
+    value: "BATCH_ONLY",
+    label: "Lot / Brand Tracking",
+    desc: "Track by supplier lot or brand. FIFO ordering. No expiry date.",
+  },
+  {
+    value: "BATCH_WITH_EXPIRY",
+    label: "Lot + Expiry Date",
+    desc: "Track lot and expiry date. FEFO (nearest-expiry-first) ordering.",
+  },
+];
+
 class Add extends AddForm {
   title = messages.common.inventory;
   addurl = apiEndpoints.createProduct;
 
-  state = { categories: [] };
+  state = {
+    categories: [],
+    batchMode: "NONE",
+  };
 
   constructor(props) {
     super(props);
     this.formData.isManagedInventory = true;
+    this.formData.batchMode = "NONE";
   }
 
   componentDidMount() {
@@ -37,19 +60,77 @@ class Add extends AddForm {
       });
     }
   }
+
+  renderBatchModeCards() {
+    const { batchMode } = this.state;
+    return (
+      <div style={{ marginBottom: 8, width: "100%" }}>
+        <label
+          style={{
+            fontSize: 12,
+            color: "#666",
+            fontWeight: 500,
+            display: "block",
+            marginBottom: 8,
+          }}
+        >
+          Batch Tracking
+        </label>
+        <div style={{ display: "flex", gap: 12 }}>
+          {BATCH_OPTIONS.map(({ value, label, desc }) => {
+            const selected = batchMode === value;
+            return (
+              <label
+                key={value}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  gap: 10,
+                  padding: "10px 14px",
+                  border: selected ? "2px solid #1976d2" : "1px solid #ccc",
+                  borderRadius: 6,
+                  background: selected ? "#e3f2fd" : "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="radio"
+                  name="batchMode"
+                  value={value}
+                  checked={selected}
+                  onChange={() => {
+                    this.formData.batchMode = value;
+                    this.setState({ batchMode: value });
+                  }}
+                  style={{ marginTop: 3, flexShrink: 0 }}
+                />
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{label}</div>
+                  <div style={{ fontSize: 11, color: "#666", marginTop: 3 }}>
+                    {desc}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   render() {
     return (
       <div className="list-section add">
         {this.renderHeading()}
         <form onSubmit={(e) => this.add(e)}>
-          <div class="flex">
+          <div className="flex">
             {this.renderTextField({
               fieldname: "productName",
               placeholder: messages.common.inventory,
               required: true,
             })}
           </div>
-          <div class="flex">
+          <div className="flex">
             {this.renderTextField({
               fieldname: "productDescription",
               placeholder: messages.common.description,
@@ -74,36 +155,24 @@ class Add extends AddForm {
               options: this.state.categories,
               disableClearable: true,
               required: true,
-              getOption: (option) => {
-                return option["name"];
-              },
+              getOption: (option) => option["name"],
               onChange: (e, value) => {
                 this.formData.categoryId = value.id;
               },
             })}
           </div>
-          <div class="flex flex-space-between">
-            {this.renderToggle('Show in Dashboard', 'showOnDashboard')}
-            {this.renderToggle('Is Managed Inventory', 'isManagedInventory')}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px' }}>
-              <label style={{ fontSize: '12px', color: '#666', fontWeight: 500 }}>Batch Tracking</label>
-              <select
-                style={{ padding: '8px 10px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
-                defaultValue="NONE"
-                onChange={(e) => { this.formData.batchMode = e.target.value; }}
-              >
-                <option value="NONE">No Batch Tracking</option>
-                <option value="BATCH_ONLY">Track by Identifier / Lot (no expiry)</option>
-                <option value="BATCH_WITH_EXPIRY">Track by Identifier / Lot + Expiry Date</option>
-              </select>
-            </div>
-            {this.renderFooter()}
+          <div className="flex">{this.renderBatchModeCards()}</div>
+          <div className="flex">
+            {this.renderToggle("Show in Dashboard", "showOnDashboard")}
+            {this.renderToggle("Is Managed Inventory", "isManagedInventory")}
           </div>
+          {this.renderFooter()}
         </form>
       </div>
     );
   }
 }
+
 export default connect(null, null, null, { forwardRef: true })(
   withSnackbar(Add)
 );

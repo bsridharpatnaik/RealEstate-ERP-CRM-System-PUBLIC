@@ -4,6 +4,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.ec.application.config.SchemaConfig;
+import com.ec.application.model.StockInformationFromView;
+import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.repository.StockInformationRepo;
+
 import javax.transaction.Transactional;
 
 import com.ec.application.ReusableClasses.ActivityLogDescription;
@@ -54,6 +59,12 @@ public class ProductService {
 
     @Autowired
     StockService stockService;
+
+    @Autowired
+    SchemaConfig schemaConfig;
+
+    @Autowired
+    StockInformationRepo stockInformationRepo;
 
     @Autowired
     UserDetailsService userDetailsService;
@@ -183,7 +194,10 @@ public class ProductService {
         product.setReorderQuantity(payload.getReorderQuantity());
         product.setShowOnDashboard(Boolean.TRUE.equals(payload.getShowOnDashboard()));
         product.setIsManagedInventory(payload.getIsManagedInventory() == null || payload.getIsManagedInventory());
-        product.setBatchMode(resolveBatchMode(payload));
+        BatchMode newBatchMode = resolveBatchMode(payload);
+        BatchMode existingBatchMode = product.getBatchMode() != null ? product.getBatchMode() : BatchMode.NONE;
+        checkBatchModeChangeAllowed(product.getProductId(), existingBatchMode, newBatchMode);
+        product.setBatchMode(newBatchMode);
 
         return productRepo.save(product);
     }
@@ -387,6 +401,13 @@ public class ProductService {
                     }
                     BatchMode oldBatchMode = product.getBatchMode() != null ? product.getBatchMode() : BatchMode.NONE;
                     if (oldBatchMode != newBatchMode) {
+                        try {
+                            checkBatchModeChangeAllowed(product.getProductId(), oldBatchMode, newBatchMode);
+                        } catch (Exception ex) {
+                            errors.add("Row " + (i + 1) + ": " + ex.getMessage());
+                            skipped++;
+                            continue;
+                        }
                         changes.add("batchMode: " + oldBatchMode + "→" + newBatchMode);
                         product.setBatchMode(newBatchMode);
                     }
@@ -419,6 +440,36 @@ public class ProductService {
         result.put("updatedItems", updatedItems);
         result.put("errors", errors);
         return result;
+    }
+
+    /**
+     * Blocks batch mode changes when the product has live stock in any tenant schema.
+     * Iterates all non-master schemas, temporarily switching ThreadLocal context for each query.
+     */
+    private void checkBatchModeChangeAllowed(Long productId, BatchMode existingMode, BatchMode newMode) throws Exception {
+        if (existingMode == newMode) return;
+        List<String> schemasWithStock = new ArrayList<>();
+        String savedTenant = ThreadLocalStorage.getTenantName();
+        try {
+            for (String schema : schemaConfig.getNonMasterSchemaList()) {
+                ThreadLocalStorage.setTenantName(schema);
+                List<StockInformationFromView> stock =
+                    stockInformationRepo.findByProductIdInAndTotalQuantityInHandGreaterThan(
+                        Collections.singletonList(productId), 0.0);
+                if (!stock.isEmpty()) {
+                    schemasWithStock.add(schema);
+                }
+            }
+        } finally {
+            ThreadLocalStorage.setTenantName(savedTenant);
+        }
+        if (!schemasWithStock.isEmpty()) {
+            throw new Exception(
+                "Cannot change batch tracking mode: this product has stock in " +
+                schemasWithStock.size() + " project(s). " +
+                "Clear all stock in every project before changing batch tracking mode."
+            );
+        }
     }
 
     private String resolveCurrentUser() {

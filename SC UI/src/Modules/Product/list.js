@@ -3,8 +3,8 @@ import React from "react";
 //Third Party
 import ListCommon from "./../../Shared/List";
 import { withSnackbar } from "notistack";
-import SettingsIcon from "@material-ui/icons/Settings";
 import PublishIcon from "@material-ui/icons/Publish";
+import SettingsIcon from "@material-ui/icons/Settings";
 import Popper from "@material-ui/core/Popper";
 import Filter from "./filter";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
@@ -207,20 +207,18 @@ class List extends ListCommon {
   }
 
   render() {
-    const { tenantConfigProduct } = this.state;
+    const { tenantConfigProduct, importDialogOpen, importResult, importLoading } = this.state;
 
     const customActions = canEditInventoryModules()
       ? [
           {
             key: "tenant-reorder",
-            title: "Tenant Reorder Overrides",
+            title: "Reorder Overrides",
             icon: <SettingsIcon style={{ fontSize: 18 }} />,
             onClick: (row) => this.setState({ tenantConfigProduct: row }),
           },
         ]
       : [];
-
-    const { importDialogOpen, importResult, importLoading } = this.state;
 
     return (
       <div className="list-section">
