@@ -98,40 +98,60 @@ public class LostDamagedInventoryService {
 
     /**
      * Handles batch side-effects on create:
-     * - LOST_DAMAGED + batchId present: drain that specific batch's qtyRemaining.
-     * - EXCESS_FOUND + isBatchTracked: create a new InventoryBatch and return it.
-     * Returns the InventoryBatch reference to store on the entity (may be null).
+     * - LOST_DAMAGED + batchId: drain that batch. Validates qty <= qtyRemaining.
+     * - LOST_DAMAGED + no batchId: throws — batchId is required for batch-tracked products.
+     * - EXCESS_FOUND + existingBatchId: add qty to an existing batch.
+     * - EXCESS_FOUND + no existingBatchId: create a new InventoryBatch.
      */
     private InventoryBatch handleBatchOnCreate(LostDamagedInventory entity,
                                                 CreateLostOrDamagedInventoryData payload) {
-        try {
-            Product product = entity.getProduct();
-            if (product == null || !product.isBatchTracked()) return null;
+        Product product = entity.getProduct();
+        if (product == null || !product.isBatchTracked()) return null;
 
-            if ("LOST_DAMAGED".equals(payload.getEntryType()) && payload.getBatchId() != null) {
-                InventoryBatch batch = inventoryBatchRepository.findById(payload.getBatchId()).orElse(null);
-                if (batch != null) {
-                    double newQty = Math.max(0, batch.getQtyRemaining() - payload.getQuantity());
-                    batch.setQtyRemaining(newQty);
-                    return inventoryBatchRepository.save(batch);
-                }
-            } else if ("EXCESS_FOUND".equals(payload.getEntryType())) {
-                Warehouse warehouse = entity.getWarehouse();
-                InventoryBatch newBatch = new InventoryBatch();
-                newBatch.setProduct(product);
-                newBatch.setWarehouse(warehouse);
-                newBatch.setInwardId(0L); // sentinel: excess-found origin
-                newBatch.setBrand(payload.getBrand());
-                newBatch.setLotNumber(payload.getLotNumber());
-                newBatch.setExpiryDate(payload.getExpiryDate());
-                newBatch.setReceivedDate(new java.util.Date());
-                newBatch.setQtyReceived(payload.getQuantity());
-                newBatch.setQtyRemaining(payload.getQuantity());
-                return inventoryBatchRepository.save(newBatch);
+        if ("LOST_DAMAGED".equals(payload.getEntryType())) {
+            // LD4: require batchId for batch-tracked products
+            if (payload.getBatchId() == null) {
+                throw new IllegalArgumentException(
+                        "This product is batch-tracked. Please select the batch the loss came from.");
             }
-        } catch (Exception e) {
-            log.warn("Batch handling failed on LostDamaged create: {}", e.getMessage());
+            InventoryBatch batch = inventoryBatchRepository.findById(payload.getBatchId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Batch not found: " + payload.getBatchId()));
+            // LD2: validate qty instead of silently flooring to 0
+            if (payload.getQuantity() > batch.getQtyRemaining()) {
+                throw new IllegalArgumentException(
+                        "Cannot mark " + payload.getQuantity()
+                        + " as lost/damaged. Batch only has " + batch.getQtyRemaining()
+                        + " units remaining.");
+            }
+            batch.setQtyRemaining(batch.getQtyRemaining() - payload.getQuantity());
+            return inventoryBatchRepository.save(batch);
         }
+
+        if ("EXCESS_FOUND".equals(payload.getEntryType())) {
+            // LD3: add to existing batch if user selected one
+            if (payload.getExistingBatchId() != null) {
+                InventoryBatch batch = inventoryBatchRepository.findById(payload.getExistingBatchId())
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Batch not found: " + payload.getExistingBatchId()));
+                batch.setQtyRemaining(batch.getQtyRemaining() + payload.getQuantity());
+                return inventoryBatchRepository.save(batch);
+            }
+            // Create new batch
+            Warehouse warehouse = entity.getWarehouse();
+            InventoryBatch newBatch = new InventoryBatch();
+            newBatch.setProduct(product);
+            newBatch.setWarehouse(warehouse);
+            newBatch.setInwardId(0L); // sentinel: excess-found origin
+            newBatch.setBrand(payload.getBrand());
+            newBatch.setLotNumber(payload.getLotNumber());
+            newBatch.setExpiryDate(payload.getExpiryDate());
+            newBatch.setReceivedDate(new java.util.Date());
+            newBatch.setQtyReceived(payload.getQuantity());
+            newBatch.setQtyRemaining(payload.getQuantity());
+            return inventoryBatchRepository.save(newBatch);
+        }
+
         return null;
     }
 
@@ -251,19 +271,18 @@ public class LostDamagedInventoryService {
      * - EXCESS_FOUND: zero out the created batch (soft-delete is handled by stock reversal; zeroing prevents double-counting).
      */
     private void reverseBatchOnDelete(LostDamagedInventory entity) {
-        try {
-            InventoryBatch batch = entity.getBatch();
-            if (batch == null) return;
+        InventoryBatch batch = entity.getBatch();
+        if (batch == null) return;
 
-            if ("LOST_DAMAGED".equals(entity.getEntryType())) {
-                batch.setQtyRemaining(batch.getQtyRemaining() + entity.getQuantity());
-                inventoryBatchRepository.save(batch);
-            } else if ("EXCESS_FOUND".equals(entity.getEntryType())) {
-                batch.setQtyRemaining(0.0);
-                inventoryBatchRepository.save(batch);
-            }
-        } catch (Exception e) {
-            log.warn("Batch reversal failed on LostDamaged delete/update: {}", e.getMessage());
+        if ("LOST_DAMAGED".equals(entity.getEntryType())) {
+            // Restore qty that was drained on create
+            batch.setQtyRemaining(batch.getQtyRemaining() + entity.getQuantity());
+            inventoryBatchRepository.save(batch);
+        } else if ("EXCESS_FOUND".equals(entity.getEntryType())) {
+            // Reduce by what was added — clamp to 0 if outwards consumed some of it
+            double restored = Math.max(0.0, batch.getQtyRemaining() - entity.getQuantity());
+            batch.setQtyRemaining(restored);
+            inventoryBatchRepository.save(batch);
         }
     }
 

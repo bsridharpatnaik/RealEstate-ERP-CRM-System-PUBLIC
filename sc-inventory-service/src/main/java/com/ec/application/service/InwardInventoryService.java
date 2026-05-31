@@ -626,18 +626,8 @@ public class InwardInventoryService {
         Double currentQuantity = target.getQuantity();
 
         // -----------------------------------------
-        // Stock OUTWARD
-        // -----------------------------------------
-        Double closingStock = stockService.updateStock(
-                productId,
-                warehouseId,
-                quantity,
-                "outward"
-        );
-
-        // -----------------------------------------
-        // -----------------------------------------
-        // Reduce batch qty for rejected inward
+        // Reduce batch qty for rejected inward — MUST run before stock update
+        // so we can fail fast if batch qty was already consumed via outward.
         // If user specified batches (multi-batch inward) — drain those; else auto-drain last first
         // -----------------------------------------
         if (overrideBatches != null && !overrideBatches.isEmpty()) {
@@ -645,7 +635,9 @@ public class InwardInventoryService {
                 InventoryBatch rb = inventoryBatchRepository.findById(entry.getBatchId())
                         .orElseThrow(() -> new Exception("Batch not found: " + entry.getBatchId()));
                 if (entry.getQty() > rb.getQtyRemaining()) {
-                    throw new Exception("Reject quantity exceeds available qty in batch #" + entry.getBatchId());
+                    throw new Exception("Cannot reject. Batch #" + entry.getBatchId()
+                            + " has only " + rb.getQtyRemaining()
+                            + " units remaining — some qty was already consumed via outward.");
                 }
                 rb.setQtyRemaining(rb.getQtyRemaining() - entry.getQty());
                 inventoryBatchRepository.save(rb);
@@ -661,8 +653,23 @@ public class InwardInventoryService {
                     reduction -= actualReduce;
                     inventoryBatchRepository.save(rb);
                 }
+                if (reduction > 0.001) {
+                    throw new Exception("Cannot reject " + quantity
+                            + " units. Only " + (quantity - reduction)
+                            + " units remain in the batch — the rest has already been consumed via outward.");
+                }
             }
         }
+
+        // -----------------------------------------
+        // Stock OUTWARD — runs only after batch validation passes
+        // -----------------------------------------
+        Double closingStock = stockService.updateStock(
+                productId,
+                warehouseId,
+                quantity,
+                "outward"
+        );
 
         // -----------------------------------------
         // Record reject entry
@@ -1100,6 +1107,15 @@ public class InwardInventoryService {
                     batch.setQtyReceived(Math.max(batch.getQtyReceived() - actualReduce, consumed));
                     reduction -= actualReduce;
                     inventoryBatchRepository.save(batch);
+                }
+                if (reduction > 0.001) {
+                    double alreadyConsumed = Math.abs(delta) - reduction;
+                    throw new IllegalArgumentException(
+                            "Cannot reduce inward quantity by " + Math.abs(delta) + " for product '"
+                            + iol.getProduct().getProductName() + "'. Only "
+                            + String.format("%.3f", alreadyConsumed)
+                            + " units remain in batch records — the rest has already been consumed via outward."
+                    );
                 }
             } else {
                 boolean hasSplits = paq.getBatchSplits() != null && !paq.getBatchSplits().isEmpty();

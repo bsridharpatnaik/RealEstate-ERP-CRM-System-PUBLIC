@@ -840,20 +840,22 @@ class InwardInventoryForm extends AddForm {
                 </div>
               ) : (
                 <>
-                  {/* Brand (optional) */}
-                  <div style={{ width: '150px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                    {this.renderTextField({
-                      fieldname: `brand_${key}`,
-                      placeholder: "Identifier (optional)",
-                      skipAdd: true,
-                      value: product.brand || '',
-                      onChange: (value) => {
-                        const p = this.state.noproduct;
-                        p[key].brand = value;
-                        this.setState({ noproduct: { ...p } });
-                      },
-                    })}
-                  </div>
+                  {/* Brand — only for batch-tracked products in edit mode */}
+                  {product.batchMode !== 'NONE' && (
+                    <div style={{ width: '150px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                      {this.renderTextField({
+                        fieldname: `brand_${key}`,
+                        placeholder: "Identifier (optional)",
+                        skipAdd: true,
+                        value: product.brand || '',
+                        onChange: (value) => {
+                          const p = this.state.noproduct;
+                          p[key].brand = value;
+                          this.setState({ noproduct: { ...p } });
+                        },
+                      })}
+                    </div>
+                  )}
                   {/* Expiry Date — only for BATCH_WITH_EXPIRY products in edit mode */}
                   {product.batchMode === 'BATCH_WITH_EXPIRY' && (
                     <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -1071,20 +1073,22 @@ class InwardInventoryForm extends AddForm {
                 </div>
               ) : (
                 <>
-                  {/* Brand (optional) */}
-                  <div style={{ width: '150px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                    {this.renderTextField({
-                      fieldname: `brand_${key}`,
-                      placeholder: "Identifier (optional)",
-                      skipAdd: true,
-                      value: product.brand || '',
-                      onChange: (value) => {
-                        const p = this.state.noproduct;
-                        p[key].brand = value;
-                        this.setState({ noproduct: { ...p } });
-                      },
-                    })}
-                  </div>
+                  {/* Brand — only for batch-tracked products in edit mode */}
+                  {product.batchMode !== 'NONE' && (
+                    <div style={{ width: '150px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
+                      {this.renderTextField({
+                        fieldname: `brand_${key}`,
+                        placeholder: "Identifier (optional)",
+                        skipAdd: true,
+                        value: product.brand || '',
+                        onChange: (value) => {
+                          const p = this.state.noproduct;
+                          p[key].brand = value;
+                          this.setState({ noproduct: { ...p } });
+                        },
+                      })}
+                    </div>
+                  )}
                   {/* Expiry Date — only for BATCH_WITH_EXPIRY products in edit mode */}
                   {product.batchMode === 'BATCH_WITH_EXPIRY' && (
                     <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>

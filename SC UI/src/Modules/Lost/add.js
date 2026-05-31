@@ -26,6 +26,8 @@ class Add extends AddForm {
     // Batches available for selected product+warehouse
     availableBatches: [],
     selectedBatchId: null,
+    // EXCESS_FOUND: whether to add qty to an existing batch (true) or create a new one (false)
+    existingBatchMode: false,
   };
 
   constructor(props) {
@@ -153,39 +155,101 @@ class Add extends AddForm {
     }
 
     if (entryType === "EXCESS_FOUND") {
-      // User enters batch details for the new stock being added
+      const { existingBatchMode } = this.state;
+      // User can add excess qty to an existing batch OR create a new batch
       return (
         <div style={{ marginTop: 8 }}>
           <div style={{ fontSize: 12, color: "#666", fontWeight: 500, marginBottom: 4 }}>
-            Batch Details (optional — fill to track this excess stock as a batch)
+            Batch Details
           </div>
-          <div className="flex width50">
-            {this.renderTextField({
-              fieldname: "brand",
-              placeholder: "Identifier / Lot",
-              onChange: (value) => {
-                this.formData.brand = value;
-              },
-            })}
-            {this.renderTextField({
-              fieldname: "lotNumber",
-              placeholder: "Lot Number",
-              onChange: (value) => {
-                this.formData.lotNumber = value;
-              },
-            })}
-          </div>
-          {/* Show expiry date only if the product is BATCH_WITH_EXPIRY.
-              Since we can't easily distinguish from batch list alone,
-              we show it as optional — backend will validate if needed. */}
-          <div className="flex width50">
-            {this.renderDate({
-              fieldname: "expiryDate",
-              label: "Expiry Date (if applicable)",
-              minDate: moment(),
-              required: false,
-            })}
-          </div>
+          {/* Toggle only shown when existing batches are present */}
+          {availableBatches.length > 0 && (
+            <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
+              <label style={{ fontSize: 12, cursor: "pointer" }}>
+                <input
+                  type="radio"
+                  name="excessBatchMode"
+                  checked={existingBatchMode}
+                  onChange={() => {
+                    this.formData.existingBatchId = null;
+                    this.formData.brand = null;
+                    this.formData.lotNumber = null;
+                    this.formData.expiryDate = null;
+                    this.setState({ existingBatchMode: true, selectedBatchId: null });
+                  }}
+                />{" "}Add to existing batch
+              </label>
+              <label style={{ fontSize: 12, cursor: "pointer" }}>
+                <input
+                  type="radio"
+                  name="excessBatchMode"
+                  checked={!existingBatchMode}
+                  onChange={() => {
+                    this.formData.existingBatchId = null;
+                    this.setState({ existingBatchMode: false, selectedBatchId: null });
+                  }}
+                />{" "}Create new batch
+              </label>
+            </div>
+          )}
+          {existingBatchMode ? (
+            /* Existing batch: show dropdown to pick which batch receives this excess */
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 12, color: "#666" }}>Select batch to add excess to:</label>
+              <select
+                style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 4, fontSize: 13 }}
+                value={this.state.selectedBatchId || ""}
+                onChange={(e) => {
+                  const val = e.target.value ? Number(e.target.value) : null;
+                  this.formData.existingBatchId = val;
+                  this.setState({ selectedBatchId: val });
+                }}
+              >
+                <option value="">-- Select Batch --</option>
+                {availableBatches.map((b) => {
+                  const label = [
+                    b.brand,
+                    b.lotNumber,
+                    b.expiryDate ? "Exp: " + moment(b.expiryDate).format("DD-MM-YYYY") : null,
+                    `Qty: ${b.qtyRemaining}`,
+                  ].filter(Boolean).join(" | ");
+                  return (
+                    <option key={b.batchId} value={b.batchId}>
+                      {label || `Batch #${b.batchId}`}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          ) : (
+            /* New batch: user fills in batch metadata */
+            <div>
+              <div className="flex width50">
+                {this.renderTextField({
+                  fieldname: "brand",
+                  placeholder: "Identifier / Lot",
+                  onChange: (value) => {
+                    this.formData.brand = value;
+                  },
+                })}
+                {this.renderTextField({
+                  fieldname: "lotNumber",
+                  placeholder: "Lot Number",
+                  onChange: (value) => {
+                    this.formData.lotNumber = value;
+                  },
+                })}
+              </div>
+              <div className="flex width50">
+                {this.renderDate({
+                  fieldname: "expiryDate",
+                  label: "Expiry Date (if applicable)",
+                  minDate: moment(),
+                  required: false,
+                })}
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -207,11 +271,12 @@ class Add extends AddForm {
                   this.formData.entryType = e.target.value;
                   // Clear batch fields when type changes
                   this.formData.batchId = null;
+                  this.formData.existingBatchId = null;
                   this.formData.brand = null;
                   this.formData.lotNumber = null;
                   this.formData.expiryDate = null;
                   this.setState(
-                    { entryType: e.target.value, selectedBatchId: null },
+                    { entryType: e.target.value, selectedBatchId: null, existingBatchMode: false },
                     () => this.getCurrentStock()
                   );
                 }}

@@ -38,6 +38,9 @@ public class CreateLostOrDamagedInventoryData
 	// Lost/Damaged: user selects which batch the loss came from
 	Long batchId;
 
+	// Excess Found: user can add to an existing batch instead of creating a new one
+	Long existingBatchId;
+
 	// Excess Found: user enters batch details for the new batch
 	String brand;
 
@@ -134,6 +137,16 @@ public class CreateLostOrDamagedInventoryData
 	public void setBatchId(Long batchId)
 	{
 		this.batchId = batchId;
+	}
+
+	public Long getExistingBatchId()
+	{
+		return existingBatchId;
+	}
+
+	public void setExistingBatchId(Long existingBatchId)
+	{
+		this.existingBatchId = existingBatchId;
 	}
 
 	public String getBrand()

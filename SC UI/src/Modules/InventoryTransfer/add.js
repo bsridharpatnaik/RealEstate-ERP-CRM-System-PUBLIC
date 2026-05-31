@@ -46,6 +46,8 @@ class Add extends AddForm {
     batchPreviews: {},
     // Whether the user has toggled batch override for a product key
     showBatchOverride: {},
+    // All available batches per product key (loaded when override is toggled on)
+    allBatches: {},
   };
   _isMounted = false;
   key = 1;
@@ -233,6 +235,33 @@ class Add extends AddForm {
       }
     } catch (e) {
       // silently fail — batch preview is informational
+    }
+  }
+
+  /** Fetch ALL available batches for source product+warehouse so user can pick any in override mode. */
+  async fetchAllBatchesForProduct(key, productId, warehouseId) {
+    const fromProjectId = this.formData.fromProjectId;
+    if (!productId || !warehouseId || !fromProjectId) return;
+    try {
+      const token = getToken();
+      const customAxios = axios.create({ baseURL: process.env.REACT_APP_BASE_URL });
+      const response = await customAxios.get(
+        apiEndpoints.getBatchesForProduct(productId, warehouseId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "tenant-id": fromProjectId,
+          },
+        }
+      );
+      if (response.data && Array.isArray(response.data) && this._isMounted) {
+        const batches = response.data.filter((b) => b.qtyRemaining > 0);
+        const allBatches = { ...this.state.allBatches };
+        allBatches[key] = batches;
+        this.setState({ allBatches });
+      }
+    } catch (e) {
+      // silently fail
     }
   }
 
@@ -446,12 +475,16 @@ class Add extends AddForm {
                 onClick={() => {
                   const showBatchOverride = { ...this.state.showBatchOverride };
                   showBatchOverride[key] = !showBatchOverride[key];
-                  // Clear override entries when toggling off
                   if (!showBatchOverride[key]) {
+                    // Toggling OFF — clear override entries and restore FIFO preview
                     const p = this.state.products;
                     p[key].overrideBatches = [];
                     this.setState({ products: { ...p } });
                     this.fetchBatchPreview(key, p[key].productId, parseFloat(p[key].quantity) || 0);
+                  } else {
+                    // Toggling ON — load ALL available batches so user can pick any batch, not just FIFO picks
+                    const p = this.state.products;
+                    this.fetchAllBatchesForProduct(key, p[key].productId, this.formData.fromWarehouseId);
                   }
                   this.setState({ showBatchOverride });
                 }}
@@ -490,7 +523,7 @@ class Add extends AddForm {
                 <div style={{ fontSize: 11, color: "#e65100", marginBottom: 6 }}>
                   Enter specific batch quantities. Total must equal transfer quantity.
                 </div>
-                {batchPreview.map((b, idx) => {
+                {(this.state.allBatches[key] || batchPreview).map((b, idx) => {
                   const label = [b.brand, b.lotNumber, b.expiryDate ? moment(b.expiryDate).format("DD-MM-YYYY") : null]
                     .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
                   const overrides = this.state.products[key]?.overrideBatches || [];

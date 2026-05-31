@@ -295,6 +295,9 @@ public class OutwardInventoryService {
 
                 rejectOutwardList.add(new RejectOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
                         quantity, remarks));
+
+                // Decrement line qty so the same qty cannot be rejected again on a subsequent call
+                inwardOutwardList.setQuantity(currentQuantity - quantity);
             }
         }
         oi.setRejectOutwardList(rejectOutwardList);

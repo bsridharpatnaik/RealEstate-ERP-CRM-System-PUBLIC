@@ -17,14 +17,30 @@ class Edit extends EditForm {
   state = {
     data: {},
     isLoaded: false,
+    categoriesLoaded: false,
     batchMode: 'NONE',
     originalBatchMode: 'NONE',
     batchModeChanged: false,
+    categories: [],
   };
 
   componentDidMount() {
     this.updateUrl = this.updateUrl + this.props.id;
     this.search();
+    this.fetchCategories();
+  }
+
+  async fetchCategories() {
+    const response = await API.GET(apiEndpoints.getCategoryIdAndNames);
+    if (response.success && Array.isArray(response.data)) {
+      this.setState({
+        categories: response.data.map((cat) => ({
+          id: cat.categoryId ?? cat.id,
+          name: cat.categoryName ?? cat.name,
+        })),
+        categoriesLoaded: true,
+      });
+    }
   }
 
   async search() {
@@ -64,7 +80,7 @@ class Edit extends EditForm {
     return (
       <div className="list-section add">
         {this.renderHeading()}
-        {this.state.isLoaded && (
+        {this.state.isLoaded && this.state.categoriesLoaded && (
           <form onSubmit={(e) => this.update(e)}>
             <div class="flex">
               {this.renderTextField({
@@ -95,7 +111,7 @@ class Edit extends EditForm {
               {this.renderAutoComplete({
                 fieldname: "categoryId",
                 placeholder: "Category",
-                options: this.props.categories,
+                options: this.state.categories,
                 disableClearable: true,
                 required: true,
                 getOption: (option) => {
@@ -138,11 +154,6 @@ class Edit extends EditForm {
   }
 }
 
-const mapStateToProps = (state) => {
-  return {
-    categories: state.categories.categories,
-  };
-};
-export default connect(mapStateToProps, null, null, { forwardRef: true })(
+export default connect(null, null, null, { forwardRef: true })(
   withSnackbar(Edit)
 );

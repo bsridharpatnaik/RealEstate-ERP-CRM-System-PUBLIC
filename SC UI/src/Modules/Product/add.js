@@ -6,6 +6,7 @@ import { connect } from "react-redux";
 import { withSnackbar } from "notistack";
 import AddForm from "./../../Shared/AddForm";
 //misc
+import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
 import { messages } from "./../../messages";
 import "./style.scss";
@@ -13,14 +14,28 @@ class Add extends AddForm {
   title = messages.common.inventory;
   addurl = apiEndpoints.createProduct;
 
+  state = { categories: [] };
+
   constructor(props) {
     super(props);
     this.formData.isManagedInventory = true;
   }
 
   componentDidMount() {
-    // Ensure the value is set even if constructor wasn't called
     this.formData.isManagedInventory = true;
+    this.fetchCategories();
+  }
+
+  async fetchCategories() {
+    const response = await API.GET(apiEndpoints.getCategoryIdAndNames);
+    if (response.success && Array.isArray(response.data)) {
+      this.setState({
+        categories: response.data.map((cat) => ({
+          id: cat.categoryId ?? cat.id,
+          name: cat.categoryName ?? cat.name,
+        })),
+      });
+    }
   }
   render() {
     return (
@@ -56,7 +71,7 @@ class Add extends AddForm {
             {this.renderAutoComplete({
               fieldname: "categoryId",
               placeholder: "Category",
-              options: this.props.categories,
+              options: this.state.categories,
               disableClearable: true,
               required: true,
               getOption: (option) => {
@@ -89,11 +104,6 @@ class Add extends AddForm {
     );
   }
 }
-const mapStateToProps = (state) => {
-  return {
-    categories: state.categories.categories,
-  };
-};
-export default connect(mapStateToProps, null, null, { forwardRef: true })(
+export default connect(null, null, null, { forwardRef: true })(
   withSnackbar(Add)
 );
