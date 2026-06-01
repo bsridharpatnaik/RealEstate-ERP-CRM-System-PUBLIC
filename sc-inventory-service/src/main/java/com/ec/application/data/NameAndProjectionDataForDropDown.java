@@ -3,6 +3,7 @@ package com.ec.application.data;
 import java.util.List;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.LocationWithTypeProjection;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.Data;
@@ -25,5 +26,8 @@ public class NameAndProjectionDataForDropDown {
     List<String> purchaseOrderStatus;
     List<String> tenants;
     List<IdNameDTO> stalebuckets;
+    List<IdNameProjections> buildingtype;
+    List<LocationWithTypeProjection> usagelocationWithType;
+    Boolean boqEnforcementBlock;
 }
 
