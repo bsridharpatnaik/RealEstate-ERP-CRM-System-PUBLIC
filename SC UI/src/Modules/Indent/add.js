@@ -1174,6 +1174,11 @@ renderCurrentStockField(key) {
                         </div>
                       )}
                     </div>
+                    {file.fileName && (
+                      <div className="thumbnail-filename" title={file.fileName}>
+                        {file.fileName.length > 15 ? file.fileName.substring(0, 13) + "…" : file.fileName}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -37,7 +37,7 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 	@Query(value = "SELECT locationName from UsageLocation m where locationName like %:name% order by locationName")
 	List<String> getNamesForTypeAhead(@Param("name") String name);
 
-	@Query(value = "SELECT l.locationId as id, l.locationName as name, l.buildingType.typeId as typeId, l.buildingType.typeName as typeName FROM UsageLocation l ORDER BY l.locationName")
+	@Query(value = "SELECT l.locationId as id, l.locationName as name, bt.typeId as typeId, bt.typeName as typeName FROM UsageLocation l LEFT JOIN l.buildingType bt ORDER BY l.locationName")
 	List<LocationWithTypeProjection> findIdNamesAndTypes();
 
 	@Query(value = "SELECT count(m) from UsageLocation m where m.buildingType.typeId=:typeId")
