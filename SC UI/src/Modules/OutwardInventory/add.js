@@ -38,7 +38,7 @@ class Add extends AddForm {
     allProductsStockMap: {},
     selectedWarehouseId: null,
     boqViolationDialog: { open: false, violations: [] },
-    selectedStructureTypeId: null,
+    selectedStructureTypeId: "ALL",
     filteredStructures: [],
   };
   key = 1;
@@ -395,17 +395,21 @@ class Add extends AddForm {
             {this.renderAutoComplete({
               fieldname: "structureTypeId",
               placeholder: "Structure Type",
-              options: this.props.dropdowns.buildingtype || [],
-              disableClearable: false,
+              options: [
+                { id: "ALL", name: "All Structures" },
+                ...(this.props.dropdowns.buildingtype || []),
+              ],
+              disableClearable: true,
               required: false,
               skipAdd: true,
               getOption: (option) => option["name"],
+              getDefaultValue: () => ({ id: "ALL", name: "All Structures" }),
               onChange: (e, value) => {
-                const typeId = value ? value.id : null;
+                const typeId = value ? value.id : "ALL";
                 const allWithType = this.props.dropdowns.usagelocationWithType || [];
-                const filtered = typeId
-                  ? allWithType.filter((l) => l.typeId === typeId)
-                  : allWithType;
+                const filtered = typeId === "ALL"
+                  ? allWithType
+                  : allWithType.filter((l) => l.typeId === typeId);
                 this.formData.usageLocationId = null;
                 this.setState({ selectedStructureTypeId: typeId, filteredStructures: filtered });
               },
@@ -413,9 +417,9 @@ class Add extends AddForm {
             {this.renderAutoComplete({
               fieldname: "usageLocationId",
               placeholder: messages.common.location,
-              options: this.state.selectedStructureTypeId
-                ? this.state.filteredStructures
-                : (this.props.dropdowns.usagelocationWithType || this.props.dropdowns.usagelocation || []),
+              options: this.state.selectedStructureTypeId === "ALL"
+                ? (this.props.dropdowns.usagelocationWithType || this.props.dropdowns.usagelocation || [])
+                : this.state.filteredStructures,
               disableClearable: true,
               required: true,
               getOption: (option) => option["name"],
