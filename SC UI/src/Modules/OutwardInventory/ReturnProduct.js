@@ -154,7 +154,7 @@ class ReturnProduct extends AddForm {
           const label = [
             b.brand,
             b.lotNumber,
-            b.expiryDate ? "Exp: " + moment(b.expiryDate).format("DD-MM-YYYY") : null,
+            b.expiryDate ? "Exp: " + b.expiryDate : null,
             `(available: ${b.totalConsumed})`,
           ]
             .filter(Boolean)

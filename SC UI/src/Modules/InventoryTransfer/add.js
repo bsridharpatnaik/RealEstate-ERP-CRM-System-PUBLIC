@@ -504,7 +504,7 @@ class Add extends AddForm {
                 </thead>
                 <tbody>
                   {batchPreview.map((b, idx) => {
-                    const label = [b.brand, b.lotNumber, b.expiryDate ? moment(b.expiryDate).format("DD-MM-YYYY") : null]
+                    const label = [b.brand, b.lotNumber, b.expiryDate ? b.expiryDate : null]
                       .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
                     return (
                       <tr key={idx}>
@@ -524,7 +524,7 @@ class Add extends AddForm {
                   Enter specific batch quantities. Total must equal transfer quantity.
                 </div>
                 {(this.state.allBatches[key] || batchPreview).map((b, idx) => {
-                  const label = [b.brand, b.lotNumber, b.expiryDate ? moment(b.expiryDate).format("DD-MM-YYYY") : null]
+                  const label = [b.brand, b.lotNumber, b.expiryDate ? b.expiryDate : null]
                     .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
                   const overrides = this.state.products[key]?.overrideBatches || [];
                   const entry = overrides.find((e) => e.batchId === b.batchId);

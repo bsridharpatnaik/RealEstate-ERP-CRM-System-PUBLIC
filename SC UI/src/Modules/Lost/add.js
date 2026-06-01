@@ -17,16 +17,33 @@ import { messages } from "./../../messages";
 import { fetchUnit } from "./../../actions/measurementUnit";
 import moment from "moment";
 
+// ── date helpers (expiryDate arrives as "dd-MM-yyyy") ──────────────────────
+function parseDDMMYYYY(s) {
+  if (!s) return null;
+  const [d, m, y] = s.split("-");
+  return new Date(Number(y), Number(m) - 1, Number(d));
+}
+function isExpiredDate(s) {
+  const d = parseDDMMYYYY(s);
+  return d ? d < new Date() : false;
+}
+function isNearExpiryDate(s) {
+  const d = parseDDMMYYYY(s);
+  if (!d) return false;
+  const now = new Date();
+  const limit = new Date();
+  limit.setDate(now.getDate() + 30);
+  return d >= now && d <= limit;
+}
+
 class Add extends AddForm {
   title = messages.common.lost;
   addurl = apiEndpoints.createLost;
   state = {
     closing: null,
     entryType: "LOST_DAMAGED",
-    // Batches available for selected product+warehouse
     availableBatches: [],
     selectedBatchId: null,
-    // EXCESS_FOUND: whether to add qty to an existing batch (true) or create a new one (false)
     existingBatchMode: false,
   };
 
@@ -44,27 +61,23 @@ class Add extends AddForm {
   async getCurrentStock() {
     const warehouseId = this.formData.warehouseId;
     const productId = this.formData.productId;
-    if (!productId || !warehouseId) {
-      return;
-    }
+    if (!productId || !warehouseId) return;
     const response = await API.GET(
       apiEndpoints.getCurrentStock +
-        "productId=" +
-        productId +
-        "&warehouseId=" +
-        warehouseId
+        "productId=" + productId +
+        "&warehouseId=" + warehouseId
     );
     if (response.success) {
       const qty = Number(this.formData.quantity) || 0;
       const currentStock = Number(response.data);
-      const closing = this.formData.entryType === "EXCESS_FOUND"
-        ? currentStock + qty
-        : currentStock - qty;
-      this.setState({ closing: closing });
+      const closing =
+        this.formData.entryType === "EXCESS_FOUND"
+          ? currentStock + qty
+          : currentStock - qty;
+      this.setState({ closing });
     }
   }
 
-  /** Load available batches for the currently selected product+warehouse. */
   async loadBatches() {
     const { productId, warehouseId } = this.formData;
     if (!productId || !warehouseId) {
@@ -89,155 +102,209 @@ class Add extends AddForm {
 
   add(event) {
     event.preventDefault();
-
     if (
       !this.formData.fileInformations ||
       this.formData.fileInformations.length === 0
     ) {
-      this.props.enqueueSnackbar("Add atleast one file", {
-        variant: "error",
-      });
+      this.props.enqueueSnackbar("Add atleast one file", { variant: "error" });
       return;
     }
     super.add(event);
   }
 
-  renderBatchSection() {
-    const { entryType, availableBatches } = this.state;
-    const isBatchTracked = availableBatches.length > 0;
-
-    if (!isBatchTracked) return null;
-
-    if (entryType === "LOST_DAMAGED") {
-      // User must select which batch the loss came from
-      return (
-        <div className="flex" style={{ marginTop: 8 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
-            <label style={{ fontSize: 12, color: "#666", fontWeight: 500 }}>
-              Batch (select which batch the loss came from)
-            </label>
-            <select
+  // ── Reusable batch card list ─────────────────────────────────────────────
+  renderBatchCards({ selectedId, radioName, onSelect }) {
+    const { availableBatches } = this.state;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {availableBatches.map((b) => {
+          const selected = selectedId === b.batchId;
+          const expired = isExpiredDate(b.expiryDate);
+          const nearExpiry = !expired && isNearExpiryDate(b.expiryDate);
+          const expiryColor = expired ? "#c62828" : nearExpiry ? "#e65100" : "#2e7d32";
+          return (
+            <label
+              key={b.batchId}
               style={{
-                padding: "8px 10px",
-                border: "1px solid #ccc",
-                borderRadius: 4,
-                fontSize: 13,
-              }}
-              value={this.state.selectedBatchId || ""}
-              onChange={(e) => {
-                const val = e.target.value ? Number(e.target.value) : null;
-                this.formData.batchId = val;
-                this.setState({ selectedBatchId: val });
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "10px 14px",
+                border: selected ? "2px solid #1976d2" : "1px solid #ddd",
+                borderRadius: 6,
+                background: selected ? "#e3f2fd" : "#fafafa",
+                cursor: "pointer",
+                userSelect: "none",
               }}
             >
-              <option value="">-- Select Batch --</option>
-              {availableBatches.map((b) => {
-                const label = [
-                  b.brand,
-                  b.lotNumber,
-                  b.expiryDate
-                    ? "Exp: " + moment(b.expiryDate).format("DD-MM-YYYY")
-                    : null,
-                  `Qty: ${b.qtyRemaining}`,
-                ]
-                  .filter(Boolean)
-                  .join(" | ");
-                return (
-                  <option key={b.batchId} value={b.batchId}>
-                    {label || `Batch #${b.batchId}`}
-                  </option>
-                );
-              })}
-            </select>
+              <input
+                type="radio"
+                name={radioName}
+                value={b.batchId}
+                checked={selected}
+                onChange={() => onSelect(b.batchId)}
+                style={{ flexShrink: 0, marginTop: 1 }}
+              />
+              <div style={{ flex: 1, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+                {b.brand && (
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>{b.brand}</span>
+                )}
+                {b.lotNumber && (
+                  <span style={{ fontSize: 12, color: "#555" }}>Lot: {b.lotNumber}</span>
+                )}
+                {b.expiryDate ? (
+                  <span style={{ fontSize: 12, fontWeight: 500, color: expiryColor }}>
+                    Exp: {b.expiryDate}
+                    {expired ? " ⚠ Expired" : nearExpiry ? " ⚠ Expiring soon" : ""}
+                  </span>
+                ) : null}
+                {!b.brand && !b.lotNumber && !b.expiryDate && (
+                  <span style={{ fontSize: 12, color: "#888" }}>Batch #{b.batchId}</span>
+                )}
+                <span
+                  style={{
+                    marginLeft: "auto",
+                    fontSize: 12,
+                    color: "#444",
+                    background: "#e8eaf6",
+                    borderRadius: 4,
+                    padding: "2px 8px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Available: <strong>{b.qtyRemaining}</strong>
+                </span>
+              </div>
+            </label>
+          );
+        })}
+      </div>
+    );
+  }
+
+  renderBatchSection() {
+    const { entryType, availableBatches, selectedBatchId, existingBatchMode } = this.state;
+    if (availableBatches.length === 0) return null;
+
+    if (entryType === "LOST_DAMAGED") {
+      return (
+        <div style={{ marginTop: 12 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: "#666",
+              fontWeight: 600,
+              marginBottom: 8,
+              textTransform: "uppercase",
+              letterSpacing: "0.4px",
+            }}
+          >
+            Which batch did the loss come from?
           </div>
+          {this.renderBatchCards({
+            selectedId: selectedBatchId,
+            radioName: "lostBatch",
+            onSelect: (id) => {
+              this.formData.batchId = id;
+              this.setState({ selectedBatchId: id });
+            },
+          })}
         </div>
       );
     }
 
     if (entryType === "EXCESS_FOUND") {
-      const { existingBatchMode } = this.state;
-      // User can add excess qty to an existing batch OR create a new batch
       return (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 12, color: "#666", fontWeight: 500, marginBottom: 4 }}>
+        <div style={{ marginTop: 12 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: "#666",
+              fontWeight: 600,
+              marginBottom: 8,
+              textTransform: "uppercase",
+              letterSpacing: "0.4px",
+            }}
+          >
             Batch Details
           </div>
-          {/* Toggle only shown when existing batches are present */}
-          {availableBatches.length > 0 && (
-            <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
-              <label style={{ fontSize: 12, cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="excessBatchMode"
-                  checked={existingBatchMode}
-                  onChange={() => {
-                    this.formData.existingBatchId = null;
-                    this.formData.brand = null;
-                    this.formData.lotNumber = null;
-                    this.formData.expiryDate = null;
-                    this.setState({ existingBatchMode: true, selectedBatchId: null });
+
+          {/* Toggle cards */}
+          <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+            {[
+              {
+                value: true,
+                title: "Add to existing batch",
+                desc: "Select a batch already in this warehouse",
+              },
+              {
+                value: false,
+                title: "Create new batch",
+                desc: "Record this stock as a brand-new batch",
+              },
+            ].map(({ value, title, desc }) => {
+              const active = existingBatchMode === value;
+              return (
+                <label
+                  key={String(value)}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    gap: 10,
+                    padding: "10px 14px",
+                    border: active ? "2px solid #1976d2" : "1px solid #ccc",
+                    borderRadius: 6,
+                    background: active ? "#e3f2fd" : "#fff",
+                    cursor: "pointer",
+                    userSelect: "none",
                   }}
-                />{" "}Add to existing batch
-              </label>
-              <label style={{ fontSize: 12, cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name="excessBatchMode"
-                  checked={!existingBatchMode}
-                  onChange={() => {
-                    this.formData.existingBatchId = null;
-                    this.setState({ existingBatchMode: false, selectedBatchId: null });
-                  }}
-                />{" "}Create new batch
-              </label>
-            </div>
-          )}
+                >
+                  <input
+                    type="radio"
+                    name="excessBatchMode"
+                    checked={active}
+                    onChange={() => {
+                      this.formData.existingBatchId = null;
+                      this.formData.brand = null;
+                      this.formData.lotNumber = null;
+                      this.formData.expiryDate = null;
+                      this.setState({
+                        existingBatchMode: value,
+                        selectedBatchId: null,
+                      });
+                    }}
+                    style={{ marginTop: 3, flexShrink: 0 }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{title}</div>
+                    <div style={{ fontSize: 11, color: "#777", marginTop: 2 }}>{desc}</div>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+
           {existingBatchMode ? (
-            /* Existing batch: show dropdown to pick which batch receives this excess */
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 12, color: "#666" }}>Select batch to add excess to:</label>
-              <select
-                style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 4, fontSize: 13 }}
-                value={this.state.selectedBatchId || ""}
-                onChange={(e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
-                  this.formData.existingBatchId = val;
-                  this.setState({ selectedBatchId: val });
-                }}
-              >
-                <option value="">-- Select Batch --</option>
-                {availableBatches.map((b) => {
-                  const label = [
-                    b.brand,
-                    b.lotNumber,
-                    b.expiryDate ? "Exp: " + moment(b.expiryDate).format("DD-MM-YYYY") : null,
-                    `Qty: ${b.qtyRemaining}`,
-                  ].filter(Boolean).join(" | ");
-                  return (
-                    <option key={b.batchId} value={b.batchId}>
-                      {label || `Batch #${b.batchId}`}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+            this.renderBatchCards({
+              selectedId: selectedBatchId,
+              radioName: "excessExistingBatch",
+              onSelect: (id) => {
+                this.formData.existingBatchId = id;
+                this.setState({ selectedBatchId: id });
+              },
+            })
           ) : (
-            /* New batch: user fills in batch metadata */
             <div>
               <div className="flex width50">
                 {this.renderTextField({
                   fieldname: "brand",
-                  placeholder: "Identifier / Lot",
-                  onChange: (value) => {
-                    this.formData.brand = value;
-                  },
+                  placeholder: "Brand / Supplier",
+                  onChange: (value) => { this.formData.brand = value; },
                 })}
                 {this.renderTextField({
                   fieldname: "lotNumber",
-                  placeholder: "Lot Number",
-                  onChange: (value) => {
-                    this.formData.lotNumber = value;
-                  },
+                  placeholder: "Lot / Batch Number",
+                  onChange: (value) => { this.formData.lotNumber = value; },
                 })}
               </div>
               <div className="flex width50">
@@ -262,6 +329,8 @@ class Add extends AddForm {
       <div className="list-section add">
         {this.renderHeading()}
         <form onSubmit={(e) => this.add(e)}>
+
+          {/* Type toggle */}
           <div className="flex">
             <FormControl component="fieldset">
               <RadioGroup
@@ -269,7 +338,6 @@ class Add extends AddForm {
                 value={this.state.entryType}
                 onChange={(e) => {
                   this.formData.entryType = e.target.value;
-                  // Clear batch fields when type changes
                   this.formData.batchId = null;
                   this.formData.existingBatchId = null;
                   this.formData.brand = null;
@@ -281,21 +349,29 @@ class Add extends AddForm {
                   );
                 }}
               >
-                <FormControlLabel value="LOST_DAMAGED" control={<Radio color="primary" />} label="Lost / Damaged" />
-                <FormControlLabel value="EXCESS_FOUND" control={<Radio color="primary" />} label="Excess Found" />
+                <FormControlLabel
+                  value="LOST_DAMAGED"
+                  control={<Radio color="primary" />}
+                  label="Lost / Damaged"
+                />
+                <FormControlLabel
+                  value="EXCESS_FOUND"
+                  control={<Radio color="primary" />}
+                  label="Excess Found"
+                />
               </RadioGroup>
             </FormControl>
           </div>
-          <div className="flex">
+
+          {/* Warehouse + Inventory — same row */}
+          <div className="flex width50">
             {this.renderAutoComplete({
               fieldname: "warehouseId",
               placeholder: "Warehouse",
               options: this.props.dropdowns?.warehouse || [],
               disableClearable: true,
               required: true,
-              getOption: (option) => {
-                return option["name"];
-              },
+              getOption: (option) => option["name"],
               onChange: (e, value) => {
                 if (value) {
                   this.formData.warehouseId = value.id;
@@ -304,17 +380,13 @@ class Add extends AddForm {
                 }
               },
             })}
-          </div>
-          <div className="flex">
             {this.renderAutoComplete({
               fieldname: "productId",
               placeholder: messages.common.inventory,
               options: this.props.dropdowns?.product || [],
               disableClearable: true,
               required: true,
-              getOption: (option) => {
-                return option["name"];
-              },
+              getOption: (option) => option["name"],
               onChange: (e, value) => {
                 if (value) {
                   this.formData.productId = value.id;
@@ -324,14 +396,8 @@ class Add extends AddForm {
               },
             })}
           </div>
-          <div className="flex">
-            {this.renderTextField({
-              fieldname: "measurementUnit",
-              placeholder: "Measurement Unit",
-              disabled: true,
-              value: this.props.units[this.formData.productId],
-            })}
-          </div>
+
+          {/* Quantity + Measurement Unit + Closing Stock — same row */}
           <div className="flex width50">
             {this.renderTextField({
               fieldname: "quantity",
@@ -339,9 +405,13 @@ class Add extends AddForm {
               type: "number",
               required: true,
               validation: "nonegative",
-              onChange: (value) => {
-                this.getCurrentStock();
-              },
+              onChange: () => { this.getCurrentStock(); },
+            })}
+            {this.renderTextField({
+              fieldname: "measurementUnit",
+              placeholder: "Measurement Unit",
+              disabled: true,
+              value: this.props.units[this.formData.productId],
             })}
             {this.renderTextField({
               fieldname: "Closing Stock",
@@ -350,42 +420,46 @@ class Add extends AddForm {
               value: this.state.closing,
             })}
           </div>
+
+          {/* Date + Location/Remarks */}
           <div className="flex width50">
             {this.renderDate({
               fieldname: "date",
               label: messages.fields.date,
               maxDate: moment(),
-              minDate: moment().add(-7, 'd'),
+              minDate: moment().add(-7, "d"),
             })}
             {this.renderTextField({
               fieldname: "theftLocation",
-              placeholder: this.state.entryType === "EXCESS_FOUND" ? "Remarks" : "Location",
+              placeholder:
+                this.state.entryType === "EXCESS_FOUND" ? "Remarks" : "Location",
               required: true,
             })}
           </div>
 
-          {/* Batch section — shown only when product+warehouse selected and product is batch-tracked */}
+          {/* Batch section */}
           {this.renderBatchSection()}
 
+          {/* Additional Comments */}
           <div className="flex">
             {this.renderTextArea({
               fieldname: "Additional Comments",
               placeholder: "Additional Comments",
             })}
           </div>
-          {this.renderFileArea()}
 
+          {this.renderFileArea()}
           {this.renderFooter()}
         </form>
       </div>
     );
   }
 }
-const mapStateToProps = (state) => {
-  return {
-    units: state.units.units,
-  };
-};
+
+const mapStateToProps = (state) => ({
+  units: state.units.units,
+});
+
 export default connect(mapStateToProps, null, null, { forwardRef: true })(
   withSnackbar(Add)
 );
