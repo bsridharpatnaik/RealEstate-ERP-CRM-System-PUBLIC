@@ -49,6 +49,12 @@ public class CreateLostOrDamagedInventoryData
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
 	Date expiryDate;
 
+	// Multi-batch: LOST_DAMAGED — distribute loss across multiple batches
+	List<BatchOverrideEntry> batchEntries;
+
+	// Multi-batch: EXCESS_FOUND add-to-existing — distribute excess across multiple existing batches
+	List<BatchOverrideEntry> excessBatchEntries;
+
 	public String getEntryType()
 	{
 		return entryType;
@@ -177,5 +183,25 @@ public class CreateLostOrDamagedInventoryData
 	public void setExpiryDate(Date expiryDate)
 	{
 		this.expiryDate = expiryDate;
+	}
+
+	public List<BatchOverrideEntry> getBatchEntries()
+	{
+		return batchEntries;
+	}
+
+	public void setBatchEntries(List<BatchOverrideEntry> batchEntries)
+	{
+		this.batchEntries = batchEntries;
+	}
+
+	public List<BatchOverrideEntry> getExcessBatchEntries()
+	{
+		return excessBatchEntries;
+	}
+
+	public void setExcessBatchEntries(List<BatchOverrideEntry> excessBatchEntries)
+	{
+		this.excessBatchEntries = excessBatchEntries;
 	}
 }

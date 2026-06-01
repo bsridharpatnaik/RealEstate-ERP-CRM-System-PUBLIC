@@ -1,6 +1,8 @@
 package com.ec.application.service;
 
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.ReusableClasses.ReusableMethods;
 import java.util.Collections;
+import com.ec.application.data.BatchOverrideEntry;
 import com.ec.application.data.CreateLostOrDamagedInventoryData;
 import com.ec.application.data.LostDamagedReturnData;
 import com.ec.application.model.InventoryBatch;
@@ -98,42 +101,95 @@ public class LostDamagedInventoryService {
 
     /**
      * Handles batch side-effects on create:
-     * - LOST_DAMAGED + batchId: drain that batch. Validates qty <= qtyRemaining.
-     * - LOST_DAMAGED + no batchId: throws — batchId is required for batch-tracked products.
-     * - EXCESS_FOUND + existingBatchId: add qty to an existing batch.
-     * - EXCESS_FOUND + no existingBatchId: create a new InventoryBatch.
+     * - LOST_DAMAGED + batchEntries (multi): drain each listed batch by its qty; validate sum == total.
+     * - LOST_DAMAGED + batchId (single, legacy): drain that batch.
+     * - EXCESS_FOUND + excessBatchEntries (multi): add qty to each listed existing batch.
+     * - EXCESS_FOUND + existingBatchId (single): add qty to that batch.
+     * - EXCESS_FOUND + no existing batch: create a new InventoryBatch.
      */
     private InventoryBatch handleBatchOnCreate(LostDamagedInventory entity,
                                                 CreateLostOrDamagedInventoryData payload) {
+        // Always clear stale JSON from a previous save (important on update path)
+        entity.setBatchEntriesJson(null);
+
         Product product = entity.getProduct();
         if (product == null || !product.isBatchTracked()) return null;
 
         if ("LOST_DAMAGED".equals(payload.getEntryType())) {
-            // LD4: require batchId for batch-tracked products
+            List<BatchOverrideEntry> entries = payload.getBatchEntries();
+            if (entries != null && !entries.isEmpty()) {
+                // Multi-batch drain
+                double total = entries.stream().mapToDouble(e -> e.getQty() != null ? e.getQty() : 0.0).sum();
+                if (Math.abs(total - payload.getQuantity()) > 0.001) {
+                    throw new IllegalArgumentException(
+                            "Sum of batch quantities (" + total + ") does not match total quantity (" + payload.getQuantity() + ").");
+                }
+                InventoryBatch firstBatch = null;
+                List<BatchOverrideEntry> saved = new ArrayList<>();
+                for (BatchOverrideEntry entry : entries) {
+                    if (entry.getBatchId() == null || entry.getQty() == null || entry.getQty() <= 0) continue;
+                    InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                            .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
+                    if (entry.getQty() > batch.getQtyRemaining()) {
+                        throw new IllegalArgumentException("Batch " + entry.getBatchId()
+                                + " only has " + batch.getQtyRemaining() + " units remaining.");
+                    }
+                    batch.setQtyRemaining(batch.getQtyRemaining() - entry.getQty());
+                    inventoryBatchRepository.save(batch);
+                    saved.add(entry);
+                    if (firstBatch == null) firstBatch = batch;
+                }
+                try {
+                    entity.setBatchEntriesJson(
+                            new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(saved));
+                } catch (Exception e) { log.warn("Failed to serialize batchEntriesJson: " + e.getMessage()); }
+                return firstBatch;
+            }
+            // Single batch path (backward compat / edit from old record)
             if (payload.getBatchId() == null) {
                 throw new IllegalArgumentException(
                         "This product is batch-tracked. Please select the batch the loss came from.");
             }
             InventoryBatch batch = inventoryBatchRepository.findById(payload.getBatchId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Batch not found: " + payload.getBatchId()));
-            // LD2: validate qty instead of silently flooring to 0
+                    .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + payload.getBatchId()));
             if (payload.getQuantity() > batch.getQtyRemaining()) {
-                throw new IllegalArgumentException(
-                        "Cannot mark " + payload.getQuantity()
-                        + " as lost/damaged. Batch only has " + batch.getQtyRemaining()
-                        + " units remaining.");
+                throw new IllegalArgumentException("Cannot mark " + payload.getQuantity()
+                        + " as lost/damaged. Batch only has " + batch.getQtyRemaining() + " units remaining.");
             }
             batch.setQtyRemaining(batch.getQtyRemaining() - payload.getQuantity());
             return inventoryBatchRepository.save(batch);
         }
 
         if ("EXCESS_FOUND".equals(payload.getEntryType())) {
-            // LD3: add to existing batch if user selected one
+            List<BatchOverrideEntry> excessEntries = payload.getExcessBatchEntries();
+            if (excessEntries != null && !excessEntries.isEmpty()) {
+                // Multi-batch add to existing
+                double total = excessEntries.stream().mapToDouble(e -> e.getQty() != null ? e.getQty() : 0.0).sum();
+                if (Math.abs(total - payload.getQuantity()) > 0.001) {
+                    throw new IllegalArgumentException(
+                            "Sum of batch quantities (" + total + ") does not match total quantity (" + payload.getQuantity() + ").");
+                }
+                InventoryBatch firstBatch = null;
+                List<BatchOverrideEntry> saved = new ArrayList<>();
+                for (BatchOverrideEntry entry : excessEntries) {
+                    if (entry.getBatchId() == null || entry.getQty() == null || entry.getQty() <= 0) continue;
+                    InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                            .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
+                    batch.setQtyRemaining(batch.getQtyRemaining() + entry.getQty());
+                    inventoryBatchRepository.save(batch);
+                    saved.add(entry);
+                    if (firstBatch == null) firstBatch = batch;
+                }
+                try {
+                    entity.setBatchEntriesJson(
+                            new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(saved));
+                } catch (Exception e) { log.warn("Failed to serialize batchEntriesJson: " + e.getMessage()); }
+                return firstBatch;
+            }
+            // Single existingBatchId path
             if (payload.getExistingBatchId() != null) {
                 InventoryBatch batch = inventoryBatchRepository.findById(payload.getExistingBatchId())
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Batch not found: " + payload.getExistingBatchId()));
+                        .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + payload.getExistingBatchId()));
                 batch.setQtyRemaining(batch.getQtyRemaining() + payload.getQuantity());
                 return inventoryBatchRepository.save(batch);
             }
@@ -267,19 +323,43 @@ public class LostDamagedInventoryService {
 
     /**
      * Reverses batch side-effects when deleting or updating a LostDamagedInventory entry.
-     * - LOST_DAMAGED: restore qty back to the referenced batch.
-     * - EXCESS_FOUND: zero out the created batch (soft-delete is handled by stock reversal; zeroing prevents double-counting).
+     * Uses batchEntriesJson for multi-batch records; falls back to single-batch for legacy records.
      */
     private void reverseBatchOnDelete(LostDamagedInventory entity) {
+        String entriesJson = entity.getBatchEntriesJson();
+        if (entriesJson != null && !entriesJson.isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper =
+                        new com.fasterxml.jackson.databind.ObjectMapper();
+                List<BatchOverrideEntry> entries = mapper.readValue(entriesJson,
+                        mapper.getTypeFactory().constructCollectionType(List.class, BatchOverrideEntry.class));
+                for (BatchOverrideEntry entry : entries) {
+                    if (entry.getBatchId() == null) continue;
+                    inventoryBatchRepository.findById(entry.getBatchId()).ifPresent(batch -> {
+                        double qty = entry.getQty() != null ? entry.getQty() : 0.0;
+                        if ("LOST_DAMAGED".equals(entity.getEntryType())) {
+                            batch.setQtyRemaining(batch.getQtyRemaining() + qty);
+                        } else {
+                            batch.setQtyRemaining(Math.max(0.0, batch.getQtyRemaining() - qty));
+                        }
+                        inventoryBatchRepository.save(batch);
+                    });
+                }
+                return;
+            } catch (Exception e) {
+                log.warn("Failed to parse batchEntriesJson for reversal, falling back to single batch: " + e.getMessage());
+            }
+        }
+        reverseSingleBatch(entity);
+    }
+
+    private void reverseSingleBatch(LostDamagedInventory entity) {
         InventoryBatch batch = entity.getBatch();
         if (batch == null) return;
-
         if ("LOST_DAMAGED".equals(entity.getEntryType())) {
-            // Restore qty that was drained on create
             batch.setQtyRemaining(batch.getQtyRemaining() + entity.getQuantity());
             inventoryBatchRepository.save(batch);
         } else if ("EXCESS_FOUND".equals(entity.getEntryType())) {
-            // Reduce by what was added — clamp to 0 if outwards consumed some of it
             double restored = Math.max(0.0, batch.getQtyRemaining() - entity.getQuantity());
             batch.setQtyRemaining(restored);
             inventoryBatchRepository.save(batch);

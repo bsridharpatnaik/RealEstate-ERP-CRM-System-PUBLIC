@@ -209,4 +209,15 @@ public class LostDamagedInventory extends ReusableFields
 	{
 		this.batch = batch;
 	}
+
+	/**
+	 * JSON array of [{batchId, qty}] entries for multi-batch operations.
+	 * LOST_DAMAGED: batches drained. EXCESS_FOUND (add to existing): batches filled.
+	 * Null for single-batch and non-batch-tracked records.
+	 */
+	@Column(name = "batch_entries_json", columnDefinition = "TEXT")
+	private String batchEntriesJson;
+
+	public String getBatchEntriesJson() { return batchEntriesJson; }
+	public void setBatchEntriesJson(String batchEntriesJson) { this.batchEntriesJson = batchEntriesJson; }
 }

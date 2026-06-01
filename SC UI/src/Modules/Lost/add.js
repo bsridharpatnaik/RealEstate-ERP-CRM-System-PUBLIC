@@ -43,8 +43,10 @@ class Add extends AddForm {
     closing: null,
     entryType: "LOST_DAMAGED",
     availableBatches: [],
-    selectedBatchId: null,
     existingBatchMode: false,
+    // multi-batch qty maps: batchId (number) → qty string
+    batchQtyMap: {},    // LOST_DAMAGED allocation
+    excessQtyMap: {},   // EXCESS_FOUND add-to-existing allocation
   };
 
   constructor(props) {
@@ -81,7 +83,11 @@ class Add extends AddForm {
   async loadBatches() {
     const { productId, warehouseId } = this.formData;
     if (!productId || !warehouseId) {
-      this.setState({ availableBatches: [], selectedBatchId: null });
+      this.setState({
+        availableBatches: [],
+        batchQtyMap: {},
+        excessQtyMap: {},
+      });
       return;
     }
     try {
@@ -90,13 +96,19 @@ class Add extends AddForm {
       );
       if (response.success && Array.isArray(response.data)) {
         const batches = response.data.filter((b) => b.qtyRemaining > 0);
-        this.setState({ availableBatches: batches, selectedBatchId: null });
+        this.setState({
+          availableBatches: batches,
+          batchQtyMap: {},
+          excessQtyMap: {},
+        });
         this.formData.batchId = null;
+        this.formData.batchEntries = null;
+        this.formData.excessBatchEntries = null;
       } else {
-        this.setState({ availableBatches: [], selectedBatchId: null });
+        this.setState({ availableBatches: [], batchQtyMap: {}, excessQtyMap: {} });
       }
     } catch (e) {
-      this.setState({ availableBatches: [] });
+      this.setState({ availableBatches: [], batchQtyMap: {}, excessQtyMap: {} });
     }
   }
 
@@ -109,104 +121,163 @@ class Add extends AddForm {
       this.props.enqueueSnackbar("Add atleast one file", { variant: "error" });
       return;
     }
+
+    const { entryType, availableBatches, batchQtyMap, excessQtyMap, existingBatchMode } = this.state;
+    const totalQty = Number(this.formData.quantity) || 0;
+
+    if (availableBatches.length > 0) {
+      if (entryType === "LOST_DAMAGED") {
+        const allocated = Object.values(batchQtyMap).reduce(
+          (s, v) => s + (Number(v) || 0), 0
+        );
+        if (Math.abs(allocated - totalQty) > 0.001) {
+          this.props.enqueueSnackbar(
+            `Batch quantities must sum to ${totalQty} (currently ${Math.round(allocated * 1000) / 1000})`,
+            { variant: "error" }
+          );
+          return;
+        }
+        const entries = availableBatches
+          .filter((b) => (Number(batchQtyMap[b.batchId]) || 0) > 0)
+          .map((b) => ({ batchId: b.batchId, qty: Number(batchQtyMap[b.batchId]) }));
+        this.formData.batchEntries = entries.length > 0 ? entries : null;
+        this.formData.batchId = null;
+      } else if (entryType === "EXCESS_FOUND" && existingBatchMode) {
+        const allocated = Object.values(excessQtyMap).reduce(
+          (s, v) => s + (Number(v) || 0), 0
+        );
+        if (Math.abs(allocated - totalQty) > 0.001) {
+          this.props.enqueueSnackbar(
+            `Batch quantities must sum to ${totalQty} (currently ${Math.round(allocated * 1000) / 1000})`,
+            { variant: "error" }
+          );
+          return;
+        }
+        const entries = availableBatches
+          .filter((b) => (Number(excessQtyMap[b.batchId]) || 0) > 0)
+          .map((b) => ({ batchId: b.batchId, qty: Number(excessQtyMap[b.batchId]) }));
+        this.formData.excessBatchEntries = entries.length > 0 ? entries : null;
+        this.formData.existingBatchId = null;
+      }
+    }
+
     super.add(event);
   }
 
-  // ── Reusable batch card list ─────────────────────────────────────────────
-  renderBatchCards({ selectedId, radioName, onSelect }) {
-    const { availableBatches } = this.state;
+  // ── Batch allocation cards — each batch has a qty input ───────────────────
+  renderBatchAllocCards({ batches, qtyMap, onQtyChange, totalQty, label }) {
+    const allocated = Object.values(qtyMap).reduce(
+      (s, v) => s + (Number(v) || 0), 0
+    );
+    const remaining = Math.round((totalQty - allocated) * 1000) / 1000;
+    const overAllocated = remaining < -0.001;
+    const fullyAllocated = Math.abs(remaining) <= 0.001;
+
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {availableBatches.map((b) => {
-          const selected = selectedId === b.batchId;
-          const expired = isExpiredDate(b.expiryDate);
-          const nearExpiry = !expired && isNearExpiryDate(b.expiryDate);
-          const expiryColor = expired ? "#c62828" : nearExpiry ? "#e65100" : "#2e7d32";
-          return (
-            <label
-              key={b.batchId}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "10px 14px",
-                border: selected ? "2px solid #1976d2" : "1px solid #ddd",
-                borderRadius: 6,
-                background: selected ? "#e3f2fd" : "#fafafa",
-                cursor: "pointer",
-                userSelect: "none",
-              }}
-            >
-              <input
-                type="radio"
-                name={radioName}
-                value={b.batchId}
-                checked={selected}
-                onChange={() => onSelect(b.batchId)}
-                style={{ flexShrink: 0, marginTop: 1 }}
-              />
-              <div style={{ flex: 1, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
-                {b.brand && (
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{b.brand}</span>
-                )}
-                {b.lotNumber && (
-                  <span style={{ fontSize: 12, color: "#555" }}>Lot: {b.lotNumber}</span>
-                )}
-                {b.expiryDate ? (
-                  <span style={{ fontSize: 12, fontWeight: 500, color: expiryColor }}>
-                    Exp: {b.expiryDate}
-                    {expired ? " ⚠ Expired" : nearExpiry ? " ⚠ Expiring soon" : ""}
-                  </span>
-                ) : null}
-                {!b.brand && !b.lotNumber && !b.expiryDate && (
-                  <span style={{ fontSize: 12, color: "#888" }}>Batch #{b.batchId}</span>
-                )}
-                <span
-                  style={{
-                    marginLeft: "auto",
-                    fontSize: 12,
-                    color: "#444",
-                    background: "#e8eaf6",
-                    borderRadius: 4,
-                    padding: "2px 8px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+      <div>
+        {/* allocation summary strip */}
+        <div style={{
+          display: "flex", justifyContent: "flex-end", marginBottom: 6,
+          fontSize: 12, fontWeight: 500,
+          color: overAllocated ? "#c62828" : fullyAllocated ? "#2e7d32" : "#555",
+        }}>
+          {overAllocated
+            ? `⚠ Over-allocated by ${Math.abs(remaining)}`
+            : fullyAllocated
+            ? "✓ Fully allocated"
+            : `Remaining to allocate: ${remaining}`}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {batches.map((b) => {
+            const expired = isExpiredDate(b.expiryDate);
+            const nearExpiry = !expired && isNearExpiryDate(b.expiryDate);
+            const expiryColor = expired ? "#c62828" : nearExpiry ? "#e65100" : "#2e7d32";
+            const qty = qtyMap[b.batchId] !== undefined ? qtyMap[b.batchId] : "";
+
+            return (
+              <div
+                key={b.batchId}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "10px 14px", border: "1px solid #ddd",
+                  borderRadius: 6, background: "#fafafa",
+                }}
+              >
+                {/* batch meta */}
+                <div style={{ flex: 1, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+                  {b.brand && (
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{b.brand}</span>
+                  )}
+                  {b.lotNumber && (
+                    <span style={{ fontSize: 12, color: "#555" }}>Lot: {b.lotNumber}</span>
+                  )}
+                  {b.expiryDate ? (
+                    <span style={{ fontSize: 12, fontWeight: 500, color: expiryColor }}>
+                      Exp: {b.expiryDate}
+                      {expired ? " ⚠ Expired" : nearExpiry ? " ⚠ Expiring soon" : ""}
+                    </span>
+                  ) : null}
+                  {!b.brand && !b.lotNumber && !b.expiryDate && (
+                    <span style={{ fontSize: 12, color: "#888" }}>Batch #{b.batchId}</span>
+                  )}
+                </div>
+
+                {/* available qty badge */}
+                <span style={{
+                  fontSize: 12, color: "#444", background: "#e8eaf6",
+                  borderRadius: 4, padding: "2px 8px", whiteSpace: "nowrap",
+                }}>
                   Available: <strong>{b.qtyRemaining}</strong>
                 </span>
+
+                {/* qty input */}
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder="Qty"
+                  value={qty}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onQtyChange(b.batchId, val);
+                  }}
+                  style={{
+                    width: 80, padding: "5px 8px", borderRadius: 4,
+                    border: "1px solid #ccc", fontSize: 13, textAlign: "right",
+                  }}
+                />
               </div>
-            </label>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   }
 
   renderBatchSection() {
-    const { entryType, availableBatches, selectedBatchId, existingBatchMode } = this.state;
+    const { entryType, availableBatches, batchQtyMap, excessQtyMap, existingBatchMode } = this.state;
     if (availableBatches.length === 0) return null;
+
+    const totalQty = Number(this.formData.quantity) || 0;
 
     if (entryType === "LOST_DAMAGED") {
       return (
         <div style={{ marginTop: 12 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: "#666",
-              fontWeight: 600,
-              marginBottom: 8,
-              textTransform: "uppercase",
-              letterSpacing: "0.4px",
-            }}
-          >
-            Which batch did the loss come from?
+          <div style={{
+            fontSize: 12, color: "#666", fontWeight: 600, marginBottom: 8,
+            textTransform: "uppercase", letterSpacing: "0.4px",
+          }}>
+            Distribute loss across batches
           </div>
-          {this.renderBatchCards({
-            selectedId: selectedBatchId,
-            radioName: "lostBatch",
-            onSelect: (id) => {
-              this.formData.batchId = id;
-              this.setState({ selectedBatchId: id });
+          {this.renderBatchAllocCards({
+            batches: availableBatches,
+            qtyMap: batchQtyMap,
+            totalQty,
+            onQtyChange: (batchId, val) => {
+              this.setState((prev) => ({
+                batchQtyMap: { ...prev.batchQtyMap, [batchId]: val },
+              }));
             },
           })}
         </div>
@@ -216,47 +287,29 @@ class Add extends AddForm {
     if (entryType === "EXCESS_FOUND") {
       return (
         <div style={{ marginTop: 12 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: "#666",
-              fontWeight: 600,
-              marginBottom: 8,
-              textTransform: "uppercase",
-              letterSpacing: "0.4px",
-            }}
-          >
+          <div style={{
+            fontSize: 12, color: "#666", fontWeight: 600, marginBottom: 8,
+            textTransform: "uppercase", letterSpacing: "0.4px",
+          }}>
             Batch Details
           </div>
 
-          {/* Toggle cards */}
+          {/* Toggle: add to existing vs create new */}
           <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
             {[
-              {
-                value: true,
-                title: "Add to existing batch",
-                desc: "Select a batch already in this warehouse",
-              },
-              {
-                value: false,
-                title: "Create new batch",
-                desc: "Record this stock as a brand-new batch",
-              },
+              { value: true,  title: "Add to existing batch",  desc: "Select a batch already in this warehouse" },
+              { value: false, title: "Create new batch",       desc: "Record this stock as a brand-new batch" },
             ].map(({ value, title, desc }) => {
               const active = existingBatchMode === value;
               return (
                 <label
                   key={String(value)}
                   style={{
-                    flex: 1,
-                    display: "flex",
-                    gap: 10,
+                    flex: 1, display: "flex", gap: 10,
                     padding: "10px 14px",
                     border: active ? "2px solid #1976d2" : "1px solid #ccc",
-                    borderRadius: 6,
-                    background: active ? "#e3f2fd" : "#fff",
-                    cursor: "pointer",
-                    userSelect: "none",
+                    borderRadius: 6, background: active ? "#e3f2fd" : "#fff",
+                    cursor: "pointer", userSelect: "none",
                   }}
                 >
                   <input
@@ -265,13 +318,11 @@ class Add extends AddForm {
                     checked={active}
                     onChange={() => {
                       this.formData.existingBatchId = null;
+                      this.formData.excessBatchEntries = null;
                       this.formData.brand = null;
                       this.formData.lotNumber = null;
                       this.formData.expiryDate = null;
-                      this.setState({
-                        existingBatchMode: value,
-                        selectedBatchId: null,
-                      });
+                      this.setState({ existingBatchMode: value, excessQtyMap: {} });
                     }}
                     style={{ marginTop: 3, flexShrink: 0 }}
                   />
@@ -285,12 +336,14 @@ class Add extends AddForm {
           </div>
 
           {existingBatchMode ? (
-            this.renderBatchCards({
-              selectedId: selectedBatchId,
-              radioName: "excessExistingBatch",
-              onSelect: (id) => {
-                this.formData.existingBatchId = id;
-                this.setState({ selectedBatchId: id });
+            this.renderBatchAllocCards({
+              batches: availableBatches,
+              qtyMap: excessQtyMap,
+              totalQty,
+              onQtyChange: (batchId, val) => {
+                this.setState((prev) => ({
+                  excessQtyMap: { ...prev.excessQtyMap, [batchId]: val },
+                }));
               },
             })
           ) : (
@@ -337,14 +390,22 @@ class Add extends AddForm {
                 row
                 value={this.state.entryType}
                 onChange={(e) => {
-                  this.formData.entryType = e.target.value;
+                  const newType = e.target.value;
+                  this.formData.entryType = newType;
                   this.formData.batchId = null;
+                  this.formData.batchEntries = null;
                   this.formData.existingBatchId = null;
+                  this.formData.excessBatchEntries = null;
                   this.formData.brand = null;
                   this.formData.lotNumber = null;
                   this.formData.expiryDate = null;
                   this.setState(
-                    { entryType: e.target.value, selectedBatchId: null, existingBatchMode: false },
+                    {
+                      entryType: newType,
+                      existingBatchMode: false,
+                      batchQtyMap: {},
+                      excessQtyMap: {},
+                    },
                     () => this.getCurrentStock()
                   );
                 }}
@@ -441,7 +502,7 @@ class Add extends AddForm {
           {this.renderBatchSection()}
 
           {/* Additional Comments */}
-          <div className="flex">
+          <div className="flex" style={{ marginTop: 16 }}>
             {this.renderTextArea({
               fieldname: "Additional Comments",
               placeholder: "Additional Comments",

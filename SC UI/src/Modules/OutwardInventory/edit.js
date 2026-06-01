@@ -93,79 +93,93 @@ class Edit extends EditForm {
     const currentProductId = this.state.noproduct?.[key]?.productId;
     const selectedProducts = Object.keys(this.state.noproduct).map(index => this?.state?.noproduct?.[index]?.productId);
     const remainingProducts = (this.props.dropdowns?.product??[]).filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
-    return (
-      <div className="flex" key={key}>
-        {this.renderAutoComplete({
-          fieldname: "productId",
-          placeholder: messages.common.inventory,
-          options: remainingProducts,
-          disableClearable: true,
-          required: true,
-          defaultKey: "productId",
-          data: this.state.noproduct[key],
-          skipAdd: true,
-          disabled: true,
-          getOption: (option) => {
-            return option["name"];
-          },
-          onChange: (e, value) => {
-            const p = this.state.noproduct;
-            p[key].productId = value.id || "";
-            if (value) {
-              this.getCurrentStock(key);
-              this.getBoqQuantity(key);
-            }
-          },
-        })}
-        {this.renderTextField({
-          fieldname: "measurementUnit",
-          placeholder: "Measurement Unit",
-          disabled: true,
-          value: this.props.units[this.state.noproduct[key].productId],
-        })}
-        {this.renderTextField({
-          fieldname: "quantity",
-          placeholder: "Quantity",
-          type: "number",
-          required: true,
-          defaultKey: "quantity",
-          data: this.state.noproduct[key],
-          skipAdd: true,
-          validation: "nonegative",
-          onChange: (value) => {
-            const p = this.state.noproduct;
-            p[key].quantity = value;
-            this.getCurrentStock(key);
-          },
-        })}
+    const productId = this.state.noproduct[key].productId;
+    const unit = this.props.units[productId] || '—';
+    const closingStock = productId ? (this.state.currentStock[productId] ?? '—') : '—';
+    const boqRemaining = productId ? (this.state.boqQuantity[productId] ?? '—') : '—';
 
-        {this.renderTextField({
-          fieldname: "ClosingStock",
-          placeholder: "Closing Stock",
-          type: "number",
-          disabled: true,
-          data: this.state.noproduct[key],
-          value: this.state.currentStock[this.state.noproduct[key].productId],
-        })}
-        {this.renderTextField({
-          fieldname: "boq",
-          placeholder: "BOQ Remaining",
-          disabled: true,
-          data: this.state.noproduct[key],
-          value: this.state.boqQuantity[this.state.noproduct[key].productId],
-        })}
-        <IconButton
-          aria-label="back"
-          onClick={() => {
-            const p = this.state.noproduct;
-            delete p[key];
-            this.setState({ noproduct: { ...p } });
-          }}
-          disabled={true}
-          className="back-icon"
-        >
-          <DeleteIcon />
-        </IconButton>
+    return (
+      <div key={key} style={{
+        border: '1px solid #dce3ec', borderRadius: '8px', marginBottom: '12px',
+        overflow: 'hidden', backgroundColor: '#fff',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      }}>
+        {/* Card header */}
+        <div style={{
+          background: '#f5f7fa', borderBottom: '1px solid #dce3ec',
+          padding: '4px 8px 4px 14px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          minHeight: '32px',
+        }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Product
+          </span>
+          {/* Delete disabled in edit mode */}
+          <IconButton
+            size="small"
+            disabled
+            style={{ color: '#ccc' }}
+            title="Products cannot be removed in edit mode"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </div>
+
+        <div style={{ padding: '10px 12px 4px' }}>
+          {/* Row 1: Product (disabled) + Quantity */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <div style={{ flex: 3 }}>
+              {this.renderAutoComplete({
+                fieldname: "productId",
+                placeholder: messages.common.inventory,
+                options: remainingProducts,
+                disableClearable: true,
+                required: true,
+                defaultKey: "productId",
+                data: this.state.noproduct[key],
+                skipAdd: true,
+                disabled: true,
+                getOption: (option) => option["name"],
+                onChange: (e, value) => {
+                  const p = this.state.noproduct;
+                  p[key].productId = value.id || "";
+                  if (value) {
+                    this.getCurrentStock(key);
+                    this.getBoqQuantity(key);
+                  }
+                },
+              })}
+            </div>
+            <div style={{ flex: 1 }}>
+              {this.renderTextField({
+                fieldname: "quantity",
+                placeholder: "Quantity",
+                type: "number",
+                required: true,
+                defaultKey: "quantity",
+                data: this.state.noproduct[key],
+                skipAdd: true,
+                validation: "nonegative",
+                onChange: (value) => {
+                  const p = this.state.noproduct;
+                  p[key].quantity = value;
+                  this.getCurrentStock(key);
+                },
+              })}
+            </div>
+          </div>
+
+          {/* Row 2: read-only info strip */}
+          <div style={{
+            display: 'flex', gap: 24, padding: '5px 10px',
+            background: '#f5f7fa', borderRadius: 4, fontSize: 12,
+            color: '#555', marginBottom: 6, marginTop: 2,
+          }}>
+            <span><span style={{ color: '#999' }}>Unit:</span> <strong>{unit}</strong></span>
+            <span><span style={{ color: '#999' }}>Closing Stock:</span> <strong>{closingStock}</strong></span>
+            <span><span style={{ color: '#999' }}>BOQ Remaining:</span> <strong>{boqRemaining}</strong></span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -378,7 +392,7 @@ class Edit extends EditForm {
                 placeholder: "Purpose",
               })}
             </div>
-            <div class="flex">
+            <div className="flex">
               {this.renderTextArea({
                 defaultKey: "additionalInfo",
                 fieldname: "additionalInfo",
