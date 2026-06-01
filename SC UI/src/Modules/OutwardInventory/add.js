@@ -38,6 +38,8 @@ class Add extends AddForm {
     allProductsStockMap: {},
     selectedWarehouseId: null,
     boqViolationDialog: { open: false, violations: [] },
+    selectedStructureTypeId: "ALL",
+    filteredStructures: [],
   };
   key = 1;
   componentDidMount() {
@@ -191,7 +193,8 @@ class Add extends AddForm {
             }
             this.getCurrentStock(key);
             const boqRemaining = this.state.boqQuantity[productId];
-            if (boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
+            const boqEnforcementBlock = this.props.dropdowns.boqEnforcementBlock !== false;
+            if (boqEnforcementBlock && boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
               const inWastage = Number(boqRemaining) < 0;
               this.props.enqueueSnackbar(
                 inWastage
@@ -390,14 +393,36 @@ class Add extends AddForm {
               },
             })}
             {this.renderAutoComplete({
+              fieldname: "structureTypeId",
+              placeholder: "Structure Type",
+              options: [
+                { id: "ALL", name: "All Structures" },
+                ...(this.props.dropdowns.buildingtype || []),
+              ],
+              disableClearable: true,
+              required: false,
+              skipAdd: true,
+              getOption: (option) => option["name"],
+              getDefaultValue: () => ({ id: "ALL", name: "All Structures" }),
+              onChange: (e, value) => {
+                const typeId = value ? value.id : "ALL";
+                const allWithType = this.props.dropdowns.usagelocationWithType || [];
+                const filtered = typeId === "ALL"
+                  ? allWithType
+                  : allWithType.filter((l) => l.typeId === typeId);
+                this.formData.usageLocationId = null;
+                this.setState({ selectedStructureTypeId: typeId, filteredStructures: filtered });
+              },
+            })}
+            {this.renderAutoComplete({
               fieldname: "usageLocationId",
               placeholder: messages.common.location,
-              options: this.props.dropdowns.usagelocation,
+              options: this.state.selectedStructureTypeId === "ALL"
+                ? (this.props.dropdowns.usagelocationWithType || this.props.dropdowns.usagelocation || [])
+                : this.state.filteredStructures,
               disableClearable: true,
               required: true,
-              getOption: (option) => {
-                return option["name"];
-              },
+              getOption: (option) => option["name"],
               onChange: (e, value) => {
                 if (value) {
                   this.formData.usageLocationId = value.id;

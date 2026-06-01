@@ -12,9 +12,11 @@ import com.ec.application.data.StaleBucketConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.NameAndProjectionDataForDropDown;
+import com.ec.application.repository.BuildingTypeRepo;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
@@ -60,6 +62,12 @@ public class PopulateDropdownService {
     UsageAreaRepo usageAreaRepo;
 
     @Autowired
+    BuildingTypeRepo buildingTypeRepo;
+
+    @Value("${boq.enforcement.block:true}")
+    private boolean boqEnforcementBlock;
+
+    @Autowired
     SchemaConfig schemaConfig;
 
     @Autowired
@@ -91,6 +99,9 @@ public class PopulateDropdownService {
                 morDropdownDataList.setContractor(contractorRepo.findIdAndNames());
                 morDropdownDataList.setWarehouse(warehouseRepo.findIdAndNames());
                 morDropdownDataList.setUsageArea(usageAreaRepo.findIdAndNames());
+                morDropdownDataList.setBuildingtype(buildingTypeRepo.findIdAndNames());
+                morDropdownDataList.setUsagelocationWithType(locationRepo.findIdNamesAndTypes());
+                morDropdownDataList.setBoqEnforcementBlock(boqEnforcementBlock);
                 break;
             case "stock":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());

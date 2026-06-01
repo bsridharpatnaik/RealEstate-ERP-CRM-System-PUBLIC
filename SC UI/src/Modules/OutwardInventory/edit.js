@@ -30,6 +30,8 @@ class Edit extends EditForm {
     currentStock: {},
     boqQuantity: {},
     boqViolationDialog: { open: false, violations: [] },
+    selectedStructureTypeId: "ALL",
+    filteredStructures: [],
   };
   key = 1;
 
@@ -57,6 +59,17 @@ class Edit extends EditForm {
       this.formData.date = data.date;
       this.formData.fileInformations = data.fileInformations;
 
+      // Derive structure type from the selected location
+      const allWithType = this.props.dropdowns?.usagelocationWithType || [];
+      const matchedLocation = allWithType.find(
+        (l) => l.id === data.usageLocation.locationId
+      );
+      const structureTypeId = matchedLocation && matchedLocation.typeId ? matchedLocation.typeId : "ALL";
+      const filteredStructures = structureTypeId === "ALL"
+        ? allWithType
+        : allWithType.filter((l) => l.typeId === structureTypeId);
+      this.formData.structureTypeId = structureTypeId;
+
       const currentStock = {};
       for (let i = 0; i < data.inwardOutwardList.length; i++) {
         const item = data.inwardOutwardList[i];
@@ -73,6 +86,8 @@ class Edit extends EditForm {
         isLoaded: true,
         noproduct: { ...p },
         currentStock: currentStock,
+        selectedStructureTypeId: structureTypeId,
+        filteredStructures: filteredStructures,
       });
     }
   }
@@ -314,15 +329,44 @@ class Edit extends EditForm {
                 },
               })}
               {this.renderAutoComplete({
+                fieldname: "structureTypeId",
+                placeholder: "Structure Type",
+                options: [
+                  { id: "ALL", name: "All Structures" },
+                  ...(this.props.dropdowns.buildingtype || []),
+                ],
+                disableClearable: true,
+                required: false,
+                disabled: !this.isAdmin,
+                skipAdd: true,
+                getOption: (option) => option["name"],
+                getDefaultValue: () => {
+                  const typeId = this.state.selectedStructureTypeId;
+                  if (!typeId || typeId === "ALL") return { id: "ALL", name: "All Structures" };
+                  const allTypes = this.props.dropdowns.buildingtype || [];
+                  return allTypes.find((t) => t.id === typeId) || { id: "ALL", name: "All Structures" };
+                },
+                onChange: (e, value) => {
+                  const typeId = value ? value.id : "ALL";
+                  const allWithType = this.props.dropdowns.usagelocationWithType || [];
+                  const filtered = typeId === "ALL"
+                    ? allWithType
+                    : allWithType.filter((l) => l.typeId === typeId);
+                  this.formData.usageLocationId = null;
+                  this.formData.structureTypeId = typeId;
+                  this.setState({ selectedStructureTypeId: typeId, filteredStructures: filtered });
+                },
+              })}
+              {this.renderAutoComplete({
                 fieldname: "usageLocationId",
                 placeholder: messages.common.location,
-                options: this.props.dropdowns.usagelocation,
+                options: this.state.selectedStructureTypeId === "ALL"
+                  ? (this.props.dropdowns.usagelocationWithType || this.props.dropdowns.usagelocation || [])
+                  : this.state.filteredStructures,
                 disableClearable: true,
                 required: true,
                 disabled: !this.isAdmin,
-                getOption: (option) => {
-                  return option["name"];
-                },
+                getOption: (option) => option["name"],
               })}
               {this.renderAutoComplete({
                 fieldname: "usageAreaId",
