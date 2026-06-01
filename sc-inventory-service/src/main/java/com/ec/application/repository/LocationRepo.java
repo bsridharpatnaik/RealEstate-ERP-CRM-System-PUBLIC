@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.LocationWithTypeProjection;
 import com.ec.application.model.UsageLocation;
 
 @Repository
@@ -35,6 +36,9 @@ public interface LocationRepo extends BaseRepository<UsageLocation, Long>
 
 	@Query(value = "SELECT locationName from UsageLocation m where locationName like %:name% order by locationName")
 	List<String> getNamesForTypeAhead(@Param("name") String name);
+
+	@Query(value = "SELECT l.locationId as id, l.locationName as name, l.buildingType.typeId as typeId, l.buildingType.typeName as typeName FROM UsageLocation l ORDER BY l.locationName")
+	List<LocationWithTypeProjection> findIdNamesAndTypes();
 
 	@Query(value = "SELECT count(m) from UsageLocation m where m.buildingType.typeId=:typeId")
 	int getBuildingTypeUsageCount(@Param("typeId") Long typeId);

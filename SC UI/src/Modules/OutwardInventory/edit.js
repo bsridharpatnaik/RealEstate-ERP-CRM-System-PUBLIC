@@ -30,6 +30,8 @@ class Edit extends EditForm {
     currentStock: {},
     boqQuantity: {},
     boqViolationDialog: { open: false, violations: [] },
+    selectedStructureTypeId: null,
+    filteredStructures: [],
   };
   key = 1;
 
@@ -57,6 +59,17 @@ class Edit extends EditForm {
       this.formData.date = data.date;
       this.formData.fileInformations = data.fileInformations;
 
+      // Derive structure type from the selected location
+      const allWithType = this.props.dropdowns?.usagelocationWithType || [];
+      const matchedLocation = allWithType.find(
+        (l) => l.id === data.usageLocation.locationId
+      );
+      const structureTypeId = matchedLocation ? matchedLocation.typeId : null;
+      const filteredStructures = structureTypeId
+        ? allWithType.filter((l) => l.typeId === structureTypeId)
+        : allWithType;
+      this.formData.structureTypeId = structureTypeId;
+
       const currentStock = {};
       for (let i = 0; i < data.inwardOutwardList.length; i++) {
         const item = data.inwardOutwardList[i];
@@ -73,6 +86,8 @@ class Edit extends EditForm {
         isLoaded: true,
         noproduct: { ...p },
         currentStock: currentStock,
+        selectedStructureTypeId: structureTypeId,
+        filteredStructures: filteredStructures,
       });
     }
   }
@@ -314,15 +329,35 @@ class Edit extends EditForm {
                 },
               })}
               {this.renderAutoComplete({
+                fieldname: "structureTypeId",
+                placeholder: "Structure Type",
+                options: this.props.dropdowns.buildingtype || [],
+                disableClearable: false,
+                required: false,
+                disabled: !this.isAdmin,
+                skipAdd: true,
+                getOption: (option) => option["name"],
+                onChange: (e, value) => {
+                  const typeId = value ? value.id : null;
+                  const allWithType = this.props.dropdowns.usagelocationWithType || [];
+                  const filtered = typeId
+                    ? allWithType.filter((l) => l.typeId === typeId)
+                    : allWithType;
+                  this.formData.usageLocationId = null;
+                  this.formData.structureTypeId = typeId;
+                  this.setState({ selectedStructureTypeId: typeId, filteredStructures: filtered });
+                },
+              })}
+              {this.renderAutoComplete({
                 fieldname: "usageLocationId",
                 placeholder: messages.common.location,
-                options: this.props.dropdowns.usagelocation,
+                options: this.state.selectedStructureTypeId
+                  ? this.state.filteredStructures
+                  : (this.props.dropdowns.usagelocationWithType || this.props.dropdowns.usagelocation || []),
                 disableClearable: true,
                 required: true,
                 disabled: !this.isAdmin,
-                getOption: (option) => {
-                  return option["name"];
-                },
+                getOption: (option) => option["name"],
               })}
               {this.renderAutoComplete({
                 fieldname: "usageAreaId",

@@ -1004,9 +1004,16 @@ renderCurrentStockField(key) {
       return;
     }
 
-    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    const validTypes = [
+      "image/jpeg", "image/jpg", "image/png",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ];
     if (!validTypes.includes(file.type)) {
-      this.props.enqueueSnackbar("Only JPG and PNG files are allowed", {
+      this.props.enqueueSnackbar("Only JPG, PNG, PDF, Word, and Excel files are allowed", {
         variant: "error",
       });
       this.setState({ selectedFileName: "", selectedFilePreview: null });
@@ -1016,7 +1023,8 @@ renderCurrentStockField(key) {
       return;
     }
 
-    const previewUrl = URL.createObjectURL(file);
+    const isImage = file.type.startsWith("image/");
+    const previewUrl = isImage ? URL.createObjectURL(file) : null;
     this.setState({
       selectedFileName: file.name,
       selectedFilePreview: previewUrl
@@ -1109,7 +1117,7 @@ renderCurrentStockField(key) {
                 ref={this.fileInputRef}
                 type="file"
                 id="indent-file-upload"
-                accept="image/jpeg,image/jpg,image/png"
+                accept="image/jpeg,image/jpg,image/png,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 onChange={(e) => this.handleFileSelect(e)}
                 style={{ display: "none" }}
               />
@@ -1171,7 +1179,7 @@ renderCurrentStockField(key) {
               </div>
             </div>
             <div className="upload-hint">
-              Upload a file here, Max 2 MB allow (JPG, PNG only)
+              Upload a file here, Max 2 MB (JPG, PNG, PDF, Word, Excel)
             </div>
           </div>
         </div>
