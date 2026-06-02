@@ -39,6 +39,7 @@ import com.ec.application.repository.UsageAreaRepo;
 import com.ec.application.repository.WarehouseRepo;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.OutwardInventorySpecification;
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 
 @Service
 @Transactional
@@ -100,7 +101,15 @@ public class OutwardInventoryService {
     @Autowired
     OutwardBatchConsumptionRepository outwardBatchConsumptionRepository;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
     Logger log = LoggerFactory.getLogger(OutwardInventoryService.class);
+
+    private String resolveCurrentUser() {
+        try { return userDetailService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
+    }
 
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
@@ -114,6 +123,13 @@ public class OutwardInventoryService {
         updateStockForCreateOutwardInventory(outwardInventory);
         outwardInventoryRepo.save(outwardInventory);
         consumeBatchesForOutward(outwardInventory, oiData);
+        String createUser = resolveCurrentUser();
+        List<Map<String, Object>> createItems = new ArrayList<>();
+        for (InwardOutwardList io : outwardInventory.getInwardOutwardList())
+            createItems.add(ActivityLogDescription.item(io.getProduct().getProductName(), io.getQuantity()));
+        activityLogService.record("CREATED", "OUTWARD", String.valueOf(outwardInventory.getOutwardid()),
+                ActivityLogDescription.withItems("Outward " + outwardInventory.getOutwardid() + " created by " + createUser, createItems),
+                createUser);
         return outwardInventory;
     }
 
@@ -169,6 +185,20 @@ public class OutwardInventoryService {
                 addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
                         productWithQuantity.getRemarks());
         }
+
+        String actionUser = resolveCurrentUser();
+        String actionType = type.equals("return") ? "RETURNED" : "REJECTED";
+        List<Map<String, Object>> actionItems = rd.getProductWithQuantities().stream()
+                .map(pwq -> {
+                    String name = productRepo.findById(pwq.getProductId())
+                            .map(p -> p.getProductName()).orElse("ID:" + pwq.getProductId());
+                    return ActivityLogDescription.item(name, pwq.getQuantity());
+                })
+                .collect(Collectors.toList());
+        activityLogService.record(actionType, "OUTWARD", String.valueOf(outwardId),
+                ActivityLogDescription.withItems("Outward " + outwardId + " " + type + " by " + actionUser, actionItems),
+                actionUser);
+
         return outwardInventoryRepo.findById(outwardId).get();
     }
 
@@ -346,6 +376,26 @@ public class OutwardInventoryService {
         removeOrphans(oldOutwardInventory);
         outwardInventoryRepo.save(outwardInventory);
         consumeBatchesForOutward(outwardInventory, iiData);
+        String updateUser = resolveCurrentUser();
+        Map<Long, Double> savedOldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
+                .collect(Collectors.toMap(io -> io.getProduct().getProductId(), InwardOutwardList::getQuantity, (a, b) -> a));
+        List<Map<String, Object>> changedItems = ActivityLogDescription.list();
+        for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
+            Double oldQty = savedOldQtyMap.get(io.getProduct().getProductId());
+            if (oldQty == null || Double.compare(oldQty, io.getQuantity()) != 0) {
+                String productName = io.getProduct() != null ? io.getProduct().getProductName() : String.valueOf(io.getProduct().getProductId());
+                changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty != null ? oldQty : 0, io.getQuantity()));
+            }
+        }
+        if (!changedItems.isEmpty()) {
+            activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
+                    ActivityLogDescription.withItems("Outward " + id + " updated by " + updateUser, changedItems),
+                    updateUser);
+        } else {
+            activityLogService.record("UPDATED", "OUTWARD", String.valueOf(id),
+                    ActivityLogDescription.of("Outward " + id + " updated by " + updateUser),
+                    updateUser);
+        }
         return outwardInventory;
 
     }
@@ -699,6 +749,10 @@ public class OutwardInventoryService {
         updateStockBeforeDelete(outwardInventory);
         removeOrphans(outwardInventory);
         outwardInventoryRepo.softDeleteById(id);
+        String deleteUser = resolveCurrentUser();
+        activityLogService.record("DELETED", "OUTWARD", String.valueOf(id),
+                ActivityLogDescription.of("Outward " + id + " deleted by " + deleteUser),
+                deleteUser);
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -539,6 +539,7 @@ content={() => this.detailTabRef.current}
                         <TableCell>
                           {messages.common.returnedQauntity}
                         </TableCell>
+                        <TableCell>Remarks</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -549,6 +550,7 @@ content={() => this.detailTabRef.current}
                           <TableCell>{row.product.measurementUnit}</TableCell>
                           <TableCell>{row.oldQuantity}</TableCell>
                           <TableCell>{row.rejectQuantity}</TableCell>
+                          <TableCell>{row.remarks || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

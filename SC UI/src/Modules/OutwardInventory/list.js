@@ -15,6 +15,7 @@ import Button from "./../../Shared/Button";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
 import { Slide } from "@material-ui/core";
 import Details from "./details";
+import DetailsPopup from "./../../Shared/DetailsPopup";
 import Total from "./../../Shared/TotalSidePanel";
 import { API } from '../../axios';
 
@@ -175,7 +176,7 @@ class List extends ListCommon {
     return (
       <div
         className={
-          this.state.showDetails || this.state.showTotal ? "split" : ""
+          this.state.showTotal ? "split" : ""
         }
       >
         <div className="list-section">
@@ -253,24 +254,22 @@ class List extends ListCommon {
           )}
           {this.renderPagination()}
         </div>
-        <Slide
-          direction="right"
-          in={this.state.showDetails}
-          mountOnEnter
-          unmountOnExit
-          timeout={{ exit: 0 }}
+        <DetailsPopup
+          open={this.state.showDetails}
+          onClose={() => this.setState({ showDetails: false, key: this.state.key + 1 })}
         >
-          <Details
-            
-            data={this.state.selectedData}
-            edit={this.props.edit}
-            delete={(row) => this.delete(row)}
-            goToDetails={() => this.goToDetails()}
-            close={() =>
-              this.setState({ showDetails: false, key: this.state.key + 1 })
-            }
-          />
-        </Slide>
+          {this.state.showDetails && (
+            <Details
+              data={this.state.selectedData}
+              edit={this.props.edit}
+              delete={(row) => this.delete(row)}
+              goToDetails={() => this.goToDetails()}
+              close={() =>
+                this.setState({ showDetails: false, key: this.state.key + 1 })
+              }
+            />
+          )}
+        </DetailsPopup>
         <Slide
           direction="right"
           in={this.state.showTotal}

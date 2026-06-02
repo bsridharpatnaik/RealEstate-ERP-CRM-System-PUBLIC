@@ -356,6 +356,11 @@ public class InventoryTransferService {
             return transferred;
         }
 
+        // Not batch-tracked — no batch deduction needed
+        if (product == null || !product.isBatchTracked()) {
+            return Collections.emptyList();
+        }
+
         // Default: FEFO for BATCH_WITH_EXPIRY, FIFO by receivedDate for BATCH_ONLY
         boolean useExpiry = product != null && product.requiresExpiry();
         List<InventoryBatch> orderedBatches = useExpiry

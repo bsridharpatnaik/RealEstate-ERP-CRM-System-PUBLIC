@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.InwardInventorySpecification;
 import org.springframework.context.ApplicationEventPublisher;
@@ -93,7 +94,18 @@ public class InwardInventoryService {
     @Autowired
     InventoryBatchRepository inventoryBatchRepository;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
+    @Autowired
+    UserDetailsService userDetailsService;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
+    }
 
     public List<PoDropdownItem> getPendingPoDropdown() {
         String tenant = ThreadLocalStorage.getTenantName();
@@ -205,6 +217,14 @@ public class InwardInventoryService {
 
         IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, inwardInventory.getPurchaseOrderNo(), deltas);
         applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "create"));
+        String createPoUser = resolveCurrentUser();
+        List<Map<String, Object>> createPoItems = inwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(io.getProduct().getProductName(), io.getQuantity()))
+                .collect(Collectors.toList());
+        activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
+                ActivityLogDescription.withItemsAndType("Inward " + inwardInventory.getInwardId()
+                        + " created from PO " + iiData.getPoNumber() + " by " + createPoUser, "From PO", createPoItems),
+                createPoUser);
         return inwardInventory;
     }
 
@@ -239,6 +259,13 @@ public class InwardInventoryService {
             inward.setDate(data.getInwardDate());
         }
 
+        boolean noChallanUpd = data.getChallanNo() == null || data.getChallanNo().trim().isEmpty();
+        boolean noBillUpd = data.getBillNo() == null || data.getBillNo().trim().isEmpty();
+        if (noChallanUpd && noBillUpd) {
+            if (data.getNoChallanBillReason() == null || data.getNoChallanBillReason().trim().isEmpty())
+                throw new Exception("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
+
         inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());
         inward.setVehicleNo(data.getVehicleNo());
         inward.setSupplierSlipNo(data.getSupplierSlipNo());
@@ -249,6 +276,7 @@ public class InwardInventoryService {
         inward.setBillNo(data.getBillNo());
         inward.setChallanDate(data.getChallanDate());
         inward.setBillDate(data.getBillDate());
+        inward.setNoChallanBillReason(data.getNoChallanBillReason());
 
         if (data.getFileInformations() != null) {
             inward.setFileInformations(ReusableMethods.convertFilesListToSet(data.getFileInformations()));
@@ -370,6 +398,24 @@ public class InwardInventoryService {
                 applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "update"));
             }
         }
+        String updateUser = resolveCurrentUser();
+        List<Map<String, Object>> changedItems = ActivityLogDescription.list();
+        for (InwardOutwardList io : inward.getInwardOutwardList()) {
+            Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+            if (oldQty != null && Double.compare(oldQty, io.getQuantity()) != 0) {
+                String productName = io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode();
+                changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty, io.getQuantity()));
+            }
+        }
+        if (!changedItems.isEmpty()) {
+            activityLogService.record("UPDATED", "INWARD", String.valueOf(inward.getInwardId()),
+                    ActivityLogDescription.withItems("Inward " + inward.getInwardId() + " updated by " + updateUser, changedItems),
+                    updateUser);
+        } else {
+            activityLogService.record("UPDATED", "INWARD", String.valueOf(inward.getInwardId()),
+                    ActivityLogDescription.of("Inward " + inward.getInwardId() + " updated by " + updateUser),
+                    updateUser);
+        }
         return inward;
     }
 
@@ -389,6 +435,7 @@ public class InwardInventoryService {
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setNoChallanBillReason(iiData.getNoChallanBillReason());
         inwardInventory.setInwardOutwardList(fetchInwardOutwardListFromPOLine(iiData.getLineItems(), pendingItemsForInward));
         inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         inwardInventory.setCreatedFromPO(true);
@@ -477,6 +524,13 @@ public class InwardInventoryService {
 
         if (duplicateProductIdCount > 0)
             throw new IllegalArgumentException("Inventory List should be Unique. Same line item added multiple times.");
+
+        boolean noChallanPO = iiData.getChallanNo() == null || iiData.getChallanNo().trim().isEmpty();
+        boolean noBillPO = iiData.getBillNo() == null || iiData.getBillNo().trim().isEmpty();
+        if (noChallanPO && noBillPO) {
+            if (iiData.getNoChallanBillReason() == null || iiData.getNoChallanBillReason().trim().isEmpty())
+                throw new IllegalArgumentException("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -533,6 +587,17 @@ public class InwardInventoryService {
             }
         }
         createBatchesForInward(inwardInventory, directSplitsMap);
+        String directCreateUser = resolveCurrentUser();
+        List<Map<String, Object>> directItems = inwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(
+                        io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode(),
+                        io.getQuantity()))
+                .collect(Collectors.toList());
+        String directInwardType = Boolean.TRUE.equals(iiData.getIsSampleInward()) ? "Sample Inward" : "Direct Inward";
+        activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
+                ActivityLogDescription.withItemsAndType("Inward " + inwardInventory.getInwardId()
+                        + " created by " + directCreateUser, directInwardType, directItems),
+                directCreateUser);
         return inwardInventory;
     }
 
@@ -577,6 +642,18 @@ public class InwardInventoryService {
                 addReturnForInward(inwardId, pwq.getProductId(), pwq.getQuantity(), pwq.getRemarks(), pwq.getOverrideBatches());
             }
         }
+
+        String rejectUser = resolveCurrentUser();
+        List<Map<String, Object>> rejectItems = rd.getProductWithQuantities().stream()
+                .map(pwq -> {
+                    String name = productRepo.findById(pwq.getProductId())
+                            .map(p -> p.getProductName()).orElse("ID:" + pwq.getProductId());
+                    return ActivityLogDescription.item(name, pwq.getQuantity());
+                })
+                .collect(Collectors.toList());
+        activityLogService.record("REJECTED", "INWARD", String.valueOf(inwardId),
+                ActivityLogDescription.withItems("Inward " + inwardId + " rejected by " + rejectUser, rejectItems),
+                rejectUser);
 
         return inwardInventoryRepo.findById(inwardId).get();
     }
@@ -752,6 +829,7 @@ public class InwardInventoryService {
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setNoChallanBillReason(iiData.getNoChallanBillReason());
         inwardInventory.setIsSampleInward(
                 iiData.getIsSampleInward() != null && iiData.getIsSampleInward()
         );
@@ -835,6 +913,12 @@ public class InwardInventoryService {
         if (duplicateProductIdCount > 0)
             throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
 
+        boolean noChallan = iiData.getChallanNo() == null || iiData.getChallanNo().trim().isEmpty();
+        boolean noBill = iiData.getBillNo() == null || iiData.getBillNo().trim().isEmpty();
+        if (noChallan && noBill) {
+            if (iiData.getNoChallanBillReason() == null || iiData.getNoChallanBillReason().trim().isEmpty())
+                throw new Exception("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
     }
 
     public List<ProductGroupedDAO> getTotalsForInward(FilterDataList filterDataList) throws Exception {
@@ -937,6 +1021,10 @@ public class InwardInventoryService {
         }
         zeroBatchesForDeletedInward(id);
         inwardInventoryRepo.softDeleteById(id);
+        String deleteUser = resolveCurrentUser();
+        activityLogService.record("DELETED", "INWARD", String.valueOf(id),
+                ActivityLogDescription.of("Inward " + id + " deleted by " + deleteUser),
+                deleteUser);
     }
 
     @Transactional(rollbackFor = Exception.class)

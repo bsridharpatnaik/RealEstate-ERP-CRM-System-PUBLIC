@@ -479,3 +479,113 @@ Same reverse-join pattern used in split form (`splitEntries` map before POST).
 - Username: `root`
 - Password: `REDACTED`
 - Connect: `mysql -h localhost -u root -pREDACTED`
+
+---
+
+## Batch Tracking — Additional Learnings (Session 2)
+
+### `inwardId` Sentinel Values on `InventoryBatch`
+
+Three distinct values — do not confuse:
+
+| Value | Meaning |
+|---|---|
+| real inward ID (> 0) | Normal inward — batch created via inward save |
+| `-1L` | Stock split — batch created via "Split Existing Stock" on Stock/Batches tab |
+| `0L` | Inventory transfer — batch created at destination during transfer |
+
+Transfer batches (`inwardId = 0`) have no FK link to a transferId. No way to query "which batches came from transfer X" without a schema change. Transfer details page shows header + items table only; batch metadata is visible in Stock → Batches tab.
+
+---
+
+### Activity Log — Batch-Specific Entity Types Added
+
+Two new entity types now logged (in `BatchTrackingService`):
+
+| entityType | action | trigger |
+|---|---|---|
+| `WRITE_OFF` | `CREATED` | `writeOffBatch()` — after `batchWriteOffRepository.save()` |
+| `STOCK_SPLIT` | `CREATED` | `splitExistingStock()` — after all split batches saved |
+
+Both wrapped in try-catch so a log failure never aborts the operation.
+
+`resolveCurrentUser()` pattern used in `writeOffBatch()` — username captured inside the method before the log call.
+
+For `STOCK_SPLIT`, user is resolved inline (try/catch) since no `@Autowired UserDetailsService` existed in `BatchTrackingService` at the time.
+
+---
+
+### Inward Edit — Batch Metadata Update (delta = 0 path)
+
+`InwardInventoryService.reconcileBatchesForEditedInward()` — modified `if (Math.abs(delta) < 0.001)` block:
+
+**Before:** always `continue` (skip) when qty unchanged.
+
+**After:** if `paq.getBatchSplits()` is non-null and non-empty, iterate splits by position index (split[0] → batch[0], etc.) and update `brand`, `lotNumber`, `expiryDate`. Only updates fields that are non-null in the split. Then `continue`.
+
+Matching is positional — no attempt to match by batch ID or metadata. Simple and safe for typical use (user edits the same batch list they received).
+
+---
+
+### Expiry Alert Notifications — Fix
+
+`AllNotificationService.getInventoryNotification()` previously had no handlers for `EXPIRY_ALERT_30`, `EXPIRY_ALERT_60`, `EXPIRY_EXPIRED`. Notifications were created by scheduled job but rendered as blank messages.
+
+Fixed by adding three `if` blocks after the `lostDamagedStockAdded` block. Also added guard: only add to `inventoryNormalizedNotifications` when `message` is non-empty — prevents unknown types from appearing as blank entries.
+
+Message formats:
+- `EXPIRY_ALERT_30` / `EXPIRY_ALERT_60`: `"Product X in Warehouse Y is expiring within N days. Qty remaining: Z."`
+- `EXPIRY_EXPIRED`: `"Product X in Warehouse Y has expired. Qty remaining: Z. Please write off expired stock."`
+
+---
+
+### Daily Stock Email — Expiry Sections
+
+Nightly stock report (`sendDailyStockEmailReport`, cron `0 0 21 * * *`) now includes two conditional expiry sections.
+
+**New files/methods:**
+
+| File | Change |
+|---|---|
+| `data/ExpiryAlertRow.java` | New DTO: `projectName`, `productName`, `warehouseName`, `brand`, `lotNumber`, `expiryDate` (String, formatted `dd-MM-yyyy`), `qtyRemaining`, `unit` |
+| `service/StockEmailReportService.java` | `collectExpiryRows(tenantDisplayName, from, to)` — calls `inventoryBatchRepository.findBatchesExpiringBetween(from, to)`, maps to `ExpiryAlertRow`, sorts by expiryDate then productName |
+| `scheduled/ScheduledTasks.java` | Builds two date windows (today→+30, +31→+60), collects expiry rows per tenant in same loop as stock data |
+| `ReusableClasses/EmailHelper.java` | `sendDailyStockReport` now takes two extra `List<ExpiryAlertRow>` params; adds to Freemarker model as `expiring30` and `expiring60` |
+| `controller/AutomaticEmailController.java` | Manual `/email/dailystockreport` trigger updated to match new signature |
+| `templates/email-daily-stock.ftl` | Two new `<#if expiring30?has_content>` / `<#if expiring60?has_content>` sections — red header for ≤30d, amber for 31–60d |
+
+**Key points:**
+- `InventoryBatch.expiryDate` is Java `Date` type — format with `SimpleDateFormat("dd-MM-yyyy")` before setting on DTO
+- Both sections only render when non-empty — no empty tables
+- Both sections are cross-project (Project column present)
+- Both the cron job and the manual trigger endpoint produce identical output
+
+---
+
+### Inventory Transfer — Details Page (new)
+
+`InventoryTransfer` had no details view. Added:
+
+**Backend:** `apiEndpoints.getInventoryTransferById(id)` → `GET /api/inventory/inventory-transfer/{id}` (endpoint already existed in backend).
+
+**Frontend:**
+
+| File | Change |
+|---|---|
+| `Modules/InventoryTransfer/details.js` | New component — fetches transfer by ID, shows header info + items table (product, code, unit, qty, source/dest closing stock) |
+| `Modules/InventoryTransfer/list.js` | Added `showDetails` / `selectedRow` state, `showDetail(row)` handler, `<Slide>` panel wrapping `<Details>` |
+| `SC UI/src/endpoints.js` | Added `getInventoryTransferById: (id) => \`/api/inventory/inventory-transfer/${id}\`` |
+
+Transfer list wrapping div class: `"split"` when details open, `"inventory-transfer-list-wrapper"` otherwise (same pattern as other list/detail pages).
+
+---
+
+### Inward Edit — Batch Modal Now Visible in Edit Mode
+
+Previously `add.js` hid batch split button in edit mode (`{!isEditMode && ...}`). Now shown in both create and edit mode for batch-tracked products.
+
+Button label: `"Set Batches *"` (create) / `"Edit Batches"` (edit, no batches set) / `"View / Edit Batches"` (edit, batches already set).
+
+`loadExistingData()` pre-populates `batchSplits` from `GET /inward/{inwardId}/batches` response — maps `qtyReceived` → `qty`, converts `expiryDate` from `dd-MM-yyyy` → `yyyy-MM-dd` for the date input.
+
+Old brand/expiry inline fields in PO section replaced with `{false && ...}` dead-code block (kept for reference, never renders).

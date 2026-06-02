@@ -12,8 +12,8 @@ import { messages } from "./../../messages";
 import Popper from "@material-ui/core/Popper";
 import Filter from "./filter";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
-import { Slide } from "@material-ui/core";
 import Details from "./details";
+import DetailsPopup from "./../../Shared/DetailsPopup";
 import { API } from "./../../axios";
 import { triggerBlobDownload } from "./../../helper";
 
@@ -154,7 +154,7 @@ class List extends ListCommon {
 
   render() {
     return (
-      <div className={this.state.showDetails ? "split" : ""}>
+      <div>
         <div className="list-section">
           <div className="filter-section">
             <form
@@ -267,22 +267,21 @@ class List extends ListCommon {
           )}
           {this.renderPagination()}
         </div>
-        <Slide
-          direction="right"
-          in={this.state.showDetails}
-          mountOnEnter
-          unmountOnExit
-          timeout={{ exit: 0 }}
+        <DetailsPopup
+          open={this.state.showDetails}
+          onClose={() => this.setState({ showDetails: false, key: this.state.key + 1 })}
         >
-          <Details
-            data={this.state.selectedData}
-            edit={this.props.edit}
-            delete={(row) => this.delete(row)}
-            close={() =>
-              this.setState({ showDetails: false, key: this.state.key + 1 })
-            }
-          />
-        </Slide>
+          {this.state.showDetails && (
+            <Details
+              data={this.state.selectedData}
+              edit={this.props.edit}
+              delete={(row) => this.delete(row)}
+              close={() =>
+                this.setState({ showDetails: false, key: this.state.key + 1 })
+              }
+            />
+          )}
+        </DetailsPopup>
       </div>
     );
   }

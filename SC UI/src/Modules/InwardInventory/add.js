@@ -16,6 +16,8 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
+import MuiButton from "@material-ui/core/Button";
+import TextField from "@material-ui/core/TextField";
 //style
 import "./style.scss";
 import { fetchUnit } from "./../../actions/measurementUnit";
@@ -40,7 +42,9 @@ class InwardInventoryForm extends AddForm {
     selectedPO: null,
     selectedSupplier: null,
     isDirectInward: true,
-    isSampleInward: false,     // NEW: tracks sample inward mode
+    isSampleInward: false,
+    showNoChallanBillPopup: false,
+    noChallanBillPopupReason: '',
     isEditMode: false,
     isLoaded: false,
     isProductsLoaded: false,
@@ -1144,6 +1148,13 @@ class InwardInventoryForm extends AddForm {
       return;
     }
 
+    const noChallan = !this.formData.challanNo || !this.formData.challanNo.trim();
+    const noBill = !this.formData.billNo || !this.formData.billNo.trim();
+    if (noChallan && noBill && (!this.formData.noChallanBillReason || !this.formData.noChallanBillReason.trim())) {
+      this.setState({ showNoChallanBillPopup: true, noChallanBillPopupReason: '' });
+      return;
+    }
+
     // Validate batch splits for batch-tracked products (create mode)
     if (!this.state.isEditMode) {
       for (const product of Object.values(this.state.noproduct)) {
@@ -1246,6 +1257,7 @@ class InwardInventoryForm extends AddForm {
         billNo: this.formData.billNo,
         challanDate: this.formData.challanDate || null,
         billDate: this.formData.billDate || null,
+        noChallanBillReason: this.formData.noChallanBillReason || null,
         fileInformations: this.formData.fileInformations || []
       };
     } else if (this.state.isDirectInward) {
@@ -1273,7 +1285,8 @@ class InwardInventoryForm extends AddForm {
         challanNo: this.formData.challanNo,
         challanDate: this.formData.challanDate || null,
         billNo: this.formData.billNo,
-        billDate: this.formData.billDate || null
+        billDate: this.formData.billDate || null,
+        noChallanBillReason: this.formData.noChallanBillReason || null
       };
     } else {
       // PO Inward
@@ -1290,6 +1303,7 @@ class InwardInventoryForm extends AddForm {
         challanNo: this.formData.challanNo,
         challanDate: this.formData.challanDate || null,
         billDate: this.formData.billDate || null,
+        noChallanBillReason: this.formData.noChallanBillReason || null,
         additionalInfo: this.formData.additionalInfo,
         fileInformations: this.formData.fileInformations || [],
         lineItems: Object.values(this.state.noproduct).map(item => ({
@@ -1333,6 +1347,50 @@ class InwardInventoryForm extends AddForm {
       });
       this.setState({ currentStock });
     }
+  }
+
+  handleNoChallanBillSubmit = async () => {
+    const reason = this.state.noChallanBillPopupReason;
+    if (!reason || !reason.trim()) {
+      this.props.enqueueSnackbar("Reason is required.", { variant: "error" });
+      return;
+    }
+    this.formData.noChallanBillReason = reason;
+    this.setState({ showNoChallanBillPopup: false }, () => {
+      this.add({ preventDefault: () => {} });
+    });
+  };
+
+  renderNoChallanBillPopup() {
+    return (
+      <Dialog open={this.state.showNoChallanBillPopup} maxWidth="sm" fullWidth>
+        <DialogTitle>Challan / Bill No. Missing</DialogTitle>
+        <DialogContent>
+          <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px' }}>
+            Neither Challan No. nor Bill No. has been entered. Please provide a reason.
+          </p>
+          <TextField
+            label="Reason *"
+            multiline
+            rows={3}
+            variant="outlined"
+            fullWidth
+            inputProps={{ maxLength: 500 }}
+            value={this.state.noChallanBillPopupReason}
+            onChange={(e) => this.setState({ noChallanBillPopupReason: e.target.value })}
+            helperText={`${(this.state.noChallanBillPopupReason || '').length}/500`}
+          />
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={() => this.setState({ showNoChallanBillPopup: false })} color="default">
+            Cancel
+          </MuiButton>
+          <MuiButton onClick={this.handleNoChallanBillSubmit} color="primary" variant="contained">
+            Submit
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+    );
   }
 
   renderFooter() {
@@ -1621,6 +1679,7 @@ class InwardInventoryForm extends AddForm {
             </form>
           );
         })()}
+      {this.renderNoChallanBillPopup()}
       </div>
     );
   }

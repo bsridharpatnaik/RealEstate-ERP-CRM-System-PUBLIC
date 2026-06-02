@@ -607,6 +607,7 @@ class Details extends CommonDetails {
                         <TableCell>
                           {messages.common.returnedQauntity}
                         </TableCell>
+                        <TableCell>Remarks</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -617,6 +618,7 @@ class Details extends CommonDetails {
                           <TableCell>{row.product.measurementUnit}</TableCell>
                           <TableCell>{row.oldQuantity}</TableCell>
                           <TableCell>{row.rejectQuantity}</TableCell>
+                          <TableCell>{row.remarks || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
