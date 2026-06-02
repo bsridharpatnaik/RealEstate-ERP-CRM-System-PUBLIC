@@ -55,6 +55,16 @@ class List extends ListCommon {
   buildingType = [];
   buildingUnit = [];
 
+  getTenantConfig() {
+    if (!this.props.tenantId) return {};
+    return {
+      headers: {
+        "tenant-id": this.props.tenantId,
+        "X-Global-BOQ": "true",
+      },
+    };
+  }
+
   tableData = {
     headers: [
       messages.common.id,
@@ -95,8 +105,32 @@ class List extends ListCommon {
   // percentArray = new Array();
 
 
+  async getData(page, params) {
+    this.page = page;
+    if (this.inputRef && this.inputRef.current) {
+      this.inputRef.current.value = page + 1;
+    }
+    this.setState({ isLoading: true });
+    let sortParam = "";
+    if (this.sortkey) {
+      let sortkey = this.sortkey;
+      sortParam = "&sort=" + sortkey;
+      if (this.sortby) {
+        sortParam += "," + this.sortby;
+      }
+    }
+    const response = await API.POST(
+      this.url + "&page=" + page + sortParam,
+      params,
+      this.getTenantConfig()
+    );
+    this.setState({ isLoading: false });
+    this.showToaster(response);
+    return response;
+  }
+
   async getFiltersOptions() {
-    const response = await API.GET(apiEndpoints.stockDropdown);
+    const response = await API.GET(apiEndpoints.stockDropdown, this.getTenantConfig());
     if (response.success) {
       this.dropdowns = response.data;
       this.props.setOptions(this.dropdowns);
@@ -105,7 +139,7 @@ class List extends ListCommon {
 
 
   async getOptions() {
-    const response = await API.GET(apiEndpoints.buildingType);
+    const response = await API.GET(apiEndpoints.buildingType, this.getTenantConfig());
     if (response.success) {
       const options = [...response.data];
       this.buildingTypeCount = response.data.length;
@@ -114,7 +148,7 @@ class List extends ListCommon {
   }
 
   async getOptions2() {
-    const response = await API.GET(apiEndpoints.getBuildingUnit + this.buildingTypeID.id);
+    const response = await API.GET(apiEndpoints.getBuildingUnit + this.buildingTypeID.id, this.getTenantConfig());
     if (response.success) {
       const options = [...response.data.usageLocation];
       this.buildingUnitCount = response.data.usageLocationCount;
@@ -373,7 +407,7 @@ class List extends ListCommon {
     }
     const url = apiEndpoints.exportBOQStatus + (params.toString() ? '?' + params.toString() : '');
     try {
-      const response = await instance.get(url, { responseType: 'blob' });
+      const response = await instance.get(url, { responseType: 'blob', ...this.getTenantConfig() });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(new Blob([response.data]));
       link.download = 'BOQ_Status.xlsx';
@@ -444,7 +478,7 @@ class List extends ListCommon {
             )}
 
             <div className="top-button-wrapper">
-              {canEditBOQ() && (
+              {!this.props.readOnly && canEditBOQ() && (
                 <IconButtons
                   onClick={() => this.setState({ showBOQModal: true, boqModalData: null })}
                   buttonClass="filterIcon"
@@ -452,7 +486,7 @@ class List extends ListCommon {
                   icon={"AddSVG"}
                 />
               )}
-              {canEditBOQ() && (
+              {!this.props.readOnly && canEditBOQ() && (
                 <Button
                   variant="contained"
                   color="secondary"
@@ -512,7 +546,7 @@ class List extends ListCommon {
                 this.sortkey = sortkey;
                 this.search();
               }}
-              canEditBOQ={canEditBOQ()}
+              canEditBOQ={!this.props.readOnly && canEditBOQ()}
               onDeleteBOQ={(row) => this.handleDeleteBOQ(row)}
               onEditDetail={(parentRow, detail) => this.openEditDetail(parentRow, detail)}
               onDeleteDetail={(detail) => this.handleDeleteDetail(detail)}

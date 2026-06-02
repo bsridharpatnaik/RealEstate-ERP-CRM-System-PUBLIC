@@ -25,6 +25,7 @@ import InventoryTransfer from "./InventoryTransfer";
 import DeadStock from "./DeadStock";
 import HistoricalPricing from "./HistoricalPricing";
 import Firm from "./Firm";
+import GlobalBOQView from "./GlobalBOQView";
 export {
   User,
   Role,
@@ -53,4 +54,5 @@ export {
   DeadStock,
   HistoricalPricing,
   Firm,
+  GlobalBOQView,
 };

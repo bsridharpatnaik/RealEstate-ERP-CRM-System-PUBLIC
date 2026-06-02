@@ -353,4 +353,5 @@ export const appRoutes = {
   purchaseOrder: "/purchaseOrder",
   historicalPricing: "/historicalPricing",
   globalDashboard: "/globalDashboard",
+  globalBOQ: "/globalBOQ",
 };

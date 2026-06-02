@@ -156,3 +156,13 @@ After code changes in session, refresh graph:
 
 ```bash
 python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+```
+
+---
+
+## Local Database
+
+- Host: `localhost`
+- Username: `root`
+- Password: `REDACTED`
+- Connect: `mysql -h localhost -u root -pREDACTED`

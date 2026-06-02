@@ -1,0 +1,29 @@
+.global-boq-page {
+  .global-boq-project-selector {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0 12px 0;
+
+    .selector-label {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .project-select {
+      min-width: 280px;
+    }
+  }
+
+  .global-boq-list-wrapper {
+    margin-top: 8px;
+  }
+
+  .global-boq-placeholder {
+    margin-top: 40px;
+    text-align: center;
+    color: #888;
+    font-size: 15px;
+  }
+}
