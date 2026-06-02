@@ -63,7 +63,7 @@ public class PurchaseOrderBuilder {
         return po;
     }
 
-    private PurchaseOrderLine buildPoLine(PurchaseOrder po, CreatePoLineRequest itemReq) throws Exception {
+    public PurchaseOrderLine buildPoLine(PurchaseOrder po, CreatePoLineRequest itemReq) throws Exception {
         PurchaseOrderLine line = new PurchaseOrderLine();
         line.setPurchaseOrder(po);
         line.setBrand(itemReq.getBrand());

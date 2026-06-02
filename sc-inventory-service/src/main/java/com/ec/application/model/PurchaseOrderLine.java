@@ -89,4 +89,14 @@ public class PurchaseOrderLine extends ReusableFields {
     @JsonProperty("balanceQuantity")
     @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
     private Double balanceQuantity;
+
+    /**
+     * Indent line item status for this PO line — derived at query time from the linked
+     * IndentInventoryList.lineItemStatus. Used by the frontend to decide whether the line
+     * can be removed (only removable when status is "PO CREATED").
+     * Not persisted — populated by PurchaseOrderService.getPurchaseOrderWithInit().
+     */
+    @Transient
+    @JsonProperty("lineItemStatus")
+    private String lineItemStatus;
 }

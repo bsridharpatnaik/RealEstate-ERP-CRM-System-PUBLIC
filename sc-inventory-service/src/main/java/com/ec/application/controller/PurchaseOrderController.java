@@ -95,6 +95,41 @@ public class PurchaseOrderController {
         return ResponseEntity.ok("Entity deleted");
     }
 
+    /**
+     * Adds a new line item to an existing PO.
+     * PO must be in NEW or PARTIAL status.
+     * The indent line item being added must be in NEW status.
+     */
+    @PostMapping("/{id}/line")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder addLineItem(@PathVariable String id, @RequestBody CreatePoLineRequest payload) throws Exception {
+        return purchaseOrderService.addLineItem(id, payload);
+    }
+
+    /**
+     * Adds multiple new line items to an existing PO in one call.
+     * PO must be in NEW or PARTIAL status.
+     * All supplied indent line items must be in NEW status.
+     */
+    @PostMapping("/{id}/lines")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder addLineItems(@PathVariable String id, @RequestBody List<CreatePoLineRequest> payload) throws Exception {
+        return purchaseOrderService.addLineItems(id, payload);
+    }
+
+    /**
+     * Removes an open line item from an existing PO.
+     * The line's linked indent item must be in PO CREATED status (no inward started).
+     */
+    @DeleteMapping("/{id}/line/{lineId}")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder removeLineItem(@PathVariable String id, @PathVariable Long lineId) throws Exception {
+        return purchaseOrderService.removeLineItem(id, lineId);
+    }
+
     @PostMapping("/short-close")
     public PurchaseOrder shortClosePo(@RequestBody ShortClosePoRequest request) throws Exception {
         PurchaseOrder po = purchaseOrderService.shortClosePurchaseOrder(request);

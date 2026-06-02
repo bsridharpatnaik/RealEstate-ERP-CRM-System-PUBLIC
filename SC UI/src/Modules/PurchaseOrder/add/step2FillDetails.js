@@ -725,7 +725,7 @@ handleAddFirm = async (firm) => {
         />
 
         {/* Order To and Order From Sections - Side by Side */}
-        <div className="order-sections-container">
+        {!this.props.addLinesMode && <div className="order-sections-container">
           {/* Order To Section */}
           <div className="form-section">
             <h3 className="section-title">Order To</h3>
@@ -937,11 +937,11 @@ handleAddFirm = async (firm) => {
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* Purchase Order Subject */}
         {/* Purchase Order Subject + SPL PO inline */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div style={{ flex: 1 }}>
               <h3 className="section-title">Purchase order Subject</h3>
@@ -996,7 +996,7 @@ handleAddFirm = async (firm) => {
               )}
             />
           </div>
-        </div>
+        </div>}
         {/* Purchase Order Items Table */}
         <div className="form-section items-section">
           <h3 className="section-title">Purchase order Items</h3>
@@ -1128,42 +1128,59 @@ handleAddFirm = async (firm) => {
                         />
                       </TableCell>
                       <TableCell className="rate-cell">
-                        <TextField
-                          value={item.rate || ""}
-                          onChange={(e) =>
-                            this.handleItemChange(index, "rate", e.target.value)
-                          }
-                          size="small"
-                          variant="outlined"
-                          type="number"
-                          required
-                          inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                        />
+                        {item.willBeClubbed ? (
+                          <div style={{ fontSize: "12px" }}>
+                            <div>Rs. {item.rate}</div>
+                            <div style={{ color: "#1976d2", fontStyle: "italic", fontSize: "11px", marginTop: "2px" }}>
+                              Clubbed
+                            </div>
+                          </div>
+                        ) : (
+                          <TextField
+                            value={item.rate || ""}
+                            onChange={(e) =>
+                              this.handleItemChange(index, "rate", e.target.value)
+                            }
+                            size="small"
+                            variant="outlined"
+                            type="number"
+                            required
+                            inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          variant="outlined"
-                          placeholder="0"
-                          value={item.discount || ""}
-                          inputProps={{ min: 0, max: 100, step: 0.01 }}
-                          onChange={(e) => this.handleItemChange(index, "discount", e.target.value)}
-                          style={{ width: "80px" }}
-                        />
+                        {item.willBeClubbed ? (
+                          <span style={{ fontSize: "12px" }}>{item.discount || "0"}%</span>
+                        ) : (
+                          <TextField
+                            type="number"
+                            size="small"
+                            variant="outlined"
+                            placeholder="0"
+                            value={item.discount || ""}
+                            inputProps={{ min: 0, max: 100, step: 0.01 }}
+                            onChange={(e) => this.handleItemChange(index, "discount", e.target.value)}
+                            style={{ width: "80px" }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          value={item.gst ?? ""}
-                          onChange={(e) =>
-                            this.handleItemChange(index, "gst", e.target.value)
-                          }
-                          size="small"
-                          variant="outlined"
-                          type="number"
-                          placeholder="%"
-                          inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                        />
+                        {item.willBeClubbed ? (
+                          <span style={{ fontSize: "12px" }}>{item.gst || "0"}%</span>
+                        ) : (
+                          <TextField
+                            value={item.gst ?? ""}
+                            onChange={(e) =>
+                              this.handleItemChange(index, "gst", e.target.value)
+                            }
+                            size="small"
+                            variant="outlined"
+                            type="number"
+                            placeholder="%"
+                            inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell className="net-rate-cell calculated-cell">
                         {item.netRate ? `Rs. ${parseFloat(item.netRate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
@@ -1227,7 +1244,7 @@ handleAddFirm = async (firm) => {
 
 
         {/* Freight Charges Section */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <h3 className="section-title">Freight Charges</h3>
           <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
             <div style={{ flex: "1", minWidth: "160px" }}>
@@ -1280,10 +1297,10 @@ handleAddFirm = async (firm) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Custom / Additional Charges Section */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
             <h3 className="section-title" style={{ margin: 0 }}>Additional Charges</h3>
             <button
@@ -1371,15 +1388,15 @@ handleAddFirm = async (firm) => {
               </div>
             );
           })}
-        </div>
+        </div>}
 
         {/* Notes Section */}
-        {this.props.fileArea ? (
+        {!this.props.addLinesMode && (this.props.fileArea ? (
           <div className="form-section">
             {this.props.fileArea}
           </div>
-        ) : null}
-        <div className="form-section">
+        ) : null)}
+        {!this.props.addLinesMode && <div className="form-section">
           <h3 className="section-title">Notes</h3>
           <ReactQuill
             value={this.props.noteText}
@@ -1395,7 +1412,7 @@ handleAddFirm = async (firm) => {
             placeholder="Enter notes..."
             style={{ background: '#fff' }}
           />
-        </div>
+        </div>}
       </div>
     );
   }

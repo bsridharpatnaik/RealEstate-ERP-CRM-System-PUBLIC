@@ -26,6 +26,40 @@ public class IndentStatusUpdater {
     private final IndentCompletionEvaluator indentCompletionEvaluator;
     private final IndentStatusHistoryService indentStatusHistoryService;
 
+    /**
+     * Marks a single indent line item as PO CREATED and links it to the given PO.
+     * Used when adding a new line item to an existing PO.
+     */
+    @Transactional
+    public void markIndentLineAsPOCreated(String lineItemCode, String poId) {
+        IndentInventoryList item = indentInventoryListRepo.findByLineItemCode(lineItemCode).get(0);
+        item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_PO_CREATED);
+        item.setPurchaseOrderId(poId);
+        indentStatusHistoryService.logStatusChange(
+            item.getIndentInventory(), null, null, "System",
+            "Indent line item " + lineItemCode + " status changed to PO CREATED — line item added to PO " + poId + ".",
+            Collections.singletonList(new HistoryRelationInput(HistoryRelationType.PO, "", poId)));
+        indentInventoryListRepo.save(item);
+        indentCompletionEvaluator.evaluate(item.getIndentInventory());
+    }
+
+    /**
+     * Reverts a single indent line item back to NEW and clears its PO linkage.
+     * Used when removing an open line item from an existing PO.
+     */
+    @Transactional
+    public void revertIndentLineToNew(String lineItemCode, String poId) {
+        IndentInventoryList item = indentInventoryListRepo.findByLineItemCode(lineItemCode).get(0);
+        item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
+        item.setPurchaseOrderId(null);
+        indentStatusHistoryService.logStatusChange(
+            item.getIndentInventory(), null, null, "System",
+            "Indent line item " + lineItemCode + " reverted to NEW — line item removed from PO " + poId + ".",
+            Collections.singletonList(new HistoryRelationInput(HistoryRelationType.PO, "", poId)));
+        indentInventoryListRepo.save(item);
+        indentCompletionEvaluator.evaluate(item.getIndentInventory());
+    }
+
     @Transactional
     public void updateIndentStatuses(PurchaseOrder po, POIndentUpdateAction action) {
 
