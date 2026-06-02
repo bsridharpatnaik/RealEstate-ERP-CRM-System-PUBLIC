@@ -77,7 +77,8 @@ function SideMenu(props) {
     props.history.location.pathname === "/user" ||
     props.history.location.pathname === "/firm" ||
     props.history.location.pathname === appRoutes.productMerge ||
-    props.history.location.pathname === appRoutes.activityLog
+    props.history.location.pathname === appRoutes.activityLog ||
+    props.history.location.pathname === "/globalBOQ"
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
@@ -462,6 +463,15 @@ function SideMenu(props) {
   onClick={props.setSideBarValue}
   linkurl="/stockSummary"
 />
+            {(_role === "admin" || _role === "project-manager") && (
+              <DashboardItem
+                nodeId="41"
+                labelText={messages.common.globalBOQ}
+                labelIcon={HomeWorkIcon}
+                onClick={props.setSideBarValue}
+                linkurl={appRoutes.globalBOQ}
+              />
+            )}
             <DashboardItem
               nodeId="39"
               labelText={messages.common.indentPO}

@@ -78,6 +78,7 @@ export const messages = {
     settings: "Settings",
     projects: "Projects",
     globalDashboard: "Global Dashboard",
+    globalBOQ: "Global BOQ View",
     role: "Role",
     uploadedDocuments: "Uploaded Documents",
     details: "Details",

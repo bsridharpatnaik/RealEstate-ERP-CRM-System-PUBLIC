@@ -470,3 +470,12 @@ Same reverse-join pattern used in split form (`splitEntries` map before POST).
 5. **Edit page must reload batch consumptions** — `edit.js` loads `batchConsumptionData` from `/outward/{id}/batch-consumptions` on mount. If qty unchanged and override was present, re-sends `overrideBatches` in PUT payload to preserve it.
 
 6. **Untracked count circular dep** — `BatchTrackingService` already autowires `StockService`. Untracked filter logic in `StockService.expiryFilter` block calls repos directly (not BatchTrackingService) to avoid circular dependency.
+
+---
+
+## Local Database
+
+- Host: `localhost`
+- Username: `root`
+- Password: `REDACTED`
+- Connect: `mysql -h localhost -u root -pREDACTED`

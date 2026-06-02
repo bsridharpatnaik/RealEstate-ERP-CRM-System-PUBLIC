@@ -94,9 +94,17 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
             return false;
         }
 
+        boolean isGlobalBOQRequest = "true".equals(request.getHeader("X-Global-BOQ"));
+        boolean isProjectManager = currentUser.getRoles() != null &&
+                currentUser.getRoles().contains("project-manager");
+
         if (!currentUser.getAllowedTenants().contains(tenantName)) {
-            writeError(response, "User not allowed to access data for this project - " + tenantName);
-            return false;
+            if (isGlobalBOQRequest && isProjectManager) {
+                // project-managers may read any tenant's BOQ data via the Global BOQ View
+            } else {
+                writeError(response, "User not allowed to access data for this project - " + tenantName);
+                return false;
+            }
         }
 
         ThreadLocalStorage.setTenantName(tenantName);

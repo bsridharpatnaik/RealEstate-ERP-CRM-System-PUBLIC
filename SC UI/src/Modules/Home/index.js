@@ -32,6 +32,7 @@ import {
   BOQHistory,
   Activity,
   ProjectActivity,
+  GlobalBOQView,
   Indent,
   PurchaseOrder,
   InventoryTransfer,
@@ -103,6 +104,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.projectActivityLog}>
                   <ProjectActivity key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.globalBOQ}>
+                  <GlobalBOQView key={new Date()} {...props} />
                 </Route>
                 <Route path={"/boqReport"}>
                   <BOQReport key={new Date()} {...props} />

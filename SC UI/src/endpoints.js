@@ -381,4 +381,5 @@ export const appRoutes = {
   historicalPricing: "/historicalPricing",
   globalDashboard: "/globalDashboard",
   productMerge: "/productMerge",
+  globalBOQ: "/globalBOQ",
 };
