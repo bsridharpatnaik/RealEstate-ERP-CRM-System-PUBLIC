@@ -271,6 +271,7 @@ export const apiEndpoints = {
   getIndentsForPo: (poId) => `/api/inventory/purchase-order/${poId}/indents`,
   getIndentsForDropdown: "/api/inventory/indent/for-dropdown",
   getInventoryTransfer: "/api/inventory/inventory-transfer?size=" + noOfRecords,
+  getInventoryTransferById: (id) => `/api/inventory/inventory-transfer/${id}`,
   createInventoryTransfer: "/api/inventory/inventory-transfer/create",
   previewTransferBatches: "/api/inventory/inventory-transfer/preview-batches",
   getDeadStock: "/api/inventory/dead-stock",

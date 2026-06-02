@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.data.BatchConsumptionPreviewDTO;
 import com.ec.application.data.BatchOverrideEntry;
 import com.ec.application.data.BatchUpdateRequestDTO;
@@ -72,6 +73,9 @@ public class BatchTrackingService {
     @Autowired
     AllInventoryRepo allInventoryRepo;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
     @Transactional(rollbackFor = Exception.class)
     public BatchWriteOff writeOffBatch(Long batchId, WriteOffRequestDTO request) throws Exception {
         InventoryBatch batch = inventoryBatchRepository.findById(batchId)
@@ -114,7 +118,23 @@ public class BatchTrackingService {
         writeOff.setWriteOffDate(new Date());
         writeOff.setWrittenOffBy(currentUser);
 
-        return batchWriteOffRepository.save(writeOff);
+        BatchWriteOff savedWriteOff = batchWriteOffRepository.save(writeOff);
+
+        try {
+            String logDesc = ActivityLogDescription.of(
+                "Write-off of " + request.getQuantity() + " " + batch.getProduct().getMeasurementUnit()
+                + " of " + batch.getProduct().getProductName()
+                + " from batch #" + batchId
+                + " in " + batch.getWarehouse().getWarehouseName()
+                + ". Reason: " + request.getReason().trim()
+            );
+            activityLogService.record("CREATED", "WRITE_OFF", String.valueOf(batchId), logDesc,
+                    currentUser != null ? currentUser : "System");
+        } catch (Exception e) {
+            log.warn("Failed to record activity log for write-off batchId={}: {}", batchId, e.getMessage());
+        }
+
+        return savedWriteOff;
     }
 
     public List<InventoryBatch> getBatchesForProduct(Long productId, Long warehouseId) {
@@ -396,6 +416,23 @@ public class BatchTrackingService {
             batch.setQtyRemaining(entry.getQty());
             created.add(inventoryBatchRepository.save(batch));
         }
+
+        try {
+            String splitUser = null;
+            try { splitUser = userDetailsService.getCurrentUser().getUsername(); } catch (Exception ignored) {}
+            String logDesc = ActivityLogDescription.of(
+                "Stock split: " + created.size() + " batch" + (created.size() > 1 ? "es" : "")
+                + " created for " + product.getProductName()
+                + " in " + warehouse.getWarehouseName()
+                + ". Total " + requestTotal + " " + product.getMeasurementUnit()
+                + " converted from untracked stock."
+            );
+            activityLogService.record("CREATED", "STOCK_SPLIT", String.valueOf(productId), logDesc,
+                    splitUser != null ? splitUser : "System");
+        } catch (Exception e) {
+            log.warn("Failed to record activity log for stock split productId={}: {}", productId, e.getMessage());
+        }
+
         return created;
     }
 

@@ -1095,7 +1095,23 @@ public class InwardInventoryService {
 
             double existingTotal = batches.stream().mapToDouble(InventoryBatch::getQtyReceived).sum();
             double delta = newTotal - existingTotal;
-            if (Math.abs(delta) < 0.001) continue;
+            if (Math.abs(delta) < 0.001) {
+                // Qty unchanged — but user may have supplied updated batch metadata (brand / lot / expiry).
+                // Update existing batches positionally: split[0] → batches[0], split[1] → batches[1], …
+                boolean hasSplits = paq.getBatchSplits() != null && !paq.getBatchSplits().isEmpty();
+                if (hasSplits) {
+                    List<InwardBatchSplit> splits = paq.getBatchSplits();
+                    for (int i = 0; i < Math.min(splits.size(), batches.size()); i++) {
+                        InwardBatchSplit split = splits.get(i);
+                        InventoryBatch batch = batches.get(i);
+                        if (split.getBrand() != null)      batch.setBrand(split.getBrand());
+                        if (split.getLotNumber() != null)  batch.setLotNumber(split.getLotNumber());
+                        if (split.getExpiryDate() != null) batch.setExpiryDate(split.getExpiryDate());
+                        inventoryBatchRepository.save(batch);
+                    }
+                }
+                continue;
+            }
 
             if (delta < 0) {
                 double reduction = Math.abs(delta);

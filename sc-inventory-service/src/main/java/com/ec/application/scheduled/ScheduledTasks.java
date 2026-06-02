@@ -14,8 +14,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.ec.application.data.ExpiryAlertRow;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -107,24 +109,57 @@ public class ScheduledTasks {
             List<String> tenants = schemaConfig.getNonMasterSchemaList();
             Map<Long, Double> netRateMap = stockEmailReportService.fetchLatestNetRateMap();
             List<ProjectStockEmailData> allProjects = new ArrayList<>();
+
+            // Expiry windows
+            Calendar cal = Calendar.getInstance();
+            Date today = truncateToDay(cal);
+            Date day30  = addDays(cal, 30);
+            Date day31  = addDays(cal, 31);
+            Date day60  = addDays(cal, 60);
+
+            List<ExpiryAlertRow> expiring30 = new ArrayList<>();  // 0–30 days
+            List<ExpiryAlertRow> expiring60 = new ArrayList<>();  // 31–60 days
+
             for (String tenantName : tenants) {
                 com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
                 try {
-                    ProjectStockEmailData data = stockEmailReportService.collectTenantStockData(tenantName, netRateMap);
-                    allProjects.add(data);
+                    allProjects.add(stockEmailReportService.collectTenantStockData(tenantName, netRateMap));
+                    expiring30.addAll(stockEmailReportService.collectExpiryRows(tenantName, today, day30));
+                    expiring60.addAll(stockEmailReportService.collectExpiryRows(tenantName, day31, day60));
                 } finally {
                     com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
                 }
             }
             if (!allProjects.isEmpty()) {
                 byte[] excelBytes = stockEmailReportService.buildExcelBytes(allProjects);
-                emailHelper.sendDailyStockReport(allProjects, excelBytes);
+                emailHelper.sendDailyStockReport(allProjects, excelBytes, expiring30, expiring60);
             } else {
                 log.info("No tenants found — skipping daily stock report");
             }
         } catch (Exception e) {
             log.error("Daily stock email report failed", e);
         }
+    }
+
+    /** Strips time component — start of today. */
+    private static Date truncateToDay(Calendar cal) {
+        cal.setTime(new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    /** Returns a new Date = today + days, time 23:59:59 (end of that day). */
+    private static Date addDays(Calendar cal, int days) {
+        cal.setTime(new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        cal.add(Calendar.DAY_OF_YEAR, days);
+        return cal.getTime();
     }
 
     @Scheduled(cron = "0 0 7 * * *", zone = "Asia/Kolkata")

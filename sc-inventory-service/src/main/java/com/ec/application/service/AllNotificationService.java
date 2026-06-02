@@ -118,7 +118,40 @@ public class AllNotificationService
 						message, inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(),
 						true);
 			}
-			inventoryNormalizedNotifications.add(returnAllNotification);
+
+			if (inventoryNotification.getType().equals("EXPIRY_ALERT_30"))
+			{
+				message = "Product " + inventoryNotification.getProduct().getProductName()
+						+ " in " + inventoryNotification.getWarehouseName()
+						+ " is expiring within 30 days. Qty remaining: "
+						+ df.format(inventoryNotification.getQuantity()) + ".";
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "EXPIRY_ALERT_30", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
+			}
+
+			if (inventoryNotification.getType().equals("EXPIRY_ALERT_60"))
+			{
+				message = "Product " + inventoryNotification.getProduct().getProductName()
+						+ " in " + inventoryNotification.getWarehouseName()
+						+ " is expiring within 60 days. Qty remaining: "
+						+ df.format(inventoryNotification.getQuantity()) + ".";
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "EXPIRY_ALERT_60", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
+			}
+
+			if (inventoryNotification.getType().equals("EXPIRY_EXPIRED"))
+			{
+				message = "Product " + inventoryNotification.getProduct().getProductName()
+						+ " in " + inventoryNotification.getWarehouseName()
+						+ " has expired. Qty remaining: "
+						+ df.format(inventoryNotification.getQuantity()) + ". Please write off expired stock.";
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "EXPIRY_EXPIRED", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
+			}
+
+			// Only add notifications that have a message — skip unknown/unhandled types
+			if (!message.isEmpty())
+				inventoryNormalizedNotifications.add(returnAllNotification);
 		}
 		return inventoryNormalizedNotifications;
 	}

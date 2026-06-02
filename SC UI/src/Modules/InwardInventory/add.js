@@ -203,9 +203,31 @@ class InwardInventoryForm extends AddForm {
 
       // Process existing line items
       if (isDirectInward) {
+        // Load existing batch records so edit mode can pre-populate the split modal
+        let batchesByProduct = {};
+        try {
+          const batchRes = await API.GET(apiEndpoints.getInwardBatches(data.inwardId));
+          if (batchRes.success && Array.isArray(batchRes.data)) {
+            batchRes.data.forEach(b => {
+              const pid = b.product?.productId;
+              if (pid) {
+                if (!batchesByProduct[pid]) batchesByProduct[pid] = [];
+                batchesByProduct[pid].push(b);
+              }
+            });
+          }
+        } catch (e) { /* non-fatal — batch split modal falls back to empty entry */ }
+
         for (let i = 0; i < data.inwardOutwardList.length; i++) {
           const item = data.inwardOutwardList[i];
           const pid = item.product.productId;
+          const existingBatches = batchesByProduct[pid] || [];
+          const batchSplits = existingBatches.map(b => ({
+            qty: b.qtyReceived,
+            expiryDate: b.expiryDate ? b.expiryDate.split('-').reverse().join('-') : '',
+            brand: b.brand || '',
+            lotNumber: b.lotNumber || '',
+          }));
           p[keyCounter] = {
             quantity: item.quantity,
             productId: pid,
@@ -217,6 +239,7 @@ class InwardInventoryForm extends AddForm {
             batchMode: item.product.batchMode || 'NONE',
             poQuantity: item.poQuantity,
             lineItemCode: item.lineItemCode,
+            batchSplits: batchSplits.length > 0 ? batchSplits : null,
             selectedProduct: {
               id: pid,
               name: item.product.productName,
@@ -814,8 +837,8 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Batch splits for expirable products (add mode) OR brand+expiry for non-expirable */}
-              {!isEditMode && product.batchMode !== 'NONE' ? (
+              {/* Batch splits — shown in both create and edit mode for batch-tracked products */}
+              {product.batchMode !== 'NONE' && (
                 <div style={{ width: '200px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
                   {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -824,7 +847,7 @@ class InwardInventoryForm extends AddForm {
                       </span>
                       <button type="button" onClick={() => this.openBatchSplitModal(key)}
                         style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 0', textDecoration: 'underline' }}>
-                        Edit Batches
+                        {isEditMode ? 'View / Edit Batches' : 'Edit Batches'}
                       </button>
                     </div>
                   ) : (
@@ -832,49 +855,12 @@ class InwardInventoryForm extends AddForm {
                       <button type="button" onClick={() => this.openBatchSplitModal(key)}
                         disabled={!product.quantity}
                         style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
-                        Set Batches *
+                        {isEditMode ? 'Edit Batches' : 'Set Batches *'}
                       </button>
                       <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{product.batchMode === 'BATCH_WITH_EXPIRY' ? 'Expiry required' : 'Brand / Lot tracking'}</span>
                     </div>
                   )}
                 </div>
-              ) : (
-                <>
-                  {/* Brand — only for batch-tracked products in edit mode */}
-                  {product.batchMode !== 'NONE' && (
-                    <div style={{ width: '150px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                      {this.renderTextField({
-                        fieldname: `brand_${key}`,
-                        placeholder: "Identifier (optional)",
-                        skipAdd: true,
-                        value: product.brand || '',
-                        onChange: (value) => {
-                          const p = this.state.noproduct;
-                          p[key].brand = value;
-                          this.setState({ noproduct: { ...p } });
-                        },
-                      })}
-                    </div>
-                  )}
-                  {/* Expiry Date — only for BATCH_WITH_EXPIRY products in edit mode */}
-                  {product.batchMode === 'BATCH_WITH_EXPIRY' && (
-                    <div style={{ width: '170px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      {this.renderDate({
-                        fieldname: `expiryDate_${key}`,
-                        label: isEditMode ? "New Expiry Date" : "Expiry Date",
-                        value: product.expiryDate || null,
-                        onChange: () => {
-                          const p = this.state.noproduct;
-                          p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                          this.setState({ noproduct: { ...p } });
-                        },
-                      })}
-                      {isEditMode && (
-                        <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required if increasing qty</span>
-                      )}
-                    </div>
-                  )}
-                </>
               )}
             </div>
           </div>
@@ -1047,8 +1033,8 @@ class InwardInventoryForm extends AddForm {
                 })}
               </div>
 
-              {/* Batch splits for expirable products OR brand+expiry for non-expirable */}
-              {!isEditMode && product.batchMode !== 'NONE' ? (
+              {/* Batch splits — shown in both create and edit mode for batch-tracked products */}
+              {product.batchMode !== 'NONE' && (
                 <div style={{ width: '200px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
                   {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -1057,7 +1043,7 @@ class InwardInventoryForm extends AddForm {
                       </span>
                       <button type="button" onClick={() => this.openBatchSplitModal(key)}
                         style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 0', textDecoration: 'underline' }}>
-                        Edit Batches
+                        {isEditMode ? 'View / Edit Batches' : 'Edit Batches'}
                       </button>
                     </div>
                   ) : (
@@ -1065,13 +1051,15 @@ class InwardInventoryForm extends AddForm {
                       <button type="button" onClick={() => this.openBatchSplitModal(key)}
                         disabled={!product.quantity}
                         style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
-                        Set Batches *
+                        {isEditMode ? 'Edit Batches' : 'Set Batches *'}
                       </button>
                       <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{product.batchMode === 'BATCH_WITH_EXPIRY' ? 'Expiry required' : 'Brand / Lot tracking'}</span>
                     </div>
                   )}
                 </div>
-              ) : (
+              )}
+              {/* Brand fallback (PO edit mode without pre-loaded batches) */}
+              {false && product.batchMode !== 'NONE' && (
                 <>
                   {/* Brand — only for batch-tracked products in edit mode */}
                   {product.batchMode !== 'NONE' && (

@@ -242,7 +242,8 @@ class Add extends AddForm {
                   this.getCurrentStock(key);
                   this.fetchBatchPreview(key);
                   const boqRemaining = this.state.boqQuantity[productId];
-                  if (boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
+                  const boqEnforcementBlock = this.props.dropdowns.boqEnforcementBlock !== false;
+                  if (boqEnforcementBlock && boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
                     clearTimeout(this._boqWarnTimers[key]);
                     this._boqWarnTimers[key] = setTimeout(() => {
                       const currentValue = this.state.noproduct[key]?.quantity;
@@ -287,113 +288,6 @@ class Add extends AddForm {
           const outwardQty = parseFloat(this.state.noproduct[key].quantity) || 0;
           const overrideTotal = overrideBatches.reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
           const qtyMismatch = overrideFifo && outwardQty > 0 && Math.abs(overrideTotal - outwardQty) > 0.001;
-      <div className="flex" key={key}>
-        {this.renderAutoComplete({
-          fieldname: "productId",
-          placeholder: messages.common.inventory,
-          options: remainingProducts,
-          disableClearable: true,
-          required: true,
-          getOption: (option) => {
-            const { allProductsStockMap, selectedWarehouseId } = this.state;
-            const stockInfo = allProductsStockMap[option.id];
-            if (stockInfo && selectedWarehouseId) {
-              const entry = stockInfo.warehouseStocks.find(
-                ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
-              );
-              const stock = entry ? Number(entry.stock.toFixed(2)) : 0;
-              return `${option.name} (${stock} ${stockInfo.measurementUnit || ''})`;
-            }
-            return option.name;
-          },
-          onChange: (e, value) => {
-            const p = this.state.noproduct;
-            p[key].productId = value.id || "";
-            if (value) {
-              const { allProductsStockMap, selectedWarehouseId } = this.state;
-              const stockInfo = allProductsStockMap[value.id];
-              if (selectedWarehouseId) {
-                if (!stockInfo || stockInfo.warehouseStocks.length === 0) {
-                  this.props.enqueueSnackbar(
-                    `${value.name} is out of stock in all warehouses`,
-                    { variant: "warning" }
-                  );
-                } else {
-                  const entry = stockInfo.warehouseStocks.find(
-                    ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
-                  );
-                  const stockInWarehouse = entry ? entry.stock : 0;
-                  if (stockInWarehouse <= 0) {
-                    const otherWarehouses = stockInfo.warehouseStocks.filter(ws => ws.stock > 0);
-                    const selectedWarehouse = (this.props.dropdowns.warehouse || []).find(
-                      w => Number(w.id) === Number(selectedWarehouseId)
-                    );
-                    const warehouseName = selectedWarehouse ? selectedWarehouse.name : selectedWarehouseId;
-                    if (otherWarehouses.length > 0) {
-                      const otherNames = otherWarehouses.map(ws => ws.warehouseName).join(', ');
-                      this.props.enqueueSnackbar(
-                        `${value.name} does not have stock in warehouse ${warehouseName}. It has stock in warehouse(s) - ${otherNames}`,
-                        { variant: "warning" }
-                      );
-                    } else {
-                      this.props.enqueueSnackbar(
-                        `${value.name} is out of stock in all warehouses`,
-                        { variant: "warning" }
-                      );
-                    }
-                  }
-                }
-              }
-              this.getCurrentStock(key);
-              this.getBoqQuantity(key);
-            }
-          },
-        })}
-        {this.renderTextField({
-          fieldname: "measurementUnit",
-          placeholder: "Measurement Unit",
-          disabled: true,
-          value: this.props.units[this.state.noproduct[key].productId],
-        })}
-        {this.renderTextField({
-          fieldname: "quantity",
-          placeholder: "Quantity",
-          type: "number",
-          required: true,
-          skipAdd: true,
-          validation: "nonegative",
-          onChange: (value) => {
-            const p = this.state.noproduct;
-            p[key].quantity = value;
-            const productId = this.state.noproduct[key].productId;
-            const { allProductsStockMap, selectedWarehouseId } = this.state;
-            const stockInfo = allProductsStockMap[productId];
-            if (stockInfo && selectedWarehouseId) {
-              const entry = stockInfo.warehouseStocks.find(
-                ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
-              );
-              const stockInWarehouse = entry ? entry.stock : 0;
-              if (stockInWarehouse > 0 && Number(value) > stockInWarehouse) {
-                this.props.enqueueSnackbar(
-                  `Quantity cannot exceed available stock of ${stockInWarehouse} ${stockInfo.measurementUnit || ''}`,
-                  { variant: "error" }
-                );
-              }
-            }
-            this.getCurrentStock(key);
-            const boqRemaining = this.state.boqQuantity[productId];
-            const boqEnforcementBlock = this.props.dropdowns.boqEnforcementBlock !== false;
-            if (boqEnforcementBlock && boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
-              const inWastage = Number(boqRemaining) < 0;
-              this.props.enqueueSnackbar(
-                inWastage
-                  ? `BOQ Warning: Already in wastage buffer. Base BOQ fully consumed (${Math.abs(boqRemaining)} over base BOQ).`
-                  : `BOQ Warning: Quantity exceeds base BOQ remaining (${boqRemaining} remaining). Wastage allowance may still permit save.`,
-                { variant: "warning" }
-              );
-            }
-          },
-        })}
 
           if (!productId || batches.length === 0) return null;
           const requiresExpiry = batches.some(b => b.expiryDate != null);
