@@ -105,6 +105,27 @@ class Table extends CommonTable {
           </Button>
         </td>
       );
+    } else if (key === "purchaseOrderNo") {
+      const val = row["purchaseOrderNo"];
+      if (!val) return <td data-label="PO No">—</td>;
+      const pos = String(val).split(",").map(s => s.trim()).filter(Boolean);
+      return (
+        <td data-label="PO No">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {pos.map((po, i) => (
+              <span key={i} style={{
+                display: 'inline-block',
+                padding: '2px 10px',
+                background: '#e3f0ff',
+                color: '#1565c0',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}>{po}</span>
+            ))}
+          </div>
+        </td>
+      );
     } else {
       return super.renderCell(key, row, index);
     }
