@@ -591,12 +591,26 @@ class Add extends AddForm {
                     cursor: "pointer",
                     padding: "2px 8px",
                   }}
-                  onClick={() => {
+                  onClick={async () => {
                     const p = this.state.products;
-                    this.fetchBatchPreview(key, p[key].productId, parseFloat(p[key].quantity) || 0);
+                    const transferQty = parseFloat(p[key].quantity) || 0;
+                    const overrides = (p[key].overrideBatches || []).filter(e => e.qty > 0);
+                    const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+                    if (Math.abs(totalEntered - transferQty) > 0.001) {
+                      this.props.enqueueSnackbar(
+                        `Batch quantities must total ${transferQty}. Currently entered: ${totalEntered}.`,
+                        { variant: "error" }
+                      );
+                      return;
+                    }
+                    await this.fetchBatchPreview(key, p[key].productId, transferQty);
+                    // Switch to table view so user can see the applied override allocation
+                    const showBatchOverride = { ...this.state.showBatchOverride };
+                    showBatchOverride[key] = false;
+                    this.setState({ showBatchOverride });
                   }}
                 >
-                  Preview override
+                  Apply override
                 </button>
               </div>
             )}

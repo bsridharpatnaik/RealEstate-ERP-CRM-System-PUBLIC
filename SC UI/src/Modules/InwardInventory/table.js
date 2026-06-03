@@ -86,7 +86,8 @@ class Table extends CommonTable {
         <td data-label={messages.common.id}>
           <Button
             color="primary"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               this.hideedit = true;
               this.hidedelete = true;
               this.props.showDetail(row);

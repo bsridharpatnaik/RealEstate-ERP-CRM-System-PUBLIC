@@ -210,6 +210,8 @@ class Table extends React.Component {
       <tr
         key={index}
         className={index === rows.length - 1 ? "row last" : "row"}
+        style={this.props.showDetail ? { cursor: "pointer" } : undefined}
+        onClick={this.props.showDetail ? () => this.props.showDetail(row) : undefined}
       >
         {keys.map((key,index) => {
           return this.renderCell(key, row, index);

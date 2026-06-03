@@ -157,6 +157,7 @@ class Edit extends EditForm {
         }
       }
 
+      const isBatchLinked = !!(data.batchEntriesJson || data.batch);
       this.setState({
         isLoaded: true,
         closing: data.closingStock,
@@ -164,6 +165,7 @@ class Edit extends EditForm {
         existingBatchMode,
         batchQtyMap,
         excessQtyMap,
+        isBatchLinked,
       });
       this.loadBatches();
     }
@@ -490,6 +492,8 @@ class Edit extends EditForm {
                 required: true,
                 skipAdd: true,
                 validation: "nonegative",
+                disabled: this.state.isBatchLinked,
+                helperText: this.state.isBatchLinked ? "Qty locked — batches assigned. Delete and recreate to change." : undefined,
                 onChange: (value) => {
                   this.formData.quantity = value;
                   this.getCurrentStock();

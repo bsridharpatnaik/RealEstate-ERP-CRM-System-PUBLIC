@@ -811,7 +811,9 @@ class InwardInventoryForm extends AddForm {
 
               {/* Quantity */}
               <div style={{ width: '90px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
+                {(() => {
+                  const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+                  return this.renderTextField({
                   fieldname: `quantity_${key}`,
                   placeholder: "Receive Qty",
                   type: "number",
@@ -819,6 +821,8 @@ class InwardInventoryForm extends AddForm {
                   skipAdd: true,
                   validation: "nonegative",
                   value: product.quantity,
+                  disabled: hasBatchSplits,
+                  helperText: hasBatchSplits ? "Qty locked — batches assigned. Delete and recreate to change." : undefined,
                   onChange: (value) => {
                     const p = this.state.noproduct;
                     p[key].quantity = parseFloat(value) || 0;
@@ -826,7 +830,8 @@ class InwardInventoryForm extends AddForm {
                       this.getCurrentStock(key);
                     });
                   },
-                })}
+                  });
+                })()}
               </div>
 
               {/* Closing Stock */}
@@ -993,7 +998,9 @@ class InwardInventoryForm extends AddForm {
 
               {/* Quantity - Editable */}
               <div style={{ width: '90px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {this.renderTextField({
+                {(() => {
+                  const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+                  return this.renderTextField({
                   fieldname: `quantity_${key}`,
                   placeholder: "Receive Qty",
                   type: "number",
@@ -1001,6 +1008,8 @@ class InwardInventoryForm extends AddForm {
                   skipAdd: true,
                   validation: "nonegative",
                   value: product.quantity,
+                  disabled: hasBatchSplits,
+                  helperText: hasBatchSplits ? "Qty locked — batches assigned. Delete and recreate to change." : undefined,
                   onChange: (value) => {
                     const p = this.state.noproduct;
                     p[key].quantity = parseFloat(value) || 0;
@@ -1008,7 +1017,8 @@ class InwardInventoryForm extends AddForm {
                       this.getCurrentStock(key);
                     });
                   },
-                })}
+                  });
+                })()}
                 {product.quantity > product.maxAllowedQuantity && (
                   <span style={{ fontSize: '10px', color: '#c62828', marginTop: '2px' }}>
                     {product.tolerancePercent > 0

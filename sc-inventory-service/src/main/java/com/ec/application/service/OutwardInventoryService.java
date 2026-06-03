@@ -882,6 +882,24 @@ public class OutwardInventoryService {
             boolean hasMultiOverride = overrideBatches != null && !overrideBatches.isEmpty();
             boolean hasSingleOverride = overrideBatchId != null && !hasMultiOverride;
 
+            // Untracked stock check — runs for ALL paths (FIFO and override)
+            if (iol.getProduct().isBatchTracked()) {
+                List<InventoryBatch> availableBatches = iol.getProduct().requiresExpiry()
+                        ? inventoryBatchRepository.findAvailableBatchesFifoOrderLocked(productId, warehouseId)
+                        : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceivedLocked(productId, warehouseId);
+                double totalBatchQty = availableBatches.stream()
+                        .mapToDouble(InventoryBatch::getQtyRemaining).sum();
+                Double currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
+                double originalStock = (currentStock != null ? currentStock : 0.0) + qtyToConsume;
+                double untrackedStock = originalStock - totalBatchQty;
+                if (untrackedStock > 0.001) {
+                    throw new IllegalArgumentException(
+                        "Product '" + iol.getProduct().getProductName() + "' has " +
+                        String.format("%.3f", untrackedStock) +
+                        " units of untracked stock. Go to Stock → Batches tab and split existing stock into batches first.");
+                }
+            }
+
             if (hasMultiOverride || hasSingleOverride) {
                 // #10: Skip batch processing entirely for non-batch-tracked products
                 if (!iol.getProduct().isBatchTracked()) {
@@ -989,20 +1007,6 @@ public class OutwardInventoryService {
 
                 double totalBatchQty = fifoBatches.stream()
                         .mapToDouble(InventoryBatch::getQtyRemaining).sum();
-
-                // For batch-tracked products: block if ANY untracked stock exists.
-                // Stock was already deducted before this method, so reconstruct original stock.
-                if (iol.getProduct().isBatchTracked()) {
-                    Double currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
-                    double originalStock = (currentStock != null ? currentStock : 0.0) + qtyToConsume;
-                    double untrackedStock = originalStock - totalBatchQty;
-                    if (untrackedStock > 0.001) {
-                        throw new IllegalArgumentException(
-                            "Product '" + iol.getProduct().getProductName() + "' has " +
-                            String.format("%.3f", untrackedStock) +
-                            " units of untracked stock. Go to Stock → Batches tab and split existing stock into batches first.");
-                    }
-                }
 
                 double preFeatureStock = Math.max(qtyToConsume - totalBatchQty, 0.0);
                 double remaining = qtyToConsume - preFeatureStock;

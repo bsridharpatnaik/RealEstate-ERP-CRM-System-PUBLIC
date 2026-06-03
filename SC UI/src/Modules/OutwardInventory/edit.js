@@ -166,7 +166,10 @@ class Edit extends EditForm {
               })}
             </div>
             <div style={{ flex: 1 }}>
-              {this.renderTextField({
+              {(() => {
+                const consumptions = (this.batchConsumptionData || {})[productId] || [];
+                const hasOverride = consumptions.some(c => c.fifoOverridden === true);
+                return this.renderTextField({
                 fieldname: "quantity",
                 placeholder: "Quantity",
                 type: "number",
@@ -175,12 +178,15 @@ class Edit extends EditForm {
                 data: this.state.noproduct[key],
                 skipAdd: true,
                 validation: "nonegative",
+                disabled: hasOverride,
+                helperText: hasOverride ? "Qty locked — record was created with batch override. Delete and recreate to change quantity." : undefined,
                 onChange: (value) => {
                   const p = this.state.noproduct;
                   p[key].quantity = value;
                   this.getCurrentStock(key);
                 },
-              })}
+              });
+              })()}
             </div>
           </div>
 

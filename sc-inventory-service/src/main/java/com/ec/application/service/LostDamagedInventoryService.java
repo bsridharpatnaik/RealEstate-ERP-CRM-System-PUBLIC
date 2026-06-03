@@ -115,6 +115,27 @@ public class LostDamagedInventoryService {
         Product product = entity.getProduct();
         if (product == null || !product.isBatchTracked()) return null;
 
+        // Block LOST_DAMAGED if untracked stock exists — same guard as outward
+        if ("LOST_DAMAGED".equals(payload.getEntryType())) {
+            Long productId = product.getProductId();
+            Long warehouseId = entity.getWarehouse().getWarehouseId();
+            List<InventoryBatch> availableBatches = product.requiresExpiry()
+                    ? inventoryBatchRepository.findAvailableBatchesFifoOrder(productId, warehouseId)
+                    : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceived(productId, warehouseId);
+            double totalBatchQty = availableBatches.stream()
+                    .mapToDouble(InventoryBatch::getQtyRemaining).sum();
+            Double currentStock = stockService.findStockForProductWarehouse(productId, warehouseId);
+            double stock = currentStock != null ? currentStock : 0.0;
+            double untrackedStock = stock - totalBatchQty;
+            if (untrackedStock > 0.001) {
+                throw new IllegalArgumentException(
+                    "Product '" + product.getProductName() + "' has "
+                    + String.format("%.3f", untrackedStock)
+                    + " units of untracked stock in this warehouse. "
+                    + "Go to Stock → Batches tab and split existing stock into batches first.");
+            }
+        }
+
         if ("LOST_DAMAGED".equals(payload.getEntryType())) {
             List<BatchOverrideEntry> entries = payload.getBatchEntries();
             if (entries != null && !entries.isEmpty()) {

@@ -36,7 +36,8 @@ class Table extends CommonTable {
         <td data-label='ID'>
           <Button
             color="primary"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               this.hideedit = true;
               this.hidedelete = true;
               this.props.showDetail(row);
