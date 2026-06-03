@@ -154,7 +154,7 @@ class InwardInventoryForm extends AddForm {
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
-              quantity: "",
+              quantity: !!this.props.id ? (item.quantity || "") : "",
               warehouseId: item.warehouse?.warehouseId || null,
               lineItemCode: item.lineItemCode
             };
@@ -690,428 +690,320 @@ class InwardInventoryForm extends AddForm {
 
       const remainingProducts = dropdownProducts.filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
 
+      const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+      const isBatchTracked = product.productId && product.batchMode && product.batchMode !== 'NONE';
+
       return (
-        <div key={key} className="product-row-container" style={{ marginBottom: '16px', position: 'relative' }}>
-          {!isEditMode && (
-            <IconButton
-              aria-label="close"
-              onClick={() => {
+        <div key={key} style={{
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1.8fr 1fr 90px 130px 130px auto 32px',
+          gap: '0 8px',
+          alignItems: 'start',
+          padding: '8px 12px',
+          background: '#fff',
+          borderBottom: '1px solid #eef0f3',
+        }}>
+          {/* Warehouse */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `warehouse_${key}`,
+              placeholder: "Warehouse",
+              options: this.props.dropdowns?.warehouse || [],
+              value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
+              disableClearable: true,
+              required: true,
+              disabled: isEditMode,
+              getOption: (option) => option?.name || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].warehouseId = value?.id || null;
+                if (value?.id) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
+
+          {/* Product Name */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `productName_${key}`,
+              placeholder: "Product Name",
+              options: remainingProducts,
+              disableClearable: true,
+              required: true,
+              disabled: isEditMode,
+              value: product.selectedProduct || null,
+              getOption: (option) => option?.name || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].productId = value?.id || "";
+                p[key].productCode = value?.productCode || "";
+                p[key].unit = value?.measurementUnit || "";
+                p[key].batchMode = value?.batchMode || 'NONE';
+                p[key].selectedProduct = value;
+                if (value) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
+
+          {/* Product Code */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `productCode_${key}`,
+              placeholder: "Product Code",
+              options: remainingProducts,
+              disableClearable: false,
+              required: true,
+              disabled: isEditMode,
+              value: product.selectedProduct || null,
+              getOption: (option) => option?.productCode || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].productId = value?.id || "";
+                p[key].productCode = value?.productCode || "";
+                p[key].unit = value?.measurementUnit || "";
+                p[key].batchMode = value?.batchMode || 'NONE';
+                p[key].selectedProduct = value;
+                if (value) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
+
+          {/* Unit */}
+          <div>
+            {this.renderTextField({
+              fieldname: `unit_${key}`,
+              placeholder: "Unit",
+              value: product.unit || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Receive Qty */}
+          <div>
+            {this.renderTextField({
+              fieldname: `quantity_${key}`,
+              placeholder: "Receive Qty",
+              type: "number",
+              required: true,
+              skipAdd: true,
+              validation: "nonegative",
+              value: product.quantity,
+              disabled: hasBatchSplits,
+              helperText: hasBatchSplits ? "Qty locked" : undefined,
+              onChange: (value) => {
+                const p = this.state.noproduct;
+                p[key].quantity = parseFloat(value) || 0;
+                this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+              },
+            })}
+          </div>
+
+          {/* Closing Stock — only after qty entered */}
+          <div>
+            {this.renderTextField({
+              fieldname: `closingStock_${key}`,
+              placeholder: "Closing Stock",
+              value: product.productId && product.quantity > 0 ? (this.state.currentStock[product.productId] ?? '') : '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Batch button — only when batch-tracked product selected */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {isBatchTracked && (
+              hasBatchSplits ? (
+                <div>
+                  <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+                    ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
+                  </span>
+                  <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                    style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    {isEditMode ? 'View / Edit' : 'Edit'}
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                  disabled={!product.quantity}
+                  style={{ padding: '5px 12px', background: product.quantity ? '#e3f2fd' : '#f5f5f5', color: product.quantity ? '#1565c0' : '#aaa', border: '1px solid', borderColor: product.quantity ? '#90caf9' : '#ddd', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  {isEditMode ? 'Edit Batches' : 'Set Batches *'}
+                </button>
+              )
+            )}
+          </div>
+
+          {/* Delete button */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {!isEditMode && (
+              <IconButton size="small" onClick={() => {
                 const p = this.state.noproduct;
                 delete p[key];
                 this.setState({ noproduct: { ...p } });
-              }}
-              className="close-icon"
-              disableRipple
-              disableFocusRipple
-              size="small"
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                backgroundColor: 'transparent',
-                padding: '4px',
-                width: '24px',
-                height: '24px',
-                zIndex: 10
-              }}
-            >
-              <CloseIcon style={{ fontSize: '18px' }} />
-            </IconButton>
-          )}
-
-          <div className="product-row-scroll" style={{ overflowX: 'auto', overflowY: 'hidden', paddingRight: '40px', paddingBottom: '20px' }}>
-            <div className="flex product-row" style={{ alignItems: 'center', paddingTop: '16px', display: 'flex', flexWrap: 'nowrap', width: 'fit-content' }}>
-              {/* Warehouse */}
-              <div style={{ width: '200px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `warehouse_${key}`,
-                  placeholder: "Warehouse",
-                  options: this.props.dropdowns?.warehouse || [],
-                  value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
-                  disableClearable: true,
-                  required: true,
-                  disabled: isEditMode,
-                  getOption: (option) => option?.name || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].warehouseId = value?.id || null;
-                    if (value?.id) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
-              </div>
-
-              {/* Product Name */}
-              <div style={{ width: '220px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `productName_${key}`,
-                  placeholder: "Product Name",
-                  options: remainingProducts,
-                  disableClearable: true,
-                  required: true,
-                  disabled: isEditMode,
-                  value: product.selectedProduct || null,
-                  getOption: (option) => option?.name || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].productId = value?.id || "";
-                    p[key].productCode = value?.productCode || "";
-                    p[key].unit = value?.measurementUnit || "";
-                    p[key].batchMode = value?.batchMode || 'NONE';
-                    p[key].selectedProduct = value;
-                    if (value) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
-              </div>
-
-              {/* Product Code */}
-              <div style={{ width: '180px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `productCode_${key}`,
-                  placeholder: "Product Code",
-                  options: remainingProducts,
-                  disableClearable: false,
-                  required: true,
-                  disabled: isEditMode,
-                  value: product.selectedProduct || null,
-                  getOption: (option) => option?.productCode || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].productId = value?.id || "";
-                    p[key].productCode = value?.productCode || "";
-                    p[key].unit = value?.measurementUnit || "";
-                    p[key].batchMode = value?.batchMode || 'NONE';
-                    p[key].selectedProduct = value;
-                    if (value) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
-              </div>
-
-              {/* Measurement Unit */}
-              <div style={{ width: '50px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `unit_${key}`,
-                  placeholder: "Unit",
-                  value: product.unit || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-
-              {/* Quantity */}
-              <div style={{ width: '90px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {(() => {
-                  const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
-                  return this.renderTextField({
-                  fieldname: `quantity_${key}`,
-                  placeholder: "Receive Qty",
-                  type: "number",
-                  required: true,
-                  skipAdd: true,
-                  validation: "nonegative",
-                  value: product.quantity,
-                  disabled: hasBatchSplits,
-                  helperText: hasBatchSplits ? "Qty locked — batches assigned. Delete and recreate to change." : undefined,
-                  onChange: (value) => {
-                    const p = this.state.noproduct;
-                    p[key].quantity = parseFloat(value) || 0;
-                    this.setState({ noproduct: { ...p } }, () => {
-                      this.getCurrentStock(key);
-                    });
-                  },
-                  });
-                })()}
-              </div>
-
-              {/* Closing Stock */}
-              <div style={{ width: '110px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `closingStock_${key}`,
-                  placeholder: "Closing Stock",
-                  type: "number",
-                  value: this.state.currentStock[product.productId] || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-
-              {/* Batch splits — shown in both create and edit mode for batch-tracked products */}
-              {product.batchMode !== 'NONE' && (
-                <div style={{ width: '200px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                  {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>
-                        ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
-                      </span>
-                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
-                        style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 0', textDecoration: 'underline' }}>
-                        {isEditMode ? 'View / Edit Batches' : 'Edit Batches'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
-                        disabled={!product.quantity}
-                        style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
-                        {isEditMode ? 'Edit Batches' : 'Set Batches *'}
-                      </button>
-                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{product.batchMode === 'BATCH_WITH_EXPIRY' ? 'Expiry required' : 'Brand / Lot tracking'}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+              }} style={{ padding: '4px' }}>
+                <CloseIcon style={{ fontSize: '16px', color: '#999' }} />
+              </IconButton>
+            )}
           </div>
-
-          {/* Warning: all products used up */}
-          {productList.length > 0 && remainingProducts.length === 0 && (
-            <div style={{
-              color: '#ff9800',
-              fontSize: '12px',
-              marginTop: '8px',
-              marginBottom: '12px',
-              paddingLeft: '4px'
-            }}>
-              {this.state.isSampleInward
-                ? "All available products have been added."
-                : "All available unmanaged products have been added. Please remove a product from another row to add a different one."}
-            </div>
-          )}
         </div>
       );
     } else {
-      // PO Inward Layout
+      // PO Inward Layout — grid row (same pattern as direct inward)
+      const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+      const isBatchTracked = product.productId && product.batchMode && product.batchMode !== 'NONE';
+
       return (
-        <div key={key} className="product-row-container" style={{ marginBottom: '16px', position: 'relative' }}>
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              const p = this.state.noproduct;
-              delete p[key];
-              this.setState({ noproduct: { ...p } });
-            }}
-            className="close-icon"
-            disableRipple
-            disableFocusRipple
-            size="small"
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              backgroundColor: 'transparent',
-              padding: '4px',
-              width: '24px',
-              height: '24px',
-              zIndex: 10
-            }}
-          >
-            <CloseIcon style={{ fontSize: '18px' }} />
-          </IconButton>
+        <div key={key} style={{
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1.8fr 90px 100px 120px 130px 130px auto 32px',
+          gap: '0 8px',
+          alignItems: 'start',
+          padding: '8px 12px',
+          background: '#fff',
+          borderBottom: '1px solid #eef0f3',
+        }}>
 
-          <div className="product-row-scroll" style={{ overflowX: 'auto', overflowY: 'hidden', paddingRight: '40px', paddingBottom: '20px' }}>
-            <div className="flex product-row" style={{ alignItems: 'center', paddingTop: '16px', flexWrap: 'nowrap', display: 'flex', width: 'fit-content' }}>
-              {/* Warehouse */}
-              <div style={{ width: '200px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `warehouse_${key}`,
-                  placeholder: "Warehouse",
-                  options: this.props.dropdowns?.warehouse || [],
-                  value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
-                  disableClearable: true,
-                  required: true,
-                  getOption: (option) => option?.name || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].warehouseId = value?.id || null;
-                    if (value?.id) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
-              </div>
+          {/* Warehouse */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `warehouse_${key}`,
+              placeholder: "Warehouse",
+              options: this.props.dropdowns?.warehouse || [],
+              value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
+              disableClearable: true,
+              required: true,
+              disabled: isEditMode,
+              getOption: (option) => option?.name || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].warehouseId = value?.id || null;
+                if (value?.id) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
 
-              {/* Product Name - Read Only */}
-              <div style={{ width: '220px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `productName_${key}`,
-                  placeholder: "Product Name",
-                  value: product.productName || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
+          {/* Product Name */}
+          <div>
+            {this.renderTextField({
+              fieldname: `productName_${key}`,
+              placeholder: "Product Name",
+              value: product.productName || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
 
-              {/* PO Quantity - Read Only */}
-              <div style={{ width: '50px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `poQuantity_${key}`,
-                  placeholder: "PO Qty",
-                  type: "number",
-                  value: product.poQuantity || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
+          {/* Unit */}
+          <div>
+            {this.renderTextField({
+              fieldname: `unit_${key}`,
+              placeholder: "Unit",
+              value: product.measurementUnit || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
 
-              {/* Max Allowed - Read Only, always shown for PO-linked inwards */}
-              {product.maxAllowedQuantity != null && (
-                <div style={{ width: '80px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  {this.renderTextField({
-                    fieldname: `maxAllowed_${key}`,
-                    placeholder: "Max Allowed",
-                    type: "number",
-                    value: Math.floor(product.maxAllowedQuantity * 100) / 100,
-                    disabled: true,
-                    skipAdd: true,
-                  })}
-                  <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
-                    {product.tolerancePercent > 0
-                      ? `Max (incl. ${product.tolerancePercent}% tol.)`
-                      : 'Max Allowed (pending)'}
+          {/* PO Qty */}
+          <div>
+            {this.renderTextField({
+              fieldname: `poQuantity_${key}`,
+              placeholder: "PO Qty",
+              type: "number",
+              value: product.poQuantity || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Max Allowed */}
+          <div>
+            {this.renderTextField({
+              fieldname: `maxAllowed_${key}`,
+              placeholder: "Max Allowed",
+              type: "number",
+              value: product.maxAllowedQuantity != null ? Math.floor(product.maxAllowedQuantity * 100) / 100 : '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Receive Qty */}
+          <div>
+            {this.renderTextField({
+              fieldname: `quantity_${key}`,
+              placeholder: "Receive Qty",
+              type: "number",
+              required: true,
+              skipAdd: true,
+              validation: "nonegative",
+              value: product.quantity,
+              disabled: hasBatchSplits,
+              helperText: hasBatchSplits ? "Qty locked" : undefined,
+              error: !hasBatchSplits && product.quantity > 0 && product.maxAllowedQuantity != null && product.quantity > product.maxAllowedQuantity,
+              onChange: (value) => {
+                const p = this.state.noproduct;
+                p[key].quantity = parseFloat(value) || 0;
+                this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+              },
+            })}
+          </div>
+
+          {/* Closing Stock */}
+          <div>
+            {this.renderTextField({
+              fieldname: `closingStock_${key}`,
+              placeholder: "Closing Stock",
+              value: product.quantity > 0 && this.state.currentStock[product.productId] != null
+                ? Math.round(this.state.currentStock[product.productId] * 100) / 100
+                : '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Batch button */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {isBatchTracked && (
+              hasBatchSplits ? (
+                <div>
+                  <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+                    ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
                   </span>
+                  <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                    style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    {isEditMode ? 'View / Edit' : 'Edit'}
+                  </button>
                 </div>
-              )}
+              ) : (
+                <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                  disabled={!product.quantity}
+                  style={{ padding: '5px 12px', background: product.quantity ? '#e3f2fd' : '#f5f5f5', color: product.quantity ? '#1565c0' : '#aaa', border: '1px solid', borderColor: product.quantity ? '#90caf9' : '#ddd', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  {isEditMode ? 'Edit Batches' : 'Set Batches *'}
+                </button>
+              )
+            )}
+          </div>
 
-              {/* Measurement Unit - Read Only */}
-              <div style={{ width: '70px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `unit_${key}`,
-                  placeholder: "Unit",
-                  value: product.measurementUnit || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-
-              {/* Quantity - Editable */}
-              <div style={{ width: '90px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {(() => {
-                  const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
-                  return this.renderTextField({
-                  fieldname: `quantity_${key}`,
-                  placeholder: "Receive Qty",
-                  type: "number",
-                  required: true,
-                  skipAdd: true,
-                  validation: "nonegative",
-                  value: product.quantity,
-                  disabled: hasBatchSplits,
-                  helperText: hasBatchSplits ? "Qty locked — batches assigned. Delete and recreate to change." : undefined,
-                  onChange: (value) => {
-                    const p = this.state.noproduct;
-                    p[key].quantity = parseFloat(value) || 0;
-                    this.setState({ noproduct: { ...p } }, () => {
-                      this.getCurrentStock(key);
-                    });
-                  },
-                  });
-                })()}
-                {product.quantity > product.maxAllowedQuantity && (
-                  <span style={{ fontSize: '10px', color: '#c62828', marginTop: '2px' }}>
-                    {product.tolerancePercent > 0
-                      ? `Exceeds max allowed (${Math.floor(product.maxAllowedQuantity * 100) / 100}). Pending: ${Math.round(product.pendingQuantity * 100) / 100}, Tolerance: ${product.tolerancePercent}%`
-                      : `Exceeds pending qty (${Math.round(product.pendingQuantity * 100) / 100}). No tolerance set.`}
-                  </span>
-                )}
-                {product.tolerancePercent > 0 && product.quantity > product.pendingQuantity && product.quantity <= product.maxAllowedQuantity && (
-                  <span style={{ fontSize: '10px', color: '#2e7d32', marginTop: '2px' }}>
-                    Within {product.tolerancePercent}% tolerance. Max: {Math.floor(product.maxAllowedQuantity * 100) / 100}
-                  </span>
-                )}
-              </div>
-
-              {/* Closing Stock - Read Only */}
-              <div style={{ width: '50px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `closingStock_${key}`,
-                  placeholder: "Closing Stock",
-                  type: "number",
-                  value: this.state.currentStock[product.productId] != null
-                    ? Math.round(this.state.currentStock[product.productId] * 100) / 100
-                    : '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-
-              {/* Batch splits — shown in both create and edit mode for batch-tracked products */}
-              {product.batchMode !== 'NONE' && (
-                <div style={{ width: '200px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                  {product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>
-                        ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
-                      </span>
-                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
-                        style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: '1px 0', textDecoration: 'underline' }}>
-                        {isEditMode ? 'View / Edit Batches' : 'Edit Batches'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      <button type="button" onClick={() => this.openBatchSplitModal(key)}
-                        disabled={!product.quantity}
-                        style={{ padding: '6px 14px', background: '#e3f2fd', color: '#1565c0', border: '1px solid #90caf9', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600 }}>
-                        {isEditMode ? 'Edit Batches' : 'Set Batches *'}
-                      </button>
-                      <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>{product.batchMode === 'BATCH_WITH_EXPIRY' ? 'Expiry required' : 'Brand / Lot tracking'}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Brand fallback (PO edit mode without pre-loaded batches) */}
-              {false && product.batchMode !== 'NONE' && (
-                <>
-                  {/* Brand — only for batch-tracked products in edit mode */}
-                  {product.batchMode !== 'NONE' && (
-                    <div style={{ width: '150px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                      {this.renderTextField({
-                        fieldname: `brand_${key}`,
-                        placeholder: "Identifier (optional)",
-                        skipAdd: true,
-                        value: product.brand || '',
-                        onChange: (value) => {
-                          const p = this.state.noproduct;
-                          p[key].brand = value;
-                          this.setState({ noproduct: { ...p } });
-                        },
-                      })}
-                    </div>
-                  )}
-                  {/* Expiry Date — only for BATCH_WITH_EXPIRY products in edit mode */}
-                  {product.batchMode === 'BATCH_WITH_EXPIRY' && (
-                    <div style={{ width: '170px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                      {this.renderDate({
-                        fieldname: `expiryDate_${key}`,
-                        label: isEditMode ? "New Expiry Date" : "Expiry Date",
-                        value: product.expiryDate || null,
-                        onChange: () => {
-                          const p = this.state.noproduct;
-                          p[key].expiryDate = this.formData[`expiryDate_${key}`];
-                          this.setState({ noproduct: { ...p } });
-                        },
-                      })}
-                      {isEditMode && (
-                        <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>Required if increasing qty</span>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+          {/* Delete */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {!isEditMode && (
+              <IconButton size="small" onClick={() => {
+                const p = this.state.noproduct;
+                delete p[key];
+                this.setState({ noproduct: { ...p } });
+              }} style={{ padding: '4px' }}>
+                <CloseIcon style={{ fontSize: '16px', color: '#999' }} />
+              </IconButton>
+            )}
           </div>
         </div>
       );
@@ -1676,8 +1568,20 @@ class InwardInventoryForm extends AddForm {
                         {noProductsMessage}
                       </div>
                     )}
-                    {Object.keys(this.state.noproduct).map((key) =>
-                      this.renderProduct(key)
+                    {this.state.isDirectInward && Object.keys(this.state.noproduct).length > 0 && (
+                      <div style={{ border: '1px solid #dde3ea', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
+                        {/* Table rows */}
+                        {Object.keys(this.state.noproduct).map((key) =>
+                          this.renderProduct(key)
+                        )}
+                      </div>
+                    )}
+                    {!this.state.isDirectInward && Object.keys(this.state.noproduct).length > 0 && (
+                      <div style={{ border: '1px solid #dde3ea', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
+                        {Object.keys(this.state.noproduct).map((key) =>
+                          this.renderProduct(key)
+                        )}
+                      </div>
                     )}
                     {this.state.isDirectInward && !this.state.isEditMode && this.renderProductAddButton()}
                   </div>
