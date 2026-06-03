@@ -48,6 +48,8 @@ class Add extends AddForm {
     showBatchOverride: {},
     // All available batches per product key (loaded when override is toggled on)
     allBatches: {},
+    // Products where preview returned empty despite being batch-tracked (needs split before transfer)
+    batchBlockedKeys: {},
   };
   _isMounted = false;
   key = 1;
@@ -213,7 +215,9 @@ class Add extends AddForm {
     if (!productId || !fromWarehouseId || !fromProjectId || !qty || qty <= 0) {
       const batchPreviews = { ...this.state.batchPreviews };
       delete batchPreviews[key];
-      this.setState({ batchPreviews });
+      const batchBlockedKeys = { ...this.state.batchBlockedKeys };
+      delete batchBlockedKeys[key];
+      this.setState({ batchPreviews, batchBlockedKeys });
       return;
     }
     try {
@@ -228,7 +232,10 @@ class Add extends AddForm {
       if (response.success && Array.isArray(response.data)) {
         const batchPreviews = { ...this.state.batchPreviews };
         batchPreviews[key] = response.data;
-        this.setState({ batchPreviews });
+        const batchBlockedKeys = { ...this.state.batchBlockedKeys };
+        // Empty preview = batch-tracked product with no batches split yet
+        batchBlockedKeys[key] = response.data.length === 0;
+        this.setState({ batchPreviews, batchBlockedKeys });
       }
     } catch (e) {
       // silently fail — batch preview is informational
@@ -434,6 +441,10 @@ class Add extends AddForm {
 
               // Validate stock when quantity is entered
               if (value && p[key].productId && this.formData.fromWarehouseId) {
+                // Reset override mode when qty changes
+                const showBatchOverride = { ...this.state.showBatchOverride };
+                delete showBatchOverride[key];
+                this.setState({ showBatchOverride });
                 await this.validateStockForProduct(key, p[key].productId, parseFloat(value) || 0);
                 await this.fetchBatchPreview(key, p[key].productId, parseFloat(value) || 0);
               } else {
@@ -451,6 +462,13 @@ class Add extends AddForm {
             value: this.state.products[key]?.measurementUnit || "",
           })}
         </div>
+
+        {/* Batch blocked warning — batch-tracked but no batches split yet */}
+        {this.state.batchBlockedKeys[key] && (
+          <div style={{ marginTop: 8, padding: "8px 12px", background: "#fff3e0", borderRadius: 4, color: "#e65100", fontSize: 12 }}>
+            ⚠ This product is batch-tracked but has no batches in the source warehouse. Go to <strong>Stock → Batches tab</strong> and split existing stock into batches before transferring.
+          </div>
+        )}
 
         {/* Batch preview — only shown when batch-tracked product has preview data */}
         {batchPreview.length > 0 && (
@@ -501,7 +519,8 @@ class Add extends AddForm {
                 </thead>
                 <tbody>
                   {batchPreview.map((b, idx) => {
-                    const label = [b.brand, b.lotNumber, b.expiryDate ? b.expiryDate : null]
+                    const fmtDate = (d) => { if (!d) return null; if (/^\d{2}-\d{2}-\d{4}$/.test(String(d))) return d; try { const dt = new Date(d); if (isNaN(dt.getTime())) return d; return `${String(dt.getDate()).padStart(2,'0')}-${String(dt.getMonth()+1).padStart(2,'0')}-${dt.getFullYear()}`; } catch(e) { return d; } };
+                    const label = [b.brand, b.lotNumber, b.expiryDate ? fmtDate(b.expiryDate) : null]
                       .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
                     return (
                       <tr key={idx}>
@@ -521,17 +540,19 @@ class Add extends AddForm {
                   Enter specific batch quantities. Total must equal transfer quantity.
                 </div>
                 {(this.state.allBatches[key] || batchPreview).map((b, idx) => {
-                  const label = [b.brand, b.lotNumber, b.expiryDate ? b.expiryDate : null]
+                  const fmtDate = (d) => { if (!d) return null; if (/^\d{2}-\d{2}-\d{4}$/.test(String(d))) return d; try { const dt = new Date(d); if (isNaN(dt.getTime())) return d; return `${String(dt.getDate()).padStart(2,'0')}-${String(dt.getMonth()+1).padStart(2,'0')}-${dt.getFullYear()}`; } catch(e) { return d; } };
+                  const avail = b.qtyRemaining != null ? b.qtyRemaining : b.qtyAvailable;
+                  const label = [b.brand, b.lotNumber, b.expiryDate ? fmtDate(b.expiryDate) : null]
                     .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
                   const overrides = this.state.products[key]?.overrideBatches || [];
                   const entry = overrides.find((e) => e.batchId === b.batchId);
                   return (
                     <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, flex: 1 }}>{label} (avail: {b.qtyAvailable})</span>
+                      <span style={{ fontSize: 12, flex: 1 }}>{label} (avail: {avail})</span>
                       <input
                         type="number"
                         min="0"
-                        max={b.qtyAvailable}
+                        max={avail}
                         step="any"
                         placeholder="Qty"
                         value={entry?.qty || ""}
@@ -651,6 +672,19 @@ class Add extends AddForm {
         });
         return;
       }
+    }
+
+    // Block if any batch-tracked product has no batches split yet
+    const blockedKeys = Object.entries(this.state.batchBlockedKeys)
+      .filter(([, blocked]) => blocked)
+      .map(([k]) => k);
+    if (blockedKeys.length > 0) {
+      const names = blockedKeys.map((k) => this.state.products[k]?.productName || `Product ${k}`).join(", ");
+      this.props.enqueueSnackbar(
+        `Cannot transfer: ${names} is batch-tracked but has no batches in the source warehouse. Go to Stock → Batches tab and split existing stock into batches first.`,
+        { variant: "error", autoHideDuration: 8000 }
+      );
+      return;
     }
 
     // Transform products data to match API payload structure

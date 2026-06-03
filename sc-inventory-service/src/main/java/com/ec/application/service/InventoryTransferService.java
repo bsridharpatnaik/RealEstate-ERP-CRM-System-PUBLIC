@@ -47,6 +47,7 @@ public class InventoryTransferService {
     private final InventoryTransferMapper inventoryTransferMapper;
     private final PopulateDropdownService populateDropdownService;
     private final InventoryBatchRepository inventoryBatchRepository;
+    private final BatchTrackingService batchTrackingService;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -111,7 +112,7 @@ public class InventoryTransferService {
                     });
                     withTenant(targetTenant, () -> {
                         createTargetBatchesForTransfer(
-                                item.getProductId(), targetWarehouse.getWarehouseId(), transferredBatches);
+                                item.getProductId(), targetWarehouse.getWarehouseId(), transferredBatches, sourceProduct);
                         return null;
                     });
 
@@ -402,12 +403,13 @@ public class InventoryTransferService {
     }
 
     private void createTargetBatchesForTransfer(
-            Long productId, Long targetWarehouseId, List<TransferredBatchData> transferredBatches) {
+            Long productId, Long targetWarehouseId, List<TransferredBatchData> transferredBatches,
+            Product product) {
 
         for (TransferredBatchData td : transferredBatches) {
             InventoryBatch targetBatch = new InventoryBatch();
             targetBatch.setInwardId(0L); // sentinel: transfer-origin batch
-            targetBatch.setProduct(productRepo.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId)));
+            targetBatch.setProduct(product);
             targetBatch.setWarehouse(warehouseRepo.findById(targetWarehouseId).orElseThrow(() -> new IllegalArgumentException("Warehouse not found: " + targetWarehouseId)));
             targetBatch.setBrand(td.brand);
             targetBatch.setLotNumber(td.lotNumber);
@@ -447,26 +449,27 @@ public class InventoryTransferService {
             String sourceTenant, Long productId, Long sourceWarehouseId, Double qty,
             List<BatchOverrideEntry> overrideBatches) throws Exception {
 
-        return withTenant(sourceTenant, () -> {
-            com.ec.application.model.Product product;
-            try {
-                ThreadLocalStorage.setTenantName(masterSchema);
-                product = productRepo.findById(productId).orElse(null);
-            } finally {
-                ThreadLocalStorage.setTenantName(sourceTenant);
-            }
+        // Fetch product from master schema before switching tenant — avoids connection reuse issue
+        // with AbstractRoutingDataSource (connection bound at masterschema would be reused for batch query)
+        com.ec.application.model.Product product;
+        try {
+            ThreadLocalStorage.setTenantName(masterSchema);
+            product = productRepo.findById(productId).orElse(null);
+        } finally {
+            ThreadLocalStorage.setTenantName(null);
+        }
+        final boolean useExpiry = product != null && product.requiresExpiry();
 
+        return withTenant(sourceTenant, () -> {
             List<InventoryBatch> batches;
             if (overrideBatches != null && !overrideBatches.isEmpty()) {
-                batches = new ArrayList<>();
-                for (BatchOverrideEntry entry : overrideBatches) {
-                    inventoryBatchRepository.findById(entry.getBatchId()).ifPresent(batches::add);
-                }
+                List<Long> ids = overrideBatches.stream()
+                        .filter(e -> e.getBatchId() != null)
+                        .map(BatchOverrideEntry::getBatchId)
+                        .collect(java.util.stream.Collectors.toList());
+                batches = batchTrackingService.fetchBatchesByIdsNewTx(ids);
             } else {
-                boolean useExpiry = product != null && product.requiresExpiry();
-                batches = useExpiry
-                        ? inventoryBatchRepository.findAvailableBatchesFifoOrder(productId, sourceWarehouseId)
-                        : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceived(productId, sourceWarehouseId);
+                batches = batchTrackingService.fetchAvailableBatchesNewTx(productId, sourceWarehouseId, useExpiry);
             }
 
             List<Map<String, Object>> result = new ArrayList<>();

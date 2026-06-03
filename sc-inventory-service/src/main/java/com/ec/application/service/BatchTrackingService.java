@@ -137,6 +137,27 @@ public class BatchTrackingService {
         return savedWriteOff;
     }
 
+    /**
+     * Fetch available batches in FIFO/FEFO order using a REQUIRES_NEW transaction.
+     * Called from InventoryTransferService inside withTenant() — REQUIRES_NEW forces a fresh
+     * connection from the routing datasource instead of reusing any already-bound connection.
+     */
+    @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public List<InventoryBatch> fetchAvailableBatchesNewTx(Long productId, Long warehouseId, boolean useExpiry) {
+        return useExpiry
+                ? inventoryBatchRepository.findAvailableBatchesFifoOrder(productId, warehouseId)
+                : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceived(productId, warehouseId);
+    }
+
+    @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    public List<InventoryBatch> fetchBatchesByIdsNewTx(List<Long> batchIds) {
+        List<InventoryBatch> result = new java.util.ArrayList<>();
+        for (Long id : batchIds) {
+            inventoryBatchRepository.findById(id).ifPresent(result::add);
+        }
+        return result;
+    }
+
     public List<InventoryBatch> getBatchesForProduct(Long productId, Long warehouseId) {
         List<InventoryBatch> batches = warehouseId != null
                 ? inventoryBatchRepository.findAllBatchesForProduct(productId, warehouseId)
