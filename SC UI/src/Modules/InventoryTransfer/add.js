@@ -166,11 +166,8 @@ class Add extends AddForm {
       const customAxios = axios.create({
         baseURL: process.env.REACT_APP_BASE_URL,
       });
-      const store = require("./../../index").store;
-      const state = store.getState();
-
       const response = await customAxios.get(
-        apiEndpoints.getInventoryTransferCurrentStock + `tenant=${state.tennant.tennant_id}&productId=${productId}&warehouseId=${this.formData.fromWarehouseId}`,
+        apiEndpoints.getInventoryTransferCurrentStock + `tenant=${this.formData.fromProjectId}&productId=${productId}&warehouseId=${this.formData.fromWarehouseId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

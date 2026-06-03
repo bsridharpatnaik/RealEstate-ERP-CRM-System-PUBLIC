@@ -163,6 +163,51 @@ class Details extends CommonDetails {
                 </tr>
               </tbody>
             </table>
+
+            {(data.batchEntriesJson || data.batch) && (() => {
+              let batchRows = [];
+              if (data.batchEntriesJson) {
+                try { batchRows = JSON.parse(data.batchEntriesJson); } catch(e) {}
+              } else if (data.batch) {
+                batchRows = [{
+                  batchId: data.batch.batchId,
+                  brand: data.batch.brand,
+                  lotNumber: data.batch.lotNumber,
+                  expiryDate: data.batch.expiryDate,
+                  qty: data.quantity
+                }];
+              }
+              if (!batchRows.length) return null;
+              return (
+                <>
+                  <div style={{ marginTop: '16px', fontWeight: 600, fontSize: '14px' }}>
+                    Batch Details
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Batch #</th>
+                        <th>Brand</th>
+                        <th>Lot No</th>
+                        <th>Expiry Date</th>
+                        <th>Qty</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batchRows.map((row, i) => (
+                        <tr key={i}>
+                          <td>{row.batchId}</td>
+                          <td>{row.brand || '-'}</td>
+                          <td>{row.lotNumber || '-'}</td>
+                          <td>{row.expiryDate || '-'}</td>
+                          <td>{row.qty}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              );
+            })()}
           </div>
         </TabPanel>
       </div>

@@ -136,7 +136,16 @@ public class LostDamagedInventoryService {
                     }
                     batch.setQtyRemaining(batch.getQtyRemaining() - entry.getQty());
                     inventoryBatchRepository.save(batch);
-                    saved.add(entry);
+                    BatchOverrideEntry enriched = new BatchOverrideEntry();
+                    enriched.setBatchId(entry.getBatchId());
+                    enriched.setQty(entry.getQty());
+                    enriched.setBrand(batch.getBrand());
+                    enriched.setLotNumber(batch.getLotNumber());
+                    if (batch.getExpiryDate() != null) {
+                        enriched.setExpiryDate(
+                            new java.text.SimpleDateFormat("dd-MM-yyyy").format(batch.getExpiryDate()));
+                    }
+                    saved.add(enriched);
                     if (firstBatch == null) firstBatch = batch;
                 }
                 try {
@@ -177,7 +186,16 @@ public class LostDamagedInventoryService {
                             .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
                     batch.setQtyRemaining(batch.getQtyRemaining() + entry.getQty());
                     inventoryBatchRepository.save(batch);
-                    saved.add(entry);
+                    BatchOverrideEntry enriched = new BatchOverrideEntry();
+                    enriched.setBatchId(entry.getBatchId());
+                    enriched.setQty(entry.getQty());
+                    enriched.setBrand(batch.getBrand());
+                    enriched.setLotNumber(batch.getLotNumber());
+                    if (batch.getExpiryDate() != null) {
+                        enriched.setExpiryDate(
+                            new java.text.SimpleDateFormat("dd-MM-yyyy").format(batch.getExpiryDate()));
+                    }
+                    saved.add(enriched);
                     if (firstBatch == null) firstBatch = batch;
                 }
                 try {

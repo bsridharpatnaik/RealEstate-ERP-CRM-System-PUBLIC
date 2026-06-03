@@ -5,6 +5,12 @@ import { connect } from "react-redux";
 //third party
 import { withSnackbar } from "notistack";
 import EditForm from "./../../Shared/EditForm";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogActions from "@material-ui/core/DialogActions";
+import Button from "@material-ui/core/Button";
 //misc
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
@@ -39,6 +45,7 @@ class Edit extends EditForm {
     batchMode: "NONE",
     originalBatchMode: "NONE",
     batchModeChanged: false,
+    batchModeConfirmOpen: false,
     categories: [],
     // Tenant reorder overrides
     tenantConfigs: [],
@@ -196,26 +203,47 @@ class Edit extends EditForm {
     }
 
     if (this.state.batchModeChanged) {
-      const confirmed = window.confirm(
-        "Warning: Changing the batch tracking mode for an existing product may cause inconsistencies with existing inventory.\n\n" +
-          "Existing stock without batch data will remain untracked, and FIFO ordering may be affected for in-progress batches.\n\n" +
-          "Are you sure you want to continue?"
-      );
-      if (!confirmed) return;
+      this.setState({ batchModeConfirmOpen: true });
+      return;
     }
 
-    this.setState({ isUpdating: true });
+    this.doUpdate();
+  }
 
-    // Save product + overrides in parallel
+  async doUpdate() {
+    this.setState({ batchModeConfirmOpen: false, isUpdating: true });
     const [response] = await Promise.all([
       API.PUT(this.updateUrl, this.formData),
       this.state.tenantConfigsLoaded && this.state.tenantConfigs.length > 0
         ? this.saveTenantConfigs({ showSuccess: false })
         : Promise.resolve(),
     ]);
-
     this.showToaster(response);
     this.setState({ isUpdating: false });
+  }
+
+  renderBatchModeConfirmDialog() {
+    return (
+      <Dialog open={this.state.batchModeConfirmOpen} onClose={() => this.setState({ batchModeConfirmOpen: false })}>
+        <DialogTitle>Change Batch Tracking Mode?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Changing the batch tracking mode for an existing product may cause inconsistencies with existing inventory.
+          </DialogContentText>
+          <DialogContentText style={{ marginTop: 8 }}>
+            Existing stock without batch data will remain untracked, and FIFO ordering may be affected for in-progress batches.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => this.setState({ batchModeConfirmOpen: false })} color="default">
+            Cancel
+          </Button>
+          <Button onClick={() => this.doUpdate()} color="primary" variant="contained">
+            Continue
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
   }
 
   renderBatchModeCards() {
@@ -516,6 +544,7 @@ class Edit extends EditForm {
   render() {
     return (
       <div className="list-section add">
+        {this.renderBatchModeConfirmDialog()}
         {this.renderHeading()}
         {this.state.isLoaded && this.state.categoriesLoaded && (
           <form onSubmit={(e) => this.update(e)}>
