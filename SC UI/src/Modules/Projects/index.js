@@ -26,7 +26,8 @@ class Project extends Component {
     mnglmcity:"/mangalam.png",
     mhvrtrdcntr:"/mhvrtrdcntr.jpg",
     mgrental:"/mgrental.jpeg",
-    dextension: "/dextension.png"
+    dextension: "/dextension.png",
+    bextension: "/bextension.png"
 
   };
   async componentDidMount() {
