@@ -56,6 +56,14 @@ public class ActivityLogGlobalSyncOrchestrator {
                     log.error("Activity log sync failed for tenant {}", tenant, e);
                 }
             }
+            // Sync master schema — captures logs for global entities (Products, etc.)
+            try {
+                String masterSchema = schemaConfig.getMasterSchema();
+                log.info("Starting activity log sync for master schema {}", masterSchema);
+                syncService.syncSingleTenant(masterSchema);
+            } catch (Exception e) {
+                log.error("Activity log sync failed for master schema", e);
+            }
             ThreadLocalStorage.setTenantName(schemaConfig.getMasterSchema());
             job.setLastStatus("SUCCESS");
             job.setLastEndTime(new Date());

@@ -351,12 +351,12 @@ function SideMenu(props) {
                     labelText={messages.common.role}
                     linkurl={appendURL("/role")}
                   /> */}
-                    {username === 'sridhar' && <DashboardItem
+                    <DashboardItem
                       nodeId="54"
                       labelText="Activity Log"
                       onClick={props.setSideBarValue}
                       linkurl={appendURL(appRoutes.projectActivityLog)}
-                    />}
+                    />
                   </DashboardItem>
                 )}
                 {isCRM && (
@@ -533,12 +533,12 @@ function SideMenu(props) {
   onClick={props.setSideBarValue}
   linkurl={appRoutes.productMerge}
 />}
-    {username === 'sridhar' && <DashboardItem
+    <DashboardItem
   nodeId="53"
   labelText="Activity Log"
   onClick={props.setSideBarValue}
   linkurl={appRoutes.activityLog}
-/>}
+/>
   </DashboardItem>
 )}
             <DashboardItem

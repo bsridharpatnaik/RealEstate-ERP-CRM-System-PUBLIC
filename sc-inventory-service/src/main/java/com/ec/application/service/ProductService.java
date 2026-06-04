@@ -199,7 +199,19 @@ public class ProductService {
         checkBatchModeChangeAllowed(product.getProductId(), existingBatchMode, newBatchMode);
         product.setBatchMode(newBatchMode);
 
-        return productRepo.save(product);
+        Product saved = productRepo.save(product);
+
+        try {
+            String user = resolveCurrentUser();
+            String desc = "{\"summary\": \"Product '" + saved.getProductName() + "' updated by " + user
+                    + "\", \"items\": [{\"field\": \"Batch Tracking\", \"oldValue\": \"" + existingBatchMode
+                    + "\", \"newValue\": \"" + newBatchMode + "\"}]}";
+            activityLogService.record("UPDATED", "PRODUCT", String.valueOf(saved.getProductId()), desc, user);
+        } catch (Exception e) {
+            log.warn("Failed to record activity log for product update: {}", e.getMessage());
+        }
+
+        return saved;
     }
 
     public Product findSingleProduct(Long id) throws Exception {
