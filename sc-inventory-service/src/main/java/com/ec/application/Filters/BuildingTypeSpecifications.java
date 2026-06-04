@@ -1,24 +1,30 @@
 package com.ec.application.Filters;
 
-import java.util.List;
-
-import org.springframework.data.jpa.domain.Specification;
-
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.model.BuildingType;
 import com.ec.application.model.BuildingType_;
+import org.springframework.data.jpa.domain.Specification;
 
-public final class BuildingTypeSpecifications
-{
-	static SpecificationsBuilder<BuildingType> specbldr = new SpecificationsBuilder<BuildingType>();
+import java.util.List;
 
-	public static Specification<BuildingType> getSpecification(FilterDataList filterDataList)
-	{
-		List<String> buildingTypeNames = specbldr.fetchValueFromFilterList(filterDataList, "name");
-		Specification<BuildingType> finalSpec = null;
-		if (buildingTypeNames != null && buildingTypeNames.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(BuildingType_.TYPE_NAME, buildingTypeNames));
-		return finalSpec;
-	}
+public final class BuildingTypeSpecifications {
+
+    private static final SpecificationsBuilder<BuildingType> specbldr = new SpecificationsBuilder<>();
+
+    public static Specification<BuildingType> getSpecification(FilterDataList filterDataList) {
+        List<String> names = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "name");
+
+        Specification<BuildingType> spec = null;
+        if (notEmpty(names))
+            spec = and(spec, specbldr.whereDirectFieldContains(BuildingType_.TYPE_NAME, names));
+        return spec;
+    }
+
+    private static <T> Specification<T> and(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.and(next);
+    }
+
+    private static boolean notEmpty(List<?> list) {
+        return list != null && !list.isEmpty();
+    }
 }

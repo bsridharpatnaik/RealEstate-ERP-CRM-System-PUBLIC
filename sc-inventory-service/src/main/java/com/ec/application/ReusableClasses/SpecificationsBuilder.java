@@ -1,9 +1,7 @@
 package com.ec.application.ReusableClasses;
 
-
 import javax.persistence.criteria.*;
 
-import com.ec.application.constants.POStatusConstants;
 import com.ec.application.constants.ProjectConstants;
 import com.ec.application.model.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,350 +15,172 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Generic reusable predicates for simple field-level filtering.
+ * Complex multi-join or EXISTS-based filters belong in the individual Specification classes.
+ */
 public class SpecificationsBuilder<T> {
 
     String dateFormat = ProjectConstants.dateFormat;
-    // #######################################//
-    // Level 0 //
-    // #######################################//
+
+    // ── Direct field predicates ──────────────────────────────────────────────
 
     public Specification<T> whereDirectFieldContains(String key, List<String> names) {
-        Specification<T> finalSpec = null;
+        Specification<T> spec = null;
         for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .like(root.get(key), "%" + name + "%");
-            finalSpec = specOrCondition(finalSpec, internalSpec);
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.like(root.get(key), "%" + name + "%"));
         }
-        return finalSpec;
+        return spec;
     }
 
+    /** Note: method name kept as-is for backward compatibility with existing callers. */
     public Specification<T> whereDirectBoleanFieldEquals(String key, List<String> names) {
-        Specification<T> finalSpec = null;
+        Specification<T> spec = null;
         for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .equal(root.get(key), Boolean.parseBoolean(name));
-            finalSpec = specOrCondition(finalSpec, internalSpec);
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.equal(root.get(key), Boolean.parseBoolean(name)));
         }
-        return finalSpec;
+        return spec;
     }
 
     public Specification<T> whereDirectFieldEquals(String key, List<String> names) {
-        Specification<T> finalSpec = null;
+        Specification<T> spec = null;
         for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .equal(root.get(key), name);
-            finalSpec = specOrCondition(finalSpec, internalSpec);
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.equal(root.get(key), name));
         }
-        return finalSpec;
+        return spec;
     }
 
     public Specification<T> whereDirectFieldDateGreaterThan(String key, List<String> startDates) throws ParseException {
         Date startDate = ReusableMethods.atStartOfDay(new SimpleDateFormat(dateFormat).parse(startDates.get(0)));
-        Specification<T> finalSpec = null;
-        Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                .greaterThanOrEqualTo(root.get(key), startDate);
-        finalSpec = specOrCondition(finalSpec, internalSpec);
-        return finalSpec;
+        return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get(key), startDate);
     }
-
-    public Specification<T> whereDirectFieldLongBetween(String key, Long lowerLimit, Long upperLimit)
-            throws ParseException {
-
-        Specification<T> finalSpec = null;
-        Specification<T> internalSpec1 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                .lessThanOrEqualTo(root.get(key), lowerLimit);
-        Specification<T> internalSpec2 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                .greaterThanOrEqualTo(root.get(key), upperLimit);
-        finalSpec = specAndCondition(internalSpec1, internalSpec2);
-        return finalSpec;
-    }
-
-//    public Specification<T> whereDirectFieldDoubleBetween(String key, Double lowerLimit, Double upperLimit)
-//            throws ParseException {
-//
-//        Specification<T> finalSpec = null;
-//        Specification<T> internalSpec1 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-//                .lessThanOrEqualTo(root.get(key), upperLimit);
-//        Specification<T> internalSpec2 = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-//                .greaterThanOrEqualTo(root.get(key), lowerLimit);
-//        finalSpec = specAndCondition(internalSpec1, internalSpec2);
-//        return finalSpec;
-//    }
-//    
 
     public Specification<T> whereDirectFieldDateLessThan(String key, List<String> endDates) throws ParseException {
-        Date startDate = ReusableMethods.atEndOfDay(new SimpleDateFormat(dateFormat).parse(endDates.get(0)));
-        Specification<T> finalSpec = null;
-        Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                .lessThanOrEqualTo(root.get(key), startDate);
-        finalSpec = specOrCondition(finalSpec, internalSpec);
-        return finalSpec;
+        Date endDate = ReusableMethods.atEndOfDay(new SimpleDateFormat(dateFormat).parse(endDates.get(0)));
+        return (root, query, cb) -> cb.lessThanOrEqualTo(root.get(key), endDate);
     }
 
     public Specification<T> whereDirectFieldDoubleGreaterThan(String key, Double value) {
-        Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                .greaterThan(root.get(key), value);
-        return internalSpec;
+        return (root, query, cb) -> cb.greaterThan(root.get(key), value);
     }
 
     public Specification<T> whereDirectFieldLongFieldContains(String key, List<String> names) {
-        Specification<T> finalSpec = null;
+        Specification<T> spec = null;
         for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .equal(root.get(key), Long.parseLong(name));
-            finalSpec = specOrCondition(finalSpec, internalSpec);
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.equal(root.get(key), Long.parseLong(name)));
         }
-        return finalSpec;
+        return spec;
     }
 
-    // #######################################//
-    // Level 1 //
-    // #######################################//
-
-    public Specification<T> whereChildFieldContains(String childTable, String childFiledName, List<String> names) {
-        Specification<T> finalSpec = null;
-        for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .like(root.get(childTable).get(childFiledName), "%" + name + "%");
-            finalSpec = specOrCondition(finalSpec, internalSpec);
-        }
-        return finalSpec;
+    public Specification<T> whereDirectFieldLongBetween(String key, Long lowerLimit, Long upperLimit) {
+        return specAndCondition(
+            (root, query, cb) -> cb.lessThanOrEqualTo(root.get(key), lowerLimit),
+            (root, query, cb) -> cb.greaterThanOrEqualTo(root.get(key), upperLimit)
+        );
     }
 
-    public Specification<T> whereChildFieldEquals(String childTable, String childFiledName, List<String> names) {
-        Specification<T> finalSpec = null;
+    // ── ManyToOne path navigation (no collection join — no fan-out risk) ─────
+
+    public Specification<T> whereChildFieldContains(String childField, String grandChildField, List<String> names) {
+        Specification<T> spec = null;
         for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .equal(root.get(childTable).get(childFiledName), name);
-            finalSpec = specOrCondition(finalSpec, internalSpec);
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.like(root.get(childField).get(grandChildField), "%" + name + "%"));
         }
-        return finalSpec;
+        return spec;
     }
 
-    // #######################################//
-    // Level 2 //
-    // #######################################//
-
-    public Specification<T> whereGrandChildFieldContains(String childTable, String grandChildTable,
-                                                         String grandChildFiledName, List<String> names) {
-        Specification<T> finalSpec = null;
+    public Specification<T> whereChildFieldEquals(String childField, String grandChildField, List<String> names) {
+        Specification<T> spec = null;
         for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .like(root.get(childTable).get(grandChildTable).get(grandChildFiledName), "%" + name + "%");
-            finalSpec = specOrCondition(finalSpec, internalSpec);
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.equal(root.get(childField).get(grandChildField), name));
         }
-        return finalSpec;
+        return spec;
     }
 
-    public Specification<T> whereChildFieldListContains(String childTableName, String gcTable, String fieldName,
-                                                        List<String> names) {
-        Specification<T> finalSpec = null;
+    public Specification<T> whereGrandChildFieldContains(String childField, String grandChildField,
+                                                          String ggcField, List<String> names) {
+        Specification<T> spec = null;
         for (String name : names) {
-            Specification<T> internalSpec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> cb
-                    .like(root.join(childTableName).join(gcTable).get(fieldName), "%" + name + "%");
-            finalSpec = specOrCondition(finalSpec, internalSpec);
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.like(root.get(childField).get(grandChildField).get(ggcField), "%" + name + "%"));
         }
-        return finalSpec;
+        return spec;
+    }
+
+    // ── Collection JOIN predicates (kept for Inward/Outward specs) ───────────
+    // These use INNER JOIN on a collection — callers must ensure DISTINCT is applied
+    // on the outer query if fan-out is possible.
+
+    public Specification<T> whereProductContains(List<String> productNames, String joinTable) {
+        return (root, query, cb) -> {
+            query.distinct(true);
+            Join<T, InwardOutwardList> items = root.join(joinTable);
+            Join<InwardOutwardList, Product> product = items.join(InwardOutwardList_.PRODUCT);
+            return product.get(Product_.PRODUCT_NAME).in(productNames);
+        };
     }
 
     public Specification<T> whereCategoryContains(List<String> categoryNames, String joinTable) {
-
-        return (root, query, cb) ->
-        {
-
-            Join<T, InwardOutwardList> ioList = root.join(joinTable);
-            Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
-            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
+        return (root, query, cb) -> {
             query.distinct(true);
-            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
-            Predicate parentPredicate = parentExpression.in(categoryNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
+            Join<T, InwardOutwardList> items = root.join(joinTable);
+            Join<InwardOutwardList, Product> product = items.join(InwardOutwardList_.PRODUCT);
+            Join<Product, Category> category = product.join(Product_.CATEGORY);
+            return category.get(Category_.CATEGORY_NAME).in(categoryNames);
         };
     }
 
     public Specification<T> whereWarehouseContains(List<String> warehouseNames, String joinTable) {
-
-        return (root, query, cb) ->
-        {
-
-            Join<T, InwardOutwardList> ioList = root.join(joinTable);
-            Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
-            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
-            query.distinct(true);
-            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
-            Predicate parentPredicate = parentExpression.in(warehouseNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
-        };
-    }
-
-    public Specification<T> whereIndentCategoryContains(List<String> categoryNames, String joinTable) {
-
-        return (root, query, cb) ->
-        {
-
-            Join<T, InwardOutwardList> ioList = root.join(joinTable);
-            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
-            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
-            query.distinct(true);
-            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
-            Predicate parentPredicate = parentExpression.in(categoryNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
-        };
-    }
-
-    public Specification<T> whereProductContains(List<String> productNames, String joinTable) {
-        return (root, query, cb) ->
-        {
-
-            Join<T, InwardOutwardList> ioList = root.join(joinTable);
-            Join<InwardOutwardList, Product> productList = ioList.join(InwardOutwardList_.PRODUCT);
-            query.distinct(true);
-            Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
-            Predicate parentPredicate = parentExpression.in(productNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
-        };
-    }
-
-    public Specification<T> wherePurchanseOrderContainsProductName(List<String> productNames, String joinTable) {
-        return (root, query, cb) ->
-        {
-
-            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
-            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
-            query.distinct(true);
-            Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
-            return parentExpression.in(productNames);
-        };
-    }
-
-    public Specification<T> wherePurchanseOrderContainsProductCode(List<String> productNames, String joinTable) {
-        return (root, query, cb) ->
-        {
-
-            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
-            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
-            query.distinct(true);
-            Expression<String> parentExpression = productList.get(Product_.PRODUCT_CODE);
-            return parentExpression.in(productNames);
-        };
-    }
-
-    public Specification<T> wherePurchaseOrderCategoryContains(List<String> categoryNames, String joinTable) {
-
-        return (root, query, cb) ->
-        {
-            Join<T, PurchaseOrderLine> ioList = root.join(joinTable);
-            Join<PurchaseOrderLine, Product> productList = ioList.join(PurchaseOrderLine_.PRODUCT);
-            Join<Product, Category> categoryList = productList.join(Product_.CATEGORY);
-            query.distinct(true);
-            Expression<String> parentExpression = categoryList.get(Category_.categoryName);
-            return parentExpression.in(categoryNames);
-        };
-    }
-
-    public Specification<T> whereIndentContainsProductName(List<String> productNames, String joinTable) {
-
-        return (root, query, cb) ->
-        {
-
-            Join<T, InwardOutwardList> ioList = root.join(joinTable);
-            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
-            query.distinct(true);
-            Expression<String> parentExpression = productList.get(Product_.PRODUCT_NAME);
-            Predicate parentPredicate = parentExpression.in(productNames);
-            query.where(parentPredicate);
-            return query.getRestriction();
-        };
-    }
-
-    public Specification<T> whereIndentContainsProductCode(List<String> productCodes, String joinTable) {
-
-        return (root, query, cb) ->
-        {
-            Join<T, InwardOutwardList> ioList = root.join(joinTable);
-            Join<InwardOutwardList, Product> productList = ioList.join(IndentInventoryList_.PRODUCT);
-            query.distinct(true);
-            Expression<String> parentExpression = productList.get(Product_.PRODUCT_CODE);
-            Predicate parentPredicate = parentExpression.in(productCodes);
-            query.where(parentPredicate);
-            return query.getRestriction();
-        };
-    }
-
-    public <T> Specification<T> whereIndentContainsLineItemStatus(List<String> lineItemStatuses, String joinTable) {
         return (root, query, cb) -> {
-
-            if (lineItemStatuses == null || lineItemStatuses.isEmpty()) {
-                return cb.conjunction(); // no filtering
-            }
-
-            Join<T, IndentInventoryList> lineItemJoin = root.join(joinTable, JoinType.INNER);
             query.distinct(true);
-            return lineItemJoin.get(IndentInventoryList_.lineItemStatus).in(lineItemStatuses);
+            Join<T, InwardOutwardList> items = root.join(joinTable);
+            Join<InwardOutwardList, Product> product = items.join(InwardOutwardList_.PRODUCT);
+            Join<Product, Category> category = product.join(Product_.CATEGORY);
+            return category.get(Category_.CATEGORY_NAME).in(warehouseNames);
         };
     }
 
-    // #######################################//
-    // Reusable Spec Setter for NULLs //
-    // #######################################//
-
-    public Specification<T> specAndCondition(Specification<T> finalSpec, Specification<T> internalSpec) {
-        if (finalSpec == null)
-            return internalSpec;
-        else
-            return finalSpec.and(internalSpec);
+    public Specification<T> whereChildFieldListContains(String childTableName, String gcTable,
+                                                         String fieldName, List<String> names) {
+        Specification<T> spec = null;
+        for (String name : names) {
+            spec = specOrCondition(spec,
+                (root, query, cb) -> cb.like(root.join(childTableName).join(gcTable).get(fieldName), "%" + name + "%"));
+        }
+        return spec;
     }
 
-    public Specification<T> specOrCondition(Specification<T> finalSpec, Specification<T> interalSpec) {
-        if (finalSpec == null)
-            return interalSpec;
-        else
-            return finalSpec.or(interalSpec);
+    // ── Composition helpers ──────────────────────────────────────────────────
+
+    public Specification<T> specAndCondition(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.and(next);
     }
 
-    // ############################################//
-    // Reusable method to fetch filter Data //
-    // ############################################//
+    public Specification<T> specOrCondition(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.or(next);
+    }
+
+    // ── Filter data extraction ───────────────────────────────────────────────
 
     public static List<String> fetchValueFromFilterList(FilterDataList filterDataList, String field) {
-        List<String> returnValue = null;
         for (FilterAttributeData filterData : filterDataList.getFilterData()) {
             if (filterData.getAttrName().equalsIgnoreCase(field))
-                returnValue = filterData.getAttrValue();
+                return filterData.getAttrValue();
         }
-        return returnValue;
+        return null;
     }
 
     public static List<String> fetchValueFromBoqFilterList(BOQStatusFilterDataList filterDataList, String field) {
-        List<String> returnValue = null;
         for (FilterAttributeData filterData : filterDataList.getFilterData()) {
             if (filterData.getAttrName().equalsIgnoreCase(field))
-                returnValue = filterData.getAttrValue();
+                return filterData.getAttrValue();
         }
-        return returnValue;
-    }
-
-    public Specification<IndentInventory> whereIndentLastStatusUpdatedBefore(Date cutoffDate) {
-        return (root, query, cb) ->
-                cb.lessThan(root.get(IndentInventory_.LAST_STATUS_UPDATED_AT), ReusableMethods.atEndOfDay(cutoffDate));
-    }
-
-    public Specification<PurchaseOrder> wherePOLastStatusUpdatedBefore(Date cutoffDate) {
-        return (root, query, cb) ->
-                cb.lessThan(root.get(PurchaseOrder_.LAST_STATUS_UPDATED_AT), ReusableMethods.atEndOfDay(cutoffDate));
-    }
-
-    public Specification<IndentInventory> whereIndentStatusNotIn(List<String> statuses) {
-        return (root, query, cb) ->
-                cb.not(root.get(IndentInventory_.INDENT_STATUS).in(statuses));
-    }
-
-    public Specification<PurchaseOrder> wherePOStatusNotIn(List<String> statuses) {
-        return (root, query, cb) ->
-                cb.not(root.get(PurchaseOrder_.STATUS).in(statuses));
+        return null;
     }
 }

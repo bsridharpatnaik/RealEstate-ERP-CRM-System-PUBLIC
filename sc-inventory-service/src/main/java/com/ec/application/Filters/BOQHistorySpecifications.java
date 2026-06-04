@@ -9,47 +9,48 @@ import java.util.List;
 
 public final class BOQHistorySpecifications {
 
-    static SpecificationsBuilder<BOQHistory> specbldr = new SpecificationsBuilder<>();
+    private static final SpecificationsBuilder<BOQHistory> specbldr = new SpecificationsBuilder<>();
 
     public static Specification<BOQHistory> getSpecification(FilterDataList filterDataList) throws ParseException {
-        List<String> startDate    = specbldr.fetchValueFromFilterList(filterDataList, "startDate");
-        List<String> endDate      = specbldr.fetchValueFromFilterList(filterDataList, "endDate");
-        List<String> buildingType = specbldr.fetchValueFromFilterList(filterDataList, "buildingType");
-        List<String> buildingUnit = specbldr.fetchValueFromFilterList(filterDataList, "buildingUnit");
-        List<String> inventory    = specbldr.fetchValueFromFilterList(filterDataList, "inventory");
-        List<String> changeType   = specbldr.fetchValueFromFilterList(filterDataList, "changeType");
-        List<String> changedBy    = specbldr.fetchValueFromFilterList(filterDataList, "changedBy");
+        List<String> startDate    = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "startDate");
+        List<String> endDate      = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "endDate");
+        List<String> buildingType = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "buildingType");
+        List<String> buildingUnit = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "buildingUnit");
+        List<String> inventory    = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "inventory");
+        List<String> changeType   = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "changeType");
+        List<String> changedBy    = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "changedBy");
 
-        Specification<BOQHistory> finalSpec = null;
+        Specification<BOQHistory> spec = null;
 
-        if (startDate != null && !startDate.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldDateGreaterThan("changeDateTime", startDate));
+        if (notEmpty(startDate))
+            spec = and(spec, specbldr.whereDirectFieldDateGreaterThan("changeDateTime", startDate));
 
-        if (endDate != null && !endDate.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldDateLessThan("changeDateTime", endDate));
+        if (notEmpty(endDate))
+            spec = and(spec, specbldr.whereDirectFieldDateLessThan("changeDateTime", endDate));
 
-        if (buildingType != null && !buildingType.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereChildFieldContains("buildingType", "typeName", buildingType));
+        if (notEmpty(buildingType))
+            spec = and(spec, specbldr.whereChildFieldContains("buildingType", "typeName", buildingType));
 
-        if (buildingUnit != null && !buildingUnit.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereChildFieldContains("usageLocation", "locationName", buildingUnit));
+        if (notEmpty(buildingUnit))
+            spec = and(spec, specbldr.whereChildFieldContains("usageLocation", "locationName", buildingUnit));
 
-        if (inventory != null && !inventory.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereChildFieldContains("product", "productName", inventory));
+        if (notEmpty(inventory))
+            spec = and(spec, specbldr.whereChildFieldContains("product", "productName", inventory));
 
-        if (changeType != null && !changeType.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldEquals("changeType", changeType));
+        if (notEmpty(changeType))
+            spec = and(spec, specbldr.whereDirectFieldEquals("changeType", changeType));
 
-        if (changedBy != null && !changedBy.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("changedBy", changedBy));
+        if (notEmpty(changedBy))
+            spec = and(spec, specbldr.whereDirectFieldContains("changedBy", changedBy));
 
-        return finalSpec;
+        return spec;
+    }
+
+    private static <T> Specification<T> and(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.and(next);
+    }
+
+    private static boolean notEmpty(List<?> list) {
+        return list != null && !list.isEmpty();
     }
 }
