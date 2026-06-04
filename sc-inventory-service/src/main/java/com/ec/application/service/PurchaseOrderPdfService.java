@@ -154,6 +154,8 @@ public class PurchaseOrderPdfService {
             left.addElement(new Paragraph("Email: " + emailToShow, smallFont));
         if (notBlank(firm.getFirmGstNumber()))
             left.addElement(new Paragraph("GSTIN: " + firm.getFirmGstNumber(), smallFont));
+        if (notBlank(firm.getFirmPanNumber()))
+            left.addElement(new Paragraph("PAN: " + firm.getFirmPanNumber(), smallFont));
         headerTable.addCell(left);
 
         // ---- RIGHT: logo / firm name fallback
@@ -215,8 +217,10 @@ public class PurchaseOrderPdfService {
         left.addElement(new Paragraph(join(", ", s.getCity(), s.getState(), s.getZip()), normal));
         if (notBlank(s.getGstNumber())) left.addElement(new Paragraph("GSTIN: " + s.getGstNumber(), normal));
         if (notBlank(s.getContactPerson()))
-            left.addElement(new Paragraph("Contact: " + s.getContactPerson()
-                    + (notBlank(s.getMobileNo()) ? " | " + s.getMobileNo() : ""), normal));
+            left.addElement(new Paragraph("Contact: " + s.getContactPerson(), normal));
+        String vendorPhone = notBlank(s.getMobileNo()) ? s.getMobileNo() : s.getContactPersonMobileNo();
+        if (notBlank(vendorPhone))
+            left.addElement(new Paragraph("Phone: " + vendorPhone, normal));
         mainTable.addCell(left);
 
         // ---- RIGHT: Vendor Account Details
