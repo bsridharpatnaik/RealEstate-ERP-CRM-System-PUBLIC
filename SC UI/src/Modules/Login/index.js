@@ -161,13 +161,14 @@ function Login(props) {
         });
       } else {
         const status = response.status;
+        const errorMsg = response.errorMessage;
         let msg;
-        if (status === 401 || status === 403) {
+        if (status === 401 && errorMsg === "INVALID_CREDENTIALS") {
           msg = messages.common.loginFailure;
         } else if (!status) {
           msg = "Unable to reach server. Please check your connection.";
         } else {
-          msg = `Something went wrong. Please try again later. (Error ${status})`;
+          msg = "Something went wrong. Please contact administrator.";
         }
         enqueueSnackbar(msg, { variant: "error" });
       }
