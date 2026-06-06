@@ -47,7 +47,10 @@ public class CategoryService {
     public Category createCategory(Category payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
-        if (!categoryRepo.existsByCategoryName(payload.getCategoryName().trim())) {
+        payload.setCategoryName(payload.getCategoryName().trim());
+        if (payload.getCategoryDescription() != null)
+            payload.setCategoryDescription(payload.getCategoryDescription().trim());
+        if (!categoryRepo.existsByCategoryName(payload.getCategoryName())) {
             categoryRepo.save(payload);
             return payload;
         } else {
@@ -72,10 +75,12 @@ public class CategoryService {
         newCategory = payload;
         if (!categoryRepo.existsByCategoryName(newCategory.getCategoryName())
                 && !newCategory.getCategoryName().equalsIgnoreCase(CategoryForUpdate.getCategoryName())) {
-            CategoryForUpdate.setCategoryName(newCategory.getCategoryName());
-            CategoryForUpdate.setCategoryDescription(newCategory.getCategoryDescription());
+            CategoryForUpdate.setCategoryName(newCategory.getCategoryName().trim());
+            CategoryForUpdate.setCategoryDescription(newCategory.getCategoryDescription() == null ? ""
+                    : newCategory.getCategoryDescription().trim());
         } else if (newCategory.getCategoryName().equalsIgnoreCase(CategoryForUpdate.getCategoryName())) {
-            CategoryForUpdate.setCategoryDescription(newCategory.getCategoryDescription());
+            CategoryForUpdate.setCategoryDescription(newCategory.getCategoryDescription() == null ? ""
+                    : newCategory.getCategoryDescription().trim());
         } else {
             throw new Exception("Category with same Name already exists");
         }

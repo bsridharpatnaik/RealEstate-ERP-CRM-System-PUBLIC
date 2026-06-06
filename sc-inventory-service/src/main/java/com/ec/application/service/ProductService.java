@@ -93,7 +93,7 @@ public class ProductService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
         checkIfDashboardProductLimitReached(null, payload, "create");
-        if (!productRepo.existsByProductName(payload.getProductName())) {
+        if (!productRepo.existsByProductName(payload.getProductName().trim())) {
             Optional<Category> categoryOpt = categoryRepo.findById(payload.getCategoryId());
             if (categoryOpt.isPresent()) {
                 Product product = getProduct(payload, categoryOpt);
@@ -188,8 +188,10 @@ public class ProductService {
         }
 
         product.setProductName(payload.getProductName().trim());
-        product.setProductDescription(payload.getProductDescription());
-        product.setMeasurementUnit(payload.getMeasurementUnit());
+        product.setProductDescription(payload.getProductDescription() == null ? ""
+                : payload.getProductDescription().trim());
+        product.setMeasurementUnit(payload.getMeasurementUnit() == null ? ""
+                : payload.getMeasurementUnit().trim());
         product.setCategory(category);
         product.setReorderQuantity(payload.getReorderQuantity());
         product.setShowOnDashboard(Boolean.TRUE.equals(payload.getShowOnDashboard()));

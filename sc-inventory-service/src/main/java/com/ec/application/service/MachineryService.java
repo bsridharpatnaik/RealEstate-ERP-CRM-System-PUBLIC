@@ -37,7 +37,10 @@ public class MachineryService {
     public Machinery createMachinery(Machinery payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
-        if (!machineryRepo.existsByMachineryName(payload.getMachineryName().trim())) {
+        payload.setMachineryName(payload.getMachineryName().trim());
+        if (payload.getMachineryDescription() != null)
+            payload.setMachineryDescription(payload.getMachineryDescription().trim());
+        if (!machineryRepo.existsByMachineryName(payload.getMachineryName())) {
             machineryRepo.save(payload);
             return payload;
         } else {
@@ -62,10 +65,12 @@ public class MachineryService {
         newMachinery = payload;
         if (!machineryRepo.existsByMachineryName(newMachinery.getMachineryName())
                 && !newMachinery.getMachineryName().equalsIgnoreCase(MachineryForUpdate.getMachineryName())) {
-            MachineryForUpdate.setMachineryName(newMachinery.getMachineryName());
-            MachineryForUpdate.setMachineryDescription(newMachinery.getMachineryDescription());
+            MachineryForUpdate.setMachineryName(newMachinery.getMachineryName().trim());
+            MachineryForUpdate.setMachineryDescription(newMachinery.getMachineryDescription() == null ? ""
+                    : newMachinery.getMachineryDescription().trim());
         } else if (newMachinery.getMachineryName().equalsIgnoreCase(MachineryForUpdate.getMachineryName())) {
-            MachineryForUpdate.setMachineryDescription(newMachinery.getMachineryDescription());
+            MachineryForUpdate.setMachineryDescription(newMachinery.getMachineryDescription() == null ? ""
+                    : newMachinery.getMachineryDescription().trim());
         } else {
             throw new Exception("Machinery with same Name already exists");
         }

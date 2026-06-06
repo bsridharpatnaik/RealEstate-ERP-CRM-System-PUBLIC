@@ -42,6 +42,8 @@ public class ContactService {
     private final Logger log = LoggerFactory.getLogger(ContactService.class);
 
     public Contact createContact(Contact payload) throws Exception {
+        if (payload.getName() != null)
+            payload.setName(payload.getName().trim());
         validatePayload(payload);
         formatMobileNo(payload);
         exitIfMobileNoExists(payload);
@@ -55,6 +57,8 @@ public class ContactService {
     }
 
     public Contact updateContact(Long id, Contact payload) throws Exception {
+        if (payload.getName() != null)
+            payload.setName(payload.getName().trim());
         Contact existing = findContactById(id);
         validatePayload(payload);
         formatMobileNo(payload);

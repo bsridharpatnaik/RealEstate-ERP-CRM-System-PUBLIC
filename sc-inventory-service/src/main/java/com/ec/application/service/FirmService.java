@@ -201,6 +201,30 @@ public class FirmService {
 
         if (firm.getFirmContactNumber() != null)
             firm.setFirmContactNumber(firm.getFirmContactNumber().trim());
+
+        if (firm.getFirmDescription() != null)
+            firm.setFirmDescription(firm.getFirmDescription().trim());
+
+        if (firm.getAddr_line1() != null)
+            firm.setAddr_line1(firm.getAddr_line1().trim());
+
+        if (firm.getAddr_line2() != null)
+            firm.setAddr_line2(firm.getAddr_line2().trim());
+
+        if (firm.getCity() != null)
+            firm.setCity(firm.getCity().trim());
+
+        if (firm.getState() != null)
+            firm.setState(firm.getState().trim());
+
+        if (firm.getZip() != null)
+            firm.setZip(firm.getZip().trim());
+
+        if (firm.getContactPerson() != null)
+            firm.setContactPerson(firm.getContactPerson().trim());
+
+        if (firm.getContactPersonMobileNo() != null)
+            firm.setContactPersonMobileNo(firm.getContactPersonMobileNo().trim());
     }
 
     private void copyFields(Firm target, Firm source) {
