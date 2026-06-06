@@ -15,8 +15,9 @@ import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
 import {
   Dialog, DialogTitle, DialogContent, DialogContentText,
-  DialogActions, Button as MuiButton,
+  DialogActions, Button as MuiButton, TextField, Chip,
 } from "@material-ui/core";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 
 //style
 import "./style.scss";
@@ -146,28 +147,44 @@ class Add extends AddForm {
         </div>
 
         <div style={{ padding: '10px 12px 4px' }}>
-          {/* Row 1: active inputs — Product (wide) + Quantity (narrow) */}
+          {/* Row 1: Product (wide) + Quantity (narrow) */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
             <div style={{ flex: 3 }}>
-              {this.renderAutoComplete({
-                fieldname: "productId",
-                placeholder: messages.common.inventory,
-                options: remainingProducts,
-                disableClearable: true,
-                required: true,
-                getOption: (option) => {
+              <Autocomplete
+                id={`product-autocomplete-${key}`}
+                options={remainingProducts}
+                disableClearable
+                getOptionLabel={(option) => option.name || ""}
+                renderOption={(option) => {
                   const { allProductsStockMap, selectedWarehouseId } = this.state;
                   const stockInfo = allProductsStockMap[option.id];
+                  let stock = null;
+                  let unit = "";
                   if (stockInfo && selectedWarehouseId) {
                     const entry = stockInfo.warehouseStocks.find(
                       ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
                     );
-                    const stock = entry ? Number(entry.stock.toFixed(2)) : 0;
-                    return `${option.name} (${stock} ${stockInfo.measurementUnit || ''})`;
+                    stock = entry ? Number(entry.stock.toFixed(2)) : 0;
+                    unit = stockInfo.measurementUnit || "";
                   }
-                  return option.name;
-                },
-                onChange: (e, value) => {
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                      <span style={{ fontSize: 13 }}>{option.name}</span>
+                      {stock !== null && (
+                        <Chip
+                          label={`${stock} ${unit}`}
+                          size="small"
+                          style={{
+                            marginLeft: 8, fontSize: 11, height: 20,
+                            background: stock > 0 ? '#e8f5e9' : '#ffebee',
+                            color: stock > 0 ? '#2e7d32' : '#c62828',
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                }}
+                onChange={(e, value) => {
                   const p = this.state.noproduct;
                   p[key].productId = value.id || "";
                   if (value) {
@@ -210,8 +227,19 @@ class Add extends AddForm {
                     this.fetchBatchesForProduct(value.id, this.formData.warehouseId);
                     setTimeout(() => this.fetchBatchPreview(key), 100);
                   }
-                },
-              })}
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    name="productId"
+                    variant="outlined"
+                    margin="normal"
+                    label={messages.common.inventory}
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                )}
+              />
             </div>
             <div style={{ flex: 1 }}>
               {this.renderTextField({
@@ -267,15 +295,31 @@ class Add extends AddForm {
             </div>
           </div>
 
-          {/* Row 2: read-only info strip */}
-          <div style={{
-            display: 'flex', gap: 24, padding: '5px 10px',
-            background: '#f5f7fa', borderRadius: 4, fontSize: 12,
-            color: '#555', marginBottom: 6, marginTop: 2,
-          }}>
-            <span><span style={{ color: '#999' }}>Unit:</span> <strong>{unit}</strong></span>
-            <span><span style={{ color: '#999' }}>Closing Stock:</span> <strong>{closingStock}</strong></span>
-            <span><span style={{ color: '#999' }}>BOQ Remaining:</span> <strong>{boqRemaining}</strong></span>
+          {/* Row 2: info badges */}
+          <div style={{ display: 'flex', gap: 8, padding: '4px 2px', marginBottom: 6, marginTop: 0, flexWrap: 'wrap' }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: '#f0f4ff', border: '1px solid #c5cae9', borderRadius: 12,
+              padding: '2px 10px', fontSize: 12, color: '#3949ab', fontWeight: 500,
+            }}>
+              Unit: <strong>{unit || '—'}</strong>
+            </span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: closingStock > 0 ? '#e8f5e9' : '#ffebee',
+              border: `1px solid ${closingStock > 0 ? '#a5d6a7' : '#ef9a9a'}`,
+              borderRadius: 12, padding: '2px 10px', fontSize: 12,
+              color: closingStock > 0 ? '#2e7d32' : '#c62828', fontWeight: 500,
+            }}>
+              Stock: <strong>{closingStock ?? '—'}</strong>
+            </span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: '#fff8e1', border: '1px solid #ffe082', borderRadius: 12,
+              padding: '2px 10px', fontSize: 12, color: '#f57f17', fontWeight: 500,
+            }}>
+              BOQ Remaining: <strong>{boqRemaining ?? '—'}</strong>
+            </span>
           </div>
         </div>
 
@@ -429,6 +473,7 @@ class Add extends AddForm {
                                 min="0"
                                 max={b.qtyRemaining}
                                 step="any"
+                                onWheel={(e) => e.target.blur()}
                                 style={{ width: '70px', padding: '3px 5px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '12px', textAlign: 'right' }}
                                 value={entry.qty}
                                 onChange={(ev) => {

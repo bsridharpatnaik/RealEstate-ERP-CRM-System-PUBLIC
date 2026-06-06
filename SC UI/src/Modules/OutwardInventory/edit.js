@@ -8,7 +8,7 @@ import EditForm from "./../../Shared/EditForm";
 import { API } from "./../../axios";
 import {
   Dialog, DialogTitle, DialogContent, DialogContentText,
-  DialogActions, Button as MuiButton,
+  DialogActions, Button as MuiButton, Tooltip,
 } from "@material-ui/core";
 
 //misc
@@ -101,6 +101,9 @@ class Edit extends EditForm {
           if (!this.batchConsumptionData[pid]) this.batchConsumptionData[pid] = [];
           this.batchConsumptionData[pid].push(c);
         });
+        // Force re-render so hasOverride is evaluated with loaded data immediately,
+        // preventing race condition where quantity field appears enabled then snaps to disabled on first keystroke.
+        this.setState({});
       }
     }
   }
@@ -169,23 +172,31 @@ class Edit extends EditForm {
               {(() => {
                 const consumptions = (this.batchConsumptionData || {})[productId] || [];
                 const hasOverride = consumptions.some(c => c.fifoOverridden === true);
-                return this.renderTextField({
-                fieldname: "quantity",
-                placeholder: "Quantity",
-                type: "number",
-                required: true,
-                defaultKey: "quantity",
-                data: this.state.noproduct[key],
-                skipAdd: true,
-                validation: "nonegative",
-                disabled: hasOverride,
-                helperText: hasOverride ? "Qty locked — record was created with batch override. Delete and recreate to change quantity." : undefined,
-                onChange: (value) => {
-                  const p = this.state.noproduct;
-                  p[key].quantity = value;
-                  this.getCurrentStock(key);
-                },
-              });
+                const field = this.renderTextField({
+                  fieldname: "quantity",
+                  placeholder: "Quantity",
+                  type: "number",
+                  required: true,
+                  defaultKey: "quantity",
+                  data: this.state.noproduct[key],
+                  skipAdd: true,
+                  validation: "nonegative",
+                  disabled: hasOverride,
+                  onChange: (value) => {
+                    const p = this.state.noproduct;
+                    p[key].quantity = value;
+                    this.getCurrentStock(key);
+                  },
+                });
+                return hasOverride ? (
+                  <Tooltip
+                    title="Quantity is locked because this outward was created with a manual batch override. To change quantity, delete this outward and recreate it."
+                    arrow
+                    placement="top"
+                  >
+                    <span style={{ display: 'block' }}>{field}</span>
+                  </Tooltip>
+                ) : field;
               })()}
             </div>
           </div>

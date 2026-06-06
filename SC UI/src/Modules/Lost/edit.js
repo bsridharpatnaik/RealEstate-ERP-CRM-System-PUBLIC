@@ -118,7 +118,7 @@ class Edit extends EditForm {
       this.formData.quantity = data.quantity;
       this.formData.productId = data.product.productId;
       this.formData.theftLocation = data.locationOfTheft;
-      this.formData["Additional Comments"] = data["Additional Comments"];
+      this.formData["additionalComment"] = data["additionalComment"];
       this.formData.date = data.date;
       this.formData.fileInformations = data.fileInformations;
       this.formData.entryType = data.entryType || "LOST_DAMAGED";
@@ -269,6 +269,7 @@ class Edit extends EditForm {
                   min="0"
                   step="any"
                   placeholder="Qty"
+                  onWheel={(e) => e.target.blur()}
                   value={qty}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -287,12 +288,39 @@ class Edit extends EditForm {
     );
   }
 
+  renderReadOnlyBatchCards(batches, qtyMap) {
+    if (!batches || batches.length === 0) return null;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {batches
+          .filter((b) => (Number(qtyMap[b.batchId]) || 0) > 0)
+          .map((b) => {
+            const qty = qtyMap[b.batchId] || "0";
+            return (
+              <div key={b.batchId} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 14px", border: "1px solid #e0e0e0",
+                borderRadius: 6, background: "#f9f9f9",
+              }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, color: "#5c6bc0",
+                  background: "#e8eaf6", borderRadius: 4, padding: "1px 7px",
+                }}>#{b.batchId}</span>
+                {b.brand && <span style={{ fontSize: 13, fontWeight: 600 }}>{b.brand}</span>}
+                {b.lotNumber && <span style={{ fontSize: 12, color: "#555" }}>Lot: {b.lotNumber}</span>}
+                {b.expiryDate && <span style={{ fontSize: 12, color: "#555" }}>Exp: {b.expiryDate}</span>}
+                <span style={{ marginLeft: "auto", fontSize: 13, fontWeight: 600 }}>Qty: {qty}</span>
+              </div>
+            );
+          })}
+      </div>
+    );
+  }
+
   renderBatchSection() {
-    const { entryType, availableBatches, batchQtyMap, excessQtyMap, existingBatchMode } = this.state;
+    const { entryType, availableBatches, batchQtyMap, excessQtyMap } = this.state;
     const isBatchTracked = availableBatches.length > 0 || !!this.formData.batchId;
     if (!isBatchTracked) return null;
-
-    const totalQty = Number(this.formData.quantity) || 0;
 
     if (entryType === "LOST_DAMAGED") {
       return (
@@ -301,118 +329,35 @@ class Edit extends EditForm {
             fontSize: 12, color: "#666", fontWeight: 600, marginBottom: 8,
             textTransform: "uppercase", letterSpacing: "0.4px",
           }}>
-            Distribute loss across batches
+            Batch Allocation (read-only)
           </div>
-          <div style={{ fontSize: 11, color: "#888", marginBottom: 8 }}>
-            Note: current batch quantities shown before reversal of this entry.
+          <div style={{
+            fontSize: 11, color: "#e65100", marginBottom: 8,
+            background: "#fff3e0", padding: "4px 10px", borderRadius: 4,
+          }}>
+            ⚠ Batch allocation cannot be changed after saving. Delete and recreate to modify.
           </div>
-          {this.renderBatchAllocCards({
-            batches: availableBatches,
-            qtyMap: batchQtyMap,
-            totalQty,
-            onQtyChange: (batchId, val) => {
-              this.setState((prev) => ({
-                batchQtyMap: { ...prev.batchQtyMap, [batchId]: val },
-              }));
-            },
-          })}
+          {this.renderReadOnlyBatchCards(availableBatches, batchQtyMap)}
         </div>
       );
     }
 
     if (entryType === "EXCESS_FOUND") {
-      const activeBatches = availableBatches.filter((b) => b.qtyRemaining > 0);
       return (
         <div style={{ marginTop: 12 }}>
           <div style={{
             fontSize: 12, color: "#666", fontWeight: 600, marginBottom: 8,
             textTransform: "uppercase", letterSpacing: "0.4px",
           }}>
-            Batch Details
+            Batch Details (read-only)
           </div>
-
-          {activeBatches.length > 0 && (
-            <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
-              {[
-                { value: true,  title: "Add to existing batch",  desc: "Select a batch already in this warehouse" },
-                { value: false, title: "Create new batch",       desc: "Record this stock as a brand-new batch" },
-              ].map(({ value, title, desc }) => {
-                const active = existingBatchMode === value;
-                return (
-                  <label
-                    key={String(value)}
-                    style={{
-                      flex: 1, display: "flex", gap: 10,
-                      padding: "10px 14px",
-                      border: active ? "2px solid #1976d2" : "1px solid #ccc",
-                      borderRadius: 6, background: active ? "#e3f2fd" : "#fff",
-                      cursor: "pointer", userSelect: "none",
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="excessBatchModeEdit"
-                      checked={active}
-                      onChange={() => {
-                        this.formData.existingBatchId = null;
-                        this.formData.excessBatchEntries = null;
-                        this.formData.brand = null;
-                        this.formData.lotNumber = null;
-                        this.formData.expiryDate = null;
-                        this.setState({ existingBatchMode: value, excessQtyMap: {} });
-                      }}
-                      style={{ marginTop: 3, flexShrink: 0 }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{title}</div>
-                      <div style={{ fontSize: 11, color: "#777", marginTop: 2 }}>{desc}</div>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          )}
-
-          {existingBatchMode ? (
-            <>
-              <div style={{ fontSize: 11, color: "#888", marginBottom: 8 }}>
-                Note: quantities shown before reversal of this entry.
-              </div>
-              {this.renderBatchAllocCards({
-                batches: activeBatches,
-                qtyMap: excessQtyMap,
-                totalQty,
-                onQtyChange: (batchId, val) => {
-                  this.setState((prev) => ({
-                    excessQtyMap: { ...prev.excessQtyMap, [batchId]: val },
-                  }));
-                },
-              })}
-            </>
-          ) : (
-            <div>
-              <div className="flex width50">
-                {this.renderTextField({
-                  fieldname: "brand",
-                  placeholder: "Brand / Supplier",
-                  onChange: (value) => { this.formData.brand = value; },
-                })}
-                {this.renderTextField({
-                  fieldname: "lotNumber",
-                  placeholder: "Lot / Batch Number",
-                  onChange: (value) => { this.formData.lotNumber = value; },
-                })}
-              </div>
-              <div className="flex width50">
-                {this.renderDate({
-                  fieldname: "expiryDate",
-                  label: "Expiry Date (if applicable)",
-                  minDate: moment(),
-                  required: false,
-                })}
-              </div>
-            </div>
-          )}
+          <div style={{
+            fontSize: 11, color: "#e65100", marginBottom: 8,
+            background: "#fff3e0", padding: "4px 10px", borderRadius: 4,
+          }}>
+            ⚠ Batch allocation cannot be changed after saving. Delete and recreate to modify.
+          </div>
+          {this.renderReadOnlyBatchCards(availableBatches, excessQtyMap)}
         </div>
       );
     }
@@ -528,7 +473,7 @@ class Edit extends EditForm {
 
             <div className="flex" style={{ marginTop: 16 }}>
               {this.renderTextArea({
-                fieldname: "Additional Comments",
+                fieldname: "additionalComment",
                 placeholder: "Additional Comments",
               })}
             </div>

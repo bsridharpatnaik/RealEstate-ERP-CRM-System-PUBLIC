@@ -282,7 +282,12 @@ public class IndentInventoryService {
             IndentInventoryList existingItem = existingItemsMap.get(lineItemCode);
 
             if (existingItem != null) {
-                // Item exists - update mutable fields only
+                // Non-NEW line items are locked — skip silently, keep as-is
+                if (!IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(existingItem.getLineItemStatus())) {
+                    itemsToKeep.add(existingItem);
+                    continue;
+                }
+                // Item exists and is NEW — update mutable fields
                 existingItem.setProduct(newItem.getProduct());
                 existingItem.setQuantity(newItem.getQuantity());
                 existingItem.setSpecification(newItem.getSpecification());
@@ -299,9 +304,10 @@ public class IndentInventoryService {
         for (IndentInventoryList existingItem : indentInventory.getInventoryList()) {
             if (!itemsToKeep.contains(existingItem)) {
 
-                // 🚨 Business rule check (optional but recommended)
-                if (existingItem.getPurchaseOrderId() != null) {
-                    throw new RuntimeException("Cannot remove line item linked to Purchase Order");
+                // Only NEW line items can be removed
+                if (!IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(existingItem.getLineItemStatus())) {
+                    throw new RuntimeException("Cannot remove line item '" + existingItem.getLineItemCode()
+                            + "' — it is in status: " + existingItem.getLineItemStatus());
                 }
 
                 existingItem.setDeleted(true);   // ✅ SOFT DELETE

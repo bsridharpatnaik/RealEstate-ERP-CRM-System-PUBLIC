@@ -41,9 +41,11 @@ class Add extends AddForm {
   addurl = apiEndpoints.createLost;
   state = {
     closing: null,
+    currentStockValue: null,   // stock BEFORE this entry (for display/validation)
     entryType: "LOST_DAMAGED",
     availableBatches: [],
     existingBatchMode: false,
+    selectedProductBatchMode: null, // 'BATCH_ONLY' | 'BATCH_WITH_EXPIRY' | null
     // multi-batch qty maps: batchId (number) → qty string
     batchQtyMap: {},    // LOST_DAMAGED allocation
     excessQtyMap: {},   // EXCESS_FOUND add-to-existing allocation
@@ -76,7 +78,7 @@ class Add extends AddForm {
         this.formData.entryType === "EXCESS_FOUND"
           ? currentStock + qty
           : currentStock - qty;
-      this.setState({ closing });
+      this.setState({ closing, currentStockValue: currentStock });
     }
   }
 
@@ -206,6 +208,13 @@ class Add extends AddForm {
               >
                 {/* batch meta */}
                 <div style={{ flex: 1, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, color: "#5c6bc0",
+                    background: "#e8eaf6", borderRadius: 4, padding: "1px 7px",
+                    whiteSpace: "nowrap",
+                  }}>
+                    #{b.batchId}
+                  </span>
                   {b.brand && (
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{b.brand}</span>
                   )}
@@ -218,9 +227,6 @@ class Add extends AddForm {
                       {expired ? " ⚠ Expired" : nearExpiry ? " ⚠ Expiring soon" : ""}
                     </span>
                   ) : null}
-                  {!b.brand && !b.lotNumber && !b.expiryDate && (
-                    <span style={{ fontSize: 12, color: "#888" }}>Batch #{b.batchId}</span>
-                  )}
                 </div>
 
                 {/* available qty badge */}
@@ -238,6 +244,7 @@ class Add extends AddForm {
                   step="any"
                   placeholder="Qty"
                   value={qty}
+                  onWheel={(e) => e.target.blur()}
                   onChange={(e) => {
                     const val = e.target.value;
                     onQtyChange(b.batchId, val);
@@ -360,14 +367,16 @@ class Add extends AddForm {
                   onChange: (value) => { this.formData.lotNumber = value; },
                 })}
               </div>
-              <div className="flex width50">
-                {this.renderDate({
-                  fieldname: "expiryDate",
-                  label: "Expiry Date (if applicable)",
-                  minDate: moment(),
-                  required: false,
-                })}
-              </div>
+              {this.state.selectedProductBatchMode === 'BATCH_WITH_EXPIRY' && (
+                <div className="flex width50">
+                  {this.renderDate({
+                    fieldname: "expiryDate",
+                    label: "Expiry Date",
+                    minDate: moment(),
+                    required: true,
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -378,57 +387,76 @@ class Add extends AddForm {
   }
 
   render() {
+    const { entryType, currentStockValue, closing } = this.state;
+    const isLost = entryType === "LOST_DAMAGED";
+    const unit = this.props.units[this.formData.productId];
+    const bothSelected = !!(this.formData.productId && this.formData.warehouseId);
+    const qty = Number(this.formData.quantity) || 0;
+    const stockKnown = bothSelected && currentStockValue !== null;
+    const noStock = stockKnown && currentStockValue <= 0 && isLost;
+    const overQty = stockKnown && isLost && qty > currentStockValue && currentStockValue > 0;
+
+    const sectionHeader = (label, color = '#1976d2') => (
+      <div style={{
+        fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase',
+        letterSpacing: '0.6px', marginBottom: 8, marginTop: 4,
+        paddingBottom: 4, borderBottom: `2px solid ${color}22`,
+      }}>
+        {label}
+      </div>
+    );
+
     return (
       <div className="list-section add">
         {this.renderHeading()}
         <form onSubmit={(e) => this.add(e)}>
 
-          {/* Type toggle */}
-          <div className="flex">
-            <FormControl component="fieldset">
-              <RadioGroup
-                row
-                value={this.state.entryType}
-                onChange={(e) => {
-                  const newType = e.target.value;
-                  this.formData.entryType = newType;
-                  this.formData.batchId = null;
-                  this.formData.batchEntries = null;
-                  this.formData.existingBatchId = null;
-                  this.formData.excessBatchEntries = null;
-                  this.formData.brand = null;
-                  this.formData.lotNumber = null;
-                  this.formData.expiryDate = null;
-                  this.setState(
-                    {
-                      entryType: newType,
-                      existingBatchMode: false,
-                      batchQtyMap: {},
-                      excessQtyMap: {},
-                    },
-                    () => this.getCurrentStock()
-                  );
-                }}
-              >
-                <FormControlLabel
-                  value="LOST_DAMAGED"
-                  control={<Radio color="primary" />}
-                  label="Lost / Damaged"
-                />
-                <FormControlLabel
-                  value="EXCESS_FOUND"
-                  control={<Radio color="primary" />}
-                  label="Excess Found"
-                />
-              </RadioGroup>
-            </FormControl>
+          {/* ── TYPE TOGGLE ──────────────────────────────────── */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            {[
+              { value: 'LOST_DAMAGED', label: '↓ Lost / Damaged', color: '#c62828', bg: '#ffebee', border: '#ef9a9a' },
+              { value: 'EXCESS_FOUND', label: '↑ Excess Found',   color: '#2e7d32', bg: '#e8f5e9', border: '#a5d6a7' },
+            ].map(({ value, label, color, bg, border }) => {
+              const active = entryType === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    this.formData.entryType = value;
+                    this.formData.batchId = null;
+                    this.formData.batchEntries = null;
+                    this.formData.existingBatchId = null;
+                    this.formData.excessBatchEntries = null;
+                    this.formData.brand = null;
+                    this.formData.lotNumber = null;
+                    this.formData.expiryDate = null;
+                    this.setState(
+                      { entryType: value, existingBatchMode: false, batchQtyMap: {}, excessQtyMap: {}, selectedProductBatchMode: null },
+                      () => this.getCurrentStock()
+                    );
+                  }}
+                  style={{
+                    padding: '10px 28px', borderRadius: 6, cursor: 'pointer',
+                    fontWeight: 600, fontSize: 14,
+                    border: active ? `2px solid ${color}` : `2px solid #e0e0e0`,
+                    background: active ? bg : '#fafafa',
+                    color: active ? color : '#888',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Warehouse + Inventory — same row */}
+          {/* ── SECTION 1: PRODUCT & WAREHOUSE ───────────────── */}
+          {sectionHeader('1. Select Product & Warehouse')}
           <div className="flex width50">
             {this.renderAutoComplete({
               fieldname: "warehouseId",
-              placeholder: "Warehouse",
+              placeholder: "Warehouse *",
               options: this.props.dropdowns?.warehouse || [],
               disableClearable: true,
               required: true,
@@ -436,6 +464,7 @@ class Add extends AddForm {
               onChange: (e, value) => {
                 if (value) {
                   this.formData.warehouseId = value.id;
+                  this.setState({ currentStockValue: null, closing: null });
                   this.getCurrentStock();
                   this.loadBatches();
                 }
@@ -443,7 +472,7 @@ class Add extends AddForm {
             })}
             {this.renderAutoComplete({
               fieldname: "productId",
-              placeholder: messages.common.inventory,
+              placeholder: "Inventory *",
               options: this.props.dropdowns?.product || [],
               disableClearable: true,
               required: true,
@@ -451,61 +480,111 @@ class Add extends AddForm {
               onChange: (e, value) => {
                 if (value) {
                   this.formData.productId = value.id;
+                  this.setState({ selectedProductBatchMode: null, currentStockValue: null, closing: null });
                   this.getCurrentStock();
                   this.loadBatches();
+                  API.GET(`/api/inventory/product/${value.id}`).then(r => {
+                    if (r.success && r.data) {
+                      this.setState({ selectedProductBatchMode: r.data.batchMode || 'BATCH_ONLY' });
+                    }
+                  });
                 }
               },
             })}
           </div>
 
-          {/* Quantity + Measurement Unit + Closing Stock — same row */}
-          <div className="flex width50">
-            {this.renderTextField({
-              fieldname: "quantity",
-              placeholder: "Quantity",
-              type: "number",
-              required: true,
-              validation: "nonegative",
-              onChange: () => { this.getCurrentStock(); },
-            })}
-            {this.renderTextField({
-              fieldname: "measurementUnit",
-              placeholder: "Measurement Unit",
-              disabled: true,
-              value: this.props.units[this.formData.productId],
-            })}
-            {this.renderTextField({
-              fieldname: "Closing Stock",
-              placeholder: "Closing Stock",
-              disabled: true,
-              value: this.state.closing,
-            })}
-          </div>
+          {/* Stock info card — shown after both selected */}
+          {bothSelected && (
+            <div style={{
+              marginBottom: 16, padding: '10px 16px',
+              borderRadius: 8, border: '1px solid',
+              borderColor: noStock ? '#ef9a9a' : '#c8e6c9',
+              background: noStock ? '#ffebee' : '#f1f8e9',
+              display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+            }}>
+              {currentStockValue === null ? (
+                <span style={{ fontSize: 13, color: '#888' }}>Loading stock…</span>
+              ) : (
+                <>
+                  <span style={{ fontSize: 13 }}>
+                    <span style={{ color: '#777' }}>Current stock in warehouse: </span>
+                    <strong style={{ fontSize: 16, color: noStock ? '#c62828' : '#2e7d32' }}>
+                      {currentStockValue} {unit || ''}
+                    </strong>
+                  </span>
+                  {noStock && (
+                    <span style={{
+                      fontSize: 12, color: '#c62828', fontWeight: 600,
+                      background: '#ffcdd2', padding: '2px 10px', borderRadius: 10,
+                    }}>
+                      ⚠ No stock in this warehouse
+                    </span>
+                  )}
+                  {overQty && (
+                    <span style={{
+                      fontSize: 12, color: '#e65100', fontWeight: 600,
+                      background: '#fff3e0', padding: '2px 10px', borderRadius: 10,
+                    }}>
+                      ⚠ Quantity exceeds available stock
+                    </span>
+                  )}
+                  {closing !== null && qty > 0 && (
+                    <span style={{ fontSize: 13, marginLeft: 'auto' }}>
+                      <span style={{ color: '#777' }}>After this entry: </span>
+                      <strong style={{ color: closing < 0 ? '#c62828' : '#1976d2' }}>
+                        {closing} {unit || ''}
+                      </strong>
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
-          {/* Date + Location/Remarks */}
-          <div className="flex width50">
+          {/* ── SECTION 2: QUANTITY & DATE ────────────────────── */}
+          {sectionHeader('2. Quantity & Details')}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 1 }}>
+            <div style={{ width: 160, flexShrink: 0 }}>
+              {this.renderTextField({
+                fieldname: "quantity",
+                placeholder: isLost ? "Qty Lost *" : "Qty Found *",
+                type: "number",
+                required: true,
+                validation: "nonegative",
+                onChange: () => { this.getCurrentStock(); },
+              })}
+            </div>
+            {unit && (
+              <span style={{
+                fontSize: 15, fontWeight: 700, color: '#3949ab',
+                background: '#e8eaf6', borderRadius: 6, padding: '6px 14px',
+                whiteSpace: 'nowrap', flexShrink: 0, alignSelf: 'center',
+              }}>
+                {unit}
+              </span>
+            )}
             {this.renderDate({
               fieldname: "date",
-              label: messages.fields.date,
+              label: "Date *",
               maxDate: moment(),
               minDate: moment().add(-7, "d"),
             })}
             {this.renderTextField({
               fieldname: "theftLocation",
-              placeholder:
-                this.state.entryType === "EXCESS_FOUND" ? "Remarks" : "Location",
+              placeholder: "Remarks *",
               required: true,
             })}
           </div>
 
-          {/* Batch section */}
+          {/* ── SECTION 3: BATCH ALLOCATION ───────────────────── */}
           {this.renderBatchSection()}
 
-          {/* Additional Comments */}
-          <div className="flex" style={{ marginTop: 16 }}>
+          {/* ── SECTION 4: ADDITIONAL INFO ────────────────────── */}
+          {sectionHeader('Additional Information', '#555')}
+          <div className="flex" style={{ marginTop: 4 }}>
             {this.renderTextArea({
-              fieldname: "Additional Comments",
-              placeholder: "Additional Comments",
+              fieldname: "additionalComment",
+              placeholder: "Additional Comments (optional)",
             })}
           </div>
 

@@ -22,6 +22,8 @@ import com.ec.application.repository.InventoryNotificationRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.StockInformationRepo;
 import com.ec.application.repository.WarehouseRepo;
+import com.ec.application.repository.StockRepo;
+import com.ec.application.model.Stock;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.stream.Collectors;
@@ -75,6 +77,9 @@ public class BatchTrackingService {
 
     @Autowired
     ActivityLogService activityLogService;
+
+    @Autowired
+    StockRepo stockRepo;
 
     @Transactional(rollbackFor = Exception.class)
     public BatchWriteOff writeOffBatch(Long batchId, WriteOffRequestDTO request) throws Exception {
@@ -184,28 +189,36 @@ public class BatchTrackingService {
             if (batchTrackedIds.isEmpty()) return 0;
         }
 
-        List<StockInformationFromView> stockItems =
-                stockInformationRepo.findByProductIdInAndTotalQuantityInHandGreaterThan(batchTrackedIds, 0.0);
-        if (stockItems.isEmpty()) return 0;
+        // Use Stock entities (which have warehouse context) instead of aggregated view
+        List<Stock> stocks = stockRepo.findByProductIdIn(batchTrackedIds);
+        if (stocks.isEmpty()) return 0;
 
-        List<Long> stockProductIds = stockItems.stream()
-                .map(StockInformationFromView::getProductId)
+        // Get batch sums per product+warehouse
+        List<Long> warehouseIds = stocks.stream()
+                .map(Stock::getWarehouseId)
+                .distinct()
                 .collect(Collectors.toList());
 
-        List<Object[]> batchSums = inventoryBatchRepository.sumQtyRemainingGroupByProduct(stockProductIds);
-        Map<Long, Double> batchQtyMap = new HashMap<>();
+        List<Object[]> batchSums = inventoryBatchRepository.sumQtyRemainingGroupByProductAndWarehouse(batchTrackedIds, warehouseIds);
+        // Map: productId_warehouseId → batch qty
+        Map<String, Double> batchQtyMap = new HashMap<>();
         for (Object[] row : batchSums) {
-            batchQtyMap.put(((Number) row[0]).longValue(), ((Number) row[1]).doubleValue());
+            Long productId = ((Number) row[0]).longValue();
+            Long warehouseId = ((Number) row[1]).longValue();
+            Double qty = ((Number) row[2]).doubleValue();
+            batchQtyMap.put(productId + "_" + warehouseId, qty);
         }
 
-        long count = 0;
-        for (StockInformationFromView si : stockItems) {
-            double batchQty = batchQtyMap.getOrDefault(si.getProductId(), 0.0);
-            if (si.getTotalQuantityInHand() > batchQty + 0.001) {
-                count++;
+        // Count distinct products with untracked stock (per warehouse basis)
+        Set<Long> untrackedProducts = new HashSet<>();
+        for (Stock stock : stocks) {
+            String key = stock.getProductId() + "_" + stock.getWarehouseId();
+            double batchQty = batchQtyMap.getOrDefault(key, 0.0);
+            if (stock.getQuantityInHand() > batchQty + 0.001) {
+                untrackedProducts.add(stock.getProductId());
             }
         }
-        return count;
+        return untrackedProducts.size();
     }
 
     public StockTilesDTO getStockTiles(FilterDataList filterDataList) {

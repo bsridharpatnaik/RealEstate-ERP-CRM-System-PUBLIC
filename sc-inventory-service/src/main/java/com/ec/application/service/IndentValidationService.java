@@ -58,18 +58,22 @@ public class IndentValidationService {
         boolean canEditAsManager = userDetailsService.canEditIndentAsManager(); // admin, purchase-manager, project-manager
         boolean isStoreIncharge = userDetailsService.isStoreIncharge();
 
-        // NEW indents: admin, purchase-manager, project-manager, or store-incharge can edit
-        if (IndentStatusConstants.STATUS_NEW.equalsIgnoreCase(status) && (canEditAsManager || isStoreIncharge)) {
-            return;
-        }
-        // APPROVED indents (before any PO is created): admin, purchase-manager, project-manager can edit
-        // Store Incharge cannot edit once approved — they no longer own the record
-        else if (IndentStatusConstants.STATUS_APPROVED.equalsIgnoreCase(status) && canEditAsManager) {
-            return;
-        }
-        else {
+        // Role check — same as before
+        if (!canEditAsManager && !isStoreIncharge)
             throw new IllegalStateException("Indent cannot be updated in status: " + status + " by current user.");
-        }
+
+        // Terminal statuses always block editing
+        boolean isTerminal = IndentStatusConstants.getTerminalStatuses().stream()
+                .anyMatch(s -> s.equalsIgnoreCase(status));
+        if (isTerminal)
+            throw new IllegalStateException("Indent cannot be edited in status: " + status);
+
+        // Must have at least one NEW line item to allow edit
+        boolean hasNewLineItem = indentInventory.getInventoryList().stream()
+                .anyMatch(i -> !i.isDeleted()
+                        && IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(i.getLineItemStatus()));
+        if (!hasNewLineItem)
+            throw new IllegalStateException("Indent cannot be edited — no editable line items. All items already have a PO or are closed.");
     }
 
     public void validateBeforeSplit(IndentInventory indentInventory, IndentInventoryList lineItem) throws Exception {

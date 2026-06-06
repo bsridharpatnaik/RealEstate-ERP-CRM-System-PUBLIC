@@ -346,6 +346,7 @@ public class LostDamagedInventoryService {
         if (!lostDamagedInventoryOpt.isPresent())
             throw new Exception("Machinery On rent by ID " + id + " Not found");
         LostDamagedInventory lostDamagedInventory = lostDamagedInventoryOpt.get();
+        validateBatchStateBeforeDelete(lostDamagedInventory);
         AdjustStockBeforeDelete(lostDamagedInventory);
         reverseBatchOnDelete(lostDamagedInventory);
         lostDamagedInventoryRepo.softDeleteById(id);
@@ -364,6 +365,60 @@ public class LostDamagedInventoryService {
      * Reverses batch side-effects when deleting or updating a LostDamagedInventory entry.
      * Uses batchEntriesJson for multi-batch records; falls back to single-batch for legacy records.
      */
+    /**
+     * Guards against deleting an EXCESS_FOUND record whose added stock was already consumed by outward.
+     * Reverting would silently clamp batch qtyRemaining at 0 while reducing stock,
+     * creating a stock < batch_sum inconsistency.
+     *
+     * Only EXCESS_FOUND needs this guard — LOST_DAMAGED reversal always ADDS back to batch (safe).
+     */
+    private void validateBatchStateBeforeDelete(LostDamagedInventory entity) throws Exception {
+        if (!"EXCESS_FOUND".equals(entity.getEntryType())) return;
+
+        String entriesJson = entity.getBatchEntriesJson();
+        if (entriesJson != null && !entriesJson.isEmpty()) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                List<BatchOverrideEntry> entries = mapper.readValue(entriesJson,
+                        mapper.getTypeFactory().constructCollectionType(List.class, BatchOverrideEntry.class));
+                for (BatchOverrideEntry entry : entries) {
+                    if (entry.getBatchId() == null || entry.getQty() == null) continue;
+                    inventoryBatchRepository.findById(entry.getBatchId()).ifPresent(batch -> {
+                        if (batch.getQtyRemaining() < entry.getQty() - 0.001) {
+                            throw new IllegalStateException(
+                                "Cannot delete this Excess Found entry. The stock added to Batch #" + batch.getBatchId()
+                                + " (product: " + batch.getProduct().getProductName() + ")"
+                                + " has already been partially consumed via outward ("
+                                + String.format("%.3f", entry.getQty() - batch.getQtyRemaining())
+                                + " units consumed). "
+                                + "Please reverse those outward records first before deleting this entry.");
+                        }
+                    });
+                }
+                return;
+            } catch (IllegalStateException e) {
+                throw new Exception(e.getMessage());
+            } catch (Exception ignored) {
+                // JSON parse failure — fall through to single-batch check
+            }
+        }
+
+        // Single batch path
+        InventoryBatch batch = entity.getBatch();
+        if (batch != null) {
+            double excessQty = entity.getQuantity();
+            if (batch.getQtyRemaining() < excessQty - 0.001) {
+                throw new Exception(
+                    "Cannot delete this Excess Found entry. The stock added to Batch #" + batch.getBatchId()
+                    + " (product: " + batch.getProduct().getProductName() + ")"
+                    + " has already been partially consumed via outward ("
+                    + String.format("%.3f", excessQty - batch.getQtyRemaining())
+                    + " units consumed). "
+                    + "Please reverse those outward records first before deleting this entry.");
+            }
+        }
+    }
+
     private void reverseBatchOnDelete(LostDamagedInventory entity) {
         String entriesJson = entity.getBatchEntriesJson();
         if (entriesJson != null && !entriesJson.isEmpty()) {

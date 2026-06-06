@@ -1270,8 +1270,21 @@ public class InwardInventoryService {
         }
     }
 
-    private void zeroBatchesForDeletedInward(Long inwardId) {
+    private void zeroBatchesForDeletedInward(Long inwardId) throws Exception {
         List<InventoryBatch> batches = inventoryBatchRepository.findAllByInwardId(inwardId);
+        // Guard: if any batch from this inward was partially consumed (via outward or stock adjustment),
+        // deleting would orphan OutwardBatchConsumption records and corrupt batch vs stock totals.
+        for (InventoryBatch batch : batches) {
+            double consumed = batch.getQtyReceived() - batch.getQtyRemaining();
+            if (consumed > 0.001) {
+                throw new Exception(
+                    "Cannot delete this inward. Batch #" + batch.getBatchId()
+                    + " (product: " + batch.getProduct().getProductName() + ")"
+                    + " has already been partially consumed via outward or stock adjustment ("
+                    + String.format("%.3f", consumed) + " units consumed). "
+                    + "Please reverse those records first before deleting this inward.");
+            }
+        }
         for (InventoryBatch batch : batches) {
             batch.setQtyRemaining(0.0);
             batch.setDeleted(true);

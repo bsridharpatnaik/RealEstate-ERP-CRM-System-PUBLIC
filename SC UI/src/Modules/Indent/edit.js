@@ -192,6 +192,8 @@ class Edit extends EditForm {
             specification: item.specification || "",
             remarks: item.remarks || "",
             needByDate: item.needByDate || null,
+            lineItemStatus: item.lineItemStatus || "NEW",
+            lineItemCode: item.lineItemCode || null,
             selectedCategory,
             selectedProduct: {
               id: pid,
@@ -228,6 +230,9 @@ class Edit extends EditForm {
     const inventoryItem = this.state.noinventory?.[key];
     if (!inventoryItem) return null;
 
+    const isLineItemLocked = inventoryItem.lineItemStatus &&
+      inventoryItem.lineItemStatus.toUpperCase() !== "NEW";
+
     const currentInventoryId = inventoryItem.productId;
     const selectedInventories = Object.keys(this.state.noinventory)
       .map(index => this?.state?.noinventory?.[index]?.productId)
@@ -254,27 +259,38 @@ class Edit extends EditForm {
       >
         <div className="inventory-item-header">
           <span>Inventory {inventoryNumber}</span>
-          <IconButton
-            aria-label="delete"
-            onClick={() => {
-              if (Object.keys(this.state.noinventory).length <= 1) {
-                this.props.enqueueSnackbar("At least one inventory option must be present", {
-                  variant: "warning",
-                });
-                return;
-              }
-              const p = { ...this.state.noinventory };
-              delete p[key];
-              this.setState({ noinventory: p }, () => {
-                if (this.props.onValidationChange) {
-                  this.props.onValidationChange();
+          {!isLineItemLocked && (
+            <IconButton
+              aria-label="delete"
+              onClick={() => {
+                if (Object.keys(this.state.noinventory).length <= 1) {
+                  this.props.enqueueSnackbar("At least one inventory option must be present", {
+                    variant: "warning",
+                  });
+                  return;
                 }
-              });
-            }}
-            className="delete-icon"
-          >
-            <img src={trashRedIcon} alt="Delete" className="trash-red-icon" />
-          </IconButton>
+                const p = { ...this.state.noinventory };
+                delete p[key];
+                this.setState({ noinventory: p }, () => {
+                  if (this.props.onValidationChange) {
+                    this.props.onValidationChange();
+                  }
+                });
+              }}
+              className="delete-icon"
+            >
+              <img src={trashRedIcon} alt="Delete" className="trash-red-icon" />
+            </IconButton>
+          )}
+          {isLineItemLocked && (
+            <span
+              className={`status-badge-table status-${(inventoryItem.lineItemStatus || "").toLowerCase().replace(/\s+/g, "-")}`}
+              title={`Line item is ${inventoryItem.lineItemStatus} — cannot be edited`}
+              style={{ marginLeft: "auto", alignSelf: "center" }}
+            >
+              {inventoryItem.lineItemStatus}
+            </span>
+          )}
         </div>
         <div className="flex">
           <Autocomplete
@@ -394,11 +410,13 @@ class Edit extends EditForm {
               placeholder: "Enter Quantity",
               type: "number",
               required: true,
+              disabled: isLineItemLocked,
               data: this.state.noinventory[key],
               skipAdd: true,
               validation: "nonegative",
               value: this.state.noinventory[key]?.quantity || "",
               onChange: (value) => {
+                if (isLineItemLocked) return;
                 const p = this.state.noinventory;
                 p[key].quantity = value;
                 this.setState({ noinventory: { ...p } }, () => {

@@ -260,6 +260,7 @@ class Details extends Component {
                       type="number" min="0" step="any"
                       style={{ width: '100%', padding: '3px 5px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '12px', boxSizing: 'border-box' }}
                       value={entry.qty}
+                      onWheel={(e) => e.target.blur()}
                       onChange={e => this.updateSplitEntry(idx, 'qty', e.target.value)}
                       placeholder="0"
                     />
@@ -812,6 +813,7 @@ class Details extends Component {
                                                   <div style={{ fontSize: '11px', marginBottom: '2px' }}>Quantity *</div>
                                                   <input type="number" style={{ padding: '4px', width: '80px', border: '1px solid #ccc', borderRadius: '3px' }}
                                                     value={this.state.writeOffForm.quantity}
+                                                    onWheel={(e) => e.target.blur()}
                                                     onChange={e => this.setState({ writeOffForm: { ...this.state.writeOffForm, quantity: e.target.value } })}
                                                     max={batch.qtyRemaining} min="0" step="any"
                                                   />

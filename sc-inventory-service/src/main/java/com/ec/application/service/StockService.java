@@ -139,29 +139,39 @@ public class StockService {
                     Date cutoff = Date.from(today.minusDays(90).atStartOfDay(zone).toInstant());
                     expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
                 } else if ("untracked".equals(filterType)) {
-                    // Batch-tracked products where totalQuantityInHand > sum of batch qtyRemaining
+                    // Batch-tracked products where stock > sum of batch qtyRemaining in same warehouse
                     List<Long> batchTrackedIds = productRepo.findBatchTrackedProductIds();
                     if (batchTrackedIds.isEmpty()) {
                         expiryProductIds = Collections.emptyList();
                     } else {
-                        List<StockInformationFromView> stockItems =
-                                siRepo.findByProductIdInAndTotalQuantityInHandGreaterThan(batchTrackedIds, 0.0);
-                        if (stockItems.isEmpty()) {
+                        List<Stock> stocks = stockRepo.findByProductIdIn(batchTrackedIds);
+                        if (stocks.isEmpty()) {
                             expiryProductIds = Collections.emptyList();
                         } else {
-                            List<Long> stockProductIds = stockItems.stream()
-                                    .map(StockInformationFromView::getProductId)
+                            // Get batch sums per product+warehouse
+                            List<Long> warehouseIds = stocks.stream()
+                                    .map(Stock::getWarehouseId)
+                                    .distinct()
                                     .collect(Collectors.toList());
                             List<Object[]> batchSums =
-                                    inventoryBatchRepository.sumQtyRemainingGroupByProduct(stockProductIds);
-                            Map<Long, Double> batchQtyMap = new HashMap<>();
+                                    inventoryBatchRepository.sumQtyRemainingGroupByProductAndWarehouse(batchTrackedIds, warehouseIds);
+                            // Map: productId_warehouseId → batch qty
+                            Map<String, Double> batchQtyMap = new HashMap<>();
                             for (Object[] row : batchSums) {
-                                batchQtyMap.put(((Number) row[0]).longValue(), ((Number) row[1]).doubleValue());
+                                Long productId = ((Number) row[0]).longValue();
+                                Long warehouseId = ((Number) row[1]).longValue();
+                                Double qty = ((Number) row[2]).doubleValue();
+                                batchQtyMap.put(productId + "_" + warehouseId, qty);
                             }
-                            expiryProductIds = stockItems.stream()
-                                    .filter(si -> si.getTotalQuantityInHand() >
-                                            batchQtyMap.getOrDefault(si.getProductId(), 0.0) + 0.001)
-                                    .map(StockInformationFromView::getProductId)
+                            // Filter stocks with untracked gap
+                            expiryProductIds = stocks.stream()
+                                    .filter(stock -> {
+                                        String key = stock.getProductId() + "_" + stock.getWarehouseId();
+                                        Double batchQty = batchQtyMap.getOrDefault(key, 0.0);
+                                        return stock.getQuantityInHand() > batchQty + 0.001;
+                                    })
+                                    .map(Stock::getProductId)
+                                    .distinct()
                                     .collect(Collectors.toList());
                         }
                     }

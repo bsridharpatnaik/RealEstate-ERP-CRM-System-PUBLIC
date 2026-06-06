@@ -128,6 +128,12 @@ class Details extends CommonDetails {
                 <div className="label">{data.entryType === "EXCESS_FOUND" ? "Remarks" : messages.fields.location}</div>
                 <div className="value">{data.locationOfTheft}</div>
               </div>
+              {data.additionalComment && (
+                <div className="detail-item">
+                  <div className="label">Additional Comments</div>
+                  <div className="value">{data.additionalComment}</div>
+                </div>
+              )}
               <div className="detail-item">
                 <div className="label">{messages.common.warehouse}</div>
                 <div className="value">{data.warehouse.warehouseName}</div>
