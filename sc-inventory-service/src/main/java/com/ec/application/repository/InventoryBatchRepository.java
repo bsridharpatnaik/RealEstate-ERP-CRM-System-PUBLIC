@@ -41,53 +41,57 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
             @Param("productId") Long productId);
 
     // For expiry alerts — batches expiring within N days with qty remaining
+    // Use >= :from AND < :to (exclusive upper bound) to prevent day-boundary overlap:
+    //   expired  = expiryDate < today  (strictly in the past)
+    //   alert-30 = today <= expiryDate < today+30  (today..+29 days)
+    //   alert-60 = today+30 <= expiryDate < today+60  (day 30..+59)
     @Query("SELECT b FROM InventoryBatch b WHERE b.expiryDate IS NOT NULL " +
            "AND b.qtyRemaining > 0 AND b.isDeleted = false " +
-           "AND b.expiryDate BETWEEN :from AND :to")
+           "AND b.expiryDate >= :from AND b.expiryDate < :to")
     List<InventoryBatch> findBatchesExpiringBetween(
             @Param("from") Date from,
             @Param("to") Date to);
 
-    // For expiry alert — already expired batches with qty remaining
+    // Expired: strictly before today (expiryDate < today)
     @Query("SELECT b FROM InventoryBatch b WHERE b.expiryDate IS NOT NULL " +
            "AND b.qtyRemaining > 0 AND b.isDeleted = false " +
-           "AND b.expiryDate <= :today")
+           "AND b.expiryDate < :today")
     List<InventoryBatch> findExpiredBatchesWithStock(@Param("today") Date today);
 
-    // Count distinct products expiring within N days (for tiles)
+    // Count distinct products expiring in [from, to) — exclusive upper bound
     @Query("SELECT COUNT(DISTINCT b.product.productId) FROM InventoryBatch b " +
            "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
-           "AND b.isDeleted = false AND b.expiryDate BETWEEN :from AND :to")
+           "AND b.isDeleted = false AND b.expiryDate >= :from AND b.expiryDate < :to")
     Long countDistinctProductsExpiringBetween(@Param("from") Date from, @Param("to") Date to);
 
     @Query("SELECT COUNT(DISTINCT b.product.productId) FROM InventoryBatch b " +
            "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
-           "AND b.isDeleted = false AND b.expiryDate BETWEEN :from AND :to " +
+           "AND b.isDeleted = false AND b.expiryDate >= :from AND b.expiryDate < :to " +
            "AND b.product.productId IN :ids")
     Long countDistinctProductsExpiringBetweenIn(@Param("from") Date from, @Param("to") Date to, @Param("ids") List<Long> ids);
 
-    // Count distinct products with expired stock
+    // Count distinct products with expired stock (strictly before today)
     @Query("SELECT COUNT(DISTINCT b.product.productId) FROM InventoryBatch b " +
            "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
-           "AND b.isDeleted = false AND b.expiryDate <= :today")
+           "AND b.isDeleted = false AND b.expiryDate < :today")
     Long countDistinctProductsExpired(@Param("today") Date today);
 
     @Query("SELECT COUNT(DISTINCT b.product.productId) FROM InventoryBatch b " +
            "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
-           "AND b.isDeleted = false AND b.expiryDate <= :today " +
+           "AND b.isDeleted = false AND b.expiryDate < :today " +
            "AND b.product.productId IN :ids")
     Long countDistinctProductsExpiredIn(@Param("today") Date today, @Param("ids") List<Long> ids);
 
-    // Product IDs expiring within N days (for tile filter)
+    // Product IDs expiring in [from, to) — exclusive upper bound
     @Query("SELECT DISTINCT b.product.productId FROM InventoryBatch b " +
            "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
-           "AND b.isDeleted = false AND b.expiryDate BETWEEN :from AND :to")
+           "AND b.isDeleted = false AND b.expiryDate >= :from AND b.expiryDate < :to")
     List<Long> findProductIdsExpiringBetween(@Param("from") Date from, @Param("to") Date to);
 
-    // Product IDs with expired stock (for tile filter)
+    // Product IDs with expired stock (strictly before today)
     @Query("SELECT DISTINCT b.product.productId FROM InventoryBatch b " +
            "WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 " +
-           "AND b.isDeleted = false AND b.expiryDate <= :today")
+           "AND b.isDeleted = false AND b.expiryDate < :today")
     List<Long> findProductIdsWithExpiredStock(@Param("today") Date today);
 
     // ── BATCH_ONLY: FIFO by receivedDate (no expiry column required) ────────────

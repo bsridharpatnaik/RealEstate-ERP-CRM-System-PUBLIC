@@ -249,13 +249,60 @@ public class OutwardInventoryService {
                                          List<BatchOverrideEntry> returnBatches) {
         try {
             if (returnBatches != null && !returnBatches.isEmpty()) {
-                // User specified exactly which batches to restore
-                for (BatchOverrideEntry entry : returnBatches) {
+                // ----- PRE-VALIDATION (no saves yet) -----
+
+                // Filter valid entries only
+                List<BatchOverrideEntry> validEntries = returnBatches.stream()
+                        .filter(e -> e.getBatchId() != null && e.getQty() != null && e.getQty() > 0)
+                        .collect(java.util.stream.Collectors.toList());
+                if (validEntries.isEmpty()) {
+                    throw new IllegalArgumentException("No valid batch entries provided for return.");
+                }
+                // Duplicate batchId check
+                Set<Long> seenIds = new HashSet<>();
+                for (BatchOverrideEntry e : validEntries) {
+                    if (!seenIds.add(e.getBatchId())) {
+                        throw new IllegalArgumentException("Duplicate batch ID " + e.getBatchId() + " in return batches.");
+                    }
+                }
+                // Sum must equal return quantity
+                double totalReturn = validEntries.stream().mapToDouble(BatchOverrideEntry::getQty).sum();
+                if (Math.abs(totalReturn - quantity) > 0.001) {
+                    throw new IllegalArgumentException(
+                            "Return batch quantities (" + totalReturn
+                            + ") must equal the return quantity (" + quantity + ").");
+                }
+                for (BatchOverrideEntry entry : validEntries) {
+                    InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Batch not found: " + entry.getBatchId()));
+                    // Product ownership
+                    if (!batch.getProduct().getProductId().equals(productId)) {
+                        throw new IllegalArgumentException(
+                                "Batch #" + entry.getBatchId() + " belongs to product '"
+                                + batch.getProduct().getProductName() + "', not the returned product.");
+                    }
+                    // Outward ownership — batch must have been consumed by this outward
+                    List<OutwardBatchConsumption> cons = outwardBatchConsumptionRepository
+                            .findByOutwardIdAndBatch_BatchId(outwardId, entry.getBatchId());
+                    if (cons.isEmpty()) {
+                        throw new IllegalArgumentException(
+                                "Batch #" + entry.getBatchId() + " was not consumed by outward #" + outwardId + ".");
+                    }
+                    // Upper-bound: cannot return more than was consumed
+                    double totalConsumed = cons.stream().mapToDouble(OutwardBatchConsumption::getQtyConsumed).sum();
+                    if (entry.getQty() > totalConsumed + 0.001) {
+                        throw new IllegalArgumentException(
+                                "Cannot return " + entry.getQty() + " from batch #" + entry.getBatchId()
+                                + " — only " + String.format("%.3f", totalConsumed) + " units were consumed.");
+                    }
+                }
+                // ----- APPLY (all validations passed) -----
+                for (BatchOverrideEntry entry : validEntries) {
                     InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId()).orElse(null);
-                    if (batch != null && entry.getQty() != null && entry.getQty() > 0) {
+                    if (batch != null) {
                         batch.setQtyRemaining(batch.getQtyRemaining() + entry.getQty());
                         inventoryBatchRepository.save(batch);
-                        // #13: Reduce the corresponding consumption record so Batch Usage tab stays accurate
                         List<OutwardBatchConsumption> cons = outwardBatchConsumptionRepository
                                 .findByOutwardIdAndBatch_BatchId(outwardId, entry.getBatchId());
                         for (OutwardBatchConsumption c : cons) {
@@ -270,10 +317,21 @@ public class OutwardInventoryService {
                     }
                 }
             } else {
-                // Auto-restore: find all consumptions for this outward+product and restore proportionally
+                // Auto-restore only safe for single-batch outwards.
+                // If multiple distinct batches were consumed, require explicit allocation.
                 List<OutwardBatchConsumption> consumptions =
                         outwardBatchConsumptionRepository.findByOutwardIdAndProductIdOrderByIdAsc(outwardId, productId);
                 if (consumptions.isEmpty()) return;
+
+                long distinctBatches = consumptions.stream()
+                        .filter(c -> c.getBatch() != null)
+                        .map(c -> c.getBatch().getBatchId())
+                        .distinct().count();
+                if (distinctBatches > 1) {
+                    throw new IllegalArgumentException(
+                            "This outward consumed from " + distinctBatches + " batches. "
+                            + "Please specify which batch(es) to return from.");
+                }
 
                 double totalConsumed = consumptions.stream().mapToDouble(OutwardBatchConsumption::getQtyConsumed).sum();
                 if (totalConsumed <= 0) return;
@@ -290,7 +348,6 @@ public class OutwardInventoryService {
                         batch.setQtyRemaining(batch.getQtyRemaining() + restoreQty);
                         inventoryBatchRepository.save(batch);
                     }
-                    // #13: Update consumption record to reflect the partial return
                     double newQty = c.getQtyConsumed() - restoreQty;
                     if (newQty <= 0.001) {
                         outwardBatchConsumptionRepository.delete(c);
@@ -299,6 +356,13 @@ public class OutwardInventoryService {
                         outwardBatchConsumptionRepository.save(c);
                     }
                     remaining -= restoreQty;
+                }
+                // Guard: stock was already increased by full quantity — if batches couldn't absorb it all,
+                // we have a divergence. This should not happen in normal flow but fail loud if it does.
+                if (remaining > 0.001) {
+                    throw new IllegalStateException(
+                            "Batch restore incomplete: " + String.format("%.3f", remaining)
+                            + " units could not be returned to any batch. Stock/batch totals may be inconsistent.");
                 }
             }
         } catch (Exception e) {
@@ -965,7 +1029,14 @@ public class OutwardInventoryService {
                     InventoryBatch batch = inventoryBatchRepository.findByIdLocked(entry.getBatchId())
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "Batch not found with ID: " + entry.getBatchId()));
-                    // #2: Validate batch belongs to the outward's warehouse
+                    // Validate batch belongs to the correct product
+                    if (!batch.getProduct().getProductId().equals(productId)) {
+                        throw new IllegalArgumentException(
+                            "Batch " + entry.getBatchId() + " belongs to product '"
+                            + batch.getProduct().getProductName()
+                            + "' but outward line is for a different product.");
+                    }
+                    // Validate batch belongs to the outward's warehouse
                     if (!batch.getWarehouse().getWarehouseId().equals(warehouseId)) {
                         throw new IllegalArgumentException(
                             "Batch " + entry.getBatchId() + " belongs to warehouse '" +

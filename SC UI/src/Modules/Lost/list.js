@@ -173,8 +173,6 @@ class List extends ListCommon {
               key={this.state.key}
               tableData={this.tableData}
               rows={this.state.data}
-              edit={this.props.edit}
-              delete={(row) => this.delete(row)}
               sortby={this.sortby}
               sortkey={this.sortkey}
               search={(sortkey, sortby) => {
@@ -198,8 +196,6 @@ class List extends ListCommon {
         >
           <Details
             data={this.state.selectedData}
-            edit={this.props.edit}
-            delete={(row) => this.delete(row)}
             close={() =>
               this.setState({ showDetails: false, key: this.state.key + 1 })
             }

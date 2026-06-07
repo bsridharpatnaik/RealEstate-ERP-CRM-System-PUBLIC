@@ -1,11 +1,8 @@
 import React from "react";
-import { EditIcon, DeleteIcon } from "./../../Shared/Icons/Index.js";
 import CommonDetails from "./../../Shared/Details";
 import IconButton from "@material-ui/core/IconButton";
 import Clear from "@material-ui/icons/Clear";
 import { messages } from "./../../messages";
-import { canCreateInward } from "./../../helper";
-import DeleteConfirm from "./../../Shared/DeleteConfirm";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import Typography from "@material-ui/core/Typography";
@@ -29,50 +26,15 @@ function TabPanel(props) {
 }
 
 class Details extends CommonDetails {
-  state = { value: 0, deleteConfirmOpen: false };
-  deleteRow = null;
+  state = { value: 0 };
 
   render() {
     const data = this.props.data;
-    const canWrite = canCreateInward();
     return (
       <div className="list-section detail-section">
-        <DeleteConfirm
-          open={this.state.deleteConfirmOpen}
-          onConfirm={() => {
-            this.props.delete(this.deleteRow);
-            this.setState({ deleteConfirmOpen: false });
-          }}
-          onCancel={() => {
-            this.deleteRow = null;
-            this.setState({ deleteConfirmOpen: false });
-          }}
-        />
-
         <div className="details-header">
           {messages.common.details}
           <div>
-            {canWrite && (
-              <IconButton
-                aria-label="back"
-                onClick={() => this.props.edit(data)}
-                className="back-icon"
-              >
-                {EditIcon({ fontSize: "medium" })}
-              </IconButton>
-            )}
-            {canWrite && (
-              <IconButton
-                aria-label="back"
-                onClick={() => {
-                  this.deleteRow = data;
-                  this.setState({ deleteConfirmOpen: true });
-                }}
-                className="back-icon"
-              >
-                {DeleteIcon({ fontSize: "medium" })}
-              </IconButton>
-            )}
             <IconButton
               aria-label="back"
               onClick={() => this.props.close(data)}

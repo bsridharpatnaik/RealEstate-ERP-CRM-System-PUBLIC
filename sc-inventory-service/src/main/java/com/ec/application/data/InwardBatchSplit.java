@@ -16,4 +16,11 @@ public class InwardBatchSplit {
     private String brand;
 
     private String lotNumber;
+
+    /**
+     * Only set on the reduce path (inward edit, qty decrease, multi-batch).
+     * Identifies which existing InventoryBatch to reduce from.
+     * Null on the increase/create path — new batches are matched by metadata.
+     */
+    private Long batchId;
 }

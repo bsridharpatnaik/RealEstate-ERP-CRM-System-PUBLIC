@@ -57,7 +57,8 @@ class InwardInventoryForm extends AddForm {
       productName: '',
       totalQty: 0,
       batchMode: 'BATCH_WITH_EXPIRY',   // drives expiry required / lot number visibility
-      entries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }]
+      modalMode: 'add',                 // 'add' | 'reduce'
+      entries: [{ batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }]
     },
     // Store form field values in state for React to track changes
     formValues: {
@@ -227,8 +228,11 @@ class InwardInventoryForm extends AddForm {
           const pid = item.product.productId;
           const existingBatches = batchesByProduct[pid] || [];
           const batchSplits = existingBatches.map(b => ({
+            batchId: b.batchId,
             qty: b.qtyReceived,
-            expiryDate: b.expiryDate ? b.expiryDate.split('-').reverse().join('-') : '',
+            qtyRemaining: b.qtyRemaining,  // for reduce modal — actual available qty
+            // Keep dd-MM-yyyy (backend format). Modal converts to yyyy-MM-dd for <input type="date">.
+            expiryDate: b.expiryDate || '',
             brand: b.brand || '',
             lotNumber: b.lotNumber || '',
           }));
@@ -484,22 +488,52 @@ class InwardInventoryForm extends AddForm {
     const product = this.state.noproduct[key];
     const totalQty = parseFloat(product.quantity) || 0;
     const batchMode = product.batchMode || 'BATCH_WITH_EXPIRY';
-    const existing = product.batchSplits && product.batchSplits.length > 0
-      ? product.batchSplits.map(s => ({
-          qty: s.qty || '',
-          expiryDate: s.expiryDate ? s.expiryDate.split('-').reverse().join('-') : '',
-          brand: s.brand || '',
-          lotNumber: s.lotNumber || ''
-        }))
-      : [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }];
+    const isEditMode = this.state.isEditMode;
+
+    // Determine modal mode: 'reduce' when editing and qty decreased vs original
+    const originalQty = (this.oldStock || {})[product.productId] || 0;
+    const delta = totalQty - originalQty;
+    const isReduce = isEditMode && delta < -0.001 && product.batchSplits && product.batchSplits.length > 1;
+    const modalMode = isReduce ? 'reduce' : 'add';
+
+    let entries;
+    if (isReduce) {
+      // Reduce mode: show existing batches (from batchSplits, never overwritten), user enters reduction qty
+      // Pre-fill qty from any previously-confirmed _reduceSplits
+      const prevReduceByBatchId = {};
+      (product._reduceSplits || []).forEach(s => {
+        if (s.batchId) prevReduceByBatchId[s.batchId] = s.qty;
+      });
+      entries = (product.batchSplits || []).map(s => ({
+        batchId: s.batchId,
+        qty: prevReduceByBatchId[s.batchId] ?? '',
+        expiryDate: s.expiryDate || '',
+        brand: s.brand || '',
+        lotNumber: s.lotNumber || '',
+        qtyAvailable: s.qtyRemaining ?? s.qty ?? 0,  // actual remaining (not qtyReceived — some may be consumed)
+      }));
+    } else {
+      entries = product.batchSplits && product.batchSplits.length > 0
+        ? product.batchSplits.map(s => ({
+            batchId: s.batchId || null,
+            qty: s.qty || '',
+            // s.expiryDate is dd-MM-yyyy (backend format); convert to yyyy-MM-dd for <input type="date">
+            expiryDate: s.expiryDate ? s.expiryDate.split('-').reverse().join('-') : '',
+            brand: s.brand || '',
+            lotNumber: s.lotNumber || ''
+          }))
+        : [{ batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }];
+    }
+
     this.setState({
       batchSplitModal: {
         open: true,
         productKey: key,
         productName: product.productName || product.selectedProduct?.name || 'Product',
-        totalQty,
+        totalQty: isReduce ? Math.abs(delta) : totalQty,
         batchMode,
-        entries: existing
+        entries,
+        modalMode,
       }
     });
   }
@@ -515,7 +549,7 @@ class InwardInventoryForm extends AddForm {
   }
 
   addBatchEntry() {
-    const entries = [...this.state.batchSplitModal.entries, { qty: '', expiryDate: '', brand: '', lotNumber: '' }];
+    const entries = [...this.state.batchSplitModal.entries, { batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }];
     this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries } }));
   }
 
@@ -524,7 +558,7 @@ class InwardInventoryForm extends AddForm {
     this.setState(prev => ({
       batchSplitModal: {
         ...prev.batchSplitModal,
-        entries: entries.length > 0 ? entries : [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }]
+        entries: entries.length > 0 ? entries : [{ batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }]
       }
     }));
   }
@@ -540,14 +574,30 @@ class InwardInventoryForm extends AddForm {
   }
 
   confirmBatchSplits() {
-    const { productKey, entries } = this.state.batchSplitModal;
+    const { productKey, entries, modalMode } = this.state.batchSplitModal;
     const p = this.state.noproduct;
-    p[productKey].batchSplits = entries.map(e => ({
-      qty: parseFloat(e.qty) || 0,
-      expiryDate: e.expiryDate ? e.expiryDate.split('-').reverse().join('-') : null,
-      brand: e.brand || null,
-      lotNumber: e.lotNumber || null,
-    }));
+
+    if (modalMode === 'reduce') {
+      // Reduce: only batchId + qty needed. Backend ignores expiryDate/brand/lotNumber on reduce path.
+      // Store in _reduceSplits so original batchSplits (display data) stay intact.
+      p[productKey]._reduceSplits = entries.map(e => ({
+        batchId: e.batchId || null,
+        qty: parseFloat(e.qty) || 0,
+        expiryDate: null,
+        brand: null,
+        lotNumber: null,
+      }));
+    } else {
+      // Increase / metadata update: entries come from date input (yyyy-MM-dd) — convert to dd-MM-yyyy for backend.
+      p[productKey].batchSplits = entries.map(e => ({
+        batchId: e.batchId || null,
+        qty: parseFloat(e.qty) || 0,
+        expiryDate: e.expiryDate ? e.expiryDate.split('-').reverse().join('-') : null,
+        brand: e.brand || null,
+        lotNumber: e.lotNumber || null,
+      }));
+    }
+
     this.setState({ noproduct: { ...p } });
     this.closeBatchSplitModal();
   }
@@ -555,7 +605,8 @@ class InwardInventoryForm extends AddForm {
   renderBatchSplitModal() {
     const { batchSplitModal } = this.state;
     if (!batchSplitModal.open) return null;
-    const { entries, totalQty, productName, batchMode } = batchSplitModal;
+    const { entries, totalQty, productName, batchMode, modalMode } = batchSplitModal;
+    const isReduceMode = modalMode === 'reduce';
     const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
     const allocated = entries.reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
     const remaining = Math.round((totalQty - allocated) * 1000) / 1000;
@@ -564,21 +615,22 @@ class InwardInventoryForm extends AddForm {
     const pct = totalQty > 0 ? Math.min((allocated / totalQty) * 100, 100) : 0;
     const barColor = isOver ? '#c62828' : isExact ? '#2e7d32' : '#1976d2';
     const canConfirm = isExact && entries.every(e =>
-      parseFloat(e.qty) > 0 && (!requiresExpiry || e.expiryDate)
+      parseFloat(e.qty) >= 0 && (!requiresExpiry || e.expiryDate || isReduceMode)
     );
-    const modalSubtitle = requiresExpiry
-      ? 'Track by Brand / Lot + Expiry Date'
-      : 'Track by Brand / Lot (no expiry)';
+    const modalTitle = isReduceMode ? 'Specify Batch Reduction' : 'Set Batches';
+    const modalSubtitle = isReduceMode
+      ? 'Enter the qty to reduce per batch — total must equal quantity reduction'
+      : (requiresExpiry ? 'Track by Brand / Lot + Expiry Date' : 'Track by Brand / Lot (no expiry)');
 
     return (
       <Dialog open maxWidth="sm" fullWidth onClose={() => this.closeBatchSplitModal()}>
         <DialogTitle disableTypography>
-          <div style={{ fontWeight: 600, fontSize: '16px' }}>Set Batches</div>
+          <div style={{ fontWeight: 600, fontSize: '16px' }}>{modalTitle}</div>
           <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>{productName} — {modalSubtitle}</div>
         </DialogTitle>
         <DialogContent>
           <div style={{ display: 'flex', gap: '24px', marginBottom: '10px', fontSize: '13px' }}>
-            <span>Total: <strong>{totalQty}</strong></span>
+            <span>{isReduceMode ? 'To Reduce' : 'Total'}: <strong>{totalQty}</strong></span>
             <span>Allocated: <strong style={{ color: isOver ? '#c62828' : isExact ? '#2e7d32' : '#1976d2' }}>{Math.round(allocated * 1000) / 1000}</strong></span>
             <span>Remaining: <strong style={{ color: remaining > 0.001 ? '#e65100' : isOver ? '#c62828' : '#2e7d32' }}>{remaining}</strong></span>
           </div>
@@ -588,25 +640,40 @@ class InwardInventoryForm extends AddForm {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ background: '#f5f5f5' }}>
-                <th style={{ padding: '6px 8px', textAlign: 'left', width: '80px' }}>Qty *</th>
-                {requiresExpiry && (
+                {isReduceMode && <th style={{ padding: '6px 8px', textAlign: 'left', width: '70px' }}>Batch #</th>}
+                <th style={{ padding: '6px 8px', textAlign: 'left', width: '80px' }}>
+                  {isReduceMode ? 'Reduce By *' : 'Qty *'}
+                </th>
+                {isReduceMode && <th style={{ padding: '6px 8px', textAlign: 'left', width: '80px' }}>Available</th>}
+                {!isReduceMode && requiresExpiry && (
                   <th style={{ padding: '6px 8px', textAlign: 'left', width: '145px' }}>Expiry Date *</th>
                 )}
                 <th style={{ padding: '6px 8px', textAlign: 'left' }}>Identifier</th>
                 <th style={{ padding: '6px 8px', textAlign: 'left' }}>Lot / Batch No.</th>
-                <th style={{ width: '30px' }} />
+                {!isReduceMode && <th style={{ width: '30px' }} />}
               </tr>
             </thead>
             <tbody>
               {entries.map((entry, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  {isReduceMode && (
+                    <td style={{ padding: '4px 8px', color: '#555', fontSize: '12px' }}>
+                      #{entry.batchId}
+                    </td>
+                  )}
                   <td style={{ padding: '4px 8px' }}>
                     <input type="number" min="0" step="any" value={entry.qty}
+                      max={isReduceMode ? entry.qtyAvailable : undefined}
                       onChange={e => this.updateBatchEntry(idx, 'qty', e.target.value)}
                       style={{ width: '70px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
                       placeholder="0" />
                   </td>
-                  {requiresExpiry && (
+                  {isReduceMode && (
+                    <td style={{ padding: '4px 8px', color: '#888', fontSize: '12px' }}>
+                      {entry.qtyAvailable}
+                    </td>
+                  )}
+                  {!isReduceMode && requiresExpiry && (
                     <td style={{ padding: '4px 8px' }}>
                       <input type="date" value={entry.expiryDate || ''}
                         onChange={e => this.updateBatchEntry(idx, 'expiryDate', e.target.value)}
@@ -616,26 +683,31 @@ class InwardInventoryForm extends AddForm {
                   )}
                   <td style={{ padding: '4px 8px' }}>
                     <input type="text" value={entry.brand || ''}
-                      onChange={e => this.updateBatchEntry(idx, 'brand', e.target.value)}
-                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
-                      placeholder="e.g. Brand, Type, Grade" />
+                      readOnly={isReduceMode}
+                      onChange={isReduceMode ? undefined : e => this.updateBatchEntry(idx, 'brand', e.target.value)}
+                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px', background: isReduceMode ? '#f9f9f9' : undefined }}
+                      placeholder={isReduceMode ? '—' : 'e.g. Brand, Type, Grade'} />
                   </td>
                   <td style={{ padding: '4px 8px' }}>
                     <input type="text" value={entry.lotNumber || ''}
-                      onChange={e => this.updateBatchEntry(idx, 'lotNumber', e.target.value)}
-                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
-                      placeholder="Optional" />
+                      readOnly={isReduceMode}
+                      onChange={isReduceMode ? undefined : e => this.updateBatchEntry(idx, 'lotNumber', e.target.value)}
+                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px', background: isReduceMode ? '#f9f9f9' : undefined }}
+                      placeholder={isReduceMode ? '—' : 'Optional'} />
                   </td>
-                  <td style={{ padding: '4px 4px', textAlign: 'center' }}>
-                    {entries.length > 1 && (
-                      <button type="button" onClick={() => this.removeBatchEntry(idx)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c62828', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}>×</button>
-                    )}
-                  </td>
+                  {!isReduceMode && (
+                    <td style={{ padding: '4px 4px', textAlign: 'center' }}>
+                      {entries.length > 1 && (
+                        <button type="button" onClick={() => this.removeBatchEntry(idx)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c62828', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}>×</button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
+          {!isReduceMode && (
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
             <button type="button" onClick={() => this.addBatchEntry()}
               style={{ fontSize: '12px', color: '#1976d2', background: 'none', border: '1px dashed #1976d2', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer' }}>
@@ -648,12 +720,15 @@ class InwardInventoryForm extends AddForm {
               </button>
             )}
           </div>
+          )}
           {isOver && <div style={{ color: '#c62828', fontSize: '12px', marginTop: '8px' }}>Allocated exceeds total by {Math.round(Math.abs(remaining) * 1000) / 1000} units.</div>}
           {!canConfirm && !isOver && !isExact && allocated > 0 && (
             <div style={{ color: '#888', fontSize: '12px', marginTop: '6px' }}>
-              {requiresExpiry
-                ? `Allocate all ${totalQty} units and set expiry dates to confirm.`
-                : `Allocate all ${totalQty} units to confirm.`}
+              {isReduceMode
+                ? `Total reduction must equal ${totalQty} units.`
+                : requiresExpiry
+                  ? `Allocate all ${totalQty} units and set expiry dates to confirm.`
+                  : `Allocate all ${totalQty} units to confirm.`}
             </div>
           )}
         </DialogContent>
@@ -795,11 +870,11 @@ class InwardInventoryForm extends AddForm {
               skipAdd: true,
               validation: "nonegative",
               value: product.quantity,
-              disabled: hasBatchSplits,
-              helperText: hasBatchSplits ? "Qty locked" : undefined,
               onChange: (value) => {
                 const p = this.state.noproduct;
                 p[key].quantity = parseFloat(value) || 0;
+                // Changing qty invalidates any previously-confirmed reduce splits
+                if (p[key]._reduceSplits) delete p[key]._reduceSplits;
                 this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
               },
             })}
@@ -821,9 +896,15 @@ class InwardInventoryForm extends AddForm {
             {isBatchTracked && (
               hasBatchSplits ? (
                 <div>
-                  <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
-                    ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
-                  </span>
+                  {product._reduceSplits ? (
+                    <span style={{ fontSize: '11px', color: '#e65100', fontWeight: 600, display: 'block' }}>
+                      ⚠ Reduction set ({product._reduceSplits.reduce((s, b) => s + (b.qty || 0), 0)} units)
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+                      ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
+                    </span>
+                  )}
                   <button type="button" onClick={() => this.openBatchSplitModal(key)}
                     style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
                     {isEditMode ? 'View / Edit' : 'Edit'}
@@ -946,12 +1027,12 @@ class InwardInventoryForm extends AddForm {
               skipAdd: true,
               validation: "nonegative",
               value: product.quantity,
-              disabled: hasBatchSplits,
-              helperText: hasBatchSplits ? "Qty locked" : undefined,
-              error: !hasBatchSplits && product.quantity > 0 && product.maxAllowedQuantity != null && product.quantity > product.maxAllowedQuantity,
+              error: product.quantity > 0 && product.maxAllowedQuantity != null && product.quantity > product.maxAllowedQuantity,
               onChange: (value) => {
                 const p = this.state.noproduct;
                 p[key].quantity = parseFloat(value) || 0;
+                // Changing qty invalidates any previously-confirmed reduce splits
+                if (p[key]._reduceSplits) delete p[key]._reduceSplits;
                 this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
               },
             })}
@@ -975,9 +1056,15 @@ class InwardInventoryForm extends AddForm {
             {isBatchTracked && (
               hasBatchSplits ? (
                 <div>
-                  <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
-                    ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
-                  </span>
+                  {product._reduceSplits ? (
+                    <span style={{ fontSize: '11px', color: '#e65100', fontWeight: 600, display: 'block' }}>
+                      ⚠ Reduction set ({product._reduceSplits.reduce((s, b) => s + (b.qty || 0), 0)} units)
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+                      ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
+                    </span>
+                  )}
                   <button type="button" onClick={() => this.openBatchSplitModal(key)}
                     style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
                     {isEditMode ? 'View / Edit' : 'Edit'}
@@ -1144,12 +1231,29 @@ class InwardInventoryForm extends AddForm {
       params = {
         inwardDate: (this.state.isDirectInward ? this.formData.date : this.formData.inwardDate) || null,
         supplierId: supplierIdToSend,
-        productWithQuantities: Object.values(this.state.noproduct).map(product => ({
-          productId: product.productId,
-          quantity: product.quantity,
-          expiryDate: product.expiryDate || null,
-          batchSplits: product.batchMode !== 'NONE' && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
-        })),
+        productWithQuantities: Object.values(this.state.noproduct).map(product => {
+          // For reduce path: send _reduceSplits (delta); for increase/metadata: send batchSplits.
+          // Strip extra UI-only fields (qtyRemaining, batchId on non-reduce) — backend DTO only knows:
+          // batchId, qty, expiryDate (dd-MM-yyyy), brand, lotNumber.
+          const isReducePath = !!product._reduceSplits;
+          const rawSplits = product._reduceSplits
+            || (product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null);
+          const effectiveSplits = rawSplits ? rawSplits.map(s => ({
+            // Only include batchId for the reduce path — backend uses it to target specific batches.
+            // Sending batchId on original/increase splits would trigger the reduce-detection check incorrectly.
+            batchId: isReducePath ? (s.batchId || null) : null,
+            qty: s.qty,
+            expiryDate: s.expiryDate || null,
+            brand: s.brand || null,
+            lotNumber: s.lotNumber || null,
+          })) : null;
+          return {
+            productId: product.productId,
+            quantity: product.quantity,
+            expiryDate: product.expiryDate || null,
+            batchSplits: product.batchMode !== 'NONE' ? effectiveSplits : null,
+          };
+        }),
         vehicleNo: this.formData.vehicleNo,
         supplierSlipNo: this.formData.supplierSlipNo,
         ourSlipNo: this.formData.ourSlipNo,

@@ -84,16 +84,14 @@ class ReturnProduct extends AddForm {
       }
       Object.values(this.state.noproduct).forEach((item) => {
         if (item && item.productId && item.returnquantity && item.returnquantity > 0 && isValid) {
-          // If multiple batches, user must enter qty for at least one batch
           if (this.hasMultipleBatches(item.productId)) {
             const batchEntries = item.batchReturnQtys || {};
-            const consumptions = this.state.batchConsumptions[item.productId] || [];
-            const hasAny = consumptions.some(
-              (c) => batchEntries[c.batch?.batchId] && batchEntries[c.batch?.batchId] > 0
-            );
-            if (!hasAny) isValid = false;
+            const batchTotal = Object.values(batchEntries).reduce((s, v) => s + (v || 0), 0);
+            // Sum of per-batch qtys must equal the entered return quantity
+            if (Math.abs(batchTotal - Number(item.returnquantity)) > 0.001) {
+              isValid = false;
+            }
           }
-          // isValid stays true if checks passed
         } else {
           isValid = false;
         }
@@ -128,7 +126,7 @@ class ReturnProduct extends AddForm {
     const consumptions = this.state.batchConsumptions[productId] || [];
     if (!this.hasMultipleBatches(productId)) return null;
 
-    // Group consumptions by batchId (from nested batch object)
+    // Group consumptions by batchId
     const batchMap = {};
     consumptions.forEach((c) => {
       const bId = c.batch?.batchId;
@@ -145,6 +143,13 @@ class ReturnProduct extends AddForm {
       batchMap[bId].totalConsumed += c.qtyConsumed;
     });
 
+    const batchEntries = item.batchReturnQtys || {};
+    const batchTotal = Object.values(batchEntries).reduce((s, v) => s + (v || 0), 0);
+    const required = Number(item.returnquantity) || 0;
+    const remaining = Math.round((required - batchTotal) * 1000) / 1000;
+    const isExact = Math.abs(remaining) < 0.001;
+    const isOver = remaining < -0.001;
+
     return (
       <Grid item sm={12} style={{ marginTop: 8 }}>
         <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
@@ -155,7 +160,7 @@ class ReturnProduct extends AddForm {
             b.brand,
             b.lotNumber,
             b.expiryDate ? "Exp: " + b.expiryDate : null,
-            `(available: ${b.totalConsumed})`,
+            `(consumed: ${b.totalConsumed})`,
           ]
             .filter(Boolean)
             .join(" | ");
@@ -185,6 +190,12 @@ class ReturnProduct extends AddForm {
             </div>
           );
         })}
+        <div style={{ fontSize: 12, marginTop: 4, color: isOver ? '#c62828' : isExact ? '#2e7d32' : '#e65100' }}>
+          Allocated: <strong>{batchTotal}</strong> / {required}
+          {!isExact && !isOver && ` — ${remaining} remaining`}
+          {isOver && ` — over by ${Math.abs(remaining)}`}
+          {isExact && ' ✓'}
+        </div>
       </Grid>
     );
   }

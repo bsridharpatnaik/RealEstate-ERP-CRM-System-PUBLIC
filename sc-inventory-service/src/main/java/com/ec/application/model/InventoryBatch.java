@@ -54,6 +54,15 @@ public class InventoryBatch extends ReusableFields {
     @Column(name = "qty_remaining", nullable = false)
     private Double qtyRemaining;
 
+    /**
+     * Optimistic-lock version column.
+     * Prevents concurrent updates from silently over-consuming or duplicating batch quantities.
+     * Requires DB migration: ALTER TABLE inventory_batch ADD COLUMN version BIGINT DEFAULT 0 NOT NULL;
+     */
+    @javax.persistence.Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
     @Column(name = "alert_sent_60", columnDefinition = "boolean default false")
     private Boolean alertSent60 = false;
 

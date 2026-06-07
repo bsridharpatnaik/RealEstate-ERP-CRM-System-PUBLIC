@@ -8,7 +8,7 @@ import EditForm from "./../../Shared/EditForm";
 import { API } from "./../../axios";
 import {
   Dialog, DialogTitle, DialogContent, DialogContentText,
-  DialogActions, Button as MuiButton, Tooltip,
+  DialogActions, Button as MuiButton,
 } from "@material-ui/core";
 
 //misc
@@ -169,35 +169,22 @@ class Edit extends EditForm {
               })}
             </div>
             <div style={{ flex: 1 }}>
-              {(() => {
-                const consumptions = (this.batchConsumptionData || {})[productId] || [];
-                const hasOverride = consumptions.some(c => c.fifoOverridden === true);
-                const field = this.renderTextField({
-                  fieldname: "quantity",
-                  placeholder: "Quantity",
-                  type: "number",
-                  required: true,
-                  defaultKey: "quantity",
-                  data: this.state.noproduct[key],
-                  skipAdd: true,
-                  validation: "nonegative",
-                  disabled: hasOverride,
-                  onChange: (value) => {
-                    const p = this.state.noproduct;
-                    p[key].quantity = value;
-                    this.getCurrentStock(key);
-                  },
-                });
-                return hasOverride ? (
-                  <Tooltip
-                    title="Quantity is locked because this outward was created with a manual batch override. To change quantity, delete this outward and recreate it."
-                    arrow
-                    placement="top"
-                  >
-                    <span style={{ display: 'block' }}>{field}</span>
-                  </Tooltip>
-                ) : field;
-              })()}
+              {this.renderTextField({
+                fieldname: "quantity",
+                placeholder: "Quantity",
+                type: "number",
+                required: true,
+                defaultKey: "quantity",
+                data: this.state.noproduct[key],
+                skipAdd: true,
+                validation: "nonegative",
+                disabled: false,
+                onChange: (value) => {
+                  const p = this.state.noproduct;
+                  p[key].quantity = value;
+                  this.getCurrentStock(key);
+                },
+              })}
             </div>
           </div>
 
@@ -289,25 +276,64 @@ class Edit extends EditForm {
 
     const params = this.formData;
 
-    // #7: Preserve batch override data when qty is unchanged for a product
+    // Batch override handling for edit
+    const batchErrors = [];
     params.productWithQuantities = Object.values(this.state.noproduct).map(p => {
       const result = { ...p };
       const originalQty = (this.originalQtyMap || {})[p.productId];
       const consumptions = (this.batchConsumptionData || {})[p.productId] || [];
-      const hasOverride = consumptions.some(c => c.fifoOverridden);
+      const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
+      const hasOverride = overriddenConsumptions.length > 0;
+      const qtyChanged = originalQty != null && Math.abs(p.quantity - originalQty) > 0.001;
 
-      if (hasOverride && originalQty != null && Math.abs(p.quantity - originalQty) <= 0.001) {
-        // Qty unchanged — re-send the same override batches so the re-created consumptions match
+      if (!hasOverride) {
+        // No override — FIFO re-applies automatically on any qty change. Nothing to do.
+        return result;
+      }
+
+      if (!qtyChanged) {
+        // Qty unchanged — re-send same override batches to preserve them
         result.overrideBatches = consumptions.map(c => ({
           batchId: c.batch ? c.batch.batchId : c.batchId,
           qty: c.qtyConsumed,
         }));
-        const comment = consumptions.find(c => c.overrideComment)?.overrideComment;
-        if (comment) result.overrideComment = comment;
+        // Backend requires overrideComment when there are overrides — always provide a fallback
+        result.overrideComment = consumptions.find(c => c.overrideComment)?.overrideComment || 'Override preserved';
+        return result;
       }
-      // If qty changed: drop override — backend re-runs pure FIFO with new qty
+
+      // Qty changed with override.
+      // Safe to auto-adjust only when there is exactly ONE consumption total (not just one overridden)
+      // — avoids sending wrong qty when a product has mixed override + FIFO consumptions.
+      const isSingleBatchOverride = consumptions.length === 1 && overriddenConsumptions.length === 1;
+
+      if (isSingleBatchOverride) {
+        // Single batch — auto-adjust: same batch, new qty
+        const c = overriddenConsumptions[0];
+        const batchId = c.batch ? c.batch.batchId : c.batchId;
+        result.overrideBatches = [{ batchId, qty: parseFloat(p.quantity) }];
+        result.overrideComment = c.overrideComment || 'Qty adjusted';
+      } else {
+        // Multi-batch override + qty changed — user must re-specify
+        // Check if user already provided new overrideBatches via state (manual re-assign)
+        if (!result.overrideBatches || result.overrideBatches.length === 0) {
+          const productEntry = (this.props.dropdowns?.product || []).find(pr => pr.id === p.productId);
+          const productName = productEntry?.name || `Product ${p.productId}`;
+          batchErrors.push(
+            `"${productName}" has multiple batch overrides and quantity was changed. ` +
+            `To change quantity on a multi-batch override outward, please delete this outward and create a new one with the correct quantities and batch allocation.`
+          );
+        }
+      }
+
       return result;
     });
+
+    if (batchErrors.length > 0) {
+      this.props.enqueueSnackbar(batchErrors[0], { variant: 'error' });
+      this.setState({ isUpdating: false });
+      return;
+    }
 
     const response = await API.PUT(this.updateUrl, params);
     this.setState({ isUpdating: false });

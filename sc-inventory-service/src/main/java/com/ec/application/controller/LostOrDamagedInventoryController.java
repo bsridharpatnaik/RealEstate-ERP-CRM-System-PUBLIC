@@ -61,17 +61,18 @@ public class LostOrDamagedInventoryController {
     }
 
     @PutMapping("/{id}")
-    @CheckAuthority
-    public LostDamagedInventory updateLDInventoryByID(@PathVariable long id,
-                                                      @RequestBody CreateLostOrDamagedInventoryData payload) throws Exception {
-        return lostDamagedInventoryService.UpdateData(payload, id);
+    public ResponseEntity<?> updateLDInventoryByID(@PathVariable long id) {
+        // Edit is intentionally removed. Correct a mistake by adding the opposite entry
+        // (EXCESS_FOUND corrects a LOST_DAMAGED and vice-versa).
+        return ResponseEntity.status(org.springframework.http.HttpStatus.GONE)
+                .body("Edit is not supported for Lost/Damaged entries. Add an opposite entry to correct a mistake.");
     }
 
     @DeleteMapping("/{id}")
-    @CheckAuthority
-    public ResponseEntity<?> deleteLDInventoryByID(@PathVariable long id) throws Exception {
-        lostDamagedInventoryService.DeleteData(id);
-        return ResponseEntity.ok("Entity deleted");
+    public ResponseEntity<?> deleteLDInventoryByID(@PathVariable long id) {
+        // Delete is intentionally removed. Correct a mistake by adding the opposite entry.
+        return ResponseEntity.status(org.springframework.http.HttpStatus.GONE)
+                .body("Delete is not supported for Lost/Damaged entries. Add an opposite entry to correct a mistake.");
     }
 
     @ExceptionHandler(

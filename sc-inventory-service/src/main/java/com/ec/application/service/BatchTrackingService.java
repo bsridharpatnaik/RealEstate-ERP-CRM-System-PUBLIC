@@ -26,6 +26,7 @@ import com.ec.application.repository.StockRepo;
 import com.ec.application.model.Stock;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
@@ -195,7 +191,7 @@ public class BatchTrackingService {
 
         // Get batch sums per product+warehouse
         List<Long> warehouseIds = stocks.stream()
-                .map(Stock::getWarehouseId)
+                .map(s -> s.getWarehouse().getWarehouseId())
                 .distinct()
                 .collect(Collectors.toList());
 
@@ -212,10 +208,10 @@ public class BatchTrackingService {
         // Count distinct products with untracked stock (per warehouse basis)
         Set<Long> untrackedProducts = new HashSet<>();
         for (Stock stock : stocks) {
-            String key = stock.getProductId() + "_" + stock.getWarehouseId();
+            String key = stock.getProduct().getProductId() + "_" + stock.getWarehouse().getWarehouseId();
             double batchQty = batchQtyMap.getOrDefault(key, 0.0);
             if (stock.getQuantityInHand() > batchQty + 0.001) {
-                untrackedProducts.add(stock.getProductId());
+                untrackedProducts.add(stock.getProduct().getProductId());
             }
         }
         return untrackedProducts.size();
@@ -389,7 +385,23 @@ public class BatchTrackingService {
 
         batch.setBrand(request.getBrand());
         batch.setLotNumber(request.getLotNumber());
+
+        // Validate expiry: BATCH_WITH_EXPIRY products must always have an expiry date
+        if (batch.getProduct() != null && batch.getProduct().requiresExpiry()
+                && request.getExpiryDate() == null) {
+            throw new IllegalArgumentException(
+                    "Expiry date is required for product '" + batch.getProduct().getProductName()
+                    + "' (batch mode: BATCH_WITH_EXPIRY).");
+        }
+        // If expiry date changed, reset notification flags so alerts fire again at the new date
+        boolean expiryChanged = !java.util.Objects.equals(batch.getExpiryDate(), request.getExpiryDate());
         batch.setExpiryDate(request.getExpiryDate());
+        if (expiryChanged) {
+            batch.setAlertSent30(false);
+            batch.setAlertSent60(false);
+            batch.setAlertSentExpired(false);
+        }
+
         if (request.getReceivedDate() != null) {
             batch.setReceivedDate(request.getReceivedDate());
         }

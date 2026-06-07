@@ -150,7 +150,7 @@ public class StockService {
                         } else {
                             // Get batch sums per product+warehouse
                             List<Long> warehouseIds = stocks.stream()
-                                    .map(Stock::getWarehouseId)
+                                    .map(s -> s.getWarehouse().getWarehouseId())
                                     .distinct()
                                     .collect(Collectors.toList());
                             List<Object[]> batchSums =
@@ -166,11 +166,11 @@ public class StockService {
                             // Filter stocks with untracked gap
                             expiryProductIds = stocks.stream()
                                     .filter(stock -> {
-                                        String key = stock.getProductId() + "_" + stock.getWarehouseId();
+                                        String key = stock.getProduct().getProductId() + "_" + stock.getWarehouse().getWarehouseId();
                                         Double batchQty = batchQtyMap.getOrDefault(key, 0.0);
                                         return stock.getQuantityInHand() > batchQty + 0.001;
                                     })
-                                    .map(Stock::getProductId)
+                                    .map(s -> s.getProduct().getProductId())
                                     .distinct()
                                     .collect(Collectors.toList());
                         }

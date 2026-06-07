@@ -1,4 +1,4 @@
-# ERP/CRM Project — Claude Code Context
+# ERP/CRM Project — Codex Context
 
 ## Project Overview
 
@@ -655,76 +655,14 @@ NOT verified on: inventory transfer out (may be missing — check `InventoryTran
 - Qty changed → `reverseBatchConsumptions()` + fresh `consumeBatchesForOutward()` using pure FIFO. Override is dropped, FIFO applied. Correct.
 - Qty unchanged → `edit.js` re-sends same `overrideBatches` in payload, preserving override. Correct.
 
-## FIFO Override — Resolved Behavior (Session 3)
+**Pending decision:** Whether to silently drop override on qty change, or show a warning to user. Either way the quantity field lock should be removed.
 
-- Qty field lock (`disabled: hasOverride`) removed from outward `edit.js`.
-- Single batch override + qty changed → frontend auto-sends `overrideBatches = [{batchId, qty: newQty}]`. Only safe when `consumptions.length === 1 && overriddenConsumptions.length === 1` (full single-batch, not mixed).
-- Multi-batch override + qty changed → frontend blocks save with error. User must delete and recreate.
-- Qty unchanged + override → re-send existing `overrideBatches` unchanged. Always include fallback `overrideComment` ("Override preserved") since backend requires it.
+## Lost/Damaged — Pending Work
 
-## Lost/Damaged — Completed (Session 3)
-
-Edit and delete removed from:
-- `Lost/index.js` — removed Edit import, edit state, edit prop passed to List
-- `Lost/list.js` — removed `edit` and `delete` props from `<Table>` and `<Details>`
-- `Lost/details.js` — removed EditIcon, DeleteIcon, DeleteConfirm, edit/delete buttons
-
-## Inward Edit — Batch Reconciliation (Session 3)
-
-### State design in `add.js`
-
-`product.batchSplits` — always stores the original batch data (loaded from backend). Never overwritten by reduce operations. Used for:
-- Modal population (add/reduce modes)
-- Metadata-only update (when qty unchanged, sent to backend as-is)
-- Display summary ("✓ N batches · X units")
-
-`product._reduceSplits` — stores reduce-path delta only. Set by `confirmBatchSplits` in reduce mode. Cleared when user changes qty. Sent to backend as `batchSplits` payload for the reduce path.
-
-`product.batchSplits` (overwritten) — when user confirms increase splits via modal, original batchSplits are overwritten with the delta splits. Display shows delta, not original total.
-
-### Date format contract
-
-All `expiryDate` values inside `product.batchSplits` and `product._reduceSplits` are stored as **`dd-MM-yyyy`** (backend wire format). The modal input converts to/from `yyyy-MM-dd` for `<input type="date">`.
-
-Conversions:
-- `loadExistingData`: backend `dd-MM-yyyy` → store as `dd-MM-yyyy` (no conversion)
-- `openBatchSplitModal` add mode: `dd-MM-yyyy` → `.split.reverse.join` → `yyyy-MM-dd` for input
-- `confirmBatchSplits` increase: input `yyyy-MM-dd` → `.split.reverse.join` → `dd-MM-yyyy` stored in batchSplits
-- `confirmBatchSplits` reduce: always `expiryDate: null` (not needed by backend reduce path)
-- Payload: `s.expiryDate || null` → sends `dd-MM-yyyy` or null → backend `@JsonFormat(dd-MM-yyyy)` parses correctly
-
-### Payload build for edit PUT
-
-`isReducePath = !!product._reduceSplits`
-
-`rawSplits = _reduceSplits || batchSplits`
-
-When building payload, `batchId` is only included when `isReducePath`. This prevents original splits (which have batchIds from `loadExistingData`) from triggering the `hasSplitsWithBatchId` reduce-detection check on the backend when the user only changed qty without specifying which batches to reduce from.
-
-The backend then correctly throws: "Product X has N batches. Please specify which batch(es) the reduction comes from using 'Edit Batches'."
-
-### Backend guards
-
-`addReturnForInward` — validates `sum(overrideBatches.qty) == quantity` before draining. Prevents batch/stock divergence when user sends partial override entries.
-
-`reconcileBatchesForEditedInward`:
-- delta = 0: metadata update (brand/lot/expiry) by position. batchId ignored.
-- delta < 0, single batch: auto-reduce. No user input needed.
-- delta < 0, multi-batch, no splits with batchId: throws clear error.
-- delta < 0, multi-batch, splits with batchId: validates sum == reduction, then drains per batch.
-- delta > 0, no splits: throws "specify batch for new qty."
-- delta > 0, splits: validates sum == delta, creates/merges batches.
-
-## External Review Findings — Fixed (Session 3)
-
-| # | File | Issue | Fix |
-|---|---|---|---|
-| 1+7 | `InventoryTransferService` | Override: total check was AFTER individual batch saves → partial deductions survived total validation failure. Catch block compensated stock but NOT batch changes. | Two-pass: validate+sum before any saves; catch block now reverses source batch deductions and soft-deletes partially-created target batches. `createTargetBatchesForTransfer` returns `List<Long>` of created IDs. |
-| 2 | `OutwardInventoryService.restoreBatchesForReturn` | No sum check, no product ownership, no outward ownership, no upper-bound, no duplicate check on explicit returnBatches. | Added all five: filter valid entries, dedup, sum==quantity, product match, outward consumption match, qty ≤ consumed. Two-pass: validate then apply. |
-| 3 | `ReturnProduct.js` | Frontend validation only required "any" batch qty > 0. Sum could be 10 with return qty 50. | `checkValidation` now requires `sum(batchReturnQtys) == returnquantity`. Added live Allocated/remaining indicator in UI. |
-| 5 | Outward create, transfer override, inward reject, lost/damaged | Batch ownership only checked warehouse (or nothing). Product ownership not validated anywhere except outward create (now). | Added `batch.product == productId` check in outward override, transfer override (pass 1), inward reject override, lost/damaged single+multi-batch. Added warehouse check to L/D and inward reject. |
-| 9 | `LostDamagedInventoryService.handleBatchOnCreate` | Null-batchId entries counted in sum, skipped in loop → stock adjusted by full qty but batch adjusted by less. Duplicates not checked. Same bug in EXCESS_FOUND path. | Filter to valid entries first, then sum. Duplicate check. Ownership check. Two-pass: validate then apply. Both LOST_DAMAGED and EXCESS_FOUND paths fixed. |
-| — | `InventoryTransferService.deductSourceBatchesForTransfer` | No product or warehouse ownership checks on override batches. | Added in pass 1: `batch.product == productId` and `batch.warehouse == sourceWarehouseId`. |
+Edit and delete to be removed from UI and backend. Until removed:
+- Delete does NOT restore batch `qtyRemaining` (gap in current code).
+- Edit does NOT reconcile batch delta (gap in current code).
+- These gaps are acceptable since the features will be removed.
 
 ## Key Invariant
 

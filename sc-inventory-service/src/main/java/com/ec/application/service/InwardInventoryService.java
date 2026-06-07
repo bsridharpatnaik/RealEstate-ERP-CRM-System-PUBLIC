@@ -172,7 +172,7 @@ public class InwardInventoryService {
         li.setPendingQuantity(pendingQty);
         li.setMaxAllowedQuantity(maxAllowed);
         productRepo.findById(v.getProductId()).ifPresent(p -> {
-            li.setIsExpirable(p.getIsExpirable());
+            li.setIsExpirable(p.requiresExpiry());
             li.setBatchMode(p.getBatchMode());
         });
         return li;
@@ -708,12 +708,45 @@ public class InwardInventoryService {
         // If user specified batches (multi-batch inward) — drain those; else auto-drain last first
         // -----------------------------------------
         if (overrideBatches != null && !overrideBatches.isEmpty()) {
-            for (com.ec.application.data.BatchOverrideEntry entry : overrideBatches) {
+            // Filter valid entries and check for duplicates
+            List<com.ec.application.data.BatchOverrideEntry> validOverrides = overrideBatches.stream()
+                    .filter(e -> e.getBatchId() != null && e.getQty() != null && e.getQty() > 0)
+                    .collect(Collectors.toList());
+            java.util.Set<Long> seenBatchIds = new java.util.HashSet<>();
+            for (com.ec.application.data.BatchOverrideEntry e : validOverrides) {
+                if (!seenBatchIds.add(e.getBatchId())) {
+                    throw new Exception("Duplicate batch ID " + e.getBatchId() + " in rejection entries.");
+                }
+            }
+            // Validate sum of override qtys equals reject quantity
+            double overrideTotal = validOverrides.stream()
+                    .mapToDouble(e -> e.getQty()).sum();
+            if (Math.abs(overrideTotal - quantity) > 0.001) {
+                throw new Exception("Batch quantities (" + overrideTotal
+                        + ") must equal the reject quantity (" + quantity + ").");
+            }
+            for (com.ec.application.data.BatchOverrideEntry entry : validOverrides) {
                 InventoryBatch rb = inventoryBatchRepository.findById(entry.getBatchId())
                         .orElseThrow(() -> new Exception("Batch not found: " + entry.getBatchId()));
-                if (entry.getQty() > rb.getQtyRemaining()) {
+                // Product ownership
+                if (!rb.getProduct().getProductId().equals(productId)) {
+                    throw new Exception("Batch #" + entry.getBatchId() + " belongs to product '"
+                            + rb.getProduct().getProductName() + "', not the rejected product.");
+                }
+                // Warehouse ownership
+                if (!rb.getWarehouse().getWarehouseId().equals(warehouseId)) {
+                    throw new Exception("Batch #" + entry.getBatchId() + " belongs to warehouse '"
+                            + rb.getWarehouse().getWarehouseName() + "', not the inward's warehouse.");
+                }
+                // Inward ownership — batch must belong to this specific inward
+                if (!rb.getInwardId().equals(inwardId)) {
+                    throw new Exception("Batch #" + entry.getBatchId()
+                            + " belongs to inward #" + rb.getInwardId()
+                            + ", not the inward being rejected (#" + inwardId + ").");
+                }
+                if (entry.getQty() > rb.getQtyRemaining() + 0.001) {
                     throw new Exception("Cannot reject. Batch #" + entry.getBatchId()
-                            + " has only " + rb.getQtyRemaining()
+                            + " has only " + String.format("%.3f", rb.getQtyRemaining())
                             + " units remaining — some qty was already consumed via outward.");
                 }
                 rb.setQtyRemaining(rb.getQtyRemaining() - entry.getQty());
@@ -722,19 +755,24 @@ public class InwardInventoryService {
         } else {
             List<InventoryBatch> rejectBatches = inventoryBatchRepository.findAllByInwardIdAndProductId(inwardId, productId);
             if (!rejectBatches.isEmpty()) {
-                double reduction = quantity;
-                for (int i = rejectBatches.size() - 1; i >= 0 && reduction > 0.001; i--) {
-                    InventoryBatch rb = rejectBatches.get(i);
-                    double actualReduce = Math.min(rb.getQtyRemaining(), reduction);
-                    rb.setQtyRemaining(rb.getQtyRemaining() - actualReduce);
-                    reduction -= actualReduce;
-                    inventoryBatchRepository.save(rb);
+                if (rejectBatches.size() > 1) {
+                    // Multiple batches — cannot auto-drain; user must specify which batch(es)
+                    String pName = rejectBatches.get(0).getProduct() != null
+                            ? rejectBatches.get(0).getProduct().getProductName() : "product";
+                    throw new Exception(
+                            "'" + pName + "' has " + rejectBatches.size() + " batches in this inward. "
+                            + "Please specify which batch(es) the rejection of " + quantity
+                            + " units should come from.");
                 }
-                if (reduction > 0.001) {
+                // Single batch — auto drain
+                InventoryBatch rb = rejectBatches.get(0);
+                if (quantity > rb.getQtyRemaining() + 0.001) {
                     throw new Exception("Cannot reject " + quantity
-                            + " units. Only " + (quantity - reduction)
+                            + " units. Only " + String.format("%.3f", rb.getQtyRemaining())
                             + " units remain in the batch — the rest has already been consumed via outward.");
                 }
+                rb.setQtyRemaining(rb.getQtyRemaining() - quantity);
+                inventoryBatchRepository.save(rb);
             }
         }
 
@@ -1203,66 +1241,95 @@ public class InwardInventoryService {
 
             if (delta < 0) {
                 double reduction = Math.abs(delta);
-                for (int i = batches.size() - 1; i >= 0 && reduction > 0.001; i--) {
-                    InventoryBatch batch = batches.get(i);
+                String productName = iol.getProduct().getProductName();
+
+                if (batches.size() == 1) {
+                    // Single batch — auto reduce (we know exactly which batch)
+                    InventoryBatch batch = batches.get(0);
                     double consumed = batch.getQtyReceived() - batch.getQtyRemaining();
                     double actualReduce = Math.min(batch.getQtyRemaining(), reduction);
                     batch.setQtyRemaining(batch.getQtyRemaining() - actualReduce);
                     batch.setQtyReceived(Math.max(batch.getQtyReceived() - actualReduce, consumed));
                     reduction -= actualReduce;
                     inventoryBatchRepository.save(batch);
-                }
-                if (reduction > 0.001) {
-                    double alreadyConsumed = Math.abs(delta) - reduction;
-                    throw new IllegalArgumentException(
-                            "Cannot reduce inward quantity by " + Math.abs(delta) + " for product '"
-                            + iol.getProduct().getProductName() + "'. Only "
-                            + String.format("%.3f", alreadyConsumed)
-                            + " units remain in batch records — the rest has already been consumed via outward."
-                    );
-                }
-            } else {
-                boolean hasSplits = paq.getBatchSplits() != null && !paq.getBatchSplits().isEmpty();
-                if (!hasSplits && requireExpiry && paq.getExpiryDate() == null)
-                    throw new IllegalArgumentException(
-                            "Expiry date is required when increasing quantity for product: '" + iol.getProduct().getProductName() + "'");
-                if (hasSplits) {
-                    validateBatchSplits(paq.getBatchSplits(), delta, iol.getProduct().getProductName(), requireExpiry);
-                    for (InwardBatchSplit split : paq.getBatchSplits()) {
-                        InventoryBatch last = batches.get(batches.size() - 1);
-                        // Merge into existing batch only if expiry AND brand AND lot match
-                        boolean sameBatch = split.getQty() != null
-                                && objectsEqual(split.getExpiryDate(), last.getExpiryDate())
-                                && objectsEqual(split.getBrand(), last.getBrand())
-                                && objectsEqual(split.getLotNumber(), last.getLotNumber());
-                        if (sameBatch) {
-                            last.setQtyReceived(last.getQtyReceived() + split.getQty());
-                            last.setQtyRemaining(last.getQtyRemaining() + split.getQty());
-                            inventoryBatchRepository.save(last);
-                        } else {
-                            InventoryBatch nb = new InventoryBatch();
-                            nb.setProduct(iol.getProduct()); nb.setWarehouse(iol.getWarehouse());
-                            nb.setInwardId(inward.getInwardId()); nb.setBrand(split.getBrand());
-                            nb.setLotNumber(split.getLotNumber());
-                            nb.setExpiryDate(split.getExpiryDate()); nb.setReceivedDate(inward.getDate());
-                            nb.setQtyReceived(split.getQty()); nb.setQtyRemaining(split.getQty());
-                            inventoryBatchRepository.save(nb);
-                        }
+                    if (reduction > 0.001) {
+                        double alreadyConsumed = Math.abs(delta) - reduction;
+                        throw new IllegalArgumentException(
+                                "Cannot reduce inward quantity by " + Math.abs(delta) + " for product '"
+                                + productName + "'. Only "
+                                + String.format("%.3f", alreadyConsumed)
+                                + " units remain in the batch — the rest has already been consumed via outward.");
                     }
                 } else {
+                    // Multiple batches — user must specify which batches to reduce via batchSplits with batchId
+                    boolean hasSplitsWithBatchId = paq.getBatchSplits() != null
+                            && !paq.getBatchSplits().isEmpty()
+                            && paq.getBatchSplits().stream().anyMatch(s -> s.getBatchId() != null);
+                    if (!hasSplitsWithBatchId) {
+                        throw new IllegalArgumentException(
+                                "Product '" + productName + "' has " + batches.size()
+                                + " batches in this inward. Please specify which batch(es) the quantity reduction of "
+                                + String.format("%.3f", reduction)
+                                + " units should come from using the 'Edit Batches' button.");
+                    }
+                    // Validate sum of splits equals reduction
+                    double splitTotal = paq.getBatchSplits().stream()
+                            .filter(s -> s.getBatchId() != null && s.getQty() != null)
+                            .mapToDouble(InwardBatchSplit::getQty).sum();
+                    if (Math.abs(splitTotal - reduction) > 0.001) {
+                        throw new IllegalArgumentException(
+                                "Batch reduction quantities (" + splitTotal + ") must equal the quantity reduction ("
+                                + String.format("%.3f", reduction) + ") for product '" + productName + "'.");
+                    }
+                    // Apply reduction per specified batch
+                    for (InwardBatchSplit split : paq.getBatchSplits()) {
+                        if (split.getBatchId() == null || split.getQty() == null || split.getQty() <= 0) continue;
+                        InventoryBatch batch = batches.stream()
+                                .filter(b -> b.getBatchId().equals(split.getBatchId()))
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                        "Batch #" + split.getBatchId() + " not found in this inward for product '" + productName + "'."));
+                        if (split.getQty() > batch.getQtyRemaining() + 0.001) {
+                            throw new IllegalArgumentException(
+                                    "Cannot reduce batch #" + split.getBatchId() + " by " + split.getQty()
+                                    + " — only " + String.format("%.3f", batch.getQtyRemaining())
+                                    + " units remaining (the rest was consumed via outward).");
+                        }
+                        double consumed = batch.getQtyReceived() - batch.getQtyRemaining();
+                        batch.setQtyRemaining(batch.getQtyRemaining() - split.getQty());
+                        batch.setQtyReceived(Math.max(batch.getQtyReceived() - split.getQty(), consumed));
+                        inventoryBatchRepository.save(batch);
+                    }
+                }
+            } else {
+                // delta > 0 — increase: user MUST specify batch splits for the new quantity
+                boolean hasSplits = paq.getBatchSplits() != null && !paq.getBatchSplits().isEmpty();
+                if (!hasSplits) {
+                    throw new IllegalArgumentException(
+                            "Please specify which batch the increased quantity of "
+                            + String.format("%.3f", delta) + " units belongs to for product '"
+                            + iol.getProduct().getProductName()
+                            + "' using the 'Edit Batches' button.");
+                }
+                validateBatchSplits(paq.getBatchSplits(), delta, iol.getProduct().getProductName(), requireExpiry);
+                for (InwardBatchSplit split : paq.getBatchSplits()) {
                     InventoryBatch last = batches.get(batches.size() - 1);
-                    boolean sameBatch = objectsEqual(paq.getExpiryDate(), last.getExpiryDate())
-                            && objectsEqual(paq.getBrand(), last.getBrand());
+                    // Merge into existing batch only if expiry AND brand AND lot match
+                    boolean sameBatch = split.getQty() != null
+                            && objectsEqual(split.getExpiryDate(), last.getExpiryDate())
+                            && objectsEqual(split.getBrand(), last.getBrand())
+                            && objectsEqual(split.getLotNumber(), last.getLotNumber());
                     if (sameBatch) {
-                        last.setQtyReceived(last.getQtyReceived() + delta);
-                        last.setQtyRemaining(last.getQtyRemaining() + delta);
+                        last.setQtyReceived(last.getQtyReceived() + split.getQty());
+                        last.setQtyRemaining(last.getQtyRemaining() + split.getQty());
                         inventoryBatchRepository.save(last);
                     } else {
                         InventoryBatch nb = new InventoryBatch();
                         nb.setProduct(iol.getProduct()); nb.setWarehouse(iol.getWarehouse());
-                        nb.setInwardId(inward.getInwardId()); nb.setBrand(paq.getBrand());
-                        nb.setExpiryDate(paq.getExpiryDate()); nb.setReceivedDate(inward.getDate());
-                        nb.setQtyReceived(delta); nb.setQtyRemaining(delta);
+                        nb.setInwardId(inward.getInwardId()); nb.setBrand(split.getBrand());
+                        nb.setLotNumber(split.getLotNumber());
+                        nb.setExpiryDate(split.getExpiryDate()); nb.setReceivedDate(inward.getDate());
+                        nb.setQtyReceived(split.getQty()); nb.setQtyRemaining(split.getQty());
                         inventoryBatchRepository.save(nb);
                     }
                 }

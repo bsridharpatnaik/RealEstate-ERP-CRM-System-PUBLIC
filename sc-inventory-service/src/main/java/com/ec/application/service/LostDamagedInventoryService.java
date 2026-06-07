@@ -139,22 +139,51 @@ public class LostDamagedInventoryService {
         if ("LOST_DAMAGED".equals(payload.getEntryType())) {
             List<BatchOverrideEntry> entries = payload.getBatchEntries();
             if (entries != null && !entries.isEmpty()) {
-                // Multi-batch drain
-                double total = entries.stream().mapToDouble(e -> e.getQty() != null ? e.getQty() : 0.0).sum();
+                // Filter to valid entries first — prevents null batchId entries from passing sum check
+                List<BatchOverrideEntry> validEntries = entries.stream()
+                        .filter(e -> e.getBatchId() != null && e.getQty() != null && e.getQty() > 0)
+                        .collect(java.util.stream.Collectors.toList());
+                if (validEntries.isEmpty()) {
+                    throw new IllegalArgumentException("No valid batch entries provided for lost/damaged.");
+                }
+                // Duplicate batchId check
+                java.util.Set<Long> seenIds = new java.util.HashSet<>();
+                for (BatchOverrideEntry e : validEntries) {
+                    if (!seenIds.add(e.getBatchId())) {
+                        throw new IllegalArgumentException("Duplicate batch ID " + e.getBatchId() + " in lost/damaged entries.");
+                    }
+                }
+                double total = validEntries.stream().mapToDouble(BatchOverrideEntry::getQty).sum();
                 if (Math.abs(total - payload.getQuantity()) > 0.001) {
                     throw new IllegalArgumentException(
                             "Sum of batch quantities (" + total + ") does not match total quantity (" + payload.getQuantity() + ").");
                 }
-                InventoryBatch firstBatch = null;
-                List<BatchOverrideEntry> saved = new ArrayList<>();
-                for (BatchOverrideEntry entry : entries) {
-                    if (entry.getBatchId() == null || entry.getQty() == null || entry.getQty() <= 0) continue;
+                // Validate ownership + availability before any saves
+                Long warehouseId = entity.getWarehouse().getWarehouseId();
+                for (BatchOverrideEntry entry : validEntries) {
                     InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
                             .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
-                    if (entry.getQty() > batch.getQtyRemaining()) {
-                        throw new IllegalArgumentException("Batch " + entry.getBatchId()
-                                + " only has " + batch.getQtyRemaining() + " units remaining.");
+                    if (!batch.getProduct().getProductId().equals(product.getProductId())) {
+                        throw new IllegalArgumentException("Batch #" + entry.getBatchId()
+                                + " belongs to product '" + batch.getProduct().getProductName()
+                                + "', not the selected product.");
                     }
+                    if (!batch.getWarehouse().getWarehouseId().equals(warehouseId)) {
+                        throw new IllegalArgumentException("Batch #" + entry.getBatchId()
+                                + " belongs to warehouse '" + batch.getWarehouse().getWarehouseName()
+                                + "', not the selected warehouse.");
+                    }
+                    if (entry.getQty() > batch.getQtyRemaining() + 0.001) {
+                        throw new IllegalArgumentException("Batch " + entry.getBatchId()
+                                + " only has " + String.format("%.3f", batch.getQtyRemaining()) + " units remaining.");
+                    }
+                }
+                // All validations passed — apply
+                InventoryBatch firstBatch = null;
+                List<BatchOverrideEntry> saved = new ArrayList<>();
+                for (BatchOverrideEntry entry : validEntries) {
+                    InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                            .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
                     batch.setQtyRemaining(batch.getQtyRemaining() - entry.getQty());
                     inventoryBatchRepository.save(batch);
                     BatchOverrideEntry enriched = new BatchOverrideEntry();
@@ -182,9 +211,17 @@ public class LostDamagedInventoryService {
             }
             InventoryBatch batch = inventoryBatchRepository.findById(payload.getBatchId())
                     .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + payload.getBatchId()));
-            if (payload.getQuantity() > batch.getQtyRemaining()) {
+            if (!batch.getProduct().getProductId().equals(product.getProductId())) {
+                throw new IllegalArgumentException("Batch #" + payload.getBatchId()
+                        + " belongs to a different product.");
+            }
+            if (!batch.getWarehouse().getWarehouseId().equals(entity.getWarehouse().getWarehouseId())) {
+                throw new IllegalArgumentException("Batch #" + payload.getBatchId()
+                        + " belongs to a different warehouse.");
+            }
+            if (payload.getQuantity() > batch.getQtyRemaining() + 0.001) {
                 throw new IllegalArgumentException("Cannot mark " + payload.getQuantity()
-                        + " as lost/damaged. Batch only has " + batch.getQtyRemaining() + " units remaining.");
+                        + " as lost/damaged. Batch only has " + String.format("%.3f", batch.getQtyRemaining()) + " units remaining.");
             }
             batch.setQtyRemaining(batch.getQtyRemaining() - payload.getQuantity());
             return inventoryBatchRepository.save(batch);
@@ -193,16 +230,43 @@ public class LostDamagedInventoryService {
         if ("EXCESS_FOUND".equals(payload.getEntryType())) {
             List<BatchOverrideEntry> excessEntries = payload.getExcessBatchEntries();
             if (excessEntries != null && !excessEntries.isEmpty()) {
-                // Multi-batch add to existing
-                double total = excessEntries.stream().mapToDouble(e -> e.getQty() != null ? e.getQty() : 0.0).sum();
+                // Filter valid entries first — prevents null batchId entries from passing sum check
+                List<BatchOverrideEntry> validExcess = excessEntries.stream()
+                        .filter(e -> e.getBatchId() != null && e.getQty() != null && e.getQty() > 0)
+                        .collect(java.util.stream.Collectors.toList());
+                if (validExcess.isEmpty()) {
+                    throw new IllegalArgumentException("No valid batch entries provided for excess found.");
+                }
+                // Duplicate batchId check
+                java.util.Set<Long> seenExcessIds = new java.util.HashSet<>();
+                for (BatchOverrideEntry e : validExcess) {
+                    if (!seenExcessIds.add(e.getBatchId())) {
+                        throw new IllegalArgumentException("Duplicate batch ID " + e.getBatchId() + " in excess found entries.");
+                    }
+                }
+                double total = validExcess.stream().mapToDouble(BatchOverrideEntry::getQty).sum();
                 if (Math.abs(total - payload.getQuantity()) > 0.001) {
                     throw new IllegalArgumentException(
                             "Sum of batch quantities (" + total + ") does not match total quantity (" + payload.getQuantity() + ").");
                 }
+                // Validate ownership before saves
+                Long warehouseId = entity.getWarehouse().getWarehouseId();
+                for (BatchOverrideEntry entry : validExcess) {
+                    InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                            .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
+                    if (!batch.getProduct().getProductId().equals(product.getProductId())) {
+                        throw new IllegalArgumentException("Batch #" + entry.getBatchId()
+                                + " belongs to a different product.");
+                    }
+                    if (!batch.getWarehouse().getWarehouseId().equals(warehouseId)) {
+                        throw new IllegalArgumentException("Batch #" + entry.getBatchId()
+                                + " belongs to a different warehouse.");
+                    }
+                }
+                // Apply
                 InventoryBatch firstBatch = null;
                 List<BatchOverrideEntry> saved = new ArrayList<>();
-                for (BatchOverrideEntry entry : excessEntries) {
-                    if (entry.getBatchId() == null || entry.getQty() == null || entry.getQty() <= 0) continue;
+                for (BatchOverrideEntry entry : validExcess) {
                     InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
                             .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
                     batch.setQtyRemaining(batch.getQtyRemaining() + entry.getQty());
@@ -229,6 +293,14 @@ public class LostDamagedInventoryService {
             if (payload.getExistingBatchId() != null) {
                 InventoryBatch batch = inventoryBatchRepository.findById(payload.getExistingBatchId())
                         .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + payload.getExistingBatchId()));
+                if (!batch.getProduct().getProductId().equals(product.getProductId())) {
+                    throw new IllegalArgumentException("Batch #" + payload.getExistingBatchId()
+                            + " belongs to a different product.");
+                }
+                if (!batch.getWarehouse().getWarehouseId().equals(entity.getWarehouse().getWarehouseId())) {
+                    throw new IllegalArgumentException("Batch #" + payload.getExistingBatchId()
+                            + " belongs to a different warehouse.");
+                }
                 batch.setQtyRemaining(batch.getQtyRemaining() + payload.getQuantity());
                 return inventoryBatchRepository.save(batch);
             }
