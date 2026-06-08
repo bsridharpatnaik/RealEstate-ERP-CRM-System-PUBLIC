@@ -765,7 +765,7 @@ class InwardInventoryForm extends AddForm {
 
       const remainingProducts = dropdownProducts.filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
 
-      const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+      const hasBatchSplits = product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
       const isBatchTracked = product.productId && product.batchMode && product.batchMode !== 'NONE';
 
       return (
@@ -936,7 +936,7 @@ class InwardInventoryForm extends AddForm {
       );
     } else {
       // PO Inward Layout — grid row (same pattern as direct inward)
-      const hasBatchSplits = isEditMode && product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+      const hasBatchSplits = product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
       const isBatchTracked = product.productId && product.batchMode && product.batchMode !== 'NONE';
 
       return (

@@ -32,6 +32,16 @@ class Edit extends EditForm {
     boqViolationDialog: { open: false, violations: [] },
     selectedStructureTypeId: "ALL",
     filteredStructures: [],
+    // Batch re-allocation modal — shown when an override outward's qty is changed
+    batchReassignModal: {
+      open: false,
+      productKey: null,
+      productId: null,
+      productName: '',
+      newQty: 0,
+      entries: [],          // [{batchId, label, consumed, reassignQty:''}]
+      overrideComment: '',
+    },
   };
   key = 1;
 
@@ -277,7 +287,6 @@ class Edit extends EditForm {
     const params = this.formData;
 
     // Batch override handling for edit
-    const batchErrors = [];
     params.productWithQuantities = Object.values(this.state.noproduct).map(p => {
       const result = { ...p };
       const originalQty = (this.originalQtyMap || {})[p.productId];
@@ -287,50 +296,52 @@ class Edit extends EditForm {
       const qtyChanged = originalQty != null && Math.abs(p.quantity - originalQty) > 0.001;
 
       if (!hasOverride) {
-        // No override — FIFO re-applies automatically on any qty change. Nothing to do.
+        // No override — FIFO re-applies automatically. Safe: user never chose specific batches.
         return result;
       }
 
       if (!qtyChanged) {
-        // Qty unchanged — re-send same override batches to preserve them
+        // Qty unchanged — re-send same override batches to preserve them.
         result.overrideBatches = consumptions.map(c => ({
           batchId: c.batch ? c.batch.batchId : c.batchId,
           qty: c.qtyConsumed,
         }));
-        // Backend requires overrideComment when there are overrides — always provide a fallback
         result.overrideComment = consumptions.find(c => c.overrideComment)?.overrideComment || 'Override preserved';
         return result;
       }
 
       // Qty changed with override.
-      // Safe to auto-adjust only when there is exactly ONE consumption total (not just one overridden)
-      // — avoids sending wrong qty when a product has mixed override + FIFO consumptions.
       const isSingleBatchOverride = consumptions.length === 1 && overriddenConsumptions.length === 1;
-
       if (isSingleBatchOverride) {
-        // Single batch — auto-adjust: same batch, new qty
+        // Single batch — auto-adjust: same batch, new qty. Unambiguous.
         const c = overriddenConsumptions[0];
         const batchId = c.batch ? c.batch.batchId : c.batchId;
         result.overrideBatches = [{ batchId, qty: parseFloat(p.quantity) }];
         result.overrideComment = c.overrideComment || 'Qty adjusted';
-      } else {
-        // Multi-batch override + qty changed — user must re-specify
-        // Check if user already provided new overrideBatches via state (manual re-assign)
-        if (!result.overrideBatches || result.overrideBatches.length === 0) {
-          const productEntry = (this.props.dropdowns?.product || []).find(pr => pr.id === p.productId);
-          const productName = productEntry?.name || `Product ${p.productId}`;
-          batchErrors.push(
-            `"${productName}" has multiple batch overrides and quantity was changed. ` +
-            `To change quantity on a multi-batch override outward, please delete this outward and create a new one with the correct quantities and batch allocation.`
-          );
-        }
+        return result;
       }
 
+      // Multi-batch override + qty changed: user explicitly chose batches — NEVER silently reassign.
+      // If user has already confirmed re-allocation via the modal, overrideBatches is set on p.
+      // If not, we need to open the modal — handled below before API call.
       return result;
     });
 
-    if (batchErrors.length > 0) {
-      this.props.enqueueSnackbar(batchErrors[0], { variant: 'error' });
+    // Check if any product with multi-batch override + qty change still needs re-allocation
+    const needsRealloc = Object.keys(this.state.noproduct).find(key => {
+      const p = this.state.noproduct[key];
+      const originalQty = (this.originalQtyMap || {})[p.productId];
+      const consumptions = (this.batchConsumptionData || {})[p.productId] || [];
+      const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
+      const hasMultiOverride = overriddenConsumptions.length > 1 || (consumptions.length > 1 && overriddenConsumptions.length > 0);
+      const qtyChanged = originalQty != null && Math.abs(p.quantity - originalQty) > 0.001;
+      const alreadySet = p.overrideBatches && p.overrideBatches.length > 0;
+      return hasMultiOverride && qtyChanged && !alreadySet;
+    });
+
+    if (needsRealloc) {
+      // Open re-allocation modal for this product before proceeding with save
+      this.openBatchReassignModal(needsRealloc);
       this.setState({ isUpdating: false });
       return;
     }
@@ -350,6 +361,67 @@ class Edit extends EditForm {
       }
     }
   }
+  openBatchReassignModal(productKey) {
+    const p = this.state.noproduct[productKey];
+    const consumptions = (this.batchConsumptionData || {})[p.productId] || [];
+    const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
+    const productEntry = (this.props.dropdowns?.product || []).find(pr => pr.id === p.productId);
+    const productName = productEntry?.name || `Product ${p.productId}`;
+    const entries = consumptions.map(c => {
+      const batch = c.batch || {};
+      const parts = [batch.brand, batch.lotNumber, batch.expiryDate].filter(Boolean);
+      const label = parts.length > 0 ? parts.join(' · ') : `Batch #${batch.batchId || c.batchId}`;
+      return {
+        batchId: batch.batchId || c.batchId,
+        label,
+        consumed: c.qtyConsumed,
+        reassignQty: '',
+      };
+    });
+    const existingComment = overriddenConsumptions.find(c => c.overrideComment)?.overrideComment || '';
+    this.setState({
+      batchReassignModal: {
+        open: true,
+        productKey,
+        productId: p.productId,
+        productName,
+        newQty: parseFloat(p.quantity),
+        entries,
+        overrideComment: existingComment,
+      },
+    });
+  }
+
+  confirmBatchReassign() {
+    const { productKey, newQty, entries, overrideComment } = this.state.batchReassignModal;
+    const total = entries.reduce((s, e) => s + (parseFloat(e.reassignQty) || 0), 0);
+    if (Math.abs(total - newQty) > 0.001) {
+      this.props.enqueueSnackbar(
+        `Total allocated (${total}) must equal new quantity (${newQty})`,
+        { variant: 'error' }
+      );
+      return;
+    }
+    if (!overrideComment.trim()) {
+      this.props.enqueueSnackbar('Override comment is required', { variant: 'error' });
+      return;
+    }
+    const overrideBatches = entries
+      .filter(e => parseFloat(e.reassignQty) > 0)
+      .map(e => ({ batchId: e.batchId, qty: parseFloat(e.reassignQty) }));
+    const noproduct = { ...this.state.noproduct };
+    noproduct[productKey] = { ...noproduct[productKey], overrideBatches, overrideComment };
+    this.setState({
+      noproduct,
+      batchReassignModal: {
+        open: false, productKey: null, productId: null,
+        productName: '', newQty: 0, entries: [], overrideComment: '',
+      },
+    }, () => {
+      this.update({ preventDefault: () => {} });
+    });
+  }
+
   async updateStockInfo(id) {
     const params = {};
     params.warehouseId = id;
@@ -539,6 +611,99 @@ class Edit extends EditForm {
             </MuiButton>
           </DialogActions>
         </Dialog>
+        {/* Batch re-allocation modal */}
+        {(() => {
+          const m = this.state.batchReassignModal;
+          if (!m.open) return null;
+          const total = m.entries.reduce((s, e) => s + (parseFloat(e.reassignQty) || 0), 0);
+          const remaining = Math.round((m.newQty - total) * 1000) / 1000;
+          const isValid = Math.abs(total - m.newQty) < 0.001;
+          return (
+            <Dialog open maxWidth="sm" fullWidth onClose={() =>
+              this.setState({ batchReassignModal: { ...m, open: false } })
+            }>
+              <DialogTitle style={{ color: '#1565c0' }}>
+                Re-allocate Batches — {m.productName}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText style={{ marginBottom: 12 }}>
+                  New quantity is <strong>{m.newQty}</strong>. Specify how much to draw from each batch.
+                </DialogContentText>
+                {m.entries.map((entry, i) => (
+                  <div key={entry.batchId} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: '#f5f7fa', border: '1px solid #dce3ec',
+                    borderRadius: 6, padding: '8px 12px', marginBottom: 8,
+                  }}>
+                    <div style={{ flex: 1, fontSize: 13 }}>
+                      <strong>{entry.label}</strong>
+                      <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
+                        Previously consumed: {entry.consumed}
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Qty"
+                      value={entry.reassignQty}
+                      style={{
+                        width: 80, padding: '5px 8px', border: '1px solid #bbb',
+                        borderRadius: 4, fontSize: 13,
+                      }}
+                      onChange={e => {
+                        const entries = m.entries.map((en, idx) =>
+                          idx === i ? { ...en, reassignQty: e.target.value } : en
+                        );
+                        this.setState({ batchReassignModal: { ...m, entries } });
+                      }}
+                    />
+                  </div>
+                ))}
+                <div style={{
+                  display: 'flex', justifyContent: 'flex-end', gap: 16,
+                  fontSize: 13, color: remaining < 0 ? '#c62828' : remaining === 0 ? '#2e7d32' : '#555',
+                  marginBottom: 12,
+                }}>
+                  <span>Allocated: <strong>{total}</strong></span>
+                  <span>Remaining: <strong>{remaining}</strong></span>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 4 }}>
+                    Override comment *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Reason for batch selection"
+                    value={m.overrideComment}
+                    style={{
+                      width: '100%', padding: '7px 10px', border: '1px solid #bbb',
+                      borderRadius: 4, fontSize: 13, boxSizing: 'border-box',
+                    }}
+                    onChange={e =>
+                      this.setState({ batchReassignModal: { ...m, overrideComment: e.target.value } })
+                    }
+                  />
+                </div>
+              </DialogContent>
+              <DialogActions>
+                <MuiButton onClick={() =>
+                  this.setState({ batchReassignModal: { ...m, open: false } })
+                }>
+                  Cancel
+                </MuiButton>
+                <MuiButton
+                  variant="contained"
+                  color="primary"
+                  disabled={!isValid || !m.overrideComment.trim()}
+                  onClick={() => this.confirmBatchReassign()}
+                >
+                  Confirm &amp; Save
+                </MuiButton>
+              </DialogActions>
+            </Dialog>
+          );
+        })()}
       </div>
     );
   }
