@@ -26,11 +26,13 @@ public class IndentFulfillmentRow {
     private String unit;
 
     private Double requestedQty;
+    private Double poQty;        // qty on linked PO line (null if no PO yet)
     private Double receivedQty;
     private Double pendingQty;
     private Double percentFulfilled;
 
     private String poNumber;
+    private String poStatus;
     private String lineItemStatus;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy", timezone = "Asia/Kolkata")

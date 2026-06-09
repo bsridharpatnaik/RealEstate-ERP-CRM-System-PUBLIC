@@ -147,21 +147,49 @@ class PoReconTable extends CommonTable {
         </tr>
       );
     }
-    return rows.map((row, i) => (
-      <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-        {COLUMNS.map((col) => {
-          const val = row[col.key];
-          const tip = typeof val === 'string' && val.length > 0 ? val : '';
-          return (
-            <Tooltip key={col.key} title={tip} placement="top" disableHoverListener={!tip}>
-              <td style={{ ...cellBase, width: col.width, textAlign: col.align }}>
-                {this.renderCell(col, row)}
-              </td>
-            </Tooltip>
-          );
-        })}
-      </tr>
-    ));
+
+    // Assign a group index per PO so we can alternate shading
+    let poGroupIndex = -1;
+    let lastPoId = null;
+    const groupIndices = rows.map((row) => {
+      if (row.purchaseOrderId !== lastPoId) { poGroupIndex++; lastPoId = row.purchaseOrderId; }
+      return poGroupIndex;
+    });
+
+    // PO-level fields — shown only on first row of each PO group, rest dimmed
+    const PO_LEVEL_COLS = new Set(['project', 'purchaseOrderId', 'poDate', 'poStatus', 'supplier']);
+
+    return rows.map((row, i) => {
+      const grpIdx = groupIndices[i];
+      const isFirstInGroup = i === 0 || row.purchaseOrderId !== rows[i - 1].purchaseOrderId;
+      const bg = grpIdx % 2 === 0 ? '#ffffff' : '#f5f7fa';
+      const groupBorderTop = isFirstInGroup && i > 0 ? '2px solid #d0d7de' : undefined;
+
+      return (
+        <tr key={i} style={{ background: bg }}>
+          {COLUMNS.map((col) => {
+            // Dim repeated PO-level cells (show only on first row of group)
+            const isDimmed = PO_LEVEL_COLS.has(col.key) && !isFirstInGroup;
+            const val = row[col.key];
+            const tip = !isDimmed && typeof val === 'string' && val.length > 0 ? val : '';
+            return (
+              <Tooltip key={col.key} title={tip} placement="top" disableHoverListener={!tip}>
+                <td style={{
+                  ...cellBase,
+                  width: col.width,
+                  textAlign: col.align,
+                  borderTop: groupBorderTop,
+                  opacity: isDimmed ? 0 : 1,
+                  color: isDimmed ? 'transparent' : undefined,
+                }}>
+                  {isDimmed ? null : this.renderCell(col, row)}
+                </td>
+              </Tooltip>
+            );
+          })}
+        </tr>
+      );
+    });
   }
 
   render() {

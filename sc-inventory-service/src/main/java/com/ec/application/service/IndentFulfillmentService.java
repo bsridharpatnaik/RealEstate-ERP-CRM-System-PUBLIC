@@ -35,9 +35,11 @@ public class IndentFulfillmentService {
         "  p.product_code," +
         "  iie.measurement_unit AS unit," +
         "  COALESCE(iie.quantity, 0) AS requested_qty," +
+        "  pol.quantity AS po_qty," +
         "  COALESCE(iie.quantity_received, 0) AS received_qty," +
         "  COALESCE(iie.quantity_pending, 0) AS pending_qty," +
         "  iie.purchaseOrderId AS po_number," +
+        "  po.status AS po_status," +
         "  iie.line_item_status," +
         "  iie.need_by_date";
 
@@ -45,6 +47,9 @@ public class IndentFulfillmentService {
         " FROM indent_inventory ii" +
         " JOIN indent_inventory_entries iie ON iie.indent_id = ii.indent_id AND iie.is_deleted = 0" +
         " JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0" +
+        " LEFT JOIN purchase_order po ON po.purchase_order_id = iie.purchaseOrderId AND po.is_deleted = 0" +
+        " LEFT JOIN purchase_order_line pol ON pol.po_id = iie.purchaseOrderId" +
+        "   AND pol.product_id = iie.productId AND pol.is_deleted = 0" +
         " WHERE ii.is_deleted = 0";
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -98,7 +103,7 @@ public class IndentFulfillmentService {
 
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
         WhereClause wc = buildWhere(filters);
-        String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_date DESC";
+        String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_date DESC, ii.indent_id ASC, p.product_name ASC";
         Query q = em.createNativeQuery(sql);
         applyParams(q, wc.params);
 
@@ -111,8 +116,8 @@ public class IndentFulfillmentService {
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
 
             String[] cols = {"Project", "Indent ID", "Indent Date", "Indent Status",
-                    "Product", "Code", "Unit", "Requested Qty", "Received Qty",
-                    "Pending Qty", "% Fulfilled", "PO Number", "Line Status", "Need By Date"};
+                    "Product", "Code", "Unit", "Requested Qty", "PO Qty", "Received Qty",
+                    "Pending Qty", "% Fulfilled", "PO Number", "PO Status", "Line Status", "Need By Date"};
             Row hRow = sheet.createRow(0);
             for (int i = 0; i < cols.length; i++) {
                 Cell c = hRow.createCell(i);
@@ -132,13 +137,15 @@ public class IndentFulfillmentService {
                 exRow.createCell(5).setCellValue(safe(row.getProductCode()));
                 exRow.createCell(6).setCellValue(safe(row.getUnit()));
                 exRow.createCell(7).setCellValue(n(row.getRequestedQty()));
-                exRow.createCell(8).setCellValue(n(row.getReceivedQty()));
-                exRow.createCell(9).setCellValue(n(row.getPendingQty()));
-                exRow.createCell(10).setCellValue(row.getPercentFulfilled() != null
+                exRow.createCell(8).setCellValue(row.getPoQty() != null ? row.getPoQty() : 0.0);
+                exRow.createCell(9).setCellValue(n(row.getReceivedQty()));
+                exRow.createCell(10).setCellValue(n(row.getPendingQty()));
+                exRow.createCell(11).setCellValue(row.getPercentFulfilled() != null
                         ? String.format("%.1f%%", row.getPercentFulfilled()) : "0%");
-                exRow.createCell(11).setCellValue(safe(row.getPoNumber()));
-                exRow.createCell(12).setCellValue(safe(row.getLineItemStatus()));
-                exRow.createCell(13).setCellValue(row.getNeedByDate() != null ? sdf.format(row.getNeedByDate()) : "");
+                exRow.createCell(12).setCellValue(safe(row.getPoNumber()));
+                exRow.createCell(13).setCellValue(safe(row.getPoStatus()));
+                exRow.createCell(14).setCellValue(safe(row.getLineItemStatus()));
+                exRow.createCell(15).setCellValue(row.getNeedByDate() != null ? sdf.format(row.getNeedByDate()) : "");
             }
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.setHeader("Content-Disposition", "attachment; filename=indent_fulfillment.xlsx");
@@ -166,10 +173,28 @@ public class IndentFulfillmentService {
                     params.put("project", v);
                     statusParams.put("project", v);
                 } else if ("indentStatus".equals(f.getAttrName())) {
-                    sql.append(" AND ii.indent_status = :indentStatus");
-                    statusSql.append(" AND indent_status = :indentStatus");
-                    params.put("indentStatus", v);
-                    statusParams.put("indentStatus", v);
+                    // attrValue may contain multiple statuses (one per list entry)
+                    List<String> statuses = f.getAttrValue().stream()
+                            .filter(s -> s != null && !s.isEmpty())
+                            .collect(java.util.stream.Collectors.toList());
+                    if (statuses.size() == 1) {
+                        sql.append(" AND ii.indent_status = :indentStatus");
+                        statusSql.append(" AND indent_status = :indentStatus");
+                        params.put("indentStatus", statuses.get(0));
+                        statusParams.put("indentStatus", statuses.get(0));
+                    } else if (statuses.size() > 1) {
+                        StringBuilder inClause = new StringBuilder(" AND ii.indent_status IN (");
+                        StringBuilder statusIn = new StringBuilder(" AND indent_status IN (");
+                        for (int si = 0; si < statuses.size(); si++) {
+                            String pname = "indentStatus" + si;
+                            inClause.append(si == 0 ? "" : ",").append(":").append(pname);
+                            statusIn.append(si == 0 ? "" : ",").append(":").append(pname);
+                            params.put(pname, statuses.get(si));
+                            statusParams.put(pname, statuses.get(si));
+                        }
+                        inClause.append(")"); statusIn.append(")");
+                        sql.append(inClause); statusSql.append(statusIn);
+                    }
                 } else if ("lineItemStatus".equals(f.getAttrName())) {
                     sql.append(" AND iie.line_item_status = :lineItemStatus");
                     params.put("lineItemStatus", v);
@@ -204,7 +229,7 @@ public class IndentFulfillmentService {
             else if ("needByDate".equals(prop))    col = "iie.need_by_date";
             return " ORDER BY " + col + " " + order.getDirection().name();
         }
-        return " ORDER BY ii.indent_date DESC";
+        return " ORDER BY ii.indent_date DESC, ii.indent_id ASC, p.product_name ASC";
     }
 
     private void applyParams(Query q, Map<String, Object> params) {
@@ -214,6 +239,10 @@ public class IndentFulfillmentService {
     }
 
     private IndentFulfillmentRow map(Object[] r) {
+        // indices: 0=indentId, 1=project, 2=indentDate, 3=indentStatus,
+        //          4=productName, 5=productCode, 6=unit,
+        //          7=requestedQty, 8=poQty, 9=receivedQty, 10=pendingQty,
+        //          11=poNumber, 12=poStatus, 13=lineItemStatus, 14=needByDate
         IndentFulfillmentRow row = new IndentFulfillmentRow();
         row.setIndentId(str(r[0]));
         row.setProject(str(r[1]));
@@ -223,15 +252,17 @@ public class IndentFulfillmentService {
         row.setProductCode(str(r[5]));
         row.setUnit(str(r[6]));
         double requested = toDouble(r[7]);
-        double received  = toDouble(r[8]);
-        double pending   = toDouble(r[9]);
+        double received  = toDouble(r[9]);
+        double pending   = toDouble(r[10]);
         row.setRequestedQty(requested);
+        row.setPoQty(r[8] != null ? toDouble(r[8]) : null);
         row.setReceivedQty(received);
         row.setPendingQty(pending);
         row.setPercentFulfilled(requested > 0 ? (received / requested) * 100 : 0.0);
-        row.setPoNumber(str(r[10]));
-        row.setLineItemStatus(str(r[11]));
-        row.setNeedByDate(r[12] instanceof java.sql.Timestamp ? new Date(((java.sql.Timestamp) r[12]).getTime()) : null);
+        row.setPoNumber(str(r[11]));
+        row.setPoStatus(str(r[12]));
+        row.setLineItemStatus(str(r[13]));
+        row.setNeedByDate(r[14] instanceof java.sql.Timestamp ? new Date(((java.sql.Timestamp) r[14]).getTime()) : null);
         return row;
     }
 

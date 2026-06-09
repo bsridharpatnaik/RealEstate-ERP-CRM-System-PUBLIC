@@ -828,3 +828,155 @@ Date, Project, Outward ID, Product, Unit, Warehouse, Structure, Final Location, 
 - MySQL runs via LaunchAgent: `~/Library/LaunchAgents/homebrew.mxcl.mysql@8.0.plist`
 - Stop: `launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mysql@8.0.plist`
 - Start: `launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mysql@8.0.plist`
+
+---
+
+# Reports Module — Completed Work (Session 4)
+
+## Low Stock Report
+
+Global cross-tenant report showing products currently below reorder level.
+
+### Architecture
+
+- **Sync strategy:** Every 30 min (`LowStockSyncJob`, cron `0 0/30 * * * *`)
+- **Master table:** `global_low_stock_report` — stores `tenantSchema`, `productId`, `productName`, `productCode`, `category`, `warehouseName`, `currentStock`, `reorderLevel`, `deficit`, `lowStockSince`
+- **Sync logic:** `LowStockSyncService` reads `StockSummary` (master schema table with `tenantSchema` column), filters `reorderLevel > 0 AND totalQtyInHand < reorderLevel`, aggregates per product across warehouses, upserts preserving `lowStockSince`
+- **Orchestrator:** `LowStockOrchestrator` — loops `schemaConfig.getNonMasterSchemaList()`, same AtomicBoolean guard pattern
+
+### Key Backend Files
+
+| File | Role |
+|---|---|
+| `model/GlobalLowStockReport.java` | Master schema entity |
+| `repository/GlobalLowStockReportRepository.java` | JPA repo — tile count queries (HQL; use `COUNT(r)` not positional `ORDER BY 2`) |
+| `service/LowStockSyncService.java` | Per-tenant sync |
+| `service/LowStockOrchestrator.java` | Multi-tenant orchestration |
+| `service/LowStockReportService.java` | Paginated list, tile counts, Excel export |
+| `scheduled/LowStockSyncJob.java` | Every 30 min |
+| `controller/LowStockController.java` | `/list`, `/tiles`, `/dropdowns`, `/sync`, `/export/excel` — all `@UseDefaultTenant` except `/sync` |
+
+### Tile Windows
+
+5 time windows: new today (1d), last 3d, last 7d, last 30d, total. Each tile shows count + per-project breakdown on hover. Clickable to filter.
+
+### Filter
+
+**Project** and **Category** only. Product name and date range were intentionally removed.
+
+### Frontend Files
+
+| File | Role |
+|---|---|
+| `Modules/Reports/LowStock/index.js` | Main page — tiles, sync, export, filter |
+| `Modules/Reports/LowStock/filter.js` | Project + Category dropdowns only |
+| `Modules/Reports/LowStock/table.js` | Sortable table, color-coded deficit column |
+
+### Route
+
+`/lowStockReport` — in `isProjectSelectionPage` list (global, no project context required)
+
+---
+
+## PO vs Inward Reconciliation Report
+
+Global report comparing ordered vs received qty per PO line. **Live query — no sync table needed** (PO data in master schema).
+
+### Architecture
+
+- **Live native SQL** via `EntityManager` — `purchase_order` + `purchase_order_line` + `indent_inventory_entries` + `indent_inventory` (all in master schema)
+- **Pagination:** manual `COUNT(*) FROM (subquery)` + `LIMIT/OFFSET`
+- **Project identification:** `COALESCE(ii.tenant, po.project_name, 'Unknown')` — indent's tenant is the authoritative project code
+- **HAVING clause:** `reconciliationStatus` filter uses `HAVING (CASE WHEN ...) = :status` after `GROUP BY`
+- **`WhereClause` inner class** has separate `where` (before GROUP BY) and `having` (after GROUP BY) fields
+- **Card-based UX:** rows grouped by PO, each PO = expandable card with header + product lines grid
+
+### Key Backend Files
+
+| File | Role |
+|---|---|
+| `data/PoInwardReconciliationRow.java` | DTO — `@JsonFormat(dd-MM-yyyy)` on `poDate` |
+| `service/PoInwardReconciliationService.java` | Native SQL, pagination, stats, export |
+| `controller/PoInwardReconciliationController.java` | All `@UseDefaultTenant`; default sort `poDate DESC` |
+
+### Key SQL Constants
+
+```java
+BASE_FROM = " FROM purchase_order po JOIN purchase_order_line pol ... LEFT JOIN Firm f ... LEFT JOIN indent_inventory_entries iie ... LEFT JOIN indent_inventory ii ..."
+GROUP_BY  = " GROUP BY po.purchase_order_id, pol.product_id, COALESCE(ii.tenant, po.project_name, 'Unknown')"
+RECON_STATUS_CASE = " CASE WHEN COALESCE(SUM(iie.quantity_received), 0) <= 0 THEN 'NOT_STARTED' WHEN ... >= MAX(pol.quantity) THEN 'COMPLETE' ELSE 'PARTIAL' END"
+```
+
+### Frontend Files
+
+| File | Role |
+|---|---|
+| `Modules/Reports/PoReconciliation/index.js` | Main page — 4 stat tiles, Export, Filter, Cards |
+| `Modules/Reports/PoReconciliation/filter.js` | Project, PO Status, Product Name, Date Range |
+| `Modules/Reports/PoReconciliation/cards.js` | Card view — one card per PO, product lines in grid |
+| `Modules/Reports/PoReconciliation/table.js` | Old flat table (kept, no longer used in index.js) |
+
+### Route
+
+`/poReconReport` — in `isProjectSelectionPage`
+
+---
+
+## Indent Fulfillment Report
+
+Global report showing indent line items with requested/received/pending quantities. **Live query — no sync** (indent data in master schema). **Card-based UX with 3-stage pipeline view.**
+
+### Architecture
+
+- Same native SQL + EntityManager pattern as PO Recon
+- Default sort: `ORDER BY ii.indent_date DESC, ii.indent_id ASC, p.product_name ASC` (critical for card grouping — rows for the same indent must be contiguous)
+- `indentStatus` filter supports **multiple values** via IN clause (for group tile clicks that cover multiple statuses)
+- `WhereClause` has `sql` (WHERE additions) + `statusSql` / `statusParams` (for the simpler stats query that doesn't need product joins)
+
+### SQL Join
+
+```sql
+FROM indent_inventory ii
+JOIN indent_inventory_entries iie ON iie.indent_id = ii.indent_id AND iie.is_deleted = 0
+JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0
+LEFT JOIN purchase_order po ON po.purchase_order_id = iie.purchaseOrderId AND po.is_deleted = 0
+LEFT JOIN purchase_order_line pol ON pol.po_id = iie.purchaseOrderId AND pol.product_id = iie.productId AND pol.is_deleted = 0
+WHERE ii.is_deleted = 0
+```
+
+The PO joins add `poQty` (from `pol.quantity`) and `poStatus` (from `po.status`) to each line — enables end-to-end lifecycle tracking.
+
+### IndentFulfillmentRow fields
+
+`indentId`, `project`, `indentDate`, `indentStatus`, `productName`, `productCode`, `unit`, `requestedQty`, `poQty` (nullable), `receivedQty`, `pendingQty`, `percentFulfilled`, `poNumber`, `poStatus`, `lineItemStatus`, `needByDate`
+
+### Frontend Files
+
+| File | Role |
+|---|---|
+| `Modules/Reports/IndentFulfillment/index.js` | Main page — 5 status group tiles, Export, Filter, Cards |
+| `Modules/Reports/IndentFulfillment/filter.js` | Project, Product Name, Indent Status chips, Line Status chips, Date Range |
+| `Modules/Reports/IndentFulfillment/cards.js` | Card view — one card per indent, 3-stage pipeline per line |
+| `Modules/Reports/IndentFulfillment/table.js` | Old flat table (kept, no longer used) |
+
+### Status Groups (tile filter)
+
+| Group key | Statuses included |
+|---|---|
+| PENDING | NEW, APPROVED |
+| IN_PROGRESS | PO CREATED, PO PARTIAL, INWARD PARTIAL |
+| COMPLETED | CLOSED, PO COMPLETED |
+| CANCELLED | CANCELLED, REJECTED |
+
+Multiple statuses sent as `attrValue: ["NEW", "APPROVED"]` array. Backend uses `IN (:s0, :s1)` clause.
+
+### Card UX
+
+- **Header:** Indent ID, status badge, project chip, date, overall progress bar (received/requested), status summary pill
+- **Cancelled/Rejected/Short Closed badge:** shown instead of "Fully received" — avoids misleading "✓ Fully received" on cancelled indents with 0 received
+- **Per-line:** product name, unit, PO info chip (PO# + status), line status badge
+- **3-stage pipeline bar:** `[Requested qty] → [PO'd qty] → [Received qty]` — visual end-to-end lifecycle at a glance. PO Qty is null/blank if no PO linked yet.
+
+### Route
+
+`/indentFulfillmentReport` — in `isProjectSelectionPage`

@@ -3,7 +3,7 @@ import { withSnackbar } from 'notistack';
 import Popper from '@material-ui/core/Popper';
 
 import ListCommon from '../../../Shared/List';
-import Table from './table';
+import Cards from './cards';
 import Filter from './filter';
 import IconButtons from '../../../Shared/Button/IconButtons';
 import { API } from '../../../axios';
@@ -19,9 +19,6 @@ const RECON_STATUSES = [
 
 class PoReconList extends ListCommon {
   filterData = {};
-  sortkey = 'poDate';
-  sortby = 'desc';
-
   state = {
     data: [],
     pages: 0,
@@ -80,6 +77,8 @@ class PoReconList extends ListCommon {
   }
 
   async search(page = 0) {
+    const url = apiEndpoints.poReconList.replace('size=20', 'size=50');
+    this.url = url;
     const params = this.prepareRequestBody();
     const response = await this.getData(page, params);
     if (response.success) {
@@ -164,7 +163,7 @@ class PoReconList extends ListCommon {
 
           <div style={{ fontSize: 12, color: '#888', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
             <span>ℹ️</span>
-            <span>Shows ordered vs received quantity per PO line item. Click a status card to quick-filter.</span>
+            <span>Each card shows one PO with all its product lines. Click a status tile to filter. Click a card header to expand/collapse.</span>
           </div>
 
           <div className="filter-section">
@@ -200,14 +199,7 @@ class PoReconList extends ListCommon {
           </Popper>
 
           {this.state.isLoading ? this.renderLoader() : (
-            <Table
-              tableData={this.tableData}
-              rows={this.state.data}
-              hideedit hidedelete
-              sortkey={this.sortkey}
-              sortby={this.sortby}
-              search={(sortkey, sortby) => { this.sortkey = sortkey; this.sortby = sortby; this.search(); }}
-            />
+            <Cards rows={this.state.data} />
           )}
 
           {this.renderPagination()}
