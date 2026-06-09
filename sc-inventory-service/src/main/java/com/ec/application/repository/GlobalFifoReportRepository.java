@@ -36,6 +36,24 @@ public interface GlobalFifoReportRepository
             @Param("batchId") Long batchId,
             @Param("productId") Long productId);
 
+    /** Tile stats — count by project for a given date window. */
+    @Query(value = "SELECT tenant_schema, COUNT(DISTINCT CONCAT(outward_id, '-', product_id)) " +
+           "FROM global_fifo_report WHERE outward_date >= :from GROUP BY tenant_schema ORDER BY 2 DESC",
+           nativeQuery = true)
+    List<Object[]> countByProjectSince(@Param("from") Date from);
+
+    @Query(value = "SELECT COUNT(DISTINCT CONCAT(outward_id, '-', product_id)) " +
+           "FROM global_fifo_report WHERE outward_date >= :from",
+           nativeQuery = true)
+    Long countTotalSince(@Param("from") Date from);
+
+    @Query(value = "SELECT COUNT(DISTINCT product_id) FROM global_fifo_report", nativeQuery = true)
+    Long countDistinctProducts();
+
+    @Query(value = "SELECT tenant_schema, COUNT(DISTINCT product_id) FROM global_fifo_report " +
+           "GROUP BY tenant_schema ORDER BY 2 DESC", nativeQuery = true)
+    List<Object[]> countDistinctProductsByProject();
+
     /** Distinct values for filter dropdowns. */
     @Query("SELECT DISTINCT r.productName FROM GlobalFifoReport r WHERE r.productName IS NOT NULL ORDER BY r.productName")
     List<String> findDistinctProductNames();

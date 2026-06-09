@@ -15,9 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/fifo-report")
@@ -47,6 +45,51 @@ public class FifoReportController {
             @PageableDefault(page = 0, size = 20, sort = "outwardDate", direction = Sort.Direction.DESC) Pageable pageable)
             throws Exception {
         return fifoReportService.getFiltered(filterDataList, pageable);
+    }
+
+    /** Tile stats — counts by period with project breakdown. */
+    @UseDefaultTenant
+    @GetMapping("/tiles")
+    public Map<String, Object> tiles() {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        Date today = cal.getTime();
+
+        cal.add(Calendar.DAY_OF_YEAR, -7);
+        Date from7 = cal.getTime();
+        cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, -30);
+        Date from30 = cal.getTime();
+        cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, -90);
+        Date from90 = cal.getTime();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("last7Days",  buildTile(globalFifoReportRepository.countTotalSince(from7),
+                                           globalFifoReportRepository.countByProjectSince(from7)));
+        result.put("last30Days", buildTile(globalFifoReportRepository.countTotalSince(from30),
+                                           globalFifoReportRepository.countByProjectSince(from30)));
+        result.put("last90Days", buildTile(globalFifoReportRepository.countTotalSince(from90),
+                                           globalFifoReportRepository.countByProjectSince(from90)));
+        result.put("uniqueProducts", buildTile(globalFifoReportRepository.countDistinctProducts(),
+                                               globalFifoReportRepository.countDistinctProductsByProject()));
+        return result;
+    }
+
+    private Map<String, Object> buildTile(Long total, List<Object[]> byProject) {
+        Map<String, Object> tile = new LinkedHashMap<>();
+        tile.put("total", total != null ? total : 0L);
+        List<Map<String, Object>> breakdown = new ArrayList<>();
+        for (Object[] row : byProject) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("project", row[0]);
+            entry.put("count", row[1]);
+            breakdown.add(entry);
+        }
+        tile.put("byProject", breakdown);
+        return tile;
     }
 
     /** Dropdown options for filter panel — distinct values from master table. */

@@ -1,0 +1,267 @@
+package com.ec.application.service;
+
+import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.Filters.FilterDataList;
+import com.ec.application.data.IndentFulfillmentRow;
+import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class IndentFulfillmentService {
+
+    private final EntityManager em;
+
+    private static final String DATA_SELECT =
+        "SELECT" +
+        "  ii.indent_id," +
+        "  ii.tenant AS project," +
+        "  ii.indent_date," +
+        "  ii.indent_status," +
+        "  p.product_name," +
+        "  p.product_code," +
+        "  iie.measurement_unit AS unit," +
+        "  COALESCE(iie.quantity, 0) AS requested_qty," +
+        "  COALESCE(iie.quantity_received, 0) AS received_qty," +
+        "  COALESCE(iie.quantity_pending, 0) AS pending_qty," +
+        "  iie.purchaseOrderId AS po_number," +
+        "  iie.line_item_status," +
+        "  iie.need_by_date";
+
+    private static final String BASE_FROM =
+        " FROM indent_inventory ii" +
+        " JOIN indent_inventory_entries iie ON iie.indent_id = ii.indent_id AND iie.is_deleted = 0" +
+        " JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0" +
+        " WHERE ii.is_deleted = 0";
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
+    public Page<IndentFulfillmentRow> getPage(FilterDataList filters, Pageable pageable) {
+        WhereClause wc = buildWhere(filters);
+
+        String countSql = "SELECT COUNT(*) FROM (" +
+                DATA_SELECT + BASE_FROM + wc.sql + ") cnt_sub";
+        Query countQ = em.createNativeQuery(countSql);
+        applyParams(countQ, wc.params);
+        long total = ((Number) countQ.getSingleResult()).longValue();
+
+        String dataSql = DATA_SELECT + BASE_FROM + wc.sql +
+                buildOrderBy(pageable) +
+                " LIMIT " + pageable.getPageSize() + " OFFSET " + pageable.getOffset();
+        Query dataQ = em.createNativeQuery(dataSql);
+        applyParams(dataQ, wc.params);
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = dataQ.getResultList();
+        List<IndentFulfillmentRow> content = rows.stream().map(this::map).collect(Collectors.toList());
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    public Map<String, Long> getSummaryStats(FilterDataList filters) {
+        WhereClause wc = buildWhere(filters);
+        String sql = "SELECT indent_status, COUNT(*) AS cnt" +
+                " FROM indent_inventory ii WHERE ii.is_deleted = 0" + wc.statusSql +
+                " GROUP BY indent_status ORDER BY cnt DESC";
+        Query q = em.createNativeQuery(sql);
+        applyParams(q, wc.statusParams);
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = q.getResultList();
+        Map<String, Long> stats = new LinkedHashMap<>();
+        for (Object[] r : rows) {
+            stats.put((String) r[0], ((Number) r[1]).longValue());
+        }
+        return stats;
+    }
+
+    public List<String> getDistinctProjects() {
+        @SuppressWarnings("unchecked")
+        List<String> result = em.createNativeQuery(
+                "SELECT DISTINCT tenant FROM indent_inventory" +
+                " WHERE is_deleted = 0 AND tenant IS NOT NULL ORDER BY tenant")
+                .getResultList();
+        return result;
+    }
+
+    public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
+        WhereClause wc = buildWhere(filters);
+        String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_date DESC";
+        Query q = em.createNativeQuery(sql);
+        applyParams(q, wc.params);
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = q.getResultList();
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Indent Fulfillment");
+            CellStyle hdr = headerStyle(wb);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+
+            String[] cols = {"Project", "Indent ID", "Indent Date", "Indent Status",
+                    "Product", "Code", "Unit", "Requested Qty", "Received Qty",
+                    "Pending Qty", "% Fulfilled", "PO Number", "Line Status", "Need By Date"};
+            Row hRow = sheet.createRow(0);
+            for (int i = 0; i < cols.length; i++) {
+                Cell c = hRow.createCell(i);
+                c.setCellValue(cols[i]);
+                c.setCellStyle(hdr);
+                sheet.setColumnWidth(i, 20 * 256);
+            }
+            int rn = 1;
+            for (Object[] r : rows) {
+                IndentFulfillmentRow row = map(r);
+                Row exRow = sheet.createRow(rn++);
+                exRow.createCell(0).setCellValue(safe(row.getProject()));
+                exRow.createCell(1).setCellValue(safe(row.getIndentId()));
+                exRow.createCell(2).setCellValue(row.getIndentDate() != null ? sdf.format(row.getIndentDate()) : "");
+                exRow.createCell(3).setCellValue(safe(row.getIndentStatus()));
+                exRow.createCell(4).setCellValue(safe(row.getProductName()));
+                exRow.createCell(5).setCellValue(safe(row.getProductCode()));
+                exRow.createCell(6).setCellValue(safe(row.getUnit()));
+                exRow.createCell(7).setCellValue(n(row.getRequestedQty()));
+                exRow.createCell(8).setCellValue(n(row.getReceivedQty()));
+                exRow.createCell(9).setCellValue(n(row.getPendingQty()));
+                exRow.createCell(10).setCellValue(row.getPercentFulfilled() != null
+                        ? String.format("%.1f%%", row.getPercentFulfilled()) : "0%");
+                exRow.createCell(11).setCellValue(safe(row.getPoNumber()));
+                exRow.createCell(12).setCellValue(safe(row.getLineItemStatus()));
+                exRow.createCell(13).setCellValue(row.getNeedByDate() != null ? sdf.format(row.getNeedByDate()) : "");
+            }
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setHeader("Content-Disposition", "attachment; filename=indent_fulfillment.xlsx");
+            wb.write(response.getOutputStream());
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private WhereClause buildWhere(FilterDataList filters) {
+        StringBuilder sql = new StringBuilder();
+        // separate params for status-only query
+        StringBuilder statusSql = new StringBuilder();
+        Map<String, Object> params = new LinkedHashMap<>();
+        Map<String, Object> statusParams = new LinkedHashMap<>();
+
+        if (filters != null && filters.getFilterData() != null) {
+            for (FilterAttributeData f : filters.getFilterData()) {
+                if (f.getAttrValue() == null || f.getAttrValue().isEmpty()) continue;
+                String v = f.getAttrValue().get(0);
+                if (v == null || v.isEmpty()) continue;
+                if ("project".equals(f.getAttrName())) {
+                    sql.append(" AND ii.tenant = :project");
+                    statusSql.append(" AND tenant = :project");
+                    params.put("project", v);
+                    statusParams.put("project", v);
+                } else if ("indentStatus".equals(f.getAttrName())) {
+                    sql.append(" AND ii.indent_status = :indentStatus");
+                    statusSql.append(" AND indent_status = :indentStatus");
+                    params.put("indentStatus", v);
+                    statusParams.put("indentStatus", v);
+                } else if ("lineItemStatus".equals(f.getAttrName())) {
+                    sql.append(" AND iie.line_item_status = :lineItemStatus");
+                    params.put("lineItemStatus", v);
+                } else if ("productName".equals(f.getAttrName())) {
+                    sql.append(" AND p.product_name LIKE :productName");
+                    params.put("productName", "%" + v + "%");
+                } else if ("startDate".equals(f.getAttrName())) {
+                    sql.append(" AND ii.indent_date >= STR_TO_DATE(:startDate, '%d-%m-%Y')");
+                    params.put("startDate", v);
+                } else if ("endDate".equals(f.getAttrName())) {
+                    sql.append(" AND ii.indent_date < DATE_ADD(STR_TO_DATE(:endDate, '%d-%m-%Y'), INTERVAL 1 DAY)");
+                    params.put("endDate", v);
+                }
+            }
+        }
+        return new WhereClause(sql.toString(), params, statusSql.toString(), statusParams);
+    }
+
+    private String buildOrderBy(Pageable pageable) {
+        if (pageable.getSort().isSorted()) {
+            org.springframework.data.domain.Sort.Order order = pageable.getSort().iterator().next();
+            String col = "ii.indent_date";
+            String prop = order.getProperty();
+            if ("project".equals(prop))            col = "ii.tenant";
+            else if ("indentId".equals(prop))      col = "ii.indent_id";
+            else if ("indentDate".equals(prop))    col = "ii.indent_date";
+            else if ("indentStatus".equals(prop))  col = "ii.indent_status";
+            else if ("productName".equals(prop))   col = "p.product_name";
+            else if ("requestedQty".equals(prop))  col = "iie.quantity";
+            else if ("receivedQty".equals(prop))   col = "iie.quantity_received";
+            else if ("pendingQty".equals(prop))    col = "iie.quantity_pending";
+            else if ("needByDate".equals(prop))    col = "iie.need_by_date";
+            return " ORDER BY " + col + " " + order.getDirection().name();
+        }
+        return " ORDER BY ii.indent_date DESC";
+    }
+
+    private void applyParams(Query q, Map<String, Object> params) {
+        for (Map.Entry<String, Object> e : params.entrySet()) {
+            q.setParameter(e.getKey(), e.getValue());
+        }
+    }
+
+    private IndentFulfillmentRow map(Object[] r) {
+        IndentFulfillmentRow row = new IndentFulfillmentRow();
+        row.setIndentId(str(r[0]));
+        row.setProject(str(r[1]));
+        row.setIndentDate(r[2] instanceof java.sql.Timestamp ? new Date(((java.sql.Timestamp) r[2]).getTime()) : null);
+        row.setIndentStatus(str(r[3]));
+        row.setProductName(str(r[4]));
+        row.setProductCode(str(r[5]));
+        row.setUnit(str(r[6]));
+        double requested = toDouble(r[7]);
+        double received  = toDouble(r[8]);
+        double pending   = toDouble(r[9]);
+        row.setRequestedQty(requested);
+        row.setReceivedQty(received);
+        row.setPendingQty(pending);
+        row.setPercentFulfilled(requested > 0 ? (received / requested) * 100 : 0.0);
+        row.setPoNumber(str(r[10]));
+        row.setLineItemStatus(str(r[11]));
+        row.setNeedByDate(r[12] instanceof java.sql.Timestamp ? new Date(((java.sql.Timestamp) r[12]).getTime()) : null);
+        return row;
+    }
+
+    private String str(Object o) { return o == null ? null : o.toString(); }
+    private double toDouble(Object o) {
+        if (o == null) return 0.0;
+        if (o instanceof BigDecimal) return ((BigDecimal) o).doubleValue();
+        if (o instanceof Number) return ((Number) o).doubleValue();
+        return 0.0;
+    }
+    private String safe(String s) { return s == null ? "" : s; }
+    private double n(Double d)    { return d == null ? 0.0 : d; }
+
+    private CellStyle headerStyle(XSSFWorkbook wb) {
+        CellStyle s = wb.createCellStyle();
+        Font f = wb.createFont(); f.setBold(true); s.setFont(f);
+        s.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        s.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return s;
+    }
+
+    private static class WhereClause {
+        final String sql;
+        final Map<String, Object> params;
+        final String statusSql;
+        final Map<String, Object> statusParams;
+        WhereClause(String sql, Map<String, Object> params,
+                    String statusSql, Map<String, Object> statusParams) {
+            this.sql = sql; this.params = params;
+            this.statusSql = statusSql; this.statusParams = statusParams;
+        }
+    }
+}

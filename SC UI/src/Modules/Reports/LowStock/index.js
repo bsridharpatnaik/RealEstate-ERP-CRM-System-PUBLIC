@@ -12,10 +12,11 @@ import { apiEndpoints } from '../../../endpoints';
 import { messages } from '../../../messages';
 
 const TILES = [
-  { key: 'last7Days',      label: 'Last 7 Days',       color: '#5e81f4', bg: '#eef1fe', days: 7  },
-  { key: 'last30Days',     label: 'Last 30 Days',      color: '#27ae60', bg: '#eafaf1', days: 30 },
-  { key: 'last90Days',     label: 'Last 90 Days',      color: '#f39c12', bg: '#fef9e7', days: 90 },
-  { key: 'uniqueProducts', label: 'Products Overridden', color: '#8e44ad', bg: '#f5eef8', days: null },
+  { key: 'last1Day',   label: 'New Today',      color: '#e74c3c', bg: '#fdedec', days: 1  },
+  { key: 'last3Days',  label: 'Last 3 Days',    color: '#e67e22', bg: '#fdf2e9', days: 3  },
+  { key: 'last7Days',  label: 'Last 7 Days',    color: '#f39c12', bg: '#fef9e7', days: 7  },
+  { key: 'last30Days', label: 'Last 30 Days',   color: '#27ae60', bg: '#eafaf1', days: 30 },
+  { key: 'total',      label: 'Total Low Stock', color: '#5e81f4', bg: '#eef1fe', days: null },
 ];
 
 function ProjectBreakdown({ byProject }) {
@@ -37,9 +38,9 @@ function ProjectBreakdown({ byProject }) {
   );
 }
 
-class FifoReportList extends ListCommon {
+class LowStockReportList extends ListCommon {
   filterData = {};
-  sortkey = 'outwardDate';
+  sortkey = 'lowStockSince';
   sortby = 'desc';
 
   state = {
@@ -50,27 +51,17 @@ class FifoReportList extends ListCommon {
     filterOpen: false,
     syncing: false,
     tenantOptions: [],
-    dropdowns: { products: [], contractors: [], performedBy: [] },
+    dropdowns: { categories: [] },
     tiles: {},
     activeTile: null,
   };
 
   tableData = {
-    headers: [
-      'Date', 'Project', 'Outward ID', 'Product', 'Unit',
-      'Warehouse', 'Structure', 'Final Location', 'Contractor',
-      'Lot #', 'Brand', 'Recv. Date', 'Expiry Date',
-      'Qty', 'Override Reason', 'Performed By',
-    ],
-    keys: [
-      'outwardDate', 'tenantSchema', 'outwardId', 'productName', 'measurementUnit',
-      'warehouseName', 'usageLocationName', 'usageAreaName', 'contractorName',
-      'batchLotNumber', 'batchBrand', 'batchReceivedDate', 'batchExpiryDate',
-      'qtyConsumed', 'overrideComment', 'performedBy',
-    ],
+    headers: [],
+    keys: [],
   };
 
-  url = apiEndpoints.fifoReportList;
+  url = apiEndpoints.lowStockList;
 
   componentDidMount() {
     this.filterRef = React.createRef();
@@ -81,14 +72,14 @@ class FifoReportList extends ListCommon {
   }
 
   async fetchDropdowns() {
-    const res = await API.GET(apiEndpoints.fifoReportDropdowns);
+    const res = await API.GET(apiEndpoints.lowStockDropdowns);
     if (res.success && res.data) {
       this.setState({ dropdowns: res.data });
     }
   }
 
   async fetchTiles() {
-    const res = await API.GET(apiEndpoints.fifoReportTiles);
+    const res = await API.GET(apiEndpoints.lowStockTiles);
     if (res.success && res.data) {
       this.setState({ tiles: res.data });
     }
@@ -105,13 +96,20 @@ class FifoReportList extends ListCommon {
     }
   }
 
-  // Apply a date-window filter when a time-based tile is clicked
   handleTileClick(tile) {
-    if (tile.days === null) return; // uniqueProducts tile — info only, no filter
+    if (tile.days === null) {
+      // "total" tile — clear any active filter
+      const isActive = this.state.activeTile === tile.key;
+      if (isActive) {
+        delete this.filterData.startDate;
+        delete this.filterData.endDate;
+        this.setState({ activeTile: null }, () => this.search(0));
+      }
+      return;
+    }
 
     const isActive = this.state.activeTile === tile.key;
     if (isActive) {
-      // Deactivate — clear date filter
       delete this.filterData.startDate;
       delete this.filterData.endDate;
       this.setState({ activeTile: null }, () => this.search(0));
@@ -170,12 +168,12 @@ class FifoReportList extends ListCommon {
   }
 
   async exportExcel() {
-    const r = await API.POSTBlob(apiEndpoints.fifoReportExport, this.prepareRequestBody());
+    const r = await API.POSTBlob(apiEndpoints.lowStockExport, this.prepareRequestBody());
     if (r.success) {
       const url = window.URL.createObjectURL(new Blob([r.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'fifo_override_report.xlsx');
+      link.setAttribute('download', 'low_stock_report.xlsx');
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -187,9 +185,9 @@ class FifoReportList extends ListCommon {
   async triggerSync() {
     this.setState({ syncing: true });
     try {
-      const r = await API.POST(apiEndpoints.fifoReportSync, {});
+      const r = await API.POST(apiEndpoints.lowStockSync, {});
       this.props.enqueueSnackbar((r.data && r.data.message) || 'Sync triggered', { variant: 'info' });
-      setTimeout(() => { this.search(0); this.fetchTiles(); }, 3000);
+      setTimeout(() => { this.search(0); this.fetchTiles(); }, 2000);
     } catch (e) {
       this.props.enqueueSnackbar('Sync failed', { variant: 'error' });
     } finally {
@@ -209,7 +207,7 @@ class FifoReportList extends ListCommon {
           const tileEl = (
             <div
               key={t.key}
-              onClick={() => isClickable && this.handleTileClick(t)}
+              onClick={() => this.handleTileClick(t)}
               style={{
                 flex: '1 1 130px',
                 minWidth: 120,
@@ -217,7 +215,7 @@ class FifoReportList extends ListCommon {
                 border: `2px solid ${t.color}`,
                 borderRadius: 8,
                 padding: '12px 16px',
-                cursor: isClickable ? 'pointer' : 'default',
+                cursor: 'pointer',
                 textAlign: 'center',
                 transition: 'all 0.15s',
               }}
@@ -228,15 +226,12 @@ class FifoReportList extends ListCommon {
               <div style={{ fontSize: 12, color: isActive ? '#fff' : '#555', marginTop: 2 }}>
                 {t.label}
               </div>
-              {isClickable && (
-                <div style={{ fontSize: 10, color: isActive ? 'rgba(255,255,255,0.8)' : '#aaa', marginTop: 3 }}>
-                  {isActive ? 'click to clear' : 'click to filter'}
-                </div>
-              )}
+              <div style={{ fontSize: 10, color: isActive ? 'rgba(255,255,255,0.8)' : '#aaa', marginTop: 3 }}>
+                {isActive ? 'click to clear' : 'click to filter'}
+              </div>
             </div>
           );
 
-          // Wrap in tooltip showing project breakdown
           return (
             <Tooltip
               key={t.key}
@@ -257,7 +252,7 @@ class FifoReportList extends ListCommon {
       <div className="page">
         <div className="header-info">
           <div>
-            <h2 className="page-title">FIFO Override Report</h2>
+            <h2 className="page-title">Low Stock Report</h2>
           </div>
         </div>
 
@@ -269,14 +264,14 @@ class FifoReportList extends ListCommon {
             display: 'flex', alignItems: 'center', gap: 4,
           }}>
             <span>🕐</span>
-            <span>Data auto-refreshes every hour. Use <strong>Sync Now</strong> for latest data.</span>
+            <span>Data auto-refreshes every 30 minutes. Use <strong>Sync Now</strong> for latest data.</span>
           </div>
 
           <div className="filter-section">
             <div>
               {this.state.totalRecords > 0 && (
                 <span style={{ fontSize: 13, color: '#555' }}>
-                  {this.state.totalRecords} record{this.state.totalRecords !== 1 ? 's' : ''}
+                  {this.state.totalRecords} product{this.state.totalRecords !== 1 ? 's' : ''} low on stock
                   {this.state.activeTile ? ` · ${TILES.find(t => t.key === this.state.activeTile)?.label}` : ''}
                 </span>
               )}
@@ -314,9 +309,7 @@ class FifoReportList extends ListCommon {
               filterData={this.filterData}
               options={{
                 projects: this.state.tenantOptions,
-                products: this.state.dropdowns.products || [],
-                contractors: this.state.dropdowns.contractors || [],
-                performedBy: this.state.dropdowns.performedBy || [],
+                categories: this.state.dropdowns.categories || [],
               }}
               search={(data) => {
                 this.filterData = data;
@@ -352,4 +345,4 @@ class FifoReportList extends ListCommon {
   }
 }
 
-export default withSnackbar(FifoReportList);
+export default withSnackbar(LowStockReportList);

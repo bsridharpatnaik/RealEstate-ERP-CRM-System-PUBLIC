@@ -80,7 +80,10 @@ function SideMenu(props) {
     props.history.location.pathname === appRoutes.activityLog ||
     props.history.location.pathname === "/globalBOQ" ||
     props.history.location.pathname === appRoutes.fifoReport ||
-    props.history.location.pathname === appRoutes.stockAgingReport
+    props.history.location.pathname === appRoutes.stockAgingReport ||
+    props.history.location.pathname === appRoutes.lowStockReport ||
+    props.history.location.pathname === appRoutes.poReconReport ||
+    props.history.location.pathname === appRoutes.indentFulfillmentReport
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
@@ -560,6 +563,24 @@ function SideMenu(props) {
                   labelText="Stock Aging Report"
                   onClick={props.setSideBarValue}
                   linkurl={appRoutes.stockAgingReport}
+                />
+                <DashboardItem
+                  nodeId="63"
+                  labelText="Low Stock Report"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.lowStockReport}
+                />
+                <DashboardItem
+                  nodeId="64"
+                  labelText="PO vs Inward Recon"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.poReconReport}
+                />
+                <DashboardItem
+                  nodeId="65"
+                  labelText="Indent Fulfillment"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.indentFulfillmentReport}
                 />
               </DashboardItem>
             )}

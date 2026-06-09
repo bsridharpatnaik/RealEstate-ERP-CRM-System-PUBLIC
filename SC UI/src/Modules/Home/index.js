@@ -42,6 +42,9 @@ import {
   ProductMerge,
   FifoReport,
   StockAgingReport,
+  LowStockReport,
+  PoReconciliationReport,
+  IndentFulfillmentReport,
 } from "./../index";
 import BOQReport from "../BOQReport";
 
@@ -115,6 +118,15 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.stockAgingReport}>
                   <StockAgingReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.lowStockReport}>
+                  <LowStockReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.poReconReport}>
+                  <PoReconciliationReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.indentFulfillmentReport}>
+                  <IndentFulfillmentReport key={new Date()} {...props} />
                 </Route>
                 <Route path={"/boqReport"}>
                   <BOQReport key={new Date()} {...props} />
