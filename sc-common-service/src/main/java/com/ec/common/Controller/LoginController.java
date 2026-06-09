@@ -53,7 +53,7 @@ public class LoginController {
         } catch (Exception e) {
             if ("INVALID_CREDENTIALS".equals(e.getMessage())) {
                 return ResponseEntity.status(401)
-                        .body(java.util.Map.of("message", "INVALID_CREDENTIALS"));
+                        .body(new java.util.HashMap<String, String>() {{ put("message", "INVALID_CREDENTIALS"); }});
             }
             throw e;
         }

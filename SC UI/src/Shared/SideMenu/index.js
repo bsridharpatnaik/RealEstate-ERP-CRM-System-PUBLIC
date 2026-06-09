@@ -78,7 +78,9 @@ function SideMenu(props) {
     props.history.location.pathname === "/firm" ||
     props.history.location.pathname === appRoutes.productMerge ||
     props.history.location.pathname === appRoutes.activityLog ||
-    props.history.location.pathname === "/globalBOQ"
+    props.history.location.pathname === "/globalBOQ" ||
+    props.history.location.pathname === appRoutes.fifoReport ||
+    props.history.location.pathname === appRoutes.stockAgingReport
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
@@ -541,6 +543,26 @@ function SideMenu(props) {
 />
   </DashboardItem>
 )}
+            {(currentUserRole.toLowerCase() === "admin") && (
+              <DashboardItem
+                nodeId="60"
+                labelText="Reports"
+                labelIcon={DescriptionIcon}
+              >
+                <DashboardItem
+                  nodeId="61"
+                  labelText="FIFO Override Report"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.fifoReport}
+                />
+                <DashboardItem
+                  nodeId="62"
+                  labelText="Stock Aging Report"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.stockAgingReport}
+                />
+              </DashboardItem>
+            )}
             <DashboardItem
               nodeId="17"
               labelText="Global Config"

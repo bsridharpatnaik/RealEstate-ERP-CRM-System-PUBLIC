@@ -1,3 +1,38 @@
+.outward-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+
+  .filter-item {
+    margin: 0;
+  }
+
+  @media screen and (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.outward-filter-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 8px 4px 4px;
+  border-top: 1px solid #eee;
+  margin-top: 4px;
+}
+
+.outward-filter-toggle-item {
+  display: flex;
+  align-items: center;
+  min-width: 130px;
+}
+
+.outward-filter-toggle-label {
+  font-size: 13px;
+  color: #444;
+  user-select: none;
+}
+
 .filter-dates {
   display: flex;
   @media screen and (max-width: 768px) {

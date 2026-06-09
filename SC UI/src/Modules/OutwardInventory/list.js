@@ -99,7 +99,7 @@ class List extends ListCommon {
             ].includes(field)
           ) {
             value = value.map((v) => v.name);
-          } else if (["showOnlyRejected", "showOnlyReturned", "startDate", "endDate", "textSearch", "boqBypassed"].includes(field)) {
+          } else if (["showOnlyRejected", "showOnlyReturned", "startDate", "endDate", "textSearch", "boqBypassed", "fifoOverride"].includes(field)) {
             value = [value];
           }
           params.filterData.push({

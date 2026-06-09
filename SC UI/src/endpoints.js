@@ -309,6 +309,16 @@ export const apiEndpoints = {
   getGlobalDashboardSuppliersLeadTimeHeatmap: "/api/inventory/global-dashboard/suppliers/lead-time/heatmap",
   getGlobalDashboardStaleCharts: "/api/inventory/global-dashboard/stale-charts",
   downloadStockReport: "/api/inventory/email/dailystockreport/download",
+  fifoReportList: "/api/inventory/fifo-report/list?size=20",
+  fifoReportExport: "/api/inventory/fifo-report/export/excel",
+  fifoReportSync: "/api/inventory/fifo-report/sync",
+  fifoReportDropdowns: "/api/inventory/fifo-report/dropdowns",
+  stockAgingList: "/api/inventory/stock-aging/list?size=20",
+  stockAgingExport: "/api/inventory/stock-aging/export/excel",
+  stockAgingSync: "/api/inventory/stock-aging/sync",
+  stockAgingDropdowns: "/api/inventory/stock-aging/dropdowns",
+  stockAgingTiles: "/api/inventory/stock-aging/tiles",
+  stockAgingDetail: (productId) => `/api/inventory/stock-aging/detail/${productId}`,
 };
 export const exportURL = {
   getAllInventoryTransactions:
@@ -382,4 +392,6 @@ export const appRoutes = {
   globalDashboard: "/globalDashboard",
   productMerge: "/productMerge",
   globalBOQ: "/globalBOQ",
+  fifoReport: "/fifoReport",
+  stockAgingReport: "/stockAgingReport",
 };

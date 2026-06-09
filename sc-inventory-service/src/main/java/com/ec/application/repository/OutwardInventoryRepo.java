@@ -38,4 +38,8 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 
 	@Query(value="SELECT i from OutwardInventory i WHERE year(i.date)=year(current_date) AND month(i.date)=month(current_date)")
 	List<OutwardInventory> getCurrentMonthData();
+
+	/** Used by FIFO report sync to bulk-fetch outward headers for a set of outward IDs. */
+	@Query("SELECT o FROM OutwardInventory o WHERE o.outwardid IN :ids")
+	List<OutwardInventory> findByOutwardidIn(@Param("ids") List<Long> ids);
 }

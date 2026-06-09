@@ -60,6 +60,7 @@ public final class OutwardInventorySpecification {
             Specification<OutwardInventory> gs = null;
             gs = or(gs, specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, globalSearch));
             gs = or(gs, lineItemProductNameLike(globalSearch));
+            gs = or(gs, outwardIdMatch(globalSearch));
             spec = and(spec, gs);
         }
 
@@ -93,6 +94,26 @@ public final class OutwardInventorySpecification {
     }
 
     // ── Subquery helpers ─────────────────────────────────────────────────────
+
+    /**
+     * globalSearch: exact match on outwardid if the search term is a valid number.
+     * Allows searching by outward ID directly from the global search box.
+     */
+    private static Specification<OutwardInventory> outwardIdMatch(List<String> terms) {
+        return (root, query, cb) -> {
+            List<Predicate> preds = new ArrayList<>();
+            for (String term : terms) {
+                try {
+                    Long id = Long.parseLong(term.trim());
+                    preds.add(cb.equal(root.get(OutwardInventory_.OUTWARDID), id));
+                } catch (NumberFormatException ignored) {
+                    // not a number — skip
+                }
+            }
+            if (preds.isEmpty()) return cb.disjunction(); // always false — no numeric terms
+            return cb.or(preds.toArray(new Predicate[0]));
+        };
+    }
 
     /** globalSearch: LIKE on product name/code via parent-ID IN subquery. */
     private static Specification<OutwardInventory> lineItemProductNameLike(List<String> terms) {

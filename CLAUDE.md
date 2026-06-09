@@ -729,3 +729,102 @@ The backend then correctly throws: "Product X has N batches. Please specify whic
 ## Key Invariant
 
 `batch.qtyRemaining` must equal `batch.qtyReceived` minus sum of all downstream consumptions (outwards, lost/damaged, write-offs, transfer-outs, rejects). Any operation that creates or reverses consumption must update `qtyRemaining` atomically in the same transaction.
+
+---
+
+# FIFO Override Report — Completed Work
+
+## What It Does
+
+Global cross-tenant report showing all outward transactions where batch consumption deviated from FIFO/FEFO order (i.e. `fifo_overridden = true` on `OutwardBatchConsumption`). Admin-only. Accessible from global side menu under Reports → FIFO Override Report.
+
+---
+
+## Architecture
+
+### Sync Strategy — Incremental
+
+Same pattern as `ActivityLogGlobalSyncService`. Tracks `MAX(syncedAt)` per tenant in master table.
+
+- First run: loads all override rows for tenant
+- Subsequent runs: only processes rows where `lastModifiedDate > lastSyncTime`
+- Deleted source rows (outward deleted/soft-deleted): removed from master
+- Auto-sync: hourly cron (`FifoReportSyncJob`)
+- Manual sync: POST `/api/inventory/fifo-report/sync` → "Sync Now" button in UI
+
+### Master Table: `global_fifo_report`
+
+Unique constraint: `(tenantSchema, outwardId, batchId, productId)`
+
+Stored fields (denormalized from tenant schema at sync time):
+- `tenantSchema`, `outwardId`, `outwardDate`
+- `productId`, `productName`, `productCode`, `measurementUnit`
+- `warehouseId`, `warehouseName`
+- `usageLocationName` (structure), `usageAreaName` (final location)
+- `contractorName`, `purpose`
+- `batchId`, `batchLotNumber`, `batchBrand`, `batchReceivedDate`, `batchExpiryDate`
+- `qtyConsumed`, `overrideComment`, `performedBy` (from `outward_inventory.createdBy`)
+- `syncedAt`
+
+### Backend Key Files
+
+| File | Role |
+|---|---|
+| `model/GlobalFifoReport.java` | Master schema entity |
+| `repository/GlobalFifoReportRepository.java` | JPA repo — upsert helper, delete by unique key, `findLastSyncTimeByTenantSchema` |
+| `Filters/GlobalFifoReportSpecification.java` | Filter by date range, tenantSchema, productName, warehouseName, contractorName, performedBy |
+| `service/FifoReportSyncService.java` | Per-tenant incremental sync: reads consumptions from tenant, fetches outward + products, upserts into master |
+| `service/FifoReportSyncOrchestrator.java` | Loops all tenants, `AtomicBoolean` guard, `JobExecutionLog` (JOB_NAME = `FIFO_REPORT_SYNC`) |
+| `scheduled/FifoReportSyncJob.java` | `@Scheduled(cron = "0 0 * * * *")` — every hour |
+| `service/FifoReportService.java` | Paginated filtered list + Excel export (19 columns) |
+| `controller/FifoReportController.java` | POST `/fifo-report/sync`, `/fifo-report/list`, `/fifo-report/export/excel` — `/list` and `/export/excel` annotated `@UseDefaultTenant` (master schema query) |
+
+### Modified Backend Files
+
+| File | Change |
+|---|---|
+| `repository/OutwardBatchConsumptionRepository.java` | Added `findAllOverrides()` and `findOverridesModifiedAfter(Date since)` |
+| `repository/OutwardInventoryRepo.java` | Added `findByOutwardidIn(List<Long> ids)` |
+
+### API Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/inventory/fifo-report/sync` | Trigger manual sync |
+| `POST` | `/api/inventory/fifo-report/list` | Paginated filtered list |
+| `POST` | `/api/inventory/fifo-report/export/excel` | Export to Excel |
+
+---
+
+### Frontend Key Files
+
+| File | Role |
+|---|---|
+| `Modules/Reports/FifoReport/index.js` | Main list page — Sync Now, Export Excel, Filter, Table, pagination |
+| `Modules/Reports/FifoReport/filter.js` | Filter: date range, project, product, warehouse, contractor, performedBy |
+| `Modules/Reports/FifoReport/table.js` | Table — custom cell rendering for date, overrideComment, batchExpiryDate |
+
+### Modified Frontend Files
+
+| File | Change |
+|---|---|
+| `Modules/index.js` | Added `FifoReport` export |
+| `Modules/Home/index.js` | Added route `/fifoReport → FifoReport` |
+| `endpoints.js` | Added `fifoReportList`, `fifoReportExport`, `fifoReportSync`, `appRoutes.fifoReport` |
+| `Shared/SideMenu/index.js` | Added "Reports → FIFO Override Report" (admin only); added `/fifoReport` to `isProjectSelectionPage` |
+
+### Table Columns (UI)
+
+Date, Project, Outward ID, Product, Unit, Warehouse, Structure, Final Location, Contractor, Lot #, Brand, Recv. Date, Expiry Date, Qty, Override Reason, Performed By
+
+---
+
+## Local Database Access
+
+- **Host:** 127.0.0.1
+- **User:** root
+- **Password:** REDACTED (reset June 2026 via skip-grant-tables)
+- **Connect:** `/opt/homebrew/opt/mysql@8.0/bin/mysql --user=root --password=REDACTED --host=127.0.0.1`
+- MySQL runs via LaunchAgent: `~/Library/LaunchAgents/homebrew.mxcl.mysql@8.0.plist`
+- Stop: `launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.mysql@8.0.plist`
+- Start: `launchctl load ~/Library/LaunchAgents/homebrew.mxcl.mysql@8.0.plist`

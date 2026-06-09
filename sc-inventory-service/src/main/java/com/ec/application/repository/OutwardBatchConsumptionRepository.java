@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -24,4 +25,17 @@ public interface OutwardBatchConsumptionRepository extends JpaRepository<Outward
     @Transactional
     @Query("DELETE FROM OutwardBatchConsumption c WHERE c.outwardId = :outwardId")
     void deleteByOutwardId(@Param("outwardId") Long outwardId);
+
+    /**
+     * Used by FIFO report sync — fetch all override consumption rows modified after lastSyncTime.
+     * Also returns soft-deleted rows (isDeleted=true) so the sync can remove them from master.
+     */
+    @Query("SELECT c FROM OutwardBatchConsumption c WHERE c.fifoOverridden = true AND c.lastModifiedDate > :since")
+    List<OutwardBatchConsumption> findOverridesModifiedAfter(@Param("since") Date since);
+
+    /**
+     * First-time sync — fetch all override rows regardless of date.
+     */
+    @Query("SELECT c FROM OutwardBatchConsumption c WHERE c.fifoOverridden = true")
+    List<OutwardBatchConsumption> findAllOverrides();
 }

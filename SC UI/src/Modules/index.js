@@ -29,6 +29,8 @@ import HistoricalPricing from "./HistoricalPricing";
 import Firm from "./Firm";
 import ProductMerge from "./ProductMerge";
 import GlobalBOQView from "./GlobalBOQView";
+import FifoReport from "./Reports/FifoReport";
+import StockAgingReport from "./Reports/StockAging";
 export {
   User,
   Role,
@@ -61,4 +63,6 @@ export {
   Firm,
   ProductMerge,
   GlobalBOQView,
+  FifoReport,
+  StockAgingReport,
 };

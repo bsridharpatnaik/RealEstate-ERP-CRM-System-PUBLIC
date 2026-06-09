@@ -1,9 +1,27 @@
 import React from "react";
 import CommonFilter from "./../../Shared/Filter";
+import Switch from "@material-ui/core/Switch";
 import "./style.scss";
 import { messages } from "./../../messages";
+
 class filter extends CommonFilter {
-  invoiceOptions = ["true", "false"];
+  renderToggle(label, fieldname) {
+    const checked = !!this.filterData[fieldname];
+    return (
+      <div className="outward-filter-toggle-item">
+        <Switch
+          size="small"
+          checked={checked}
+          onChange={(e) => {
+            this.filterData[fieldname] = e.target.checked ? "true" : undefined;
+            this.setState({});
+          }}
+          color="primary"
+        />
+        <span className="outward-filter-toggle-label">{label}</span>
+      </div>
+    );
+  }
 
   renderFilter() {
     return (
@@ -16,82 +34,50 @@ class filter extends CommonFilter {
               {this.renderFilterDate("Start Date", "startDate")}
               {this.renderFilterDate("End Date", "endDate")}
             </div>
-            {this.renderAutoComplete(
-              messages.common.category,
-              this.props.options?.category,
-              "categoryNames",
-              (option) => {
-                return option["name"];
-              }
-            )}
-            {this.renderAutoComplete(
-              messages.common.inventory,
-              this.props.options?.product,
-              "productNames",
-              (option) => {
-                return option["name"];
-              }
-            )}
-            {this.renderAutoComplete(
-              "Contractor",
-              this.props.options?.contractor,
-              "contractorNames",
-              (option) => {
-                return option["name"];
-              }
-            )}
-            {this.renderAutoComplete(
-              "Warehouse",
-              this.props.options?.warehouse,
-              "warehouseNames",
-              (option) => {
-                return option["name"];
-              }
-            )}
-            {this.renderAutoComplete(
-              messages.common.location,
-              this.props.options?.usagelocation,
-              "usageLocation",
-              (option) => {
-                return option["name"];
-              }
-            )}
-            {this.renderAutoComplete(
-              messages.common.finalLocation,
-              this.props.options?.usageArea,
-              "usageArea",
-              (option) => {
-                return option["name"];
-              }
-            )}
-            {this.renderAutoComplete(
-              "Show only Rejected",
-              this.invoiceOptions,
-              "showOnlyRejected",
-              undefined,
-              false
-            )}
-            {this.renderAutoComplete(
-              "Show only Returned",
-              this.invoiceOptions,
-              "showOnlyReturned",
-              undefined,
-              false
-            )}
-            {this.renderAutoComplete(
-              "BOQ Bypassed",
-              this.invoiceOptions,
-              "boqBypassed",
-              undefined,
-              false
-            )}
-            {this.renderAutoComplete(
-              "FIFO Override",
-              this.invoiceOptions,
-              "fifoOverride",
-              undefined,
-              false
-            )}
+            <div className="outward-filter-grid">
+              {this.renderAutoComplete(
+                messages.common.category,
+                this.props.options?.category,
+                "categoryNames",
+                (option) => option["name"]
+              )}
+              {this.renderAutoComplete(
+                messages.common.inventory,
+                this.props.options?.product,
+                "productNames",
+                (option) => option["name"]
+              )}
+              {this.renderAutoComplete(
+                "Contractor",
+                this.props.options?.contractor,
+                "contractorNames",
+                (option) => option["name"]
+              )}
+              {this.renderAutoComplete(
+                "Warehouse",
+                this.props.options?.warehouse,
+                "warehouseNames",
+                (option) => option["name"]
+              )}
+              {this.renderAutoComplete(
+                messages.common.location,
+                this.props.options?.usagelocation,
+                "usageLocation",
+                (option) => option["name"]
+              )}
+              {this.renderAutoComplete(
+                messages.common.finalLocation,
+                this.props.options?.usageArea,
+                "usageArea",
+                (option) => option["name"]
+              )}
+            </div>
+            <div className="outward-filter-toggles">
+              {this.renderToggle("Rejected Only", "showOnlyRejected")}
+              {this.renderToggle("Returned Only", "showOnlyReturned")}
+              {this.renderToggle("BOQ Bypassed", "boqBypassed")}
+              {this.renderToggle("FIFO Override", "fifoOverride")}
+            </div>
           </div>
         ) : null}
         {this.renderFooter()}
