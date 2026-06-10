@@ -973,10 +973,178 @@ Multiple statuses sent as `attrValue: ["NEW", "APPROVED"]` array. Backend uses `
 ### Card UX
 
 - **Header:** Indent ID, status badge, project chip, date, overall progress bar (received/requested), status summary pill
-- **Cancelled/Rejected/Short Closed badge:** shown instead of "Fully received" — avoids misleading "✓ Fully received" on cancelled indents with 0 received
+- **Status summary pill:** see "IndentFulfillment Cards — Status Summary Pill Logic" section in Session 5 Learnings for full truth table. `PO COMPLETED` ≠ received — shows "📦 Fully PO'd" not "✓ Fully Received".
 - **Per-line:** product name, unit, PO info chip (PO# + status), line status badge
 - **3-stage pipeline bar:** `[Requested qty] → [PO'd qty] → [Received qty]` — visual end-to-end lifecycle at a glance. PO Qty is null/blank if no PO linked yet.
 
 ### Route
 
 `/indentFulfillmentReport` — in `isProjectSelectionPage`
+
+---
+
+# Reports Module — Session 5 Learnings
+
+## Shared Frontend Infrastructure (`SC UI/src/Modules/Reports/`)
+
+### `projectColors.js`
+
+Shared utility imported by ALL report card/table files.
+
+```js
+getProjectColor(projectCode)  // returns { bg, color, border } — deterministic hash, same code = same color
+```
+
+Color hash uses raw `tenantCode` (schema code) — NOT display name. This ensures color stability even if display name changes.
+
+### Project Display Name Resolution (Tenant Map)
+
+All report index pages now fetch `GET /user/allowedtenants` → build `tenantMap = { tenantCode → tenantName }`.
+
+Pattern used in all 5 report index files:
+```js
+// In state:
+tenantOptions: []
+
+// In fetchTenants() (already existed in FifoReport, StockAging, LowStock):
+const tenantOptions = res.data
+  .filter(t => t.inventory === true)
+  .map(t => ({ name: t.tenantName || t.name || '', id: t.tenantCode }))
+  .filter(t => t.name && t.id);
+this.setState({ tenantOptions });
+
+// Passed to child:
+tenantMap={Object.fromEntries(this.state.tenantOptions.map(t => [t.id, t.name]))}
+```
+
+Cards/tables use: `(tenantMap && tenantMap[code]) || code` — graceful fallback to raw code if map missing.
+
+**PoReconciliation and IndentFulfillment** did NOT originally fetch tenants (they fetched project codes from their own backend endpoints). `fetchTenants()` was added to both in this session.
+
+### Filter Dropdowns — Exact Match vs LIKE
+
+All report filters use **exact match** (not LIKE) for autocomplete-sourced fields:
+- `SpecificationsBuilder.whereDirectFieldEquals()` — use for product name, category, warehouse, contractor, performedBy
+- `SpecificationsBuilder.whereDirectFieldContains()` — only for free-text search fields
+
+Applies to: `GlobalStockAgingSpecification`, `GlobalFifoReportSpecification`, `GlobalLowStockSpecification`
+
+### Filter Multi-Select Pattern (Native SQL reports)
+
+For PoRecon and IndentFulfillment, multi-value filters build IN clauses dynamically:
+```java
+List<String> values = f.getAttrValue().stream()...collect(toList());
+if (values.size() == 1) {
+    where.append(" AND field = :p0"); params.put("p0", values.get(0));
+} else {
+    // build IN (:p0, :p1, ...)
+}
+```
+Frontend sends `attrValue: ["A", "B"]` array. Backend always handles both single and multi-value.
+
+### Default Filter Badge Pattern
+
+PoReconciliation and IndentFulfillment load with a pre-populated default filter (active/pending records only).
+
+State:
+```js
+usingDefaultFilter: true  // set false when user opens filter dialog or removes badge
+```
+
+Dismissible badge in UI — clicking × clears the relevant filterData key and sets `usingDefaultFilter = false`.
+
+---
+
+## Low Stock Report — Architecture Notes
+
+### Reorder Level Source (Critical)
+
+`LowStockSyncService` reads reorder level from **`ProductTenantConfig`** (tenant schema) directly — NOT from `StockSummary.reorderLevel`. This was a two-step dependency bug that was fixed.
+
+Steps in sync:
+1. Load all `StockSummary` rows for tenant
+2. Load `ProductTenantConfig` overrides for those products (from tenant schema)
+3. Effective reorder = `tenantOverride ?? stockSummary.reorderLevel`
+4. Filter: `totalQty < effectiveReorder`
+5. Load fresh product metadata from `ProductRepo`
+6. Upsert with correct reorder level
+
+### Tile Date Window Fix (Calendar Day Alignment)
+
+`LowStockReportService.dateMinusDays(days)` returns **start of calendar day**, not rolling 24-hour window.
+
+- `days=1` → today midnight 00:00:00 → "New Today" shows only records from today
+- `days=3` → 2 days ago midnight → covers 3 full calendar days
+
+```java
+cal.add(Calendar.DAY_OF_YEAR, (int) -(days - 1));
+cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
+cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0);
+```
+
+Same logic in frontend `handleTileClick`:
+```js
+if (tile.days === 1) { start.setHours(0, 0, 0, 0); }          // today midnight
+else { start.setDate(start.getDate() - (tile.days - 1)); start.setHours(0,0,0,0); }
+```
+
+**Bug to avoid:** `start.setDate(today - tile.days)` gives rolling 24h window. 9th June 22:30 record shows on 10th June morning when "New Today" tile clicked. Fixed by using calendar-day start.
+
+---
+
+## FIFO Report — Sync Step 6 (Metadata Refresh)
+
+Incremental sync only touches records where `lastModifiedDate > lastSyncTime`. Product renames/unit changes would leave stale names.
+
+`FifoReportSyncService` Step 6 — after incremental sync, refresh product metadata for ALL synced products of that tenant:
+```java
+List<Long> allSyncedProductIds = globalFifoReportRepository.findDistinctProductIdsByTenantSchema(tenantSchema);
+// update productName + measurementUnit for each
+globalFifoReportRepository.updateProductMetadata(tenantSchema, pid, name, unit);
+```
+
+Same pattern should be applied if any other synced report has product metadata (name/unit) that can change.
+
+---
+
+## IndentFulfillment Cards — Status Summary Pill Logic
+
+The header pill on each indent card reflects the **actual fulfillment state**, not just the `indentStatus` field. These are independent.
+
+| Pill | Condition |
+|---|---|
+| ✕ Cancelled / ✕ Rejected | `indentStatus` is CANCELLED or REJECTED |
+| ⊘ Short Closed | `indentStatus` is SHORT CLOSED |
+| ✓ Fully Received | `indentStatus === 'CLOSED'` OR `receivedQty >= requestedQty > 0` |
+| 📦 Fully PO'd | `indentStatus === 'PO COMPLETED'` OR `poQty >= requestedQty` — but received < requested |
+| ◑ Partially Received | some received, not all, no full PO coverage |
+| 🔄 PO in Progress | has `pendingQty` in PO but 0 received |
+| ○ Not Started | no PO, no receipt |
+
+**Critical invariant:** `PO COMPLETED` ≠ goods received. A PO COMPLETED indent with 0 inward should show "📦 Fully PO'd", NOT "✓ Fully received". Previous bug: `isFullyReceived` included `indentStatus === 'PO COMPLETED'` which was wrong.
+
+`isFullyReceived` must require actual `receivedQty >= requestedQty > 0` OR `CLOSED` status.
+
+`isFullyPOd` is a separate state — compute `totalPOd = sum(line.poQty)`, check `totalPOd >= totalAllRequested`.
+
+---
+
+## Tile Count Queries — Native SQL Pitfall
+
+When writing `@Query` annotations with native SQL (`nativeQuery = true`) in Spring JPA:
+- Column names must match Java field names (camelCase) as Hibernate stores them
+- NOT snake_case DB column names
+- Example: use `outwardId` not `outward_id` in HQL/JPQL
+- Use `COUNT(r)` not positional `ORDER BY 2` in HQL aggregate queries
+
+---
+
+## Product Name / Unit Sync — Pattern
+
+When product metadata (name, unit, category) can change in the tenant schema, any master-schema sync table needs a metadata refresh step. Pattern:
+
+1. After the incremental upsert, query `DISTINCT productId` from master table for that tenant
+2. Fetch fresh `Product` entities from tenant schema
+3. Bulk `UPDATE` master table setting `productName`, `unit` by `(tenantSchema, productId)`
+
+Applies to: `FifoReportSyncService` (done), `LowStockSyncService` (done via fresh ProductRepo load in sync loop).
