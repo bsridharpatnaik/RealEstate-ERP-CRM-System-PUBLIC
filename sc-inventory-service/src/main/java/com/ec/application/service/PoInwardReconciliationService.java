@@ -113,6 +113,17 @@ public class PoInwardReconciliationService {
         return result;
     }
 
+    public List<String> getDistinctProducts() {
+        String sql = "SELECT DISTINCT p.product_name" +
+                " FROM purchase_order_line pol" +
+                " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
+                " JOIN purchase_order po ON po.purchase_order_id = pol.po_id AND po.is_deleted = 0" +
+                " WHERE pol.is_deleted = 0 ORDER BY p.product_name";
+        @SuppressWarnings("unchecked")
+        List<String> result = em.createNativeQuery(sql).getResultList();
+        return result;
+    }
+
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
         WhereClause wc = buildWhere(filters);
         String sql = DATA_SELECT + BASE_FROM + wc.where + GROUP_BY + wc.having + " ORDER BY po.po_date DESC, po.purchase_order_id ASC, p.product_name ASC";
@@ -176,14 +187,43 @@ public class PoInwardReconciliationService {
                 String v = f.getAttrValue().get(0);
                 if (v == null || v.isEmpty()) continue;
                 if ("project".equals(f.getAttrName())) {
-                    sql.append(" AND COALESCE(ii.tenant, po.project_name, 'Unknown') = :project");
-                    params.put("project", v);
+                    List<String> projects = f.getAttrValue().stream()
+                            .filter(s -> s != null && !s.isEmpty())
+                            .collect(java.util.stream.Collectors.toList());
+                    if (projects.size() == 1) {
+                        sql.append(" AND COALESCE(ii.tenant, po.project_name, 'Unknown') = :project0");
+                        params.put("project0", projects.get(0));
+                    } else if (projects.size() > 1) {
+                        StringBuilder inClause = new StringBuilder(
+                                " AND COALESCE(ii.tenant, po.project_name, 'Unknown') IN (");
+                        for (int pi = 0; pi < projects.size(); pi++) {
+                            String pname = "project" + pi;
+                            inClause.append(pi == 0 ? "" : ",").append(":").append(pname);
+                            params.put(pname, projects.get(pi));
+                        }
+                        inClause.append(")");
+                        sql.append(inClause);
+                    }
                 } else if ("poStatus".equals(f.getAttrName())) {
                     sql.append(" AND po.status = :poStatus");
                     params.put("poStatus", v);
                 } else if ("productName".equals(f.getAttrName())) {
-                    sql.append(" AND p.product_name LIKE :productName");
-                    params.put("productName", "%" + v + "%");
+                    List<String> products = f.getAttrValue().stream()
+                            .filter(s -> s != null && !s.isEmpty())
+                            .collect(java.util.stream.Collectors.toList());
+                    if (products.size() == 1) {
+                        sql.append(" AND p.product_name = :productName0");
+                        params.put("productName0", products.get(0));
+                    } else if (products.size() > 1) {
+                        StringBuilder inClause = new StringBuilder(" AND p.product_name IN (");
+                        for (int pi = 0; pi < products.size(); pi++) {
+                            String pname = "productName" + pi;
+                            inClause.append(pi == 0 ? "" : ",").append(":").append(pname);
+                            params.put(pname, products.get(pi));
+                        }
+                        inClause.append(")");
+                        sql.append(inClause);
+                    }
                 } else if ("startDate".equals(f.getAttrName())) {
                     sql.append(" AND po.po_date >= STR_TO_DATE(:startDate, '%d-%m-%Y')");
                     params.put("startDate", v);

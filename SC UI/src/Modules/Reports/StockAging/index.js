@@ -8,7 +8,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 import ListCommon from '../../../Shared/List';
-import Table from './table';
+import Cards from './cards';
 import Filter from './filter';
 import DetailPopup from './detailPopup';
 import IconButtons from '../../../Shared/Button/IconButtons';
@@ -25,9 +25,6 @@ const BUCKET_CONFIG = [
 
 class StockAgingList extends ListCommon {
   filterData = {};
-  sortkey = 'minAgingDays';
-  sortby = 'desc';
-
   state = {
     data: [],
     pages: 0,
@@ -110,6 +107,7 @@ class StockAgingList extends ListCommon {
   }
 
   async search(page = 0) {
+    this.url = apiEndpoints.stockAgingList.replace('size=20', 'size=100');
     const params = this.prepareRequestBody();
     const response = await this.getData(page, params);
     if (response.success) {
@@ -235,7 +233,7 @@ class StockAgingList extends ListCommon {
             <div>
               {this.state.totalRecords > 0 && (
                 <span style={{ fontSize: 13, color: '#555' }}>
-                  {this.state.totalRecords} record{this.state.totalRecords !== 1 ? 's' : ''}
+                  {this.state.totalRecords} project-product row{this.state.totalRecords !== 1 ? 's' : ''}
                   {this.state.activeBucket ? ` · ${this.state.activeBucket} days` : ''}
                 </span>
               )}
@@ -288,19 +286,7 @@ class StockAgingList extends ListCommon {
           {this.state.isLoading ? (
             this.renderLoader()
           ) : (
-            <Table
-              rows={this.state.data}
-              hideedit
-              hidedelete
-              sortkey={this.sortkey}
-              sortby={this.sortby}
-              search={(sortkey, sortby) => {
-                this.sortkey = sortkey;
-                this.sortby = sortby;
-                this.search();
-              }}
-              onRowClick={(row) => this.openDetail(row)}
-            />
+            <Cards rows={this.state.data} onRowClick={(row) => this.openDetail(row)} />
           )}
 
           {this.renderPagination()}

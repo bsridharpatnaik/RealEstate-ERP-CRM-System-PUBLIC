@@ -22,6 +22,7 @@ public class LowStockSyncService {
     private final StockSummaryRepo stockSummaryRepo;
     private final ProductRepo productRepo;
     private final GlobalLowStockReportRepository lowStockRepo;
+    private final ProductTenantConfigRepository configRepo;
 
     public void syncSingleTenant(String tenantSchema) {
         String masterSchema = schemaConfig.getMasterSchema();
@@ -31,52 +32,77 @@ public class LowStockSyncService {
         ThreadLocalStorage.setTenantName(masterSchema);
         List<StockSummary> allRows = stockSummaryRepo.findByTenantSchema(tenantSchema);
 
-        // Filter: reorderLevel > 0 AND qtyInHand < reorderLevel
-        List<StockSummary> lowStockRows = allRows.stream()
-                .filter(s -> s.getReorderLevel() != null
-                          && s.getReorderLevel() > 0.0
-                          && s.getQuantityInHand() != null
-                          && s.getQuantityInHand() < s.getReorderLevel())
-                .collect(Collectors.toList());
+        if (allRows.isEmpty()) {
+            log.info("No stock rows for tenant: {}. Clearing existing rows.", tenantSchema);
+            lowStockRepo.deleteByTenantSchema(tenantSchema);
+            return;
+        }
+
+        // ── Step 2: Load project-level reorder overrides from TENANT schema ──
+        // ProductTenantConfig lives in each tenant schema and overrides the global
+        // Product.reorderQuantity. We read this directly to avoid depending on
+        // StockSummary.reorderLevel being up-to-date.
+        List<Long> allProductIds = allRows.stream()
+                .map(StockSummary::getProductId).distinct().collect(Collectors.toList());
+
+        ThreadLocalStorage.setTenantName(tenantSchema);
+        List<ProductTenantConfig> overrideList = configRepo.findByProductIds(allProductIds);
+        Map<Long, Double> tenantOverrides = overrideList.stream()
+                .filter(c -> c.getReorderLevel() != null && c.getReorderLevel() > 0.0)
+                .collect(Collectors.toMap(ProductTenantConfig::getProductId,
+                                          ProductTenantConfig::getReorderLevel));
+
+        // ── Step 3: Compute effective reorder level per product ───────────────
+        // Priority: tenant-specific config > StockSummary.reorderLevel (which holds
+        // the global Product.reorderQuantity as fallback, already synced by StockSummarySyncService)
+        Map<Long, Double> globalFallback = new HashMap<>();
+        for (StockSummary s : allRows) {
+            globalFallback.putIfAbsent(s.getProductId(),
+                    s.getReorderLevel() != null ? s.getReorderLevel() : 0.0);
+        }
+
+        // ── Step 4: Filter rows where qty < effective reorder level ───────────
+        // Aggregate qty per product first (one row per product×warehouse in StockSummary)
+        Map<Long, Double> qtyByProduct = new HashMap<>();
+        for (StockSummary s : allRows) {
+            if (s.getQuantityInHand() != null) {
+                qtyByProduct.merge(s.getProductId(), s.getQuantityInHand(), Double::sum);
+            }
+        }
+
+        List<Long> lowStockProductIds = new ArrayList<>();
+        for (Long productId : allProductIds) {
+            double totalQty = qtyByProduct.getOrDefault(productId, 0.0);
+            double effectiveReorder = tenantOverrides.containsKey(productId)
+                    ? tenantOverrides.get(productId)
+                    : globalFallback.getOrDefault(productId, 0.0);
+            if (effectiveReorder > 0.0 && totalQty < effectiveReorder) {
+                lowStockProductIds.add(productId);
+            }
+        }
 
         // If no low-stock products, remove all existing rows for this tenant
-        if (lowStockRows.isEmpty()) {
+        if (lowStockProductIds.isEmpty()) {
             log.info("No low-stock products for tenant: {}. Clearing existing rows.", tenantSchema);
             lowStockRepo.deleteByTenantSchema(tenantSchema);
             return;
         }
 
-        List<Long> lowStockProductIds = lowStockRows.stream()
-                .map(StockSummary::getProductId)
-                .distinct()
-                .collect(Collectors.toList());
-
-        // ── Step 2: Load product metadata ────────────────────────────────────
+        // ── Step 5: Load product metadata (fresh — picks up renames/unit changes) ─
+        ThreadLocalStorage.setTenantName(masterSchema);
         Map<Long, Product> productMap = productRepo.findAllById(lowStockProductIds)
                 .stream()
                 .collect(Collectors.toMap(Product::getProductId, p -> p));
 
-        // ── Step 3: Aggregate per product (sum qty across warehouses, use product-level reorderLevel) ─
-        // StockSummary has one row per product×warehouse; reorderLevel is same across all warehouse
-        // rows for a given (tenant, product). We sum qty and use the reorderLevel from any row.
-        Map<Long, Double> qtyByProduct = new HashMap<>();
-        Map<Long, Double> reorderByProduct = new HashMap<>();
-
-        for (StockSummary s : lowStockRows) {
-            qtyByProduct.merge(s.getProductId(), s.getQuantityInHand(), Double::sum);
-            reorderByProduct.putIfAbsent(s.getProductId(), s.getReorderLevel());
-        }
-
         Date syncedAt = new Date();
         int inserted = 0, updated = 0;
 
-        // ── Step 4: Upsert low-stock rows — preserve lowStockSince if already exists ─
+        // ── Step 6: Upsert low-stock rows — preserve lowStockSince on updates ─
         for (Long productId : lowStockProductIds) {
-            double totalQty   = qtyByProduct.getOrDefault(productId, 0.0);
-            double reorder    = reorderByProduct.getOrDefault(productId, 0.0);
-
-            // Re-check after aggregation (sum of all warehouses might be above reorder)
-            if (totalQty >= reorder) continue;
+            double totalQty = qtyByProduct.getOrDefault(productId, 0.0);
+            double reorder  = tenantOverrides.containsKey(productId)
+                    ? tenantOverrides.get(productId)
+                    : globalFallback.getOrDefault(productId, 0.0);
 
             Product product = productMap.get(productId);
 
@@ -104,8 +130,7 @@ public class LowStockSyncService {
             if (isNew) inserted++; else updated++;
         }
 
-        // ── Step 5: Remove products that recovered (back above reorder) ──────
-        // Use the filtered lowStockProductIds (post-aggregation check)
+        // ── Step 7: Remove products that recovered (back above reorder) ───────
         lowStockRepo.deleteRecoveredProducts(tenantSchema, lowStockProductIds);
 
         log.info("Low stock sync done for {}. Inserted={}, Updated={}", tenantSchema, inserted, updated);

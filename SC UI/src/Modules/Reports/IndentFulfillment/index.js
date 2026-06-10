@@ -29,6 +29,7 @@ class IndentFulfillmentList extends ListCommon {
     isLoading: false,
     filterOpen: false,
     projects: [],
+    products: [],
     stats: {},
     activeGroup: 'ALL',
   };
@@ -40,6 +41,7 @@ class IndentFulfillmentList extends ListCommon {
   componentDidMount() {
     this.filterRef = React.createRef();
     this.fetchProjects();
+    this.fetchProducts();
     this.search();
     this.fetchStats();
   }
@@ -47,6 +49,11 @@ class IndentFulfillmentList extends ListCommon {
   async fetchProjects() {
     const res = await API.GET(apiEndpoints.indentFulfillmentProjects);
     if (res.success && Array.isArray(res.data)) this.setState({ projects: res.data });
+  }
+
+  async fetchProducts() {
+    const res = await API.GET(apiEndpoints.indentFulfillmentProducts);
+    if (res.success && Array.isArray(res.data)) this.setState({ products: res.data });
   }
 
   async fetchStats() {
@@ -186,7 +193,7 @@ class IndentFulfillmentList extends ListCommon {
             placement="bottom-end" style={{ zIndex: 1300 }}>
             <Filter
               filterData={this.filterData}
-              options={{ projects: this.state.projects }}
+              options={{ projects: this.state.projects, products: this.state.products }}
               search={(data) => {
                 this.filterData = data;
                 this.setState({ filterOpen: false, activeGroup: 'ALL' });

@@ -4,7 +4,7 @@ import Popper from '@material-ui/core/Popper';
 import Tooltip from '@material-ui/core/Tooltip';
 
 import ListCommon from '../../../Shared/List';
-import Table from './table';
+import Cards from './cards';
 import Filter from './filter';
 import IconButtons from '../../../Shared/Button/IconButtons';
 import { API } from '../../../axios';
@@ -12,10 +12,10 @@ import { apiEndpoints } from '../../../endpoints';
 import { messages } from '../../../messages';
 
 const TILES = [
-  { key: 'last7Days',      label: 'Last 7 Days',       color: '#5e81f4', bg: '#eef1fe', days: 7  },
-  { key: 'last30Days',     label: 'Last 30 Days',      color: '#27ae60', bg: '#eafaf1', days: 30 },
-  { key: 'last90Days',     label: 'Last 90 Days',      color: '#f39c12', bg: '#fef9e7', days: 90 },
-  { key: 'uniqueProducts', label: 'Products Overridden', color: '#8e44ad', bg: '#f5eef8', days: null },
+  { key: 'last7Days',      label: 'Outwards (Last 7d)',  color: '#5e81f4', bg: '#eef1fe', days: 7  },
+  { key: 'last30Days',     label: 'Outwards (Last 30d)', color: '#27ae60', bg: '#eafaf1', days: 30 },
+  { key: 'last90Days',     label: 'Outwards (Last 90d)', color: '#f39c12', bg: '#fef9e7', days: 90 },
+  { key: 'uniqueProducts', label: 'Products Overridden',  color: '#8e44ad', bg: '#f5eef8', days: null },
 ];
 
 function ProjectBreakdown({ byProject }) {
@@ -39,9 +39,6 @@ function ProjectBreakdown({ byProject }) {
 
 class FifoReportList extends ListCommon {
   filterData = {};
-  sortkey = 'outwardDate';
-  sortby = 'desc';
-
   state = {
     data: [],
     pages: 0,
@@ -157,6 +154,7 @@ class FifoReportList extends ListCommon {
   }
 
   async search(page = 0) {
+    this.url = apiEndpoints.fifoReportList.replace('size=20', 'size=50');
     const params = this.prepareRequestBody();
     const response = await this.getData(page, params);
     if (response.success) {
@@ -276,7 +274,7 @@ class FifoReportList extends ListCommon {
             <div>
               {this.state.totalRecords > 0 && (
                 <span style={{ fontSize: 13, color: '#555' }}>
-                  {this.state.totalRecords} record{this.state.totalRecords !== 1 ? 's' : ''}
+                  {this.state.totalRecords} batch override{this.state.totalRecords !== 1 ? 's' : ''}
                   {this.state.activeTile ? ` · ${TILES.find(t => t.key === this.state.activeTile)?.label}` : ''}
                 </span>
               )}
@@ -330,19 +328,7 @@ class FifoReportList extends ListCommon {
           {this.state.isLoading ? (
             this.renderLoader()
           ) : (
-            <Table
-              tableData={this.tableData}
-              rows={this.state.data}
-              hideedit
-              hidedelete
-              sortkey={this.sortkey}
-              sortby={this.sortby}
-              search={(sortkey, sortby) => {
-                this.sortkey = sortkey;
-                this.sortby = sortby;
-                this.search();
-              }}
-            />
+            <Cards rows={this.state.data} />
           )}
 
           {this.renderPagination()}

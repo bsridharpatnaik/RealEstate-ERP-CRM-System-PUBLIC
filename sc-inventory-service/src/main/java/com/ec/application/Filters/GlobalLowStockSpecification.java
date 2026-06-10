@@ -26,11 +26,11 @@ public final class GlobalLowStockSpecification {
 
         if (category != null && !category.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("category", category));
+                    specbldr.whereDirectFieldEquals("category", category));
 
         if (productName != null && !productName.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("productName", productName));
+                    specbldr.whereDirectFieldEquals("productName", productName));
 
         // startDate/endDate filter on lowStockSince
         if (startDate != null && !startDate.isEmpty())

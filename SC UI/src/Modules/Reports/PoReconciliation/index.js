@@ -26,6 +26,7 @@ class PoReconList extends ListCommon {
     isLoading: false,
     filterOpen: false,
     projects: [],
+    products: [],
     stats: { COMPLETE: 0, PARTIAL: 0, NOT_STARTED: 0 },
     activeReconStatus: 'ALL',
   };
@@ -36,6 +37,7 @@ class PoReconList extends ListCommon {
   componentDidMount() {
     this.filterRef = React.createRef();
     this.fetchProjects();
+    this.fetchProducts();
     this.search();
     this.fetchStats();
   }
@@ -43,6 +45,11 @@ class PoReconList extends ListCommon {
   async fetchProjects() {
     const res = await API.GET(apiEndpoints.poReconProjects);
     if (res.success && Array.isArray(res.data)) this.setState({ projects: res.data });
+  }
+
+  async fetchProducts() {
+    const res = await API.GET(apiEndpoints.poReconProducts);
+    if (res.success && Array.isArray(res.data)) this.setState({ products: res.data });
   }
 
   async fetchStats() {
@@ -66,7 +73,8 @@ class PoReconList extends ListCommon {
     if (this.filterData) {
       for (const field in this.filterData) {
         const value = this.filterData[field];
-        if (value === undefined || value === null || value === '') continue;
+        if (value === undefined || value === null || value === '' ||
+            (Array.isArray(value) && value.length === 0)) continue;
         params.filterData.push({
           attrName: field,
           attrValue: Array.isArray(value) ? value.map(String) : [String(value)],
@@ -187,7 +195,7 @@ class PoReconList extends ListCommon {
             placement="bottom-end" style={{ zIndex: 1300 }}>
             <Filter
               filterData={this.filterData}
-              options={{ projects: this.state.projects }}
+              options={{ projects: this.state.projects, products: this.state.products }}
               search={(data) => {
                 this.filterData = data;
                 this.setState({ filterOpen: false, activeReconStatus: 'ALL' });

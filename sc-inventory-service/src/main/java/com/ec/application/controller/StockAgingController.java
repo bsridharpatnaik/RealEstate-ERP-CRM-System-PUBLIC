@@ -47,7 +47,8 @@ public class StockAgingController {
     @PostMapping("/list")
     public Page<GlobalStockAgingReport> list(
             @RequestBody FilterDataList filterDataList,
-            @PageableDefault(page = 0, size = 20, sort = "minAgingDays", direction = Sort.Direction.DESC)
+            @PageableDefault(page = 0, size = 100,
+                sort = {"productName", "tenantSchema"}, direction = Sort.Direction.ASC)
             Pageable pageable) throws Exception {
         return reportService.getFiltered(filterDataList, pageable);
     }

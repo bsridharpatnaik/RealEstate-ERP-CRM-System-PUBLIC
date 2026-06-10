@@ -74,10 +74,10 @@ class PoReconFilter extends CommonFilter {
             {sectionLabel('Search')}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div>
-                {this.renderAutoComplete('Project', options.projects || [], 'project', (o) => o, false)}
+                {this.renderAutoComplete('Project', options.projects || [], 'project', (o) => o, true)}
               </div>
               <div>
-                {this.renderTextField('Product Name', 'productName')}
+                {this.renderAutoComplete('Product', options.products || [], 'productName', (o) => o, true)}
               </div>
             </div>
 

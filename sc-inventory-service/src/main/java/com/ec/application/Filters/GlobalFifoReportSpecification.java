@@ -36,19 +36,19 @@ public final class GlobalFifoReportSpecification {
 
         if (productName != null && !productName.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("productName", productName));
+                    specbldr.whereDirectFieldEquals("productName", productName));
 
         if (warehouseName != null && !warehouseName.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("warehouseName", warehouseName));
+                    specbldr.whereDirectFieldEquals("warehouseName", warehouseName));
 
         if (performedBy != null && !performedBy.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("performedBy", performedBy));
+                    specbldr.whereDirectFieldEquals("performedBy", performedBy));
 
         if (contractorName != null && !contractorName.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("contractorName", contractorName));
+                    specbldr.whereDirectFieldEquals("contractorName", contractorName));
 
         return finalSpec;
     }

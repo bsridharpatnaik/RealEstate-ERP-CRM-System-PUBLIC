@@ -36,23 +36,37 @@ public interface GlobalFifoReportRepository
             @Param("batchId") Long batchId,
             @Param("productId") Long productId);
 
-    /** Tile stats — count by project for a given date window. */
-    @Query(value = "SELECT tenant_schema, COUNT(DISTINCT CONCAT(outward_id, '-', product_id)) " +
-           "FROM global_fifo_report WHERE outward_date >= :from GROUP BY tenant_schema ORDER BY 2 DESC",
+    /** Tile stats — count distinct outward IDs by project for a given date window. */
+    @Query(value = "SELECT tenantSchema, COUNT(DISTINCT outwardId) " +
+           "FROM global_fifo_report WHERE outwardDate >= :from GROUP BY tenantSchema ORDER BY 2 DESC",
            nativeQuery = true)
     List<Object[]> countByProjectSince(@Param("from") Date from);
 
-    @Query(value = "SELECT COUNT(DISTINCT CONCAT(outward_id, '-', product_id)) " +
-           "FROM global_fifo_report WHERE outward_date >= :from",
+    @Query(value = "SELECT COUNT(DISTINCT outwardId) " +
+           "FROM global_fifo_report WHERE outwardDate >= :from",
            nativeQuery = true)
     Long countTotalSince(@Param("from") Date from);
 
-    @Query(value = "SELECT COUNT(DISTINCT product_id) FROM global_fifo_report", nativeQuery = true)
+    @Query(value = "SELECT COUNT(DISTINCT productId) FROM global_fifo_report", nativeQuery = true)
     Long countDistinctProducts();
 
-    @Query(value = "SELECT tenant_schema, COUNT(DISTINCT product_id) FROM global_fifo_report " +
-           "GROUP BY tenant_schema ORDER BY 2 DESC", nativeQuery = true)
+    @Query(value = "SELECT tenantSchema, COUNT(DISTINCT productId) FROM global_fifo_report " +
+           "GROUP BY tenantSchema ORDER BY 2 DESC", nativeQuery = true)
     List<Object[]> countDistinctProductsByProject();
+
+    /** Distinct productIds present in master for a given tenant — used by metadata refresh. */
+    @Query("SELECT DISTINCT r.productId FROM GlobalFifoReport r WHERE r.tenantSchema = :tenantSchema")
+    List<Long> findDistinctProductIdsByTenantSchema(@Param("tenantSchema") String tenantSchema);
+
+    /** Bulk-update productName + measurementUnit for all rows of a given (tenant, product). */
+    @Modifying
+    @Transactional
+    @Query("UPDATE GlobalFifoReport r SET r.productName = :productName, r.measurementUnit = :unit " +
+           "WHERE r.tenantSchema = :tenantSchema AND r.productId = :productId")
+    void updateProductMetadata(@Param("tenantSchema") String tenantSchema,
+                               @Param("productId") Long productId,
+                               @Param("productName") String productName,
+                               @Param("unit") String unit);
 
     /** Distinct values for filter dropdowns. */
     @Query("SELECT DISTINCT r.productName FROM GlobalFifoReport r WHERE r.productName IS NOT NULL ORDER BY r.productName")

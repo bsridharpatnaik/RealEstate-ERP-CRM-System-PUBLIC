@@ -42,7 +42,9 @@ public class FifoReportController {
     @PostMapping("/list")
     public Page<GlobalFifoReport> list(
             @RequestBody FilterDataList filterDataList,
-            @PageableDefault(page = 0, size = 20, sort = "outwardDate", direction = Sort.Direction.DESC) Pageable pageable)
+            @PageableDefault(page = 0, size = 50,
+                sort = {"outwardDate", "outwardId"},
+                direction = Sort.Direction.DESC) Pageable pageable)
             throws Exception {
         return fifoReportService.getFiltered(filterDataList, pageable);
     }

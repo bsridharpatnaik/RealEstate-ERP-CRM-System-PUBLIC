@@ -25,11 +25,11 @@ public final class GlobalStockAgingSpecification {
 
         if (productName != null && !productName.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("productName", productName));
+                    specbldr.whereDirectFieldEquals("productName", productName));
 
         if (category != null && !category.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains("category", category));
+                    specbldr.whereDirectFieldEquals("category", category));
 
         if (agingBucket != null && !agingBucket.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,

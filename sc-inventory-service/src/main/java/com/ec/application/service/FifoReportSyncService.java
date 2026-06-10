@@ -142,5 +142,29 @@ public class FifoReportSyncService {
 
         log.info("FIFO report sync done for {}. Inserted={}, Updated={}, Deleted={}",
                 tenantSchema, inserted, updated, deleted);
+
+        // ── Step 6: Metadata refresh ─────────────────────────────────────────
+        // Incremental sync only touches rows with recent lastModifiedDate.
+        // If a product is renamed or its unit changes, existing rows keep stale data.
+        // This pass re-reads Product metadata for every productId in the master table
+        // and updates productName + measurementUnit regardless of lastModifiedDate.
+        ThreadLocalStorage.setTenantName(masterSchema);
+        List<Long> allSyncedProductIds =
+                globalFifoReportRepository.findDistinctProductIdsByTenantSchema(tenantSchema);
+        if (!allSyncedProductIds.isEmpty()) {
+            Map<Long, Product> allProductMeta = productRepo.findAllById(allSyncedProductIds)
+                    .stream()
+                    .collect(Collectors.toMap(Product::getProductId, p -> p));
+            for (Long pid : allSyncedProductIds) {
+                Product p = allProductMeta.get(pid);
+                if (p != null) {
+                    globalFifoReportRepository.updateProductMetadata(
+                            tenantSchema, pid,
+                            p.getProductName() != null ? p.getProductName() : "Unknown",
+                            p.getMeasurementUnit());
+                }
+            }
+            log.info("Metadata refresh done for {}. Products updated: {}", tenantSchema, allSyncedProductIds.size());
+        }
     }
 }

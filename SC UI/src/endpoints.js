@@ -329,10 +329,12 @@ export const apiEndpoints = {
   poReconExport: "/api/inventory/po-recon/export/excel",
   poReconStats: "/api/inventory/po-recon/stats",
   poReconProjects: "/api/inventory/po-recon/projects",
+  poReconProducts: "/api/inventory/po-recon/products",
   indentFulfillmentList: "/api/inventory/indent-fulfillment/list?size=20",
   indentFulfillmentExport: "/api/inventory/indent-fulfillment/export/excel",
   indentFulfillmentStats: "/api/inventory/indent-fulfillment/stats",
   indentFulfillmentProjects: "/api/inventory/indent-fulfillment/projects",
+  indentFulfillmentProducts: "/api/inventory/indent-fulfillment/products",
 };
 export const exportURL = {
   getAllInventoryTransactions:

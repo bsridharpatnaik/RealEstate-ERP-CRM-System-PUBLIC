@@ -101,6 +101,17 @@ public class IndentFulfillmentService {
         return result;
     }
 
+    public List<String> getDistinctProducts() {
+        @SuppressWarnings("unchecked")
+        List<String> result = em.createNativeQuery(
+                "SELECT DISTINCT p.product_name FROM indent_inventory_entries iie" +
+                " JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0" +
+                " JOIN indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0" +
+                " WHERE iie.is_deleted = 0 ORDER BY p.product_name")
+                .getResultList();
+        return result;
+    }
+
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
         WhereClause wc = buildWhere(filters);
         String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_date DESC, ii.indent_id ASC, p.product_name ASC";
@@ -168,10 +179,27 @@ public class IndentFulfillmentService {
                 String v = f.getAttrValue().get(0);
                 if (v == null || v.isEmpty()) continue;
                 if ("project".equals(f.getAttrName())) {
-                    sql.append(" AND ii.tenant = :project");
-                    statusSql.append(" AND tenant = :project");
-                    params.put("project", v);
-                    statusParams.put("project", v);
+                    List<String> projects = f.getAttrValue().stream()
+                            .filter(s -> s != null && !s.isEmpty())
+                            .collect(java.util.stream.Collectors.toList());
+                    if (projects.size() == 1) {
+                        sql.append(" AND ii.tenant = :project0");
+                        statusSql.append(" AND tenant = :project0");
+                        params.put("project0", projects.get(0));
+                        statusParams.put("project0", projects.get(0));
+                    } else if (projects.size() > 1) {
+                        StringBuilder inClause = new StringBuilder(" AND ii.tenant IN (");
+                        StringBuilder statusIn = new StringBuilder(" AND tenant IN (");
+                        for (int pi = 0; pi < projects.size(); pi++) {
+                            String pname = "project" + pi;
+                            inClause.append(pi == 0 ? "" : ",").append(":").append(pname);
+                            statusIn.append(pi == 0 ? "" : ",").append(":").append(pname);
+                            params.put(pname, projects.get(pi));
+                            statusParams.put(pname, projects.get(pi));
+                        }
+                        inClause.append(")"); statusIn.append(")");
+                        sql.append(inClause); statusSql.append(statusIn);
+                    }
                 } else if ("indentStatus".equals(f.getAttrName())) {
                     // attrValue may contain multiple statuses (one per list entry)
                     List<String> statuses = f.getAttrValue().stream()
@@ -199,8 +227,22 @@ public class IndentFulfillmentService {
                     sql.append(" AND iie.line_item_status = :lineItemStatus");
                     params.put("lineItemStatus", v);
                 } else if ("productName".equals(f.getAttrName())) {
-                    sql.append(" AND p.product_name LIKE :productName");
-                    params.put("productName", "%" + v + "%");
+                    List<String> products = f.getAttrValue().stream()
+                            .filter(s -> s != null && !s.isEmpty())
+                            .collect(java.util.stream.Collectors.toList());
+                    if (products.size() == 1) {
+                        sql.append(" AND p.product_name = :productName0");
+                        params.put("productName0", products.get(0));
+                    } else if (products.size() > 1) {
+                        StringBuilder inClause = new StringBuilder(" AND p.product_name IN (");
+                        for (int pi = 0; pi < products.size(); pi++) {
+                            String pname = "productName" + pi;
+                            inClause.append(pi == 0 ? "" : ",").append(":").append(pname);
+                            params.put(pname, products.get(pi));
+                        }
+                        inClause.append(")");
+                        sql.append(inClause);
+                    }
                 } else if ("startDate".equals(f.getAttrName())) {
                     sql.append(" AND ii.indent_date >= STR_TO_DATE(:startDate, '%d-%m-%Y')");
                     params.put("startDate", v);

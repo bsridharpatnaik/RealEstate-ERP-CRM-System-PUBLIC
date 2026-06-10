@@ -46,6 +46,11 @@ public class IndentFulfillmentController {
         return service.getDistinctProjects();
     }
 
+    @GetMapping("/products")
+    public List<String> products() {
+        return service.getDistinctProducts();
+    }
+
     /** Export to Excel. */
     @UseDefaultTenant
     @PostMapping("/export/excel")
