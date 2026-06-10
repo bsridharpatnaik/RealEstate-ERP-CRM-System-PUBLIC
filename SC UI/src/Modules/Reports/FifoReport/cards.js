@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
+import { getProjectColor } from '../projectColors';
 
 // Batch detail columns shown inside each card
 const BATCH_COLS = [
@@ -18,7 +19,7 @@ function dash(v) {
   return v;
 }
 
-function OutwardCard({ outwardId, outwardDate, project, warehouse, contractor, structure, finalLocation, performedBy, rows }) {
+function OutwardCard({ outwardId, outwardDate, project, warehouse, contractor, structure, finalLocation, performedBy, rows, tenantMap }) {
   const [expanded, setExpanded] = React.useState(true);
   const totalQty   = rows.reduce((s, r) => s + (r.qtyConsumed || 0), 0);
   const batchCount = rows.length;
@@ -62,14 +63,14 @@ function OutwardCard({ outwardId, outwardDate, project, warehouse, contractor, s
 
         {/* Meta: project, date, warehouse */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '0 0 auto', flexWrap: 'wrap' }}>
-          {project && (
+          {project && (() => { const pc = getProjectColor(project); return (
             <span style={{
-              background: '#e2e8f0', color: '#4a5568',
+              background: pc.bg, color: pc.color, border: `1px solid ${pc.border}`,
               fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
             }}>
-              {project}
+              {(tenantMap && tenantMap[project]) || project}
             </span>
-          )}
+          ); })()}
           {outwardDate && (
             <span style={{ fontSize: 12, color: '#718096' }}>📅 {outwardDate}</span>
           )}
@@ -190,7 +191,7 @@ function OutwardCard({ outwardId, outwardDate, project, warehouse, contractor, s
 
 class FifoReportCards extends Component {
   render() {
-    const { rows } = this.props;
+    const { rows, tenantMap } = this.props;
     if (!rows || rows.length === 0) {
       return (
         <div style={{ textAlign: 'center', padding: '48px 0', color: '#a0aec0', fontSize: 14 }}>
@@ -223,7 +224,7 @@ class FifoReportCards extends Component {
     return (
       <div>
         {groups.map((g) => (
-          <OutwardCard key={g.outwardId} {...g} />
+          <OutwardCard key={g.outwardId} {...g} tenantMap={tenantMap} />
         ))}
       </div>
     );

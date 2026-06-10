@@ -286,7 +286,7 @@ class StockAgingList extends ListCommon {
           {this.state.isLoading ? (
             this.renderLoader()
           ) : (
-            <Cards rows={this.state.data} onRowClick={(row) => this.openDetail(row)} />
+            <Cards rows={this.state.data} onRowClick={(row) => this.openDetail(row)} tenantMap={Object.fromEntries(this.state.tenantOptions.map(t => [t.id, t.name]))} />
           )}
 
           {this.renderPagination()}

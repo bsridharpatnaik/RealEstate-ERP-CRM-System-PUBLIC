@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
+import { getProjectColor } from '../projectColors';
 
 const PO_STATUS_STYLE = {
   COMPLETED:    { color: '#27ae60', bg: '#eafaf1', border: '#a9dfbf' },
@@ -48,7 +49,7 @@ function ProgressBar({ pct, receivedTotal, orderedTotal }) {
   );
 }
 
-function PoCard({ purchaseOrderId, project, poDate, poStatus, supplier, lines }) {
+function PoCard({ purchaseOrderId, project, poDate, poStatus, supplier, lines, tenantMap }) {
   const [expanded, setExpanded] = React.useState(true);
 
   const totalOrdered   = lines.reduce((s, l) => s + (l.orderedQty  || 0), 0);
@@ -95,14 +96,14 @@ function PoCard({ purchaseOrderId, project, poDate, poStatus, supplier, lines })
 
         {/* Project + date + supplier */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '0 0 auto', flexWrap: 'wrap' }}>
-          {project && (
+          {project && (() => { const pc = getProjectColor(project); return (
             <span style={{
-              background: '#e2e8f0', color: '#4a5568', fontSize: 11, fontWeight: 600,
-              padding: '2px 8px', borderRadius: 8,
+              background: pc.bg, color: pc.color, border: `1px solid ${pc.border}`,
+              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
             }}>
-              {project}
+              {(tenantMap && tenantMap[project]) || project}
             </span>
-          )}
+          ); })()}
           {poDate && <span style={{ fontSize: 12, color: '#718096' }}>📅 {poDate}</span>}
           {supplier && <span style={{ fontSize: 12, color: '#718096' }}>🏭 {supplier}</span>}
         </div>
@@ -261,7 +262,7 @@ function PoCard({ purchaseOrderId, project, poDate, poStatus, supplier, lines })
 
 class PoReconciliationCards extends Component {
   render() {
-    const { rows } = this.props;
+    const { rows, tenantMap } = this.props;
     if (!rows || rows.length === 0) {
       return (
         <div style={{ textAlign: 'center', padding: '48px 0', color: '#a0aec0', fontSize: 14 }}>
@@ -291,7 +292,7 @@ class PoReconciliationCards extends Component {
     return (
       <div>
         {groups.map((g) => (
-          <PoCard key={g.purchaseOrderId} {...g} />
+          <PoCard key={g.purchaseOrderId} {...g} tenantMap={tenantMap} />
         ))}
       </div>
     );

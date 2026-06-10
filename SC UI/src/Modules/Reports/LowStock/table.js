@@ -4,6 +4,7 @@ import { messages } from '../../../messages';
 import Tooltip from '@material-ui/core/Tooltip';
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
+import { getProjectColor } from '../projectColors';
 
 const COLUMNS = [
   { header: 'Project',         key: 'tenantSchema',   width: 110, align: 'left'  },
@@ -13,7 +14,7 @@ const COLUMNS = [
   { header: 'Category',        key: 'category',       width: 100, align: 'left'  },
   { header: 'Qty in Hand',     key: 'qtyInHand',      width: 90,  align: 'right' },
   { header: 'Reorder Level',   key: 'reorderLevel',   width: 95,  align: 'right' },
-  { header: 'Deficit',         key: 'deficit',        width: 80,  align: 'right' },
+  { header: 'Deficit',         key: 'deficit',        width: 120, align: 'right' },
   { header: 'Low Stock Since', key: 'lowStockSince',  width: 130, align: 'left'  },
 ];
 
@@ -108,9 +109,39 @@ class LowStockTable extends CommonTable {
     if (col.key === 'deficit') {
       if (val == null) return <span style={{ color: '#ccc' }}>—</span>;
       const color = deficitColor(val, row.reorderLevel);
+      const pct = row.reorderLevel > 0
+        ? Math.round((val / row.reorderLevel) * 100)
+        : null;
       return (
-        <span style={{ color, fontWeight: 600 }}>
-          {Number(val).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ color, fontWeight: 700 }}>
+            {Number(val).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+          </span>
+          {pct != null && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: '#fff',
+              background: color, borderRadius: 8, padding: '1px 5px',
+              whiteSpace: 'nowrap',
+            }}>
+              {pct}%
+            </span>
+          )}
+        </span>
+      );
+    }
+
+    if (col.key === 'tenantSchema') {
+      if (!val) return <span style={{ color: '#ccc' }}>—</span>;
+      const pc = getProjectColor(val);
+      const displayName = (this.props.tenantMap && this.props.tenantMap[val]) || val;
+      return (
+        <span style={{
+          background: pc.bg, color: pc.color, border: `1px solid ${pc.border}`,
+          fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 8,
+          display: 'inline-block', maxWidth: '100%',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {displayName}
         </span>
       );
     }

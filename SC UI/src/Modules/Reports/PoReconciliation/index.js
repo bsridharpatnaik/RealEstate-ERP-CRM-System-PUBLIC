@@ -17,8 +17,11 @@ const RECON_STATUSES = [
   { key: 'COMPLETE',    label: 'Complete',     color: '#27ae60', bg: '#eafaf1' },
 ];
 
+// Default: show only incomplete POs (exclude fully reconciled)
+const DEFAULT_RECON_STATUSES = ['NOT_STARTED', 'PARTIAL'];
+
 class PoReconList extends ListCommon {
-  filterData = {};
+  filterData = { reconciliationStatus: DEFAULT_RECON_STATUSES };
   state = {
     data: [],
     pages: 0,
@@ -27,8 +30,10 @@ class PoReconList extends ListCommon {
     filterOpen: false,
     projects: [],
     products: [],
+    tenantOptions: [],
     stats: { COMPLETE: 0, PARTIAL: 0, NOT_STARTED: 0 },
     activeReconStatus: 'ALL',
+    usingDefaultFilter: true,
   };
 
   tableData = { headers: [], keys: [] };
@@ -38,8 +43,20 @@ class PoReconList extends ListCommon {
     this.filterRef = React.createRef();
     this.fetchProjects();
     this.fetchProducts();
+    this.fetchTenants();
     this.search();
     this.fetchStats();
+  }
+
+  async fetchTenants() {
+    const res = await API.GET(apiEndpoints.getTenants);
+    if (res.success && Array.isArray(res.data)) {
+      const tenantOptions = res.data
+        .filter((t) => t.inventory === true)
+        .map((t) => ({ name: t.tenantName || t.name || '', id: t.tenantCode }))
+        .filter((t) => t.name && t.id);
+      this.setState({ tenantOptions });
+    }
   }
 
   async fetchProjects() {
@@ -175,11 +192,32 @@ class PoReconList extends ListCommon {
           </div>
 
           <div className="filter-section">
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {this.state.totalRecords > 0 && (
                 <span style={{ fontSize: 13, color: '#555' }}>
                   {this.state.totalRecords} line{this.state.totalRecords !== 1 ? 's' : ''}
                   {this.state.activeReconStatus !== 'ALL' ? ` · ${this.state.activeReconStatus}` : ''}
+                </span>
+              )}
+              {this.state.usingDefaultFilter && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  background: '#fef9e7', color: '#9a7d0a',
+                  border: '1px solid #f9e79f', borderRadius: 12,
+                  fontSize: 11, fontWeight: 600, padding: '2px 10px',
+                }}>
+                  Pending &amp; partial only
+                  <span
+                    onClick={() => {
+                      delete this.filterData.reconciliationStatus;
+                      this.setState({ usingDefaultFilter: false, activeReconStatus: 'ALL' }, () => {
+                        this.search(0);
+                        this.fetchStats();
+                      });
+                    }}
+                    style={{ cursor: 'pointer', marginLeft: 2, fontSize: 13, lineHeight: 1 }}
+                    title="Show all POs including fully reconciled"
+                  >×</span>
                 </span>
               )}
             </div>
@@ -198,7 +236,7 @@ class PoReconList extends ListCommon {
               options={{ projects: this.state.projects, products: this.state.products }}
               search={(data) => {
                 this.filterData = data;
-                this.setState({ filterOpen: false, activeReconStatus: 'ALL' });
+                this.setState({ filterOpen: false, activeReconStatus: 'ALL', usingDefaultFilter: false });
                 this.search(0);
                 this.fetchStats();
               }}
@@ -207,7 +245,7 @@ class PoReconList extends ListCommon {
           </Popper>
 
           {this.state.isLoading ? this.renderLoader() : (
-            <Cards rows={this.state.data} />
+            <Cards rows={this.state.data} tenantMap={Object.fromEntries(this.state.tenantOptions.map(t => [t.id, t.name]))} />
           )}
 
           {this.renderPagination()}

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
+import { getProjectColor } from '../projectColors';
 
 const INDENT_STATUS_STYLE = {
   'CLOSED':         { color: '#27ae60', bg: '#eafaf1', border: '#a9dfbf' },
@@ -121,7 +122,7 @@ function StageBar({ requestedQty, poQty, receivedQty, unit }) {
   );
 }
 
-function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
+function IndentCard({ indentId, project, indentDate, indentStatus, lines, tenantMap }) {
   const [expanded, setExpanded] = React.useState(true);
 
   // Exclude short-closed lines from pending — their remaining qty was intentionally waived
@@ -139,12 +140,19 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
   // SHORT CLOSED = intentional close-out → treated as completed, not cancelled
   const isCancelled        = indentStatus === 'CANCELLED' || indentStatus === 'REJECTED';
   const isShortClosed      = indentStatus === 'SHORT CLOSED';
-  // Fully received: active lines all fulfilled, OR indent is closed/short-closed
-  const isFullyReceived    = indentStatus === 'CLOSED' || indentStatus === 'PO COMPLETED' || isShortClosed
-                             || (totalRequested > 0 && totalReceived >= totalRequested);
-  const isPartial          = !isFullyReceived && totalReceived > 0;
-  const hasPendingInFlight = !isFullyReceived && totalPending > 0;
-  const isNotStarted       = !isFullyReceived && totalReceived === 0 && !hasPendingInFlight;
+  // Fully received: only when goods are actually received
+  const isFullyReceived    = !isShortClosed && !isCancelled
+                             && (indentStatus === 'CLOSED'
+                                 || (totalRequested > 0 && totalReceived >= totalRequested));
+  // Fully PO'd: all qty has PO coverage but nothing (or not all) received yet
+  const totalPOd           = lines.reduce((s, l) => s + (l.poQty || 0), 0);
+  const totalAllRequested  = lines.reduce((s, l) => s + (l.requestedQty || 0), 0);
+  const isFullyPOd         = !isFullyReceived && !isShortClosed && !isCancelled
+                             && (indentStatus === 'PO COMPLETED'
+                                 || (totalAllRequested > 0 && totalPOd >= totalAllRequested));
+  const isPartial          = !isFullyReceived && !isFullyPOd && totalReceived > 0;
+  const hasPendingInFlight = !isFullyReceived && !isFullyPOd && !isPartial && totalPending > 0;
+  const isNotStarted       = !isFullyReceived && !isFullyPOd && !isPartial && !hasPendingInFlight && !isShortClosed && !isCancelled;
 
   return (
     <div style={{
@@ -176,12 +184,14 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '0 0 auto' }}>
-          <span style={{
-            background: '#e2e8f0', color: '#4a5568', fontSize: 11, fontWeight: 600,
-            padding: '2px 8px', borderRadius: 8,
-          }}>
-            {project || '—'}
-          </span>
+          {(() => { const pc = getProjectColor(project); return (
+            <span style={{
+              background: pc.bg, color: pc.color, border: `1px solid ${pc.border}`,
+              fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+            }}>
+              {(tenantMap && tenantMap[project]) || project || '—'}
+            </span>
+          ); })()}
           <span style={{ fontSize: 12, color: '#718096' }}>📅 {indentDate || '—'}</span>
         </div>
 
@@ -198,13 +208,29 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
             }}>
               {'✕ ' + indentStatus.charAt(0) + indentStatus.slice(1).toLowerCase()}
             </span>
+          ) : isShortClosed ? (
+            <span style={{
+              fontSize: 11, fontWeight: 600, color: '#d35400',
+              background: '#fdf2e9', padding: '2px 8px', borderRadius: 8,
+              border: '1px solid #f0b27a',
+            }}>
+              ⊘ Short Closed
+            </span>
           ) : isFullyReceived ? (
             <span style={{
               fontSize: 11, fontWeight: 600, color: '#27ae60',
               background: '#eafaf1', padding: '2px 8px', borderRadius: 8,
               border: '1px solid #a9dfbf',
             }}>
-              {isShortClosed ? '⊘ Short Closed' : '✓ Fully received'}
+              ✓ Fully Received
+            </span>
+          ) : isFullyPOd ? (
+            <span style={{
+              fontSize: 11, fontWeight: 600, color: '#1f618d',
+              background: '#eaf2ff', padding: '2px 8px', borderRadius: 8,
+              border: '1px solid #85c1e9',
+            }}>
+              📦 Fully PO'd
             </span>
           ) : isPartial ? (
             <span style={{
@@ -212,7 +238,7 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
               background: '#fdf2e9', padding: '2px 8px', borderRadius: 8,
               border: '1px solid #f0b27a',
             }}>
-              ◑ Partial
+              ◑ Partially Received
             </span>
           ) : hasPendingInFlight ? (
             <span style={{
@@ -220,7 +246,7 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
               background: '#ebf5fb', padding: '2px 8px', borderRadius: 8,
               border: '1px solid #aed6f1',
             }}>
-              {totalPending.toLocaleString('en-IN', { maximumFractionDigits: 1 })} in-flight
+              🔄 PO in Progress
             </span>
           ) : (
             <span style={{
@@ -228,7 +254,7 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
               background: '#f2f3f4', padding: '2px 8px', borderRadius: 8,
               border: '1px solid #d5d8dc',
             }}>
-              ○ Not started
+              ○ Not Started
             </span>
           )}
           <span style={{ fontSize: 12, color: '#a0aec0', fontWeight: 600 }}>
@@ -335,7 +361,7 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines }) {
 
 class IndentFulfillmentCards extends Component {
   render() {
-    const { rows } = this.props;
+    const { rows, tenantMap } = this.props;
     if (!rows || rows.length === 0) {
       return (
         <div style={{ textAlign: 'center', padding: '48px 0', color: '#a0aec0', fontSize: 14 }}>
@@ -364,7 +390,7 @@ class IndentFulfillmentCards extends Component {
     return (
       <div>
         {groups.map((g) => (
-          <IndentCard key={g.indentId} {...g} />
+          <IndentCard key={g.indentId} {...g} tenantMap={tenantMap} />
         ))}
       </div>
     );

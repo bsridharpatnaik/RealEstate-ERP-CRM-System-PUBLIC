@@ -231,8 +231,23 @@ public class PoInwardReconciliationService {
                     sql.append(" AND po.po_date < DATE_ADD(STR_TO_DATE(:endDate, '%d-%m-%Y'), INTERVAL 1 DAY)");
                     params.put("endDate", v);
                 } else if ("reconciliationStatus".equals(f.getAttrName())) {
-                    having.append(" HAVING ").append(RECON_STATUS_CASE).append(" = :reconciliationStatus");
-                    params.put("reconciliationStatus", v);
+                    List<String> statuses = f.getAttrValue().stream()
+                            .filter(s -> s != null && !s.isEmpty())
+                            .collect(java.util.stream.Collectors.toList());
+                    if (statuses.size() == 1) {
+                        having.append(" HAVING ").append(RECON_STATUS_CASE).append(" = :recon0");
+                        params.put("recon0", statuses.get(0));
+                    } else if (statuses.size() > 1) {
+                        StringBuilder inClause = new StringBuilder(" HAVING ")
+                                .append(RECON_STATUS_CASE).append(" IN (");
+                        for (int ri = 0; ri < statuses.size(); ri++) {
+                            String pname = "recon" + ri;
+                            inClause.append(ri == 0 ? "" : ",").append(":").append(pname);
+                            params.put(pname, statuses.get(ri));
+                        }
+                        inClause.append(")");
+                        having.append(inClause);
+                    }
                 }
             }
         }

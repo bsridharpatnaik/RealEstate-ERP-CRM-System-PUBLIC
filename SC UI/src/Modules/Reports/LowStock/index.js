@@ -118,7 +118,14 @@ class LowStockReportList extends ListCommon {
 
     const end = new Date();
     const start = new Date();
-    start.setDate(start.getDate() - tile.days);
+    // "New Today" (days=1) → start = today (same calendar day)
+    // "Last N Days" (days>1) → start = midnight (N-1) days ago, so N calendar days total
+    if (tile.days === 1) {
+      start.setHours(0, 0, 0, 0);
+    } else {
+      start.setDate(start.getDate() - (tile.days - 1));
+      start.setHours(0, 0, 0, 0);
+    }
 
     const fmt = (d) => {
       const dd = String(d.getDate()).padStart(2, '0');
@@ -330,6 +337,7 @@ class LowStockReportList extends ListCommon {
               hidedelete
               sortkey={this.sortkey}
               sortby={this.sortby}
+              tenantMap={Object.fromEntries(this.state.tenantOptions.map(t => [t.id, t.name]))}
               search={(sortkey, sortby) => {
                 this.sortkey = sortkey;
                 this.sortby = sortby;

@@ -122,9 +122,18 @@ public class LowStockReportService {
         return tile;
     }
 
+    /**
+     * Returns start-of-day for (today - (days-1)).
+     * days=1 → today midnight (00:00:00) — "New Today"
+     * days=3 → 2 days ago midnight      — "Last 3 Days" covers today + 2 prior calendar days
+     */
     private Date dateMinusDays(long days) {
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DAY_OF_YEAR, (int) -days);
+        cal.add(Calendar.DAY_OF_YEAR, (int) -(days - 1));
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
     }
 }

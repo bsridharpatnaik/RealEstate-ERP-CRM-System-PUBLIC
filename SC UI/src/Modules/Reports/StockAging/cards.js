@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
+import { getProjectColor } from '../projectColors';
 
 const BUCKET_STYLE = {
   '0-30':  { color: '#27ae60', bg: '#eafaf1', border: '#a9dfbf' },
@@ -33,7 +34,7 @@ function fmt(val, decimals) {
   return Number(val).toLocaleString('en-IN', { maximumFractionDigits: decimals != null ? decimals : 2 });
 }
 
-function ProductCard({ productName, productCode, unit, category, rows, onRowClick }) {
+function ProductCard({ productName, productCode, unit, category, rows, onRowClick, tenantMap }) {
   const [expanded, setExpanded] = React.useState(true);
 
   // Worst bucket across all projects for the card header indicator
@@ -164,13 +165,14 @@ function ProductCard({ productName, productCode, unit, category, rows, onRowClic
               >
                 {/* Project */}
                 <div style={{ fontSize: 13, fontWeight: 500, color: '#2d3748' }}>
-                  <span style={{
-                    background: '#e2e8f0', color: '#4a5568',
-                    fontSize: 12, fontWeight: 600,
-                    padding: '2px 8px', borderRadius: 8,
-                  }}>
-                    {row.tenantSchema || '—'}
-                  </span>
+                  {(() => { const pc = getProjectColor(row.tenantSchema); return (
+                    <span style={{
+                      background: pc.bg, color: pc.color, border: `1px solid ${pc.border}`,
+                      fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
+                    }}>
+                      {(tenantMap && tenantMap[row.tenantSchema]) || row.tenantSchema || '—'}
+                    </span>
+                  ); })()}
                 </div>
 
                 {/* Qty in Hand */}
@@ -215,7 +217,7 @@ function ProductCard({ productName, productCode, unit, category, rows, onRowClic
 
 class StockAgingCards extends Component {
   render() {
-    const { rows, onRowClick } = this.props;
+    const { rows, onRowClick, tenantMap } = this.props;
 
     if (!rows || rows.length === 0) {
       return (
@@ -246,7 +248,7 @@ class StockAgingCards extends Component {
     return (
       <div>
         {groups.map((g) => (
-          <ProductCard key={g.productId} {...g} onRowClick={onRowClick} />
+          <ProductCard key={g.productId} {...g} onRowClick={onRowClick} tenantMap={tenantMap} />
         ))}
       </div>
     );

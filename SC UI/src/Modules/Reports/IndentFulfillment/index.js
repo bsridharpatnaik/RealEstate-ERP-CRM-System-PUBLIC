@@ -19,8 +19,11 @@ const STATUS_GROUPS = [
   { key: 'CANCELLED',   label: 'Cancelled',    color: '#95a5a6', bg: '#f2f3f4', statuses: ['CANCELLED', 'REJECTED'] },
 ];
 
+// Statuses shown by default — excludes terminal (closed/cancelled) indents
+const ACTIVE_STATUSES = ['NEW', 'APPROVED', 'PO CREATED', 'PO PARTIAL', 'INWARD PARTIAL', 'PO COMPLETED'];
+
 class IndentFulfillmentList extends ListCommon {
-  filterData = {};
+  filterData = { indentStatus: ACTIVE_STATUSES };
 
   state = {
     data: [],
@@ -30,8 +33,10 @@ class IndentFulfillmentList extends ListCommon {
     filterOpen: false,
     projects: [],
     products: [],
+    tenantOptions: [],
     stats: {},
     activeGroup: 'ALL',
+    usingDefaultFilter: true,
   };
 
   // Not used for card view but needed by ListCommon
@@ -42,8 +47,20 @@ class IndentFulfillmentList extends ListCommon {
     this.filterRef = React.createRef();
     this.fetchProjects();
     this.fetchProducts();
+    this.fetchTenants();
     this.search();
     this.fetchStats();
+  }
+
+  async fetchTenants() {
+    const res = await API.GET(apiEndpoints.getTenants);
+    if (res.success && Array.isArray(res.data)) {
+      const tenantOptions = res.data
+        .filter((t) => t.inventory === true)
+        .map((t) => ({ name: t.tenantName || t.name || '', id: t.tenantCode }))
+        .filter((t) => t.name && t.id);
+      this.setState({ tenantOptions });
+    }
   }
 
   async fetchProjects() {
@@ -173,11 +190,32 @@ class IndentFulfillmentList extends ListCommon {
           </div>
 
           <div className="filter-section" style={{ marginBottom: 16 }}>
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {this.state.totalRecords > 0 && (
                 <span style={{ fontSize: 13, color: '#555' }}>
                   {this.state.totalRecords} line item{this.state.totalRecords !== 1 ? 's' : ''}
                   {this.state.activeGroup !== 'ALL' ? ` · ${activeLabel}` : ''}
+                </span>
+              )}
+              {this.state.usingDefaultFilter && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  background: '#eef1fe', color: '#3d5afe',
+                  border: '1px solid #c5caf9', borderRadius: 12,
+                  fontSize: 11, fontWeight: 600, padding: '2px 10px',
+                }}>
+                  Active indents only
+                  <span
+                    onClick={() => {
+                      delete this.filterData.indentStatus;
+                      this.setState({ usingDefaultFilter: false, activeGroup: 'ALL' }, () => {
+                        this.search(0);
+                        this.fetchStats();
+                      });
+                    }}
+                    style={{ cursor: 'pointer', marginLeft: 2, fontSize: 13, lineHeight: 1 }}
+                    title="Show all indents including closed / cancelled"
+                  >×</span>
                 </span>
               )}
             </div>
@@ -196,7 +234,7 @@ class IndentFulfillmentList extends ListCommon {
               options={{ projects: this.state.projects, products: this.state.products }}
               search={(data) => {
                 this.filterData = data;
-                this.setState({ filterOpen: false, activeGroup: 'ALL' });
+                this.setState({ filterOpen: false, activeGroup: 'ALL', usingDefaultFilter: false });
                 this.search(0);
                 this.fetchStats();
               }}
@@ -206,7 +244,7 @@ class IndentFulfillmentList extends ListCommon {
 
           {this.state.isLoading
             ? this.renderLoader()
-            : <Cards rows={this.state.data} />
+            : <Cards rows={this.state.data} tenantMap={Object.fromEntries(this.state.tenantOptions.map(t => [t.id, t.name]))} />
           }
 
           {this.renderPagination()}

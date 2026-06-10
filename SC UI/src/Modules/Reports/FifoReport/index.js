@@ -328,7 +328,7 @@ class FifoReportList extends ListCommon {
           {this.state.isLoading ? (
             this.renderLoader()
           ) : (
-            <Cards rows={this.state.data} />
+            <Cards rows={this.state.data} tenantMap={Object.fromEntries(this.state.tenantOptions.map(t => [t.id, t.name]))} />
           )}
 
           {this.renderPagination()}
