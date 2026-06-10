@@ -24,9 +24,10 @@ class List extends ListCommon {
   deleteUrl = apiEndpoints.individualOutwardInventory;
   title = messages.common.outwardInventory;
   filterData = {};
+  searchDebounceTimer = null;
   state = {
     data: [],
-    options: [],
+    globalSearchText: "",
     showDetails: false,
     key: 1,
     showTotal: false,
@@ -77,10 +78,10 @@ class List extends ListCommon {
     let params;
     params = {};
     params.filterData = [];
-    if (this.searchValue.length) {
+    if (this.state.globalSearchText.trim().length) {
       params.filterData.push({
         attrName: "globalSearch",
-        attrValue: this.searchValue.map((v) => v.name),
+        attrValue: [this.state.globalSearchText.trim()],
       });
     }
     if (this.filterData) {
@@ -124,14 +125,11 @@ class List extends ListCommon {
     this.getTotals();
     if (response.success) {
       this.dropdowns = response.data.iiDropdown;
-      const options = [...this.dropdowns.product, ...this.dropdowns.contractor];
       this.props.setOptions(this.dropdowns);
       this.setState({
         data: response.data.outwardInventory.content,
         pages: response.data.outwardInventory.totalPages,
         totalRecords: response.data.outwardInventory.totalElements,
-        options: options,
-        // totals: response.data.totals,
       });
     }
   }
@@ -184,16 +182,22 @@ class List extends ListCommon {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                clearTimeout(this.searchDebounceTimer);
                 this.search(0);
               }}
             >
-              {this.renderAutoComplete(
-                this.state.options,
-                messages.common.searchByName,
-                (option) => {
-                  return option.name;
-                }
-              )}
+              <input
+                className="global-search-input"
+                type="text"
+                placeholder="Search by ID, product, contractor, slip no..."
+                value={this.state.globalSearchText}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  this.setState({ globalSearchText: val });
+                  clearTimeout(this.searchDebounceTimer);
+                  this.searchDebounceTimer = setTimeout(() => this.search(0), 3000);
+                }}
+              />
             </form>
             <div className="top-button-wrapper">
               <Button

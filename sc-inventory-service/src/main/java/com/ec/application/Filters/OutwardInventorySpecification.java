@@ -27,7 +27,6 @@ public final class OutwardInventorySpecification {
         List<String> showOnlyRejected = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyRejected");
         List<String> boqBypassed     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "boqBypassed");
         List<String> fifoOverride    = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "fifoOverride");
-        List<String> textSearch      = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "textSearch");
 
         Specification<OutwardInventory> spec = null;
 
@@ -58,9 +57,13 @@ public final class OutwardInventorySpecification {
 
         if (notEmpty(globalSearch)) {
             Specification<OutwardInventory> gs = null;
-            gs = or(gs, specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, globalSearch));
-            gs = or(gs, lineItemProductNameLike(globalSearch));
             gs = or(gs, outwardIdMatch(globalSearch));
+            gs = or(gs, specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, globalSearch));
+            gs = or(gs, specbldr.whereChildFieldContains(OutwardInventory_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, globalSearch));
+            gs = or(gs, lineItemProductNameLike(globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(OutwardInventory_.SLIP_NO, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(OutwardInventory_.ADDITIONAL_INFO, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(OutwardInventory_.PURPOSE, globalSearch));
             spec = and(spec, gs);
         }
 
@@ -81,14 +84,6 @@ public final class OutwardInventorySpecification {
 
         if (notEmpty(fifoOverride) && Boolean.parseBoolean(fifoOverride.get(0)))
             spec = and(spec, (root, query, cb) -> cb.isTrue(root.get(OutwardInventory_.HAS_FIFO_OVERRIDE)));
-
-        if (notEmpty(textSearch)) {
-            Specification<OutwardInventory> ts = null;
-            ts = or(ts, specbldr.whereDirectFieldContains(OutwardInventory_.SLIP_NO, textSearch));
-            ts = or(ts, specbldr.whereDirectFieldContains(OutwardInventory_.ADDITIONAL_INFO, textSearch));
-            ts = or(ts, specbldr.whereDirectFieldContains(OutwardInventory_.PURPOSE, textSearch));
-            spec = and(spec, ts);
-        }
 
         return spec;
     }

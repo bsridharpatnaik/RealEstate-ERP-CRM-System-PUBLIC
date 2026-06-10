@@ -157,6 +157,28 @@ html {
       margin-bottom: 12px;
     }
   }
+  .global-search-input {
+    width: 500px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    border: 1px solid #c4c4c4;
+    border-radius: 4px;
+    outline: none;
+    box-sizing: border-box;
+    &:focus {
+      border-color: #3f51b5;
+      box-shadow: 0 0 0 1px #3f51b5;
+    }
+    @media screen and (max-width: 768px) {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    @media screen and (max-width: 425px) {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+  }
 }
 .filter-container {
   width: 680px;

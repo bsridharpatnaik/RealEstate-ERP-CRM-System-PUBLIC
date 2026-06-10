@@ -25,7 +25,6 @@ public final class InwardInventorySpecification {
         List<String> globalSearch      = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
         List<String> showOnlyRejected  = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyRejected");
         List<String> categoryNames     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
-        List<String> textSearch        = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "textSearch");
         List<String> missingChallanBill = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "missingChallanBill");
 
         Specification<InwardInventory> spec = null;
@@ -55,21 +54,18 @@ public final class InwardInventorySpecification {
         if (notEmpty(invoiceReceived))
             spec = and(spec, specbldr.whereDirectBoleanFieldEquals(InwardInventory_.INVOICE_RECEIVED, invoiceReceived));
 
-        if (notEmpty(textSearch)) {
-            Specification<InwardInventory> ts = null;
-            ts = or(ts, specbldr.whereDirectFieldContains(InwardInventory_.BILL_NO, textSearch));
-            ts = or(ts, specbldr.whereDirectFieldContains(InwardInventory_.CHALLAN_NO, textSearch));
-            ts = or(ts, specbldr.whereDirectFieldContains(InwardInventory_.ADDITIONAL_INFO, textSearch));
-            ts = or(ts, specbldr.whereDirectFieldContains(InwardInventory_.PURCHASE_ORDER_NO, textSearch));
-            ts = or(ts, specbldr.whereDirectFieldContains(InwardInventory_.OUR_SLIP_NO, textSearch));
-            ts = or(ts, specbldr.whereDirectFieldContains(InwardInventory_.VEHICLE_NO, textSearch));
-            spec = and(spec, ts);
-        }
-
         if (notEmpty(globalSearch)) {
             Specification<InwardInventory> gs = null;
+            gs = or(gs, inwardIdMatch(globalSearch));
             gs = or(gs, specbldr.whereChildFieldContains(InwardInventory_.SUPPLIER, Supplier_.NAME, globalSearch));
             gs = or(gs, lineItemProductNameLike(globalSearch));
+            gs = or(gs, warehouseNameLike(globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(InwardInventory_.BILL_NO, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(InwardInventory_.CHALLAN_NO, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(InwardInventory_.ADDITIONAL_INFO, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(InwardInventory_.PURCHASE_ORDER_NO, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(InwardInventory_.OUR_SLIP_NO, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(InwardInventory_.VEHICLE_NO, globalSearch));
             spec = and(spec, gs);
         }
 
@@ -104,6 +100,21 @@ public final class InwardInventorySpecification {
         };
     }
 
+    /** globalSearch: exact match on inwardId if the search term is a valid number. */
+    private static Specification<InwardInventory> inwardIdMatch(List<String> terms) {
+        return (root, query, cb) -> {
+            List<Predicate> preds = new ArrayList<>();
+            for (String term : terms) {
+                try {
+                    Long id = Long.parseLong(term.trim());
+                    preds.add(cb.equal(root.get(InwardInventory_.INWARD_ID), id));
+                } catch (NumberFormatException ignored) {}
+            }
+            if (preds.isEmpty()) return cb.disjunction();
+            return cb.or(preds.toArray(new Predicate[0]));
+        };
+    }
+
     /** globalSearch: LIKE on product name via parent-ID IN subquery. */
     private static Specification<InwardInventory> lineItemProductNameLike(List<String> terms) {
         return (root, query, cb) -> {
@@ -118,6 +129,24 @@ public final class InwardInventorySpecification {
                 String like = "%" + term + "%";
                 orPreds.add(cb.like(product.get(Product_.PRODUCT_NAME), like));
                 orPreds.add(cb.like(product.get(Product_.PRODUCT_CODE), like));
+            }
+            sub.where(cb.or(orPreds.toArray(new Predicate[0])));
+            return root.get(InwardInventory_.INWARD_ID).in(sub);
+        };
+    }
+
+    /** globalSearch: LIKE on warehouse name via line-item subquery. */
+    private static Specification<InwardInventory> warehouseNameLike(List<String> terms) {
+        return (root, query, cb) -> {
+            Subquery<Long> sub = query.subquery(Long.class);
+            Root<InwardInventory> parent = sub.from(InwardInventory.class);
+            Join<InwardInventory, InwardOutwardList> items =
+                    parent.join(InwardInventory_.INWARD_OUTWARD_LIST, JoinType.INNER);
+            Join<InwardOutwardList, Warehouse> warehouse = items.join(InwardOutwardList_.WAREHOUSE, JoinType.INNER);
+            sub.select(parent.get(InwardInventory_.INWARD_ID));
+            List<Predicate> orPreds = new ArrayList<>();
+            for (String term : terms) {
+                orPreds.add(cb.like(cb.lower(warehouse.get(Warehouse_.WAREHOUSE_NAME)), "%" + term.toLowerCase() + "%"));
             }
             sub.where(cb.or(orPreds.toArray(new Predicate[0])));
             return root.get(InwardInventory_.INWARD_ID).in(sub);

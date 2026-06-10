@@ -29,7 +29,6 @@ class filter extends CommonFilter {
         {this.renderHeader()}
         {this.state.reset ? (
           <div className="filter-content">
-            {this.renderTextField("Text Search", "textSearch")}
             <div className="filter-dates">
               {this.renderFilterDate("Start Date", "startDate")}
               {this.renderFilterDate("End Date", "endDate")}
