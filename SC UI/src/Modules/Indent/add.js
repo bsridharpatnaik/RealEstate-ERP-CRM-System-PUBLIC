@@ -123,15 +123,12 @@ class Add extends AddForm {
   }
 
   buildDraftPayload() {
-    const headerNeedByDate = this.formData.needByDate || null;
     const inventoryList = Object.values(this.state.noinventory).map((item) => ({
       productId: item.productId,
       quantity: parseFloat(item.quantity) || 0,
       specification: item.specification || "",
       remarks: item.remarks || "",
       measurementUnit: item.unit || "",
-      // Propagate header date to items that don't have their own override date
-      needByDate: item.needByDate || headerNeedByDate || null,
     }));
     return {
       indentDate: moment().format("DD-MM-YYYY"),
@@ -729,20 +726,6 @@ renderCurrentStockField(key) {
               this.setState({ noinventory: { ...p } });
             },
           })}
-          <div className="item-need-by-date-wrapper">
-            {this.renderDate({
-              fieldname: `needByDate_${key}`,
-              label: "Override Date",
-              emptyDate: true,
-              type: "date",
-              value: this.state.noinventory[key]?.needByDate || null,
-              onChange: () => {
-                const p = this.state.noinventory;
-                p[key].needByDate = this.formData[`needByDate_${key}`] || null;
-                this.setState({ noinventory: { ...p } });
-              },
-            })}
-          </div>
         </div>
       </div>
     );
@@ -780,21 +763,14 @@ renderCurrentStockField(key) {
       return;
     }
 
-    // Propagate header "Expected Date" to any line items that don't have their own override date
-    const headerNeedByDate = this.formData.needByDate || null;
-
-    // Transform inventory data to match API payload structure
     const inventoryList = Object.values(this.state.noinventory).map((item) => ({
       productId: item.productId,
       quantity: parseFloat(item.quantity) || 0,
       specification: item.specification || "",
       remarks: item.remarks || "",
       measurementUnit: item.unit || "",
-      // Use item's own override date if set, otherwise fall back to header date
-      needByDate: item.needByDate || headerNeedByDate || null,
     }));
 
-    // Prepare payload — needByDate is stored only at line-item level
     const params = {
       indentDate: moment().format("DD-MM-YYYY"),
       fileInformations: this.formData.fileInformations || [],
@@ -832,19 +808,33 @@ renderCurrentStockField(key) {
   }
 
   submitForm = () => {
-    // Find first inventory key with missing quantity
+    if (Object.keys(this.state.noinventory).length === 0) {
+      this.props.enqueueSnackbar("Add at least one item.", { variant: "error" });
+      return;
+    }
+
+    // Find first item missing a product selection
+    const firstMissingProduct = Object.keys(this.state.noinventory).find(key =>
+      !this.state.noinventory[key]?.productId
+    );
+    if (firstMissingProduct) {
+      this.props.enqueueSnackbar("Please select a product for all items.", { variant: "error" });
+      this.setState({ showValidation: true }, () => {
+        const ref = this.rowRefs[firstMissingProduct];
+        if (ref) ref.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      return;
+    }
+
+    // Find first item missing a valid quantity
     const firstInvalidKey = Object.keys(this.state.noinventory).find(key => {
-      const item = this.state.noinventory[key];
-      const qty = item?.quantity;
+      const qty = this.state.noinventory[key]?.quantity;
       return !qty || isNaN(Number(qty)) || Number(qty) <= 0;
     });
-
     if (firstInvalidKey) {
       this.setState({ showValidation: true }, () => {
         const ref = this.rowRefs[firstInvalidKey];
-        if (ref) {
-          ref.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        if (ref) ref.scrollIntoView({ behavior: "smooth", block: "center" });
       });
       return;
     }
@@ -1260,7 +1250,6 @@ renderCurrentStockField(key) {
               noinventory={this.state.noinventory}
               fileInformations={this.formData.fileInformations || []}
               indentDate={require("moment")().format("DD-MM-YYYY")}
-              needByDate={this.formData.needByDate || null}
               isSaving={this.state.isAdding}
               onBack={() => this.setState({ currentStep: 1 })}
               onConfirm={this.handleConfirmSave}
@@ -1274,15 +1263,6 @@ renderCurrentStockField(key) {
               )}
               {!this.state.isLoadingDraft && (
                 <form onSubmit={(e) => this.add(e)}>
-                  <div className="indent-header-fields">
-                    {this.renderDate({
-                      fieldname: "needByDate",
-                      label: "Expected Date",
-                      emptyDate: true,
-                      type: "date",
-                      value: this.formData.needByDate || null,
-                    })}
-                  </div>
                   {this.renderInventoryAddButton()}
                   <div className="inventories-list">
                     {Object.keys(this.state.noinventory).sort((a, b) => Number(b) - Number(a)).map((key) =>

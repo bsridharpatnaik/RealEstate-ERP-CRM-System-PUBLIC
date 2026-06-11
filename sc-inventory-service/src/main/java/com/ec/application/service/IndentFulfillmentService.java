@@ -40,8 +40,7 @@ public class IndentFulfillmentService {
         "  COALESCE(iie.quantity_pending, 0) AS pending_qty," +
         "  iie.purchaseOrderId AS po_number," +
         "  po.status AS po_status," +
-        "  iie.line_item_status," +
-        "  iie.need_by_date";
+        "  iie.line_item_status";
 
     private static final String BASE_FROM =
         " FROM indent_inventory ii" +
@@ -128,7 +127,7 @@ public class IndentFulfillmentService {
 
             String[] cols = {"Project", "Indent ID", "Indent Date", "Indent Status",
                     "Product", "Code", "Unit", "Requested Qty", "PO Qty", "Received Qty",
-                    "Pending Qty", "% Fulfilled", "PO Number", "PO Status", "Line Status", "Need By Date"};
+                    "Pending Qty", "% Fulfilled", "PO Number", "PO Status", "Line Status"};
             Row hRow = sheet.createRow(0);
             for (int i = 0; i < cols.length; i++) {
                 Cell c = hRow.createCell(i);
@@ -156,7 +155,6 @@ public class IndentFulfillmentService {
                 exRow.createCell(12).setCellValue(safe(row.getPoNumber()));
                 exRow.createCell(13).setCellValue(safe(row.getPoStatus()));
                 exRow.createCell(14).setCellValue(safe(row.getLineItemStatus()));
-                exRow.createCell(15).setCellValue(row.getNeedByDate() != null ? sdf.format(row.getNeedByDate()) : "");
             }
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.setHeader("Content-Disposition", "attachment; filename=indent_fulfillment.xlsx");
@@ -268,7 +266,6 @@ public class IndentFulfillmentService {
             else if ("requestedQty".equals(prop))  col = "iie.quantity";
             else if ("receivedQty".equals(prop))   col = "iie.quantity_received";
             else if ("pendingQty".equals(prop))    col = "iie.quantity_pending";
-            else if ("needByDate".equals(prop))    col = "iie.need_by_date";
             return " ORDER BY " + col + " " + order.getDirection().name();
         }
         return " ORDER BY ii.indent_date DESC, ii.indent_id ASC, p.product_name ASC";
@@ -284,7 +281,7 @@ public class IndentFulfillmentService {
         // indices: 0=indentId, 1=project, 2=indentDate, 3=indentStatus,
         //          4=productName, 5=productCode, 6=unit,
         //          7=requestedQty, 8=poQty, 9=receivedQty, 10=pendingQty,
-        //          11=poNumber, 12=poStatus, 13=lineItemStatus, 14=needByDate
+        //          11=poNumber, 12=poStatus, 13=lineItemStatus
         IndentFulfillmentRow row = new IndentFulfillmentRow();
         row.setIndentId(str(r[0]));
         row.setProject(str(r[1]));
@@ -304,7 +301,6 @@ public class IndentFulfillmentService {
         row.setPoNumber(str(r[11]));
         row.setPoStatus(str(r[12]));
         row.setLineItemStatus(str(r[13]));
-        row.setNeedByDate(r[14] instanceof java.sql.Timestamp ? new Date(((java.sql.Timestamp) r[14]).getTime()) : null);
         return row;
     }
 

@@ -85,7 +85,8 @@ public class PoInwardReconciliationService {
 
     public Map<String, Long> getSummaryStats(FilterDataList filters) {
         WhereClause wc = buildWhere(filters);
-        String innerSql = DATA_SELECT + BASE_FROM + wc.where + GROUP_BY + wc.having;
+        // Use WHERE filters only (no HAVING/status filter) so tile counts always reflect true totals
+        String innerSql = DATA_SELECT + BASE_FROM + wc.where + GROUP_BY;
         String sql = "SELECT" +
                 "  SUM(CASE WHEN received_qty <= 0 THEN 1 ELSE 0 END) AS not_started," +
                 "  SUM(CASE WHEN received_qty > 0 AND received_qty < ordered_qty THEN 1 ELSE 0 END) AS partial," +

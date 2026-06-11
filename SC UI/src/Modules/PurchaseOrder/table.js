@@ -10,6 +10,7 @@ import { messages } from "./../../messages";
 import IconButton from "@material-ui/core/IconButton";
 import trashOutlineIcon from "./../../Shared/Icons/trash-outline.png";
 import eyeIcon from "./../../Shared/Icons/eye.png";
+import pencilIcon from "./../../Shared/Icons/pencil.png";
 
 class Table extends CommonTable {
   checkDelete(row) {
@@ -44,6 +45,8 @@ class Table extends CommonTable {
   }
 
   renderAction(row) {
+    const NON_EDITABLE_STATUSES = ["CANCELLED"];
+    const isEditAvailable = !this.hideedit && !NON_EDITABLE_STATUSES.includes((row.poStatus || "").toUpperCase()) && this.props.edit;
     const isDeleteAvailable = !this.hidedelete && !(this.checkDelete && this.checkDelete(row));
 
     // When delete is NOT available, center the single action under the full Action column
@@ -85,6 +88,20 @@ class Table extends CommonTable {
               <img src={eyeIcon} alt="View" style={{ width: 15, height: 15 }} />
             </IconButton>
           </Tooltip>
+          {isEditAvailable && (
+            <Tooltip title="Edit">
+              <IconButton
+                aria-label="edit"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  this.props.edit(row);
+                }}
+                className="back-icon"
+              >
+                <img src={pencilIcon} alt="Edit" style={{ width: 15, height: 15 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </td>
         <td data-label="Delete" className="action-delete">
           <Tooltip title="Delete">

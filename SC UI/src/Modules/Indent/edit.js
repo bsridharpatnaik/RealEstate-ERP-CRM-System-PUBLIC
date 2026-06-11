@@ -166,7 +166,6 @@ class Edit extends EditForm {
       const data = response.data;
 
       this.formData.indentDate = data.indentDate || data.dateCreation || "";
-      this.formData.needByDate = data.needByDate || null;
       this.formData.fileInformations = data.fileInformations || [];
 
       const inventoryItems = data.inventoryItems || data.inventoryList || [];
@@ -191,7 +190,6 @@ class Edit extends EditForm {
             unit: unit,
             specification: item.specification || "",
             remarks: item.remarks || "",
-            needByDate: item.needByDate || null,
             lineItemStatus: item.lineItemStatus || "NEW",
             lineItemCode: item.lineItemCode || null,
             selectedCategory,
@@ -468,20 +466,6 @@ class Edit extends EditForm {
             },
           })}
         </div>
-        <div className="item-need-by-date-wrapper">
-          {this.renderDate({
-            fieldname: `needByDate_${key}`,
-            label: "Override Date",
-            emptyDate: true,
-            type: "date",
-            value: this.state.noinventory[key]?.needByDate || null,
-            onChange: () => {
-              const p = this.state.noinventory;
-              p[key].needByDate = this.formData[`needByDate_${key}`] || null;
-              this.setState({ noinventory: { ...p } });
-            },
-          })}
-        </div>
       </div>
     );
   }
@@ -508,32 +492,16 @@ class Edit extends EditForm {
       return;
     }
 
-    // Transform inventory data to match API payload structure
     const inventoryList = Object.values(this.state.noinventory).map((item) => ({
       productId: item.productId,
       quantity: parseFloat(item.quantity) || 0,
       specification: item.specification || "",
       remarks: item.remarks || "",
       measurementUnit: item.unit || "",
-      needByDate: item.needByDate || null,
     }));
-
-    // Auto-compute header needByDate as min of item dates if not explicitly set
-    let headerNeedByDate = this.formData.needByDate || null;
-    if (!headerNeedByDate) {
-      const itemDates = Object.values(this.state.noinventory)
-        .map((item) => item.needByDate)
-        .filter((d) => d);
-      if (itemDates.length > 0) {
-        headerNeedByDate = itemDates.reduce((min, d) =>
-          moment(d, "DD-MM-YYYY").isBefore(moment(min, "DD-MM-YYYY")) ? d : min
-        );
-      }
-    }
 
     const params = {
       indentDate: this.formData.indentDate || "",
-      needByDate: headerNeedByDate,
       fileInformations: this.formData.fileInformations || [],
       inventoryList: inventoryList,
     };
@@ -924,7 +892,6 @@ class Edit extends EditForm {
               noinventory={this.state.noinventory}
               fileInformations={this.formData.fileInformations || []}
               indentDate={this.formData.indentDate || ""}
-              needByDate={this.formData.needByDate || null}
               isSaving={this.state.isUpdating}
               onBack={() => this.setState({ currentStep: 1 })}
               onConfirm={this.handleConfirmSave}
@@ -938,15 +905,6 @@ class Edit extends EditForm {
                       fieldname: "indentDate",
                       label: "Indent Date",
                       required: true,
-                    })}
-                  </div>
-                  <div className="indent-header-fields">
-                    {this.renderDate({
-                      fieldname: "needByDate",
-                      label: "Expected Date",
-                      emptyDate: true,
-                      type: "date",
-                      value: this.formData.needByDate || null,
                     })}
                   </div>
                 </div>

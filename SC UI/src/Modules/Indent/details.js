@@ -261,10 +261,8 @@ class Details extends CommonDetails {
           specification: item.specification || "",
           remarks: item.remarks || item.remark || "",
           measurementUnit: item.measurementUnit || item.product?.measurementUnit || "",
-          needByDate: item.needByDate || null,
         }))
         .filter((item) => item.productId),
-      needByDate: data.needByDate || null,
     };
     if (this.props.onResubmit) this.props.onResubmit(prefillData);
   };
@@ -449,36 +447,6 @@ class Details extends CommonDetails {
                   <span className="detail-label">Indent Date:</span>
                   <span className="detail-value">{data.indentDate || "-"}</span>
                 </div>
-                {data.needByDate && (
-                  <div className="detail-item">
-                    <span className="detail-label">Expected Delivery:</span>
-                    <span className="detail-value">
-                      {data.needByDate}
-                      {(() => {
-                        const normalizedStatus = (data.indentStatus || data.status || "").toLowerCase().trim();
-                        const isTerminal = normalizedStatus === "cancelled" || normalizedStatus === "rejected" || normalizedStatus === "po completed" || normalizedStatus === "closed" || normalizedStatus === "short closed";
-                        if (isTerminal) return null;
-                        const parts = data.needByDate.split("-");
-                        if (parts.length !== 3) return null;
-                        const deadline = new Date(parts[2], parts[1] - 1, parts[0]);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        deadline.setHours(0, 0, 0, 0);
-                        const days = Math.round((deadline - today) / (1000 * 60 * 60 * 24));
-                        let badgeClass = "days-badge-normal";
-                        if (days <= 3) badgeClass = "days-badge-critical";
-                        else if (days <= 7) badgeClass = "days-badge-high";
-                        else if (days <= 14) badgeClass = "days-badge-medium";
-                        const label = days < 0 ? `${Math.abs(days)}d overdue` : `${days}d left`;
-                        return (
-                          <span className={`days-badge ${badgeClass}`} style={{ marginLeft: 8 }}>
-                            {label}
-                          </span>
-                        );
-                      })()}
-                    </span>
-                  </div>
-                )}
                 <div className="detail-item">
                   <span className="detail-label">Project:</span>
                   <span className="detail-value">{data.projectName || data.tenant || "-"}</span>
@@ -527,7 +495,6 @@ class Details extends CommonDetails {
                           <TableCell className="inventory-qty-col">Quantity</TableCell>
                           <TableCell className="inventory-spec-col">Specification</TableCell>
                           <TableCell className="inventory-remark-col">Remark</TableCell>
-                          <TableCell className="inventory-expdate-col">Exp. Date</TableCell>
                           {showPOColumn && (
                             <TableCell className="inventory-po-col">PO Number</TableCell>
                           )}
@@ -561,9 +528,6 @@ class Details extends CommonDetails {
                             </TableCell>
                             <TableCell className="inventory-remark-col">
                               {item.remarks || item.remark || "-"}
-                            </TableCell>
-                            <TableCell className="inventory-expdate-col">
-                              {item.needByDate || "-"}
                             </TableCell>
                             {showPOColumn && (
                               <TableCell className="inventory-po-col">

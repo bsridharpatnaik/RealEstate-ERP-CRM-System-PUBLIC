@@ -116,13 +116,7 @@ class Table extends CommonTable {
     );
   }
   renderCell(key, row, index) {
-    if (key === "needByDate") {
-      return (
-        <td data-label="Expected Date">
-          {row["needByDate"] || "-"}
-        </td>
-      );
-    } else if (key === "daysRemaining") {
+    if (key === "daysRemaining") {
       const days = row["daysRemaining"];
       const normalizedStatus = (row["status"] || "").toLowerCase().trim();
       const isTerminal = normalizedStatus === "cancelled" || normalizedStatus === "rejected" || normalizedStatus === "po completed" || normalizedStatus === "closed" || normalizedStatus === "short closed";

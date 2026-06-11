@@ -153,17 +153,17 @@ class Table extends React.Component {
     return (
       <React.Fragment>
         {!this.hideedit && (
-
           <td data-label='Edit' className="action-edit">
-
-            <IconButton
-              aria-label="back"
-              onClick={() => this.props.edit(row)}
-              className="back-icon"
-              disabled={this.checkDelete ? this.checkDelete(row) : undefined}
-            >
-              <img src={pencilIcon} alt="Edit" style={{ width: 15, height: 15 }} />
-            </IconButton>
+            {!(this.props.hideEditForRow && this.props.hideEditForRow(row)) && (
+              <IconButton
+                aria-label="back"
+                onClick={() => this.props.edit(row)}
+                className="back-icon"
+                disabled={this.checkDelete ? this.checkDelete(row) : undefined}
+              >
+                <img src={pencilIcon} alt="Edit" style={{ width: 15, height: 15 }} />
+              </IconButton>
+            )}
           </td>
         )}
         {!this.hidedelete && (

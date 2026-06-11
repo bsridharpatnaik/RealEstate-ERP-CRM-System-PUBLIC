@@ -41,7 +41,6 @@ const COLUMNS = [
   { header: '% Fulfilled',   key: 'percentFulfilled', width: 95,  align: 'center'},
   { header: 'PO Number',     key: 'poNumber',         width: 80,  align: 'left'  },
   { header: 'Line Status',   key: 'lineItemStatus',   width: 110, align: 'center'},
-  { header: 'Need By',       key: 'needByDate',       width: 85,  align: 'left'  },
 ];
 
 const TOTAL_WIDTH = COLUMNS.reduce((sum, c) => sum + c.width, 0);
@@ -137,13 +136,6 @@ class IndentFulfillmentTable extends CommonTable {
 
     if (col.key === 'requestedQty' || col.key === 'receivedQty') {
       return val != null ? Number(val).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '—';
-    }
-
-    if (col.key === 'needByDate' && val) {
-      // Check if overdue
-      const d = new Date(val.replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$2-$1'));
-      const overdue = d < new Date() && row.pendingQty > 0;
-      return <span style={{ color: overdue ? '#e74c3c' : '#333', fontWeight: overdue ? 600 : 400 }}>{val}</span>;
     }
 
     if (val == null || val === '') return <span style={{ color: '#ccc' }}>—</span>;

@@ -207,9 +207,6 @@ public class PurchaseOrderPdfService {
         if (notBlank(po.getProjectName()))
             left.addElement(new Paragraph("Project: " + po.getProjectName(), normal));
 
-        if (po.getPriority() != null) {
-            left.addElement(new Paragraph("Priority: " + po.getPriority(), normal));
-        }
         left.addElement(new Paragraph(" "));
         left.addElement(new Paragraph(s.getName(), bold));
         if (notBlank(s.getAddr_line1())) left.addElement(new Paragraph(s.getAddr_line1(), normal));
@@ -333,7 +330,6 @@ public class PurchaseOrderPdfService {
             double taxable = line.getNetRate() != null ? line.getNetRate() : 0.0;
             double gstAmt = taxable * gstPct / 100.0;
             double amtInclTax = line.getTotalAmount() != null ? line.getTotalAmount() : 0.0;
-            String expDate = line.getNeedByDate() != null ? DATE_FORMAT.format(line.getNeedByDate()) : "-";
             String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : fmt(tolPct)) + "%" : "-";
 
             addBodyCell(table, desc, normalFont);
@@ -672,7 +668,6 @@ public class PurchaseOrderPdfService {
                     addBodyCell(lineTable, item.getQuantity() != null ? fmt(item.getQuantity()) : "-", normalFont);
                     addBodyCell(lineTable, item.getQuantityReceived() != null ? fmt(item.getQuantityReceived()) : "-", normalFont);
                     addBodyCell(lineTable, item.getQuantityPending() != null ? fmt(item.getQuantityPending()) : "-", normalFont);
-                    addBodyCell(lineTable, item.getNeedByDate() != null ? DATE_FORMAT.format(item.getNeedByDate()) : "-", normalFont);
                     addBodyCell(lineTable, notBlank(item.getLineItemStatus()) ? item.getLineItemStatus() : "-", normalFont);
                 }
             }

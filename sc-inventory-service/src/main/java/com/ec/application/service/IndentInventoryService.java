@@ -174,7 +174,6 @@ public class IndentInventoryService {
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setNeedByDate(dto.getNeedByDate());
             item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
 
             // Generate unique line item code: INDENT_ID/PRODUCT_ID
@@ -208,7 +207,6 @@ public class IndentInventoryService {
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setNeedByDate(dto.getNeedByDate());
             /*
              * CASE 1: Existing line item (update)
              * - Keep same lineItemCode

@@ -20,8 +20,6 @@ class Step2ReviewIndent extends Component {
       return <div className="review-empty">No inventory items added.</div>;
     }
 
-    const hasItemDates = items.some((item) => item.needByDate);
-
     return (
       <table className="indent-review-table">
         <thead>
@@ -33,7 +31,6 @@ class Step2ReviewIndent extends Component {
             <th>Unit</th>
             <th>Specification</th>
             <th>Remarks</th>
-            {hasItemDates && <th>Override Exp. Date</th>}
           </tr>
         </thead>
         <tbody>
@@ -46,7 +43,6 @@ class Step2ReviewIndent extends Component {
               <td>{this.formatValue(item.unit)}</td>
               <td>{this.formatValue(item.specification)}</td>
               <td>{this.formatValue(item.remarks)}</td>
-              {hasItemDates && <td>{this.formatValue(item.needByDate)}</td>}
             </tr>
           ))}
         </tbody>
@@ -74,7 +70,7 @@ class Step2ReviewIndent extends Component {
   }
 
   render() {
-    const { onBack, onConfirm, isSaving, indentDate, needByDate } = this.props;
+    const { onBack, onConfirm, isSaving, indentDate } = this.props;
 
     return (
       <div className="step3-review-po indent-review-wrapper">
@@ -91,12 +87,6 @@ class Step2ReviewIndent extends Component {
               <span className="review-field-label">Indent Date</span>
               <span className="review-field-value">{this.formatValue(indentDate)}</span>
             </div>
-            {needByDate && (
-              <div className="review-field-row">
-                <span className="review-field-label">Expected Delivery Date</span>
-                <span className="review-field-value">{needByDate}</span>
-              </div>
-            )}
           </div>
         </div>
 

@@ -35,6 +35,4 @@ public class IndentFulfillmentRow {
     private String poStatus;
     private String lineItemStatus;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy", timezone = "Asia/Kolkata")
-    private Date needByDate;
 }

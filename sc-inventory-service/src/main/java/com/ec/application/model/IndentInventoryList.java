@@ -63,10 +63,6 @@ public class IndentInventoryList extends ReusableFields {
     @Column(name = "remarks")
     String remarks;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    @Column(name = "need_by_date", nullable = true)
-    private Date needByDate;
-
     @Column(name = "measurement_unit")
     String measurementUnit;
 

@@ -291,7 +291,7 @@ public class PurchaseOrderService extends ReusableFields {
             }
         }
 
-        // Populate transient needByDate from linked indent line items (PO-level + per-line)
+        // Populate balanceQuantity, receivedQuantity and lineItemStatus from linked indent line items
         try {
             java.util.List<String> lineItemCodes = po.getLines().stream()
                     .flatMap(line -> line.getIndentRefs().stream())
@@ -309,16 +309,7 @@ public class PurchaseOrderService extends ReusableFields {
                                 li -> li,
                                 (a, b) -> a));
 
-                // Set per-line needByDate, balanceQuantity (PARTIAL POs), and lineItemStatus from linked indent line items
                 for (PurchaseOrderLine line : po.getLines()) {
-                    java.util.Date lineEarliest = line.getIndentRefs().stream()
-                            .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
-                            .filter(li -> li != null && li.getNeedByDate() != null)
-                            .map(IndentInventoryList::getNeedByDate)
-                            .min(java.util.Comparator.naturalOrder())
-                            .orElse(null);
-                    line.setNeedByDate(lineEarliest);
-
                     if (POStatusConstants.STATUS_PARTIAL.equals(po.getStatus())) {
                         double received = line.getIndentRefs().stream()
                                 .map(ref -> lineItemMap.get(ref.getIndentLineItemCode()))
@@ -351,13 +342,6 @@ public class PurchaseOrderService extends ReusableFields {
                     line.setLineItemStatus(lineStatus);
                 }
 
-                // Set PO-level needByDate (earliest across all lines)
-                java.util.Date earliest = lineItems.stream()
-                        .filter(li -> li.getNeedByDate() != null)
-                        .map(IndentInventoryList::getNeedByDate)
-                        .min(java.util.Comparator.naturalOrder())
-                        .orElse(null);
-                po.setNeedByDate(earliest);
             }
         } catch (Exception e) {
             // Non-critical — just skip if it fails

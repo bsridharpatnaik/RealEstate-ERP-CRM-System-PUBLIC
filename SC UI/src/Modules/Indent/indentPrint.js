@@ -77,22 +77,11 @@ class Print extends Component {
     const { showPOColumn, showReceivedPendingColumns } = this.getColumnConfig();
     const tenantName = this.getTenantName();
 
-    // Effective header expected date: use header needByDate, or fall back to min of item dates
-    let effectiveNeedByDate = data.needByDate || null;
-    if (!effectiveNeedByDate && items.length > 0) {
-      const itemDates = items.map((it) => it.needByDate).filter(Boolean);
-      if (itemDates.length > 0) {
-        const toMs = (s) => { const p = s.split("-"); return p.length === 3 ? new Date(p[2], p[1] - 1, p[0]).getTime() : 0; };
-        effectiveNeedByDate = itemDates.reduce((min, d) => toMs(d) < toMs(min) ? d : min);
-      }
-    }
-
     const metaItems = [
       { label: "Indent ID", value: data.indentId || "—" },
       { label: "Indent Date", value: data.indentDate || "—" },
       { label: "Status", value: data.status || "—", isStatus: true },
       { label: "Created By", value: data.createdBy || "—" },
-      ...(effectiveNeedByDate ? [{ label: "Expected Date", value: effectiveNeedByDate }] : []),
       ...(data.poNumber ? [{ label: "PO Number", value: data.poNumber }] : []),
       ...(data.poDate ? [{ label: "PO Date", value: data.poDate }] : []),
       { label: "Item Count", value: data.inventoryCount ?? 0 },
@@ -112,7 +101,6 @@ class Print extends Component {
           <td style="${tdC}color:${COLORS.muted};">${item.measurementUnit || "—"}</td>
           <td style="${td}">${item.specification || "—"}</td>
           <td style="${td}">${item.remarks || item.remark || "—"}</td>
-          <td style="${tdC}">${item.needByDate || "—"}</td>
           ${showPOColumn ? `<td style="${tdM}">${item.purchaseOrderId || "—"}</td>` : ""}
           <td style="${tdM}">${item.lineItemCode || "—"}</td>
           ${showReceivedPendingColumns ? `
@@ -178,7 +166,6 @@ class Print extends Component {
         <th ${th}>UOM</th>
         <th ${thL}>SPECIFICATION</th>
         <th ${thL}>REMARKS</th>
-        <th ${th}>EXP. DATE</th>
         ${showPOColumn ? `<th ${th}>PO NUMBER</th>` : ""}
         <th ${th}>LINE ITEM CODE</th>
         ${showReceivedPendingColumns ? `<th ${th}>RECEIVED QTY</th><th ${th}>PENDING QTY</th>` : ""}

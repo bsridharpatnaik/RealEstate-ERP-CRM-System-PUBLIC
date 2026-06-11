@@ -14,8 +14,8 @@ import { messages } from '../../../messages';
 const STATUS_GROUPS = [
   { key: 'ALL',         label: 'All',          color: '#555',    bg: '#f0f0f0', statuses: null },
   { key: 'PENDING',     label: 'Pending',      color: '#e74c3c', bg: '#fdedec', statuses: ['NEW', 'APPROVED'] },
-  { key: 'IN_PROGRESS', label: 'In Progress',  color: '#2980b9', bg: '#ebf5fb', statuses: ['PO CREATED', 'PO PARTIAL', 'INWARD PARTIAL'] },
-  { key: 'COMPLETED',   label: 'Completed',    color: '#27ae60', bg: '#eafaf1', statuses: ['CLOSED', 'PO COMPLETED', 'SHORT CLOSED'] },
+  { key: 'IN_PROGRESS', label: 'In Progress',  color: '#2980b9', bg: '#ebf5fb', statuses: ['PO CREATED', 'PO PARTIAL', 'INWARD PARTIAL', 'PO COMPLETED'] },
+  { key: 'COMPLETED',   label: 'Completed',    color: '#27ae60', bg: '#eafaf1', statuses: ['CLOSED', 'SHORT CLOSED'] },
   { key: 'CANCELLED',   label: 'Cancelled',    color: '#95a5a6', bg: '#f2f3f4', statuses: ['CANCELLED', 'REJECTED'] },
 ];
 

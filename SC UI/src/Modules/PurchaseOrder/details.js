@@ -420,7 +420,6 @@ class Details extends CommonDetails {
                       <th>Qty Ordered</th>
                       <th>Qty Received</th>
                       <th>Qty Pending</th>
-                      <th>Need By Date</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -445,7 +444,6 @@ class Details extends CommonDetails {
                           <td>{item.quantity != null ? Number(item.quantity).toFixed(2) : "-"}</td>
                           <td>{item.quantityReceived != null ? Number(item.quantityReceived).toFixed(2) : "-"}</td>
                           <td>{item.quantityPending != null ? Number(item.quantityPending).toFixed(2) : "-"}</td>
-                          <td>{item.needByDate || "-"}</td>
                           <td>
                             <span className={`po-indent-line-status status-${(item.lineItemStatus || "").toLowerCase().replace(/\s+/g, "-")}`}>
                               {item.lineItemStatus || "-"}
@@ -702,47 +700,6 @@ class Details extends CommonDetails {
                   <span className="detail-label">Date Creation:</span>
                   <span className="detail-value">{data.poDate || "-"}</span>
                 </div>
-                {data.needByDate && (
-                  <div className="detail-item">
-                    <span className="detail-label">Expected Delivery:</span>
-                    <span className="detail-value">
-                      {(() => {
-                        const fmtDate = data.needByDate instanceof Date
-                          ? data.needByDate.toLocaleDateString("en-IN")
-                          : data.needByDate;
-                        return fmtDate;
-                      })()}
-                      {data.priority && (
-                        <span
-                          className={`priority-badge priority-badge-${data.priority.toLowerCase()}`}
-                          style={{ marginLeft: 8 }}
-                        >
-                          {data.priority}
-                          {data.daysToDeadline !== null && data.daysToDeadline !== undefined
-                            ? (data.daysToDeadline < 0
-                                ? ` (${Math.abs(data.daysToDeadline)}d overdue)`
-                                : ` (${data.daysToDeadline}d left)`)
-                            : ""}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                )}
-                {data.priority && !data.needByDate && (
-                  <div className="detail-item">
-                    <span className="detail-label">Priority:</span>
-                    <span className="detail-value">
-                      <span className={`priority-badge priority-badge-${data.priority.toLowerCase()}`}>
-                        {data.priority}
-                        {data.daysToDeadline !== null && data.daysToDeadline !== undefined
-                          ? (data.daysToDeadline < 0
-                              ? ` (${Math.abs(data.daysToDeadline)}d overdue)`
-                              : ` (${data.daysToDeadline}d left)`)
-                          : ""}
-                      </span>
-                    </span>
-                  </div>
-                )}
                 <div className="detail-item">
                   <span className="detail-label">Subject:</span>
                   <span className="detail-value">{data.subject || "-"}</span>
@@ -894,7 +851,6 @@ class Details extends CommonDetails {
                           <TableCell>Inventory</TableCell>
                           {hasImages && <TableCell style={{ textAlign: 'center' }}>Sample Image</TableCell>}
                           <TableCell>Line Status</TableCell>
-                          <TableCell>Exp. Date</TableCell>
                           {data.status === "PARTIAL" && <TableCell style={{ whiteSpace: 'nowrap' }}>Received Qty</TableCell>}
                           {data.status === "PARTIAL" && <TableCell style={{ whiteSpace: 'nowrap' }}>Balance Qty</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Rate</TableCell>}
@@ -981,7 +937,6 @@ class Details extends CommonDetails {
                                   {lineStatus || "-"}
                                 </span>
                               </TableCell>
-                              <TableCell>{item.needByDate || "-"}</TableCell>
                               {data.status === "PARTIAL" && (
                                 <TableCell style={{ whiteSpace: 'nowrap' }}>
                                   {item.receivedQuantity != null ? Number(item.receivedQuantity).toFixed(2) : "-"}

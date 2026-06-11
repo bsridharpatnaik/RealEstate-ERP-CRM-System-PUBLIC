@@ -188,7 +188,7 @@ class List extends ListCommon {
     });
     this.scrollBottom();
 
-    // Fetch full PO via GET /{id} to populate @Transient needByDate on each line
+    // Fetch full PO via GET /{id} to load line items and status details
     try {
       const response = await API.GET(
         apiEndpoints.getPurchaseOrderDetail(row.purchaseOrderId)
@@ -457,17 +457,6 @@ class List extends ListCommon {
           attrName: "statusChangedBeforeDate",
           attrValue: [this.filterData.statusChangedBeforeDate],
         });
-      }
-
-      // Priority filter
-      const priorityArr = Array.isArray(this.filterData.priority)
-        ? this.filterData.priority
-        : this.filterData.priority != null ? [this.filterData.priority] : [];
-      if (priorityArr.length > 0) {
-        const priorityValues = priorityArr.map(p =>
-          p && typeof p === "object" ? (p.id || p.name) : p
-        ).filter(Boolean);
-        params.filterData.push({ attrName: "priority", attrValue: priorityValues });
       }
 
       // Project filter
@@ -762,6 +751,7 @@ class List extends ListCommon {
                 this.showDetail(row);
               }}
               hideedit={!canEditInventoryModules()}
+              hideEditForRow={(row) => row.poStatus !== "NEW"}
               hidedelete={!canEditInventoryModules()}
             />
           )}

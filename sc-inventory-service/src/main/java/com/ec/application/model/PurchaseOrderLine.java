@@ -63,16 +63,6 @@ public class PurchaseOrderLine extends ReusableFields {
     private List<PurchaseOrderIndentRef> indentRefs = new ArrayList<>();
 
     /**
-     * Per-line expected delivery date derived from the linked indent line item.
-     * Not persisted — populated at query time by PurchaseOrderService.
-     * @JsonProperty forces Jackson to include this @Transient field in serialization.
-     */
-    @Transient
-    @JsonProperty("needByDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    private Date needByDate;
-
-    /**
      * Raw image bytes pre-fetched in tenant context by PurchaseOrderService.
      * Used only by PurchaseOrderPdfService — never serialised to JSON.
      */

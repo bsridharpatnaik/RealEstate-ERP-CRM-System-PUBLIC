@@ -87,15 +87,6 @@ class Filter extends CommonFilter {
               {this.renderFilterDate("Status Changed Before", "statusChangedBeforeDate", false)}
             </div>
 
-            {/* Priority Filter */}
-            {this.renderAutoComplete(
-              "Priority",
-              ["CRITICAL", "HIGH", "MEDIUM", "NORMAL"].map(p => ({ name: p, id: p })),
-              "priority",
-              (option) => option.name,
-              true
-            )}
-
             {this.renderAutoComplete(
               "Project",
               this.props.options?.projects || [],

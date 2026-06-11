@@ -49,9 +49,6 @@ public class ScheduledTasks {
     StockSyncJob stockSyncJob;
 
     @Autowired
-    PriorityComputeService priorityComputeService;
-
-    @Autowired
     StockBalanceValidationService stockBalanceValidationService;
 
     @Autowired
@@ -92,15 +89,6 @@ public class ScheduledTasks {
     public void sendIOStats() throws Exception {
         smsService.sendIOStats();
     }*/
-
-    /** Runs every hour from 9 AM to 6 PM IST. Recomputes PO priority from indent expected dates.
-     *  POs are stored in the master schema — @UseDefaultTenant sets the correct schema context. */
-    @Scheduled(cron = "0 0 9-18 * * *", zone = "Asia/Kolkata")
-    @UseDefaultTenant
-    public void computePoPriority() {
-        log.info("Scheduled PO priority recompute triggered");
-        priorityComputeService.recomputeAllPriorities();
-    }
 
     @Scheduled(cron = "0 0 21 * * *", zone = "Asia/Kolkata")
     public void sendDailyStockEmailReport() {

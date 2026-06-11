@@ -276,9 +276,6 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines, tenant
         <div style={{ padding: '0 0 4px 0' }}>
           {lines.map((line, idx) => {
             const lst = LINE_STATUS_STYLE[line.lineItemStatus] || {};
-            const isOverdue = line.needByDate &&
-              new Date(line.needByDate.replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$2-$1')) < new Date() &&
-              (line.pendingQty || 0) > 0;
             const poColor = PO_STATUS_COLOR[line.poStatus] || '#888';
 
             return (
@@ -309,11 +306,6 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines, tenant
                     </Tooltip>
                     {line.productCode && (
                       <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 1 }}>{line.productCode}</div>
-                    )}
-                    {line.needByDate && (
-                      <div style={{ fontSize: 10, color: isOverdue ? '#c0392b' : '#a0aec0', marginTop: 1 }}>
-                        {isOverdue ? '⚠ Overdue: ' : 'Need by: '}{line.needByDate}
-                      </div>
                     )}
                   </div>
 

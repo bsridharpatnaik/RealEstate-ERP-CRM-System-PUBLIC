@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,15 +38,6 @@ public class IndentInventoryUiEnricher {
             indent.setPoNumbers(poNums);
         }
 
-        // Compute effective needByDate = minimum across all active line item dates
-        if (indent.getInventoryList() != null) {
-            Date minDate = indent.getInventoryList().stream()
-                    .filter(li -> li != null && !li.isDeleted() && li.getNeedByDate() != null)
-                    .map(IndentInventoryList::getNeedByDate)
-                    .min(Date::compareTo)
-                    .orElse(null);
-            indent.setNeedByDate(minDate);
-        }
     }
 
     public void enrich(Collection<IndentInventory> indents) {

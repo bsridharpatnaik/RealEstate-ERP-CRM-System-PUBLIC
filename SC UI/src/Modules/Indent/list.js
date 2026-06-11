@@ -76,8 +76,6 @@ class List extends ListCommon {
       "indentId",
       "projectName",
       "indentDate",
-      "needByDate",
-      "daysRemaining",
       "inventoryCount",
       "poNumbers",
       "status",
@@ -90,41 +88,9 @@ class List extends ListCommon {
     if (!Array.isArray(rawData)) return [];
 
     return rawData.map(item => {
-      // Helper: parse dd-MM-yyyy string to Date
-      const parseDate = (s) => {
-        if (!s) return null;
-        const p = s.split("-");
-        return p.length === 3 ? new Date(p[2], p[1] - 1, p[0]) : new Date(s);
-      };
-
-      // Effective expected date: header needByDate OR minimum of line-item dates
-      let effectiveNeedByDate = item.needByDate || null;
-      if (!effectiveNeedByDate && item.inventoryList && item.inventoryList.length > 0) {
-        const itemDates = item.inventoryList.map((li) => li.needByDate).filter(Boolean);
-        if (itemDates.length > 0) {
-          effectiveNeedByDate = itemDates.reduce((min, d) => {
-            const dMs = parseDate(d);
-            const mMs = parseDate(min);
-            return dMs && mMs && dMs < mMs ? d : min;
-          });
-        }
-      }
-
-      // Compute daysRemaining from effective date
-      let daysRemaining = null;
-      if (effectiveNeedByDate) {
-        const deadline = parseDate(effectiveNeedByDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        deadline.setHours(0, 0, 0, 0);
-        daysRemaining = Math.round((deadline - today) / (1000 * 60 * 60 * 24));
-      }
-
       return {
         indentId: item.indentId,
         indentDate: item.indentDate,
-        needByDate: effectiveNeedByDate,
-        daysRemaining,
         inventoryCount: item.inventoryList?.length || 0,
         status: item.indentStatus,
         createdBy: item.createdBy,

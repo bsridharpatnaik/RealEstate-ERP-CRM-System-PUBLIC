@@ -15,7 +15,6 @@ import com.ec.application.model.PurchaseOrderStatusHistory;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.PurchaseOrderIndentRefRepository;
-import com.ec.application.service.PriorityComputeService;
 import com.ec.application.service.PurchaseOrderPdfService;
 import com.ec.application.service.PurchaseOrderService;
 import com.ec.application.service.PurchaseOrderStatusHistoryService;
@@ -53,7 +52,6 @@ public class PurchaseOrderController {
     private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
     private final SchemaConfig schemaConfig;
     private final PurchaseOrderPdfService purchaseOrderPdfService;
-    private final PriorityComputeService priorityComputeService;
     private final PurchaseOrderIndentRefRepository purchaseOrderIndentRefRepository;
     private final IndentInventoryRepo indentInventoryRepo;
 
@@ -260,20 +258,6 @@ public class PurchaseOrderController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(stream);
-    }
-
-    /**
-     * Manually triggers PO priority recomputation.
-     * POs live in the master schema — @UseDefaultTenant on this class sets the correct schema context.
-     * Accessible only to ADMIN and PURCHASE_MANAGER roles.
-     */
-    @PostMapping("/po-prioritize")
-    @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
-    public ResponseEntity<String> triggerPoPrioritization() {
-        log.info("Manual PO priority recompute triggered");
-        priorityComputeService.recomputeAllPriorities();
-        return ResponseEntity.ok("PO prioritization completed successfully");
     }
 
     @GetMapping("/project-list")
