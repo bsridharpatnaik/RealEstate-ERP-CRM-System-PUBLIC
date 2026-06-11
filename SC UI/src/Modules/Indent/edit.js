@@ -188,6 +188,7 @@ class Edit extends EditForm {
             productId: pid,
             productCode: productCode,
             unit: unit,
+            leadTimeDays: item.leadTimeDays ?? null,
             specification: item.specification || "",
             remarks: item.remarks || "",
             lineItemStatus: item.lineItemStatus || "NEW",
@@ -198,6 +199,7 @@ class Edit extends EditForm {
               name: item.product?.productName || "",
               measurementUnit: unit,
               productCode: productCode,
+              leadTimeDays: item.leadTimeDays ?? null,
             },
           };
         }
@@ -326,6 +328,7 @@ class Edit extends EditForm {
                 p[key].productId = value.id || "";
                 p[key].productCode = value.productCode || "";
                 p[key].unit = value.measurementUnit || "";
+                p[key].leadTimeDays = value.leadTimeDays ?? null;
                 p[key].selectedProduct = value;
                 this.setState({ noinventory: p }, () => {
                   if (this.props.onValidationChange) {
@@ -336,6 +339,7 @@ class Edit extends EditForm {
                 p[key].productId = "";
                 p[key].productCode = "";
                 p[key].unit = "";
+                p[key].leadTimeDays = null;
                 p[key].selectedProduct = null;
                 this.setState({ noinventory: p }, () => {
                   if (this.props.onValidationChange) {
@@ -369,6 +373,7 @@ class Edit extends EditForm {
                 p[key].productId = value.id || "";
                 p[key].productCode = value.productCode || "";
                 p[key].unit = value.measurementUnit || "";
+                p[key].leadTimeDays = value.leadTimeDays ?? null;
                 p[key].selectedProduct = value;
                 this.setState({ noinventory: p }, () => {
                   if (this.props.onValidationChange) {
@@ -379,6 +384,7 @@ class Edit extends EditForm {
                 p[key].productId = "";
                 p[key].productCode = "";
                 p[key].unit = "";
+                p[key].leadTimeDays = null;
                 p[key].selectedProduct = null;
                 this.setState({ noinventory: p }, () => {
                   if (this.props.onValidationChange) {
@@ -465,6 +471,12 @@ class Edit extends EditForm {
               this.setState({ noinventory: { ...p } });
             },
           })}
+          {this.state.noinventory[key]?.leadTimeDays != null && (
+            <div className="lead-time-chip">
+              <span className="lead-time-chip-icon">⏱</span>
+              Lead Time: <strong>{this.state.noinventory[key].leadTimeDays} days</strong>
+            </div>
+          )}
         </div>
       </div>
     );

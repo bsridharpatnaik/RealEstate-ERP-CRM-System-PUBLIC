@@ -148,6 +148,7 @@ class List extends ListCommon {
       "Managed Inventory": item.isManagedInventory ? "Yes" : "No",
       "Can Expire": item.isExpirable ? "Yes" : "No",
       "Batch Tracking": item.batchMode || "NONE",
+      "Lead Time (Days)": item.leadTimeDays != null ? item.leadTimeDays : "",
     }));
   }
 

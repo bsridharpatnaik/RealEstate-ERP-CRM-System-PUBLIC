@@ -91,6 +91,7 @@ class Edit extends EditForm {
         data.isManagedInventory !== undefined ? data.isManagedInventory : true;
       this.formData.batchMode =
         data.batchMode || (data.isExpirable ? "BATCH_WITH_EXPIRY" : "NONE");
+      this.formData.leadTimeDays = data.leadTimeDays != null ? String(data.leadTimeDays) : "";
       this.setState({
         isLoaded: true,
         batchMode: this.formData.batchMode,
@@ -581,6 +582,11 @@ class Edit extends EditForm {
                 disableClearable: true,
                 required: true,
                 getOption: (option) => option.name,
+              })}
+              {this.renderTextField({
+                fieldname: "leadTimeDays",
+                placeholder: "Lead Time (Days)",
+                type: "number",
               })}
             </div>
             <div className="flex">{this.renderBatchModeCards()}</div>

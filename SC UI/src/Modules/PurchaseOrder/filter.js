@@ -112,6 +112,22 @@ class Filter extends CommonFilter {
                 label="Show SPL POs only"
               />
             </div>
+            <div className="filter-field">
+              <span className="filter-field-label">Overdue</span>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={!!this.filterData.hasOverdueOnly}
+                    onChange={(e) => {
+                      this.filterData.hasOverdueOnly = e.target.checked ? "true" : null;
+                      this.setState({});
+                    }}
+                    color="primary"
+                  />
+                }
+                label="Show overdue POs only"
+              />
+            </div>
           </div>
         ) : null}
         {this.renderFooter()}

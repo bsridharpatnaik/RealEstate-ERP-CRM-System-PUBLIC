@@ -252,10 +252,13 @@ public class PurchaseOrderService extends ReusableFields {
             if (po.getLines() != null && !po.getLines().isEmpty()) {
                 Hibernate.initialize(po.getLines());
                 po.getLines().forEach(line -> {
-                    // Initialize product
+                    // Initialize product and its category (for lead time resolution)
                     if (line.getProduct() != null) {
                         Hibernate.initialize(line.getProduct());
                         String productName = line.getProduct().getProductName(); // Touch to load
+                        if (line.getProduct().getCategory() != null) {
+                            Hibernate.initialize(line.getProduct().getCategory());
+                        }
                     }
 
                     // Initialize indent refs
@@ -359,6 +362,9 @@ public class PurchaseOrderService extends ReusableFields {
                 }
             }
         }
+
+        // Enrich lead time and overdue flags per line
+        purchaseOrderUiEnricher.enrichOverdueFlag(po);
 
         // MASK PRICE FIELDS
         purchaseOrderPriceMasker.mask(po);
@@ -908,6 +914,83 @@ public class PurchaseOrderService extends ReusableFields {
 
         row.createCell(col++).setCellValue(safeExcel(indentNo));
         row.createCell(col++).setCellValue(safeExcel(indentLineItemCode));
+    }
+
+    // ── Overdue PO lines (dashboard widget) ─────────────────────────────────
+
+    @javax.persistence.PersistenceContext
+    private javax.persistence.EntityManager entityManager;
+
+    /**
+     * Returns a paginated list of open PO line items that have exceeded their
+     * effective lead time (product-level → category-level → not tracked).
+     * Result ordered by daysOverdue DESC (most overdue first).
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getOverdueLines(int page, int size) {
+        String terminalIn = "'CANCELLED','COMPLETE INWARD','SHORT CLOSED','SHORT CLOSE'";
+
+        String baseSelect =
+            "SELECT po.purchase_order_id, DATE_FORMAT(po.po_date,'%d-%m-%Y') AS po_date, " +
+            "  po.project_name, " +
+            "  COALESCE(s.name,'') AS supplier_name, " +
+            "  p.product_name, p.product_code, p.measurement_unit, " +
+            "  COALESCE(p.lead_time_days, cat.lead_time_days) AS lead_time_days, " +
+            "  (DATEDIFF(CURDATE(), po.po_date) - COALESCE(p.lead_time_days, cat.lead_time_days)) AS days_overdue ";
+
+        String baseFrom =
+            "FROM purchase_order po " +
+            "JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0 " +
+            "JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0 " +
+            "LEFT JOIN category cat ON cat.id = p.category_id AND cat.is_deleted = 0 " +
+            "LEFT JOIN supplier s ON s.id = po.supplier_id AND s.is_deleted = 0 ";
+
+        String baseWhere =
+            "WHERE po.is_deleted = 0 " +
+            "AND po.status NOT IN (" + terminalIn + ") " +
+            "AND COALESCE(pol.line_item_status,'') != 'INWARD_COMPLETE' " +
+            "AND COALESCE(p.lead_time_days, cat.lead_time_days) IS NOT NULL " +
+            "AND DATEDIFF(CURDATE(), po.po_date) > COALESCE(p.lead_time_days, cat.lead_time_days) ";
+
+        String orderBy = "ORDER BY days_overdue DESC ";
+
+        // Total count
+        Number totalNum = (Number) entityManager.createNativeQuery(
+            "SELECT COUNT(*) " + baseFrom + baseWhere
+        ).getSingleResult();
+        long total = totalNum != null ? totalNum.longValue() : 0L;
+
+        // Data page
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery(
+            baseSelect + baseFrom + baseWhere + orderBy + "LIMIT :lim OFFSET :off"
+        )
+        .setParameter("lim", size)
+        .setParameter("off", page * size)
+        .getResultList();
+
+        List<OverduePOLineDTO> content = new ArrayList<>();
+        for (Object[] r : rows) {
+            OverduePOLineDTO dto = new OverduePOLineDTO();
+            dto.setPurchaseOrderId(r[0] != null ? r[0].toString() : null);
+            dto.setPoDate(r[1] != null ? r[1].toString() : null);
+            dto.setProjectName(r[2] != null ? r[2].toString() : null);
+            dto.setSupplierName(r[3] != null ? r[3].toString() : null);
+            dto.setProductName(r[4] != null ? r[4].toString() : null);
+            dto.setProductCode(r[5] != null ? r[5].toString() : null);
+            dto.setMeasurementUnit(r[6] != null ? r[6].toString() : null);
+            dto.setLeadTimeDays(r[7] != null ? ((Number) r[7]).intValue() : null);
+            dto.setDaysOverdue(r[8] != null ? ((Number) r[8]).intValue() : null);
+            content.add(dto);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("content", content);
+        result.put("totalElements", total);
+        result.put("totalPages", (int) Math.ceil((double) total / size));
+        result.put("page", page);
+        result.put("size", size);
+        return result;
     }
 
     private String safeExcel(String value) {

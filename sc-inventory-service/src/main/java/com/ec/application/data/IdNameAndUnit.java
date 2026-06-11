@@ -17,6 +17,9 @@ public class IdNameAndUnit
 	/** Deprecated — kept for backward compat. Derived from batchMode. */
 	Boolean isExpirable;
 
+	/** Effective lead time (product-level → category-level → null). */
+	Integer leadTimeDays;
+
 
 	public IdNameAndUnit(Long productId, String productName, String measurementUnit, String productCode, Boolean isManagedInventory) {
 		super();
@@ -49,5 +52,18 @@ public class IdNameAndUnit
 		this.isManagedInventory = isManagedInventory;
 		this.batchMode = batchMode != null ? batchMode : BatchMode.NONE;
 		this.isExpirable = this.batchMode == BatchMode.BATCH_WITH_EXPIRY;
+	}
+
+	/** Constructor with leadTimeDays. */
+	public IdNameAndUnit(Long productId, String productName, String measurementUnit, String productCode, Boolean isManagedInventory, BatchMode batchMode, Integer leadTimeDays) {
+		super();
+		this.ProductId = productId;
+		this.productName = productName;
+		this.measurementUnit = measurementUnit;
+		this.productCode = productCode;
+		this.isManagedInventory = isManagedInventory;
+		this.batchMode = batchMode != null ? batchMode : BatchMode.NONE;
+		this.isExpirable = this.batchMode == BatchMode.BATCH_WITH_EXPIRY;
+		this.leadTimeDays = leadTimeDays;
 	}
 }

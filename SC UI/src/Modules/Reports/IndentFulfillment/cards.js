@@ -307,6 +307,11 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines, tenant
                     {line.productCode && (
                       <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 1 }}>{line.productCode}</div>
                     )}
+                    {line.leadTimeDays != null && (
+                      <div style={{ fontSize: 11, color: '#7f8c8d', marginTop: 2 }}>
+                        ⏱ Lead time: {line.leadTimeDays}d
+                      </div>
+                    )}
                   </div>
 
                   {/* PO info chip */}

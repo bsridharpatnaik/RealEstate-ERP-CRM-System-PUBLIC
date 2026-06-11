@@ -138,6 +138,11 @@ class GlobalDashboard extends Component {
     isPOTrendLoaded: false,
     suppliersHeatmapData: [],
     isSuppliersHeatmapLoaded: false,
+    overdueLines: [],
+    overdueLinesTotalPages: 0,
+    overdueLinesTotalElements: 0,
+    overdueLinesCurPage: 0,
+    isOverdueLinesLoaded: false,
     indentStaleBuckets: [],
     poStaleBuckets: [],
     isStaleLoaded: false,
@@ -173,6 +178,7 @@ class GlobalDashboard extends Component {
     this.fetchIndentTrend();
     this.fetchPOTrend();
     this.fetchSuppliersHeatmap();
+    this.fetchOverdueLines(0);
     this.fetchStaleCharts();
   }
 
@@ -239,6 +245,22 @@ class GlobalDashboard extends Component {
       });
     } else {
       this.setState({ isSuppliersHeatmapLoaded: true });
+    }
+  }
+
+  async fetchOverdueLines(page = 0) {
+    this.setState({ isOverdueLinesLoaded: false });
+    const response = await API.GET(apiEndpoints.getOverduePOLines(page, 5));
+    if (response.success && response.data) {
+      this.setState({
+        overdueLines: response.data.content || [],
+        overdueLinesTotalPages: response.data.totalPages || 0,
+        overdueLinesTotalElements: response.data.totalElements || 0,
+        overdueLinesCurPage: page,
+        isOverdueLinesLoaded: true,
+      });
+    } else {
+      this.setState({ isOverdueLinesLoaded: true });
     }
   }
 
@@ -775,30 +797,71 @@ class GlobalDashboard extends Component {
     );
   }
 
-  renderSuppliersHeatmap() {
-    const { suppliersHeatmapData, isSuppliersHeatmapLoaded } = this.state;
-    if (!isSuppliersHeatmapLoaded) {
-      return (
-        <div className="heatmap-card">
-          <div className="dashboard-heading indent-trend-title">Supplier Lead Time Heat Map</div>
-          {this.renderLoader()}
-        </div>
-      );
-    }
-    if (!suppliersHeatmapData || !suppliersHeatmapData.length) {
-      return (
-        <div className="heatmap-card">
-          <div className="dashboard-heading indent-trend-title">Supplier Lead Time Heat Map</div>
-          <div className="indent-trend-empty">No supplier data</div>
-        </div>
-      );
-    }
+  renderOverduePOLines() {
+    const {
+      overdueLines, overdueLinesTotalPages, overdueLinesTotalElements,
+      overdueLinesCurPage, isOverdueLinesLoaded
+    } = this.state;
+
     return (
-      <div className="heatmap-card">
-        <div className="dashboard-heading indent-trend-title">Supplier Lead Time Heat Map</div>
-        <div className="heatmap-chart-wrap">
-          <SupplierLeadTimeHeatmap data={suppliersHeatmapData} />
+      <div className="heatmap-card overdue-po-widget">
+        <div className="dashboard-heading indent-trend-title">
+          ⚠ Overdue PO Lines
+          {overdueLinesTotalElements > 0 && (
+            <span className="overdue-total-badge">{overdueLinesTotalElements}</span>
+          )}
         </div>
+        {!isOverdueLinesLoaded ? (
+          this.renderLoader()
+        ) : overdueLines.length === 0 ? (
+          <div className="indent-trend-empty" style={{ color: '#27ae60' }}>✓ No overdue PO lines</div>
+        ) : (
+          <>
+            <div className="overdue-po-table-wrap">
+              <table className="overdue-po-table">
+                <thead>
+                  <tr>
+                    <th>PO #</th>
+                    <th>Project</th>
+                    <th>Supplier</th>
+                    <th>Product</th>
+                    <th>Lead Time</th>
+                    <th>Days Overdue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overdueLines.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.purchaseOrderId}</td>
+                      <td>{row.projectName || '—'}</td>
+                      <td>{row.supplierName || '—'}</td>
+                      <td>{row.productName} <span style={{ color: '#888', fontSize: '11px' }}>({row.measurementUnit})</span></td>
+                      <td>{row.leadTimeDays != null ? `${row.leadTimeDays}d` : '—'}</td>
+                      <td><span className="overdue-badge">+{row.daysOverdue}d</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {overdueLinesTotalPages > 1 && (
+              <div className="overdue-po-pagination">
+                <button
+                  className="overdue-page-btn"
+                  disabled={overdueLinesCurPage === 0}
+                  onClick={() => this.fetchOverdueLines(overdueLinesCurPage - 1)}
+                >‹ Prev</button>
+                <span className="overdue-page-info">
+                  Page {overdueLinesCurPage + 1} of {overdueLinesTotalPages}
+                </span>
+                <button
+                  className="overdue-page-btn"
+                  disabled={overdueLinesCurPage >= overdueLinesTotalPages - 1}
+                  onClick={() => this.fetchOverdueLines(overdueLinesCurPage + 1)}
+                >Next ›</button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     );
   }
@@ -1056,7 +1119,7 @@ class GlobalDashboard extends Component {
           </div>
         </div>
         <div className="heatmap-section">
-          {this.renderSuppliersHeatmap()}
+          {this.renderOverduePOLines()}
         </div>
       </div>
     );

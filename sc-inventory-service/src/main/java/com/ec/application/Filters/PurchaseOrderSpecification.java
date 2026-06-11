@@ -33,6 +33,7 @@ public final class PurchaseOrderSpecification {
         List<String> statusChangedBefore = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
         List<String> isSpecialPo         = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "isSpecialPo");
         List<String> projectNames        = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "projectNames");
+        List<String> hasOverdueOnly      = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "hasOverdueOnly");
 
         Specification<PurchaseOrder> spec = null;
 
@@ -100,6 +101,11 @@ public final class PurchaseOrderSpecification {
 
         if (notEmpty(statusChangedTo) || notEmpty(statusChangedAfter) || notEmpty(statusChangedBefore))
             spec = and(spec, poStatusHistoryExists(statusChangedTo, statusChangedAfter, statusChangedBefore));
+
+        if (notEmpty(hasOverdueOnly) && "true".equalsIgnoreCase(hasOverdueOnly.get(0))) {
+            spec = and(spec, wherePOStatusNotIn(POStatusConstants.getTerminalStatuses()));
+            spec = and(spec, poHasOverdueLine());
+        }
 
         return spec;
     }
@@ -226,6 +232,48 @@ public final class PurchaseOrderSpecification {
 
     private static Specification<PurchaseOrder> wherePOStatusNotIn(List<String> statuses) {
         return (root, query, cb) -> cb.not(root.get(PurchaseOrder_.STATUS).in(statuses));
+    }
+
+    // ── Overdue lines filter ─────────────────────────────────────────────────
+
+    /**
+     * POs with at least one non-completed line whose effective lead time has been exceeded.
+     * Effective lead time = COALESCE(product.leadTimeDays, product.category.leadTimeDays).
+     * Days elapsed = DATEDIFF(CURRENT_DATE, po.poDate).
+     */
+    private static Specification<PurchaseOrder> poHasOverdueLine() {
+        return (root, query, cb) -> {
+            Subquery<Long> sub = query.subquery(Long.class);
+            Root<PurchaseOrderLine> line = sub.from(PurchaseOrderLine.class);
+            Join<PurchaseOrderLine, Product> product = line.join(PurchaseOrderLine_.PRODUCT);
+            Join<Product, Category> category = product.join(Product_.CATEGORY, JoinType.LEFT);
+
+            // COALESCE(product.leadTimeDays, category.leadTimeDays)
+            Expression<Integer> effectiveLeadTime = cb.function(
+                    "COALESCE", Integer.class,
+                    product.<Integer>get("leadTimeDays"),
+                    category.<Integer>get("leadTimeDays")
+            );
+
+            // DATEDIFF(CURRENT_DATE, po.poDate)
+            Expression<Integer> daysSincePO = cb.function(
+                    "DATEDIFF", Integer.class,
+                    cb.currentDate(),
+                    root.get(PurchaseOrder_.PO_DATE)
+            );
+
+            sub.select(cb.literal(1L));
+            sub.where(cb.and(
+                    cb.equal(line.get(PurchaseOrderLine_.PURCHASE_ORDER)
+                            .get(PurchaseOrder_.PURCHASE_ORDER_ID),
+                            root.get(PurchaseOrder_.PURCHASE_ORDER_ID)),
+                    cb.isFalse(line.get("deleted")),
+                    cb.notEqual(cb.coalesce(line.<String>get("lineItemStatus"), ""), "INWARD_COMPLETE"),
+                    cb.isNotNull(effectiveLeadTime),
+                    cb.greaterThan(daysSincePO, effectiveLeadTime)
+            ));
+            return cb.exists(sub);
+        };
     }
 
     // ── Composition helpers ──────────────────────────────────────────────────

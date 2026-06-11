@@ -29,6 +29,7 @@ public class PoInwardReconciliationService {
         " FROM purchase_order po" +
         " JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0" +
         " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
+        " LEFT JOIN category cat ON cat.id = p.category_id AND cat.is_deleted = 0" +
         " LEFT JOIN Firm f ON f.firmId = po.firm_id AND f.is_deleted = 0" +
         " LEFT JOIN indent_inventory_entries iie" +
         "   ON iie.purchaseOrderId = po.purchase_order_id" +
@@ -56,7 +57,12 @@ public class PoInwardReconciliationService {
         "  p.product_code," +
         "  p.measurementUnit AS unit," +
         "  MAX(pol.quantity) AS ordered_qty," +
-        "  COALESCE(SUM(iie.quantity_received), 0) AS received_qty";
+        "  COALESCE(SUM(iie.quantity_received), 0) AS received_qty," +
+        "  COALESCE(p.lead_time_days, cat.lead_time_days) AS lead_time_days," +
+        "  CASE WHEN COALESCE(p.lead_time_days, cat.lead_time_days) IS NOT NULL" +
+        "            AND po.status NOT IN ('CANCELLED','COMPLETE INWARD','SHORT CLOSED','SHORT CLOSE')" +
+        "       THEN (DATEDIFF(CURDATE(), po.po_date) - COALESCE(p.lead_time_days, cat.lead_time_days))" +
+        "       ELSE NULL END AS days_overdue";
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -300,6 +306,15 @@ public class PoInwardReconciliationService {
         if (received <= 0)          row.setReconciliationStatus("NOT_STARTED");
         else if (received >= ordered) row.setReconciliationStatus("COMPLETE");
         else                          row.setReconciliationStatus("PARTIAL");
+        // Lead time / overdue (r[10], r[11])
+        if (r.length > 10 && r[10] != null) {
+            row.setLeadTimeDays(((Number) r[10]).intValue());
+        }
+        if (r.length > 11 && r[11] != null) {
+            int daysOverdue = ((Number) r[11]).intValue();
+            row.setDaysOverdue(daysOverdue);
+            row.setIsOverdue(daysOverdue > 0);
+        }
         return row;
     }
 

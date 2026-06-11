@@ -613,6 +613,7 @@ renderCurrentStockField(key) {
               p[key].productId = value?.id || "";
               p[key].productCode = value?.productCode || "";
               p[key].unit = value?.measurementUnit || "";
+              p[key].leadTimeDays = value?.leadTimeDays ?? null;
               p[key].selectedProduct = value;
               if (value) {
                 this.setState({ noinventory: { ...p } }, () => {
@@ -645,6 +646,7 @@ renderCurrentStockField(key) {
               p[key].productId = value?.id || "";
               p[key].productCode = value?.productCode || "";
               p[key].unit = value?.measurementUnit || "";
+              p[key].leadTimeDays = value?.leadTimeDays ?? null;
               p[key].selectedProduct = value;
               if (value) {
                 this.setState({ noinventory: { ...p } }, () => {
@@ -726,6 +728,12 @@ renderCurrentStockField(key) {
               this.setState({ noinventory: { ...p } });
             },
           })}
+          {this.state.noinventory[key]?.leadTimeDays != null && (
+            <div className="lead-time-chip">
+              <span className="lead-time-chip-icon">⏱</span>
+              Lead Time: <strong>{this.state.noinventory[key].leadTimeDays} days</strong>
+            </div>
+          )}
         </div>
       </div>
     );

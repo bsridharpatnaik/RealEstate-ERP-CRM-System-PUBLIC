@@ -1813,3 +1813,22 @@ table {
     }
   }
 }
+// ── Lead time chip ─────────────────────────────────────────────────────────
+
+.lead-time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: #eaf4fb;
+  color: #2980b9;
+  border: 1px solid #aed6f1;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+
+  .lead-time-chip-icon {
+    font-size: 13px;
+  }
+}

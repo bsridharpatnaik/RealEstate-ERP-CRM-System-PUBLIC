@@ -41,4 +41,9 @@ public class Category extends ReusableFields {
     @JsonDeserialize(using = ToSentenceCaseDeserializer.class)
     @Column(name = "categoryDescription")
     String categoryDescription;
+
+    /** Optional lead time in calendar days — applies to all products in this category
+     *  unless overridden at product level. */
+    @Column(name = "lead_time_days")
+    Integer leadTimeDays;
 }

@@ -265,6 +265,13 @@ public class PurchaseOrderController {
         return schemaConfig.getNonMasterSchemaList();
     }
 
+    @GetMapping("/overdue-lines")
+    public Map<String, Object> getOverdueLines(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) throws Exception {
+        return purchaseOrderService.getOverdueLines(page, size);
+    }
+
     @ExceptionHandler({JpaSystemException.class})
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiOnlyMessageAndCodeError sqlError(Exception ex) {

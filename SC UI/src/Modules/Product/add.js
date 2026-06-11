@@ -160,6 +160,11 @@ class Add extends AddForm {
                 this.formData.categoryId = value.id;
               },
             })}
+            {this.renderTextField({
+              fieldname: "leadTimeDays",
+              placeholder: "Lead Time (Days)",
+              type: "number",
+            })}
           </div>
           <div className="flex">{this.renderBatchModeCards()}</div>
           <div className="flex">

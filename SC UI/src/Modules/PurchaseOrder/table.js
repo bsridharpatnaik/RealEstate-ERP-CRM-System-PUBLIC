@@ -154,6 +154,9 @@ class Table extends CommonTable {
         <td data-label="PO Status" className="po-status-cell">
           <div className="po-status-cell-inner">
             <span className={`status-badge ${statusClass}`}>{statusValue}</span>
+            {row.hasOverdueLines && (
+              <span className="overdue-badge" title="One or more line items have exceeded lead time">⚠ Overdue</span>
+            )}
           </div>
         </td>
       );

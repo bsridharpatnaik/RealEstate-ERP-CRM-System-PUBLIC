@@ -51,7 +51,8 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(
 			"SELECT new com.ec.application.data.IdNameAndUnit(" +
-					"   m.productId, m.productName, m.measurementUnit, m.productCode, m.isManagedInventory, m.batchMode" +
+					"   m.productId, m.productName, m.measurementUnit, m.productCode, m.isManagedInventory, m.batchMode," +
+					"   COALESCE(m.leadTimeDays, m.category.leadTimeDays)" +
 					") " +
 					"FROM Product m " +
 					"WHERE (:isManagedInventory IS NULL OR m.isManagedInventory = :isManagedInventory) " +

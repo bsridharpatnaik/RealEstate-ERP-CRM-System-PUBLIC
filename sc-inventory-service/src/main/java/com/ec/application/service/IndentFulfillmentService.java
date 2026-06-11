@@ -40,12 +40,14 @@ public class IndentFulfillmentService {
         "  COALESCE(iie.quantity_pending, 0) AS pending_qty," +
         "  iie.purchaseOrderId AS po_number," +
         "  po.status AS po_status," +
-        "  iie.line_item_status";
+        "  iie.line_item_status," +
+        "  COALESCE(p.lead_time_days, cat.lead_time_days) AS lead_time_days";
 
     private static final String BASE_FROM =
         " FROM indent_inventory ii" +
         " JOIN indent_inventory_entries iie ON iie.indent_id = ii.indent_id AND iie.is_deleted = 0" +
         " JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0" +
+        " LEFT JOIN category cat ON cat.id = p.category_id AND cat.is_deleted = 0" +
         " LEFT JOIN purchase_order po ON po.purchase_order_id = iie.purchaseOrderId AND po.is_deleted = 0" +
         " LEFT JOIN purchase_order_line pol ON pol.po_id = iie.purchaseOrderId" +
         "   AND pol.product_id = iie.productId AND pol.is_deleted = 0" +
@@ -301,6 +303,10 @@ public class IndentFulfillmentService {
         row.setPoNumber(str(r[11]));
         row.setPoStatus(str(r[12]));
         row.setLineItemStatus(str(r[13]));
+        // r[14] = lead_time_days
+        if (r.length > 14 && r[14] != null) {
+            row.setLeadTimeDays(((Number) r[14]).intValue());
+        }
         return row;
     }
 

@@ -1037,6 +1037,12 @@ handleAddFirm = async (firm) => {
                             {this.formatValue(item.inventoryName)} ({this.formatValue(item.unit)})
                           </span>
                         </span>
+                        {item.leadTimeDays != null && (
+                          <div className="lead-time-chip" style={{ marginTop: '4px' }}>
+                            <span className="lead-time-chip-icon">⏱</span>
+                            Lead Time: <strong>{item.leadTimeDays} days</strong>
+                          </div>
+                        )}
                         {item.projectInfo && (
                           <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
                             Projects: {item.projectInfo}

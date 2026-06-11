@@ -28,6 +28,7 @@ import org.springframework.lang.NonNull;
 
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @Entity
@@ -141,4 +142,9 @@ public class PurchaseOrder extends ReusableFields {
 
     @Transient
     Boolean cancellationAllowed;
+
+    /** True when any non-completed line item has exceeded its lead time. Populated at query time. */
+    @Transient
+    @JsonProperty("hasOverdueLines")
+    Boolean hasOverdueLines;
 }

@@ -111,6 +111,7 @@ class Add extends AddForm {
       totalAmt: line.totalAmount != null ? String(line.totalAmount) : "",
       sampleImageFileId: line.sampleImageFileId || null,
       sampleImagePreview: null, // will fall back to download URL in the UI
+      leadTimeDays: line.leadTimeDays ?? null,
     }));
 
     this.formData.fileInformations = Array.from(data.fileInformations || []);
@@ -343,6 +344,7 @@ class Add extends AddForm {
           inventoryName: indent.inventoryName,
           quantity,
           unit: indent.unit || "NOS",
+          leadTimeDays: indent.leadTimeDays ?? null,
           specification: indent.specification || "",
           remarks: indent.remarks || "",
           diameter: "",

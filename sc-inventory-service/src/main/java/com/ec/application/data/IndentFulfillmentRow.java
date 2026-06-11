@@ -35,4 +35,7 @@ public class IndentFulfillmentRow {
     private String poStatus;
     private String lineItemStatus;
 
+    /** Effective lead time (product-level → category-level → null). */
+    private Integer leadTimeDays;
+
 }

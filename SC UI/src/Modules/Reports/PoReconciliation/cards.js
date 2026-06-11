@@ -195,6 +195,17 @@ function PoCard({ purchaseOrderId, project, poDate, poStatus, supplier, lines, t
                   {line.productCode && (
                     <div style={{ fontSize: 11, color: '#a0aec0' }}>{line.productCode}</div>
                   )}
+                  {line.leadTimeDays != null && (
+                    <div style={{ fontSize: 11, marginTop: 2 }}>
+                      {line.isOverdue ? (
+                        <span style={{ color: '#e74c3c', fontWeight: 700 }}>
+                          ⚠ {line.daysOverdue}d overdue (LT {line.leadTimeDays}d)
+                        </span>
+                      ) : (
+                        <span style={{ color: '#7f8c8d' }}>⏱ Lead: {line.leadTimeDays}d</span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Unit */}

@@ -89,4 +89,19 @@ public class PurchaseOrderLine extends ReusableFields {
     @Transient
     @JsonProperty("lineItemStatus")
     private String lineItemStatus;
+
+    /** Effective lead time in days (product override → category fallback). Populated at query time. */
+    @Transient
+    @JsonProperty("leadTimeDays")
+    private Integer leadTimeDays;
+
+    /** Days remaining until lead time expires (negative = overdue). Null when no lead time set. */
+    @Transient
+    @JsonProperty("daysLeft")
+    private Integer daysLeft;
+
+    /** True when daysLeft < 0 and PO is still open. */
+    @Transient
+    @JsonProperty("isOverdue")
+    private Boolean isOverdue;
 }

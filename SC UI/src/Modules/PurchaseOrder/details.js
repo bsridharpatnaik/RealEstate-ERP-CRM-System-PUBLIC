@@ -856,6 +856,7 @@ class Details extends CommonDetails {
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Rate</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Discount</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Tolerance %</TableCell>
+                          <TableCell style={{ whiteSpace: 'nowrap' }}>Days Left</TableCell>
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Rate</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>GST %</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Total</TableCell>}
@@ -961,6 +962,19 @@ class Details extends CommonDetails {
                               )}
                               <TableCell style={{ whiteSpace: 'nowrap' }}>
                                 {tolerancePercent > 0 ? `${tolerancePercent}%` : "-"}
+                              </TableCell>
+                              <TableCell style={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {item.daysLeft != null ? (
+                                  <span
+                                    className={`days-left-chip ${item.isOverdue ? "days-left-overdue" : "days-left-ok"}`}
+                                  >
+                                    {item.isOverdue
+                                      ? `⚠ ${Math.abs(item.daysLeft)}d overdue`
+                                      : `${item.daysLeft}d left`}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#aaa' }}>—</span>
+                                )}
                               </TableCell>
                               {showMoneyFields && (
                                 <>

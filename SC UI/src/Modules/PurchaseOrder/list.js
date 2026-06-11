@@ -372,6 +372,12 @@ class List extends ListCommon {
             attrValue: [this.filterData.isSpecialPo],
           });
         }
+        if (this.filterData.hasOverdueOnly) {
+          params.filterData.push({
+            attrName: "hasOverdueOnly",
+            attrValue: [this.filterData.hasOverdueOnly],
+          });
+        }
 
       // Handle multi-select filters - convert objects to IDs (normalize to array for preset/single values)
       const productNamesArr = Array.isArray(this.filterData.productNames)

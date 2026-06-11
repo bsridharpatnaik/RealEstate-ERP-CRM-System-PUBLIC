@@ -49,6 +49,10 @@ public class Product extends ReusableFields {
     @Column(name = "reorderQuantity")
     Double reorderQuantity;
 
+    /** Optional lead time in calendar days. Overrides category-level lead time when set. */
+    @Column(name = "lead_time_days")
+    Integer leadTimeDays;
+
     @Column(name = "is_managed_inventory", columnDefinition = "boolean default true")
     Boolean isManagedInventory;
 

@@ -264,6 +264,7 @@ export const apiEndpoints = {
   createPurchaseOrder: "/api/inventory/purchase-order/create",
   updatePurchaseOrder: (id) => `/api/inventory/purchase-order/${id}`,
   getPoProjectList: "/api/inventory/purchase-order/project-list",
+  getOverduePOLines: (page = 0, size = 5) => `/api/inventory/purchase-order/overdue-lines?page=${page}&size=${size}`,
   deletePurchaseOrder: "/api/inventory/purchase-order/",
   shortClosePurchaseOrder: "/api/inventory/purchase-order/short-close",
   printPurchaseOrder: (poId, hideMoneyFields = false, includeIndents = false) =>

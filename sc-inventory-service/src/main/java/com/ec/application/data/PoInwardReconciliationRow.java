@@ -33,4 +33,13 @@ public class PoInwardReconciliationRow {
 
     /** Derived status for quick filtering. */
     private String reconciliationStatus; // COMPLETE, PARTIAL, NOT_STARTED, EXCESS
+
+    /** Effective lead time in calendar days (product-level → category-level → null). */
+    private Integer leadTimeDays;
+
+    /** Positive = days past deadline; null when no lead time or PO is terminal. */
+    private Integer daysOverdue;
+
+    /** True when daysOverdue > 0 (lead time exceeded and PO still open). */
+    private Boolean isOverdue;
 }

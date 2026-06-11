@@ -289,8 +289,8 @@ public class ProductService {
      * Bulk-import products from Excel.
      * Columns (0-indexed): 0=Product Name, 1=Product Code, 2=Description,
      *   3=Reorder Level, 4=Measurement Unit, 5=Category, 6=Managed Inventory,
-     *   7=Can Expire, 8=Batch Tracking
-     * Only productName, reorderQuantity, isManagedInventory, batchMode are updated.
+     *   7=Can Expire, 8=Batch Tracking, 9=Lead Time (Days)
+     * Only productName, reorderQuantity, isManagedInventory, batchMode, leadTimeDays are updated.
      * One activity log entry per changed product.
      */
     @Caching(evict = {
@@ -330,7 +330,8 @@ public class ProductService {
                 String productCode  = getCellString(row, 1);
                 String reorderRaw   = getCellString(row, 3);
                 String managedRaw   = getCellString(row, 6);
-                String batchModeRaw = getCellString(row, 8);
+                String batchModeRaw   = getCellString(row, 8);
+                String leadTimeRaw    = getCellString(row, 9);
 
                 // Need at least one identifier
                 if ((productCode == null || productCode.isEmpty()) &&
@@ -424,6 +425,27 @@ public class ProductService {
                         }
                         changes.add("batchMode: " + oldBatchMode + "→" + newBatchMode);
                         product.setBatchMode(newBatchMode);
+                    }
+                }
+
+                // --- leadTimeDays ---
+                if (leadTimeRaw != null && !leadTimeRaw.isEmpty()) {
+                    try {
+                        int ltVal = Integer.parseInt(leadTimeRaw.trim());
+                        if (ltVal < 0) {
+                            errors.add("Row " + (i + 1) + ": Lead time cannot be negative");
+                            skipped++;
+                            continue;
+                        }
+                        Integer oldLt = product.getLeadTimeDays();
+                        if (oldLt == null || oldLt != ltVal) {
+                            changes.add("leadTimeDays: " + oldLt + "→" + ltVal);
+                            product.setLeadTimeDays(ltVal);
+                        }
+                    } catch (NumberFormatException e) {
+                        errors.add("Row " + (i + 1) + ": Invalid lead time '" + leadTimeRaw + "'");
+                        skipped++;
+                        continue;
                     }
                 }
 
