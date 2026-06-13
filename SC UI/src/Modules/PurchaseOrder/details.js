@@ -845,8 +845,8 @@ class Details extends CommonDetails {
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Total</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Discount %</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Tolerance %</TableCell>
-                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Rate</TableCell>}
-                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Rate/Unit</TableCell>}
+                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value</TableCell>}
+                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value/Unit</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>GST %</TableCell>
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>GST Amt</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Amt Incl Tax</TableCell>}
