@@ -82,6 +82,7 @@ function SideMenu(props) {
     props.history.location.pathname === appRoutes.fifoReport ||
     props.history.location.pathname === appRoutes.stockAgingReport ||
     props.history.location.pathname === appRoutes.lowStockReport ||
+    props.history.location.pathname === appRoutes.globalStockReports ||
     props.history.location.pathname === appRoutes.poReconReport ||
     props.history.location.pathname === appRoutes.indentFulfillmentReport
   )
@@ -565,10 +566,10 @@ function SideMenu(props) {
                   linkurl={appRoutes.stockAgingReport}
                 />
                 <DashboardItem
-                  nodeId="63"
-                  labelText="Low Stock Report"
+                  nodeId="68"
+                  labelText="Stock Reports"
                   onClick={props.setSideBarValue}
-                  linkurl={appRoutes.lowStockReport}
+                  linkurl={appRoutes.globalStockReports}
                 />
                 <DashboardItem
                   nodeId="64"

@@ -43,6 +43,7 @@ import {
   FifoReport,
   StockAgingReport,
   LowStockReport,
+  GlobalStockReports,
   PoReconciliationReport,
   IndentFulfillmentReport,
 } from "./../index";
@@ -121,6 +122,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.lowStockReport}>
                   <LowStockReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.globalStockReports}>
+                  <GlobalStockReports key={new Date()} {...props} />
                 </Route>
                 <Route path={appRoutes.poReconReport}>
                   <PoReconciliationReport key={new Date()} {...props} />

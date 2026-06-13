@@ -143,11 +143,20 @@ class List extends ListCommon {
     const response = await this.getData(page, params);
 
     if (response.success) {
-      this.setState({
-        data: response.data.stockInformation.content,
+      const freshRows = response.data.stockInformation.content;
+      const newState = {
+        data: freshRows,
         pages: response.data.stockInformation.totalPages,
         totalRecords: response.data.stockInformation.totalElements,
-      });
+      };
+      // If detail panel is open, refresh selectedData with the updated row
+      if (this.state.showDetails && this.state.selectedData) {
+        const refreshed = freshRows.find(
+          (r) => r.productId === this.state.selectedData.productId
+        );
+        if (refreshed) newState.selectedData = refreshed;
+      }
+      this.setState(newState);
       this.loadExpiryTiles();
     }
   }
@@ -276,6 +285,7 @@ class List extends ListCommon {
               data={this.state.selectedData}
               edit={this.props.edit}
               delete={(row) => this.delete(row)}
+              reloadData={() => this.search(this.page)}
               close={() =>
                 this.setState({ showDetails: false, key: this.state.key + 1 })
               }

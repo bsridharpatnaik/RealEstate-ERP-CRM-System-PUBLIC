@@ -170,4 +170,9 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
     List<Object[]> sumQtyRemainingGroupByProductAndWarehouse(
             @Param("ids") List<Long> productIds,
             @Param("warehouseIds") List<Long> warehouseIds);
+
+    @Query("SELECT b FROM InventoryBatch b " +
+           "WHERE b.warehouse.warehouseName = :warehouseName AND b.isDeleted = false " +
+           "AND b.qtyRemaining > 0")
+    List<InventoryBatch> findActiveByWarehouseName(@Param("warehouseName") String warehouseName);
 }

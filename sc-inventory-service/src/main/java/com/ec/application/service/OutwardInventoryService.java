@@ -667,6 +667,13 @@ public class OutwardInventoryService {
             throw new Exception("Contractor not found.");
         if (!warehouseRepo.existsById(oiData.getWarehouseId()))
             throw new Exception("Warehouse not found.");
+        warehouseRepo.findById(oiData.getWarehouseId()).ifPresent(w -> {
+            if (com.ec.application.constants.ProjectConstants.deadStockWarehouseName
+                    .equalsIgnoreCase(w.getWarehouseName())) {
+                throw new RuntimeException("Outward cannot be created from Dead Stock Warehouse. " +
+                        "Use 'Move from Dead Stock' on the Stock page to transfer stock to another warehouse first.");
+            }
+        });
         if (!usageAreaRepo.existsById(oiData.getUsageAreaId()))
             throw new Exception("Work Area not found.");
 

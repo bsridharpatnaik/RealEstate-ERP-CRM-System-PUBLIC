@@ -295,6 +295,15 @@ export const apiEndpoints = {
   stockSummaryImport: "/api/inventory/stock-summary/import",
   getDeadStockByProduct: "/api/inventory/dead-stock", // Use with ?productId={productId}
   syncDeadStock: "/api/inventory/dead-stock/sync",
+  getStockComments: (productId) => `/api/inventory/stock/${productId}/comments`,
+  addStockComment: (productId) => `/api/inventory/stock/${productId}/comments`,
+  markAsDeadStock: (productId) => `/api/inventory/stock/${productId}/mark-dead-stock`,
+  moveFromDeadStock: (productId) => `/api/inventory/stock/${productId}/move-from-dead-stock`,
+  deadStockReportList: "/api/inventory/dead-stock-report/list?size=500",
+  deadStockReportSync: "/api/inventory/dead-stock-report/sync",
+  deadStockReportDropdowns: "/api/inventory/dead-stock-report/dropdowns",
+  deadStockReportTiles: "/api/inventory/dead-stock-report/tiles",
+  deadStockReportExport: "/api/inventory/dead-stock-report/export/excel",
   getPurchaseOrderPreviousRates: (productId) =>
     `/api/inventory/purchase-orders/previous-rates?productId=${productId}`,
   getProductForDropdown: "/api/inventory/product?size=5000",
@@ -412,6 +421,7 @@ export const appRoutes = {
   fifoReport: "/fifoReport",
   stockAgingReport: "/stockAgingReport",
   lowStockReport: "/lowStockReport",
+  globalStockReports: "/globalStockReports",
   poReconReport: "/poReconReport",
   indentFulfillmentReport: "/indentFulfillmentReport",
 };

@@ -32,6 +32,7 @@ import GlobalBOQView from "./GlobalBOQView";
 import FifoReport from "./Reports/FifoReport";
 import StockAgingReport from "./Reports/StockAging";
 import LowStockReport from "./Reports/LowStock";
+import GlobalStockReports from "./GlobalStockReports";
 import PoReconciliationReport from "./Reports/PoReconciliation";
 import IndentFulfillmentReport from "./Reports/IndentFulfillment";
 export {
@@ -69,6 +70,7 @@ export {
   FifoReport,
   StockAgingReport,
   LowStockReport,
+  GlobalStockReports,
   PoReconciliationReport,
   IndentFulfillmentReport,
 };

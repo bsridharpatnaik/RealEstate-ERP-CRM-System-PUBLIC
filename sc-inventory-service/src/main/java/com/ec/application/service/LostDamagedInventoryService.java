@@ -398,6 +398,13 @@ public class LostDamagedInventoryService {
             throw new Exception("Invalid Product ID");
         if (!warehouseRepo.findById(payload.getWarehouseId()).isPresent())
             throw new Exception("Invalid warehouse ID");
+        warehouseRepo.findById(payload.getWarehouseId()).ifPresent(w -> {
+            if (com.ec.application.constants.ProjectConstants.deadStockWarehouseName
+                    .equalsIgnoreCase(w.getWarehouseName())) {
+                throw new RuntimeException("Lost/Damaged entry cannot be created for Dead Stock Warehouse. " +
+                        "Use 'Move from Dead Stock' on the Stock page to transfer stock first.");
+            }
+        });
         if (payload.getQuantity() <= 0)
             throw new Exception("Quantity should be greater than zero");
     }

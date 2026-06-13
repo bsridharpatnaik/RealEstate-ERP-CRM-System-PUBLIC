@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.IndentInventorySpecification;
 import com.ec.application.Filters.InventoryTransferSpecification;
@@ -48,6 +49,9 @@ public class InventoryTransferService {
     private final PopulateDropdownService populateDropdownService;
     private final InventoryBatchRepository inventoryBatchRepository;
     private final BatchTrackingService batchTrackingService;
+    private final StockCommentService stockCommentService;
+    private final ActivityLogService activityLogService;
+    private final UserDetailsService userDetailsService;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -207,7 +211,55 @@ public class InventoryTransferService {
             }
         }
         boolean fullySuccessful = itemResults.stream().allMatch(TransferItemResult::isSuccess);
+
+        if (!successfulItems.isEmpty()) {
+            logTransferActivity(transfer, sourceWarehouse, targetWarehouse, successfulItems, sourceTenant);
+        }
+
         return new InventoryTransferResult(transfer.getTransferId(), fullySuccessful, itemResults);
+    }
+
+    private void logTransferActivity(InventoryTransfer transfer, Warehouse sourceWarehouse, Warehouse targetWarehouse,
+                                      List<InventoryTransferItem> successfulItems, String sourceTenant) {
+        String user = resolveCurrentUser();
+        boolean involvesDeadStock = ProjectConstants.deadStockWarehouseName.equals(sourceWarehouse.getWarehouseName())
+                || ProjectConstants.deadStockWarehouseName.equals(targetWarehouse.getWarehouseName());
+
+        boolean toDeadStock = ProjectConstants.deadStockWarehouseName.equals(targetWarehouse.getWarehouseName());
+        for (InventoryTransferItem item : successfulItems) {
+            String productName = item.getProductName() != null ? item.getProductName() : "Product";
+            Long productId = item.getProductId();
+
+            try {
+                String desc = com.ec.application.ReusableClasses.ActivityLogDescription.of(
+                        "Transfer #" + transfer.getTransferId() + " — " + user
+                                + " moved " + item.getQuantity() + " units of " + productName
+                                + " from " + sourceWarehouse.getWarehouseName()
+                                + " to " + targetWarehouse.getWarehouseName());
+                activityLogService.record("CREATED", "INVENTORY_TRANSFER",
+                        String.valueOf(transfer.getTransferId()), desc, user);
+            } catch (Exception e) {
+                log.warn("Failed to log activity for transfer item productId={}", productId, e);
+            }
+
+            if (involvesDeadStock) {
+                try {
+                    String commentText = "Transfer #" + transfer.getTransferId() + " — " + user
+                            + " moved " + item.getQuantity() + " units "
+                            + (toDeadStock ? "to Dead Stock Warehouse" : "from Dead Stock Warehouse")
+                            + " on " + new java.text.SimpleDateFormat("dd-MM-yyyy").format(transfer.getTransferDate());
+                    stockCommentService.addSystemComment(productId, productName, commentText, "TRANSFER_AUTO",
+                            transfer.getTransferId());
+                } catch (Exception e) {
+                    log.warn("Failed to create auto stock comment for transfer item productId={}", productId, e);
+                }
+            }
+        }
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     /* =====================================================
