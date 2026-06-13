@@ -56,7 +56,7 @@ class ActivityTable extends CommonTable {
     }
     if (key === 'description') {
       return (
-        <td data-label="Description" style={{ maxWidth: '360px' }}>
+        <td data-label="Description" style={{ maxWidth: '360px', overflow: 'hidden', wordBreak: 'break-word' }}>
           {renderActivityDescription(row.description)}
         </td>
       );

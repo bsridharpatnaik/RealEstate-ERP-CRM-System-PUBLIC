@@ -221,6 +221,11 @@ public class InventoryTransferService {
 
     private void logTransferActivity(InventoryTransfer transfer, Warehouse sourceWarehouse, Warehouse targetWarehouse,
                                       List<InventoryTransferItem> successfulItems, String sourceTenant) {
+        // withTenant() leaves ThreadLocal = null in its finally block.
+        // Restore sourceTenant so activityLogService.record() and stockCommentService
+        // both write to the correct tenant schema.
+        ThreadLocalStorage.setTenantName(sourceTenant);
+
         String user = resolveCurrentUser();
         boolean involvesDeadStock = ProjectConstants.deadStockWarehouseName.equals(sourceWarehouse.getWarehouseName())
                 || ProjectConstants.deadStockWarehouseName.equals(targetWarehouse.getWarehouseName());

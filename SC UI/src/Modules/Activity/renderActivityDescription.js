@@ -64,7 +64,7 @@ export function renderActivityDescription(description) {
       <div>
         {typeBadge && <div style={{ marginBottom: '4px' }}>{typeBadge}</div>}
         <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>{summary}</div>
-        <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: '200px' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', maxWidth: '340px' }}>
           <thead>
             <tr>
               <th style={thStyle}>Product</th>
