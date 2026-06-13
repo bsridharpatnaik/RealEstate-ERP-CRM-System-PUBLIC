@@ -306,8 +306,8 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
         addHeaderCell(table, "Tolerance %", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Net Rate \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Net Rate/Unit \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net Value \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net Value/Unit \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
