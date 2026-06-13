@@ -111,6 +111,9 @@ class Add extends AddForm {
       totalAmt: line.totalAmount != null ? String(line.totalAmount) : "",
       sampleImageFileId: line.sampleImageFileId || null,
       sampleImagePreview: null, // will fall back to download URL in the UI
+      billingUnit: line.billingUnit || null,
+      billingQuantity: line.billingQuantity != null ? line.billingQuantity : null,
+      billingConversionFactor: line.billingConversionFactor != null ? line.billingConversionFactor : null,
     }));
 
     this.formData.fileInformations = Array.from(data.fileInformations || []);
@@ -531,11 +534,14 @@ class Add extends AddForm {
         // Build line updates — quantity and indent refs are preserved by the backend
         const lineUpdates = this.state.items.map((item) => {
           const qty = parseFloat(item.quantity || 0);
+          const billingQty = item.billingUnit && item.billingQuantity
+            ? parseFloat(item.billingQuantity) : null;
+          const calcQty = billingQty !== null ? billingQty : qty;
           const rate = parseFloat(item.rate || 0);
           const discount = parseFloat(item.discount || 0);
           const gst = parseFloat(item.gst || 0);
           const discountedRate = rate - (rate * discount / 100);
-          const netRate = discountedRate * qty;
+          const netRate = discountedRate * calcQty;
           const totalAmount = netRate + (netRate * gst / 100);
           return {
             lineId: item.lineId,
@@ -550,6 +556,9 @@ class Add extends AddForm {
             diameter: item.diameter || "",
             specification: item.specification || "",
             sampleImageFileId: item.sampleImageFileId || null,
+            billingUnit: item.billingUnit || null,
+            billingQuantity: billingQty,
+            billingConversionFactor: item.billingConversionFactor || null,
           };
         });
 
