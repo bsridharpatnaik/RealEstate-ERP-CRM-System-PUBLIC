@@ -112,6 +112,9 @@ class Add extends AddForm {
       sampleImageFileId: line.sampleImageFileId || null,
       sampleImagePreview: null, // will fall back to download URL in the UI
       leadTimeDays: line.leadTimeDays ?? null,
+      billingUnit: line.billingUnit || null,
+      billingQuantity: line.billingQuantity != null ? line.billingQuantity : null,
+      billingConversionFactor: line.billingConversionFactor != null ? line.billingConversionFactor : null,
     }));
 
     this.formData.fileInformations = Array.from(data.fileInformations || []);
@@ -425,10 +428,13 @@ class Add extends AddForm {
           tolerancePercent: parseFloat(item.tolerance || 0),
           gstPercent: parseFloat(item.gst || 0),
           sampleImageFileId: item.sampleImageFileId || null,
+          billingUnit: item.billingUnit || null,
+          billingQuantity: item.billingQuantity || null,
+          billingConversionFactor: item.billingConversionFactor || null,
           indentRefs: [],
         };
       }
-      
+
       // Sum quantities
       groupedItems[productId].quantity += parseFloat(item.quantity || 0);
       
@@ -449,11 +455,15 @@ class Add extends AddForm {
     };
     const lineItems = Object.values(groupedItems).map((item) => {
       const quantity = roundQuantity(item.quantity);
+      // When billing unit selected, rate is per billing unit — calculate on billing qty
+      const calcQty = item.billingUnit && item.billingQuantity
+        ? parseFloat(item.billingQuantity)
+        : quantity;
       const rate = item.rate;
       const discount = item.discountPercent || 0;
       const gstPercent = item.gstPercent;
       const discountedRate = rate - (rate * discount / 100);
-      const netRate = discountedRate * quantity;
+      const netRate = discountedRate * calcQty;
       const totalAmount = netRate + (netRate * gstPercent / 100);
 
       return {
@@ -470,6 +480,9 @@ class Add extends AddForm {
         netRate,
         totalAmount,
         sampleImageFileId: item.sampleImageFileId || null,
+        billingUnit: item.billingUnit || null,
+        billingQuantity: item.billingQuantity ? parseFloat(item.billingQuantity) : null,
+        billingConversionFactor: item.billingConversionFactor || null,
         indentRefs: item.indentRefs,
       };
     });
@@ -525,11 +538,14 @@ class Add extends AddForm {
         // Build line updates — quantity and indent refs are preserved by the backend
         const lineUpdates = this.state.items.map((item) => {
           const qty = parseFloat(item.quantity || 0);
+          const billingQty = item.billingUnit && item.billingQuantity
+            ? parseFloat(item.billingQuantity) : null;
+          const calcQty = billingQty !== null ? billingQty : qty;
           const rate = parseFloat(item.rate || 0);
           const discount = parseFloat(item.discount || 0);
           const gst = parseFloat(item.gst || 0);
           const discountedRate = rate - (rate * discount / 100);
-          const netRate = discountedRate * qty;
+          const netRate = discountedRate * calcQty;
           const totalAmount = netRate + (netRate * gst / 100);
           return {
             lineId: item.lineId,
@@ -544,6 +560,9 @@ class Add extends AddForm {
             diameter: item.diameter || "",
             specification: item.specification || "",
             sampleImageFileId: item.sampleImageFileId || null,
+            billingUnit: item.billingUnit || null,
+            billingQuantity: billingQty,
+            billingConversionFactor: item.billingConversionFactor || null,
           };
         });
 

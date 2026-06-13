@@ -23,6 +23,8 @@ class Step3ReviewPO extends Component {
         groupedItems[productId] = {
           inventoryName: item.inventoryName,
           unit: item.unit || "",
+          billingUnit: item.billingUnit || null,
+          billingQuantity: item.billingQuantity || null,
           diameter: item.diameter || "",
           size: item.size || "",
           brandName: item.brandName || "",
@@ -41,14 +43,21 @@ class Step3ReviewPO extends Component {
     });
 
     return Object.values(groupedItems).map((item) => {
-      const qty = item.quantity;
+      // Use billing qty for calculation when billing unit is active
+      const qty = item.billingUnit && item.billingQuantity
+        ? parseFloat(item.billingQuantity)
+        : item.quantity;
       const rate = item.rate;
       const discount = item.discount;
       const gst = item.gst;
       const discountedRate = rate - (rate * discount) / 100;
       const netRate = discountedRate * qty;
       const totalAmt = netRate + (netRate * gst) / 100;
-      return { ...item, netRate, totalAmt };
+      // Display qty: billing qty with unit, else base qty
+      const displayQty = item.billingUnit
+        ? `${item.billingQuantity} ${item.billingUnit} (= ${item.quantity} ${item.unit})`
+        : `${item.quantity} ${item.unit}`;
+      return { ...item, qty, netRate, totalAmt, displayQty };
     });
   }
 
@@ -227,7 +236,7 @@ class Step3ReviewPO extends Component {
                     <td>{this.formatValue(item.brandName)}</td>
                     <td>{this.formatValue(item.grade)}</td>
                     <td className="review-spec-cell">{this.formatValue(item.specification)}</td>
-                    <td className="text-right">{item.quantity}</td>
+                    <td className="text-right">{item.displayQty || item.quantity}</td>
                     <td className="text-right">{this.formatCurrency(item.rate)}</td>
                     <td className="text-right">{item.discount > 0 ? `${item.discount}%` : "-"}</td>
                     <td className="text-right">{item.tolerance > 0 ? `${item.tolerance}%` : "-"}</td>

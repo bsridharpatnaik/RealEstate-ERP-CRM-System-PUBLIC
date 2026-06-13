@@ -24,9 +24,12 @@ import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.data.AllTenantReorderConfigDTO;
 import com.ec.application.data.ProductCreateData;
 import com.ec.application.data.TenantReorderSaveRequest;
+import com.ec.application.data.ProductUnitConversionDTO;
 import com.ec.application.model.Product;
+import com.ec.application.model.ProductUnitConversion;
 import com.ec.application.service.ProductService;
 import com.ec.application.service.ProductTenantConfigService;
+import com.ec.application.service.ProductUnitConversionService;
 import com.ec.application.Filters.FilterDataList;
 
 @RestController
@@ -37,6 +40,9 @@ public class ProductController {
 
     @Autowired
     ProductTenantConfigService productTenantConfigService;
+
+    @Autowired
+    ProductUnitConversionService productUnitConversionService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
@@ -181,6 +187,32 @@ public class ProductController {
                     .body(java.util.Collections.singletonMap("message",
                             "Import failed: " + e.getMessage()));
         }
+    }
+
+    // ── Unit Conversion endpoints ──────────────────────────────────────────────
+
+    @GetMapping("/{id}/unit-conversions")
+    public List<ProductUnitConversionDTO> getUnitConversions(@PathVariable Long id) {
+        return productUnitConversionService.getConversions(id);
+    }
+
+    @PostMapping("/{id}/unit-conversions")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public ProductUnitConversion addUnitConversion(
+            @PathVariable Long id,
+            @RequestBody ProductUnitConversion body) {
+        return productUnitConversionService.addConversion(id, body.getUnitName(), body.getConversionFactor());
+    }
+
+    @DeleteMapping("/{id}/unit-conversions/{conversionId}")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public ResponseEntity<Void> deleteUnitConversion(
+            @PathVariable Long id,
+            @PathVariable Long conversionId) {
+        productUnitConversionService.deleteConversion(conversionId);
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(

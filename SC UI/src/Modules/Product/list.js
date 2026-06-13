@@ -19,6 +19,8 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
+import UnitConversionConfig from "./UnitConversionConfig";
+import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
 //misc
 import { apiEndpoints, exportURL } from "./../../endpoints";
 import * as XLSX from "xlsx";
@@ -38,6 +40,7 @@ class List extends ListCommon {
     data: [],
     options: [],
     tenantConfigProduct: null,
+    unitConversionProduct: null,
     importDialogOpen: false,
     importResult: null,
     importLoading: false,
@@ -217,6 +220,12 @@ class List extends ListCommon {
             title: "Reorder Overrides",
             icon: <SettingsIcon style={{ fontSize: 18 }} />,
             onClick: (row) => this.setState({ tenantConfigProduct: row }),
+          },
+          {
+            key: "unit-conversions",
+            title: "Billing Unit Conversions",
+            icon: <SwapHorizIcon style={{ fontSize: 18 }} />,
+            onClick: (row) => this.setState({ unitConversionProduct: row }),
           },
         ]
       : [];
@@ -423,6 +432,13 @@ class List extends ListCommon {
             )}
           </DialogActions>
         </Dialog>
+
+        {this.state.unitConversionProduct && (
+          <UnitConversionConfig
+            product={this.state.unitConversionProduct}
+            onClose={() => this.setState({ unitConversionProduct: null })}
+          />
+        )}
       </div>
     );
   }
