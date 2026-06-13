@@ -29,4 +29,5 @@ public class ProductCreateData {
     Boolean isExpirable;
     /** New batch tracking mode. Supersedes isExpirable. */
     BatchMode batchMode;
+    Integer leadTimeDays;
 }

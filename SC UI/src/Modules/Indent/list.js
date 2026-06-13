@@ -65,8 +65,6 @@ class List extends ListCommon {
       "Indent. No.",
       "Project",
       "Indent Date",
-      "Expected Date",
-      "Days Left",
       "Inventory Count",
       "PO Numbers",
       "Status",

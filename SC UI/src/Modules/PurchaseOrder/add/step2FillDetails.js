@@ -1208,44 +1208,58 @@ handleAddFirm = async (firm) => {
 
                           return (
                             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                              {/* Unit selector — only when alternate units configured */}
                               {hasAlternateUnits ? (
-                                <select
-                                  value={selectedBillingUnit}
-                                  onChange={(e) =>
-                                    this.handleBillingUnitChange(index, e.target.value, conversions, baseUnit)
-                                  }
-                                  style={{
-                                    fontSize: 12,
-                                    padding: "5px 6px",
-                                    border: "1px solid #ccc",
-                                    borderRadius: 4,
-                                    width: "100%",
-                                    height: 34,
-                                    background: "#fff",
-                                  }}
-                                >
-                                  <option value={baseUnit}>{baseUnit}</option>
-                                  {conversions.map((c) => (
-                                    <option key={c.id} value={c.unitName}>{c.unitName}</option>
-                                  ))}
-                                </select>
+                                <>
+                                  {/* Unit dropdown when alternate units configured */}
+                                  <select
+                                    value={selectedBillingUnit}
+                                    onChange={(e) =>
+                                      this.handleBillingUnitChange(index, e.target.value, conversions, baseUnit)
+                                    }
+                                    style={{
+                                      fontSize: 12,
+                                      padding: "5px 6px",
+                                      border: "1px solid #ccc",
+                                      borderRadius: 4,
+                                      width: "100%",
+                                      height: 34,
+                                      background: "#fff",
+                                    }}
+                                  >
+                                    <option value={baseUnit}>{baseUnit}</option>
+                                    {conversions.map((c) => (
+                                      <option key={c.id} value={c.unitName}>{c.unitName}</option>
+                                    ))}
+                                  </select>
+                                  {/* Qty — billing qty when billing unit active, base qty otherwise */}
+                                  <TextField
+                                    value={item.billingUnit ? (item.billingQuantity || "") : (item.quantity || "")}
+                                    size="small"
+                                    variant="outlined"
+                                    type="number"
+                                    disabled
+                                    inputProps={{ style: { fontSize: "12px", padding: "6px 8px" } }}
+                                  />
+                                  {/* Base qty reference when billing unit is active */}
+                                  {item.billingUnit && (
+                                    <div style={{ fontSize: 10, color: "#888", lineHeight: 1.2 }}>
+                                      = {item.quantity || 0} {baseUnit}
+                                    </div>
+                                  )}
+                                </>
                               ) : (
-                                <span style={{ fontSize: 11, color: "#666", paddingBottom: 2 }}>{baseUnit}</span>
-                              )}
-                              {/* Quantity — billing qty when unit selected, base qty otherwise */}
-                              <TextField
-                                value={item.billingUnit ? (item.billingQuantity || "") : (item.quantity || "")}
-                                size="small"
-                                variant="outlined"
-                                type="number"
-                                disabled
-                                inputProps={{ style: { fontSize: "12px", padding: "6px 8px" } }}
-                              />
-                              {/* Base qty reference when billing unit is active */}
-                              {item.billingUnit && (
-                                <div style={{ fontSize: 10, color: "#888", lineHeight: 1.2 }}>
-                                  = {item.quantity || 0} {baseUnit}
+                                /* No conversions — qty and unit inline */
+                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <TextField
+                                    value={item.quantity || ""}
+                                    size="small"
+                                    variant="outlined"
+                                    type="number"
+                                    disabled
+                                    inputProps={{ style: { fontSize: "12px", padding: "6px 8px" } }}
+                                    style={{ width: 80 }}
+                                  />
+                                  <span style={{ fontSize: 12, color: "#555", whiteSpace: "nowrap" }}>{baseUnit}</span>
                                 </div>
                               )}
                             </div>

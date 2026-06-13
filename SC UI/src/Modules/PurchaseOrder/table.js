@@ -37,7 +37,7 @@ class Table extends CommonTable {
             </th>
           );
         })}
-        <th colSpan="2" className="action">
+        <th colSpan="3" className="action">
           {messages.common.action}
         </th>
       </tr>
@@ -52,7 +52,7 @@ class Table extends CommonTable {
     // When delete is NOT available, center the single action under the full Action column
     if (!isDeleteAvailable) {
       return (
-        <td data-label="Action" className="action-single" colSpan="2">
+        <td data-label="Action" className="action-single" colSpan="3">
           <Tooltip title="View">
             <IconButton
               aria-label="view"
@@ -88,6 +88,8 @@ class Table extends CommonTable {
               <img src={eyeIcon} alt="View" style={{ width: 15, height: 15 }} />
             </IconButton>
           </Tooltip>
+        </td>
+        <td data-label="Edit" className="action-edit">
           {isEditAvailable && (
             <Tooltip title="Edit">
               <IconButton
@@ -209,7 +211,7 @@ class Table extends CommonTable {
     if (rows.length === 0) {
       return (
         <tr>
-          <td colSpan={keys.length + 2}>{messages.common.noRecords}</td>
+          <td colSpan={keys.length + 3}>{messages.common.noRecords}</td>
         </tr>
       );
     }

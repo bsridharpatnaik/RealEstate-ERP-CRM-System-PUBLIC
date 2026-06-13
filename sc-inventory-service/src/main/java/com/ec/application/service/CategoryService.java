@@ -85,6 +85,8 @@ public class CategoryService {
             throw new Exception("Category with same Name already exists");
         }
 
+        CategoryForUpdate.setLeadTimeDays(newCategory.getLeadTimeDays());
+
         return categoryRepo.save(CategoryForUpdate);
 
     }

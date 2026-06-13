@@ -448,14 +448,15 @@
 
         // Action header and cells: centered, buttons close together
         th.action {
-          min-width: 70px;
-          width: 70px;
+          min-width: 100px;
+          width: 100px;
           text-align: center;
           padding-right: 0;
         }
 
         // Action columns: black icons, right-aligned, close together
         .action-view,
+        .action-edit,
         .action-delete {
           width: 28px;
           min-width: 28px;
@@ -536,8 +537,9 @@
           }
         }
 
-        // View: keep compact
-        .action-view {
+        // View and Edit: keep compact
+        .action-view,
+        .action-edit {
           padding-right: 0;
 
           .MuiIconButton-root {

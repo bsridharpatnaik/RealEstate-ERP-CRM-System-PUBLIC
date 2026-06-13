@@ -122,6 +122,7 @@ public class ProductService {
             product.setIsManagedInventory(payload.getIsManagedInventory());
         }
         product.setBatchMode(resolveBatchMode(payload));
+        product.setLeadTimeDays(payload.getLeadTimeDays());
         return product;
     }
 
@@ -200,6 +201,7 @@ public class ProductService {
         BatchMode existingBatchMode = product.getBatchMode() != null ? product.getBatchMode() : BatchMode.NONE;
         checkBatchModeChangeAllowed(product.getProductId(), existingBatchMode, newBatchMode);
         product.setBatchMode(newBatchMode);
+        product.setLeadTimeDays(payload.getLeadTimeDays());
 
         Product saved = productRepo.save(product);
 

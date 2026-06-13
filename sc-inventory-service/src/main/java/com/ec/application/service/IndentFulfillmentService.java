@@ -47,7 +47,7 @@ public class IndentFulfillmentService {
         " FROM indent_inventory ii" +
         " JOIN indent_inventory_entries iie ON iie.indent_id = ii.indent_id AND iie.is_deleted = 0" +
         " JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0" +
-        " LEFT JOIN category cat ON cat.id = p.category_id AND cat.is_deleted = 0" +
+        " LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
         " LEFT JOIN purchase_order po ON po.purchase_order_id = iie.purchaseOrderId AND po.is_deleted = 0" +
         " LEFT JOIN purchase_order_line pol ON pol.po_id = iie.purchaseOrderId" +
         "   AND pol.product_id = iie.productId AND pol.is_deleted = 0" +
@@ -115,7 +115,7 @@ public class IndentFulfillmentService {
 
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
         WhereClause wc = buildWhere(filters);
-        String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_date DESC, ii.indent_id ASC, p.product_name ASC";
+        String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_id DESC, p.product_name ASC";
         Query q = em.createNativeQuery(sql);
         applyParams(q, wc.params);
 
@@ -270,7 +270,7 @@ public class IndentFulfillmentService {
             else if ("pendingQty".equals(prop))    col = "iie.quantity_pending";
             return " ORDER BY " + col + " " + order.getDirection().name();
         }
-        return " ORDER BY ii.indent_date DESC, ii.indent_id ASC, p.product_name ASC";
+        return " ORDER BY ii.indent_id DESC, p.product_name ASC";
     }
 
     private void applyParams(Query q, Map<String, Object> params) {
