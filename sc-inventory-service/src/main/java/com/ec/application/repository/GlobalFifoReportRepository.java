@@ -58,15 +58,16 @@ public interface GlobalFifoReportRepository
     @Query("SELECT DISTINCT r.productId FROM GlobalFifoReport r WHERE r.tenantSchema = :tenantSchema")
     List<Long> findDistinctProductIdsByTenantSchema(@Param("tenantSchema") String tenantSchema);
 
-    /** Bulk-update productName + measurementUnit for all rows of a given (tenant, product). */
+    /** Bulk-update productName, measurementUnit, and category for all rows of a given (tenant, product). */
     @Modifying
     @Transactional
-    @Query("UPDATE GlobalFifoReport r SET r.productName = :productName, r.measurementUnit = :unit " +
+    @Query("UPDATE GlobalFifoReport r SET r.productName = :productName, r.measurementUnit = :unit, r.category = :category " +
            "WHERE r.tenantSchema = :tenantSchema AND r.productId = :productId")
     void updateProductMetadata(@Param("tenantSchema") String tenantSchema,
                                @Param("productId") Long productId,
                                @Param("productName") String productName,
-                               @Param("unit") String unit);
+                               @Param("unit") String unit,
+                               @Param("category") String category);
 
     /** Distinct values for filter dropdowns. */
     @Query("SELECT DISTINCT r.productName FROM GlobalFifoReport r WHERE r.productName IS NOT NULL ORDER BY r.productName")

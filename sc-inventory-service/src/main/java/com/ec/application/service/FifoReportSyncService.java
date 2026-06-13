@@ -161,7 +161,8 @@ public class FifoReportSyncService {
                     globalFifoReportRepository.updateProductMetadata(
                             tenantSchema, pid,
                             p.getProductName() != null ? p.getProductName() : "Unknown",
-                            p.getMeasurementUnit());
+                            p.getMeasurementUnit(),
+                            p.getCategory() != null ? p.getCategory().getCategoryName() : null);
                 }
             }
             log.info("Metadata refresh done for {}. Products updated: {}", tenantSchema, allSyncedProductIds.size());

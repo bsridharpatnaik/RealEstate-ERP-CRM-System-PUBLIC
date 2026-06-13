@@ -58,6 +58,9 @@ public class GlobalFifoReport {
     @Column(length = 20)
     private String measurementUnit;
 
+    @Column(length = 100)
+    private String category;
+
     @Column(nullable = false)
     private Long warehouseId;
 
