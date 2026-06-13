@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -30,7 +29,8 @@ public class DeadStockSyncService {
     @PersistenceContext
     private EntityManager em;
 
-    @Transactional
+    // No @Transactional — routing DataSource picks schema per-query via ThreadLocalStorage.
+    // A wrapping transaction would bind to masterschema at start, before setTenantName runs.
     public void syncSingleTenant(String tenantSchema) {
         String masterSchema = schemaConfig.getMasterSchema();
         log.info("Starting dead stock sync for tenant: {}", tenantSchema);
@@ -42,7 +42,7 @@ public class DeadStockSyncService {
                     .filter(s -> s.getQuantityInHand() != null && s.getQuantityInHand() > 0)
                     .collect(Collectors.toList());
 
-            // Step 2: Delete existing rows atomically (covered by @Transactional)
+            // Step 2: Delete existing rows for this tenant in master
             ThreadLocalStorage.setTenantName(masterSchema);
             deadStockRepo.deleteByTenantSchema(tenantSchema);
 

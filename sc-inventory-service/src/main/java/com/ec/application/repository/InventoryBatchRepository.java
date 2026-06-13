@@ -175,4 +175,8 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
            "WHERE b.warehouse.warehouseName = :warehouseName AND b.isDeleted = false " +
            "AND b.qtyRemaining > 0")
     List<InventoryBatch> findActiveByWarehouseName(@Param("warehouseName") String warehouseName);
+
+    /** All active batches with a non-null expiryDate and remaining stock — for expired stock report sync */
+    @Query("SELECT b FROM InventoryBatch b WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 AND b.isDeleted = false")
+    List<InventoryBatch> findAllWithExpiryAndStock();
 }

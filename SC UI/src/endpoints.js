@@ -304,6 +304,11 @@ export const apiEndpoints = {
   deadStockReportDropdowns: "/api/inventory/dead-stock-report/dropdowns",
   deadStockReportTiles: "/api/inventory/dead-stock-report/tiles",
   deadStockReportExport: "/api/inventory/dead-stock-report/export/excel",
+  expiredStockReportList: "/api/inventory/expired-stock/list?size=500",
+  expiredStockReportSync: "/api/inventory/expired-stock/sync",
+  expiredStockReportDropdowns: "/api/inventory/expired-stock/dropdowns",
+  expiredStockReportTiles: "/api/inventory/expired-stock/tiles",
+  expiredStockReportExport: "/api/inventory/expired-stock/export/excel",
   getPurchaseOrderPreviousRates: (productId) =>
     `/api/inventory/purchase-orders/previous-rates?productId=${productId}`,
   getProductForDropdown: "/api/inventory/product?size=5000",
