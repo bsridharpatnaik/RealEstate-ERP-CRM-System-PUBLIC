@@ -31,7 +31,13 @@ class Print extends Component {
             </tr>
             {items.map((item, index) => {
               const productName = item.product?.name || item.product?.productName || "-";
-              const quantity = item.quantity || 0;
+              const quantity = item.billingUnit
+                ? item.billingQuantity || 0
+                : item.quantity || 0;
+              const baseUnit = item.product?.measurementUnit || "";
+              const unitLabel = item.billingUnit
+                ? `${item.billingUnit} (= ${item.quantity || 0} ${baseUnit})`
+                : baseUnit;
               const rate = parseFloat(item.rate || 0);
               const gstPercent = parseFloat(item.gstPercent || 0);
               const netRate = parseFloat(item.netRate || 0);
@@ -50,7 +56,7 @@ class Print extends Component {
                   <td className="no">{index + 1}</td>
                   <td className="product">{productName}</td>
                   <td className="details">{details || "-"}</td>
-                  <td className="quantity">{quantity}</td>
+                  <td className="quantity">{quantity}{unitLabel ? ` ${unitLabel}` : ""}</td>
                   {showMoneyFields && (
                     <>
                       <td className="rate">Rs. {rate.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>

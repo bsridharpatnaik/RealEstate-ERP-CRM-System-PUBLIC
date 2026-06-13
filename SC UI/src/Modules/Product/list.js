@@ -9,6 +9,8 @@ import SettingsIcon from "@material-ui/icons/Settings";
 //component
 import Table from "./../../Shared/Table";
 import TenantReorderConfig from "./TenantReorderConfig";
+import UnitConversionConfig from "./UnitConversionConfig";
+import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
 //misc
 import { apiEndpoints, exportURL } from "./../../endpoints";
 import * as XLSX from "xlsx";
@@ -22,7 +24,7 @@ class List extends ListCommon {
   deleteUrl = apiEndpoints.individualProduct;
   title = messages.common.product;
 
-  state = { data: [], options: [], tenantConfigProduct: null };
+  state = { data: [], options: [], tenantConfigProduct: null, unitConversionProduct: null };
   tableData = {
     headers: [
       messages.common.inventory,
@@ -118,6 +120,12 @@ class List extends ListCommon {
             icon: <SettingsIcon style={{ fontSize: 18 }} />,
             onClick: (row) => this.setState({ tenantConfigProduct: row }),
           },
+          {
+            key: "unit-conversions",
+            title: "Billing Unit Conversions",
+            icon: <SwapHorizIcon style={{ fontSize: 18 }} />,
+            onClick: (row) => this.setState({ unitConversionProduct: row }),
+          },
         ]
       : [];
 
@@ -163,6 +171,13 @@ class List extends ListCommon {
           <TenantReorderConfig
             product={tenantConfigProduct}
             onClose={() => this.setState({ tenantConfigProduct: null })}
+          />
+        )}
+
+        {this.state.unitConversionProduct && (
+          <UnitConversionConfig
+            product={this.state.unitConversionProduct}
+            onClose={() => this.setState({ unitConversionProduct: null })}
           />
         )}
       </div>

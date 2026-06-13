@@ -421,10 +421,13 @@ class Add extends AddForm {
           tolerancePercent: parseFloat(item.tolerance || 0),
           gstPercent: parseFloat(item.gst || 0),
           sampleImageFileId: item.sampleImageFileId || null,
+          billingUnit: item.billingUnit || null,
+          billingQuantity: item.billingQuantity || null,
+          billingConversionFactor: item.billingConversionFactor || null,
           indentRefs: [],
         };
       }
-      
+
       // Sum quantities
       groupedItems[productId].quantity += parseFloat(item.quantity || 0);
       
@@ -445,11 +448,15 @@ class Add extends AddForm {
     };
     const lineItems = Object.values(groupedItems).map((item) => {
       const quantity = roundQuantity(item.quantity);
+      // When billing unit selected, rate is per billing unit — calculate on billing qty
+      const calcQty = item.billingUnit && item.billingQuantity
+        ? parseFloat(item.billingQuantity)
+        : quantity;
       const rate = item.rate;
       const discount = item.discountPercent || 0;
       const gstPercent = item.gstPercent;
       const discountedRate = rate - (rate * discount / 100);
-      const netRate = discountedRate * quantity;
+      const netRate = discountedRate * calcQty;
       const totalAmount = netRate + (netRate * gstPercent / 100);
 
       return {
@@ -466,6 +473,9 @@ class Add extends AddForm {
         netRate,
         totalAmount,
         sampleImageFileId: item.sampleImageFileId || null,
+        billingUnit: item.billingUnit || null,
+        billingQuantity: item.billingQuantity ? parseFloat(item.billingQuantity) : null,
+        billingConversionFactor: item.billingConversionFactor || null,
         indentRefs: item.indentRefs,
       };
     });

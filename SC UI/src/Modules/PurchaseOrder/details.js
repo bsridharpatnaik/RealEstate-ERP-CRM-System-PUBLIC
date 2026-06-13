@@ -839,6 +839,7 @@ class Details extends CommonDetails {
                         <TableRow>
                           <TableCell>Inventory</TableCell>
                           {hasImages && <TableCell style={{ textAlign: 'center' }}>Sample Image</TableCell>}
+                          <TableCell style={{ whiteSpace: 'nowrap' }}>Qty / UOM</TableCell>
                           <TableCell>Status</TableCell>
                           <TableCell>Exp. Date</TableCell>
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Rate</TableCell>}
@@ -870,8 +871,17 @@ class Details extends CommonDetails {
                           const gstAmt = netRate * gstPercent / 100;
                           const totalAmount = parseFloat(item.totalAmount || 0);
 
-                          const quantityText = quantity
-                            ? `${quantity} ${item.unit || ""}`.trim()
+                          // Show billing unit/qty when PO was created in alternate unit
+                          const baseUnit = item.product?.measurementUnit || item.unit || "";
+                          const displayQty = item.billingUnit
+                            ? item.billingQuantity
+                            : quantity;
+                          const displayUnit = item.billingUnit || baseUnit;
+                          const quantityText = displayQty
+                            ? `${displayQty} ${displayUnit}`.trim()
+                            : "";
+                          const baseQtyNote = item.billingUnit
+                            ? ` (= ${quantity} ${baseUnit})`.trim()
                             : "";
                           const details = [
                             item.brand && `Brand Name: ${item.brand}`,
@@ -881,7 +891,7 @@ class Details extends CommonDetails {
                               `Spec: ${item.specification}`,
                           ].filter(Boolean);
                           const inventoryDetails = quantityText
-                            ? [quantityText, ...details].join(", ")
+                            ? [quantityText + baseQtyNote, ...details].join(", ")
                             : details.join(", ");
 
                           const status = data.status || "Complete Inward";
@@ -890,9 +900,9 @@ class Details extends CommonDetails {
                             <TableRow key={index}>
                               <TableCell className="inventory-cell">
                                 <div className="inventory-name">{productName}</div>
-                                {inventoryDetails && (
+                                {details.length > 0 && (
                                   <div className="inventory-details">
-                                    {inventoryDetails}
+                                    {details.join(", ")}
                                   </div>
                                 )}
                               </TableCell>
@@ -909,6 +919,12 @@ class Details extends CommonDetails {
                                   ) : (item.sampleImageFileId ? "Loading…" : "-")}
                                 </TableCell>
                               )}
+                              <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                <div>{displayQty} {displayUnit}</div>
+                                {item.billingUnit && (
+                                  <div style={{ fontSize: 11, color: '#888' }}>= {quantity} {baseUnit}</div>
+                                )}
+                              </TableCell>
                               <TableCell>
                                 <span
                                   className={`status-badge-table status-${status
@@ -941,7 +957,7 @@ class Details extends CommonDetails {
                                     Rs. {netRate.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </TableCell>
                                   <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                    Rs. {(quantity > 0 ? netRate / quantity : 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    Rs. {(displayQty > 0 ? netRate / displayQty : 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </TableCell>
                                 </>
                               )}

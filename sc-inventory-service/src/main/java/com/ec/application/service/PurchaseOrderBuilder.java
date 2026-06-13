@@ -79,6 +79,9 @@ public class PurchaseOrderBuilder {
         line.setTotalAmount(itemReq.getTotalAmount());
         line.setTolerancePercent(itemReq.getTolerancePercent() != null ? itemReq.getTolerancePercent() : 0.0);
         line.setSampleImageFileId(itemReq.getSampleImageFileId());
+        line.setBillingUnit(itemReq.getBillingUnit());
+        line.setBillingQuantity(itemReq.getBillingQuantity());
+        line.setBillingConversionFactor(itemReq.getBillingConversionFactor());
         for (IndentLineRefRequest indentRef : itemReq.getIndentRefs()) {
             PurchaseOrderIndentRef ref = buildIndentRef(indentRef);
             ref.setPoLine(line);

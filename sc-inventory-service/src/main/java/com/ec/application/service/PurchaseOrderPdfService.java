@@ -327,7 +327,13 @@ public class PurchaseOrderPdfService {
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
                     ? "\nSpec: " + line.getSpecification() : "");
 
-            double qty = line.getQuantity() != null ? line.getQuantity() : 0.0;
+            boolean hasBillingUnit = notBlank(line.getBillingUnit());
+            // Display qty and UOM: use billing unit/qty when set, else base qty/unit
+            double qty = hasBillingUnit && line.getBillingQuantity() != null
+                    ? line.getBillingQuantity()
+                    : (line.getQuantity() != null ? line.getQuantity() : 0.0);
+            String uom = hasBillingUnit ? line.getBillingUnit() : product.getMeasurementUnit();
+
             double rate = line.getRate() != null ? line.getRate() : 0.0;
             double discPct = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
             double tolPct  = line.getTolerancePercent() != null ? line.getTolerancePercent() : 0.0;
@@ -336,9 +342,16 @@ public class PurchaseOrderPdfService {
             double taxable = line.getNetRate() != null ? line.getNetRate() : 0.0;
             double gstAmt = taxable * gstPct / 100.0;
             double amtInclTax = line.getTotalAmount() != null ? line.getTotalAmount() : 0.0;
-String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : fmt(tolPct)) + "%" : "-";
+            String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : fmt(tolPct)) + "%" : "-";
 
-            addBodyCell(table, desc, normalFont);
+            // Append base qty note to description when billing unit differs from base unit
+            String fullDesc = desc;
+            if (hasBillingUnit) {
+                double baseQty = line.getQuantity() != null ? line.getQuantity() : 0.0;
+                fullDesc += "\n(= " + fmt(baseQty) + " " + product.getMeasurementUnit() + ")";
+            }
+
+            addBodyCell(table, fullDesc, normalFont);
 
             // Sample image cell — only added when the column is shown
             if (hasImages) {
@@ -366,7 +379,7 @@ String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : 
             }
 
             addBodyCell(table, fmt(qty), normalFont);
-            addBodyCell(table, product.getMeasurementUnit(), normalFont);
+            addBodyCell(table, uom != null ? uom : "", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(grossTotal), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : (discPct > 0 ? (discPct % 1 == 0 ? String.valueOf((int) discPct) : fmt(discPct)) + "%" : "-"), normalFont);
