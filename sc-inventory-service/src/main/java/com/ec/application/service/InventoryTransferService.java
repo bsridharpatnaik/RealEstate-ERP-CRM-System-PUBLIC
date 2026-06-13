@@ -537,9 +537,15 @@ public class InventoryTransferService {
     }
 
     /**
-     * Creates target batches for a transfer.
-     * Populates {@code createdIds} incrementally — each ID is added immediately after its save —
-     * so the caller's compensation path can soft-delete partial creates even if this method throws mid-loop.
+     * Creates (or merges into existing) target batches for a transfer.
+     *
+     * Upsert rule: if a non-deleted batch already exists at (product, targetWarehouse)
+     * with the same lot#, brand, expiryDate (day-truncated), and receivedDate (day-truncated),
+     * add qty to it instead of creating a duplicate. This handles repeated dead-stock marking
+     * of the same physical batch, and repeated same-source transfers to the same warehouse.
+     *
+     * Populates {@code createdIds} only for genuinely NEW batches — used by the compensation
+     * path to soft-delete partial creates on rollback.
      */
     private void createTargetBatchesForTransfer(
             Long productId, Long targetWarehouseId, List<TransferredBatchData> transferredBatches,
@@ -548,20 +554,72 @@ public class InventoryTransferService {
         if (transferredBatches.isEmpty()) return;
         Warehouse targetWarehouse = warehouseRepo.findById(targetWarehouseId)
                 .orElseThrow(() -> new IllegalArgumentException("Warehouse not found: " + targetWarehouseId));
+
+        // Load existing batches at target once — used for upsert matching
+        List<InventoryBatch> existingBatches =
+                inventoryBatchRepository.findAllActiveByProductAndWarehouse(productId, targetWarehouseId);
+
         for (TransferredBatchData td : transferredBatches) {
-            InventoryBatch targetBatch = new InventoryBatch();
-            targetBatch.setInwardId(0L); // sentinel: transfer-origin batch
-            targetBatch.setProduct(product);
-            targetBatch.setWarehouse(targetWarehouse);
-            targetBatch.setBrand(td.brand);
-            targetBatch.setLotNumber(td.lotNumber);
-            targetBatch.setExpiryDate(td.expiryDate);
-            targetBatch.setReceivedDate(td.receivedDate);
-            targetBatch.setQtyReceived(td.qty);
-            targetBatch.setQtyRemaining(td.qty);
-            InventoryBatch saved = inventoryBatchRepository.save(targetBatch);
-            createdIds.add(saved.getBatchId()); // incremental — visible to compensation even on throw
+            InventoryBatch match = findMatchingBatch(existingBatches, td);
+            if (match != null) {
+                // Upsert: add qty to existing batch instead of creating a duplicate
+                match.setQtyReceived(match.getQtyReceived() + td.qty);
+                match.setQtyRemaining(match.getQtyRemaining() + td.qty);
+                inventoryBatchRepository.save(match);
+                // Do NOT add to createdIds — compensation must not soft-delete a pre-existing batch
+            } else {
+                InventoryBatch targetBatch = new InventoryBatch();
+                targetBatch.setInwardId(0L); // sentinel: transfer-origin batch
+                targetBatch.setProduct(product);
+                targetBatch.setWarehouse(targetWarehouse);
+                targetBatch.setBrand(td.brand);
+                targetBatch.setLotNumber(td.lotNumber);
+                targetBatch.setExpiryDate(td.expiryDate);
+                targetBatch.setReceivedDate(td.receivedDate);
+                targetBatch.setQtyReceived(td.qty);
+                targetBatch.setQtyRemaining(td.qty);
+                InventoryBatch saved = inventoryBatchRepository.save(targetBatch);
+                createdIds.add(saved.getBatchId()); // incremental — visible to compensation even on throw
+                existingBatches.add(saved); // make it visible to subsequent iterations in same call
+            }
         }
+    }
+
+    /**
+     * Returns an existing batch whose metadata matches the transferred batch data.
+     * All four fields are compared null-safely; dates are truncated to calendar day.
+     */
+    private InventoryBatch findMatchingBatch(List<InventoryBatch> existing, TransferredBatchData td) {
+        for (InventoryBatch b : existing) {
+            if (!nullSafeStringEquals(b.getLotNumber(), td.lotNumber)) continue;
+            if (!nullSafeStringEquals(b.getBrand(), td.brand)) continue;
+            if (!nullSafeDateEquals(b.getExpiryDate(), td.expiryDate)) continue;
+            if (!nullSafeDateEquals(b.getReceivedDate(), td.receivedDate)) continue;
+            return b;
+        }
+        return null;
+    }
+
+    private boolean nullSafeStringEquals(String a, String b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+
+    private boolean nullSafeDateEquals(Date a, Date b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return truncateToDay(a).equals(truncateToDay(b));
+    }
+
+    private Date truncateToDay(Date d) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(d);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 
     private static class TransferredBatchData {

@@ -2,6 +2,8 @@ package com.ec.application.service;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -304,8 +306,17 @@ public class LostDamagedInventoryService {
                 batch.setQtyRemaining(batch.getQtyRemaining() + payload.getQuantity());
                 return inventoryBatchRepository.save(batch);
             }
-            // Create new batch
+            // Upsert: find existing batch with same metadata before creating a new one
             Warehouse warehouse = entity.getWarehouse();
+            List<InventoryBatch> existing = inventoryBatchRepository
+                    .findAllActiveByProductAndWarehouse(product.getProductId(), warehouse.getWarehouseId());
+            InventoryBatch match = findMatchingBatchForUpsert(existing,
+                    payload.getLotNumber(), payload.getBrand(), payload.getExpiryDate());
+            if (match != null) {
+                match.setQtyReceived(match.getQtyReceived() + payload.getQuantity());
+                match.setQtyRemaining(match.getQtyRemaining() + payload.getQuantity());
+                return inventoryBatchRepository.save(match);
+            }
             InventoryBatch newBatch = new InventoryBatch();
             newBatch.setProduct(product);
             newBatch.setWarehouse(warehouse);
@@ -551,6 +562,47 @@ public class LostDamagedInventoryService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Page<LostDamagedInventory> allLODInv = lostDamagedInventoryRepo.findAll(pageable);
         return allLODInv;
+    }
+
+    // ── Batch upsert helpers ─────────────────────────────────────────────────
+
+    /**
+     * Finds an existing batch whose lot#, brand, and expiryDate match.
+     * receivedDate is intentionally excluded from the key — excess-found entries
+     * use today's date, so two entries on different days for the same physical batch
+     * would otherwise not merge.
+     */
+    private InventoryBatch findMatchingBatchForUpsert(List<InventoryBatch> existing,
+                                                       String lotNumber, String brand, Date expiryDate) {
+        for (InventoryBatch b : existing) {
+            if (!nullSafeStringEquals(b.getLotNumber(), lotNumber)) continue;
+            if (!nullSafeStringEquals(b.getBrand(), brand)) continue;
+            if (!nullSafeDateEquals(b.getExpiryDate(), expiryDate)) continue;
+            return b;
+        }
+        return null;
+    }
+
+    private boolean nullSafeStringEquals(String a, String b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+
+    private boolean nullSafeDateEquals(Date a, Date b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return truncateToDay(a).equals(truncateToDay(b));
+    }
+
+    private Date truncateToDay(Date d) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(d);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 
 }
