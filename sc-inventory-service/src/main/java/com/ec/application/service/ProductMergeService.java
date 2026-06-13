@@ -35,6 +35,8 @@ public class ProductMergeService {
         Product source = getProduct(sourceId);
         Product target = getProduct(targetId);
 
+        validateBatchModeCompatibility(source, target);
+
         ProductMergePreviewDTO dto = new ProductMergePreviewDTO();
         dto.setSourceProduct(toInfo(source));
         dto.setTargetProduct(toInfo(target));
@@ -64,8 +66,10 @@ public class ProductMergeService {
         validate(sourceId, targetId);
 
         // Source may be soft-deleted from a previous partial merge attempt — bypass @Where filter
-        getProductIncludingDeleted(sourceId);
+        Product source = getProductIncludingDeleted(sourceId);
         Product target = getProduct(targetId);
+
+        validateBatchModeCompatibility(source, target);
 
         List<ProductMergeResultDTO.TenantMergeResult> results = new ArrayList<>();
         String originalTenant = ThreadLocalStorage.getTenantName();
@@ -122,6 +126,20 @@ public class ProductMergeService {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void validateBatchModeCompatibility(Product source, Product target) {
+        com.ec.application.constants.BatchMode sourceMode = source.getBatchMode() != null
+                ? source.getBatchMode() : com.ec.application.constants.BatchMode.NONE;
+        com.ec.application.constants.BatchMode targetMode = target.getBatchMode() != null
+                ? target.getBatchMode() : com.ec.application.constants.BatchMode.NONE;
+        if (sourceMode != targetMode) {
+            throw new IllegalArgumentException(
+                    "Cannot merge products with different batch tracking modes. "
+                    + "'" + source.getProductName() + "' is " + sourceMode
+                    + " but '" + target.getProductName() + "' is " + targetMode
+                    + ". Both products must have the same batch mode before merging.");
+        }
+    }
 
     private void validate(Long sourceId, Long targetId) {
         if (sourceId == null || targetId == null) {

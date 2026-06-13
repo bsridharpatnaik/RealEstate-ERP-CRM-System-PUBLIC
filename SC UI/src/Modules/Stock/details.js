@@ -167,9 +167,11 @@ class Details extends Component {
     }
     const response = await API.POST(apiEndpoints.markAsDeadStock(productId), payload);
     if (response.success) {
-      this.setState({ markDeadStockModal: null });
+      this.setState({ markDeadStockModal: null, batches: [] });
       this.props.enqueueSnackbar && this.props.enqueueSnackbar('Stock marked as dead stock successfully', { variant: 'success' });
       this.props.reloadData && this.props.reloadData();
+      this.loadBatches(this.props.data.productId, null);
+      this.loadComments();
     } else {
       this.setState({ markDeadStockModal: { ...markDeadStockModal, submitting: false } });
       this.props.enqueueSnackbar && this.props.enqueueSnackbar(response.errorMessage || 'Failed to mark dead stock', { variant: 'error' });
@@ -228,9 +230,11 @@ class Details extends Component {
     }
     const response = await API.POST(apiEndpoints.moveFromDeadStock(productId), payload);
     if (response.success) {
-      this.setState({ moveFromDeadStockModal: null });
+      this.setState({ moveFromDeadStockModal: null, batches: [] });
       this.props.enqueueSnackbar && this.props.enqueueSnackbar('Stock moved from dead stock successfully', { variant: 'success' });
       this.props.reloadData && this.props.reloadData();
+      this.loadBatches(this.props.data.productId, null);
+      this.loadComments();
     } else {
       this.setState({ moveFromDeadStockModal: { ...moveFromDeadStockModal, submitting: false } });
       this.props.enqueueSnackbar && this.props.enqueueSnackbar(response.errorMessage || 'Failed to move from dead stock', { variant: 'error' });

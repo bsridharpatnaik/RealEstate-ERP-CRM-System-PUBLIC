@@ -73,7 +73,9 @@ class ListCommon extends Component {
   async getData(page, params) {
     console.log('params at getData: ',params);
     this.page = page;
-    this.inputRef.current.value = page + 1;
+    if (this.inputRef && this.inputRef.current) {
+      this.inputRef.current.value = page + 1;
+    }
     this.setState({ isLoading: true });
     if (this.props.isLoading) {
       this.props.isLoading(true);

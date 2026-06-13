@@ -92,6 +92,21 @@ public class ProductMergeTenantExecutor {
         // 9. product_tenant_config: soft-delete source config
         jdbcTemplate.update(
             "DELETE FROM product_tenant_config WHERE product_id=?", sourceId);
+
+        // 10. Batch tracking: reassign inventory_batch product FK
+        jdbcTemplate.update(
+            "UPDATE inventory_batch SET product_id=? WHERE product_id=? AND is_deleted=false",
+            targetId, sourceId);
+
+        // 11. outward_batch_consumption: update denormalized product_id
+        jdbcTemplate.update(
+            "UPDATE outward_batch_consumption SET product_id=? WHERE product_id=?",
+            targetId, sourceId);
+
+        // 12. batch_write_off: update denormalized product_id and product_name
+        jdbcTemplate.update(
+            "UPDATE batch_write_off SET product_id=?, product_name=? WHERE product_id=?",
+            targetId, targetProduct.getProductName(), sourceId);
     }
 
     // ── Master-schema merge ───────────────────────────────────────────────────
@@ -109,6 +124,15 @@ public class ProductMergeTenantExecutor {
             targetId, sourceId);
 
         jdbcTemplate.update("UPDATE Product SET is_deleted=true WHERE productId=?", sourceId);
+
+        // global_fifo_report: incremental sync — won't self-heal after merge.
+        // Reassign productId and refresh denormalized metadata to target product.
+        String targetCategory = targetProduct.getCategory() != null
+                ? targetProduct.getCategory().getCategoryName() : null;
+        jdbcTemplate.update(
+            "UPDATE global_fifo_report SET productId=?, productName=?, productCode=?, measurementUnit=?, category=? WHERE productId=?",
+            targetId, targetProduct.getProductName(), targetProduct.getProductCode(),
+            targetProduct.getMeasurementUnit(), targetCategory, sourceId);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
