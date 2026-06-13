@@ -284,7 +284,7 @@ public class PurchaseOrderPdfService {
         // Only show the image column when at least one line has an image
         boolean hasImages = lines.stream()
                 .anyMatch(l -> l.getSampleImageData() != null && l.getSampleImageData().length > 0);
-        int numCols = hasImages ? 12 : 11;
+        int numCols = hasImages ? 13 : 12;
 
         PdfPTable table = new PdfPTable(numCols);
         table.setWidthPercentage(100);

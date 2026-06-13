@@ -859,8 +859,6 @@ class Details extends CommonDetails {
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Tolerance %</TableCell>
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Days Left</TableCell>
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Exp. Date</TableCell>
-                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Rate</TableCell>}
-                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Rate/Unit</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value/Unit</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>GST %</TableCell>
