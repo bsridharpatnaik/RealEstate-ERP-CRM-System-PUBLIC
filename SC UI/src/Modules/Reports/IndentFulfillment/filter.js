@@ -1,7 +1,6 @@
 import React from 'react';
 import CommonFilter from '../../../Shared/Filter';
 
-// Mirrors the card badge colors so chips feel familiar
 const INDENT_STATUS_OPTIONS = [
   { value: 'NEW',            label: 'New',            color: '#7f8c8d', bg: '#f2f3f4', border: '#d5d8dc' },
   { value: 'APPROVED',       label: 'Approved',       color: '#8e44ad', bg: '#f5eef8', border: '#d7bde2' },
@@ -29,13 +28,14 @@ const sectionLabel = (text) => (
     fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
     letterSpacing: 0.8, color: '#a0aec0',
     borderBottom: '1px solid #edf2f7',
-    paddingBottom: 6, marginBottom: 4, marginTop: 4,
+    paddingBottom: 6, marginBottom: 8, marginTop: 4,
   }}>
     {text}
   </div>
 );
 
 class IndentFulfillmentFilter extends CommonFilter {
+  labelsOutside = true;
 
   renderColorChips(fieldname, options) {
     const selected = this.filterData[fieldname] || '';
@@ -80,31 +80,22 @@ class IndentFulfillmentFilter extends CommonFilter {
         {this.state.reset ? (
           <div className="filter-content" style={{ padding: '16px 20px' }}>
 
-            {/* Row 1: Project + Product */}
-            {sectionLabel('Search')}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 {this.renderAutoComplete('Project', options.projects || [], 'project', (o) => o, true)}
               </div>
               <div>
                 {this.renderAutoComplete('Product', options.products || [], 'productName', (o) => o, true)}
               </div>
-            </div>
-
-            {/* Row 2: Date range */}
-            {sectionLabel('Date Range')}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: -16, marginBottom: 4 }}>
               <div>{this.renderFilterDate('Indent Date From', 'startDate')}</div>
               <div>{this.renderFilterDate('Indent Date To', 'endDate')}</div>
             </div>
 
-            {/* Indent Status chips */}
             {sectionLabel('Indent Status')}
             <div style={{ marginBottom: 16 }}>
               {this.renderColorChips('indentStatus', INDENT_STATUS_OPTIONS)}
             </div>
 
-            {/* Line Status chips */}
             {sectionLabel('Line Item Status')}
             <div style={{ marginBottom: 8 }}>
               {this.renderColorChips('lineItemStatus', LINE_STATUS_OPTIONS)}

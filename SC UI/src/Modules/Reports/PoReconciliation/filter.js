@@ -19,13 +19,14 @@ const sectionLabel = (text) => (
     fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
     letterSpacing: 0.8, color: '#a0aec0',
     borderBottom: '1px solid #edf2f7',
-    paddingBottom: 6, marginBottom: 4, marginTop: 4,
+    paddingBottom: 6, marginBottom: 8, marginTop: 4,
   }}>
     {text}
   </div>
 );
 
 class PoReconFilter extends CommonFilter {
+  labelsOutside = true;
 
   renderColorChips(fieldname, options) {
     const selected = this.filterData[fieldname] || '';
@@ -70,31 +71,22 @@ class PoReconFilter extends CommonFilter {
         {this.state.reset ? (
           <div className="filter-content" style={{ padding: '16px 20px' }}>
 
-            {/* Row 1: Project + Product */}
-            {sectionLabel('Search')}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 {this.renderAutoComplete('Project', options.projects || [], 'project', (o) => o, true)}
               </div>
               <div>
                 {this.renderAutoComplete('Product', options.products || [], 'productName', (o) => o, true)}
               </div>
+              <div>{this.renderFilterDate('PO Date From', 'startDate')}</div>
+              <div>{this.renderFilterDate('PO Date To', 'endDate')}</div>
             </div>
 
-            {/* Row 2: Date range */}
-            {sectionLabel('PO Date Range')}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: -16, marginBottom: 4 }}>
-              <div>{this.renderFilterDate('From', 'startDate')}</div>
-              <div>{this.renderFilterDate('To', 'endDate')}</div>
-            </div>
-
-            {/* PO Status chips */}
             {sectionLabel('PO Status')}
             <div style={{ marginBottom: 16 }}>
               {this.renderColorChips('poStatus', PO_STATUS_OPTIONS)}
             </div>
 
-            {/* Reconciliation Status chips */}
             {sectionLabel('Reconciliation Status')}
             <div style={{ marginBottom: 8 }}>
               {this.renderColorChips('reconciliationStatus', RECON_STATUS_OPTIONS)}
