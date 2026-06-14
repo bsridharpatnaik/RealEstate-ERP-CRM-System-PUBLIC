@@ -14,7 +14,7 @@ import Filter from "./filter";
 import Button from "./../../Shared/Button";
 import Details from "./details";
 //misc
-import { apiEndpoints, exportURL, noOfRecords } from "./../../endpoints";
+import { apiEndpoints, exportURL } from "./../../endpoints";
 import { messages } from "./../../messages";
 import { API } from "./../../axios";
 import { getTenantName } from "./../../helper";
@@ -155,7 +155,7 @@ class List extends ListCommon {
 
     // Add pagination to request body for POST request
     params.page = page;
-    params.size = noOfRecords;
+    params.size = this.pageSize;
 
     // Build sort parameter for URL
     let sortParam = "";
@@ -178,7 +178,8 @@ class List extends ListCommon {
       this.props.isLoading(true);
     }
 
-    const response = await API.POST(this.url + "&page=" + page + sortParam, params);
+    const baseUrl = this.url.replace(/([?&])size=\d+/, `$1size=${this.pageSize}`);
+    const response = await API.POST(baseUrl + "&page=" + page + sortParam, params);
 
     if (this.props.isLoading) {
       this.props.isLoading(false);

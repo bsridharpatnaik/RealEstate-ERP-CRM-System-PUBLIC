@@ -26,7 +26,7 @@ import Table from "./table";
 import Filter from "./filter";
 import IconButtons from "./../../Shared/Button/IconButtons";
 //misc
-import { apiEndpoints, noOfRecords } from "./../../endpoints";
+import { apiEndpoints } from "./../../endpoints";
 import { messages } from "./../../messages";
 import { API } from "./../../axios";
 import { getTenantName, triggerBlobDownload } from "./../../helper";
@@ -181,7 +181,7 @@ class List extends ListCommon {
   async search(page = 0, sortkey = null, sortby = null) {
     const params = this.prepareRequestBody();
     params.page = page;
-    params.size = noOfRecords;
+    params.size = this.pageSize;
     let sortParam = "";
     if (sortkey) {
       sortParam = "&sort=" + sortkey;
@@ -196,7 +196,7 @@ class List extends ListCommon {
     this.setState({ isLoading: true, pageno: pageNum });
     if (this.props.isLoading) this.props.isLoading(true);
 
-    const url = this.url + "?size=" + noOfRecords + "&page=" + page + sortParam;
+    const url = this.url + "?size=" + this.pageSize + "&page=" + page + sortParam;
     const response = await API.POST(url, params);
 
     if (this.props.isLoading) this.props.isLoading(false);

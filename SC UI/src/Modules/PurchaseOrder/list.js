@@ -640,7 +640,7 @@ class List extends ListCommon {
     }
 
     const response = await API.POST(
-      apiEndpoints.getPurchaseOrder + "?page=" + page + sortParam,
+      apiEndpoints.getPurchaseOrder + "?size=" + this.pageSize + "&page=" + page + sortParam,
       params
     );
 

@@ -18,7 +18,7 @@ import PODetails from "./../PurchaseOrder/details";
 import InwardDetails from "./../InwardInventory/details";
 //misc
 import { API } from "./../../axios";
-import { apiEndpoints, noOfRecords } from "./../../endpoints";
+import { apiEndpoints } from "./../../endpoints";
 import { fetchEntityByRelation } from "./../../relationDetailsFetch";
 import { messages } from "./../../messages";
 import Popper from "@material-ui/core/Popper";
@@ -420,7 +420,7 @@ class List extends ListCommon {
 
     const params = this.prepareRequestBody();
     params.page = page;
-    params.size = noOfRecords;
+    params.size = this.pageSize;
 
     let sortParam = "";
     if (this.sortkey) {
@@ -437,8 +437,9 @@ class List extends ListCommon {
     }
 
     const config = this.props.isGlobal ? { skipTenantId: true } : {};
+    const baseUrl = this.url.replace(/([?&])size=\d+/, `$1size=${this.pageSize}`);
     const response = await API.POST(
-      this.url + "&page=" + page + sortParam,
+      baseUrl + "&page=" + page + sortParam,
       params,
       config
     );
