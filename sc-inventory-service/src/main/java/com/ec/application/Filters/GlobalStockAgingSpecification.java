@@ -11,7 +11,7 @@ public final class GlobalStockAgingSpecification {
 
     private static final SpecificationsBuilder<GlobalStockAgingReport> specbldr = new SpecificationsBuilder<>();
 
-    public static Specification<GlobalStockAgingReport> getSpecification(FilterDataList filterDataList) throws ParseException {
+    public static Specification<GlobalStockAgingReport> getSpecification(FilterDataList filterDataList, List<String> allowedSchemas) throws ParseException {
         List<String> tenantSchema  = specbldr.fetchValueFromFilterList(filterDataList, "tenantSchema");
         List<String> productName   = specbldr.fetchValueFromFilterList(filterDataList, "productName");
         List<String> category      = specbldr.fetchValueFromFilterList(filterDataList, "category");
@@ -34,6 +34,10 @@ public final class GlobalStockAgingSpecification {
         if (agingBucket != null && !agingBucket.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldEquals("agingBucket", agingBucket));
+
+        if (allowedSchemas != null && !allowedSchemas.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals("tenantSchema", allowedSchemas));
 
         return finalSpec;
     }

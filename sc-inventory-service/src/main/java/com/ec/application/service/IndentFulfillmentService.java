@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class IndentFulfillmentService {
 
     private final EntityManager em;
+    private final UserDetailsService userDetailsService;
 
     private static final String DATA_SELECT =
         "SELECT" +
@@ -55,8 +56,9 @@ public class IndentFulfillmentService {
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public Page<IndentFulfillmentRow> getPage(FilterDataList filters, Pageable pageable) {
-        WhereClause wc = buildWhere(filters);
+    public Page<IndentFulfillmentRow> getPage(FilterDataList filters, Pageable pageable) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        WhereClause wc = buildWhere(filters, allowedSchemas);
 
         String countSql = "SELECT COUNT(*) FROM (" +
                 DATA_SELECT + BASE_FROM + wc.sql + ") cnt_sub";
@@ -76,8 +78,9 @@ public class IndentFulfillmentService {
         return new PageImpl<>(content, pageable, total);
     }
 
-    public Map<String, Long> getSummaryStats(FilterDataList filters) {
-        WhereClause wc = buildWhere(filters);
+    public Map<String, Long> getSummaryStats(FilterDataList filters) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        WhereClause wc = buildWhere(filters, allowedSchemas);
         String sql = "SELECT indent_status, COUNT(*) AS cnt" +
                 " FROM indent_inventory ii WHERE ii.is_deleted = 0" + wc.statusSql +
                 " GROUP BY indent_status ORDER BY cnt DESC";
@@ -114,7 +117,8 @@ public class IndentFulfillmentService {
     }
 
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
-        WhereClause wc = buildWhere(filters);
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        WhereClause wc = buildWhere(filters, allowedSchemas);
         String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_id DESC, p.product_name ASC";
         Query q = em.createNativeQuery(sql);
         applyParams(q, wc.params);
@@ -166,12 +170,32 @@ public class IndentFulfillmentService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private WhereClause buildWhere(FilterDataList filters) {
+    private WhereClause buildWhere(FilterDataList filters, List<String> allowedSchemas) {
         StringBuilder sql = new StringBuilder();
         // separate params for status-only query
         StringBuilder statusSql = new StringBuilder();
         Map<String, Object> params = new LinkedHashMap<>();
         Map<String, Object> statusParams = new LinkedHashMap<>();
+
+        if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+            if (allowedSchemas.size() == 1) {
+                sql.append(" AND ii.tenant = :as0");
+                statusSql.append(" AND tenant = :as0");
+                params.put("as0", allowedSchemas.get(0));
+                statusParams.put("as0", allowedSchemas.get(0));
+            } else {
+                StringBuilder inClause = new StringBuilder(" AND ii.tenant IN (");
+                StringBuilder statusIn = new StringBuilder(" AND tenant IN (");
+                for (int i = 0; i < allowedSchemas.size(); i++) {
+                    inClause.append(i == 0 ? "" : ",").append(":as").append(i);
+                    statusIn.append(i == 0 ? "" : ",").append(":as").append(i);
+                    params.put("as" + i, allowedSchemas.get(i));
+                    statusParams.put("as" + i, allowedSchemas.get(i));
+                }
+                inClause.append(")"); statusIn.append(")");
+                sql.append(inClause); statusSql.append(statusIn);
+            }
+        }
 
         if (filters != null && filters.getFilterData() != null) {
             for (FilterAttributeData f : filters.getFilterData()) {

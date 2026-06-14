@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -24,9 +25,11 @@ public class StockAgingReportService {
     private static final SimpleDateFormat DATE_DISPLAY = new SimpleDateFormat("dd-MM-yyyy");
 
     private final GlobalStockAgingReportRepository repo;
+    private final UserDetailsService userDetailsService;
 
-    public Page<GlobalStockAgingReport> getFiltered(FilterDataList filterDataList, Pageable pageable) throws ParseException {
-        Specification<GlobalStockAgingReport> spec = GlobalStockAgingSpecification.getSpecification(filterDataList);
+    public Page<GlobalStockAgingReport> getFiltered(FilterDataList filterDataList, Pageable pageable) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalStockAgingReport> spec = GlobalStockAgingSpecification.getSpecification(filterDataList, allowedSchemas);
         // Always exclude soft-deleted rows
         Specification<GlobalStockAgingReport> notDeleted = (root, query, cb) -> cb.isFalse(root.get("isDeleted"));
         Specification<GlobalStockAgingReport> combined = spec == null ? notDeleted : spec.and(notDeleted);
@@ -34,7 +37,8 @@ public class StockAgingReportService {
     }
 
     public void exportExcel(FilterDataList filterDataList, HttpServletResponse response) throws Exception {
-        Specification<GlobalStockAgingReport> spec = GlobalStockAgingSpecification.getSpecification(filterDataList);
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalStockAgingReport> spec = GlobalStockAgingSpecification.getSpecification(filterDataList, allowedSchemas);
         Specification<GlobalStockAgingReport> notDeleted = (root, query, cb) -> cb.isFalse(root.get("isDeleted"));
         Specification<GlobalStockAgingReport> combined = spec == null ? notDeleted : spec.and(notDeleted);
         List<GlobalStockAgingReport> rows = repo.findAll(combined);

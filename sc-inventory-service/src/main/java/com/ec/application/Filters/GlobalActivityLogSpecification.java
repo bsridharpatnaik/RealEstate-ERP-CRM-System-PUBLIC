@@ -11,7 +11,7 @@ public final class GlobalActivityLogSpecification {
 
     private static final SpecificationsBuilder<GlobalActivityLog> specbldr = new SpecificationsBuilder<>();
 
-    public static Specification<GlobalActivityLog> getSpecification(FilterDataList filterDataList) throws ParseException {
+    public static Specification<GlobalActivityLog> getSpecification(FilterDataList filterDataList, List<String> allowedSchemas) throws ParseException {
         List<String> startDate    = specbldr.fetchValueFromFilterList(filterDataList, "startDate");
         List<String> endDate      = specbldr.fetchValueFromFilterList(filterDataList, "endDate");
         List<String> action       = specbldr.fetchValueFromFilterList(filterDataList, "action");
@@ -49,6 +49,10 @@ public final class GlobalActivityLogSpecification {
         if (tenantSchema != null && !tenantSchema.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldEquals("tenantSchema", tenantSchema));
+
+        if (allowedSchemas != null && !allowedSchemas.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals("tenantSchema", allowedSchemas));
 
         return finalSpec;
     }

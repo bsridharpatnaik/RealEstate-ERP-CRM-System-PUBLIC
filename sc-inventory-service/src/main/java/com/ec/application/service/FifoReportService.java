@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -24,16 +25,19 @@ public class FifoReportService {
     private static final SimpleDateFormat DATE_DISPLAY = new SimpleDateFormat("dd-MM-yyyy");
 
     private final GlobalFifoReportRepository repo;
+    private final UserDetailsService userDetailsService;
 
-    public Page<GlobalFifoReport> getFiltered(FilterDataList filterDataList, Pageable pageable) throws ParseException {
-        Specification<GlobalFifoReport> spec = GlobalFifoReportSpecification.getSpecification(filterDataList);
+    public Page<GlobalFifoReport> getFiltered(FilterDataList filterDataList, Pageable pageable) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalFifoReport> spec = GlobalFifoReportSpecification.getSpecification(filterDataList, allowedSchemas);
         return spec == null
                 ? repo.findAll(pageable)
                 : repo.findAll(spec, pageable);
     }
 
     public void exportExcel(FilterDataList filterDataList, HttpServletResponse response) throws Exception {
-        Specification<GlobalFifoReport> spec = GlobalFifoReportSpecification.getSpecification(filterDataList);
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalFifoReport> spec = GlobalFifoReportSpecification.getSpecification(filterDataList, allowedSchemas);
         List<GlobalFifoReport> rows = spec == null ? repo.findAll() : repo.findAll(spec);
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {

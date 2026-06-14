@@ -20,10 +20,13 @@ import java.util.*;
 public class ExpiredStockReportService {
 
     private final GlobalExpiredStockReportRepository repo;
+    private final UserDetailsService userDetailsService;
 
-    public Page<GlobalExpiredStockReport> getFiltered(FilterDataList filterDataList, Pageable pageable) {
+
+    public Page<GlobalExpiredStockReport> getFiltered(FilterDataList filterDataList, Pageable pageable) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         Specification<GlobalExpiredStockReport> spec =
-                GlobalExpiredStockSpecification.getSpecification(filterDataList);
+                GlobalExpiredStockSpecification.getSpecification(filterDataList, allowedSchemas);
         return spec == null ? repo.findAll(pageable) : repo.findAll(spec, pageable);
     }
 
@@ -36,14 +39,18 @@ public class ExpiredStockReportService {
      *   within90 — daysUntilExpiry <= 90
      *   total    — all rows
      */
-    public Map<String, Object> getTiles() {
+    public Map<String, Object> getTiles() throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         Map<String, Object> result = new HashMap<>();
-        result.put("expired",  Optional.ofNullable(repo.countExpired()).orElse(0L));
-        result.put("within1",  Optional.ofNullable(repo.countWithinDays(1)).orElse(0L));
-        result.put("within10", Optional.ofNullable(repo.countWithinDays(10)).orElse(0L));
-        result.put("within30", Optional.ofNullable(repo.countWithinDays(30)).orElse(0L));
-        result.put("within90", Optional.ofNullable(repo.countWithinDays(90)).orElse(0L));
-        result.put("total",    repo.count());
+        result.put("expired",  Optional.ofNullable(repo.countExpired(allowedSchemas)).orElse(0L));
+        result.put("within1",  Optional.ofNullable(repo.countWithinDays(1, allowedSchemas)).orElse(0L));
+        result.put("within10", Optional.ofNullable(repo.countWithinDays(10, allowedSchemas)).orElse(0L));
+        result.put("within30", Optional.ofNullable(repo.countWithinDays(30, allowedSchemas)).orElse(0L));
+        result.put("within90", Optional.ofNullable(repo.countWithinDays(90, allowedSchemas)).orElse(0L));
+        // total: count within allowed schemas using the spec executor
+        Specification<GlobalExpiredStockReport> allowedSpec =
+                (root, q, cb) -> root.get("tenantSchema").in(allowedSchemas);
+        result.put("total", repo.count(allowedSpec));
         return result;
     }
 
@@ -54,8 +61,9 @@ public class ExpiredStockReportService {
     }
 
     public void exportExcel(FilterDataList filterDataList, HttpServletResponse response) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         Specification<GlobalExpiredStockReport> spec =
-                GlobalExpiredStockSpecification.getSpecification(filterDataList);
+                GlobalExpiredStockSpecification.getSpecification(filterDataList, allowedSchemas);
         List<GlobalExpiredStockReport> rows = spec == null ? repo.findAll() : repo.findAll(spec);
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {

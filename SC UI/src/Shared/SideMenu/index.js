@@ -547,7 +547,7 @@ function SideMenu(props) {
 />
   </DashboardItem>
 )}
-            {(currentUserRole.toLowerCase() === "admin") && (
+            {(_role === "admin" || _role === "purchase-manager" || _role === "management" || _role === "project-manager" || _role === "store-incharge") && (
               <DashboardItem
                 nodeId="60"
                 labelText="Reports"

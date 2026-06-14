@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class PoInwardReconciliationService {
 
     private final EntityManager em;
+    private final UserDetailsService userDetailsService;
 
     private static final String BASE_FROM =
         " FROM purchase_order po" +
@@ -66,8 +67,9 @@ public class PoInwardReconciliationService {
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public Page<PoInwardReconciliationRow> getPage(FilterDataList filters, Pageable pageable) {
-        WhereClause wc = buildWhere(filters);
+    public Page<PoInwardReconciliationRow> getPage(FilterDataList filters, Pageable pageable) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        WhereClause wc = buildWhere(filters, allowedSchemas);
 
         // Count
         String countSql = "SELECT COUNT(*) FROM (" +
@@ -91,8 +93,9 @@ public class PoInwardReconciliationService {
         return new PageImpl<>(content, pageable, total);
     }
 
-    public Map<String, Long> getSummaryStats(FilterDataList filters) {
-        WhereClause wc = buildWhere(filters);
+    public Map<String, Long> getSummaryStats(FilterDataList filters) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        WhereClause wc = buildWhere(filters, allowedSchemas);
         // Use WHERE filters only (no HAVING/status filter) so tile counts always reflect true totals
         String innerSql = DATA_SELECT + BASE_FROM + wc.where + GROUP_BY;
         String sql = "SELECT" +
@@ -134,7 +137,8 @@ public class PoInwardReconciliationService {
     }
 
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
-        WhereClause wc = buildWhere(filters);
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        WhereClause wc = buildWhere(filters, allowedSchemas);
         String sql = DATA_SELECT + BASE_FROM + wc.where + GROUP_BY + wc.having + " ORDER BY po.po_date DESC, po.purchase_order_id ASC, p.product_name ASC";
         Query q = em.createNativeQuery(sql);
         applyParams(q, wc.params);
@@ -185,12 +189,28 @@ public class PoInwardReconciliationService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private WhereClause buildWhere(FilterDataList filters) {
+    private WhereClause buildWhere(FilterDataList filters, List<String> allowedSchemas) {
         StringBuilder sql = new StringBuilder();
         Map<String, Object> params = new LinkedHashMap<>();
         Map<String, Object> havingParams = new LinkedHashMap<>();
 
         StringBuilder having = new StringBuilder();
+
+        if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+            if (allowedSchemas.size() == 1) {
+                sql.append(" AND COALESCE(ii.tenant, po.project_name, 'Unknown') = :as0");
+                params.put("as0", allowedSchemas.get(0));
+            } else {
+                StringBuilder inClause = new StringBuilder(
+                        " AND COALESCE(ii.tenant, po.project_name, 'Unknown') IN (");
+                for (int i = 0; i < allowedSchemas.size(); i++) {
+                    inClause.append(i == 0 ? "" : ",").append(":as").append(i);
+                    params.put("as" + i, allowedSchemas.get(i));
+                }
+                inClause.append(")");
+                sql.append(inClause);
+            }
+        }
 
         if (filters != null && filters.getFilterData() != null) {
             for (FilterAttributeData f : filters.getFilterData()) {

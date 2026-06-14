@@ -11,7 +11,7 @@ public final class GlobalLowStockSpecification {
 
     private static final SpecificationsBuilder<GlobalLowStockReport> specbldr = new SpecificationsBuilder<>();
 
-    public static Specification<GlobalLowStockReport> getSpecification(FilterDataList filterDataList) throws ParseException {
+    public static Specification<GlobalLowStockReport> getSpecification(FilterDataList filterDataList, List<String> allowedSchemas) throws ParseException {
         List<String> tenantSchema = specbldr.fetchValueFromFilterList(filterDataList, "tenantSchema");
         List<String> category     = specbldr.fetchValueFromFilterList(filterDataList, "category");
         List<String> productName  = specbldr.fetchValueFromFilterList(filterDataList, "productName");
@@ -40,6 +40,10 @@ public final class GlobalLowStockSpecification {
         if (endDate != null && !endDate.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldDateLessThan("lowStockSince", endDate));
+
+        if (allowedSchemas != null && !allowedSchemas.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals("tenantSchema", allowedSchemas));
 
         return finalSpec;
     }

@@ -608,6 +608,7 @@ class Details extends Component {
         },
       });
       const productId = this.props.data.productId;
+      this.props.reloadData && this.props.reloadData();
       this.loadBatches(productId, null);
       this.loadWriteOffHistory(batchId);
     } else {

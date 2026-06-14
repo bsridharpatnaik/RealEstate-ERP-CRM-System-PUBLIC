@@ -33,6 +33,7 @@ public class ActivityLogGlobalSyncService {
     private final ActivityLogRepository activityLogRepository;
     private final GlobalActivityLogRepository globalActivityLogRepository;
     private final SchemaConfig schemaConfig;
+    private final UserDetailsService userDetailsService;
 
     public void syncSingleTenant(String tenantSchema) {
         String masterSchema = schemaConfig.getMasterSchema();
@@ -73,14 +74,16 @@ public class ActivityLogGlobalSyncService {
     }
 
     public Page<GlobalActivityLog> getFiltered(FilterDataList filterDataList, Pageable pageable) throws Exception {
-        Specification<GlobalActivityLog> spec = GlobalActivityLogSpecification.getSpecification(filterDataList);
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalActivityLog> spec = GlobalActivityLogSpecification.getSpecification(filterDataList, allowedSchemas);
         return spec == null
                 ? globalActivityLogRepository.findAll(pageable)
                 : globalActivityLogRepository.findAll(spec, pageable);
     }
 
     public byte[] exportExcel(FilterDataList filterDataList) throws Exception {
-        Specification<GlobalActivityLog> spec = GlobalActivityLogSpecification.getSpecification(filterDataList);
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalActivityLog> spec = GlobalActivityLogSpecification.getSpecification(filterDataList, allowedSchemas);
         List<GlobalActivityLog> rows = spec == null
                 ? globalActivityLogRepository.findAll()
                 : globalActivityLogRepository.findAll(spec);

@@ -6,6 +6,7 @@ import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.model.GlobalDeadStockReport;
 import com.ec.application.repository.GlobalDeadStockReportRepository;
 import com.ec.application.service.DeadStockSyncOrchestrator;
+import com.ec.application.service.UserDetailsService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,9 @@ public class DeadStockReportController {
     @Autowired
     private GlobalDeadStockReportRepository deadStockRepo;
 
+    @Autowired
+    private UserDetailsService userDetailsService;
+
     @PostMapping("/sync")
     public ResponseEntity<Map<String, String>> sync() {
         String message = orchestrator.syncAllTenants();
@@ -42,8 +46,11 @@ public class DeadStockReportController {
 
     @UseDefaultTenant
     @GetMapping("/tiles")
-    public Map<String, Object> tiles() {
-        List<GlobalDeadStockReport> all = deadStockRepo.findAll();
+    public Map<String, Object> tiles() throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalDeadStockReport> allowedSpec =
+                (root, q, cb) -> root.get("tenantSchema").in(allowedSchemas);
+        List<GlobalDeadStockReport> all = deadStockRepo.findAll(allowedSpec);
 
         long uniqueProducts = all.stream()
                 .map(r -> r.getTenantSchema() + "__" + r.getProductId())
@@ -80,15 +87,17 @@ public class DeadStockReportController {
     @PostMapping("/list")
     public Page<GlobalDeadStockReport> list(
             @RequestBody(required = false) FilterDataList filterDataList,
-            @PageableDefault(page = 0, size = 500, sort = "productName", direction = Sort.Direction.ASC) Pageable pageable) {
-        return deadStockRepo.findAll(buildSpec(filterDataList), pageable);
+            @PageableDefault(page = 0, size = 500, sort = "productName", direction = Sort.Direction.ASC) Pageable pageable) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        return deadStockRepo.findAll(buildSpec(filterDataList, allowedSchemas), pageable);
     }
 
     @UseDefaultTenant
     @PostMapping("/export/excel")
     public void exportExcel(@RequestBody(required = false) FilterDataList filterDataList,
                             HttpServletResponse response) throws Exception {
-        List<GlobalDeadStockReport> rows = deadStockRepo.findAll(buildSpec(filterDataList),
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        List<GlobalDeadStockReport> rows = deadStockRepo.findAll(buildSpec(filterDataList, allowedSchemas),
                 Sort.by(Sort.Direction.ASC, "tenantSchema", "productName"));
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
@@ -144,10 +153,17 @@ public class DeadStockReportController {
         }
     }
 
-    private Specification<GlobalDeadStockReport> buildSpec(FilterDataList filterDataList) {
+    private Specification<GlobalDeadStockReport> buildSpec(FilterDataList filterDataList, List<String> allowedSchemas) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (filterDataList == null || filterDataList.getFilterData() == null) return cb.conjunction();
+
+            // Always restrict to user's allowed projects
+            if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+                predicates.add(root.get("tenantSchema").in(allowedSchemas));
+            }
+
+            if (filterDataList == null || filterDataList.getFilterData() == null)
+                return cb.and(predicates.toArray(new Predicate[0]));
 
             for (FilterAttributeData f : filterDataList.getFilterData()) {
                 if (f.getAttrName() == null || f.getAttrValue() == null) continue;

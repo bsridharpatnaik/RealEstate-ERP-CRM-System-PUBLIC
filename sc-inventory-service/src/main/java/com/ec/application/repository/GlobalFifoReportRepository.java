@@ -36,23 +36,23 @@ public interface GlobalFifoReportRepository
             @Param("batchId") Long batchId,
             @Param("productId") Long productId);
 
-    /** Tile stats — count distinct outward IDs by project for a given date window. */
+    /** Tile stats — count distinct outward IDs by project for a given date window, filtered by allowed schemas. */
     @Query(value = "SELECT tenantSchema, COUNT(DISTINCT outwardId) " +
-           "FROM global_fifo_report WHERE outwardDate >= :from GROUP BY tenantSchema ORDER BY 2 DESC",
+           "FROM global_fifo_report WHERE outwardDate >= :from AND tenantSchema IN :schemas GROUP BY tenantSchema ORDER BY 2 DESC",
            nativeQuery = true)
-    List<Object[]> countByProjectSince(@Param("from") Date from);
+    List<Object[]> countByProjectSince(@Param("from") Date from, @Param("schemas") List<String> schemas);
 
     @Query(value = "SELECT COUNT(DISTINCT outwardId) " +
-           "FROM global_fifo_report WHERE outwardDate >= :from",
+           "FROM global_fifo_report WHERE outwardDate >= :from AND tenantSchema IN :schemas",
            nativeQuery = true)
-    Long countTotalSince(@Param("from") Date from);
+    Long countTotalSince(@Param("from") Date from, @Param("schemas") List<String> schemas);
 
-    @Query(value = "SELECT COUNT(DISTINCT productId) FROM global_fifo_report", nativeQuery = true)
-    Long countDistinctProducts();
+    @Query(value = "SELECT COUNT(DISTINCT productId) FROM global_fifo_report WHERE tenantSchema IN :schemas", nativeQuery = true)
+    Long countDistinctProducts(@Param("schemas") List<String> schemas);
 
     @Query(value = "SELECT tenantSchema, COUNT(DISTINCT productId) FROM global_fifo_report " +
-           "GROUP BY tenantSchema ORDER BY 2 DESC", nativeQuery = true)
-    List<Object[]> countDistinctProductsByProject();
+           "WHERE tenantSchema IN :schemas GROUP BY tenantSchema ORDER BY 2 DESC", nativeQuery = true)
+    List<Object[]> countDistinctProductsByProject(@Param("schemas") List<String> schemas);
 
     /** Distinct productIds present in master for a given tenant — used by metadata refresh. */
     @Query("SELECT DISTINCT r.productId FROM GlobalFifoReport r WHERE r.tenantSchema = :tenantSchema")

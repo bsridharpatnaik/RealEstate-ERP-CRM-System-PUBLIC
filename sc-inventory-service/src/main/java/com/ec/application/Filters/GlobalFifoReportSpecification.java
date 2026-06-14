@@ -11,7 +11,7 @@ public final class GlobalFifoReportSpecification {
 
     private static final SpecificationsBuilder<GlobalFifoReport> specbldr = new SpecificationsBuilder<>();
 
-    public static Specification<GlobalFifoReport> getSpecification(FilterDataList filterDataList) throws ParseException {
+    public static Specification<GlobalFifoReport> getSpecification(FilterDataList filterDataList, List<String> allowedSchemas) throws ParseException {
         List<String> startDate      = specbldr.fetchValueFromFilterList(filterDataList, "startDate");
         List<String> endDate        = specbldr.fetchValueFromFilterList(filterDataList, "endDate");
         List<String> tenantSchema   = specbldr.fetchValueFromFilterList(filterDataList, "tenantSchema");
@@ -49,6 +49,10 @@ public final class GlobalFifoReportSpecification {
         if (contractorName != null && !contractorName.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldEquals("contractorName", contractorName));
+
+        if (allowedSchemas != null && !allowedSchemas.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals("tenantSchema", allowedSchemas));
 
         return finalSpec;
     }

@@ -6,6 +6,7 @@ import com.ec.application.model.GlobalFifoReport;
 import com.ec.application.repository.GlobalFifoReportRepository;
 import com.ec.application.service.FifoReportService;
 import com.ec.application.service.FifoReportSyncOrchestrator;
+import com.ec.application.service.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/fifo-report")
@@ -29,6 +31,9 @@ public class FifoReportController {
 
     @Autowired
     private GlobalFifoReportRepository globalFifoReportRepository;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
 
     /** Trigger manual sync — same pattern as stock-summary and activity-log. */
     @PostMapping("/sync")
@@ -52,7 +57,9 @@ public class FifoReportController {
     /** Tile stats — counts by period with project breakdown. */
     @UseDefaultTenant
     @GetMapping("/tiles")
-    public Map<String, Object> tiles() {
+    public Map<String, Object> tiles() throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
@@ -69,14 +76,14 @@ public class FifoReportController {
         Date from90 = cal.getTime();
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("last7Days",  buildTile(globalFifoReportRepository.countTotalSince(from7),
-                                           globalFifoReportRepository.countByProjectSince(from7)));
-        result.put("last30Days", buildTile(globalFifoReportRepository.countTotalSince(from30),
-                                           globalFifoReportRepository.countByProjectSince(from30)));
-        result.put("last90Days", buildTile(globalFifoReportRepository.countTotalSince(from90),
-                                           globalFifoReportRepository.countByProjectSince(from90)));
-        result.put("uniqueProducts", buildTile(globalFifoReportRepository.countDistinctProducts(),
-                                               globalFifoReportRepository.countDistinctProductsByProject()));
+        result.put("last7Days",  buildTile(globalFifoReportRepository.countTotalSince(from7, allowedSchemas),
+                                           globalFifoReportRepository.countByProjectSince(from7, allowedSchemas)));
+        result.put("last30Days", buildTile(globalFifoReportRepository.countTotalSince(from30, allowedSchemas),
+                                           globalFifoReportRepository.countByProjectSince(from30, allowedSchemas)));
+        result.put("last90Days", buildTile(globalFifoReportRepository.countTotalSince(from90, allowedSchemas),
+                                           globalFifoReportRepository.countByProjectSince(from90, allowedSchemas)));
+        result.put("uniqueProducts", buildTile(globalFifoReportRepository.countDistinctProducts(allowedSchemas),
+                                               globalFifoReportRepository.countDistinctProductsByProject(allowedSchemas)));
         return result;
     }
 

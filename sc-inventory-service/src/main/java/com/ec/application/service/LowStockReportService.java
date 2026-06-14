@@ -24,14 +24,17 @@ public class LowStockReportService {
     private static final SimpleDateFormat DATE_DISPLAY = new SimpleDateFormat("dd-MM-yyyy HH:mm");
 
     private final GlobalLowStockReportRepository repo;
+    private final UserDetailsService userDetailsService;
 
-    public Page<GlobalLowStockReport> getFiltered(FilterDataList filterDataList, Pageable pageable) throws ParseException {
-        Specification<GlobalLowStockReport> spec = GlobalLowStockSpecification.getSpecification(filterDataList);
+    public Page<GlobalLowStockReport> getFiltered(FilterDataList filterDataList, Pageable pageable) throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalLowStockReport> spec = GlobalLowStockSpecification.getSpecification(filterDataList, allowedSchemas);
         return spec == null ? repo.findAll(pageable) : repo.findAll(spec, pageable);
     }
 
     /** Tile data — counts per time window + project breakdown. */
-    public Map<String, Object> getTiles() {
+    public Map<String, Object> getTiles() throws Exception {
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         Map<String, Object> result = new HashMap<>();
 
         long[] windowDays = {1, 3, 7, 30};
@@ -39,14 +42,14 @@ public class LowStockReportService {
 
         for (int i = 0; i < windowDays.length; i++) {
             Date since = dateMinusDays(windowDays[i]);
-            long total = Optional.ofNullable(repo.countSince(since)).orElse(0L);
-            List<Object[]> byProject = repo.countByProjectSince(since);
+            long total = Optional.ofNullable(repo.countSince(since, allowedSchemas)).orElse(0L);
+            List<Object[]> byProject = repo.countByProjectSince(since, allowedSchemas);
             result.put(keys[i], buildTileMap(total, byProject));
         }
 
         // All currently low-stock products
-        long totalAll = Optional.ofNullable(repo.countAll()).orElse(0L);
-        List<Object[]> allByProject = repo.countAllByProject();
+        long totalAll = Optional.ofNullable(repo.countAll(allowedSchemas)).orElse(0L);
+        List<Object[]> allByProject = repo.countAllByProject(allowedSchemas);
         result.put("total", buildTileMap(totalAll, allByProject));
 
         return result;
@@ -59,7 +62,8 @@ public class LowStockReportService {
     }
 
     public void exportExcel(FilterDataList filterDataList, HttpServletResponse response) throws Exception {
-        Specification<GlobalLowStockReport> spec = GlobalLowStockSpecification.getSpecification(filterDataList);
+        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        Specification<GlobalLowStockReport> spec = GlobalLowStockSpecification.getSpecification(filterDataList, allowedSchemas);
         List<GlobalLowStockReport> rows = spec == null ? repo.findAll() : repo.findAll(spec);
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {

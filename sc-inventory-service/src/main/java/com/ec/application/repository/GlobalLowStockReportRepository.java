@@ -34,21 +34,21 @@ public interface GlobalLowStockReportRepository
     @Query("DELETE FROM GlobalLowStockReport r WHERE r.tenantSchema = :tenantSchema")
     void deleteByTenantSchema(@Param("tenantSchema") String tenantSchema);
 
-    /** Tile counts — products that became low stock within a time window. */
-    @Query("SELECT COUNT(r) FROM GlobalLowStockReport r WHERE r.lowStockSince >= :since")
-    Long countSince(@Param("since") Date since);
+    /** Tile counts — products that became low stock within a time window (filtered by allowed schemas). */
+    @Query("SELECT COUNT(r) FROM GlobalLowStockReport r WHERE r.lowStockSince >= :since AND r.tenantSchema IN :schemas")
+    Long countSince(@Param("since") Date since, @Param("schemas") List<String> schemas);
 
     @Query("SELECT r.tenantSchema, COUNT(r) FROM GlobalLowStockReport r " +
-           "WHERE r.lowStockSince >= :since GROUP BY r.tenantSchema ORDER BY COUNT(r) DESC")
-    List<Object[]> countByProjectSince(@Param("since") Date since);
+           "WHERE r.lowStockSince >= :since AND r.tenantSchema IN :schemas GROUP BY r.tenantSchema ORDER BY COUNT(r) DESC")
+    List<Object[]> countByProjectSince(@Param("since") Date since, @Param("schemas") List<String> schemas);
 
-    /** Total currently low-stock products (all tenants). */
-    @Query("SELECT COUNT(r) FROM GlobalLowStockReport r")
-    Long countAll();
+    /** Total currently low-stock products (filtered by allowed schemas). */
+    @Query("SELECT COUNT(r) FROM GlobalLowStockReport r WHERE r.tenantSchema IN :schemas")
+    Long countAll(@Param("schemas") List<String> schemas);
 
     @Query("SELECT r.tenantSchema, COUNT(r) FROM GlobalLowStockReport r " +
-           "GROUP BY r.tenantSchema ORDER BY COUNT(r) DESC")
-    List<Object[]> countAllByProject();
+           "WHERE r.tenantSchema IN :schemas GROUP BY r.tenantSchema ORDER BY COUNT(r) DESC")
+    List<Object[]> countAllByProject(@Param("schemas") List<String> schemas);
 
     /** Dropdown values. */
     @Query("SELECT DISTINCT r.category FROM GlobalLowStockReport r " +

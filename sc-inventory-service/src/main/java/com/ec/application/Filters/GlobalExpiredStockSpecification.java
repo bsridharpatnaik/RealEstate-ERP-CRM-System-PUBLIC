@@ -21,7 +21,7 @@ public final class GlobalExpiredStockSpecification {
      *                    "within30" → daysUntilExpiry <= 30
      *                    "within90" → daysUntilExpiry <= 90
      */
-    public static Specification<GlobalExpiredStockReport> getSpecification(FilterDataList filterDataList) {
+    public static Specification<GlobalExpiredStockReport> getSpecification(FilterDataList filterDataList, List<String> allowedSchemas) {
         List<String> tenantSchema  = specbldr.fetchValueFromFilterList(filterDataList, "tenantSchema");
         List<String> category      = specbldr.fetchValueFromFilterList(filterDataList, "category");
         List<String> expiryFilter  = specbldr.fetchValueFromFilterList(filterDataList, "expiryFilter");
@@ -35,6 +35,10 @@ public final class GlobalExpiredStockSpecification {
         if (category != null && !category.isEmpty())
             finalSpec = specbldr.specAndCondition(finalSpec,
                     specbldr.whereDirectFieldEquals("category", category));
+
+        if (allowedSchemas != null && !allowedSchemas.isEmpty())
+            finalSpec = specbldr.specAndCondition(finalSpec,
+                    specbldr.whereDirectFieldEquals("tenantSchema", allowedSchemas));
 
         if (expiryFilter != null && !expiryFilter.isEmpty()) {
             String ef = expiryFilter.get(0);

@@ -21,13 +21,13 @@ public interface GlobalExpiredStockReportRepository
     @Query("DELETE FROM GlobalExpiredStockReport r WHERE r.tenantSchema = :tenantSchema")
     void deleteByTenantSchema(@Param("tenantSchema") String tenantSchema);
 
-    /** Batches already expired (daysUntilExpiry < 0) */
-    @Query("SELECT COUNT(r) FROM GlobalExpiredStockReport r WHERE r.daysUntilExpiry < 0")
-    Long countExpired();
+    /** Batches already expired (daysUntilExpiry < 0), filtered by allowed schemas. */
+    @Query("SELECT COUNT(r) FROM GlobalExpiredStockReport r WHERE r.daysUntilExpiry < 0 AND r.tenantSchema IN :schemas")
+    Long countExpired(@Param("schemas") List<String> schemas);
 
-    /** Batches expiring within N days inclusive (cumulative — includes expired when maxDays >= 0) */
-    @Query("SELECT COUNT(r) FROM GlobalExpiredStockReport r WHERE r.daysUntilExpiry <= :maxDays")
-    Long countWithinDays(@Param("maxDays") int maxDays);
+    /** Batches expiring within N days inclusive, filtered by allowed schemas. */
+    @Query("SELECT COUNT(r) FROM GlobalExpiredStockReport r WHERE r.daysUntilExpiry <= :maxDays AND r.tenantSchema IN :schemas")
+    Long countWithinDays(@Param("maxDays") int maxDays, @Param("schemas") List<String> schemas);
 
     @Query("SELECT DISTINCT r.category FROM GlobalExpiredStockReport r WHERE r.category IS NOT NULL ORDER BY r.category")
     List<String> findDistinctCategories();
