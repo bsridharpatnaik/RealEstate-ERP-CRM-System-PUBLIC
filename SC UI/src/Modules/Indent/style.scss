@@ -1853,3 +1853,20 @@ table {
     font-size: 13px;
   }
 }
+
+// ── Indent expand row ──────────────────────────────────────────────────────
+.indent-expansion-row {
+  td {
+    background: #f9fbff;
+  }
+
+  table {
+    th, td {
+      white-space: nowrap;
+    }
+    td:nth-child(4) {
+      white-space: normal;
+      max-width: 240px;
+    }
+  }
+}

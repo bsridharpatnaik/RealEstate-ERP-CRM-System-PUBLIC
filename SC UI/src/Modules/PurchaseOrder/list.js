@@ -64,6 +64,7 @@ class List extends ListCommon {
     draftsDialogOpen: false,
     drafts: [],
     isDraftsLoading: false,
+    allExpanded: false,
   };
   tableData = {
     headers: [
@@ -696,6 +697,14 @@ class List extends ListCommon {
                 label={messages.common.filter}
                 icon={"MenuSVG"}
               />
+              <Button
+                onClick={() => this.setState(prev => ({ allExpanded: !prev.allExpanded }))}
+                variant="outlined"
+                size="small"
+                style={{ textTransform: 'none', height: 34, minHeight: 34, marginRight: 4 }}
+              >
+                {this.state.allExpanded ? "⊖ Collapse All" : "⊕ Expand All"}
+              </Button>
               {this.renderExport()}
               {canEditInventoryModules() && (
                 <Button
@@ -759,6 +768,7 @@ class List extends ListCommon {
               hideedit={!canEditInventoryModules()}
               hideEditForRow={(row) => row.poStatus !== "NEW"}
               hidedelete={!canEditInventoryModules()}
+              allExpanded={this.state.allExpanded}
             />
           )}
           {this.renderPagination()}

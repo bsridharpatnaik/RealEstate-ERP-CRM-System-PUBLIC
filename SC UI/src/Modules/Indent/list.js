@@ -59,6 +59,7 @@ class List extends ListCommon {
     selectedData: null,
     currentIndex: 0,
     detailStack: [],
+    allExpanded: false,
   };
   tableData = {
     headers: [
@@ -509,6 +510,14 @@ class List extends ListCommon {
                 label={messages.common.filter}
                 icon={"MenuSVG"}
               />
+              <Button
+                onClick={() => this.setState(prev => ({ allExpanded: !prev.allExpanded }))}
+                variant="outlined"
+                size="small"
+                style={{ textTransform: 'none', height: 34, minHeight: 34, marginRight: 4 }}
+              >
+                {this.state.allExpanded ? "⊖ Collapse All" : "⊕ Expand All"}
+              </Button>
               {this.renderExport()}
               {!this.props.isGlobal && canCreateIndent() && (
                 <Button
@@ -563,6 +572,7 @@ class List extends ListCommon {
               refreshList={() => this.search(this.state.pageno)}
               enqueueSnackbar={this.props.enqueueSnackbar}
               isGlobal={this.props.isGlobal}
+              allExpanded={this.state.allExpanded}
               canEditIndentRow={(row) => canEditIndentRecord(row?.status)}
               canDeleteIndentRow={(row) => canCancelIndentRecord(row?.status)}
             />

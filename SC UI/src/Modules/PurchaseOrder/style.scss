@@ -1324,6 +1324,22 @@
   }
 }
 
+// ── PO expand row ──────────────────────────────────────────────────────────
+.po-expansion-row {
+  td {
+    background: #f9fbff;
+  }
+
+  table {
+    th, td {
+      white-space: nowrap;
+    }
+    td:first-child {
+      white-space: normal;
+    }
+  }
+}
+
 // ── Lead time / overdue styles ─────────────────────────────────────────────
 
 .overdue-badge {
