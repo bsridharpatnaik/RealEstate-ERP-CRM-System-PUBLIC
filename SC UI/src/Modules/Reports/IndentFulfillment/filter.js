@@ -93,7 +93,7 @@ class IndentFulfillmentFilter extends CommonFilter {
 
             {/* Row 2: Date range */}
             {sectionLabel('Date Range')}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: -12, marginBottom: 4 }}>
               <div>{this.renderFilterDate('Indent Date From', 'startDate')}</div>
               <div>{this.renderFilterDate('Indent Date To', 'endDate')}</div>
             </div>

@@ -22,7 +22,7 @@ class SupplierPerformanceFilter extends CommonFilter {
           <div className="filter-content" style={{ padding: '16px 20px' }}>
 
             {sectionLabel('Date Range')}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: -12, marginBottom: 4 }}>
               <div>{this.renderFilterDate('Start Date', 'startDate')}</div>
               <div>{this.renderFilterDate('End Date', 'endDate')}</div>
             </div>
