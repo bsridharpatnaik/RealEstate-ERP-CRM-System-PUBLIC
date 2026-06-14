@@ -582,6 +582,7 @@ class Add extends AddForm {
         const grandTotalEdit = Math.round((lineItemsTotal + totalFreightEdit + totalCustomEdit) * 100) / 100;
 
         const updatePayload = {
+          poDate: this.state.poDate,
           supplierId: this.state.orderTo?.id || null,
           firmId: this.state.orderFrom?.id || null,
           subject: this.state.poSubject || "",

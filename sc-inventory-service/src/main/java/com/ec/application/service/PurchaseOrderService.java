@@ -147,6 +147,9 @@ public class PurchaseOrderService extends ReusableFields {
         if (request.getFirmId() != null) {
             po.setFirm(firmService.findSingleFirm(request.getFirmId()));
         }
+        if (request.getPoDate() != null) {
+            po.setPoDate(request.getPoDate());
+        }
         po.setSubject(request.getSubject());
         po.setNotes(request.getNotes());
         po.setOverridePhoneNumber(request.getOverridePhoneNumber());
