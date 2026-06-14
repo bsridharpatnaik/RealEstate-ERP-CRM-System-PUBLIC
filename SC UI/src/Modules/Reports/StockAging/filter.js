@@ -1,8 +1,18 @@
 import React from 'react';
 import CommonFilter from '../../../Shared/Filter';
-import Switch from '@material-ui/core/Switch';
 
 const AGING_BUCKETS = ['0-30', '31-60', '61-90', '90+'];
+
+const sectionLabel = (text) => (
+  <div style={{
+    fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
+    letterSpacing: 0.8, color: '#a0aec0',
+    borderBottom: '1px solid #edf2f7',
+    paddingBottom: 6, marginBottom: 10, marginTop: 4,
+  }}>
+    {text}
+  </div>
+);
 
 class StockAgingFilter extends CommonFilter {
 
@@ -11,40 +21,39 @@ class StockAgingFilter extends CommonFilter {
     const arr = Array.isArray(selected) ? selected : [selected];
 
     return (
-      <div className="filter-item">
-        <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Aging Bucket</label>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {AGING_BUCKETS.map((b) => {
-            const active = arr.includes(b);
-            return (
-              <span
-                key={b}
-                onClick={() => {
-                  const current = Array.isArray(this.filterData['agingBucket'])
-                    ? this.filterData['agingBucket']
-                    : (this.filterData['agingBucket'] ? [this.filterData['agingBucket']] : []);
-                  this.filterData['agingBucket'] = active
-                    ? current.filter((x) => x !== b)
-                    : [...current, b];
-                  this.setState({});
-                }}
-                style={{
-                  padding: '4px 12px',
-                  borderRadius: 12,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: '1px solid #ccc',
-                  background: active ? '#323c47' : '#f5f5f5',
-                  color: active ? '#fff' : '#555',
-                  userSelect: 'none',
-                }}
-              >
-                {b} days
-              </span>
-            );
-          })}
-        </div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {AGING_BUCKETS.map((b) => {
+          const active = arr.includes(b);
+          return (
+            <span
+              key={b}
+              onClick={() => {
+                const current = Array.isArray(this.filterData['agingBucket'])
+                  ? this.filterData['agingBucket']
+                  : (this.filterData['agingBucket'] ? [this.filterData['agingBucket']] : []);
+                this.filterData['agingBucket'] = active
+                  ? current.filter((x) => x !== b)
+                  : [...current, b];
+                this.setState({});
+              }}
+              style={{
+                padding: '5px 14px',
+                borderRadius: 20,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: '1.5px solid',
+                borderColor: active ? '#323c47' : '#d0d7de',
+                background: active ? '#323c47' : '#f5f5f5',
+                color: active ? '#fff' : '#555',
+                userSelect: 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              {b} days
+            </span>
+          );
+        })}
       </div>
     );
   }
@@ -55,29 +64,26 @@ class StockAgingFilter extends CommonFilter {
       <div className="filter-container">
         {this.renderHeader()}
         {this.state.reset ? (
-          <div className="filter-content">
-            {this.renderAutoComplete(
-              'Project',
-              options.projects || [],
-              'tenantSchema',
-              (o) => o.name,
-              true
-            )}
-            {this.renderAutoComplete(
-              'Product',
-              options.products || [],
-              'productName',
-              (o) => o,
-              true
-            )}
-            {this.renderAutoComplete(
-              'Category',
-              options.categories || [],
-              'category',
-              (o) => o,
-              true
-            )}
-            {this.renderToggleBuckets()}
+          <div className="filter-content" style={{ padding: '16px 20px' }}>
+
+            {sectionLabel('Search')}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div>
+                {this.renderAutoComplete('Project', options.projects || [], 'tenantSchema', (o) => o.name, true)}
+              </div>
+              <div>
+                {this.renderAutoComplete('Category', options.categories || [], 'category', (o) => o, true)}
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                {this.renderAutoComplete('Product', options.products || [], 'productName', (o) => o, true)}
+              </div>
+            </div>
+
+            {sectionLabel('Aging Bucket')}
+            <div style={{ marginBottom: 8 }}>
+              {this.renderToggleBuckets()}
+            </div>
+
           </div>
         ) : null}
         {this.renderFooter()}
