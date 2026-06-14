@@ -15,7 +15,7 @@ public class StockAgingSyncJob {
 
     private final StockAgingOrchestrator orchestrator;
 
-    @Scheduled(cron = "0 0 * * * *") // every hour
+    @Scheduled(cron = "0 10 * * * *") // every hour at :10
     public void run() {
         log.info("Stock aging sync job started");
         orchestrator.syncAllTenants();

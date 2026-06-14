@@ -205,6 +205,7 @@ class Add extends AddForm {
                 measurementUnit: p.measurementUnit,
                 productCode: p.productCode,
                 isManagedInventory: p.isManagedInventory,
+                leadTimeDays: p.leadTimeDays ?? null,
               }));
             }
           }
@@ -224,6 +225,7 @@ class Add extends AddForm {
             deadStock: deadStockData,
             deadStockData,
             currentStockData,
+            leadTimeDays: item.leadTimeDays ?? null,
           };
         } else {
           const [deadStockData, currentStockData] = await Promise.all([
@@ -318,6 +320,7 @@ class Add extends AddForm {
         measurementUnit: product.measurementUnit,
         productCode: product.productCode,
         isManagedInventory: product.isManagedInventory,
+        leadTimeDays: product.leadTimeDays ?? null,
       }));
       np[key] = { ...np[key], products: transformedProducts };
       this.setState({ noinventory: np });

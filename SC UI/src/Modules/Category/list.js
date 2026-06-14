@@ -16,8 +16,8 @@ class List extends ListCommon {
   deleteUrl = apiEndpoints.individualCategory;
   title = messages.common.category;
   tableData = {
-    headers: [messages.fields.categoryName, messages.common.description],
-    keys: ["categoryName", "categoryDescription"],
+    headers: [messages.fields.categoryName, messages.common.description, "Lead Time (Days)"],
+    keys: ["categoryName", "categoryDescription", "leadTimeDays"],
   };
   url = apiEndpoints.getCategory;
   exportUrl = exportURL.getCategory;

@@ -128,6 +128,7 @@ class Edit extends EditForm {
         measurementUnit: product.measurementUnit,
         productCode: product.productCode,
         isManagedInventory: product.isManagedInventory,
+        leadTimeDays: product.leadTimeDays ?? null,
       }));
       np[key] = { ...np[key], products: transformedProducts };
       this.setState({ noinventory: np });
@@ -146,6 +147,7 @@ class Edit extends EditForm {
         measurementUnit: product.measurementUnit,
         productCode: product.productCode,
         isManagedInventory: product.isManagedInventory,
+        leadTimeDays: product.leadTimeDays ?? null,
       }));
       this.setState({
         products: transformedProducts,

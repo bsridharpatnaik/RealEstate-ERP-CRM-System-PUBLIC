@@ -516,6 +516,11 @@ class Details extends CommonDetails {
                               <Tooltip title={item.product?.productName || "-"} placement="top">
                                 <span className="inventory-name-truncate">{item.product?.productName || "-"}</span>
                               </Tooltip>
+                              {item.leadTimeDays != null && (
+                                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+                                  ⏱ Lead: <strong>{item.leadTimeDays}d</strong>
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell className="inventory-code-col">
                               {item.product?.productCode || "-"}

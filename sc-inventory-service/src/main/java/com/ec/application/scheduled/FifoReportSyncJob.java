@@ -15,7 +15,7 @@ public class FifoReportSyncJob {
 
     private final FifoReportSyncOrchestrator orchestrator;
 
-    @Scheduled(cron = "0 0 * * * *") // every hour
+    @Scheduled(cron = "0 5 * * * *") // every hour at :05
     public void run() {
         log.info("FIFO report sync job started");
         orchestrator.syncAllTenants();

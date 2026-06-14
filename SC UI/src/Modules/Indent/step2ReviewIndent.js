@@ -38,7 +38,14 @@ class Step2ReviewIndent extends Component {
             <tr key={index}>
               <td>{index + 1}</td>
               <td>{this.formatValue(item.selectedCategory?.name)}</td>
-              <td>{this.formatValue(item.selectedProduct?.name)}</td>
+              <td>
+                {this.formatValue(item.selectedProduct?.name)}
+                {item.leadTimeDays != null && (
+                  <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+                    ⏱ Lead: <strong>{item.leadTimeDays}d</strong>
+                  </div>
+                )}
+              </td>
               <td className="text-right">{this.formatValue(item.quantity)}</td>
               <td>{this.formatValue(item.unit)}</td>
               <td>{this.formatValue(item.specification)}</td>

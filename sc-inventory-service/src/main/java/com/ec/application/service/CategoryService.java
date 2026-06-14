@@ -9,6 +9,8 @@ import com.ec.application.aspects.UseDefaultTenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -65,6 +67,10 @@ public class CategoryService {
 
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "refProducts",   allEntries = true),
+        @CacheEvict(value = "refCategories", allEntries = true)
+    })
     public Category updateCategory(Long id, Category payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);

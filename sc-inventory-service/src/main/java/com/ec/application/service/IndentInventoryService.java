@@ -82,6 +82,9 @@ public class IndentInventoryService {
     @Autowired
     ActivityLogService activityLogService;
 
+    @Autowired
+    LeadTimeResolver leadTimeResolver;
+
     List<String> indentPOEligibleStatuses = Arrays.asList(
             IndentStatusConstants.STATUS_APPROVED,
             IndentStatusConstants.STATUS_PO_PARTIAL,
@@ -778,7 +781,8 @@ public class IndentInventoryService {
                 Category c = p.getCategory();
                 DeadStockDTOForIndent deadStock = deadStocks.getOrDefault(p.getProductId(), new DeadStockDTOForIndent(0.0, Collections.emptyList()));
                 CurrentStockDTOForIndent currentStock = currentStocks.getOrDefault(p.getProductId(), new CurrentStockDTOForIndent(0.0, Collections.emptyList()));
-                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock, currentStock);
+                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock, currentStock, null);
+                dto.setLeadTimeDays(leadTimeResolver.resolve(p));
                 result.add(dto);
             }
         }

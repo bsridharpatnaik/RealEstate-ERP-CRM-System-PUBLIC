@@ -29,7 +29,7 @@ public class PoInwardReconciliationService {
         " FROM purchase_order po" +
         " JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0" +
         " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
-        " LEFT JOIN category cat ON cat.id = p.category_id AND cat.is_deleted = 0" +
+        " LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
         " LEFT JOIN Firm f ON f.firmId = po.firm_id AND f.is_deleted = 0" +
         " LEFT JOIN indent_inventory_entries iie" +
         "   ON iie.purchaseOrderId = po.purchase_order_id" +
@@ -74,6 +74,7 @@ public class PoInwardReconciliationService {
                 DATA_SELECT + BASE_FROM + wc.where + GROUP_BY + wc.having + ") cnt_sub";
         Query countQ = em.createNativeQuery(countSql);
         applyParams(countQ, wc.params);
+        applyParams(countQ, wc.havingParams);
         long total = ((Number) countQ.getSingleResult()).longValue();
 
         // Data
@@ -82,6 +83,7 @@ public class PoInwardReconciliationService {
                 " LIMIT " + pageable.getPageSize() + " OFFSET " + pageable.getOffset();
         Query dataQ = em.createNativeQuery(dataSql);
         applyParams(dataQ, wc.params);
+        applyParams(dataQ, wc.havingParams);
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = dataQ.getResultList();
@@ -136,6 +138,7 @@ public class PoInwardReconciliationService {
         String sql = DATA_SELECT + BASE_FROM + wc.where + GROUP_BY + wc.having + " ORDER BY po.po_date DESC, po.purchase_order_id ASC, p.product_name ASC";
         Query q = em.createNativeQuery(sql);
         applyParams(q, wc.params);
+        applyParams(q, wc.havingParams);
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = q.getResultList();
@@ -185,6 +188,7 @@ public class PoInwardReconciliationService {
     private WhereClause buildWhere(FilterDataList filters) {
         StringBuilder sql = new StringBuilder();
         Map<String, Object> params = new LinkedHashMap<>();
+        Map<String, Object> havingParams = new LinkedHashMap<>();
 
         StringBuilder having = new StringBuilder();
 
@@ -243,14 +247,14 @@ public class PoInwardReconciliationService {
                             .collect(java.util.stream.Collectors.toList());
                     if (statuses.size() == 1) {
                         having.append(" HAVING ").append(RECON_STATUS_CASE).append(" = :recon0");
-                        params.put("recon0", statuses.get(0));
+                        havingParams.put("recon0", statuses.get(0));
                     } else if (statuses.size() > 1) {
                         StringBuilder inClause = new StringBuilder(" HAVING ")
                                 .append(RECON_STATUS_CASE).append(" IN (");
                         for (int ri = 0; ri < statuses.size(); ri++) {
                             String pname = "recon" + ri;
                             inClause.append(ri == 0 ? "" : ",").append(":").append(pname);
-                            params.put(pname, statuses.get(ri));
+                            havingParams.put(pname, statuses.get(ri));
                         }
                         inClause.append(")");
                         having.append(inClause);
@@ -258,7 +262,7 @@ public class PoInwardReconciliationService {
                 }
             }
         }
-        return new WhereClause(sql.toString(), having.toString(), params);
+        return new WhereClause(sql.toString(), having.toString(), params, havingParams);
     }
 
     private String buildOrderBy(Pageable pageable) {
@@ -337,11 +341,12 @@ public class PoInwardReconciliationService {
     }
 
     private static class WhereClause {
-        final String where;   // appended after BASE_FROM (before GROUP BY)
-        final String having;  // appended after GROUP BY
-        final Map<String, Object> params;
-        WhereClause(String where, String having, Map<String, Object> params) {
-            this.where = where; this.having = having; this.params = params;
+        final String where;
+        final String having;
+        final Map<String, Object> params;        // WHERE clause params only
+        final Map<String, Object> havingParams;  // HAVING clause params only
+        WhereClause(String where, String having, Map<String, Object> params, Map<String, Object> havingParams) {
+            this.where = where; this.having = having; this.params = params; this.havingParams = havingParams;
         }
     }
 }

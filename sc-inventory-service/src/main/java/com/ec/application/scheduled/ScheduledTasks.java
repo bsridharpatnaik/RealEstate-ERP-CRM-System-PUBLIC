@@ -176,7 +176,7 @@ public class ScheduledTasks {
         }
     }
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 20 * * * *") // every hour at :20
     public void updateClosingStock() throws Exception {
         List<String> tenants = schemaConfig.getNonMasterSchemaList();
         List<JobFailureAlertDTO> failures = new ArrayList<>();

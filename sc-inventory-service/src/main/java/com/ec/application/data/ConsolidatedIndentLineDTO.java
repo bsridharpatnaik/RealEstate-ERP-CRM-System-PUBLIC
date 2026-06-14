@@ -35,4 +35,5 @@ public class ConsolidatedIndentLineDTO {
     private Date creationDate;
     private DeadStockDTOForIndent deadStock;
     private CurrentStockDTOForIndent currentStock;
+    private Integer leadTimeDays;
 }
