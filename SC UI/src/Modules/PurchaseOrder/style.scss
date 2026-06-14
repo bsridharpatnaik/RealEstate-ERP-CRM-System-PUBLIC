@@ -1279,6 +1279,51 @@
     }
   }
 }
+// ── PO Filter toggle switches & advanced section ───────────────────────────
+.po-filter {
+  .po-filter-toggles {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 4px 0 0;
+
+    .MuiFormControlLabel-root {
+      margin: 0;
+    }
+
+    .MuiFormControlLabel-label {
+      font-size: 14px;
+      color: #323c47;
+      font-weight: 500;
+    }
+  }
+
+  .po-filter-advanced-toggle {
+    padding-top: 4px;
+  }
+
+  .po-filter-advanced-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3f51b5;
+    padding: 4px 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    .po-filter-advanced-arrow {
+      font-size: 10px;
+    }
+  }
+}
+
 // ── Lead time / overdue styles ─────────────────────────────────────────────
 
 .overdue-badge {

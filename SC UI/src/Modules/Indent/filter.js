@@ -6,74 +6,56 @@ import { messages } from "./../../messages";
 class filter extends CommonFilter {
   labelsOutside = true;
 
+  state = {
+    ...this.state,
+    showAdvanced: false,
+  };
+
   renderFilter() {
+    const { showAdvanced } = this.state;
     return (
       <div className="filter-container indent-filter">
         {this.renderHeader()}
         {this.state.reset ? (
           <div className="filter-content">
-            <div className="filter-dates">
+
+            {/* Row 1: Date Range */}
+            <div className="filter-item">
               {this.renderFilterDate("Start Date", "startDate")}
+            </div>
+            <div className="filter-item">
               {this.renderFilterDate("End Date", "endDate")}
             </div>
+
+            {/* Row 2: Category & Product */}
             {this.renderAutoComplete(
               "Category",
               this.props.options?.category,
               "categoryNames",
-              (option) => {
-                return option["name"];
-              }
+              (option) => option["name"]
             )}
             {this.renderAutoComplete(
               "Product",
               this.props.options?.product,
               "productNames",
-              (option) => {
-                return option["name"];
-              }
+              (option) => option["name"]
             )}
-            {this.renderAutoComplete(
-              "Product Code",
-              this.props.options?.productCodes || [],
-              "productCodes",
-              (option) => {
-                return option && (option["name"] || `Product Code ${option["id"]}`);
-              }
-            )}
+
+            {/* Row 3: Indent Status & Line Item Status */}
             {this.renderAutoComplete(
               "Indent Status",
               this.props.options?.indentStatus,
               "indentStatus",
-              (option) => {
-                return option;
-              }
+              (option) => option
             )}
             {this.renderAutoComplete(
               "Line Item Status",
               this.props.options?.indentLineItemStatus,
               "lineItemStatus",
-              (option) => {
-                return option;
-              }
+              (option) => option
             )}
-            {this.renderAutoComplete(
-              "Last Status Updated",
-              this.props.options?.stalebuckets || [],
-              "staleBuckets",
-              (option) => option?.name ?? "",
-              false
-            )}
-            <div className="filter-status-changed-row">
-              {this.renderAutoComplete(
-                "Status Changed To",
-                this.props.options?.indentStatus,
-                "statusChangedTo",
-                (option) => (option ?? ""),
-                false
-              )}
-              {this.renderFilterDate("Status Changed After", "statusChangedAfterDate", false)}
-              {this.renderFilterDate("Status Changed Before", "statusChangedBeforeDate", false)}
-            </div>
+
+            {/* Row 4: Project (global only) & Updated Within */}
             {this.props.isGlobal && this.renderAutoComplete(
               "Project",
               this.props.options?.projects || [],
@@ -81,6 +63,49 @@ class filter extends CommonFilter {
               (option) => option.name,
               true
             )}
+            {this.renderAutoComplete(
+              "Updated Within",
+              this.props.options?.stalebuckets || [],
+              "staleBuckets",
+              (option) => option?.name ?? "",
+              false
+            )}
+
+            {/* Advanced toggle */}
+            <div className="filter-item filter-item-full po-filter-advanced-toggle">
+              <button
+                type="button"
+                className="po-filter-advanced-btn"
+                onClick={() => this.setState({ showAdvanced: !showAdvanced })}
+              >
+                <span>Advanced</span>
+                <span className="po-filter-advanced-arrow">{showAdvanced ? "▲" : "▼"}</span>
+              </button>
+            </div>
+
+            {showAdvanced && (
+              <>
+                {this.renderAutoComplete(
+                  "Product Code",
+                  this.props.options?.productCodes || [],
+                  "productCodes",
+                  (option) => option && (option["name"] || `Product Code ${option["id"]}`)
+                )}
+                <div className="filter-item" />
+                <div className="filter-status-changed-row">
+                  {this.renderAutoComplete(
+                    "Status Changed To",
+                    this.props.options?.indentStatus,
+                    "statusChangedTo",
+                    (option) => (option ?? ""),
+                    false
+                  )}
+                  {this.renderFilterDate("Status Changed After", "statusChangedAfterDate", false)}
+                  {this.renderFilterDate("Status Changed Before", "statusChangedBeforeDate", false)}
+                </div>
+              </>
+            )}
+
           </div>
         ) : null}
         {this.renderFooter()}
@@ -90,7 +115,3 @@ class filter extends CommonFilter {
 }
 
 export default filter;
-
-
-
-
