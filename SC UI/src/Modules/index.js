@@ -35,6 +35,7 @@ import LowStockReport from "./Reports/LowStock";
 import GlobalStockReports from "./GlobalStockReports";
 import PoReconciliationReport from "./Reports/PoReconciliation";
 import IndentFulfillmentReport from "./Reports/IndentFulfillment";
+import SupplierPerformanceReport from "./Reports/SupplierPerformance";
 export {
   User,
   Role,
@@ -73,4 +74,5 @@ export {
   GlobalStockReports,
   PoReconciliationReport,
   IndentFulfillmentReport,
+  SupplierPerformanceReport,
 };

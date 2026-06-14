@@ -84,7 +84,8 @@ function SideMenu(props) {
     props.history.location.pathname === appRoutes.lowStockReport ||
     props.history.location.pathname === appRoutes.globalStockReports ||
     props.history.location.pathname === appRoutes.poReconReport ||
-    props.history.location.pathname === appRoutes.indentFulfillmentReport
+    props.history.location.pathname === appRoutes.indentFulfillmentReport ||
+    props.history.location.pathname === appRoutes.supplierPerformanceReport
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
@@ -583,6 +584,14 @@ function SideMenu(props) {
                   onClick={props.setSideBarValue}
                   linkurl={appRoutes.indentFulfillmentReport}
                 />
+                {(_role === "admin" || _role === "purchase-manager") && (
+                  <DashboardItem
+                    nodeId="69"
+                    labelText="Supplier Performance"
+                    onClick={props.setSideBarValue}
+                    linkurl={appRoutes.supplierPerformanceReport}
+                  />
+                )}
               </DashboardItem>
             )}
             <DashboardItem

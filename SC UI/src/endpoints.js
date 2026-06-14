@@ -353,6 +353,10 @@ export const apiEndpoints = {
   indentFulfillmentStats: "/api/inventory/indent-fulfillment/stats",
   indentFulfillmentProjects: "/api/inventory/indent-fulfillment/projects",
   indentFulfillmentProducts: "/api/inventory/indent-fulfillment/products",
+  supplierPerformanceList: "/api/inventory/supplier-performance/list?size=50",
+  supplierPerformanceTiles: "/api/inventory/supplier-performance/tiles",
+  supplierPerformanceExport: "/api/inventory/supplier-performance/export/excel",
+  supplierPriceComparison: (supplierId) => `/api/inventory/supplier-performance/${supplierId}/price-comparison`,
 };
 export const exportURL = {
   getAllInventoryTransactions:
@@ -432,4 +436,5 @@ export const appRoutes = {
   globalStockReports: "/globalStockReports",
   poReconReport: "/poReconReport",
   indentFulfillmentReport: "/indentFulfillmentReport",
+  supplierPerformanceReport: "/supplierPerformanceReport",
 };

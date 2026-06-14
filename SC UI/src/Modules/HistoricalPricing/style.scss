@@ -21,6 +21,16 @@
     align-items: flex-start;
     margin-bottom: 16px;
 
+    .historical-pricing-category-field {
+      min-width: 200px;
+      max-width: 280px;
+      flex: 0 0 220px;
+
+      .MuiTextField-root {
+        width: 100%;
+      }
+    }
+
     .historical-pricing-indent-field {
       min-width: 320px;
       max-width: 480px;
