@@ -931,13 +931,13 @@ public class PurchaseOrderService extends ReusableFields {
      */
     @Transactional(readOnly = true)
     public Map<String, Object> getOverdueLines(int page, int size) {
-        String terminalIn = "'CANCELLED','COMPLETE INWARD','SHORT CLOSED','SHORT CLOSE'";
+        String terminalIn = "'" + String.join("','", POStatusConstants.getTerminalStatuses()) + "'";
 
         String baseSelect =
             "SELECT po.purchase_order_id, DATE_FORMAT(po.po_date,'%d-%m-%Y') AS po_date, " +
             "  po.project_name, " +
             "  COALESCE(s.name,'') AS supplier_name, " +
-            "  p.product_name, p.product_code, p.measurement_unit, " +
+            "  p.product_name, p.product_code, p.measurementUnit, " +
             "  COALESCE(p.lead_time_days, cat.lead_time_days) AS lead_time_days, " +
             "  (DATEDIFF(CURDATE(), po.po_date) - COALESCE(p.lead_time_days, cat.lead_time_days)) AS days_overdue ";
 
@@ -945,13 +945,13 @@ public class PurchaseOrderService extends ReusableFields {
             "FROM purchase_order po " +
             "JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0 " +
             "JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0 " +
-            "LEFT JOIN category cat ON cat.id = p.category_id AND cat.is_deleted = 0 " +
-            "LEFT JOIN supplier s ON s.id = po.supplier_id AND s.is_deleted = 0 ";
+            "LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0 " +
+            "LEFT JOIN contacts s ON s.contactId = po.supplier_id AND s.contacttype = 'supplier' AND s.is_deleted = 0 ";
 
         String baseWhere =
             "WHERE po.is_deleted = 0 " +
+            "AND pol.is_deleted = 0 " +
             "AND po.status NOT IN (" + terminalIn + ") " +
-            "AND COALESCE(pol.line_item_status,'') != 'INWARD_COMPLETE' " +
             "AND COALESCE(p.lead_time_days, cat.lead_time_days) IS NOT NULL " +
             "AND DATEDIFF(CURDATE(), po.po_date) > COALESCE(p.lead_time_days, cat.lead_time_days) ";
 

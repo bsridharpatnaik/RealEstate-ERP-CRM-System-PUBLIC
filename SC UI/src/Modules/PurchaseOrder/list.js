@@ -434,11 +434,13 @@ class List extends ListCommon {
         params.filterData.push({ attrName: "suppliers", attrValue: supplierNames });
       }
 
-      if (this.filterData.staleBuckets && this.filterData.staleBuckets.id) {
-        params.filterData.push({
-          attrName: "staleBuckets",
-          attrValue: [this.filterData.staleBuckets.id],
-        });
+      if (this.filterData.staleBuckets) {
+        const staleBucketVal = typeof this.filterData.staleBuckets === "object"
+          ? this.filterData.staleBuckets.id
+          : this.filterData.staleBuckets;
+        if (staleBucketVal) {
+          params.filterData.push({ attrName: "staleBuckets", attrValue: [staleBucketVal] });
+        }
       }
 
       if (this.filterData.statusChangedTo) {

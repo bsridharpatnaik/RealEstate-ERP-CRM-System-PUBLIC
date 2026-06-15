@@ -107,7 +107,7 @@ class StockAgingList extends ListCommon {
   }
 
   async search(page = 0) {
-    this.url = apiEndpoints.stockAgingList.replace('size=20', 'size=100');
+    this.url = apiEndpoints.stockAgingList;
     const params = this.prepareRequestBody();
     const response = await this.getData(page, params);
     if (response.success) {

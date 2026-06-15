@@ -226,7 +226,7 @@ public final class IndentInventorySpecification {
 
     private static Specification<IndentInventory> whereLastStatusUpdatedBefore(Date cutoffDate) {
         return (root, query, cb) ->
-            cb.lessThan(root.get(IndentInventory_.LAST_STATUS_UPDATED_AT), ReusableMethods.atEndOfDay(cutoffDate));
+            cb.lessThan(root.get(IndentInventory_.LAST_STATUS_UPDATED_AT), cutoffDate);
     }
 
     private static Specification<IndentInventory> whereIndentStatusNotIn(List<String> statuses) {

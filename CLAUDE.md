@@ -1148,3 +1148,31 @@ When product metadata (name, unit, category) can change in the tenant schema, an
 3. Bulk `UPDATE` master table setting `productName`, `unit` by `(tenantSchema, productId)`
 
 Applies to: `FifoReportSyncService` (done), `LowStockSyncService` (done via fresh ProductRepo load in sync loop).
+
+---
+
+## Contacts Table — Supplier and Contractor Pattern
+
+**Critical for native SQL queries:** There is NO `supplier` table in any schema. Both suppliers and contractors are stored in the `contacts` table, distinguished by `contacttype`.
+
+| Entity class | Table | PK | Filter |
+|---|---|---|---|
+| `Supplier` | `contacts` | `contactId` | `contacttype = 'supplier'` |
+| (Contractor) | `contacts` | `contactId` | `contacttype = 'contractor'` (or similar) |
+
+`PurchaseOrder` has:
+- `supplier_id` → FK to `contacts.contactId` (supplier)
+- `firm_id` → FK to `Firm.id` (billing firm)
+
+**In native SQL, never join `supplier` table.** Use:
+```sql
+LEFT JOIN contacts s ON s.contactId = po.supplier_id AND s.contacttype = 'supplier' AND s.is_deleted = 0
+```
+
+**Column name pitfall:** DB columns in masterschema use camelCase (Hibernate convention), not snake_case:
+- Product unit: `measurementUnit` (not `measurement_unit`)
+- Category PK: `categoryId` (not `id` or `category_id`)
+- Product FK to category: `categoryId` (not `category_id`)
+- Supplier/contact PK: `contactId` (not `id`)
+
+Always verify column names against `SHOW COLUMNS FROM <table>` before writing native SQL targeting masterschema.

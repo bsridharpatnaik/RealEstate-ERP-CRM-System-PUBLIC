@@ -11,16 +11,13 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 @Component
 public class PurchaseOrderUiEnricher {
 
-    private static final List<String> TERMINAL_STATUSES = Arrays.asList(
-            "CANCELLED", "COMPLETE INWARD", "SHORT CLOSED", "SHORT CLOSE"
-    );
+    private static final List<String> TERMINAL_STATUSES = POStatusConstants.getTerminalStatuses();
 
     @Autowired
     UserDetailsService userDetailsService;

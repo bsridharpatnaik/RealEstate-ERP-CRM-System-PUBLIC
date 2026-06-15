@@ -102,8 +102,7 @@ class PoReconList extends ListCommon {
   }
 
   async search(page = 0) {
-    const url = apiEndpoints.poReconList.replace('size=20', 'size=50');
-    this.url = url;
+    this.url = apiEndpoints.poReconList;
     const params = this.prepareRequestBody();
     const response = await this.getData(page, params);
     if (response.success) {

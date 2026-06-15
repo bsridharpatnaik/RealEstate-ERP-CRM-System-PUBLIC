@@ -114,8 +114,7 @@ class IndentFulfillmentList extends ListCommon {
 
   async search(page = 0) {
     // Use larger page size for card view — more lines per indent make pagination less jarring
-    const url = apiEndpoints.indentFulfillmentList.replace('size=20', 'size=50');
-    this.url = url;
+    this.url = apiEndpoints.indentFulfillmentList;
     const params = this.prepareRequestBody();
     const response = await this.getData(page, params);
     if (response.success) {

@@ -11,7 +11,7 @@ import Chart from "../../Shared/Chart";
 import SemiPieChart from "../../Shared/Chart/semiPieChart";
 import IndentTrendChart from "../../Shared/Chart/IndentTrendChart";
 import SupplierLeadTimeHeatmap from "../../Shared/Chart/SupplierLeadTimeHeatmap";
-import StaleStackedColumnChart, { STALE_COLOR_PALETTE } from "../../Shared/Chart/StaleStackedColumnChart";
+import StaleHorizontalBarChart, { buildHorizontalStaleData, StaleChartLegend } from "../../Shared/Chart/StaleHorizontalBarChart";
 import moment from "moment";
 import { API } from "../../axios";
 import { apiEndpoints, appRoutes } from "../../endpoints";
@@ -876,12 +876,12 @@ class GlobalDashboard extends Component {
         </div>
       );
     }
-    const { data, seriesKeys } = this.buildStaleChartData(
+    const rows = buildHorizontalStaleData(
       indentStaleBuckets,
       "tenantCounts",
       (code) => this.resolveTenantName(code)
     );
-    if (!data.length || !seriesKeys.length) {
+    if (!rows.length) {
       return (
         <div className="indent-trend-card">
           <div className="dashboard-heading indent-trend-title">Stale Indents</div>
@@ -892,23 +892,17 @@ class GlobalDashboard extends Component {
     return (
       <div className="indent-trend-card">
         <div className="dashboard-heading indent-trend-title">Stale Indents</div>
-        <div className="stale-chart-legend">
-          {seriesKeys.map((key, i) => (
-            <div key={key} className="stale-legend-item">
-              <span
-                className="stale-legend-color"
-                style={{ background: STALE_COLOR_PALETTE[i % STALE_COLOR_PALETTE.length] }}
-              />
-              <span className="stale-legend-label" title={key}>{key}</span>
-            </div>
-          ))}
-        </div>
-        <div className="indent-trend-chart-wrap">
-          <StaleStackedColumnChart
-            chartId="indentStaleChartDiv"
-            data={data}
-            categoryField="bucketLabel"
-            seriesKeys={seriesKeys}
+        <StaleChartLegend clickable />
+        <div className="stale-chart-scroll-wrap">
+          <StaleHorizontalBarChart
+            rows={rows}
+            onRowClick={(row) => {
+              setSession("indentPresetFilterData", [
+                { attrName: "tenants", attrValue: [row.key] },
+                { attrName: "staleBuckets", attrValue: [{ id: "GT_3_DAYS", name: "More than 3 days" }] },
+              ]);
+              this.props.history.push("/globalIndent");
+            }}
           />
         </div>
       </div>
@@ -925,11 +919,8 @@ class GlobalDashboard extends Component {
         </div>
       );
     }
-    const { data, seriesKeys } = this.buildStaleChartData(
-      poStaleBuckets,
-      "supplierCounts"
-    );
-    if (!data.length || !seriesKeys.length) {
+    const rows = buildHorizontalStaleData(poStaleBuckets, "supplierCounts");
+    if (!rows.length) {
       return (
         <div className="indent-trend-card">
           <div className="dashboard-heading indent-trend-title">Stale POs</div>
@@ -940,23 +931,17 @@ class GlobalDashboard extends Component {
     return (
       <div className="indent-trend-card">
         <div className="dashboard-heading indent-trend-title">Stale POs</div>
-        <div className="stale-chart-legend">
-          {seriesKeys.map((key, i) => (
-            <div key={key} className="stale-legend-item">
-              <span
-                className="stale-legend-color"
-                style={{ background: STALE_COLOR_PALETTE[i % STALE_COLOR_PALETTE.length] }}
-              />
-              <span className="stale-legend-label" title={key}>{key}</span>
-            </div>
-          ))}
-        </div>
-        <div className="indent-trend-chart-wrap">
-          <StaleStackedColumnChart
-            chartId="poStaleChartDiv"
-            data={data}
-            categoryField="bucketLabel"
-            seriesKeys={seriesKeys}
+        <StaleChartLegend clickable />
+        <div className="stale-chart-scroll-wrap">
+          <StaleHorizontalBarChart
+            rows={rows}
+            onRowClick={(row) => {
+              setSession("poPresetFilterData", [
+                { attrName: "suppliers", attrValue: [row.name] },
+                { attrName: "staleBuckets", attrValue: [{ id: "GT_3_DAYS", name: "More than 3 days" }] },
+              ]);
+              this.props.history.push(appRoutes.purchaseOrder);
+            }}
           />
         </div>
       </div>

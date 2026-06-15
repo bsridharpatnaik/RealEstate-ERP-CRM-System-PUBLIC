@@ -55,7 +55,7 @@ public class SupplierPerformanceService {
         "     - COUNT(DISTINCT CASE WHEN po.status NOT IN ('CANCELLED','COMPLETED','SHORT CLOSED','SHORT CLOSE') AND COALESCE(p.lead_time_days, cat.lead_time_days) IS NOT NULL AND DATEDIFF(CURDATE(), po.po_date) > COALESCE(p.lead_time_days, cat.lead_time_days) THEN po.purchase_order_id END)" +
         "    ) * 100.0 / NULLIF(COUNT(DISTINCT CASE WHEN po.status != 'CANCELLED' AND COALESCE(p.lead_time_days, cat.lead_time_days) IS NOT NULL THEN po.purchase_order_id END), 0)" +
         "  , 1) AS onTimeRate," +
-        "  COALESCE(SUM(pol.quantity * COALESCE(pol.netRate, pol.rate, 0)), 0) AS totalOrderValue," +
+        "  COALESCE(SUM(COALESCE(pol.netRate, pol.quantity * pol.rate, 0)), 0) AS totalOrderValue," +
         "  MAX(po.po_date) AS lastPoDate";
 
     private static final String BASE_FROM =

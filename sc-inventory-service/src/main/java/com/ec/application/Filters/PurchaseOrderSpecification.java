@@ -227,7 +227,7 @@ public final class PurchaseOrderSpecification {
 
     private static Specification<PurchaseOrder> whereLastStatusUpdatedBefore(Date cutoffDate) {
         return (root, query, cb) ->
-            cb.lessThan(root.get(PurchaseOrder_.LAST_STATUS_UPDATED_AT), ReusableMethods.atEndOfDay(cutoffDate));
+            cb.lessThan(root.get(PurchaseOrder_.LAST_STATUS_UPDATED_AT), cutoffDate);
     }
 
     private static Specification<PurchaseOrder> wherePOStatusNotIn(List<String> statuses) {

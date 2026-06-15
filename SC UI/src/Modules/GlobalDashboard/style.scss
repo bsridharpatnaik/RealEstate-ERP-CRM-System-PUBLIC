@@ -237,9 +237,9 @@
     padding: 0 12px 12px;
     gap: 12px;
     height: auto;
-    min-height: 480px;
+    min-height: 200px;
     flex-shrink: 0;
-    @media screen and (max-width: 1024px) { min-height: auto; }
+    align-items: stretch;
     @media screen and (max-width: 768px) {
       flex-direction: column;
       min-height: auto;
@@ -294,6 +294,14 @@
     .indent-trend-chart-wrap {
       height: 400px;
       overflow: hidden;
+      @media screen and (max-width: 1024px) { height: 300px; }
+      @media screen and (max-width: 768px)  { height: 220px; }
+    }
+    .stale-chart-scroll-wrap {
+      height: 360px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
       @media screen and (max-width: 1024px) { height: 300px; }
       @media screen and (max-width: 768px)  { height: 220px; }
     }
