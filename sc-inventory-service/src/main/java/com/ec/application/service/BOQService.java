@@ -16,6 +16,8 @@ import com.ec.application.ReusableClasses.IdNameProjections;
 
 import javax.transaction.Transactional;
 
+import com.ec.application.constants.IndentLineItemStatusConstants;
+import com.ec.application.constants.IndentStatusConstants;
 import com.ec.application.data.*;
 import com.ec.application.model.*;
 import com.ec.application.repository.*;
@@ -1199,8 +1201,8 @@ public class BOQService {
             "FROM " + master + ".indent_inventory_entries iie " +
             "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
             "WHERE iie.is_deleted = 0 AND iie.productId = :pid AND ii.tenant = :tenant " +
-            "AND ii.indent_status NOT IN ('CANCELLED','REJECTED') " +
-            "AND iie.line_item_status NOT IN ('SHORT CLOSED','CANCELLED')")
+            "AND ii.indent_status NOT IN ('" + IndentStatusConstants.STATUS_CANCELLED + "','" + IndentStatusConstants.STATUS_REJECTED + "') " +
+            "AND iie.line_item_status NOT IN ('" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "','" + IndentLineItemStatusConstants.STATUS_CANCELLED + "')")
             .setParameter("pid", productId)
             .setParameter("tenant", tenantCode)
             .getSingleResult();
@@ -1266,8 +1268,8 @@ public class BOQService {
             "JOIN " + master + ".product p ON p.productId = iie.productId AND p.is_deleted = 0 " +
             "JOIN " + master + ".category c ON c.categoryId = p.categoryId " +
             "WHERE iie.is_deleted = 0 AND ii.tenant = :tenantCode " +
-            "AND ii.indent_status NOT IN ('CANCELLED','REJECTED') " +
-            "AND iie.line_item_status NOT IN ('SHORT CLOSED','CANCELLED') " +
+            "AND ii.indent_status NOT IN ('" + IndentStatusConstants.STATUS_CANCELLED + "','" + IndentStatusConstants.STATUS_REJECTED + "') " +
+            "AND iie.line_item_status NOT IN ('" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "','" + IndentLineItemStatusConstants.STATUS_CANCELLED + "') " +
             "GROUP BY iie.productId, p.product_name, c.category_name, p.product_code, p.measurementUnit")
             .setParameter("tenantCode", tenantCode)
             .getResultList();
