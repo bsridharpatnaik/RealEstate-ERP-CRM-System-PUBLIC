@@ -1233,12 +1233,12 @@ public class BOQService {
         List<Object[]> boqRows = em.createNativeQuery(
             "SELECT bu.productId, p.product_name, c.category_name, " +
             "  SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent, 0) / 100)) AS total_planned, " +
-            "  p.productCode, p.measurementUnit " +
+            "  p.product_code, p.measurementUnit " +
             "FROM BOQUpload bu " +
             "INNER JOIN Product p ON p.productId = bu.productId AND p.is_deleted = 0 " +
             "INNER JOIN Category c ON c.categoryId = p.categoryId " +
             "WHERE bu.is_deleted = 0 " +
-            "GROUP BY bu.productId, p.product_name, c.category_name, p.productCode, p.measurementUnit")
+            "GROUP BY bu.productId, p.product_name, c.category_name, p.product_code, p.measurementUnit")
             .getResultList();
         // cols: 0=productId, 1=product_name, 2=category_name, 3=total_planned, 4=productCode, 5=measurementUnit
 
@@ -1259,14 +1259,14 @@ public class BOQService {
         @SuppressWarnings("unchecked")
         List<Object[]> indentRows = em.createNativeQuery(
             "SELECT iie.productId, SUM(iie.quantity) AS total_qty, p.product_name, c.category_name, " +
-            "  p.productCode, p.measurementUnit " +
+            "  p.product_code, p.measurementUnit " +
             "FROM " + master + ".indent_inventory_entries iie " +
             "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
             "JOIN " + master + ".product p ON p.productId = iie.productId AND p.is_deleted = 0 " +
             "JOIN " + master + ".category c ON c.categoryId = p.categoryId " +
             "WHERE iie.is_deleted = 0 AND ii.tenant = :tenantCode " +
             "AND ii.indent_status NOT IN ('CANCELLED','REJECTED','SHORT CLOSED','SHORT_CLOSED') " +
-            "GROUP BY iie.productId, p.product_name, c.category_name, p.productCode, p.measurementUnit")
+            "GROUP BY iie.productId, p.product_name, c.category_name, p.product_code, p.measurementUnit")
             .setParameter("tenantCode", tenantCode)
             .getResultList();
         // cols: 0=productId, 1=total_qty, 2=product_name, 3=category_name, 4=productCode, 5=measurementUnit
