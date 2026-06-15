@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import com.ec.application.ReusableClasses.BOQUploadConstant;
 import com.ec.application.Filters.BOQStatusFilterDataList;
 import com.ec.application.Filters.FilterAttributeData;
+import com.ec.application.multitenant.ThreadLocalStorage;
 
 @Service
 @Transactional
@@ -41,6 +42,12 @@ public class BOQService {
 
     @Autowired
     private ProductRepo productRepository;
+
+    @Autowired
+    private javax.persistence.EntityManager em;
+
+    @Autowired
+    private com.ec.application.config.SchemaConfig schemaConfig;
 
     @Autowired
     private BuildingTypeRepo buildingTypeRepository;
@@ -1156,6 +1163,157 @@ public class BOQService {
         if (consumed <= 90)  return "80-90 %";
         if (consumed <= 100) return "90-100 %";
         return "above 100 %";
+    }
+
+    /**
+     * Returns aggregate BOQ summary for a single product in the current tenant schema.
+     * Aggregates across all building units and work areas.
+     */
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public ProductBOQSummaryDto getProductBOQSummary(Long productId) {
+        ProductBOQSummaryDto dto = new ProductBOQSummaryDto();
+
+        // Check BOQ exists for this product (tenant schema — unqualified, routed by ThreadLocal)
+        Number boqCount = (Number) em.createNativeQuery(
+            "SELECT COUNT(*) FROM BOQUpload WHERE productId = :pid AND is_deleted = 0")
+            .setParameter("pid", productId)
+            .getSingleResult();
+        if (boqCount.longValue() == 0) {
+            dto.setHasBOQ(false);
+            return dto;
+        }
+
+        // Total planned BOQ with wastage (tenant schema)
+        Object boqResult = em.createNativeQuery(
+            "SELECT COALESCE(SUM(quantity * (1 + COALESCE(wastagePercent, 0) / 100)), 0) " +
+            "FROM BOQUpload WHERE productId = :pid AND is_deleted = 0")
+            .setParameter("pid", productId)
+            .getSingleResult();
+        double totalPlanned = toDouble(boqResult);
+
+        // Total indented qty from master schema (fully qualified — bypasses routing)
+        String tenantCode = ThreadLocalStorage.getTenantName();
+        String master = schemaConfig.getMasterSchema();
+        Object indentResult = em.createNativeQuery(
+            "SELECT COALESCE(SUM(iie.quantity), 0) " +
+            "FROM " + master + ".indent_inventory_entries iie " +
+            "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
+            "WHERE iie.is_deleted = 0 AND iie.productId = :pid AND ii.tenant = :tenant " +
+            "AND ii.indent_status NOT IN ('CANCELLED','REJECTED','SHORT CLOSED','SHORT_CLOSED')")
+            .setParameter("pid", productId)
+            .setParameter("tenant", tenantCode)
+            .getSingleResult();
+        double totalIndented = toDouble(indentResult);
+
+        double remaining = totalPlanned - totalIndented;
+        dto.setHasBOQ(true);
+        dto.setTotalPlanned(totalPlanned);
+        dto.setTotalConsumed(totalIndented);
+        dto.setRemaining(remaining);
+        double pct = totalPlanned > 0 ? (totalIndented / totalPlanned) * 100 : 0;
+        dto.setBucket(pct >= 100 ? "exceeded" : pct >= 80 ? "atRisk" : "onTrack");
+        return dto;
+    }
+
+    /**
+     * Returns BOQ planned vs indent raised per product for the current project.
+     * BOQ data from current tenant schema; indent data from master schema filtered by tenant code.
+     * NOT_SUPPORTED: suspends the class-level transaction so the EntityManager acquires a fresh
+     * connection per query. Master schema tables are fully qualified in the SQL (Step 3), so no
+     * schema routing is needed — this mirrors the PoInwardReconciliationService pattern.
+     */
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public List<BOQIndentSummaryItem> getBOQIndentSummary() {
+        String tenantCode = ThreadLocalStorage.getTenantName();
+        String master = schemaConfig.getMasterSchema();
+
+        // Step 1: BOQ aggregates from tenant schema — simple GROUP BY, no correlated subquery.
+        // EntityManager with NOT_SUPPORTED acquires a fresh connection routed by ThreadLocal (tenant schema).
+        @SuppressWarnings("unchecked")
+        List<Object[]> boqRows = em.createNativeQuery(
+            "SELECT bu.productId, p.product_name, c.category_name, " +
+            "  SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent, 0) / 100)) AS total_planned, " +
+            "  p.productCode, p.measurementUnit " +
+            "FROM BOQUpload bu " +
+            "INNER JOIN Product p ON p.productId = bu.productId AND p.is_deleted = 0 " +
+            "INNER JOIN Category c ON c.categoryId = p.categoryId " +
+            "WHERE bu.is_deleted = 0 " +
+            "GROUP BY bu.productId, p.product_name, c.category_name, p.productCode, p.measurementUnit")
+            .getResultList();
+        // cols: 0=productId, 1=product_name, 2=category_name, 3=total_planned, 4=productCode, 5=measurementUnit
+
+        Map<Long, double[]> boqByProduct = new LinkedHashMap<>();
+        Map<Long, String[]> metaByProduct = new LinkedHashMap<>(); // [name, category, code, unit]
+        for (Object[] r : boqRows) {
+            Long pid = toLong(r[0]);
+            boqByProduct.put(pid, new double[]{ toDouble(r[3]) });
+            metaByProduct.put(pid, new String[]{
+                r[1] != null ? (String) r[1] : "",
+                r[2] != null ? (String) r[2] : "",
+                r[4] != null ? (String) r[4] : "",
+                r[5] != null ? (String) r[5] : ""
+            });
+        }
+
+        // Step 2: Indent totals from master schema — fully qualified table names bypass schema routing.
+        @SuppressWarnings("unchecked")
+        List<Object[]> indentRows = em.createNativeQuery(
+            "SELECT iie.productId, SUM(iie.quantity) AS total_qty, p.product_name, c.category_name, " +
+            "  p.productCode, p.measurementUnit " +
+            "FROM " + master + ".indent_inventory_entries iie " +
+            "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
+            "JOIN " + master + ".product p ON p.productId = iie.productId AND p.is_deleted = 0 " +
+            "JOIN " + master + ".category c ON c.categoryId = p.categoryId " +
+            "WHERE iie.is_deleted = 0 AND ii.tenant = :tenantCode " +
+            "AND ii.indent_status NOT IN ('CANCELLED','REJECTED','SHORT CLOSED','SHORT_CLOSED') " +
+            "GROUP BY iie.productId, p.product_name, c.category_name, p.productCode, p.measurementUnit")
+            .setParameter("tenantCode", tenantCode)
+            .getResultList();
+        // cols: 0=productId, 1=total_qty, 2=product_name, 3=category_name, 4=productCode, 5=measurementUnit
+
+        Map<Long, double[]> indentByProduct = new LinkedHashMap<>();
+        for (Object[] r : indentRows) {
+            Long pid = toLong(r[0]);
+            indentByProduct.put(pid, new double[]{ toDouble(r[1]) });
+            if (!metaByProduct.containsKey(pid)) {
+                metaByProduct.put(pid, new String[]{
+                    r[2] != null ? (String) r[2] : "",
+                    r[3] != null ? (String) r[3] : "",
+                    r[4] != null ? (String) r[4] : "",
+                    r[5] != null ? (String) r[5] : ""
+                });
+            }
+        }
+
+        // Step 3: Merge — all products with BOQ or indent
+        Set<Long> allProducts = new LinkedHashSet<>();
+        allProducts.addAll(boqByProduct.keySet());
+        allProducts.addAll(indentByProduct.keySet());
+
+        List<BOQIndentSummaryItem> result = new ArrayList<>();
+        for (Long pid : allProducts) {
+            double boqPlanned = boqByProduct.containsKey(pid) ? boqByProduct.get(pid)[0] : 0;
+            double indented   = indentByProduct.containsKey(pid) ? indentByProduct.get(pid)[0] : 0;
+            String[] meta     = metaByProduct.getOrDefault(pid, new String[]{"Product " + pid, "", "", ""});
+
+            BOQIndentSummaryItem item = new BOQIndentSummaryItem();
+            item.setCategoryName(meta[1]);
+            item.setProductName(meta[0]);
+            item.setProductCode(meta[2]);
+            item.setUnit(meta[3]);
+            item.setBoqPlanned(boqPlanned);
+            item.setTotalIndented(indented);
+            item.setBalance(boqPlanned - indented);
+            item.setCoveragePct(boqPlanned > 0 ? Math.round((indented / boqPlanned) * 10000.0) / 100.0 : null);
+            if (boqPlanned <= 0) item.setBucket("none");
+            else if (indented > boqPlanned) item.setBucket("over");
+            else item.setBucket("under");
+            result.add(item);
+        }
+
+        result.sort(Comparator.comparing(BOQIndentSummaryItem::getCategoryName, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(BOQIndentSummaryItem::getProductName, Comparator.nullsLast(Comparator.naturalOrder())));
+        return result;
     }
 
     private void sortDtos(List<BOQStatusDto> dtos, Sort sort) {

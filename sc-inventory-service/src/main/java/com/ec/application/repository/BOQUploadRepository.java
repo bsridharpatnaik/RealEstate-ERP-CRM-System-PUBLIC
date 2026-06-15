@@ -216,4 +216,17 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
 
     @Query("SELECT COUNT(b) FROM BOQUpload b WHERE b.usageLocation.locationId = :id AND b.isDeleted = false")
     int locationBoqCount(@Param("id") Long id);
+
+    /**
+     * Returns [productId, effective_boq_qty] per product for a set of product IDs.
+     * Used to enrich cross-tenant reports (e.g. PO Recon) with BOQ planned totals.
+     * effective_boq_qty = SUM(quantity * (1 + wastage%/100))
+     */
+    @Query(value =
+        "SELECT bu.productId, SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent, 0) / 100)) AS effective_boq " +
+        "FROM BOQUpload bu " +
+        "WHERE bu.is_deleted = 0 AND bu.productId IN (:productIds) " +
+        "GROUP BY bu.productId",
+        nativeQuery = true)
+    List<Object[]> fetchEffectiveBOQByProductIds(@Param("productIds") List<Long> productIds);
 }

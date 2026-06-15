@@ -243,6 +243,8 @@ export const apiEndpoints = {
   exportBOQStatus: "/api/inventory/boqupload/export-status",
   boqUploadByUnit: "/api/inventory/boqupload/byunit/",
   boqDashboardStats: "/api/inventory/boqupload/boq-dashboard-summary",
+  getProductBOQSummary: "/api/inventory/boqupload/boq-summary",
+  boqIndentSummary: "/api/inventory/boqupload/boq-vs-planned",
   boqHistoryList: "/api/inventory/boqhistory/list?size=" + noOfRecords,
   boqHistoryExport: "/api/inventory/boqhistory/export",
   activityLogByEntity: (entityType, entityId) => `/api/inventory/activity-log/by-entity/${entityType}/${entityId}`,
@@ -437,4 +439,5 @@ export const appRoutes = {
   poReconReport: "/poReconReport",
   indentFulfillmentReport: "/indentFulfillmentReport",
   supplierPerformanceReport: "/supplierPerformanceReport",
+  boqIndentReport: "/boqIndentReport",
 };

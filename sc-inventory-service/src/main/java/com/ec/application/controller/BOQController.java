@@ -26,9 +26,11 @@ import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.AllowOnly;
 import com.ec.application.data.BOQDashboardResponse;
 import com.ec.application.data.BOQDto;
+import com.ec.application.data.BOQIndentSummaryItem;
 import com.ec.application.data.BOQInformation;
 import com.ec.application.data.BOQReportResponse;
 import com.ec.application.data.BOQUploadValidationResponse;
+import com.ec.application.data.ProductBOQSummaryDto;
 import com.ec.application.data.UsageLocationResponse;
 import com.ec.application.model.BOQUpload;
 import com.ec.application.service.BOQService;
@@ -115,6 +117,18 @@ public class BOQController {
     @ResponseStatus(HttpStatus.OK)
     public List<BOQUpload> getBOQByUnit(@PathVariable("locationId") long locationId) {
         return bOQService.getBOQByUnit(locationId);
+    }
+
+    @GetMapping("/boq-summary")
+    @ResponseStatus(HttpStatus.OK)
+    public ProductBOQSummaryDto getProductBOQSummary(@RequestParam Long productId) {
+        return bOQService.getProductBOQSummary(productId);
+    }
+
+    @GetMapping("/boq-vs-planned")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BOQIndentSummaryItem> getBOQIndentSummary() {
+        return bOQService.getBOQIndentSummary();
     }
 
     @DeleteMapping("/boq_upload/{id}")

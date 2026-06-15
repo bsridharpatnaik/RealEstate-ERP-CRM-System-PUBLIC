@@ -36,6 +36,7 @@ import GlobalStockReports from "./GlobalStockReports";
 import PoReconciliationReport from "./Reports/PoReconciliation";
 import IndentFulfillmentReport from "./Reports/IndentFulfillment";
 import SupplierPerformanceReport from "./Reports/SupplierPerformance";
+import BOQIndentReport from "./Reports/BOQIndent";
 export {
   User,
   Role,
@@ -75,4 +76,5 @@ export {
   PoReconciliationReport,
   IndentFulfillmentReport,
   SupplierPerformanceReport,
+  BOQIndentReport,
 };

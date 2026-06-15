@@ -42,4 +42,7 @@ public class PoInwardReconciliationRow {
 
     /** True when daysOverdue > 0 (lead time exceeded and PO still open). */
     private Boolean isOverdue;
+
+    /** Total effective BOQ planned qty for this product in the project (null = no BOQ configured). */
+    private Double boqPlannedQty;
 }

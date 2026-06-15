@@ -42,6 +42,7 @@ class IndentFulfillmentList extends ListCommon {
   // Not used for card view but needed by ListCommon
   tableData = { headers: [], keys: [] };
   url = apiEndpoints.indentFulfillmentList;
+  pageSize = 100;
 
   componentDidMount() {
     this.filterRef = React.createRef();

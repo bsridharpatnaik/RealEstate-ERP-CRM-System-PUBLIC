@@ -209,9 +209,10 @@ class Add extends AddForm {
               }));
             }
           }
-          const [deadStockData, currentStockData] = await Promise.all([
+          const [deadStockData, currentStockData, boqData] = await Promise.all([
             this.fetchDeadStockForProduct(item.productId),
             this.fetchCurrentStockForProduct(item.productId),
+            this.fetchBOQForProduct(item.productId),
           ]);
           newNoinventory[key] = {
             productId: item.productId,
@@ -225,12 +226,14 @@ class Add extends AddForm {
             deadStock: deadStockData,
             deadStockData,
             currentStockData,
+            boqData,
             leadTimeDays: item.leadTimeDays ?? null,
           };
         } else {
-          const [deadStockData, currentStockData] = await Promise.all([
+          const [deadStockData, currentStockData, boqData] = await Promise.all([
             this.fetchDeadStockForProduct(item.productId),
             this.fetchCurrentStockForProduct(item.productId),
+            this.fetchBOQForProduct(item.productId),
           ]);
           newNoinventory[key] = {
             productId: item.productId,
@@ -241,12 +244,14 @@ class Add extends AddForm {
             deadStock: deadStockData,
             deadStockData,
             currentStockData,
+            boqData,
           };
         }
       } catch (_) {
-        const [deadStockData, currentStockData] = await Promise.all([
+        const [deadStockData, currentStockData, boqData] = await Promise.all([
           this.fetchDeadStockForProduct(item.productId).catch(() => null),
           this.fetchCurrentStockForProduct(item.productId).catch(() => null),
+          this.fetchBOQForProduct(item.productId).catch(() => null),
         ]);
         newNoinventory[key] = {
           productId: item.productId,
@@ -257,6 +262,7 @@ class Add extends AddForm {
           deadStock: deadStockData || { toalDeadStock: 0, detailedDeadStock: [] },
           deadStockData: deadStockData || { toalDeadStock: 0, detailedDeadStock: [] },
           currentStockData: currentStockData || { totalCurrentStock: 0, warehouseWiseStock: [] },
+          boqData: boqData || null,
         };
       }
       key++;
@@ -403,6 +409,57 @@ renderCurrentStockField(key) {
   return currentStockField;
 }
 
+  renderBOQField(key) {
+    const boqData = this.state.noinventory[key]?.boqData;
+    const unit = this.state.noinventory[key]?.unit || "";
+    if (!boqData || !boqData.hasBOQ) return null;
+
+    const { remaining, totalPlanned, totalConsumed } = boqData;
+    const remainingVal = typeof remaining === 'number' ? remaining : 0;
+
+    const displayValue = remainingVal < 0
+      ? `Exceeded by ${Math.abs(remainingVal).toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`
+      : `${remainingVal.toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`;
+
+    const tooltipContent = (
+      <div style={{ textAlign: 'left' }}>
+        <div style={{ fontWeight: 'bold', marginBottom: 6, fontSize: 13, color: '#323c47' }}>BOQ Summary:</div>
+        <div style={{ fontSize: 12, color: '#666', marginBottom: 3 }}>
+          <span style={{ fontWeight: 500, color: '#323c47' }}>Planned:</span>{' '}
+          {(totalPlanned || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })} {unit}
+        </div>
+        <div style={{ fontSize: 12, color: '#666', marginBottom: 3 }}>
+          <span style={{ fontWeight: 500, color: '#323c47' }}>Already Indented:</span>{' '}
+          {(totalConsumed || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })} {unit}
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 600 }}>
+          Remaining: {remainingVal.toLocaleString('en-IN', { maximumFractionDigits: 2 })} {unit}
+        </div>
+      </div>
+    );
+
+    const accentColor = remainingVal < 0 ? '#e53935' : '#27ae60';
+
+    const boqField = (
+      <div className="boq-field-wrapper" key={`boq_${key}_${remainingVal}`}
+        style={{ borderLeft: `3px solid ${accentColor}`, borderRadius: 4 }}>
+        {this.renderTextField({
+          fieldname: `boqRemaining_${key}`,
+          placeholder: "BOQ Remaining",
+          disabled: true,
+          value: displayValue,
+          skipAdd: true,
+        })}
+      </div>
+    );
+
+    return (
+      <HtmlTooltip title={tooltipContent} placement="top" arrow>
+        <span style={{ display: 'block', width: '100%' }}>{boqField}</span>
+      </HtmlTooltip>
+    );
+  }
+
   renderDeadStockField(key) {
     const deadStockData = this.state.noinventory[key]?.deadStockData;
     const unit = this.state.noinventory[key]?.unit || "";
@@ -502,23 +559,37 @@ renderCurrentStockField(key) {
     }
   }
 
+  /** Fetches BOQ summary for a product; returns null on error or no BOQ. Used when loading draft/resubmit. */
+  async fetchBOQForProduct(productId) {
+    if (!productId) return null;
+    try {
+      const response = await API.GET(`${apiEndpoints.getProductBOQSummary}?productId=${productId}`);
+      if (response.success && response.data && response.data.hasBOQ) return response.data;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   async fetchDeadStock(productId, key) {
     if (!productId) {
       const p = this.state.noinventory;
       if (p[key]) {
         p[key].deadStock = null;
         p[key].deadStockData = null;
-        p[key].currentStockData = null;   // ← clear this too
+        p[key].currentStockData = null;
+        p[key].boqData = null;
         this.setState({ noinventory: { ...p } });
       }
       return;
     }
 
     try {
-      // Both calls fire at the same time
-      const [deadStockRes, currentStockRes] = await Promise.allSettled([
+      // All three calls fire at the same time
+      const [deadStockRes, currentStockRes, boqRes] = await Promise.allSettled([
         API.GET(`${apiEndpoints.getDeadStockByProduct}?productId=${productId}`),
-        API.GET(`${apiEndpoints.getCurrentStockForIndent}?productId=${productId}`)
+        API.GET(`${apiEndpoints.getCurrentStockForIndent}?productId=${productId}`),
+        API.GET(`${apiEndpoints.getProductBOQSummary}?productId=${productId}`),
       ]);
 
       const deadData = (deadStockRes.status === 'fulfilled' && deadStockRes.value?.success)
@@ -529,11 +600,16 @@ renderCurrentStockField(key) {
         ? currentStockRes.value.data
         : { totalCurrentStock: 0, warehouseWiseStock: [] };
 
+      const boqData = (boqRes.status === 'fulfilled' && boqRes.value?.success)
+        ? boqRes.value.data
+        : null;
+
       const p = this.state.noinventory;
       if (p[key]) {
         p[key].deadStock = deadData;
         p[key].deadStockData = deadData;
-        p[key].currentStockData = currentData;   // ← new
+        p[key].currentStockData = currentData;
+        p[key].boqData = boqData;
         this.setState({ noinventory: { ...p } });
       }
     } catch (error) {
@@ -541,7 +617,8 @@ renderCurrentStockField(key) {
       if (p[key]) {
         p[key].deadStock = { toalDeadStock: 0, detailedDeadStock: [] };
         p[key].deadStockData = { toalDeadStock: 0, detailedDeadStock: [] };
-        p[key].currentStockData = { totalCurrentStock: 0, warehouseWiseStock: [] };   // ← new
+        p[key].currentStockData = { totalCurrentStock: 0, warehouseWiseStock: [] };
+        p[key].boqData = null;
         this.setState({ noinventory: { ...p } });
       }
     }
@@ -694,6 +771,7 @@ renderCurrentStockField(key) {
           </div>
           {this.renderDeadStockField(key)}
           {this.renderCurrentStockField(key)}
+          {this.renderBOQField(key)}
           {this.renderTextField({
             fieldname: `unit_${key}`,
             placeholder: "Measurement Unit",

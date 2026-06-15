@@ -62,6 +62,7 @@ class LowStockReportList extends ListCommon {
   };
 
   url = apiEndpoints.lowStockList;
+  pageSize = 100;
 
   componentDidMount() {
     this.filterRef = React.createRef();

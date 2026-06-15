@@ -68,6 +68,7 @@ class FifoReportList extends ListCommon {
   };
 
   url = apiEndpoints.fifoReportList;
+  pageSize = 100;
 
   componentDidMount() {
     this.filterRef = React.createRef();

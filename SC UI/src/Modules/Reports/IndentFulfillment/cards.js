@@ -291,6 +291,12 @@ function IndentCard({ indentId, project, indentDate, indentStatus, lines, tenant
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                   {/* Product name + code + need-by */}
                   <div style={{ flex: '2 1 200px', minWidth: 0 }}>
+                    {line.categoryName && (
+                      <div style={{ fontSize: 11, color: '#7f8c8d', marginBottom: 2 }}>
+                        {line.categoryName}
+                        <span style={{ margin: '0 4px', color: '#a0aec0' }}>→</span>
+                      </div>
+                    )}
                     <Tooltip title={line.productName || ''} placement="top">
                       <div style={{
                         fontSize: 13, fontWeight: 600, color: '#2d3748',

@@ -37,6 +37,7 @@ class DeadStockReport extends ListCommon {
 
   tableData = { headers: [], keys: [] };
   url = apiEndpoints.deadStockReportList;
+  pageSize = 100;
 
   componentDidMount() {
     this.filterRef = React.createRef();

@@ -43,6 +43,7 @@ class StockAgingList extends ListCommon {
   };
 
   url = apiEndpoints.stockAgingList;
+  pageSize = 100;
 
   componentDidMount() {
     this.filterRef = React.createRef();

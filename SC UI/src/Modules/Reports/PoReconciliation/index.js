@@ -38,6 +38,7 @@ class PoReconList extends ListCommon {
 
   tableData = { headers: [], keys: [] };
   url = apiEndpoints.poReconList;
+  pageSize = 100;
 
   componentDidMount() {
     this.filterRef = React.createRef();

@@ -42,7 +42,8 @@ public class IndentFulfillmentService {
         "  iie.purchaseOrderId AS po_number," +
         "  po.status AS po_status," +
         "  iie.line_item_status," +
-        "  COALESCE(p.lead_time_days, cat.lead_time_days) AS lead_time_days";
+        "  COALESCE(p.lead_time_days, cat.lead_time_days) AS lead_time_days," +
+        "  cat.category_name";
 
     private static final String BASE_FROM =
         " FROM indent_inventory ii" +
@@ -307,7 +308,8 @@ public class IndentFulfillmentService {
         // indices: 0=indentId, 1=project, 2=indentDate, 3=indentStatus,
         //          4=productName, 5=productCode, 6=unit,
         //          7=requestedQty, 8=poQty, 9=receivedQty, 10=pendingQty,
-        //          11=poNumber, 12=poStatus, 13=lineItemStatus
+        //          11=poNumber, 12=poStatus, 13=lineItemStatus,
+        //          14=leadTimeDays, 15=categoryName
         IndentFulfillmentRow row = new IndentFulfillmentRow();
         row.setIndentId(str(r[0]));
         row.setProject(str(r[1]));
@@ -327,9 +329,11 @@ public class IndentFulfillmentService {
         row.setPoNumber(str(r[11]));
         row.setPoStatus(str(r[12]));
         row.setLineItemStatus(str(r[13]));
-        // r[14] = lead_time_days
         if (r.length > 14 && r[14] != null) {
             row.setLeadTimeDays(((Number) r[14]).intValue());
+        }
+        if (r.length > 15 && r[15] != null) {
+            row.setCategoryName(str(r[15]));
         }
         return row;
     }

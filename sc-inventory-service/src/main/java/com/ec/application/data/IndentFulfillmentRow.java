@@ -21,6 +21,7 @@ public class IndentFulfillmentRow {
     private Date indentDate;
 
     private String indentStatus;
+    private String categoryName;
     private String productName;
     private String productCode;
     private String unit;

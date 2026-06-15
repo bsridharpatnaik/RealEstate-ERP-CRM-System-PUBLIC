@@ -3,9 +3,13 @@ package com.ec.application.service;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.FilterAttributeData;
 import com.ec.application.data.PoInwardReconciliationRow;
+import com.ec.application.config.SchemaConfig;
+import com.ec.application.multitenant.ThreadLocalStorage;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,8 +27,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PoInwardReconciliationService {
 
+    private static final Logger log = LoggerFactory.getLogger(PoInwardReconciliationService.class);
+
     private final EntityManager em;
     private final UserDetailsService userDetailsService;
+    private final BOQService boqService;
+    private final SchemaConfig schemaConfig;
 
     private static final String BASE_FROM =
         " FROM purchase_order po" +
@@ -145,7 +153,8 @@ public class PoInwardReconciliationService {
         applyParams(q, wc.havingParams);
 
         @SuppressWarnings("unchecked")
-        List<Object[]> rows = q.getResultList();
+        List<Object[]> rawRows = q.getResultList();
+        List<PoInwardReconciliationRow> mappedRows = rawRows.stream().map(this::map).collect(Collectors.toList());
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("PO vs Inward Recon");
@@ -163,8 +172,7 @@ public class PoInwardReconciliationService {
                 sheet.setColumnWidth(i, 22 * 256);
             }
             int rn = 1;
-            for (Object[] r : rows) {
-                PoInwardReconciliationRow row = map(r);
+            for (PoInwardReconciliationRow row : mappedRows) {
                 Row exRow = sheet.createRow(rn++);
                 exRow.createCell(0).setCellValue(safe(row.getProject()));
                 exRow.createCell(1).setCellValue(safe(row.getPurchaseOrderId()));
@@ -340,6 +348,58 @@ public class PoInwardReconciliationService {
             row.setIsOverdue(daysOverdue > 0);
         }
         return row;
+    }
+
+    /**
+     * For each unique project in the rows, temporarily switches to that tenant schema,
+     * fetches effective BOQ totals per product, then enriches rows with boqPlannedQty.
+     * Restores original tenant (master) in finally block.
+     */
+    private void enrichWithBOQ(List<PoInwardReconciliationRow> rows) {
+        if (rows == null || rows.isEmpty()) return;
+
+        // group productName by project (tenantCode)
+        Map<String, Set<String>> productsByTenant = new LinkedHashMap<>();
+        for (PoInwardReconciliationRow row : rows) {
+            String tenant = row.getProject();
+            if (tenant == null || tenant.isEmpty() || "Unknown".equals(tenant)) continue;
+            productsByTenant.computeIfAbsent(tenant, k -> new LinkedHashSet<>()).add(row.getProductName());
+        }
+
+        String originalTenant = ThreadLocalStorage.getTenantName();
+        // boqMap: tenantCode -> (productName -> boqPlannedQty)
+        Map<String, Map<String, Double>> boqMap = new HashMap<>();
+        try {
+            for (Map.Entry<String, Set<String>> entry : productsByTenant.entrySet()) {
+                String tenant = entry.getKey();
+                ThreadLocalStorage.setTenantName(tenant);
+                try {
+                    // Use cached BOQ rows (2-min cache per tenant context)
+                    List<Object[]> boqRows = boqService.getCachedBOQStatusRows();
+                    Map<String, Double> tenantBoqMap = new HashMap<>();
+                    for (Object[] r : boqRows) {
+                        String pName = r[8] != null ? r[8].toString() : null;
+                        if (pName == null) continue;
+                        double qty = r[10] != null ? ((Number) r[10]).doubleValue() : 0;
+                        double wastage = r[12] != null ? ((Number) r[12]).doubleValue() : 0;
+                        double effective = qty * (1 + wastage / 100.0);
+                        tenantBoqMap.merge(pName, effective, Double::sum);
+                    }
+                    boqMap.put(tenant, tenantBoqMap);
+                } catch (Exception e) {
+                    log.warn("BOQ enrichment failed for tenant {}: {}", tenant, e.getMessage());
+                }
+            }
+        } finally {
+            ThreadLocalStorage.setTenantName(originalTenant);
+        }
+
+        for (PoInwardReconciliationRow row : rows) {
+            Map<String, Double> tenantBoq = boqMap.get(row.getProject());
+            if (tenantBoq == null || row.getProductName() == null) continue;
+            Double planned = tenantBoq.get(row.getProductName());
+            if (planned != null && planned > 0) row.setBoqPlannedQty(planned);
+        }
     }
 
     private String str(Object o)   { return o == null ? null : o.toString(); }

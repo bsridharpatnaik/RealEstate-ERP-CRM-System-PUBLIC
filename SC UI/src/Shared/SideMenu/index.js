@@ -254,12 +254,12 @@ function SideMenu(props) {
                     labelText={"History"}
                     linkurl={appendURL("/boqHistory")}
                   />
-                  {/* <DashboardItem
-                    nodeId="16"
+                  <DashboardItem
+                    nodeId="70"
                     onClick={props.setSideBarValue}
-                    labelText={"Report"}
-                    linkurl={appendURL("/boqReport")}
-                  /> */}
+                    labelText={"BOQ vs Indent"}
+                    linkurl={appendURL(appRoutes.boqIndentReport)}
+                  />
                 </DashboardItem>
               )}
               {isCRM && (

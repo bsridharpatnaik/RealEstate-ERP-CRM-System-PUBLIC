@@ -113,6 +113,7 @@ class Details extends CommonDetails {
     statusHistoryIndentId: null,
     activityLogs: [],
     activityLoading: false,
+    boqDataByProduct: {},
   };
 
   async download(file) {
@@ -137,6 +138,7 @@ class Details extends CommonDetails {
 
   componentDidMount() {
     this.detailTabRef = React.createRef();
+    this.fetchBOQForItems();
   }
 
   componentDidUpdate(prevProps) {
@@ -145,13 +147,39 @@ class Details extends CommonDetails {
         statusHistory: null,
         statusHistoryError: null,
         statusHistoryIndentId: null,
+        boqDataByProduct: {},
       });
       if (this.state.value === 1) {
         this.fetchStatusHistory();
         this.loadActivityLog();
       }
+      this.fetchBOQForItems();
     }
   }
+
+  fetchBOQForItems = async () => {
+    const data = this.props.data;
+    if (!data) return;
+    const status = (data.status || "").toUpperCase().trim();
+    if (status !== "NEW") return;
+    const items = data.inventoryItems || data.inventoryList || [];
+    const productIds = [...new Set(items.map(i => i.product?.productId || i.productId).filter(Boolean))];
+    if (productIds.length === 0) return;
+    const results = await Promise.allSettled(
+      productIds.map(pid =>
+        API.GET(`${apiEndpoints.getProductBOQSummary}?productId=${pid}`)
+          .then(r => ({ pid, data: r.success && r.data?.hasBOQ ? r.data : null }))
+          .catch(() => ({ pid, data: null }))
+      )
+    );
+    const boqDataByProduct = {};
+    results.forEach(r => {
+      if (r.status === 'fulfilled' && r.value.data) {
+        boqDataByProduct[r.value.pid] = r.value.data;
+      }
+    });
+    this.setState({ boqDataByProduct });
+  };
 
   fetchStatusHistory = async () => {
     const data = this.props.data;
@@ -338,6 +366,8 @@ class Details extends CommonDetails {
     const canShowManagerReject = !fromRelation && canManagerRejectIndentRecord(data.status);
     const canShowCancel        = !fromRelation && canCancelIndentRecord(data.status);
     const canShowResubmit      = !fromRelation && canResubmitIndentRecord(data.status);
+    const showBOQChips         = canShowApprove || canShowManagerReject;
+    const { boqDataByProduct } = this.state;
 
     return (
       <div className="list-section detail-section indent-detail-section">
@@ -521,6 +551,34 @@ class Details extends CommonDetails {
                                   ⏱ Lead: <strong>{item.leadTimeDays}d</strong>
                                 </div>
                               )}
+                              {showBOQChips && (() => {
+                                const pid = item.product?.productId || item.productId;
+                                const boq = boqDataByProduct[pid];
+                                if (!boq) return null;
+                                const rem = typeof boq.remaining === 'number' ? boq.remaining : 0;
+                                const unit = item.measurementUnit || "";
+                                const exceeded = rem < 0;
+                                const style = exceeded
+                                  ? { color: '#c0392b', background: '#fdedec', border: '1px solid #f1948a' }
+                                  : { color: '#1a7a40', background: '#eafaf1', border: '1px solid #a9dfbf' };
+                                const label = exceeded
+                                  ? `⚠ Exceeded by ${Math.abs(rem).toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`
+                                  : `BOQ Rem. ${rem.toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`;
+                                return (
+                                  <Tooltip
+                                    title={`Planned: ${(boq.totalPlanned||0).toLocaleString('en-IN',{maximumFractionDigits:2})} ${unit} | Already Indented: ${(boq.totalConsumed||0).toLocaleString('en-IN',{maximumFractionDigits:2})} ${unit}`}
+                                    placement="top"
+                                  >
+                                    <div style={{
+                                      display: 'inline-block', marginTop: 4, padding: '2px 7px',
+                                      borderRadius: 4, fontSize: 11, fontWeight: 600,
+                                      ...style
+                                    }}>
+                                      {label}
+                                    </div>
+                                  </Tooltip>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell className="inventory-code-col">
                               {item.product?.productCode || "-"}
