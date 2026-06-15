@@ -1176,3 +1176,157 @@ LEFT JOIN contacts s ON s.contactId = po.supplier_id AND s.contacttype = 'suppli
 - Supplier/contact PK: `contactId` (not `id`)
 
 Always verify column names against `SHOW COLUMNS FROM <table>` before writing native SQL targeting masterschema.
+
+**Mixed convention in `product` table (tenant schema):**
+- `product_code` — snake_case (NOT `productCode`)
+- `product_name` — snake_case (NOT `productName`)
+- `measurementUnit` — camelCase
+- `categoryId` — camelCase (FK to category)
+- `productId` — camelCase (PK)
+
+Same mixed convention applies to tenant schemas. Always check before writing native SQL.
+
+---
+
+# BOQ Feature — Completed Work (Session 6)
+
+## What Was Built
+
+BOQ (Bill of Quantities) feature for tracking planned vs actual material usage per project.
+
+---
+
+## Architecture
+
+### Key Entities
+
+- `BOQUpload` — tenant schema table. Fields: `productId`, `quantity`, `wastagePercent`, `is_deleted`
+- BOQ data lives in **project (tenant) schema** (unlike Indents which are in master schema)
+
+### BOQ Summary (per-product, on Indent form)
+
+**Endpoint:** `GET /api/inventory/boqupload/boq-summary?productId=X`
+
+Returns `ProductBOQSummaryDto`:
+- `hasBOQ` — false if no BOQ rows for product
+- `totalPlanned` — SUM(quantity * (1 + wastagePercent/100))
+- `totalIndented` — SUM of valid indent quantities (master schema)
+- `remaining` — totalPlanned - totalIndented
+
+"Valid" indents exclude status: `CANCELLED`, `REJECTED`, `SHORT CLOSED`, `SHORT_CLOSED`
+
+**Performance:** Uses 3 targeted EntityManager native queries (COUNT, SUM BOQ, SUM indent). Sub-500ms. Avoids `getCachedBOQStatusRows()` entirely.
+
+### BOQ vs Indent Summary Report
+
+**Endpoint:** `GET /api/inventory/boqupload/boq-vs-planned`
+
+Returns `List<BOQIndentSummaryItem>` — one row per product with BOQ or indent activity.
+
+Fields: `productId`, `productName`, `categoryName`, `productCode`, `unit`, `totalPlanned`, `totalIndented`, `remaining`
+
+Sorted: category → productName.
+
+**Performance:** 2 EntityManager GROUP BY queries (no correlated subquery). Sub-1s.
+
+---
+
+## Critical: TenantNameInterceptor URL Exclusion Patterns
+
+`TenantNameInterceptor` has excluded URL patterns. Any endpoint URL matching these patterns will have its tenant set to **masterschema** (default) instead of reading the `tenant-id` header. This silently causes BOQ/stock data queries to hit wrong schema.
+
+**Known excluded patterns include:**
+- `.*/product.*` — matches any URL containing "product"
+- `.*/indent.*` — matches any URL containing "indent"
+
+**Do NOT name BOQ endpoints with these strings.** Use:
+- ✅ `/boq-summary` (not `/product-boq-summary`)
+- ✅ `/boq-vs-planned` (not `/boq-indent-summary`)
+
+If a new endpoint mysteriously returns empty/wrong data despite DB having correct data, check `TenantNameInterceptor` excluded pattern list first.
+
+---
+
+## Cross-Schema Query Pattern (BOQService)
+
+`BOQService` is `@Transactional` at class level (javax). This pins connection to tenant schema.
+
+To query BOTH tenant schema (for BOQ) AND master schema (for indents) in one method:
+- Annotate the method with `@Transactional(TxType.NOT_SUPPORTED)` — suspends class-level transaction
+- Use `EntityManager.createNativeQuery()` for both
+- For master schema tables: use fully-qualified names (`masterschema.indent_inventory_entries`)
+- For tenant schema tables: use unqualified names (routing handles it via ThreadLocal)
+
+```java
+@Transactional(Transactional.TxType.NOT_SUPPORTED)
+public ProductBOQSummaryDto getProductBOQSummary(Long productId) {
+    String master = schemaConfig.getMasterSchema();
+    String tenantCode = ThreadLocalStorage.getTenantName();
+    // tenant query — unqualified:
+    em.createNativeQuery("SELECT ... FROM BOQUpload WHERE ...")...
+    // master query — fully qualified:
+    em.createNativeQuery("SELECT ... FROM " + master + ".indent_inventory_entries ...")...
+}
+```
+
+**Self-call warning:** Both `@Cacheable` and `@Transactional` on a method are bypassed when called from within the same bean (Spring AOP proxy not invoked). Always inject self or use direct EntityManager queries instead of calling cached methods internally.
+
+---
+
+## Key Backend Files
+
+| File | Role |
+|---|---|
+| `controller/BOQController.java` | Endpoints: `/boq-summary`, `/boq-vs-planned`, upload, list |
+| `service/BOQService.java` | Core logic: summary, cross-schema queries, upload processing |
+| `data/ProductBOQSummaryDto.java` | DTO for per-product BOQ summary |
+| `data/BOQIndentSummaryItem.java` | DTO for BOQ vs Indent report row (includes `categoryName`) |
+| `repository/BOQUploadRepository.java` | JPA repo for BOQ uploads |
+
+---
+
+## Key Frontend Files
+
+| File | Role |
+|---|---|
+| `Modules/Reports/BOQIndent/index.js` | BOQ vs Indent Report page — table with category filter |
+| `Modules/Indent/add.js` | BOQ remaining info box (renderTextField style, colored border) |
+| `Modules/Indent/details.js` | BOQ remaining chip on approval view (status=NEW only) |
+
+### BOQ chip in Indent Details
+
+- Shown only when `canShowApprove || canShowManagerReject` (i.e. approval-relevant views)
+- Green chip "BOQ Rem. X unit" or red "⚠ Exceeded by X unit"
+- Fetched in parallel for all products via `fetchBOQForItems()`
+- State: `boqDataByProduct: { [productId]: boqData }`
+
+---
+
+## Report Page Defaults (Session 6)
+
+All report list pages now open with `pageSize = 100` (overriding `ListCommon` base class default of 12).
+
+Affected files (add `pageSize = 100;` after `url =` line in each class):
+- `Reports/FifoReport/index.js`
+- `Reports/StockAging/index.js`
+- `Reports/LowStock/index.js`
+- `GlobalStockReports/DeadStockReport.js`
+- `GlobalStockReports/ExpiredStockReport.js`
+- `Reports/PoReconciliation/index.js`
+- `Reports/IndentFulfillment/index.js`
+
+---
+
+## IndentFulfillment — Category Added (Session 6)
+
+`IndentFulfillmentRow.categoryName` added. SQL in `IndentFulfillmentService.DATA_SELECT` selects `cat.category_name` as r[15]. The `LEFT JOIN category cat` was already in `BASE_FROM`.
+
+Frontend `IndentFulfillment/cards.js` shows `categoryName → productName` above each line item.
+
+---
+
+## PoReconciliation — BOQ Planned Removed (Session 6)
+
+`enrichWithBOQ()` removed from `PoInwardReconciliationService`. It was calling `getCachedBOQStatusRows()` on every page load causing 5+ second latency. BOQ Planned column removed from:
+- `PoInwardReconciliationService.exportExcel()` — 13 columns now (was 14)
+- `Reports/PoReconciliation/cards.js` — grid changed from 8 to 7 columns
