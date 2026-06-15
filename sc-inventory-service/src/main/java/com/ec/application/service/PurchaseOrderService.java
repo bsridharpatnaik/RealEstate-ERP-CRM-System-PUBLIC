@@ -996,6 +996,25 @@ public class PurchaseOrderService extends ReusableFields {
         return result;
     }
 
+    public long getOverduePOCount() {
+        String terminalIn = "'" + String.join("','", POStatusConstants.getTerminalStatuses()) + "'";
+        String baseFrom =
+            "FROM purchase_order po " +
+            "JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0 " +
+            "JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0 " +
+            "LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0 ";
+        String baseWhere =
+            "WHERE po.is_deleted = 0 " +
+            "AND pol.is_deleted = 0 " +
+            "AND po.status NOT IN (" + terminalIn + ") " +
+            "AND COALESCE(p.lead_time_days, cat.lead_time_days) IS NOT NULL " +
+            "AND DATEDIFF(CURDATE(), po.po_date) > COALESCE(p.lead_time_days, cat.lead_time_days) ";
+        Number result = (Number) entityManager.createNativeQuery(
+            "SELECT COUNT(DISTINCT po.purchase_order_id) " + baseFrom + baseWhere
+        ).getSingleResult();
+        return result != null ? result.longValue() : 0L;
+    }
+
     private String safeExcel(String value) {
         if (value == null) return "";
         if (value.startsWith("=") || value.startsWith("+")

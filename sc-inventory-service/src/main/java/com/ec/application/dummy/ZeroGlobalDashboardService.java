@@ -48,7 +48,8 @@ public class ZeroGlobalDashboardService {
 
                 // PO (STATIC / CURRENT STATE) - All zeros
                 createEmptyDashboardChart(),  // statusNewPO
-                createEmptyDashboardChart()   // statusPartialPO
+                createEmptyDashboardChart(),  // statusPartialPO
+                createEmptyDashboardChart()   // overduePOLines
         );
     }
 

@@ -20,6 +20,7 @@ public class DashboardChartListDTO {
     DashboardChartDTO inwardPartialIndents;
     DashboardChartDTO statusNewPO;
     DashboardChartDTO statusPartialPO;
+    DashboardChartDTO overduePOLines;
 
 
     public DashboardChartListDTO(DashboardChartDTO newIndents, DashboardChartDTO approvedIndents,
@@ -28,7 +29,8 @@ public class DashboardChartListDTO {
                                  DashboardChartDTO poCreated, DashboardChartDTO poCompleted, DashboardChartDTO poShortClosed,
                                  DashboardChartDTO poCancelled,
                                  DashboardChartDTO awaitingApprovalIndents, DashboardChartDTO zeroPOIndents, DashboardChartDTO partialPOIndents,
-                                 DashboardChartDTO inwardPartialIndents, DashboardChartDTO statusNewPO, DashboardChartDTO statusPartialPO) {
+                                 DashboardChartDTO inwardPartialIndents, DashboardChartDTO statusNewPO, DashboardChartDTO statusPartialPO,
+                                 DashboardChartDTO overduePOLines) {
         this.newIndents = newIndents;
         this.approvedIndents = approvedIndents;
         this.poCompletedIndents = poCompletedIndents;
@@ -44,5 +46,6 @@ public class DashboardChartListDTO {
         this.inwardPartialIndents = inwardPartialIndents;
         this.statusNewPO = statusNewPO;
         this.statusPartialPO = statusPartialPO;
+        this.overduePOLines = overduePOLines;
     }
 }

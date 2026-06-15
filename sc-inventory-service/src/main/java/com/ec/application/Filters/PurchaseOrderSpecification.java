@@ -267,8 +267,7 @@ public final class PurchaseOrderSpecification {
                     cb.equal(line.get(PurchaseOrderLine_.PURCHASE_ORDER)
                             .get(PurchaseOrder_.PURCHASE_ORDER_ID),
                             root.get(PurchaseOrder_.PURCHASE_ORDER_ID)),
-                    cb.isFalse(line.get("deleted")),
-                    cb.notEqual(cb.coalesce(line.<String>get("lineItemStatus"), ""), "INWARD_COMPLETE"),
+                    cb.isFalse(line.get("isDeleted")),
                     cb.isNotNull(effectiveLeadTime),
                     cb.greaterThan(daysSincePO, effectiveLeadTime)
             ));

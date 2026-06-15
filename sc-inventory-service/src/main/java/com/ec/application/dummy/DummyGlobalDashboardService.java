@@ -65,7 +65,8 @@ public class DummyGlobalDashboardService {
 
                 // PO (STATIC / CURRENT STATE)
                 generateRandomDashboardChart(22, 95),   // statusNewPO
-                generateRandomDashboardChart(16, 70)    // statusPartialPO
+                generateRandomDashboardChart(16, 70),   // statusPartialPO
+                generateRandomDashboardChart(5, 30)     // overduePOLines
         );
     }
 

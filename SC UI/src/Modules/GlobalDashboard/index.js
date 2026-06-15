@@ -54,6 +54,7 @@ const LIVE_DATA_KEYS = [
   "inwardPartialIndents",
   "statusNewPO",
   "statusPartialPO",
+  "overduePOLines",
 ];
 
 const METRIC_LABELS = {
@@ -72,6 +73,7 @@ const METRIC_LABELS = {
   inwardPartialIndents: "Inward Partial Indents",
   statusNewPO: "Status New PO",
   statusPartialPO: "Status Partial PO",
+  overduePOLines: "Overdue POs",
 };
 
 /** Slice metric key -> status value for Indent (path: /globalIndent). */
@@ -114,6 +116,10 @@ const LIVE_PRESETS = {
   statusPartialPO: {
     path: appRoutes.purchaseOrder,
     filterData: [{ attrName: "status", attrValue: ["PARTIAL"] }],
+  },
+  overduePOLines: {
+    path: appRoutes.purchaseOrder,
+    filterData: [{ attrName: "hasOverdueOnly", attrValue: ["true"] }],
   },
 };
 
@@ -250,7 +256,7 @@ class GlobalDashboard extends Component {
 
   async fetchOverdueLines(page = 0) {
     this.setState({ isOverdueLinesLoaded: false });
-    const response = await API.GET(apiEndpoints.getOverduePOLines(page, 5));
+    const response = await API.GET(apiEndpoints.getOverduePOLines(page, 10));
     if (response.success && response.data) {
       this.setState({
         overdueLines: response.data.content || [],
@@ -527,7 +533,7 @@ class GlobalDashboard extends Component {
   }
 
   renderMetricList(keys) {
-    const URGENT_KEYS = ["awaitingApprovalIndents", "zeroPOIndents", "partialPOIndents"];
+    const URGENT_KEYS = ["awaitingApprovalIndents", "zeroPOIndents", "partialPOIndents", "overduePOLines"];
     return keys.map((key) => {
           const item = this.data[key];
           const count = item?.totalCount ?? 0;
