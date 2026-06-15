@@ -1325,6 +1325,85 @@ Frontend `IndentFulfillment/cards.js` shows `categoryName → productName` above
 
 ---
 
+## BOQ Table Schema (tenant schema)
+
+Table: `BOQUpload`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | bigint PK | |
+| `productId` | bigint FK | → `product.productId` |
+| `buildingTypeId` | bigint FK | → `usage_location.typeId` (structure type) |
+| `usageLocationId` | bigint FK | → `Usage_Location.locationId` (structure / block) |
+| `locationId` | bigint FK | → `location.locationId` (final location / flat) |
+| `quantity` | double | base planned qty |
+| `wastagePercent` | double | effective planned = quantity * (1 + wastagePercent/100) |
+| `sno` | int | row order |
+| `is_deleted` | bit | soft delete |
+
+### Dimension Tables (tenant schema)
+
+| Table | PK | Key column | Notes |
+|---|---|---|---|
+| `usage_location` | `locationId` | `location_name`, `typeId` | Structure (block/tower). `typeId` → building_type |
+| `building_type` | `typeId` | `building_type` | Structure type (e.g. Tower A, Villa) |
+| `usage_area` | `usageAreaId` | `usagearea_name` | Final location (flat/unit) |
+| `location` | `locationId` | `location_name`, `typeId` | Also links to building_type via `typeId` |
+
+### Outward → Location Hierarchy
+
+`outward_inventory` has:
+- `locationId` → `location.locationId` (structure/block level)
+- `usageAreaId` → `usage_area.usageAreaId` (final location/flat level)
+- No direct `buildingTypeId` — get building type via: `location.typeId → building_type.typeId`
+
+### BOQ → Outward Join Path
+
+BOQ and outward share `locationId` (both refer to the same `location` table).
+BOQ `usageLocationId` is NOT the same FK as outward `locationId` — verify before joining.
+Check actual data to confirm join key before writing the unified report SQL.
+
+### Indent — No Location Data
+
+`indent_inventory_entries` has no `locationId`, `buildingTypeId`, or `usageAreaId`.
+Indent qty only rolls up at **product level** — cannot drill down by structure/location for indents.
+
+---
+
+## Unified BOQ Report — Planned Feature (Next Session)
+
+**Goal:** Single page showing BOQ Planned vs Indented vs Outward with drill-down.
+
+### Hierarchy
+```
+Product level       → BOQ Planned | Total Indented | Total Outward
+  └─ Building Type  → BOQ Planned | Outward  (no indent at this level)
+       └─ Location (structure) → BOQ Planned | Outward
+            └─ Usage Area (final location) → BOQ Planned | Outward
+```
+
+### Filters needed
+- Category, Product
+- Gap filters: BOQ exists but no indent, BOQ exists but no outward, indent exists but no BOQ
+
+### Backend approach
+- New endpoint in `BOQController`
+- `@Transactional(TxType.NOT_SUPPORTED)` + `EntityManager` native queries (same pattern as `getBOQIndentSummary`)
+- Two queries: (1) BOQ GROUP BY product+buildingType+location+usageLocation, (2) Outward GROUP BY product+location+usageArea
+- Indent totals at product level only (existing `getBOQIndentSummary` logic reused)
+- Join outward → building type via `location.typeId → building_type.typeId`
+
+### Frontend approach
+- New page `Modules/Reports/BOQDashboard/index.js`
+- Accordion UX: top row per product, expand to see building type rows, expand further to location rows
+- New route `/boqDashboard`, add to `isProjectSelectionPage`, add to sidebar under Reports
+
+### Pre-work for next session
+- Verify `BOQUpload.usageLocationId` vs outward `locationId` join compatibility with actual data
+- Run: `SELECT bu.usageLocationId, oi.locationId FROM BOQUpload bu JOIN outward_inventory oi ON bu.productId = oi.productId LIMIT 5` to confirm key overlap
+
+---
+
 ## PoReconciliation — BOQ Planned Removed (Session 6)
 
 `enrichWithBOQ()` removed from `PoInwardReconciliationService`. It was calling `getCachedBOQStatusRows()` on every page load causing 5+ second latency. BOQ Planned column removed from:
