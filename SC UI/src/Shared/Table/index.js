@@ -146,6 +146,10 @@ class Table extends React.Component {
   }
   renderCell(key, row, name) {
     const value = row[key] !== null ? row[key] : "";
+    const customRenders = this.props.customRenders || {};
+    if (customRenders[key]) {
+      return <td data-label={(this.state.headers || [])[name] || key}>{customRenders[key](value, row)}</td>;
+    }
     return <td data-label={(this.state.headers || [])[name] || key}>{`${value}`}</td>;
   }
   renderAction(row) {

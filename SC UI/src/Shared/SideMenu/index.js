@@ -7,6 +7,7 @@ import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import DashboardIcon from "@material-ui/icons/Dashboard";
 import TreeView from "@material-ui/lab/TreeView";
 import SettingsIcon from "@material-ui/icons/Settings";
+import LockIcon from "@material-ui/icons/Lock";
 import Avatar from "@material-ui/core/Avatar";
 import ApartmentIcon from "@material-ui/icons/Apartment";
 import { SvgIcon } from "@material-ui/core";
@@ -346,12 +347,6 @@ function SideMenu(props) {
                 labelText={messages.common.settings}
                 labelIcon={SettingsIcon}
               >
-                <DashboardItem
-                  nodeId="3"
-                  labelText={messages.common.changePassword}
-                  // linkurl={appendURL(appRoutes.changePassword)}
-                  onClick={() => props.toggleChangePasswordModal()}
-                />
                 {currentUserRole.toLowerCase() === "admin" && (
                   <DashboardItem nodeId="2" labelText={messages.common.admin}>
                     <DashboardItem
@@ -439,6 +434,12 @@ function SideMenu(props) {
                   </DashboardItem>
                 )}
               </DashboardItem>
+              <DashboardItem
+                nodeId="cp-project"
+                labelText={messages.common.changePassword}
+                labelIcon={LockIcon}
+                onClick={() => props.toggleChangePasswordModal()}
+              />
               <DashboardItem
                 nodeId="18"
                 labelText={messages.common.logout}
@@ -645,6 +646,12 @@ function SideMenu(props) {
                 linkurl="/contact"
               />
             </DashboardItem>
+            <DashboardItem
+              nodeId="cp-global"
+              labelText={messages.common.changePassword}
+              labelIcon={LockIcon}
+              onClick={() => props.toggleChangePasswordModal()}
+            />
             <DashboardItem
               nodeId="18"
               labelText={messages.common.logout}
