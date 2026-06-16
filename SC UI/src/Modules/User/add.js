@@ -80,56 +80,44 @@ class Add extends AddForm {
                   });
             },
           })}
-          {
-              this.state.permissions
-              &&
-              this.state.permissions.length > 0
-              &&
-              <div className="list-section">
-                <div className="add-heading">Permissions</div>
-                <table>
-                  {console.log(this.state.permissions)}
-                  <tbody>
-                  {
-                    this.state.permissions.map((tenant) => (
-                            <tr>
-                              <td>{tenant?.tenant?.tenantLongName}</td>
-                              <td>
-                                <FormControlLabel
-                                    value="ReadOnly"
-                                    checked={tenant?.authorization === 'ReadOnly'}
-                                    onClick={event => {
-                                      const {permissions} = this.state;
-                                      const index = permissions.indexOf(tenant);
-                                      permissions[index].authorization = event.target.value;
-                                      this.setState({permissions: [...permissions]});
-                                    }}
-                                    control={<Radio color="primary" />}
-                                    label="View"
-                                />
-                              </td>
-                              <td>
-                                <FormControlLabel
-                                    value="FullAccess"
-                                    checked={tenant?.authorization === 'FullAccess'}
-                                    onClick={event => {
-                                      const {permissions} = this.state;
-                                      const index = permissions.indexOf(tenant);
-                                      permissions[index].authorization = event.target.value;
-                                      this.setState({permissions: [...permissions]});
-                                    }}
-                                    control={<Radio color="primary" />}
-                                    label="Edit"
-                                />
-                              </td>
-                            </tr>
-                        )
-                    )
-                  }
-                  </tbody>
-                </table>
+          {this.state.permissions && this.state.permissions.length > 0 && (
+            <div className="permissions-section">
+              <div className="add-heading">Project Permissions</div>
+              <div className="permissions-grid">
+                {this.state.permissions.map((tenant, idx) => (
+                  <div key={idx} className="permission-card">
+                    <span className="tenant-name">{tenant?.tenant?.tenantLongName}</span>
+                    <div className="radio-group">
+                      <FormControlLabel
+                        value="ReadOnly"
+                        checked={tenant?.authorization === 'ReadOnly'}
+                        onClick={event => {
+                          const { permissions } = this.state;
+                          const index = permissions.indexOf(tenant);
+                          permissions[index].authorization = event.target.value;
+                          this.setState({ permissions: [...permissions] });
+                        }}
+                        control={<Radio color="primary" size="small" />}
+                        label="View"
+                      />
+                      <FormControlLabel
+                        value="FullAccess"
+                        checked={tenant?.authorization === 'FullAccess'}
+                        onClick={event => {
+                          const { permissions } = this.state;
+                          const index = permissions.indexOf(tenant);
+                          permissions[index].authorization = event.target.value;
+                          this.setState({ permissions: [...permissions] });
+                        }}
+                        control={<Radio color="primary" size="small" />}
+                        label="Edit"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-          }
+            </div>
+          )}
           {this.renderFooter()}
         </form>
       </div>
