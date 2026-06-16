@@ -1404,6 +1404,87 @@ Product level       → BOQ Planned | Total Indented | Total Outward
 
 ---
 
+# BOQ End-to-End Tracker — Planned Feature (Session 7)
+
+## Goal
+
+Single unified page: BOQ Planned vs Indent vs Outward, drillable from summary → structure type → structure → final location.
+
+## Entity Relationships (confirmed from code)
+
+### BOQUpload fields (tenant schema, table: `BOQUpload`)
+| Field | FK | Entity class | Table |
+|---|---|---|---|
+| `buildingTypeId` | → `BuildingType.id` | `BuildingType` | `building_type` |
+| `usageLocationId` | → `UsageLocation.id` | `UsageLocation` | `Usage_Location` |
+| `locationId` | → `UsageArea.id` | `UsageArea` | `usage_area` |
+| `productId` | → `Product.productId` | `Product` | `product` |
+| `quantity` | — | — | — |
+| `wastagePercent` | — | — | — |
+
+Planned qty = `quantity * (1 + wastagePercent/100)`
+
+### OutwardInventory fields (tenant schema, table: `outward_inventory`)
+| Field | FK | Meaning |
+|---|---|---|
+| `locationId` | → `UsageLocation.id` | Structure (matches BOQ `usageLocationId`) |
+| `usageAreaId` | → `UsageArea.id` | Final location (matches BOQ `locationId`) |
+
+### UsageLocation (table: `Usage_Location`)
+- `location_name` — structure name
+- `typeId` → `BuildingType.id` — structure type FK
+
+### UsageArea (table: `usage_area`)
+- `usagearea_name` — final location name
+- No direct FK to BuildingType (path is via UsageLocation)
+
+### Join path: Outward → BuildingType
+```
+outward_inventory.locationId → Usage_Location.id → Usage_Location.typeId → building_type.id
+```
+
+### Hierarchy
+```
+BuildingType (structure type)
+  └─ UsageLocation (structure) — linked via typeId
+       └─ UsageArea (final location) — linked via outward
+```
+
+## Drilldown Design
+
+| Level | Columns | Data source |
+|---|---|---|
+| Product | BOQ Planned, Indented, Outward | BOQ (tenant), indent (master schema), outward (tenant) |
+| BuildingType | BOQ Planned, Outward | BOQ + outward (indent has no location) |
+| UsageLocation | BOQ Planned, Outward | BOQ + outward |
+| UsageArea | BOQ Planned, Outward | BOQ + outward |
+
+Indent only aggregates at product level — no structure breakdown.
+
+## Filter Requirements
+- Category
+- Product name
+- BOQ exists but no indent
+- BOQ exists but no outward
+- Indent exists but no BOQ
+- No BOQ, no indent, no outward (activity with no plan)
+
+## Backend Strategy
+- New endpoint: `GET /api/inventory/boqupload/boq-tracker`
+- Returns per-product summary with nested structure breakdown
+- `@Transactional(TxType.NOT_SUPPORTED)` to cross tenant+master schemas (same as `getProductBOQSummary`)
+- BOQ + outward: JOIN on `productId` + `usageLocationId = outward.locationId`
+- Indent: cross-schema query to `masterschema.indent_inventory_entries` (same as existing BOQ summary)
+- Gap filters implemented as HAVING or post-filter in Java
+
+## Frontend Strategy
+- New page: `Modules/Reports/BOQTracker/index.js`
+- Accordion UX: top-level product rows, expand → structure type rows, expand → structure/location rows
+- Route: `/boqTracker` — add to `isProjectSelectionPage`
+- Sidebar: under Reports
+
+---
+
 ## PoReconciliation — BOQ Planned Removed (Session 6)
 
 `enrichWithBOQ()` removed from `PoInwardReconciliationService`. It was calling `getCachedBOQStatusRows()` on every page load causing 5+ second latency. BOQ Planned column removed from:

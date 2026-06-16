@@ -1320,6 +1320,412 @@ public class BOQService {
         return result;
     }
 
+    // -------------------------------------------------------------------------
+    // BOQ Tracker: end-to-end BOQ → Indent → Inward → Outward per product
+    // -------------------------------------------------------------------------
+
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public List<BOQTrackerRow> getBOQTrackerSummary(String categoryFilter, String productFilter, String gapFilter) {
+        String tenantCode = ThreadLocalStorage.getTenantName();
+        String master = schemaConfig.getMasterSchema();
+
+        // --- BOQ planned per product ---
+        @SuppressWarnings("unchecked")
+        List<Object[]> boqRows = em.createNativeQuery(
+            "SELECT bu.productId, p.product_name, p.product_code, c.category_name, p.measurementUnit, " +
+            "  SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent,0)/100)) AS planned " +
+            "FROM BOQUpload bu " +
+            "INNER JOIN product p ON p.productId = bu.productId AND p.is_deleted = 0 " +
+            "INNER JOIN category c ON c.categoryId = p.categoryId " +
+            "WHERE bu.is_deleted = 0 " +
+            "GROUP BY bu.productId, p.product_name, p.product_code, c.category_name, p.measurementUnit")
+            .getResultList();
+
+        // --- Indent totals (master schema, fully qualified) ---
+        @SuppressWarnings("unchecked")
+        List<Object[]> indentRows = em.createNativeQuery(
+            "SELECT iie.productId, SUM(iie.quantity) " +
+            "FROM " + master + ".indent_inventory_entries iie " +
+            "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
+            "WHERE iie.is_deleted = 0 AND ii.tenant = :tenant " +
+            "AND ii.indent_status NOT IN ('" + IndentStatusConstants.STATUS_CANCELLED + "','" + IndentStatusConstants.STATUS_REJECTED + "') " +
+            "AND iie.line_item_status NOT IN ('" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "','" + IndentLineItemStatusConstants.STATUS_CANCELLED + "') " +
+            "GROUP BY iie.productId")
+            .setParameter("tenant", tenantCode)
+            .getResultList();
+
+        // --- Inward totals (tenant schema) ---
+        @SuppressWarnings("unchecked")
+        List<Object[]> inwardRows = em.createNativeQuery(
+            "SELECT ioe.productId, SUM(ioe.quantity) " +
+            "FROM inward_outward_entries ioe " +
+            "JOIN inwardinventory_entry ie ON ie.entryId = ioe.entryid " +
+            "JOIN inward_inventory ii ON ii.inwardId = ie.inwardid AND ii.is_deleted = 0 " +
+            "WHERE ioe.is_deleted = 0 " +
+            "GROUP BY ioe.productId")
+            .getResultList();
+
+        // --- Outward totals (tenant schema) ---
+        @SuppressWarnings("unchecked")
+        List<Object[]> outwardRows = em.createNativeQuery(
+            "SELECT ioe.productId, SUM(ioe.quantity) " +
+            "FROM inward_outward_entries ioe " +
+            "JOIN outwardinventory_entry oe ON oe.entryId = ioe.entryid " +
+            "JOIN outward_inventory oi ON oi.outwardid = oe.outwardid AND oi.is_deleted = 0 " +
+            "WHERE ioe.is_deleted = 0 " +
+            "GROUP BY ioe.productId")
+            .getResultList();
+
+        // --- Products with indent/inward/outward but no BOQ (need metadata from product table) ---
+        @SuppressWarnings("unchecked")
+        List<Object[]> extraProductRows = em.createNativeQuery(
+            "SELECT p.productId, p.product_name, p.product_code, c.category_name, p.measurementUnit " +
+            "FROM product p " +
+            "INNER JOIN category c ON c.categoryId = p.categoryId " +
+            "WHERE p.is_deleted = 0")
+            .getResultList();
+
+        // Build lookup maps
+        Map<Long, String[]> metaMap = new LinkedHashMap<>();
+        for (Object[] r : extraProductRows) {
+            Long pid = toLong(r[0]);
+            metaMap.put(pid, new String[]{
+                r[1] != null ? (String) r[1] : "",
+                r[2] != null ? (String) r[2] : "",
+                r[3] != null ? (String) r[3] : "",
+                r[4] != null ? (String) r[4] : ""
+            });
+        }
+
+        Map<Long, double[]> boqMap = new LinkedHashMap<>();
+        for (Object[] r : boqRows) {
+            Long pid = toLong(r[0]);
+            boqMap.put(pid, new double[]{ toDouble(r[5]) });
+            // Override meta with BOQ query (has category join too)
+            metaMap.put(pid, new String[]{
+                r[1] != null ? (String) r[1] : "",
+                r[2] != null ? (String) r[2] : "",
+                r[3] != null ? (String) r[3] : "",
+                r[4] != null ? (String) r[4] : ""
+            });
+        }
+
+        Map<Long, Double> indentMap = new HashMap<>();
+        for (Object[] r : indentRows) indentMap.put(toLong(r[0]), toDouble(r[1]));
+
+        Map<Long, Double> inwardMap = new HashMap<>();
+        for (Object[] r : inwardRows) inwardMap.put(toLong(r[0]), toDouble(r[1]));
+
+        Map<Long, Double> outwardMap = new HashMap<>();
+        for (Object[] r : outwardRows) outwardMap.put(toLong(r[0]), toDouble(r[1]));
+
+        // Union of all product IDs that have any activity
+        Set<Long> allPids = new LinkedHashSet<>();
+        allPids.addAll(boqMap.keySet());
+        allPids.addAll(indentMap.keySet());
+        allPids.addAll(inwardMap.keySet());
+        allPids.addAll(outwardMap.keySet());
+
+        List<BOQTrackerRow> result = new ArrayList<>();
+        for (Long pid : allPids) {
+            double boq = boqMap.containsKey(pid) ? boqMap.get(pid)[0] : 0;
+            double indented = indentMap.getOrDefault(pid, 0.0);
+            double inward = inwardMap.getOrDefault(pid, 0.0);
+            double outward = outwardMap.getOrDefault(pid, 0.0);
+            String[] meta = metaMap.getOrDefault(pid, new String[]{"Product " + pid, "", "", ""});
+
+            // Gap filter
+            if ("BOQ_NO_OUTWARD".equals(gapFilter) && !(boq > 0 && outward == 0)) continue;
+            if ("OUTWARD_EXCEEDS_BOQ".equals(gapFilter) && !(boq > 0 && outward > boq)) continue;
+            if ("NO_BOQ_HAS_ACTIVITY".equals(gapFilter) && !(boq == 0 && (indented > 0 || inward > 0 || outward > 0))) continue;
+            if ("BOQ_NO_INDENT".equals(gapFilter) && !(boq > 0 && indented == 0)) continue;
+
+            // Category filter
+            if (categoryFilter != null && !categoryFilter.isEmpty() && !categoryFilter.equalsIgnoreCase(meta[2])) continue;
+
+            // Product filter (name or code, case-insensitive contains)
+            if (productFilter != null && !productFilter.isEmpty()) {
+                String pf = productFilter.toLowerCase();
+                if (!meta[0].toLowerCase().contains(pf) && !meta[1].toLowerCase().contains(pf)) continue;
+            }
+
+            BOQTrackerRow row = new BOQTrackerRow();
+            row.setProductId(pid);
+            row.setProductName(meta[0]);
+            row.setProductCode(meta[1]);
+            row.setCategoryName(meta[2]);
+            row.setUnit(meta[3]);
+            row.setBoqPlanned(boq > 0 ? boq : null);
+            row.setTotalIndented(indented > 0 ? indented : null);
+            row.setTotalInward(inward > 0 ? inward : null);
+            row.setTotalOutward(outward > 0 ? outward : null);
+            row.setBoqBalance(boq > 0 ? boq - outward : null);
+
+            if (boq <= 0) row.setBucket("no_boq");
+            else if (outward > boq) row.setBucket("over");
+            else if (boq > 0 && outward >= boq * 0.8) row.setBucket("at_risk");
+            else row.setBucket("on_track");
+
+            result.add(row);
+        }
+
+        result.sort(Comparator
+            .comparing(BOQTrackerRow::getCategoryName, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(BOQTrackerRow::getProductName, Comparator.nullsLast(Comparator.naturalOrder())));
+        return result;
+    }
+
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public List<BOQDrillDownItem> getBOQDrillDown(Long productId) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = em.createNativeQuery(
+            "SELECT bt.typeId, bt.building_type, ul.locationId, ul.location_name, " +
+            "  ua.usageAreaId, ua.usagearea_name, " +
+            "  SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent,0)/100)) AS qty " +
+            "FROM BOQUpload bu " +
+            "JOIN building_type bt ON bt.typeId = bu.buildingTypeId AND bt.is_deleted = 0 " +
+            "JOIN Usage_Location ul ON ul.locationId = bu.usageLocationId AND ul.is_deleted = 0 " +
+            "LEFT JOIN usage_area ua ON ua.usageAreaId = bu.locationId AND ua.is_deleted = 0 " +
+            "WHERE bu.is_deleted = 0 AND bu.productId = :pid " +
+            "GROUP BY bt.typeId, bt.building_type, ul.locationId, ul.location_name, ua.usageAreaId, ua.usagearea_name " +
+            "ORDER BY bt.building_type, ul.location_name, ua.usagearea_name")
+            .setParameter("pid", productId)
+            .getResultList();
+
+        return buildDrillDownTree(rows);
+    }
+
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public List<BOQDrillDownItem> getOutwardDrillDown(Long productId) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = em.createNativeQuery(
+            "SELECT bt.typeId, bt.building_type, ul.locationId, ul.location_name, " +
+            "  ua.usageAreaId, ua.usagearea_name, SUM(ioe.quantity) AS qty " +
+            "FROM inward_outward_entries ioe " +
+            "JOIN outwardinventory_entry oe ON oe.entryId = ioe.entryid " +
+            "JOIN outward_inventory oi ON oi.outwardid = oe.outwardid AND oi.is_deleted = 0 " +
+            "JOIN Usage_Location ul ON ul.locationId = oi.locationId AND ul.is_deleted = 0 " +
+            "JOIN building_type bt ON bt.typeId = ul.typeId AND bt.is_deleted = 0 " +
+            "LEFT JOIN usage_area ua ON ua.usageAreaId = oi.usageAreaId AND ua.is_deleted = 0 " +
+            "WHERE ioe.is_deleted = 0 AND ioe.productId = :pid " +
+            "GROUP BY bt.typeId, bt.building_type, ul.locationId, ul.location_name, ua.usageAreaId, ua.usagearea_name " +
+            "ORDER BY bt.building_type, ul.location_name, ua.usagearea_name")
+            .setParameter("pid", productId)
+            .getResultList();
+
+        return buildDrillDownTree(rows);
+    }
+
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public List<BOQCombinedDrillItem> getCombinedDrillDown(Long productId) {
+        // Reuse existing queries — cols: 0=typeId, 1=typeName, 2=locId, 3=locName, 4=areaId, 5=areaName, 6=qty
+        @SuppressWarnings("unchecked")
+        List<Object[]> boqRows = em.createNativeQuery(
+            "SELECT bt.typeId, bt.building_type, ul.locationId, ul.location_name, " +
+            "  ua.usageAreaId, ua.usagearea_name, " +
+            "  SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent,0)/100)) AS qty " +
+            "FROM BOQUpload bu " +
+            "JOIN building_type bt ON bt.typeId = bu.buildingTypeId AND bt.is_deleted = 0 " +
+            "JOIN Usage_Location ul ON ul.locationId = bu.usageLocationId AND ul.is_deleted = 0 " +
+            "LEFT JOIN usage_area ua ON ua.usageAreaId = bu.locationId AND ua.is_deleted = 0 " +
+            "WHERE bu.is_deleted = 0 AND bu.productId = :pid " +
+            "GROUP BY bt.typeId, bt.building_type, ul.locationId, ul.location_name, ua.usageAreaId, ua.usagearea_name " +
+            "ORDER BY bt.building_type, ul.location_name, ua.usagearea_name")
+            .setParameter("pid", productId)
+            .getResultList();
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> outwardRows = em.createNativeQuery(
+            "SELECT bt.typeId, bt.building_type, ul.locationId, ul.location_name, " +
+            "  ua.usageAreaId, ua.usagearea_name, SUM(ioe.quantity) AS qty " +
+            "FROM inward_outward_entries ioe " +
+            "JOIN outwardinventory_entry oe ON oe.entryId = ioe.entryid " +
+            "JOIN outward_inventory oi ON oi.outwardid = oe.outwardid AND oi.is_deleted = 0 " +
+            "JOIN Usage_Location ul ON ul.locationId = oi.locationId AND ul.is_deleted = 0 " +
+            "JOIN building_type bt ON bt.typeId = ul.typeId AND bt.is_deleted = 0 " +
+            "LEFT JOIN usage_area ua ON ua.usageAreaId = oi.usageAreaId AND ua.is_deleted = 0 " +
+            "WHERE ioe.is_deleted = 0 AND ioe.productId = :pid " +
+            "GROUP BY bt.typeId, bt.building_type, ul.locationId, ul.location_name, ua.usageAreaId, ua.usagearea_name " +
+            "ORDER BY bt.building_type, ul.location_name, ua.usagearea_name")
+            .setParameter("pid", productId)
+            .getResultList();
+
+        // key: typeId_locId_areaId (areaId may be null → "null")
+        // Build BOQ map
+        Map<String, double[]> boqMap = new LinkedHashMap<>();
+        Map<String, String[]> labelMap = new LinkedHashMap<>(); // typeId_locId_areaId → [typeName, locName, areaName]
+        Map<String, Long[]>   idMap    = new LinkedHashMap<>(); // → [typeId, locId, areaId]
+
+        for (Object[] r : boqRows) {
+            Long typeId = toLong(r[0]); Long locId = toLong(r[2]);
+            Long areaId = r[4] != null ? toLong(r[4]) : null;
+            String key = typeId + "_" + locId + "_" + areaId;
+            boqMap.put(key, new double[]{ toDouble(r[6]) });
+            labelMap.put(key, new String[]{ str(r[1]), str(r[3]), str(r[5]) });
+            idMap.put(key, new Long[]{ typeId, locId, areaId });
+        }
+
+        // Build outward map
+        Map<String, double[]> outwardMap = new LinkedHashMap<>();
+        for (Object[] r : outwardRows) {
+            Long typeId = toLong(r[0]); Long locId = toLong(r[2]);
+            Long areaId = r[4] != null ? toLong(r[4]) : null;
+            String key = typeId + "_" + locId + "_" + areaId;
+            outwardMap.put(key, new double[]{ toDouble(r[6]) });
+            labelMap.computeIfAbsent(key, k -> new String[]{ str(r[1]), str(r[3]), str(r[5]) });
+            idMap.computeIfAbsent(key, k -> new Long[]{ typeId, locId, areaId });
+        }
+
+        // Union of all keys, sorted
+        Set<String> allKeys = new LinkedHashSet<>();
+        allKeys.addAll(boqMap.keySet());
+        allKeys.addAll(outwardMap.keySet());
+
+        // Build tree: typeId → locId → areas
+        Map<Long, BOQCombinedDrillItem> typeMap = new LinkedHashMap<>();
+        Map<String, BOQCombinedDrillItem.LocationGroup> locGroupMap = new LinkedHashMap<>();
+
+        for (String key : allKeys) {
+            Long[] ids = idMap.get(key);
+            String[] labels = labelMap.get(key);
+            Long typeId = ids[0]; Long locId = ids[1]; Long areaId = ids[2];
+            String typeName = labels[0]; String locName = labels[1]; String areaName = labels[2];
+
+            double boqQty    = boqMap.containsKey(key)    ? boqMap.get(key)[0]    : 0;
+            double outwardQty = outwardMap.containsKey(key) ? outwardMap.get(key)[0] : 0;
+            Double pct = boqQty > 0 ? Math.round((outwardQty / boqQty) * 10000.0) / 100.0 : null;
+
+            BOQCombinedDrillItem typeItem = typeMap.computeIfAbsent(typeId, k -> {
+                BOQCombinedDrillItem t = new BOQCombinedDrillItem();
+                t.setBuildingTypeId(k); t.setBuildingTypeName(typeName);
+                t.setBoqTotal(0.0); t.setOutwardTotal(0.0);
+                t.setLocations(new ArrayList<>()); return t;
+            });
+            typeItem.setBoqTotal(typeItem.getBoqTotal() + boqQty);
+            typeItem.setOutwardTotal(typeItem.getOutwardTotal() + outwardQty);
+
+            String locKey = typeId + "_" + locId;
+            BOQCombinedDrillItem.LocationGroup lg = locGroupMap.computeIfAbsent(locKey, k -> {
+                BOQCombinedDrillItem.LocationGroup g = new BOQCombinedDrillItem.LocationGroup();
+                g.setLocationId(locId); g.setLocationName(locName);
+                g.setBoqTotal(0.0); g.setOutwardTotal(0.0);
+                g.setAreas(new ArrayList<>()); typeItem.getLocations().add(g); return g;
+            });
+            lg.setBoqTotal(lg.getBoqTotal() + boqQty);
+            lg.setOutwardTotal(lg.getOutwardTotal() + outwardQty);
+
+            BOQCombinedDrillItem.AreaEntry area = new BOQCombinedDrillItem.AreaEntry();
+            area.setAreaId(areaId); area.setAreaName(areaName);
+            area.setBoqQty(boqQty > 0 ? boqQty : null);
+            area.setOutwardQty(outwardQty > 0 ? outwardQty : null);
+            area.setPct(pct);
+            lg.getAreas().add(area);
+        }
+
+        // Compute pct at type and location level
+        for (BOQCombinedDrillItem t : typeMap.values()) {
+            t.setPct(t.getBoqTotal() > 0 ? Math.round((t.getOutwardTotal() / t.getBoqTotal()) * 10000.0) / 100.0 : null);
+            for (BOQCombinedDrillItem.LocationGroup lg : t.getLocations()) {
+                lg.setPct(lg.getBoqTotal() > 0 ? Math.round((lg.getOutwardTotal() / lg.getBoqTotal()) * 10000.0) / 100.0 : null);
+            }
+        }
+
+        return new ArrayList<>(typeMap.values());
+    }
+
+    private String str(Object o) { return o != null ? o.toString() : ""; }
+
+    private List<BOQDrillDownItem> buildDrillDownTree(List<Object[]> rows) {
+        // cols: 0=typeId, 1=building_type, 2=locationId, 3=location_name, 4=areaId, 5=areaName, 6=qty
+        Map<Long, BOQDrillDownItem> typeMap = new LinkedHashMap<>();
+        Map<String, BOQDrillDownItem.LocationGroup> locMap = new LinkedHashMap<>();
+
+        for (Object[] r : rows) {
+            Long typeId = toLong(r[0]);
+            String typeName = r[1] != null ? (String) r[1] : "";
+            Long locId = toLong(r[2]);
+            String locName = r[3] != null ? (String) r[3] : "";
+            Long areaId = r[4] != null ? toLong(r[4]) : null;
+            String areaName = r[5] != null ? (String) r[5] : "";
+            double qty = toDouble(r[6]);
+
+            BOQDrillDownItem typeItem = typeMap.computeIfAbsent(typeId, k -> {
+                BOQDrillDownItem t = new BOQDrillDownItem();
+                t.setBuildingTypeId(k);
+                t.setBuildingTypeName(typeName);
+                t.setTypeTotal(0.0);
+                t.setLocations(new ArrayList<>());
+                return t;
+            });
+            typeItem.setTypeTotal(typeItem.getTypeTotal() + qty);
+
+            String locKey = typeId + "_" + locId;
+            BOQDrillDownItem.LocationGroup locGroup = locMap.computeIfAbsent(locKey, k -> {
+                BOQDrillDownItem.LocationGroup lg = new BOQDrillDownItem.LocationGroup();
+                lg.setLocationId(locId);
+                lg.setLocationName(locName);
+                lg.setLocationTotal(0.0);
+                lg.setAreas(new ArrayList<>());
+                typeItem.getLocations().add(lg);
+                return lg;
+            });
+            locGroup.setLocationTotal(locGroup.getLocationTotal() + qty);
+
+            BOQDrillDownItem.AreaEntry area = new BOQDrillDownItem.AreaEntry();
+            area.setAreaId(areaId);
+            area.setAreaName(areaName);
+            area.setQty(qty);
+            locGroup.getAreas().add(area);
+        }
+
+        return new ArrayList<>(typeMap.values());
+    }
+
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public byte[] exportBOQTrackerExcel(String categoryFilter, String productFilter, String gapFilter) throws IOException {
+        List<BOQTrackerRow> rows = getBOQTrackerSummary(categoryFilter, productFilter, gapFilter);
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("BOQ Tracker");
+
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            String[] headers = {"Category", "Product", "Code", "Unit", "BOQ Planned", "Total Indented", "Total Inward", "Total Outward", "BOQ Balance", "Status"};
+            Row hRow = sheet.createRow(0);
+            for (int i = 0; i < headers.length; i++) {
+                Cell c = hRow.createCell(i);
+                c.setCellValue(headers[i]);
+                c.setCellStyle(headerStyle);
+            }
+
+            int rowNum = 1;
+            for (BOQTrackerRow r : rows) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(r.getCategoryName() != null ? r.getCategoryName() : "");
+                row.createCell(1).setCellValue(r.getProductName() != null ? r.getProductName() : "");
+                row.createCell(2).setCellValue(r.getProductCode() != null ? r.getProductCode() : "");
+                row.createCell(3).setCellValue(r.getUnit() != null ? r.getUnit() : "");
+                if (r.getBoqPlanned() != null) row.createCell(4).setCellValue(r.getBoqPlanned());
+                if (r.getTotalIndented() != null) row.createCell(5).setCellValue(r.getTotalIndented());
+                if (r.getTotalInward() != null) row.createCell(6).setCellValue(r.getTotalInward());
+                if (r.getTotalOutward() != null) row.createCell(7).setCellValue(r.getTotalOutward());
+                if (r.getBoqBalance() != null) row.createCell(8).setCellValue(r.getBoqBalance());
+                row.createCell(9).setCellValue(r.getBucket() != null ? r.getBucket() : "");
+            }
+
+            for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            wb.write(out);
+            return out.toByteArray();
+        }
+    }
+
     private void sortDtos(List<BOQStatusDto> dtos, Sort sort) {
         if (sort == null || sort.isUnsorted()) return;
         for (Sort.Order order : sort) {

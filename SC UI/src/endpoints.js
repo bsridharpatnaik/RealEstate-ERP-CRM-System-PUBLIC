@@ -245,6 +245,11 @@ export const apiEndpoints = {
   boqDashboardStats: "/api/inventory/boqupload/boq-dashboard-summary",
   getProductBOQSummary: "/api/inventory/boqupload/boq-summary",
   boqIndentSummary: "/api/inventory/boqupload/boq-vs-planned",
+  boqTracker: "/api/inventory/boqupload/boq-tracker",
+  boqTrackerCombinedDrill: (productId) => `/api/inventory/boqupload/boq-tracker/combined-drill/${productId}`,
+  boqTrackerBOQDrill: (productId) => `/api/inventory/boqupload/boq-tracker/boq-drill/${productId}`,
+  boqTrackerOutwardDrill: (productId) => `/api/inventory/boqupload/boq-tracker/outward-drill/${productId}`,
+  boqTrackerExport: "/api/inventory/boqupload/boq-tracker/export",
   boqHistoryList: "/api/inventory/boqhistory/list?size=" + noOfRecords,
   boqHistoryExport: "/api/inventory/boqhistory/export",
   activityLogByEntity: (entityType, entityId) => `/api/inventory/activity-log/by-entity/${entityType}/${entityId}`,
@@ -440,4 +445,6 @@ export const appRoutes = {
   indentFulfillmentReport: "/indentFulfillmentReport",
   supplierPerformanceReport: "/supplierPerformanceReport",
   boqIndentReport: "/boqIndentReport",
+  boqTracker: "/boqTracker",
+  globalBOQTracker: "/globalBOQTracker",
 };

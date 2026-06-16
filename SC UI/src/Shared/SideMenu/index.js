@@ -85,7 +85,8 @@ function SideMenu(props) {
     props.history.location.pathname === appRoutes.globalStockReports ||
     props.history.location.pathname === appRoutes.poReconReport ||
     props.history.location.pathname === appRoutes.indentFulfillmentReport ||
-    props.history.location.pathname === appRoutes.supplierPerformanceReport
+    props.history.location.pathname === appRoutes.supplierPerformanceReport ||
+    props.history.location.pathname === appRoutes.globalBOQTracker
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
@@ -259,6 +260,12 @@ function SideMenu(props) {
                     onClick={props.setSideBarValue}
                     labelText={"BOQ vs Indent"}
                     linkurl={appendURL(appRoutes.boqIndentReport)}
+                  />
+                  <DashboardItem
+                    nodeId="71"
+                    onClick={props.setSideBarValue}
+                    labelText={"BOQ Tracker"}
+                    linkurl={appendURL(appRoutes.boqTracker)}
                   />
                 </DashboardItem>
               )}
@@ -590,6 +597,14 @@ function SideMenu(props) {
                     labelText="Supplier Performance"
                     onClick={props.setSideBarValue}
                     linkurl={appRoutes.supplierPerformanceReport}
+                  />
+                )}
+                {(_role === "admin" || _role === "purchase-manager" || _role === "project-manager") && (
+                  <DashboardItem
+                    nodeId="72"
+                    labelText="BOQ Tracker"
+                    onClick={props.setSideBarValue}
+                    linkurl={appRoutes.globalBOQTracker}
                   />
                 )}
               </DashboardItem>

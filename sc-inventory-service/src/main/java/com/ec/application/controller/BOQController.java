@@ -26,9 +26,12 @@ import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.AllowOnly;
 import com.ec.application.data.BOQDashboardResponse;
 import com.ec.application.data.BOQDto;
+import com.ec.application.data.BOQCombinedDrillItem;
+import com.ec.application.data.BOQDrillDownItem;
 import com.ec.application.data.BOQIndentSummaryItem;
 import com.ec.application.data.BOQInformation;
 import com.ec.application.data.BOQReportResponse;
+import com.ec.application.data.BOQTrackerRow;
 import com.ec.application.data.BOQUploadValidationResponse;
 import com.ec.application.data.ProductBOQSummaryDto;
 import com.ec.application.data.UsageLocationResponse;
@@ -129,6 +132,45 @@ public class BOQController {
     @ResponseStatus(HttpStatus.OK)
     public List<BOQIndentSummaryItem> getBOQIndentSummary() {
         return bOQService.getBOQIndentSummary();
+    }
+
+    @GetMapping("/boq-tracker")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BOQTrackerRow> getBOQTracker(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String product,
+            @RequestParam(required = false) String gapFilter) {
+        return bOQService.getBOQTrackerSummary(category, product, gapFilter);
+    }
+
+    @GetMapping("/boq-tracker/combined-drill/{productId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BOQCombinedDrillItem> getCombinedDrillDown(@PathVariable Long productId) {
+        return bOQService.getCombinedDrillDown(productId);
+    }
+
+    @GetMapping("/boq-tracker/boq-drill/{productId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BOQDrillDownItem> getBOQDrillDown(@PathVariable Long productId) {
+        return bOQService.getBOQDrillDown(productId);
+    }
+
+    @GetMapping("/boq-tracker/outward-drill/{productId}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BOQDrillDownItem> getOutwardDrillDown(@PathVariable Long productId) {
+        return bOQService.getOutwardDrillDown(productId);
+    }
+
+    @GetMapping("/boq-tracker/export")
+    public ResponseEntity<byte[]> exportBOQTracker(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String product,
+            @RequestParam(required = false) String gapFilter) throws Exception {
+        byte[] excel = bOQService.exportBOQTrackerExcel(category, product, gapFilter);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"BOQ_Tracker.xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excel);
     }
 
     @DeleteMapping("/boq_upload/{id}")

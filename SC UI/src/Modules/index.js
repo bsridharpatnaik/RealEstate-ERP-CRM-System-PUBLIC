@@ -37,6 +37,8 @@ import PoReconciliationReport from "./Reports/PoReconciliation";
 import IndentFulfillmentReport from "./Reports/IndentFulfillment";
 import SupplierPerformanceReport from "./Reports/SupplierPerformance";
 import BOQIndentReport from "./Reports/BOQIndent";
+import BOQTracker from "./Reports/BOQTracker";
+import BOQTrackerGlobal from "./Reports/BOQTracker/global";
 export {
   User,
   Role,
@@ -77,4 +79,6 @@ export {
   IndentFulfillmentReport,
   SupplierPerformanceReport,
   BOQIndentReport,
+  BOQTracker,
+  BOQTrackerGlobal,
 };

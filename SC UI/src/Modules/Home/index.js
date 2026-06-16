@@ -48,6 +48,8 @@ import {
   IndentFulfillmentReport,
   SupplierPerformanceReport,
   BOQIndentReport,
+  BOQTracker,
+  BOQTrackerGlobal,
 } from "./../index";
 import BOQReport from "../BOQReport";
 
@@ -139,6 +141,12 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.boqIndentReport}>
                   <BOQIndentReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.boqTracker}>
+                  <BOQTracker key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.globalBOQTracker}>
+                  <BOQTrackerGlobal key={new Date()} {...props} />
                 </Route>
                 <Route path={"/boqReport"}>
                   <BOQReport key={new Date()} {...props} />
