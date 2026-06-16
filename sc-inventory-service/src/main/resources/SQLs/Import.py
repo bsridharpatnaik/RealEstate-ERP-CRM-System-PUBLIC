@@ -19,9 +19,12 @@ CREATE_VIEWS_SCHEMAS = [
     "mhvrtrdcntr",
     "iseries",
     "smartcity",
-    "dextension"
+    "dextension",
+    "anantamsamosharan"
 ]
 MYSQL_BIN = "/opt/homebrew/opt/mysql@8.0/bin/mysql"
+MC_BIN = "/opt/homebrew/bin/mc"
+RCLONE_BIN = "/opt/homebrew/bin/rclone"
 DOWNLOAD_DIR = os.path.expanduser("~/Downloads")
 FILE_PATTERN = "all-databases-*.sql"
 
@@ -40,7 +43,8 @@ SCHEMAS = [
     "mhvrtrdcntr",
     "iseries",
     "smartcity",
-    "masterschema"
+    "masterschema",
+    "anantamsamosharan"
 ]
 
 # MinIO sync config
@@ -123,17 +127,17 @@ def post_process_schema(schema):
 def ensure_minio_buckets():
     log("Ensuring local MinIO buckets exist...")
     run_cmd([
-        "mc", "alias", "set", MINIO_LOCAL_MC_ALIAS,
+        MC_BIN, "alias", "set", MINIO_LOCAL_MC_ALIAS,
         MINIO_LOCAL_URL, MINIO_LOCAL_USER, MINIO_LOCAL_PASS
     ], "mc alias set")
 
     for schema in SCHEMAS:
         result = subprocess.run(
-            ["mc", "ls", f"{MINIO_LOCAL_MC_ALIAS}/{schema}"],
+            [MC_BIN, "ls", f"{MINIO_LOCAL_MC_ALIAS}/{schema}"],
             capture_output=True
         )
         if result.returncode != 0:
-            run_cmd(["mc", "mb", f"{MINIO_LOCAL_MC_ALIAS}/{schema}"], f"create bucket {schema}")
+            run_cmd([MC_BIN, "mb", f"{MINIO_LOCAL_MC_ALIAS}/{schema}"], f"create bucket {schema}")
             log(f"  Created bucket: {schema}")
         else:
             log(f"  Bucket exists: {schema}")
@@ -145,7 +149,7 @@ def sync_minio_files():
     log(f"  Dest   : {MINIO_LOCAL_REMOTE}")
 
     cmd = [
-        "rclone", "copy",
+        RCLONE_BIN, "copy",
         MINIO_GDRIVE_SOURCE,
         MINIO_LOCAL_REMOTE,
         "--transfers", "4",
