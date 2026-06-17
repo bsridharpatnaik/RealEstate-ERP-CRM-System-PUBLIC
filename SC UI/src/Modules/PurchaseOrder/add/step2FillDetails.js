@@ -44,6 +44,10 @@ class Step2FillDetails extends React.Component {
     tooltipProductId: null,   // which product is hovered
     projectList: [],
     unitConversionsCache: {}, // productId -> [{id, unitName, conversionFactor}]
+    // Quote linkage
+    finalizedQuoteLines: [],   // finalized supplier quote lines for selected supplier+indents
+    quoteLinkAnchorEl: null,   // anchor for quote link dropdown
+    quoteLinkLineIndex: null,  // which line the dropdown is for
   };
 
   componentDidMount() {
@@ -83,6 +87,7 @@ class Step2FillDetails extends React.Component {
       (!prevProps.orderTo || prevProps.orderTo.id !== this.props.orderTo.id)
     ) {
       this.loadSupplierDetails(this.props.orderTo.id);
+      this.fetchFinalizedQuoteLines(this.props.orderTo.id);
     }
     // If orderFrom changes and has an ID, fetch its details if not already loaded
     if (
@@ -294,6 +299,40 @@ class Step2FillDetails extends React.Component {
         isLoadingFirms: false,
       });
     }
+  };
+
+  fetchFinalizedQuoteLines = async (supplierId) => {
+    if (!supplierId) return;
+    try {
+      const items = this.props.items || [];
+      const indentIds = [...new Set(
+        items.flatMap(i => (i.indentRefs || []).map(r => String(r.indentId || r.actualIndentId || "")).filter(Boolean))
+      )];
+      const params = new URLSearchParams();
+      params.append("supplierId", supplierId);
+      indentIds.forEach(id => params.append("indentIds", id));
+      const res = await API.GET(`${apiEndpoints.quoteComparisonFinalizedForPo}?${params.toString()}`);
+      if (res && res.data) {
+        this.setState({ finalizedQuoteLines: res.data });
+      }
+    } catch (e) {
+      // non-critical — quote linkage is optional
+    }
+  };
+
+  openQuoteLink = (e, idx) => this.setState({ quoteLinkAnchorEl: e.currentTarget, quoteLinkLineIndex: idx });
+  closeQuoteLink = () => this.setState({ quoteLinkAnchorEl: null, quoteLinkLineIndex: null });
+
+  applyQuoteLink = (line) => {
+    const idx = this.state.quoteLinkLineIndex;
+    if (idx == null) return;
+    this.handleItemChange(idx, "rate", String(line.quotedRate || ""));
+    this.handleItemChange(idx, "discount", String(line.discountPercent || "0"));
+    this.handleItemChange(idx, "gst", String(line.gstPercent || "0"));
+    this.handleItemChange(idx, "_linkedQcLineId", line.qcLineId);
+    this.handleItemChange(idx, "_linkedSupplierQuoteLineId", line.supplierQuoteLineId);
+    this.handleItemChange(idx, "_linkedQcId", line.qcId);
+    this.closeQuoteLink();
   };
 
   fetchSupplierDetails = async (supplierId) => {
@@ -1287,17 +1326,29 @@ handleAddFirm = async (firm) => {
                             </div>
                           </div>
                         ) : (
-                          <TextField
-                            value={item.rate || ""}
-                            onChange={(e) =>
-                              this.handleItemChange(index, "rate", e.target.value)
-                            }
-                            size="small"
-                            variant="outlined"
-                            type="number"
-                            required
-                            inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                          />
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <TextField
+                              value={item.rate || ""}
+                              onChange={(e) =>
+                                this.handleItemChange(index, "rate", e.target.value)
+                              }
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              required
+                              inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
+                            />
+                            {this.props.orderTo && this.state.finalizedQuoteLines.length > 0 && (
+                              <IconButton
+                                size="small"
+                                title="Link finalized quote rate"
+                                onClick={(e) => this.openQuoteLink(e, index)}
+                                style={{ padding: 4, color: item._linkedQcId ? "#2e7d32" : "#999" }}
+                              >
+                                <span style={{ fontSize: 14 }}>🔗</span>
+                              </IconButton>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>
@@ -1564,6 +1615,37 @@ handleAddFirm = async (firm) => {
             style={{ background: '#fff' }}
           />
         </div>}
+
+        {/* Quote Linkage Popover */}
+        <Popover
+          open={Boolean(this.state.quoteLinkAnchorEl)}
+          anchorEl={this.state.quoteLinkAnchorEl}
+          onClose={this.closeQuoteLink}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <div style={{ padding: 12, minWidth: 280, maxHeight: 300, overflowY: "auto" }}>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Select Finalized Quote Line</div>
+            {this.state.finalizedQuoteLines.length === 0 ? (
+              <div style={{ fontSize: 12, color: "#aaa" }}>No finalized lines for this supplier</div>
+            ) : (
+              this.state.finalizedQuoteLines.map((line, i) => (
+                <div
+                  key={i}
+                  onClick={() => this.applyQuoteLink(line)}
+                  style={{
+                    padding: "8px 10px", borderRadius: 4, cursor: "pointer",
+                    borderBottom: "1px solid #f0f0f0", fontSize: 12,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{ fontWeight: 600 }}>{line.productName}</div>
+                  <div style={{ color: "#555" }}>Rate: ₹{line.quotedRate} | QC: {line.qcId}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </Popover>
       </div>
     );
   }

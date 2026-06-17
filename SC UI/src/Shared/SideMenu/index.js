@@ -87,7 +87,9 @@ function SideMenu(props) {
     props.history.location.pathname === appRoutes.poReconReport ||
     props.history.location.pathname === appRoutes.indentFulfillmentReport ||
     props.history.location.pathname === appRoutes.supplierPerformanceReport ||
-    props.history.location.pathname === appRoutes.globalBOQTracker
+    props.history.location.pathname === appRoutes.globalBOQTracker ||
+    props.history.location.pathname === "/quoteComparison" ||
+    props.history.location.pathname === "/quoteComparison/create"
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
@@ -509,6 +511,16 @@ function SideMenu(props) {
                 onClick={props.setSideBarValue}
                 linkurl="/purchaseOrder"
               />
+              {(currentUserRole.toLowerCase() === "admin" ||
+                currentUserRole.toLowerCase() === "purchase-manager" ||
+                currentUserRole.toLowerCase() === "purchase-executive") && (
+                <DashboardItem
+                  nodeId="11q"
+                  labelText="Quote Comparison"
+                  onClick={props.setSideBarValue}
+                  linkurl="/quoteComparison"
+                />
+              )}
               <DashboardItem
                 nodeId="10"
                 labelText={messages.common.inventoryTransfer}

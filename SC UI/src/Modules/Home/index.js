@@ -50,6 +50,8 @@ import {
   BOQIndentReport,
   BOQTracker,
   BOQTrackerGlobal,
+  QuoteComparison,
+  QuoteComparisonCreate,
 } from "./../index";
 import BOQReport from "../BOQReport";
 
@@ -150,6 +152,12 @@ class Home extends React.Component {
                 </Route>
                 <Route path={"/boqReport"}>
                   <BOQReport key={new Date()} {...props} />
+                </Route>
+                <Route path={"/quoteComparison/create"}>
+                  <QuoteComparisonCreate key={new Date()} {...props} />
+                </Route>
+                <Route path={"/quoteComparison"}>
+                  <QuoteComparison key={new Date()} {...props} />
                 </Route>
                 <Route path={"/contact"}>
                   <Contact key={new Date()} {...props} />

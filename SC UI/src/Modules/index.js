@@ -39,6 +39,8 @@ import SupplierPerformanceReport from "./Reports/SupplierPerformance";
 import BOQIndentReport from "./Reports/BOQIndent";
 import BOQTracker from "./Reports/BOQTracker";
 import BOQTrackerGlobal from "./Reports/BOQTracker/global";
+import QuoteComparison from "./QuoteComparison";
+import QuoteComparisonCreate from "./QuoteComparison/create";
 export {
   User,
   Role,
@@ -81,4 +83,6 @@ export {
   BOQIndentReport,
   BOQTracker,
   BOQTrackerGlobal,
+  QuoteComparison,
+  QuoteComparisonCreate,
 };

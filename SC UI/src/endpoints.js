@@ -406,6 +406,21 @@ export const exportURL = {
   getLead: "/api/crm/activity/getleadactivitypage/export?size=" + exportPageSize,
   getCustomer: "/api/crm/customer?size=" + exportPageSize,
   getBuildingType: "/api/inventory/buildingtype?size=" + exportPageSize,
+
+  // Quote Comparison
+  quoteComparisonList: "/api/inventory/quote-comparison/list?size=100",
+  quoteComparisonCreate: "/api/inventory/quote-comparison/create",
+  quoteComparisonDetail: (qcId) => `/api/inventory/quote-comparison/${qcId}`,
+  quoteComparisonMatrix: (qcId) => `/api/inventory/quote-comparison/matrix/${qcId}`,
+  quoteComparisonAddSupplierQuote: (qcId) => `/api/inventory/quote-comparison/${qcId}/supplier-quote`,
+  quoteComparisonUpdateSupplierQuote: (qcId, sqId) => `/api/inventory/quote-comparison/${qcId}/supplier-quote/${sqId}`,
+  quoteComparisonDeleteSupplierQuote: (qcId, sqId) => `/api/inventory/quote-comparison/${qcId}/supplier-quote/${sqId}`,
+  quoteComparisonFinalizeLine: (qcId) => `/api/inventory/quote-comparison/${qcId}/finalize-line`,
+  quoteComparisonReopenLine: (qcId, lineId) => `/api/inventory/quote-comparison/${qcId}/reopen-line/${lineId}`,
+  quoteComparisonClose: (qcId) => `/api/inventory/quote-comparison/${qcId}/close`,
+  quoteComparisonCancel: (qcId) => `/api/inventory/quote-comparison/${qcId}/cancel`,
+  quoteComparisonLinkToPo: "/api/inventory/quote-comparison/link-to-po",
+  quoteComparisonFinalizedForPo: "/api/inventory/quote-comparison/finalized-for-po",
 };
 export const appRoutes = {
   dashboard: "/dashboard",
@@ -447,4 +462,5 @@ export const appRoutes = {
   boqIndentReport: "/boqIndentReport",
   boqTracker: "/boqTracker",
   globalBOQTracker: "/globalBOQTracker",
+  quoteComparison: "/quoteComparison",
 };

@@ -258,7 +258,10 @@ class Step2FillDetailsRoute extends AddForm {
         netRate,
         totalAmount,
         sampleImageFileId: item.sampleImageFileId || null,
-        indentRefs: item.indentRefs
+        indentRefs: item.indentRefs,
+        linkedQcLineId: item._linkedQcLineId || null,
+        linkedSupplierQuoteLineId: item._linkedSupplierQuoteLineId || null,
+        linkedQcId: item._linkedQcId || null,
       };
     });
 
@@ -289,8 +292,24 @@ class Step2FillDetailsRoute extends AddForm {
     try {
       const response = await API.POST(apiEndpoints.createPurchaseOrder, payload);
       this.setState({ isAdding: false });
-      
+
       if (response.success) {
+        // Link any quote-comparison lines to this PO (optional, non-blocking)
+        const poId = response.data?.purchaseOrderId;
+        if (poId) {
+          const linkedItems = lineItems.filter(l => l.linkedQcLineId && l.linkedSupplierQuoteLineId && l.linkedQcId);
+          for (const li of linkedItems) {
+            try {
+              await API.POST(apiEndpoints.quoteComparisonLinkToPo, {
+                supplierQuoteLineId: li.linkedSupplierQuoteLineId,
+                qcLineId: li.linkedQcLineId,
+                qcId: li.linkedQcId,
+                purchaseOrderId: poId,
+                poLineId: null,
+              });
+            } catch (e) { /* non-critical */ }
+          }
+        }
         this.props.enqueueSnackbar("Purchase Order created successfully", {
           variant: "success",
         });

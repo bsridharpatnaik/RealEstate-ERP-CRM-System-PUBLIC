@@ -70,10 +70,22 @@ public class PurchaseOrderLine extends ReusableFields {
     @Column(name = "sample_image_file_uuid")
     private String sampleImageFileId;
 
-    /** Traceability */
+    /** Traceability — indent refs */
     @JsonIgnoreProperties("poLine")
     @OneToMany(mappedBy = "poLine", cascade = CascadeType.ALL)
     private List<PurchaseOrderIndentRef> indentRefs = new ArrayList<>();
+
+    /** Quote comparison line linked to this PO line (optional, for traceability) */
+    @Column(name = "linked_qc_line_id")
+    private Long linkedQcLineId;
+
+    /** Supplier quote line ID linked to this PO line */
+    @Column(name = "linked_supplier_quote_line_id")
+    private Long linkedSupplierQuoteLineId;
+
+    /** QC ID for display reference */
+    @Column(name = "linked_qc_id")
+    private String linkedQcId;
 
     /**
      * Raw image bytes pre-fetched in tenant context by PurchaseOrderService.
