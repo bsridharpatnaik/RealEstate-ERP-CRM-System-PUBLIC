@@ -33,4 +33,9 @@ public class PoLineItemForInward {
     /** Deprecated — kept for backward compat. Use batchMode instead. */
     private Boolean isExpirable;
     private BatchMode batchMode;
+
+    /** Billing unit context from PO line — shown in inward form so store person knows base qty vs billing qty */
+    private String billingUnit;
+    private Double billingQuantity;
+    private Double billingConversionFactor;
 }

@@ -468,7 +468,9 @@ class InwardInventoryForm extends AddForm {
             maxAllowedQuantity: item.maxAllowedQuantity != null ? item.maxAllowedQuantity : pendingQty + (poQty * tolPct / 100),
             quantity: "",
             warehouseId: null,
-            lineItemCode: item.lineItemCode
+            lineItemCode: item.lineItemCode,
+            billingUnit: item.billingUnit || null,
+            billingQuantity: item.billingQuantity || null,
           };
         });
 
@@ -1003,6 +1005,11 @@ class InwardInventoryForm extends AddForm {
               disabled: true,
               skipAdd: true,
             })}
+            {product.billingUnit && product.billingQuantity && (
+              <div style={{ fontSize: 11, color: '#1976d2', marginTop: 2, paddingLeft: 4 }}>
+                = {product.billingQuantity} {product.billingUnit} (billing)
+              </div>
+            )}
           </div>
 
           {/* Max Allowed */}

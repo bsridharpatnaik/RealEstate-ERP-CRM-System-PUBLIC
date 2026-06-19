@@ -171,6 +171,9 @@ public class InwardInventoryService {
         li.setTotalInwardQuantity(alreadyInwarded);
         li.setPendingQuantity(pendingQty);
         li.setMaxAllowedQuantity(maxAllowed);
+        li.setBillingUnit(v.getBillingUnit());
+        li.setBillingQuantity(v.getBillingQuantity());
+        li.setBillingConversionFactor(v.getBillingConversionFactor());
         productRepo.findById(v.getProductId()).ifPresent(p -> {
             li.setIsExpirable(p.requiresExpiry());
             li.setBatchMode(p.getBatchMode());
