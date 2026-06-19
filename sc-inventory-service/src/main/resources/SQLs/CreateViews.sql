@@ -1283,7 +1283,10 @@ SELECT
     c.name AS supplier_name,
     COALESCE(iip.total_inward_quantity, 0) AS total_inward_quantity,
     COALESCE(pol.quantity, iie.quantity)   AS poLineQuantity,
-    COALESCE(pol.tolerance_percent, 0)     AS tolerancePercent
+    COALESCE(pol.tolerance_percent, 0)     AS tolerancePercent,
+    pol.billing_unit                       AS billingUnit,
+    pol.billing_quantity                   AS billingQuantity,
+    pol.billing_conversion_factor          AS billingConversionFactor
 
 FROM masterschema.indent_inventory ii
 INNER JOIN masterschema.indent_inventory_entries iie

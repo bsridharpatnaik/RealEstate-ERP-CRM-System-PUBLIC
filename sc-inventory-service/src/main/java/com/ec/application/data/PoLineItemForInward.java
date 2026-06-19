@@ -28,4 +28,9 @@ public class PoLineItemForInward {
     private Double tolerancePercent;
 
     private Double maxAllowedQuantity;
+
+    /** Billing unit context from PO line — shown in inward form so store person knows base qty vs billing qty */
+    private String billingUnit;
+    private Double billingQuantity;
+    private Double billingConversionFactor;
 }
