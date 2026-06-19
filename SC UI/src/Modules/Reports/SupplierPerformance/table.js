@@ -46,7 +46,7 @@ function SupplierPerformanceTable({ rows, sortBy, sortDir, onSort, onSelectFirm 
   const createSortHandler = (key) => () => { if (onSort) onSort(key); };
 
   return (
-    <div style={{ overflowX: "auto" }}>
+    <div>
       <Table size="small">
         <TableHead>
           <TableRow style={{ background: "#f5f5f5" }}>
@@ -54,7 +54,7 @@ function SupplierPerformanceTable({ rows, sortBy, sortDir, onSort, onSelectFirm 
               <TableCell
                 key={col.key}
                 align={col.align || "left"}
-                style={{ fontWeight: 700, whiteSpace: "nowrap", padding: "10px 12px" }}
+                style={{ fontWeight: 700, padding: "8px 6px" }}
               >
                 {col.sortable ? (
                   <TableSortLabel
@@ -116,7 +116,7 @@ function SupplierPerformanceTable({ rows, sortBy, sortDir, onSort, onSelectFirm 
               <TableCell align="right" style={{ color: row.cancelledPos > 0 ? "#888" : "#aaa" }}>
                 {row.cancelledPos ?? "—"}
               </TableCell>
-              <TableCell align="right" style={{ minWidth: 140 }}>
+              <TableCell align="right">
                 <OnTimeBar rate={row.onTimeRate} />
               </TableCell>
               <TableCell align="right" style={{ fontWeight: 500 }}>

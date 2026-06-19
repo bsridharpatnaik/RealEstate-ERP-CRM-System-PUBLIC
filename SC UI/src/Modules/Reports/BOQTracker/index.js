@@ -196,7 +196,7 @@ class BOQTracker extends Component {
     const hasAnyFilter = !!(selectedCategory || search || gapFilter || bucketFilter);
 
     return (
-      <div style={{ padding: '24px 28px', fontFamily: 'inherit' }}>
+      <div style={{ padding: '16px 16px', fontFamily: 'inherit' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
           <div>
@@ -289,7 +289,7 @@ class BOQTracker extends Component {
         ) : visibleRows.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 48, color: '#a0aec0', fontSize: 14 }}>No data found.</div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f7f8fa', borderBottom: '2px solid #e2e8f0' }}>
@@ -305,7 +305,7 @@ class BOQTracker extends Component {
                     { label: 'Balance',         align: 'right' },
                     { label: 'Status',          align: 'center' },
                   ].map(h => (
-                    <th key={h.label} style={{ padding: '10px 12px', textAlign: h.align, fontSize: 11, fontWeight: 700, color: '#718096', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    <th key={h.label} style={{ padding: '8px 6px', textAlign: h.align, fontSize: 11, fontWeight: 700, color: '#718096', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                       {h.label}
                       {h.note && <div style={{ fontSize: 9, color: '#2980b9', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{h.note}</div>}
                     </th>
@@ -318,34 +318,34 @@ class BOQTracker extends Component {
                   const balanceColor = row.boqBalance == null ? '#a0aec0' : row.boqBalance < 0 ? '#c0392b' : '#27ae60';
                   return (
                     <tr key={idx} style={{ background: idx % 2 === 0 ? '#fff' : '#fafbfc', borderBottom: '1px solid #f0f2f5' }}>
-                      <td style={{ padding: '10px 12px', color: '#718096', fontSize: 12 }}>{row.categoryName || '—'}</td>
-                      <td style={{ padding: '10px 12px', fontWeight: 500, color: '#2d3748' }}>{row.productName || '—'}</td>
-                      <td style={{ padding: '10px 12px', color: '#a0aec0', fontSize: 12 }}>{row.productCode || '—'}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center', color: '#718096' }}>{row.unit || '—'}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                      <td style={{ padding: '8px 6px', color: '#718096', fontSize: 12 }}>{row.categoryName || '—'}</td>
+                      <td style={{ padding: '8px 6px', fontWeight: 500, color: '#2d3748' }}>{row.productName || '—'}</td>
+                      <td style={{ padding: '8px 6px', color: '#a0aec0', fontSize: 12 }}>{row.productCode || '—'}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'center', color: '#718096' }}>{row.unit || '—'}</td>
+                      <td style={{ padding: '8px 6px', textAlign: 'right' }}>
                         {row.boqPlanned != null ? (
                           <span onClick={() => this.openDrill(row)} style={{ color: '#2980b9', fontWeight: 600, cursor: 'pointer', borderBottom: '1px dashed #2980b9' }} title="Click to see structure breakdown">
                             {this.fmt(row.boqPlanned)}
                           </span>
                         ) : <span style={{ color: '#a0aec0' }}>—</span>}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', color: '#2d3748' }}>
+                      <td style={{ padding: '8px 6px', textAlign: 'right', color: '#2d3748' }}>
                         {row.totalIndented != null ? this.fmt(row.totalIndented) : <span style={{ color: '#a0aec0' }}>—</span>}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', color: '#2d3748' }}>
+                      <td style={{ padding: '8px 6px', textAlign: 'right', color: '#2d3748' }}>
                         {row.totalInward != null ? this.fmt(row.totalInward) : <span style={{ color: '#a0aec0' }}>—</span>}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                      <td style={{ padding: '8px 6px', textAlign: 'right' }}>
                         {row.totalOutward != null ? (
                           <span onClick={() => this.openDrill(row)} style={{ color: '#7d3c98', fontWeight: 600, cursor: 'pointer', borderBottom: '1px dashed #7d3c98' }} title="Click to see structure breakdown">
                             {this.fmt(row.totalOutward)}
                           </span>
                         ) : <span style={{ color: '#a0aec0' }}>—</span>}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: balanceColor }}>
+                      <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 600, color: balanceColor }}>
                         {row.boqBalance != null ? this.fmt(row.boqBalance) : <span style={{ color: '#a0aec0' }}>—</span>}
                       </td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                      <td style={{ padding: '8px 6px', textAlign: 'center' }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: bs.color, background: bs.bg, padding: '2px 8px', borderRadius: 8, border: `1px solid ${bs.border}`, whiteSpace: 'nowrap' }}>
                           {bs.label}
                         </span>

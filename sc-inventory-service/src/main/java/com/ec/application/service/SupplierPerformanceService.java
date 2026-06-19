@@ -62,8 +62,8 @@ public class SupplierPerformanceService {
         " FROM contacts s" +
         " JOIN purchase_order po ON po.supplier_id = s.contactId AND po.is_deleted = 0" +
         " JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0" +
-        " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
-        " LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
+        " JOIN Product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
+        " LEFT JOIN Category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
         " WHERE s.is_deleted = 0 AND s.contacttype = 'supplier'";
 
     private static final String GROUP_BY = " GROUP BY s.contactId, s.name";
@@ -135,7 +135,7 @@ public class SupplierPerformanceService {
             "  COUNT(DISTINCT CASE WHEN po.supplier_id = :supplierId THEN po.purchase_order_id END) AS thisPosCount" +
             " FROM purchase_order_line pol" +
             " JOIN purchase_order po ON po.purchase_order_id = pol.po_id AND po.is_deleted = 0" +
-            " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
+            " JOIN Product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
             " WHERE pol.is_deleted = 0" +
             "   AND COALESCE(pol.netRate, pol.rate) > 0" +
             "   AND pol.product_id IN (" +

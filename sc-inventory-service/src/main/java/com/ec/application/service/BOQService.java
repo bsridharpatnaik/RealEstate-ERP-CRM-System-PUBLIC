@@ -1335,8 +1335,8 @@ public class BOQService {
             "SELECT bu.productId, p.product_name, p.product_code, c.category_name, p.measurementUnit, " +
             "  SUM(bu.quantity * (1 + COALESCE(bu.wastagePercent,0)/100)) AS planned " +
             "FROM BOQUpload bu " +
-            "INNER JOIN product p ON p.productId = bu.productId AND p.is_deleted = 0 " +
-            "INNER JOIN category c ON c.categoryId = p.categoryId " +
+            "INNER JOIN Product p ON p.productId = bu.productId AND p.is_deleted = 0 " +
+            "INNER JOIN Category c ON c.categoryId = p.categoryId " +
             "WHERE bu.is_deleted = 0 " +
             "GROUP BY bu.productId, p.product_name, p.product_code, c.category_name, p.measurementUnit")
             .getResultList();
@@ -1380,8 +1380,8 @@ public class BOQService {
         @SuppressWarnings("unchecked")
         List<Object[]> extraProductRows = em.createNativeQuery(
             "SELECT p.productId, p.product_name, p.product_code, c.category_name, p.measurementUnit " +
-            "FROM product p " +
-            "INNER JOIN category c ON c.categoryId = p.categoryId " +
+            "FROM Product p " +
+            "INNER JOIN Category c ON c.categoryId = p.categoryId " +
             "WHERE p.is_deleted = 0")
             .getResultList();
 

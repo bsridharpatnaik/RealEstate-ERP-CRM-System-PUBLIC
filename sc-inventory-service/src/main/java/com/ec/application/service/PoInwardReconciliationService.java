@@ -37,8 +37,8 @@ public class PoInwardReconciliationService {
     private static final String BASE_FROM =
         " FROM purchase_order po" +
         " JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0" +
-        " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
-        " LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
+        " JOIN Product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
+        " LEFT JOIN Category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
         " LEFT JOIN Firm f ON f.firmId = po.firm_id AND f.is_deleted = 0" +
         " LEFT JOIN indent_inventory_entries iie" +
         "   ON iie.purchaseOrderId = po.purchase_order_id" +
@@ -136,7 +136,7 @@ public class PoInwardReconciliationService {
     public List<String> getDistinctProducts() {
         String sql = "SELECT DISTINCT p.product_name" +
                 " FROM purchase_order_line pol" +
-                " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
+                " JOIN Product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
                 " JOIN purchase_order po ON po.purchase_order_id = pol.po_id AND po.is_deleted = 0" +
                 " WHERE pol.is_deleted = 0 ORDER BY p.product_name";
         @SuppressWarnings("unchecked")

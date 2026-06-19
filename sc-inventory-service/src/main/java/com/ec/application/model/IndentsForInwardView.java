@@ -117,4 +117,14 @@ public class IndentsForInwardView {
 
     @Column(name = "tolerancePercent")
     private Double tolerancePercent;
+
+    // ---------- PO Line Billing Unit (for display in inward form) ----------
+    @Column(name = "billingUnit")
+    private String billingUnit;
+
+    @Column(name = "billingQuantity")
+    private Double billingQuantity;
+
+    @Column(name = "billingConversionFactor")
+    private Double billingConversionFactor;
 }
