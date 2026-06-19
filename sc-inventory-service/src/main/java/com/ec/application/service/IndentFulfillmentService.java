@@ -48,8 +48,8 @@ public class IndentFulfillmentService {
     private static final String BASE_FROM =
         " FROM indent_inventory ii" +
         " JOIN indent_inventory_entries iie ON iie.indent_id = ii.indent_id AND iie.is_deleted = 0" +
-        " JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0" +
-        " LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
+        " JOIN Product p ON p.productId = iie.productId AND p.is_deleted = 0" +
+        " LEFT JOIN Category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
         " LEFT JOIN purchase_order po ON po.purchase_order_id = iie.purchaseOrderId AND po.is_deleted = 0" +
         " LEFT JOIN purchase_order_line pol ON pol.po_id = iie.purchaseOrderId" +
         "   AND pol.product_id = iie.productId AND pol.is_deleted = 0" +
@@ -110,7 +110,7 @@ public class IndentFulfillmentService {
         @SuppressWarnings("unchecked")
         List<String> result = em.createNativeQuery(
                 "SELECT DISTINCT p.product_name FROM indent_inventory_entries iie" +
-                " JOIN product p ON p.productId = iie.productId AND p.is_deleted = 0" +
+                " JOIN Product p ON p.productId = iie.productId AND p.is_deleted = 0" +
                 " JOIN indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0" +
                 " WHERE iie.is_deleted = 0 ORDER BY p.product_name")
                 .getResultList();

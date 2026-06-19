@@ -79,8 +79,8 @@ public class PurchaseOrderHistoryPriceService {
             " FROM contacts s" +
             " JOIN purchase_order po ON po.supplier_id = s.contactId AND po.is_deleted = 0" +
             " JOIN purchase_order_line pol ON pol.po_id = po.purchase_order_id AND pol.is_deleted = 0" +
-            " JOIN product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
-            " LEFT JOIN category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
+            " JOIN Product p ON p.productId = pol.product_id AND p.is_deleted = 0" +
+            " LEFT JOIN Category cat ON cat.categoryId = p.categoryId AND cat.is_deleted = 0" +
             " WHERE s.is_deleted = 0 AND s.contactId IN (:ids)" +
             " GROUP BY s.contactId";
 
