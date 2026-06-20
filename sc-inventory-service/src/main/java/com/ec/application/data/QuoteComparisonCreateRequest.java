@@ -21,7 +21,7 @@ public class QuoteComparisonCreateRequest {
     @Data
     public static class LineRequest {
         private String indentId;
-        private Long indentLineId;
+        private String indentLineId;
         private Long productId;
         private String productName;
         private String unit;

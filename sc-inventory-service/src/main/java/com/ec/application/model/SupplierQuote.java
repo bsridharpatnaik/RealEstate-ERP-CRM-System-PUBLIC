@@ -3,6 +3,7 @@ package com.ec.application.model;
 import com.ec.application.ReusableClasses.ReusableFields;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -23,6 +24,7 @@ public class SupplierQuote extends ReusableFields {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "qc_id", nullable = false)
     private QuoteComparison quoteComparison;
@@ -59,7 +61,7 @@ public class SupplierQuote extends ReusableFields {
     @Column(name = "created_by_user")
     private String createdByUser;
 
-    @OneToMany(mappedBy = "supplierQuote", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "supplierQuote", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy("id ASC")
     private List<SupplierQuoteLine> lines = new ArrayList<>();
 

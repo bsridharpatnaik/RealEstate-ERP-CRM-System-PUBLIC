@@ -637,7 +637,7 @@ class Step1SelectIndents extends React.Component {
                   <TableCell>Remarks</TableCell>
                   <TableCell>Dead Stock</TableCell>
                   {this.renderSortableHeader("Date Creation", "creationDate")}
-                  <TableCell>Split Action</TableCell>
+                  {!this.props.hideSplitAction && <TableCell>Split Action</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -742,7 +742,7 @@ class Step1SelectIndents extends React.Component {
                       )}
                     </TableCell>
                     <TableCell>{this.formatValue(row.dateCreation)}</TableCell>
-                      <TableCell align="center">
+                      {!this.props.hideSplitAction && <TableCell align="center">
                       <IconButton
                         size="small"
                         onClick={(e) => this.handleSplitClick(e, row)}
@@ -758,7 +758,7 @@ class Step1SelectIndents extends React.Component {
                           style={{ display: "block" }}
                         />
                       </IconButton>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   ))
                 )}

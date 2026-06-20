@@ -3,6 +3,7 @@ package com.ec.application.model;
 import com.ec.application.ReusableClasses.ReusableFields;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -19,6 +20,7 @@ public class QuoteComparisonLine extends ReusableFields {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "qc_id", nullable = false)
     private QuoteComparison quoteComparison;
@@ -27,7 +29,7 @@ public class QuoteComparisonLine extends ReusableFields {
     private String indentId;
 
     @Column(name = "indent_line_id")
-    private Long indentLineId;
+    private String indentLineId;
 
     @Column(name = "product_id", nullable = false)
     private Long productId;

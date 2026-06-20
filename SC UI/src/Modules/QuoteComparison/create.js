@@ -182,6 +182,7 @@ class QuoteComparisonCreate extends Component {
           onSelectIndents={(indents) => this.setState({ selectedIndents: indents })}
           onIndentItemsChange={(indents) => this.setState({ selectedIndents: indents })}
           enqueueSnackbar={this.props.enqueueSnackbar}
+          hideSplitAction
         />
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
           <Button variant="outlined" onClick={() => this.props.history.push("/quoteComparison")}>
@@ -359,7 +360,7 @@ class QuoteComparisonCreate extends Component {
   render() {
     const { step } = this.state;
     return (
-      <div style={{ padding: 24, maxWidth: step === 0 ? "100%" : 960, margin: "0 auto" }}>
+      <div style={{ padding: 24, maxWidth: step === 0 ? "100%" : 960, margin: "0 auto", overflowX: "hidden", boxSizing: "border-box" }}>
         <h2 style={{ marginTop: 0, marginBottom: 24 }}>New Quote Comparison</h2>
         {this.renderStepper()}
         {step === 0 && this.renderStep0()}

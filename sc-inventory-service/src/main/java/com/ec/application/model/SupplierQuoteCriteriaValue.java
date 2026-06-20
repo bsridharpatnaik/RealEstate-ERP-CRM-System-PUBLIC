@@ -3,6 +3,7 @@ package com.ec.application.model;
 import com.ec.application.ReusableClasses.ReusableFields;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -18,6 +19,7 @@ public class SupplierQuoteCriteriaValue extends ReusableFields {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_quote_line_id", nullable = false)
     private SupplierQuoteLine supplierQuoteLine;

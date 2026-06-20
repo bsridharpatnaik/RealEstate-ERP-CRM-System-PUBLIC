@@ -4,6 +4,8 @@ import com.ec.application.IDGenerator.GlobalQuoteComparisonIdGenerator;
 import com.ec.application.ReusableClasses.ReusableFields;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Where;
 
@@ -44,22 +46,24 @@ public class QuoteComparison extends ReusableFields {
     @Column(name = "created_by_user")
     private String createdByUser;
 
-    // Indent references (comma-separated indent IDs)
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "quote_comparison_indent_refs",
             joinColumns = @JoinColumn(name = "qc_id"))
     @Column(name = "indent_id")
     private List<String> indentIds = new ArrayList<>();
 
-    @OneToMany(mappedBy = "quoteComparison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "quoteComparison", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     @OrderBy("id ASC")
     private List<QuoteComparisonLine> lines = new ArrayList<>();
 
-    @OneToMany(mappedBy = "quoteComparison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "quoteComparison", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     @OrderBy("id ASC")
     private List<ComparisonCriteria> criteria = new ArrayList<>();
 
-    @OneToMany(mappedBy = "quoteComparison", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "quoteComparison", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     @OrderBy("id ASC")
     private List<SupplierQuote> supplierQuotes = new ArrayList<>();
 }

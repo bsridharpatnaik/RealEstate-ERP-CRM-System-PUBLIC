@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/inventory/quote-comparison")
+@RequestMapping("/quote-comparison")
 @RequiredArgsConstructor
 public class QuoteComparisonController {
 
