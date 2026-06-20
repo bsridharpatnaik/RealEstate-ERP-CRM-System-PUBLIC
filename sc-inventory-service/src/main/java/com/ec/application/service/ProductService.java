@@ -5,9 +5,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.ec.application.config.SchemaConfig;
-import com.ec.application.model.StockInformationFromView;
 import com.ec.application.multitenant.ThreadLocalStorage;
-import com.ec.application.repository.StockInformationRepo;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import javax.transaction.Transactional;
 
@@ -15,6 +16,7 @@ import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.BatchMode;
 import com.ec.application.constants.ProjectConstants;
+import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.InventoryMonthPriceMappingRepository;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -64,13 +66,16 @@ public class ProductService {
     SchemaConfig schemaConfig;
 
     @Autowired
-    StockInformationRepo stockInformationRepo;
-
-    @Autowired
     UserDetailsService userDetailsService;
 
     @Autowired
     InventoryNotificationService inService;
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
 
     @Autowired
     InventoryMonthPriceMappingRepository inventoryMonthPriceMappingRepository;
@@ -486,27 +491,21 @@ public class ProductService {
      */
     private void checkBatchModeChangeAllowed(Long productId, BatchMode existingMode, BatchMode newMode) throws Exception {
         if (existingMode == newMode) return;
-        List<String> schemasWithStock = new ArrayList<>();
-        String savedTenant = ThreadLocalStorage.getTenantName();
-        try {
-            for (String schema : schemaConfig.getNonMasterSchemaList()) {
-                ThreadLocalStorage.setTenantName(schema);
-                List<StockInformationFromView> stock =
-                    stockInformationRepo.findByProductIdInAndTotalQuantityInHandGreaterThan(
-                        Collections.singletonList(productId), 0.0);
-                if (!stock.isEmpty()) {
-                    schemasWithStock.add(schema);
-                }
+        // Switching FROM None → any batch mode is always allowed.
+        // Switching FROM a batch mode (to None or between batch modes) is blocked if batches exist.
+        if (existingMode == BatchMode.NONE) return;
+        for (String schema : schemaConfig.getNonMasterSchemaList()) {
+            Number batchCount = (Number) entityManager
+                .createNativeQuery("SELECT COUNT(*) FROM `" + schema + "`.inventory_batch WHERE product_id = :pid AND is_deleted = 0")
+                .setParameter("pid", productId)
+                .getSingleResult();
+            if (batchCount.longValue() > 0) {
+                throw new Exception(
+                    "Cannot change batch tracking mode: this product has " + batchCount.longValue() +
+                    " batch record(s) in project '" + schema + "'. " +
+                    "Remove all batch records before changing the tracking mode."
+                );
             }
-        } finally {
-            ThreadLocalStorage.setTenantName(savedTenant);
-        }
-        if (!schemasWithStock.isEmpty()) {
-            throw new Exception(
-                "Cannot change batch tracking mode: this product has stock in " +
-                schemasWithStock.size() + " project(s). " +
-                "Clear all stock in every project before changing batch tracking mode."
-            );
         }
     }
 

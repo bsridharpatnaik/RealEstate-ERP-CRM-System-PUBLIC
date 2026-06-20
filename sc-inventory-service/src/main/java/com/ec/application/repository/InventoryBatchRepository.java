@@ -180,6 +180,10 @@ public interface InventoryBatchRepository extends JpaRepository<InventoryBatch, 
     @Query("SELECT b FROM InventoryBatch b WHERE b.expiryDate IS NOT NULL AND b.qtyRemaining > 0 AND b.isDeleted = false")
     List<InventoryBatch> findAllWithExpiryAndStock();
 
+    /** Count of any non-deleted batches for a product — used to block batch-mode reversal. */
+    @Query("SELECT COUNT(b) FROM InventoryBatch b WHERE b.product.productId = :productId AND b.isDeleted = false")
+    long countByProductId(@Param("productId") Long productId);
+
     /** All non-deleted batches for a product+warehouse — used for upsert matching on transfer. */
     @Query("SELECT b FROM InventoryBatch b WHERE b.product.productId = :productId " +
            "AND b.warehouse.warehouseId = :warehouseId AND b.isDeleted = false")
