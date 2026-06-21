@@ -135,6 +135,7 @@ class Add extends AddForm {
           measurementUnit: product.measurementUnit,
           productCode: product.productCode,
           isManagedInventory: product.isManagedInventory,
+          batchMode: product.batchMode,
         }));
         // productCodes for Product Code dropdown: { id, name } where name = productCode
         const productCodes = transformedProducts
@@ -218,6 +219,11 @@ class Add extends AddForm {
       const batchBlockedKeys = { ...this.state.batchBlockedKeys };
       delete batchBlockedKeys[key];
       this.setState({ batchPreviews, batchBlockedKeys });
+      return;
+    }
+    const productList = this.state.dropdowns?.product || this.props.dropdowns?.product || [];
+    const selectedProduct = productList.find(p => p.id === productId);
+    if (selectedProduct && selectedProduct.batchMode === 'NONE') {
       return;
     }
     try {

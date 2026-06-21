@@ -511,16 +511,7 @@ function SideMenu(props) {
                 onClick={props.setSideBarValue}
                 linkurl="/purchaseOrder"
               />
-              {(currentUserRole.toLowerCase() === "admin" ||
-                currentUserRole.toLowerCase() === "purchase-manager" ||
-                currentUserRole.toLowerCase() === "purchase-executive") && (
-                <DashboardItem
-                  nodeId="11q"
-                  labelText="Quote Comparison"
-                  onClick={props.setSideBarValue}
-                  linkurl="/quoteComparison"
-                />
-              )}
+              {/* Quote Comparison hidden — feature not in use */}
               <DashboardItem
                 nodeId="10"
                 labelText={messages.common.inventoryTransfer}
