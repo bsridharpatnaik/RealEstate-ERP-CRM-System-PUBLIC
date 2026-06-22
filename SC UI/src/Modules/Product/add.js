@@ -142,7 +142,7 @@ class Add extends AddForm {
               placeholder: "Reorder Level",
               required: true,
               type: "number",
-              validation: "positive",
+              validation: "nonegative",
             })}
             {this.renderTextField({
               fieldname: "measurementUnit",

@@ -48,7 +48,7 @@ public class LowStockSyncService {
         ThreadLocalStorage.setTenantName(tenantSchema);
         List<ProductTenantConfig> overrideList = configRepo.findByProductIds(allProductIds);
         Map<Long, Double> tenantOverrides = overrideList.stream()
-                .filter(c -> c.getReorderLevel() != null && c.getReorderLevel() > 0.0)
+                .filter(c -> c.getReorderLevel() != null)
                 .collect(Collectors.toMap(ProductTenantConfig::getProductId,
                                           ProductTenantConfig::getReorderLevel));
 

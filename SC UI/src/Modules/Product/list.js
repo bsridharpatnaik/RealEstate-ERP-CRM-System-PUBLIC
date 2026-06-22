@@ -213,22 +213,25 @@ class List extends ListCommon {
   render() {
     const { tenantConfigProduct, importDialogOpen, importResult, importLoading } = this.state;
 
-    const customActions = canEditInventoryModules()
-      ? [
-          {
-            key: "tenant-reorder",
-            title: "Reorder Overrides",
-            icon: <SettingsIcon style={{ fontSize: 18 }} />,
-            onClick: (row) => this.setState({ tenantConfigProduct: row }),
-          },
-          {
-            key: "unit-conversions",
-            title: "Billing Unit Conversions",
-            icon: <SwapHorizIcon style={{ fontSize: 18 }} />,
-            onClick: (row) => this.setState({ unitConversionProduct: row }),
-          },
-        ]
-      : [];
+    const customActions = [
+      // Reorder Overrides — accessible to all roles
+      {
+        key: "tenant-reorder",
+        title: "Reorder Overrides",
+        icon: <SettingsIcon style={{ fontSize: 18 }} />,
+        onClick: (row) => this.setState({ tenantConfigProduct: row }),
+      },
+      ...(canEditInventoryModules()
+        ? [
+            {
+              key: "unit-conversions",
+              title: "Billing Unit Conversions",
+              icon: <SwapHorizIcon style={{ fontSize: 18 }} />,
+              onClick: (row) => this.setState({ unitConversionProduct: row }),
+            },
+          ]
+        : []),
+    ];
 
     return (
       <div className="list-section">

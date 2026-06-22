@@ -21,7 +21,7 @@ public interface StockInformationRepo extends BaseRepository<StockInformationFro
             "        p.measurementUnit, " +
             "        c.category_name, " +
             "        ROUND(SUM(ai1.closingstock),2) as totalQuantityInHand, " +
-            "        CASE WHEN ROUND(SUM(ai1.closingstock),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus, " +
+            "        CASE WHEN p.reorderQuantity > 0 AND ROUND(SUM(ai1.closingstock),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus, " +
             "        JSON_ARRAYAGG(JSON_OBJECT( " +
             "'warehouseName',ai1.warehousename, " +
             "            'quantityInHand',ai1.closingstock, " +

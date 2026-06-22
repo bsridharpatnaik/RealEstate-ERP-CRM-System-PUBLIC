@@ -37,7 +37,8 @@ public class StockInformationExportDAO {
         this.warehouseStock = stock.getQuantityInHand();
         this.measurementUnit = stock.getProduct().getMeasurementUnit();
         this.reorderQuantity = stock.getProduct().getReorderQuantity();
-        this.stockStatus = stock.getQuantityInHand() > stock.getProduct().getReorderQuantity() ? "High" : "Low";
+        boolean neverLowStock = this.reorderQuantity == null || this.reorderQuantity <= 0;
+        this.stockStatus = neverLowStock || stock.getQuantityInHand() > this.reorderQuantity ? "High" : "Low";
         this.lastInwardDate = ssi.getLastInwardDate();
     }
 }

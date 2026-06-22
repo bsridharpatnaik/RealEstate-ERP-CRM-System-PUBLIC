@@ -568,7 +568,7 @@ class Edit extends EditForm {
                 placeholder: "Reorder Level",
                 required: true,
                 type: "number",
-                validation: "positive",
+                validation: "nonegative",
               })}
               {this.renderTextField({
                 fieldname: "measurementUnit",

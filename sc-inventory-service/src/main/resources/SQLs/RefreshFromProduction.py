@@ -15,6 +15,7 @@ and reads /etc/default/minio at runtime. The local `mc` CLI must be installed
 
 from __future__ import annotations
 
+import getpass
 import gzip
 import os
 import re
@@ -458,10 +459,7 @@ def local_mysql_command() -> tuple[list[str], dict[str, str]]:
 
     env = os.environ.copy()
     if not env.get("MYSQL_PWD"):
-        raise RuntimeError(
-            "MYSQL_PWD environment variable is not set.\n"
-            "Run:  MYSQL_PWD='your-password' python3 RefreshFromProduction.py"
-        )
+        env["MYSQL_PWD"] = getpass.getpass("Local MySQL password: ")
 
     command = [
         mysql_binary,
