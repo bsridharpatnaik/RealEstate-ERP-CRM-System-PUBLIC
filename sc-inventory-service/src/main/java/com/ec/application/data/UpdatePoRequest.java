@@ -22,6 +22,7 @@ public class UpdatePoRequest {
     private Double freightCharges;
     private Double freightGstPercent;
     private Double totalFreightCharges;
+    private Double poDiscount;
     @Column(length = 35)
     private String overridePhoneNumber;
     private String overrideEmail;

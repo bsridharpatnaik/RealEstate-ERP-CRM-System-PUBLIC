@@ -2,6 +2,9 @@ import React from "react";
 import 'react-quill/dist/quill.core.css';
 import CommonDetails from "./../../Shared/Details";
 import IconButton from "@material-ui/core/IconButton";
+import TextField from "@material-ui/core/TextField";
+import CheckIcon from "@material-ui/icons/Check";
+import CloseIconMui from "@material-ui/icons/Close";
 import { messages } from "./../../messages";
 import {
   MoreIcon,
@@ -79,6 +82,10 @@ class Details extends CommonDetails {
     removeLineConfirmOpen: false,
     lineToRemove: null,
     removeLineLoading: false,
+    // Inline tolerance % edit (allowed in NEW/PARTIAL, blocked once terminal)
+    editingToleranceLineId: null,
+    editingToleranceValue: "",
+    savingTolerance: false,
   };
 
   async download(file) {
@@ -342,6 +349,45 @@ class Details extends CommonDetails {
 
   /** Returns localData if set (after add/remove), otherwise falls back to props.data. */
   getEffectiveData = () => this.state.localData || this.props.data;
+
+  startEditTolerance = (line) => {
+    this.setState({
+      editingToleranceLineId: line.id,
+      editingToleranceValue: line.tolerancePercent != null ? String(line.tolerancePercent) : "",
+    });
+  };
+
+  cancelEditTolerance = () => {
+    this.setState({ editingToleranceLineId: null, editingToleranceValue: "" });
+  };
+
+  saveTolerance = async (lineId) => {
+    const data = this.getEffectiveData();
+    if (!data) return;
+    const value = parseFloat(this.state.editingToleranceValue || 0);
+    this.setState({ savingTolerance: true });
+    try {
+      const response = await API.PUT(
+        apiEndpoints.updatePOLineTolerance(data.purchaseOrderId, lineId),
+        { tolerancePercent: isNaN(value) ? 0 : value }
+      );
+      if (response.success) {
+        this.props.enqueueSnackbar("Tolerance % updated successfully", { variant: "success" });
+        this.setState({
+          localData: response.data,
+          editingToleranceLineId: null,
+          editingToleranceValue: "",
+        });
+        if (this.props.onRefresh) this.props.onRefresh();
+      } else {
+        this.props.enqueueSnackbar(response.errorMessage || "Failed to update tolerance %", { variant: "error" });
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("An error occurred while updating tolerance %", { variant: "error" });
+    } finally {
+      this.setState({ savingTolerance: false });
+    }
+  };
 
   // ─── Navigation ────────────────────────────────────────────────────────────
 
@@ -984,7 +1030,47 @@ class Details extends CommonDetails {
                                 </>
                               )}
                               <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                {tolerancePercent > 0 ? `${tolerancePercent}%` : "-"}
+                                {canEditInventoryModules() && (data.status === "NEW" || data.status === "PARTIAL") ? (
+                                  this.state.editingToleranceLineId === item.id ? (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                      <TextField
+                                        type="number"
+                                        size="small"
+                                        variant="outlined"
+                                        value={this.state.editingToleranceValue}
+                                        onChange={(e) => this.setState({ editingToleranceValue: e.target.value })}
+                                        inputProps={{ min: 0, max: 100, step: 0.01, style: { fontSize: 12, padding: "4px 6px", width: 50 } }}
+                                        disabled={this.state.savingTolerance}
+                                      />
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => this.saveTolerance(item.id)}
+                                        disabled={this.state.savingTolerance}
+                                        title="Save"
+                                      >
+                                        <CheckIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        onClick={this.cancelEditTolerance}
+                                        disabled={this.state.savingTolerance}
+                                        title="Cancel"
+                                      >
+                                        <CloseIconMui fontSize="small" />
+                                      </IconButton>
+                                    </div>
+                                  ) : (
+                                    <span
+                                      onClick={() => this.startEditTolerance(item)}
+                                      style={{ cursor: "pointer", borderBottom: "1px dashed #999" }}
+                                      title="Click to edit tolerance %"
+                                    >
+                                      {tolerancePercent > 0 ? `${tolerancePercent}%` : "Set %"}
+                                    </span>
+                                  )
+                                ) : (
+                                  tolerancePercent > 0 ? `${tolerancePercent}%` : "-"
+                                )}
                               </TableCell>
                               <TableCell style={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
                                 {item.daysLeft != null ? (
@@ -1083,6 +1169,14 @@ class Details extends CommonDetails {
                             </span>
                           </div>
                         ))}
+                        {data.poDiscount > 0 && (
+                          <div className="total-row">
+                            <span className="total-label">PO Discount: </span>
+                            <span className="total-amount">
+                              - Rs. {data.poDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        )}
                         <div className="total-row">
                           <span className="total-label">Grand Total: </span>
                           <span className="total-amount">

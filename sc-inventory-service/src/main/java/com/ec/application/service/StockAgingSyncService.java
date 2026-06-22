@@ -25,6 +25,47 @@ public class StockAgingSyncService {
     private final ProductRepo productRepo;
     private final GlobalStockAgingReportRepository agingReportRepo;
     private final GlobalStockAgingDetailRepository agingDetailRepo;
+    private final GlobalStockAgingChunkRepository agingChunkRepo;
+
+    /** One FIFO chunk of stock still present: qty, inward date, and its age in days. */
+    private static class AgeChunk {
+        final double quantity;
+        final Date inwardDate;
+        final int ageDays;
+        AgeChunk(double quantity, Date inwardDate, int ageDays) {
+            this.quantity = quantity;
+            this.inwardDate = inwardDate;
+            this.ageDays = ageDays;
+        }
+    }
+
+    /** Raw inward row used to walk FIFO order: oldest first. */
+    private static class InwardRow {
+        final Date date;
+        final double quantity;
+        InwardRow(Date date, double quantity) {
+            this.date = date;
+            this.quantity = quantity;
+        }
+    }
+
+    /**
+     * Walks inward rows oldest→newest, consuming from {@code qtyInHand} until exhausted.
+     * Mirrors StockService.calculateStockAges() — assumes FIFO: the qty currently in hand is
+     * made up of the oldest available inward quantities first.
+     */
+    private static List<AgeChunk> walkFifoChunks(List<InwardRow> inwardRows, double qtyInHand, long todayMs) {
+        List<AgeChunk> chunks = new ArrayList<>();
+        double remaining = qtyInHand;
+        for (InwardRow row : inwardRows) {
+            if (remaining <= 0) break;
+            double take = Math.min(remaining, row.quantity);
+            int ageDays = (int) ((todayMs - truncateToDay(row.date).getTime()) / 86_400_000L);
+            chunks.add(new AgeChunk(take, row.date, ageDays));
+            remaining -= take;
+        }
+        return chunks;
+    }
 
     @PersistenceContext
     private EntityManager em;
@@ -53,27 +94,33 @@ public class StockAgingSyncService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        // ── Step 2: Get last inward date per (productId, warehouseId) ────────
-        // Native query — must run in TENANT schema (inward tables are per-tenant)
+        // ── Step 2: Get ALL stock-increase rows per (productId, warehouseId), oldest first ──
+        // Native query — must run in TENANT schema. Used to FIFO-walk "oldest stock still
+        // present" rather than just taking the most recent inward date. Must include every
+        // transaction type that adds to stock — matches all_inventory_view's closingstock
+        // CASE (Inward, Transfer-In, Excess-Found); Transfer-Out/Outward/Lost-Damaged/Write-Off
+        // are deductions and are intentionally excluded.
         ThreadLocalStorage.setTenantName(tenantSchema);
         @SuppressWarnings("unchecked")
-        List<Object[]> inwardDates = em.createNativeQuery(
-                "SELECT ioe.productId, ioe.warehouse_id, MAX(ii.date) " +
-                "FROM inward_inventory ii " +
-                "JOIN inwardinventory_entry jt ON jt.inwardid = ii.inwardId " +
-                "JOIN inward_outward_entries ioe ON ioe.entryid = jt.entryId " +
-                "WHERE ii.is_deleted = false " +
-                "GROUP BY ioe.productId, ioe.warehouse_id"
-        ).getResultList();
+        List<Object[]> inwardRowsRaw = em.createNativeQuery(
+                "SELECT productid, warehouse_id, date, quantity " +
+                "FROM all_inventory " +
+                "WHERE type IN ('Inward', 'Transfer-In', 'Excess-Found') AND productid IN (:productIds) " +
+                "ORDER BY productid, warehouse_id, id ASC"
+        ).setParameter("productIds", activeProductIds)
+         .getResultList();
 
-        // Map: productId → (warehouseId → lastInwardDate)
-        Map<Long, Map<Long, Date>> inwardDateMap = new HashMap<>();
-        for (Object[] row : inwardDates) {
-            Long productId  = ((Number) row[0]).longValue();
+        // Map: productId → (warehouseId → ordered list of inward rows, oldest first)
+        Map<Long, Map<Long, List<InwardRow>>> inwardRowMap = new HashMap<>();
+        for (Object[] row : inwardRowsRaw) {
+            if (row[0] == null || row[1] == null || row[2] == null) continue;
+            Long productId   = ((Number) row[0]).longValue();
             Long warehouseId = ((Number) row[1]).longValue();
-            Date lastDate   = (Date) row[2];
-            inwardDateMap.computeIfAbsent(productId, k -> new HashMap<>())
-                         .put(warehouseId, lastDate);
+            Date date        = (Date) row[2];
+            double quantity  = row[3] != null ? ((Number) row[3]).doubleValue() : 0.0;
+            inwardRowMap.computeIfAbsent(productId, k -> new HashMap<>())
+                        .computeIfAbsent(warehouseId, k -> new ArrayList<>())
+                        .add(new InwardRow(date, quantity));
         }
 
         // ── Step 3: Get last PO rate per productId from master schema ────────
@@ -130,6 +177,17 @@ public class StockAgingSyncService {
 
         ThreadLocalStorage.setTenantName(masterSchema);
 
+        // Wipe and fully rebuild detail/chunk rows for this tenant ONCE, rather than per
+        // product — each save()/delete() against the (unpooled) master-schema DataSource opens
+        // its own raw DB connection, so per-row calls in a loop can pile up thousands of
+        // connections across a multi-tenant sync run and exhaust local ephemeral ports.
+        agingDetailRepo.deleteByTenantSchema(tenantSchema);
+        agingChunkRepo.deleteByTenantSchema(tenantSchema);
+
+        List<GlobalStockAgingReport> reportsToSave = new ArrayList<>();
+        List<GlobalStockAgingDetail> detailsToSave = new ArrayList<>();
+        List<GlobalStockAgingChunk> chunksToSave = new ArrayList<>();
+
         int inserted = 0, updated = 0;
         for (Map.Entry<Long, List<StockSummary>> entry : byProduct.entrySet()) {
             Long productId = entry.getKey();
@@ -140,21 +198,33 @@ public class StockAgingSyncService {
             // Roll-up totals
             double totalQty = rows.stream().mapToDouble(StockSummary::getQuantityInHand).sum();
 
-            // Per-warehouse aging
-            Map<Long, Date> warehouseInwardDates = inwardDateMap.getOrDefault(productId, Collections.emptyMap());
-
-            // Find the most recent inward date across all warehouses (minimum aging = most recent stock)
-            Date latestInwardDate = null;
+            // Per-warehouse FIFO walk: which inward chunks make up the qty currently in hand,
+            // oldest first. Build this once per warehouse, then reuse for both the header
+            // roll-up (oldest chunk overall) and the per-warehouse detail/breakdown rows.
+            Map<Long, List<InwardRow>> warehouseInwardRows = inwardRowMap.getOrDefault(productId, Collections.emptyMap());
+            Map<Long, List<AgeChunk>> warehouseChunks = new HashMap<>();
             for (StockSummary s : rows) {
-                Date whDate = warehouseInwardDates.get(s.getWarehouseId());
-                if (whDate != null && (latestInwardDate == null || whDate.after(latestInwardDate))) {
-                    latestInwardDate = whDate;
-                }
+                if (s.getQuantityInHand() == null || s.getQuantityInHand() <= 0.001) continue;
+                List<InwardRow> whRows = warehouseInwardRows.getOrDefault(s.getWarehouseId(), Collections.emptyList());
+                warehouseChunks.put(s.getWarehouseId(), walkFifoChunks(whRows, s.getQuantityInHand(), todayMs));
             }
 
-            int minAgingDays = latestInwardDate != null
-                    ? (int) ((todayMs - truncateToDay(latestInwardDate).getTime()) / 86_400_000L)
-                    : 9999;
+            // Headline aging = age of the OLDEST chunk still present across all warehouses
+            // (worst case / dead-stock risk), not the most recent inward. Each warehouse's
+            // chunks[0] is already its oldest surviving stock (walkFifoChunks walks oldest→newest).
+            Date oldestInwardDate = null;
+            int minAgingDays = 9999;
+            boolean foundAnyChunk = false;
+            for (List<AgeChunk> chunks : warehouseChunks.values()) {
+                if (chunks.isEmpty()) continue;
+                AgeChunk oldest = chunks.get(0);
+                if (!foundAnyChunk || oldest.ageDays > minAgingDays) {
+                    minAgingDays = oldest.ageDays;
+                    oldestInwardDate = oldest.inwardDate;
+                    foundAnyChunk = true;
+                }
+            }
+            Date latestInwardDate = oldestInwardDate; // field name kept for minimal diff; now holds the OLDEST traceable inward date
 
             String agingBucket = computeBucket(minAgingDays);
 
@@ -188,17 +258,19 @@ public class StockAgingSyncService {
             report.setDeleted(false);
             report.setSyncedAt(syncedAt);
 
-            agingReportRepo.save(report);
+            reportsToSave.add(report);
             if (isNew) inserted++; else updated++;
 
-            // ── Upsert detail rows (per warehouse) ──
-            agingDetailRepo.deleteByTenantSchemaAndProductId(tenantSchema, productId);
+            // ── Build detail rows (per warehouse) — collected, saved in bulk after the loop ──
             for (StockSummary s : rows) {
                 if (s.getQuantityInHand() == null || s.getQuantityInHand() <= 0.001) continue;
-                Date whDate = warehouseInwardDates.get(s.getWarehouseId());
-                int whAging = whDate != null
-                        ? (int) ((todayMs - truncateToDay(whDate).getTime()) / 86_400_000L)
-                        : 9999;
+                List<AgeChunk> chunks = warehouseChunks.getOrDefault(s.getWarehouseId(), Collections.emptyList());
+
+                // chunks[0] is the oldest surviving stock (walkFifoChunks walks oldest→newest),
+                // so it drives this warehouse's headline age.
+                AgeChunk oldestChunk = chunks.isEmpty() ? null : chunks.get(0);
+                int whAging = oldestChunk != null ? oldestChunk.ageDays : 9999;
+                Date whDate = oldestChunk != null ? oldestChunk.inwardDate : null;
 
                 GlobalStockAgingDetail detail = new GlobalStockAgingDetail();
                 detail.setTenantSchema(tenantSchema);
@@ -209,9 +281,28 @@ public class StockAgingSyncService {
                 detail.setAgingDays(whAging);
                 detail.setLastInwardDate(whDate);
                 detail.setAgingBucket(computeBucket(whAging));
-                agingDetailRepo.save(detail);
+                detailsToSave.add(detail);
+
+                // Persist the FIFO chunk breakdown for the expand/drill-down UI
+                int sortOrder = 0;
+                for (AgeChunk c : chunks) {
+                    GlobalStockAgingChunk chunk = new GlobalStockAgingChunk();
+                    chunk.setTenantSchema(tenantSchema);
+                    chunk.setProductId(productId);
+                    chunk.setWarehouseId(s.getWarehouseId());
+                    chunk.setQuantity(c.quantity);
+                    chunk.setInwardDate(c.inwardDate);
+                    chunk.setAgeDays(c.ageDays);
+                    chunk.setSortOrder(sortOrder++);
+                    chunksToSave.add(chunk);
+                }
             }
         }
+
+        // ── Bulk-save everything for this tenant in three round trips instead of thousands ──
+        agingReportRepo.saveAll(reportsToSave);
+        agingDetailRepo.saveAll(detailsToSave);
+        agingChunkRepo.saveAll(chunksToSave);
 
         // ── Step 6: Soft-delete master rows for products no longer active ────
         agingReportRepo.markDeletedForTenant(tenantSchema, activeProductIds);

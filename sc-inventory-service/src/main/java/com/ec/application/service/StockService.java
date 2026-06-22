@@ -488,8 +488,15 @@ public class StockService {
         }
     }
 
+    /** Stock-increasing transaction types — must match all_inventory_view's closingstock CASE (Inward, Transfer-In, Excess-Found). */
+    private static boolean isStockIncreaseType(String type) {
+        return type != null && (type.equalsIgnoreCase("inward")
+                || type.equalsIgnoreCase("Transfer-In")
+                || type.equalsIgnoreCase("Excess-Found"));
+    }
+
     private Date getLastInwardDate(List<AllInventoryTransactions> aiList) {
-        List<AllInventoryTransactions> filtered = aiList.stream().filter(e -> e.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+        List<AllInventoryTransactions> filtered = aiList.stream().filter(e -> isStockIncreaseType(e.getType())).collect(Collectors.toList());
         if (!filtered.isEmpty())
             return filtered.get(0).getDate();
         return null;
@@ -504,8 +511,8 @@ public class StockService {
 
             String warehouse = si.getWarehouseName();
             Double stock = si.getQuantityInHand();
-            List<AllInventoryTransactions> aiListFIltered = aiList.stream().filter(ai -> ai.getType()
-                            .equalsIgnoreCase("Inward") && ai.getWarehouseName()
+            List<AllInventoryTransactions> aiListFIltered = aiList.stream().filter(ai -> isStockIncreaseType(ai.getType())
+                            && ai.getWarehouseName()
                             .equalsIgnoreCase(warehouse))
                     .sorted(Comparator.comparing(AllInventoryTransactions::getId))
                     .collect(Collectors.toList());

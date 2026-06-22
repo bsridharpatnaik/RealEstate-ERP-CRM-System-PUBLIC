@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Master-schema table: one row per (tenantSchema, productId, warehouseId).
@@ -47,10 +48,15 @@ public class GlobalStockAgingDetail {
     @Column(nullable = false)
     private Double qtyInHand;
 
-    /** Days since last inward into this warehouse. -1 if no inward exists. */
+    /**
+     * Age, in days, of the OLDEST stock chunk still present in this warehouse — computed via a
+     * FIFO walk over inward history, not simply "days since last inward." 9999 if no inward
+     * history is traceable for the qty currently in hand.
+     */
     @Column(nullable = false)
     private Integer agingDays;
 
+    /** Inward date of the oldest stock chunk still present (FIFO), not the most recent inward. */
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy", timezone = "Asia/Kolkata")
     @Temporal(TemporalType.DATE)
     private Date lastInwardDate;
@@ -58,4 +64,8 @@ public class GlobalStockAgingDetail {
     /** 0-30 / 31-60 / 61-90 / 90+ */
     @Column(nullable = false, length = 10)
     private String agingBucket;
+
+    /** Not persisted — populated at read time by the controller for the expand/drill-down UI. */
+    @Transient
+    private List<GlobalStockAgingChunk> ageBreakdown;
 }

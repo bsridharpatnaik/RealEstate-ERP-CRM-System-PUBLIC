@@ -23,6 +23,9 @@ import Popover from "@material-ui/core/Popover";
 import moment from "moment";
 import DatePicker from "./../../../Shared/Date";
 import { constants } from "./../../../messages";
+import SettingsIcon from "@material-ui/icons/Settings";
+import Tooltip from "@material-ui/core/Tooltip";
+import UnitConversionConfig from "./../../Product/UnitConversionConfig";
 
 class Step2FillDetails extends React.Component {
   lineFileInputRefs = {};
@@ -48,6 +51,7 @@ class Step2FillDetails extends React.Component {
     finalizedQuoteLines: [],   // finalized supplier quote lines for selected supplier+indents
     quoteLinkAnchorEl: null,   // anchor for quote link dropdown
     quoteLinkLineIndex: null,  // which line the dropdown is for
+    unitConversionProduct: null, // { productId, productName, measurementUnit } — set to open the edit dialog
   };
 
   componentDidMount() {
@@ -126,6 +130,18 @@ class Step2FillDetails extends React.Component {
         }
       })
     );
+  };
+
+  refreshUnitConversionsForProduct = async (productId) => {
+    try {
+      const res = await API.GET(apiEndpoints.getUnitConversions(productId));
+      const conversions = res.success ? res.data : [];
+      this.setState((prev) => ({
+        unitConversionsCache: { ...prev.unitConversionsCache, [productId]: conversions },
+      }));
+    } catch (_) {
+      // leave existing cache as-is on error
+    }
   };
 
   handleBillingUnitChange = (index, selectedUnit, conversions, baseUnit) => {
@@ -631,8 +647,23 @@ const firmDetails = {
     return mergedItems;
   };
 
+  // Distributes the overall PO Discount proportionally across lines (by netRate share),
+  // then re-applies GST on the discounted net rate to get the payable amount per line.
+  applyPoDiscount = (mergedItems) => {
+    const poDiscount = parseFloat(this.props.poDiscount || 0);
+    const totalNetRate = mergedItems.reduce((sum, item) => sum + parseFloat(item.netRate || 0), 0);
+    return mergedItems.map((item) => {
+      const netRate = parseFloat(item.netRate || 0);
+      const gst = parseFloat(item.gst || 0);
+      const share = poDiscount > 0 && totalNetRate > 0 ? poDiscount * (netRate / totalNetRate) : 0;
+      const discountedNetRate = netRate - share;
+      const totalAmt = discountedNetRate + (discountedNetRate * gst / 100);
+      return { ...item, poDiscountShare: share, totalAmt: totalAmt.toFixed(2) };
+    });
+  };
+
   calculateTotal = () => {
-    const mergedItems = this.groupItemsByProductId();
+    const mergedItems = this.applyPoDiscount(this.groupItemsByProductId());
     return mergedItems.reduce((sum, item) => {
       return sum + parseFloat(item.totalAmt || 0);
     }, 0);
@@ -837,7 +868,7 @@ handleAddFirm = async (firm) => {
   };
 
   render() {
-    const mergedItems = this.groupItemsByProductId();
+    const mergedItems = this.applyPoDiscount(this.groupItemsByProductId());
     const total = this.calculateTotal();
 
     return (
@@ -853,6 +884,17 @@ handleAddFirm = async (firm) => {
           onSave={this.handleAddFirm}
           ref={(ref) => { this.firmModalRef = ref; }}
         />
+
+        {this.state.unitConversionProduct && (
+          <UnitConversionConfig
+            product={this.state.unitConversionProduct}
+            onClose={() => {
+              const productId = this.state.unitConversionProduct.productId;
+              this.setState({ unitConversionProduct: null });
+              this.refreshUnitConversionsForProduct(productId);
+            }}
+          />
+        )}
 
         {/* Order To and Order From Sections - Side by Side */}
         {!this.props.addLinesMode && <div className="order-sections-container">
@@ -1147,6 +1189,7 @@ handleAddFirm = async (firm) => {
                     <TableCell>Discount %</TableCell>
                     <TableCell>GST</TableCell>
                     <TableCell>Net Rate</TableCell>
+                    <TableCell>PO Discount</TableCell>
                     <TableCell>Total Amt.</TableCell>
                     <TableCell>Sample Image</TableCell>
                     {!this.props.isEditMode && <TableCell>Action</TableCell>}
@@ -1250,26 +1293,44 @@ handleAddFirm = async (firm) => {
                               {hasAlternateUnits ? (
                                 <>
                                   {/* Unit dropdown when alternate units configured */}
-                                  <select
-                                    value={selectedBillingUnit}
-                                    onChange={(e) =>
-                                      this.handleBillingUnitChange(index, e.target.value, conversions, baseUnit)
-                                    }
-                                    style={{
-                                      fontSize: 12,
-                                      padding: "5px 6px",
-                                      border: "1px solid #ccc",
-                                      borderRadius: 4,
-                                      width: "100%",
-                                      height: 34,
-                                      background: "#fff",
-                                    }}
-                                  >
-                                    <option value={baseUnit}>{baseUnit}</option>
-                                    {conversions.map((c) => (
-                                      <option key={c.id} value={c.unitName}>{c.unitName}</option>
-                                    ))}
-                                  </select>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                    <select
+                                      value={selectedBillingUnit}
+                                      onChange={(e) =>
+                                        this.handleBillingUnitChange(index, e.target.value, conversions, baseUnit)
+                                      }
+                                      style={{
+                                        fontSize: 12,
+                                        padding: "5px 6px",
+                                        border: "1px solid #ccc",
+                                        borderRadius: 4,
+                                        width: "100%",
+                                        height: 34,
+                                        background: "#fff",
+                                      }}
+                                    >
+                                      <option value={baseUnit}>{baseUnit}</option>
+                                      {conversions.map((c) => (
+                                        <option key={c.id} value={c.unitName}>{c.unitName}</option>
+                                      ))}
+                                    </select>
+                                    <Tooltip title="Edit billing units">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          this.setState({
+                                            unitConversionProduct: {
+                                              productId: item.productId,
+                                              productName: item.inventoryName,
+                                              measurementUnit: baseUnit,
+                                            },
+                                          })
+                                        }
+                                      >
+                                        <SettingsIcon style={{ fontSize: 16 }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </div>
                                   {/* Qty — billing qty when billing unit active, base qty otherwise */}
                                   <TextField
                                     value={item.billingUnit ? (item.billingQuantity || "") : (item.quantity || "")}
@@ -1299,6 +1360,22 @@ handleAddFirm = async (firm) => {
                                     style={{ width: 80 }}
                                   />
                                   <span style={{ fontSize: 12, color: "#555", whiteSpace: "nowrap" }}>{baseUnit}</span>
+                                  <Tooltip title="Add billing units">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        this.setState({
+                                          unitConversionProduct: {
+                                            productId: item.productId,
+                                            productName: item.inventoryName,
+                                            measurementUnit: baseUnit,
+                                          },
+                                        })
+                                      }
+                                    >
+                                      <SettingsIcon style={{ fontSize: 16 }} />
+                                    </IconButton>
+                                  </Tooltip>
                                 </div>
                               )}
                             </div>
@@ -1387,6 +1464,9 @@ handleAddFirm = async (firm) => {
                       <TableCell className="net-rate-cell calculated-cell">
                         {item.netRate ? `Rs. ${parseFloat(item.netRate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                       </TableCell>
+                      <TableCell className="calculated-cell">
+                        {item.poDiscountShare ? `Rs. ${item.poDiscountShare.toFixed(2)}` : "-"}
+                      </TableCell>
                       <TableCell className="total-amt-cell calculated-cell">
                         {item.totalAmt ? `Rs. ${parseFloat(item.totalAmt).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                       </TableCell>
@@ -1444,6 +1524,29 @@ handleAddFirm = async (firm) => {
         </div>
 
 
+
+        {/* PO Discount Section */}
+        {!this.props.addLinesMode && <div className="form-section">
+          <h3 className="section-title">PO Discount</h3>
+          <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
+            <div style={{ flex: "1", minWidth: "160px" }}>
+              <div style={{ fontSize: "12px", marginBottom: "4px", color: "#555" }}>PO Discount (₹)</div>
+              <TextField
+                type="number"
+                variant="outlined"
+                size="small"
+                placeholder="0.00"
+                value={this.props.poDiscount || ""}
+                onChange={(e) => this.props.onPoDiscountChange(e.target.value)}
+                inputProps={{ min: 0, step: 0.01, style: { fontSize: "12px", padding: "8px" } }}
+                style={{ width: "100%" }}
+              />
+            </div>
+          </div>
+          <div style={{ fontSize: "11px", color: "#888", marginTop: "6px" }}>
+            Deducted proportionally from each line's net rate before GST is applied. See "PO Discount" column above for the per-line share.
+          </div>
+        </div>}
 
         {/* Freight Charges Section */}
         {!this.props.addLinesMode && <div className="form-section">

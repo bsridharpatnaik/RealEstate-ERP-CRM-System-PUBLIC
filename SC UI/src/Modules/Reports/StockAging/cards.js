@@ -132,7 +132,7 @@ function ProductCard({ productName, productCode, unit, category, rows, onRowClic
             borderBottom: '1px solid #e8ecf0',
             gap: 8,
           }}>
-            {['Project', 'Qty in Hand', 'Last Inward', 'Aging', 'Bucket', 'POG (₹)', 'PO Rate (₹)'].map((h) => (
+            {['Project', 'Qty in Hand', 'Oldest Stock', 'Aging', 'Bucket', 'POG (₹)', 'PO Rate (₹)'].map((h) => (
               <div key={h} style={{
                 fontSize: 11, fontWeight: 700, color: '#718096',
                 textTransform: 'uppercase', letterSpacing: 0.5,

@@ -283,6 +283,7 @@ export const apiEndpoints = {
   addPOLine: (poId) => `/api/inventory/purchase-order/${poId}/line`,
   addPOLines: (poId) => `/api/inventory/purchase-order/${poId}/lines`,
   removePOLine: (poId, lineId) => `/api/inventory/purchase-order/${poId}/line/${lineId}`,
+  updatePOLineTolerance: (poId, lineId) => `/api/inventory/purchase-order/${poId}/line/${lineId}/tolerance`,
   getIndentsForDropdown: "/api/inventory/indent/for-dropdown",
   getInventoryTransfer: "/api/inventory/inventory-transfer?size=" + noOfRecords,
   getInventoryTransferById: (id) => `/api/inventory/inventory-transfer/${id}`,

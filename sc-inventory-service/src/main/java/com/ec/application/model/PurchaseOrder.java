@@ -81,6 +81,10 @@ public class PurchaseOrder extends ReusableFields {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double totalFreightCharges;
 
+    /** Overall PO-level discount amount, deducted from line net rates before GST. Null = 0. */
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double poDiscount;
+
     private String shortCloseReason;
 
     @Lob

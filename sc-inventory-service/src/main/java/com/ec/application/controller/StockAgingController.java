@@ -35,6 +35,9 @@ public class StockAgingController {
     @Autowired
     private GlobalStockAgingDetailRepository agingDetailRepo;
 
+    @Autowired
+    private com.ec.application.repository.GlobalStockAgingChunkRepository agingChunkRepo;
+
     /** Trigger manual sync. */
     @PostMapping("/sync")
     public ResponseEntity<Map<String, String>> sync() {
@@ -59,7 +62,12 @@ public class StockAgingController {
     public List<GlobalStockAgingDetail> detail(
             @PathVariable Long productId,
             @RequestParam String tenantSchema) {
-        return agingDetailRepo.findByTenantSchemaAndProductId(tenantSchema, productId);
+        List<GlobalStockAgingDetail> details = agingDetailRepo.findByTenantSchemaAndProductId(tenantSchema, productId);
+        for (GlobalStockAgingDetail d : details) {
+            d.setAgeBreakdown(agingChunkRepo.findByTenantSchemaAndProductIdAndWarehouseIdOrderBySortOrderAsc(
+                    tenantSchema, productId, d.getWarehouseId()));
+        }
+        return details;
     }
 
     /** Bucket tile counts (all tenants). */

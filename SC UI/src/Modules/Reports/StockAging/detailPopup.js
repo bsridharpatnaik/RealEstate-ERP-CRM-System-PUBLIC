@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 const BUCKET_COLORS = {
@@ -43,6 +43,8 @@ function BucketBadge({ bucket }) {
 }
 
 export default function DetailPopup({ row, data, loading }) {
+  const [expandedWarehouse, setExpandedWarehouse] = useState(null);
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: 40 }}>
@@ -68,7 +70,7 @@ export default function DetailPopup({ row, data, loading }) {
     { label: 'Category', value: row.category || '—' },
     { label: 'Total Qty', value: row.totalQtyInHand != null
         ? Number(row.totalQtyInHand).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '—' },
-    { label: 'Min Aging', value: row.minAgingDays === 9999 ? 'No Inward' : `${row.minAgingDays} days` },
+    { label: 'Aging (Oldest Stock)', value: row.minAgingDays === 9999 ? 'No Inward' : `${row.minAgingDays} days` },
     { label: 'POG', value: row.pog != null
         ? `₹ ${Number(row.pog).toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : '—' },
     { label: 'Last PO Rate', value: row.lastPoRate != null
@@ -101,34 +103,75 @@ export default function DetailPopup({ row, data, loading }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, width: '28%', textAlign: 'left'  }}>Warehouse</th>
-              <th style={{ ...thStyle, width: '16%', textAlign: 'right' }}>Qty in Hand</th>
-              <th style={{ ...thStyle, width: '18%', textAlign: 'left'  }}>Last Inward Date</th>
-              <th style={{ ...thStyle, width: '16%', textAlign: 'right' }}>Aging (Days)</th>
+              <th style={{ ...thStyle, width: '24%', textAlign: 'left'  }}>Warehouse</th>
+              <th style={{ ...thStyle, width: '14%', textAlign: 'right' }}>Qty in Hand</th>
+              <th style={{ ...thStyle, width: '18%', textAlign: 'left'  }}>Oldest Stock Date</th>
+              <th style={{ ...thStyle, width: '14%', textAlign: 'right' }}>Aging (Days)</th>
               <th style={{ ...thStyle, width: '12%', textAlign: 'center'}}>Bucket</th>
+              <th style={{ ...thStyle, width: '18%', textAlign: 'center'}}></th>
             </tr>
           </thead>
           <tbody>
             {data.map((d, i) => {
               const bStyle = BUCKET_COLORS[d.agingBucket] || {};
+              const breakdown = d.ageBreakdown || [];
+              const isExpanded = expandedWarehouse === d.warehouseId;
               return (
-                <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                  <td style={{ ...cellStyle, textAlign: 'left' }}>{d.warehouseName || '—'}</td>
-                  <td style={{ ...cellStyle, textAlign: 'right' }}>
-                    {d.qtyInHand != null
-                      ? Number(d.qtyInHand).toLocaleString('en-IN', { maximumFractionDigits: 2 })
-                      : '—'}
-                  </td>
-                  <td style={{ ...cellStyle, textAlign: 'left' }}>
-                    {d.lastInwardDate || <span style={{ color: '#ccc' }}>No Inward</span>}
-                  </td>
-                  <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 600, color: bStyle.color || '#333' }}>
-                    {d.agingDays === 9999 ? 'No Inward' : d.agingDays}
-                  </td>
-                  <td style={{ ...cellStyle, textAlign: 'center' }}>
-                    <BucketBadge bucket={d.agingBucket} />
-                  </td>
-                </tr>
+                <React.Fragment key={i}>
+                  <tr style={{ background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                    <td style={{ ...cellStyle, textAlign: 'left' }}>{d.warehouseName || '—'}</td>
+                    <td style={{ ...cellStyle, textAlign: 'right' }}>
+                      {d.qtyInHand != null
+                        ? Number(d.qtyInHand).toLocaleString('en-IN', { maximumFractionDigits: 2 })
+                        : '—'}
+                    </td>
+                    <td style={{ ...cellStyle, textAlign: 'left' }}>
+                      {d.lastInwardDate || <span style={{ color: '#ccc' }}>No Inward</span>}
+                    </td>
+                    <td style={{ ...cellStyle, textAlign: 'right', fontWeight: 600, color: bStyle.color || '#333' }}>
+                      {d.agingDays === 9999 ? 'No Inward' : d.agingDays}
+                    </td>
+                    <td style={{ ...cellStyle, textAlign: 'center' }}>
+                      <BucketBadge bucket={d.agingBucket} />
+                    </td>
+                    <td style={{ ...cellStyle, textAlign: 'center' }}>
+                      {breakdown.length > 0 && (
+                        <span
+                          onClick={() => setExpandedWarehouse(isExpanded ? null : d.warehouseId)}
+                          style={{ color: '#1976d2', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+                        >
+                          {isExpanded ? 'Hide breakdown ▲' : 'Show breakdown ▼'}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                  {isExpanded && (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '0 12px 10px 32px', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #eee' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ ...thStyle, fontSize: 11, textAlign: 'right', width: '30%' }}>Quantity</th>
+                              <th style={{ ...thStyle, fontSize: 11, textAlign: 'left', width: '35%' }}>Inward Date</th>
+                              <th style={{ ...thStyle, fontSize: 11, textAlign: 'right', width: '35%' }}>Age (Days)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {breakdown.map((c, j) => (
+                              <tr key={j}>
+                                <td style={{ ...cellStyle, fontSize: 12, textAlign: 'right' }}>
+                                  {Number(c.quantity).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                </td>
+                                <td style={{ ...cellStyle, fontSize: 12, textAlign: 'left' }}>{c.inwardDate || '—'}</td>
+                                <td style={{ ...cellStyle, fontSize: 12, textAlign: 'right' }}>{c.ageDays}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               );
             })}
           </tbody>

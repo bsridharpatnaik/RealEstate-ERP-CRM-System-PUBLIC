@@ -413,7 +413,9 @@ public class PurchaseOrderPdfService {
         boolean hasCustomCharges = po.getCustomCharges() != null
                 && po.getCustomCharges().stream().anyMatch(c -> c.getChargeAmount() != null && c.getChargeAmount() > 0);
 
-        if (freightCharges <= 0 && !hasCustomCharges) return;
+        double poDiscount = po.getPoDiscount() != null ? po.getPoDiscount() : 0.0;
+
+        if (freightCharges <= 0 && !hasCustomCharges && poDiscount <= 0) return;
 
         PdfPTable charges = new PdfPTable(2);
         charges.setWidthPercentage(40);
@@ -477,6 +479,16 @@ public class PurchaseOrderPdfService {
                 ccTotalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 charges.addCell(ccTotalVal);
             }
+        }
+
+        if (poDiscount > 0) {
+            PdfPCell discLabel = new PdfPCell(new Phrase("PO Discount", bold));
+            discLabel.setPadding(4f);
+            charges.addCell(discLabel);
+            PdfPCell discVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : "- " + fmt(poDiscount), bold));
+            discVal.setPadding(4f);
+            discVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(discVal);
         }
 
         document.add(charges);

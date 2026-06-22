@@ -51,6 +51,7 @@ class Add extends AddForm {
     poDate: moment().format(constants.dateFormat),
     freightCharges: "",
     freightGstPercent: 18,
+    poDiscount: "",
     customCharges: [],
     poNumber: "", // Generated PO number
     isEditMode: false,
@@ -135,6 +136,7 @@ class Add extends AddForm {
       isSpecialPo: data.specialPo || false,
       freightCharges: data.freightCharges != null ? String(data.freightCharges) : "",
       freightGstPercent: data.freightGstPercent != null ? data.freightGstPercent : 18,
+      poDiscount: data.poDiscount != null ? String(data.poDiscount) : "",
       customCharges: (data.customCharges || []).map(c => ({
         chargeName: c.chargeName || "",
         chargeAmount: c.chargeAmount != null ? String(c.chargeAmount) : "",
@@ -160,6 +162,7 @@ class Add extends AddForm {
       isSpecialPo: this.state.isSpecialPo,
       freightCharges: this.state.freightCharges,
       freightGstPercent: this.state.freightGstPercent,
+      poDiscount: this.state.poDiscount,
       customCharges: this.state.customCharges,
       fileInformations: (this.formData.fileInformations || []).map((f) => ({
         fileUUId: f.fileUUId,
@@ -229,6 +232,7 @@ class Add extends AddForm {
       isSpecialPo: draft.isSpecialPo || false,
       freightCharges: draft.freightCharges || "",
       freightGstPercent: draft.freightGstPercent !== undefined ? draft.freightGstPercent : 18,
+      poDiscount: draft.poDiscount || "",
       customCharges: draft.customCharges || [],
     });
     this.forceUpdate();
@@ -453,7 +457,7 @@ class Add extends AddForm {
       const n = parseFloat(q);
       return isNaN(n) ? 0 : (Number.isInteger(n) ? n : parseFloat(n.toFixed(2)));
     };
-    const lineItems = Object.values(groupedItems).map((item) => {
+    const rawLineItems = Object.values(groupedItems).map((item) => {
       const quantity = roundQuantity(item.quantity);
       // When billing unit selected, rate is per billing unit — calculate on billing qty
       const calcQty = item.billingUnit && item.billingQuantity
@@ -464,7 +468,6 @@ class Add extends AddForm {
       const gstPercent = item.gstPercent;
       const discountedRate = rate - (rate * discount / 100);
       const netRate = discountedRate * calcQty;
-      const totalAmount = netRate + (netRate * gstPercent / 100);
 
       return {
         productId: item.productId,
@@ -478,13 +481,25 @@ class Add extends AddForm {
         tolerancePercent: item.tolerancePercent || 0,
         gstPercent,
         netRate,
-        totalAmount,
         sampleImageFileId: item.sampleImageFileId || null,
         billingUnit: item.billingUnit || null,
         billingQuantity: item.billingQuantity ? parseFloat(item.billingQuantity) : null,
         billingConversionFactor: item.billingConversionFactor || null,
         indentRefs: item.indentRefs,
       };
+    });
+
+    // Distribute overall PO Discount proportionally across lines (by netRate share),
+    // then re-apply GST on the discounted net rate to get the payable totalAmount.
+    const poDiscountAmt = parseFloat(this.state.poDiscount || 0);
+    const totalNetRate = rawLineItems.reduce((sum, item) => sum + (item.netRate || 0), 0);
+    const lineItems = rawLineItems.map((item) => {
+      const share = poDiscountAmt > 0 && totalNetRate > 0
+        ? poDiscountAmt * (item.netRate / totalNetRate)
+        : 0;
+      const discountedNetRate = item.netRate - share;
+      const totalAmount = discountedNetRate + (discountedNetRate * item.gstPercent / 100);
+      return { ...item, totalAmount };
     });
 
     // Calculate grandTotal from lineItems
@@ -526,6 +541,7 @@ class Add extends AddForm {
       freightCharges: freightCharges || null,
       freightGstPercent: freightCharges > 0 ? freightGstPercent : null,
       totalFreightCharges: freightCharges > 0 ? totalFreightCharges : null,
+      poDiscount: poDiscountAmt || null,
       customCharges: customChargesPayload,
       specialPo: this.state.isSpecialPo || false,
       lineItems: lineItems
@@ -536,7 +552,7 @@ class Add extends AddForm {
     try {
       if (this.state.isEditMode) {
         // Build line updates — quantity and indent refs are preserved by the backend
-        const lineUpdates = this.state.items.map((item) => {
+        const rawLineUpdates = this.state.items.map((item) => {
           const qty = parseFloat(item.quantity || 0);
           const billingQty = item.billingUnit && item.billingQuantity
             ? parseFloat(item.billingQuantity) : null;
@@ -546,7 +562,6 @@ class Add extends AddForm {
           const gst = parseFloat(item.gst || 0);
           const discountedRate = rate - (rate * discount / 100);
           const netRate = discountedRate * calcQty;
-          const totalAmount = netRate + (netRate * gst / 100);
           return {
             lineId: item.lineId,
             rate,
@@ -554,7 +569,6 @@ class Add extends AddForm {
             tolerancePercent: parseFloat(item.tolerance || 0),
             gstPercent: gst,
             netRate,
-            totalAmount,
             brand: item.brandName || "",
             grade: item.grade || "",
             diameter: item.diameter || "",
@@ -564,6 +578,18 @@ class Add extends AddForm {
             billingQuantity: billingQty,
             billingConversionFactor: item.billingConversionFactor || null,
           };
+        });
+
+        // Distribute overall PO Discount proportionally across lines, re-apply GST after discount
+        const poDiscountEdit = parseFloat(this.state.poDiscount || 0);
+        const totalNetRateEdit = rawLineUpdates.reduce((sum, l) => sum + (l.netRate || 0), 0);
+        const lineUpdates = rawLineUpdates.map((l) => {
+          const share = poDiscountEdit > 0 && totalNetRateEdit > 0
+            ? poDiscountEdit * (l.netRate / totalNetRateEdit)
+            : 0;
+          const discountedNetRate = l.netRate - share;
+          const totalAmount = discountedNetRate + (discountedNetRate * l.gstPercent / 100);
+          return { ...l, totalAmount };
         });
 
         const lineItemsTotal = lineUpdates.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
@@ -594,6 +620,7 @@ class Add extends AddForm {
           freightCharges: freightChargesEdit || null,
           freightGstPercent: freightChargesEdit > 0 ? freightGstEdit : null,
           totalFreightCharges: freightChargesEdit > 0 ? totalFreightEdit : null,
+          poDiscount: poDiscountEdit || null,
           customCharges: customChargesEdit,
           grandTotal: grandTotalEdit,
           fileInformations: (this.formData.fileInformations || []).map((f) => ({
@@ -1072,6 +1099,8 @@ class Add extends AddForm {
               freightGstPercent={this.state.freightGstPercent}
               onFreightChargesChange={(val) => this.setState({ freightCharges: val })}
               onFreightGstPercentChange={(val) => this.setState({ freightGstPercent: val })}
+              poDiscount={this.state.poDiscount}
+              onPoDiscountChange={(val) => this.setState({ poDiscount: val })}
               customCharges={this.state.customCharges}
               onCustomChargesChange={(val) => this.setState({ customCharges: val })}
               fileArea={this.renderIndentStyleFileArea()}
@@ -1095,6 +1124,7 @@ class Add extends AddForm {
               fileInformations={this.formData.fileInformations || []}
               freightCharges={this.state.freightCharges}
               freightGstPercent={this.state.freightGstPercent}
+              poDiscount={this.state.poDiscount}
               customCharges={this.state.customCharges}
             />
           )}

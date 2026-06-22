@@ -42,7 +42,7 @@ class Step3ReviewPO extends Component {
       groupedItems[productId].quantity += parseFloat(item.quantity || 0);
     });
 
-    return Object.values(groupedItems).map((item) => {
+    const rawItems = Object.values(groupedItems).map((item) => {
       // Use billing qty for calculation when billing unit is active
       const qty = item.billingUnit && item.billingQuantity
         ? parseFloat(item.billingQuantity)
@@ -52,12 +52,23 @@ class Step3ReviewPO extends Component {
       const gst = item.gst;
       const discountedRate = rate - (rate * discount) / 100;
       const netRate = discountedRate * qty;
-      const totalAmt = netRate + (netRate * gst) / 100;
       // Display qty: billing qty with unit, else base qty
       const displayQty = item.billingUnit
         ? `${item.billingQuantity} ${item.billingUnit} (= ${item.quantity} ${item.unit})`
         : `${item.quantity} ${item.unit}`;
-      return { ...item, qty, netRate, totalAmt, displayQty };
+      return { ...item, qty, netRate, displayQty };
+    });
+
+    // Distribute overall PO Discount proportionally across lines, re-apply GST after discount
+    const poDiscountAmt = parseFloat(this.props.poDiscount || 0);
+    const totalNetRate = rawItems.reduce((sum, item) => sum + (item.netRate || 0), 0);
+    return rawItems.map((item) => {
+      const share = poDiscountAmt > 0 && totalNetRate > 0
+        ? poDiscountAmt * (item.netRate / totalNetRate)
+        : 0;
+      const discountedNetRate = item.netRate - share;
+      const totalAmt = discountedNetRate + (discountedNetRate * item.gst) / 100;
+      return { ...item, poDiscountShare: share, totalAmt };
     });
   }
 
@@ -68,7 +79,8 @@ class Step3ReviewPO extends Component {
   }
 
   render() {
-    const { orderTo, orderFrom, poSubject, isSpecialPo, noteText, projectName, overridePhoneNumber, overrideEmail, fileInformations, freightCharges, freightGstPercent, customCharges, poDate } = this.props;
+    const { orderTo, orderFrom, poSubject, isSpecialPo, noteText, projectName, overridePhoneNumber, overrideEmail, fileInformations, freightCharges, freightGstPercent, customCharges, poDate, poDiscount } = this.props;
+    const poDiscountAmt = parseFloat(poDiscount || 0);
     const lineItems = this.computeLineItems();
     const lineItemsTotal = lineItems.reduce((sum, item) => sum + (item.totalAmt || 0), 0);
     const fc = parseFloat(freightCharges || 0);
@@ -219,6 +231,7 @@ class Step3ReviewPO extends Component {
                   <th className="text-right">Tolerance %</th>
                   <th className="text-right">GST %</th>
                   <th className="text-right">Net Rate</th>
+                  <th className="text-right">PO Discount</th>
                   <th className="text-right">Total Amt</th>
                   <th>Sample Image</th>
                 </tr>
@@ -242,6 +255,7 @@ class Step3ReviewPO extends Component {
                     <td className="text-right">{item.tolerance > 0 ? `${item.tolerance}%` : "-"}</td>
                     <td className="text-right">{item.gst > 0 ? `${item.gst}%` : "-"}</td>
                     <td className="text-right">{this.formatCurrency(item.netRate)}</td>
+                    <td className="text-right">{item.poDiscountShare > 0 ? this.formatCurrency(item.poDiscountShare) : "-"}</td>
                     <td className="text-right review-total-cell">{this.formatCurrency(item.totalAmt)}</td>
                     <td style={{ textAlign: "center" }}>
                       {item.sampleImageFileId ? (
@@ -279,6 +293,13 @@ class Step3ReviewPO extends Component {
               </div>
             </div>
           ))}
+          {poDiscountAmt > 0 && (
+            <div style={{ textAlign: "right", padding: "8px 8px 0", fontSize: "13px", color: "#323c47", borderTop: "1px solid #e0e0e0", marginTop: "4px" }}>
+              <div style={{ marginBottom: "3px" }}>
+                PO Discount: <strong>- ₹ {this.formatCurrency(poDiscountAmt)}</strong>
+              </div>
+            </div>
+          )}
           <div className="review-grand-total">
             Grand Total: <strong>₹ {this.formatCurrency(grandTotal)}</strong>
           </div>

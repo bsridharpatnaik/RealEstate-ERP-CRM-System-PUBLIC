@@ -19,7 +19,7 @@ const COLUMNS = [
   { header: 'Unit',            key: 'unit',            width: 50,  align: 'center'},
   { header: 'Category',        key: 'category',        width: 100, align: 'left'  },
   { header: 'Qty in Hand',     key: 'totalQtyInHand',  width: 90,  align: 'right' },
-  { header: 'Last Inward',     key: 'lastInwardDate',  width: 100, align: 'left'  },
+  { header: 'Oldest Stock',    key: 'lastInwardDate',  width: 100, align: 'left'  },
   { header: 'Aging (Days)',    key: 'minAgingDays',    width: 90,  align: 'right' },
   { header: 'Bucket',          key: 'agingBucket',     width: 80,  align: 'center'},
   { header: 'POG (₹)',         key: 'pog',             width: 90,  align: 'right' },

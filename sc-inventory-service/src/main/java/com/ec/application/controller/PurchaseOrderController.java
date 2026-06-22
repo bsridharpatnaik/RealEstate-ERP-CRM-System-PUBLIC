@@ -128,6 +128,19 @@ public class PurchaseOrderController {
         return purchaseOrderService.removeLineItem(id, lineId);
     }
 
+    /**
+     * Updates only the tolerance % of a single PO line.
+     * Allowed in NEW and PARTIAL status; blocked once the PO reaches a terminal status
+     * (CANCELLED, COMPLETED, SHORT CLOSED).
+     */
+    @PutMapping("/{id}/line/{lineId}/tolerance")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder updateLineTolerance(@PathVariable String id, @PathVariable Long lineId,
+                                              @RequestBody UpdateToleranceRequest payload) throws Exception {
+        return purchaseOrderService.updateLineTolerance(id, lineId, payload.getTolerancePercent());
+    }
+
     @PostMapping("/short-close")
     public PurchaseOrder shortClosePo(@RequestBody ShortClosePoRequest request) throws Exception {
         PurchaseOrder po = purchaseOrderService.shortClosePurchaseOrder(request);

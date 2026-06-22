@@ -159,6 +159,7 @@ public class PurchaseOrderService extends ReusableFields {
         po.setFreightCharges(request.getFreightCharges());
         po.setFreightGstPercent(request.getFreightGstPercent());
         po.setTotalFreightCharges(request.getTotalFreightCharges());
+        po.setPoDiscount(request.getPoDiscount());
         po.setGrandTotal(request.getGrandTotal());
 
         po.getCustomCharges().clear();
@@ -576,6 +577,34 @@ public class PurchaseOrderService extends ReusableFields {
         poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
                 "Line item (ID: " + lineId + ") removed from PO by " + username, null);
 
+        return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
+    }
+
+    /**
+     * Updates only the tolerance % of a single PO line. Allowed in NEW and PARTIAL status;
+     * blocked once the PO reaches a terminal status (CANCELLED, COMPLETED, SHORT CLOSED).
+     */
+    @Transactional
+    public PurchaseOrder updateLineTolerance(String poId, Long lineId, Double tolerancePercent) throws Exception {
+        PurchaseOrder po = purchaseOrderRepo.findById(poId)
+                .orElseThrow(() -> new Exception("Purchase Order not found: " + poId));
+
+        validator.validateAddLineToPO(po); // reuses terminal-status check
+
+        PurchaseOrderLine line = po.getLines().stream()
+                .filter(l -> l.getId().equals(lineId))
+                .findFirst()
+                .orElseThrow(() -> new Exception("PO line not found: " + lineId));
+
+        line.setTolerancePercent(tolerancePercent != null ? tolerancePercent : 0.0);
+
+        PurchaseOrder saved = purchaseOrderRepo.save(po);
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
+                "Tolerance % updated on line (ID: " + lineId + ") by " + username, null);
+        String activityUser = resolveCurrentUser();
+        activityLogService.record("UPDATED", "PURCHASE_ORDER", saved.getPurchaseOrderId(),
+                "Tolerance % updated on PO " + saved.getPurchaseOrderId() + " by " + activityUser, activityUser);
         return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
     }
 
