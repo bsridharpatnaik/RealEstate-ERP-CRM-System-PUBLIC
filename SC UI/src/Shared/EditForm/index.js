@@ -271,6 +271,7 @@ class EditForm extends Component {
     disabled,
     getDefaultValue,
     freeSolo,
+    helperText,
   }) {
     let value = data || this.formData;
     let defaultValue = options.filter((op) => op.id === value[fieldname]);
@@ -281,6 +282,14 @@ class EditForm extends Component {
       : freeSolo && value[fieldname]
       ? { id: value[fieldname], name: value[fieldname] }
       : {};
+    const commit = (e, v) => {
+      if (skipAdd) {
+        onChange && onChange(e, v);
+        return;
+      }
+      let value = Array.isArray(v) ? v : v && v.id ? v.id : v;
+      this.formData[fieldname] = value;
+    };
     return (
       <Autocomplete
         disabled={disabled}
@@ -289,14 +298,7 @@ class EditForm extends Component {
         freeSolo={freeSolo}
         getOptionLabel={getOption}
         filterSelectedOptions={!freeSolo}
-        onChange={(e, v) => {
-          if (skipAdd) {
-            onChange && onChange(e, v);
-            return;
-          }
-          let value = Array.isArray(v) ? v : v && v.id ? v.id : v;
-          this.formData[fieldname] = value;
-        }}
+        onChange={commit}
         disableClearable={disableClearable}
         defaultValue={defaultValue}
         renderInput={(params) => (
@@ -308,7 +310,15 @@ class EditForm extends Component {
             margin="normal"
             label={placeholder}
             required={required}
+            helperText={helperText}
             InputLabelProps={{ shrink: true }}
+            onBlur={(e) => {
+              params.inputProps.onBlur && params.inputProps.onBlur(e);
+              if (freeSolo) {
+                const typed = e.target.value;
+                if (typed) commit(e, typed);
+              }
+            }}
           />
         )}
       />

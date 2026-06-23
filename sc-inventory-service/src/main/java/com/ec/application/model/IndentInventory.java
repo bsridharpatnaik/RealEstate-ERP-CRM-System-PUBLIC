@@ -52,6 +52,9 @@ public class IndentInventory extends ReusableFields implements Cloneable {
     @Column(name = "indent_status", nullable = false, length = 20)
     private String indentStatus;
 
+    @Column(name = "required_by")
+    private String requiredBy;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @Column(name = "indent_date", nullable = false)
     @NonNull

@@ -168,6 +168,7 @@ class Edit extends EditForm {
       const data = response.data;
 
       this.formData.indentDate = data.indentDate || data.dateCreation || "";
+      this.formData.requiredBy = data.requiredBy;
       this.formData.fileInformations = data.fileInformations || [];
 
       const inventoryItems = data.inventoryItems || data.inventoryList || [];
@@ -516,6 +517,7 @@ class Edit extends EditForm {
 
     const params = {
       indentDate: this.formData.indentDate || "",
+      requiredBy: this.formData.requiredBy,
       fileInformations: this.formData.fileInformations || [],
       inventoryList: inventoryList,
     };
@@ -919,6 +921,15 @@ class Edit extends EditForm {
                       fieldname: "indentDate",
                       label: "Indent Date",
                       required: true,
+                    })}
+                    {this.renderAutoComplete({
+                      fieldname: "requiredBy",
+                      placeholder: "Required By",
+                      options: this.props.dropdowns?.requiredByOptions || [],
+                      freeSolo: true,
+                      helperText: "Type to search existing, or enter a new name",
+                      getOption: (option) =>
+                        typeof option === "string" ? option : option["name"] || "",
                     })}
                   </div>
                 </div>

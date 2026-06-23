@@ -217,6 +217,7 @@ class AddForm extends Component {
     disabled,
     value,
     freeSolo,
+    helperText,
   }) {
     return (
       <Autocomplete
@@ -238,7 +239,15 @@ class AddForm extends Component {
             margin="normal"
             label={placeholder}
             required={required}
+            helperText={helperText}
             InputLabelProps={{ shrink: true }}
+            onBlur={(e) => {
+              params.inputProps.onBlur && params.inputProps.onBlur(e);
+              if (freeSolo && !multiple) {
+                const typed = e.target.value;
+                if (typed) onChange && onChange(e, typed);
+              }
+            }}
           />
         )}
       />

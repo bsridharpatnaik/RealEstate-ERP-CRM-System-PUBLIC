@@ -91,7 +91,12 @@ class filter extends CommonFilter {
                   "productCodes",
                   (option) => option && (option["name"] || `Product Code ${option["id"]}`)
                 )}
-                <div className="filter-item" />
+                {this.renderAutoComplete(
+                  "Required By",
+                  this.props.options?.requiredByOptions || [],
+                  "requiredByNames",
+                  (option) => option["name"]
+                )}
                 <div className="filter-status-changed-row">
                   {this.renderAutoComplete(
                     "Status Changed To",

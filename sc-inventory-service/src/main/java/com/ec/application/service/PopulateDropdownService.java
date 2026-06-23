@@ -21,6 +21,7 @@ import com.ec.application.repository.BuildingTypeRepo;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
+import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.MachineryRepo;
 import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
@@ -68,6 +69,9 @@ public class PopulateDropdownService {
 
     @Autowired
     OutwardInventoryRepo outwardInventoryRepo;
+
+    @Autowired
+    IndentInventoryRepo indentInventoryRepo;
 
     @Value("${boq.enforcement.block:true}")
     private boolean boqEnforcementBlock;
@@ -142,6 +146,7 @@ public class PopulateDropdownService {
                 morDropdownDataList.setIndentStatus(IndentStatusConstants.getAllStatuses());
                 morDropdownDataList.setIndentLineItemStatus(IndentLineItemStatusConstants.getAllStatuses());
                 morDropdownDataList.setStalebuckets(StaleBucketConstants.getAllBuckets());
+                morDropdownDataList.setRequiredByOptions(toIdNameDTOList(indentInventoryRepo.findDistinctRequiredBy()));
                 break;
             case "purchaseorder":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());

@@ -31,6 +31,7 @@ public final class IndentInventorySpecification {
         List<String> statusChangedAfter  = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedAfterDate");
         List<String> statusChangedBefore = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
         List<String> tenants             = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "tenants");
+        List<String> requiredByNames     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "requiredByNames");
 
         Specification<IndentInventory> spec = null;
 
@@ -51,6 +52,9 @@ public final class IndentInventorySpecification {
 
         if (notEmpty(tenants))
             spec = and(spec, specbldr.whereDirectFieldEquals(IndentInventory_.TENANT, tenants));
+
+        if (notEmpty(requiredByNames))
+            spec = and(spec, specbldr.whereDirectFieldEquals(IndentInventory_.REQUIRED_BY, requiredByNames));
 
         if (notEmpty(lineItemStatuses))
             spec = and(spec, lineItemExistsWithStatusIn(lineItemStatuses));

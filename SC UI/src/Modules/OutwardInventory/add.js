@@ -833,6 +833,7 @@ class Add extends AddForm {
               placeholder: "Requested By",
               options: this.props.dropdowns.requestedByOptions || [],
               freeSolo: true,
+              helperText: "Type to search existing, or enter a new name",
               getOption: (option) =>
                 typeof option === "string" ? option : option["name"] || "",
               onChange: (e, value) => {
@@ -845,6 +846,7 @@ class Add extends AddForm {
               placeholder: "Issued By",
               options: this.props.dropdowns.issuedByOptions || [],
               freeSolo: true,
+              helperText: "Type to search existing, or enter a new name",
               getOption: (option) =>
                 typeof option === "string" ? option : option["name"] || "",
               onChange: (e, value) => {

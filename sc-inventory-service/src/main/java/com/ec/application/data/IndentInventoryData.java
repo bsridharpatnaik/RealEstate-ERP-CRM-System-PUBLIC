@@ -21,6 +21,8 @@ public class IndentInventoryData {
     @NonNull
     Date indentDate;
 
+    String requiredBy;
+
     @NonNull
     List<FileInformationDAO> fileInformations;
 

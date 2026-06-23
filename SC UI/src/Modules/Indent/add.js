@@ -132,6 +132,7 @@ class Add extends AddForm {
     }));
     return {
       indentDate: moment().format("DD-MM-YYYY"),
+      requiredBy: this.formData.requiredBy,
       fileInformations: (this.formData.fileInformations || []).map((f) => ({
         fileUUId: f.fileUUId,
         fileName: f.fileName || "file",
@@ -862,6 +863,7 @@ renderCurrentStockField(key) {
 
     const params = {
       indentDate: moment().format("DD-MM-YYYY"),
+      requiredBy: this.formData.requiredBy,
       fileInformations: this.formData.fileInformations || [],
       inventoryList: inventoryList,
     };
@@ -1352,6 +1354,21 @@ renderCurrentStockField(key) {
               )}
               {!this.state.isLoadingDraft && (
                 <form onSubmit={(e) => this.add(e)}>
+                  <div className="flex width50">
+                    {this.renderAutoComplete({
+                      fieldname: "requiredBy",
+                      placeholder: "Required By",
+                      options: this.props.dropdowns?.requiredByOptions || [],
+                      freeSolo: true,
+                      helperText: "Type to search existing, or enter a new name",
+                      getOption: (option) =>
+                        typeof option === "string" ? option : option["name"] || "",
+                      onChange: (e, value) => {
+                        this.formData.requiredBy =
+                          typeof value === "string" ? value : value ? value.name : undefined;
+                      },
+                    })}
+                  </div>
                   {this.renderInventoryAddButton()}
                   <div className="inventories-list">
                     {Object.keys(this.state.noinventory).sort((a, b) => Number(b) - Number(a)).map((key) =>

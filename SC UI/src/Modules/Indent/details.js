@@ -477,6 +477,12 @@ class Details extends CommonDetails {
                   <span className="detail-label">Indent Date:</span>
                   <span className="detail-value">{data.indentDate || "-"}</span>
                 </div>
+                {data.requiredBy && (
+                  <div className="detail-item">
+                    <span className="detail-label">Required By:</span>
+                    <span className="detail-value">{data.requiredBy}</span>
+                  </div>
+                )}
                 <div className="detail-item">
                   <span className="detail-label">Project:</span>
                   <span className="detail-value">{data.projectName || data.tenant || "-"}</span>

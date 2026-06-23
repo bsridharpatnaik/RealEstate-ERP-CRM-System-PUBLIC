@@ -90,6 +90,9 @@ public interface IndentInventoryRepo extends BaseRepository<IndentInventory, Str
     })
     @Query("select distinct i from IndentInventory i where i.indentId in :ids")
     List<IndentInventory> findWithDetailsByIndentIdIn(@Param("ids") List<String> ids);
+
+    @Query("SELECT DISTINCT i.requiredBy FROM IndentInventory i WHERE i.requiredBy IS NOT NULL AND i.requiredBy <> ''")
+    List<String> findDistinctRequiredBy();
 }
 
 

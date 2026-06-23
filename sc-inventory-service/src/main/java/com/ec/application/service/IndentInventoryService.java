@@ -110,6 +110,7 @@ public class IndentInventoryService {
         indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(tenantService.fetchTenantFromHeader()));
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         indentInventory.setIndentDate(iiData.getIndentDate());
+        indentInventory.setRequiredBy(iiData.getRequiredBy());
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_NEW);
         indentInventory.setLastStatusUpdatedAt(new Date());
         // First save to generate indentId
@@ -539,6 +540,7 @@ public class IndentInventoryService {
 
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
         indentInventory.setIndentDate(payload.getIndentDate());
+        indentInventory.setRequiredBy(payload.getRequiredBy());
 
         // Process and synchronize inventory list
         Set<IndentInventoryList> processedInventoryList = processInventoryListForUpdate(

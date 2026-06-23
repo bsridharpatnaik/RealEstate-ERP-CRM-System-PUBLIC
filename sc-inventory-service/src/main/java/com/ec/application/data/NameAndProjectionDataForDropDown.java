@@ -31,5 +31,6 @@ public class NameAndProjectionDataForDropDown {
     Boolean boqEnforcementBlock;
     List<IdNameDTO> requestedByOptions;
     List<IdNameDTO> issuedByOptions;
+    List<IdNameDTO> requiredByOptions;
 }
 
