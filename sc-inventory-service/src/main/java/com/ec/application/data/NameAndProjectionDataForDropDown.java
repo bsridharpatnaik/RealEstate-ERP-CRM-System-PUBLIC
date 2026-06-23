@@ -29,5 +29,7 @@ public class NameAndProjectionDataForDropDown {
     List<IdNameProjections> buildingtype;
     List<LocationWithTypeProjection> usagelocationWithType;
     Boolean boqEnforcementBlock;
+    List<IdNameDTO> requestedByOptions;
+    List<IdNameDTO> issuedByOptions;
 }
 

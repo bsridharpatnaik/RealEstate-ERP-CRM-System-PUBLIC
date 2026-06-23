@@ -152,6 +152,7 @@ class List extends ListCommon {
       "Can Expire": item.isExpirable ? "Yes" : "No",
       "Batch Tracking": item.batchMode || "NONE",
       "Lead Time (Days)": item.leadTimeDays != null ? item.leadTimeDays : "",
+      "Default Expiry (Days)": item.defaultExpiryDays != null ? item.defaultExpiryDays : "",
     }));
   }
 

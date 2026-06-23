@@ -65,6 +65,8 @@ class Edit extends EditForm {
       this.formData.contractorId = data.contractor.contactId;
       this.formData.warehouseId = data.warehouse.warehouseId;
       this.formData.slipNo = data.slipNo;
+      this.formData.requestedBy = data.requestedBy;
+      this.formData.issuedBy = data.issuedBy;
       this.formData.additionalInfo = data.additionalInfo;
       this.formData.date = data.date;
       this.formData.fileInformations = data.fileInformations;
@@ -549,6 +551,24 @@ class Edit extends EditForm {
               {this.renderTextField({
                 fieldname: "purpose",
                 placeholder: "Purpose",
+              })}
+            </div>
+            <div className="width50 flex">
+              {this.renderAutoComplete({
+                fieldname: "requestedBy",
+                placeholder: "Requested By",
+                options: this.props.dropdowns.requestedByOptions || [],
+                freeSolo: true,
+                getOption: (option) =>
+                  typeof option === "string" ? option : option["name"] || "",
+              })}
+              {this.renderAutoComplete({
+                fieldname: "issuedBy",
+                placeholder: "Issued By",
+                options: this.props.dropdowns.issuedByOptions || [],
+                freeSolo: true,
+                getOption: (option) =>
+                  typeof option === "string" ? option : option["name"] || "",
               })}
             </div>
             <div className="flex">

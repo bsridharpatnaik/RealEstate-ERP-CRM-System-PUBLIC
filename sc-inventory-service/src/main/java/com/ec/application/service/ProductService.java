@@ -128,6 +128,7 @@ public class ProductService {
         }
         product.setBatchMode(resolveBatchMode(payload));
         product.setLeadTimeDays(payload.getLeadTimeDays());
+        product.setDefaultExpiryDays(payload.getDefaultExpiryDays());
         return product;
     }
 
@@ -207,6 +208,7 @@ public class ProductService {
         checkBatchModeChangeAllowed(product.getProductId(), existingBatchMode, newBatchMode);
         product.setBatchMode(newBatchMode);
         product.setLeadTimeDays(payload.getLeadTimeDays());
+        product.setDefaultExpiryDays(payload.getDefaultExpiryDays());
 
         Product saved = productRepo.save(product);
 
@@ -296,8 +298,9 @@ public class ProductService {
      * Bulk-import products from Excel.
      * Columns (0-indexed): 0=Product Name, 1=Product Code, 2=Description,
      *   3=Reorder Level, 4=Measurement Unit, 5=Category, 6=Managed Inventory,
-     *   7=Can Expire, 8=Batch Tracking, 9=Lead Time (Days)
-     * Only productName, reorderQuantity, isManagedInventory, batchMode, leadTimeDays are updated.
+     *   7=Can Expire, 8=Batch Tracking, 9=Lead Time (Days), 10=Default Expiry (Days)
+     * Only productName, reorderQuantity, isManagedInventory, batchMode, leadTimeDays,
+     * defaultExpiryDays are updated.
      * One activity log entry per changed product.
      */
     @Caching(evict = {
@@ -339,6 +342,7 @@ public class ProductService {
                 String managedRaw   = getCellString(row, 6);
                 String batchModeRaw   = getCellString(row, 8);
                 String leadTimeRaw    = getCellString(row, 9);
+                String defaultExpiryRaw = getCellString(row, 10);
 
                 // Need at least one identifier
                 if ((productCode == null || productCode.isEmpty()) &&
@@ -451,6 +455,27 @@ public class ProductService {
                         }
                     } catch (NumberFormatException e) {
                         errors.add("Row " + (i + 1) + ": Invalid lead time '" + leadTimeRaw + "'");
+                        skipped++;
+                        continue;
+                    }
+                }
+
+                // --- defaultExpiryDays ---
+                if (defaultExpiryRaw != null && !defaultExpiryRaw.isEmpty()) {
+                    try {
+                        int deVal = Integer.parseInt(defaultExpiryRaw.trim());
+                        if (deVal < 0) {
+                            errors.add("Row " + (i + 1) + ": Default Expiry (Days) cannot be negative");
+                            skipped++;
+                            continue;
+                        }
+                        Integer oldDe = product.getDefaultExpiryDays();
+                        if (oldDe == null || oldDe != deVal) {
+                            changes.add("defaultExpiryDays: " + oldDe + "→" + deVal);
+                            product.setDefaultExpiryDays(deVal);
+                        }
+                    } catch (NumberFormatException e) {
+                        errors.add("Row " + (i + 1) + ": Invalid Default Expiry (Days) '" + defaultExpiryRaw + "'");
                         skipped++;
                         continue;
                     }

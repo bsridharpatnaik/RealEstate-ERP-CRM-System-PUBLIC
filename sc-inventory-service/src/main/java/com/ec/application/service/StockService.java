@@ -472,6 +472,7 @@ public class StockService {
             productRepo.findById(si.getProductId()).ifPresent(p -> {
                 dto.setIsExpirable(p.getIsExpirable());
                 dto.setBatchMode(p.getBatchMode());
+                dto.setDefaultExpiryDays(p.getDefaultExpiryDays());
             });
             // Use pre-fetched override map — no per-row DB call
             Double effectiveReorder = overrideMap.getOrDefault(si.getProductId(), si.getReorderQuantity());

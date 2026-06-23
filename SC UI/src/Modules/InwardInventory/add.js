@@ -152,6 +152,7 @@ class InwardInventoryForm extends AddForm {
               productName: item.product.productName,
               measurementUnit: item.product.measurementUnit,
               batchMode: item.product.batchMode || 'NONE',
+              defaultExpiryDays: item.product.defaultExpiryDays || null,
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
@@ -245,6 +246,7 @@ class InwardInventoryForm extends AddForm {
             unit: item.product.measurementUnit,
             measurementUnit: item.product.measurementUnit,
             batchMode: item.product.batchMode || 'NONE',
+            defaultExpiryDays: item.product.defaultExpiryDays || null,
             poQuantity: item.poQuantity,
             lineItemCode: item.lineItemCode,
             batchSplits: batchSplits.length > 0 ? batchSplits : null,
@@ -368,6 +370,7 @@ class InwardInventoryForm extends AddForm {
           productCode: product.productCode,
           isManagedInventory: product.isManagedInventory,
           batchMode: product.batchMode || 'NONE',
+          defaultExpiryDays: product.defaultExpiryDays || null,
         }));
 
       // In edit mode, also include existing products from the inward data
@@ -462,6 +465,7 @@ class InwardInventoryForm extends AddForm {
             productName: item.productName,
             measurementUnit: item.measurementUnit,
             batchMode: item.batchMode || 'NONE',
+            defaultExpiryDays: item.defaultExpiryDays || null,
             poQuantity: poQty,
             tolerancePercent: tolPct,
             pendingQuantity: pendingQty,
@@ -486,11 +490,22 @@ class InwardInventoryForm extends AddForm {
     }
   }
 
+  // For a brand-new batch row: today + product.defaultExpiryDays (if the product has one
+  // configured and is BATCH_WITH_EXPIRY). Returns '' otherwise — never overwrites an
+  // already-set expiry date, only fills in genuinely blank ones for new batches.
+  computeDefaultExpiryDate(product) {
+    const batchMode = product.batchMode || 'BATCH_WITH_EXPIRY';
+    const days = product.defaultExpiryDays;
+    if (batchMode !== 'BATCH_WITH_EXPIRY' || !days) return '';
+    return moment().add(days, 'days').format('YYYY-MM-DD');
+  }
+
   openBatchSplitModal(key) {
     const product = this.state.noproduct[key];
     const totalQty = parseFloat(product.quantity) || 0;
     const batchMode = product.batchMode || 'BATCH_WITH_EXPIRY';
     const isEditMode = this.state.isEditMode;
+    const defaultExpiry = this.computeDefaultExpiryDate(product);
 
     // Determine modal mode: 'reduce' when editing and qty decreased vs original
     const originalQty = (this.oldStock || {})[product.productId] || 0;
@@ -520,11 +535,14 @@ class InwardInventoryForm extends AddForm {
             batchId: s.batchId || null,
             qty: s.qty || '',
             // s.expiryDate is dd-MM-yyyy (backend format); convert to yyyy-MM-dd for <input type="date">
-            expiryDate: s.expiryDate ? s.expiryDate.split('-').reverse().join('-') : '',
+            // Brand-new row (no batchId) with no expiry yet → default it; existing/edited rows are left untouched.
+            expiryDate: s.expiryDate
+              ? s.expiryDate.split('-').reverse().join('-')
+              : (s.batchId ? '' : defaultExpiry),
             brand: s.brand || '',
             lotNumber: s.lotNumber || ''
           }))
-        : [{ batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }];
+        : [{ batchId: null, qty: '', expiryDate: defaultExpiry, brand: '', lotNumber: '' }];
     }
 
     this.setState({
@@ -536,6 +554,7 @@ class InwardInventoryForm extends AddForm {
         batchMode,
         entries,
         modalMode,
+        defaultExpiry,
       }
     });
   }
@@ -551,7 +570,8 @@ class InwardInventoryForm extends AddForm {
   }
 
   addBatchEntry() {
-    const entries = [...this.state.batchSplitModal.entries, { batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }];
+    const defaultExpiry = this.state.batchSplitModal.defaultExpiry || '';
+    const entries = [...this.state.batchSplitModal.entries, { batchId: null, qty: '', expiryDate: defaultExpiry, brand: '', lotNumber: '' }];
     this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries } }));
   }
 
@@ -818,6 +838,7 @@ class InwardInventoryForm extends AddForm {
                 p[key].productCode = value?.productCode || "";
                 p[key].unit = value?.measurementUnit || "";
                 p[key].batchMode = value?.batchMode || 'NONE';
+                p[key].defaultExpiryDays = value?.defaultExpiryDays || null;
                 p[key].selectedProduct = value;
                 if (value) {
                   this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
@@ -843,6 +864,7 @@ class InwardInventoryForm extends AddForm {
                 p[key].productCode = value?.productCode || "";
                 p[key].unit = value?.measurementUnit || "";
                 p[key].batchMode = value?.batchMode || 'NONE';
+                p[key].defaultExpiryDays = value?.defaultExpiryDays || null;
                 p[key].selectedProduct = value;
                 if (value) {
                   this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });

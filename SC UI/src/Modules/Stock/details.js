@@ -268,6 +268,21 @@ class Details extends Component {
     return Math.max(parseFloat((warehouseStock - trackedQty).toFixed(4)), 0);
   }
 
+  // For a brand-new batch row when splitting untracked stock: today + product.defaultExpiryDays
+  // (only when the product is BATCH_WITH_EXPIRY and has one configured).
+  computeDefaultExpiryDate() {
+    const data = this.props.data;
+    const batchMode = data.batchMode || 'NONE';
+    const days = data.defaultExpiryDays;
+    if (batchMode !== 'BATCH_WITH_EXPIRY' || !days) return '';
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   getSplitTotal() {
     return this.state.splitEntries.reduce((sum, e) => {
       const v = parseFloat(e.qty);
@@ -282,7 +297,7 @@ class Details extends Component {
 
   addSplitEntry() {
     this.setState(prev => ({
-      splitEntries: [...prev.splitEntries, { qty: '', expiryDate: '', brand: '', lotNumber: '' }],
+      splitEntries: [...prev.splitEntries, { qty: '', expiryDate: this.computeDefaultExpiryDate(), brand: '', lotNumber: '' }],
       splitError: null,
     }));
   }
@@ -381,7 +396,7 @@ class Details extends Component {
               background: '#e65100', color: 'white', border: 'none',
               borderRadius: '4px', cursor: 'pointer', whiteSpace: 'nowrap',
             }}
-            onClick={() => this.setState({ splitFormOpenWarehouseId: warehouseId, splitError: null, splitEntries: [{ qty: '', expiryDate: '', brand: '', lotNumber: '' }] })}
+            onClick={() => this.setState({ splitFormOpenWarehouseId: warehouseId, splitError: null, splitEntries: [{ qty: '', expiryDate: this.computeDefaultExpiryDate(), brand: '', lotNumber: '' }] })}
           >
             Split Stock →
           </button>

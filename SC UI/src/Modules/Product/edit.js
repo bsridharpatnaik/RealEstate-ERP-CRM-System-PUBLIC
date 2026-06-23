@@ -92,6 +92,7 @@ class Edit extends EditForm {
       this.formData.batchMode =
         data.batchMode || (data.isExpirable ? "BATCH_WITH_EXPIRY" : "NONE");
       this.formData.leadTimeDays = data.leadTimeDays != null ? String(data.leadTimeDays) : "";
+      this.formData.defaultExpiryDays = data.defaultExpiryDays != null ? String(data.defaultExpiryDays) : "";
       this.setState({
         isLoaded: true,
         batchMode: this.formData.batchMode,
@@ -590,6 +591,16 @@ class Edit extends EditForm {
               })}
             </div>
             <div className="flex">{this.renderBatchModeCards()}</div>
+            {this.state.batchMode === "BATCH_WITH_EXPIRY" && (
+              <div className="flex width50">
+                {this.renderTextField({
+                  fieldname: "defaultExpiryDays",
+                  placeholder: "Default Expiry (Days)",
+                  type: "number",
+                  validation: "nonegative",
+                })}
+              </div>
+            )}
             <div className="flex">
               {this.renderToggle("Show in Dashboard", "showOnDashboard")}
               {this.renderToggle("Is Managed Inventory", "isManagedInventory")}

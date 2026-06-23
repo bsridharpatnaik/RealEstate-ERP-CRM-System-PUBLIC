@@ -270,21 +270,25 @@ class EditForm extends Component {
     skipAdd,
     disabled,
     getDefaultValue,
+    freeSolo,
   }) {
     let value = data || this.formData;
     let defaultValue = options.filter((op) => op.id === value[fieldname]);
     defaultValue = getDefaultValue
       ? getDefaultValue()
-      : defaultValue
+      : defaultValue && defaultValue.length
       ? defaultValue[0]
+      : freeSolo && value[fieldname]
+      ? { id: value[fieldname], name: value[fieldname] }
       : {};
     return (
       <Autocomplete
         disabled={disabled}
         id="tags-standard"
         options={options}
+        freeSolo={freeSolo}
         getOptionLabel={getOption}
-        filterSelectedOptions={true}
+        filterSelectedOptions={!freeSolo}
         onChange={(e, v) => {
           if (skipAdd) {
             onChange && onChange(e, v);

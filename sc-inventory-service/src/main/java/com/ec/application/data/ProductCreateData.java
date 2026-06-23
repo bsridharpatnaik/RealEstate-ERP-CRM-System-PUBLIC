@@ -30,4 +30,6 @@ public class ProductCreateData {
     /** New batch tracking mode. Supersedes isExpirable. */
     BatchMode batchMode;
     Integer leadTimeDays;
+    /** Optional — new batch entries default their expiry to today + this many days. */
+    Integer defaultExpiryDays;
 }

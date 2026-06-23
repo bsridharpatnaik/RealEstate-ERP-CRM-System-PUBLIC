@@ -631,7 +631,10 @@ public class PurchaseOrderService extends ReusableFields {
         double customTotal = po.getCustomCharges().stream()
                 .mapToDouble(c -> c.getTotalChargeAmount() != null ? c.getTotalChargeAmount() : 0.0)
                 .sum();
-        po.setGrandTotal(linesTotal + freightTotal + customTotal);
+        // PO Discount is a flat, post-tax PO-level deduction — not baked into any line's
+        // totalAmount, so it must be subtracted here explicitly.
+        double poDiscount = po.getPoDiscount() != null ? po.getPoDiscount() : 0.0;
+        po.setGrandTotal(linesTotal + freightTotal + customTotal - poDiscount);
     }
 
     @Transactional(rollbackFor = Exception.class)

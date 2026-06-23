@@ -647,26 +647,18 @@ const firmDetails = {
     return mergedItems;
   };
 
-  // Distributes the overall PO Discount proportionally across lines (by netRate share),
-  // then re-applies GST on the discounted net rate to get the payable amount per line.
-  applyPoDiscount = (mergedItems) => {
-    const poDiscount = parseFloat(this.props.poDiscount || 0);
-    const totalNetRate = mergedItems.reduce((sum, item) => sum + parseFloat(item.netRate || 0), 0);
-    return mergedItems.map((item) => {
-      const netRate = parseFloat(item.netRate || 0);
-      const gst = parseFloat(item.gst || 0);
-      const share = poDiscount > 0 && totalNetRate > 0 ? poDiscount * (netRate / totalNetRate) : 0;
-      const discountedNetRate = netRate - share;
-      const totalAmt = discountedNetRate + (discountedNetRate * gst / 100);
-      return { ...item, poDiscountShare: share, totalAmt: totalAmt.toFixed(2) };
-    });
-  };
-
   calculateTotal = () => {
-    const mergedItems = this.applyPoDiscount(this.groupItemsByProductId());
+    const mergedItems = this.groupItemsByProductId();
     return mergedItems.reduce((sum, item) => {
       return sum + parseFloat(item.totalAmt || 0);
     }, 0);
+  };
+
+  // PO Discount is a flat, post-tax PO-level deduction — does not touch line items, rates, or GST.
+  calculateNetTotalAfterPoDiscount = () => {
+    const lineTotal = this.calculateTotal();
+    const poDiscount = parseFloat(this.props.poDiscount || 0);
+    return lineTotal - poDiscount;
   };
 
   handleAddSupplier = async (supplier) => {
@@ -868,8 +860,10 @@ handleAddFirm = async (firm) => {
   };
 
   render() {
-    const mergedItems = this.applyPoDiscount(this.groupItemsByProductId());
+    const mergedItems = this.groupItemsByProductId();
     const total = this.calculateTotal();
+    const poDiscount = parseFloat(this.props.poDiscount || 0);
+    const netTotal = this.calculateNetTotalAfterPoDiscount();
 
     return (
       <div className="step2-fill-details">
@@ -1189,7 +1183,6 @@ handleAddFirm = async (firm) => {
                     <TableCell>Discount %</TableCell>
                     <TableCell>GST</TableCell>
                     <TableCell>Net Rate</TableCell>
-                    <TableCell>PO Discount</TableCell>
                     <TableCell>Total Amt.</TableCell>
                     <TableCell>Sample Image</TableCell>
                     {!this.props.isEditMode && <TableCell>Action</TableCell>}
@@ -1464,9 +1457,6 @@ handleAddFirm = async (firm) => {
                       <TableCell className="net-rate-cell calculated-cell">
                         {item.netRate ? `Rs. ${parseFloat(item.netRate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                       </TableCell>
-                      <TableCell className="calculated-cell">
-                        {item.poDiscountShare ? `Rs. ${item.poDiscountShare.toFixed(2)}` : "-"}
-                      </TableCell>
                       <TableCell className="total-amt-cell calculated-cell">
                         {item.totalAmt ? `Rs. ${parseFloat(item.totalAmt).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                       </TableCell>
@@ -1519,6 +1509,16 @@ handleAddFirm = async (firm) => {
             </div>
             <div className="table-total">
               <strong>Total: Rs. {total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              {poDiscount > 0 && (
+                <>
+                  <div style={{ fontSize: 13, marginTop: 4 }}>
+                    PO Discount: <strong>- Rs. {poDiscount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  </div>
+                  <div style={{ marginTop: 4 }}>
+                    <strong>Net Total: Rs. {netTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -1544,7 +1544,7 @@ handleAddFirm = async (firm) => {
             </div>
           </div>
           <div style={{ fontSize: "11px", color: "#888", marginTop: "6px" }}>
-            Deducted proportionally from each line's net rate before GST is applied. See "PO Discount" column above for the per-line share.
+            A flat, special discount applied at the PO level after GST. Line item rates, GST, and totals are not affected.
           </div>
         </div>}
 

@@ -49,6 +49,8 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 
 	String purpose;
 	String slipNo;
+	String requestedBy;
+	String issuedBy;
 
 	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinTable(name = "outwardinventory_entry", joinColumns =
@@ -265,5 +267,25 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	public void setAdditionalInfo(String additionalInfo)
 	{
 		this.additionalInfo = additionalInfo;
+	}
+
+	public String getRequestedBy()
+	{
+		return requestedBy;
+	}
+
+	public void setRequestedBy(String requestedBy)
+	{
+		this.requestedBy = requestedBy;
+	}
+
+	public String getIssuedBy()
+	{
+		return issuedBy;
+	}
+
+	public void setIssuedBy(String issuedBy)
+	{
+		this.issuedBy = issuedBy;
 	}
 }

@@ -76,6 +76,14 @@ public class Product extends ReusableFields {
     @Column(name = "batch_mode", columnDefinition = "varchar(30) default 'NONE'")
     BatchMode batchMode = BatchMode.NONE;
 
+    /**
+     * Optional. When set (and batchMode = BATCH_WITH_EXPIRY), new batch entries default their
+     * expiry date to today + this many days instead of leaving the field blank for manual entry.
+     * Only applies to brand-new batch rows — never overwrites an already-set expiry date.
+     */
+    @Column(name = "default_expiry_days")
+    Integer defaultExpiryDays;
+
     /** True when any batch tracking is active (BATCH_ONLY or BATCH_WITH_EXPIRY). */
     public boolean isBatchTracked() {
         return batchMode != null && batchMode != BatchMode.NONE;

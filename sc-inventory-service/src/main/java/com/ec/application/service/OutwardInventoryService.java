@@ -646,6 +646,8 @@ public class OutwardInventoryService {
         outwardInventory.setDate(oiData.getDate());
         outwardInventory.setPurpose(oiData.getPurpose());
         outwardInventory.setSlipNo(oiData.getSlipNo());
+        outwardInventory.setRequestedBy(oiData.getRequestedBy());
+        outwardInventory.setIssuedBy(oiData.getIssuedBy());
         outwardInventory.setInwardOutwardList(fetchInwardOutwardList(oiData.getProductWithQuantities(), warehouse));
         outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
         log.info("Exited setFields");

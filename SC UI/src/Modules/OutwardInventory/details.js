@@ -483,6 +483,18 @@ class Details extends CommonDetails {
                   <div className="label">{messages.common.purpose}</div>
                   <div className="value">{data.purpose}</div>
                 </div>
+                {data.requestedBy && (
+                  <div className="detail-item">
+                    <div className="label">Requested By</div>
+                    <div className="value">{data.requestedBy}</div>
+                  </div>
+                )}
+                {data.issuedBy && (
+                  <div className="detail-item">
+                    <div className="label">Issued By</div>
+                    <div className="value">{data.issuedBy}</div>
+                  </div>
+                )}
               </div>
               <div className="detail-item">
                 <div className="label">{messages.common.comment}</div>

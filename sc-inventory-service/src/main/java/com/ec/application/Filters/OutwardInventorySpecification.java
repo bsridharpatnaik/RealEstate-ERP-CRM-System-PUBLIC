@@ -27,6 +27,8 @@ public final class OutwardInventorySpecification {
         List<String> showOnlyRejected = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyRejected");
         List<String> boqBypassed     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "boqBypassed");
         List<String> fifoOverride    = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "fifoOverride");
+        List<String> requestedByNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "requestedByNames");
+        List<String> issuedByNames   = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "issuedByNames");
 
         Specification<OutwardInventory> spec = null;
 
@@ -54,6 +56,12 @@ public final class OutwardInventorySpecification {
 
         if (notEmpty(usageAreas))
             spec = and(spec, specbldr.whereChildFieldEquals(OutwardInventory_.USAGE_AREA, UsageArea_.USAGE_AREA_NAME, usageAreas));
+
+        if (notEmpty(requestedByNames))
+            spec = and(spec, specbldr.whereDirectFieldEquals(OutwardInventory_.REQUESTED_BY, requestedByNames));
+
+        if (notEmpty(issuedByNames))
+            spec = and(spec, specbldr.whereDirectFieldEquals(OutwardInventory_.ISSUED_BY, issuedByNames));
 
         if (notEmpty(globalSearch)) {
             Specification<OutwardInventory> gs = null;

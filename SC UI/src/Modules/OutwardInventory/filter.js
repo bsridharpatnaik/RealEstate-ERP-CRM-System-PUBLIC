@@ -70,6 +70,18 @@ class filter extends CommonFilter {
                 "usageArea",
                 (option) => option["name"]
               )}
+              {this.renderAutoComplete(
+                "Requested By",
+                this.props.options?.requestedByOptions,
+                "requestedByNames",
+                (option) => option["name"]
+              )}
+              {this.renderAutoComplete(
+                "Issued By",
+                this.props.options?.issuedByOptions,
+                "issuedByNames",
+                (option) => option["name"]
+              )}
             </div>
             <div className="outward-filter-toggles">
               {this.renderToggle("Rejected Only", "showOnlyRejected")}

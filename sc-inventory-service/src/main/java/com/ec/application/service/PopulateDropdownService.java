@@ -15,12 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.data.IdNameDTO;
 import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.repository.BuildingTypeRepo;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
 import com.ec.application.repository.MachineryRepo;
+import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.SupplierRepo;
 import com.ec.application.repository.UsageAreaRepo;
@@ -64,6 +66,9 @@ public class PopulateDropdownService {
     @Autowired
     BuildingTypeRepo buildingTypeRepo;
 
+    @Autowired
+    OutwardInventoryRepo outwardInventoryRepo;
+
     @Value("${boq.enforcement.block:true}")
     private boolean boqEnforcementBlock;
 
@@ -102,6 +107,8 @@ public class PopulateDropdownService {
                 morDropdownDataList.setBuildingtype(buildingTypeRepo.findIdAndNames());
                 morDropdownDataList.setUsagelocationWithType(locationRepo.findIdNamesAndTypes());
                 morDropdownDataList.setBoqEnforcementBlock(boqEnforcementBlock);
+                morDropdownDataList.setRequestedByOptions(toIdNameDTOList(outwardInventoryRepo.findDistinctRequestedBy()));
+                morDropdownDataList.setIssuedByOptions(toIdNameDTOList(outwardInventoryRepo.findDistinctIssuedBy()));
                 break;
             case "stock":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
@@ -156,6 +163,14 @@ public class PopulateDropdownService {
                 morDropdownDataList.setTenants(fetchTenantNames());
         }
         return morDropdownDataList;
+    }
+
+    private List<IdNameDTO> toIdNameDTOList(List<String> values) {
+        List<IdNameDTO> result = new ArrayList<>();
+        for (String value : values) {
+            result.add(new IdNameDTO(value, value));
+        }
+        return result;
     }
 
     private List<String> fetchTenantNames() {

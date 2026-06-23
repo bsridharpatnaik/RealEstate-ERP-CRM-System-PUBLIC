@@ -13,7 +13,7 @@ import Radio from "@material-ui/core/Radio";
 
 //misc
 import { apiEndpoints } from "./../../endpoints";
-import { messages } from "./../../messages";
+import { messages, constants } from "./../../messages";
 import { fetchUnit } from "./../../actions/measurementUnit";
 import moment from "moment";
 
@@ -46,6 +46,7 @@ class Add extends AddForm {
     availableBatches: [],
     existingBatchMode: false,
     selectedProductBatchMode: null, // 'BATCH_ONLY' | 'BATCH_WITH_EXPIRY' | null
+    selectedProductDefaultExpiryDays: null,
     // multi-batch qty maps: batchId (number) → qty string
     batchQtyMap: {},    // LOST_DAMAGED allocation
     excessQtyMap: {},   // EXCESS_FOUND add-to-existing allocation
@@ -60,6 +61,14 @@ class Add extends AddForm {
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch(fetchUnit());
+  }
+
+  // For a brand-new batch: today + product.defaultExpiryDays, if the product has one configured.
+  // Never used for existing batches — only when creating a new one (Excess Found "create new batch").
+  computeDefaultExpiryValue() {
+    const days = this.state.selectedProductDefaultExpiryDays;
+    if (!days) return undefined;
+    return moment().add(days, "days").format(constants.dateFormat);
   }
 
   async getCurrentStock() {
@@ -374,6 +383,7 @@ class Add extends AddForm {
                     label: "Expiry Date",
                     minDate: moment(),
                     required: true,
+                    value: this.computeDefaultExpiryValue(),
                   })}
                 </div>
               )}
@@ -480,12 +490,20 @@ class Add extends AddForm {
               onChange: (e, value) => {
                 if (value) {
                   this.formData.productId = value.id;
-                  this.setState({ selectedProductBatchMode: null, currentStockValue: null, closing: null });
+                  this.setState({
+                    selectedProductBatchMode: null,
+                    selectedProductDefaultExpiryDays: null,
+                    currentStockValue: null,
+                    closing: null,
+                  });
                   this.getCurrentStock();
                   this.loadBatches();
                   API.GET(`/api/inventory/product/${value.id}`).then(r => {
                     if (r.success && r.data) {
-                      this.setState({ selectedProductBatchMode: r.data.batchMode || 'BATCH_ONLY' });
+                      this.setState({
+                        selectedProductBatchMode: r.data.batchMode || 'BATCH_ONLY',
+                        selectedProductDefaultExpiryDays: r.data.defaultExpiryDays || null,
+                      });
                     }
                   });
                 }

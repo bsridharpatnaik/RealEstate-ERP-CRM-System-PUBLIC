@@ -216,6 +216,7 @@ class AddForm extends Component {
     multiple,
     disabled,
     value,
+    freeSolo,
   }) {
     return (
       <Autocomplete
@@ -223,11 +224,12 @@ class AddForm extends Component {
         disabled={disabled}
         options={options}
         value={value}
+        freeSolo={freeSolo}
         getOptionLabel={getOption}
         onChange={onChange}
         disableClearable={disableClearable}
         multiple={multiple}
-        filterSelectedOptions={true}
+        filterSelectedOptions={!freeSolo}
         renderInput={(params) => (
           <TextField
             {...params}

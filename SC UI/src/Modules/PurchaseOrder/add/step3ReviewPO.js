@@ -42,7 +42,7 @@ class Step3ReviewPO extends Component {
       groupedItems[productId].quantity += parseFloat(item.quantity || 0);
     });
 
-    const rawItems = Object.values(groupedItems).map((item) => {
+    return Object.values(groupedItems).map((item) => {
       // Use billing qty for calculation when billing unit is active
       const qty = item.billingUnit && item.billingQuantity
         ? parseFloat(item.billingQuantity)
@@ -52,23 +52,12 @@ class Step3ReviewPO extends Component {
       const gst = item.gst;
       const discountedRate = rate - (rate * discount) / 100;
       const netRate = discountedRate * qty;
+      const totalAmt = netRate + (netRate * gst) / 100;
       // Display qty: billing qty with unit, else base qty
       const displayQty = item.billingUnit
         ? `${item.billingQuantity} ${item.billingUnit} (= ${item.quantity} ${item.unit})`
         : `${item.quantity} ${item.unit}`;
-      return { ...item, qty, netRate, displayQty };
-    });
-
-    // Distribute overall PO Discount proportionally across lines, re-apply GST after discount
-    const poDiscountAmt = parseFloat(this.props.poDiscount || 0);
-    const totalNetRate = rawItems.reduce((sum, item) => sum + (item.netRate || 0), 0);
-    return rawItems.map((item) => {
-      const share = poDiscountAmt > 0 && totalNetRate > 0
-        ? poDiscountAmt * (item.netRate / totalNetRate)
-        : 0;
-      const discountedNetRate = item.netRate - share;
-      const totalAmt = discountedNetRate + (discountedNetRate * item.gst) / 100;
-      return { ...item, poDiscountShare: share, totalAmt };
+      return { ...item, qty, netRate, totalAmt, displayQty };
     });
   }
 
@@ -95,7 +84,9 @@ class Step3ReviewPO extends Component {
         return { name: c.chargeName || "Additional Charges", amt, gst, total };
       });
     const totalCustom = customChargeRows.reduce((sum, c) => sum + c.total, 0);
-    const grandTotal = lineItemsTotal + totalFreight + totalCustom;
+    // PO Discount is a flat, post-tax PO-level deduction — applied once at the very end,
+    // after line/freight/custom totals (which already include their own GST) are summed.
+    const grandTotal = lineItemsTotal + totalFreight + totalCustom - poDiscountAmt;
 
     return (
       <div className="step3-review-po">
@@ -231,7 +222,6 @@ class Step3ReviewPO extends Component {
                   <th className="text-right">Tolerance %</th>
                   <th className="text-right">GST %</th>
                   <th className="text-right">Net Rate</th>
-                  <th className="text-right">PO Discount</th>
                   <th className="text-right">Total Amt</th>
                   <th>Sample Image</th>
                 </tr>
@@ -255,7 +245,6 @@ class Step3ReviewPO extends Component {
                     <td className="text-right">{item.tolerance > 0 ? `${item.tolerance}%` : "-"}</td>
                     <td className="text-right">{item.gst > 0 ? `${item.gst}%` : "-"}</td>
                     <td className="text-right">{this.formatCurrency(item.netRate)}</td>
-                    <td className="text-right">{item.poDiscountShare > 0 ? this.formatCurrency(item.poDiscountShare) : "-"}</td>
                     <td className="text-right review-total-cell">{this.formatCurrency(item.totalAmt)}</td>
                     <td style={{ textAlign: "center" }}>
                       {item.sampleImageFileId ? (

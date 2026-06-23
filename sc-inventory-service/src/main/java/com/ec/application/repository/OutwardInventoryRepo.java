@@ -42,4 +42,10 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 	/** Used by FIFO report sync to bulk-fetch outward headers for a set of outward IDs. */
 	@Query("SELECT o FROM OutwardInventory o WHERE o.outwardid IN :ids")
 	List<OutwardInventory> findByOutwardidIn(@Param("ids") List<Long> ids);
+
+	@Query("SELECT DISTINCT o.requestedBy FROM OutwardInventory o WHERE o.requestedBy IS NOT NULL AND o.requestedBy <> ''")
+	List<String> findDistinctRequestedBy();
+
+	@Query("SELECT DISTINCT o.issuedBy FROM OutwardInventory o WHERE o.issuedBy IS NOT NULL AND o.issuedBy <> ''")
+	List<String> findDistinctIssuedBy();
 }

@@ -41,6 +41,12 @@ public class OutwardInventoryData
 	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
 	String additionalInfo;
 
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
+	String requestedBy;
+
+	@JsonDeserialize(using = ToSentenceCaseDeserializer.class)
+	String issuedBy;
+
 	@NonNull
 	List<FileInformationDAO> fileInformations;
 
@@ -114,6 +120,22 @@ public class OutwardInventoryData
 
 	public void setAdditionalInfo(String additionalInfo) {
 		this.additionalInfo = additionalInfo;
+	}
+
+	public String getRequestedBy() {
+		return requestedBy;
+	}
+
+	public void setRequestedBy(String requestedBy) {
+		this.requestedBy = requestedBy;
+	}
+
+	public String getIssuedBy() {
+		return issuedBy;
+	}
+
+	public void setIssuedBy(String issuedBy) {
+		this.issuedBy = issuedBy;
 	}
 
 	public List<FileInformationDAO> getFileInformations() {

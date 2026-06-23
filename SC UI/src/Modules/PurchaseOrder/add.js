@@ -457,7 +457,7 @@ class Add extends AddForm {
       const n = parseFloat(q);
       return isNaN(n) ? 0 : (Number.isInteger(n) ? n : parseFloat(n.toFixed(2)));
     };
-    const rawLineItems = Object.values(groupedItems).map((item) => {
+    const lineItems = Object.values(groupedItems).map((item) => {
       const quantity = roundQuantity(item.quantity);
       // When billing unit selected, rate is per billing unit — calculate on billing qty
       const calcQty = item.billingUnit && item.billingQuantity
@@ -468,6 +468,7 @@ class Add extends AddForm {
       const gstPercent = item.gstPercent;
       const discountedRate = rate - (rate * discount / 100);
       const netRate = discountedRate * calcQty;
+      const totalAmount = netRate + (netRate * gstPercent / 100);
 
       return {
         productId: item.productId,
@@ -481,6 +482,7 @@ class Add extends AddForm {
         tolerancePercent: item.tolerancePercent || 0,
         gstPercent,
         netRate,
+        totalAmount,
         sampleImageFileId: item.sampleImageFileId || null,
         billingUnit: item.billingUnit || null,
         billingQuantity: item.billingQuantity ? parseFloat(item.billingQuantity) : null,
@@ -489,18 +491,9 @@ class Add extends AddForm {
       };
     });
 
-    // Distribute overall PO Discount proportionally across lines (by netRate share),
-    // then re-apply GST on the discounted net rate to get the payable totalAmount.
+    // PO Discount is a flat, special, post-tax PO-level deduction — it must not change line
+    // item rates, GST, or totals. It's subtracted once from the grand total below.
     const poDiscountAmt = parseFloat(this.state.poDiscount || 0);
-    const totalNetRate = rawLineItems.reduce((sum, item) => sum + (item.netRate || 0), 0);
-    const lineItems = rawLineItems.map((item) => {
-      const share = poDiscountAmt > 0 && totalNetRate > 0
-        ? poDiscountAmt * (item.netRate / totalNetRate)
-        : 0;
-      const discountedNetRate = item.netRate - share;
-      const totalAmount = discountedNetRate + (discountedNetRate * item.gstPercent / 100);
-      return { ...item, totalAmount };
-    });
 
     // Calculate grandTotal from lineItems
     const lineItemsTotal = lineItems.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
@@ -521,7 +514,7 @@ class Add extends AddForm {
       });
     const totalCustomCharges = customChargesPayload.reduce((sum, c) => sum + c.totalChargeAmount, 0);
 
-    const grandTotal = Math.round((lineItemsTotal + totalFreightCharges + totalCustomCharges) * 100) / 100;
+    const grandTotal = Math.round((lineItemsTotal + totalFreightCharges + totalCustomCharges - poDiscountAmt) * 100) / 100;
 
     // Prepare payload matching API structure
     const payload = {
@@ -552,7 +545,7 @@ class Add extends AddForm {
     try {
       if (this.state.isEditMode) {
         // Build line updates — quantity and indent refs are preserved by the backend
-        const rawLineUpdates = this.state.items.map((item) => {
+        const lineUpdates = this.state.items.map((item) => {
           const qty = parseFloat(item.quantity || 0);
           const billingQty = item.billingUnit && item.billingQuantity
             ? parseFloat(item.billingQuantity) : null;
@@ -562,6 +555,7 @@ class Add extends AddForm {
           const gst = parseFloat(item.gst || 0);
           const discountedRate = rate - (rate * discount / 100);
           const netRate = discountedRate * calcQty;
+          const totalAmount = netRate + (netRate * gst / 100);
           return {
             lineId: item.lineId,
             rate,
@@ -569,6 +563,7 @@ class Add extends AddForm {
             tolerancePercent: parseFloat(item.tolerance || 0),
             gstPercent: gst,
             netRate,
+            totalAmount,
             brand: item.brandName || "",
             grade: item.grade || "",
             diameter: item.diameter || "",
@@ -580,17 +575,8 @@ class Add extends AddForm {
           };
         });
 
-        // Distribute overall PO Discount proportionally across lines, re-apply GST after discount
+        // PO Discount is a flat, special, post-tax PO-level deduction — does not touch line items.
         const poDiscountEdit = parseFloat(this.state.poDiscount || 0);
-        const totalNetRateEdit = rawLineUpdates.reduce((sum, l) => sum + (l.netRate || 0), 0);
-        const lineUpdates = rawLineUpdates.map((l) => {
-          const share = poDiscountEdit > 0 && totalNetRateEdit > 0
-            ? poDiscountEdit * (l.netRate / totalNetRateEdit)
-            : 0;
-          const discountedNetRate = l.netRate - share;
-          const totalAmount = discountedNetRate + (discountedNetRate * l.gstPercent / 100);
-          return { ...l, totalAmount };
-        });
 
         const lineItemsTotal = lineUpdates.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
         const freightChargesEdit = parseFloat(this.state.freightCharges || 0);
@@ -605,7 +591,7 @@ class Add extends AddForm {
             return { chargeName: c.chargeName || null, chargeAmount: amt, chargeGstPercent: gst, totalChargeAmount: total };
           });
         const totalCustomEdit = customChargesEdit.reduce((sum, c) => sum + c.totalChargeAmount, 0);
-        const grandTotalEdit = Math.round((lineItemsTotal + totalFreightEdit + totalCustomEdit) * 100) / 100;
+        const grandTotalEdit = Math.round((lineItemsTotal + totalFreightEdit + totalCustomEdit - poDiscountEdit) * 100) / 100;
 
         const updatePayload = {
           poDate: this.state.poDate,

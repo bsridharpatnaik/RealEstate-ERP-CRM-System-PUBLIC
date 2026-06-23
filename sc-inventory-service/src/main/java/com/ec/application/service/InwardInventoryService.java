@@ -177,6 +177,7 @@ public class InwardInventoryService {
         productRepo.findById(v.getProductId()).ifPresent(p -> {
             li.setIsExpirable(p.requiresExpiry());
             li.setBatchMode(p.getBatchMode());
+            li.setDefaultExpiryDays(p.getDefaultExpiryDays());
         });
         return li;
     }

@@ -33,6 +33,8 @@ public class PoLineItemForInward {
     /** Deprecated — kept for backward compat. Use batchMode instead. */
     private Boolean isExpirable;
     private BatchMode batchMode;
+    /** Optional — new batch entries default their expiry to today + this many days. */
+    private Integer defaultExpiryDays;
 
     /** Billing unit context from PO line — shown in inward form so store person knows base qty vs billing qty */
     private String billingUnit;

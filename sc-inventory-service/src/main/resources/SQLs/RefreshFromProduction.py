@@ -285,6 +285,7 @@ def filter_dump(source_path: Path, schemas: set[str]) -> Path:
     log(f"Creating filtered restore dump: {output_path}")
     included_schemas: set[str] = set()
     include_section = False
+    seen_first_marker = False
     current_schema: str | None = None
 
     with (
@@ -294,11 +295,16 @@ def filter_dump(source_path: Path, schemas: set[str]) -> Path:
         for line in source:
             match = DATABASE_MARKER.match(line)
             if match:
+                seen_first_marker = True
                 current_schema = match.group(1)
                 include_section = current_schema in schemas
                 if include_section:
                     included_schemas.add(current_schema)
-            if include_section:
+            # Global preamble (session SET statements before the first
+            # "-- Current Database" marker) must always be kept — later
+            # restore statements (e.g. SET TIME_ZONE=@OLD_TIME_ZONE) pair
+            # with it and fail with a NULL value if it's dropped.
+            if include_section or not seen_first_marker:
                 target.write(line)
 
     temporary_path.replace(output_path)

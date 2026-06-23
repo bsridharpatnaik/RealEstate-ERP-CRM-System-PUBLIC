@@ -827,6 +827,32 @@ class Add extends AddForm {
               placeholder: "Purpose",
             })}
           </div>
+          <div className="width50 flex">
+            {this.renderAutoComplete({
+              fieldname: "requestedBy",
+              placeholder: "Requested By",
+              options: this.props.dropdowns.requestedByOptions || [],
+              freeSolo: true,
+              getOption: (option) =>
+                typeof option === "string" ? option : option["name"] || "",
+              onChange: (e, value) => {
+                this.formData.requestedBy =
+                  typeof value === "string" ? value : value ? value.name : undefined;
+              },
+            })}
+            {this.renderAutoComplete({
+              fieldname: "issuedBy",
+              placeholder: "Issued By",
+              options: this.props.dropdowns.issuedByOptions || [],
+              freeSolo: true,
+              getOption: (option) =>
+                typeof option === "string" ? option : option["name"] || "",
+              onChange: (e, value) => {
+                this.formData.issuedBy =
+                  typeof value === "string" ? value : value ? value.name : undefined;
+              },
+            })}
+          </div>
           <div className="flex">
             {this.renderTextArea({
               fieldname: "additionalInfo",
