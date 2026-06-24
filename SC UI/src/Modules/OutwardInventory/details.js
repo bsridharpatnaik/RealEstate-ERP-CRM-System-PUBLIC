@@ -463,17 +463,15 @@ class Details extends CommonDetails {
                   <div className="label">{messages.common.warehouse}</div>
                   <div className="value">
                     {(() => {
-                      // data.warehouse is only set when every line shares one warehouse —
-                      // it's null for an outward that spans multiple warehouses (see line items below).
-                      if (data.warehouse) return data.warehouse.warehouseName;
+                      // Each line carries its own warehouse — show it directly, or "Multiple
+                      // Warehouses" when lines disagree. No header-level warehouse exists.
                       const distinctNames = Array.from(new Set(
                         (data.inwardOutwardList || [])
                           .map((row) => row.warehouse && row.warehouse.warehouseName)
                           .filter(Boolean)
                       ));
-                      return distinctNames.length > 0
-                        ? `Multiple Warehouses (${distinctNames.join(', ')})`
-                        : '—';
+                      if (distinctNames.length > 1) return `Multiple Warehouses (${distinctNames.join(', ')})`;
+                      return distinctNames[0] || '—';
                     })()}
                   </div>
                 </div>

@@ -59,12 +59,6 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "warehouse_id", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Warehouse warehouse;
-
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "usageAreaId", nullable = true)
 	@JsonIgnoreProperties(
 	{ "hibernateLazyInitializer", "handler" })
@@ -227,16 +221,6 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	public void setInwardOutwardList(Set<InwardOutwardList> inwardOutwardList)
 	{
 		this.inwardOutwardList = inwardOutwardList;
-	}
-
-	public Warehouse getWarehouse()
-	{
-		return warehouse;
-	}
-
-	public void setWarehouse(Warehouse warehouse)
-	{
-		this.warehouse = warehouse;
 	}
 
 	public Contractor getContractor()

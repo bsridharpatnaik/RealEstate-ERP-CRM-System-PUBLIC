@@ -12,6 +12,15 @@ class Print extends Component {
     let selectenant = this.props.allTenant.filter(t => t.tenantCode === this.props.tennant);
     selectenant = selectenant[0] ? selectenant[0] : this.props.tennant;
 
+    // Each line carries its own warehouse — show it directly, or "Multiple" when lines
+    // disagree. No header-level warehouse exists.
+    const distinctWarehouseNames = Array.from(new Set(
+      items.map((item) => item.warehouse?.warehouseName).filter(Boolean)
+    ));
+    const warehouseDisplay = distinctWarehouseNames.length > 1
+      ? "Multiple (see items below)"
+      : (distinctWarehouseNames[0] || "-");
+
     return (
       <>
         {/* Title Block */}
@@ -30,10 +39,7 @@ class Print extends Component {
             </div>
             <div className="mis-info-row">
               <span className="mis-label">Warehouse:</span>
-              <span className="mis-value">
-                {data.warehouse?.warehouseName
-                  || (items.length > 0 ? "Multiple (see items below)" : "-")}
-              </span>
+              <span className="mis-value">{warehouseDisplay}</span>
             </div>
             <div className="mis-info-row">
               <span className="mis-label">Location:</span>

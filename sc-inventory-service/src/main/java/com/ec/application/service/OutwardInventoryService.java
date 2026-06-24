@@ -618,22 +618,8 @@ public class OutwardInventoryService {
         outwardInventory.setRequestedBy(oiData.getRequestedBy());
         outwardInventory.setIssuedBy(oiData.getIssuedBy());
         outwardInventory.setInwardOutwardList(fetchInwardOutwardList(oiData.getProductWithQuantities()));
-        // Header warehouse is now a display-only derived value: the single warehouse when every
-        // line shares one (covers the common case + all legacy single-warehouse records), or null
-        // when lines span multiple warehouses — callers must fall back to per-line warehouse display.
-        outwardInventory.setWarehouse(derivePrimaryWarehouse(outwardInventory.getInwardOutwardList()));
         outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
         log.info("Exited setFields");
-    }
-
-    /** Returns the common warehouse when every line shares one, otherwise null (multi-warehouse outward). */
-    private Warehouse derivePrimaryWarehouse(Set<InwardOutwardList> lines) {
-        Set<Long> distinctWarehouseIds = lines.stream()
-                .map(l -> l.getWarehouse().getWarehouseId())
-                .collect(Collectors.toSet());
-        if (distinctWarehouseIds.size() == 1)
-            return lines.iterator().next().getWarehouse();
-        return null;
     }
 
     private boolean validateInputs(OutwardInventoryData oiData) throws Exception {
@@ -755,23 +741,6 @@ public class OutwardInventoryService {
         }
         return returnData;
     }
-
-    /*
-     * public List<OutwardInventoryExportDAO>
-     * fetchOutwardnventoryForExport(FilterDataList filterDataList) throws Exception
-     * { log.info("Invoked fetchOutwardnventoryForExport");
-     * Specification<OutwardInventory> spec =
-     * OutwardInventorySpecification.getSpecification(filterDataList); long size =
-     * spec != null ? outwardInventoryRepo.count(spec) :
-     * outwardInventoryRepo.count(); if (size > 2000) throw new
-     * Exception("Too many rows to export. Apply some more filters and try again");
-     * List<OutwardInventory> iiData = spec != null ?
-     * outwardInventoryRepo.findAll(spec) : outwardInventoryRepo.findAll();
-     * List<OutwardInventoryExportDAO> clonedData =
-     * iiData.parallelStream().map(OutwardInventoryExportDAO::new)
-     * .collect(Collectors.toList());
-     * log.info("Exited fetchOutwardnventoryForExport"); return clonedData; }
-     */
 
     public List<OutwardInventoryExportDAO2> fetchInwardnventoryForExport2(FilterDataList filterDataList)
             throws Exception {
