@@ -22,7 +22,20 @@ class Table extends CommonTable {
     if (key === "contractor") {
       return <td data-label={key}>{`${row["contractor"]["name"]}`}</td>;
     } else if (key === "warehouse") {
-      return <td data-label={key}>{`${row["warehouse"]["warehouseName"]}`}</td>;
+      // row.warehouse is only set when every line shares one warehouse — null when the
+      // outward spans multiple warehouses (open the row to see the per-line breakdown).
+      let label = "—";
+      if (row.warehouse) {
+        label = row.warehouse.warehouseName;
+      } else {
+        const distinctNames = Array.from(new Set(
+          (row.inwardOutwardList || [])
+            .map((line) => line.warehouse && line.warehouse.warehouseName)
+            .filter(Boolean)
+        ));
+        if (distinctNames.length > 0) label = `Multiple (${distinctNames.length})`;
+      }
+      return <td data-label={key}>{label}</td>;
     } else if (key === "inventoryCount") {
       return <td data-label={key}>{`${row["inwardOutwardList"].length}`}</td>;
     } else if (key === "usageLocation") {

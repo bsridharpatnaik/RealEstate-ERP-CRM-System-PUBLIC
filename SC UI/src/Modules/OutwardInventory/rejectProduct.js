@@ -17,14 +17,28 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 
 class RejectProduct extends AddForm {
-  sourceDetails = this.props?.data?.inwardOutwardList.map((item) => {
-    return {
-      value: item.product.productId,
+  // value must be unique per LINE, not per product — a product can appear on two lines
+  // if the outward drew it from two different warehouses. Display name is disambiguated
+  // with the warehouse name whenever the same product appears more than once.
+  sourceDetails = (() => {
+    const lines = (this.props?.data?.inwardOutwardList || []).map((item, idx) => ({
+      value: `${item.product.productId}_${item.warehouse ? item.warehouse.warehouseId : idx}`,
+      productId: item.product.productId,
+      warehouseId: item.warehouse ? item.warehouse.warehouseId : null,
+      warehouseName: item.warehouse ? item.warehouse.warehouseName : null,
       name: item.product.productName,
       measurementUnit: item.product.measurementUnit,
       quantity: item.quantity,
-    };
-  });
+    }));
+    const countByProduct = {};
+    lines.forEach((l) => { countByProduct[l.productId] = (countByProduct[l.productId] || 0) + 1; });
+    lines.forEach((l) => {
+      if (countByProduct[l.productId] > 1 && l.warehouseName) {
+        l.name = `${l.name} (${l.warehouseName})`;
+      }
+    });
+    return lines;
+  })();
   state = {
     value: 0,
     noproduct: {},
@@ -102,7 +116,11 @@ class RejectProduct extends AddForm {
             },
             onChange: (e, item) => {
               const p = this.state.noproduct;
-              p[key].productId = item.value || "";
+              // value is a composite per-line key (product can be on two lines from two
+              // warehouses) — productId/warehouseId are the real identifiers sent to the backend.
+              p[key].value = item.value || "";
+              p[key].productId = item.productId || "";
+              p[key].warehouseId = item.warehouseId || null;
               this.setState({
                 currentsourceDetails: this.state.currentsourceDetails.filter(
                   (x) => x.value !== item.value
@@ -154,10 +172,10 @@ class RejectProduct extends AddForm {
               const p = this.state.noproduct;
               const updatedsourceDetails = this.state.currentsourceDetails;
               p &&
-                p[key].productId &&
+                p[key].value &&
                 updatedsourceDetails.push(
                   this.sourceDetails.filter(
-                    (x) => x.value === p[key].productId
+                    (x) => x.value === p[key].value
                   )[0]
                 );
               this.setState({ currentsourceDetails: updatedsourceDetails });
@@ -229,6 +247,7 @@ class RejectProduct extends AddForm {
     const data = Object.values(this.state.noproduct).map((item) => {
       return {
         productId: item.productId,
+        warehouseId: item.warehouseId,
         quantity: Number(item.returnquantity),
         remarks: item.remarks,
       };

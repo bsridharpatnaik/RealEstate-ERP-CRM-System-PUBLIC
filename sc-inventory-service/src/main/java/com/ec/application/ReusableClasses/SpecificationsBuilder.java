@@ -140,9 +140,8 @@ public class SpecificationsBuilder<T> {
         return (root, query, cb) -> {
             query.distinct(true);
             Join<T, InwardOutwardList> items = root.join(joinTable);
-            Join<InwardOutwardList, Product> product = items.join(InwardOutwardList_.PRODUCT);
-            Join<Product, Category> category = product.join(Product_.CATEGORY);
-            return category.get(Category_.CATEGORY_NAME).in(warehouseNames);
+            Join<InwardOutwardList, Warehouse> warehouse = items.join(InwardOutwardList_.WAREHOUSE);
+            return warehouse.get(Warehouse_.WAREHOUSE_NAME).in(warehouseNames);
         };
     }
 

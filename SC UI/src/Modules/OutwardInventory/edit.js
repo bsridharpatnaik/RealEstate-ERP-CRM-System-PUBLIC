@@ -63,7 +63,6 @@ class Edit extends EditForm {
       this.formData.usageLocationId = data.usageLocation.locationId;
       this.formData.usageAreaId = data.usageArea.usageAreaId;
       this.formData.contractorId = data.contractor.contactId;
-      this.formData.warehouseId = data.warehouse.warehouseId;
       this.formData.slipNo = data.slipNo;
       this.formData.requestedBy = data.requestedBy;
       this.formData.issuedBy = data.issuedBy;
@@ -83,16 +82,22 @@ class Edit extends EditForm {
       this.formData.structureTypeId = structureTypeId;
 
       const currentStock = {};
-      this.originalQtyMap = {};   // track original qty per product for override preservation
+      // Keyed by (productId, warehouseId) — the same product can appear on two lines if
+      // it was originally outwarded from two different warehouses in this transaction.
+      this.originalQtyMap = {};   // track original qty per line for override preservation
       for (let i = 0; i < data.inwardOutwardList.length; i++) {
         const item = data.inwardOutwardList[i];
         const pid = item.product.productId;
-        p[this.key++] = {
+        const whId = item.warehouse.warehouseId;
+        const rowKey = this.key++;
+        p[rowKey] = {
           quantity: item.quantity,
           productId: pid,
+          warehouseId: whId,
+          warehouseName: item.warehouse.warehouseName,
         };
-        currentStock[pid] = item.closingStock;
-        this.originalQtyMap[pid] = item.quantity;
+        currentStock[rowKey] = item.closingStock;
+        this.originalQtyMap[this.lineKey(pid, whId)] = item.quantity;
         this.getBoqQuantity(pid);
       }
       this.oldStock = currentStock;
@@ -104,14 +109,15 @@ class Edit extends EditForm {
         filteredStructures: filteredStructures,
       });
 
-      // Load batch consumption data so overrides can be preserved when qty is unchanged
+      // Load batch consumption data so overrides can be preserved when qty is unchanged.
+      // Keyed by (productId, warehouseId) for the same reason as originalQtyMap above.
       this.batchConsumptionData = {};
       const bcResp = await API.GET(apiEndpoints.getOutwardBatchConsumptions(this.props.id));
       if (bcResp.success) {
         (bcResp.data || []).forEach(c => {
-          const pid = c.productId;
-          if (!this.batchConsumptionData[pid]) this.batchConsumptionData[pid] = [];
-          this.batchConsumptionData[pid].push(c);
+          const key = this.lineKey(c.productId, c.warehouseId);
+          if (!this.batchConsumptionData[key]) this.batchConsumptionData[key] = [];
+          this.batchConsumptionData[key].push(c);
         });
         // Force re-render so hasOverride is evaluated with loaded data immediately,
         // preventing race condition where quantity field appears enabled then snaps to disabled on first keystroke.
@@ -119,13 +125,21 @@ class Edit extends EditForm {
       }
     }
   }
+
+  lineKey(productId, warehouseId) {
+    return `${productId}_${warehouseId}`;
+  }
   renderProduct(key) {
-    const currentProductId = this.state.noproduct?.[key]?.productId;
-    const selectedProducts = Object.keys(this.state.noproduct).map(index => this?.state?.noproduct?.[index]?.productId);
-    const remainingProducts = (this.props.dropdowns?.product??[]).filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
+    // Product list isn't editable here (field is disabled below), but the same product
+    // can legitimately appear on two rows if the original outward drew it from two
+    // different warehouses — so no cross-row exclusion is needed.
+    const remainingProducts = this.props.dropdowns?.product ?? [];
     const productId = this.state.noproduct[key].productId;
+    const warehouseName = this.state.noproduct[key].warehouseName;
     const unit = this.props.units[productId] || '—';
-    const closingStock = productId ? (this.state.currentStock[productId] ?? '—') : '—';
+    // Stock keyed per row (not per product) — the same product can be on two rows
+    // with two different warehouses and two different stock levels.
+    const closingStock = productId ? (this.state.currentStock[key] ?? '—') : '—';
     const boqRemaining = productId ? (this.state.boqQuantity[productId] ?? '—') : '—';
 
     return (
@@ -206,6 +220,7 @@ class Edit extends EditForm {
             background: '#f5f7fa', borderRadius: 4, fontSize: 12,
             color: '#555', marginBottom: 6, marginTop: 2,
           }}>
+            <span><span style={{ color: '#999' }}>Warehouse:</span> <strong>{warehouseName || '—'}</strong></span>
             <span><span style={{ color: '#999' }}>Unit:</span> <strong>{unit}</strong></span>
             <span><span style={{ color: '#999' }}>Closing Stock:</span> <strong>{closingStock}</strong></span>
             <span><span style={{ color: '#999' }}>BOQ Remaining:</span> <strong>{boqRemaining}</strong></span>
@@ -215,9 +230,9 @@ class Edit extends EditForm {
     );
   }
   async getCurrentStock(index) {
-    const warehouseId = this.formData.warehouseId;
+    const warehouseId = this.state.noproduct[index].warehouseId;
     const productId = this.state.noproduct[index].productId;
-    if (!productId) {
+    if (!productId || !warehouseId) {
       return;
     }
     const response = await API.GET(
@@ -228,12 +243,12 @@ class Edit extends EditForm {
         warehouseId
     );
     if (response.success) {
+      // Keyed per row, not per product — see renderProduct() for why.
       const currentStock = this.state.currentStock;
-      const productId = this.state.noproduct[index].productId;
-      currentStock[productId] =
+      currentStock[index] =
         Number(response.data) -
         Number(this.state.noproduct[index].quantity) +
-        (this.oldStock[productId] || 0);
+        (this.oldStock[index] || 0);
       this.setState({ currentStock: { ...currentStock } });
     }
   }
@@ -288,11 +303,13 @@ class Edit extends EditForm {
 
     const params = this.formData;
 
-    // Batch override handling for edit
+    // Batch override handling for edit — keyed by (productId, warehouseId) since the
+    // same product can be on two lines with two different warehouses.
     params.productWithQuantities = Object.values(this.state.noproduct).map(p => {
       const result = { ...p };
-      const originalQty = (this.originalQtyMap || {})[p.productId];
-      const consumptions = (this.batchConsumptionData || {})[p.productId] || [];
+      const lineKey = this.lineKey(p.productId, p.warehouseId);
+      const originalQty = (this.originalQtyMap || {})[lineKey];
+      const consumptions = (this.batchConsumptionData || {})[lineKey] || [];
       const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
       const hasOverride = overriddenConsumptions.length > 0;
       const qtyChanged = originalQty != null && Math.abs(p.quantity - originalQty) > 0.001;
@@ -332,8 +349,9 @@ class Edit extends EditForm {
     // Check if any product with multi-batch override + qty change still needs re-allocation
     const needsRealloc = Object.keys(this.state.noproduct).find(key => {
       const p = this.state.noproduct[key];
-      const originalQty = (this.originalQtyMap || {})[p.productId];
-      const consumptions = (this.batchConsumptionData || {})[p.productId] || [];
+      const lineKey = this.lineKey(p.productId, p.warehouseId);
+      const originalQty = (this.originalQtyMap || {})[lineKey];
+      const consumptions = (this.batchConsumptionData || {})[lineKey] || [];
       const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
       const hasMultiOverride = overriddenConsumptions.length > 1 || (consumptions.length > 1 && overriddenConsumptions.length > 0);
       const qtyChanged = originalQty != null && Math.abs(p.quantity - originalQty) > 0.001;
@@ -365,10 +383,10 @@ class Edit extends EditForm {
   }
   openBatchReassignModal(productKey) {
     const p = this.state.noproduct[productKey];
-    const consumptions = (this.batchConsumptionData || {})[p.productId] || [];
+    const consumptions = (this.batchConsumptionData || {})[this.lineKey(p.productId, p.warehouseId)] || [];
     const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
     const productEntry = (this.props.dropdowns?.product || []).find(pr => pr.id === p.productId);
-    const productName = productEntry?.name || `Product ${p.productId}`;
+    const productName = (productEntry?.name || `Product ${p.productId}`) + (p.warehouseName ? ` (${p.warehouseName})` : '');
     const entries = consumptions.map(c => {
       const batch = c.batch || {};
       const parts = [batch.brand, batch.lotNumber, batch.expiryDate].filter(Boolean);
@@ -424,26 +442,6 @@ class Edit extends EditForm {
     });
   }
 
-  async updateStockInfo(id) {
-    const params = {};
-    params.warehouseId = id;
-    params.productIds = Object.values(this.state.noproduct).map(
-      (p) => p.productId
-    );
-    const response = await API.POST(apiEndpoints.getMultiStock, params);
-    if (response.success) {
-      const data = response.data;
-      const currentStock = {};
-      const products = Object.values(this.state.noproduct);
-      data.forEach((element) => {
-        const productId = element.productId;
-        let product = products.filter((p) => p.productId === productId);
-        product = product[0];
-        currentStock[productId] = element.stock - Number(product.quantity);
-      });
-      this.setState({ currentStock: currentStock });
-    }
-  }
   render() {
     return (
       <div className="list-section add">
@@ -458,25 +456,6 @@ class Edit extends EditForm {
                 disabled: true,
                 maxDate: moment(),
                 //minDate: moment(this.formData.date).add(-3, 'd'),
-              })}
-
-              {this.renderAutoComplete({
-                fieldname: "warehouseId",
-                placeholder: "Warehouse",
-                options: this.props.dropdowns.warehouse,
-                disableClearable: true,
-                required: true,
-                skipAdd: true,
-                disabled: true,
-                getOption: (option) => {
-                  return option["name"];
-                },
-                onChange: (e, value) => {
-                  if (value) {
-                    this.formData.warehouseId = value.id;
-                    this.updateStockInfo(value.id);
-                  }
-                },
               })}
             </div>
             <div className="flex width50">

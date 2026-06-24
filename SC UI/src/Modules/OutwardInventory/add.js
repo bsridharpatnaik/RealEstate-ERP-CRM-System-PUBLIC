@@ -37,7 +37,6 @@ class Add extends AddForm {
     currentStock: {},
     boqQuantity: {},
     allProductsStockMap: {},
-    selectedWarehouseId: null,
     boqViolationDialog: { open: false, violations: [] },
     availableBatches: {}, // productId → [batch]
     batchPreviews: {},     // productKey → { batches: [], loading: false, error: null }
@@ -79,12 +78,6 @@ class Add extends AddForm {
         aria-label="add"
         disabled={Object.keys(this.state.noproduct).length === 50}
         onClick={() => {
-          if (!this.formData.warehouseId) {
-            this.props.enqueueSnackbar("Select Warehouse first", {
-              variant: "error",
-            });
-            return;
-          }
           if (!this.formData.usageLocationId) {
             this.props.enqueueSnackbar("Select Structure first", {
               variant: "error",
@@ -108,12 +101,14 @@ class Add extends AddForm {
   }
 
   renderProduct(key) {
-    const currentProductId = this.state.noproduct?.[key]?.productId;
-    const selectedProducts = Object.keys(this.state.noproduct).map(index => this?.state?.noproduct?.[index]?.productId);
-    const remainingProducts = (this.props.dropdowns?.product??[]).filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
+    // Same product can now appear on more than one row (outwarded from different
+    // warehouses), so the product picker no longer excludes already-selected products.
+    const remainingProducts = this.props.dropdowns?.product ?? [];
     const productId = this.state.noproduct[key].productId;
     const unit = this.props.units[productId] || '—';
-    const closingStock = productId ? (this.state.currentStock[productId] ?? '—') : '—';
+    // Stock/batch caches are keyed per row (not per product) since the same product
+    // can appear on two rows with two different warehouses and two different stock levels.
+    const closingStock = productId ? (this.state.currentStock[key] ?? '—') : '—';
     const boqRemaining = productId ? (this.state.boqQuantity[productId] ?? '—') : '—';
 
     return (
@@ -147,22 +142,24 @@ class Add extends AddForm {
         </div>
 
         <div style={{ padding: '10px 12px 4px' }}>
-          {/* Row 1: Product (wide) + Quantity (narrow) */}
+          {/* Row 1: Product + Warehouse (own per line, so the same product can be
+              outwarded from two different warehouses in one entry) + Quantity */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-            <div style={{ flex: 3 }}>
+            <div style={{ flex: 2.2 }}>
               <Autocomplete
                 id={`product-autocomplete-${key}`}
                 options={remainingProducts}
                 disableClearable
                 getOptionLabel={(option) => option.name || ""}
                 renderOption={(option) => {
-                  const { allProductsStockMap, selectedWarehouseId } = this.state;
+                  const { allProductsStockMap } = this.state;
+                  const rowWarehouseId = this.state.noproduct[key]?.warehouseId;
                   const stockInfo = allProductsStockMap[option.id];
                   let stock = null;
                   let unit = "";
-                  if (stockInfo && selectedWarehouseId) {
+                  if (stockInfo && rowWarehouseId) {
                     const entry = stockInfo.warehouseStocks.find(
-                      ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
+                      ws => Number(ws.warehouseId) === Number(rowWarehouseId)
                     );
                     stock = entry ? Number(entry.stock.toFixed(2)) : 0;
                     unit = stockInfo.measurementUnit || "";
@@ -188,44 +185,19 @@ class Add extends AddForm {
                   const p = this.state.noproduct;
                   p[key].productId = value.id || "";
                   if (value) {
-                    const { allProductsStockMap, selectedWarehouseId } = this.state;
+                    const { allProductsStockMap } = this.state;
+                    const rowWarehouseId = p[key].warehouseId;
                     const stockInfo = allProductsStockMap[value.id];
-                    if (selectedWarehouseId) {
-                      if (!stockInfo || stockInfo.warehouseStocks.length === 0) {
-                        this.props.enqueueSnackbar(
-                          `${value.name} is out of stock in all warehouses`,
-                          { variant: "warning" }
-                        );
-                      } else {
-                        const entry = stockInfo.warehouseStocks.find(
-                          ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
-                        );
-                        const stockInWarehouse = entry ? entry.stock : 0;
-                        if (stockInWarehouse <= 0) {
-                          const otherWarehouses = stockInfo.warehouseStocks.filter(ws => ws.stock > 0);
-                          const selectedWarehouse = (this.props.dropdowns.warehouse || []).find(
-                            w => Number(w.id) === Number(selectedWarehouseId)
-                          );
-                          const warehouseName = selectedWarehouse ? selectedWarehouse.name : selectedWarehouseId;
-                          if (otherWarehouses.length > 0) {
-                            const otherNames = otherWarehouses.map(ws => ws.warehouseName).join(', ');
-                            this.props.enqueueSnackbar(
-                              `${value.name} does not have stock in warehouse ${warehouseName}. It has stock in warehouse(s) - ${otherNames}`,
-                              { variant: "warning" }
-                            );
-                          } else {
-                            this.props.enqueueSnackbar(
-                              `${value.name} is out of stock in all warehouses`,
-                              { variant: "warning" }
-                            );
-                          }
-                        }
-                      }
+                    if (rowWarehouseId) {
+                      this.warnIfNoStockInWarehouse(value, stockInfo, rowWarehouseId);
                     }
+                    this.setState({ noproduct: { ...p } });
                     this.getCurrentStock(key);
                     this.getBoqQuantity(key);
-                    this.fetchBatchesForProduct(value.id, this.formData.warehouseId);
-                    setTimeout(() => this.fetchBatchPreview(key), 100);
+                    if (rowWarehouseId) {
+                      this.fetchBatchesForProduct(key, value.id, rowWarehouseId);
+                      setTimeout(() => this.fetchBatchPreview(key), 100);
+                    }
                   }
                 }}
                 renderInput={(params) => (
@@ -241,7 +213,42 @@ class Add extends AddForm {
                 )}
               />
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1.6 }}>
+              <Autocomplete
+                id={`warehouse-autocomplete-${key}`}
+                options={this.props.dropdowns.warehouse || []}
+                disableClearable
+                value={(this.props.dropdowns.warehouse || []).find(
+                  w => Number(w.id) === Number(this.state.noproduct[key]?.warehouseId)
+                ) || null}
+                getOptionLabel={(option) => option.name || ""}
+                onChange={(e, value) => {
+                  const p = this.state.noproduct;
+                  p[key].warehouseId = value ? value.id : null;
+                  this.setState({ noproduct: { ...p } });
+                  const productId = p[key].productId;
+                  if (productId && value) {
+                    const stockInfo = this.state.allProductsStockMap[productId];
+                    this.warnIfNoStockInWarehouse({ id: productId, name: this.props.dropdowns.product?.find(pr => pr.id === productId)?.name || 'Product' }, stockInfo, value.id);
+                    this.fetchBatchesForProduct(key, productId, value.id);
+                    setTimeout(() => this.fetchBatchPreview(key), 100);
+                  }
+                  this.getCurrentStock(key);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    name="warehouseId"
+                    variant="outlined"
+                    margin="normal"
+                    label="Warehouse"
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                )}
+              />
+            </div>
+            <div style={{ flex: 1.2 }}>
               {this.renderTextField({
                 fieldname: "quantity",
                 placeholder: "Quantity",
@@ -253,11 +260,12 @@ class Add extends AddForm {
                   const p = this.state.noproduct;
                   p[key].quantity = value;
                   const productId = this.state.noproduct[key].productId;
-                  const { allProductsStockMap, selectedWarehouseId } = this.state;
+                  const rowWarehouseId = this.state.noproduct[key].warehouseId;
+                  const { allProductsStockMap } = this.state;
                   const stockInfo = allProductsStockMap[productId];
-                  if (stockInfo && selectedWarehouseId) {
+                  if (stockInfo && rowWarehouseId) {
                     const entry = stockInfo.warehouseStocks.find(
-                      ws => Number(ws.warehouseId) === Number(selectedWarehouseId)
+                      ws => Number(ws.warehouseId) === Number(rowWarehouseId)
                     );
                     const stockInWarehouse = entry ? entry.stock : 0;
                     if (stockInWarehouse > 0 && Number(value) > stockInWarehouse) {
@@ -325,7 +333,7 @@ class Add extends AddForm {
 
         {/* Batch allocation section — below inputs, full width */}
         {(() => {
-          const batches = this.state.availableBatches[productId] || [];
+          const batches = this.state.availableBatches[key] || [];
           const preview = this.state.batchPreviews[key];
           const overrideFifo = !!this.state.noproduct[key].overrideFifo;
           const overrideBatches = this.state.noproduct[key].overrideBatches || [];
@@ -518,19 +526,43 @@ class Add extends AddForm {
       </div>
     );
   }
-  async fetchBatchesForProduct(productId, warehouseId) {
+  /** key = the product row this fetch is for (not the product itself — same product can
+   *  be on two rows with two different warehouses, each needing its own batch list). */
+  async fetchBatchesForProduct(key, productId, warehouseId) {
     if (!productId || !warehouseId) return;
     const response = await API.GET(apiEndpoints.getBatchesForProduct(productId, warehouseId));
     if (response.success && Array.isArray(response.data)) {
       const batches = this.state.availableBatches;
-      batches[productId] = response.data.filter(b => b.qtyRemaining > 0);
+      batches[key] = response.data.filter(b => b.qtyRemaining > 0);
       this.setState({ availableBatches: { ...batches } });
+    }
+  }
+
+  warnIfNoStockInWarehouse(product, stockInfo, warehouseId) {
+    if (!stockInfo || !stockInfo.warehouseStocks || stockInfo.warehouseStocks.length === 0) {
+      this.props.enqueueSnackbar(`${product.name} is out of stock in all warehouses`, { variant: "warning" });
+      return;
+    }
+    const entry = stockInfo.warehouseStocks.find(ws => Number(ws.warehouseId) === Number(warehouseId));
+    const stockInWarehouse = entry ? entry.stock : 0;
+    if (stockInWarehouse > 0) return;
+    const otherWarehouses = stockInfo.warehouseStocks.filter(ws => ws.stock > 0);
+    const selectedWarehouse = (this.props.dropdowns.warehouse || []).find(w => Number(w.id) === Number(warehouseId));
+    const warehouseName = selectedWarehouse ? selectedWarehouse.name : warehouseId;
+    if (otherWarehouses.length > 0) {
+      const otherNames = otherWarehouses.map(ws => ws.warehouseName).join(', ');
+      this.props.enqueueSnackbar(
+        `${product.name} does not have stock in warehouse ${warehouseName}. It has stock in warehouse(s) - ${otherNames}`,
+        { variant: "warning" }
+      );
+    } else {
+      this.props.enqueueSnackbar(`${product.name} is out of stock in all warehouses`, { variant: "warning" });
     }
   }
 
   async fetchBatchPreview(key) {
     const product = this.state.noproduct[key];
-    const warehouseId = this.formData.warehouseId;
+    const warehouseId = product?.warehouseId;
     if (!product || !product.productId || !product.quantity || !warehouseId) return;
 
     const overrideFifo = !!product.overrideFifo;
@@ -565,9 +597,9 @@ class Add extends AddForm {
   }
 
   async getCurrentStock(index) {
-    const warehouseId = this.formData.warehouseId;
+    const warehouseId = this.state.noproduct[index].warehouseId;
     const productId = this.state.noproduct[index].productId;
-    if (!productId) {
+    if (!productId || !warehouseId) {
       return;
     }
     const response = await API.GET(
@@ -578,9 +610,10 @@ class Add extends AddForm {
         warehouseId
     );
     if (response.success) {
+      // Keyed per row, not per product — the same product can be on two rows
+      // with two different warehouses and two different stock levels.
       const currentStock = this.state.currentStock;
-      const productId = this.state.noproduct[index].productId;
-      currentStock[productId] =
+      currentStock[index] =
         Number(response.data) - Number(this.state.noproduct[index].quantity);
       this.setState({ currentStock: { ...currentStock } });
     }
@@ -635,6 +668,32 @@ class Add extends AddForm {
       });
       return;
     }
+    // Every row needs a product and its own warehouse now that warehouse is no longer a single header field
+    const rowMissingProduct = Object.values(this.state.noproduct).some(p => !p.productId);
+    if (rowMissingProduct) {
+      this.props.enqueueSnackbar("Select a product for every row.", { variant: "error" });
+      return;
+    }
+    const rowMissingWarehouse = Object.values(this.state.noproduct).some(p => !p.warehouseId);
+    if (rowMissingWarehouse) {
+      this.props.enqueueSnackbar("Select a warehouse for every product.", { variant: "error" });
+      return;
+    }
+
+    // Same product can be outwarded from two different warehouses, but not from the
+    // same product+warehouse combination twice — that's just two numbers that should be one.
+    const lineKeys = Object.values(this.state.noproduct).map(p => `${p.productId}_${p.warehouseId}`);
+    const duplicateKey = lineKeys.find((k, i) => lineKeys.indexOf(k) !== i);
+    if (duplicateKey) {
+      const [dupProductId] = duplicateKey.split('_');
+      const dupProduct = (this.props.dropdowns.product || []).find(pr => String(pr.id) === dupProductId);
+      this.props.enqueueSnackbar(
+        `"${dupProduct ? dupProduct.name : 'A product'}" is added twice from the same warehouse. Combine into a single line.`,
+        { variant: "error" }
+      );
+      return;
+    }
+
     // Validate batch confirmation for FIFO (non-override) products with preview loaded
     for (const [k, product] of Object.entries(this.state.noproduct)) {
       const preview = this.state.batchPreviews[k];
@@ -675,6 +734,7 @@ class Add extends AddForm {
         : null;
       return {
         productId: p.productId,
+        warehouseId: p.warehouseId,
         quantity: p.quantity,
         overrideBatches: overrideBatches && overrideBatches.length > 0 ? overrideBatches : null,
         overrideComment: p.overrideFifo ? (p.overrideComment || null) : null,
@@ -695,26 +755,6 @@ class Add extends AddForm {
       }
     }
   }
-  async updateStockInfo(id) {
-    const params = {};
-    params.warehouseId = id;
-    params.productIds = Object.values(this.state.noproduct).map(
-      (p) => p.productId
-    );
-    const response = await API.POST(apiEndpoints.getMultiStock, params);
-    if (response.success) {
-      const data = response.data;
-      const currentStock = {};
-      const products = Object.values(this.state.noproduct);
-      data.forEach((element) => {
-        const productId = element.productId;
-        let product = products.filter((p) => p.productId === productId);
-        product = product[0];
-        currentStock[productId] = element.stock - Number(product.quantity);
-      });
-      this.setState({ currentStock: currentStock });
-    }
-  }
   render() {
     const days = getRoleEditConstraintDays();
 
@@ -729,23 +769,6 @@ class Add extends AddForm {
               label: messages.fields.date,
               maxDate: moment(),
               minDate: moment().add(-days, "d"),
-            })}
-
-            {this.renderAutoComplete({
-              fieldname: "warehouseId",
-              placeholder: "Warehouse",
-              options: this.props.dropdowns.warehouse,
-              disableClearable: true,
-              required: true,
-              getOption: (option) => {
-                return option["name"];
-              },
-              onChange: (e, value) => {
-                if (value) {
-                  this.formData.warehouseId = value.id;
-                  this.setState({ selectedWarehouseId: value.id });
-                }
-              },
             })}
           </div>
           <div className="flex width50">

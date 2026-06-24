@@ -68,12 +68,26 @@ public final class ActivityLogDescription {
         return m;
     }
 
+    /** Single-quantity item with warehouse — used where a transaction can span multiple warehouses */
+    public static Map<String, Object> item(String product, double qty, String warehouse) {
+        Map<String, Object> m = item(product, qty);
+        if (warehouse != null) m.put("warehouse", warehouse);
+        return m;
+    }
+
     /** Old → new quantity item (UPDATE) */
     public static Map<String, Object> itemChanged(String product, double oldQty, double newQty) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("product", product);
         m.put("oldQty", fmt(oldQty));
         m.put("newQty", fmt(newQty));
+        return m;
+    }
+
+    /** Old → new quantity item with warehouse — used where a transaction can span multiple warehouses */
+    public static Map<String, Object> itemChanged(String product, double oldQty, double newQty, String warehouse) {
+        Map<String, Object> m = itemChanged(product, oldQty, newQty);
+        if (warehouse != null) m.put("warehouse", warehouse);
         return m;
     }
 

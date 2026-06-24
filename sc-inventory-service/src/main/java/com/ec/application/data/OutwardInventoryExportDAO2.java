@@ -73,7 +73,7 @@ public class OutwardInventoryExportDAO2 {
         this.quantity = iol.getQuantity();
         this.closingStock = iol.getClosingStock();
         this.measurementUnit = iol.getProduct().getMeasurementUnit();
-        this.warehouse = oi.getWarehouse().getWarehouseName();
+        this.warehouse = iol.getWarehouse().getWarehouseName();
         this.usageArea = oi.getUsageArea().getUsageAreaName();
         this.contractor = oi.getContractor().getName();
         this.usageLocation = oi.getUsageLocation().getLocationName();

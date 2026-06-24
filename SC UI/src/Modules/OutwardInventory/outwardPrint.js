@@ -30,7 +30,10 @@ class Print extends Component {
             </div>
             <div className="mis-info-row">
               <span className="mis-label">Warehouse:</span>
-              <span className="mis-value">{data.warehouse?.warehouseName || "-"}</span>
+              <span className="mis-value">
+                {data.warehouse?.warehouseName
+                  || (items.length > 0 ? "Multiple (see items below)" : "-")}
+              </span>
             </div>
             <div className="mis-info-row">
               <span className="mis-label">Location:</span>
@@ -68,6 +71,7 @@ class Print extends Component {
             <tr>
               <th className="col-no">SR.</th>
               <th className="col-desc">DESCRIPTION</th>
+              <th className="col-desc">WAREHOUSE</th>
               <th className="col-uom">UOM</th>
               <th className="col-qty">QUANTITY</th>
               <th className="col-qty">CLOSING STOCK</th>
@@ -78,6 +82,7 @@ class Print extends Component {
               <tr key={index}>
                 <td className="col-no">{index + 1}</td>
                 <td className="col-desc">{item.product.productName}</td>
+                <td className="col-desc">{item.warehouse?.warehouseName || "-"}</td>
                 <td className="col-uom">{item.product?.measurementUnit || "-"}</td>
                 <td className="col-qty">{item.quantity}</td>
                 <td className="col-qty">{item.closingStock}</td>

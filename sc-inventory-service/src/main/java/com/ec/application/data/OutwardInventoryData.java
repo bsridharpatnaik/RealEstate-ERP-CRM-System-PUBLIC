@@ -22,10 +22,11 @@ public class OutwardInventoryData
 	
 	@NonNull
 	Long usageLocationId;
-	
-	@NonNull
+
+	// Deprecated: warehouse is now selected per product line (see ProductWithQuantity.warehouseId).
+	// Kept nullable for backward compatibility with any stale clients; no longer authoritative.
 	Long warehouseId;
-	
+
 	String slipNo;
 	
 	@NonNull

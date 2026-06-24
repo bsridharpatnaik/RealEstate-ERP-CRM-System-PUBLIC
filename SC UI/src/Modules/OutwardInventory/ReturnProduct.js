@@ -18,14 +18,28 @@ import DialogActions from "@material-ui/core/DialogActions";
 import moment from "moment";
 
 class ReturnProduct extends AddForm {
-  sourceDetails = this.props?.data?.inwardOutwardList.map((item) => {
-    return {
-      value: item.product.productId,
+  // value must be unique per LINE, not per product — a product can appear on two lines
+  // if the outward drew it from two different warehouses. Display name is disambiguated
+  // with the warehouse name whenever the same product appears more than once.
+  sourceDetails = (() => {
+    const lines = (this.props?.data?.inwardOutwardList || []).map((item, idx) => ({
+      value: `${item.product.productId}_${item.warehouse ? item.warehouse.warehouseId : idx}`,
+      productId: item.product.productId,
+      warehouseId: item.warehouse ? item.warehouse.warehouseId : null,
+      warehouseName: item.warehouse ? item.warehouse.warehouseName : null,
       name: item.product.productName,
       measurementUnit: item.product.measurementUnit,
       quantity: item.quantity,
-    };
-  });
+    }));
+    const countByProduct = {};
+    lines.forEach((l) => { countByProduct[l.productId] = (countByProduct[l.productId] || 0) + 1; });
+    lines.forEach((l) => {
+      if (countByProduct[l.productId] > 1 && l.warehouseName) {
+        l.name = `${l.name} (${l.warehouseName})`;
+      }
+    });
+    return lines;
+  })();
   state = {
     value: 0,
     noproduct: {},
@@ -46,18 +60,21 @@ class ReturnProduct extends AddForm {
     this.setState({ noproduct: { ...p } });
   }
 
-  /** Load batch consumptions for a product in this outward. Sets state.batchConsumptions[productId]. */
-  async loadBatchConsumptions(productId) {
+  /** Load batch consumptions for one line of this outward. Cached per LINE (lineValue), not per
+   *  product — a product on two lines (different warehouses) consumed two different sets of
+   *  batches, and a productId-only cache key would conflate them. */
+  async loadBatchConsumptions(lineValue, productId, warehouseId) {
     if (!productId) return;
     const outwardId = this.props?.data?.outwardid;
     if (!outwardId) return;
     try {
       const response = await API.GET(apiEndpoints.getOutwardBatchConsumptions(outwardId));
       if (response.success && Array.isArray(response.data)) {
-        // Filter to this product
-        const forProduct = response.data.filter((c) => c.productId === productId);
+        const forLine = response.data.filter((c) =>
+          c.productId === productId && (warehouseId == null || c.warehouseId === warehouseId)
+        );
         this.setState((prev) => ({
-          batchConsumptions: { ...prev.batchConsumptions, [productId]: forProduct },
+          batchConsumptions: { ...prev.batchConsumptions, [lineValue]: forLine },
         }));
       }
     } catch (e) {
@@ -66,11 +83,11 @@ class ReturnProduct extends AddForm {
   }
 
   /**
-   * Returns true if the product used multiple distinct batches in the outward
+   * Returns true if this line used multiple distinct batches in the outward
    * (i.e., batch selection is required for return).
    */
-  hasMultipleBatches(productId) {
-    const consumptions = this.state.batchConsumptions[productId] || [];
+  hasMultipleBatches(lineValue) {
+    const consumptions = this.state.batchConsumptions[lineValue] || [];
     const distinctBatches = new Set(consumptions.map((c) => c.batch?.batchId));
     return distinctBatches.size > 1;
   }
@@ -84,7 +101,7 @@ class ReturnProduct extends AddForm {
       }
       Object.values(this.state.noproduct).forEach((item) => {
         if (item && item.productId && item.returnquantity && item.returnquantity > 0 && isValid) {
-          if (this.hasMultipleBatches(item.productId)) {
+          if (this.hasMultipleBatches(item.value)) {
             const batchEntries = item.batchReturnQtys || {};
             const batchTotal = Object.values(batchEntries).reduce((s, v) => s + (v || 0), 0);
             // Sum of per-batch qtys must equal the entered return quantity
@@ -123,8 +140,8 @@ class ReturnProduct extends AddForm {
   renderBatchReturnSection(key, item) {
     const productId = item.productId;
     if (!productId) return null;
-    const consumptions = this.state.batchConsumptions[productId] || [];
-    if (!this.hasMultipleBatches(productId)) return null;
+    const consumptions = this.state.batchConsumptions[item.value] || [];
+    if (!this.hasMultipleBatches(item.value)) return null;
 
     // Group consumptions by batchId
     const batchMap = {};
@@ -216,7 +233,11 @@ class ReturnProduct extends AddForm {
             },
             onChange: (e, selectedItem) => {
               const p = this.state.noproduct;
-              p[key].productId = selectedItem.value || "";
+              // value is a composite per-line key (product can be on two lines from two
+              // warehouses) — productId/warehouseId are the real identifiers sent to the backend.
+              p[key].value = selectedItem.value || "";
+              p[key].productId = selectedItem.productId || "";
+              p[key].warehouseId = selectedItem.warehouseId || null;
               p[key].batchReturnQtys = {};
               this.setState({
                 currentsourceDetails: this.state.currentsourceDetails.filter(
@@ -227,8 +248,8 @@ class ReturnProduct extends AddForm {
                 p[key].quantity = selectedItem.quantity;
                 p[key].measurementUnit = selectedItem.measurementUnit;
               }
-              // Load batch consumptions for this product
-              this.loadBatchConsumptions(selectedItem.value);
+              // Load batch consumptions for this line
+              this.loadBatchConsumptions(selectedItem.value, selectedItem.productId, selectedItem.warehouseId);
               this.checkValidation();
             },
           })}
@@ -258,10 +279,10 @@ class ReturnProduct extends AddForm {
               const p = this.state.noproduct;
               const updatedsourceDetails = this.state.currentsourceDetails;
               p &&
-                p[key].productId &&
+                p[key].value &&
                 updatedsourceDetails.push(
                   this.sourceDetails.filter(
-                    (x) => x.value === p[key].productId
+                    (x) => x.value === p[key].value
                   )[0]
                 );
               this.setState({ currentsourceDetails: updatedsourceDetails });
@@ -333,6 +354,7 @@ class ReturnProduct extends AddForm {
     const data = Object.values(this.state.noproduct).map((item) => {
       const entry = {
         productId: item.productId,
+        warehouseId: item.warehouseId,
         quantity: Number(item.returnquantity),
       };
       // Include returnBatches if user specified per-batch qtys (multi-batch scenario)

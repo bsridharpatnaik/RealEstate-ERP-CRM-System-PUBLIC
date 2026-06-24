@@ -48,8 +48,10 @@ public final class OutwardInventorySpecification {
         if (notEmpty(contractorNames))
             spec = and(spec, specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, contractorNames));
 
+        // Matches if ANY line item in the outward is from one of the selected warehouses
+        // (an outward can now span multiple warehouses across its lines).
         if (notEmpty(warehouseNames))
-            spec = and(spec, specbldr.whereChildFieldContains(OutwardInventory_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, warehouseNames));
+            spec = and(spec, specbldr.whereWarehouseContains(warehouseNames, OutwardInventory_.INWARD_OUTWARD_LIST));
 
         if (notEmpty(usageLocations))
             spec = and(spec, specbldr.whereChildFieldEquals(OutwardInventory_.USAGE_LOCATION, UsageLocation_.LOCATION_NAME, usageLocations));
@@ -67,7 +69,7 @@ public final class OutwardInventorySpecification {
             Specification<OutwardInventory> gs = null;
             gs = or(gs, outwardIdMatch(globalSearch));
             gs = or(gs, specbldr.whereChildFieldContains(OutwardInventory_.CONTRACTOR, Contractor_.NAME, globalSearch));
-            gs = or(gs, specbldr.whereChildFieldContains(OutwardInventory_.WAREHOUSE, Warehouse_.WAREHOUSE_NAME, globalSearch));
+            gs = or(gs, lineItemWarehouseNameLike(globalSearch));
             gs = or(gs, lineItemProductNameLike(globalSearch));
             gs = or(gs, specbldr.whereDirectFieldContains(OutwardInventory_.SLIP_NO, globalSearch));
             gs = or(gs, specbldr.whereDirectFieldContains(OutwardInventory_.ADDITIONAL_INFO, globalSearch));
@@ -132,6 +134,24 @@ public final class OutwardInventorySpecification {
                 String like = "%" + term + "%";
                 orPreds.add(cb.like(product.get(Product_.PRODUCT_NAME), like));
                 orPreds.add(cb.like(product.get(Product_.PRODUCT_CODE), like));
+            }
+            sub.where(cb.or(orPreds.toArray(new Predicate[0])));
+            return root.get(OutwardInventory_.OUTWARDID).in(sub);
+        };
+    }
+
+    /** globalSearch: LIKE on per-line warehouse name via parent-ID IN subquery. */
+    private static Specification<OutwardInventory> lineItemWarehouseNameLike(List<String> terms) {
+        return (root, query, cb) -> {
+            Subquery<Long> sub = query.subquery(Long.class);
+            Root<OutwardInventory> parent = sub.from(OutwardInventory.class);
+            Join<OutwardInventory, InwardOutwardList> items =
+                    parent.join(OutwardInventory_.INWARD_OUTWARD_LIST, JoinType.INNER);
+            Join<InwardOutwardList, Warehouse> warehouse = items.join(InwardOutwardList_.WAREHOUSE, JoinType.INNER);
+            sub.select(parent.get(OutwardInventory_.OUTWARDID));
+            List<Predicate> orPreds = new ArrayList<>();
+            for (String term : terms) {
+                orPreds.add(cb.like(warehouse.get(Warehouse_.WAREHOUSE_NAME), "%" + term + "%"));
             }
             sub.where(cb.or(orPreds.toArray(new Predicate[0])));
             return root.get(OutwardInventory_.OUTWARDID).in(sub);

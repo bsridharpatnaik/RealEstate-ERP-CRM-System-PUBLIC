@@ -461,7 +461,21 @@ class Details extends CommonDetails {
                 </div>
                 <div className="detail-item">
                   <div className="label">{messages.common.warehouse}</div>
-                  <div className="value">{data.warehouse.warehouseName}</div>
+                  <div className="value">
+                    {(() => {
+                      // data.warehouse is only set when every line shares one warehouse —
+                      // it's null for an outward that spans multiple warehouses (see line items below).
+                      if (data.warehouse) return data.warehouse.warehouseName;
+                      const distinctNames = Array.from(new Set(
+                        (data.inwardOutwardList || [])
+                          .map((row) => row.warehouse && row.warehouse.warehouseName)
+                          .filter(Boolean)
+                      ));
+                      return distinctNames.length > 0
+                        ? `Multiple Warehouses (${distinctNames.join(', ')})`
+                        : '—';
+                    })()}
+                  </div>
                 </div>
                 <div className="detail-item">
                   <div className="label">{messages.common.location}</div>
@@ -508,15 +522,17 @@ class Details extends CommonDetails {
                 <TableHead>
                   <TableRow>
                     <TableCell>{messages.common.inventory}</TableCell>
+                    <TableCell>{messages.common.warehouse}</TableCell>
                     <TableCell>{messages.common.unit}</TableCell>
                     <TableCell>{messages.common.quantity}</TableCell>
                     <TableCell>{messages.common.closingStock}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {data.inwardOutwardList.map((row) => (
-                    <TableRow key={row.productName}>
+                  {data.inwardOutwardList.map((row, i) => (
+                    <TableRow key={`${row.product.productId}-${row.warehouse ? row.warehouse.warehouseId : i}`}>
                       <TableCell>{row.product.productName}</TableCell>
+                      <TableCell>{row.warehouse ? row.warehouse.warehouseName : '—'}</TableCell>
                       <TableCell>{row.product.measurementUnit}</TableCell>
                       <TableCell>{row.quantity}</TableCell>
                       <TableCell>{row.closingStock}</TableCell>
@@ -543,6 +559,7 @@ class Details extends CommonDetails {
                       <TableHead>
                         <TableRow>
                           <TableCell>Product</TableCell>
+                          <TableCell>Warehouse</TableCell>
                           <TableCell>Batch #</TableCell>
                           <TableCell>Expiry</TableCell>
                           <TableCell>Brand</TableCell>
@@ -555,6 +572,7 @@ class Details extends CommonDetails {
                         {this.state.batchConsumptions.map((c) => (
                           <TableRow key={c.id} style={c.fifoOverridden ? { backgroundColor: '#fff8e1' } : {}}>
                             <TableCell>{productMap[c.productId] || '—'}</TableCell>
+                            <TableCell>{c.batch && c.batch.warehouse ? c.batch.warehouse.warehouseName : '—'}</TableCell>
                             <TableCell>#{c.batch ? c.batch.batchId : '—'}</TableCell>
                             <TableCell>{c.batch && c.batch.expiryDate ? c.batch.expiryDate.replace(/-/g, '/') : '—'}</TableCell>
                             <TableCell>{c.batch && c.batch.brand ? c.batch.brand : '—'}</TableCell>

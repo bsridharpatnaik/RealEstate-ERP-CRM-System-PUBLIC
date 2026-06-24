@@ -118,8 +118,10 @@ public class FifoReportSyncService {
             row.setProductName(product != null ? product.getProductName() : "Unknown");
             row.setProductCode(product != null ? product.getProductCode() : null);
             row.setMeasurementUnit(product != null ? product.getMeasurementUnit() : null);
+            // Warehouse comes from the consumption/batch itself, not the outward header — an outward
+            // can now span multiple warehouses, so the header warehouse is no longer authoritative.
             row.setWarehouseId(c.getWarehouseId());
-            row.setWarehouseName(outward.getWarehouse() != null ? outward.getWarehouse().getWarehouseName() : null);
+            row.setWarehouseName(batch != null && batch.getWarehouse() != null ? batch.getWarehouse().getWarehouseName() : null);
             row.setUsageLocationName(outward.getUsageLocation() != null ? outward.getUsageLocation().getLocationName() : null);
             row.setUsageAreaName(outward.getUsageArea() != null ? outward.getUsageArea().getUsageAreaName() : null);
             row.setContractorName(outward.getContractor() != null ? outward.getContractor().getName() : null);

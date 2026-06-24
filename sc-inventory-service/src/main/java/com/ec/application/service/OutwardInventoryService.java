@@ -111,6 +111,58 @@ public class OutwardInventoryService {
         catch (Exception e) { return "System"; }
     }
 
+    /** Composite key for matching a line item by (productId, warehouseId) — warehouseId may be null
+     *  for legacy callers, in which case the key degrades to product-only matching. */
+    private static String lineKey(Long productId, Long warehouseId) {
+        return productId + "_" + (warehouseId != null ? warehouseId : "");
+    }
+
+    /**
+     * Collapses multiple lines of the same product (now possible across different warehouses)
+     * into one combined ProductWithQuantity per product, summing quantities. BOQ is enforced
+     * per product+location, not per warehouse, so the BOQ check must see the combined demand —
+     * otherwise two 60-unit lines of a product with 100 BOQ remaining would each independently
+     * pass a "≤100" check (60 ≤ 100) while jointly exceeding it (120 > 100).
+     */
+    private List<ProductWithQuantity> aggregateByProduct(List<ProductWithQuantity> items) {
+        Map<Long, Double> totals = new LinkedHashMap<>();
+        for (ProductWithQuantity item : items) {
+            totals.merge(item.getProductId(), item.getQuantity(), Double::sum);
+        }
+        List<ProductWithQuantity> aggregated = new ArrayList<>();
+        for (Map.Entry<Long, Double> e : totals.entrySet()) {
+            aggregated.add(new ProductWithQuantity(e.getKey(), e.getValue()));
+        }
+        return aggregated;
+    }
+
+    /**
+     * Finds the single InwardOutwardList line matching productId (and warehouseId, when provided).
+     * Throws a clear error if the match is ambiguous (same product on multiple warehouse lines,
+     * but the caller didn't say which one) rather than silently picking one.
+     */
+    private InwardOutwardList findLineForProductAndWarehouse(Set<InwardOutwardList> lines, Long productId, Long warehouseId) throws Exception {
+        List<InwardOutwardList> matchesByProduct = lines.stream()
+                .filter(l -> l.getProduct().getProductId().equals(productId))
+                .collect(Collectors.toList());
+        if (matchesByProduct.isEmpty()) return null;
+        if (matchesByProduct.size() == 1) return matchesByProduct.get(0);
+
+        // More than one line has this product (different warehouses) — caller must disambiguate.
+        if (warehouseId == null) {
+            throw new Exception("Product '" + matchesByProduct.get(0).getProduct().getProductName()
+                    + "' was outwarded from multiple warehouses on this entry. Please specify which warehouse this applies to.");
+        }
+        List<InwardOutwardList> matchesByWarehouse = matchesByProduct.stream()
+                .filter(l -> l.getWarehouse().getWarehouseId().equals(warehouseId))
+                .collect(Collectors.toList());
+        if (matchesByWarehouse.isEmpty()) {
+            throw new Exception("Product '" + matchesByProduct.get(0).getProduct().getProductName()
+                    + "' was not outwarded from the specified warehouse on this entry.");
+        }
+        return matchesByWarehouse.get(0);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = {"boqStatusRows", "boqOutwardQty"}, allEntries = true)
     public OutwardInventory createOutwardnventory(OutwardInventoryData oiData) throws Exception {
@@ -124,9 +176,13 @@ public class OutwardInventoryService {
         outwardInventoryRepo.save(outwardInventory);
         consumeBatchesForOutward(outwardInventory, oiData);
         String createUser = resolveCurrentUser();
+        boolean multiWarehouse = outwardInventory.getInwardOutwardList().stream()
+                .map(l -> l.getWarehouse().getWarehouseId()).distinct().count() > 1;
         List<Map<String, Object>> createItems = new ArrayList<>();
         for (InwardOutwardList io : outwardInventory.getInwardOutwardList())
-            createItems.add(ActivityLogDescription.item(io.getProduct().getProductName(), io.getQuantity()));
+            createItems.add(multiWarehouse
+                    ? ActivityLogDescription.item(io.getProduct().getProductName(), io.getQuantity(), io.getWarehouse().getWarehouseName())
+                    : ActivityLogDescription.item(io.getProduct().getProductName(), io.getQuantity()));
         activityLogService.record("CREATED", "OUTWARD", String.valueOf(outwardInventory.getOutwardid()),
                 ActivityLogDescription.withItems("Outward " + outwardInventory.getOutwardid() + " created by " + createUser, createItems),
                 createUser);
@@ -137,10 +193,10 @@ public class OutwardInventoryService {
     private void updateStockForCreateOutwardInventory(OutwardInventory outwardInventory) throws Exception {
         log.info("Invoked updateStockForCreateOutwardInventory");
         Set<InwardOutwardList> productsWithQuantities = outwardInventory.getInwardOutwardList();
-        Long warehouseId = outwardInventory.getWarehouse().getWarehouseId();
 
         for (InwardOutwardList oiList : productsWithQuantities) {
             Long productId = oiList.getProduct().getProductId();
+            Long warehouseId = oiList.getWarehouse().getWarehouseId();
             Double quantity = oiList.getQuantity();
             Double closingStock = stockService.updateStock(productId, warehouseId, quantity, "outward");
             oiList.setClosingStock(closingStock);
@@ -168,12 +224,16 @@ public class OutwardInventoryService {
                     throw new Exception("Remarks is a mandatory field. Please provide remarks before saving data");
             }
         }
+        // Dedupe by (productId, warehouseId) — a return/reject payload may legitimately target
+        // the same product across two different lines if the original outward drew it from
+        // multiple warehouses, as long as each (product, warehouse) pair appears once.
         Long duplicateProductIdCount = rd.getProductWithQuantities().stream()
-                .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
+                .collect(Collectors.groupingBy(pwq -> lineKey(pwq.getProductId(), pwq.getWarehouseId()), counting()))
+                .entrySet().stream()
                 .filter(e -> e.getValue() > 1).count();
 
         if (duplicateProductIdCount > 0)
-            throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
+            throw new Exception("Inventory List should be Unique. Same product/warehouse combination added multiple times. Please correct.");
 
         for (ProductWithQuantity productWithQuantity : rd.getProductWithQuantities()) {
             if (productWithQuantity.getQuantity() == null || productWithQuantity.getProductId() == null
@@ -183,7 +243,7 @@ public class OutwardInventoryService {
                 addReturnForOutward(outwardId, productWithQuantity);
             else
                 addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
-                        productWithQuantity.getRemarks());
+                        productWithQuantity.getRemarks(), productWithQuantity.getWarehouseId());
         }
 
         String actionUser = resolveCurrentUser();
@@ -215,22 +275,21 @@ public class OutwardInventoryService {
 
         Set<ReturnOutwardList> returnOutwardList = oi.getReturnOutwardList();
         Set<InwardOutwardList> inwardOutwardListSet = oi.getInwardOutwardList();
-        for (InwardOutwardList inwardOutwardList : inwardOutwardListSet) {
-            if (inwardOutwardList.getProduct().getProductId().equals(productId)) {
-                Double currentQuantity = inwardOutwardList.getQuantity();
-                if (quantity > currentQuantity)
-                    throw new Exception(
-                            "Return quantity cannot be greater than existing quantity for product -"
-                                    + inwardOutwardList.getProduct().getProductName());
+        InwardOutwardList inwardOutwardList = findLineForProductAndWarehouse(inwardOutwardListSet, productId, pwq.getWarehouseId());
+        if (inwardOutwardList != null) {
+            Double currentQuantity = inwardOutwardList.getQuantity();
+            if (quantity > currentQuantity)
+                throw new Exception(
+                        "Return quantity cannot be greater than existing quantity for product -"
+                                + inwardOutwardList.getProduct().getProductName());
 
-                Double diffInQuantity = currentQuantity - quantity;
-                Double closingStock = stockService.updateStock(productId, oi.getWarehouse().getWarehouseId(),
-                        quantity, "inward");
-                returnOutwardList.add(new ReturnOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
-                        quantity, closingStock));
-                inwardOutwardList.setQuantity(diffInQuantity);
-                inwardOutwardList.setClosingStock(closingStock);
-            }
+            Double diffInQuantity = currentQuantity - quantity;
+            Double closingStock = stockService.updateStock(productId, inwardOutwardList.getWarehouse().getWarehouseId(),
+                    quantity, "inward");
+            returnOutwardList.add(new ReturnOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
+                    quantity, closingStock));
+            inwardOutwardList.setQuantity(diffInQuantity);
+            inwardOutwardList.setClosingStock(closingStock);
         }
         oi.setReturnOutwardList(returnOutwardList);
         oi.setInwardOutwardList(inwardOutwardListSet);
@@ -374,25 +433,29 @@ public class OutwardInventoryService {
 
     @Transactional(rollbackFor = Exception.class)
     private void addRejectForOutward(Long outwardId, Long productId, Double quantity, String remarks) throws Exception {
+        addRejectForOutward(outwardId, productId, quantity, remarks, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    private void addRejectForOutward(Long outwardId, Long productId, Double quantity, String remarks, Long warehouseId) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         OutwardInventory oi = outwardInventoryRepo.findById(outwardId).get();
         exitIfNotAuthorized(oi, null, APICallTypeForAuthorization.Reject);
         Set<RejectOutwardList> rejectOutwardList = oi.getRejectOutwardList();
         Set<InwardOutwardList> inwardOutwardListSet = oi.getInwardOutwardList();
-        for (InwardOutwardList inwardOutwardList : inwardOutwardListSet) {
-            if (inwardOutwardList.getProduct().getProductId().equals(productId)) {
-                Double currentQuantity = inwardOutwardList.getQuantity();
-                if (quantity > currentQuantity)
-                    throw new Exception(
-                            "Reject quantity cannot be greater than existing quantity for product -"
-                                    + inwardOutwardList.getProduct().getProductName());
+        InwardOutwardList inwardOutwardList = findLineForProductAndWarehouse(inwardOutwardListSet, productId, warehouseId);
+        if (inwardOutwardList != null) {
+            Double currentQuantity = inwardOutwardList.getQuantity();
+            if (quantity > currentQuantity)
+                throw new Exception(
+                        "Reject quantity cannot be greater than existing quantity for product -"
+                                + inwardOutwardList.getProduct().getProductName());
 
-                rejectOutwardList.add(new RejectOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
-                        quantity, remarks));
+            rejectOutwardList.add(new RejectOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
+                    quantity, remarks));
 
-                // Decrement line qty so the same qty cannot be rejected again on a subsequent call
-                inwardOutwardList.setQuantity(currentQuantity - quantity);
-            }
+            // Decrement line qty so the same qty cannot be rejected again on a subsequent call
+            inwardOutwardList.setQuantity(currentQuantity - quantity);
         }
         oi.setRejectOutwardList(rejectOutwardList);
         oi.setInwardOutwardList(inwardOutwardListSet);
@@ -413,17 +476,23 @@ public class OutwardInventoryService {
 
         // BOQ enforcement for update: use delta quantities (newQty - oldQty) to avoid
         // double-counting existing outward quantities that are still in the DB at validation time.
-        // Only products with a net increase need to be checked.
+        // Only products with a net increase need to be checked. Aggregated by product (not by
+        // product+warehouse) since BOQ is enforced per product+location — a product with two lines
+        // (different warehouses) must be compared as one combined old-vs-new total.
         Map<Long, Double> oldQtyMap = new HashMap<>();
         for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
-            oldQtyMap.put(io.getProduct().getProductId(), io.getQuantity());
+            oldQtyMap.merge(io.getProduct().getProductId(), io.getQuantity(), Double::sum);
+        }
+        Map<Long, Double> newQtyMap = new HashMap<>();
+        for (ProductWithQuantity item : iiData.getProductWithQuantities()) {
+            newQtyMap.merge(item.getProductId(), item.getQuantity(), Double::sum);
         }
         List<ProductWithQuantity> deltaItems = new ArrayList<>();
-        for (ProductWithQuantity item : iiData.getProductWithQuantities()) {
-            double oldQty   = oldQtyMap.getOrDefault(item.getProductId(), 0.0);
-            double delta    = item.getQuantity() - oldQty;
+        for (Map.Entry<Long, Double> e : newQtyMap.entrySet()) {
+            double oldQty = oldQtyMap.getOrDefault(e.getKey(), 0.0);
+            double delta  = e.getValue() - oldQty;
             if (delta > 0) {
-                deltaItems.add(new ProductWithQuantity(item.getProductId(), delta));
+                deltaItems.add(new ProductWithQuantity(e.getKey(), delta));
             }
         }
         if (!deltaItems.isEmpty()) {
@@ -441,14 +510,23 @@ public class OutwardInventoryService {
         outwardInventoryRepo.save(outwardInventory);
         consumeBatchesForOutward(outwardInventory, iiData);
         String updateUser = resolveCurrentUser();
-        Map<Long, Double> savedOldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
-                .collect(Collectors.toMap(io -> io.getProduct().getProductId(), InwardOutwardList::getQuantity, (a, b) -> a));
+        // Keyed by (productId, warehouseId) — a product can have two lines (different warehouses),
+        // each with its own old quantity, so a productId-only map would conflate them.
+        Map<String, Double> savedOldQtyMap = oldOutwardInventory.getInwardOutwardList().stream()
+                .collect(Collectors.toMap(
+                        io -> lineKey(io.getProduct().getProductId(), io.getWarehouse().getWarehouseId()),
+                        InwardOutwardList::getQuantity));
+        boolean multiWarehouse = outwardInventory.getInwardOutwardList().stream()
+                .map(l -> l.getWarehouse().getWarehouseId()).distinct().count() > 1;
         List<Map<String, Object>> changedItems = ActivityLogDescription.list();
         for (InwardOutwardList io : outwardInventory.getInwardOutwardList()) {
-            Double oldQty = savedOldQtyMap.get(io.getProduct().getProductId());
+            String key = lineKey(io.getProduct().getProductId(), io.getWarehouse().getWarehouseId());
+            Double oldQty = savedOldQtyMap.get(key);
             if (oldQty == null || Double.compare(oldQty, io.getQuantity()) != 0) {
                 String productName = io.getProduct() != null ? io.getProduct().getProductName() : String.valueOf(io.getProduct().getProductId());
-                changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty != null ? oldQty : 0, io.getQuantity()));
+                changedItems.add(multiWarehouse
+                        ? ActivityLogDescription.itemChanged(productName, oldQty != null ? oldQty : 0, io.getQuantity(), io.getWarehouse().getWarehouseName())
+                        : ActivityLogDescription.itemChanged(productName, oldQty != null ? oldQty : 0, io.getQuantity()));
             }
         }
         if (!changedItems.isEmpty()) {
@@ -472,18 +550,18 @@ public class OutwardInventoryService {
             if (outwardInventory.getInwardOutwardList().size() != iiData.getProductWithQuantities().size())
                 throw new Exception("Outward inventory entry cannot be edited after return entry is added.");
 
+            // Match by (productId, warehouseId), not productId alone — a product can have two
+            // lines (different warehouses), and matching by productId only would let either line
+            // compare against the wrong one's quantity.
+            Map<String, Double> payloadByLineKey = iiData.getProductWithQuantities().stream()
+                    .collect(Collectors.toMap(p -> lineKey(p.getProductId(), p.getWarehouseId()), ProductWithQuantity::getQuantity));
+
             for (InwardOutwardList ioList : outwardInventory.getInwardOutwardList()) {
-                boolean isFound = false;
-                for (ProductWithQuantity pwq : iiData.getProductWithQuantities()) {
-                    if (ioList.getProduct().getProductId().equals(pwq.getProductId())) {
-                        isFound = true;
-                        if (!ioList.getQuantity().equals(pwq.getQuantity())) {
-                            flag = true;
-                        }
-                    }
-                }
-                if (!isFound)
+                String key = lineKey(ioList.getProduct().getProductId(), ioList.getWarehouse().getWarehouseId());
+                Double payloadQty = payloadByLineKey.get(key);
+                if (payloadQty == null || !ioList.getQuantity().equals(payloadQty)) {
                     flag = true;
+                }
             }
 
             if (flag)
@@ -491,166 +569,71 @@ public class OutwardInventoryService {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    private void updateWhenWarehouseSame(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory)
-            throws Exception {
-        log.info("Invoked updateWhenWarehouseSame");
-        // Fetch product only in old and only in new and common
-        Set<Long> oldProductSet = new HashSet<>(oldOutwardInventory.getInwardOutwardList().size());
-        Set<Long> newProductSet = new HashSet<>(outwardInventory.getInwardOutwardList().size());
-        oldOutwardInventory.getInwardOutwardList().stream()
-                .filter(p -> oldProductSet.add(p.getProduct().getProductId())).collect(Collectors.toList());
-        outwardInventory.getInwardOutwardList().stream().filter(p -> newProductSet.add(p.getProduct().getProductId()))
-                .collect(Collectors.toList());
-        Set<Long> onlyInOld = ReusableMethods.differenceBetweenSets(oldProductSet, newProductSet);
-        Set<Long> onlyInNew = ReusableMethods.differenceBetweenSets(newProductSet, oldProductSet);
-        Set<Long> commonInBoth = ReusableMethods.commonBetweenSets(oldProductSet, newProductSet);
-        updateStockForOnlyInOld(onlyInOld, oldOutwardInventory);
-        updateStockForOnlyInNew(onlyInNew, outwardInventory);
-        updateStockForCommonInBoth(commonInBoth, oldOutwardInventory, outwardInventory);
-        log.info("Exiting updateWhenWarehouseSame");
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForCommonInBoth(Set<Long> commonInBoth, OutwardInventory oldOutwardInventory,
-                                            OutwardInventory outwardInventory) throws Exception {
-        log.info("Invoked updateWhenWarehouseSame");
-        Set<InwardOutwardList> oldIOListSet = oldOutwardInventory.getInwardOutwardList();
-        Set<InwardOutwardList> newIOListSet = outwardInventory.getInwardOutwardList();
-        for (Long id : commonInBoth) {
-            Double oldQuantity = findQuantityForProductInIOList(id, oldIOListSet);
-            Double newQuantity = findQuantityForProductInIOList(id, newIOListSet);
-            Double quantityForUpdate = newQuantity - oldQuantity;
-            for (InwardOutwardList ioList : newIOListSet) {
-                if (id.equals(ioList.getProduct().getProductId())) {
-                    Double closingStock = stockService.updateStock(id,
-                            outwardInventory.getWarehouse().getWarehouseId(), quantityForUpdate, "outward");
-                    System.out.println("Closing stock - " + closingStock);
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            outwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
-                    ioList.setClosingStock(closingStock);
-                }
-            }
-            outwardInventory.setInwardOutwardList(newIOListSet);
-        }
-        log.info("Exiting updateWhenWarehouseSame");
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private Double findQuantityForProductInIOList(Long productId, Set<InwardOutwardList> ioListSet) {
-        log.info("Invoked findQuantityForProductInIOList");
-        for (InwardOutwardList ioList : ioListSet) {
-            if (productId.equals(ioList.getProduct().getProductId())) {
-                log.info("Old Quantity in findQuantityForProductInIOList - " + ioList.getQuantity());
-                Double oldQuantity = ioList.getQuantity();
-                log.info("Exiting findQuantityForProductInIOList");
-                return oldQuantity;
-            }
-        }
-        log.info("Exiting findQuantityForProductInIOList with return as null");
-        return null;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForOnlyInNew(Set<Long> onlyInNew, OutwardInventory outwardInventory) throws Exception {
-        log.info("Invoked updateStockForOnlyInNew");
-        for (Long id : onlyInNew) {
-            Set<InwardOutwardList> ioListSet = outwardInventory.getInwardOutwardList();
-            for (InwardOutwardList ioList : ioListSet) {
-                if (id.equals(ioList.getProduct().getProductId())) {
-                    Double quantity = ioList.getQuantity();
-                    Double closingStock = stockService.updateStock(id,
-                            outwardInventory.getWarehouse().getWarehouseId(), quantity, "outward");
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            outwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
-                    ioList.setClosingStock(closingStock);
-                }
-            }
-            outwardInventory.setInwardOutwardList(ioListSet);
-
-        }
-        log.info("Exiting updateStockForOnlyInNew");
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private void updateStockForOnlyInOld(Set<Long> onlyInOld, OutwardInventory oldOutwardInventory) throws Exception {
-        log.info("Invoked updateStockForOnlyInOld");
-        // Delete stock received as part of old inventory
-        for (Long id : onlyInOld) {
-            Set<InwardOutwardList> ioListSet = oldOutwardInventory.getInwardOutwardList();
-            for (InwardOutwardList ioList : ioListSet) {
-                if (id.equals(ioList.getProduct().getProductId())) {
-                    Double quantity = ioList.getQuantity();
-                    Double closingStock = stockService.updateStock(id,
-                            oldOutwardInventory.getWarehouse().getWarehouseId(), quantity, "inward");
-                    inventoryNotificationService.pushQuantityEditedNotification(ioList.getProduct(),
-                            oldOutwardInventory.getWarehouse().getWarehouseName(), "outward", closingStock);
-                }
-            }
-        }
-        log.info("Exiting updateStockForOnlyInOld");
-    }
-
+    /**
+     * Applies stock deltas for an outward edit. Each line now carries its own warehouse, and
+     * {@code exitIfNotAuthorized} (Update path) already enforces that the set of (product, warehouse)
+     * lines cannot change on edit — only quantities can. That means every line in the new payload has
+     * exactly one matching line in the old payload at the same (product, warehouse) key, so this is
+     * always a simple per-line quantity delta — no more old/new/common-set reconciliation needed.
+     */
     @Transactional(rollbackFor = Exception.class)
     private void modifyStockBeforeUpdate(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory)
             throws Exception {
         log.info("Invoked modifyStockBeforeUpdate");
-        if (!oldOutwardInventory.getWarehouse().getWarehouseId()
-                .equals(outwardInventory.getWarehouse().getWarehouseId()))
-            updateWhenWarehouseChanged(oldOutwardInventory, outwardInventory);
-        else
-            updateWhenWarehouseSame(oldOutwardInventory, outwardInventory);
-        log.info("Exiting modifyStockBeforeUpdate");
-    }
+        Map<String, Double> oldQtyByLineKey = oldOutwardInventory.getInwardOutwardList().stream()
+                .collect(Collectors.toMap(
+                        l -> lineKey(l.getProduct().getProductId(), l.getWarehouse().getWarehouseId()),
+                        InwardOutwardList::getQuantity));
 
-    @Transactional(rollbackFor = Exception.class)
-    private void updateWhenWarehouseChanged(OutwardInventory oldOutwardInventory, OutwardInventory outwardInventory)
-            throws Exception {
-        log.info("Invoked updateWhenWarehouseChanged");
-        // Delete all stock added as part of old warehouse
-        traverseListAndUpdateStock(oldOutwardInventory.getInwardOutwardList(), "inward",
-                oldOutwardInventory.getWarehouse());
-
-        // Add new stock to new warehouse
-        Set<InwardOutwardList> newLIOList = traverseListAndUpdateStock(outwardInventory.getInwardOutwardList(),
-                "outward", outwardInventory.getWarehouse());
-        outwardInventory.setInwardOutwardList(newLIOList);
-        log.info("Existing updateWhenWarehouseChanged");
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    private Set<InwardOutwardList> traverseListAndUpdateStock(Set<InwardOutwardList> ioListset, String type,
-                                                              Warehouse warehouse) throws Exception {
-        log.info("Invoked traverseListAndUpdateStock");
-        for (InwardOutwardList oiList : ioListset) {
-            Double closingStock = stockService.updateStock(oiList.getProduct().getProductId(),
-                    warehouse.getWarehouseId(), oiList.getQuantity(), type);
-            inventoryNotificationService.pushQuantityEditedNotification(oiList.getProduct(),
-                    warehouse.getWarehouseName(), "outward", closingStock);
-            oiList.setClosingStock(closingStock);
-
+        for (InwardOutwardList newLine : outwardInventory.getInwardOutwardList()) {
+            String key = lineKey(newLine.getProduct().getProductId(), newLine.getWarehouse().getWarehouseId());
+            Double oldQty = oldQtyByLineKey.getOrDefault(key, 0.0);
+            Double newQty = newLine.getQuantity();
+            Double delta = newQty - oldQty;
+            if (Math.abs(delta) < 0.0001) {
+                // No quantity change — still refresh closingStock for display consistency
+                Double closingStock = stockService.findStockForProductWarehouse(
+                        newLine.getProduct().getProductId(), newLine.getWarehouse().getWarehouseId());
+                newLine.setClosingStock(closingStock != null ? closingStock : 0.0);
+                continue;
+            }
+            Double closingStock = stockService.updateStock(newLine.getProduct().getProductId(),
+                    newLine.getWarehouse().getWarehouseId(), Math.abs(delta), delta > 0 ? "outward" : "inward");
+            inventoryNotificationService.pushQuantityEditedNotification(newLine.getProduct(),
+                    newLine.getWarehouse().getWarehouseName(), "outward", closingStock);
+            newLine.setClosingStock(closingStock);
         }
-        log.info("Exiting traverseListAndUpdateStock");
-        return ioListset;
+        log.info("Exiting modifyStockBeforeUpdate");
     }
 
     private void setFields(OutwardInventory outwardInventory, OutwardInventoryData oiData) {
         log.info("Invoked setFields");
-        Warehouse warehouse = warehouseRepo.findById(oiData.getWarehouseId()).get();
         outwardInventory.setAdditionalInfo(oiData.getAdditionalInfo());
         outwardInventory.setContractor(contractorRepo.findById(oiData.getContractorId()).get());
         outwardInventory.setUsageLocation(locationRepo.findById(oiData.getUsageLocationId()).get());
         outwardInventory.setUsageArea(usageAreaRepo.findById(oiData.getUsageAreaId()).get());
-        outwardInventory.setWarehouse(warehouse);
-        ;
         outwardInventory.setDate(oiData.getDate());
         outwardInventory.setPurpose(oiData.getPurpose());
         outwardInventory.setSlipNo(oiData.getSlipNo());
         outwardInventory.setRequestedBy(oiData.getRequestedBy());
         outwardInventory.setIssuedBy(oiData.getIssuedBy());
-        outwardInventory.setInwardOutwardList(fetchInwardOutwardList(oiData.getProductWithQuantities(), warehouse));
+        outwardInventory.setInwardOutwardList(fetchInwardOutwardList(oiData.getProductWithQuantities()));
+        // Header warehouse is now a display-only derived value: the single warehouse when every
+        // line shares one (covers the common case + all legacy single-warehouse records), or null
+        // when lines span multiple warehouses — callers must fall back to per-line warehouse display.
+        outwardInventory.setWarehouse(derivePrimaryWarehouse(outwardInventory.getInwardOutwardList()));
         outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
         log.info("Exited setFields");
+    }
+
+    /** Returns the common warehouse when every line shares one, otherwise null (multi-warehouse outward). */
+    private Warehouse derivePrimaryWarehouse(Set<InwardOutwardList> lines) {
+        Set<Long> distinctWarehouseIds = lines.stream()
+                .map(l -> l.getWarehouse().getWarehouseId())
+                .collect(Collectors.toSet());
+        if (distinctWarehouseIds.size() == 1)
+            return lines.iterator().next().getWarehouse();
+        return null;
     }
 
     private boolean validateInputs(OutwardInventoryData oiData) throws Exception {
@@ -667,34 +650,45 @@ public class OutwardInventoryService {
             throw new Exception("Structure not found.");
         if (!contractorRepo.existsById(oiData.getContractorId()))
             throw new Exception("Contractor not found.");
-        if (!warehouseRepo.existsById(oiData.getWarehouseId()))
-            throw new Exception("Warehouse not found.");
-        warehouseRepo.findById(oiData.getWarehouseId()).ifPresent(w -> {
-            if (com.ec.application.constants.ProjectConstants.deadStockWarehouseName
-                    .equalsIgnoreCase(w.getWarehouseName())) {
-                throw new RuntimeException("Outward cannot be created from Dead Stock Warehouse. " +
-                        "Use 'Move from Dead Stock' on the Stock page to transfer stock to another warehouse first.");
-            }
-        });
         if (!usageAreaRepo.existsById(oiData.getUsageAreaId()))
             throw new Exception("Work Area not found.");
 
-        Long duplicateProductIdCount = oiData.getProductWithQuantities().stream()
-                .collect(Collectors.groupingBy(ProductWithQuantity::getProductId, counting())).entrySet().stream()
-                .filter(e -> e.getValue() > 1).count();
+        if (oiData.getProductWithQuantities() == null || oiData.getProductWithQuantities().isEmpty())
+            throw new Exception("Minimum of one product is required to save data.");
 
-        if (duplicateProductIdCount > 0)
-            throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
+        // Each line now carries its own warehouse — validate per line instead of a single header warehouse.
         for (ProductWithQuantity productWithQuantity : oiData.getProductWithQuantities()) {
             if (!productRepo.existsById(productWithQuantity.getProductId()))
                 throw new Exception("Product not found.");
+            if (productWithQuantity.getWarehouseId() == null)
+                throw new Exception("Warehouse is required for every product line.");
+            Warehouse lineWarehouse = warehouseRepo.findById(productWithQuantity.getWarehouseId())
+                    .orElseThrow(() -> new Exception("Warehouse not found."));
+            if (com.ec.application.constants.ProjectConstants.deadStockWarehouseName
+                    .equalsIgnoreCase(lineWarehouse.getWarehouseName())) {
+                throw new Exception("Outward cannot be created from Dead Stock Warehouse for product '"
+                        + lineWarehouse.getWarehouseName() + "'. " +
+                        "Use 'Move from Dead Stock' on the Stock page to transfer stock to another warehouse first.");
+            }
         }
+
+        // Dedupe by (productId, warehouseId) — same product from two different warehouses in one
+        // outward is allowed; the same product/warehouse combination twice is not (combine into one line).
+        Long duplicateProductIdCount = oiData.getProductWithQuantities().stream()
+                .collect(Collectors.groupingBy(pwq -> lineKey(pwq.getProductId(), pwq.getWarehouseId()), counting()))
+                .entrySet().stream()
+                .filter(e -> e.getValue() > 1).count();
+
+        if (duplicateProductIdCount > 0)
+            throw new Exception("Inventory List should be Unique. Same product/warehouse combination added multiple times. Please correct.");
 
         if (skipBoq) return false;
 
-        // BOQ enforcement: block save if any product exceeds 100% BOQ consumption
+        // BOQ enforcement: block save if any product exceeds 100% BOQ consumption.
+        // Aggregate by product first — a product can now have two lines (different warehouses)
+        // whose combined quantity is what matters for BOQ, not each line in isolation.
         // returns true only if ALL products have BOQ configured
-        return boqService.enforceBOQLimits(oiData.getUsageLocationId(), oiData.getProductWithQuantities(), oiData.getUsageAreaId());
+        return boqService.enforceBOQLimits(oiData.getUsageLocationId(), aggregateByProduct(oiData.getProductWithQuantities()), oiData.getUsageAreaId());
     }
 
     public OutwardInventory findOutwardnventory(Long id) throws Exception {
@@ -840,12 +834,9 @@ public class OutwardInventoryService {
     @Transactional(rollbackFor = Exception.class)
     private void updateStockBeforeDelete(OutwardInventory outwardInventory) throws Exception {
         log.info("Invoked updateStockBeforeDelete");
-        Long warehouseId = outwardInventory.getWarehouse().getWarehouseId();
         for (InwardOutwardList ioList : outwardInventory.getInwardOutwardList()) {
+            Long warehouseId = ioList.getWarehouse().getWarehouseId();
             Double stock = ioList.getQuantity();
-            Double currentStock = stockRepo
-                    .findStockForProductAndWarehouse(ioList.getProduct().getProductId(), warehouseId).get(0)
-                    .getQuantityInHand();
             stockService.updateStock(ioList.getProduct().getProductId(), warehouseId, stock, "inward");
         }
         log.info("Exiting updateStockBeforeDelete");
@@ -866,16 +857,21 @@ public class OutwardInventoryService {
             if (!oiData.getDate().equals(outwardInventory.getDate()))
                 throw new Exception("Date should not be modified while updating outward inventory record");
 
-            if (!oiData.getWarehouseId().equals(outwardInventory.getWarehouse().getWarehouseId()))
-                throw new Exception("Warehouse should not be modified while updating outward inventory record");
-            List<Long> productsInPayload = oiData.getProductWithQuantities().stream()
-                    .map(ProductWithQuantity::getProductId).collect(Collectors.toList());
+            // Each line's (product, warehouse) pairing is fixed at creation — only quantities can
+            // change on edit. Adding/removing lines or moving a line to a different warehouse is not
+            // allowed (mirrors the previous single-warehouse rule, applied per line instead of header).
+            if (oiData.getProductWithQuantities().stream().anyMatch(p -> p.getWarehouseId() == null))
+                throw new Exception("Warehouse is required for every product line.");
 
-            List<Long> productsInExistingRecord = outwardInventory.getInwardOutwardList().stream()
-                    .map(InwardOutwardList::getProduct).map(Product::getProductId).collect(Collectors.toList());
-            if (!(productsInPayload.containsAll(productsInExistingRecord)
-                    && productsInPayload.size() == productsInExistingRecord.size()))
-                throw new Exception("Inventory List should not be modified while updating an outward inventory record");
+            Set<String> lineKeysInPayload = oiData.getProductWithQuantities().stream()
+                    .map(p -> lineKey(p.getProductId(), p.getWarehouseId())).collect(Collectors.toSet());
+
+            Set<String> lineKeysInExistingRecord = outwardInventory.getInwardOutwardList().stream()
+                    .map(l -> lineKey(l.getProduct().getProductId(), l.getWarehouse().getWarehouseId()))
+                    .collect(Collectors.toSet());
+
+            if (!lineKeysInPayload.equals(lineKeysInExistingRecord))
+                throw new Exception("Inventory list and warehouse assignment should not be modified while updating an outward inventory record — only quantities can be changed.");
         }
 
         if (action.equals(APICallTypeForAuthorization.Create)) {
@@ -922,32 +918,34 @@ public class OutwardInventoryService {
         return pageable;
     }
 
-    public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities,
-                                                         Warehouse warehouse) {
+    public Set<InwardOutwardList> fetchInwardOutwardList(List<ProductWithQuantity> productWithQuantities) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         Set<InwardOutwardList> inwardOutwardListSet = new HashSet<>();
         for (ProductWithQuantity productWithQuantity : productWithQuantities) {
             InwardOutwardList inwardOutwardList = new InwardOutwardList();
             Product product = productRepo.findById(productWithQuantity.getProductId()).get();
+            Warehouse warehouse = warehouseRepo.findById(productWithQuantity.getWarehouseId()).get();
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
-            inwardOutwardListSet.add(inwardOutwardList);
             inwardOutwardList.setWarehouse(warehouse);
+            inwardOutwardListSet.add(inwardOutwardList);
         }
         return inwardOutwardListSet;
     }
 
     private void consumeBatchesForOutward(OutwardInventory outwardInventory, OutwardInventoryData oiData) {
-        Long warehouseId = outwardInventory.getWarehouse().getWarehouseId();
         boolean anyOverride = false;
 
-        Map<Long, ProductWithQuantity> pwqByProductId = oiData.getProductWithQuantities().stream()
-                .collect(Collectors.toMap(ProductWithQuantity::getProductId, p -> p));
+        // Keyed by (productId, warehouseId) — a product may appear on two lines if it was
+        // outwarded from two different warehouses in the same transaction.
+        Map<String, ProductWithQuantity> pwqByLineKey = oiData.getProductWithQuantities().stream()
+                .collect(Collectors.toMap(p -> lineKey(p.getProductId(), p.getWarehouseId()), p -> p));
 
         for (InwardOutwardList iol : outwardInventory.getInwardOutwardList()) {
             Long productId = iol.getProduct().getProductId();
+            Long warehouseId = iol.getWarehouse().getWarehouseId();
             Double qtyToConsume = iol.getQuantity();
-            ProductWithQuantity pwq = pwqByProductId.get(productId);
+            ProductWithQuantity pwq = pwqByLineKey.get(lineKey(productId, warehouseId));
             Long overrideBatchId = pwq != null ? pwq.getOverrideBatchId() : null;
             String overrideComment = pwq != null ? pwq.getOverrideComment() : null;
 
