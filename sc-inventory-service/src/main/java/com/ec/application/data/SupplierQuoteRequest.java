@@ -17,11 +17,15 @@ public class SupplierQuoteRequest {
     private String freightTerms;
     private Integer deliveryLeadDays;
     private String headerNotes;
+    private String revisionLabel;
 
     // Files already uploaded via /master-file/upload
     private List<FileInformationDAO> fileInformations;
 
     private List<QuoteLineRequest> lines;
+
+    // Values for criteria with scope = HEADER (one per vendor, not per line)
+    private List<CriteriaValueRequest> headerCriteriaValues;
 
     @Data
     public static class QuoteLineRequest {

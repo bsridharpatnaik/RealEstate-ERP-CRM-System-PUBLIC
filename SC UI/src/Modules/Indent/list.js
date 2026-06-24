@@ -325,6 +325,13 @@ class List extends ListCommon {
         });
       }
 
+      if (this.filterData.hasQuoteRequested) {
+        params.filterData.push({
+          attrName: "hasQuoteRequested",
+          attrValue: [this.filterData.hasQuoteRequested === "Yes" ? "true" : "false"],
+        });
+      }
+
       if (this.filterData.staleBuckets) {
         const staleBucketVal = typeof this.filterData.staleBuckets === "object"
           ? this.filterData.staleBuckets.id

@@ -58,6 +58,7 @@ export const messages = {
     inventoryTransfer: "Inventory Transfer",
     indentPO: "Indent / PO",
     historicalPricing: "Historical Pricing",
+    quoteComparison: "Quote Comparison",
     deadStock: "Dead Stock",
     stockSummary: "Stock Summary",
     syncNow: "Sync Now",

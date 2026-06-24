@@ -70,6 +70,13 @@ class filter extends CommonFilter {
               (option) => option?.name ?? "",
               false
             )}
+            {this.renderAutoComplete(
+              "Quote Requested",
+              ["Yes", "No"],
+              "hasQuoteRequested",
+              (option) => option,
+              false
+            )}
 
             {/* Advanced toggle */}
             <div className="filter-item filter-item-full po-filter-advanced-toggle">

@@ -631,6 +631,9 @@ public class IndentInventoryService {
         splitItem1.setRemarks(originalItem.getRemarks());
         splitItem1.setMeasurementUnit(originalItem.getMeasurementUnit());
         splitItem1.setLineItemStatus(originalItem.getLineItemStatus());
+        // Carry the "quote requested" marker forward — the original line is being soft-deleted,
+        // so without this a split would silently lose the fact that an RFQ covers this quantity.
+        splitItem1.setQuoteRequestedQcId(originalItem.getQuoteRequestedQcId());
 
         String splitCode1 = LineItemCodeGenerator.generateSplitCode(rootParentCode, splitIndex1);
         splitItem1.setLineItemCode(splitCode1);
@@ -645,6 +648,7 @@ public class IndentInventoryService {
         splitItem2.setRemarks(originalItem.getRemarks());
         splitItem2.setMeasurementUnit(originalItem.getMeasurementUnit());
         splitItem2.setLineItemStatus(originalItem.getLineItemStatus());
+        splitItem2.setQuoteRequestedQcId(originalItem.getQuoteRequestedQcId());
 
         String splitCode2 = LineItemCodeGenerator.generateSplitCode(rootParentCode, splitIndex2);
         splitItem2.setLineItemCode(splitCode2);
@@ -783,7 +787,7 @@ public class IndentInventoryService {
                 Category c = p.getCategory();
                 DeadStockDTOForIndent deadStock = deadStocks.getOrDefault(p.getProductId(), new DeadStockDTOForIndent(0.0, Collections.emptyList()));
                 CurrentStockDTOForIndent currentStock = currentStocks.getOrDefault(p.getProductId(), new CurrentStockDTOForIndent(0.0, Collections.emptyList()));
-                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock, currentStock, null);
+                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock, currentStock, null, line.getQuoteRequestedQcId());
                 dto.setLeadTimeDays(leadTimeResolver.resolve(p));
                 result.add(dto);
             }

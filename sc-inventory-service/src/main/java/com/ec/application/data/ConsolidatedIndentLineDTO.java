@@ -36,4 +36,8 @@ public class ConsolidatedIndentLineDTO {
     private DeadStockDTOForIndent deadStock;
     private CurrentStockDTOForIndent currentStock;
     private Integer leadTimeDays;
+    // Non-null when this line is already referenced by an active (non-cancelled) Quote
+    // Comparison — lets the indent-selection screen disable/flag it instead of letting the
+    // user pick it and find out only after submitting.
+    private String quoteRequestedQcId;
 }

@@ -31,6 +31,11 @@ public class ComparisonCriteria extends ReusableFields {
     @Column(name = "criteria_type", nullable = false)
     private String criteriaType = "TEXT";
 
+    // LINE — one value per demand line per vendor (e.g. Brand for that product).
+    // HEADER — one value per vendor for the whole quote (e.g. ISO Certification).
+    @Column(name = "criteria_scope", nullable = false)
+    private String criteriaScope = "LINE";
+
     @Column(name = "display_order")
     private Integer displayOrder = 0;
 

@@ -3,14 +3,17 @@ import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import DeleteIcon from "@material-ui/icons/Delete";
+import AttachFileIcon from "@material-ui/icons/AttachFile";
+import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { API } from "../../axios";
 import { apiEndpoints } from "../../endpoints";
 
-const PRESET_CRITERIA = [
-  "Unit Rate", "Quoted Quantity", "Brand", "Grade/Make", "Delivery Lead Time (days)",
-  "Expected Delivery Date", "Payment Terms", "Freight Charges", "GST %",
-  "Discount %", "Warranty", "Compliance Status", "Remarks"
+const ATTACHMENT_MAX_MB = 10;
+const ATTACHMENT_VALID_TYPES = [
+  "image/jpeg", "image/jpg", "image/png", "application/pdf",
+  "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ];
 
 class SupplierQuoteForm extends Component {
@@ -20,9 +23,12 @@ class SupplierQuoteForm extends Component {
   constructor(props) {
     super(props);
     const eq = props.existingQuote;
+    const lineCriteria = (props.criteria || []).filter(c => c.criteriaScope !== "HEADER");
+    const headerCriteria = (props.criteria || []).filter(c => c.criteriaScope === "HEADER");
     this.state = {
       supplierId: eq?.supplierId || "",
       supplierName: eq?.supplierName || "",
+      revisionLabel: eq?.revisionLabel || "",
       quotationRefNo: eq?.quotationRefNo || "",
       quotationDate: eq?.quotationDate ? eq.quotationDate.substring(0, 10) : "",
       validityDate: eq?.validityDate ? eq.validityDate.substring(0, 10) : "",
@@ -31,6 +37,14 @@ class SupplierQuoteForm extends Component {
       deliveryLeadDays: eq?.deliveryLeadDays || "",
       headerNotes: eq?.headerNotes || "",
       saving: false,
+      uploading: false,
+      // received quote files (vendor's quotation PDF/scan/etc) — array of { fileUUId, fileName }
+      attachments: eq?.fileInformations ? Array.from(eq.fileInformations).map(f => ({ fileUUId: f.fileUUId, fileName: f.fileName })) : [],
+      // header-scoped criteria — one value per vendor, shown once
+      headerCriteriaValues: headerCriteria.map(c => {
+        const existingVal = eq?.headerCriteriaValues?.find(cv => cv.criteriaId === c.id);
+        return { criteriaId: c.id, criteriaName: c.criteriaName, value: existingVal?.value || "" };
+      }),
       // lines: one entry per QC line
       lines: (props.lines || []).map(l => {
         const existing = eq?.lines?.find(el => el.qcLineId === l.id);
@@ -46,7 +60,7 @@ class SupplierQuoteForm extends Component {
           freightAmount: existing?.freightAmount || 0,
           expectedDeliveryDate: existing?.expectedDeliveryDate?.substring(0, 10) || "",
           lineRemarks: existing?.lineRemarks || "",
-          criteriaValues: (props.criteria || []).map(c => {
+          criteriaValues: lineCriteria.map(c => {
             const existingVal = existing?.criteriaValues?.find(cv => cv.criteriaId === c.id);
             return { criteriaId: c.id, criteriaName: c.criteriaName, value: existingVal?.value || "" };
           }),
@@ -56,6 +70,12 @@ class SupplierQuoteForm extends Component {
   }
 
   handleHeaderChange = (key) => (e) => this.setState({ [key]: e.target.value });
+
+  handleHeaderCriteriaChange = (cIdx) => (e) => {
+    const headerCriteriaValues = [...this.state.headerCriteriaValues];
+    headerCriteriaValues[cIdx] = { ...headerCriteriaValues[cIdx], value: e.target.value };
+    this.setState({ headerCriteriaValues });
+  };
 
   handleLineChange = (idx, key) => (e) => {
     const lines = [...this.state.lines];
@@ -69,6 +89,61 @@ class SupplierQuoteForm extends Component {
     criteriaValues[cIdx] = { ...criteriaValues[cIdx], value: e.target.value };
     lines[lineIdx] = { ...lines[lineIdx], criteriaValues };
     this.setState({ lines });
+  };
+
+  handleAttachmentUpload = async (e) => {
+    const inputEl = e.target;
+    const file = inputEl.files[0];
+    if (!file) return;
+
+    if (file.size / 1024 / 1024 > ATTACHMENT_MAX_MB) {
+      this.props.enqueueSnackbar(`File upload is restricted to ${ATTACHMENT_MAX_MB}MB`, { variant: "error" });
+      inputEl.value = "";
+      return;
+    }
+    if (!ATTACHMENT_VALID_TYPES.includes(file.type)) {
+      this.props.enqueueSnackbar("Only PDF, Word, Excel and image files are allowed", { variant: "error" });
+      inputEl.value = "";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+    this.setState({ uploading: true });
+    try {
+      const response = await API.POST(apiEndpoints.masterFileUpload, formData);
+      if (response.success) {
+        this.setState(prev => ({
+          attachments: [...prev.attachments, { fileUUId: response.data.fileUUId, fileName: file.name }],
+        }));
+        this.props.enqueueSnackbar("File attached", { variant: "success" });
+      } else {
+        this.props.enqueueSnackbar(response.errorMessage || "Upload failed", { variant: "error" });
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("Upload failed", { variant: "error" });
+    }
+    inputEl.value = "";
+    this.setState({ uploading: false });
+  };
+
+  handleRemoveAttachment = (idx) => () => {
+    this.setState(prev => ({ attachments: prev.attachments.filter((_, i) => i !== idx) }));
+  };
+
+  handleDownloadAttachment = (file) => async () => {
+    try {
+      const response = await API.GET(apiEndpoints.masterFileDownload + file.fileUUId, { responseType: "blob" });
+      if (response.status === 200) {
+        const url = window.URL.createObjectURL(response.data);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.fileName;
+        a.click();
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("Failed to download file", { variant: "error" });
+    }
   };
 
   computeLanded = (line) => {
@@ -96,6 +171,7 @@ class SupplierQuoteForm extends Component {
       const payload = {
         supplierId: this.state.supplierId || null,
         supplierName: this.state.supplierName,
+        revisionLabel: this.state.revisionLabel ? this.state.revisionLabel.trim() : null,
         quotationRefNo: this.state.quotationRefNo,
         quotationDate: this.state.quotationDate || null,
         validityDate: this.state.validityDate || null,
@@ -103,7 +179,8 @@ class SupplierQuoteForm extends Component {
         freightTerms: this.state.freightTerms,
         deliveryLeadDays: this.state.deliveryLeadDays || null,
         headerNotes: this.state.headerNotes,
-        fileInformations: [],
+        fileInformations: this.state.attachments.map(a => ({ fileUUId: a.fileUUId, fileName: a.fileName })),
+        headerCriteriaValues: this.state.headerCriteriaValues.filter(cv => cv.value),
         lines: lines.map(l => ({
           qcLineId: l.qcLineId,
           quotedQty: parseFloat(l.quotedQty) || null,
@@ -138,7 +215,7 @@ class SupplierQuoteForm extends Component {
   };
 
   render() {
-    const { lines, saving } = this.state;
+    const { lines, saving, uploading, headerCriteriaValues, attachments } = this.state;
     const tf = { size: "small", variant: "outlined", style: { marginBottom: 8 } };
 
     return (
@@ -149,6 +226,10 @@ class SupplierQuoteForm extends Component {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
           <TextField label="Supplier Name *" value={this.state.supplierName}
             onChange={this.handleHeaderChange("supplierName")} fullWidth {...tf} />
+          <TextField label="Revision" value={this.state.revisionLabel}
+            onChange={this.handleHeaderChange("revisionLabel")} fullWidth {...tf}
+            placeholder="e.g. R-0, R-1 — leave blank to auto-number"
+            helperText="Add another quote for the same vendor to capture a negotiation round (R-0, R-1, R-2...)" />
           <TextField label="Quotation Ref No" value={this.state.quotationRefNo}
             onChange={this.handleHeaderChange("quotationRefNo")} fullWidth {...tf} />
           <TextField label="Quotation Date" type="date" InputLabelProps={{ shrink: true }}
@@ -163,6 +244,53 @@ class SupplierQuoteForm extends Component {
             onChange={this.handleHeaderChange("deliveryLeadDays")} fullWidth {...tf} />
           <TextField label="Header Notes" value={this.state.headerNotes}
             onChange={this.handleHeaderChange("headerNotes")} fullWidth {...tf} />
+        </div>
+
+        {/* Header-scoped criteria — one value per vendor, applies to the whole quote */}
+        {headerCriteriaValues.length > 0 && (
+          <div style={{ marginBottom: 16, padding: 16, background: "#f5f8ff", borderRadius: 8, border: "1px solid #dbe6fb" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#1565c0", marginBottom: 8 }}>
+              Vendor-Wide Criteria (applies to entire quote)
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+              {headerCriteriaValues.map((cv, cIdx) => (
+                <TextField key={cv.criteriaId} label={cv.criteriaName} value={cv.value}
+                  onChange={this.handleHeaderCriteriaChange(cIdx)} fullWidth {...tf} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Received quote attachments — the vendor's actual quotation document(s) */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ fontWeight: 600, fontSize: 13 }}>Received Quote Attachments</span>
+            <Button component="label" size="small" variant="outlined" startIcon={<AttachFileIcon fontSize="small" />} disabled={uploading}>
+              {uploading ? "Uploading…" : "Attach File"}
+              <input type="file" hidden onChange={this.handleAttachmentUpload}
+                accept="image/jpeg,image/jpg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            </Button>
+          </div>
+          {attachments.length === 0 ? (
+            <div style={{ fontSize: 12, color: "#aaa" }}>No files attached. Attach the vendor's quotation (PDF/scan/email) for reference.</div>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {attachments.map((file, idx) => (
+                <div key={idx} style={{
+                  display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 16,
+                  background: "#f0f4fa", border: "1px solid #dbe6fb", fontSize: 12,
+                }}>
+                  <InsertDriveFileIcon fontSize="small" style={{ color: "#1565c0" }} />
+                  <span style={{ cursor: "pointer", color: "#1565c0" }} onClick={this.handleDownloadAttachment(file)}>
+                    {file.fileName}
+                  </span>
+                  <IconButton size="small" style={{ padding: 2 }} onClick={this.handleRemoveAttachment(idx)}>
+                    <DeleteIcon style={{ fontSize: 14 }} />
+                  </IconButton>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Line items */}
@@ -198,7 +326,7 @@ class SupplierQuoteForm extends Component {
             {/* Criteria values */}
             {line.criteriaValues.length > 0 && (
               <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 8 }}>Comparison Criteria</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 8 }}>Per-Product Criteria</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
                   {line.criteriaValues.map((cv, cIdx) => (
                     <TextField key={cv.criteriaId} label={cv.criteriaName} value={cv.value}

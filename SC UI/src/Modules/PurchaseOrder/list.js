@@ -720,6 +720,16 @@ class List extends ListCommon {
               )}
               {canEditInventoryModules() && (
                 <Button
+                  onClick={this.props.onLoadFromQuote}
+                  color="default"
+                  variant="outlined"
+                  style={{ marginRight: 8, textTransform: "none" }}
+                >
+                  Load from Quote
+                </Button>
+              )}
+              {canEditInventoryModules() && (
+                <Button
                   onClick={this.props.onAdd}
                   color="primary"
                   variant="contained"

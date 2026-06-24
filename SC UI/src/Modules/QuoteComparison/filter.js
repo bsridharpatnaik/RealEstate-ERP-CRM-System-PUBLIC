@@ -9,6 +9,8 @@ const STATUS_OPTIONS = [
   { value: "OPEN", label: "Open" },
   { value: "PARTIALLY_FINALIZED", label: "Partially Finalized" },
   { value: "FINALIZED", label: "Finalized" },
+  { value: "PARTIALLY_ORDERED", label: "Partially Ordered" },
+  { value: "PO_COMPLETED", label: "PO Completed" },
   { value: "CLOSED", label: "Closed" },
   { value: "CANCELLED", label: "Cancelled" },
 ];

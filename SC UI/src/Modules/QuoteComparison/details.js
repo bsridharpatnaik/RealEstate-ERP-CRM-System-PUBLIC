@@ -8,6 +8,7 @@ import CloseIcon from "@material-ui/icons/Close";
 import EditIcon from "@material-ui/icons/Edit";
 import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
+import AttachFileIcon from "@material-ui/icons/AttachFile";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -20,12 +21,15 @@ import { apiEndpoints } from "../../endpoints";
 import SupplierQuoteForm from "./supplierQuoteForm";
 import ComparisonMatrix from "./comparisonMatrix";
 import { getRole } from "../../helper";
+import { getFinalizedPoGroups as getFinalizedPoGroupsHelper, buildQuotePrefill } from "../../Shared/quoteToPo";
 
 const STATUS_COLORS = {
   DRAFT:               { bg: "#f5f5f5", color: "#666" },
   OPEN:                { bg: "#e3f2fd", color: "#1565c0" },
   PARTIALLY_FINALIZED: { bg: "#fff8e1", color: "#f57f17" },
   FINALIZED:           { bg: "#e8f5e9", color: "#2e7d32" },
+  PARTIALLY_ORDERED:   { bg: "#e1f5fe", color: "#0277bd" },
+  PO_COMPLETED:        { bg: "#e0f2f1", color: "#00695c" },
   CLOSED:              { bg: "#ede7f6", color: "#4527a0" },
   CANCELLED:           { bg: "#ffebee", color: "#b71c1c" },
 };
@@ -73,6 +77,7 @@ class QuoteComparisonDetails extends Component {
   get supplierQuotes() { return this.state.detail?.supplierQuotes || []; }
   get matrix() { return this.state.detail?.matrix || []; }
   get criteria() { return this.header?.criteria || []; }
+  get supplierSummary() { return this.state.detail?.supplierSummary || []; }
 
   canManage = () => {
     const r = getRole()?.toLowerCase();
@@ -153,6 +158,64 @@ class QuoteComparisonDetails extends Component {
     this.setState({ saving: false });
   };
 
+  handleReopenComparison = async () => {
+    this.setState({ saving: true });
+    const res = await API.POST(apiEndpoints.quoteComparisonReopen(this.props.qcId));
+    if (res?.success) {
+      this.props.enqueueSnackbar("Comparison reopened", { variant: "success" });
+      this.loadDetail();
+    } else {
+      this.props.enqueueSnackbar(res?.errorMessage || "Error reopening comparison", { variant: "error" });
+    }
+    this.setState({ saving: false });
+  };
+
+  handleDownloadAttachment = (file) => async () => {
+    try {
+      const response = await API.GET(apiEndpoints.masterFileDownload + file.fileUUId, { responseType: "blob" });
+      if (response.status === 200) {
+        const url = window.URL.createObjectURL(response.data);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.fileName;
+        a.click();
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("Failed to download file", { variant: "error" });
+    }
+  };
+
+  handleExportRfqPdf = async () => {
+    try {
+      const res = await API.GETBlob(apiEndpoints.quoteComparisonRfqPdf(this.props.qcId));
+      if (res?.success) {
+        const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+        window.open(blobUrl, "_blank");
+      } else {
+        this.props.enqueueSnackbar("Failed to generate RFQ PDF", { variant: "error" });
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("Failed to generate RFQ PDF", { variant: "error" });
+    }
+  };
+
+  // Groups finalized-but-not-yet-PO'd lines by their winning supplier quote, so one PO can be
+  // created per vendor round in a single click (a PO has exactly one supplier).
+  getFinalizedPoGroups = () => getFinalizedPoGroupsHelper(this.matrix);
+
+  handleCreatePo = (group) => () => {
+    const quotePrefill = buildQuotePrefill(group, this.lines, this.props.qcId, this.header.project);
+
+    if (this.props.history) {
+      // Stashed in sessionStorage (not router state) because the PO route remounts its
+      // component on every parent re-render — router state would get wiped before it's read.
+      sessionStorage.setItem("qcPoPrefill", JSON.stringify(quotePrefill));
+      this.props.history.push("/purchaseOrder");
+    } else {
+      this.props.enqueueSnackbar("Cannot open Purchase Order — navigation unavailable", { variant: "error" });
+    }
+  };
+
   handleCancel = async () => {
     this.setState({ saving: true });
     const res = await API.POST(apiEndpoints.quoteComparisonCancel(this.props.qcId));
@@ -192,6 +255,13 @@ class QuoteComparisonDetails extends Component {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            <Button size="small" variant="outlined" onClick={this.handleExportRfqPdf}>
+              Export RFQ PDF
+            </Button>
+            {this.canManage() && h.status === "CLOSED" && (
+              <Button size="small" variant="outlined" color="primary" disabled={this.state.saving}
+                onClick={this.handleReopenComparison}>Reopen</Button>
+            )}
             {this.canManage() && h.status !== "CLOSED" && h.status !== "CANCELLED" && (
               <>
                 <Button size="small" variant="outlined" color="secondary"
@@ -207,8 +277,32 @@ class QuoteComparisonDetails extends Component {
   }
 
   renderOverviewTab() {
+    const poGroups = this.canManage() ? this.getFinalizedPoGroups() : [];
     return (
       <div>
+        {poGroups.length > 0 && (
+          <div style={{ marginBottom: 20 }}>
+            <h4>Ready for Purchase Order</h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {poGroups.map(g => (
+                <div key={g.supplierQuoteId} style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
+                  border: "1px solid #c8e6c9", background: "#f1f8e9", borderRadius: 8,
+                }}>
+                  <span style={{ fontSize: 13 }}>
+                    <strong>{g.supplierName}</strong>
+                    {g.revisionLabel && <span style={{ color: "#888" }}> ({g.revisionLabel})</span>}
+                    {" — "}{g.lines.length} item{g.lines.length === 1 ? "" : "s"} finalized
+                  </span>
+                  <Button size="small" variant="contained" color="primary" onClick={this.handleCreatePo(g)}>
+                    Create PO
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <h4>Demand Lines</h4>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
@@ -303,6 +397,8 @@ class QuoteComparisonDetails extends Component {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
               <span style={{ fontWeight: 700, fontSize: 15 }}>{sq.supplierName}</span>
+              {sq.revisionLabel && <Chip label={sq.revisionLabel} size="small"
+                style={{ background: "#e3f2fd", color: "#1565c0", fontWeight: 600 }} />}
               {sq.quotationRefNo && <Chip label={sq.quotationRefNo} size="small" variant="outlined" />}
               <span style={{ fontSize: 12, color: "#888", marginLeft: "auto" }}>
                 {sq.quotationDate && `Quoted: ${new Date(sq.quotationDate).toLocaleDateString("en-IN")}`}
@@ -319,6 +415,15 @@ class QuoteComparisonDetails extends Component {
                 </>
               )}
             </div>
+            {sq.fileInformations && sq.fileInformations.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {sq.fileInformations.map((file, i) => (
+                  <Chip key={i} icon={<AttachFileIcon style={{ fontSize: 14 }} />} label={file.fileName} size="small"
+                    variant="outlined" onClick={this.handleDownloadAttachment(file)}
+                    style={{ cursor: "pointer", fontSize: 11 }} />
+                ))}
+              </div>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, fontSize: 12, color: "#555", marginBottom: 12 }}>
               {sq.paymentTerms && <span>Payment: {sq.paymentTerms}</span>}
               {sq.freightTerms && <span>Freight: {sq.freightTerms}</span>}
@@ -360,11 +465,12 @@ class QuoteComparisonDetails extends Component {
   }
 
   renderMatrixTab() {
-    const canFinalize = this.canManage() && !["CLOSED", "CANCELLED", "FINALIZED"].includes(this.header.status);
+    const canFinalize = this.canManage() && !["CLOSED", "CANCELLED", "FINALIZED", "PARTIALLY_ORDERED", "PO_COMPLETED"].includes(this.header.status);
     return (
       <ComparisonMatrix
         matrix={this.matrix}
         criteria={this.header.criteria || []}
+        supplierSummary={this.supplierSummary}
         onSelectWinner={canFinalize ? this.handleSelectWinner : null}
         canFinalize={canFinalize}
       />
@@ -490,7 +596,7 @@ class QuoteComparisonDetails extends Component {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => this.setState({ cancellingDialog: false })}>Back</Button>
-            <Button onClick={this.handleCancel} style={{ color: "#d32f2f" }} variant="contained"
+            <Button onClick={this.handleCancel} variant="contained"
               style={{ background: "#d32f2f", color: "#fff" }} disabled={saving}>
               {saving ? <CircularProgress size={18} /> : "Cancel Comparison"}
             </Button>

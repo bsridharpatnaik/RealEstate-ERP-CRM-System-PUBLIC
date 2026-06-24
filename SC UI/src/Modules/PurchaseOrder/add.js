@@ -75,8 +75,22 @@ class Add extends AddForm {
       this.loadEditData(this.props.editData);
     } else if (this.props.draftData) {
       this.loadDraftData(this.props.draftData, this.props.draftId);
+    } else if (this.props.quotePrefill) {
+      this.loadQuotePrefill(this.props.quotePrefill);
     }
   }
+
+  // Arrived from Quote Comparison's "Create PO" button — skip indent selection (step 1) since
+  // the awarded supplier, products, rates and terms are already known from the finalized quote.
+  loadQuotePrefill = (prefill) => {
+    this.setState({
+      isLoaded: true,
+      currentStep: 2,
+      items: prefill.items || [],
+      orderTo: prefill.orderTo || null,
+      projectName: prefill.projectName || "",
+    });
+  };
 
   componentWillUnmount() {
     // Clean up blob URLs to prevent memory leaks
@@ -638,6 +652,19 @@ class Add extends AddForm {
           });
           if (this.state.loadedDraftId) {
             API.DELETE(apiEndpoints.deleteDraftById(this.state.loadedDraftId)).catch(() => {});
+          }
+          // If this PO was created from a Quote Comparison "Create PO" action, mark those
+          // quote lines as PO-linked so the comparison reflects that it's been ordered.
+          const poId = response.data?.purchaseOrderId;
+          const linkedItems = this.state.items.filter(i => i._linkedQcLineId && i._linkedSupplierQuoteLineId && i._linkedQcId);
+          if (poId && linkedItems.length > 0) {
+            await Promise.all(linkedItems.map(li => API.POST(apiEndpoints.quoteComparisonLinkToPo, {
+              supplierQuoteLineId: li._linkedSupplierQuoteLineId,
+              qcLineId: li._linkedQcLineId,
+              qcId: li._linkedQcId,
+              purchaseOrderId: poId,
+              poLineId: null,
+            }).catch(() => {})));
           }
           this.props.back();
         } else {

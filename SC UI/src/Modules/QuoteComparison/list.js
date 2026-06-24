@@ -17,6 +17,8 @@ const STATUS_COLORS = {
   OPEN:                 { bg: "#e3f2fd", color: "#1565c0" },
   PARTIALLY_FINALIZED:  { bg: "#fff8e1", color: "#f57f17" },
   FINALIZED:            { bg: "#e8f5e9", color: "#2e7d32" },
+  PARTIALLY_ORDERED:    { bg: "#e1f5fe", color: "#0277bd" },
+  PO_COMPLETED:         { bg: "#e0f2f1", color: "#00695c" },
   CLOSED:               { bg: "#ede7f6", color: "#4527a0" },
   CANCELLED:            { bg: "#ffebee", color: "#b71c1c" },
 };
@@ -165,6 +167,7 @@ class QuoteComparisonList extends Component {
               qcId={selectedQcId}
               onClose={this.closeDetails}
               enqueueSnackbar={this.props.enqueueSnackbar}
+              history={this.props.history}
             />
           </div>
         )}

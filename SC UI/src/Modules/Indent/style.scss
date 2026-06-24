@@ -732,6 +732,13 @@ table {
     color: #c2185b;
   }
 
+  &.status-quote-requested {
+    background-color: #e0f2f1;
+    color: #00695c;
+    font-size: 11px;
+    padding: 3px 9px;
+  }
+
   &.status-rejected {
     background-color: #f3e5f5;
     color: #6a1b9a;

@@ -32,6 +32,7 @@ public final class IndentInventorySpecification {
         List<String> statusChangedBefore = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "statusChangedBeforeDate");
         List<String> tenants             = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "tenants");
         List<String> requiredByNames     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "requiredByNames");
+        List<String> hasQuoteRequested   = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "hasQuoteRequested");
 
         Specification<IndentInventory> spec = null;
 
@@ -79,6 +80,9 @@ public final class IndentInventorySpecification {
 
         if (notEmpty(statusChangedTo) || notEmpty(statusChangedAfter) || notEmpty(statusChangedBefore))
             spec = and(spec, statusHistoryExists(statusChangedTo, statusChangedAfter, statusChangedBefore));
+
+        if (notEmpty(hasQuoteRequested))
+            spec = and(spec, lineItemHasQuoteRequested(Boolean.parseBoolean(hasQuoteRequested.get(0))));
 
         return spec;
     }
@@ -155,6 +159,23 @@ public final class IndentInventorySpecification {
                 product.get(Product_.CATEGORY).get(Category_.CATEGORY_NAME).in(categories)
             ));
             return cb.exists(sub);
+        };
+    }
+
+    // "Yes" → at least one line item has been referenced by a (non-cancelled) Quote Comparison.
+    // "No"  → strictly zero line items have been quoted (not "at least one un-quoted line").
+    private static Specification<IndentInventory> lineItemHasQuoteRequested(boolean hasQuote) {
+        return (root, query, cb) -> {
+            Subquery<Long> sub = query.subquery(Long.class);
+            Root<IndentInventoryList> line = sub.from(IndentInventoryList.class);
+            sub.select(cb.literal(1L));
+            sub.where(cb.and(
+                cb.equal(line.get(IndentInventoryList_.INDENT_INVENTORY).get(IndentInventory_.INDENT_ID),
+                         root.get(IndentInventory_.INDENT_ID)),
+                cb.isNotNull(line.get(IndentInventoryList_.QUOTE_REQUESTED_QC_ID))
+            ));
+            Predicate exists = cb.exists(sub);
+            return hasQuote ? exists : cb.not(exists);
         };
     }
 

@@ -82,6 +82,13 @@ public class IndentInventoryList extends ReusableFields {
 
     private String purchaseOrderId;
 
+    // Set when a Quote Comparison (RFQ) is created referencing this line — independent of
+    // lineItemStatus, which is owned by the PO/inward pipeline and gets recomputed on every
+    // inward sync. This is a non-destructive marker: it's never cleared or overwritten by that
+    // pipeline, so "a quote was requested for this line" stays visible regardless of PO progress.
+    @Column(name = "quote_requested_qc_id")
+    private String quoteRequestedQcId;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "indent_inward_mapping",

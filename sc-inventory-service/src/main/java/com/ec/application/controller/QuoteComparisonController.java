@@ -2,11 +2,16 @@ package com.ec.application.controller;
 
 import com.ec.application.data.*;
 import com.ec.application.model.*;
+import com.ec.application.service.QuoteComparisonPdfService;
 import com.ec.application.service.QuoteComparisonService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
 import java.util.Map;
@@ -14,9 +19,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/quote-comparison")
 @RequiredArgsConstructor
+@Slf4j
 public class QuoteComparisonController {
 
     private final QuoteComparisonService service;
+    private final QuoteComparisonPdfService pdfService;
 
     @PostMapping("/create")
     public ResponseEntity<QuoteComparison> create(@RequestBody QuoteComparisonCreateRequest req) {
@@ -80,6 +87,12 @@ public class QuoteComparisonController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{qcId}/reopen")
+    public ResponseEntity<Void> reopen(@PathVariable String qcId) {
+        service.reopen(qcId);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{qcId}/cancel")
     public ResponseEntity<Void> cancel(@PathVariable String qcId) {
         service.cancel(qcId);
@@ -89,6 +102,29 @@ public class QuoteComparisonController {
     @GetMapping("/matrix/{qcId}")
     public ResponseEntity<List<Map<String, Object>>> matrix(@PathVariable String qcId) {
         return ResponseEntity.ok(service.buildMatrix(qcId));
+    }
+
+    // RFQ PDF — the document sent out to vendors asking them to quote on the demand lines.
+    @GetMapping(value = "/{qcId}/rfq-pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<StreamingResponseBody> rfqPdf(@PathVariable String qcId) {
+        QuoteComparison qc = service.getForRfqPdf(qcId);
+        List<QuoteComparisonLine> lines = service.getLinesForRfqPdf(qcId);
+        String filename = qcId + "-RFQ.pdf";
+
+        StreamingResponseBody stream = outputStream -> {
+            try {
+                pdfService.generateRfqPdf(qc, lines, outputStream);
+                outputStream.flush();
+            } catch (Exception e) {
+                log.error("Failed to generate RFQ PDF for {}", qcId, e);
+                throw new RuntimeException(e);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(stream);
     }
 
     // Called from PO creation to link a finalized quote line

@@ -32,10 +32,13 @@ public class QuoteComparisonService {
     private final QuoteToPoRefRepository qtpRepo;
     private final ActivityLogService activityLogService;
     private final UserDetailsService userDetailsService;
+    private final IndentInventoryListRepo indentInventoryListRepo;
 
     // ─── Create ───────────────────────────────────────────────────────────────
 
     public QuoteComparison create(QuoteComparisonCreateRequest req) {
+        validateIndentLinesNotAlreadyQuoted(req.getLines());
+
         String user = resolveCurrentUser();
 
         QuoteComparison qc = new QuoteComparison();
@@ -54,6 +57,7 @@ public class QuoteComparisonService {
             c.setQuoteComparison(qc);
             c.setCriteriaName(cr.getCriteriaName());
             c.setCriteriaType(cr.getCriteriaType() != null ? cr.getCriteriaType() : "TEXT");
+            c.setCriteriaScope(cr.getCriteriaScope() != null ? cr.getCriteriaScope() : "LINE");
             c.setIsMandatory(cr.getIsMandatory() != null && cr.getIsMandatory());
             c.setDisplayOrder(cr.getDisplayOrder() != null ? cr.getDisplayOrder() : order);
             qc.getCriteria().add(c);
@@ -77,12 +81,53 @@ public class QuoteComparisonService {
         }
 
         QuoteComparison saved = qcRepo.save(qc);
+        markIndentLinesQuoteRequested(saved);
 
         activityLogService.record("CREATED", "QUOTE_COMPARISON", saved.getQcId(),
                 buildDescription("Quote comparison " + saved.getQcId() + " created by " + user, null),
                 user);
 
         return saved;
+    }
+
+    // An indent line can only be part of ONE active quote comparison at a time — if it's already
+    // marked as quote-requested by a comparison that isn't CANCELLED, block creation outright
+    // rather than silently overwriting the marker (which would orphan the earlier RFQ).
+    private void validateIndentLinesNotAlreadyQuoted(List<QuoteComparisonCreateRequest.LineRequest> lines) {
+        for (QuoteComparisonCreateRequest.LineRequest lr : safeList(lines)) {
+            String code = lr.getIndentLineId();
+            if (code == null || code.trim().isEmpty()) continue;
+            for (IndentInventoryList entry : indentInventoryListRepo.findByLineItemCode(code)) {
+                String existingQcId = entry.getQuoteRequestedQcId();
+                if (existingQcId == null) continue;
+                QuoteComparison existingQc = qcRepo.findById(existingQcId).orElse(null);
+                if (existingQc != null && !"CANCELLED".equals(existingQc.getStatus())) {
+                    throw new RuntimeException(
+                            (lr.getProductName() != null ? lr.getProductName() : code) +
+                            " (" + code + ") is already part of quote comparison " + existingQcId +
+                            " (" + existingQc.getStatus() + "). Cancel that comparison before requesting a new quote for this line.");
+                }
+            }
+        }
+    }
+
+    // Marks the originating indent line(s) as "quote requested" — additive only, never cleared
+    // here, so it stays visible on the indent regardless of what the PO/inward pipeline later
+    // does to lineItemStatus. Best-effort: a missing/renamed indent line shouldn't block QC creation.
+    private void markIndentLinesQuoteRequested(QuoteComparison qc) {
+        for (QuoteComparisonLine line : qc.getLines()) {
+            String lineItemCode = line.getIndentLineId();
+            if (lineItemCode == null || lineItemCode.trim().isEmpty()) continue;
+            try {
+                List<IndentInventoryList> matches = indentInventoryListRepo.findByLineItemCode(lineItemCode);
+                for (IndentInventoryList entry : matches) {
+                    entry.setQuoteRequestedQcId(qc.getQcId());
+                    indentInventoryListRepo.save(entry);
+                }
+            } catch (Exception e) {
+                log.warn("Could not mark indent line {} as quote-requested for {}: {}", lineItemCode, qc.getQcId(), e.getMessage());
+            }
+        }
     }
 
     // ─── Get detail ──────────────────────────────────────────────────────────
@@ -95,7 +140,20 @@ public class QuoteComparisonService {
         result.put("lines", qcLineRepo.findByQuoteComparison_QcId(qcId));
         result.put("supplierQuotes", sqRepo.findByQuoteComparison_QcId(qcId));
         result.put("matrix", buildMatrix(qcId));
+        result.put("supplierSummary", buildSupplierSummary(qcId));
         return result;
+    }
+
+    // ─── Lines for RFQ PDF ──────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public QuoteComparison getForRfqPdf(String qcId) {
+        return getOrThrow(qcId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuoteComparisonLine> getLinesForRfqPdf(String qcId) {
+        return qcLineRepo.findByQuoteComparison_QcId(qcId);
     }
 
     // ─── List ────────────────────────────────────────────────────────────────
@@ -114,6 +172,9 @@ public class QuoteComparisonService {
 
         SupplierQuote sq = new SupplierQuote();
         sq.setQuoteComparison(qc);
+        if (req.getRevisionLabel() == null || req.getRevisionLabel().trim().isEmpty()) {
+            req.setRevisionLabel(nextRevisionLabel(qcId, req.getSupplierName()));
+        }
         mapSupplierQuoteFields(sq, req, user);
 
         SupplierQuote saved = sqRepo.save(sq);
@@ -136,11 +197,29 @@ public class QuoteComparisonService {
     public SupplierQuote updateSupplierQuote(String qcId, Long sqId, SupplierQuoteRequest req) {
         SupplierQuote sq = sqRepo.findById(sqId)
                 .orElseThrow(() -> new RuntimeException("Supplier quote not found: " + sqId));
+
+        // The edit path deletes and recreates every SupplierQuoteLine with new IDs. If any of
+        // this quote's CURRENT lines is the winning reference for a finalized demand line,
+        // editing would silently orphan that reference (the matrix/Create PO would lose track
+        // of the award). Block the edit and point the user at "Reopen" first instead.
+        Set<Long> thisQuotesLineIds = sq.getLines().stream().map(SupplierQuoteLine::getId).collect(Collectors.toSet());
+        List<QuoteComparisonLine> qcLines = qcLineRepo.findByQuoteComparison_QcId(qcId);
+        List<String> blockedProducts = qcLines.stream()
+                .filter(l -> l.getFinalizedSupplierQuoteLineId() != null && thisQuotesLineIds.contains(l.getFinalizedSupplierQuoteLineId()))
+                .map(QuoteComparisonLine::getProductName)
+                .collect(Collectors.toList());
+        if (!blockedProducts.isEmpty()) {
+            throw new RuntimeException("Cannot edit this quote — it's already the winning quote for: " +
+                    String.join(", ", blockedProducts) + ". Reopen those line(s) first.");
+        }
+
         String user = resolveCurrentUser();
 
-        // Soft-delete existing lines before replacing
+        // Soft-delete existing lines and header criteria values before replacing
         sq.getLines().forEach(l -> l.setDeleted(true));
         sq.getLines().clear();
+        sq.getHeaderCriteriaValues().forEach(v -> v.setDeleted(true));
+        sq.getHeaderCriteriaValues().clear();
         mapSupplierQuoteFields(sq, req, user);
 
         SupplierQuote saved = sqRepo.save(sq);
@@ -246,6 +325,26 @@ public class QuoteComparisonService {
                 user);
     }
 
+    // ─── Reopen comparison ────────────────────────────────────────────────────
+    // Only CLOSED comparisons can be reopened — CANCELLED is a deliberate dead end (and may
+    // already be blocked from cancelling further work elsewhere). recalcStatus() normally
+    // exits early for CLOSED/CANCELLED, so we flip the status first to let it recompute the
+    // real status from the lines' actual state instead of guessing.
+    public void reopen(String qcId) {
+        QuoteComparison qc = getOrThrow(qcId);
+        if (!"CLOSED".equals(qc.getStatus())) {
+            throw new RuntimeException("Only a closed comparison can be reopened");
+        }
+        String user = resolveCurrentUser();
+        qc.setStatus("OPEN");
+        qcRepo.save(qc);
+        recalcStatus(qcId);
+
+        activityLogService.record("REOPENED", "QUOTE_COMPARISON", qcId,
+                buildDescription("Quote comparison " + qcId + " reopened by " + user, null),
+                user);
+    }
+
     // ─── Cancel comparison ────────────────────────────────────────────────────
 
     public void cancel(String qcId) {
@@ -260,16 +359,47 @@ public class QuoteComparisonService {
         String user = resolveCurrentUser();
         qc.setStatus("CANCELLED");
         qcRepo.save(qc);
+        clearIndentLinesQuoteRequested(qc);
 
         activityLogService.record("CANCELLED", "QUOTE_COMPARISON", qcId,
                 buildDescription("Quote comparison " + qcId + " cancelled by " + user, null),
                 user);
     }
 
+    // Cancelling withdraws the RFQ, so the "quote requested" marker on the indent line should
+    // go with it — unlike Close, which just means "decided", not "withdrawn". Only clears the
+    // flag when it still points at THIS comparison, so a newer QC that re-requested the same
+    // line in the meantime doesn't get its marker erased by this one's cancellation.
+    private void clearIndentLinesQuoteRequested(QuoteComparison qc) {
+        for (QuoteComparisonLine line : qc.getLines()) {
+            String lineItemCode = line.getIndentLineId();
+            if (lineItemCode == null || lineItemCode.trim().isEmpty()) continue;
+            try {
+                List<IndentInventoryList> matches = indentInventoryListRepo.findByLineItemCode(lineItemCode);
+                for (IndentInventoryList entry : matches) {
+                    if (qc.getQcId().equals(entry.getQuoteRequestedQcId())) {
+                        entry.setQuoteRequestedQcId(null);
+                        indentInventoryListRepo.save(entry);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not clear quote-requested marker for indent line {} on cancel of {}: {}", lineItemCode, qc.getQcId(), e.getMessage());
+            }
+        }
+    }
+
     // ─── Link to PO ──────────────────────────────────────────────────────────
 
     public QuoteToPoRef linkToPo(LinkQuoteToPoRequest req) {
         String user = resolveCurrentUser();
+
+        // Guard against double-linking the same QC line (e.g. a double-click before the page
+        // re-renders, or two tabs racing) — without this, a single demand line could end up
+        // pointing at two different POs, which makes no sense once it's actually been ordered.
+        QuoteComparisonLine existingLine = qcLineRepo.findById(req.getQcLineId()).orElse(null);
+        if (existingLine != null && "PO_LINKED".equals(existingLine.getLineStatus())) {
+            throw new RuntimeException("This line is already linked to a Purchase Order.");
+        }
 
         // Remove any existing link for this PO line (skip when poLineId is null)
         if (req.getPoLineId() != null) {
@@ -348,6 +478,7 @@ public class QuoteComparisonService {
                 resp.put("supplierQuoteId", sq.getId());
                 resp.put("supplierId", sq.getSupplierId());
                 resp.put("supplierName", sq.getSupplierName());
+                resp.put("revisionLabel", sq.getRevisionLabel());
 
                 Optional<SupplierQuoteLine> match = sq.getLines().stream()
                         .filter(l -> line.getId().equals(l.getQcLineId()))
@@ -388,6 +519,53 @@ public class QuoteComparisonService {
         }).collect(Collectors.toList());
     }
 
+    // ─── Supplier summary (ranking, totals, header criteria) ──────────────────
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> buildSupplierSummary(String qcId) {
+        List<SupplierQuote> quotes = sqRepo.findByQuoteComparison_QcId(qcId);
+        List<Map<String, Object>> summary = new ArrayList<>();
+
+        for (SupplierQuote sq : quotes) {
+            int respondedLines = (int) sq.getLines().stream()
+                    .filter(l -> l.getQuotedRate() != null)
+                    .count();
+            double total = sq.getLines().stream()
+                    .filter(l -> l.getLandedCost() != null)
+                    .mapToDouble(SupplierQuoteLine::getLandedCost)
+                    .sum();
+
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("supplierQuoteId", sq.getId());
+            item.put("supplierId", sq.getSupplierId());
+            item.put("supplierName", sq.getSupplierName());
+            item.put("revisionLabel", sq.getRevisionLabel());
+            item.put("label", sq.getSupplierName() + (sq.getRevisionLabel() != null && !sq.getRevisionLabel().isEmpty()
+                    ? " (" + sq.getRevisionLabel() + ")" : ""));
+            item.put("deliveryLeadDays", sq.getDeliveryLeadDays());
+            item.put("paymentTerms", sq.getPaymentTerms());
+            item.put("totalLandedCost", total);
+            item.put("respondedLines", respondedLines);
+            item.put("headerCriteriaValues", sq.getHeaderCriteriaValues());
+            item.put("rank", null);
+            summary.add(item);
+        }
+
+        // Rank ascending by total cost — only vendors that quoted at least one line are ranked.
+        summary.stream()
+                .filter(s -> (int) s.get("respondedLines") > 0)
+                .sorted(Comparator.comparingDouble(s -> (Double) s.get("totalLandedCost")))
+                .forEach(new java.util.function.Consumer<Map<String, Object>>() {
+                    int rank = 1;
+                    @Override
+                    public void accept(Map<String, Object> s) {
+                        s.put("rank", rank++);
+                    }
+                });
+
+        return summary;
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private void mapSupplierQuoteFields(SupplierQuote sq, SupplierQuoteRequest req, String user) {
@@ -400,6 +578,7 @@ public class QuoteComparisonService {
         sq.setFreightTerms(req.getFreightTerms());
         sq.setDeliveryLeadDays(req.getDeliveryLeadDays());
         sq.setHeaderNotes(req.getHeaderNotes());
+        sq.setRevisionLabel(req.getRevisionLabel());
         sq.setCreatedByUser(user);
 
         if (req.getFileInformations() != null) {
@@ -409,6 +588,24 @@ public class QuoteComparisonService {
         for (SupplierQuoteRequest.QuoteLineRequest lr : safeList(req.getLines())) {
             sq.getLines().add(buildQuoteLine(sq, lr));
         }
+
+        for (SupplierQuoteRequest.CriteriaValueRequest cv : safeList(req.getHeaderCriteriaValues())) {
+            SupplierQuoteCriteriaValue val = new SupplierQuoteCriteriaValue();
+            val.setSupplierQuote(sq);
+            val.setCriteriaId(cv.getCriteriaId());
+            val.setCriteriaName(cv.getCriteriaName());
+            val.setValue(cv.getValue());
+            sq.getHeaderCriteriaValues().add(val);
+        }
+    }
+
+    // Auto-labels successive quotes from the same vendor as R-0, R-1, R-2... when the caller doesn't specify one.
+    private String nextRevisionLabel(String qcId, String supplierName) {
+        if (supplierName == null) return "R-0";
+        long count = sqRepo.findByQuoteComparison_QcId(qcId).stream()
+                .filter(sq -> supplierName.equalsIgnoreCase(sq.getSupplierName()))
+                .count();
+        return "R-" + count;
     }
 
     private void recalcStatus(String qcId) {
@@ -420,11 +617,18 @@ public class QuoteComparisonService {
 
         List<SupplierQuote> quotes = sqRepo.findByQuoteComparison_QcId(qcId);
         long openCount = lines.stream().filter(l -> "OPEN".equals(l.getLineStatus())).count();
+        long poLinkedCount = lines.stream().filter(l -> "PO_LINKED".equals(l.getLineStatus())).count();
 
         if (quotes.isEmpty()) {
             qc.setStatus("DRAFT");
+        } else if (poLinkedCount == lines.size()) {
+            qc.setStatus("PO_COMPLETED");
         } else if (openCount == lines.size()) {
             qc.setStatus("OPEN");
+        } else if (openCount == 0 && poLinkedCount > 0) {
+            // Every line has been awarded, but only some have actually been turned into a PO yet —
+            // distinct from FINALIZED (none ordered) so progress toward PO_COMPLETED is visible.
+            qc.setStatus("PARTIALLY_ORDERED");
         } else if (openCount == 0) {
             qc.setStatus("FINALIZED");
         } else {

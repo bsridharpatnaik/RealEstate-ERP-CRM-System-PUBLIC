@@ -630,6 +630,12 @@ class Details extends CommonDetails {
                                   <StatusBadgeWithTooltip lineItemStatus={lineItemStatus} statusClass={statusClass} />
                                 ) : "-";
                               })()}
+                              {item.quoteRequestedQcId && (
+                                <span className="status-badge status-quote-requested" style={{ marginLeft: 4 }}
+                                  title={`Quote requested via ${item.quoteRequestedQcId}`}>
+                                  Quote Req.
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="inventory-action-col">
                               {item.lineItemStatus === "NEW" && (

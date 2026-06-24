@@ -1490,3 +1490,107 @@ Indent only aggregates at product level — no structure breakdown.
 `enrichWithBOQ()` removed from `PoInwardReconciliationService`. It was calling `getCachedBOQStatusRows()` on every page load causing 5+ second latency. BOQ Planned column removed from:
 - `PoInwardReconciliationService.exportExcel()` — 13 columns now (was 14)
 - `Reports/PoReconciliation/cards.js` — grid changed from 8 to 7 columns
+
+---
+
+# Quote Comparison Feature — Completed Work (Session 7)
+
+## What It Does
+
+Lets a buyer collect multiple vendor quotes for a set of demand lines (sourced from indents), compare them side by side, award (finalize) each line to a winner, and turn the award into a Purchase Order — with the indent itself reflecting that an RFQ is in flight. Master-schema entity (`@UseDefaultTenant` on `QuoteComparisonService`), same as Indents/POs.
+
+## Entities
+
+| Entity | Table | Notes |
+|---|---|---|
+| `QuoteComparison` | `quote_comparison` | Header. `qcId` PK (custom ID gen, e.g. `QC-1`). `status` enum — see below. |
+| `QuoteComparisonLine` | `quote_comparison_line` | One per demand line. `indentId`/`indentLineId` link back to the source indent line (`lineItemCode`). `lineStatus`: `OPEN` → `FINALIZED` → `PO_LINKED`. |
+| `ComparisonCriteria` | `comparison_criteria` | Custom comparison columns. `criteriaScope`: `LINE` (varies per product) or `HEADER` (one value per vendor for the whole quote). |
+| `SupplierQuote` | `supplier_quote` | One per vendor *round*. `revisionLabel` (R-0, R-1...) lets the same vendor be quoted multiple times — each round is a separate row, auto-numbered if left blank (`nextRevisionLabel`). |
+| `SupplierQuoteLine` | `supplier_quote_line` | Per-line vendor response: rate, qty, discount, GST, freight, computed `landedCost`. |
+| `SupplierQuoteCriteriaValue` | `supplier_quote_criteria_value` | Either `supplierQuoteLine` (LINE scope) or `supplierQuote` (HEADER scope) is set, never both. |
+| `QuoteToPoRef` | — | Audit trail: which PO/PO-line a finalized quote line was turned into. |
+
+## Status State Machine (`QuoteComparisonService.recalcStatus`, re-run after every quote/finalize/link/delete)
+
+| Status | Set when |
+|---|---|
+| `DRAFT` | No `SupplierQuote` exists yet |
+| `OPEN` | At least one quote exists, every line still `OPEN` |
+| `PARTIALLY_FINALIZED` | Mix of open and decided lines |
+| `FINALIZED` | Zero `OPEN` lines, **none** `PO_LINKED` |
+| `PARTIALLY_ORDERED` | Zero `OPEN` lines, **some** (not all) `PO_LINKED` |
+| `PO_COMPLETED` | **All** lines `PO_LINKED` |
+| `CLOSED` | Manual — `recalcStatus` exits early (sticky), reversible via `reopen()` |
+| `CANCELLED` | Manual — sticky, permanent (blocked if any line already `PO_LINKED`) |
+
+`reopen()` only works from `CLOSED` (not `CANCELLED`): it flips status to `OPEN` then calls `recalcStatus` to let it recompute the *real* status from the lines' actual state, rather than guessing.
+
+## Indent Linkage — "Quote Requested" Marker
+
+`IndentInventoryList.quoteRequestedQcId` (column `quote_requested_qc_id`) — **independent of `lineItemStatus`**, which is owned by the PO/inward pipeline and gets silently recomputed on every inward sync (`IndentInventoryAsyncUpdater.recalculateIndentLine`). Overloading that field would have gotten wiped; this is a separate, additive column instead.
+
+- **Set**: `QuoteComparisonService.create()` → `markIndentLinesQuoteRequested()`, looked up by `indentLineId` (= indent's `lineItemCode`), best-effort (logs+continues on failure, never blocks QC creation).
+- **Cleared**: only on `cancel()` → `clearIndentLinesQuoteRequested()`, and only if the marker still points at *that* QC (guards against a newer QC's marker being clobbered by a stale cancel).
+- **Not cleared on `close()`** — closing means "decided", not "withdrawn".
+- **Propagated on indent split**: `IndentInventoryService.splitLineItem()` copies the marker to both split children (it copies `lineItemStatus` too — same pattern). Known residual: if a quoted line is later split *and then* its QC is cancelled, the cancel's lookup-by-original-`lineItemCode` won't find the (now differently-coded) split children, so their markers won't auto-clear — narrow compound edge case, not closed.
+- **One indent line can only be in ONE active (non-cancelled) comparison at a time** — enforced two ways:
+  1. **Proactive**: `Step1SelectIndents` (shared by both PO and Quote Comparison creation wizards) disables/grays already-quoted rows with a tooltip, but **only when `disableAlreadyQuoted` prop is passed** (only from `QuoteComparison/create.js` — the PO wizard is unaffected, since being quoted never blocks creating a PO directly from an indent).
+  2. **Reactive safety net**: `QuoteComparisonService.create()` → `validateIndentLinesNotAlreadyQuoted()` rejects server-side regardless of UI state (handles races / direct API calls).
+- **Indent list filter**: "Quote Requested" Yes/No dropdown (`Indent/filter.js`) → `hasQuoteRequested` attrName → `IndentInventorySpecification.lineItemHasQuoteRequested()` (EXISTS/NOT EXISTS subquery on `IndentInventoryList`). "No" means *zero* lines quoted, not "at least one un-quoted line".
+- **Indent list/details badges**: aggregate "Quote Requested" / "Partial Quote Requested" badge (`Indent/table.js` status cell, stacked vertically under the main status to avoid overflowing into the next column — it did the first time, fixed) computed client-side from how many *active* (non-cancelled) line items carry the flag; per-line "Quote Req." chip in both the list's expansion row and `Indent/details.js`.
+
+## Create-PO Integration (bidirectional)
+
+- **From Quote Comparison**: Overview tab shows a "Ready for Purchase Order" card per *winning supplier-quote* group (one PO = one vendor/revision) — `getFinalizedPoGroups()` groups `FINALIZED` matrix rows by `supplierQuoteId`. "Create PO" button builds a prefill (`SC UI/src/Shared/quoteToPo.js` → `buildQuotePrefill`) and hands off via `sessionStorage` (see gotcha below), landing directly on PO step 2 (Fill Details), pre-filled with product/qty/rate/GST/discount and `_linkedQcLineId`/`_linkedSupplierQuoteLineId`/`_linkedQcId` markers on each item.
+- **From Purchase Order**: "Load from Quote" button in `PurchaseOrder/list.js` toolbar opens `PurchaseOrder/add/LoadFromQuoteDialog.js` — two-step picker (comparison → vendor group within it), same `quoteToPo.js` helpers, sets state directly (no sessionStorage needed since it's the same already-mounted page). Only lists comparisons in `FINALIZED`, `PARTIALLY_FINALIZED`, or `PARTIALLY_ORDERED` status (i.e. has at least one finalized-but-unordered line) — **must keep this list in sync whenever a new header status is added**, it was missed for `PARTIALLY_ORDERED` once already.
+- **On PO save**: `add.js`'s create-success handler loops `state.items` for the `_linked*` markers and calls `quoteComparisonLinkToPo` for each — which sets the QC line to `PO_LINKED` and triggers `recalcStatus`. Guarded against double-linking (`linkToPo` rejects if the line is already `PO_LINKED`).
+- **Editing a finalized SupplierQuote is blocked**: `updateSupplierQuote()` deletes-and-recreates all `SupplierQuoteLine` rows with new IDs on every edit — if any of those lines is the *current* winning reference for a finalized demand line, editing would silently orphan that reference (matrix/Create PO lose track of the award). Blocked outright with a message naming the affected product(s) and pointing at "Reopen" first.
+- **Gotcha — sessionStorage, not router state**: the PO module's route wrapper (`Home/index.js`) does `key={new Date()}` on every routed component, which **remounts on every parent re-render**, wiping anything passed via `history.push(url, state)` before it's read. Use `sessionStorage` (set in `details.js` before navigating, read in `PurchaseOrder/index.js` `componentDidMount`, cleared only on the wizard's `back()`) instead of router state for any future cross-route handoff in this app.
+- **Gotcha — multi-project indent strings**: a QC's `project` field can be a comma-joined list when its source indents spanned multiple projects. `buildQuotePrefill` only carries it into the PO prefill when it's a single value — otherwise the PO's Project field is left blank rather than silently holding an invalid combined string (caught by testing, was a real bug).
+
+## Comparison Matrix UX (`comparisonMatrix.js`)
+
+- Vendor summary cards (rank, total landed cost, payment terms, lead time, header-criteria chips) above the detail table, sorted cheapest-first.
+- **Auto-narrows past 5 vendors**: shows only the 3 cheapest in the detailed table by default, with checkboxes on each card to add/remove vendors — full vendor count always visible via cards even when narrowed. Computed once via `useState(() => ...)` at mount; doesn't auto-recompute if new quotes arrive while the tab stays open (would need a tab switch to re-trigger).
+- Sticky left columns use **hardcoded pixel `left` offsets** (`STICKY_WIDTHS` map) — must stay in sync with actual column content widths, or sticky-column text bleeds across boundaries (happened once, fixed by constraining width/overflow on each sticky cell).
+- `getFinalizedPoGroups`/`buildPoItemsFromGroup`/`buildQuotePrefill` live in `SC UI/src/Shared/quoteToPo.js`, shared by `QuoteComparison/details.js` and `LoadFromQuoteDialog.js` — change once, both stay in sync.
+
+## RFQ PDF Export
+
+`QuoteComparisonPdfService` (iText, same pattern as `PurchaseOrderPdfService`) — `GET /quote-comparison/{qcId}/rfq-pdf`. Branded with the same logo resource (`sc-login-logo.png`) as the PO PDF. Lists demand lines only (product/qty/unit/spec/need-by) — no rate data exists yet at RFQ stage. No firm/letterhead detail beyond the logo, since an RFQ isn't tied to a specific firm the way a PO is.
+
+## Key Backend Files
+
+| File | Role |
+|---|---|
+| `service/QuoteComparisonService.java` | Core logic: create/finalize/reopen/close/cancel/linkToPo, status machine, indent-marker sync |
+| `service/QuoteComparisonPdfService.java` | RFQ PDF |
+| `controller/QuoteComparisonController.java` | All endpoints under `/quote-comparison` |
+| `Filters/IndentInventorySpecification.java` | `lineItemHasQuoteRequested()` — new EXISTS subquery |
+| `data/ConsolidatedIndentLineDTO.java` | Added `quoteRequestedQcId` — surfaced in the indent-picker response |
+| `model/IndentInventoryList.java` | Added `quoteRequestedQcId` column |
+
+## Key Frontend Files
+
+| File | Role |
+|---|---|
+| `Modules/QuoteComparison/{list,details,create,filter,comparisonMatrix,supplierQuoteForm}.js` | Module pages |
+| `Shared/quoteToPo.js` | Shared QC→PO prefill builders |
+| `Modules/PurchaseOrder/add/LoadFromQuoteDialog.js` | "Load from Quote" picker |
+| `Modules/PurchaseOrder/add/step1SelectIndents.js` | Shared indent picker — `disableAlreadyQuoted` prop (QC creation only) |
+| `Modules/Indent/{table,details,filter,list}.js` | Quote-requested badges + filter |
+
+## DB Migrations (no Flyway/Liquibase in this project — `ddl-auto=none`)
+
+All additive, all on `masterschema`. Captured in `sc-inventory-service/quote-comparison-schema-migrations.sql` — **run this by hand against every other environment before deploying**:
+- `supplier_quote.revision_label`
+- `comparison_criteria.criteria_scope`
+- `supplier_quote_criteria_value.supplier_quote_id` (new) + `supplier_quote_line_id` made nullable
+- `indent_inventory_entries.quote_requested_qc_id`
+
+## Known Limitations (not fixed, by design or lower priority)
+
+- Split-then-cancel compound edge case on the quote-requested marker (see above).
+- `LoadFromQuoteDialog` has no pagination (fetches first 100 quote comparisons).
+- No automated test coverage — this feature was built and verified via manual UI testing + direct API calls against local dev DB only.

@@ -171,6 +171,9 @@ class Step1SelectIndents extends React.Component {
           lineItemCode: item.lineItemCode, // Store lineItemCode explicitly
           // Store full deadStock object for potential future use
           deadStockData: item.deadStock,
+          // Non-null when this line is already part of an active (non-cancelled) Quote
+          // Comparison. Used by quote-comparison creation to block re-selecting it.
+          quoteRequestedQcId: item.quoteRequestedQcId || null,
         });
       });
     });
@@ -284,9 +287,15 @@ class Step1SelectIndents extends React.Component {
     );
   };
 
+  // When used from Quote Comparison creation (props.disableAlreadyQuoted), a line that's
+  // already referenced by another active comparison can't be selected — it would only fail
+  // at submit time otherwise. Purchase Order's own indent picker doesn't set this prop, so
+  // it's unaffected: being quoted never blocks creating a PO directly from an indent.
+  isRowSelectable = (row) => !(this.props.disableAlreadyQuoted && row.quoteRequestedQcId);
+
   handleSelectAll = (event) => {
     const category = this.state.categories[this.state.selectedCategory].name;
-    const filteredData = this.getFilteredData();
+    const filteredData = this.getFilteredData().filter(this.isRowSelectable);
     if (event.target.checked) {
       const newSelected = new Set(this.state.selectedRows);
       filteredData.forEach((row) => {
@@ -648,20 +657,38 @@ class Step1SelectIndents extends React.Component {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredData.map((row) => (
+                  filteredData.map((row) => {
+                    const selectable = this.isRowSelectable(row);
+                    return (
                     <TableRow
                       key={row.indentId}
                       hover
                       className={this.itemMatchesSearch(row) ? "search-match-row" : ""}
+                      style={!selectable ? { opacity: 0.55 } : undefined}
                     >
                       <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={this.state.selectedRows.has(row.indentId)}
-                          onChange={this.handleSelectRow(row.indentId)}
-                        />
+                        <HtmlTooltip
+                          title={!selectable ? `Already part of quote comparison ${row.quoteRequestedQcId}. Cancel it before requesting a new quote for this line.` : ""}
+                          placement="right"
+                        >
+                          <span>
+                            <Checkbox
+                              checked={this.state.selectedRows.has(row.indentId)}
+                              onChange={this.handleSelectRow(row.indentId)}
+                              disabled={!selectable}
+                            />
+                          </span>
+                        </HtmlTooltip>
                       </TableCell>
                     <TableCell>{this.formatValue(row.indentNo || row.indentId)}</TableCell>
-                    <TableCell>{this.formatValue(row.inventoryName)}</TableCell>
+                    <TableCell>
+                      {this.formatValue(row.inventoryName)}
+                      {!selectable && (
+                        <div style={{ fontSize: 11, color: "#00695c", marginTop: 2 }}>
+                          Quote requested ({row.quoteRequestedQcId})
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {this.formatValue(row.quantity)} {this.formatValue(row.unit)}
                     </TableCell>
@@ -760,7 +787,8 @@ class Step1SelectIndents extends React.Component {
                       </IconButton>
                       </TableCell>}
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

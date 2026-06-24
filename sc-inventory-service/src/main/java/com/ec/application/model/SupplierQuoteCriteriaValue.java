@@ -19,10 +19,17 @@ public class SupplierQuoteCriteriaValue extends ReusableFields {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Set when this value belongs to a LINE-scoped criteria. Null for HEADER-scoped values.
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "supplier_quote_line_id", nullable = false)
+    @JoinColumn(name = "supplier_quote_line_id", nullable = true)
     private SupplierQuoteLine supplierQuoteLine;
+
+    // Set when this value belongs to a HEADER-scoped criteria. Null for LINE-scoped values.
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_quote_id", nullable = true)
+    private SupplierQuote supplierQuote;
 
     @Column(name = "criteria_id", nullable = false)
     private Long criteriaId;

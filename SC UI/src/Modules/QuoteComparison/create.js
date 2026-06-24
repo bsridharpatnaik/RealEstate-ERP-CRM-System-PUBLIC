@@ -12,19 +12,21 @@ import Step1SelectIndents from "../PurchaseOrder/add/step1SelectIndents";
 import { API } from "../../axios";
 import { apiEndpoints } from "../../endpoints";
 
+// Default scope per preset — LINE means "varies per product" (e.g. Brand for each item),
+// HEADER means "one value for the whole vendor quote" (e.g. Payment Terms). User can flip either.
 const PRESET_CRITERIA = [
-  "Brand / Make",
-  "Grade / Quality",
-  "Delivery Lead Time (days)",
-  "Expected Delivery Date",
-  "Payment Terms",
-  "Freight / Transportation Charges",
-  "GST %",
-  "Discount %",
-  "Warranty / Guarantee",
-  "Compliance / Certification Status",
-  "After-sales Support",
-  "Remarks / Additional Notes",
+  { name: "Brand / Make", scope: "LINE" },
+  { name: "Grade / Quality", scope: "LINE" },
+  { name: "Delivery Lead Time (days)", scope: "HEADER" },
+  { name: "Expected Delivery Date", scope: "LINE" },
+  { name: "Payment Terms", scope: "HEADER" },
+  { name: "Freight / Transportation Charges", scope: "HEADER" },
+  { name: "GST %", scope: "LINE" },
+  { name: "Discount %", scope: "LINE" },
+  { name: "Warranty / Guarantee", scope: "HEADER" },
+  { name: "Compliance / Certification Status", scope: "HEADER" },
+  { name: "After-sales Support", scope: "HEADER" },
+  { name: "Remarks / Additional Notes", scope: "HEADER" },
 ];
 
 const STEPS = ["Select Indent Lines", "Review Lines", "Criteria", "Summary"];
@@ -38,9 +40,11 @@ class QuoteComparisonCreate extends Component {
     reviewedLines: [],
     // Step 3 — criteria
     selectedPresets: new Set(),
-    customCriteria: [],
+    criteriaScopes: PRESET_CRITERIA.reduce((acc, c) => ({ ...acc, [c.name]: c.scope }), {}),
+    customCriteria: [], // [{ name, scope }]
     // Step 4 — header
     title: "",
+    project: "",
     notes: "",
     comparisonDate: new Date().toISOString().substring(0, 10),
     saving: false,
@@ -63,7 +67,8 @@ class QuoteComparisonCreate extends Component {
       specifications: ind.specification !== "-" ? ind.specification : "",
       needByDate: "",
     }));
-    this.setState({ step: 1, reviewedLines });
+    const projectNames = [...new Set(selectedIndents.map(ind => ind.projectName).filter(Boolean))];
+    this.setState({ step: 1, reviewedLines, project: projectNames.join(", ") });
   };
 
   handleLineChange = (idx, key) => (e) => {
@@ -78,13 +83,25 @@ class QuoteComparisonCreate extends Component {
     this.setState({ selectedPresets: s });
   };
 
+  toggleScope = (name) => () => {
+    const criteriaScopes = { ...this.state.criteriaScopes };
+    criteriaScopes[name] = criteriaScopes[name] === "HEADER" ? "LINE" : "HEADER";
+    this.setState({ criteriaScopes });
+  };
+
   addCustomCriteria = () => {
-    this.setState(prev => ({ customCriteria: [...prev.customCriteria, ""] }));
+    this.setState(prev => ({ customCriteria: [...prev.customCriteria, { name: "", scope: "HEADER" }] }));
   };
 
   handleCustomChange = (idx) => (e) => {
     const customCriteria = [...this.state.customCriteria];
-    customCriteria[idx] = e.target.value;
+    customCriteria[idx] = { ...customCriteria[idx], name: e.target.value };
+    this.setState({ customCriteria });
+  };
+
+  toggleCustomScope = (idx) => () => {
+    const customCriteria = [...this.state.customCriteria];
+    customCriteria[idx] = { ...customCriteria[idx], scope: customCriteria[idx].scope === "HEADER" ? "LINE" : "HEADER" };
     this.setState({ customCriteria });
   };
 
@@ -94,24 +111,24 @@ class QuoteComparisonCreate extends Component {
   };
 
   buildCriteriaList = () => {
-    const { selectedPresets, customCriteria } = this.state;
+    const { selectedPresets, criteriaScopes, customCriteria } = this.state;
     let order = 1;
     const list = [];
-    PRESET_CRITERIA.forEach(name => {
+    PRESET_CRITERIA.forEach(({ name }) => {
       if (selectedPresets.has(name)) {
-        list.push({ criteriaName: name, criteriaType: "TEXT", isMandatory: false, displayOrder: order++ });
+        list.push({ criteriaName: name, criteriaType: "TEXT", criteriaScope: criteriaScopes[name] || "LINE", isMandatory: false, displayOrder: order++ });
       }
     });
-    customCriteria.forEach(name => {
-      if (name.trim()) {
-        list.push({ criteriaName: name.trim(), criteriaType: "TEXT", isMandatory: false, displayOrder: order++ });
+    customCriteria.forEach(({ name, scope }) => {
+      if (name && name.trim()) {
+        list.push({ criteriaName: name.trim(), criteriaType: "TEXT", criteriaScope: scope || "HEADER", isMandatory: false, displayOrder: order++ });
       }
     });
     return list;
   };
 
   handleCreate = async () => {
-    const { title, reviewedLines, comparisonDate, notes } = this.state;
+    const { title, project, reviewedLines, comparisonDate, notes } = this.state;
     if (!title.trim()) {
       this.props.enqueueSnackbar("Title is required", { variant: "error" });
       return;
@@ -121,6 +138,7 @@ class QuoteComparisonCreate extends Component {
       const criteria = this.buildCriteriaList();
       const payload = {
         title: title.trim(),
+        project: project ? project.trim() : null,
         notes,
         comparisonDate: comparisonDate || null,
         lines: reviewedLines.map(l => ({
@@ -177,14 +195,15 @@ class QuoteComparisonCreate extends Component {
 
   renderStep0() {
     return (
-      <div>
+      <div style={{ overflowX: "auto" }}>
         <Step1SelectIndents
           onSelectIndents={(indents) => this.setState({ selectedIndents: indents })}
           onIndentItemsChange={(indents) => this.setState({ selectedIndents: indents })}
           enqueueSnackbar={this.props.enqueueSnackbar}
           hideSplitAction
+          disableAlreadyQuoted
         />
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16, minWidth: "fit-content" }}>
           <Button variant="outlined" onClick={() => this.props.history.push("/quoteComparison")}>
             Cancel
           </Button>
@@ -249,30 +268,51 @@ class QuoteComparisonCreate extends Component {
     );
   }
 
+  renderScopeToggle(scope, onToggle) {
+    const isHeader = scope === "HEADER";
+    return (
+      <span
+        onClick={onToggle}
+        title="Click to switch between Per Vendor and Per Product"
+        style={{
+          cursor: "pointer", fontSize: 10, fontWeight: 600, marginLeft: 6, padding: "2px 6px",
+          borderRadius: 10, background: isHeader ? "#e3f2fd" : "#fff3e0",
+          color: isHeader ? "#1565c0" : "#e65100", whiteSpace: "nowrap",
+        }}
+      >
+        {isHeader ? "Per Vendor" : "Per Product"}
+      </span>
+    );
+  }
+
   renderStep2() {
-    const { selectedPresets, customCriteria } = this.state;
+    const { selectedPresets, criteriaScopes, customCriteria } = this.state;
     return (
       <div>
         <h3 style={{ marginTop: 0 }}>Comparison Criteria</h3>
         <p style={{ color: "#666", fontSize: 13 }}>
-          Select parameters you want to compare across supplier quotes. These become columns in the comparison matrix.
+          Select parameters you want to compare across supplier quotes. "Per Vendor" criteria apply once to the
+          whole quote (e.g. Warranty); "Per Product" criteria can differ for every line item (e.g. Brand). Click the
+          badge to switch.
         </p>
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontWeight: 600, marginBottom: 12 }}>Standard Criteria</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
-            {PRESET_CRITERIA.map(name => (
-              <FormControlLabel
-                key={name}
-                control={
-                  <Checkbox
-                    checked={selectedPresets.has(name)}
-                    onChange={() => this.togglePreset(name)}
-                    color="primary"
-                    size="small"
-                  />
-                }
-                label={<span style={{ fontSize: 13 }}>{name}</span>}
-              />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 4 }}>
+            {PRESET_CRITERIA.map(({ name }) => (
+              <div key={name} style={{ display: "flex", alignItems: "center" }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={selectedPresets.has(name)}
+                      onChange={() => this.togglePreset(name)}
+                      color="primary"
+                      size="small"
+                    />
+                  }
+                  label={<span style={{ fontSize: 13 }}>{name}</span>}
+                />
+                {selectedPresets.has(name) && this.renderScopeToggle(criteriaScopes[name], this.toggleScope(name))}
+              </div>
             ))}
           </div>
         </div>
@@ -284,12 +324,13 @@ class QuoteComparisonCreate extends Component {
               <AddIcon fontSize="small" />
             </IconButton>
           </div>
-          {customCriteria.map((val, idx) => (
+          {customCriteria.map((c, idx) => (
             <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <TextField
                 size="small" variant="outlined" placeholder="Criteria name"
-                value={val} onChange={this.handleCustomChange(idx)} style={{ width: 280 }}
+                value={c.name} onChange={this.handleCustomChange(idx)} style={{ width: 280 }}
               />
+              {this.renderScopeToggle(c.scope, this.toggleCustomScope(idx))}
               <IconButton size="small" onClick={this.removeCustom(idx)}>
                 <DeleteIcon fontSize="small" />
               </IconButton>
@@ -311,7 +352,7 @@ class QuoteComparisonCreate extends Component {
   }
 
   renderStep3() {
-    const { title, notes, comparisonDate, reviewedLines, saving } = this.state;
+    const { title, project, notes, comparisonDate, reviewedLines, saving } = this.state;
     const criteria = this.buildCriteriaList();
     const tf = { size: "small", variant: "outlined", style: { marginBottom: 12 } };
     return (
@@ -320,6 +361,8 @@ class QuoteComparisonCreate extends Component {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
           <TextField label="Title *" value={title} onChange={e => this.setState({ title: e.target.value })}
             fullWidth {...tf} />
+          <TextField label="Project" value={project} onChange={e => this.setState({ project: e.target.value })}
+            fullWidth {...tf} helperText="Auto-filled from selected indents; edit if needed" />
           <TextField label="Comparison Date" type="date" InputLabelProps={{ shrink: true }}
             value={comparisonDate} onChange={e => this.setState({ comparisonDate: e.target.value })}
             fullWidth {...tf} />
@@ -341,7 +384,9 @@ class QuoteComparisonCreate extends Component {
             {criteria.length === 0
               ? <div style={{ fontSize: 12, color: "#aaa" }}>None selected (basic comparison only)</div>
               : criteria.map((c, i) => (
-                  <div key={i} style={{ fontSize: 12, marginBottom: 4, color: "#555" }}>• {c.criteriaName}</div>
+                  <div key={i} style={{ fontSize: 12, marginBottom: 4, color: "#555" }}>
+                    • {c.criteriaName} <span style={{ color: "#aaa" }}>({c.criteriaScope === "HEADER" ? "per vendor" : "per product"})</span>
+                  </div>
                 ))
             }
           </div>
@@ -360,7 +405,7 @@ class QuoteComparisonCreate extends Component {
   render() {
     const { step } = this.state;
     return (
-      <div style={{ padding: 24, maxWidth: step === 0 ? "100%" : 960, margin: "0 auto", overflowX: "hidden", boxSizing: "border-box" }}>
+      <div style={{ padding: 24, maxWidth: step === 0 ? "100%" : 960, margin: "0 auto", overflowX: step === 0 ? "auto" : "hidden", boxSizing: "border-box" }}>
         <h2 style={{ marginTop: 0, marginBottom: 24 }}>New Quote Comparison</h2>
         {this.renderStepper()}
         {step === 0 && this.renderStep0()}

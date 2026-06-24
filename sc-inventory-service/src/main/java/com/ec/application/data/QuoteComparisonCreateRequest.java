@@ -34,6 +34,7 @@ public class QuoteComparisonCreateRequest {
     public static class CriteriaRequest {
         private String criteriaName;
         private String criteriaType; // NUMBER, TEXT, DATE, BOOLEAN
+        private String criteriaScope; // LINE, HEADER
         private Boolean isMandatory;
         private Integer displayOrder;
     }

@@ -206,9 +206,13 @@ class Table extends CommonTable {
         statusClass = `status-${normalizedStatus.replace(/\s+/g, '-')}`;
       }
       
+      const quoteBadge = this.renderQuoteRequestedBadge(row);
       return (
         <td data-label="Status">
-          <span className={`status-badge ${statusClass}`}>{statusValue}</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
+            <span className={`status-badge ${statusClass}`}>{statusValue}</span>
+            {quoteBadge}
+          </div>
         </td>
       );
     } else if (key === "poNumbers") {
@@ -243,6 +247,26 @@ class Table extends CommonTable {
     } else {
       return super.renderCell(key, row, index);
     }
+  }
+
+  // Aggregate "Quote Requested" / "Partial Quote Requested" badge — derived client-side from
+  // each line item's quoteRequestedQcId (set when a Quote Comparison references that line).
+  // Independent of indentStatus, so it shows regardless of NEW/APPROVED/PO progress.
+  renderQuoteRequestedBadge(row) {
+    const items = row.inventoryList || row.inventoryItems || [];
+    const activeItems = items.filter(item => (item.lineItemStatus || "").toUpperCase() !== "CANCELLED");
+    if (activeItems.length === 0) return null;
+    const requestedCount = activeItems.filter(item => !!item.quoteRequestedQcId).length;
+    if (requestedCount === 0) return null;
+    const allRequested = requestedCount === activeItems.length;
+    return (
+      <span
+        className="status-badge status-quote-requested"
+        title={`${requestedCount} of ${activeItems.length} line item(s) referenced by a Quote Comparison`}
+      >
+        {allRequested ? "Quote Requested" : "Partial Quote Requested"}
+      </span>
+    );
   }
 
   renderExpansionRow(row, colSpan) {
@@ -289,6 +313,12 @@ class Table extends CommonTable {
                           {lineStatus
                             ? <span className={`status-badge status-${lineStatus.toLowerCase().replace(/\s+/g, '-')}`}>{lineStatus}</span>
                             : '—'}
+                          {item.quoteRequestedQcId && (
+                            <span className="status-badge status-quote-requested" style={{ marginLeft: 4 }}
+                              title={`Quote requested via ${item.quoteRequestedQcId}`}>
+                              Quote Req.
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );

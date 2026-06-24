@@ -4,6 +4,8 @@ import com.ec.application.ReusableClasses.ReusableFields;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
@@ -61,9 +63,21 @@ public class SupplierQuote extends ReusableFields {
     @Column(name = "created_by_user")
     private String createdByUser;
 
+    // Free-text round label (e.g. "R-0", "R-1", "R-2") — lets the same vendor be quoted
+    // multiple times in one comparison so negotiation rounds sit side by side in the matrix.
+    @Column(name = "revision_label")
+    private String revisionLabel = "R-0";
+
     @OneToMany(mappedBy = "supplierQuote", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
     @OrderBy("id ASC")
     private List<SupplierQuoteLine> lines = new ArrayList<>();
+
+    // Header-scoped criteria values (criteriaScope = HEADER) — one value per vendor, not per line.
+    @OneToMany(mappedBy = "supplierQuote", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
+    @OrderBy("id ASC")
+    private List<SupplierQuoteCriteriaValue> headerCriteriaValues = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(

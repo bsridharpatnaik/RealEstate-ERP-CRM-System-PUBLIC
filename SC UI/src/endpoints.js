@@ -377,9 +377,11 @@ export const apiEndpoints = {
   quoteComparisonFinalizeLine: (qcId) => `/api/inventory/quote-comparison/${qcId}/finalize-line`,
   quoteComparisonReopenLine: (qcId, lineId) => `/api/inventory/quote-comparison/${qcId}/reopen-line/${lineId}`,
   quoteComparisonClose: (qcId) => `/api/inventory/quote-comparison/${qcId}/close`,
+  quoteComparisonReopen: (qcId) => `/api/inventory/quote-comparison/${qcId}/reopen`,
   quoteComparisonCancel: (qcId) => `/api/inventory/quote-comparison/${qcId}/cancel`,
   quoteComparisonLinkToPo: "/api/inventory/quote-comparison/link-to-po",
   quoteComparisonFinalizedForPo: "/api/inventory/quote-comparison/finalized-for-po",
+  quoteComparisonRfqPdf: (qcId) => `/api/inventory/quote-comparison/${qcId}/rfq-pdf`,
 };
 export const exportURL = {
   getAllInventoryTransactions:
