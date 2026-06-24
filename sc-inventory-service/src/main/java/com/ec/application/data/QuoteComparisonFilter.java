@@ -2,14 +2,14 @@ package com.ec.application.data;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class QuoteComparisonFilter {
-    private String qcId;
-    private String project;
-    private String indentId;
-    private String status;
+    private String search; // matches QC Number or Indent ID
+    private List<String> status;
     private String createdBy;
-    private String supplierName;
+    private List<String> supplierName;
     private String dateFrom;
     private String dateTo;
 }

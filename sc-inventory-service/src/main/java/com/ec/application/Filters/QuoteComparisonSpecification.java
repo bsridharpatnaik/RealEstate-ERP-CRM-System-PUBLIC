@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class QuoteComparisonSpecification {
 
@@ -18,17 +19,18 @@ public class QuoteComparisonSpecification {
 
             if (filter == null) return cb.conjunction();
 
-            if (filter.getQcId() != null && !filter.getQcId().trim().isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("qcId")),
-                        "%" + filter.getQcId().toLowerCase() + "%"));
+            if (filter.getSearch() != null && !filter.getSearch().trim().isEmpty()) {
+                String search = filter.getSearch().trim().toLowerCase();
+                Join<Object, Object> indentRefs = root.join("indentIds", JoinType.LEFT);
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("qcId")), "%" + search + "%"),
+                        cb.like(cb.lower(indentRefs.as(String.class)), "%" + search + "%")
+                ));
+                query.distinct(true);
             }
 
-            if (filter.getProject() != null && !filter.getProject().trim().isEmpty()) {
-                predicates.add(cb.equal(root.get("project"), filter.getProject()));
-            }
-
-            if (filter.getStatus() != null && !filter.getStatus().trim().isEmpty()) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+            if (filter.getStatus() != null && !filter.getStatus().isEmpty()) {
+                predicates.add(root.get("status").in(filter.getStatus()));
             }
 
             if (filter.getCreatedBy() != null && !filter.getCreatedBy().trim().isEmpty()) {
@@ -36,17 +38,12 @@ public class QuoteComparisonSpecification {
                         "%" + filter.getCreatedBy().toLowerCase() + "%"));
             }
 
-            if (filter.getIndentId() != null && !filter.getIndentId().trim().isEmpty()) {
-                // Check in the indent refs collection
-                Join<Object, Object> indentRefs = root.join("indentIds", JoinType.LEFT);
-                predicates.add(cb.equal(indentRefs, filter.getIndentId()));
-                query.distinct(true);
-            }
-
-            if (filter.getSupplierName() != null && !filter.getSupplierName().trim().isEmpty()) {
+            if (filter.getSupplierName() != null && !filter.getSupplierName().isEmpty()) {
                 Join<Object, Object> supplierQuotes = root.join("supplierQuotes", JoinType.LEFT);
-                predicates.add(cb.like(cb.lower(supplierQuotes.get("supplierName")),
-                        "%" + filter.getSupplierName().toLowerCase() + "%"));
+                List<String> lowered = filter.getSupplierName().stream()
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toList());
+                predicates.add(cb.lower(supplierQuotes.get("supplierName")).in(lowered));
                 query.distinct(true);
             }
 

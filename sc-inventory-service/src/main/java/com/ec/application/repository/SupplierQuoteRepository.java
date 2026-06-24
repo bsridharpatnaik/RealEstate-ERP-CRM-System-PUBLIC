@@ -2,6 +2,7 @@ package com.ec.application.repository;
 
 import com.ec.application.model.SupplierQuote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,4 +11,7 @@ import java.util.List;
 public interface SupplierQuoteRepository extends JpaRepository<SupplierQuote, Long> {
 
     List<SupplierQuote> findByQuoteComparison_QcId(String qcId);
+
+    @Query("SELECT DISTINCT sq.supplierName FROM SupplierQuote sq WHERE sq.isDeleted = false ORDER BY sq.supplierName ASC")
+    List<String> findDistinctSupplierNames();
 }

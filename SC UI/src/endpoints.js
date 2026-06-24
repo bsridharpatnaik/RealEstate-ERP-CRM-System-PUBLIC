@@ -368,6 +368,7 @@ export const apiEndpoints = {
 
   // Quote Comparison
   quoteComparisonList: "/api/inventory/quote-comparison/list?size=100",
+  quoteComparisonSupplierNames: "/api/inventory/quote-comparison/supplier-names",
   quoteComparisonCreate: "/api/inventory/quote-comparison/create",
   quoteComparisonDetail: (qcId) => `/api/inventory/quote-comparison/${qcId}`,
   quoteComparisonMatrix: (qcId) => `/api/inventory/quote-comparison/matrix/${qcId}`,

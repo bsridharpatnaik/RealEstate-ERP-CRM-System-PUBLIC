@@ -48,11 +48,27 @@ class QuoteComparisonCreate extends Component {
     notes: "",
     comparisonDate: new Date().toISOString().substring(0, 10),
     saving: false,
+    tenantNameByCode: {},
+  };
+
+  componentDidMount() {
+    this.fetchTenants();
+  }
+
+  fetchTenants = async () => {
+    const res = await API.GET(apiEndpoints.getTenants);
+    if (res?.success && Array.isArray(res.data)) {
+      const tenantNameByCode = {};
+      res.data.forEach((t) => {
+        if (t.tenantCode) tenantNameByCode[t.tenantCode] = t.tenantName || t.name || t.tenantCode;
+      });
+      this.setState({ tenantNameByCode });
+    }
   };
 
   // Step 1 → Step 2
   handleIndentSelectionDone = () => {
-    const { selectedIndents } = this.state;
+    const { selectedIndents, tenantNameByCode } = this.state;
     if (!selectedIndents || selectedIndents.length === 0) {
       this.props.enqueueSnackbar("Select at least one indent line", { variant: "error" });
       return;
@@ -67,7 +83,7 @@ class QuoteComparisonCreate extends Component {
       specifications: ind.specification !== "-" ? ind.specification : "",
       needByDate: "",
     }));
-    const projectNames = [...new Set(selectedIndents.map(ind => ind.projectName).filter(Boolean))];
+    const projectNames = [...new Set(selectedIndents.map(ind => tenantNameByCode[ind.projectName] || ind.projectName).filter(Boolean))];
     this.setState({ step: 1, reviewedLines, project: projectNames.join(", ") });
   };
 
@@ -195,7 +211,7 @@ class QuoteComparisonCreate extends Component {
 
   renderStep0() {
     return (
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflow: "hidden", minWidth: 0 }}>
         <Step1SelectIndents
           onSelectIndents={(indents) => this.setState({ selectedIndents: indents })}
           onIndentItemsChange={(indents) => this.setState({ selectedIndents: indents })}
@@ -203,7 +219,7 @@ class QuoteComparisonCreate extends Component {
           hideSplitAction
           disableAlreadyQuoted
         />
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16, minWidth: "fit-content" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
           <Button variant="outlined" onClick={() => this.props.history.push("/quoteComparison")}>
             Cancel
           </Button>
@@ -361,8 +377,8 @@ class QuoteComparisonCreate extends Component {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
           <TextField label="Title *" value={title} onChange={e => this.setState({ title: e.target.value })}
             fullWidth {...tf} />
-          <TextField label="Project" value={project} onChange={e => this.setState({ project: e.target.value })}
-            fullWidth {...tf} helperText="Auto-filled from selected indents; edit if needed" />
+          <TextField label="Project" value={project} disabled
+            fullWidth {...tf} helperText="Derived from selected indents" />
           <TextField label="Comparison Date" type="date" InputLabelProps={{ shrink: true }}
             value={comparisonDate} onChange={e => this.setState({ comparisonDate: e.target.value })}
             fullWidth {...tf} />
@@ -405,7 +421,7 @@ class QuoteComparisonCreate extends Component {
   render() {
     const { step } = this.state;
     return (
-      <div style={{ padding: 24, maxWidth: step === 0 ? "100%" : 960, margin: "0 auto", overflowX: step === 0 ? "auto" : "hidden", boxSizing: "border-box" }}>
+      <div style={{ padding: 24, maxWidth: step === 0 ? "100%" : 960, margin: "0 auto", boxSizing: "border-box", overflow: "hidden", minWidth: 0 }}>
         <h2 style={{ marginTop: 0, marginBottom: 24 }}>New Quote Comparison</h2>
         {this.renderStepper()}
         {step === 0 && this.renderStep0()}

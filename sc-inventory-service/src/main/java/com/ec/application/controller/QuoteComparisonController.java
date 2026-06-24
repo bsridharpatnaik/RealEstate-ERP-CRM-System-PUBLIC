@@ -43,6 +43,11 @@ public class QuoteComparisonController {
         return ResponseEntity.ok(service.list(filter, page, size));
     }
 
+    @GetMapping("/supplier-names")
+    public ResponseEntity<List<String>> getDistinctSupplierNames() {
+        return ResponseEntity.ok(service.getDistinctSupplierNames());
+    }
+
     @PostMapping("/{qcId}/supplier-quote")
     public ResponseEntity<SupplierQuote> addSupplierQuote(
             @PathVariable String qcId,

@@ -48,7 +48,6 @@ public class QuoteComparisonService {
         qc.setComparisonDate(req.getComparisonDate() != null ? req.getComparisonDate() : new Date());
         qc.setStatus("DRAFT");
         qc.setCreatedByUser(user);
-        qc.setIndentIds(req.getIndentIds() != null ? req.getIndentIds() : new ArrayList<>());
 
         // Add criteria
         int order = 0;
@@ -79,6 +78,15 @@ public class QuoteComparisonService {
             line.setLineStatus("OPEN");
             qc.getLines().add(line);
         }
+
+        // Derived from the lines themselves rather than trusting a separate request field —
+        // every line already carries its source indentId, so this can't drift out of sync.
+        List<String> indentIds = qc.getLines().stream()
+                .map(QuoteComparisonLine::getIndentId)
+                .filter(id -> id != null && !id.trim().isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
+        qc.setIndentIds(indentIds);
 
         QuoteComparison saved = qcRepo.save(qc);
         markIndentLinesQuoteRequested(saved);
@@ -161,7 +169,12 @@ public class QuoteComparisonService {
     @Transactional(readOnly = true)
     public Page<QuoteComparison> list(QuoteComparisonFilter filter, int page, int size) {
         Specification<QuoteComparison> spec = QuoteComparisonSpecification.getSpec(filter);
-        return qcRepo.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "comparisonDate")));
+        return qcRepo.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "creationDate")));
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getDistinctSupplierNames() {
+        return sqRepo.findDistinctSupplierNames();
     }
 
     // ─── Add supplier quote ──────────────────────────────────────────────────

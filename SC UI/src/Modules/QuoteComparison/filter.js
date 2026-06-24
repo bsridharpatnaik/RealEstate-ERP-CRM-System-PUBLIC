@@ -1,63 +1,42 @@
-import React, { Component } from "react";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
-import MenuItem from "@material-ui/core/MenuItem";
+import React from "react";
+import CommonFilter from "../../Shared/Filter";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "OPEN", label: "Open" },
-  { value: "PARTIALLY_FINALIZED", label: "Partially Finalized" },
-  { value: "FINALIZED", label: "Finalized" },
-  { value: "PARTIALLY_ORDERED", label: "Partially Ordered" },
-  { value: "PO_COMPLETED", label: "PO Completed" },
-  { value: "CLOSED", label: "Closed" },
-  { value: "CANCELLED", label: "Cancelled" },
+  "DRAFT", "OPEN", "PARTIALLY_FINALIZED", "FINALIZED",
+  "PARTIALLY_ORDERED", "PO_COMPLETED", "CLOSED", "CANCELLED",
 ];
 
-class QuoteComparisonFilter extends Component {
-  state = {
-    qcId: "",
-    project: "",
-    indentId: "",
-    status: "",
-    createdBy: "",
-    supplierName: "",
-    dateFrom: "",
-    dateTo: "",
-  };
+class QuoteComparisonFilter extends CommonFilter {
+  labelsOutside = true;
 
-  handleChange = (key) => (e) => this.setState({ [key]: e.target.value });
-
-  handleApply = () => this.props.onApply(this.state);
-
-  handleReset = () => {
-    const empty = {
-      qcId: "", project: "", indentId: "", status: "",
-      createdBy: "", supplierName: "", dateFrom: "", dateTo: "",
-    };
-    this.setState(empty, () => this.props.onApply(empty));
-  };
-
-  render() {
-    const { qcId, project, indentId, status, createdBy, supplierName, dateFrom, dateTo } = this.state;
-    const f = { fullWidth: true, size: "small", variant: "outlined", style: { marginBottom: 12 } };
+  renderFilter() {
+    const { options = {} } = this.props;
     return (
-      <div style={{ padding: 16, minWidth: 280 }}>
-        <TextField label="QC Number" value={qcId} onChange={this.handleChange("qcId")} {...f} />
-        <TextField label="Project Code" value={project} onChange={this.handleChange("project")} {...f} />
-        <TextField label="Indent ID" value={indentId} onChange={this.handleChange("indentId")} {...f} />
-        <TextField select label="Status" value={status} onChange={this.handleChange("status")} {...f}>
-          {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-        </TextField>
-        <TextField label="Supplier Name" value={supplierName} onChange={this.handleChange("supplierName")} {...f} />
-        <TextField label="Created By" value={createdBy} onChange={this.handleChange("createdBy")} {...f} />
-        <TextField label="Date From (dd-MM-yyyy)" value={dateFrom} onChange={this.handleChange("dateFrom")} {...f} />
-        <TextField label="Date To (dd-MM-yyyy)" value={dateTo} onChange={this.handleChange("dateTo")} {...f} />
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button variant="contained" color="primary" onClick={this.handleApply} style={{ flex: 1 }}>Apply</Button>
-          <Button variant="outlined" onClick={this.handleReset} style={{ flex: 1 }}>Reset</Button>
-        </div>
+      <div className="filter-container">
+        {this.renderHeader()}
+        {this.state.reset ? (
+          <div className="filter-content" style={{ padding: "16px 20px" }}>
+
+            {this.renderTextField("Search (QC No. or Indent ID)", "search", 60)}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+              <div>{this.renderFilterDate("Date From", "dateFrom")}</div>
+              <div>{this.renderFilterDate("Date To", "dateTo")}</div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
+              <div>
+                {this.renderAutoComplete("Status", STATUS_OPTIONS, "status", (o) => o.replace(/_/g, " "), true)}
+              </div>
+              <div>
+                {this.renderAutoComplete("Supplier Name", options.suppliers || [], "supplierName", (o) => o, true)}
+              </div>
+              {this.renderTextField("Created By", "createdBy", 60)}
+            </div>
+
+          </div>
+        ) : null}
+        {this.renderFooter()}
       </div>
     );
   }
