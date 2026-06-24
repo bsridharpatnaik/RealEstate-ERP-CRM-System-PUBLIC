@@ -770,8 +770,6 @@ class Add extends AddForm {
               maxDate: moment(),
               minDate: moment().add(-days, "d"),
             })}
-          </div>
-          <div className="flex width50">
             {this.renderAutoComplete({
               fieldname: "contractorId",
               placeholder: "Contractor",
@@ -787,6 +785,8 @@ class Add extends AddForm {
                 }
               },
             })}
+          </div>
+          <div className="flex width50">
             {this.renderAutoComplete({
               fieldname: "structureTypeId",
               placeholder: "Structure Type",

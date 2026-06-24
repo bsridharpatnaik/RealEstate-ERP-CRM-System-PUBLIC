@@ -457,8 +457,6 @@ class Edit extends EditForm {
                 maxDate: moment(),
                 //minDate: moment(this.formData.date).add(-3, 'd'),
               })}
-            </div>
-            <div className="flex width50">
               {this.renderAutoComplete({
                 fieldname: "contractorId",
                 placeholder: "Contractor",
@@ -470,6 +468,8 @@ class Edit extends EditForm {
                   return option["name"];
                 },
               })}
+            </div>
+            <div className="flex width50">
               {this.renderAutoComplete({
                 fieldname: "structureTypeId",
                 placeholder: "Structure Type",
