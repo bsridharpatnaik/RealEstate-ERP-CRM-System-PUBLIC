@@ -1594,3 +1594,17 @@ All additive, all on `masterschema`. Captured in `sc-inventory-service/quote-com
 - Split-then-cancel compound edge case on the quote-requested marker (see above).
 - `LoadFromQuoteDialog` has no pagination (fetches first 100 quote comparisons).
 - No automated test coverage — this feature was built and verified via manual UI testing + direct API calls against local dev DB only.
+
+---
+
+# Pending Deploy Migrations — Standing Convention
+
+No Flyway/Liquibase (`ddl-auto=none`) — every schema change is applied by hand against each environment after deploy.
+
+**Single canonical file:** `sc-inventory-service/src/main/resources/SQLs/PendingDeployMigrations.sql`
+
+Rule going forward: any code change that requires a schema change (new column, dropped column, new table, FK change, etc.) gets its SQL **appended** to this file (with a comment explaining what/why and which schema it targets — tenant schema vs `masterschema`), instead of creating a new one-off `.sql` file. Do not create per-feature migration files anymore.
+
+User's workflow: after deploying the code, they run everything currently in this file by hand against the target environment(s), then empty the file back out (keeping the header comment) once confirmed applied everywhere. So at any point in time, the file's contents = what is still outstanding / not yet run in prod.
+
+Do NOT delete or stop populating this file just because it looks empty — empty means "nothing pending," not "convention abandoned."

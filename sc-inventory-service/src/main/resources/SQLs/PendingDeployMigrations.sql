@@ -1,4 +1,20 @@
 -- ============================================================
+-- PENDING DEPLOY MIGRATIONS
+--
+-- There is no Flyway/Liquibase in this project (ddl-auto=none), so
+-- schema changes are applied by hand. Convention:
+--   1. Every schema-changing code change gets its SQL appended below
+--      (with a comment header explaining what/why), instead of a new
+--      one-off file.
+--   2. After deploying the code, run everything in this file by hand
+--      against every environment that needs it (run once per tenant
+--      schema for tenant-schema changes; once for masterschema changes).
+--   3. Once confirmed applied everywhere, empty this file back out
+--      (keep this header block) so it always reflects only what is
+--      still outstanding.
+-- ============================================================
+
+-- ----------------------------------------------------------------
 -- Drop legacy header-level warehouse from outward_inventory
 -- Run once per tenant schema (warehouse now lives on each line
 -- in InwardOutwardList instead — this header column has had no
@@ -13,7 +29,7 @@
 --   SELECT constraint_name FROM information_schema.key_column_usage
 --   WHERE table_schema = '<schema>' AND table_name = 'outward_inventory'
 --     AND column_name = 'warehouse_id' AND referenced_table_name IS NOT NULL;
--- ============================================================
+-- ----------------------------------------------------------------
 
 ALTER TABLE outward_inventory
     DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp;
