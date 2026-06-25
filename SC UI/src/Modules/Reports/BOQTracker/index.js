@@ -47,7 +47,7 @@ class BOQTracker extends Component {
   };
 
   componentDidMount() {
-    if (this.props.tenantCode) this.fetchUnfiltered();
+    if (!('tenantCode' in this.props) || this.props.tenantCode) this.fetchUnfiltered();
   }
 
   componentDidUpdate(prevProps) {
