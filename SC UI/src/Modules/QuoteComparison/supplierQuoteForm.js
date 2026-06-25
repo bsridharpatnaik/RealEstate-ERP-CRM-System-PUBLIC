@@ -8,6 +8,7 @@ import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { API } from "../../axios";
 import { apiEndpoints } from "../../endpoints";
+import AttachmentThumbnail, { isImageFile } from "../../Shared/AttachmentThumbnail";
 
 const ATTACHMENT_MAX_MB = 10;
 const ATTACHMENT_VALID_TYPES = [
@@ -280,7 +281,11 @@ class SupplierQuoteForm extends Component {
                   display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 16,
                   background: "#f0f4fa", border: "1px solid #dbe6fb", fontSize: 12,
                 }}>
-                  <InsertDriveFileIcon fontSize="small" style={{ color: "#1565c0" }} />
+                  {isImageFile(file.fileName) ? (
+                    <AttachmentThumbnail file={file} size={20} downloadUrl={apiEndpoints.masterFileDownload} />
+                  ) : (
+                    <InsertDriveFileIcon fontSize="small" style={{ color: "#1565c0" }} />
+                  )}
                   <span style={{ cursor: "pointer", color: "#1565c0" }} onClick={this.handleDownloadAttachment(file)}>
                     {file.fileName}
                   </span>

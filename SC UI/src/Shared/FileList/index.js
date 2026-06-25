@@ -8,6 +8,7 @@ import Upload from "./../Upload";
 import { messages } from "./../../messages";
 import "./style.scss";
 import DeleteConfirm from "./../DeleteConfirm";
+import AttachmentThumbnail from "./../AttachmentThumbnail";
 
 class FileList extends Component {
   state = { deleteConfirmOpen: false };
@@ -37,7 +38,10 @@ class FileList extends Component {
   renderFile(file) {
     return (
       <div className="file-item">
-        <div className="file-name">{file.fileName}</div>
+        <div className="file-name" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <AttachmentThumbnail file={file} />
+          {file.fileName}
+        </div>
         <div className="file-buttons">
           <IconButton className="back-icon" onClick={() => this.download(file)}>
             <GetAppIcon />

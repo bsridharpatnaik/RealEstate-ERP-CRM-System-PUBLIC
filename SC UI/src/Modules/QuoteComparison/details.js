@@ -22,6 +22,7 @@ import SupplierQuoteForm from "./supplierQuoteForm";
 import ComparisonMatrix from "./comparisonMatrix";
 import { getRole } from "../../helper";
 import { getFinalizedPoGroups as getFinalizedPoGroupsHelper, buildQuotePrefill } from "../../Shared/quoteToPo";
+import AttachmentThumbnail, { isImageFile } from "../../Shared/AttachmentThumbnail";
 
 const STATUS_COLORS = {
   DRAFT:               { bg: "#f5f5f5", color: "#666" },
@@ -418,7 +419,10 @@ class QuoteComparisonDetails extends Component {
             {sq.fileInformations && sq.fileInformations.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                 {sq.fileInformations.map((file, i) => (
-                  <Chip key={i} icon={<AttachFileIcon style={{ fontSize: 14 }} />} label={file.fileName} size="small"
+                  <Chip key={i}
+                    icon={isImageFile(file.fileName) ? undefined : <AttachFileIcon style={{ fontSize: 14 }} />}
+                    avatar={isImageFile(file.fileName) ? <AttachmentThumbnail file={file} size={24} downloadUrl={apiEndpoints.masterFileDownload} /> : undefined}
+                    label={file.fileName} size="small"
                     variant="outlined" onClick={this.handleDownloadAttachment(file)}
                     style={{ cursor: "pointer", fontSize: 11 }} />
                 ))}

@@ -3,6 +3,7 @@ import React from "react";
 //Third Party
 import ListCommon from "./../../Shared/List";
 import { withSnackbar } from "notistack";
+import * as XLSX from "xlsx";
 
 //component
 import Table from "./table";
@@ -114,6 +115,18 @@ class List extends ListCommon {
   }
   getExportData(response) {
     return response.data;
+  }
+  async exportToCSV() {
+    const response = await this.getExportAPIData();
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage, { variant: "error" });
+      return;
+    }
+    const data = this.getExportData(response);
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Outward Inventory");
+    XLSX.writeFile(wb, this.exportFile + ".xlsx");
   }
   async search(page = 0, sortkey = null, sortby = null) {
     if (sortkey !== null) this.sortkey = sortkey;

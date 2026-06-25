@@ -41,6 +41,11 @@ QA_SSH_PORT         = 2244
 QA_BACKUP_DIR       = "/opt/dbbk/production-refresh"
 QA_MINIO_URL        = "http://163.128.113.28:9000"
 
+# Local MinIO (matches application-sc-local-v2.properties).
+LOCAL_MINIO_URL         = "http://localhost:9000"
+LOCAL_MINIO_ACCESS_KEY  = "minioadmin"
+LOCAL_MINIO_SECRET_KEY  = "minioadmin"
+
 # Local MySQL connection (used only when target = local)
 # Password must be set via the MYSQL_PWD environment variable before running.
 # Example:  MYSQL_PWD='mypassword' python3 RefreshFromProduction.py
@@ -57,13 +62,31 @@ EXTRA_EXCLUDED_SCHEMAS: list[str] = []
 
 # ─── Post-restore configuration ──────────────────────────────────────────────
 
-# post_script.sql is in the same folder as this script.
-# It creates views, stored procedures, and indexes in each tenant schema.
-POST_SCRIPT_PATH = Path(__file__).parent / "post_script.sql"
+# CreateViews.sql is in the same folder as this script and is the canonical
+# source of views/procedures/indexes (also used to set up tenant schemas
+# elsewhere). Run it directly instead of the old post_script.sql copy, which
+# had drifted out of sync with CreateViews.sql and was missing newer views
+# (Excess-Found / Write-Off types, etc.).
+POST_SCRIPT_PATH = Path(__file__).parent / "CreateViews.sql"
 
-# These schemas are NOT tenant schemas — post_script.sql is skipped for them.
-# masterschema holds global entities (POs, Indents). common holds user accounts.
-POST_SCRIPT_SKIP_SCHEMAS: set[str] = {"masterschema", "common"}
+# CreateViews.sql starts with a hardcoded "use <schema>;" line for manual
+# running. Strip any leading USE statement — this script issues its own
+# "USE `<schema>`;" per tenant when running the script in a loop.
+LEADING_USE_STATEMENT = re.compile(r"(?im)^\s*use\s+[`\w]+\s*;\s*$")
+
+# Real ERP/CRM tenant schemas (matches common.tenant WHERE is_inventory = 1).
+# CreateViews.sql is only run against these — NOT every schema in the prod
+# dump. Production also contains unrelated, non-ERP databases (businesspark,
+# dhabba, kalpavrish, kanboard_db, riddhisiddhi, school, suncitynx) that have
+# none of the expected tables (Product, Warehouse, etc). Running CreateViews.sql
+# against one of those throws and used to abort the whole post-processing step
+# — including the password reset that runs after it. Keep this list in sync
+# with common.tenant.
+TENANT_SCHEMAS: set[str] = {
+    "anantamsamosharan", "bextension", "bhaavbhumi", "citycenter",
+    "dextension", "drgtrdcntr", "iseries", "mhvrtrdcntr", "mnglmcity",
+    "smartcity",
+}
 
 # After restore all prod user passwords are wiped and replaced with this hash
 # so QA logins use a known password instead of leaked prod credentials.
@@ -190,14 +213,12 @@ def prompt_options() -> tuple[str, bool, bool]:
     target = "qa" if target_choice == "1" else "local"
     print()
 
-    # MinIO sync — QA only
-    sync_minio = False
-    if target == "qa":
-        print("Sync MinIO? (copies objects missing on QA from production,")
-        print("never deletes QA-only objects. Requires local `mc` CLI.)")
-        ans = ask("Sync MinIO as well? [y/n]: ", ("y", "n", "yes", "no"))
-        sync_minio = ans in ("y", "yes")
-        print()
+    # MinIO sync — available for both QA and local
+    print(f"Sync MinIO? (copies objects missing on {target.upper()} from production,")
+    print(f"never deletes {target.upper()}-only objects. Requires local `mc` CLI.)")
+    ans = ask("Sync MinIO as well? [y/n]: ", ("y", "n", "yes", "no"))
+    sync_minio = ans in ("y", "yes")
+    print()
 
     # Preview vs execute
     print("Run mode:")
@@ -349,8 +370,9 @@ def copy_backup_to_qa(local_path: Path) -> str:
 
 def load_post_script() -> str:
     if not POST_SCRIPT_PATH.exists():
-        raise RuntimeError(f"post_script.sql not found at {POST_SCRIPT_PATH}")
-    return POST_SCRIPT_PATH.read_text(encoding="utf-8")
+        raise RuntimeError(f"{POST_SCRIPT_PATH.name} not found at {POST_SCRIPT_PATH}")
+    text = POST_SCRIPT_PATH.read_text(encoding="utf-8")
+    return LEADING_USE_STATEMENT.sub("", text)
 
 
 def password_reset_sql() -> str:
@@ -364,17 +386,21 @@ def password_reset_sql() -> str:
 
 def run_post_scripts_qa(schemas: list[str]) -> None:
     """
-    Run post_script.sql in each tenant schema on QA, then reset all user passwords.
-    Skips schemas in POST_SCRIPT_SKIP_SCHEMAS (masterschema, common, etc.)
+    Run CreateViews.sql in each real tenant schema on QA, then reset all user
+    passwords. Only schemas in TENANT_SCHEMAS are touched — the prod dump also
+    contains unrelated non-ERP databases without the expected tables.
     """
     post_script = load_post_script()
-    tenant_schemas = [s for s in schemas if s not in POST_SCRIPT_SKIP_SCHEMAS]
+    tenant_schemas = [s for s in schemas if s in TENANT_SCHEMAS]
 
-    log(f"Running post_script.sql in {len(tenant_schemas)} tenant schema(s) on QA")
+    log(f"Running CreateViews.sql in {len(tenant_schemas)} tenant schema(s) on QA")
     for schema in tenant_schemas:
-        log(f"  post_script → {schema}")
+        log(f"  CreateViews.sql → {schema}")
         sql = f"USE `{schema}`;\n{post_script}"
-        ssh(QA_SSH, QA_SSH_PORT, "mysql", input_data=sql)
+        try:
+            ssh(QA_SSH, QA_SSH_PORT, "mysql", input_data=sql)
+        except Exception as error:
+            log(f"  ⚠ CreateViews.sql failed for {schema}: {error} — continuing")
 
     log("Resetting all user passwords to QA-safe hash")
     ssh(QA_SSH, QA_SSH_PORT, "mysql", input_data=password_reset_sql())
@@ -383,16 +409,20 @@ def run_post_scripts_qa(schemas: list[str]) -> None:
 
 def run_post_scripts_local(schemas: list[str], mysql_command: list[str], env: dict[str, str]) -> None:
     """
-    Run post_script.sql in each tenant schema on local MySQL, then reset passwords.
+    Run CreateViews.sql in each real tenant schema on local MySQL, then reset
+    passwords. Only schemas in TENANT_SCHEMAS are touched — see run_post_scripts_qa.
     """
     post_script = load_post_script()
-    tenant_schemas = [s for s in schemas if s not in POST_SCRIPT_SKIP_SCHEMAS]
+    tenant_schemas = [s for s in schemas if s in TENANT_SCHEMAS]
 
-    log(f"Running post_script.sql in {len(tenant_schemas)} tenant schema(s) locally")
+    log(f"Running CreateViews.sql in {len(tenant_schemas)} tenant schema(s) locally")
     for schema in tenant_schemas:
-        log(f"  post_script → {schema}")
+        log(f"  CreateViews.sql → {schema}")
         sql = f"USE `{schema}`;\n{post_script}"
-        run(mysql_command, input_data=sql, env=env)
+        try:
+            run(mysql_command, input_data=sql, env=env)
+        except Exception as error:
+            log(f"  ⚠ CreateViews.sql failed for {schema}: {error} — continuing")
 
     log("Resetting all user passwords to QA-safe hash")
     run(mysql_command, input_data=password_reset_sql(), env=env)
@@ -557,13 +587,20 @@ def read_minio_credentials(host: str, port: int) -> tuple[str, str]:
         raise RuntimeError(f"MinIO credentials missing on {host}: /etc/default/minio") from error
 
 
-def sync_minio(execute: bool) -> None:
+def sync_minio(execute: bool, target: str) -> None:
     require_commands(["mc"])
     log("Reading MinIO credentials from production server…")
     prod_user, prod_password = read_minio_credentials(PROD_SSH, PROD_SSH_PORT)
-    log("Reading MinIO credentials from QA server…")
-    qa_user, qa_password = read_minio_credentials(QA_SSH, QA_SSH_PORT)
 
+    if target == "qa":
+        log("Reading MinIO credentials from QA server…")
+        dest_user, dest_password = read_minio_credentials(QA_SSH, QA_SSH_PORT)
+        dest_url = QA_MINIO_URL
+    else:
+        dest_user, dest_password = LOCAL_MINIO_ACCESS_KEY, LOCAL_MINIO_SECRET_KEY
+        dest_url = LOCAL_MINIO_URL
+
+    dest_alias = f"mahavir-{target}"
     with tempfile.TemporaryDirectory(prefix="mahavir-mc-") as config_dir:
         env = os.environ.copy()
         env["MC_CONFIG_DIR"] = config_dir
@@ -573,14 +610,14 @@ def sync_minio(execute: bool) -> None:
             display_command=f"mc alias set mahavir-prod {PROD_MINIO_URL} <credentials redacted>",
         )
         run(
-            ["mc", "alias", "set", "mahavir-qa", QA_MINIO_URL, qa_user, qa_password],
+            ["mc", "alias", "set", dest_alias, dest_url, dest_user, dest_password],
             env=env,
-            display_command=f"mc alias set mahavir-qa {QA_MINIO_URL} <credentials redacted>",
+            display_command=f"mc alias set {dest_alias} {dest_url} <credentials redacted>",
         )
-        # mc mirror copies objects missing on QA from prod.
+        # mc mirror copies objects missing on the destination from prod.
         # Without --overwrite it skips existing destination objects.
-        # Without --remove it never deletes QA-only objects.
-        mirror_command = ["mc", "mirror", "--quiet", "--summary", "mahavir-prod", "mahavir-qa"]
+        # Without --remove it never deletes destination-only objects.
+        mirror_command = ["mc", "mirror", "--quiet", "--summary", "mahavir-prod", dest_alias]
         if not execute:
             mirror_command.insert(2, "--dry-run")
         run(mirror_command, env=env)
@@ -621,7 +658,7 @@ def main() -> int:
         log("Run the script again and choose 'Execute' to perform the refresh.")
         if do_sync_minio:
             log("Running MinIO mirror dry-run…")
-            sync_minio(execute=False)
+            sync_minio(execute=False, target=target)
         return 0
 
     # Final confirmation before destructive operation
@@ -638,8 +675,8 @@ def main() -> int:
         refresh_local(filtered_dump, restore_schemas)
 
     if do_sync_minio:
-        log("Copying production MinIO objects missing from QA…")
-        sync_minio(execute=True)
+        log(f"Copying production MinIO objects missing from {target.upper()}…")
+        sync_minio(execute=True, target=target)
 
     log("Refresh completed successfully")
     return 0

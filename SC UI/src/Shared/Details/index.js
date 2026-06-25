@@ -4,6 +4,7 @@ import { API } from "./../../axios";
 import { messages } from "./../../messages";
 import IconButton from "@material-ui/core/IconButton";
 import { DownloadIcon } from "./../../Shared/Icons/Index.js";
+import AttachmentThumbnail from "./../../Shared/AttachmentThumbnail";
 
 class Details extends Component {
   renderFileList(list) {
@@ -12,7 +13,10 @@ class Details extends Component {
         <div className="label">{messages.common.uploadedDocuments}</div>
         {list.map((file) => (
           <div key={file.id || file.fileUUId || file.fileName} className="value detail-file-item">
-            {file.fileName}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <AttachmentThumbnail file={file} />
+              {file.fileName}
+            </div>
             <IconButton
               className="back-icon"
               onClick={() => this.download(file)}

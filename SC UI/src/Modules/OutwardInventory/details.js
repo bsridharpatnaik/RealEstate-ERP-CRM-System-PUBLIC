@@ -460,22 +460,6 @@ class Details extends CommonDetails {
                   <div className="value">{data.contractor.name}</div>
                 </div>
                 <div className="detail-item">
-                  <div className="label">{messages.common.warehouse}</div>
-                  <div className="value">
-                    {(() => {
-                      // Each line carries its own warehouse — show it directly, or "Multiple
-                      // Warehouses" when lines disagree. No header-level warehouse exists.
-                      const distinctNames = Array.from(new Set(
-                        (data.inwardOutwardList || [])
-                          .map((row) => row.warehouse && row.warehouse.warehouseName)
-                          .filter(Boolean)
-                      ));
-                      if (distinctNames.length > 1) return `Multiple Warehouses (${distinctNames.join(', ')})`;
-                      return distinctNames[0] || '—';
-                    })()}
-                  </div>
-                </div>
-                <div className="detail-item">
                   <div className="label">{messages.common.location}</div>
                   <div className="value">{data.usageLocation.locationName}</div>
                 </div>
