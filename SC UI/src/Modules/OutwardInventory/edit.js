@@ -247,7 +247,7 @@ class Edit extends EditForm {
       const currentStock = this.state.currentStock;
       currentStock[index] =
         Number(response.data) -
-        Number(this.state.noproduct[index].quantity) +
+        Number(this.state.noproduct[index].quantity || 0) +
         (this.oldStock[index] || 0);
       this.setState({ currentStock: { ...currentStock } });
     }

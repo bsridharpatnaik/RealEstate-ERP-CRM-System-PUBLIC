@@ -613,8 +613,7 @@ class Add extends AddForm {
       // Keyed per row, not per product — the same product can be on two rows
       // with two different warehouses and two different stock levels.
       const currentStock = this.state.currentStock;
-      currentStock[index] =
-        Number(response.data) - Number(this.state.noproduct[index].quantity);
+      currentStock[index] = Number(response.data);
       this.setState({ currentStock: { ...currentStock } });
     }
   }
