@@ -101,16 +101,12 @@ class Edit extends EditForm {
         this.getBoqQuantity(pid);
       }
       this.oldStock = currentStock;
-      this.setState({
-        isLoaded: true,
-        noproduct: { ...p },
-        currentStock: currentStock,
-        selectedStructureTypeId: structureTypeId,
-        filteredStructures: filteredStructures,
-      });
 
       // Load batch consumption data so overrides can be preserved when qty is unchanged.
       // Keyed by (productId, warehouseId) for the same reason as originalQtyMap above.
+      // Awaited BEFORE isLoaded is set — otherwise the form renders (and Save becomes
+      // clickable) before this data exists, and an override edit silently bypasses the
+      // re-allocation modal because hasOverride/needsRealloc read an empty map.
       this.batchConsumptionData = {};
       const bcResp = await API.GET(apiEndpoints.getOutwardBatchConsumptions(this.props.id));
       if (bcResp.success) {
@@ -119,10 +115,15 @@ class Edit extends EditForm {
           if (!this.batchConsumptionData[key]) this.batchConsumptionData[key] = [];
           this.batchConsumptionData[key].push(c);
         });
-        // Force re-render so hasOverride is evaluated with loaded data immediately,
-        // preventing race condition where quantity field appears enabled then snaps to disabled on first keystroke.
-        this.setState({});
       }
+
+      this.setState({
+        isLoaded: true,
+        noproduct: { ...p },
+        currentStock: currentStock,
+        selectedStructureTypeId: structureTypeId,
+        filteredStructures: filteredStructures,
+      });
     }
   }
 
@@ -245,10 +246,7 @@ class Edit extends EditForm {
     if (response.success) {
       // Keyed per row, not per product — see renderProduct() for why.
       const currentStock = this.state.currentStock;
-      currentStock[index] =
-        Number(response.data) -
-        Number(this.state.noproduct[index].quantity || 0) +
-        (this.oldStock[index] || 0);
+      currentStock[index] = Number(response.data);
       this.setState({ currentStock: { ...currentStock } });
     }
   }
@@ -381,23 +379,59 @@ class Edit extends EditForm {
       }
     }
   }
-  openBatchReassignModal(productKey) {
+  async openBatchReassignModal(productKey) {
     const p = this.state.noproduct[productKey];
     const consumptions = (this.batchConsumptionData || {})[this.lineKey(p.productId, p.warehouseId)] || [];
     const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
     const productEntry = (this.props.dropdowns?.product || []).find(pr => pr.id === p.productId);
     const productName = (productEntry?.name || `Product ${p.productId}`) + (p.warehouseName ? ` (${p.warehouseName})` : '');
-    const entries = consumptions.map(c => {
-      const batch = c.batch || {};
+
+    const consumedByBatchId = {};
+    consumptions.forEach(c => {
+      const bid = c.batch ? c.batch.batchId : c.batchId;
+      consumedByBatchId[bid] = (consumedByBatchId[bid] || 0) + c.qtyConsumed;
+    });
+
+    const labelFor = (batch) => {
       const parts = [batch.brand, batch.lotNumber, batch.expiryDate].filter(Boolean);
-      const label = parts.length > 0 ? parts.join(' · ') : `Batch #${batch.batchId || c.batchId}`;
+      return parts.length > 0 ? parts.join(' · ') : `Batch #${batch.batchId}`;
+    };
+
+    // Available-to-allocate for a batch = its current qtyRemaining + whatever this outward
+    // line already has consumed from it (that qty gets restored before re-consuming).
+    let entries = consumptions.map(c => {
+      const batch = c.batch || {};
+      const batchId = batch.batchId || c.batchId;
       return {
-        batchId: batch.batchId || c.batchId,
-        label,
+        batchId,
+        label: labelFor(batch),
         consumed: c.qtyConsumed,
+        available: (batch.qtyRemaining || 0) + (consumedByBatchId[batchId] || 0),
         reassignQty: '',
       };
     });
+
+    // If qty is being increased, the extra may need to come from a batch this line never
+    // touched before — fetch all batches with stock for this product/warehouse and offer
+    // any not already listed.
+    const newQty = parseFloat(p.quantity);
+    const totalPreviouslyConsumed = consumptions.reduce((s, c) => s + c.qtyConsumed, 0);
+    if (newQty > totalPreviouslyConsumed) {
+      const resp = await API.GET(apiEndpoints.getBatchesForProduct(p.productId, p.warehouseId));
+      if (resp.success) {
+        const extra = (resp.data || [])
+          .filter(b => !consumedByBatchId[b.batchId] && (b.qtyRemaining || 0) > 0)
+          .map(b => ({
+            batchId: b.batchId,
+            label: labelFor(b),
+            consumed: 0,
+            available: b.qtyRemaining,
+            reassignQty: '',
+          }));
+        entries = [...entries, ...extra];
+      }
+    }
+
     const existingComment = overriddenConsumptions.find(c => c.overrideComment)?.overrideComment || '';
     this.setState({
       batchReassignModal: {
@@ -405,7 +439,7 @@ class Edit extends EditForm {
         productKey,
         productId: p.productId,
         productName,
-        newQty: parseFloat(p.quantity),
+        newQty,
         entries,
         overrideComment: existingComment,
       },
@@ -424,6 +458,14 @@ class Edit extends EditForm {
     }
     if (!overrideComment.trim()) {
       this.props.enqueueSnackbar('Override comment is required', { variant: 'error' });
+      return;
+    }
+    const overAllocated = entries.find(e => parseFloat(e.reassignQty) > e.available + 0.001);
+    if (overAllocated) {
+      this.props.enqueueSnackbar(
+        `${overAllocated.label}: only ${overAllocated.available} available`,
+        { variant: 'error' }
+      );
       return;
     }
     const overrideBatches = entries
@@ -618,7 +660,8 @@ class Edit extends EditForm {
           if (!m.open) return null;
           const total = m.entries.reduce((s, e) => s + (parseFloat(e.reassignQty) || 0), 0);
           const remaining = Math.round((m.newQty - total) * 1000) / 1000;
-          const isValid = Math.abs(total - m.newQty) < 0.001;
+          const anyOverAllocated = m.entries.some(e => parseFloat(e.reassignQty) > e.available + 0.001);
+          const isValid = Math.abs(total - m.newQty) < 0.001 && !anyOverAllocated;
           return (
             <Dialog open maxWidth="sm" fullWidth onClose={() =>
               this.setState({ batchReassignModal: { ...m, open: false } })
@@ -630,16 +673,18 @@ class Edit extends EditForm {
                 <DialogContentText style={{ marginBottom: 12 }}>
                   New quantity is <strong>{m.newQty}</strong>. Specify how much to draw from each batch.
                 </DialogContentText>
-                {m.entries.map((entry, i) => (
+                {m.entries.map((entry, i) => {
+                  const overCap = parseFloat(entry.reassignQty) > entry.available + 0.001;
+                  return (
                   <div key={entry.batchId} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
-                    background: '#f5f7fa', border: '1px solid #dce3ec',
+                    background: '#f5f7fa', border: overCap ? '1px solid #c62828' : '1px solid #dce3ec',
                     borderRadius: 6, padding: '8px 12px', marginBottom: 8,
                   }}>
                     <div style={{ flex: 1, fontSize: 13 }}>
                       <strong>{entry.label}</strong>
                       <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
-                        Previously consumed: {entry.consumed}
+                        Previously consumed: {entry.consumed} · Available: {entry.available}
                       </div>
                     </div>
                     <input
@@ -649,7 +694,8 @@ class Edit extends EditForm {
                       placeholder="Qty"
                       value={entry.reassignQty}
                       style={{
-                        width: 80, padding: '5px 8px', border: '1px solid #bbb',
+                        width: 80, padding: '5px 8px',
+                        border: overCap ? '1px solid #c62828' : '1px solid #bbb',
                         borderRadius: 4, fontSize: 13,
                       }}
                       onChange={e => {
@@ -660,7 +706,8 @@ class Edit extends EditForm {
                       }}
                     />
                   </div>
-                ))}
+                  );
+                })}
                 <div style={{
                   display: 'flex', justifyContent: 'flex-end', gap: 16,
                   fontSize: 13, color: remaining < 0 ? '#c62828' : remaining === 0 ? '#2e7d32' : '#555',

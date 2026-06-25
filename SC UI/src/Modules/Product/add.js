@@ -61,6 +61,33 @@ class Add extends AddForm {
     }
   }
 
+  renderSectionLabel(text) {
+    return (
+      <label
+        style={{
+          fontSize: 12,
+          color: "#666",
+          fontWeight: 500,
+          display: "block",
+          marginBottom: 8,
+          marginTop: 4,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}
+      >
+        {text}
+      </label>
+    );
+  }
+
+  renderSectionDivider() {
+    return (
+      <div
+        style={{ borderTop: "1px solid #eee", margin: "18px 0 14px" }}
+      />
+    );
+  }
+
   renderBatchModeCards() {
     const { batchMode } = this.state;
     return (
@@ -76,7 +103,7 @@ class Add extends AddForm {
         >
           Batch Tracking
         </label>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "stretch" }}>
           {BATCH_OPTIONS.map(({ value, label, desc }) => {
             const selected = batchMode === value;
             return (
@@ -85,6 +112,7 @@ class Add extends AddForm {
                 style={{
                   flex: 1,
                   display: "flex",
+                  alignItems: "center",
                   gap: 10,
                   padding: "10px 14px",
                   border: selected ? "2px solid #1976d2" : "1px solid #ccc",
@@ -113,6 +141,44 @@ class Add extends AddForm {
               </label>
             );
           })}
+          {batchMode === "BATCH_WITH_EXPIRY" && (
+            <div
+              style={{
+                flex: "0 0 230px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                padding: "10px 14px",
+                border: "1px solid #ccc",
+                borderRadius: 6,
+                background: "#fff",
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: 13 }}>
+                Default Expiry (Days)
+              </div>
+              <div style={{ fontSize: 11, color: "#666", marginTop: 3, marginBottom: 8 }}>
+                Expiry date will be auto-selected based on this value while setting batches
+              </div>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 90"
+                defaultValue={this.formData.defaultExpiryDays || ""}
+                onChange={(e) => {
+                  this.formData.defaultExpiryDays = e.target.value;
+                }}
+                style={{
+                  padding: "7px 10px",
+                  border: "1px solid #bbb",
+                  borderRadius: 4,
+                  fontSize: 13,
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -123,30 +189,11 @@ class Add extends AddForm {
       <div className="list-section add">
         {this.renderHeading()}
         <form onSubmit={(e) => this.add(e)}>
-          <div className="flex">
+          {this.renderSectionLabel("Basic Info")}
+          <div className="flex width50">
             {this.renderTextField({
               fieldname: "productName",
               placeholder: messages.common.inventory,
-              required: true,
-            })}
-          </div>
-          <div className="flex">
-            {this.renderTextField({
-              fieldname: "productDescription",
-              placeholder: messages.common.description,
-            })}
-          </div>
-          <div className="flex width50">
-            {this.renderTextField({
-              fieldname: "reorderQuantity",
-              placeholder: "Reorder Level",
-              required: true,
-              type: "number",
-              validation: "nonegative",
-            })}
-            {this.renderTextField({
-              fieldname: "measurementUnit",
-              placeholder: messages.fields.measurementUnit,
               required: true,
             })}
             {this.renderAutoComplete({
@@ -160,23 +207,41 @@ class Add extends AddForm {
                 this.formData.categoryId = value.id;
               },
             })}
+          </div>
+          <div className="flex">
+            {this.renderTextField({
+              fieldname: "productDescription",
+              placeholder: messages.common.description,
+            })}
+          </div>
+
+          {this.renderSectionDivider()}
+          {this.renderSectionLabel("Stock Settings")}
+          <div className="flex width50">
+            {this.renderTextField({
+              fieldname: "measurementUnit",
+              placeholder: messages.fields.measurementUnit,
+              required: true,
+            })}
+            {this.renderTextField({
+              fieldname: "reorderQuantity",
+              placeholder: "Reorder Level",
+              required: true,
+              type: "number",
+              validation: "nonegative",
+            })}
             {this.renderTextField({
               fieldname: "leadTimeDays",
               placeholder: "Lead Time (Days)",
               type: "number",
             })}
           </div>
+
+          {this.renderSectionDivider()}
           <div className="flex">{this.renderBatchModeCards()}</div>
-          {this.state.batchMode === "BATCH_WITH_EXPIRY" && (
-            <div className="flex width50">
-              {this.renderTextField({
-                fieldname: "defaultExpiryDays",
-                placeholder: "Default Expiry (Days)",
-                type: "number",
-                validation: "nonegative",
-              })}
-            </div>
-          )}
+
+          {this.renderSectionDivider()}
+          {this.renderSectionLabel("Visibility")}
           <div className="flex">
             {this.renderToggle("Show in Dashboard", "showOnDashboard")}
             {this.renderToggle("Is Managed Inventory", "isManagedInventory")}
