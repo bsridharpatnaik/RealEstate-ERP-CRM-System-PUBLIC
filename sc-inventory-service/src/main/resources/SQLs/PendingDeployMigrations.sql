@@ -31,8 +31,42 @@
 --     AND column_name = 'warehouse_id' AND referenced_table_name IS NOT NULL;
 -- ----------------------------------------------------------------
 
-ALTER TABLE outward_inventory
-    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp;
+ALTER TABLE drgtrdcntr.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
 
-ALTER TABLE outward_inventory
+ALTER TABLE bhaavbhumi.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE citycenter.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE mnglmcity.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE mhvrtrdcntr.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE iseries.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE smartcity.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE dextension.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE bextension.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
+    DROP COLUMN warehouse_id;
+
+ALTER TABLE anantamsamosharan.outward_inventory
+    DROP FOREIGN KEY FKk7s86tr3i8o8m9mx35786fskp,
     DROP COLUMN warehouse_id;
