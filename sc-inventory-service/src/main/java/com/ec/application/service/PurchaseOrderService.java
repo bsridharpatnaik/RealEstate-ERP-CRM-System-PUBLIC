@@ -136,7 +136,9 @@ public class PurchaseOrderService extends ReusableFields {
         PurchaseOrder po = purchaseOrderRepo.findById(id)
                 .orElseThrow(() -> new Exception("Purchase Order not found: " + id));
 
-        if (!POStatusConstants.STATUS_NEW.equals(po.getStatus())) {
+        boolean isAdmin = userDetailsService.getCurrentUser().getRoles().stream()
+                .anyMatch(r -> r.toLowerCase().contains(RoleConstants.ADMIN));
+        if (!isAdmin && !POStatusConstants.STATUS_NEW.equals(po.getStatus())) {
             throw new Exception("Purchase Order cannot be edited. Only POs in NEW status can be edited.");
         }
 

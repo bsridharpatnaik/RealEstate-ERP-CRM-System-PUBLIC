@@ -276,8 +276,8 @@ public class PurchaseOrderPdfService {
      */
     private void addItemsTable(Document document, PurchaseOrder po, boolean hideMoneyFields)
             throws DocumentException {
-        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7);
+        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 7);
 
         List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
 
@@ -292,9 +292,9 @@ public class PurchaseOrderPdfService {
         table.setSpacingAfter(0f);
 
         if (hasImages) {
-            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 1.0f, 0.75f, 0.95f, 1.2f});
+            table.setWidths(new float[]{1.7f, 1.4f, 0.55f, 0.5f, 0.75f, 0.95f, 0.55f, 0.5f, 0.95f, 0.85f, 0.5f, 0.75f, 0.95f});
         } else {
-            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 1.0f, 0.75f, 0.95f, 1.2f});
+            table.setWidths(new float[]{1.9f, 0.6f, 0.55f, 0.85f, 1.05f, 0.6f, 0.55f, 1.05f, 0.95f, 0.55f, 0.85f, 1.05f});
         }
 
         // Column headers — money columns blanked for executives
@@ -304,13 +304,13 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, "UOM", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Rate \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
-        addHeaderCell(table, "Tolerance %", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Disc %", headerFont);
+        addHeaderCell(table, "Tol %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Net Value \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Net Value/Unit \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net/Unit \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Incl. Tax \u20B9", headerFont);
 
         for (PurchaseOrderLine line : lines) {
             Product product = line.getProduct();
@@ -778,7 +778,7 @@ public class PurchaseOrderPdfService {
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setBackgroundColor(new BaseColor(230, 230, 230));
-        cell.setPadding(4f);
+        cell.setPadding(2f);
         table.addCell(cell);
     }
 
@@ -787,7 +787,7 @@ public class PurchaseOrderPdfService {
         cell.setHorizontalAlignment(Element.ALIGN_LEFT);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setBackgroundColor(BaseColor.WHITE);
-        cell.setPadding(4f);
+        cell.setPadding(2f);
         table.addCell(cell);
     }
 

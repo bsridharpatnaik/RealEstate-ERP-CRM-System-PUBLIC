@@ -36,7 +36,7 @@ import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import AddIcon from "@material-ui/icons/Add";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { withSnackbar } from "notistack";
-import { canEditInventoryModules, canViewMoneyFields, getRole } from "./../../helper";
+import { canEditInventoryModules, canViewMoneyFields, getRole, isAdmin } from "./../../helper";
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
 
@@ -669,7 +669,7 @@ class Details extends CommonDetails {
                       Print
                     </MenuItem>
 
-                    {canEditInventoryModules() && data.status === "NEW" && (
+                    {canEditInventoryModules() && (isAdmin() || data.status === "NEW") && (
                       <MenuItem
                         onClick={() => {
                           this.handleCloseMenu();

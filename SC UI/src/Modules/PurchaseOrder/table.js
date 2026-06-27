@@ -240,6 +240,9 @@ class Table extends CommonTable {
                     <th style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Qty</th>
                     <th style={{ textAlign: 'left', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Unit</th>
                     <th style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Rate</th>
+                    <th style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Discount %</th>
+                    <th style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 600, color: '#555' }}>GST %</th>
+                    <th style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Net Rate</th>
                     <th style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Amount</th>
                     <th style={{ textAlign: 'center', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Line Status</th>
                   </tr>
@@ -251,6 +254,9 @@ class Table extends CommonTable {
                     const unit = product.measurementUnit || line.measurementUnit || '';
                     const qty = line.quantity != null ? line.quantity : '—';
                     const rate = line.rate != null ? `₹${Number(line.rate).toFixed(2)}` : '—';
+                    const discountPercent = line.discountPercent != null ? `${Number(line.discountPercent).toFixed(2)}%` : '—';
+                    const gstPercent = line.gstPercent != null ? `${Number(line.gstPercent).toFixed(2)}%` : '—';
+                    const netRate = line.netRate != null ? `₹${Number(line.netRate).toFixed(2)}` : '—';
                     const total = line.totalAmount != null ? `₹${Number(line.totalAmount).toFixed(2)}` : '—';
                     const lineStatus = line.lineItemStatus || '';
                     const leadTime = line.leadTimeDays;
@@ -282,6 +288,9 @@ class Table extends CommonTable {
                         <td style={{ padding: '5px 10px', textAlign: 'right' }}>{qty}</td>
                         <td style={{ padding: '5px 10px' }}>{unit}</td>
                         <td style={{ padding: '5px 10px', textAlign: 'right' }}>{rate}</td>
+                        <td style={{ padding: '5px 10px', textAlign: 'right' }}>{discountPercent}</td>
+                        <td style={{ padding: '5px 10px', textAlign: 'right' }}>{gstPercent}</td>
+                        <td style={{ padding: '5px 10px', textAlign: 'right' }}>{netRate}</td>
                         <td style={{ padding: '5px 10px', textAlign: 'right' }}>{total}</td>
                         <td style={{ padding: '5px 10px', textAlign: 'center' }}>
                           {lineStatus
