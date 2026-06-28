@@ -131,13 +131,13 @@ public class StockService {
                     expiryProductIds = inventoryBatchRepository.findProductIdsWithExpiredStock(now);
                 } else if ("aging30".equals(filterType)) {
                     Date cutoff = Date.from(today.minusDays(30).atStartOfDay(zone).toInstant());
-                    expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
+                    expiryProductIds = findAgingProductIdsFifo(cutoff, null);
                 } else if ("aging60".equals(filterType)) {
                     Date cutoff = Date.from(today.minusDays(60).atStartOfDay(zone).toInstant());
-                    expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
+                    expiryProductIds = findAgingProductIdsFifo(cutoff, null);
                 } else if ("aging90".equals(filterType)) {
                     Date cutoff = Date.from(today.minusDays(90).atStartOfDay(zone).toInstant());
-                    expiryProductIds = allInventoryRepo.findAgingProductIds(cutoff);
+                    expiryProductIds = findAgingProductIdsFifo(cutoff, null);
                 } else if ("untracked".equals(filterType)) {
                     // Batch-tracked products where stock > sum of batch qtyRemaining in same warehouse
                     List<Long> batchTrackedIds = productRepo.findBatchTrackedProductIds();
@@ -232,7 +232,7 @@ public class StockService {
             List<AllInventoryTransactions> filtered = aiList.stream().filter(i -> i.getDate().before(closingDate)).collect(Collectors.toList());
             s.setInwardOutwardHistory(filtered);
             if (!filtered.isEmpty()) {
-                List<AllInventoryTransactions> iList = filtered.stream().filter(i -> i.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+                List<AllInventoryTransactions> iList = filtered.stream().filter(i -> isStockIncreaseType(i.getType())).collect(Collectors.toList());
                 Date lastInwardDate = !iList.isEmpty() ? aiList.get(0).getDate() : null;
                 s.setLastInwardDate(lastInwardDate);
             }
@@ -494,6 +494,25 @@ public class StockService {
         return type != null && (type.equalsIgnoreCase("inward")
                 || type.equalsIgnoreCase("Transfer-In")
                 || type.equalsIgnoreCase("Excess-Found"));
+    }
+
+    /**
+     * Returns the IDs (restricted to candidateProductIds, or all products if null) whose oldest
+     * surviving stock chunk is on or before cutoffDate — i.e. the oldest Inward/Transfer-In/
+     * Excess-Found transaction date among warehouses that currently still have stock for that
+     * product. Per StockService.calculateStockAges' FIFO assumption, that oldest date IS the age
+     * of a warehouse's surviving stock, so this is computed directly in SQL (AllInventoryRepo)
+     * rather than fetching full transaction history per product and walking it in Java.
+     * <p>
+     * This replaces the old "last stock-increase date <= cutoffDate" approach, which incorrectly
+     * cleared a product's aging the moment ANY new inward happened — even if older, still-unconsumed
+     * stock from a prior inward was sitting untouched in the warehouse (e.g. inwarded 10-Jan, never
+     * outwarded, then inwarded again yesterday — age should still be reported from 10-Jan).
+     */
+    public List<Long> findAgingProductIdsFifo(Date cutoffDate, List<Long> candidateProductIds) {
+        return candidateProductIds != null
+                ? allInventoryRepo.findAgingProductIdsFifoIn(cutoffDate, candidateProductIds)
+                : allInventoryRepo.findAgingProductIdsFifo(cutoffDate);
     }
 
     private Date getLastInwardDate(List<AllInventoryTransactions> aiList) {

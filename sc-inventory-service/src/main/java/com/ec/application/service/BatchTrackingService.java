@@ -15,7 +15,6 @@ import com.ec.application.model.Warehouse;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.StockInformationSpecification;
 import com.ec.application.model.StockInformationFromView;
-import com.ec.application.repository.AllInventoryRepo;
 import com.ec.application.repository.BatchWriteOffRepository;
 import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.InventoryNotificationRepo;
@@ -67,9 +66,6 @@ public class BatchTrackingService {
 
     @Autowired
     StockInformationRepo stockInformationRepo;
-
-    @Autowired
-    AllInventoryRepo allInventoryRepo;
 
     @Autowired
     ActivityLogService activityLogService;
@@ -245,9 +241,9 @@ public class BatchTrackingService {
             expired    = inventoryBatchRepository.countDistinctProductsExpired(now);
             lowStock   = stockInformationRepo.countByStockStatus("Low");
             highStock  = stockInformationRepo.countByStockStatus("High");
-            aging30    = allInventoryRepo.countAgingProducts(cutoff30);
-            aging60    = allInventoryRepo.countAgingProducts(cutoff60);
-            aging90    = allInventoryRepo.countAgingProducts(cutoff90);
+            aging30    = stockService.findAgingProductIdsFifo(cutoff30, null).size();
+            aging60    = stockService.findAgingProductIdsFifo(cutoff60, null).size();
+            aging90    = stockService.findAgingProductIdsFifo(cutoff90, null).size();
             untrackedCount = computeUntrackedCount(null);
         } else {
             Specification<StockInformationFromView> spec =
@@ -268,9 +264,9 @@ public class BatchTrackingService {
             expired    = inventoryBatchRepository.countDistinctProductsExpiredIn(now, filteredIds);
             lowStock   = stockInformationRepo.countByStockStatusAndProductIdIn("Low", filteredIds);
             highStock  = stockInformationRepo.countByStockStatusAndProductIdIn("High", filteredIds);
-            aging30    = allInventoryRepo.countAgingProductsIn(cutoff30, filteredIds);
-            aging60    = allInventoryRepo.countAgingProductsIn(cutoff60, filteredIds);
-            aging90    = allInventoryRepo.countAgingProductsIn(cutoff90, filteredIds);
+            aging30    = stockService.findAgingProductIdsFifo(cutoff30, filteredIds).size();
+            aging60    = stockService.findAgingProductIdsFifo(cutoff60, filteredIds).size();
+            aging90    = stockService.findAgingProductIdsFifo(cutoff90, filteredIds).size();
             untrackedCount = computeUntrackedCount(filteredIds);
         }
 

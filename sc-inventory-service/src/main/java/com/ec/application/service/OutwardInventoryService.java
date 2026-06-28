@@ -436,6 +436,10 @@ public class OutwardInventoryService {
         addRejectForOutward(outwardId, productId, quantity, remarks, null);
     }
 
+    // Reject means the contractor lost/damaged the material at site — it never comes back to the
+    // warehouse. The original outward already deducted it from Stock/batches at consumption time,
+    // and that deduction must stand. This only reclassifies the qty into RejectOutwardList for
+    // reporting; it must NOT call stockService.updateStock or restore batch consumption.
     @Transactional(rollbackFor = Exception.class)
     private void addRejectForOutward(Long outwardId, Long productId, Double quantity, String remarks, Long warehouseId) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
@@ -617,7 +621,13 @@ public class OutwardInventoryService {
         outwardInventory.setSlipNo(oiData.getSlipNo());
         outwardInventory.setRequestedBy(oiData.getRequestedBy());
         outwardInventory.setIssuedBy(oiData.getIssuedBy());
-        outwardInventory.setInwardOutwardList(fetchInwardOutwardList(oiData.getProductWithQuantities()));
+        // Mutate the existing Hibernate-managed collection in place rather than replacing it with a
+        // new HashSet. Replacing the field outright causes Hibernate to redundantly re-flush the
+        // outwardinventory_entry join-table insert if a second auto-flush happens later in the same
+        // transaction (e.g. triggered by the low-stock-check queries below), producing a duplicate-key
+        // error on a row it already inserted moments earlier in the same uncommitted transaction.
+        outwardInventory.getInwardOutwardList().clear();
+        outwardInventory.getInwardOutwardList().addAll(fetchInwardOutwardList(oiData.getProductWithQuantities()));
         outwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(oiData.getFileInformations()));
         log.info("Exited setFields");
     }

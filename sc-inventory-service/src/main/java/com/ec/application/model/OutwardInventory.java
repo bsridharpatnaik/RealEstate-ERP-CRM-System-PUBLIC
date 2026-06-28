@@ -105,7 +105,15 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	@Override
 	public Object clone() throws CloneNotSupportedException
 	{
-		return super.clone();
+		// Default Object.clone() is shallow — the cloned OutwardInventory would share the exact
+		// same inwardOutwardList Set instance as the original. OutwardInventoryService.updateOutwardnventory
+		// relies on a clone taken BEFORE the edit to snapshot the old quantities (modifyStockBeforeUpdate,
+		// activity-log diff, indent reconciliation delta) while the live entity's collection is mutated
+		// in place for the new quantities. Sharing the same Set would let that in-place mutation also
+		// wipe out the "old" snapshot, since clear()/addAll() act on the container both references point to.
+		OutwardInventory cloned = (OutwardInventory) super.clone();
+		cloned.inwardOutwardList = new HashSet<>(this.inwardOutwardList);
+		return cloned;
 	}
 
 	public Boolean getHasBOQ()

@@ -95,40 +95,33 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 	@Query("SELECT a FROM AllInventoryTransactions a WHERE a.productId IN :productIds ORDER BY a.id")
 	List<AllInventoryTransactions> findInwardOutwardByProductIds(@Param("productIds") List<Long> productIds);
 
-	// Aging with product ID filter
-	@Query("SELECT COUNT(DISTINCT a.productId) FROM AllInventoryTransactions a " +
-		"WHERE a.type = 'Inward' " +
-		"AND a.productId NOT IN (" +
-		"  SELECT DISTINCT b.productId FROM AllInventoryTransactions b " +
-		"  WHERE b.type = 'Inward' AND b.date > :cutoffDate" +
+	// Aging: product IDs whose oldest stock-increasing transaction date (Inward/Transfer-In/
+	// Excess-Found), in a warehouse that currently still has stock, is on or before cutoffDate.
+	// Per StockService.calculateStockAges' FIFO assumption, the oldest such transaction's date IS
+	// the age of a warehouse's surviving stock — done in SQL instead of fetching full transaction
+	// history per product and walking it in Java.
+	@Query(value =
+		"SELECT ai.productid FROM all_inventory ai " +
+		"WHERE ai.type IN ('Inward','Transfer-In','Excess-Found') " +
+		"AND EXISTS (" +
+		"  SELECT 1 FROM Stock s WHERE s.productId = ai.productid AND s.warehouseId = ai.warehouse_id" +
+		"  AND s.quantityInHand > 0 AND s.is_deleted = 0" +
 		") " +
-		"AND a.productId IN :ids " +
-		"AND a.productId IN (" +
-		"  SELECT s.product.productId FROM Stock s WHERE s.quantityInHand > 0" +
-		")")
-	long countAgingProductsIn(@Param("cutoffDate") Date cutoffDate, @Param("ids") List<Long> ids);
+		"GROUP BY ai.productid " +
+		"HAVING MIN(ai.date) <= :cutoffDate",
+		nativeQuery = true)
+	List<Long> findAgingProductIdsFifo(@Param("cutoffDate") Date cutoffDate);
 
-	// Aging: count products whose last inward date is on or before cutoffDate AND still have stock
-	@Query("SELECT COUNT(DISTINCT a.productId) FROM AllInventoryTransactions a " +
-		"WHERE a.type = 'Inward' " +
-		"AND a.productId NOT IN (" +
-		"  SELECT DISTINCT b.productId FROM AllInventoryTransactions b " +
-		"  WHERE b.type = 'Inward' AND b.date > :cutoffDate" +
+	@Query(value =
+		"SELECT ai.productid FROM all_inventory ai " +
+		"WHERE ai.type IN ('Inward','Transfer-In','Excess-Found') " +
+		"AND ai.productid IN (:ids) " +
+		"AND EXISTS (" +
+		"  SELECT 1 FROM Stock s WHERE s.productId = ai.productid AND s.warehouseId = ai.warehouse_id" +
+		"  AND s.quantityInHand > 0 AND s.is_deleted = 0" +
 		") " +
-		"AND a.productId IN (" +
-		"  SELECT s.product.productId FROM Stock s WHERE s.quantityInHand > 0" +
-		")")
-	long countAgingProducts(@Param("cutoffDate") Date cutoffDate);
-
-	// Aging: product IDs for filtering stock list (only products with stock > 0)
-	@Query("SELECT DISTINCT a.productId FROM AllInventoryTransactions a " +
-		"WHERE a.type = 'Inward' " +
-		"AND a.productId NOT IN (" +
-		"  SELECT DISTINCT b.productId FROM AllInventoryTransactions b " +
-		"  WHERE b.type = 'Inward' AND b.date > :cutoffDate" +
-		") " +
-		"AND a.productId IN (" +
-		"  SELECT s.product.productId FROM Stock s WHERE s.quantityInHand > 0" +
-		")")
-	List<Long> findAgingProductIds(@Param("cutoffDate") Date cutoffDate);
+		"GROUP BY ai.productid " +
+		"HAVING MIN(ai.date) <= :cutoffDate",
+		nativeQuery = true)
+	List<Long> findAgingProductIdsFifoIn(@Param("cutoffDate") Date cutoffDate, @Param("ids") List<Long> ids);
 }
