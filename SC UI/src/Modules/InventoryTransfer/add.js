@@ -585,6 +585,25 @@ class Add extends AddForm {
                     </div>
                   );
                 })}
+                <div style={{ marginTop: 6, marginBottom: 6 }}>
+                  <input
+                    type="text"
+                    placeholder="Reason for manual override (required)"
+                    value={this.state.products[key]?.overrideComment || ""}
+                    style={{
+                      padding: "4px 8px",
+                      border: "1px solid #ccc",
+                      borderRadius: 4,
+                      fontSize: 12,
+                      width: "100%",
+                    }}
+                    onChange={(e) => {
+                      const p = this.state.products;
+                      p[key].overrideComment = e.target.value;
+                      this.setState({ products: { ...p } });
+                    }}
+                  />
+                </div>
                 <button
                   type="button"
                   style={{
@@ -605,6 +624,13 @@ class Add extends AddForm {
                     if (Math.abs(totalEntered - transferQty) > 0.001) {
                       this.props.enqueueSnackbar(
                         `Batch quantities must total ${transferQty}. Currently entered: ${totalEntered}.`,
+                        { variant: "error" }
+                      );
+                      return;
+                    }
+                    if (!p[key].overrideComment || !p[key].overrideComment.trim()) {
+                      this.props.enqueueSnackbar(
+                        "Please provide a reason for the manual batch override.",
                         { variant: "error" }
                       );
                       return;
@@ -716,9 +742,23 @@ class Add extends AddForm {
       // Include override batches if user specified them
       if (product.overrideBatches && product.overrideBatches.length > 0) {
         item.overrideBatches = product.overrideBatches.filter((e) => e.qty > 0);
+        item.overrideComment = product.overrideComment || "";
       }
       return item;
     });
+
+    // Block submission if any product has an override but never confirmed a reason for it
+    const missingReason = Object.values(this.state.products).find(
+      (product) => product.overrideBatches && product.overrideBatches.length > 0
+        && (!product.overrideComment || !product.overrideComment.trim())
+    );
+    if (missingReason) {
+      this.props.enqueueSnackbar(
+        `Please provide a reason for the manual batch override on "${missingReason.productName || "a product"}".`,
+        { variant: "error" }
+      );
+      return;
+    }
 
     // Create product lookup for confirmation dialog
     const productLookup = {};

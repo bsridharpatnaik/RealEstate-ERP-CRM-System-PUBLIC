@@ -602,7 +602,7 @@ class Details extends Component {
   async submitWriteOff(batchId) {
     const { writeOffForm } = this.state;
     if (!writeOffForm || !writeOffForm.quantity || !writeOffForm.reason) {
-      alert("Quantity and reason are required.");
+      this.props.enqueueSnackbar && this.props.enqueueSnackbar('Quantity and reason are required.', { variant: 'error' });
       return;
     }
     this.setState({ writeOffSubmitting: true });
@@ -627,7 +627,7 @@ class Details extends Component {
       this.loadBatches(productId, null);
       this.loadWriteOffHistory(batchId);
     } else {
-      alert(response.errorMessage || "Write-off failed.");
+      this.props.enqueueSnackbar && this.props.enqueueSnackbar(response.errorMessage || "Write-off failed.", { variant: 'error' });
     }
   }
 
@@ -1096,20 +1096,26 @@ class Details extends Component {
                                                 <thead>
                                                   <tr style={{ backgroundColor: '#fff3e0' }}>
                                                     <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Date</th>
+                                                    <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Batch</th>
                                                     <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Qty</th>
                                                     <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>Reason</th>
                                                     <th style={{ padding: '3px 6px', border: '1px solid #ffe082', textAlign: 'left' }}>By</th>
                                                   </tr>
                                                 </thead>
                                                 <tbody>
-                                                  {this.state.writeOffHistories[batch.batchId].map((wo, i) => (
+                                                  {this.state.writeOffHistories[batch.batchId].map((wo, i) => {
+                                                    const woBatchLabel = [wo.batch?.brand, wo.batch?.lotNumber].filter(Boolean).join(' · ')
+                                                      || `Batch #${wo.batch?.batchId || batch.batchId}`;
+                                                    return (
                                                     <tr key={i}>
                                                       <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.writeOffDate ? wo.writeOffDate.replace(/-/g, '/') : '—'}</td>
+                                                      <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{woBatchLabel}</td>
                                                       <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.quantity}</td>
                                                       <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.reason}</td>
                                                       <td style={{ padding: '3px 6px', border: '1px solid #ffe082' }}>{wo.writtenOffBy || '—'}</td>
                                                     </tr>
-                                                  ))}
+                                                    );
+                                                  })}
                                                 </tbody>
                                               </table>
                                             </td>

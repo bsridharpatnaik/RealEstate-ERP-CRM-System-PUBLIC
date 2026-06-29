@@ -1204,6 +1204,71 @@ class InwardInventoryForm extends AddForm {
       }
     }
 
+    // Validate batch splits for batch-tracked products (edit mode) — mirrors the create-mode
+    // check above, but targets the DELTA (new qty - original qty), since that's what the modal
+    // actually populates batchSplits/_reduceSplits with on edit (see confirmBatchSplits()).
+    // Without this, increasing qty without clicking "Edit Batches" would submit stale splits
+    // (still summing to the ORIGINAL qty) and only get caught by a raw 500 from the backend.
+    if (this.state.isEditMode) {
+      for (const product of Object.values(this.state.noproduct)) {
+        if (product.batchMode === 'NONE') continue;
+        const originalQty = (this.oldStock || {})[product.productId] || 0;
+        const totalQty = parseFloat(product.quantity) || 0;
+        const delta = totalQty - originalQty;
+        const label = product.productName || product.selectedProduct?.name || 'product';
+
+        if (Math.abs(delta) < 0.001) continue; // qty unchanged — batch metadata edits are optional
+
+        if (delta > 0) {
+          const splits = product.batchSplits;
+          if (!splits || splits.length === 0 || !splits[0].qty) {
+            this.props.enqueueSnackbar(
+              `Please specify which batch the increased quantity of ${delta} belongs to for "${label}". Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+          const splitSum = splits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+          if (Math.abs(splitSum - delta) > 0.001) {
+            this.props.enqueueSnackbar(
+              `Batch split totals (${splitSum}) must equal the increased quantity (${delta}) for "${label}". Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+          if (product.batchMode === 'BATCH_WITH_EXPIRY' && splits.some(b => !b.expiryDate)) {
+            this.props.enqueueSnackbar(
+              `All batch splits must have an expiry date for "${label}".`,
+              { variant: "error" }
+            );
+            return;
+          }
+        } else {
+          // delta < 0 — reduction. Single-batch inwards auto-resolve on the backend; only
+          // multi-batch inwards need the user to specify which batch(es) via the reduce modal.
+          const isMultiBatch = product.batchSplits && product.batchSplits.length > 1;
+          if (!isMultiBatch) continue;
+
+          const reduceSplits = product._reduceSplits;
+          if (!reduceSplits || reduceSplits.length === 0) {
+            this.props.enqueueSnackbar(
+              `"${label}" has ${product.batchSplits.length} batches in this inward. Please specify which batch(es) the reduction of ${Math.abs(delta)} should come from. Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+          const reduceSum = reduceSplits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+          if (Math.abs(reduceSum - Math.abs(delta)) > 0.001) {
+            this.props.enqueueSnackbar(
+              `Batch reduction totals (${reduceSum}) must equal the decreased quantity (${Math.abs(delta)}) for "${label}". Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+        }
+      }
+    }
+
     // Validate batch splits for PO inward batch-tracked products (create mode)
     if (!this.state.isEditMode && !this.state.isDirectInward) {
       for (const item of Object.values(this.state.noproduct)) {

@@ -465,6 +465,12 @@ public class InventoryTransferService {
             if (validEntries.isEmpty()) {
                 throw new IllegalArgumentException("No valid batch entries provided for transfer override.");
             }
+            // Mandatory reason for any manual batch override — same convention as Outward/Lost-Damaged
+            if (dtoItem.getOverrideComment() == null || dtoItem.getOverrideComment().trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Please provide a reason for the manual batch override on product '"
+                        + product.getProductName() + "'.");
+            }
             // Duplicate batchId check
             Set<Long> seenBatchIds = new HashSet<>();
             for (BatchOverrideEntry e : validEntries) {

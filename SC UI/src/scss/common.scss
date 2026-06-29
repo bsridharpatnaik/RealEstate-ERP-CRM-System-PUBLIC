@@ -424,7 +424,13 @@ html {
 .MuiFormHelperText-root.Mui-error {
   font-size: 10px;
   position: absolute;
-  bottom: -15px;
+  // Anchor from the top of the field (growing downward) instead of the bottom (growing
+  // upward into the field). bottom:-15px worked for short single-line messages but made
+  // longer/wrapped messages grow upward and overlap the field's border — see Inventory
+  // Transfer's "Current stock for inventory X is Y. Please enter a quantity less than the
+  // current stock." Still absolutely positioned so it doesn't shift surrounding layout.
+  top: 100%;
+  margin-top: 2px;
 }
 .add {
   padding: 0 20px;

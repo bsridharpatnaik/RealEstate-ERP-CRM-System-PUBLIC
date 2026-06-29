@@ -1223,7 +1223,11 @@ public class InwardInventoryService {
                 continue;
             }
 
-            double existingTotal = batches.stream().mapToDouble(InventoryBatch::getQtyReceived).sum();
+            // Use the inward line's own authoritative quantity as the baseline, not sum(batch.qtyReceived).
+            // Inward Reject only ever decrements batch.qtyRemaining (never qtyReceived), so after any
+            // partial reject those two permanently diverge — using qtyReceived here would compute a
+            // phantom delta on every future edit, even for products whose qty isn't actually changing.
+            double existingTotal = iol.getQuantity();
             double delta = newTotal - existingTotal;
             if (Math.abs(delta) < 0.001) {
                 // Qty unchanged — but user may have supplied updated batch metadata (brand / lot / expiry).
