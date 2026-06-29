@@ -152,7 +152,7 @@ FROM (
     JOIN inward_outward_entries ioe ON oie.entryid    = ioe.entryid
     JOIN Product p                  ON p.productid    = ioe.productid
     JOIN Category cat               ON cat.categoryid = p.categoryid
-    JOIN Warehouse w                ON w.warehouse_id = oi.warehouse_id
+    JOIN Warehouse w                ON w.warehouse_id = ioe.warehouse_id
     WHERE oi.is_deleted = 0
 
     UNION ALL
