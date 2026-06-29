@@ -27,7 +27,7 @@ class InventoryTransferConfirm extends Component {
   }
 
   render() {
-    const { open, onCancel, onConfirm, transferData } = this.props;
+    const { open, onCancel, onConfirm, transferData, submitting } = this.props;
 
     return (
       <Dialog
@@ -61,11 +61,13 @@ class InventoryTransferConfirm extends Component {
             onClick={onCancel}
             buttonClass="grey"
             label="No"
+            disabled={submitting}
           ></Button>
           <Button
             onClick={onConfirm}
             buttonClass="blue"
-            label="Yes"
+            label={submitting ? "Submitting..." : "Yes"}
+            disabled={submitting}
           ></Button>
         </DialogActions>
       </Dialog>

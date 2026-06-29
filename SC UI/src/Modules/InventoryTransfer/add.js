@@ -443,6 +443,9 @@ class Add extends AddForm {
             onChange: async (value) => {
               const p = this.state.products;
               p[key].quantity = value;
+              // Reset any batch override entries when qty changes — they no longer match
+              p[key].overrideBatches = [];
+              p[key].overrideComment = "";
               this.setState({ products: { ...p } });
 
               // Validate stock when quantity is entered
@@ -471,14 +474,14 @@ class Add extends AddForm {
 
         {/* Batch blocked warning — batch-tracked but no batches split yet */}
         {this.state.batchBlockedKeys[key] && (
-          <div style={{ marginTop: 8, padding: "8px 12px", background: "#fff3e0", borderRadius: 4, color: "#e65100", fontSize: 12 }}>
+          <div style={{ marginTop: this.state.stockValidationErrors[key] ? 28 : 8, padding: "8px 12px", background: "#fff3e0", borderRadius: 4, color: "#e65100", fontSize: 12 }}>
             ⚠ This product is batch-tracked but has no batches in the source warehouse. Go to <strong>Stock → Batches tab</strong> and split existing stock into batches before transferring.
           </div>
         )}
 
         {/* Batch preview — only shown when batch-tracked product has preview data */}
         {batchPreview.length > 0 && (
-          <div style={{ marginTop: 8, padding: "8px 12px", background: "#f5f5f5", borderRadius: 4 }}>
+          <div style={{ marginTop: this.state.stockValidationErrors[key] ? 28 : 8, padding: "8px 12px", background: "#f5f5f5", borderRadius: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
               <span style={{ fontSize: 12, color: "#555", fontWeight: 500 }}>
                 Batch allocation (FIFO preview)
@@ -545,6 +548,17 @@ class Add extends AddForm {
                 <div style={{ fontSize: 11, color: "#e65100", marginBottom: 6 }}>
                   Enter specific batch quantities. Total must equal transfer quantity.
                 </div>
+                {(() => {
+                  const transferQty = parseFloat(this.state.products[key]?.quantity) || 0;
+                  const overrides = this.state.products[key]?.overrideBatches || [];
+                  const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+                  const matches = Math.abs(totalEntered - transferQty) <= 0.001;
+                  return (
+                    <div style={{ fontSize: 12, marginBottom: 6, color: matches ? "#2e7d32" : "#c62828", fontWeight: 600 }}>
+                      Allocated: {totalEntered} / {transferQty} {matches ? "✓" : `(remaining: ${(transferQty - totalEntered).toFixed(2)})`}
+                    </div>
+                  );
+                })()}
                 {(this.state.allBatches[key] || batchPreview).map((b, idx) => {
                   const fmtDate = (d) => { if (!d) return null; if (/^\d{2}-\d{2}-\d{4}$/.test(String(d))) return d; try { const dt = new Date(d); if (isNaN(dt.getTime())) return d; return `${String(dt.getDate()).padStart(2,'0')}-${String(dt.getMonth()+1).padStart(2,'0')}-${dt.getFullYear()}`; } catch(e) { return d; } };
                   const avail = b.qtyRemaining != null ? b.qtyRemaining : b.qtyAvailable;
@@ -606,6 +620,12 @@ class Add extends AddForm {
                 </div>
                 <button
                   type="button"
+                  disabled={(() => {
+                    const transferQty = parseFloat(this.state.products[key]?.quantity) || 0;
+                    const overrides = (this.state.products[key]?.overrideBatches || []).filter(e => e.qty > 0);
+                    const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+                    return Math.abs(totalEntered - transferQty) > 0.001;
+                  })()}
                   style={{
                     marginTop: 4,
                     fontSize: 11,
@@ -718,6 +738,38 @@ class Add extends AddForm {
         });
         return;
       }
+    }
+
+    // Block if a batch override panel is still open (unapplied) for any product
+    const openOverrideKeys = Object.keys(this.state.showBatchOverride || {}).filter(
+      (k) => this.state.showBatchOverride[k]
+    );
+    if (openOverrideKeys.length > 0) {
+      const names = openOverrideKeys.map((k) => this.state.products[k]?.productName || `Product ${k}`).join(", ");
+      this.props.enqueueSnackbar(
+        `Please apply or cancel the batch override for: ${names}.`,
+        { variant: "error" }
+      );
+      return;
+    }
+
+    // Block if any product's override batch quantities don't total the transfer quantity
+    const mismatchedOverrideKeys = Object.entries(this.state.products).filter(([, product]) => {
+      const overrides = (product.overrideBatches || []).filter((e) => e.qty > 0);
+      if (overrides.length === 0) return false;
+      const transferQty = parseFloat(product.quantity) || 0;
+      const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+      return Math.abs(totalEntered - transferQty) > 0.001;
+    });
+    if (mismatchedOverrideKeys.length > 0) {
+      const names = mismatchedOverrideKeys
+        .map(([, product]) => product.productName || "a product")
+        .join(", ");
+      this.props.enqueueSnackbar(
+        `Batch override quantities must total the transfer quantity for: ${names}.`,
+        { variant: "error" }
+      );
+      return;
     }
 
     // Block if any batch-tracked product has no batches split yet
@@ -895,6 +947,7 @@ class Add extends AddForm {
   }
 
   handleConfirmSubmit = () => {
+    if (this.state.isAdding) return; // guard against double-click double-submit
     this.submitTransfer();
   }
 
@@ -1123,6 +1176,7 @@ class Add extends AddForm {
           transferData={this.state.transferData}
           onCancel={this.handleConfirmCancel}
           onConfirm={this.handleConfirmSubmit}
+          submitting={this.state.isAdding}
         />
         <InventoryTransferResultModal
           open={this.state.showResultModal}

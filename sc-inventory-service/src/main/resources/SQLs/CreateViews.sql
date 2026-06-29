@@ -1359,20 +1359,68 @@ WHERE
 
 
  -- BOQUpload: filter by is_deleted + JOIN columns
- CREATE INDEX idx_boqupload_active
-   ON BOQUpload (is_deleted, buildingTypeId, usageLocationId, locationId, productId);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'BOQUpload'
+   AND index_name = 'idx_boqupload_active';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_boqupload_active
+      ON BOQUpload (is_deleted, buildingTypeId, usageLocationId, locationId, productId)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
  -- outward_inventory: JOIN condition in subquery
- CREATE INDEX idx_outward_inv_join
-   ON outward_inventory (is_deleted, locationId, usageAreaId);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'outward_inventory'
+   AND index_name = 'idx_outward_inv_join';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_outward_inv_join
+      ON outward_inventory (is_deleted, locationId, usageAreaId)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
  -- outwardinventory_entry: JOIN on outwardid
- CREATE INDEX idx_oie_outwardid
-   ON outwardinventory_entry (outwardid);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'outwardinventory_entry'
+   AND index_name = 'idx_oie_outwardid';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_oie_outwardid
+      ON outwardinventory_entry (outwardid)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
  -- inward_outward_entries: JOIN on entryId + productId filter
- CREATE INDEX idx_ioe_entry_product
-   ON inward_outward_entries (entryId, productId);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'inward_outward_entries'
+   AND index_name = 'idx_ioe_entry_product';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_ioe_entry_product
+      ON inward_outward_entries (entryId, productId)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
 
 -- =====================================================

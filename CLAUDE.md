@@ -1599,11 +1599,26 @@ All additive, all on `masterschema`. Captured in `sc-inventory-service/quote-com
 
 # Pending Deploy Migrations — Standing Convention
 
-No Flyway/Liquibase (`ddl-auto=none`) — every schema change is applied by hand against each environment after deploy.
+No Flyway/Liquibase. `spring.jpa.hibernate.ddl-auto=none` in `application.properties` is **not** the
+effective setting at runtime, though — `sc-inventory-service/src/main/java/com/ec/application/multitenant/AutoDDLConfig.java`
+builds its own per-tenant routing `DataSource`/`EntityManagerFactory` for every schema in
+`schemas.map`, and hardcodes `hibernate.hbm2ddl.auto=update` on each one. That means:
+
+- **Additive changes (new column, new table) are auto-applied on backend startup** — Hibernate's
+  `update` mode creates what's missing on every tenant schema (and master) the moment the app boots
+  against it. No manual SQL needed for these.
+- **Hibernate `update` never drops or renames anything** — dropped columns/tables, renamed
+  columns, FK changes, and any data backfill/correction still need to be applied by hand. This is
+  what `PendingDeployMigrations.sql` is actually for.
 
 **Single canonical file:** `sc-inventory-service/src/main/resources/SQLs/PendingDeployMigrations.sql`
 
-Rule going forward: any code change that requires a schema change (new column, dropped column, new table, FK change, etc.) gets its SQL **appended** to this file (with a comment explaining what/why and which schema it targets — tenant schema vs `masterschema`), instead of creating a new one-off `.sql` file. Do not create per-feature migration files anymore.
+Rule going forward: any code change that requires a **non-additive** schema change (dropped column,
+renamed column, FK change, etc.) or a one-off data correction gets its SQL **appended** to this file
+(with a comment explaining what/why and which schema it targets — tenant schema vs `masterschema`),
+instead of creating a new one-off `.sql` file. Do not create per-feature migration files anymore.
+Purely additive changes (new column/table) don't need an entry — they self-apply on next backend
+startup per environment.
 
 User's workflow: after deploying the code, they run everything currently in this file by hand against the target environment(s), then empty the file back out (keeping the header comment) once confirmed applied everywhere. So at any point in time, the file's contents = what is still outstanding / not yet run in prod.
 

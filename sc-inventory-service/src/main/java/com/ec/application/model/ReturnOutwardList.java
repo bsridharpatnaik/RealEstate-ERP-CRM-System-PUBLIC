@@ -54,6 +54,11 @@ public class ReturnOutwardList extends ReusableFields
 
 	Double closingStock;
 
+	// Snapshot of which batch(es) the returned qty was restored to, taken once at creation
+	// and never re-derived afterward — same pattern as LostDamagedInventory.batchEntriesJson.
+	@Column(columnDefinition = "TEXT")
+	String batchEntriesJson;
+
 	public ReturnOutwardList(Date returnDate, Product product, Double oldQuantity, Double returnQuantity,
 			Double closingStock)
 	{
@@ -129,6 +134,16 @@ public class ReturnOutwardList extends ReusableFields
 	public void setClosingStock(Double closingStock)
 	{
 		this.closingStock = closingStock;
+	}
+
+	public String getBatchEntriesJson()
+	{
+		return batchEntriesJson;
+	}
+
+	public void setBatchEntriesJson(String batchEntriesJson)
+	{
+		this.batchEntriesJson = batchEntriesJson;
 	}
 
 }

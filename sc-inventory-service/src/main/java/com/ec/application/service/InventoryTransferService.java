@@ -188,11 +188,11 @@ public class InventoryTransferService {
                             log.error("Failed to delete created target batches for productId={}: {}", item.getProductId(), reverseEx.getMessage());
                         }
                     }
-                    itemResults.add(new TransferItemResult(item.getProductId(), false, creditOrBatchEx.getMessage()));
+                    itemResults.add(new TransferItemResult(item.getProductId(), false, resolveFailureMessage(creditOrBatchEx)));
                 }
 
             } catch (Exception debitEx) {
-                itemResults.add(new TransferItemResult(item.getProductId(), false, "Debit failed: " + debitEx.getMessage()));
+                itemResults.add(new TransferItemResult(item.getProductId(), false, "Debit failed: " + resolveFailureMessage(debitEx)));
             }
         }
         /* =====================================================
@@ -421,6 +421,107 @@ public class InventoryTransferService {
         }
     }
 
+    /**
+     * Converts a raw exception into a user-facing message. Optimistic-lock failures
+     * on {@code InventoryBatch} (concurrent transfer/outward/write-off touching the
+     * same batch at the same time) surface as a generic Hibernate stack trace by
+     * default — replace with an actionable message instead.
+     */
+    private String resolveFailureMessage(Exception ex) {
+        if (isOptimisticLockFailure(ex)) {
+            return "Batch stock was updated by another transaction at the same time. Please retry the transfer.";
+        }
+        return ex.getMessage();
+    }
+
+    private static final int BATCH_LOCK_MAX_ATTEMPTS = 6;
+
+    private void sleepBackoff(int attempt) {
+        try {
+            Thread.sleep(30L * attempt);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private boolean isOptimisticLockFailure(Exception e) {
+        Throwable t = e;
+        while (t != null) {
+            if (t instanceof org.springframework.orm.ObjectOptimisticLockingFailureException
+                    || t instanceof javax.persistence.OptimisticLockException
+                    || t instanceof org.hibernate.StaleObjectStateException
+                    || t instanceof org.hibernate.StaleStateException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
+
+    /**
+     * Deducts a fixed {@code qty} from a single override-selected batch, re-fetching and
+     * retrying on optimistic-lock conflict instead of letting a concurrent transfer/outward
+     * on the same batch fail this entire item outright.
+     */
+    private void consumeOverrideBatchWithRetry(
+            Long batchId, double qty, List<TransferredBatchData> out, String productName) {
+        for (int attempt = 1; attempt <= BATCH_LOCK_MAX_ATTEMPTS; attempt++) {
+            InventoryBatch fresh = inventoryBatchRepository.findById(batchId)
+                    .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
+            if (qty > fresh.getQtyRemaining() + 0.001) {
+                throw new IllegalArgumentException(
+                        "Batch #" + batchId + " has only "
+                        + String.format("%.3f", fresh.getQtyRemaining())
+                        + " units remaining — requested " + qty + " for transfer of '" + productName + "'.");
+            }
+            fresh.setQtyRemaining(fresh.getQtyRemaining() - qty);
+            try {
+                inventoryBatchRepository.save(fresh);
+                out.add(new TransferredBatchData(fresh.getBatchId(), fresh.getBrand(), fresh.getLotNumber(),
+                        fresh.getExpiryDate(), fresh.getReceivedDate(), qty));
+                return;
+            } catch (Exception e) {
+                if (!isOptimisticLockFailure(e) || attempt == BATCH_LOCK_MAX_ATTEMPTS) {
+                    throw e;
+                }
+                sleepBackoff(attempt);
+            }
+        }
+    }
+
+    /**
+     * Consumes up to {@code remainingNeeded} from one FIFO/FEFO batch, re-fetching its
+     * freshest {@code qtyRemaining} on every attempt (another concurrent consumer may have
+     * already taken some of it since the ordered batch list was loaded) and retrying on
+     * optimistic-lock conflict. Returns the actual quantity consumed (may be less than
+     * {@code remainingNeeded} if the batch has less available now than originally seen).
+     */
+    private double consumeFifoBatchWithRetry(
+            Long batchId, double remainingNeeded, List<TransferredBatchData> out) {
+        for (int attempt = 1; attempt <= BATCH_LOCK_MAX_ATTEMPTS; attempt++) {
+            InventoryBatch fresh = inventoryBatchRepository.findById(batchId)
+                    .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
+            double available = fresh.getQtyRemaining();
+            if (available <= 0.0009) {
+                return 0.0; // drained by a concurrent consumer between list load and now
+            }
+            double consume = Math.min(remainingNeeded, available);
+            fresh.setQtyRemaining(available - consume);
+            try {
+                inventoryBatchRepository.save(fresh);
+                out.add(new TransferredBatchData(fresh.getBatchId(), fresh.getBrand(), fresh.getLotNumber(),
+                        fresh.getExpiryDate(), fresh.getReceivedDate(), consume));
+                return consume;
+            } catch (Exception e) {
+                if (!isOptimisticLockFailure(e) || attempt == BATCH_LOCK_MAX_ATTEMPTS) {
+                    throw e;
+                }
+                sleepBackoff(attempt);
+            }
+        }
+        return 0.0;
+    }
+
     /* =====================================================
        BATCH SPLIT HELPERS (#6)
        ===================================================== */
@@ -507,14 +608,11 @@ public class InventoryTransferService {
                             + " units remaining — requested " + entry.getQty() + " for transfer.");
                 }
             }
-            // PASS 2: all validations passed — save and populate out incrementally
+            // PASS 2: all validations passed — save and populate out incrementally.
+            // Re-fetch + retry on optimistic-lock conflict so a concurrent transfer/outward
+            // touching the same batch doesn't fail this entire item outright.
             for (BatchOverrideEntry entry : validEntries) {
-                InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
-                        .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
-                batch.setQtyRemaining(batch.getQtyRemaining() - entry.getQty());
-                inventoryBatchRepository.save(batch);
-                out.add(new TransferredBatchData(batch.getBatchId(), batch.getBrand(), batch.getLotNumber(),
-                        batch.getExpiryDate(), batch.getReceivedDate(), entry.getQty()));
+                consumeOverrideBatchWithRetry(entry.getBatchId(), entry.getQty(), out, product.getProductName());
             }
             return; // override path done
         }
@@ -533,13 +631,10 @@ public class InventoryTransferService {
         double remaining = qtyToTransfer;
         for (InventoryBatch batch : orderedBatches) {
             if (remaining <= 0) break;
-            double consume = Math.min(remaining, batch.getQtyRemaining());
-            batch.setQtyRemaining(batch.getQtyRemaining() - consume);
-            inventoryBatchRepository.save(batch);
-            // Populate incrementally so compensation sees partial saves if we throw later
-            out.add(new TransferredBatchData(batch.getBatchId(), batch.getBrand(), batch.getLotNumber(),
-                    batch.getExpiryDate(), batch.getReceivedDate(), consume));
-            remaining -= consume;
+            // Re-fetch + retry on optimistic-lock conflict, recomputing the consumable amount
+            // from the freshest qtyRemaining each attempt (a concurrent consumer may have
+            // already taken some of this batch since orderedBatches was loaded).
+            remaining -= consumeFifoBatchWithRetry(batch.getBatchId(), remaining, out);
         }
         if (remaining > 0.001) {
             throw new IllegalArgumentException(

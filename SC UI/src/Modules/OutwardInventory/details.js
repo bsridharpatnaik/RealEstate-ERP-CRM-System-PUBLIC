@@ -118,6 +118,25 @@ class Details extends CommonDetails {
     this.setState({ anchorEl: null });
   };
 
+  // One-time snapshot taken at return/reject creation — same pattern as Lost/details.js's
+  // batchEntriesJson rendering. Never re-derived from current batch state afterward.
+  renderBatchEntriesCell(batchEntriesJson) {
+    if (!batchEntriesJson) return "-";
+    let rows = [];
+    try {
+      rows = JSON.parse(batchEntriesJson);
+    } catch (e) {
+      return "-";
+    }
+    if (!rows.length) return "-";
+    return rows
+      .map((r) => {
+        const label = [r.brand, r.lotNumber].filter(Boolean).join(" / ") || `Batch #${r.batchId}`;
+        return `${label}: ${r.qty}`;
+      })
+      .join(", ");
+  }
+
   render() {
     const data = this.props.data;
     const days = getRoleEditConstraintDays();
@@ -588,16 +607,18 @@ class Details extends CommonDetails {
                         <TableCell>
                           {messages.common.returnedQauntity}
                         </TableCell>
+                        <TableCell>Batch Details</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {data.returnOutwardList.map((row) => (
-                        <TableRow key={row.productName}>
+                        <TableRow key={row.returnentryid}>
                           <TableCell>{row.returnDate}</TableCell>
                           <TableCell>{row.product.productName}</TableCell>
                           <TableCell>{row.product.measurementUnit}</TableCell>
                           <TableCell>{row.oldQuantity}</TableCell>
                           <TableCell>{row.returnQuantity}</TableCell>
+                          <TableCell>{this.renderBatchEntriesCell(row.batchEntriesJson)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -616,21 +637,21 @@ class Details extends CommonDetails {
                         <TableCell>{messages.common.inventory}</TableCell>
                         <TableCell>{messages.common.unit}</TableCell>
                         <TableCell>{messages.common.oldquantity}</TableCell>
-                        <TableCell>
-                          {messages.common.returnedQauntity}
-                        </TableCell>
+                        <TableCell>Rejected Qty</TableCell>
                         <TableCell>Remarks</TableCell>
+                        <TableCell>Batch Details</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {data.rejectOutwardList.map((row) => (
-                        <TableRow key={row.productName}>
+                        <TableRow key={row.rejectentryid}>
                           <TableCell>{row.rejectDate}</TableCell>
                           <TableCell>{row.product.productName}</TableCell>
                           <TableCell>{row.product.measurementUnit}</TableCell>
                           <TableCell>{row.oldQuantity}</TableCell>
                           <TableCell>{row.rejectQuantity}</TableCell>
                           <TableCell>{row.remarks || '-'}</TableCell>
+                          <TableCell>{this.renderBatchEntriesCell(row.batchEntriesJson)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

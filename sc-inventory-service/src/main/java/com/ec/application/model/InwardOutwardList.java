@@ -60,6 +60,12 @@ public class InwardOutwardList extends ReusableFields {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     Warehouse warehouse;
 
+    // Cumulative qty rejected against this line so far. Kept separate from `quantity` —
+    // `quantity` must stay net-of-returns-only since it feeds the stock ledger view; reject
+    // does not change stock (already deducted at outward time), so it must not shrink it.
+    @Column(name = "rejected_quantity")
+    private Double rejectedQuantity = 0.0;
+
     @Transient
     public String getIndentId() {
         if (lineItemCode == null || !lineItemCode.contains("/")) {

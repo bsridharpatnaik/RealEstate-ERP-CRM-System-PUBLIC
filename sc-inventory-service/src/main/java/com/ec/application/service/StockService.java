@@ -93,7 +93,26 @@ public class StockService {
     @Autowired
     InventoryBatchRepository inventoryBatchRepository;
 
+    @javax.persistence.PersistenceContext
+    private javax.persistence.EntityManager entityManager;
+
     Logger log = LoggerFactory.getLogger(StockService.class);
+
+    private static final int STOCK_LOCK_MAX_ATTEMPTS = 6;
+
+    private boolean isOptimisticLockFailure(Exception e) {
+        Throwable t = e;
+        while (t != null) {
+            if (t instanceof org.springframework.orm.ObjectOptimisticLockingFailureException
+                    || t instanceof javax.persistence.OptimisticLockException
+                    || t instanceof org.hibernate.StaleObjectStateException
+                    || t instanceof org.hibernate.StaleStateException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
 
     public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) throws ParseException {
         StockInformationV2 stockInformation = new StockInformationV2();
@@ -711,31 +730,53 @@ public class StockService {
         }
     }
 
+    /**
+     * Updates quantityInHand for a product+warehouse. Retries on optimistic-lock conflict
+     * (Stock.version) — two concurrent stock-mutating operations (inward/outward/transfer/etc.)
+     * on the same product+warehouse used to race via a plain read-modify-write with no locking,
+     * which could silently corrupt quantityInHand (one update's effect lost or double-applied).
+     * Each retry calls entityManager.clear() so the next findOrInsertStock re-reads the row's
+     * freshest committed value instead of returning the same stale managed instance from the
+     * Hibernate session's identity map.
+     */
     @Transactional(rollbackFor = Exception.class)
     public Double updateStock(Long productId, Long warehouseId, Double quantity, String operation) throws Exception {
         System.out.println("updateStock - Tenant =- " + ThreadLocalStorage.getTenantName());
-        Stock currentStock = findOrInsertStock(productId, warehouseId);
-        Double oldStock = currentStock.getQuantityInHand();
-        Double newStock = (double) 0;
-        switch (operation) {
-            case "inward":
-                newStock = oldStock + quantity;
-                break;
-            case "outward":
-                newStock = oldStock - quantity;
-        }
-        if (newStock < 0) {
-            log.info("stock update failed for product " + currentStock.getProduct().getProductName()
-                    + ".  Stock will go Negative");
-            throw new Exception("stock update failed for product " + currentStock.getProduct().getProductName()
-                    + ".  Stock will go Negative");
-        } else {
+        for (int attempt = 1; attempt <= STOCK_LOCK_MAX_ATTEMPTS; attempt++) {
+            Stock currentStock = findOrInsertStock(productId, warehouseId);
+            Double oldStock = currentStock.getQuantityInHand();
+            Double newStock = (double) 0;
+            switch (operation) {
+                case "inward":
+                    newStock = oldStock + quantity;
+                    break;
+                case "outward":
+                    newStock = oldStock - quantity;
+            }
+            if (newStock < 0) {
+                log.info("stock update failed for product " + currentStock.getProduct().getProductName()
+                        + ".  Stock will go Negative");
+                throw new Exception("stock update failed for product " + currentStock.getProduct().getProductName()
+                        + ".  Stock will go Negative");
+            }
             currentStock.setQuantityInHand(newStock);
-
-            stockRepo.save(currentStock);
-            inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
-            return newStock;
+            try {
+                stockRepo.save(currentStock);
+                inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
+                return newStock;
+            } catch (Exception e) {
+                if (!isOptimisticLockFailure(e) || attempt == STOCK_LOCK_MAX_ATTEMPTS) {
+                    throw e;
+                }
+                entityManager.clear();
+                try {
+                    Thread.sleep(30L * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
+        throw new Exception("Unable to update stock after concurrent update retries.");
     }
 
     @Transactional(rollbackFor = Exception.class)

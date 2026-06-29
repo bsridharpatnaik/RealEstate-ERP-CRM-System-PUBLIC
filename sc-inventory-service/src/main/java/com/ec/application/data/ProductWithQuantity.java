@@ -41,6 +41,10 @@ public class ProductWithQuantity {
     // Return batch entries: explicit list of {batchId, qty} — required when multiple batches were used in the original outward
     List<BatchOverrideEntry> returnBatches;
 
+    // Reject batch entries: explicit list of {batchId, qty} — required when multiple batches were used in the
+    // original outward. Read-only attribution (reject does not move stock or batch qty), unlike returnBatches.
+    List<BatchOverrideEntry> rejectBatches;
+
     public ProductWithQuantity() {}
 
     public ProductWithQuantity(Long productId, Double quantity) {

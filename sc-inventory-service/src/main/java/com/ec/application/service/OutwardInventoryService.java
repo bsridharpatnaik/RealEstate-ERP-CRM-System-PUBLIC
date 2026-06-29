@@ -243,7 +243,8 @@ public class OutwardInventoryService {
                 addReturnForOutward(outwardId, productWithQuantity);
             else
                 addRejectForOutward(outwardId, productWithQuantity.getProductId(), productWithQuantity.getQuantity(),
-                        productWithQuantity.getRemarks(), productWithQuantity.getWarehouseId());
+                        productWithQuantity.getRemarks(), productWithQuantity.getWarehouseId(),
+                        productWithQuantity.getRejectBatches());
         }
 
         String actionUser = resolveCurrentUser();
@@ -286,26 +287,39 @@ public class OutwardInventoryService {
             Double diffInQuantity = currentQuantity - quantity;
             Double closingStock = stockService.updateStock(productId, inwardOutwardList.getWarehouse().getWarehouseId(),
                     quantity, "inward");
-            returnOutwardList.add(new ReturnOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
-                    quantity, closingStock));
+
+            // Restore batch quantities, capturing a one-time snapshot of which batch(es) the
+            // returned qty came from for display (see batchEntriesJson on ReturnOutwardList).
+            List<BatchOverrideEntry> batchSnapshot = restoreBatchesForReturn(outwardId, productId, quantity, returnBatches);
+
+            ReturnOutwardList returnEntry = new ReturnOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
+                    quantity, closingStock);
+            if (batchSnapshot != null && !batchSnapshot.isEmpty()) {
+                try {
+                    returnEntry.setBatchEntriesJson(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(batchSnapshot));
+                } catch (Exception e) {
+                    log.warn("Failed to serialize batchEntriesJson for return: " + e.getMessage());
+                }
+            }
+            returnOutwardList.add(returnEntry);
             inwardOutwardList.setQuantity(diffInQuantity);
             inwardOutwardList.setClosingStock(closingStock);
         }
         oi.setReturnOutwardList(returnOutwardList);
         oi.setInwardOutwardList(inwardOutwardListSet);
         outwardInventoryRepo.save(oi);
-
-        // Restore batch quantities
-        restoreBatchesForReturn(outwardId, productId, quantity, returnBatches);
     }
 
     /**
      * Restore batches after a return.
      * If returnBatches is provided (multi-batch scenario), restore each specified batch.
      * Otherwise, auto-restore from OutwardBatchConsumption records (single-batch scenario).
+     * Returns an enriched snapshot (batchId, qty, brand, lotNumber, expiryDate) of what was
+     * restored, for display — never re-derived after this call.
      */
-    private void restoreBatchesForReturn(Long outwardId, Long productId, Double quantity,
+    private List<BatchOverrideEntry> restoreBatchesForReturn(Long outwardId, Long productId, Double quantity,
                                          List<BatchOverrideEntry> returnBatches) {
+        List<BatchOverrideEntry> snapshot = new ArrayList<>();
         try {
             if (returnBatches != null && !returnBatches.isEmpty()) {
                 // ----- PRE-VALIDATION (no saves yet) -----
@@ -362,6 +376,7 @@ public class OutwardInventoryService {
                     if (batch != null) {
                         batch.setQtyRemaining(batch.getQtyRemaining() + entry.getQty());
                         inventoryBatchRepository.save(batch);
+                        snapshot.add(enrichBatchEntry(batch, entry.getQty()));
                         List<OutwardBatchConsumption> cons = outwardBatchConsumptionRepository
                                 .findByOutwardIdAndBatch_BatchId(outwardId, entry.getBatchId());
                         for (OutwardBatchConsumption c : cons) {
@@ -380,7 +395,7 @@ public class OutwardInventoryService {
                 // If multiple distinct batches were consumed, require explicit allocation.
                 List<OutwardBatchConsumption> consumptions =
                         outwardBatchConsumptionRepository.findByOutwardIdAndProductIdOrderByIdAsc(outwardId, productId);
-                if (consumptions.isEmpty()) return;
+                if (consumptions.isEmpty()) return snapshot;
 
                 long distinctBatches = consumptions.stream()
                         .filter(c -> c.getBatch() != null)
@@ -393,7 +408,7 @@ public class OutwardInventoryService {
                 }
 
                 double totalConsumed = consumptions.stream().mapToDouble(OutwardBatchConsumption::getQtyConsumed).sum();
-                if (totalConsumed <= 0) return;
+                if (totalConsumed <= 0) return snapshot;
 
                 double remaining = quantity;
                 // Restore from most-recently-consumed first (LIFO restore)
@@ -406,6 +421,7 @@ public class OutwardInventoryService {
                     if (batch != null) {
                         batch.setQtyRemaining(batch.getQtyRemaining() + restoreQty);
                         inventoryBatchRepository.save(batch);
+                        snapshot.add(enrichBatchEntry(batch, restoreQty));
                     }
                     double newQty = c.getQtyConsumed() - restoreQty;
                     if (newQty <= 0.001) {
@@ -424,6 +440,7 @@ public class OutwardInventoryService {
                             + " units could not be returned to any batch. Stock/batch totals may be inconsistent.");
                 }
             }
+            return snapshot;
         } catch (Exception e) {
             // #8: Rethrow — don't silently swallow; stock/batch divergence would corrupt future outwards
             log.error("Batch restore failed for return outwardId={}, productId={}: {}", outwardId, productId, e.getMessage(), e);
@@ -431,17 +448,30 @@ public class OutwardInventoryService {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    private void addRejectForOutward(Long outwardId, Long productId, Double quantity, String remarks) throws Exception {
-        addRejectForOutward(outwardId, productId, quantity, remarks, null);
+    private BatchOverrideEntry enrichBatchEntry(InventoryBatch batch, Double qty) {
+        BatchOverrideEntry enriched = new BatchOverrideEntry();
+        enriched.setBatchId(batch.getBatchId());
+        enriched.setQty(qty);
+        enriched.setBrand(batch.getBrand());
+        enriched.setLotNumber(batch.getLotNumber());
+        if (batch.getExpiryDate() != null) {
+            enriched.setExpiryDate(new java.text.SimpleDateFormat("dd-MM-yyyy").format(batch.getExpiryDate()));
+        }
+        return enriched;
     }
 
     // Reject means the contractor lost/damaged the material at site — it never comes back to the
     // warehouse. The original outward already deducted it from Stock/batches at consumption time,
     // and that deduction must stand. This only reclassifies the qty into RejectOutwardList for
     // reporting; it must NOT call stockService.updateStock or restore batch consumption.
+    //
+    // `quantity` on the line is deliberately left untouched — it feeds the stock ledger view
+    // (all_inventory_view) and must keep representing "stock that left and hasn't been returned."
+    // Rejected-so-far is tracked separately on InwardOutwardList.rejectedQuantity so the same qty
+    // can't be rejected twice, without shrinking the ledger total reject doesn't actually undo.
     @Transactional(rollbackFor = Exception.class)
-    private void addRejectForOutward(Long outwardId, Long productId, Double quantity, String remarks, Long warehouseId) throws Exception {
+    private void addRejectForOutward(Long outwardId, Long productId, Double quantity, String remarks, Long warehouseId,
+                                      List<BatchOverrideEntry> rejectBatches) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         OutwardInventory oi = outwardInventoryRepo.findById(outwardId).get();
         exitIfNotAuthorized(oi, null, APICallTypeForAuthorization.Reject);
@@ -450,20 +480,107 @@ public class OutwardInventoryService {
         InwardOutwardList inwardOutwardList = findLineForProductAndWarehouse(inwardOutwardListSet, productId, warehouseId);
         if (inwardOutwardList != null) {
             Double currentQuantity = inwardOutwardList.getQuantity();
-            if (quantity > currentQuantity)
+            Double alreadyRejected = inwardOutwardList.getRejectedQuantity() != null ? inwardOutwardList.getRejectedQuantity() : 0.0;
+            Double remainingRejectable = currentQuantity - alreadyRejected;
+            if (quantity > remainingRejectable)
                 throw new Exception(
                         "Reject quantity cannot be greater than existing quantity for product -"
                                 + inwardOutwardList.getProduct().getProductName());
 
-            rejectOutwardList.add(new RejectOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
-                    quantity, remarks));
+            RejectOutwardList rejectEntry = new RejectOutwardList(new Date(), inwardOutwardList.getProduct(), currentQuantity,
+                    quantity, remarks);
+            List<BatchOverrideEntry> batchSnapshot = buildRejectBatchSnapshot(outwardId, productId, quantity, rejectBatches);
+            if (batchSnapshot != null && !batchSnapshot.isEmpty()) {
+                try {
+                    rejectEntry.setBatchEntriesJson(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(batchSnapshot));
+                } catch (Exception e) {
+                    log.warn("Failed to serialize batchEntriesJson for reject: " + e.getMessage());
+                }
+            }
+            rejectOutwardList.add(rejectEntry);
 
-            // Decrement line qty so the same qty cannot be rejected again on a subsequent call
-            inwardOutwardList.setQuantity(currentQuantity - quantity);
+            inwardOutwardList.setRejectedQuantity(alreadyRejected + quantity);
         }
         oi.setRejectOutwardList(rejectOutwardList);
         oi.setInwardOutwardList(inwardOutwardListSet);
         outwardInventoryRepo.save(oi);
+    }
+
+    /**
+     * Read-only batch attribution for a reject — does NOT mutate batch.qtyRemaining or
+     * OutwardBatchConsumption (stock/batch state was already deducted at outward-create time
+     * and must stand). Only records which batch(es) the rejected qty is attributed to, for display.
+     * Validated the same way as a return (sum/ownership/upper-bound against what's still
+     * consumption-attributed to this outward), but never applies any mutation.
+     */
+    private List<BatchOverrideEntry> buildRejectBatchSnapshot(Long outwardId, Long productId, Double quantity,
+                                                                List<BatchOverrideEntry> rejectBatches) {
+        List<BatchOverrideEntry> snapshot = new ArrayList<>();
+        try {
+            if (rejectBatches != null && !rejectBatches.isEmpty()) {
+                List<BatchOverrideEntry> validEntries = rejectBatches.stream()
+                        .filter(e -> e.getBatchId() != null && e.getQty() != null && e.getQty() > 0)
+                        .collect(java.util.stream.Collectors.toList());
+                if (validEntries.isEmpty()) {
+                    throw new IllegalArgumentException("No valid batch entries provided for reject.");
+                }
+                Set<Long> seenIds = new HashSet<>();
+                for (BatchOverrideEntry e : validEntries) {
+                    if (!seenIds.add(e.getBatchId())) {
+                        throw new IllegalArgumentException("Duplicate batch ID " + e.getBatchId() + " in reject batches.");
+                    }
+                }
+                double total = validEntries.stream().mapToDouble(BatchOverrideEntry::getQty).sum();
+                if (Math.abs(total - quantity) > 0.001) {
+                    throw new IllegalArgumentException(
+                            "Reject batch quantities (" + total + ") must equal the reject quantity (" + quantity + ").");
+                }
+                for (BatchOverrideEntry entry : validEntries) {
+                    InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                            .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
+                    if (!batch.getProduct().getProductId().equals(productId)) {
+                        throw new IllegalArgumentException(
+                                "Batch #" + entry.getBatchId() + " belongs to product '"
+                                + batch.getProduct().getProductName() + "', not the rejected product.");
+                    }
+                    List<OutwardBatchConsumption> cons = outwardBatchConsumptionRepository
+                            .findByOutwardIdAndBatch_BatchId(outwardId, entry.getBatchId());
+                    if (cons.isEmpty()) {
+                        throw new IllegalArgumentException(
+                                "Batch #" + entry.getBatchId() + " was not consumed by outward #" + outwardId + ".");
+                    }
+                    double totalConsumed = cons.stream().mapToDouble(OutwardBatchConsumption::getQtyConsumed).sum();
+                    if (entry.getQty() > totalConsumed + 0.001) {
+                        throw new IllegalArgumentException(
+                                "Cannot reject " + entry.getQty() + " from batch #" + entry.getBatchId()
+                                + " — only " + String.format("%.3f", totalConsumed) + " units were consumed.");
+                    }
+                    snapshot.add(enrichBatchEntry(batch, entry.getQty()));
+                }
+            } else {
+                List<OutwardBatchConsumption> consumptions =
+                        outwardBatchConsumptionRepository.findByOutwardIdAndProductIdOrderByIdAsc(outwardId, productId);
+                if (consumptions.isEmpty()) return snapshot;
+
+                long distinctBatches = consumptions.stream()
+                        .filter(c -> c.getBatch() != null)
+                        .map(c -> c.getBatch().getBatchId())
+                        .distinct().count();
+                if (distinctBatches > 1) {
+                    throw new IllegalArgumentException(
+                            "This outward consumed from " + distinctBatches + " batches. "
+                            + "Please specify which batch(es) the rejected qty came from.");
+                }
+                InventoryBatch batch = consumptions.get(0).getBatch();
+                if (batch != null) {
+                    snapshot.add(enrichBatchEntry(batch, quantity));
+                }
+            }
+            return snapshot;
+        } catch (Exception e) {
+            log.error("Reject batch attribution failed for outwardId={}, productId={}: {}", outwardId, productId, e.getMessage(), e);
+            throw new RuntimeException("Failed to record batch attribution for reject: " + e.getMessage(), e);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
