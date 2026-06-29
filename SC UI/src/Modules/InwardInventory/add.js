@@ -421,7 +421,9 @@ class InwardInventoryForm extends AddForm {
             maxAllowedQuantity: item.maxAllowedQuantity != null ? item.maxAllowedQuantity : pendingQty + (poQty * tolPct / 100),
             quantity: "",
             warehouseId: null,
-            lineItemCode: item.lineItemCode
+            lineItemCode: item.lineItemCode,
+            billingUnit: item.billingUnit || null,
+            billingQuantity: item.billingQuantity || null,
           };
         });
 
@@ -698,6 +700,12 @@ class InwardInventoryForm extends AddForm {
                   skipAdd: true,
                 })}
               </div>
+
+              {product.billingUnit && product.billingQuantity && (
+                <div style={{ fontSize: '10px', color: '#1976d2', marginTop: '2px', paddingLeft: '2px' }}>
+                  = {product.billingQuantity} {product.billingUnit} (billing)
+                </div>
+              )}
 
               {/* Max Allowed - Read Only, always shown for PO-linked inwards */}
               {product.maxAllowedQuantity != null && (

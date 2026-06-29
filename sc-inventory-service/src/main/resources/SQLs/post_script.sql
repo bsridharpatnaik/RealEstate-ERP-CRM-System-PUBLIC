@@ -1,6 +1,3 @@
--- use drgtrdcntr,bhaavbhumi,citycenter,mnglmcity,mhvrtrdcntr,iseries, smartcity, dextension, bextension,anantamsamosharan:AS
-use iseries;
-
 CREATE TABLE IF NOT EXISTS execution_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     procedure_name VARCHAR(255) NOT NULL,
@@ -26,7 +23,7 @@ SELECT
     q.quantity,
 
     SUM(CASE
-        WHEN q.type IN ('Inward', 'Transfer-In', 'Excess-Found')   THEN  q.quantity
+        WHEN q.type IN ('Inward', 'Transfer-In')                   THEN  q.quantity
         WHEN q.type IN ('Transfer-Out', 'Outward', 'Lost-Damaged') THEN -q.quantity
         ELSE 0
     END) OVER (
@@ -178,32 +175,7 @@ FROM (
     JOIN Product p    ON p.productid    = ldi.productid
     JOIN Category cat ON cat.categoryid = p.categoryid
     JOIN Warehouse w  ON w.warehouse_id = ldi.warehousename
-    WHERE ldi.is_deleted = 0 AND (ldi.entry_type = 'LOST_DAMAGED' OR ldi.entry_type IS NULL)
-
-    UNION ALL
-
-    /* === EXCESS FOUND — sort_order 5 === */
-    SELECT
-        'Excess-Found'          AS type,
-        ldi.lostdamagedid       AS keyid,
-        ldi.lostdamagedid       AS entryid,
-        DATE(ldi.date)          AS date,
-        NULL                    AS contactid,
-        ldi.productid,
-        ldi.quantity,
-        ldi.creationDate,
-        ldi.lastModifiedDate,
-        p.product_name,
-        cat.category_name,
-        p.measurementunit,
-        w.warehouse_id,
-        w.warehousename,
-        5                       AS sort_order
-    FROM lost_damaged_inventory ldi
-    JOIN Product p    ON p.productid    = ldi.productid
-    JOIN Category cat ON cat.categoryid = p.categoryid
-    JOIN Warehouse w  ON w.warehouse_id = ldi.warehousename
-    WHERE ldi.is_deleted = 0 AND ldi.entry_type = 'EXCESS_FOUND'
+    WHERE ldi.is_deleted = 0
 
 ) q
 LEFT JOIN contacts c ON c.contactid = q.contactid;
@@ -228,7 +200,7 @@ BEGIN
         sr.type,
         sr.oldClosingStock,
         SUM(
-            CASE WHEN sr.type IN ('Inward', 'Transfer-In', 'Excess-Found') THEN sr.quantity ELSE 0 END
+            CASE WHEN sr.type IN ('Inward', 'Transfer-In') THEN sr.quantity ELSE 0 END
         ) OVER (
             PARTITION BY sr.warehouse_id, sr.productid
             ORDER BY sr.row_num
@@ -646,11 +618,10 @@ SELECT
     t1.measurementunit,
     t1.category_name,
     t1.warehousename,
-    IF(total_inward+total_excess_found-total_outward-total_lost_damaged=closing_stock,0,(t2.closing_stock+total_outward+total_lost_damaged-total_inward-total_excess_found)) as opening_stock,
+    IF(total_inward-total_outward-total_lost_damaged=closing_stock,0,(t2.closing_stock+total_outward+total_lost_damaged-total_inward)) as opening_stock,
     t1.total_inward,
     total_outward,
     total_lost_damaged,
-    total_excess_found,
     t2.closing_stock
 FROM
 (
@@ -662,8 +633,7 @@ FROM
         ai1.warehousename,
 		SUM(IF(type='Inward',quantity,0)) as total_inward,
 		SUM(IF(type='Outward',quantity,0)) as total_outward,
-		SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged,
-		SUM(IF(type='Excess-Found',quantity,0)) as total_excess_found
+		SUM(IF(type='Lost-Damaged',quantity,0)) as total_lost_damaged
 	FROM all_inventory ai1
 	GROUP BY month,category_name,product_name,measurementunit,ai1.warehousename
 	ORDER BY month,category_name,product_name,measurementunit, ai1.warehousename
@@ -1261,32 +1231,32 @@ LEFT JOIN last_inward_dates lid ON ps.productId = lid.productId;
 CREATE OR REPLACE VIEW masterschema.IndentsForInward AS
 SELECT
     iie.line_item_code AS lineItemCode,
+
     ii.indent_id,
     ii.indent_date,
     ii.indent_status,
     ii.createdBy AS indentCreatedBy,
     ii.tenant,
+
     iie.line_item_status,
     iie.productId,
+
     p.product_name,
     p.product_code,
     p.measurementUnit,
+
     iie.purchaseOrderId,
     iie.quantity,
     iie.remarks,
-    iie.specification,
     po.po_date,
     po.purchase_order_id,
     po.grandTotal,
     po.status AS po_status,
+
     c.contactId AS supplier_id,
     c.name AS supplier_name,
-    COALESCE(iip.total_inward_quantity, 0) AS total_inward_quantity,
-    COALESCE(pol.quantity, iie.quantity)   AS poLineQuantity,
-    COALESCE(pol.tolerance_percent, 0)     AS tolerancePercent,
-    pol.billing_unit                       AS billingUnit,
-    pol.billing_quantity                   AS billingQuantity,
-    pol.billing_conversion_factor          AS billingConversionFactor
+
+    COALESCE(iip.total_inward_quantity, 0) AS total_inward_quantity
 
 FROM masterschema.indent_inventory ii
 INNER JOIN masterschema.indent_inventory_entries iie
@@ -1297,14 +1267,16 @@ INNER JOIN masterschema.purchase_order po
     ON po.purchase_order_id = iie.purchaseOrderId
 INNER JOIN masterschema.contacts c
     ON po.supplier_id = c.contactId
+
 LEFT JOIN (
-    SELECT indent_entry_id, SUM(inward_quantity) AS total_inward_quantity
+    SELECT
+        indent_entry_id,
+        SUM(inward_quantity) AS total_inward_quantity
     FROM masterschema.indent_inward_mapping
     GROUP BY indent_entry_id
-) iip ON iie.entryid = iip.indent_entry_id
-LEFT JOIN masterschema.purchase_order_line pol
-    ON pol.po_id = po.purchase_order_id
-    AND pol.product_id = iie.productId
+) iip
+ON iie.entryid = iip.indent_entry_id
+
 WHERE
     iie.line_item_status IN ('PO Created', 'INWARD PARTIAL', 'INWARD COMPLETE')
     AND ii.is_deleted = 0
@@ -1312,9 +1284,6 @@ WHERE
     AND po.is_deleted = 0
     AND p.is_deleted = 0
     AND c.is_deleted = 0;
-
-
-
 
  SELECT COUNT(*) INTO @idx_exists
  FROM information_schema.statistics
@@ -1331,38 +1300,5 @@ WHERE
  EXECUTE stmt;
  DEALLOCATE PREPARE stmt;
 
-
- -- BOQUpload: filter by is_deleted + JOIN columns
- CREATE INDEX idx_boqupload_active
-   ON BOQUpload (is_deleted, buildingTypeId, usageLocationId, locationId, productId);
-
- -- outward_inventory: JOIN condition in subquery
- CREATE INDEX idx_outward_inv_join
-   ON outward_inventory (is_deleted, locationId, usageAreaId);
-
- -- outwardinventory_entry: JOIN on outwardid
- CREATE INDEX idx_oie_outwardid
-   ON outwardinventory_entry (outwardid);
-
- -- inward_outward_entries: JOIN on entryId + productId filter
- CREATE INDEX idx_ioe_entry_product
-   ON inward_outward_entries (entryId, productId);
-
-
--- =====================================================
--- REFRESH OPTIMIZER STATISTICS
--- Must run after any dump restore. Without this, MySQL
--- thinks all tables have ~1 row and picks terrible join
--- order, causing BOQ status queries to take 50+ seconds.
--- Safe to re-run anytime — takes <1s per schema.
--- =====================================================
-ANALYZE TABLE
-    BOQUpload,
-    building_type,
-    Usage_Location,
-    usage_area,
-    Product,
-    Category,
-    outward_inventory,
-    outwardinventory_entry,
-    inward_outward_entries;
+SET sql_safe_updates=0;
+UPDATE common.security_user SET password='$2a$12$Wz0MZ4k6pkL6w5gviou82OYRPuPJv4/xRAFsTNAs9SIOQYPu.aCv.';

@@ -839,14 +839,18 @@ class Details extends CommonDetails {
                         <TableRow>
                           <TableCell>Inventory</TableCell>
                           {hasImages && <TableCell style={{ textAlign: 'center' }}>Sample Image</TableCell>}
+                          <TableCell style={{ whiteSpace: 'nowrap' }}>Qty / UOM</TableCell>
                           <TableCell>Status</TableCell>
                           <TableCell>Exp. Date</TableCell>
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Rate</TableCell>}
-                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Discount</TableCell>}
-                          <TableCell style={{ whiteSpace: 'nowrap' }}>Tolerance %</TableCell>
-                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Rate</TableCell>}
-                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>GST %</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Total</TableCell>}
+                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Discount %</TableCell>}
+                          <TableCell style={{ whiteSpace: 'nowrap' }}>Tolerance %</TableCell>
+                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value</TableCell>}
+                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value/Unit</TableCell>}
+                          <TableCell style={{ whiteSpace: 'nowrap' }}>GST %</TableCell>
+                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>GST Amt</TableCell>}
+                          {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Amt Incl Tax</TableCell>}
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -863,10 +867,21 @@ class Details extends CommonDetails {
                           const gstPercent = parseFloat(item.gstPercent || 0);
                           const tolerancePercent = parseFloat(item.tolerancePercent || 0);
                           const netRate = parseFloat(item.netRate || 0);
+                          const grossTotal = rate * quantity;
+                          const gstAmt = netRate * gstPercent / 100;
                           const totalAmount = parseFloat(item.totalAmount || 0);
 
-                          const quantityText = quantity
-                            ? `${quantity} ${item.unit || ""}`.trim()
+                          // Show billing unit/qty when PO was created in alternate unit
+                          const baseUnit = item.product?.measurementUnit || item.unit || "";
+                          const displayQty = item.billingUnit
+                            ? item.billingQuantity
+                            : quantity;
+                          const displayUnit = item.billingUnit || baseUnit;
+                          const quantityText = displayQty
+                            ? `${displayQty} ${displayUnit}`.trim()
+                            : "";
+                          const baseQtyNote = item.billingUnit
+                            ? ` (= ${quantity} ${baseUnit})`.trim()
                             : "";
                           const details = [
                             item.brand && `Brand Name: ${item.brand}`,
@@ -876,7 +891,7 @@ class Details extends CommonDetails {
                               `Spec: ${item.specification}`,
                           ].filter(Boolean);
                           const inventoryDetails = quantityText
-                            ? [quantityText, ...details].join(", ")
+                            ? [quantityText + baseQtyNote, ...details].join(", ")
                             : details.join(", ");
 
                           const status = data.status || "Complete Inward";
@@ -885,9 +900,9 @@ class Details extends CommonDetails {
                             <TableRow key={index}>
                               <TableCell className="inventory-cell">
                                 <div className="inventory-name">{productName}</div>
-                                {inventoryDetails && (
+                                {details.length > 0 && (
                                   <div className="inventory-details">
-                                    {inventoryDetails}
+                                    {details.join(", ")}
                                   </div>
                                 )}
                               </TableCell>
@@ -904,6 +919,12 @@ class Details extends CommonDetails {
                                   ) : (item.sampleImageFileId ? "Loading…" : "-")}
                                 </TableCell>
                               )}
+                              <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                <div>{displayQty} {displayUnit}</div>
+                                {item.billingUnit && (
+                                  <div style={{ fontSize: 11, color: '#888' }}>= {quantity} {baseUnit}</div>
+                                )}
+                              </TableCell>
                               <TableCell>
                                 <span
                                   className={`status-badge-table status-${status
@@ -920,9 +941,10 @@ class Details extends CommonDetails {
                                     Rs. {rate.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </TableCell>
                                   <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                    {discountPercent > 0
-                                      ? `${discountPercent}%`
-                                      : "-"}
+                                    Rs. {grossTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </TableCell>
+                                  <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                    {discountPercent > 0 ? `${discountPercent}%` : "-"}
                                   </TableCell>
                                 </>
                               )}
@@ -934,7 +956,17 @@ class Details extends CommonDetails {
                                   <TableCell className="net-rate-cell" style={{ whiteSpace: 'nowrap' }}>
                                     Rs. {netRate.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </TableCell>
-                                  <TableCell style={{ whiteSpace: 'nowrap' }}>{gstPercent}%</TableCell>
+                                  <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                    Rs. {(displayQty > 0 ? netRate / displayQty : 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </TableCell>
+                                </>
+                              )}
+                              <TableCell style={{ whiteSpace: 'nowrap' }}>{gstPercent}%</TableCell>
+                              {showMoneyFields && (
+                                <>
+                                  <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                    Rs. {gstAmt.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </TableCell>
                                   <TableCell style={{ whiteSpace: 'nowrap' }}>
                                     Rs. {totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </TableCell>

@@ -52,6 +52,9 @@ public class PurchaseOrderPdfService {
     @Autowired
     UserDetailsService userDetailsService;
 
+    @Autowired
+    DBFileStorageService dbFileStorageService;
+
     static {
         CURRENCY_FORMAT.setMinimumFractionDigits(2);
         CURRENCY_FORMAT.setMaximumFractionDigits(2);
@@ -73,8 +76,9 @@ public class PurchaseOrderPdfService {
             throws Exception {
         boolean hideMoneyFields = forceHideMoneyFields || userDetailsService.isPriceRestricted();
 
+        ByteArrayOutputStream baseOut = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
+        PdfWriter writer = PdfWriter.getInstance(document, baseOut);
         document.open();
 
         addHeader(document, po);
@@ -90,6 +94,8 @@ public class PurchaseOrderPdfService {
         }
 
         document.close();
+
+        appendAttachments(po, baseOut.toByteArray(), outputStream);
     }
     // -----------------------------------------------------------------------
     // Public API
@@ -97,23 +103,81 @@ public class PurchaseOrderPdfService {
 
     public void generatePdf(PurchaseOrder po, OutputStream outputStream)
             throws Exception {
+        generatePdf(po, outputStream, false, java.util.Collections.emptyList());
+    }
 
-        // Resolve once: price-restricted roles must not see any monetary values
-        boolean hideMoneyFields = userDetailsService.isPriceRestricted();
+    // -----------------------------------------------------------------------
+    // Attachment merging — PDFs appended as-is, images rendered onto a full page
+    // -----------------------------------------------------------------------
 
-        Document document = new Document(PageSize.A4, 36, 36, 36, 36);
-        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
-        document.open();
+    private void appendAttachments(PurchaseOrder po, byte[] basePdfBytes, OutputStream outputStream)
+            throws Exception {
+        List<com.ec.application.model.FileInformation> files =
+                po.getFileInformations() == null ? java.util.Collections.emptyList()
+                        : po.getFileInformations().stream()
+                            .sorted(java.util.Comparator.comparing(
+                                    com.ec.application.model.FileInformation::getId,
+                                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                            .collect(java.util.stream.Collectors.toList());
 
-        addHeader(document, po);
-        addVendorAndPoDetails(document, po);
-        addSubjectAndIntro(document, po);
-        addItemsTable(document, po, hideMoneyFields);
-        addChargesSection(document, po, hideMoneyFields);
-        addPriceTable(document, po, hideMoneyFields);
-        addTermsAndSignatures(document, writer, po);
+        if (files.isEmpty()) {
+            outputStream.write(basePdfBytes);
+            return;
+        }
 
-        document.close();
+        PdfReader baseReader = new PdfReader(basePdfBytes);
+        Document mergedDoc = new Document(baseReader.getPageSizeWithRotation(1));
+        PdfCopy copy = new PdfCopy(mergedDoc, outputStream);
+        mergedDoc.open();
+        copy.addDocument(baseReader);
+        baseReader.close();
+
+        for (com.ec.application.model.FileInformation fi : files) {
+            try {
+                appendOneAttachment(fi.getFileUUId(), copy);
+            } catch (Exception e) {
+                log.warn("Skipping attachment {} for PO {} — failed to merge: {}",
+                        fi.getFileUUId(), po.getPurchaseOrderId(), e.getMessage());
+            }
+        }
+
+        mergedDoc.close();
+    }
+
+    private void appendOneAttachment(String fileUUId, PdfCopy copy) throws Exception {
+        com.ec.application.model.DBFile dbFile = dbFileStorageService.getFile(fileUUId);
+        byte[] bytes = dbFileStorageService.getFileBytes(fileUUId);
+        String fileType = dbFile.getFileType() == null ? "" : dbFile.getFileType().toLowerCase();
+
+        if (fileType.contains("pdf")) {
+            PdfReader attachmentReader = new PdfReader(bytes);
+            copy.addDocument(attachmentReader);
+            attachmentReader.close();
+        } else if (fileType.startsWith("image")) {
+            byte[] imagePagePdf = imageToPdfPage(bytes);
+            PdfReader imageReader = new PdfReader(imagePagePdf);
+            copy.addDocument(imageReader);
+            imageReader.close();
+        } else {
+            log.warn("Unsupported attachment type '{}' for file {} — skipped", fileType, fileUUId);
+        }
+    }
+
+    private byte[] imageToPdfPage(byte[] imageBytes) throws Exception {
+        ByteArrayOutputStream imgOut = new ByteArrayOutputStream();
+        Document imgDoc = new Document(PageSize.A4, 18, 18, 18, 18);
+        PdfWriter.getInstance(imgDoc, imgOut);
+        imgDoc.open();
+
+        Image image = Image.getInstance(imageBytes);
+        float maxWidth = imgDoc.getPageSize().getWidth() - imgDoc.leftMargin() - imgDoc.rightMargin();
+        float maxHeight = imgDoc.getPageSize().getHeight() - imgDoc.topMargin() - imgDoc.bottomMargin();
+        image.scaleToFit(maxWidth, maxHeight);
+        image.setAlignment(Image.ALIGN_CENTER | Image.ALIGN_MIDDLE);
+        imgDoc.add(image);
+
+        imgDoc.close();
+        return imgOut.toByteArray();
     }
 
     // -----------------------------------------------------------------------
@@ -297,9 +361,9 @@ public class PurchaseOrderPdfService {
         table.setSpacingAfter(0f);
 
         if (hasImages) {
-            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 1.0f, 0.75f, 0.95f, 1.2f});
         } else {
-            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 0.75f, 0.95f, 1.2f, 0.85f});
+            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 1.0f, 0.75f, 0.95f, 1.2f});
         }
 
         // Column headers — money columns blanked for executives
@@ -311,11 +375,11 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
         addHeaderCell(table, "Tolerance %", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Net Rate \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net Value \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net Value/Unit \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
-        addHeaderCell(table, "Exp. Date", headerFont);
 
         for (PurchaseOrderLine line : lines) {
             Product product = line.getProduct();
@@ -327,7 +391,13 @@ public class PurchaseOrderPdfService {
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
                     ? "\nSpec: " + line.getSpecification() : "");
 
-            double qty = line.getQuantity() != null ? line.getQuantity() : 0.0;
+            boolean hasBillingUnit = notBlank(line.getBillingUnit());
+            // Display qty and UOM: use billing unit/qty when set, else base qty/unit
+            double qty = hasBillingUnit && line.getBillingQuantity() != null
+                    ? line.getBillingQuantity()
+                    : (line.getQuantity() != null ? line.getQuantity() : 0.0);
+            String uom = hasBillingUnit ? line.getBillingUnit() : product.getMeasurementUnit();
+
             double rate = line.getRate() != null ? line.getRate() : 0.0;
             double discPct = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
             double tolPct  = line.getTolerancePercent() != null ? line.getTolerancePercent() : 0.0;
@@ -336,10 +406,16 @@ public class PurchaseOrderPdfService {
             double taxable = line.getNetRate() != null ? line.getNetRate() : 0.0;
             double gstAmt = taxable * gstPct / 100.0;
             double amtInclTax = line.getTotalAmount() != null ? line.getTotalAmount() : 0.0;
-            String expDate = line.getNeedByDate() != null ? DATE_FORMAT.format(line.getNeedByDate()) : "-";
             String tolStr  = tolPct > 0 ? (tolPct % 1 == 0 ? String.valueOf((int) tolPct) : fmt(tolPct)) + "%" : "-";
 
-            addBodyCell(table, desc, normalFont);
+            // Append base qty note to description when billing unit differs from base unit
+            String fullDesc = desc;
+            if (hasBillingUnit) {
+                double baseQty = line.getQuantity() != null ? line.getQuantity() : 0.0;
+                fullDesc += "\n(= " + fmt(baseQty) + " " + product.getMeasurementUnit() + ")";
+            }
+
+            addBodyCell(table, fullDesc, normalFont);
 
             // Sample image cell — only added when the column is shown
             if (hasImages) {
@@ -367,16 +443,16 @@ public class PurchaseOrderPdfService {
             }
 
             addBodyCell(table, fmt(qty), normalFont);
-            addBodyCell(table, product.getMeasurementUnit(), normalFont);
+            addBodyCell(table, uom != null ? uom : "", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(rate), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(grossTotal), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : (discPct > 0 ? (discPct % 1 == 0 ? String.valueOf((int) discPct) : fmt(discPct)) + "%" : "-"), normalFont);
             addBodyCell(table, tolStr, normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(taxable), normalFont);
+            addBodyCell(table, hideMoneyFields ? "" : (qty > 0 ? fmt(taxable / qty) : "-"), normalFont);
             addBodyCell(table, fmt(gstPct) + "%", normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(gstAmt), normalFont);
             addBodyCell(table, hideMoneyFields ? "" : fmt(amtInclTax), normalFont);
-            addBodyCell(table, expDate, normalFont);
         }
 
         // Line items subtotal — single full-width cell to avoid narrow-column overflow

@@ -153,6 +153,9 @@ public class InwardInventoryService {
         li.setTotalInwardQuantity(alreadyInwarded);
         li.setPendingQuantity(pendingQty);
         li.setMaxAllowedQuantity(maxAllowed);
+        li.setBillingUnit(v.getBillingUnit());
+        li.setBillingQuantity(v.getBillingQuantity());
+        li.setBillingConversionFactor(v.getBillingConversionFactor());
         return li;
     }
 

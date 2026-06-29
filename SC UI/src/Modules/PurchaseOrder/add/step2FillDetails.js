@@ -43,11 +43,13 @@ class Step2FillDetails extends React.Component {
     tooltipAnchorEl: null,    // DOM element for Popover anchor
     tooltipProductId: null,   // which product is hovered
     projectList: [],
+    unitConversionsCache: {}, // productId -> [{id, unitName, conversionFactor}]
   };
 
   componentDidMount() {
     this.fetchSupplierNames();
     this.fetchFirmList();
+    this.fetchUnitConversionsForItems(this.props.items || []);
     API.GET(apiEndpoints.getTenants)
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
@@ -70,6 +72,10 @@ class Step2FillDetails extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
+    // Fetch unit conversions for newly added items
+    if (prevProps.items !== this.props.items) {
+      this.fetchUnitConversionsForItems(this.props.items || []);
+    }
     // If orderTo changes and has an ID, fetch its details if not already loaded
     if (
       this.props.orderTo &&
@@ -87,6 +93,90 @@ class Step2FillDetails extends React.Component {
       this.loadFirmDetails(this.props.orderFrom.id);
     }
   }
+
+  fetchUnitConversionsForItems = async (items) => {
+    const { unitConversionsCache } = this.state;
+    const newProductIds = [...new Set((items || []).map((i) => i.productId))]
+      .filter((id) => id && !(id in unitConversionsCache));
+
+    if (newProductIds.length === 0) return;
+
+    // Mark as loading (empty array) to avoid duplicate fetches
+    const pending = {};
+    newProductIds.forEach((id) => { pending[id] = []; });
+    this.setState((prev) => ({
+      unitConversionsCache: { ...prev.unitConversionsCache, ...pending },
+    }));
+
+    await Promise.all(
+      newProductIds.map(async (productId) => {
+        try {
+          const res = await API.GET(apiEndpoints.getUnitConversions(productId));
+          const conversions = res.success ? res.data : [];
+          this.setState((prev) => ({
+            unitConversionsCache: { ...prev.unitConversionsCache, [productId]: conversions },
+          }));
+        } catch (_) {
+          // leave as empty array on error
+        }
+      })
+    );
+  };
+
+  handleBillingUnitChange = (index, selectedUnit, conversions, baseUnit) => {
+    const mergedItems = this.groupItemsByProductId();
+    const targetItem = mergedItems[index];
+    if (!targetItem) return;
+
+    const productId = targetItem.productId;
+    const baseQty = parseFloat(targetItem.quantity || 0);
+
+    if (!selectedUnit || selectedUnit === baseUnit) {
+      // Revert to base unit — clear billing fields, clear rate, recalc on base qty
+      const updatedItems = this.props.items.map((item) => {
+        if (item.productId === productId) {
+          const updated = {
+            ...item,
+            billingUnit: null,
+            billingQuantity: null,
+            billingConversionFactor: null,
+            rate: "",
+          };
+          updated.netRate = "0.00";
+          updated.totalAmt = "0.00";
+          return updated;
+        }
+        return item;
+      });
+      this.props.onItemsChange(updatedItems);
+      return;
+    }
+
+    const conversion = conversions.find((c) => c.unitName === selectedUnit);
+    if (!conversion) return;
+
+    // Billing qty = base qty / factor (auto-computed, read-only)
+    const billingQty = conversion.conversionFactor > 0
+      ? parseFloat((baseQty / conversion.conversionFactor).toFixed(2))
+      : 0;
+
+    // Clear rate — user must re-enter rate in new unit; reset totals
+    const updatedItems = this.props.items.map((item) => {
+      if (item.productId === productId) {
+        return {
+          ...item,
+          billingUnit: selectedUnit,
+          billingQuantity: billingQty,
+          billingConversionFactor: conversion.conversionFactor,
+          rate: "",
+          netRate: "0.00",
+          totalAmt: "0.00",
+        };
+      }
+      return item;
+    });
+    this.props.onItemsChange(updatedItems);
+  };
 
   loadSupplierDetails = async (supplierId) => {
     // Only fetch if details are missing
@@ -386,8 +476,10 @@ const firmDetails = {
 
     if (!targetItem) return;
 
-    // ✅ Use total merged quantity for the whole group
-    const totalGroupQuantity = parseFloat(targetItem.quantity || 0);
+    // Use billing qty when a billing unit is active, otherwise base qty from indent
+    const totalGroupQuantity = targetItem.billingUnit
+      ? parseFloat(targetItem.billingQuantity || 0)
+      : parseFloat(targetItem.quantity || 0);
 
     const updatedItems = this.props.items.map(originalItem => {
       if (originalItem.productId === targetItem.productId) {
@@ -399,7 +491,6 @@ const firmDetails = {
           const discount = parseFloat(updatedItem.discount || 0);
           const discountedRate = rate - (rate * discount / 100);
 
-          // ✅ Use totalGroupQuantity, not updatedItem.quantity
           const netRate = discountedRate * totalGroupQuantity;
           const totalAmt = netRate + (netRate * gst / 100);
           updatedItem.netRate = netRate.toFixed(2);
@@ -1011,7 +1102,7 @@ handleAddFirm = async (firm) => {
                     <TableCell>Brand Name</TableCell>
                     <TableCell>Grade</TableCell>
                     <TableCell>Specification</TableCell>
-                    <TableCell>Quantity</TableCell>
+                    <TableCell>Qty / Unit</TableCell>
                     <TableCell>Tolerance %</TableCell>
                     <TableCell>Rate *</TableCell>
                     <TableCell>Discount %</TableCell>
@@ -1102,18 +1193,58 @@ handleAddFirm = async (firm) => {
                           inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
                         />
                       </TableCell>
-                      <TableCell>
-                        <TextField
-                          value={item.quantity || ""}
-                          onChange={(e) =>
-                            this.handleItemChange(index, "quantity", e.target.value)
-                          }
-                          size="small"
-                          variant="outlined"
-                          type="number"
-                          disabled
-                          inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                        />
+                      <TableCell style={{ minWidth: 130 }}>
+                        {(() => {
+                          const conversions = this.state.unitConversionsCache[item.productId] || [];
+                          const baseUnit = item.unit || "";
+                          const selectedBillingUnit = item.billingUnit || baseUnit;
+                          const hasAlternateUnits = conversions.length > 0;
+
+                          return (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                              {/* Unit selector — only when alternate units configured */}
+                              {hasAlternateUnits ? (
+                                <select
+                                  value={selectedBillingUnit}
+                                  onChange={(e) =>
+                                    this.handleBillingUnitChange(index, e.target.value, conversions, baseUnit)
+                                  }
+                                  style={{
+                                    fontSize: 12,
+                                    padding: "5px 6px",
+                                    border: "1px solid #ccc",
+                                    borderRadius: 4,
+                                    width: "100%",
+                                    height: 34,
+                                    background: "#fff",
+                                  }}
+                                >
+                                  <option value={baseUnit}>{baseUnit}</option>
+                                  {conversions.map((c) => (
+                                    <option key={c.id} value={c.unitName}>{c.unitName}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span style={{ fontSize: 11, color: "#666", paddingBottom: 2 }}>{baseUnit}</span>
+                              )}
+                              {/* Quantity — billing qty when unit selected, base qty otherwise */}
+                              <TextField
+                                value={item.billingUnit ? (item.billingQuantity || "") : (item.quantity || "")}
+                                size="small"
+                                variant="outlined"
+                                type="number"
+                                disabled
+                                inputProps={{ style: { fontSize: "12px", padding: "6px 8px" } }}
+                              />
+                              {/* Base qty reference when billing unit is active */}
+                              {item.billingUnit && (
+                                <div style={{ fontSize: 10, color: "#888", lineHeight: 1.2 }}>
+                                  = {item.quantity || 0} {baseUnit}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         <TextField

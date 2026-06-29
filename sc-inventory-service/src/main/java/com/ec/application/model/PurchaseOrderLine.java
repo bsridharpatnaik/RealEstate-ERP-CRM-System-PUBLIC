@@ -42,6 +42,19 @@ public class PurchaseOrderLine extends ReusableFields {
     private String specification;
 
     private Double quantity;
+
+    /** Billing unit selected at PO creation time (null = same as product's base unit) */
+    @Column(name = "billing_unit")
+    private String billingUnit;
+
+    /** Quantity in the billing unit (null when billing unit = base unit) */
+    @Column(name = "billing_quantity")
+    private Double billingQuantity;
+
+    /** Conversion factor captured at PO creation time for audit */
+    @Column(name = "billing_conversion_factor")
+    private Double billingConversionFactor;
+
     private Double rate;
     private Double discountPercent;
     private Double gstPercent;

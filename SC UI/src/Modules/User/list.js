@@ -20,6 +20,33 @@ import "./style.scss";
 import { getAllTennants } from "./../../actions/tennant";
 import { API } from "./../../axios";
 
+const PROJECT_COLORS = [
+  { bg: '#e3f2fd', color: '#1565c0', border: '#90caf9' },
+  { bg: '#e8f5e9', color: '#2e7d32', border: '#a5d6a7' },
+  { bg: '#fff3e0', color: '#e65100', border: '#ffcc80' },
+  { bg: '#f3e5f5', color: '#6a1b9a', border: '#ce93d8' },
+  { bg: '#e0f7fa', color: '#006064', border: '#80deea' },
+  { bg: '#fff8e1', color: '#f57f17', border: '#ffe082' },
+  { bg: '#fbe9e7', color: '#bf360c', border: '#ffab91' },
+  { bg: '#e8eaf6', color: '#283593', border: '#9fa8da' },
+  { bg: '#e0f2f1', color: '#004d40', border: '#80cbc4' },
+  { bg: '#f9fbe7', color: '#558b2f', border: '#c5e1a5' },
+  { bg: '#ede7f6', color: '#4527a0', border: '#b39ddb' },
+  { bg: '#fff0f0', color: '#b71c1c', border: '#ef9a9a' },
+];
+
+function hashProjectName(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+  }
+  return Math.abs(hash);
+}
+
+function getProjectColor(projectName) {
+  return PROJECT_COLORS[hashProjectName(projectName) % PROJECT_COLORS.length];
+}
+
 class List extends ListCommon {
   searchValue = "";
   state = { data: [] };
@@ -135,6 +162,41 @@ class List extends ListCommon {
               this.sortby = sortby;
               this.sortkey = sortkey;
               this.search();
+            }}
+            customRenders={{
+              role: (roles) => (
+                <div className="project-tags">
+                  {(Array.isArray(roles) ? roles : [roles]).filter(Boolean).map((r, i) => {
+                    const { bg, color, border } = getProjectColor(r);
+                    return (
+                      <span
+                        key={i}
+                        className="project-tag"
+                        style={{ background: bg, color, border: `1px solid ${border}` }}
+                      >
+                        {r}
+                      </span>
+                    );
+                  })}
+                </div>
+              ),
+              tenantList: (projects) => (
+                <div className="project-tags">
+                  {projects.map((p, i) => {
+                    const namePart = p.lastIndexOf('-') > -1 ? p.slice(0, p.lastIndexOf('-')) : p;
+                    const { bg, color, border } = getProjectColor(namePart);
+                    return (
+                      <span
+                        key={i}
+                        className="project-tag"
+                        style={{ background: bg, color, border: `1px solid ${border}` }}
+                      >
+                        {p}
+                      </span>
+                    );
+                  })}
+                </div>
+              ),
             }}
           />
         )}

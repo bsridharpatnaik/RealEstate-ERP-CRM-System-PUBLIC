@@ -36,6 +36,9 @@ public interface PurchaseOrderLineRepository
     )
     List<Object[]> findLatestNetRatePerProduct();
 
+    boolean existsByProduct_ProductIdAndBillingUnitAndIsDeletedFalse(
+            Long productId, String billingUnit);
+
     @Query(
             "SELECT pol FROM PurchaseOrderLine pol " +
                     "JOIN FETCH pol.product " +
