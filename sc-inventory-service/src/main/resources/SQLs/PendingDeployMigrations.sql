@@ -82,20 +82,16 @@ DELIMITER ;
 
 CALL drop_outward_warehouse_id_if_exists('drgtrdcntr');
 CALL drop_outward_warehouse_id_if_exists('bhaavbhumi');
-CALL drop_outward_warehouse_id_if_exists('businesspark');
 CALL drop_outward_warehouse_id_if_exists('citycenter');
-CALL drop_outward_warehouse_id_if_exists('dextension');
-CALL drop_outward_warehouse_id_if_exists('dhabba');
-CALL drop_outward_warehouse_id_if_exists('iseries');
-CALL drop_outward_warehouse_id_if_exists('kalpavrish');
-CALL drop_outward_warehouse_id_if_exists('mhvrtrdcntr');
 CALL drop_outward_warehouse_id_if_exists('mnglmcity');
-CALL drop_outward_warehouse_id_if_exists('riddhisiddhi');
-CALL drop_outward_warehouse_id_if_exists('school');
+CALL drop_outward_warehouse_id_if_exists('mhvrtrdcntr');
+CALL drop_outward_warehouse_id_if_exists('iseries');
 CALL drop_outward_warehouse_id_if_exists('smartcity');
-CALL drop_outward_warehouse_id_if_exists('suncitynx');
+CALL drop_outward_warehouse_id_if_exists('masterschema');
+CALL drop_outward_warehouse_id_if_exists('dextension');
 CALL drop_outward_warehouse_id_if_exists('bextension');
 CALL drop_outward_warehouse_id_if_exists('anantamsamosharan');
+CALL drop_outward_warehouse_id_if_exists('bbextension');
 -- Add any other tenant schema names here before running in a new environment.
 
 DROP PROCEDURE drop_outward_warehouse_id_if_exists;

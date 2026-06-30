@@ -1190,7 +1190,6 @@ renderCurrentStockField(key) {
 
     return (
       <div className="indent-upload-section">
-        <div className="upload-documents-heading">Upload Documents</div>
         <div className="upload-controls">
           <div className="upload-left">
             <div className="upload-buttons-row">
@@ -1354,20 +1353,27 @@ renderCurrentStockField(key) {
               )}
               {!this.state.isLoadingDraft && (
                 <form onSubmit={(e) => this.add(e)}>
-                  <div className="flex width50">
-                    {this.renderAutoComplete({
-                      fieldname: "requiredBy",
-                      placeholder: "Required By",
-                      options: this.props.dropdowns?.requiredByOptions || [],
-                      freeSolo: true,
-                      helperText: "Type to search existing, or enter a new name",
-                      getOption: (option) =>
-                        typeof option === "string" ? option : option["name"] || "",
-                      onChange: (e, value) => {
-                        this.formData.requiredBy =
-                          typeof value === "string" ? value : value ? value.name : undefined;
-                      },
-                    })}
+                  <div className="indent-header-card">
+                    <div className="header-required-by">
+                      {this.renderAutoComplete({
+                        fieldname: "requiredBy",
+                        placeholder: "Required By",
+                        options: this.props.dropdowns?.requiredByOptions || [],
+                        freeSolo: true,
+                        helperText: "Type to search existing, or enter a new name",
+                        getOption: (option) =>
+                          typeof option === "string" ? option : option["name"] || "",
+                        onChange: (e, value) => {
+                          this.formData.requiredBy =
+                            typeof value === "string" ? value : value ? value.name : undefined;
+                        },
+                      })}
+                    </div>
+                    <div className="header-divider" />
+                    <div className="header-upload-documents">
+                      <div className="upload-documents-heading">Upload Documents</div>
+                      {this.renderFileArea()}
+                    </div>
                   </div>
                   {this.renderInventoryAddButton()}
                   <div className="inventories-list">
@@ -1375,7 +1381,6 @@ renderCurrentStockField(key) {
                       this.renderInventory(key)
                     )}
                   </div>
-                  {this.renderFileArea()}
                 </form>
               )}
             </>

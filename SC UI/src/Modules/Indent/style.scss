@@ -1533,21 +1533,48 @@ table {
   }
 }
 
-.indent-upload-section {
-  margin-top: 24px;
-  margin-bottom: 24px;
+.indent-header-card {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   padding: 20px;
   background-color: #ffffff;
-  
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  .header-required-by {
+    flex: 0 0 320px;
+    max-width: 100%;
+  }
+
+  .header-divider {
+    width: 1px;
+    background-color: #e0e0e0;
+    align-self: stretch;
+  }
+
+  .header-upload-documents {
+    flex: 1 1 320px;
+    min-width: 280px;
+  }
+
+  @media (max-width: 768px) {
+    .header-divider {
+      display: none;
+    }
+  }
+}
+
+.indent-upload-section {
   .upload-documents-heading {
     font-weight: 600;
     font-size: 14px;
     color: #323c47;
     margin-bottom: 16px;
   }
-  
+
   .upload-controls {
     .upload-left {
       display: flex;
