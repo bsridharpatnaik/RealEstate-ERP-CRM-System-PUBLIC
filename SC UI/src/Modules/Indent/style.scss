@@ -409,131 +409,172 @@
   }
 }
 
-.inventories-list {
-  margin-top: 16px;
-  
-  .inventory-item {
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 16px;
-    margin-bottom: 16px;
-    background-color: #ffffff;
+// Items section — replaces the old always-expanded per-item cards. Items are only
+// ever added/edited through the dialog (see .item-dialog-row below); this is just
+// the compact summary list, so a 20-line indent no longer turns into a huge scroll.
+.indent-items-section {
+  margin-top: 8px;
 
-    .inventory-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
+  .indent-items-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .indent-items-title {
       font-weight: 600;
+      font-size: 15px;
+      color: #323c47;
+    }
+  }
 
-      .delete-icon {
-        color: #f44336;
-      }
+  .indent-items-empty {
+    border: 1px dashed #d0d5dd;
+    border-radius: 8px;
+    padding: 40px 24px;
+    text-align: center;
+    background-color: #fafbfc;
+
+    .indent-items-empty-text {
+      color: #8a94a6;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+  }
+
+  .indent-items-table {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    overflow: hidden;
+
+    .indent-items-table-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background-color: #f7f8fa;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8a94a6;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
-    .flex {
+    .indent-item-row {
       display: flex;
+      align-items: center;
       gap: 12px;
-      align-items: flex-start;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f1f3;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
 
       &:last-child {
-        margin-bottom: 0;
+        border-bottom: none;
       }
 
-      .MuiFormControl-root,
-      .MuiAutocomplete-root {
-        flex: 1;
-        min-width: 0; // Prevents flex items from overflowing
-      }
-
-      // First row: Category Name, Inventory Name, Inventory Code – equal width
-      &.inventory-row-first {
-        flex-wrap: nowrap;
-        > * {
-          flex: 1 1 0%;
-          min-width: 100px;
-        }
-      }
-
-      // Second row: Quantity, Dead Stock, Measurement Unit – equal width (same as first row)
-        &.inventory-row-second {
-          flex-wrap: nowrap;
-          align-items: flex-start;
-          > * {
-            flex: 1 1 0%;
-            min-width: 80px;   // slightly reduced from 100px to fit 4 columns
-          }
-          .dead-stock-field-wrapper,
-          .current-stock-field-wrapper,           // ← ADD
-          .dead-stock-field-wrapper .MuiFormControl-root,
-          .current-stock-field-wrapper .MuiFormControl-root {   // ← ADD
-            min-width: 0;
-            width: 100%;
-          }
-        }
-
-        // Add alongside .dead-stock-field-wrapper rule
-        .current-stock-field-wrapper {
-          .MuiFormControl-root {
-            width: 100%;
-          }
-        }
-
-      .dead-stock-field-wrapper {
-        .MuiFormControl-root {
-          width: 100%;
-        }
-      }
-
-      .MuiTextField-root {
-        width: 100%;
-        padding-right: 0 !important; // Override App.scss padding to prevent overlap
-      }
-
-      .MuiAutocomplete-root {
-        .MuiTextField-root {
-          padding-right: 0 !important; // Override App.scss padding for autocomplete fields
-        }
-      }
-
-      @media screen and (max-width: 768px) {
-        flex-direction: column;
-        gap: 0;
-
-        .MuiFormControl-root,
-        .MuiAutocomplete-root,
-        .dead-stock-field-wrapper {
-          width: 100%;
-          margin-bottom: 16px;
-          flex: none;
-          min-width: 0;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-        }
-      }
-
-      @media screen and (max-width: 425px) {
-        flex-direction: column;
-        gap: 0;
-
-        .MuiFormControl-root,
-        .MuiAutocomplete-root,
-        .dead-stock-field-wrapper {
-          width: 100%;
-          margin-bottom: 16px;
-          flex: none;
-          min-width: 0;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-        }
+      &:hover {
+        background-color: #f7f8fa;
       }
     }
+
+    .item-col {
+      min-width: 0;
+      font-size: 13px;
+      color: #323c47;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .item-col-product {
+      flex: 1 1 200px;
+      white-space: normal;
+
+      .item-product-name {
+        font-weight: 600;
+      }
+
+      .item-product-code {
+        font-size: 11px;
+        color: #8a94a6;
+      }
+    }
+
+    .item-col-category {
+      flex: 0 1 130px;
+    }
+
+    .item-col-qty {
+      flex: 0 0 90px;
+      font-weight: 500;
+    }
+
+    .item-col-spec,
+    .item-col-remarks {
+      flex: 1 1 150px;
+    }
+
+    .item-col-badges {
+      flex: 0 1 160px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      white-space: normal;
+    }
+
+    .item-col-actions {
+      flex: 0 0 76px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0;
+    }
+
+    .item-col-empty {
+      color: #c0c5cc;
+    }
+
+    @media screen and (max-width: 900px) {
+      .indent-items-table-head {
+        display: none;
+      }
+
+      .indent-item-row {
+        flex-wrap: wrap;
+      }
+
+      .item-col-category,
+      .item-col-spec,
+      .item-col-remarks {
+        flex: 1 1 45%;
+      }
+    }
+  }
+}
+
+.item-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.item-badge-success {
+    background-color: #e8f5e9;
+    color: #27ae60;
+  }
+
+  &.item-badge-danger {
+    background-color: #fdecea;
+    color: #e53935;
+  }
+
+  &.item-badge-neutral {
+    background-color: #eef1f6;
+    color: #5a6472;
   }
 }
 
@@ -544,40 +585,84 @@
   object-fit: contain;
 }
 
-.add-inventory-button-wrapper {
+// Item add/edit dialog content
+.item-dialog-row {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
+  gap: 12px;
   margin-bottom: 16px;
 
-  .MuiButton-root {
-    background: #f0f0f0 !important;
-    color: #000000 !important;
-    font-weight: 500 !important;
-    border: none !important;
-    border-radius: 10px !important;
-    padding: 10px 24px !important;
-    min-height: 40px !important;
-    text-transform: none !important;
-    box-shadow: none !important;
+  &.two-col > * {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
 
-    .button-label,
-    .MuiButton-label {
-      color: #000000 !important;
-      font-weight: 500 !important;
-      font-size: 14px !important;
+  .MuiFormControl-root,
+  .MuiAutocomplete-root {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .MuiTextField-root {
+    width: 100%;
+    padding-right: 0 !important;
+  }
+
+  @media screen and (max-width: 480px) {
+    flex-direction: column;
+    gap: 0;
+
+    > * {
+      margin-bottom: 16px;
     }
+  }
+}
 
-    &:hover {
-      background: #e8e8e8 !important;
-      color: #000000 !important;
-      box-shadow: none !important;
+.item-dialog-stock-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
 
-      .button-label,
-      .MuiButton-label {
-        color: #000000 !important;
-      }
-    }
+  @media screen and (max-width: 480px) {
+    flex-wrap: wrap;
+  }
+}
+
+.stock-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #f7f8fa;
+  border: 1px solid #e8eaed;
+  flex: 1 1 0%;
+  min-width: 0;
+
+  .stock-chip-label {
+    font-size: 11px;
+    color: #8a94a6;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+  }
+
+  .stock-chip-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #323c47;
+  }
+
+  &.stock-chip-warning {
+    border-color: #f5d56a;
+    background-color: #fffbea;
+  }
+
+  &.stock-chip-success {
+    border-left: 3px solid #27ae60;
+  }
+
+  &.stock-chip-danger {
+    border-left: 3px solid #e53935;
   }
 }
 
@@ -1535,24 +1620,40 @@ table {
 
 .indent-header-card {
   display: flex;
-  align-items: stretch;
-  gap: 24px;
+  align-items: center;
+  gap: 20px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  padding: 20px;
+  padding: 8px 16px;
   background-color: #ffffff;
   margin-bottom: 16px;
   flex-wrap: wrap;
 
   .header-required-by {
-    flex: 0 0 320px;
+    flex: 0 0 300px;
     max-width: 100%;
+
+    .MuiFormControl-root {
+      margin: 0;
+      width: 100%;
+    }
+
+    &.header-required-by-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 0 0 320px;
+
+      .MuiFormControl-root {
+        margin: 0;
+      }
+    }
   }
 
   .header-divider {
     width: 1px;
-    background-color: #e0e0e0;
     align-self: stretch;
+    background-color: #e0e0e0;
   }
 
   .header-upload-documents {
@@ -1564,17 +1665,14 @@ table {
     .header-divider {
       display: none;
     }
+
+    .header-required-by {
+      flex: 1 1 100%;
+    }
   }
 }
 
 .indent-upload-section {
-  .upload-documents-heading {
-    font-weight: 600;
-    font-size: 14px;
-    color: #323c47;
-    margin-bottom: 16px;
-  }
-
   .upload-controls {
     .upload-left {
       display: flex;

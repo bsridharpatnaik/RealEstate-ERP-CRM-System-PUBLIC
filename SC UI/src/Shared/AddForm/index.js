@@ -269,6 +269,8 @@ class AddForm extends Component {
     lengthConstraint,
     compRef,
     key,
+    multiline,
+    rows,
   }) {
     // Use defaultValue instead of value to allow uncontrolled behavior
     // This allows users to type in the fields without re-render issues
@@ -310,6 +312,8 @@ class AddForm extends Component {
         error={error}
         helperText={helperText}
         lengthConstraint={lengthConstraint}
+        multiline={multiline}
+        rows={rows}
         inValidateForm={(bFlag) => {
           if (bFlag) {
             this.formValidation[fieldname] = bFlag;

@@ -13,13 +13,13 @@ import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 import IconButton from "@material-ui/core/IconButton";
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
+import EditIcon from "@material-ui/icons/Edit";
 
 //misc
 import { apiEndpoints } from "./../../endpoints";
 import { messages } from "./../../messages";
 import trashRedIcon from "./../../Shared/Icons/trash-red.png";
 import AddIcon from "@material-ui/icons/Add";
-import Fab from "@material-ui/core/Fab";
 //style
 import "./style.scss";
 import "../PurchaseOrder/add/stepStyles.scss";
@@ -48,11 +48,9 @@ const HtmlTooltip = withStyles((theme) => ({
 class Add extends AddForm {
   title = messages.common.indent;
   addurl = apiEndpoints.createIndent;
-  rowRefs = {};
   state = {
     value: 0,
     noinventory: {},
-    showValidation: false,
     categories: [],
     selectedFileName: "",
     selectedFilePreview: null,
@@ -62,9 +60,15 @@ class Add extends AddForm {
     isSavingDraft: false,
     isLoadingDraft: false,
     currentStep: 1,
+    // Item add/edit dialog — items are only added to noinventory once
+    // validated and saved here, never edited inline in the list.
+    itemDialogOpen: false,
+    dialogItem: {},
+    dialogEditingKey: null,
+    dialogValidation: false,
   };
   fileInputRef = React.createRef();
-  key = 2;
+  key = 1;
 
   async fetchDraft() {
     const response = await API.GET(apiEndpoints.getDraft("INDENT"));
@@ -79,22 +83,12 @@ class Add extends AddForm {
     dispatch(fetchUnit());
     this.fetchCategories();
 
-    // Initialize with one empty inventory option
-    this.setState(
-      {
-        noinventory: {
-          1: {}
-        }
-      },
-      () => {
-        if (this.props.prefillData) {
-          // Pre-fill from a rejected indent — skip the draft prompt
-          this.loadDraftData(this.props.prefillData);
-        } else {
-          this.fetchDraft();
-        }
-      }
-    );
+    if (this.props.prefillData) {
+      // Pre-fill from a rejected indent — skip the draft prompt
+      this.loadDraftData(this.props.prefillData);
+    } else {
+      this.fetchDraft();
+    }
   }
 
   componentWillUnmount() {
@@ -269,57 +263,78 @@ class Add extends AddForm {
       key++;
     }
     this.key = key;
-    this.setState({ noinventory: Object.keys(newNoinventory).length ? newNoinventory : { 1: {} } });
+    this.setState({ noinventory: newNoinventory });
     this.setState({ isLoadingDraft: false });
     this.forceUpdate();
   };
 
-  clearRowProductSelection(key) {
-    const p = { ...this.state.noinventory };
-    if (p[key]) {
-      p[key] = {
-        ...p[key],
+  /** Item add/edit dialog — opens empty for a new item. */
+  openAddItemDialog = () => {
+    this.setState({
+      itemDialogOpen: true,
+      dialogItem: {},
+      dialogEditingKey: null,
+      dialogValidation: false,
+    });
+  };
+
+  /** Item add/edit dialog — opens pre-filled with an existing item's data. */
+  openEditItemDialog = (key) => {
+    this.setState({
+      itemDialogOpen: true,
+      dialogItem: { ...this.state.noinventory[key] },
+      dialogEditingKey: key,
+      dialogValidation: false,
+    });
+  };
+
+  closeItemDialog = () => {
+    this.setState({
+      itemDialogOpen: false,
+      dialogItem: {},
+      dialogEditingKey: null,
+      dialogValidation: false,
+    });
+  };
+
+  /** Products already used by other items, excluded from the dialog's product list (unless editing that same item). */
+  getDialogRemainingProducts() {
+    const item = this.state.dialogItem || {};
+    const productList = item.products || [];
+    const editingKey = this.state.dialogEditingKey;
+    const selectedElsewhere = Object.keys(this.state.noinventory)
+      .filter((k) => String(k) !== String(editingKey))
+      .map((k) => this.state.noinventory[k]?.productId);
+    return productList.filter(
+      (p) => !selectedElsewhere.includes(p.id) || item.productId === p.id
+    );
+  }
+
+  handleDialogCategoryChange = async (categoryValue) => {
+    this.setState((prev) => ({
+      dialogItem: {
+        ...prev.dialogItem,
+        selectedCategory: categoryValue,
         productId: "",
         productCode: "",
         unit: "",
         selectedProduct: null,
-        deadStock: null,
         deadStockData: null,
-        currentStockData: null
-      };
-      this.setState({ noinventory: p });
-    }
-  }
-
-  async fetchProductsByCategoryForRow(key, categoryValue) {
-    const p = { ...this.state.noinventory };
-    if (!p[key]) return;
-    p[key] = {
-      ...p[key],
-      selectedCategory: categoryValue,
-      productId: "",
-      productCode: "",
-      unit: "",
-      selectedProduct: null,
-      deadStock: null,
-      deadStockData: null,
-      currentStockData: null,
-      products: [],
-    };
-    this.setState({ noinventory: p });
+        currentStockData: null,
+        boqData: null,
+        leadTimeDays: null,
+        products: [],
+      },
+    }));
     if (!categoryValue?.id) return;
     const response = await API.GET(apiEndpoints.getProductForIndentByCategory(categoryValue.id));
-    const np = { ...this.state.noinventory };
-    if (!np[key]) return;
+    if (!this.state.itemDialogOpen) return;
     if (response.success && Array.isArray(response.data)) {
       if (response.data.length === 0) {
         this.props.enqueueSnackbar(
           "There are no inventories under selected category. Please select a different category.",
           { variant: "warning" }
         );
-        np[key] = { ...np[key], products: [] };
-        this.setState({ noinventory: np });
-        return;
       }
       const transformedProducts = response.data.map((product) => ({
         id: product.productId,
@@ -329,212 +344,92 @@ class Add extends AddForm {
         isManagedInventory: product.isManagedInventory,
         leadTimeDays: product.leadTimeDays ?? null,
       }));
-      np[key] = { ...np[key], products: transformedProducts };
-      this.setState({ noinventory: np });
+      this.setState((prev) =>
+        prev.itemDialogOpen
+          ? { dialogItem: { ...prev.dialogItem, products: transformedProducts } }
+          : prev
+      );
     } else {
-      np[key] = { ...np[key], products: [] };
-      this.setState({ noinventory: np });
-    }
-  }
-
-renderCurrentStockField(key) {
-  const currentStockData = this.state.noinventory[key]?.currentStockData;
-  const unit = this.state.noinventory[key]?.unit || "";
-  let currentStockValue = "";
-  let hasBreakdown = false;
-
-  if (currentStockData && currentStockData.totalCurrentStock != null) {
-    const stockValue = currentStockData.totalCurrentStock;
-    if (typeof stockValue === 'number') {
-      currentStockValue = `${stockValue.toLocaleString('en-IN')} ${unit}`;
-    } else if (typeof stockValue === 'string') {
-      const numValue = parseFloat(stockValue);
-      if (!isNaN(numValue)) {
-        currentStockValue = `${numValue.toLocaleString('en-IN')} ${unit}`;
-      }
-    }
-
-    if (currentStockData.warehouseWiseStock &&
-        Array.isArray(currentStockData.warehouseWiseStock) &&
-        currentStockData.warehouseWiseStock.length > 0 &&
-        currentStockValue !== "") {
-      hasBreakdown = true;
-    }
-  }
-
-  const currentStockField = (
-    <div className="current-stock-field-wrapper" key={`currentStock_${key}_${currentStockValue}`}>
-      {this.renderTextField({
-        fieldname: `currentStock_${key}`,
-        placeholder: "Current Stock",
-        disabled: true,
-        value: currentStockValue,
-        skipAdd: true,
-      })}
-    </div>
-  );
-
-  if (hasBreakdown) {
-    return (
-      <HtmlTooltip
-        title={
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '13px', color: '#323c47' }}>
-              Current Stock Breakdown:
-            </div>
-            {currentStockData.warehouseWiseStock.map((item, idx) => {
-              const warehouseName = Object.keys(item)[0];
-              const amount = item[warehouseName];
-              if (amount === null || amount === undefined) return null;
-              const formattedAmount = typeof amount === 'number'
-                ? `${amount.toLocaleString('en-IN')} ${unit}`
-                : `${amount} ${unit}`;
-              return (
-                <div key={idx} style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>
-                  <span style={{ fontWeight: '500', color: '#323c47' }}>{warehouseName}:</span> {formattedAmount}
-                </div>
-              );
-            })}
-          </div>
-        }
-        placement="top"
-        arrow
-      >
-        <span style={{ display: 'block', width: '100%' }}>
-          {currentStockField}
-        </span>
-      </HtmlTooltip>
-    );
-  }
-
-  return currentStockField;
-}
-
-  renderBOQField(key) {
-    const boqData = this.state.noinventory[key]?.boqData;
-    const unit = this.state.noinventory[key]?.unit || "";
-    if (!boqData || !boqData.hasBOQ) return null;
-
-    const { remaining, totalPlanned, totalConsumed } = boqData;
-    const remainingVal = typeof remaining === 'number' ? remaining : 0;
-
-    const displayValue = remainingVal < 0
-      ? `Exceeded by ${Math.abs(remainingVal).toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`
-      : `${remainingVal.toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`;
-
-    const tooltipContent = (
-      <div style={{ textAlign: 'left' }}>
-        <div style={{ fontWeight: 'bold', marginBottom: 6, fontSize: 13, color: '#323c47' }}>BOQ Summary:</div>
-        <div style={{ fontSize: 12, color: '#666', marginBottom: 3 }}>
-          <span style={{ fontWeight: 500, color: '#323c47' }}>Planned:</span>{' '}
-          {(totalPlanned || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })} {unit}
-        </div>
-        <div style={{ fontSize: 12, color: '#666', marginBottom: 3 }}>
-          <span style={{ fontWeight: 500, color: '#323c47' }}>Already Indented:</span>{' '}
-          {(totalConsumed || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })} {unit}
-        </div>
-        <div style={{ fontSize: 12, fontWeight: 600 }}>
-          Remaining: {remainingVal.toLocaleString('en-IN', { maximumFractionDigits: 2 })} {unit}
-        </div>
-      </div>
-    );
-
-    const accentColor = remainingVal < 0 ? '#e53935' : '#27ae60';
-
-    const boqField = (
-      <div className="boq-field-wrapper" key={`boq_${key}_${remainingVal}`}
-        style={{ borderLeft: `3px solid ${accentColor}`, borderRadius: 4 }}>
-        {this.renderTextField({
-          fieldname: `boqRemaining_${key}`,
-          placeholder: "BOQ Remaining",
-          disabled: true,
-          value: displayValue,
-          skipAdd: true,
-        })}
-      </div>
-    );
-
-    return (
-      <HtmlTooltip title={tooltipContent} placement="top" arrow>
-        <span style={{ display: 'block', width: '100%' }}>{boqField}</span>
-      </HtmlTooltip>
-    );
-  }
-
-  renderDeadStockField(key) {
-    const deadStockData = this.state.noinventory[key]?.deadStockData;
-    const unit = this.state.noinventory[key]?.unit || "";
-    let deadStockValue = "";
-    let hasBreakdown = false;
-
-    if (deadStockData && deadStockData.toalDeadStock !== null && deadStockData.toalDeadStock !== undefined) {
-      const stockValue = deadStockData.toalDeadStock;
-      if (typeof stockValue === 'number') {
-        deadStockValue = `${stockValue.toLocaleString('en-IN')} ${unit}`;
-      } else if (typeof stockValue === 'string') {
-        const numValue = parseFloat(stockValue);
-        if (!isNaN(numValue)) {
-          deadStockValue = `${numValue.toLocaleString('en-IN')} ${unit}`;
-        } else {
-          deadStockValue = stockValue.trim();
-        }
-      }
-
-      if (deadStockData.detailedDeadStock &&
-          Array.isArray(deadStockData.detailedDeadStock) &&
-          deadStockData.detailedDeadStock.length > 0 &&
-          deadStockValue !== "") {
-        hasBreakdown = true;
-      }
-    }
-
-    const deadStockField = (
-      <div className="dead-stock-field-wrapper" key={`deadStock_${key}_${deadStockValue}`}>
-        {this.renderTextField({
-          fieldname: `deadStock_${key}`,
-          placeholder: "Dead Stock",
-          disabled: true,
-          value: deadStockValue,
-          skipAdd: true,
-        })}
-      </div>
-    );
-
-    if (hasBreakdown) {
-      return (
-        <HtmlTooltip
-          title={
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '13px', color: '#323c47' }}>
-                Dead Stock Breakdown:
-              </div>
-              {deadStockData.detailedDeadStock.map((item, idx) => {
-                const tenantName = Object.keys(item)[0];
-                const amount = item[tenantName];
-                if (amount === null || amount === undefined) return null;
-                const formattedAmount = typeof amount === 'number'
-                  ? `${amount.toLocaleString('en-IN')} ${unit}`
-                  : `${amount} ${unit}`;
-                return (
-                  <div key={idx} style={{ marginBottom: '4px', fontSize: '12px', color: '#666' }}>
-                    <span style={{ fontWeight: '500', color: '#323c47' }}>{tenantName}:</span> {formattedAmount}
-                  </div>
-                );
-              })}
-            </div>
-          }
-          placement="top"
-          arrow
-        >
-          <span style={{ display: 'block', width: '100%' }}>
-            {deadStockField}
-          </span>
-        </HtmlTooltip>
+      this.setState((prev) =>
+        prev.itemDialogOpen ? { dialogItem: { ...prev.dialogItem, products: [] } } : prev
       );
     }
+  };
 
-    return deadStockField;
-  }
+  handleDialogProductChange = async (value) => {
+    this.setState((prev) => ({
+      dialogItem: {
+        ...prev.dialogItem,
+        productId: value?.id || "",
+        productCode: value?.productCode || "",
+        unit: value?.measurementUnit || "",
+        leadTimeDays: value?.leadTimeDays ?? null,
+        selectedProduct: value || null,
+        deadStockData: null,
+        currentStockData: null,
+        boqData: null,
+      },
+    }));
+    if (!value?.id) return;
+    const [deadStockData, currentStockData, boqData] = await Promise.all([
+      this.fetchDeadStockForProduct(value.id),
+      this.fetchCurrentStockForProduct(value.id),
+      this.fetchBOQForProduct(value.id),
+    ]);
+    this.setState((prev) =>
+      prev.itemDialogOpen
+        ? { dialogItem: { ...prev.dialogItem, deadStockData, currentStockData, boqData } }
+        : prev
+    );
+  };
+
+  saveDialogItem = () => {
+    const item = this.state.dialogItem || {};
+    const hasProduct = !!item.productId;
+    const qty = item.quantity;
+    const hasQty = qty !== undefined && qty !== null && qty !== "" && !isNaN(Number(qty)) && Number(qty) > 0;
+    const specTooLong = item.specification && item.specification.length > 100;
+    const remarksTooLong = item.remarks && item.remarks.length > 100;
+
+    if (!hasProduct || !hasQty || specTooLong || remarksTooLong) {
+      this.setState({ dialogValidation: true });
+      if (!hasProduct) {
+        this.props.enqueueSnackbar("Please select a product", { variant: "error" });
+      } else if (!hasQty) {
+        this.props.enqueueSnackbar("Please enter a valid quantity", { variant: "error" });
+      } else {
+        this.props.enqueueSnackbar("Only 100 characters allowed", { variant: "error" });
+      }
+      return;
+    }
+
+    const key = this.state.dialogEditingKey !== null ? this.state.dialogEditingKey : this.key++;
+    const updated = { ...this.state.noinventory, [key]: { ...item } };
+    this.setState(
+      {
+        noinventory: updated,
+        itemDialogOpen: false,
+        dialogItem: {},
+        dialogEditingKey: null,
+        dialogValidation: false,
+      },
+      () => {
+        if (this.props.onValidationChange) {
+          this.props.onValidationChange();
+        }
+      }
+    );
+  };
+
+  deleteItem = (key) => {
+    const p = { ...this.state.noinventory };
+    delete p[key];
+    this.setState({ noinventory: p }, () => {
+      if (this.props.onValidationChange) {
+        this.props.onValidationChange();
+      }
+    });
+  };
 
   /** Fetches dead stock for a product; returns data only (no state update). Used when loading draft/resubmit. */
   async fetchDeadStockForProduct(productId) {
@@ -572,253 +467,180 @@ renderCurrentStockField(key) {
     }
   }
 
-  async fetchDeadStock(productId, key) {
-    if (!productId) {
-      const p = this.state.noinventory;
-      if (p[key]) {
-        p[key].deadStock = null;
-        p[key].deadStockData = null;
-        p[key].currentStockData = null;
-        p[key].boqData = null;
-        this.setState({ noinventory: { ...p } });
+  /**
+   * Compact read-only stock/BOQ chips shown inside the item dialog only — kept out of
+   * the main list per request, since they're informational, not data the user edits.
+   */
+  renderDialogStockChips(item) {
+    if (!item.productId) return null;
+    const unit = item.unit || "";
+    const chips = [];
+
+    if (item.currentStockData && item.currentStockData.totalCurrentStock != null) {
+      const raw = item.currentStockData.totalCurrentStock;
+      const num = typeof raw === "number" ? raw : parseFloat(raw);
+      if (!isNaN(num)) {
+        const breakdown = (item.currentStockData.warehouseWiseStock || []).filter(
+          (w) => Object.values(w)[0] != null
+        );
+        const chip = (
+          <div className="stock-chip" key="current">
+            <span className="stock-chip-label">Current Stock</span>
+            <span className="stock-chip-value">{num.toLocaleString("en-IN")} {unit}</span>
+          </div>
+        );
+        chips.push(
+          breakdown.length > 0 ? (
+            <HtmlTooltip
+              key="current"
+              placement="top"
+              arrow
+              title={
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontWeight: "bold", marginBottom: 8, fontSize: 13, color: "#323c47" }}>
+                    Current Stock Breakdown:
+                  </div>
+                  {breakdown.map((w, idx) => {
+                    const name = Object.keys(w)[0];
+                    const amt = w[name];
+                    const formatted = typeof amt === "number" ? `${amt.toLocaleString("en-IN")} ${unit}` : `${amt} ${unit}`;
+                    return (
+                      <div key={idx} style={{ marginBottom: 4, fontSize: 12, color: "#666" }}>
+                        <span style={{ fontWeight: 500, color: "#323c47" }}>{name}:</span> {formatted}
+                      </div>
+                    );
+                  })}
+                </div>
+              }
+            >
+              <span style={{ display: "block", flex: "1 1 0%", minWidth: 0 }}>{chip}</span>
+            </HtmlTooltip>
+          ) : (
+            chip
+          )
+        );
       }
-      return;
     }
 
-    try {
-      // All three calls fire at the same time
-      const [deadStockRes, currentStockRes, boqRes] = await Promise.allSettled([
-        API.GET(`${apiEndpoints.getDeadStockByProduct}?productId=${productId}`),
-        API.GET(`${apiEndpoints.getCurrentStockForIndent}?productId=${productId}`),
-        API.GET(`${apiEndpoints.getProductBOQSummary}?productId=${productId}`),
-      ]);
-
-      const deadData = (deadStockRes.status === 'fulfilled' && deadStockRes.value?.success)
-        ? deadStockRes.value.data
-        : { toalDeadStock: 0, detailedDeadStock: [] };
-
-      const currentData = (currentStockRes.status === 'fulfilled' && currentStockRes.value?.success)
-        ? currentStockRes.value.data
-        : { totalCurrentStock: 0, warehouseWiseStock: [] };
-
-      const boqData = (boqRes.status === 'fulfilled' && boqRes.value?.success)
-        ? boqRes.value.data
-        : null;
-
-      const p = this.state.noinventory;
-      if (p[key]) {
-        p[key].deadStock = deadData;
-        p[key].deadStockData = deadData;
-        p[key].currentStockData = currentData;
-        p[key].boqData = boqData;
-        this.setState({ noinventory: { ...p } });
-      }
-    } catch (error) {
-      const p = this.state.noinventory;
-      if (p[key]) {
-        p[key].deadStock = { toalDeadStock: 0, detailedDeadStock: [] };
-        p[key].deadStockData = { toalDeadStock: 0, detailedDeadStock: [] };
-        p[key].currentStockData = { totalCurrentStock: 0, warehouseWiseStock: [] };
-        p[key].boqData = null;
-        this.setState({ noinventory: { ...p } });
+    if (item.deadStockData && item.deadStockData.toalDeadStock != null) {
+      const raw = item.deadStockData.toalDeadStock;
+      const num = typeof raw === "number" ? raw : parseFloat(raw);
+      if (!isNaN(num)) {
+        const breakdown = (item.deadStockData.detailedDeadStock || []).filter(
+          (d) => Object.values(d)[0] != null
+        );
+        const chip = (
+          <div className={`stock-chip${num > 0 ? " stock-chip-warning" : ""}`} key="dead">
+            <span className="stock-chip-label">Dead Stock</span>
+            <span className="stock-chip-value">{num.toLocaleString("en-IN")} {unit}</span>
+          </div>
+        );
+        chips.push(
+          breakdown.length > 0 ? (
+            <HtmlTooltip
+              key="dead"
+              placement="top"
+              arrow
+              title={
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontWeight: "bold", marginBottom: 8, fontSize: 13, color: "#323c47" }}>
+                    Dead Stock Breakdown:
+                  </div>
+                  {breakdown.map((d, idx) => {
+                    const name = Object.keys(d)[0];
+                    const amt = d[name];
+                    const formatted = typeof amt === "number" ? `${amt.toLocaleString("en-IN")} ${unit}` : `${amt} ${unit}`;
+                    return (
+                      <div key={idx} style={{ marginBottom: 4, fontSize: 12, color: "#666" }}>
+                        <span style={{ fontWeight: 500, color: "#323c47" }}>{name}:</span> {formatted}
+                      </div>
+                    );
+                  })}
+                </div>
+              }
+            >
+              <span style={{ display: "block", flex: "1 1 0%", minWidth: 0 }}>{chip}</span>
+            </HtmlTooltip>
+          ) : (
+            chip
+          )
+        );
       }
     }
+
+    if (item.boqData && item.boqData.hasBOQ) {
+      const { remaining, totalPlanned, totalConsumed } = item.boqData;
+      const remainingVal = typeof remaining === "number" ? remaining : 0;
+      const exceeded = remainingVal < 0;
+      const chip = (
+        <div className={`stock-chip ${exceeded ? "stock-chip-danger" : "stock-chip-success"}`} key="boq">
+          <span className="stock-chip-label">BOQ Remaining</span>
+          <span className="stock-chip-value">
+            {exceeded
+              ? `Exceeded by ${Math.abs(remainingVal).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+              : remainingVal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}{" "}
+            {unit}
+          </span>
+        </div>
+      );
+      chips.push(
+        <HtmlTooltip
+          key="boq"
+          placement="top"
+          arrow
+          title={
+            <div style={{ textAlign: "left" }}>
+              <div style={{ fontWeight: "bold", marginBottom: 6, fontSize: 13, color: "#323c47" }}>BOQ Summary:</div>
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 3 }}>
+                <span style={{ fontWeight: 500, color: "#323c47" }}>Planned:</span>{" "}
+                {(totalPlanned || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })} {unit}
+              </div>
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 3 }}>
+                <span style={{ fontWeight: 500, color: "#323c47" }}>Already Indented:</span>{" "}
+                {(totalConsumed || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })} {unit}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>
+                Remaining: {remainingVal.toLocaleString("en-IN", { maximumFractionDigits: 2 })} {unit}
+              </div>
+            </div>
+          }
+        >
+          <span style={{ display: "block", flex: "1 1 0%", minWidth: 0 }}>{chip}</span>
+        </HtmlTooltip>
+      );
+    } else {
+      chips.push(
+        <div className="stock-chip" key="boq">
+          <span className="stock-chip-label">BOQ Remaining</span>
+          <span className="stock-chip-value">No BOQ</span>
+        </div>
+      );
+    }
+
+    if (chips.length === 0) return null;
+    return <div className="item-dialog-stock-chips">{chips}</div>;
   }
 
-  renderInventory(key) {
-    const currentInventoryId = this.state.noinventory?.[key]?.productId;
-    const selectedInventories = Object.keys(this.state.noinventory).map(index => this?.state?.noinventory?.[index]?.productId);
-    const productList = this.state.noinventory?.[key]?.products || [];
-    const remainingInventories = productList.filter(item => (!selectedInventories.includes(item.id) || currentInventoryId === item.id));
-    const inventoryNumber = Number(key);
-
-    const quantityMissing = this.state.showValidation &&
-      (!this.state.noinventory[key]?.quantity || Number(this.state.noinventory[key]?.quantity) <= 0);
-
-    return (
-      <div
-        className="inventory-item"
-        key={key}
-        ref={(el) => { this.rowRefs[key] = el; }}
-      >
-        <div className="inventory-item-header">
-          <span>Inventory {inventoryNumber}</span>
-          <IconButton
-            aria-label="delete"
-            onClick={() => {
-              if (Object.keys(this.state.noinventory).length <= 1) {
-                this.props.enqueueSnackbar("At least one inventory option must be present", {
-                  variant: "warning",
-                });
-                return;
-              }
-              const p = this.state.noinventory;
-              delete p[key];
-              this.setState({ noinventory: { ...p } }, () => {
-                if (this.props.onValidationChange) {
-                  this.props.onValidationChange();
-                }
-              });
-            }}
-            className="delete-icon"
-          >
-            <img src={trashRedIcon} alt="Delete" className="trash-red-icon" />
-          </IconButton>
-        </div>
-        <div className="flex inventory-row-first">
-          {this.renderAutoComplete({
-            fieldname: `category_${key}`,
-            placeholder: "Category Name",
-            options: this.state.categories,
-            disableClearable: false,
-            required: true,
-            value: this.state.noinventory[key]?.selectedCategory || null,
-            getOption: (option) => option.name,
-            onChange: (e, value) => {
-              this.fetchProductsByCategoryForRow(key, value);
-              if (this.props.onValidationChange) this.props.onValidationChange();
-            },
-          })}
-          {this.renderAutoComplete({
-            fieldname: "productId",
-            placeholder: "Inventory Name",
-            options: remainingInventories,
-            disableClearable: true,
-            required: true,
-            value: this.state.noinventory[key]?.selectedProduct || null,
-            getOption: (option) => {
-              return option["name"];
-            },
-            onChange: (e, value) => {
-              const p = this.state.noinventory;
-              p[key].productId = value?.id || "";
-              p[key].productCode = value?.productCode || "";
-              p[key].unit = value?.measurementUnit || "";
-              p[key].leadTimeDays = value?.leadTimeDays ?? null;
-              p[key].selectedProduct = value;
-              if (value) {
-                this.setState({ noinventory: { ...p } }, () => {
-                  if (value?.id) {
-                    this.fetchDeadStock(value.id, key);
-                  }
-                  if (this.props.onValidationChange) {
-                    this.props.onValidationChange();
-                  }
-                });
-              } else {
-                p[key].deadStock = null;
-                p[key].deadStockData = null;
-                this.setState({ noinventory: { ...p } });
-              }
-            },
-          })}
-          {this.renderAutoComplete({
-            fieldname: "productCode",
-            placeholder: "Inventory Code",
-            options: remainingInventories,
-            disableClearable: true,
-            required: true,
-            value: this.state.noinventory[key]?.selectedProduct || null,
-            getOption: (option) => {
-              return option["productCode"];
-            },
-            onChange: (e, value) => {
-              const p = this.state.noinventory;
-              p[key].productId = value?.id || "";
-              p[key].productCode = value?.productCode || "";
-              p[key].unit = value?.measurementUnit || "";
-              p[key].leadTimeDays = value?.leadTimeDays ?? null;
-              p[key].selectedProduct = value;
-              if (value) {
-                this.setState({ noinventory: { ...p } }, () => {
-                  if (value?.id) {
-                    this.fetchDeadStock(value.id, key);
-                  }
-                  if (this.props.onValidationChange) {
-                    this.props.onValidationChange();
-                  }
-                });
-              } else {
-                p[key].deadStock = null;
-                p[key].deadStockData = null;
-                this.setState({ noinventory: { ...p } });
-              }
-            },
-          })}
-        </div>
-        <div className={`flex inventory-row-second${quantityMissing ? " quantity-row-error" : ""}`}>
-          <div className={`quantity-field-wrapper${quantityMissing ? " quantity-error" : ""}`}>
-            {this.renderTextField({
-              fieldname: "quantity",
-              placeholder: "Enter Quantity",
-              type: "number",
-              required: true,
-              skipAdd: true,
-              validation: "nonegative",
-              value: this.state.noinventory[key]?.quantity || "",
-              onChange: (value) => {
-                const p = this.state.noinventory;
-                p[key].quantity = value;
-                this.setState({ noinventory: { ...p } }, () => {
-                  if (this.props.onValidationChange) {
-                    this.props.onValidationChange();
-                  }
-                });
-              },
-            })}
-            {quantityMissing && (
-              <span className="quantity-error-msg">Quantity is required</span>
-            )}
-          </div>
-          {this.renderDeadStockField(key)}
-          {this.renderCurrentStockField(key)}
-          {this.renderBOQField(key)}
-          {this.renderTextField({
-            fieldname: `unit_${key}`,
-            placeholder: "Measurement Unit",
-            disabled: true,
-            value: this.state.noinventory[key]?.unit || "",
-            skipAdd: true,
-          })}
-        </div>
-        <div className="flex">
-          {this.renderTextField({
-            fieldname: "specification",
-            placeholder: "Enter Specification",
-            skipAdd: true,
-            validation: "maxlength",
-            lengthConstraint: 100,
-            errorMessage: "only 100 characters allowed",
-            value: this.state.noinventory[key]?.specification ?? "",
-            onChange: (value) => {
-              const p = this.state.noinventory;
-              p[key].specification = value;
-              this.setState({ noinventory: { ...p } });
-            },
-          })}
-          {this.renderTextField({
-            fieldname: "remarks",
-            placeholder: "Enter Remarks",
-            skipAdd: true,
-            validation: "maxlength",
-            lengthConstraint: 100,
-            errorMessage: "only 100 characters allowed",
-            value: this.state.noinventory[key]?.remarks ?? "",
-            onChange: (value) => {
-              const p = this.state.noinventory;
-              p[key].remarks = value;
-              this.setState({ noinventory: { ...p } });
-            },
-          })}
-          {this.state.noinventory[key]?.leadTimeDays != null && (
-            <div className="lead-time-chip">
-              <span className="lead-time-chip-icon">⏱</span>
-              Lead Time: <strong>{this.state.noinventory[key].leadTimeDays} days</strong>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  /** Small inline flags shown on each list row — BOQ status and lead time only. */
+  renderItemRowBadges(item) {
+    const badges = [];
+    if (item.boqData && item.boqData.hasBOQ) {
+      const remaining = typeof item.boqData.remaining === "number" ? item.boqData.remaining : 0;
+      const exceeded = remaining < 0;
+      badges.push(
+        <span key="boq" className={`item-badge ${exceeded ? "item-badge-danger" : "item-badge-success"}`}>
+          {exceeded ? "BOQ exceeded" : `BOQ ${remaining.toLocaleString("en-IN", { maximumFractionDigits: 0 })} left`}
+        </span>
+      );
+    }
+    if (item.leadTimeDays != null) {
+      badges.push(
+        <span key="lead" className="item-badge item-badge-neutral">
+          ⏱ {item.leadTimeDays}d
+        </span>
+      );
+    }
+    return badges;
   }
 
   autoSaveDraftSilently = async () => {
@@ -899,39 +721,28 @@ renderCurrentStockField(key) {
   }
 
   submitForm = () => {
-    if (Object.keys(this.state.noinventory).length === 0) {
+    const keys = Object.keys(this.state.noinventory);
+    if (keys.length === 0) {
       this.props.enqueueSnackbar("Add at least one item.", { variant: "error" });
       return;
     }
 
-    // Find first item missing a product selection
-    const firstMissingProduct = Object.keys(this.state.noinventory).find(key =>
-      !this.state.noinventory[key]?.productId
-    );
-    if (firstMissingProduct) {
-      this.props.enqueueSnackbar("Please select a product for all items.", { variant: "error" });
-      this.setState({ showValidation: true }, () => {
-        const ref = this.rowRefs[firstMissingProduct];
-        if (ref) ref.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
-      return;
-    }
-
-    // Find first item missing a valid quantity
-    const firstInvalidKey = Object.keys(this.state.noinventory).find(key => {
-      const qty = this.state.noinventory[key]?.quantity;
-      return !qty || isNaN(Number(qty)) || Number(qty) <= 0;
+    // Items are only ever written to noinventory via saveDialogItem, which already
+    // enforces product + quantity — this only catches stale/incomplete draft data.
+    const invalidKey = keys.find((key) => {
+      const item = this.state.noinventory[key];
+      const qty = item?.quantity;
+      return !item?.productId || !qty || isNaN(Number(qty)) || Number(qty) <= 0;
     });
-    if (firstInvalidKey) {
-      this.setState({ showValidation: true }, () => {
-        const ref = this.rowRefs[firstInvalidKey];
-        if (ref) ref.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (invalidKey) {
+      this.props.enqueueSnackbar("Please complete this item's details before proceeding.", {
+        variant: "error",
       });
+      this.openEditItemDialog(invalidKey);
       return;
     }
 
-    // Validation passed — advance to review step
-    this.setState({ showValidation: false, currentStep: 2 });
+    this.setState({ currentStep: 2 });
   }
 
   handleConfirmSave = () => {
@@ -1025,23 +836,6 @@ renderCurrentStockField(key) {
         </span>
       </div>
     );
-  }
-
-  hasEmptyInventoryRecords = () => {
-    const inventories = Object.values(this.state.noinventory || {});
-    if (inventories.length === 0) return true;
-
-    return inventories.some(inventory => {
-      if (!inventory) return true;
-      const hasProduct = inventory.productId && inventory.productId !== "" && inventory.productId !== null && inventory.productId !== undefined;
-      const quantityValue = inventory.quantity;
-      const hasQuantity = quantityValue !== undefined &&
-                         quantityValue !== null &&
-                         quantityValue !== "" &&
-                         !isNaN(Number(quantityValue)) &&
-                         Number(quantityValue) > 0;
-      return !hasProduct || !hasQuantity;
-    });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -1215,7 +1009,7 @@ renderCurrentStockField(key) {
                   type="text"
                   className="file-name-input"
                   value={this.state.selectedFileName}
-                  placeholder="choose file"
+                  placeholder="Upload Documents"
                   readOnly
                 />
               </label>
@@ -1272,24 +1066,229 @@ renderCurrentStockField(key) {
     );
   }
 
-  renderInventoryAddButton() {
+  renderItemRow(key, item) {
+    const productName = item?.selectedProduct?.name || "—";
+    const productCode = item?.productCode || "";
+    const categoryName = item?.selectedCategory?.name || "—";
+    const qty = item?.quantity || 0;
+    const unit = item?.unit || "";
+    const spec = item?.specification || "";
+    const remarks = item?.remarks || "";
+    const truncate = (text) => (text.length > 28 ? text.slice(0, 26) + "…" : text);
+    const badges = this.renderItemRowBadges(item || {});
+
     return (
-      <div className="add-inventory-button-wrapper">
-        <Button
-          onClick={() => {
-            const p = this.state.noinventory;
-            p[this.key++] = {};
-            this.setState({ noinventory: { ...p } }, () => {
-              if (this.props.onValidationChange) {
-                this.props.onValidationChange();
-              }
-            });
-          }}
-          buttonClass="grey"
-          label="+ Add Inventory"
-          disabled={Object.keys(this.state.noinventory).length === 50}
-        />
+      <div
+        className="indent-item-row"
+        key={key}
+        onClick={() => this.openEditItemDialog(key)}
+      >
+        <div className="item-col item-col-product">
+          <div className="item-product-name">{productName}</div>
+          {productCode && <div className="item-product-code">{productCode}</div>}
+        </div>
+        <div className="item-col item-col-category">{categoryName}</div>
+        <div className="item-col item-col-qty">
+          {qty} {unit}
+        </div>
+        <div className="item-col item-col-spec" title={spec}>
+          {spec ? truncate(spec) : <span className="item-col-empty">—</span>}
+        </div>
+        <div className="item-col item-col-remarks" title={remarks}>
+          {remarks ? truncate(remarks) : <span className="item-col-empty">—</span>}
+        </div>
+        <div className="item-col item-col-badges">
+          {badges.length > 0 ? badges : <span className="item-col-empty">—</span>}
+        </div>
+        <div className="item-col item-col-actions">
+          <IconButton
+            size="small"
+            aria-label="edit"
+            onClick={(e) => {
+              e.stopPropagation();
+              this.openEditItemDialog(key);
+            }}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            aria-label="delete"
+            onClick={(e) => {
+              e.stopPropagation();
+              this.deleteItem(key);
+            }}
+          >
+            <img src={trashRedIcon} alt="Delete" className="trash-red-icon" />
+          </IconButton>
+        </div>
       </div>
+    );
+  }
+
+  renderItemsSection() {
+    const keys = Object.keys(this.state.noinventory).sort((a, b) => Number(a) - Number(b));
+    return (
+      <div className="indent-items-section">
+        <div className="indent-items-header-row">
+          <div className="indent-items-title">
+            Items{keys.length > 0 ? ` (${keys.length})` : ""}
+          </div>
+          {keys.length > 0 && (
+            <Button
+              onClick={this.openAddItemDialog}
+              buttonClass="blue"
+              label="Add Product"
+              startIcon={<AddIcon />}
+            />
+          )}
+        </div>
+        {keys.length === 0 ? (
+          <div className="indent-items-empty">
+            <div className="indent-items-empty-text">No items added yet.</div>
+            <Button onClick={this.openAddItemDialog} buttonClass="blue" label="+ Add Product" />
+          </div>
+        ) : (
+          <div className="indent-items-table">
+            <div className="indent-items-table-head">
+              <div className="item-col item-col-product">Product</div>
+              <div className="item-col item-col-category">Category</div>
+              <div className="item-col item-col-qty">Qty</div>
+              <div className="item-col item-col-spec">Specification</div>
+              <div className="item-col item-col-remarks">Remarks</div>
+              <div className="item-col item-col-badges">Lead Time</div>
+              <div className="item-col item-col-actions" />
+            </div>
+            {keys.map((key) => this.renderItemRow(key, this.state.noinventory[key]))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  renderItemDialog() {
+    const item = this.state.dialogItem || {};
+    const showValidation = this.state.dialogValidation;
+    const remainingProducts = this.getDialogRemainingProducts();
+    const quantityMissing =
+      showValidation && (!item.quantity || Number(item.quantity) <= 0);
+    const productMissing = showValidation && !item.productId;
+
+    return (
+      <Dialog
+        open={this.state.itemDialogOpen}
+        onClose={this.closeItemDialog}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="item-dialog-title"
+      >
+        <DialogTitle id="item-dialog-title">
+          {this.state.dialogEditingKey !== null ? "Edit Item" : "Add Item"}
+        </DialogTitle>
+        <DialogContent>
+          <div className="item-dialog-row">
+            {this.renderAutoComplete({
+              fieldname: "dialogCategory",
+              placeholder: "Category Name",
+              options: this.state.categories,
+              required: true,
+              value: item.selectedCategory || null,
+              getOption: (option) => option.name,
+              onChange: (e, value) => this.handleDialogCategoryChange(value),
+            })}
+          </div>
+          <div className="item-dialog-row two-col">
+            {this.renderAutoComplete({
+              fieldname: "dialogProductName",
+              placeholder: "Inventory Name",
+              options: remainingProducts,
+              disableClearable: true,
+              required: true,
+              value: item.selectedProduct || null,
+              getOption: (option) => option["name"],
+              onChange: (e, value) => this.handleDialogProductChange(value),
+            })}
+            {this.renderAutoComplete({
+              fieldname: "dialogProductCode",
+              placeholder: "Inventory Code",
+              options: remainingProducts,
+              disableClearable: true,
+              required: true,
+              value: item.selectedProduct || null,
+              getOption: (option) => option["productCode"],
+              onChange: (e, value) => this.handleDialogProductChange(value),
+            })}
+          </div>
+          {productMissing && (
+            <div className="quantity-error-msg">Please select a product</div>
+          )}
+          <div className="item-dialog-row two-col">
+            <div className={`quantity-field-wrapper${quantityMissing ? " quantity-error" : ""}`}>
+              {this.renderTextField({
+                fieldname: "dialogQuantity",
+                placeholder: "Enter Quantity",
+                type: "number",
+                required: true,
+                skipAdd: true,
+                validation: "nonegative",
+                value: item.quantity || "",
+                onChange: (value) => {
+                  this.setState((prev) => ({ dialogItem: { ...prev.dialogItem, quantity: value } }));
+                },
+              })}
+              {quantityMissing && <span className="quantity-error-msg">Quantity is required</span>}
+            </div>
+            {this.renderTextField({
+              fieldname: "dialogUnit",
+              placeholder: "Measurement Unit",
+              disabled: true,
+              skipAdd: true,
+              value: item.unit || "",
+            })}
+          </div>
+          {this.renderDialogStockChips(item)}
+          <div className="item-dialog-row">
+            {this.renderTextField({
+              fieldname: "dialogSpecification",
+              placeholder: "Enter Specification",
+              skipAdd: true,
+              validation: "maxlength",
+              lengthConstraint: 100,
+              errorMessage: "only 100 characters allowed",
+              value: item.specification ?? "",
+              onChange: (value) =>
+                this.setState((prev) => ({ dialogItem: { ...prev.dialogItem, specification: value } })),
+            })}
+          </div>
+          <div className="item-dialog-row">
+            {this.renderTextField({
+              fieldname: "dialogRemarks",
+              placeholder: "Enter Remarks",
+              skipAdd: true,
+              validation: "maxlength",
+              lengthConstraint: 100,
+              errorMessage: "only 100 characters allowed",
+              value: item.remarks ?? "",
+              onChange: (value) =>
+                this.setState((prev) => ({ dialogItem: { ...prev.dialogItem, remarks: value } })),
+            })}
+          </div>
+          {item.leadTimeDays != null && (
+            <div className="lead-time-chip">
+              <span className="lead-time-chip-icon">⏱</span>
+              Lead Time: <strong>{item.leadTimeDays} days</strong>
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={this.closeItemDialog} buttonClass="grey" label="Cancel" />
+          <Button
+            onClick={this.saveDialogItem}
+            buttonClass="blue"
+            label={this.state.dialogEditingKey !== null ? "Save Changes" : "Add Item"}
+          />
+        </DialogActions>
+      </Dialog>
     );
   }
 
@@ -1327,6 +1326,7 @@ renderCurrentStockField(key) {
     return (
       <div className="list-section add create-po-wrapper">
         {this.renderDraftDialog()}
+        {this.renderItemDialog()}
         <div className="create-po-header">
           <div className="create-po-header-row">
             {this.renderAddHeading()}
@@ -1340,6 +1340,7 @@ renderCurrentStockField(key) {
               noinventory={this.state.noinventory}
               fileInformations={this.formData.fileInformations || []}
               indentDate={require("moment")().format("DD-MM-YYYY")}
+              requiredBy={this.formData.requiredBy}
               isSaving={this.state.isAdding}
               onBack={() => this.setState({ currentStep: 1 })}
               onConfirm={this.handleConfirmSave}
@@ -1371,16 +1372,10 @@ renderCurrentStockField(key) {
                     </div>
                     <div className="header-divider" />
                     <div className="header-upload-documents">
-                      <div className="upload-documents-heading">Upload Documents</div>
                       {this.renderFileArea()}
                     </div>
                   </div>
-                  {this.renderInventoryAddButton()}
-                  <div className="inventories-list">
-                    {Object.keys(this.state.noinventory).sort((a, b) => Number(b) - Number(a)).map((key) =>
-                      this.renderInventory(key)
-                    )}
-                  </div>
+                  {this.renderItemsSection()}
                 </form>
               )}
             </>

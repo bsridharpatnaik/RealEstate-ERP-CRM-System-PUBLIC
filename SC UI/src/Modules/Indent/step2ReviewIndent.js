@@ -77,7 +77,7 @@ class Step2ReviewIndent extends Component {
   }
 
   render() {
-    const { onBack, onConfirm, isSaving, indentDate } = this.props;
+    const { onBack, onConfirm, isSaving, indentDate, requiredBy } = this.props;
 
     return (
       <div className="step3-review-po indent-review-wrapper">
@@ -93,6 +93,10 @@ class Step2ReviewIndent extends Component {
             <div className="review-field-row">
               <span className="review-field-label">Indent Date</span>
               <span className="review-field-value">{this.formatValue(indentDate)}</span>
+            </div>
+            <div className="review-field-row">
+              <span className="review-field-label">Required By</span>
+              <span className="review-field-value">{this.formatValue(requiredBy)}</span>
             </div>
           </div>
         </div>
