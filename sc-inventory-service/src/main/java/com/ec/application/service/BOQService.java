@@ -1265,8 +1265,8 @@ public class BOQService {
             "  p.product_code, p.measurementUnit " +
             "FROM " + master + ".indent_inventory_entries iie " +
             "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
-            "JOIN " + master + ".product p ON p.productId = iie.productId AND p.is_deleted = 0 " +
-            "JOIN " + master + ".category c ON c.categoryId = p.categoryId " +
+            "JOIN " + master + ".Product p ON p.productId = iie.productId AND p.is_deleted = 0 " +
+            "JOIN " + master + ".Category c ON c.categoryId = p.categoryId " +
             "WHERE iie.is_deleted = 0 AND ii.tenant = :tenantCode " +
             "AND ii.indent_status NOT IN ('" + IndentStatusConstants.STATUS_CANCELLED + "','" + IndentStatusConstants.STATUS_REJECTED + "') " +
             "AND iie.line_item_status NOT IN ('" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "','" + IndentLineItemStatusConstants.STATUS_CANCELLED + "') " +

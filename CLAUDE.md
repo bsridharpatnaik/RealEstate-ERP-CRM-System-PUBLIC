@@ -1188,6 +1188,37 @@ Same mixed convention applies to tenant schemas. Always check before writing nat
 
 ---
 
+## Native SQL — Table Name Case Rules (Linux/QA Safety)
+
+**Critical:** Local Mac MySQL is case-insensitive (`lower_case_table_names=2`). QA/prod runs Linux MySQL with `lower_case_table_names=0` (case-sensitive). A query that works locally can fail on QA purely due to table name casing.
+
+### Canonical table name casing (match exactly in all native SQL)
+
+| Table | Correct case | Wrong |
+|---|---|---|
+| `Product` | `Product` | ~~`product`~~ |
+| `Category` | `Category` | ~~`category`~~ |
+| `Firm` | `Firm` | ~~`firm`~~ |
+| `BOQUpload` | `BOQUpload` | ~~`boqupload`~~ |
+| `Usage_Location` | `Usage_Location` | ~~`usage_location`~~ |
+| `contacts` | `contacts` | ~~`Contacts`~~ |
+| `purchase_order` | `purchase_order` | ~~`Purchase_Order`~~ |
+| `purchase_order_line` | `purchase_order_line` | — |
+| `indent_inventory` | `indent_inventory` | — |
+| `indent_inventory_entries` | `indent_inventory_entries` | — |
+| `inward_inventory` | `inward_inventory` | — |
+| `outward_inventory` | `outward_inventory` | — |
+| `inventory_batch` | `inventory_batch` | — |
+| `stock_summary` | `stock_summary` | — |
+
+**Rule:** PascalCase/camelCase table names (Hibernate-created: `Product`, `Category`, `Firm`, `BOQUpload`) must use exact class-name casing. Snake_case tables (manually created) are all lowercase.
+
+**This rule applies to fully-qualified references too:** `masterschema.Product` NOT `masterschema.product`.
+
+When writing any new native SQL (`createNativeQuery` or `@Query(nativeQuery=true)`), verify the table name against this list before committing. If adding a new table, confirm its actual casing by running `SHOW TABLES` against the schema.
+
+---
+
 # BOQ Feature — Completed Work (Session 6)
 
 ## What Was Built
