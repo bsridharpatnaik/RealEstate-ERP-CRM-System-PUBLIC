@@ -40,6 +40,7 @@ public class ProductMergeTenantExecutor {
         s.setBoqInventoryEntries(count("SELECT COUNT(*) FROM boq_inventory WHERE productId=? AND is_deleted=false", sourceId));
         s.setBoqHistoryEntries(count("SELECT COUNT(*) FROM boq_history WHERE productId=?", sourceId));
         s.setPricingEntries(count("SELECT COUNT(*) FROM InventoryMonthPriceMapping WHERE productId=? AND is_deleted=false", sourceId));
+        s.setStockCommentEntries(count("SELECT COUNT(*) FROM stock_comment WHERE productId=?", sourceId));
         return s;
     }
 
@@ -48,6 +49,8 @@ public class ProductMergeTenantExecutor {
         ProductMergePreviewDTO.GlobalUsageSummary s = new ProductMergePreviewDTO.GlobalUsageSummary();
         s.setIndentEntries(count("SELECT COUNT(*) FROM indent_inventory_entries WHERE productId=?", sourceId));
         s.setPurchaseOrderLineEntries(count("SELECT COUNT(*) FROM purchase_order_line WHERE product_id=?", sourceId));
+        s.setQuoteComparisonLineEntries(count("SELECT COUNT(*) FROM quote_comparison_line WHERE product_id=?", sourceId));
+        s.setUnitConversionEntries(count("SELECT COUNT(*) FROM product_unit_conversions WHERE product_id=?", sourceId));
         return s;
     }
 
@@ -107,6 +110,11 @@ public class ProductMergeTenantExecutor {
         jdbcTemplate.update(
             "UPDATE batch_write_off SET product_id=?, product_name=? WHERE product_id=?",
             targetId, targetProduct.getProductName(), sourceId);
+
+        // 13. stock_comment: reassign comments to target product
+        jdbcTemplate.update(
+            "UPDATE stock_comment SET productId=? WHERE productId=?",
+            targetId, sourceId);
     }
 
     // ── Master-schema merge ───────────────────────────────────────────────────
@@ -121,6 +129,16 @@ public class ProductMergeTenantExecutor {
             targetId, targetProduct.getMeasurementUnit(), sourceId);
         jdbcTemplate.update(
             "UPDATE purchase_order_line SET product_id=? WHERE product_id=?",
+            targetId, sourceId);
+
+        // Quote comparison lines (master schema) — update id, name, and unit
+        jdbcTemplate.update(
+            "UPDATE quote_comparison_line SET product_id=?, product_name=?, unit=? WHERE product_id=?",
+            targetId, targetProduct.getProductName(), targetProduct.getMeasurementUnit(), sourceId);
+
+        // Product unit conversions (master schema)
+        jdbcTemplate.update(
+            "UPDATE product_unit_conversions SET product_id=? WHERE product_id=?",
             targetId, sourceId);
 
         jdbcTemplate.update("UPDATE Product SET is_deleted=true WHERE productId=?", sourceId);

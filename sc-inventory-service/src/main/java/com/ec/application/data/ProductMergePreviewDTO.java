@@ -23,6 +23,8 @@ public class ProductMergePreviewDTO {
     public static class GlobalUsageSummary {
         private long indentEntries;
         private long purchaseOrderLineEntries;
+        private long quoteComparisonLineEntries;
+        private long unitConversionEntries;
     }
 
     @Data
@@ -40,5 +42,6 @@ public class ProductMergePreviewDTO {
         private long boqInventoryEntries;
         private long boqHistoryEntries;
         private long pricingEntries;
+        private long stockCommentEntries;
     }
 }

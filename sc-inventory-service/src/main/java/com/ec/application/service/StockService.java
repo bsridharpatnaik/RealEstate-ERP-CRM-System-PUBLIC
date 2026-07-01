@@ -500,7 +500,15 @@ public class StockService {
             // Recompute status using tenant-specific reorder level (DB view uses global value)
             String computedStatus = (si.getTotalQuantityInHand() != null && si.getTotalQuantityInHand() <= effectiveReorder) ? "Low" : "High";
             dto.setStockStatus(computedStatus);
-            dto.setInwardOutwardHistory(aiList);
+            // Match all-inventory page order: date DESC, sort_order DESC, entryid DESC
+            List<AllInventoryTransactions> orderedHistory = aiList.stream()
+                    .sorted(Comparator
+                            .comparing(AllInventoryTransactions::getDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(AllInventoryTransactions::getSortOrder, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(AllInventoryTransactions::getEntryid, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .reversed())
+                    .collect(Collectors.toList());
+            dto.setInwardOutwardHistory(orderedHistory);
             return dto;
         } catch (Exception e) {
             System.out.println(e);
