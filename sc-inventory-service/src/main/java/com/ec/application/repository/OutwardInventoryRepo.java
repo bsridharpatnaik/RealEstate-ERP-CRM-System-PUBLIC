@@ -48,4 +48,21 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 
 	@Query("SELECT DISTINCT o.issuedBy FROM OutwardInventory o WHERE o.issuedBy IS NOT NULL AND o.issuedBy <> ''")
 	List<String> findDistinctIssuedBy();
+
+	// ── Tile counts ──────────────────────────────────────────────────────────
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE o.hasBOQ IS NULL")
+	long countNoBOQ();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE o.hasFifoOverride = true")
+	long countFifoOverride();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE SIZE(o.rejectOutwardList) > 0")
+	long countWithReject();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE SIZE(o.returnOutwardList) > 0")
+	long countWithReturn();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE o.date >= :from")
+	long countSince(@Param("from") java.util.Date from);
 }

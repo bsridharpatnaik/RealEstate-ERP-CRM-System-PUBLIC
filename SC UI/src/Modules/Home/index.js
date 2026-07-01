@@ -35,6 +35,7 @@ import {
   GlobalBOQView,
   Indent,
   PurchaseOrder,
+  ServiceOrder,
   InventoryTransfer,
   DeadStock,
   HistoricalPricing,
@@ -200,6 +201,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={"/purchaseOrder"}>
                   <PurchaseOrder key={new Date()} {...props} />
+                </Route>
+                <Route path={"/serviceOrder"}>
+                  <ServiceOrder key={new Date()} {...props} />
                 </Route>
                 <Route path={"/inventoryTransfer"}>
                   <InventoryTransfer key={new Date()} {...props} />

@@ -53,6 +53,9 @@ class List extends ListCommon {
     importGuideOpen: false,
     importResultOpen: false,
     importResult: null,
+    tiles: {},
+    activeTile: null,
+    activeProject: null,
   };
   filterData = {};
   filterRef = React.createRef();
@@ -80,11 +83,122 @@ class List extends ListCommon {
   };
   url = apiEndpoints.getStockSummary;
 
+  TILES = [
+    { key: "lowStock",      label: "Low Stock",  color: "#e67e22", bg: "#fdf2e9", countKey: "lowStockCount",  filterField: "lowStock" },
+    { key: "deadStockPresent", label: "Dead Stock", color: "#b71c1c", bg: "#ffebee", countKey: "deadStockCount", filterField: "deadStockPresent" },
+  ];
+
   componentDidMount() {
     if (this.page === undefined || isNaN(this.page)) {
       this.page = 0;
     }
     this.search();
+    this.fetchTiles();
+  }
+
+  fetchTiles = async () => {
+    const params = this.prepareRequestBody();
+    const response = await API.POST(apiEndpoints.stockSummaryTiles, params);
+    if (response.success) {
+      this.setState({ tiles: response.data || {} });
+    }
+  };
+
+  handleTileClick = (tile) => {
+    const isActive = this.state.activeTile === tile.key;
+    delete this.filterData[tile.filterField];
+    delete this.filterData.tenants;
+    if (isActive) {
+      this.setState({ activeTile: null, activeProject: null }, () => { this.search(0); this.fetchTiles(); });
+    } else {
+      this.filterData[tile.filterField] = true;
+      this.setState({ activeTile: tile.key, activeProject: null }, () => { this.search(0); this.fetchTiles(); });
+    }
+  };
+
+  handleProjectChipClick = (tenantCode) => {
+    const isActive = this.state.activeProject === tenantCode;
+    if (isActive) {
+      delete this.filterData.tenants;
+      this.setState({ activeProject: null }, () => { this.search(0); this.fetchTiles(); });
+    } else {
+      this.filterData.tenants = [tenantCode];
+      delete this.filterData.lowStock;
+      delete this.filterData.deadStockPresent;
+      this.setState({ activeProject: tenantCode, activeTile: null }, () => { this.search(0); this.fetchTiles(); });
+    }
+  };
+
+  renderTilesAndProjects() {
+    const { tiles, activeTile, activeProject, options } = this.state;
+    const tenants = options?.tenants || [];
+    return (
+      <div style={{ marginBottom: 8 }}>
+        {/* Stat tiles */}
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "12px 0 8px" }}>
+          {this.TILES.map((t) => {
+            const count = tiles[t.countKey] || 0;
+            const isActive = activeTile === t.key;
+            return (
+              <div
+                key={t.key}
+                onClick={() => this.handleTileClick(t)}
+                style={{
+                  cursor: "pointer",
+                  minWidth: 130,
+                  padding: "10px 16px",
+                  borderRadius: 8,
+                  background: t.bg,
+                  border: isActive ? `2px solid ${t.color}` : "2px solid transparent",
+                  boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+                  flexShrink: 0,
+                }}
+              >
+                <div style={{ fontSize: 22, fontWeight: 700, color: t.color }}>{count}</div>
+                <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t.label}</div>
+              </div>
+            );
+          })}
+        </div>
+        {/* Project chips — only resolved display names, exclude masterschema */}
+        {(() => {
+          const resolved = tenants.filter(t => {
+            const code = t.tenantCode || t.id;
+            const name = t.name || code;
+            return code && code !== "masterschema" && name !== code;
+          });
+          if (!resolved.length) return null;
+          return (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "4px 0 8px" }}>
+              <span style={{ fontSize: 11, color: "#888", alignSelf: "center", marginRight: 4 }}>Project:</span>
+              {resolved.map((t) => {
+                const code = t.tenantCode || t.id;
+                const name = t.name || code;
+                const isActive = activeProject === code;
+                return (
+                  <div
+                    key={code}
+                    onClick={() => this.handleProjectChipClick(code)}
+                    style={{
+                      cursor: "pointer",
+                      padding: "3px 10px",
+                      borderRadius: 12,
+                      fontSize: 12,
+                      background: isActive ? "#1976d2" : "#f0f4fa",
+                      color: isActive ? "#fff" : "#334",
+                      border: isActive ? "1px solid #1976d2" : "1px solid #d0d8e8",
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  >
+                    {name}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
+    );
   }
 
   componentDidUpdate(prevProps) {
@@ -341,6 +455,7 @@ class List extends ListCommon {
         />
 
         <div className="list-section dead-stock-list">
+          {this.renderTilesAndProjects()}
           <div className="filter-section">
             <TextField
             variant="outlined"
@@ -409,8 +524,9 @@ class List extends ListCommon {
               search={(data) => {
                 this.filterData = data;
                 if (data.globalSearch != null) this.searchValue = data.globalSearch;
+                this.setState({ filterOpen: false, activeTile: null, activeProject: null });
                 this.search(0);
-                this.setState({ filterOpen: false });
+                this.fetchTiles();
               }}
               close={() => this.setState({ filterOpen: false })}
             />

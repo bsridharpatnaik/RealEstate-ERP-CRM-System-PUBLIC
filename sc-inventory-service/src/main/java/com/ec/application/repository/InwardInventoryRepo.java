@@ -47,4 +47,28 @@ public interface InwardInventoryRepo extends BaseRepository<InwardInventory, Lon
 	int countOpeningStockForProductAndWarehouse(
 			@Param("productName") String productName,
 			@Param("warehouseName") String warehouseName);
+
+	// ── Tile counts ───────────────────────────────────────────────────────────
+
+	@Query("SELECT COUNT(i) FROM InwardInventory i WHERE i.date >= :from")
+	long countSince(@Param("from") java.util.Date from);
+
+	@Query("SELECT COUNT(i) FROM InwardInventory i WHERE " +
+			"(i.challanNo IS NULL OR TRIM(i.challanNo) = '') AND " +
+			"(i.billNo IS NULL OR TRIM(i.billNo) = '')")
+	long countMissingChallanBill();
+
+	@Query("SELECT COUNT(i) FROM InwardInventory i WHERE SIZE(i.rejectInwardList) > 0")
+	long countWithReject();
+
+	@Query("SELECT COUNT(i) FROM InwardInventory i WHERE i.createdFromPO = true")
+	long countFromPO();
+
+	@Query("SELECT COUNT(i) FROM InwardInventory i WHERE " +
+			"(i.createdFromPO IS NULL OR i.createdFromPO = false) AND " +
+			"(i.isSampleInward IS NULL OR i.isSampleInward = false)")
+	long countDirect();
+
+	@Query("SELECT COUNT(i) FROM InwardInventory i WHERE i.isSampleInward = true")
+	long countSample();
 }

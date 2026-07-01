@@ -26,6 +26,7 @@ public final class InwardInventorySpecification {
         List<String> showOnlyRejected  = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "showOnlyRejected");
         List<String> categoryNames     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> missingChallanBill = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "missingChallanBill");
+        List<String> inwardType        = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "inwardType");
 
         Specification<InwardInventory> spec = null;
 
@@ -80,6 +81,20 @@ public final class InwardInventorySpecification {
                     cb.or(cb.isNull(root.get(InwardInventory_.BILL_NO)),
                           cb.equal(cb.trim(root.get(InwardInventory_.BILL_NO)), ""))
             ));
+
+        if (notEmpty(inwardType)) {
+            String type = inwardType.get(0).toUpperCase();
+            if ("PO".equals(type)) {
+                spec = and(spec, (root, query, cb) -> cb.equal(root.get("createdFromPO"), true));
+            } else if ("SAMPLE".equals(type)) {
+                spec = and(spec, (root, query, cb) -> cb.equal(root.get("isSampleInward"), true));
+            } else if ("DIRECT".equals(type)) {
+                spec = and(spec, (root, query, cb) -> cb.and(
+                        cb.or(cb.isNull(root.get("createdFromPO")), cb.equal(root.get("createdFromPO"), false)),
+                        cb.or(cb.isNull(root.get("isSampleInward")), cb.equal(root.get("isSampleInward"), false))
+                ));
+            }
+        }
 
         return spec;
     }

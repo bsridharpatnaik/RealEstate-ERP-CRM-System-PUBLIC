@@ -4,6 +4,7 @@ import com.ec.application.Filters.FilterAttributeData;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.data.ProductStockSumDTO;
 import com.ec.application.data.StockSummaryAggregatedDTO;
+import com.ec.application.data.StockSummaryTilesDTO;
 import com.ec.application.model.StockSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -413,5 +414,44 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
             }
         }
         return predicates;
+    }
+
+    @Override
+    public StockSummaryTilesDTO getTileCounts(FilterDataList filters) {
+        StockSummaryTilesDTO dto = new StockSummaryTilesDTO();
+
+        // Build optional tenant WHERE clause from filter
+        List<String> tenants = new ArrayList<>();
+        if (filters != null && filters.getFilterData() != null) {
+            for (FilterAttributeData fad : filters.getFilterData()) {
+                if ("tenants".equals(fad.getAttrName()) && fad.getAttrValue() != null) {
+                    tenants.addAll(fad.getAttrValue());
+                }
+            }
+        }
+        String tenantWhere = tenants.isEmpty() ? "" :
+                " AND tenantSchema IN (" + tenants.stream().map(t -> "'" + t.replace("'", "''") + "'").collect(Collectors.joining(",")) + ")";
+
+        List<?> lowStockRows = em.createNativeQuery(
+                "SELECT COUNT(*) FROM (" +
+                "  SELECT tenantSchema, productId FROM stock_summary" +
+                "  WHERE is_deleted = 0" + tenantWhere +
+                "  GROUP BY tenantSchema, productId" +
+                "  HAVING MAX(reorder_level) IS NOT NULL AND SUM(quantityInHand) <= MAX(reorder_level)" +
+                ") t"
+        ).getResultList();
+        dto.setLowStockCount(lowStockRows.isEmpty() ? 0L : ((Number) lowStockRows.get(0)).longValue());
+
+        List<?> deadStockRows = em.createNativeQuery(
+                "SELECT COUNT(*) FROM (" +
+                "  SELECT tenantSchema, productId FROM stock_summary" +
+                "  WHERE is_deleted = 0" + tenantWhere +
+                "  GROUP BY tenantSchema, productId" +
+                "  HAVING SUM(CASE WHEN warehouseName = 'Dead Stock Warehouse' THEN quantityInHand ELSE 0 END) > 0" +
+                ") t"
+        ).getResultList();
+        dto.setDeadStockCount(deadStockRows.isEmpty() ? 0L : ((Number) deadStockRows.get(0)).longValue());
+
+        return dto;
     }
 }

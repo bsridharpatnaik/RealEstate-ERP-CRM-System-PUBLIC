@@ -42,6 +42,10 @@ public class StockSummaryService {
 
     Logger log = LoggerFactory.getLogger(StockSummaryService.class);
 
+    public com.ec.application.data.StockSummaryTilesDTO getTiles(FilterDataList filterDataList) {
+        return stockSummaryRepo.getTileCounts(filterDataList);
+    }
+
     public StockSummaryWithDropdownData findFilteredStockSummary(FilterDataList filterDataList, Pageable pageable) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         StockSummaryWithDropdownData returnData = new StockSummaryWithDropdownData();

@@ -65,6 +65,9 @@ class List extends ListCommon {
     drafts: [],
     isDraftsLoading: false,
     allExpanded: false,
+    tiles: {},
+    activeTile: null,
+    activeStatusChip: null,
   };
   tableData = {
     headers: [
@@ -127,6 +130,156 @@ class List extends ListCommon {
     this.filterRef = React.createRef();
     this.fetchDropdownOptions();
     this.search();
+    this.fetchTiles();
+  }
+
+  fetchTiles = async () => {
+    const response = await API.GET(apiEndpoints.getPurchaseOrderTiles);
+    if (response.success) {
+      this.setState({ tiles: response.data || {} });
+    }
+  };
+
+  fmtDate = (d) => {
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  };
+
+  PO_STATUS_CHIPS = [
+    { status: "NEW",         label: "New",          color: "#1565c0", bg: "#e3f2fd" },
+    { status: "PARTIAL",     label: "Partial",      color: "#e65100", bg: "#fff3e0" },
+    { status: "COMPLETED",   label: "Completed",    color: "#2e7d32", bg: "#e8f5e9" },
+    { status: "CANCELLED",   label: "Cancelled",    color: "#b71c1c", bg: "#ffebee" },
+    { status: "SHORT CLOSED", label: "Short Closed", color: "#37474f", bg: "#eceff1" },
+  ];
+
+  handleStatusChipClick = (status) => {
+    const isActive = this.state.activeStatusChip === status;
+    delete this.filterData.status;
+    if (isActive) {
+      this.setState({ activeStatusChip: null }, () => this.search(0));
+    } else {
+      this.filterData.status = [status];
+      this.setState({ activeStatusChip: status }, () => this.search(0));
+    }
+  };
+
+  renderStatusChips() {
+    const { activeStatusChip, tiles } = this.state;
+    const statusCounts = tiles.statusCounts || {};
+    return (
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "4px 0 10px" }}>
+        {this.PO_STATUS_CHIPS.map((c) => {
+          const isActive = activeStatusChip === c.status;
+          const count = statusCounts[c.status];
+          return (
+            <span
+              key={c.status}
+              onClick={() => this.handleStatusChipClick(c.status)}
+              style={{
+                cursor: "pointer",
+                display: "inline-block",
+                padding: "4px 12px",
+                borderRadius: 16,
+                fontSize: 12,
+                fontWeight: isActive ? 700 : 500,
+                background: isActive ? c.color : c.bg,
+                color: isActive ? "#fff" : c.color,
+                border: `1px solid ${c.color}`,
+                userSelect: "none",
+                transition: "all 0.15s",
+              }}
+            >
+              {c.label}{count != null ? ` · ${count}` : ""}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  PO_TILES = [
+    { key: "thisWeek", label: "This Week", color: "#2980b9", bg: "#eaf2f8", countKey: "thisWeekCount", dateWindow: "week" },
+    { key: "thisMonth", label: "This Month", color: "#27ae60", bg: "#eafaf1", countKey: "thisMonthCount", dateWindow: "month" },
+    { key: "open", label: "Open POs", color: "#e67e22", bg: "#fdf2e9", countKey: "openCount", filterAttr: "status", filterValue: ["NEW"] },
+    { key: "overdue", label: "Overdue", color: "#e74c3c", bg: "#fdedec", countKey: "overdueCount", filterAttr: "hasOverdueOnly", filterValue: "true" },
+    { key: "special", label: "Special PO", color: "#8e44ad", bg: "#f4ecf7", countKey: "specialPoCount", filterAttr: "isSpecialPo", filterValue: "true" },
+    { key: "stale", label: "Stale (3+ days)", color: "#795548", bg: "#efebe9", countKey: "staleCount", filterAttr: "staleBuckets", filterValue: "GT_3_DAYS" },
+  ];
+
+  handleTileClick = (tile) => {
+    const isActive = this.state.activeTile === tile.key;
+
+    // Clear all tile-driven filters
+    delete this.filterData.hasOverdueOnly;
+    delete this.filterData.isSpecialPo;
+    delete this.filterData.staleBuckets;
+    if (this.state.activeTile) {
+      const prev = this.PO_TILES.find((t) => t.key === this.state.activeTile);
+      if (prev?.dateWindow) {
+        delete this.filterData.startDate;
+        delete this.filterData.endDate;
+      }
+      if (prev?.filterAttr === "status") {
+        delete this.filterData.status;
+      }
+    }
+
+    if (isActive) {
+      this.setState({ activeTile: null }, () => this.search(0));
+      return;
+    }
+
+    if (tile.filterAttr === "status") {
+      this.filterData.status = tile.filterValue;
+    } else if (tile.filterAttr) {
+      this.filterData[tile.filterAttr] = tile.filterValue;
+    } else if (tile.dateWindow) {
+      const end = new Date();
+      const start = new Date();
+      if (tile.dateWindow === "week") {
+        const day = start.getDay();
+        const diffToMonday = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - diffToMonday);
+      } else {
+        start.setDate(1);
+      }
+      start.setHours(0, 0, 0, 0);
+      this.filterData.startDate = this.fmtDate(start);
+      this.filterData.endDate = this.fmtDate(end);
+    }
+    this.setState({ activeTile: tile.key }, () => this.search(0));
+  };
+
+  renderTiles() {
+    const { tiles, activeTile } = this.state;
+    return (
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 0" }}>
+        {this.PO_TILES.map((t) => {
+          const count = tiles[t.countKey] || 0;
+          const isActive = activeTile === t.key;
+          return (
+            <div
+              key={t.key}
+              onClick={() => this.handleTileClick(t)}
+              style={{
+                cursor: "pointer",
+                minWidth: 130,
+                padding: "10px 16px",
+                borderRadius: 8,
+                background: t.bg,
+                border: isActive ? `2px solid ${t.color}` : "2px solid transparent",
+                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 700, color: t.color }}>{count}</div>
+              <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   componentWillUnmount() {
@@ -672,6 +825,8 @@ class List extends ListCommon {
       <div className="purchase-order-list-wrapper">
         {this.renderDraftsDialog()}
         <div className="list-section">
+          {this.renderTiles()}
+          {this.renderStatusChips()}
           <div className="filter-section">
             <TextField
               variant="outlined"
@@ -753,6 +908,7 @@ class List extends ListCommon {
                 options={this.state.filterOptions}
                 search={(data) => {
                   this.filterData = data;
+                  this.setState({ activeStatusChip: null });
                   this.search();
                 }}
                 close={() => this.setState({ filterOpen: false, filterAnchorEl: null })}

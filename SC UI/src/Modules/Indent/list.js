@@ -60,6 +60,9 @@ class List extends ListCommon {
     currentIndex: 0,
     detailStack: [],
     allExpanded: false,
+    tiles: {},
+    activeTile: null,
+    activeStatusChip: null,
   };
   tableData = {
     headers: [
@@ -128,6 +131,162 @@ class List extends ListCommon {
         .map((t) => ({ name: t.tenantName, id: t.tenantCode }));
     }
     this.search();
+    this.fetchTiles();
+  }
+
+  fetchTiles = async () => {
+    const config = this.props.isGlobal ? { skipTenantId: true } : {};
+    const response = await API.GET(apiEndpoints.getIndentTiles, config);
+    if (response.success) {
+      this.setState({ tiles: response.data || {} });
+    }
+  };
+
+  fmtDate = (d) => {
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  };
+
+  INDENT_STATUS_CHIPS = [
+    { status: "NEW",            label: "New",            color: "#1565c0", bg: "#e3f2fd" },
+    { status: "APPROVED",       label: "Approved",       color: "#2e7d32", bg: "#e8f5e9" },
+    { status: "PO PARTIAL",     label: "PO Partial",     color: "#e65100", bg: "#fff3e0" },
+    { status: "PO COMPLETED",   label: "PO Completed",   color: "#4527a0", bg: "#ede7f6" },
+    { status: "INWARD PARTIAL", label: "Inward Partial", color: "#00695c", bg: "#e0f2f1" },
+    { status: "CLOSED",         label: "Closed",         color: "#37474f", bg: "#eceff1" },
+    { status: "CANCELLED",      label: "Cancelled",      color: "#b71c1c", bg: "#ffebee" },
+    { status: "REJECTED",       label: "Rejected",       color: "#880e4f", bg: "#fce4ec" },
+  ];
+
+  handleStatusChipClick = (status) => {
+    const isActive = this.state.activeStatusChip === status;
+    delete this.filterData.indentStatus;
+    if (isActive) {
+      this.setState({ activeStatusChip: null }, () => this.search(0));
+    } else {
+      this.filterData.indentStatus = [status];
+      this.setState({ activeStatusChip: status }, () => this.search(0));
+    }
+  };
+
+  renderStatusChips() {
+    const { activeStatusChip, tiles } = this.state;
+    const statusCounts = tiles.statusCounts || {};
+    return (
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "4px 0 10px" }}>
+        {this.INDENT_STATUS_CHIPS.map((c) => {
+          const isActive = activeStatusChip === c.status;
+          const count = statusCounts[c.status];
+          return (
+            <span
+              key={c.status}
+              onClick={() => this.handleStatusChipClick(c.status)}
+              style={{
+                cursor: "pointer",
+                display: "inline-block",
+                padding: "4px 12px",
+                borderRadius: 16,
+                fontSize: 12,
+                fontWeight: isActive ? 700 : 500,
+                background: isActive ? c.color : c.bg,
+                color: isActive ? "#fff" : c.color,
+                border: `1px solid ${c.color}`,
+                userSelect: "none",
+                transition: "all 0.15s",
+              }}
+            >
+              {c.label}{count != null ? ` · ${count}` : ""}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  INDENT_TILES = [
+    { key: "thisWeek", label: "This Week", color: "#2980b9", bg: "#eaf2f8", countKey: "thisWeekCount", dateWindow: "week" },
+    { key: "thisMonth", label: "This Month", color: "#27ae60", bg: "#eafaf1", countKey: "thisMonthCount", dateWindow: "month" },
+    { key: "open", label: "Open", color: "#e67e22", bg: "#fdf2e9", countKey: "openCount", filterAttr: "indentStatus", filterValue: ["NEW", "APPROVED"] },
+    { key: "quoteRequested", label: "Quote Requested", color: "#8e44ad", bg: "#f4ecf7", countKey: "quoteRequestedCount", filterAttr: "hasQuoteRequested", filterValue: "Yes" },
+    { key: "stale", label: "Stale (3+ days)", color: "#795548", bg: "#efebe9", countKey: "staleCount", filterAttr: "staleBuckets", filterValue: "GT_3_DAYS" },
+  ];
+
+  handleTileClick = (tile) => {
+    const isActive = this.state.activeTile === tile.key;
+
+    // Clear all tile-driven filters
+    if (this.state.activeTile) {
+      const prev = this.INDENT_TILES.find((t) => t.key === this.state.activeTile);
+      if (prev?.dateWindow) {
+        delete this.filterData.startDate;
+        delete this.filterData.endDate;
+      }
+      if (prev?.filterAttr === "indentStatus") {
+        delete this.filterData.indentStatus;
+      }
+      if (prev?.filterAttr === "hasQuoteRequested") {
+        delete this.filterData.hasQuoteRequested;
+      }
+      if (prev?.filterAttr === "staleBuckets") {
+        delete this.filterData.staleBuckets;
+      }
+    }
+
+    if (isActive) {
+      this.setState({ activeTile: null }, () => this.search(0));
+      return;
+    }
+
+    if (tile.filterAttr === "indentStatus") {
+      this.filterData.indentStatus = tile.filterValue;
+    } else if (tile.filterAttr) {
+      this.filterData[tile.filterAttr] = tile.filterValue;
+    } else if (tile.dateWindow) {
+      const end = new Date();
+      const start = new Date();
+      if (tile.dateWindow === "week") {
+        const day = start.getDay();
+        const diffToMonday = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - diffToMonday);
+      } else {
+        start.setDate(1);
+      }
+      start.setHours(0, 0, 0, 0);
+      this.filterData.startDate = this.fmtDate(start);
+      this.filterData.endDate = this.fmtDate(end);
+    }
+    this.setState({ activeTile: tile.key }, () => this.search(0));
+  };
+
+  renderTiles() {
+    const { tiles, activeTile } = this.state;
+    return (
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 0" }}>
+        {this.INDENT_TILES.map((t) => {
+          const count = tiles[t.countKey] || 0;
+          const isActive = activeTile === t.key;
+          return (
+            <div
+              key={t.key}
+              onClick={() => this.handleTileClick(t)}
+              style={{
+                cursor: "pointer",
+                minWidth: 130,
+                padding: "10px 16px",
+                borderRadius: 8,
+                background: t.bg,
+                border: isActive ? `2px solid ${t.color}` : "2px solid transparent",
+                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 700, color: t.color }}>{count}</div>
+              <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   componentWillUnmount() {
@@ -493,6 +652,8 @@ class List extends ListCommon {
     return (
       <div className="indent-list-wrapper">
         <div className="list-section">
+          {this.renderTiles()}
+          {this.renderStatusChips()}
           <div className="filter-section">
             <TextField
               variant="outlined"
@@ -555,6 +716,7 @@ class List extends ListCommon {
                 isGlobal={this.props.isGlobal}
                 search={(data) => {
                   this.filterData = data;
+                  this.setState({ activeStatusChip: null });
                   this.search();
                 }}
                 close={() => this.setState({ filterOpen: false, filterAnchorEl: null })}

@@ -1049,6 +1049,43 @@ public class PurchaseOrderService extends ReusableFields {
         return result != null ? result.longValue() : 0L;
     }
 
+    public com.ec.application.data.POTilesDTO getTiles() {
+        com.ec.application.data.POTilesDTO dto = new com.ec.application.data.POTilesDTO();
+
+        java.util.Calendar weekCal = java.util.Calendar.getInstance();
+        weekCal.setFirstDayOfWeek(java.util.Calendar.MONDAY);
+        weekCal.set(java.util.Calendar.DAY_OF_WEEK, weekCal.getFirstDayOfWeek());
+        weekCal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        weekCal.set(java.util.Calendar.MINUTE, 0);
+        weekCal.set(java.util.Calendar.SECOND, 0);
+        weekCal.set(java.util.Calendar.MILLISECOND, 0);
+        dto.setThisWeekCount(purchaseOrderRepo.countSince(weekCal.getTime()));
+
+        java.util.Calendar monthCal = java.util.Calendar.getInstance();
+        monthCal.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        monthCal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        monthCal.set(java.util.Calendar.MINUTE, 0);
+        monthCal.set(java.util.Calendar.SECOND, 0);
+        monthCal.set(java.util.Calendar.MILLISECOND, 0);
+        dto.setThisMonthCount(purchaseOrderRepo.countSince(monthCal.getTime()));
+
+        List<String> terminalStatuses = POStatusConstants.getTerminalStatuses();
+        dto.setOpenCount(purchaseOrderRepo.countOpen(terminalStatuses));
+        dto.setOverdueCount(getOverduePOCount());
+        dto.setSpecialPoCount(purchaseOrderRepo.countSpecialPo());
+
+        Calendar staleCal = Calendar.getInstance();
+        staleCal.add(Calendar.DAY_OF_MONTH, -3);
+        dto.setStaleCount(purchaseOrderRepo.countStale(staleCal.getTime(), terminalStatuses));
+
+        Map<String, Long> statusCounts = new java.util.LinkedHashMap<>();
+        purchaseOrderRepo.fetchCurrentPOStatusCounts(POStatusConstants.getAllStatuses())
+                .forEach(r -> statusCounts.merge(r.getStatus(), r.getCount(), Long::sum));
+        dto.setStatusCounts(statusCounts);
+
+        return dto;
+    }
+
     private String safeExcel(String value) {
         if (value == null) return "";
         if (value.startsWith("=") || value.startsWith("+")

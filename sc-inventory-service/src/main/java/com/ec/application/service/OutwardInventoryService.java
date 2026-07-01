@@ -1223,4 +1223,31 @@ public class OutwardInventoryService {
         }
         outwardBatchConsumptionRepository.deleteByOutwardId(outwardId);
     }
+
+    public com.ec.application.data.OutwardTilesDTO getTiles() {
+        com.ec.application.data.OutwardTilesDTO dto = new com.ec.application.data.OutwardTilesDTO();
+        dto.setNoBoqCount(outwardInventoryRepo.countNoBOQ());
+        dto.setFifoOverrideCount(outwardInventoryRepo.countFifoOverride());
+        dto.setRejectCount(outwardInventoryRepo.countWithReject());
+        dto.setReturnCount(outwardInventoryRepo.countWithReturn());
+
+        Calendar weekCal = Calendar.getInstance();
+        weekCal.setFirstDayOfWeek(Calendar.MONDAY);
+        weekCal.set(Calendar.DAY_OF_WEEK, weekCal.getFirstDayOfWeek());
+        weekCal.set(Calendar.HOUR_OF_DAY, 0);
+        weekCal.set(Calendar.MINUTE, 0);
+        weekCal.set(Calendar.SECOND, 0);
+        weekCal.set(Calendar.MILLISECOND, 0);
+        dto.setThisWeekCount(outwardInventoryRepo.countSince(weekCal.getTime()));
+
+        Calendar monthCal = Calendar.getInstance();
+        monthCal.set(Calendar.DAY_OF_MONTH, 1);
+        monthCal.set(Calendar.HOUR_OF_DAY, 0);
+        monthCal.set(Calendar.MINUTE, 0);
+        monthCal.set(Calendar.SECOND, 0);
+        monthCal.set(Calendar.MILLISECOND, 0);
+        dto.setThisMonthCount(outwardInventoryRepo.countSince(monthCal.getTime()));
+
+        return dto;
+    }
 }

@@ -1495,4 +1495,33 @@ public class InwardInventoryService {
         if (a == null || b == null) return false;
         return a.equals(b);
     }
+
+    public com.ec.application.data.InwardTilesDTO getTiles() {
+        Calendar cal = Calendar.getInstance();
+
+        // Monday of current week
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);      cal.set(Calendar.MILLISECOND, 0);
+        int dow = cal.get(Calendar.DAY_OF_WEEK);
+        int diffToMonday = (dow == Calendar.SUNDAY) ? 6 : dow - Calendar.MONDAY;
+        cal.add(Calendar.DAY_OF_YEAR, -diffToMonday);
+        Date weekStart = cal.getTime();
+
+        // 1st of current month
+        cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);      cal.set(Calendar.MILLISECOND, 0);
+        Date monthStart = cal.getTime();
+
+        com.ec.application.data.InwardTilesDTO dto = new com.ec.application.data.InwardTilesDTO();
+        dto.setThisWeekCount(inwardInventoryRepo.countSince(weekStart));
+        dto.setThisMonthCount(inwardInventoryRepo.countSince(monthStart));
+        dto.setMissingChallanBillCount(inwardInventoryRepo.countMissingChallanBill());
+        dto.setRejectCount(inwardInventoryRepo.countWithReject());
+        dto.setFromPOCount(inwardInventoryRepo.countFromPO());
+        dto.setDirectCount(inwardInventoryRepo.countDirect());
+        dto.setSampleCount(inwardInventoryRepo.countSample());
+        return dto;
+    }
 }

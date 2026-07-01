@@ -23,6 +23,7 @@ import Activity from "./Activity";
 import ProjectActivity from "./Activity/projectIndex";
 import Indent from "./Indent";
 import PurchaseOrder from "./PurchaseOrder";
+import ServiceOrder from "./ServiceOrder";
 import InventoryTransfer from "./InventoryTransfer";
 import DeadStock from "./DeadStock";
 import HistoricalPricing from "./HistoricalPricing";
@@ -67,6 +68,7 @@ export {
   ProjectActivity,
   Indent,
   PurchaseOrder,
+  ServiceOrder,
   InventoryTransfer,
   DeadStock,
   HistoricalPricing,

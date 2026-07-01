@@ -23,6 +23,7 @@ const ENTITY_ROW_COLORS = {
   OUTWARD:            '#fff8f0',
   INDENT:             '#f0f4ff',
   PURCHASE_ORDER:     '#fdf5ff',
+  SERVICE_ORDER:      '#f0fbff',
   LOST_DAMAGED:       '#fff3f3',
   EXCESS_FOUND:       '#fce4ec',
   MACHINERY_ON_RENT:  '#fffde7',

@@ -73,6 +73,11 @@ public class PurchaseOrderController {
         return purchaseOrderService.fetchPurchaseOrdersPage(filterDataList, pageable);
     }
 
+    @GetMapping("/tiles")
+    public com.ec.application.data.POTilesDTO getTiles() {
+        return purchaseOrderService.getTiles();
+    }
+
     @GetMapping("/{id}")
     public PurchaseOrder findPurchaseOrderByID(@PathVariable String id) throws Exception {
         return purchaseOrderService.getPurchaseOrderWithInit(id);

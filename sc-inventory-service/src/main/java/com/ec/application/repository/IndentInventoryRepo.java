@@ -93,6 +93,27 @@ public interface IndentInventoryRepo extends BaseRepository<IndentInventory, Str
 
     @Query("SELECT DISTINCT i.requiredBy FROM IndentInventory i WHERE i.requiredBy IS NOT NULL AND i.requiredBy <> ''")
     List<String> findDistinctRequiredBy();
+
+    @Query("SELECT COUNT(ii) FROM IndentInventory ii WHERE ii.isDeleted = false AND ii.indentDate >= :from " +
+            "AND (:tenant IS NULL OR ii.tenant = :tenant)")
+    long countSince(@Param("from") java.util.Date from, @Param("tenant") String tenant);
+
+    @Query("SELECT COUNT(ii) FROM IndentInventory ii WHERE ii.isDeleted = false AND ii.indentStatus IN :statuses " +
+            "AND (:tenant IS NULL OR ii.tenant = :tenant)")
+    long countByStatusIn(@Param("statuses") java.util.List<String> statuses, @Param("tenant") String tenant);
+
+    @Query("SELECT COUNT(ii) FROM IndentInventory ii WHERE ii.isDeleted = false " +
+            "AND (:tenant IS NULL OR ii.tenant = :tenant) " +
+            "AND EXISTS (SELECT l FROM IndentInventoryList l WHERE l.indentInventory = ii " +
+            "            AND l.quoteRequestedQcId IS NOT NULL AND l.isDeleted = false)")
+    long countWithQuoteRequested(@Param("tenant") String tenant);
+
+    @Query("SELECT COUNT(ii) FROM IndentInventory ii WHERE ii.isDeleted = false " +
+            "AND ii.indentStatus NOT IN :excluded AND ii.lastStatusUpdatedAt < :cutoff " +
+            "AND (:tenant IS NULL OR ii.tenant = :tenant)")
+    long countStale(@Param("cutoff") java.util.Date cutoff,
+                    @Param("excluded") java.util.List<String> excluded,
+                    @Param("tenant") String tenant);
 }
 
 

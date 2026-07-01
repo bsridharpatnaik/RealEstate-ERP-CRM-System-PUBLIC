@@ -72,6 +72,7 @@ function SideMenu(props) {
     props.history.location.pathname === "/inventoryTransfer" ||
     props.history.location.pathname === "/stockSummary" ||
     props.history.location.pathname === "/purchaseOrder" ||
+    props.history.location.pathname === "/serviceOrder" ||
     props.history.location.pathname === "/globalIndent" ||
     props.history.location.pathname === "/contact" ||
     props.history.location.pathname === "/historicalPricing" ||
@@ -511,6 +512,15 @@ function SideMenu(props) {
                 onClick={props.setSideBarValue}
                 linkurl="/purchaseOrder"
               />
+              {(currentUserRole.toLowerCase() === "admin" ||
+                currentUserRole.toLowerCase() === "purchase-manager") && (
+                <DashboardItem
+                  nodeId="74"
+                  labelText="Service Order"
+                  onClick={props.setSideBarValue}
+                  linkurl="/serviceOrder"
+                />
+              )}
               {(currentUserRole.toLowerCase() === "admin" ||
                 currentUserRole.toLowerCase() === "purchase-manager") && (
                 <DashboardItem

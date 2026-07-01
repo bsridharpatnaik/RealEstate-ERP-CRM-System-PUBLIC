@@ -1066,4 +1066,43 @@ public class IndentInventoryService {
         return indentInventoryRepo.findById(indentId).get();
     }
 
+    public com.ec.application.data.IndentTilesDTO getTiles(String tenant) {
+        com.ec.application.data.IndentTilesDTO dto = new com.ec.application.data.IndentTilesDTO();
+
+        java.util.Calendar weekCal = java.util.Calendar.getInstance();
+        weekCal.setFirstDayOfWeek(java.util.Calendar.MONDAY);
+        weekCal.set(java.util.Calendar.DAY_OF_WEEK, weekCal.getFirstDayOfWeek());
+        weekCal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        weekCal.set(java.util.Calendar.MINUTE, 0);
+        weekCal.set(java.util.Calendar.SECOND, 0);
+        weekCal.set(java.util.Calendar.MILLISECOND, 0);
+        dto.setThisWeekCount(indentInventoryRepo.countSince(weekCal.getTime(), tenant));
+
+        java.util.Calendar monthCal = java.util.Calendar.getInstance();
+        monthCal.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        monthCal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        monthCal.set(java.util.Calendar.MINUTE, 0);
+        monthCal.set(java.util.Calendar.SECOND, 0);
+        monthCal.set(java.util.Calendar.MILLISECOND, 0);
+        dto.setThisMonthCount(indentInventoryRepo.countSince(monthCal.getTime(), tenant));
+
+        dto.setOpenCount(indentInventoryRepo.countByStatusIn(
+                java.util.Arrays.asList("NEW", "APPROVED"), tenant));
+        dto.setQuoteRequestedCount(indentInventoryRepo.countWithQuoteRequested(tenant));
+
+        Calendar staleCal = Calendar.getInstance();
+        staleCal.add(Calendar.DAY_OF_MONTH, -3);
+        dto.setStaleCount(indentInventoryRepo.countStale(
+                staleCal.getTime(), IndentStatusConstants.getTerminalStatuses(), tenant));
+
+        Map<String, Long> statusCounts = new java.util.LinkedHashMap<>();
+        indentInventoryRepo.fetchCurrentIndentStatusCounts(IndentStatusConstants.getAllStatuses())
+                .stream()
+                .filter(r -> tenant == null || tenant.equals(r.getGroupKey()))
+                .forEach(r -> statusCounts.merge(r.getStatus(), r.getCount(), Long::sum));
+        dto.setStatusCounts(statusCounts);
+
+        return dto;
+    }
+
 }

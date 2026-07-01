@@ -33,7 +33,9 @@ class List extends ListCommon {
     key: 1,
     showTotal: false,
     pageno: 0,
-    totals: []
+    totals: [],
+    tiles: {},
+    activeTile: null,
   };
   url = apiEndpoints.getOutwardInventory;
   exportUrl = exportURL.getOutwardInventory;
@@ -65,7 +67,97 @@ class List extends ListCommon {
 
   componentDidMount() {
     this.search();
+    this.fetchTiles();
     this.filterRef = React.createRef();
+  }
+
+  fetchTiles = async () => {
+    const response = await API.GET(apiEndpoints.getOutwardInventoryTiles);
+    if (response.success) {
+      this.setState({ tiles: response.data || {} });
+    }
+  };
+
+  fmtDate = (d) => {
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  };
+
+  TILES = [
+    { key: "noBoq", label: "No BOQ", color: "#e67e22", bg: "#fdf2e9", countKey: "noBoqCount", filterAttr: "boqBypassed" },
+    { key: "fifoOverride", label: "FIFO Override", color: "#8e44ad", bg: "#f4ecf7", countKey: "fifoOverrideCount", filterAttr: "fifoOverride" },
+    { key: "reject", label: "Stock Reject", color: "#e74c3c", bg: "#fdedec", countKey: "rejectCount", filterAttr: "showOnlyRejected" },
+    { key: "return", label: "Stock Return", color: "#16a085", bg: "#e8f8f5", countKey: "returnCount", filterAttr: "showOnlyReturned" },
+    { key: "thisWeek", label: "This Week", color: "#2980b9", bg: "#eaf2f8", countKey: "thisWeekCount", dateWindow: "week" },
+    { key: "thisMonth", label: "This Month", color: "#27ae60", bg: "#eafaf1", countKey: "thisMonthCount", dateWindow: "month" },
+  ];
+
+  handleTileClick = (tile) => {
+    const isActive = this.state.activeTile === tile.key;
+
+    // Clear anything a tile might have set, then re-apply only if not toggling off.
+    delete this.filterData.boqBypassed;
+    delete this.filterData.fifoOverride;
+    delete this.filterData.showOnlyRejected;
+    delete this.filterData.showOnlyReturned;
+    if (this.state.activeTile && this.TILES.find((t) => t.key === this.state.activeTile)?.dateWindow) {
+      delete this.filterData.startDate;
+      delete this.filterData.endDate;
+    }
+
+    if (isActive) {
+      this.setState({ activeTile: null }, () => this.search(0));
+      return;
+    }
+
+    if (tile.filterAttr) {
+      this.filterData[tile.filterAttr] = "true";
+    } else if (tile.dateWindow) {
+      const end = new Date();
+      const start = new Date();
+      if (tile.dateWindow === "week") {
+        const day = start.getDay(); // 0=Sun..6=Sat
+        const diffToMonday = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - diffToMonday);
+      } else {
+        start.setDate(1);
+      }
+      start.setHours(0, 0, 0, 0);
+      this.filterData.startDate = this.fmtDate(start);
+      this.filterData.endDate = this.fmtDate(end);
+    }
+    this.setState({ activeTile: tile.key }, () => this.search(0));
+  };
+
+  renderTiles() {
+    const { tiles, activeTile } = this.state;
+    return (
+      <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "12px 0" }}>
+        {this.TILES.map((t) => {
+          const count = tiles[t.countKey] || 0;
+          const isActive = activeTile === t.key;
+          return (
+            <div
+              key={t.key}
+              onClick={() => this.handleTileClick(t)}
+              style={{
+                cursor: "pointer",
+                minWidth: 130,
+                padding: "10px 16px",
+                borderRadius: 8,
+                background: t.bg,
+                border: isActive ? `2px solid ${t.color}` : "2px solid transparent",
+                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 700, color: t.color }}>{count}</div>
+              <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
   replaceSortKey(sortKey) {
     if (sortKey === "warehouse") {
@@ -191,6 +283,7 @@ class List extends ListCommon {
         }
       >
         <div className="list-section">
+          {this.renderTiles()}
           <div className="filter-section">
             <form
               onSubmit={(e) => {
