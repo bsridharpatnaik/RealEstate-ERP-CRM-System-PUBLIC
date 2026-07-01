@@ -158,3 +158,19 @@ CALL fix_reject_quantity_drift('anantamsamosharan');
 -- Add any other tenant schema names here before running in a new environment.
 
 DROP PROCEDURE fix_reject_quantity_drift;
+
+-- ----------------------------------------------------------------
+-- Data correction: cancel line items for cancelled/rejected indents
+-- Indent header cancel/reject previously left child line items in
+-- their old status (typically NEW). Code now cascades CANCELLED to
+-- all lines on header cancel/reject. This backfill corrects existing
+-- bad-data rows.
+-- Indents live in masterschema only — run once against masterschema.
+-- ----------------------------------------------------------------
+
+UPDATE masterschema.indent_inventory_entries iie
+JOIN masterschema.indent_inventory ii ON ii.indent_id = iie.indent_id
+SET iie.line_item_status = 'CANCELLED'
+WHERE ii.indent_status IN ('CANCELLED', 'REJECTED')
+  AND iie.line_item_status != 'CANCELLED'
+  AND iie.is_deleted = 0;

@@ -486,6 +486,10 @@ public class IndentInventoryService {
                     null);
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
             indentInventory.setLastStatusUpdatedAt(new Date());
+            indentInventory.getInventoryList().forEach(line -> {
+                if (!IndentLineItemStatusConstants.STATUS_CANCELLED.equals(line.getLineItemStatus()))
+                    line.setLineItemStatus(IndentLineItemStatusConstants.STATUS_CANCELLED);
+            });
             indentInventoryRepo.save(indentInventory);
             activityLogService.record("CANCELLED", "INDENT", id,
                     "Indent " + id + " cancelled by " + currentUser, currentUser);
@@ -504,6 +508,10 @@ public class IndentInventoryService {
                     null);
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_REJECTED);
             indentInventory.setLastStatusUpdatedAt(new Date());
+            indentInventory.getInventoryList().forEach(line -> {
+                if (!IndentLineItemStatusConstants.STATUS_CANCELLED.equals(line.getLineItemStatus()))
+                    line.setLineItemStatus(IndentLineItemStatusConstants.STATUS_CANCELLED);
+            });
             indentInventoryRepo.save(indentInventory);
             activityLogService.record("DELETED", "INDENT", id,
                     "Indent " + id + " rejected by " + currentUser, currentUser);
