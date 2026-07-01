@@ -574,8 +574,9 @@ public class IndentInventoryService {
         // ──────────────────────────────────────────────────────────────────
 
         indentInventoryRepo.save(indentInventory);
+        String updatedBy = resolveCurrentUser();
         activityLogService.record("UPDATED", "INDENT", id,
-                "Indent " + id + " updated by " + resolveCurrentUser(), resolveCurrentUser());
+                "Indent " + id + " updated by " + updatedBy, updatedBy);
         return indentInventory;
     }
 
