@@ -94,17 +94,28 @@ class Details extends CommonDetails {
     this.props.close && this.props.close();
   };
 
-  handlePrintPdf = () => {
+  handlePrintPdf = async () => {
     const soId = this.props.data?.serviceOrderId;
     if (!soId) return;
-    const url = `${window.location.origin}${apiEndpoints.printServiceOrderPdf(soId)}`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${soId}.pdf`;
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      const response = await API.GETBlob(apiEndpoints.printServiceOrderPdf(soId));
+      if (response.success) {
+        const blobUrl = window.URL.createObjectURL(
+          new Blob([response.data], { type: "application/pdf" })
+        );
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `${soId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      } else {
+        this.props.enqueueSnackbar("Failed to generate PDF", { variant: "error" });
+      }
+    } catch {
+      this.props.enqueueSnackbar("Failed to generate PDF", { variant: "error" });
+    }
   };
 
   render() {
