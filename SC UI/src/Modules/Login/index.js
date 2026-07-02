@@ -163,7 +163,7 @@ function Login(props) {
         const status = response.status;
         const errorMsg = response.errorMessage;
         let msg;
-        if (status === 401 && errorMsg === "INVALID_CREDENTIALS") {
+        if (status === 401) {
           msg = messages.common.loginFailure;
         } else if (!status) {
           msg = "Unable to reach server. Please check your connection.";
