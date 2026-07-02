@@ -182,4 +182,4 @@ WHERE ii.indent_status IN ('CANCELLED', 'REJECTED')
 -- Merge Products menu and can call the merge API.
 -- ----------------------------------------------------------------
 
-INSERT IGNORE INTO role (name) VALUES ('product-merge-admin');
+INSERT IGNORE INTO common.role (name) VALUES ('product-merge-admin');
