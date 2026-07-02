@@ -1061,6 +1061,9 @@ public class BOQService {
                     .collect(Collectors.toList());
         }
 
+        if (dtos.size() > 5000)
+            throw new IOException("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
+
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("BOQ Status");
 
@@ -1684,6 +1687,8 @@ public class BOQService {
     @Transactional(Transactional.TxType.NOT_SUPPORTED)
     public byte[] exportBOQTrackerExcel(String categoryFilter, String productFilter, String gapFilter) throws IOException {
         List<BOQTrackerRow> rows = getBOQTrackerSummary(categoryFilter, productFilter, gapFilter);
+        if (rows.size() > 5000)
+            throw new IOException("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("BOQ Tracker");

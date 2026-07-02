@@ -65,6 +65,9 @@ public class ActivityLogService {
 
     public byte[] exportExcel(FilterDataList filterDataList) throws Exception {
         Specification<ActivityLog> spec = ActivityLogSpecification.getSpecification(filterDataList);
+        long count = spec == null ? activityLogRepository.count() : activityLogRepository.count(spec);
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<ActivityLog> rows = (spec == null)
                 ? activityLogRepository.findAll()
                 : activityLogRepository.findAll(spec);

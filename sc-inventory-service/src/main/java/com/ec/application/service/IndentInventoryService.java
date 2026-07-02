@@ -881,6 +881,10 @@ public class IndentInventoryService {
                         userDetailsService.getCurrentUser().getAllowedTenants()
                 );
 
+        long totalCount = indentInventoryRepo.count(spec);
+        if (totalCount > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
+
         int page = 0;
         int size = 500;
         Page<IndentInventory> result;

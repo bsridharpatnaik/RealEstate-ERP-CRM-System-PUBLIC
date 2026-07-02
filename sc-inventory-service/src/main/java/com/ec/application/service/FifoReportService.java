@@ -38,6 +38,9 @@ public class FifoReportService {
     public void exportExcel(FilterDataList filterDataList, HttpServletResponse response) throws Exception {
         List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         Specification<GlobalFifoReport> spec = GlobalFifoReportSpecification.getSpecification(filterDataList, allowedSchemas);
+        long count = spec == null ? repo.count() : repo.count(spec);
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<GlobalFifoReport> rows = spec == null ? repo.findAll() : repo.findAll(spec);
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {

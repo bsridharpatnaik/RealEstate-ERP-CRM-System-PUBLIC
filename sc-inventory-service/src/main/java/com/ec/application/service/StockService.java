@@ -671,6 +671,8 @@ public class StockService {
                     exportData.add(si);
                 }
             }
+            if (exportData.size() > 5000)
+                throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
             return (List<T>) exportData;
         }
     }
@@ -684,6 +686,11 @@ public class StockService {
 
         StockInformationV2 stockData = fetchStockInformation(
                 PageRequest.of(0, Integer.MAX_VALUE), filterDataList);
+
+        long totalRows = stockData.getStockInformation().stream()
+                .mapToLong(dto -> dto.getDetailedStock() != null ? dto.getDetailedStock().size() : 0).sum();
+        if (totalRows > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=\"stock-export.xlsx\"");

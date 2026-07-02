@@ -353,10 +353,10 @@ public class MachineryOnRentService {
         Specification<MachineryOnRent> spec = MachineryOnRentSpecifications.getSpecification(filterDataList);
 
         if (spec != null) {
-            if (morRepo.count(spec) > 2000)
-                throw new Exception("Too many rows to export. Apply some more filters and try again");
-        } else if (morRepo.count() > 2000)
-            throw new Exception("Too many rows to export. Apply some more filters and try again");
+            if (morRepo.count(spec) > 5000)
+                throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
+        } else if (morRepo.count() > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
         List<MachineryOnRent> morList = spec == null ? morRepo.findAll() : morRepo.findAll(spec);
         return transformForExport(morList);

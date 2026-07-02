@@ -64,6 +64,9 @@ public class ExpiredStockReportService {
         List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         Specification<GlobalExpiredStockReport> spec =
                 GlobalExpiredStockSpecification.getSpecification(filterDataList, allowedSchemas);
+        long count = spec == null ? repo.count() : repo.count(spec);
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<GlobalExpiredStockReport> rows = spec == null ? repo.findAll() : repo.findAll(spec);
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {

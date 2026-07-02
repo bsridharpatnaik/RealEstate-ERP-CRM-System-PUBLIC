@@ -97,7 +97,11 @@ public class DeadStockReportController {
     public void exportExcel(@RequestBody(required = false) FilterDataList filterDataList,
                             HttpServletResponse response) throws Exception {
         List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
-        List<GlobalDeadStockReport> rows = deadStockRepo.findAll(buildSpec(filterDataList, allowedSchemas),
+        Specification<GlobalDeadStockReport> deadSpec = buildSpec(filterDataList, allowedSchemas);
+        long count = deadStockRepo.count(deadSpec);
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
+        List<GlobalDeadStockReport> rows = deadStockRepo.findAll(deadSpec,
                 Sort.by(Sort.Direction.ASC, "tenantSchema", "productName"));
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {

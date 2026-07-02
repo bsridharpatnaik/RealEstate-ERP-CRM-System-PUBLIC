@@ -84,6 +84,9 @@ public class ActivityLogGlobalSyncService {
     public byte[] exportExcel(FilterDataList filterDataList) throws Exception {
         List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         Specification<GlobalActivityLog> spec = GlobalActivityLogSpecification.getSpecification(filterDataList, allowedSchemas);
+        long count = spec == null ? globalActivityLogRepository.count() : globalActivityLogRepository.count(spec);
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<GlobalActivityLog> rows = spec == null
                 ? globalActivityLogRepository.findAll()
                 : globalActivityLogRepository.findAll(spec);

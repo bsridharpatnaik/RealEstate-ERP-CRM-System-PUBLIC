@@ -41,6 +41,9 @@ public class StockAgingReportService {
         Specification<GlobalStockAgingReport> spec = GlobalStockAgingSpecification.getSpecification(filterDataList, allowedSchemas);
         Specification<GlobalStockAgingReport> notDeleted = (root, query, cb) -> cb.isFalse(root.get("isDeleted"));
         Specification<GlobalStockAgingReport> combined = spec == null ? notDeleted : spec.and(notDeleted);
+        long count = repo.count(combined);
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<GlobalStockAgingReport> rows = repo.findAll(combined);
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {

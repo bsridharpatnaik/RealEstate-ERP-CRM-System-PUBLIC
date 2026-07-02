@@ -978,8 +978,8 @@ public class InwardInventoryService {
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
         long size = spec != null ? inwardInventoryRepo.count(spec) : inwardInventoryRepo.count();
         System.out.println("Size of inward inventory after filter -" + size);
-        if (size > 2000)
-            throw new Exception("Too many rows to export. Apply some more filters and try again");
+        if (size > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         System.out.println("Fetching data from db");
         List<InwardInventory> iiData = spec != null ? inwardInventoryRepo.findAll(spec) : inwardInventoryRepo.findAll();
         List<InwardInventoryExportDAO2> clonedData = transformDataForExport(iiData);

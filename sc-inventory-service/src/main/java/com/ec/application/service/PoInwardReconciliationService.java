@@ -147,6 +147,13 @@ public class PoInwardReconciliationService {
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
         List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         WhereClause wc = buildWhere(filters, allowedSchemas);
+        String countSql = "SELECT COUNT(*) FROM (" + DATA_SELECT + BASE_FROM + wc.where + GROUP_BY + wc.having + ") cnt_sub";
+        Query countQ = em.createNativeQuery(countSql);
+        applyParams(countQ, wc.params);
+        applyParams(countQ, wc.havingParams);
+        long exportCount = ((Number) countQ.getSingleResult()).longValue();
+        if (exportCount > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         String sql = DATA_SELECT + BASE_FROM + wc.where + GROUP_BY + wc.having + " ORDER BY po.po_date DESC, po.purchase_order_id ASC, p.product_name ASC";
         Query q = em.createNativeQuery(sql);
         applyParams(q, wc.params);

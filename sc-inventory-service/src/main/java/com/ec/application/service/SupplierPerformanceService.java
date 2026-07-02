@@ -171,6 +171,12 @@ public class SupplierPerformanceService {
 
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
         WhereClause wc = buildWhere(filters);
+        String countSql = "SELECT COUNT(*) FROM (" + DATA_SELECT + BASE_FROM + wc.sql + GROUP_BY + ") cnt_sub";
+        Query countQ = em.createNativeQuery(countSql);
+        applyParams(countQ, wc.params);
+        long exportCount = ((Number) countQ.getSingleResult()).longValue();
+        if (exportCount > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         String dataSql = DATA_SELECT + BASE_FROM + wc.sql + GROUP_BY + " ORDER BY s.name ASC";
         Query dataQ = em.createNativeQuery(dataSql);
         applyParams(dataQ, wc.params);

@@ -87,6 +87,9 @@ public class ContactService {
 
     public void streamContactExcel(FilterDataList filterDataList, OutputStream os) throws Exception {
         Specification<Contact> spec = ContactSpecifications.getSpecification(filterDataList);
+        long count = spec != null ? contactRepo.count(spec) : contactRepo.count();
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<Contact> contacts = spec != null ? contactRepo.findAll(spec) : contactRepo.findAll();
 
         SXSSFWorkbook workbook = new SXSSFWorkbook(100);

@@ -760,7 +760,7 @@ public class PurchaseOrderService extends ReusableFields {
 
     public void streamPurchaseOrderExcel(
             FilterDataList filterDataList,
-            OutputStream os) {
+            OutputStream os) throws Exception {
 
         SXSSFWorkbook workbook = null;
 
@@ -803,6 +803,10 @@ public class PurchaseOrderService extends ReusableFields {
 
             Specification<PurchaseOrder> spec =
                     PurchaseOrderSpecification.getSpecification(filterDataList);
+
+            long totalCount = spec != null ? purchaseOrderRepo.count(spec) : purchaseOrderRepo.count();
+            if (totalCount > 5000)
+                throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
             int page = 0;
             int size = 200;

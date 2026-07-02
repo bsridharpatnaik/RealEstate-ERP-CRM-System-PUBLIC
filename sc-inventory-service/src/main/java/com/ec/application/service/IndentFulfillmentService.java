@@ -120,6 +120,12 @@ public class IndentFulfillmentService {
     public void exportExcel(FilterDataList filters, HttpServletResponse response) throws Exception {
         List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
         WhereClause wc = buildWhere(filters, allowedSchemas);
+        String countSql = "SELECT COUNT(*) FROM (" + DATA_SELECT + BASE_FROM + wc.sql + ") cnt_sub";
+        Query countQ = em.createNativeQuery(countSql);
+        applyParams(countQ, wc.params);
+        long exportCount = ((Number) countQ.getSingleResult()).longValue();
+        if (exportCount > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         String sql = DATA_SELECT + BASE_FROM + wc.sql + " ORDER BY ii.indent_id DESC, p.product_name ASC";
         Query q = em.createNativeQuery(sql);
         applyParams(q, wc.params);
