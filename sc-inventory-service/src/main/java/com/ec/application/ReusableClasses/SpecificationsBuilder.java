@@ -113,6 +113,12 @@ public class SpecificationsBuilder<T> {
         return spec;
     }
 
+    public Specification<T> whereGrandChildFieldEquals(String childField, String grandChildField,
+                                                       String ggcField, List<String> names) {
+        return (root, query, cb) ->
+            root.get(childField).get(grandChildField).get(ggcField).in(names);
+    }
+
     // ── Collection JOIN predicates (kept for Inward/Outward specs) ───────────
     // These use INNER JOIN on a collection — callers must ensure DISTINCT is applied
     // on the outer query if fan-out is possible.

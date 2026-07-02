@@ -29,6 +29,7 @@ public final class OutwardInventorySpecification {
         List<String> fifoOverride    = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "fifoOverride");
         List<String> requestedByNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "requestedByNames");
         List<String> issuedByNames   = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "issuedByNames");
+        List<String> structureTypes  = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "structureTypes");
 
         Specification<OutwardInventory> spec = null;
 
@@ -58,6 +59,12 @@ public final class OutwardInventorySpecification {
 
         if (notEmpty(usageAreas))
             spec = and(spec, specbldr.whereChildFieldEquals(OutwardInventory_.USAGE_AREA, UsageArea_.USAGE_AREA_NAME, usageAreas));
+
+        // Structure Type — matches outward whose usageLocation belongs to one of the selected building types
+        if (notEmpty(structureTypes))
+            spec = and(spec, specbldr.whereGrandChildFieldEquals(
+                    OutwardInventory_.USAGE_LOCATION, UsageLocation_.BUILDING_TYPE,
+                    BuildingType_.TYPE_NAME, structureTypes));
 
         if (notEmpty(requestedByNames))
             spec = and(spec, specbldr.whereDirectFieldEquals(OutwardInventory_.REQUESTED_BY, requestedByNames));

@@ -71,6 +71,12 @@ class filter extends CommonFilter {
                 (option) => option["name"]
               )}
               {this.renderAutoComplete(
+                "Structure Type",
+                this.props.options?.buildingtype,
+                "structureTypes",
+                (option) => option["name"]
+              )}
+              {this.renderAutoComplete(
                 "Requested By",
                 this.props.options?.requestedByOptions,
                 "requestedByNames",
