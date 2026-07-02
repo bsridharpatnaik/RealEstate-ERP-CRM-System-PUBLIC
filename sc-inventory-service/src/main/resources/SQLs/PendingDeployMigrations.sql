@@ -174,3 +174,12 @@ SET iie.line_item_status = 'CANCELLED'
 WHERE ii.indent_status IN ('CANCELLED', 'REJECTED')
   AND iie.line_item_status != 'CANCELLED'
   AND iie.is_deleted = 0;
+
+-- ----------------------------------------------------------------
+-- New role: product-merge-admin
+-- Run once against the common-service DB (the one holding the `role`
+-- table). Only users explicitly assigned this role will see the
+-- Merge Products menu and can call the merge API.
+-- ----------------------------------------------------------------
+
+INSERT IGNORE INTO role (name) VALUES ('product-merge-admin');
