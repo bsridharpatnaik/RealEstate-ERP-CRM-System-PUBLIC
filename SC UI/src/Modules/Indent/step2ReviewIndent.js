@@ -27,7 +27,7 @@ class Step2ReviewIndent extends Component {
             <th>#</th>
             <th>Category</th>
             <th>Product Name</th>
-            <th>Quantity</th>
+            <th className="text-center">Quantity</th>
             <th>Unit</th>
             <th>Specification</th>
             <th>Remarks</th>
@@ -46,7 +46,7 @@ class Step2ReviewIndent extends Component {
                   </div>
                 )}
               </td>
-              <td className="text-right">{this.formatValue(item.quantity)}</td>
+              <td className="text-center">{this.formatValue(item.quantity)}</td>
               <td>{this.formatValue(item.unit)}</td>
               <td>{this.formatValue(item.specification)}</td>
               <td>{this.formatValue(item.remarks)}</td>
