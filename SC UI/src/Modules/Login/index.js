@@ -20,6 +20,7 @@ import { useSnackbar } from "notistack";
 import {
   setToken,
   setRole,
+  setAllRoles,
   setUserName,
   setUserId,
   getRole,
@@ -102,6 +103,7 @@ function Login(props) {
           variant: "success",
         });
         setRole(response.data.roles[0]);
+        setAllRoles(response.data.roles);
         setToken(response.data.token);
         setUserId(response.data.userid);
         clearSession("dealLostReasons");

@@ -18,7 +18,7 @@ import { InventoryIcon, CRMIcon } from "./../Icons/Index";
 import DashboardItem from "./../../Shared/DashboardItem";
 //css
 import "./style.scss";
-import { removeToken, getRole, getUserName, setSession } from "./../../helper";
+import { removeToken, getRole, getUserName, setSession, hasRole } from "./../../helper";
 import { messages } from "./../../messages";
 import { appRoutes } from "./../../endpoints";
 import { connect } from "react-redux";
@@ -563,7 +563,7 @@ function SideMenu(props) {
   }}
   linkurl={appRoutes.user}
 />
-    {username === 'sridhar' && <DashboardItem
+    {hasRole('product-merge-admin') && <DashboardItem
   nodeId="52"
   labelText="Merge Products"
   onClick={props.setSideBarValue}

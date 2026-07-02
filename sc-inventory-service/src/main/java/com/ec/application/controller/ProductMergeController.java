@@ -23,7 +23,7 @@ public class ProductMergeController {
 
     @PostMapping("/preview")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PRODUCT_MERGE_ADMIN})
     public ResponseEntity<ProductMergePreviewDTO> preview(@RequestBody ProductMergeRequest request) {
         return ResponseEntity.ok(
             productMergeService.preview(request.getSourceProductId(), request.getTargetProductId()));
@@ -31,7 +31,7 @@ public class ProductMergeController {
 
     @PostMapping("/execute")
     @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN})
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PRODUCT_MERGE_ADMIN})
     public ResponseEntity<ProductMergeResultDTO> execute(@RequestBody ProductMergeRequest request) {
         return ResponseEntity.ok(
             productMergeService.execute(request.getSourceProductId(), request.getTargetProductId()));

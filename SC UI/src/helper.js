@@ -13,6 +13,7 @@ const userKey = `${mainKey}ecUserName`;
 // Example payload: { adminDays: 7, managerDays: 5, generalDays: 3 }
 const inventoryEditDaysKey = `${mainKey}InventoryEditDays`;
 const rejectReturnDaysKey = `${mainKey}RejectReturnDays`;
+const allRolesKey = `${mainKey}AllRoles`;
 
 let _isAdmin;
 
@@ -134,6 +135,16 @@ export const setRole = (role) => {
 export const getRole = () => {
   return Cookies.get(roleKey);
 };
+export const setAllRoles = (roles) => {
+  Cookies.set(allRolesKey, JSON.stringify(roles || []));
+};
+export const getAllRoles = () => {
+  try { return JSON.parse(Cookies.get(allRolesKey) || "[]"); }
+  catch (e) { return []; }
+};
+export const hasRole = (role) => {
+  return getAllRoles().map(r => r.toLowerCase()).includes(role.toLowerCase());
+};
 export const setUserName = (role) => {
   Cookies.set(userKey, role);
 };
@@ -144,6 +155,7 @@ export const getUserName = () => {
 export const clearCookies = () => {
   Cookies.remove(userKey);
   Cookies.remove(roleKey);
+  Cookies.remove(allRolesKey);
   Cookies.remove(userIdKey);
   Cookies.remove(tokenKey);
 }
