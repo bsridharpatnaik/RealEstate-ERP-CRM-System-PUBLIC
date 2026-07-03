@@ -5,6 +5,42 @@ import "./style.scss";
 import { messages } from "./../../messages";
 
 class filter extends CommonFilter {
+  // selected structure-type NAMES (building_type names)
+  getSelectedTypeNames() {
+    const raw = this.filterData.structureTypes;
+    const arr = raw == null ? [] : Array.isArray(raw) ? raw : [raw];
+    return arr.map((t) => (typeof t === "object" ? t.name : t));
+  }
+
+  // structures filtered by selected types; all structures when no type selected
+  getStructureOptions() {
+    const all = Array.isArray(this.props.options?.usagelocation)
+      ? this.props.options.usagelocation
+      : [];
+    const types = this.getSelectedTypeNames();
+    if (types.length === 0) return all;
+    const withType = Array.isArray(this.props.options?.usagelocationWithType)
+      ? this.props.options.usagelocationWithType
+      : [];
+    return withType
+      .filter((l) => types.includes(l.typeName))
+      .map((l) => ({ id: l.id, name: l.name }));
+  }
+
+  // on structure-type change: drop selected structures no longer valid, then re-render
+  handleStructureTypeChange = () => {
+    const allowed = this.getStructureOptions().map((o) => o.name);
+    const raw = this.filterData.usageLocation;
+    const sel = raw == null ? [] : Array.isArray(raw) ? raw : [raw];
+    if (this.getSelectedTypeNames().length > 0) {
+      this.filterData.usageLocation = sel.filter((s) =>
+        allowed.includes(typeof s === "object" ? s.name : s)
+      );
+    }
+    // remount filter body so Structure dropdown picks up new options + pruned chips
+    this.setState({ reset: false }, () => this.setState({ reset: true }));
+  };
+
   renderToggle(label, fieldname) {
     const checked = !!this.filterData[fieldname];
     return (
@@ -60,7 +96,7 @@ class filter extends CommonFilter {
               )}
               {this.renderAutoComplete(
                 messages.common.location,
-                this.props.options?.usagelocation,
+                this.getStructureOptions(),
                 "usageLocation",
                 (option) => option["name"]
               )}
@@ -74,7 +110,10 @@ class filter extends CommonFilter {
                 "Structure Type",
                 this.props.options?.buildingtype,
                 "structureTypes",
-                (option) => option["name"]
+                (option) => option["name"],
+                true,
+                false,
+                this.handleStructureTypeChange
               )}
               {this.renderAutoComplete(
                 "Requested By",
