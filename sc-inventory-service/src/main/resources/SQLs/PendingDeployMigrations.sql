@@ -183,3 +183,18 @@ WHERE ii.indent_status IN ('CANCELLED', 'REJECTED')
 -- ----------------------------------------------------------------
 
 INSERT IGNORE INTO common.role (name) VALUES ('product-merge-admin');
+
+-- ----------------------------------------------------------------
+-- Quote Comparison: allow HEADER-scoped criteria values.
+-- supplier_quote_criteria_value.supplier_quote_line_id must be NULLABLE
+-- (HEADER-scope values set supplier_quote_id instead, line_id null).
+-- Non-additive (relaxes NOT NULL) — Hibernate `update` won't do this,
+-- so it must be run by hand. supplier_quote_id itself is additive and
+-- auto-applies on startup. Symptom if unapplied: saving a supplier quote
+-- with header criteria fails with "Column 'supplier_quote_line_id' cannot
+-- be null" (SQLState 23000, error 1048).
+-- Indents/QC live in masterschema only — run once against masterschema.
+-- ----------------------------------------------------------------
+
+ALTER TABLE masterschema.supplier_quote_criteria_value
+  MODIFY COLUMN supplier_quote_line_id BIGINT NULL;
