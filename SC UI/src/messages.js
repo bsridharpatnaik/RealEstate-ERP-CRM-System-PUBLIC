@@ -56,7 +56,7 @@ export const messages = {
     purchaseOrder: "Purchase Order",
     firm: "Firm",
     inventoryTransfer: "Inventory Transfer",
-    indentPO: "Indent / PO",
+    indentPO: "Procurement",
     historicalPricing: "Historical Pricing",
     quoteComparison: "Quote Comparison",
     deadStock: "Dead Stock",

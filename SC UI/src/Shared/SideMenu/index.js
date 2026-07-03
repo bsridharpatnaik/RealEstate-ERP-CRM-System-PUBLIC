@@ -474,22 +474,32 @@ function SideMenu(props) {
               onClick={props.setSideBarValue}
               linkurl="/project"
             />
-                          <DashboardItem
-  nodeId="38"
-  labelText={messages.common.stockSummary}
-  labelIcon={InventoryIcon}
-  onClick={props.setSideBarValue}
-  linkurl="/stockSummary"
-/>
-            {(_role === "admin" || _role === "project-manager") && (
+            <DashboardItem
+              nodeId="80"
+              labelText="Inventory"
+              labelIcon={InventoryIcon}
+            >
               <DashboardItem
-                nodeId="41"
-                labelText={messages.common.globalBOQ}
-                labelIcon={HomeWorkIcon}
+                nodeId="81"
+                labelText={messages.common.stockSummary}
                 onClick={props.setSideBarValue}
-                linkurl={appRoutes.globalBOQ}
+                linkurl="/stockSummary"
               />
-            )}
+              <DashboardItem
+                nodeId="10"
+                labelText={messages.common.inventoryTransfer}
+                onClick={props.setSideBarValue}
+                linkurl="/inventoryTransfer"
+              />
+              {(_role === "admin" || _role === "project-manager") && (
+                <DashboardItem
+                  nodeId="41"
+                  labelText={messages.common.globalBOQ}
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.globalBOQ}
+                />
+              )}
+            </DashboardItem>
             <DashboardItem
               nodeId="39"
               labelText={messages.common.indentPO}
@@ -504,6 +514,15 @@ function SideMenu(props) {
                   labelText={messages.common.indent}
                   onClick={props.setSideBarValue}
                   linkurl="/globalIndent"
+                />
+              )}
+              {(currentUserRole.toLowerCase() === "admin" ||
+                currentUserRole.toLowerCase() === "purchase-manager") && (
+                <DashboardItem
+                  nodeId="73"
+                  labelText={messages.common.quoteComparison}
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.quoteComparison}
                 />
               )}
               <DashboardItem
@@ -521,21 +540,6 @@ function SideMenu(props) {
                   linkurl="/serviceOrder"
                 />
               )}
-              {(currentUserRole.toLowerCase() === "admin" ||
-                currentUserRole.toLowerCase() === "purchase-manager") && (
-                <DashboardItem
-                  nodeId="73"
-                  labelText={messages.common.quoteComparison}
-                  onClick={props.setSideBarValue}
-                  linkurl={appRoutes.quoteComparison}
-                />
-              )}
-              <DashboardItem
-                nodeId="10"
-                labelText={messages.common.inventoryTransfer}
-                onClick={props.setSideBarValue}
-                linkurl="/inventoryTransfer"
-              />
               {(currentUserRole.toLowerCase() === "admin" ||
                 currentUserRole.toLowerCase() === "purchase-manager" ||
                 currentUserRole.toLowerCase() === "management") && (
