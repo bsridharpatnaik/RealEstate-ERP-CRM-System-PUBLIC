@@ -165,6 +165,8 @@ public class PopulateDropdownService {
             case "deadstock":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
                 morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductWithCategory(productRepo.findIdNamesAndCategory());
                 morDropdownDataList.setTenants(fetchTenantNames());
         }
         return morDropdownDataList;

@@ -43,6 +43,10 @@ public class StockSummary extends ReusableFields {
     @Column(nullable = false, length = 150)
     private String productName;
 
+    /** Denormalised from Product.category — synced alongside product name/code (Step 7). */
+    @Column(name = "categoryName", length = 150)
+    private String categoryName;
+
     @Column(nullable = false)
     private Long warehouseId;
 

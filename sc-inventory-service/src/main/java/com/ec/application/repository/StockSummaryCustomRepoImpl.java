@@ -112,6 +112,12 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                         );
                         break;
 
+                    case "categoryNames":
+                        wherePredicates.add(
+                                root.get("categoryName").in(values)
+                        );
+                        break;
+
                     case "globalSearch":
                         List<Predicate> orPredicates = new ArrayList<>();
 
@@ -175,7 +181,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 deadStockExpr,                         // dead stock
                 root.get("measurementUnit"),
                 cb.greatest(root.<Date>get("syncedAt")), // latest sync
-                reorderLevelExpr                       // effective reorder level (MAX across warehouse rows)
+                reorderLevelExpr,                      // effective reorder level (MAX across warehouse rows)
+                root.get("categoryName")
         ));
 
     /* =========================
@@ -190,7 +197,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 root.get("productId"),
                 root.get("productCode"),
                 root.get("productName"),
-                root.get("measurementUnit")
+                root.get("measurementUnit"),
+                root.get("categoryName")
         );
 
         if (!havingPredicates.isEmpty()) {
@@ -278,6 +286,9 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                                         .in(values.stream().map(String::toLowerCase).collect(Collectors.toList()))
                         );
                         break;
+                    case "categoryNames":
+                        countPredicates.add(countRoot.get("categoryName").in(values));
+                        break;
                     case "globalSearch":
                         List<Predicate> ors = new ArrayList<>();
                         for (String term : values) {
@@ -305,7 +316,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 countRoot.get("productId"),
                 countRoot.get("productCode"),
                 countRoot.get("productName"),
-                countRoot.get("measurementUnit")
+                countRoot.get("measurementUnit"),
+                countRoot.get("categoryName")
         );
 
         // Rebuild aggregate expressions on countRoot for HAVING conditions

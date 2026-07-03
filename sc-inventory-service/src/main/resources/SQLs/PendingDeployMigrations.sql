@@ -198,3 +198,19 @@ INSERT IGNORE INTO common.role (name) VALUES ('product-merge-admin');
 
 ALTER TABLE masterschema.supplier_quote_criteria_value
   MODIFY COLUMN supplier_quote_line_id BIGINT NULL;
+
+-- ----------------------------------------------------------------
+-- Stock Summary: backfill categoryName for existing rows.
+-- stock_summary.categoryName is a new additive column (auto-created on
+-- startup) denormalised from Product.category. The hourly sync job (Step 7)
+-- fills it on the next run, but this backfill populates existing rows
+-- immediately so the new Category filter/column works without waiting.
+-- stock_summary, Product and Category all live in masterschema — run once
+-- against masterschema. Idempotent (only touches rows not yet filled).
+-- ----------------------------------------------------------------
+
+UPDATE masterschema.stock_summary ss
+JOIN masterschema.Product p ON p.productId = ss.productId
+JOIN masterschema.Category c ON c.categoryId = p.categoryId
+SET ss.categoryName = c.category_name
+WHERE ss.categoryName IS NULL;

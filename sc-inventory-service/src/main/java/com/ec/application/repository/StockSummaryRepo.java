@@ -112,12 +112,14 @@ public interface StockSummaryRepo
      */
     @Modifying
     @Transactional
-    @Query("UPDATE StockSummary s SET s.productName = :productName, s.productCode = :productCode " +
+    @Query("UPDATE StockSummary s SET s.productName = :productName, s.productCode = :productCode, " +
+           "s.categoryName = :categoryName " +
            "WHERE s.tenantSchema = :tenantSchema AND s.productId = :productId")
     void updateProductDetails(@Param("tenantSchema") String tenantSchema,
                               @Param("productId") Long productId,
                               @Param("productName") String productName,
-                              @Param("productCode") String productCode);
+                              @Param("productCode") String productCode,
+                              @Param("categoryName") String categoryName);
 
     /**
      * Bulk-update warehouseName for all product rows of a (tenantSchema, warehouseId) pair.

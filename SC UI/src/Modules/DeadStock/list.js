@@ -61,6 +61,7 @@ class List extends ListCommon {
   filterRef = React.createRef();
   tableData = {
     headers: [
+      "Category",
       "Product Name",
       messages.common.productCode,
       messages.common.project,
@@ -71,6 +72,7 @@ class List extends ListCommon {
       messages.common.lastUpdated,
     ],
     keys: [
+      "categoryName",
       "productName",
       "productCode",
       "project",
@@ -257,7 +259,7 @@ class List extends ListCommon {
           continue;
         }
         if (value && value.length) {
-          if (["productNames", "productCodes"].includes(field)) {
+          if (["productNames", "productCodes", "categoryNames"].includes(field)) {
             value = value.map((v) => (typeof v === "object" && v?.name != null ? v.name : v));
           } else if (field === "tenants") {
             // Options are {tenantCode, name} objects — always send the code to backend
@@ -335,6 +337,8 @@ class List extends ListCommon {
       const options = {
         productNames: dropdown.product || [],
         productCodes: dropdown.productCodes || [],
+        categoryNames: dropdown.category || [],
+        productWithCategory: dropdown.productWithCategory || [],
         tenants: tenantOptions,
       };
       this.setState({ options });
@@ -354,6 +358,7 @@ class List extends ListCommon {
         _quantityInHand: item.quantityInHand,
         _reorderLevel: item.reorderLevel,
         ...item,
+        categoryName: item.categoryName ?? "-",
       }));
 
       this.setState({

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ProductWithCategoryProjection;
 import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.model.Product;
 
@@ -36,6 +37,9 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 	@Query(value = "SELECT productId as id,productName as name from Product m  order by name")
 	List<IdNameProjections> findIdAndNames();
+
+	@Query(value = "SELECT p.productId as id, p.productName as name, c.categoryName as categoryName FROM Product p LEFT JOIN p.category c ORDER BY p.productName")
+	List<ProductWithCategoryProjection> findIdNamesAndCategory();
 
 	@Query(value = "SELECT count(*) from Product m where m.category.categoryId=:categoryId")
 	int categoryUsageCount(@Param("categoryId") Long categoryId);
