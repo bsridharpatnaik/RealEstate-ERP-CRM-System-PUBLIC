@@ -6,6 +6,7 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import AttachFileIcon from "@material-ui/icons/AttachFile";
 import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import { API } from "../../axios";
 import { apiEndpoints } from "../../endpoints";
 import AttachmentThumbnail, { isImageFile } from "../../Shared/AttachmentThumbnail";
@@ -37,6 +38,7 @@ class SupplierQuoteForm extends Component {
       freightTerms: eq?.freightTerms || "",
       deliveryLeadDays: eq?.deliveryLeadDays || "",
       headerNotes: eq?.headerNotes || "",
+      suppliers: [],
       saving: false,
       uploading: false,
       // received quote files (vendor's quotation PDF/scan/etc) — array of { fileUUId, fileName }
@@ -68,6 +70,13 @@ class SupplierQuoteForm extends Component {
         };
       }),
     };
+  }
+
+  async componentDidMount() {
+    const res = await API.GET(apiEndpoints.getSupplierNames);
+    if (res?.success && Array.isArray(res.data)) {
+      this.setState({ suppliers: res.data });
+    }
   }
 
   handleHeaderChange = (key) => (e) => this.setState({ [key]: e.target.value });
@@ -225,8 +234,21 @@ class SupplierQuoteForm extends Component {
 
         {/* Supplier header */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-          <TextField label="Supplier Name *" value={this.state.supplierName}
-            onChange={this.handleHeaderChange("supplierName")} fullWidth {...tf} />
+          <Autocomplete
+            options={this.state.suppliers}
+            getOptionLabel={(o) => o.name || ""}
+            getOptionSelected={(o, v) => o.id === v.id}
+            value={
+              this.state.suppliers.find((s) => Number(s.id) === Number(this.state.supplierId)) ||
+              (this.state.supplierName ? { id: this.state.supplierId || null, name: this.state.supplierName } : null)
+            }
+            onChange={(e, val) =>
+              this.setState({ supplierId: val ? val.id : "", supplierName: val ? val.name : "" })
+            }
+            renderInput={(params) => (
+              <TextField {...params} label="Supplier *" fullWidth {...tf} />
+            )}
+          />
           <TextField label="Revision" value={this.state.revisionLabel}
             onChange={this.handleHeaderChange("revisionLabel")} fullWidth {...tf}
             placeholder="e.g. R-0, R-1 — leave blank to auto-number"
