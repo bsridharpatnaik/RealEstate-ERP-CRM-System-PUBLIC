@@ -2,6 +2,8 @@ import React from "react";
 import { withSnackbar } from "notistack";
 import { API } from "../../../axios";
 import { apiEndpoints } from "../../../endpoints";
+import Details from "../../PurchaseOrder/details";
+import DetailsPopup from "../../../Shared/DetailsPopup";
 
 // ── formatting helpers ──────────────────────────────────────────────────────
 const fmtFull = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -22,7 +24,7 @@ const bucketColor = (amount, bands) => {
 
 const isoToday = () => new Date().toISOString().slice(0, 10);
 const isoMonthsAgo = (m) => { const d = new Date(); d.setMonth(d.getMonth() - m); return d.toISOString().slice(0, 10); };
-const DEFAULT_RANGE = () => ({ startDate: isoMonthsAgo(3), endDate: isoToday() });
+const DEFAULT_RANGE = () => ({ startDate: isoMonthsAgo(6), endDate: isoToday() });
 
 const LIST_TABS = [
   { key: "highValue", label: "High-Value POs" },
@@ -43,6 +45,7 @@ class ProcurementSpend extends React.Component {
     poList: [],
     listTab: "highValue",
     loading: false,
+    detailOpen: false,
     detailPo: null,
     detailLoading: false,
     projects: [],
@@ -152,25 +155,25 @@ class ProcurementSpend extends React.Component {
     }
   }
 
-  async openDetail(poId) {
+  openDetail = async (poId) => {
     if (!poId) return;
-    this.setState({ detailLoading: true, detailPo: { purchaseOrderId: poId } });
+    this.setState({ detailOpen: true, detailLoading: true, detailPo: null });
     const res = await API.GET(apiEndpoints.getPurchaseOrderDetail(poId));
     if (res?.success && res.data) {
       this.setState({ detailPo: res.data, detailLoading: false });
     } else {
-      this.setState({ detailLoading: false, detailPo: null });
+      this.setState({ detailOpen: false, detailLoading: false, detailPo: null });
       this.props.enqueueSnackbar("Failed to load PO details", { variant: "error" });
     }
-  }
+  };
 
-  closeDetail = () => this.setState({ detailPo: null, detailLoading: false });
+  closeDetail = () => this.setState({ detailOpen: false, detailPo: null, detailLoading: false });
 
   setFilter = (key, value) => this.setState((s) => ({ filters: { ...s.filters, [key]: value } }));
 
   resetFilters = () => {
     this.setState(
-      { filters: { ...DEFAULT_RANGE(), project: "", supplier: "", firm: "", status: "", minValue: "", maxValue: "" } },
+      { filters: { startDate: "", endDate: "", project: "", supplier: "", firm: "", status: "", minValue: "", maxValue: "" } },
       () => this.fetchAll()
     );
   };
@@ -225,21 +228,35 @@ class ProcurementSpend extends React.Component {
   renderTrend() {
     const rows = this.state.trend;
     const max = rows.reduce((m, r) => Math.max(m, r.totalValue), 0) || 1;
+    const W = 900, H = 230, padL = 12, padR = 12, padT = 22, padB = 30;
+    const innerW = W - padL - padR;
+    const innerH = H - padT - padB;
+    const n = rows.length;
+    const px = (i) => (n <= 1 ? padL + innerW / 2 : padL + (i / (n - 1)) * innerW);
+    const py = (v) => padT + innerH - (v / max) * innerH;
+    const linePts = rows.map((r, i) => `${px(i)},${py(r.totalValue)}`).join(" ");
+    const areaPts = n > 0 ? `${px(0)},${padT + innerH} ${linePts} ${px(n - 1)},${padT + innerH}` : "";
     return (
       <div style={{ background: "#fff", border: "1px solid #e6e9ef", borderRadius: 8, padding: 14, marginBottom: 20 }}>
         <div style={{ fontWeight: 600, marginBottom: 12, color: "#323c47" }}>Monthly Spend (last 12 months)</div>
-        {rows.length === 0 ? (
+        {n === 0 ? (
           <div style={{ fontSize: 12, color: "#999" }}>No data</div>
         ) : (
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 160 }}>
-            {rows.map((r, i) => (
-              <div key={i} style={{ flex: 1, textAlign: "center" }} title={`${r.month}: ${fmtFull(r.totalValue)} (${r.poCount} POs)`}>
-                <div style={{ fontSize: 10, color: "#666", marginBottom: 4 }}>{fmtShort(r.totalValue)}</div>
-                <div style={{ height: `${(r.totalValue / max) * 120}px`, background: "#5e81f4", borderRadius: "3px 3px 0 0", minHeight: 2 }} />
-                <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>{r.month}</div>
-              </div>
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" preserveAspectRatio="xMidYMid meet" style={{ display: "block" }}>
+            {[0.25, 0.5, 0.75, 1].map((f, i) => (
+              <line key={i} x1={padL} x2={padL + innerW} y1={padT + innerH * (1 - f)} y2={padT + innerH * (1 - f)} stroke="#eef1f6" strokeWidth="1" />
             ))}
-          </div>
+            <polygon points={areaPts} fill="rgba(94,129,244,0.10)" />
+            <polyline points={linePts} fill="none" stroke="#5e81f4" strokeWidth="2" />
+            {rows.map((r, i) => (
+              <g key={i}>
+                <circle cx={px(i)} cy={py(r.totalValue)} r="3.5" fill="#5e81f4">
+                  <title>{`${r.month}: ${fmtFull(r.totalValue)} (${r.poCount} POs)`}</title>
+                </circle>
+                <text x={px(i)} y={H - 10} textAnchor="middle" fontSize="10" fill="#888">{r.month.slice(2)}</text>
+              </g>
+            ))}
+          </svg>
         )}
       </div>
     );
@@ -301,6 +318,10 @@ class ProcurementSpend extends React.Component {
             </tbody>
           </table>
         </div>
+        <div style={{ marginTop: 8, fontSize: 11, color: "#8a94a6", display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <span><span style={{ color: "#8e44ad" }}>★</span> Special PO</span>
+          <span>Amount colour = value bucket (grey → amber → orange → red as the total grows).</span>
+        </div>
       </div>
     );
   }
@@ -325,77 +346,24 @@ class ProcurementSpend extends React.Component {
 
   renderDetailModal() {
     const po = this.state.detailPo;
-    if (!po) return null;
-    const loading = this.state.detailLoading;
-    const lines = Array.isArray(po.lines) ? po.lines : [];
-    const kv = (label, value) => (
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <span style={{ fontSize: 11, color: "#8a94a6" }}>{label}</span>
-        <span style={{ fontSize: 13, color: "#323c47", fontWeight: 600 }}>{value || "-"}</span>
-      </div>
-    );
-    const poDate = po.poDate || "-";
     return (
-      <div onClick={this.closeDetail}
-        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1300, display: "flex", justifyContent: "center", alignItems: "flex-start", overflowY: "auto", padding: "40px 16px" }}>
-        <div onClick={(e) => e.stopPropagation()}
-          style={{ background: "#fff", borderRadius: 8, width: "min(820px, 100%)", boxShadow: "0 8px 30px rgba(0,0,0,0.2)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid #e6e9ef" }}>
-            <div style={{ fontWeight: 700, color: "#323c47" }}>Purchase Order · {po.purchaseOrderId}</div>
-            <button onClick={this.closeDetail} style={{ border: "none", background: "transparent", fontSize: 20, cursor: "pointer", color: "#888", lineHeight: 1 }}>×</button>
-          </div>
-          {loading ? (
-            <div style={{ padding: 30, textAlign: "center", color: "#888" }}>Loading…</div>
-          ) : (
-            <div style={{ padding: 18 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 18 }}>
-                {kv("PO Date", poDate)}
-                {kv("Status", po.status)}
-                {kv("Project", po.projectName || "Unassigned")}
-                {kv("Supplier", po.supplier?.name)}
-                {kv("Firm", po.firm?.firmName)}
-                {kv("Subject", po.subject)}
-              </div>
-              <div style={{ overflowX: "auto", border: "1px solid #eef1f6", borderRadius: 6 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                  <thead>
-                    <tr style={{ background: "#f5f7fa", textAlign: "left", color: "#323c47" }}>
-                      <th style={thStyle}>Product</th>
-                      <th style={thStyle}>Unit</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Qty</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Received</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Pending</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lines.length === 0 && (
-                      <tr><td colSpan={5} style={{ padding: 14, textAlign: "center", color: "#999" }}>No line items</td></tr>
-                    )}
-                    {lines.map((item, i) => (
-                      <tr key={i} style={{ borderBottom: "1px solid #eef1f6" }}>
-                        <td style={tdStyle}>
-                          {item.product?.productName || "-"}
-                          {item.product?.productCode && <div style={{ fontSize: 10, color: "#999" }}>{item.product.productCode}</div>}
-                        </td>
-                        <td style={tdStyle}>{item.measurementUnit || "-"}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>{item.quantity != null ? Number(item.quantity).toFixed(2) : "-"}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>{item.quantityReceived != null ? Number(item.quantityReceived).toFixed(2) : "-"}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>{item.quantityPending != null ? Number(item.quantityPending).toFixed(2) : "-"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 11, color: "#8a94a6" }}>Grand Total</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: "#323c47" }}>{fmtFull(po.grandTotal)}</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <DetailsPopup open={this.state.detailOpen} onClose={this.closeDetail}>
+        {this.state.detailLoading || !po ? (
+          <div style={{ padding: 40, textAlign: "center", color: "#888" }}>Loading…</div>
+        ) : (
+          <Details
+            data={po}
+            fromRelation={true}
+            close={this.closeDetail}
+            enqueueSnackbar={this.props.enqueueSnackbar}
+            edit={() => {}}
+            delete={() => {}}
+            onRefresh={() => {}}
+            onOpenRelation={() => {}}
+            onAddLineToPO={() => {}}
+          />
+        )}
+      </DetailsPopup>
     );
   }
 
