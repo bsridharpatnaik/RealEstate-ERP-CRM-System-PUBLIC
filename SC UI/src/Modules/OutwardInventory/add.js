@@ -142,14 +142,52 @@ class Add extends AddForm {
         </div>
 
         <div style={{ padding: '10px 12px 4px' }}>
-          {/* Row 1: Product + Warehouse (own per line, so the same product can be
-              outwarded from two different warehouses in one entry) + Quantity */}
+          {/* Row 1: Warehouse (own per line, so the same product can be
+              outwarded from two different warehouses in one entry) + Product + Quantity.
+              Warehouse is first: stock is scoped per-warehouse, so it must be picked
+              before the product list shows meaningful stock. */}
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <div style={{ flex: 1.6 }}>
+              <Autocomplete
+                id={`warehouse-autocomplete-${key}`}
+                options={this.props.dropdowns.warehouse || []}
+                disableClearable
+                value={(this.props.dropdowns.warehouse || []).find(
+                  w => Number(w.id) === Number(this.state.noproduct[key]?.warehouseId)
+                ) || null}
+                getOptionLabel={(option) => option.name || ""}
+                onChange={(e, value) => {
+                  const p = this.state.noproduct;
+                  p[key].warehouseId = value ? value.id : null;
+                  this.setState({ noproduct: { ...p } });
+                  const productId = p[key].productId;
+                  if (productId && value) {
+                    const stockInfo = this.state.allProductsStockMap[productId];
+                    this.warnIfNoStockInWarehouse({ id: productId, name: this.props.dropdowns.product?.find(pr => pr.id === productId)?.name || 'Product' }, stockInfo, value.id);
+                    this.fetchBatchesForProduct(key, productId, value.id);
+                    setTimeout(() => this.fetchBatchPreview(key), 100);
+                  }
+                  this.getCurrentStock(key);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    name="warehouseId"
+                    variant="outlined"
+                    margin="normal"
+                    label="Warehouse"
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                )}
+              />
+            </div>
             <div style={{ flex: 2.2 }}>
               <Autocomplete
                 id={`product-autocomplete-${key}`}
                 options={remainingProducts}
                 disableClearable
+                disabled={!this.state.noproduct[key]?.warehouseId}
                 getOptionLabel={(option) => option.name || ""}
                 renderOption={(option) => {
                   const { allProductsStockMap } = this.state;
@@ -208,41 +246,11 @@ class Add extends AddForm {
                     margin="normal"
                     label={messages.common.inventory}
                     required
-                    InputLabelProps={{ shrink: true }}
-                  />
-                )}
-              />
-            </div>
-            <div style={{ flex: 1.6 }}>
-              <Autocomplete
-                id={`warehouse-autocomplete-${key}`}
-                options={this.props.dropdowns.warehouse || []}
-                disableClearable
-                value={(this.props.dropdowns.warehouse || []).find(
-                  w => Number(w.id) === Number(this.state.noproduct[key]?.warehouseId)
-                ) || null}
-                getOptionLabel={(option) => option.name || ""}
-                onChange={(e, value) => {
-                  const p = this.state.noproduct;
-                  p[key].warehouseId = value ? value.id : null;
-                  this.setState({ noproduct: { ...p } });
-                  const productId = p[key].productId;
-                  if (productId && value) {
-                    const stockInfo = this.state.allProductsStockMap[productId];
-                    this.warnIfNoStockInWarehouse({ id: productId, name: this.props.dropdowns.product?.find(pr => pr.id === productId)?.name || 'Product' }, stockInfo, value.id);
-                    this.fetchBatchesForProduct(key, productId, value.id);
-                    setTimeout(() => this.fetchBatchPreview(key), 100);
-                  }
-                  this.getCurrentStock(key);
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    name="warehouseId"
-                    variant="outlined"
-                    margin="normal"
-                    label="Warehouse"
-                    required
+                    placeholder={
+                      this.state.noproduct[key]?.warehouseId
+                        ? undefined
+                        : "Select warehouse first"
+                    }
                     InputLabelProps={{ shrink: true }}
                   />
                 )}
