@@ -17,6 +17,7 @@ public final class StockSummarySpecification {
         List<String> productNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productNames");
         List<String> tenants      = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "tenants");
         List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
+        List<String> categoryNames = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categoryNames");
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
 
         Specification<StockSummary> spec = null;
@@ -29,6 +30,9 @@ public final class StockSummarySpecification {
 
         if (notEmpty(productCodes))
             spec = and(spec, specbldr.whereDirectFieldContains(StockSummary_.PRODUCT_CODE, productCodes));
+
+        if (notEmpty(categoryNames))
+            spec = and(spec, specbldr.whereDirectFieldEquals(StockSummary_.CATEGORY_NAME, categoryNames));
 
         if (notEmpty(globalSearch)) {
             Specification<StockSummary> gs = null;

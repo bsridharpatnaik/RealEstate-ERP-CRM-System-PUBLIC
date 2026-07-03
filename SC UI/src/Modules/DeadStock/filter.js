@@ -22,17 +22,38 @@ class Filter extends CommonFilter {
       .map((p) => ({ id: p.id, name: p.name }));
   }
 
-  // on category change: drop selected products no longer valid, then re-render
+  // product codes filtered by selected categories; all codes when no category selected
+  getCodeOptions() {
+    const all = this.props.options?.productCodes || [];
+    const cats = this.getSelectedCategoryNames();
+    if (cats.length === 0) return all;
+    const withCat = this.props.options?.productWithCategory || [];
+    return withCat
+      .filter((p) => cats.includes(p.categoryName) && p.productCode != null)
+      .map((p) => ({ id: p.id, name: p.productCode }));
+  }
+
+  // on category change: drop selected products/codes no longer valid, then re-render
   handleCategoryChange = () => {
-    const allowed = this.getProductOptions().map((o) => o.name);
-    const raw = this.filterData.productNames;
-    const sel = raw == null ? [] : Array.isArray(raw) ? raw : [raw];
-    if (this.getSelectedCategoryNames().length > 0) {
-      this.filterData.productNames = sel.filter((s) =>
-        allowed.includes(typeof s === "object" && s?.name != null ? s.name : s)
+    const hasCats = this.getSelectedCategoryNames().length > 0;
+    if (hasCats) {
+      const allowedNames = this.getProductOptions().map((o) => o.name);
+      const rawN = this.filterData.productNames;
+      const selN = rawN == null ? [] : Array.isArray(rawN) ? rawN : [rawN];
+      this.filterData.productNames = selN.filter((s) =>
+        allowedNames.includes(typeof s === "object" && s?.name != null ? s.name : s)
+      );
+
+      const allowedCodes = this.getCodeOptions().map((o) =>
+        typeof o === "object" && o?.name != null ? o.name : o
+      );
+      const rawC = this.filterData.productCodes;
+      const selC = rawC == null ? [] : Array.isArray(rawC) ? rawC : [rawC];
+      this.filterData.productCodes = selC.filter((s) =>
+        allowedCodes.includes(typeof s === "object" && s?.name != null ? s.name : s)
       );
     }
-    // remount filter body so the Product dropdown picks up new options + pruned chips
+    // remount filter body so the dropdowns pick up new options + pruned chips
     this.setState({ reset: false }, () => this.setState({ reset: true }));
   };
 
@@ -45,6 +66,15 @@ class Filter extends CommonFilter {
             {this.renderSwitch("Only with dead stock", "deadStockPresent")}
             {this.renderSwitch("Only low stock", "lowStock")}
             {this.renderAutoComplete(
+              "Category",
+              this.props.options?.categoryNames || [],
+              "categoryNames",
+              (option) => (typeof option === "object" && option?.name != null ? option.name : String(option ?? "")),
+              true,
+              false,
+              this.handleCategoryChange
+            )}
+            {this.renderAutoComplete(
               "Product Name",
               this.getProductOptions(),
               "productNames",
@@ -53,20 +83,11 @@ class Filter extends CommonFilter {
             )}
             {this.renderAutoComplete(
               "Product Code",
-              this.props.options?.productCodes || [],
+              this.getCodeOptions(),
               "productCodes",
               (option) =>
                 option && (typeof option === "object" ? (option.name ?? `Product Code ${option.id ?? ""}`) : String(option)),
               true
-            )}
-            {this.renderAutoComplete(
-              "Category",
-              this.props.options?.categoryNames || [],
-              "categoryNames",
-              (option) => (typeof option === "object" && option?.name != null ? option.name : String(option ?? "")),
-              true,
-              false,
-              this.handleCategoryChange
             )}
             {this.renderAutoComplete(
               "Project",
