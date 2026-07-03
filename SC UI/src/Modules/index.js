@@ -37,6 +37,7 @@ import GlobalStockReports from "./GlobalStockReports";
 import PoReconciliationReport from "./Reports/PoReconciliation";
 import IndentFulfillmentReport from "./Reports/IndentFulfillment";
 import SupplierPerformanceReport from "./Reports/SupplierPerformance";
+import ProcurementSpend from "./Reports/ProcurementSpend";
 import BOQIndentReport from "./Reports/BOQIndent";
 import BOQTracker from "./Reports/BOQTracker";
 import BOQTrackerGlobal from "./Reports/BOQTracker/global";
@@ -82,6 +83,7 @@ export {
   PoReconciliationReport,
   IndentFulfillmentReport,
   SupplierPerformanceReport,
+  ProcurementSpend,
   BOQIndentReport,
   BOQTracker,
   BOQTrackerGlobal,

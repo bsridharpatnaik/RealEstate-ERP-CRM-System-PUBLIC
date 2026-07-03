@@ -48,6 +48,7 @@ import {
   PoReconciliationReport,
   IndentFulfillmentReport,
   SupplierPerformanceReport,
+  ProcurementSpend,
   BOQIndentReport,
   BOQTracker,
   BOQTrackerGlobal,
@@ -141,6 +142,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.supplierPerformanceReport}>
                   <SupplierPerformanceReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.procurementSpend}>
+                  <ProcurementSpend key={new Date()} {...props} />
                 </Route>
                 <Route path={appRoutes.boqIndentReport}>
                   <BOQIndentReport key={new Date()} {...props} />

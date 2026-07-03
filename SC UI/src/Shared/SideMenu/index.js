@@ -88,6 +88,7 @@ function SideMenu(props) {
     props.history.location.pathname === appRoutes.poReconReport ||
     props.history.location.pathname === appRoutes.indentFulfillmentReport ||
     props.history.location.pathname === appRoutes.supplierPerformanceReport ||
+    props.history.location.pathname === appRoutes.procurementSpend ||
     props.history.location.pathname === appRoutes.globalBOQTracker ||
     props.history.location.pathname === "/quoteComparison" ||
     props.history.location.pathname === "/quoteComparison/create"
@@ -623,6 +624,14 @@ function SideMenu(props) {
                     labelText="Supplier Performance"
                     onClick={props.setSideBarValue}
                     linkurl={appRoutes.supplierPerformanceReport}
+                  />
+                )}
+                {_role === "admin" && (
+                  <DashboardItem
+                    nodeId="82"
+                    labelText="Procurement Spend"
+                    onClick={props.setSideBarValue}
+                    linkurl={appRoutes.procurementSpend}
                   />
                 )}
                 {(_role === "admin" || _role === "purchase-manager" || _role === "project-manager") && (
