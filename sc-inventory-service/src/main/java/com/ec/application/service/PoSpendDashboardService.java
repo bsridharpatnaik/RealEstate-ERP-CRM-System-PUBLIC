@@ -200,7 +200,7 @@ public class PoSpendDashboardService {
         return out;
     }
 
-    // ── Monthly trend (last 12 calendar months) ───────────────────────────────
+    // ── Monthly trend (follows the active date filter) ─────────────────────────
 
     public List<PoSpendMonthlyRow> getTrend(FilterDataList filters) {
         WhereClause w = buildWhere(filters);
@@ -208,7 +208,6 @@ public class PoSpendDashboardService {
             "SELECT DATE_FORMAT(po.po_date, '%Y-%m') AS ym," +
             " COALESCE(SUM(COALESCE(po.grandTotal,0)),0) AS total, COUNT(*) AS cnt" +
             BASE_FROM + w.sql +
-            " AND po.po_date >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 11 MONTH)" +
             " GROUP BY ym ORDER BY ym";
         Query q = em.createNativeQuery(sql);
         applyParams(q, w.params);

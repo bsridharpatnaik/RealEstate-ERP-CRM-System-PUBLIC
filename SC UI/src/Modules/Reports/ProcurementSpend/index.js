@@ -89,15 +89,13 @@ class ProcurementSpend extends React.Component {
   async fetchAll() {
     this.setState({ loading: true });
     const body = this.buildFilterData();
-    // Trend is a 12-month history widget — keep it independent of the page date range.
-    const trendBody = { filterData: body.filterData.filter((x) => x.attrName !== "startDate" && x.attrName !== "endDate") };
     try {
       const [summary, byProject, bySupplier, byFirm, trend] = await Promise.all([
         API.POST(apiEndpoints.poSpendSummary, body),
         API.POST(apiEndpoints.poSpendByProject, body),
         API.POST(apiEndpoints.poSpendBySupplier, body),
         API.POST(apiEndpoints.poSpendByFirm, body),
-        API.POST(apiEndpoints.poSpendTrend, trendBody),
+        API.POST(apiEndpoints.poSpendTrend, body),
       ]);
       this.setState({
         summary: summary?.success ? summary.data : null,
@@ -236,9 +234,14 @@ class ProcurementSpend extends React.Component {
     const py = (v) => padT + innerH - (v / max) * innerH;
     const linePts = rows.map((r, i) => `${px(i)},${py(r.totalValue)}`).join(" ");
     const areaPts = n > 0 ? `${px(0)},${padT + innerH} ${linePts} ${px(n - 1)},${padT + innerH}` : "";
+    const { startDate, endDate } = this.state.filters;
+    const rangeLabel = startDate && endDate ? `${startDate} to ${endDate}`
+      : startDate ? `since ${startDate}`
+      : endDate ? `up to ${endDate}`
+      : "all time";
     return (
       <div style={{ background: "#fff", border: "1px solid #e6e9ef", borderRadius: 8, padding: 14, marginBottom: 20 }}>
-        <div style={{ fontWeight: 600, marginBottom: 12, color: "#323c47" }}>Monthly Spend (last 12 months)</div>
+        <div style={{ fontWeight: 600, marginBottom: 12, color: "#323c47" }}>Monthly Spend <span style={{ fontWeight: 400, fontSize: 12, color: "#8a94a6" }}>({rangeLabel})</span></div>
         {n === 0 ? (
           <div style={{ fontSize: 12, color: "#999" }}>No data</div>
         ) : (
