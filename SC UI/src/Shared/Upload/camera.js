@@ -1,7 +1,4 @@
 const camera = (function () {
-  let width = 0;
-  let height = 0;
-
   const createObjects = function () {};
 
   return {
@@ -10,11 +7,8 @@ const camera = (function () {
     canvas: null,
     stream: null,
 
-    startCamera: function (w = 680, h = 480) {
+    startCamera: function () {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        width = w;
-        height = h;
-
         createObjects();
 
         this.video = document.getElementById("video");
