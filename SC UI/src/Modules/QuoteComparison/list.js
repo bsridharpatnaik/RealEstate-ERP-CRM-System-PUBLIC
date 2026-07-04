@@ -221,11 +221,11 @@ class QuoteComparisonList extends ListCommon {
           {this.renderPagination()}
         </div>
 
-        {/* Details Slide Panel */}
+        {/* Details — full-screen popup (uses the whole viewport, no wasted side band) */}
         {detailsOpen && selectedQcId && (
           <div style={{
-            position: "fixed", top: 0, right: 0, bottom: 0, width: "80%", maxWidth: 1200,
-            background: "#fff", boxShadow: "-4px 0 24px rgba(0,0,0,0.15)", zIndex: 1200, overflowY: "auto"
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100%",
+            background: "#fff", zIndex: 1300, overflowY: "auto"
           }}>
             <QuoteComparisonDetails
               qcId={selectedQcId}

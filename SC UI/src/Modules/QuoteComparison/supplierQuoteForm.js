@@ -175,6 +175,27 @@ class SupplierQuoteForm extends Component {
       this.props.enqueueSnackbar("Supplier name is required", { variant: "error" });
       return;
     }
+    if (!quotationDate) {
+      this.props.enqueueSnackbar("Quotation date is required", { variant: "error" });
+      return;
+    }
+
+    // A line is "being quoted" once the user enters a qty or a rate on it. Every such line must
+    // carry a rate, and at least one line must be quoted — otherwise the quote has no prices.
+    const isTouched = (l) => String(l.quotedRate ?? "").trim() !== "" || String(l.quotedQty ?? "").trim() !== "";
+    const touched = lines.filter(isTouched);
+    if (touched.length === 0) {
+      this.props.enqueueSnackbar("Enter a rate for at least one product", { variant: "error" });
+      return;
+    }
+    const missingRate = touched.filter(l => !(parseFloat(l.quotedRate) > 0));
+    if (missingRate.length > 0) {
+      this.props.enqueueSnackbar(
+        "Rate is required for: " + missingRate.map(l => l.productName).join(", "),
+        { variant: "error" }
+      );
+      return;
+    }
 
     this.setState({ saving: true });
     try {
@@ -228,8 +249,10 @@ class SupplierQuoteForm extends Component {
     const { lines, saving, uploading, headerCriteriaValues, attachments } = this.state;
     const tf = { size: "small", variant: "outlined", style: { marginBottom: 8 } };
 
+    const lineCriteria = (this.props.criteria || []).filter(c => c.criteriaScope !== "HEADER");
+
     return (
-      <div style={{ padding: 24, maxWidth: 900 }}>
+      <div style={{ padding: 24 }}>
         <h3 style={{ marginTop: 0 }}>{this.props.existingQuote ? "Edit Supplier Quote" : "Add Supplier Quote"}</h3>
 
         {/* Supplier header */}
@@ -255,7 +278,7 @@ class SupplierQuoteForm extends Component {
             helperText="Add another quote for the same vendor to capture a negotiation round (R-0, R-1, R-2...)" />
           <TextField label="Quotation Ref No" value={this.state.quotationRefNo}
             onChange={this.handleHeaderChange("quotationRefNo")} fullWidth {...tf} />
-          <TextField label="Quotation Date" type="date" InputLabelProps={{ shrink: true }}
+          <TextField label="Quotation Date *" type="date" InputLabelProps={{ shrink: true }}
             value={this.state.quotationDate} onChange={this.handleHeaderChange("quotationDate")} fullWidth {...tf} />
           <TextField label="Validity Date" type="date" InputLabelProps={{ shrink: true }}
             value={this.state.validityDate} onChange={this.handleHeaderChange("validityDate")} fullWidth {...tf} />
@@ -320,50 +343,50 @@ class SupplierQuoteForm extends Component {
           )}
         </div>
 
-        {/* Line items */}
-        <h4>Line Responses</h4>
-        {lines.map((line, idx) => (
-          <div key={line.qcLineId} style={{
-            border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16
-          }}>
-            <div style={{ fontWeight: 600, marginBottom: 12 }}>
-              {line.productName} — Required: {line.requiredQty} {line.unit}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-              <TextField label="Quoted Qty" type="number" value={line.quotedQty}
-                onChange={this.handleLineChange(idx, "quotedQty")} fullWidth {...tf} />
-              <TextField label="Unit Rate" type="number" value={line.quotedRate}
-                onChange={this.handleLineChange(idx, "quotedRate")} fullWidth {...tf} />
-              <TextField label="Discount %" type="number" value={line.discountPercent}
-                onChange={this.handleLineChange(idx, "discountPercent")} fullWidth {...tf} />
-              <TextField label="GST %" type="number" value={line.gstPercent}
-                onChange={this.handleLineChange(idx, "gstPercent")} fullWidth {...tf} />
-              <TextField label="Freight Amount" type="number" value={line.freightAmount}
-                onChange={this.handleLineChange(idx, "freightAmount")} fullWidth {...tf} />
-              <TextField label="Expected Delivery" type="date" InputLabelProps={{ shrink: true }}
-                value={line.expectedDeliveryDate} onChange={this.handleLineChange(idx, "expectedDeliveryDate")} fullWidth {...tf} />
-              <TextField label="Line Remarks" value={line.lineRemarks}
-                onChange={this.handleLineChange(idx, "lineRemarks")} fullWidth {...tf} />
-              <div style={{ display: "flex", alignItems: "center", fontSize: 12, color: "#555", padding: 8,
-                background: "#f9f9f9", borderRadius: 4, border: "1px solid #e0e0e0" }}>
-                <span>Landed Cost: <strong>₹{this.computeLanded(line)}</strong></span>
-              </div>
-            </div>
-
-            {/* Criteria values */}
-            {line.criteriaValues.length > 0 && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#666", marginBottom: 8 }}>Per-Product Criteria</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+        {/* Line items — compact spreadsheet-style grid: one row per product, fill across.
+            Landed cost updates live per row so the buyer sees the effective price as they type. */}
+        <h4>Line Responses <span style={{ fontSize: 12, fontWeight: 400, color: "#999" }}>— fill a row per product; blank rows are skipped</span></h4>
+        <div style={{ overflowX: "auto", border: "1px solid #e0e0e0", borderRadius: 8, marginBottom: 16 }}>
+          <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: "#f5f6fa" }}>
+                <th style={qh(200, "left")}>Product</th>
+                <th style={qh(70)}>Qty</th>
+                <th style={qh(90)}>Rate ₹ *</th>
+                <th style={qh(70)}>Disc %</th>
+                <th style={qh(70)}>GST %</th>
+                <th style={qh(90)}>Freight ₹</th>
+                <th style={qh(140)}>Delivery</th>
+                {lineCriteria.map(c => <th key={c.id} style={qh(110)}>{c.criteriaName}</th>)}
+                <th style={qh(120)}>Remarks</th>
+                <th style={qh(110, "right")}>Landed ₹</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((line, idx) => (
+                <tr key={line.qcLineId} style={{ borderTop: "1px solid #f0f0f0" }}>
+                  <td style={qc("left")}>
+                    <div style={{ fontWeight: 600 }}>{line.productName}</div>
+                    <div style={{ fontSize: 11, color: "#90a4ae" }}>Req: {line.requiredQty} {line.unit}</div>
+                  </td>
+                  <td style={qc()}><CellInput type="number" value={line.quotedQty} onChange={this.handleLineChange(idx, "quotedQty")} placeholder={line.requiredQty} /></td>
+                  <td style={qc()}><CellInput type="number" value={line.quotedRate} onChange={this.handleLineChange(idx, "quotedRate")} /></td>
+                  <td style={qc()}><CellInput type="number" value={line.discountPercent} onChange={this.handleLineChange(idx, "discountPercent")} /></td>
+                  <td style={qc()}><CellInput type="number" value={line.gstPercent} onChange={this.handleLineChange(idx, "gstPercent")} /></td>
+                  <td style={qc()}><CellInput type="number" value={line.freightAmount} onChange={this.handleLineChange(idx, "freightAmount")} /></td>
+                  <td style={qc()}><CellInput type="date" value={line.expectedDeliveryDate} onChange={this.handleLineChange(idx, "expectedDeliveryDate")} /></td>
                   {line.criteriaValues.map((cv, cIdx) => (
-                    <TextField key={cv.criteriaId} label={cv.criteriaName} value={cv.value}
-                      onChange={this.handleCriteriaChange(idx, cIdx)} fullWidth {...tf} />
+                    <td key={cv.criteriaId} style={qc()}><CellInput value={cv.value} onChange={this.handleCriteriaChange(idx, cIdx)} /></td>
                   ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+                  <td style={qc()}><CellInput value={line.lineRemarks} onChange={this.handleLineChange(idx, "lineRemarks")} /></td>
+                  <td style={{ ...qc("right"), fontWeight: 700, color: "#1565c0", whiteSpace: "nowrap" }}>
+                    ₹{Number(this.computeLanded(line)).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* Actions */}
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
@@ -376,5 +399,29 @@ class SupplierQuoteForm extends Component {
     );
   }
 }
+
+// Lightweight cell input for the line-response grid (plain input keeps a wide grid of many
+// fields fast and compact vs. a MUI TextField per cell).
+function CellInput({ type = "text", value, onChange, placeholder }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder != null ? String(placeholder) : ""}
+      style={{
+        width: "100%", boxSizing: "border-box", padding: "6px 8px", fontSize: 13,
+        border: "1px solid #d5d9e0", borderRadius: 4, background: "#fff",
+      }}
+    />
+  );
+}
+
+const qh = (width, align = "center") => ({
+  width, minWidth: width, padding: "8px 10px", textAlign: align,
+  fontWeight: 600, fontSize: 12, color: "#555", borderBottom: "2px solid #e0e0e0",
+  whiteSpace: "nowrap",
+});
+const qc = (align = "center") => ({ padding: "6px 8px", textAlign: align, verticalAlign: "middle" });
 
 export default SupplierQuoteForm;
