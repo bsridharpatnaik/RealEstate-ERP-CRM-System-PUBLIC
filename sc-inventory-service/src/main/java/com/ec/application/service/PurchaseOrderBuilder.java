@@ -77,6 +77,7 @@ public class PurchaseOrderBuilder {
         line.setSpecification(itemReq.getSpecification());
         line.setQuantity(itemReq.getQuantity());
         line.setDiameter(itemReq.getDiameter());
+        line.setSize(itemReq.getSize());
         line.setTotalAmount(itemReq.getTotalAmount());
         line.setTolerancePercent(itemReq.getTolerancePercent() != null ? itemReq.getTolerancePercent() : 0.0);
         line.setSampleImageFileId(itemReq.getSampleImageFileId());

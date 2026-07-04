@@ -197,6 +197,7 @@ public class PurchaseOrderService extends ReusableFields {
                     line.setBrand(update.getBrand());
                     line.setGrade(update.getGrade());
                     line.setDiameter(update.getDiameter());
+                    line.setSize(update.getSize());
                     line.setSpecification(update.getSpecification());
                     line.setNetRate(update.getNetRate());
                     line.setTotalAmount(update.getTotalAmount());

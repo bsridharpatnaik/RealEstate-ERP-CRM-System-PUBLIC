@@ -383,6 +383,7 @@ public class PurchaseOrderPdfService {
                     + (notBlank(line.getBrand())          ? "\nBrand Name: " + line.getBrand() : "")
                     + (notBlank(line.getGrade())          ? "\nGrade: " + line.getGrade() : "")
                     + (notBlank(line.getDiameter())       ? "\nDia: " + line.getDiameter() : "")
+                    + (notBlank(line.getSize())           ? "\nSize: " + line.getSize() : "")
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
                     ? "\nSpec: " + line.getSpecification() : "");
 

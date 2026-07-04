@@ -951,6 +951,7 @@ class Details extends CommonDetails {
                             item.brand && `Brand Name: ${item.brand}`,
                             item.grade && `Grade: ${item.grade}`,
                             item.diameter && `Diameter: ${item.diameter}`,
+                            item.size && `Size: ${item.size}`,
                             item.specification &&
                               `Spec: ${item.specification}`,
                           ].filter(Boolean);
