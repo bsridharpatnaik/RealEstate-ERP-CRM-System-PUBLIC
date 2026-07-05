@@ -5,7 +5,9 @@ import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
 import com.ec.application.aspects.UseDefaultTenant;
 import com.ec.application.constants.RoleConstants;
+import com.ec.application.data.CancelServiceOrderLineRequest;
 import com.ec.application.data.CancelServiceOrderRequest;
+import com.ec.application.data.CompleteServiceOrderLineRequest;
 import com.ec.application.data.CreateServiceOrderRequest;
 import com.ec.application.data.MarkCompleteServiceOrderRequest;
 import com.ec.application.data.ReturnServiceOrderData;
@@ -122,5 +124,28 @@ public class ServiceOrderController {
     @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
     public ServiceOrder cancelServiceOrder(@PathVariable String id, @RequestBody(required = false) CancelServiceOrderRequest payload) throws Exception {
         return serviceOrderService.cancelServiceOrder(id, payload);
+    }
+
+    @PostMapping("/{id}/line/{lineId}/complete")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public ServiceOrder completeLine(@PathVariable String id, @PathVariable Long lineId,
+                                     @RequestBody(required = false) CompleteServiceOrderLineRequest payload) throws Exception {
+        return serviceOrderService.completeLine(id, lineId, payload);
+    }
+
+    @PostMapping("/{id}/line/{lineId}/cancel")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public ServiceOrder cancelLine(@PathVariable String id, @PathVariable Long lineId,
+                                   @RequestBody(required = false) CancelServiceOrderLineRequest payload) throws Exception {
+        return serviceOrderService.cancelLine(id, lineId, payload);
+    }
+
+    @PostMapping("/{id}/line/{lineId}/reopen")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public ServiceOrder reopenLine(@PathVariable String id, @PathVariable Long lineId) throws Exception {
+        return serviceOrderService.reopenLine(id, lineId);
     }
 }

@@ -84,6 +84,7 @@ public class ServiceOrderService {
         }
         ServiceOrderLine line = new ServiceOrderLine();
         line.setServiceOrder(so);
+        line.setStatus(ServiceOrderStatusConstants.STATUS_NEW);
         line.setDescription(req.getDescription());
         line.setQuantity(req.getQuantity());
         line.setRate(req.getRate());
@@ -172,6 +173,9 @@ public class ServiceOrderService {
             throw new Exception("A Service Order must have at least one line.");
         }
 
+        // Adding/removing lines can change the derived header status (e.g. a new NEW line on an
+        // otherwise-completed order → PARTIALLY_COMPLETED).
+        recomputeHeaderStatus(so);
         ServiceOrder saved = serviceOrderRepo.save(so);
         String activityUser = resolveCurrentUser();
         activityLogService.record("UPDATED", "SERVICE_ORDER", saved.getServiceOrderId(),
@@ -180,32 +184,30 @@ public class ServiceOrderService {
     }
 
     @Transactional
+    // Whole-order complete: completes every still-open (NEW) line, applying per-line warranty from
+    // the request. Header status is then derived from the lines.
     public ServiceOrder markComplete(String id, MarkCompleteServiceOrderRequest request) throws Exception {
         ServiceOrder so = serviceOrderRepo.findById(id)
                 .orElseThrow(() -> new Exception("Service Order not found: " + id));
         if (ServiceOrderStatusConstants.getTerminalStatuses().contains(so.getStatus())) {
             throw new Exception("Service Order is already in a terminal status: " + so.getStatus());
         }
-        so.setStatus(ServiceOrderStatusConstants.STATUS_COMPLETED);
-        so.setLastStatusUpdatedAt(new Date());
-        if (request != null && request.getLineWarranties() != null) {
-            Map<Long, LineWarrantyRequest> lineMap = request.getLineWarranties().stream()
+        Map<Long, LineWarrantyRequest> lineMap = (request != null && request.getLineWarranties() != null)
+                ? request.getLineWarranties().stream()
                     .filter(w -> w.getLineId() != null)
-                    .collect(Collectors.toMap(LineWarrantyRequest::getLineId, w -> w, (a, b) -> a));
-            for (ServiceOrderLine line : so.getLines()) {
-                LineWarrantyRequest lw = lineMap.get(line.getId());
-                if (lw != null) {
-                    if (lw.getWarrantyTill() != null) line.setWarrantyTill(lw.getWarrantyTill());
-                    if (lw.getNextServiceDate() != null) line.setNextServiceDate(lw.getNextServiceDate());
-                }
+                    .collect(Collectors.toMap(LineWarrantyRequest::getLineId, w -> w, (a, b) -> a))
+                : new HashMap<>();
+        for (ServiceOrderLine line : so.getLines()) {
+            if (ServiceOrderStatusConstants.isLineTerminal(line.getStatus())) continue; // leave already-decided lines
+            line.setStatus(ServiceOrderStatusConstants.STATUS_COMPLETED);
+            LineWarrantyRequest lw = lineMap.get(line.getId());
+            if (lw != null) {
+                if (lw.getWarrantyTill() != null) line.setWarrantyTill(lw.getWarrantyTill());
+                if (lw.getNextServiceDate() != null) line.setNextServiceDate(lw.getNextServiceDate());
             }
-            // SO-level nextServiceDate = earliest per-line nextServiceDate (drives list tiles)
-            so.getLines().stream()
-                    .map(ServiceOrderLine::getNextServiceDate)
-                    .filter(d -> d != null)
-                    .min(java.util.Comparator.naturalOrder())
-                    .ifPresent(so::setNextServiceDate);
         }
+        refreshNextServiceDate(so);
+        recomputeHeaderStatus(so);
         ServiceOrder saved = serviceOrderRepo.save(so);
         String activityUser = resolveCurrentUser();
         activityLogService.record("COMPLETED", "SERVICE_ORDER", saved.getServiceOrderId(),
@@ -213,6 +215,8 @@ public class ServiceOrderService {
         return getServiceOrderWithInit(saved.getServiceOrderId());
     }
 
+    // Whole-order cancel: cancels every still-open (NEW) line; already-completed lines stand.
+    // Header is derived — all-cancelled → CANCELLED, some completed → COMPLETED.
     @Transactional
     public ServiceOrder cancelServiceOrder(String id, CancelServiceOrderRequest request) throws Exception {
         ServiceOrder so = serviceOrderRepo.findById(id)
@@ -220,14 +224,139 @@ public class ServiceOrderService {
         if (ServiceOrderStatusConstants.getTerminalStatuses().contains(so.getStatus())) {
             throw new Exception("Service Order is already in a terminal status: " + so.getStatus());
         }
-        so.setStatus(ServiceOrderStatusConstants.STATUS_CANCELLED);
-        so.setCancelReason(request != null ? request.getReason() : null);
-        so.setLastStatusUpdatedAt(new Date());
+        String reason = request != null ? request.getReason() : null;
+        for (ServiceOrderLine line : so.getLines()) {
+            if (ServiceOrderStatusConstants.isLineTerminal(line.getStatus())) continue;
+            line.setStatus(ServiceOrderStatusConstants.STATUS_CANCELLED);
+            line.setCancelReason(reason);
+        }
+        so.setCancelReason(reason);
+        refreshNextServiceDate(so);
+        recomputeHeaderStatus(so);
         ServiceOrder saved = serviceOrderRepo.save(so);
         String activityUser = resolveCurrentUser();
         activityLogService.record("CANCELLED", "SERVICE_ORDER", saved.getServiceOrderId(),
                 "Service Order " + saved.getServiceOrderId() + " cancelled by " + activityUser, activityUser);
         return getServiceOrderWithInit(saved.getServiceOrderId());
+    }
+
+    // ─── Per-line actions ──────────────────────────────────────────────────────
+
+    @Transactional
+    public ServiceOrder completeLine(String id, Long lineId, CompleteServiceOrderLineRequest request) throws Exception {
+        ServiceOrder so = serviceOrderRepo.findById(id)
+                .orElseThrow(() -> new Exception("Service Order not found: " + id));
+        ServiceOrderLine line = findLine(so, lineId);
+        if (ServiceOrderStatusConstants.isLineTerminal(line.getStatus())) {
+            throw new Exception("Line is already " + line.getStatus() + " and cannot be completed.");
+        }
+        line.setStatus(ServiceOrderStatusConstants.STATUS_COMPLETED);
+        if (request != null) {
+            if (request.getWarrantyTill() != null) line.setWarrantyTill(request.getWarrantyTill());
+            if (request.getNextServiceDate() != null) line.setNextServiceDate(request.getNextServiceDate());
+        }
+        refreshNextServiceDate(so);
+        recomputeHeaderStatus(so);
+        ServiceOrder saved = serviceOrderRepo.save(so);
+        String activityUser = resolveCurrentUser();
+        activityLogService.record("LINE_COMPLETED", "SERVICE_ORDER", saved.getServiceOrderId(),
+                "Line \"" + safeDesc(line) + "\" completed in " + saved.getServiceOrderId() + " by " + activityUser,
+                activityUser);
+        return getServiceOrderWithInit(saved.getServiceOrderId());
+    }
+
+    @Transactional
+    public ServiceOrder cancelLine(String id, Long lineId, CancelServiceOrderLineRequest request) throws Exception {
+        ServiceOrder so = serviceOrderRepo.findById(id)
+                .orElseThrow(() -> new Exception("Service Order not found: " + id));
+        ServiceOrderLine line = findLine(so, lineId);
+        if (ServiceOrderStatusConstants.isLineTerminal(line.getStatus())) {
+            throw new Exception("Line is already " + line.getStatus() + " and cannot be cancelled.");
+        }
+        line.setStatus(ServiceOrderStatusConstants.STATUS_CANCELLED);
+        line.setCancelReason(request != null ? request.getReason() : null);
+        refreshNextServiceDate(so); // dropping a line may remove the earliest next-service date
+        recomputeHeaderStatus(so);
+        ServiceOrder saved = serviceOrderRepo.save(so);
+        String activityUser = resolveCurrentUser();
+        activityLogService.record("LINE_CANCELLED", "SERVICE_ORDER", saved.getServiceOrderId(),
+                "Line \"" + safeDesc(line) + "\" cancelled in " + saved.getServiceOrderId() + " by " + activityUser,
+                activityUser);
+        return getServiceOrderWithInit(saved.getServiceOrderId());
+    }
+
+    // Undo a completed/cancelled line back to NEW (mis-click recovery). Completion-time data
+    // (warranty / next-service) is cleared since the line is no longer done. Header re-derives —
+    // reopening a line on a COMPLETED/CANCELLED order flips it back to PARTIALLY_COMPLETED / NEW.
+    @Transactional
+    public ServiceOrder reopenLine(String id, Long lineId) throws Exception {
+        ServiceOrder so = serviceOrderRepo.findById(id)
+                .orElseThrow(() -> new Exception("Service Order not found: " + id));
+        ServiceOrderLine line = findLine(so, lineId);
+        if (!ServiceOrderStatusConstants.isLineTerminal(line.getStatus())) {
+            throw new Exception("Line is not completed or cancelled — nothing to reopen.");
+        }
+        line.setStatus(ServiceOrderStatusConstants.STATUS_NEW);
+        line.setCancelReason(null);
+        line.setWarrantyTill(null);
+        line.setNextServiceDate(null);
+        refreshNextServiceDate(so);
+        recomputeHeaderStatus(so);
+        ServiceOrder saved = serviceOrderRepo.save(so);
+        String activityUser = resolveCurrentUser();
+        activityLogService.record("LINE_REOPENED", "SERVICE_ORDER", saved.getServiceOrderId(),
+                "Line \"" + safeDesc(line) + "\" reopened in " + saved.getServiceOrderId() + " by " + activityUser,
+                activityUser);
+        return getServiceOrderWithInit(saved.getServiceOrderId());
+    }
+
+    private ServiceOrderLine findLine(ServiceOrder so, Long lineId) throws Exception {
+        return so.getLines().stream()
+                .filter(l -> l.getId() != null && l.getId().equals(lineId))
+                .findFirst()
+                .orElseThrow(() -> new Exception("Line " + lineId + " not found on service order " + so.getServiceOrderId()));
+    }
+
+    private String safeDesc(ServiceOrderLine line) {
+        String d = line.getDescription();
+        return d == null ? "" : (d.length() > 60 ? d.substring(0, 60) + "…" : d);
+    }
+
+    // Derives the header status from the lines (PO/Indent style):
+    //   all NEW → NEW · all CANCELLED → CANCELLED · all terminal with ≥1 COMPLETED → COMPLETED
+    //   · any mix with some NEW remaining → PARTIALLY_COMPLETED
+    private void recomputeHeaderStatus(ServiceOrder so) {
+        List<ServiceOrderLine> lines = so.getLines();
+        int total = lines.size();
+        long newCount = lines.stream().filter(l -> ServiceOrderStatusConstants.STATUS_NEW.equals(l.getStatus())).count();
+        long cancelledCount = lines.stream().filter(l -> ServiceOrderStatusConstants.STATUS_CANCELLED.equals(l.getStatus())).count();
+
+        String status;
+        if (total == 0 || newCount == total) {
+            status = ServiceOrderStatusConstants.STATUS_NEW;
+        } else if (cancelledCount == total) {
+            status = ServiceOrderStatusConstants.STATUS_CANCELLED;
+        } else if (newCount == 0) {
+            // all lines terminal, not all cancelled → at least one completed
+            status = ServiceOrderStatusConstants.STATUS_COMPLETED;
+        } else {
+            status = ServiceOrderStatusConstants.STATUS_PARTIALLY_COMPLETED;
+        }
+        so.setStatus(status);
+        so.setLastStatusUpdatedAt(new Date());
+    }
+
+    // SO-level nextServiceDate = earliest next-service date across NON-cancelled lines (drives the
+    // list "due/overdue" tiles). Authoritative: clears to null when no active line has one, so a
+    // cancelled line no longer leaves a stale date behind.
+    private void refreshNextServiceDate(ServiceOrder so) {
+        Date earliest = so.getLines().stream()
+                .filter(l -> !ServiceOrderStatusConstants.STATUS_CANCELLED.equals(l.getStatus()))
+                .map(ServiceOrderLine::getNextServiceDate)
+                .filter(d -> d != null)
+                .min(java.util.Comparator.naturalOrder())
+                .orElse(null);
+        so.setNextServiceDate(earliest);
     }
 
     @Transactional(readOnly = true)

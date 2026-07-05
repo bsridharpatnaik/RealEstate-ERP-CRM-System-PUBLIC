@@ -3,6 +3,7 @@ package com.ec.application.service;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.GlobalActivityLogSpecification;
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.model.ActivityLog;
 import com.ec.application.model.GlobalActivityLog;
 import com.ec.application.repository.ActivityLogRepository;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -73,8 +75,25 @@ public class ActivityLogGlobalSyncService {
         log.info("Synced {} activity log entries for tenant: {}", newLogs.size(), tenantSchema);
     }
 
+    // Global/master-schema entities (PO, Indent, Quote Comparison, Service Order, Product) are
+    // logged under the master schema, so their rows carry tenant_schema = masterschema. The user's
+    // allowed-schema list only has project tenants, which would filter those rows out of the global
+    // log entirely — include master so cross-tenant entities are visible.
+    //
+    // Master is added ONLY for admins: these endpoints aren't role-guarded at the controller (the
+    // global log is admin-only by frontend menu), so a non-admin who reaches /global/list must stay
+    // scoped to their own project schemas and must NOT gain cross-tenant master-entity visibility.
+    private List<String> allowedSchemasForGlobalView() throws Exception {
+        List<String> allowedSchemas = new ArrayList<>(userDetailsService.getCurrentUserAllowedSchemas());
+        String master = schemaConfig.getMasterSchema();
+        if (master != null && userDetailsService.hasRole(RoleConstants.ADMIN) && !allowedSchemas.contains(master)) {
+            allowedSchemas.add(master);
+        }
+        return allowedSchemas;
+    }
+
     public Page<GlobalActivityLog> getFiltered(FilterDataList filterDataList, Pageable pageable) throws Exception {
-        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        List<String> allowedSchemas = allowedSchemasForGlobalView();
         Specification<GlobalActivityLog> spec = GlobalActivityLogSpecification.getSpecification(filterDataList, allowedSchemas);
         return spec == null
                 ? globalActivityLogRepository.findAll(pageable)
@@ -82,7 +101,7 @@ public class ActivityLogGlobalSyncService {
     }
 
     public byte[] exportExcel(FilterDataList filterDataList) throws Exception {
-        List<String> allowedSchemas = userDetailsService.getCurrentUserAllowedSchemas();
+        List<String> allowedSchemas = allowedSchemasForGlobalView();
         Specification<GlobalActivityLog> spec = GlobalActivityLogSpecification.getSpecification(filterDataList, allowedSchemas);
         long count = spec == null ? globalActivityLogRepository.count() : globalActivityLogRepository.count(spec);
         if (count > 5000)

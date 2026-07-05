@@ -4,6 +4,7 @@ import { constants } from "./../../messages";
 
 const STATUS_OPTIONS = [
   { name: "NEW", id: "NEW" },
+  { name: "PARTIALLY COMPLETED", id: "PARTIALLY_COMPLETED" },
   { name: "COMPLETED", id: "COMPLETED" },
   { name: "CANCELLED", id: "CANCELLED" },
 ];

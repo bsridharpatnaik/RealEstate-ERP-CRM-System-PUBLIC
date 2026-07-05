@@ -1,6 +1,7 @@
 package com.ec.application.model;
 
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.ec.application.constants.ServiceOrderStatusConstants;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
@@ -40,6 +41,17 @@ public class ServiceOrderLine extends ReusableFields {
     private Double gstPercent;
     private Double netRate;
     private Double totalAmount;
+
+    /** Per-line lifecycle: NEW → COMPLETED or CANCELLED. The header status is derived from all
+     *  lines' statuses (see ServiceOrderService.recomputeHeaderStatus). Column left nullable so
+     *  Hibernate can add it to existing tables without a DDL failure; new rows default to NEW here
+     *  and existing rows are backfilled via PendingDeployMigrations.sql. */
+    @Column(name = "status")
+    private String status = ServiceOrderStatusConstants.STATUS_NEW;
+
+    /** Optional reason captured when this specific line is cancelled. */
+    @Column(name = "cancel_reason")
+    private String cancelReason;
 
     /** e.g. ROUTINE, PREVENTIVE, BREAKDOWN, EMERGENCY, AMC — free text, not a hard enum. */
     @Column(name = "service_type")

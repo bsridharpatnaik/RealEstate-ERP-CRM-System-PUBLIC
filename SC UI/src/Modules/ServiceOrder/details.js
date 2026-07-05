@@ -18,9 +18,13 @@ import Add from "./add";
 
 const STATUS_COLORS = {
   NEW: { background: "#e3f2fd", color: "#1565c0" },
+  PARTIALLY_COMPLETED: { background: "#fff8e1", color: "#f57f17" },
   COMPLETED: { background: "#e8f5e9", color: "#2e7d32" },
   CANCELLED: { background: "#ffebee", color: "#c62828" },
 };
+
+// Pre-migration lines have no status — treat as NEW.
+const lineStatusOf = (line) => line.status || "NEW";
 
 class Details extends CommonDetails {
   state = {
@@ -30,10 +34,97 @@ class Details extends CommonDetails {
     completeLineData: {}, // { [lineId]: { warrantyTill, nextServiceDate } }
     actionLoading: false,
     isEditing: false,
+    lineCompleteDialog: null, // { lineId, description, warrantyTill, nextServiceDate }
+    lineCancelDialog: null,   // { lineId, description }
+    lineCancelReason: "",
+    data: null, // fresh copy after an in-place action; falls back to props.data until then
+  };
+
+  // The panel renders from a local copy once an action has refreshed it, so line-level actions
+  // don't have to close the panel — the buyer can complete/cancel several lines in a row.
+  getSO = () => this.state.data || this.props.data || {};
+
+  refreshDetail = async () => {
+    const soId = this.getSO().serviceOrderId;
+    if (!soId) return;
+    const res = await API.GET(apiEndpoints.getServiceOrderDetail(soId));
+    if (res && res.success && res.data) {
+      this.setState({ data: res.data });
+    }
+    // Keep the list behind the panel in sync too, without closing the panel.
+    this.props.onRefresh && this.props.onRefresh();
+  };
+
+  // ── Per-line complete ──
+  openLineComplete = (line) => this.setState({
+    lineCompleteDialog: {
+      lineId: line.id,
+      description: line.description,
+      warrantyTill: line.warrantyTill || null,
+      nextServiceDate: line.nextServiceDate || null,
+    },
+  });
+
+  setLineDialogField = (field, value) => this.setState((prev) => ({
+    lineCompleteDialog: { ...prev.lineCompleteDialog, [field]: value },
+  }));
+
+  handleLineComplete = async () => {
+    const d = this.state.lineCompleteDialog;
+    if (!d) return;
+    this.setState({ actionLoading: true });
+    const response = await API.POST(
+      apiEndpoints.completeServiceOrderLine(this.getSO().serviceOrderId, d.lineId),
+      { warrantyTill: d.warrantyTill || null, nextServiceDate: d.nextServiceDate || null }
+    );
+    if (response.success) {
+      this.props.enqueueSnackbar("Line marked complete", { variant: "success" });
+      await this.refreshDetail();
+    } else {
+      this.props.enqueueSnackbar(response.errorMessage || "Failed to complete line", { variant: "error" });
+    }
+    this.setState({ actionLoading: false, lineCompleteDialog: null });
+  };
+
+  handleLineReopen = async (line) => {
+    this.setState({ actionLoading: true });
+    const response = await API.POST(
+      apiEndpoints.reopenServiceOrderLine(this.getSO().serviceOrderId, line.id)
+    );
+    if (response.success) {
+      this.props.enqueueSnackbar("Line reopened", { variant: "success" });
+      await this.refreshDetail();
+    } else {
+      this.props.enqueueSnackbar(response.errorMessage || "Failed to reopen line", { variant: "error" });
+    }
+    this.setState({ actionLoading: false });
+  };
+
+  // ── Per-line cancel ──
+  openLineCancel = (line) => this.setState({
+    lineCancelDialog: { lineId: line.id, description: line.description },
+    lineCancelReason: "",
+  });
+
+  handleLineCancel = async () => {
+    const d = this.state.lineCancelDialog;
+    if (!d) return;
+    this.setState({ actionLoading: true });
+    const response = await API.POST(
+      apiEndpoints.cancelServiceOrderLine(this.getSO().serviceOrderId, d.lineId),
+      { reason: this.state.lineCancelReason || null }
+    );
+    if (response.success) {
+      this.props.enqueueSnackbar("Line cancelled", { variant: "success" });
+      await this.refreshDetail();
+    } else {
+      this.props.enqueueSnackbar(response.errorMessage || "Failed to cancel line", { variant: "error" });
+    }
+    this.setState({ actionLoading: false, lineCancelDialog: null });
   };
 
   openCompleteDialog = () => {
-    const lines = this.props.data?.lines || [];
+    const lines = (this.getSO().lines || []).filter((l) => (l.status || "NEW") === "NEW");
     const completeLineData = {};
     lines.forEach((l) => {
       completeLineData[l.id] = {
@@ -60,32 +151,30 @@ class Details extends CommonDetails {
       warrantyTill: fields.warrantyTill || null,
       nextServiceDate: fields.nextServiceDate || null,
     }));
-    const response = await API.POST(apiEndpoints.completeServiceOrder(this.props.data.serviceOrderId), {
+    const response = await API.POST(apiEndpoints.completeServiceOrder(this.getSO().serviceOrderId), {
       lineWarranties,
     });
-    this.setState({ actionLoading: false, completeDialogOpen: false });
     if (response.success) {
       this.props.enqueueSnackbar("Service Order marked complete", { variant: "success" });
-      this.props.onRefresh && this.props.onRefresh();
-      this.props.close && this.props.close();
+      await this.refreshDetail();
     } else {
       this.props.enqueueSnackbar(response.errorMessage || "Failed to mark complete", { variant: "error" });
     }
+    this.setState({ actionLoading: false, completeDialogOpen: false });
   };
 
   handleCancel = async () => {
     this.setState({ actionLoading: true });
-    const response = await API.POST(apiEndpoints.cancelServiceOrder(this.props.data.serviceOrderId), {
+    const response = await API.POST(apiEndpoints.cancelServiceOrder(this.getSO().serviceOrderId), {
       reason: this.state.cancelReason || null,
     });
-    this.setState({ actionLoading: false, cancelDialogOpen: false });
     if (response.success) {
       this.props.enqueueSnackbar("Service Order cancelled", { variant: "success" });
-      this.props.onRefresh && this.props.onRefresh();
-      this.props.close && this.props.close();
+      await this.refreshDetail();
     } else {
       this.props.enqueueSnackbar(response.errorMessage || "Failed to cancel", { variant: "error" });
     }
+    this.setState({ actionLoading: false, cancelDialogOpen: false });
   };
 
   handleEditSaved = () => {
@@ -95,7 +184,7 @@ class Details extends CommonDetails {
   };
 
   handlePrintPdf = async () => {
-    const soId = this.props.data?.serviceOrderId;
+    const soId = this.getSO().serviceOrderId;
     if (!soId) return;
     try {
       const response = await API.GETBlob(apiEndpoints.printServiceOrderPdf(soId));
@@ -122,17 +211,24 @@ class Details extends CommonDetails {
     if (this.state.isEditing) {
       return (
         <Add
-          editData={this.props.data}
+          editData={this.getSO()}
           back={() => this.setState({ isEditing: false })}
           onSaved={this.handleEditSaved}
         />
       );
     }
 
-    const data = this.props.data || {};
+    const data = this.getSO();
     const lines = data.lines || [];
     const statusStyle = STATUS_COLORS[data.status] || {};
-    const canAct = canEditInventoryModules() && data.status === "NEW";
+    const hasOpenLines = lines.some((l) => lineStatusOf(l) === "NEW");
+    // A manager can act on lines (incl. reopening terminal ones), so the Action column is shown
+    // whenever the user can manage — not only while lines are open.
+    const canManage = canEditInventoryModules();
+    // Whole-order complete/cancel: available while any line is still open.
+    const canAct = canManage && hasOpenLines;
+    // Whole-order edit stays restricted to a pristine (all-NEW) order.
+    const canEdit = canManage && data.status === "NEW";
 
     return (
       <div className="purchase-order-detail-section">
@@ -147,7 +243,7 @@ class Details extends CommonDetails {
 
         <div style={{ padding: "12px 16px" }}>
           <span style={{ ...statusStyle, padding: "4px 12px", borderRadius: 12, fontSize: 13, fontWeight: 600 }}>
-            {data.status}
+            {(data.status || "").replace(/_/g, " ")}
           </span>
           {data.status === "CANCELLED" && data.cancelReason && (
             <div style={{ marginTop: 8, color: "#c62828", fontSize: 13 }}>Reason: {data.cancelReason}</div>
@@ -229,10 +325,16 @@ class Details extends CommonDetails {
                 <th style={{ padding: "8px" }}>Warranty Till</th>
                 <th style={{ padding: "8px" }}>Next Service</th>
                 <th style={{ padding: "8px", textAlign: "right" }}>Total</th>
+                <th style={{ padding: "8px" }}>Status</th>
+                {canManage && <th style={{ padding: "8px", textAlign: "center" }}>Action</th>}
               </tr>
             </thead>
             <tbody>
-              {lines.map((line) => (
+              {lines.map((line) => {
+                const lStatus = lineStatusOf(line);
+                const lStyle = STATUS_COLORS[lStatus] || {};
+                const lineOpen = lStatus === "NEW";
+                return (
                 <tr key={line.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
                   <td style={{ padding: "8px" }}>{line.description}</td>
                   <td style={{ padding: "8px" }}>
@@ -257,8 +359,34 @@ class Details extends CommonDetails {
                   <td style={{ padding: "8px" }}>{line.warrantyTill || "-"}</td>
                   <td style={{ padding: "8px" }}>{line.nextServiceDate || "-"}</td>
                   <td style={{ padding: "8px", textAlign: "right" }}>{line.totalAmount != null ? `₹${Number(line.totalAmount).toFixed(2)}` : "-"}</td>
+                  <td style={{ padding: "8px" }}>
+                    <span style={{ ...lStyle, padding: "2px 8px", borderRadius: 10, fontSize: 11, fontWeight: 600 }}>
+                      {lStatus.replace(/_/g, " ")}
+                    </span>
+                    {lStatus === "CANCELLED" && line.cancelReason && (
+                      <div style={{ fontSize: 11, color: "#c62828", marginTop: 2 }}>{line.cancelReason}</div>
+                    )}
+                  </td>
+                  {canManage && (
+                    <td style={{ padding: "8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                      {lineOpen ? (
+                        <>
+                          <Button size="small" disabled={this.state.actionLoading}
+                            style={{ color: "#2e7d32", minWidth: 0, padding: "2px 8px" }}
+                            onClick={() => this.openLineComplete(line)}>Complete</Button>
+                          <Button size="small" disabled={this.state.actionLoading}
+                            style={{ color: "#c62828", minWidth: 0, padding: "2px 8px" }}
+                            onClick={() => this.openLineCancel(line)}>Cancel</Button>
+                        </>
+                      ) : (
+                        <Button size="small" disabled={this.state.actionLoading}
+                          style={{ color: "#1565c0", minWidth: 0, padding: "2px 8px" }}
+                          onClick={() => this.handleLineReopen(line)}>Reopen</Button>
+                      )}
+                    </td>
+                  )}
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
           <div style={{ textAlign: "right", marginTop: 12, fontWeight: 600 }}>
@@ -280,23 +408,25 @@ class Details extends CommonDetails {
           >
             Print PDF
           </Button>
+          {canEdit && (
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={this.state.actionLoading}
+              onClick={() => this.setState({ isEditing: true })}
+            >
+              Edit
+            </Button>
+          )}
           {canAct && (
             <>
-              <Button
-                variant="contained"
-                color="primary"
-                disabled={this.state.actionLoading}
-                onClick={() => this.setState({ isEditing: true })}
-              >
-                Edit
-              </Button>
               <Button
                 variant="outlined"
                 style={{ color: "#2e7d32", borderColor: "#2e7d32" }}
                 disabled={this.state.actionLoading}
                 onClick={this.openCompleteDialog}
               >
-                Mark Complete
+                Complete All Open
               </Button>
               <Button
                 variant="outlined"
@@ -304,19 +434,19 @@ class Details extends CommonDetails {
                 disabled={this.state.actionLoading}
                 onClick={() => this.setState({ cancelDialogOpen: true, cancelReason: "" })}
               >
-                Cancel
+                Cancel All Open
               </Button>
             </>
           )}
         </div>
 
         <Dialog open={this.state.completeDialogOpen} onClose={() => this.setState({ completeDialogOpen: false })} maxWidth="sm" fullWidth>
-          <DialogTitle>Mark Service Order Complete</DialogTitle>
+          <DialogTitle>Complete All Open Lines</DialogTitle>
           <DialogContent>
             <p style={{ fontSize: 13, color: "#666", marginTop: 0 }}>
-              Optionally record warranty and next service date per line.
+              This completes every line still open. Optionally record warranty and next service date per line.
             </p>
-            {(this.props.data?.lines || []).map((line) => {
+            {(this.getSO().lines || []).filter((l) => (l.status || "NEW") === "NEW").map((line) => {
               const lineData = this.state.completeLineData[line.id] || {};
               return (
                 <div key={line.id} style={{ marginBottom: 16, padding: "12px 14px", background: "#f8f9fb", borderRadius: 6, border: "1px solid #e8e8e8" }}>
@@ -357,14 +487,77 @@ class Details extends CommonDetails {
               label="Reason (optional)"
               fullWidth
               multiline
+              rows={4}
               variant="outlined"
               value={this.state.cancelReason}
-              onChange={(e) => this.setState({ cancelReason: e.target.value })}
+              onChange={(e) => this.setState({ cancelReason: e.target.value.slice(0, 100) })}
+              inputProps={{ maxLength: 100 }}
+              helperText={`${this.state.cancelReason.length}/100`}
             />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => this.setState({ cancelDialogOpen: false })}>Back</Button>
             <Button color="primary" disabled={this.state.actionLoading} onClick={this.handleCancel}>
+              Confirm Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Per-line complete */}
+        <Dialog open={!!this.state.lineCompleteDialog} onClose={() => this.setState({ lineCompleteDialog: null })} maxWidth="sm" fullWidth>
+          <DialogTitle>Complete Line</DialogTitle>
+          <DialogContent>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#2d3748", marginBottom: 12 }}>
+              {this.state.lineCompleteDialog?.description}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <DatePicker
+                label="Warranty Till (optional)"
+                type="date"
+                emptyDate
+                defaultValue={this.state.lineCompleteDialog?.warrantyTill || null}
+                onChange={(date) => this.setLineDialogField("warrantyTill", date)}
+              />
+              <DatePicker
+                label="Next Service Date (optional)"
+                type="date"
+                emptyDate
+                defaultValue={this.state.lineCompleteDialog?.nextServiceDate || null}
+                onChange={(date) => this.setLineDialogField("nextServiceDate", date)}
+              />
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ lineCompleteDialog: null })}>Back</Button>
+            <Button color="primary" disabled={this.state.actionLoading} onClick={this.handleLineComplete}>
+              Confirm Complete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Per-line cancel */}
+        <Dialog open={!!this.state.lineCancelDialog} onClose={() => this.setState({ lineCancelDialog: null })}>
+          <DialogTitle>Cancel Line</DialogTitle>
+          <DialogContent>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#2d3748", marginBottom: 12 }}>
+              {this.state.lineCancelDialog?.description}
+            </div>
+            <TextField
+              autoFocus
+              label="Reason (optional)"
+              fullWidth
+              multiline
+              rows={4}
+              variant="outlined"
+              value={this.state.lineCancelReason}
+              onChange={(e) => this.setState({ lineCancelReason: e.target.value.slice(0, 100) })}
+              inputProps={{ maxLength: 100 }}
+              helperText={`${this.state.lineCancelReason.length}/100`}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => this.setState({ lineCancelDialog: null })}>Back</Button>
+            <Button color="primary" disabled={this.state.actionLoading} onClick={this.handleLineCancel}>
               Confirm Cancel
             </Button>
           </DialogActions>

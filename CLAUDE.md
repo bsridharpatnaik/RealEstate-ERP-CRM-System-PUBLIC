@@ -1633,6 +1633,74 @@ All additive, all on `masterschema`. Captured in `sc-inventory-service/quote-com
 
 ---
 
+# Service Order — Line-Level Status + Activity Log Fix (Session 9)
+
+## Line-level status (PO/Indent-style derivation)
+
+`ServiceOrderLine.status` (column `status`, nullable in DB, defaults to `NEW` in Java) — per-line
+lifecycle `NEW → COMPLETED | CANCELLED`. `ServiceOrderLine.cancelReason` added for per-line cancels.
+
+Header status is now **derived** from the lines via `ServiceOrderService.recomputeHeaderStatus()`,
+never set directly:
+- all lines `NEW` (or no lines) → `NEW`
+- all lines `CANCELLED` → `CANCELLED`
+- all lines terminal with ≥1 `COMPLETED` → `COMPLETED`
+- any mix with some `NEW` remaining → `PARTIALLY_COMPLETED` (new header-only status in
+  `ServiceOrderStatusConstants`; not a valid line status)
+
+`recomputeHeaderStatus` runs after create, update, complete/cancel (whole-order and per-line).
+`ServiceOrderStatusConstants.isLineTerminal()` guards against re-acting on decided lines.
+
+Mixed completed+cancelled (no NEW left) derives `COMPLETED` by design — a partly-fulfilled order
+that's been closed out counts as done (confirmed decision, Session 9).
+
+### Endpoints
+- `POST /service-order/{id}/line/{lineId}/complete` (`CompleteServiceOrderLineRequest`: warrantyTill, nextServiceDate)
+- `POST /service-order/{id}/line/{lineId}/cancel` (`CancelServiceOrderLineRequest`: reason)
+- `POST /service-order/{id}/line/{lineId}/reopen` — terminal line back to `NEW` (clears cancelReason
+  + completion-time warranty/nextServiceDate); header re-derives. Mis-click recovery.
+- Existing `POST /{id}/complete` and `/{id}/cancel` now operate on **all still-open (NEW)** lines,
+  then derive the header (already-decided lines are left untouched).
+- `refreshNextServiceDate()` is authoritative — earliest next-service across **non-cancelled** lines,
+  clears to null when none; called on complete/cancel/reopen so a cancelled line can't leave a stale
+  date driving the "overdue" list tiles.
+
+### Frontend
+- `ServiceOrder/details.js` — per-line Status column + per-line Complete/Cancel/**Reopen** buttons
+  (+ dialogs). Action column shows whenever the user can manage (`canManage`), so terminal lines are
+  reopenable even on a fully-done order. Whole-order buttons "Complete All Open" / "Cancel All Open"
+  gated on `hasOpenLines` (`canAct`); whole-order Edit gated to pristine `NEW` (`canEdit`).
+  `lineStatusOf(line)` treats pre-migration null status as `NEW`.
+- **In-place refresh**: the panel keeps a local `state.data` copy (`getSO()`) and re-fetches via
+  `getServiceOrderDetail` after each action instead of closing — so several lines can be actioned in
+  one sitting. `onRefresh` still fires to keep the list behind in sync.
+- `list.js` / `filter.js` — added `PARTIALLY_COMPLETED` to status colors + filter options; status
+  labels render with `_`→space.
+
+### Migration
+`service_order_line.status` is additive (auto-created on startup, left nullable so the NOT NULL DDL
+can't fail on a non-empty table). Existing rows backfilled from header status via
+`PendingDeployMigrations.sql` (masterschema — Service Orders are `@UseDefaultTenant`).
+
+## Activity Log — global-view visibility bug (shared, found here)
+
+Service Order create/update/complete/cancel were **already** logged (`ActivityLogService.record`),
+but invisible in the UI. Root cause: `ServiceOrderService` (like `PurchaseOrderService`,
+`IndentInventoryService`, `QuoteComparisonService`) is class-level `@UseDefaultTenant`, so
+`record()` captures tenant = **masterschema** and the log lands in `masterschema.activity_log` →
+synced to `global_activity_log` with `tenantSchema = masterschema`. But
+`ActivityLogGlobalSyncService.getFiltered()`/`exportExcel()` filtered `tenantSchema IN allowedSchemas`,
+and `getCurrentUserAllowedSchemas()` only returns the user's **project** tenants — so **every
+master-logged global entity (SERVICE_ORDER, PURCHASE_ORDER, INDENT, QUOTE_COMPARISON, PRODUCT) was
+filtered out of the Global Activity Log**. Fix: `allowedSchemasForGlobalView()` appends the master
+schema before building the spec — but **only for admins** (`hasRole(ADMIN)`), because the
+`/global/list` + `/global/export` endpoints are NOT role-guarded at the controller (admin-only is
+frontend-menu only); a non-admin reaching them must stay scoped to their own project schemas and not
+gain cross-tenant master-entity visibility. New line actions log `LINE_COMPLETED` / `LINE_CANCELLED`
+/ `LINE_REOPENED`.
+
+---
+
 # Pending Deploy Migrations — Standing Convention
 
 No Flyway/Liquibase. `spring.jpa.hibernate.ddl-auto=none` in `application.properties` is **not** the

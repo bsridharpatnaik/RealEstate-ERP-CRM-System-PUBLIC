@@ -214,3 +214,24 @@ JOIN masterschema.Product p ON p.productId = ss.productId
 JOIN masterschema.Category c ON c.categoryId = p.categoryId
 SET ss.categoryName = c.category_name
 WHERE ss.categoryName IS NULL;
+
+-- ----------------------------------------------------------------
+-- Service Order: backfill per-line status for existing rows.
+-- service_order_line.status is a new additive column (auto-created on
+-- startup; left nullable so Hibernate can add it to a non-empty table
+-- without a NOT NULL DDL failure). New rows default to NEW in code, but
+-- existing lines are NULL until backfilled. Header status is now DERIVED
+-- from line statuses, so seed each existing line from its parent order's
+-- header status: COMPLETED→COMPLETED, CANCELLED→CANCELLED, else NEW.
+-- Service Orders live in masterschema only — run once against masterschema.
+-- Idempotent (only touches lines not yet filled).
+-- ----------------------------------------------------------------
+
+UPDATE masterschema.service_order_line sol
+JOIN masterschema.service_order so ON so.service_order_id = sol.service_order_id
+SET sol.status = CASE
+        WHEN so.status = 'COMPLETED' THEN 'COMPLETED'
+        WHEN so.status = 'CANCELLED' THEN 'CANCELLED'
+        ELSE 'NEW'
+    END
+WHERE sol.status IS NULL;

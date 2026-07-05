@@ -24,6 +24,7 @@ import { canEditInventoryModules } from "./../../helper";
 
 const STATUS_COLORS = {
   NEW: { background: "#e3f2fd", color: "#1565c0" },
+  PARTIALLY_COMPLETED: { background: "#fff8e1", color: "#f57f17" },
   COMPLETED: { background: "#e8f5e9", color: "#2e7d32" },
   CANCELLED: { background: "#ffebee", color: "#c62828" },
 };
@@ -359,7 +360,7 @@ class List extends ListCommon {
                         </td>
                         <td style={{ padding: "10px 8px" }}>
                           <span style={{ ...statusStyle, padding: "3px 10px", borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
-                            {row.status}
+                            {(row.status || "").replace(/_/g, " ")}
                           </span>
                         </td>
                         <td style={{ padding: "10px 8px" }}>{row.createdBy || "-"}</td>
