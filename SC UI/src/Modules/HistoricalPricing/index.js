@@ -288,14 +288,39 @@ class HistoricalPricing extends Common {
     return Number(net).toFixed(2);
   };
 
+  // Excel sheet names can't contain \ / ? * [ ] : , must be 1–31 chars, and must be unique —
+  // otherwise book_append_sheet throws and the export stops after the sheets added so far
+  // (which is why only the first product used to export). Sanitise + dedupe here.
+  makeSheetName = (product, usedNames) => {
+    let base = (product.name || `Product_${product.id}`)
+      .replace(/[\\/?*[\]:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .substring(0, 31);
+    if (!base) base = `Product_${product.id}`.substring(0, 31);
+    let name = base;
+    let i = 1;
+    while (usedNames.has(name.toLowerCase())) {
+      const suffix = ` (${i++})`;
+      name = base.substring(0, 31 - suffix.length) + suffix;
+    }
+    usedNames.add(name.toLowerCase());
+    return name;
+  };
+
   downloadExcel = () => {
     const effective = this.getEffectiveProducts();
+    if (effective.length === 0) {
+      this.props.enqueueSnackbar("No products to export", { variant: "warning" });
+      return;
+    }
     const { productRatesMap } = this.state;
     const wb = XLSX.utils.book_new();
+    const usedNames = new Set();
 
     effective.forEach((product) => {
       const rates = productRatesMap[product.id] || [];
-      const sheetName = (product.name || `Product_${product.id}`).substring(0, 31);
+      const sheetName = this.makeSheetName(product, usedNames);
       const headers = [
         "Purchase Order",
         "PO Date",
