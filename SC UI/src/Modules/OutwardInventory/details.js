@@ -479,12 +479,16 @@ class Details extends CommonDetails {
                   <div className="value">{data.contractor.name}</div>
                 </div>
                 <div className="detail-item">
+                  <div className="label">{messages.common.buildingType}</div>
+                  <div className="value">{data.usageLocation?.buildingType?.typeName || "-"}</div>
+                </div>
+                <div className="detail-item">
                   <div className="label">{messages.common.location}</div>
-                  <div className="value">{data.usageLocation.locationName}</div>
+                  <div className="value">{data.usageLocation?.locationName}</div>
                 </div>
                 <div className="detail-item">
                   <div className="label">{messages.common.finalLocation}</div>
-                  <div className="value">{data.usageArea.usageAreaName}</div>
+                  <div className="value">{data.usageArea?.usageAreaName}</div>
                 </div>
                 <div className="detail-item">
                   <div className="label">{messages.fields.date}</div>

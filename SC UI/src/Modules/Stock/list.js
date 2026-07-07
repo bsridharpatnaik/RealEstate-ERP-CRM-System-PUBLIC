@@ -210,9 +210,11 @@ class List extends ListCommon {
           </div>
           {this.state.expiryTiles && (() => {
             const t = this.state.expiryTiles;
+            // Near-expiry window is tenant-configurable (Admin → Configuration)
+            const nearDays = t.nearExpiryDays || 30;
             const tiles = [
-              { key: 'expiring30', label: 'Expiring ≤30d',   count: t.expiring30Days, color: '#e65100', bg: '#fff3e0', border: '#ffcc80' },
-              { key: 'expiring60', label: 'Expiring 31–60d', count: t.expiring60Days, color: '#f57f17', bg: '#fff8e1', border: '#ffe082' },
+              { key: 'expiring30', label: `Expiring ≤${nearDays}d`, count: t.expiring30Days, color: '#e65100', bg: '#fff3e0', border: '#ffcc80' },
+              { key: 'expiring60', label: nearDays < 60 ? `Expiring ${nearDays + 1}–60d` : 'Expiring ≤60d', count: t.expiring60Days, color: '#f57f17', bg: '#fff8e1', border: '#ffe082' },
               { key: 'expired',    label: 'Expired',          count: t.expiredCount,   color: '#c62828', bg: '#ffebee', border: '#ef9a9a' },
               { key: 'lowStock',   label: 'Low Stock',        count: t.lowStockCount,  color: '#1565c0', bg: '#e3f2fd', border: '#90caf9' },
               { key: 'highStock',  label: 'High Stock',       count: t.highStockCount, color: '#2e7d32', bg: '#e8f5e9', border: '#a5d6a7' },

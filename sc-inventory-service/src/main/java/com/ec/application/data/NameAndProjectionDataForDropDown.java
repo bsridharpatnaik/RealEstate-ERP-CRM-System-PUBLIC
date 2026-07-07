@@ -31,6 +31,7 @@ public class NameAndProjectionDataForDropDown {
     List<LocationWithTypeProjection> usagelocationWithType;
     List<ProductWithCategoryProjection> productWithCategory;
     Boolean boqEnforcementBlock;
+    Boolean boqBlockWhenMissing;
     List<IdNameDTO> requestedByOptions;
     List<IdNameDTO> issuedByOptions;
     List<IdNameDTO> requiredByOptions;

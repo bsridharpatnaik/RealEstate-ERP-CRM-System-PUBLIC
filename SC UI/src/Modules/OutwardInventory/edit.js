@@ -267,7 +267,8 @@ class Edit extends EditForm {
           finalLocationId
       );
       const boqQuantity = this.state.boqQuantity;
-      let value = 0;
+      // null = no BOQ configured ("NA" from backend) — distinct from 0 (fully consumed)
+      let value = null;
       if (boqResponse.success && boqResponse.data != null && boqResponse.data !== "" && String(boqResponse.data).toUpperCase() !== "NA") {
         const num = Number(boqResponse.data);
         value = Number.isFinite(num) ? Math.round(num * 100) / 100 : 0;
@@ -624,10 +625,11 @@ class Edit extends EditForm {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Limit Exceeded — Save Blocked</DialogTitle>
+          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Check Failed — Save Blocked</DialogTitle>
           <DialogContent>
             <DialogContentText style={{ marginBottom: 12 }}>
-              The following products exceed their BOQ limit (including wastage allowance).
+              The following products either exceed their BOQ limit (including wastage
+              allowance) or have no BOQ defined for the selected location.
             </DialogContentText>
             {this.state.boqViolationDialog.violations.map((v, i) => {
               const parts = v.split(':');

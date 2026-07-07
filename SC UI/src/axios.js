@@ -137,9 +137,9 @@ export const API = {
       };
     }
   },
-  PUT: async (url, params) => {
+  PUT: async (url, params, config) => {
     try {
-      const response = await instance.put(url, params);
+      const response = await instance.put(url, params, config);
       return { data: response.data, success: true };
     } catch (error) {
       checkToken(error);

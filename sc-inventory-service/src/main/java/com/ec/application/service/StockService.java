@@ -61,6 +61,9 @@ public class StockService {
     PopulateDropdownService populateDropdownService;
 
     @Autowired
+    ProjectConstantsService projectConstantsService;
+
+    @Autowired
     WarehouseService warehouseService;
 
     @Autowired
@@ -139,11 +142,14 @@ public class StockService {
                 spec = (spec == null) ? s : spec.and(s);
             } else {
                 List<Long> expiryProductIds;
+                // Near-expiry window is tenant-configurable; must match getStockTiles so
+                // tile counts and the filtered list agree.
+                int nearExpiryDays = projectConstantsService.getNearExpiryDays();
                 if ("expiring30".equals(filterType)) {
-                    Date in30 = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
+                    Date in30 = Date.from(today.plusDays(nearExpiryDays).atStartOfDay(zone).toInstant());
                     expiryProductIds = inventoryBatchRepository.findProductIdsExpiringBetween(now, in30);
                 } else if ("expiring60".equals(filterType)) {
-                    Date in30 = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
+                    Date in30 = Date.from(today.plusDays(nearExpiryDays).atStartOfDay(zone).toInstant());
                     Date in60 = Date.from(today.plusDays(60).atStartOfDay(zone).toInstant());
                     expiryProductIds = inventoryBatchRepository.findProductIdsExpiringBetween(in30, in60);
                 } else if ("expired".equals(filterType)) {

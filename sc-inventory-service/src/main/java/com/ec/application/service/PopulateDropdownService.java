@@ -12,7 +12,6 @@ import com.ec.application.data.StaleBucketConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.ec.application.data.IdNameDTO;
@@ -73,8 +72,8 @@ public class PopulateDropdownService {
     @Autowired
     IndentInventoryRepo indentInventoryRepo;
 
-    @Value("${boq.enforcement.block:true}")
-    private boolean boqEnforcementBlock;
+    @Autowired
+    ProjectConstantsService projectConstantsService;
 
     @Autowired
     SchemaConfig schemaConfig;
@@ -110,7 +109,8 @@ public class PopulateDropdownService {
                 morDropdownDataList.setUsageArea(usageAreaRepo.findIdAndNames());
                 morDropdownDataList.setBuildingtype(buildingTypeRepo.findIdAndNames());
                 morDropdownDataList.setUsagelocationWithType(locationRepo.findIdNamesAndTypes());
-                morDropdownDataList.setBoqEnforcementBlock(boqEnforcementBlock);
+                morDropdownDataList.setBoqEnforcementBlock(projectConstantsService.isBoqBlockOnExceed());
+                morDropdownDataList.setBoqBlockWhenMissing(projectConstantsService.isBoqBlockWhenMissing());
                 morDropdownDataList.setRequestedByOptions(toIdNameDTOList(outwardInventoryRepo.findDistinctRequestedBy()));
                 morDropdownDataList.setIssuedByOptions(toIdNameDTOList(outwardInventoryRepo.findDistinctIssuedBy()));
                 break;

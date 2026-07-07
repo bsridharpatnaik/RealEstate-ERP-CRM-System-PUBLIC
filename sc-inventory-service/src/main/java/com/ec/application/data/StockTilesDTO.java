@@ -12,6 +12,8 @@ public class StockTilesDTO {
     private long expiring30Days;
     private long expiring60Days;
     private long expiredCount;
+    // Configured near-expiry window (days) — drives dynamic tile labels on the UI
+    private int nearExpiryDays = 30;
 
     // Stock status
     private long lowStockCount;

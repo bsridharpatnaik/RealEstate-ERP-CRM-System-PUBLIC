@@ -171,6 +171,17 @@ class List extends ListCommon {
     let params;
     params = {};
     params.filterData = [];
+    const nameFilters = [
+      "productNames",
+      "contractorNames",
+      "warehouseNames",
+      "usageLocation",
+      "usageArea",
+      "categoryNames",
+      "structureTypes",
+      "requestedByNames",
+      "issuedByNames",
+    ];
     if (this.state.globalSearchText.trim().length) {
       params.filterData.push({
         attrName: "globalSearch",
@@ -182,17 +193,8 @@ class List extends ListCommon {
         let value = this.filterData[field];
 
         if (value && value.length) {
-          if (
-            [
-              "productNames",
-              "contractorNames",
-              "warehouseNames",
-              "usageLocation",
-              "usageArea",
-              "categoryNames",
-            ].includes(field)
-          ) {
-            value = value.map((v) => v.name);
+          if (nameFilters.includes(field)) {
+            value = value.map((v) => (typeof v === "object" ? v.name : v));
           } else if (["showOnlyRejected", "showOnlyReturned", "startDate", "endDate", "textSearch", "boqBypassed", "fifoOverride"].includes(field)) {
             value = [value];
           }

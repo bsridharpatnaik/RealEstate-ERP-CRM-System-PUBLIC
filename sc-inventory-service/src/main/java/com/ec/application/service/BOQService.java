@@ -24,7 +24,6 @@ import com.ec.application.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
@@ -74,8 +73,8 @@ public class BOQService {
 
     Logger log = LoggerFactory.getLogger(BOQService.class);
 
-    @Value("${boq.enforcement.block:true}")
-    private boolean boqEnforcementBlock;
+    @Autowired
+    private ProjectConstantsService projectConstantsService;
 
     /** Cached fetch of all BOQ status rows — 2-min TTL, evicted on any BOQ or outward change. */
     @Cacheable(value = "boqStatusRows", key = "T(com.ec.application.multitenant.ThreadLocalStorage).getTenantName() + ':all'")
@@ -849,17 +848,19 @@ public class BOQService {
     /**
      * Enforces BOQ limits for outward inventory.
      * Effective BOQ ceiling = SUM(quantity * (1 + wastage%/100)) across all work areas — computed in SQL.
-     * Rules:
-     *  - No BOQ record for (usageLocationId, productId) → skip enforcement, mark allHaveBOQ=false
-     *  - BOQ exists and (currentOutward + newQty) > effectiveBOQ:
-     *      boqEnforcementBlock=true  → collect violation, throw after all products checked
-     *      boqEnforcementBlock=false → skip (frontend already showed warning)
+     * Two independent per-tenant flags (ProjectConstantsTable, editable via Admin → Configuration):
+     *  - BOQ_BLOCK_ON_EXCEED: BOQ exists and (currentOutward + newQty) > effectiveBOQ → violation
+     *  - BOQ_BLOCK_WHEN_MISSING: no BOQ record for (usageLocationId, productId) → violation
+     * Violations are collected across all products, then thrown together. When a flag is off
+     * its condition only affects the allHaveBOQ return value (frontend shows a warning instead).
      *
      * @return true if every product has effective BOQ > 0, false if any product has no BOQ
      */
     public boolean enforceBOQLimits(Long usageLocationId, List<com.ec.application.data.ProductWithQuantity> items, Long usageAreaId) throws Exception {
         log.info("Invoked enforceBOQLimits");
-        if (!boqEnforcementBlock) return false; // enforcement disabled — skip all DB queries
+        boolean blockOnExceed = projectConstantsService.isBoqBlockOnExceed();
+        boolean blockWhenMissing = projectConstantsService.isBoqBlockWhenMissing();
+        if (!blockOnExceed && !blockWhenMissing) return false; // enforcement disabled — skip all DB queries
         if (usageLocationId == null || items == null || items.isEmpty()) return false;
 
         boolean allHaveBOQ = true;
@@ -873,20 +874,26 @@ public class BOQService {
             List<Object[]> rows = (usageAreaId != null)
                 ? bOQUploadRepository.fetchAggregatedBOQAndOutwardByWorkArea(usageLocationId, productId, usageAreaId)
                 : bOQUploadRepository.fetchAggregatedBOQAndOutward(usageLocationId, productId);
-            if (rows == null || rows.isEmpty()) { allHaveBOQ = false; continue; }
-            Object[] row = rows.get(0);
-            if (row == null) { allHaveBOQ = false; continue; }
+            Object[] row = (rows == null || rows.isEmpty()) ? null : rows.get(0);
 
-            double effectiveBOQ = row[0] != null ? ((Number) row[0]).doubleValue() : 0;
-            double totalOutward = row[1] != null ? ((Number) row[1]).doubleValue() : 0;
+            double effectiveBOQ = (row != null && row[0] != null) ? ((Number) row[0]).doubleValue() : 0;
+            double totalOutward = (row != null && row[1] != null) ? ((Number) row[1]).doubleValue() : 0;
 
-            if (effectiveBOQ <= 0) { allHaveBOQ = false; continue; } // no BOQ configured for this product+unit
+            if (effectiveBOQ <= 0) { // no BOQ configured for this product+location
+                allHaveBOQ = false;
+                if (blockWhenMissing) {
+                    Product product = productRepository.findByProductId(productId);
+                    String productName = product != null ? product.getProductName() : ("Product ID " + productId);
+                    violations.add(productName + ": no BOQ configured for this location");
+                }
+                continue;
+            }
 
             // BOQ exists — check consumption against wastage-adjusted ceiling
             double afterQty   = totalOutward + newQty;
             double remaining  = Math.max(effectiveBOQ - totalOutward, 0);
 
-            if (afterQty > effectiveBOQ) {
+            if (blockOnExceed && afterQty > effectiveBOQ) {
                 Product product = productRepository.findByProductId(productId);
                 String productName = product != null ? product.getProductName() : ("Product ID " + productId);
                 violations.add(String.format(

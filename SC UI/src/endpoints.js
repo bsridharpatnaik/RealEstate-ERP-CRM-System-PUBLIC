@@ -345,6 +345,7 @@ export const apiEndpoints = {
   productMergeExecute: "/api/inventory/product/merge/execute",
   // Inventory configuration / project-level constants
   inventoryProjectConstants: "/api/inventory/project-constants",
+  updateInventoryProjectConstant: (id) => `/api/inventory/project-constants/${id}`,
   getGlobalDashboardCharts: (startDate, endDate) =>
     `/api/inventory/global-dashboard/charts?startDate=${startDate}&endDate=${endDate}`,
   getGlobalDashboardProductsStock: "/api/inventory/global-dashboard/products/stock",
@@ -481,6 +482,7 @@ export const appRoutes = {
   boqHistory: "/boqHistory",
   activityLog: "/activityLog",
   projectActivityLog: "/projectActivityLog",
+  projectConfiguration: "/projectConfiguration",
   purchaseOrder: "/purchaseOrder",
   historicalPricing: "/historicalPricing",
   globalDashboard: "/globalDashboard",

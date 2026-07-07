@@ -47,6 +47,9 @@ public class AutomaticEmailController {
     @Autowired
     SchemaConfig schemaConfig;
 
+    @Autowired
+    com.ec.application.service.ProjectConstantsService projectConstantsService;
+
     @GetMapping("/stockupdate")
     public void sendEmail() throws Exception {
         stockService.sendStockNotificationEmail();
@@ -111,9 +114,6 @@ public class AutomaticEmailController {
             cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0);
             Date today = cal.getTime();
-            cal.add(Calendar.DAY_OF_YEAR, 30); cal.set(Calendar.HOUR_OF_DAY, 23);
-            cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59); Date day30 = cal.getTime();
-            cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, 31); Date day31 = cal.getTime();
             cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, 60);
             cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59);
             cal.set(Calendar.SECOND, 59); Date day60 = cal.getTime();
@@ -124,9 +124,16 @@ public class AutomaticEmailController {
             for (String tenantName : tenants) {
                 ThreadLocalStorage.setTenantName(tenantName);
                 try {
+                    // Near-expiry window is per-tenant config — compute inside the loop
+                    int nearDays = projectConstantsService.getNearExpiryDays();
+                    cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, nearDays);
+                    cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59);
+                    cal.set(Calendar.SECOND, 59); Date dayNear = cal.getTime();
+                    cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, nearDays + 1); Date dayNearPlus = cal.getTime();
                     allProjects.add(stockEmailReportService.collectTenantStockData(tenantName, netRateMap));
-                    expiring30.addAll(stockEmailReportService.collectExpiryRows(tenantName, today, day30));
-                    expiring60.addAll(stockEmailReportService.collectExpiryRows(tenantName, day31, day60));
+                    expiring30.addAll(stockEmailReportService.collectExpiryRows(tenantName, today, dayNear));
+                    if (nearDays < 60)
+                        expiring60.addAll(stockEmailReportService.collectExpiryRows(tenantName, dayNearPlus, day60));
                 } finally {
                     ThreadLocalStorage.setTenantName(null);
                 }

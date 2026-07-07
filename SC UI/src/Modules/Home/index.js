@@ -54,6 +54,7 @@ import {
   BOQTrackerGlobal,
   QuoteComparison,
   QuoteComparisonCreate,
+  Configuration,
 } from "./../index";
 import BOQReport from "../BOQReport";
 
@@ -118,6 +119,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={appRoutes.projectActivityLog}>
                   <ProjectActivity key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.projectConfiguration}>
+                  <Configuration key={new Date()} {...props} />
                 </Route>
                 <Route path={appRoutes.globalBOQ}>
                   <GlobalBOQView key={new Date()} {...props} />

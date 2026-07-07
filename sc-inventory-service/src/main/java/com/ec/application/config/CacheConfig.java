@@ -31,7 +31,11 @@ public class CacheConfig {
                 makeCache("refWorkAreas",    15,     500),
                 makeCache("refBuildingTypes",15,     500),
                 makeCache("boqOutwardQty",    2,  10_000),
-                makeCache("boqStatusRows",    2,       1)
+                makeCache("boqStatusRows",    2,       1),
+                // Per-tenant config values — rarely change; evicted on update via
+                // ProjectConstantsService.updateConstants. TTL is a safety net for
+                // out-of-band DB edits.
+                makeCache("projectConstants", 15,   1_000)
         ));
         return manager;
     }

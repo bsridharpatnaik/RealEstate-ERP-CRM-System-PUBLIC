@@ -29,6 +29,9 @@ public class AllNotificationService
 	@Autowired
 	ClearNotificationAsyncService clearNotificationAsyncService;
 
+	@Autowired
+	ProjectConstantsService projectConstantsService;
+
 	Logger log = LoggerFactory.getLogger(AllNotificationService.class);
 
 	public ReturnAllNotificationsData getAllNotifications()
@@ -57,6 +60,9 @@ public class AllNotificationService
 	{
 		String source = "inventory";
 		List<ReturnSingleNotification> inventoryNormalizedNotifications = new ArrayList<ReturnSingleNotification>();
+		// Configured near-expiry window — keeps EXPIRY_ALERT_30 message text in sync
+		// with the window the alert job actually used
+		int nearExpiryDays = projectConstantsService.getNearExpiryDays();
 		List<InventoryNotification> inventoryNotifications = inventoryNotificationService
 				.returnInventoryNotifications();
 
@@ -123,7 +129,7 @@ public class AllNotificationService
 			{
 				message = "Product " + inventoryNotification.getProduct().getProductName()
 						+ " in " + inventoryNotification.getWarehouseName()
-						+ " is expiring within 30 days. Qty remaining: "
+						+ " is expiring within " + nearExpiryDays + " days. Qty remaining: "
 						+ df.format(inventoryNotification.getQuantity()) + ".";
 				setFields(returnAllNotification, inventoryNotification.getId(), source, "EXPIRY_ALERT_30", message,
 						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);

@@ -287,6 +287,14 @@ class Add extends AddForm {
                   this.fetchBatchPreview(key);
                   const boqRemaining = this.state.boqQuantity[productId];
                   const boqEnforcementBlock = this.props.dropdowns.boqEnforcementBlock !== false;
+                  const boqBlockWhenMissing = this.props.dropdowns.boqBlockWhenMissing === true;
+                  // null = no BOQ configured for this product+location (backend returned NA)
+                  if (boqBlockWhenMissing && boqRemaining === null && Number(value) > 0) {
+                    this.props.enqueueSnackbar(
+                      "No BOQ is defined for this product at the selected location. Save will be blocked.",
+                      { variant: "warning", key: `boq-missing-${key}`, preventDuplicate: true }
+                    );
+                  }
                   if (boqEnforcementBlock && boqRemaining !== undefined && boqRemaining !== null && Number(value) > Number(boqRemaining)) {
                     clearTimeout(this._boqWarnTimers[key]);
                     this._boqWarnTimers[key] = setTimeout(() => {
@@ -644,7 +652,9 @@ class Add extends AddForm {
       );
       const boqQuantity = this.state.boqQuantity;
       const productIdKey = this.state.noproduct[index].productId;
-      let value = 0;
+      // null = no BOQ configured for this product+location ("NA" from backend) —
+      // distinct from 0 (BOQ exists, fully consumed). Drives the missing-BOQ warning.
+      let value = null;
       if (boqResponse.success && boqResponse.data != null && boqResponse.data !== "" && String(boqResponse.data).toUpperCase() !== "NA") {
         const num = Number(boqResponse.data);
         value = Number.isFinite(num) ? Math.round(num * 100) / 100 : 0;
@@ -913,11 +923,12 @@ class Add extends AddForm {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Limit Exceeded — Save Blocked</DialogTitle>
+          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Check Failed — Save Blocked</DialogTitle>
           <DialogContent>
             <DialogContentText style={{ marginBottom: 12 }}>
-              The following products exceed their BOQ limit (including wastage allowance).
-              Reduce the quantities and try again.
+              The following products either exceed their BOQ limit (including wastage
+              allowance) or have no BOQ defined for the selected location. Correct the
+              entries and try again.
             </DialogContentText>
             <div style={{ border: '1px solid #ffcdd2', borderRadius: 6, background: '#fff8f8' }}>
               {this.state.boqViolationDialog.violations.map((v, i) => {

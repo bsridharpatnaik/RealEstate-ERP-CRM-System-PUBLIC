@@ -80,6 +80,7 @@ function SideMenu(props) {
     props.history.location.pathname === "/firm" ||
     props.history.location.pathname === appRoutes.productMerge ||
     props.history.location.pathname === appRoutes.activityLog ||
+    props.history.location.pathname === appRoutes.projectConfiguration ||
     props.history.location.pathname === "/globalBOQ" ||
     props.history.location.pathname === appRoutes.fifoReport ||
     props.history.location.pathname === appRoutes.stockAgingReport ||
@@ -579,6 +580,12 @@ function SideMenu(props) {
   labelText="Activity Log"
   onClick={props.setSideBarValue}
   linkurl={appRoutes.activityLog}
+/>
+    <DashboardItem
+  nodeId="56"
+  labelText="Configuration"
+  onClick={props.setSideBarValue}
+  linkurl={appRoutes.projectConfiguration}
 />
   </DashboardItem>
 )}

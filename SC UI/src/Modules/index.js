@@ -43,6 +43,7 @@ import BOQTracker from "./Reports/BOQTracker";
 import BOQTrackerGlobal from "./Reports/BOQTracker/global";
 import QuoteComparison from "./QuoteComparison";
 import QuoteComparisonCreate from "./QuoteComparison/create";
+import Configuration from "./Configuration";
 export {
   User,
   Role,
@@ -89,4 +90,5 @@ export {
   BOQTrackerGlobal,
   QuoteComparison,
   QuoteComparisonCreate,
+  Configuration,
 };

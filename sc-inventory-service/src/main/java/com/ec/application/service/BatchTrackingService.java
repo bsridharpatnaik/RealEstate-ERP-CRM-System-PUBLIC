@@ -73,6 +73,9 @@ public class BatchTrackingService {
     @Autowired
     StockRepo stockRepo;
 
+    @Autowired
+    ProjectConstantsService projectConstantsService;
+
     @Transactional(rollbackFor = Exception.class)
     public BatchWriteOff writeOffBatch(Long batchId, WriteOffRequestDTO request) throws Exception {
         InventoryBatch batch = inventoryBatchRepository.findById(batchId)
@@ -216,8 +219,9 @@ public class BatchTrackingService {
     public StockTilesDTO getStockTiles(FilterDataList filterDataList) {
         LocalDate today = LocalDate.now();
         ZoneId zone = ZoneId.systemDefault();
+        int nearExpiryDays = projectConstantsService.getNearExpiryDays();
         Date now      = Date.from(today.atStartOfDay(zone).toInstant());
-        Date in30     = Date.from(today.plusDays(30).atStartOfDay(zone).toInstant());
+        Date in30     = Date.from(today.plusDays(nearExpiryDays).atStartOfDay(zone).toInstant());
         Date in60     = Date.from(today.plusDays(60).atStartOfDay(zone).toInstant());
         Date cutoff30 = Date.from(today.minusDays(30).atStartOfDay(zone).toInstant());
         Date cutoff60 = Date.from(today.minusDays(60).atStartOfDay(zone).toInstant());
@@ -256,7 +260,9 @@ public class BatchTrackingService {
                     : new ArrayList<>();
 
             if (filteredIds.isEmpty()) {
-                return new StockTilesDTO(); // all zeros
+                StockTilesDTO empty = new StockTilesDTO(); // all zeros
+                empty.setNearExpiryDays(nearExpiryDays);
+                return empty;
             }
 
             expiring30 = inventoryBatchRepository.countDistinctProductsExpiringBetweenIn(now, in30, filteredIds);
@@ -271,6 +277,7 @@ public class BatchTrackingService {
         }
 
         StockTilesDTO dto = new StockTilesDTO();
+        dto.setNearExpiryDays(nearExpiryDays);
         dto.setExpiring30Days(expiring30);
         dto.setExpiring60Days(expiring60);
         dto.setExpiredCount(expired);
@@ -481,8 +488,9 @@ public class BatchTrackingService {
     @Transactional(rollbackFor = Exception.class)
     public void processExpiryAlerts() {
         LocalDate today = LocalDate.now();
+        int nearExpiryDays = projectConstantsService.getNearExpiryDays();
         Date now = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date in30 = Date.from(today.plusDays(30).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date in30 = Date.from(today.plusDays(nearExpiryDays).atStartOfDay(ZoneId.systemDefault()).toInstant());
         Date in60 = Date.from(today.plusDays(60).atStartOfDay(ZoneId.systemDefault()).toInstant());
 
         // Expiring within 30 days
