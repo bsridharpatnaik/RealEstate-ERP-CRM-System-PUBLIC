@@ -18,5 +18,6 @@ public class BOQTrackerRow {
     private Double totalInward;
     private Double totalOutward;
     private Double boqBalance;    // boqPlanned - totalOutward
+    private Double consumedPct;   // totalOutward / boqPlanned * 100; null when no BOQ
     private String bucket;        // on_track, at_risk, over, no_boq
 }

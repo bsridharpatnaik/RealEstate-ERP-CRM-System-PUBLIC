@@ -1212,7 +1212,7 @@ public class BOQService {
             "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
             "WHERE iie.is_deleted = 0 AND iie.productId = :pid AND ii.tenant = :tenant " +
             "AND ii.indent_status NOT IN ('" + IndentStatusConstants.STATUS_CANCELLED + "','" + IndentStatusConstants.STATUS_REJECTED + "') " +
-            "AND iie.line_item_status NOT IN ('" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "','" + IndentLineItemStatusConstants.STATUS_CANCELLED + "')")
+            "AND (iie.line_item_status IS NULL OR iie.line_item_status <> '" + IndentLineItemStatusConstants.STATUS_CANCELLED + "')")
             .setParameter("pid", productId)
             .setParameter("tenant", tenantCode)
             .getSingleResult();
@@ -1269,26 +1269,36 @@ public class BOQService {
         }
 
         // Step 2: Indent totals from master schema — fully qualified table names bypass schema routing.
+        // "Indented" = every line that was really raised: exclude only CANCELLED/REJECTED (header) and
+        // CANCELLED (line). SHORT CLOSED lines ARE counted (real demand that happened). Breakup columns:
+        //   received      = SUM(quantity_received)
+        //   short_closed  = shortfall (requested - received) on SHORT CLOSED lines (never-arriving qty)
+        //   pending       = requested - received - short_closed (derived in Java, always reconciles)
         @SuppressWarnings("unchecked")
         List<Object[]> indentRows = em.createNativeQuery(
             "SELECT iie.productId, SUM(iie.quantity) AS total_qty, p.product_name, c.category_name, " +
-            "  p.product_code, p.measurementUnit " +
+            "  p.product_code, p.measurementUnit, " +
+            "  SUM(COALESCE(iie.quantity_received, 0)) AS received, " +
+            "  SUM(CASE WHEN iie.line_item_status = '" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "' " +
+            "           THEN GREATEST(iie.quantity - COALESCE(iie.quantity_received, 0), 0) ELSE 0 END) AS short_closed " +
             "FROM " + master + ".indent_inventory_entries iie " +
             "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
             "JOIN " + master + ".Product p ON p.productId = iie.productId AND p.is_deleted = 0 " +
             "JOIN " + master + ".Category c ON c.categoryId = p.categoryId " +
             "WHERE iie.is_deleted = 0 AND ii.tenant = :tenantCode " +
             "AND ii.indent_status NOT IN ('" + IndentStatusConstants.STATUS_CANCELLED + "','" + IndentStatusConstants.STATUS_REJECTED + "') " +
-            "AND iie.line_item_status NOT IN ('" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "','" + IndentLineItemStatusConstants.STATUS_CANCELLED + "') " +
+            "AND (iie.line_item_status IS NULL OR iie.line_item_status <> '" + IndentLineItemStatusConstants.STATUS_CANCELLED + "') " +
             "GROUP BY iie.productId, p.product_name, c.category_name, p.product_code, p.measurementUnit")
             .setParameter("tenantCode", tenantCode)
             .getResultList();
-        // cols: 0=productId, 1=total_qty, 2=product_name, 3=category_name, 4=productCode, 5=measurementUnit
+        // cols: 0=productId, 1=total_qty(requested), 2=product_name, 3=category_name, 4=productCode,
+        //       5=measurementUnit, 6=received, 7=short_closed
 
         Map<Long, double[]> indentByProduct = new LinkedHashMap<>();
         for (Object[] r : indentRows) {
             Long pid = toLong(r[0]);
-            indentByProduct.put(pid, new double[]{ toDouble(r[1]) });
+            // [requested, received, shortClosed]
+            indentByProduct.put(pid, new double[]{ toDouble(r[1]), toDouble(r[6]), toDouble(r[7]) });
             if (!metaByProduct.containsKey(pid)) {
                 metaByProduct.put(pid, new String[]{
                     r[2] != null ? (String) r[2] : "",
@@ -1307,7 +1317,11 @@ public class BOQService {
         List<BOQIndentSummaryItem> result = new ArrayList<>();
         for (Long pid : allProducts) {
             double boqPlanned = boqByProduct.containsKey(pid) ? boqByProduct.get(pid)[0] : 0;
-            double indented   = indentByProduct.containsKey(pid) ? indentByProduct.get(pid)[0] : 0;
+            double[] ind      = indentByProduct.containsKey(pid) ? indentByProduct.get(pid) : new double[]{0, 0, 0};
+            double indented   = ind[0];                                   // requested
+            double received   = ind[1];
+            double shortClosed = ind[2];
+            double pending    = Math.max(indented - received - shortClosed, 0); // derived, reconciles
             String[] meta     = metaByProduct.getOrDefault(pid, new String[]{"Product " + pid, "", "", ""});
 
             BOQIndentSummaryItem item = new BOQIndentSummaryItem();
@@ -1317,6 +1331,9 @@ public class BOQService {
             item.setUnit(meta[3]);
             item.setBoqPlanned(boqPlanned);
             item.setTotalIndented(indented);
+            item.setTotalReceived(received);
+            item.setTotalPending(pending);
+            item.setTotalShortClosed(shortClosed);
             item.setBalance(boqPlanned - indented);
             item.setCoveragePct(boqPlanned > 0 ? Math.round((indented / boqPlanned) * 10000.0) / 100.0 : null);
             if (boqPlanned <= 0) item.setBucket("none");
@@ -1352,27 +1369,20 @@ public class BOQService {
             .getResultList();
 
         // --- Indent totals (master schema, fully qualified) ---
+        // r[1] = indented (requested), r[2] = received (via indent->PO->inward flow).
+        // "Inward Received" on the tracker deliberately uses indent-line quantity_received (NOT physical
+        // inward_inventory) so it counts only stock that came in against an indent — matching the BOQ vs
+        // Indent report's "Received", and keeping both BOQ pages uniform.
         @SuppressWarnings("unchecked")
         List<Object[]> indentRows = em.createNativeQuery(
-            "SELECT iie.productId, SUM(iie.quantity) " +
+            "SELECT iie.productId, SUM(iie.quantity), SUM(COALESCE(iie.quantity_received, 0)) " +
             "FROM " + master + ".indent_inventory_entries iie " +
             "JOIN " + master + ".indent_inventory ii ON ii.indent_id = iie.indent_id AND ii.is_deleted = 0 " +
             "WHERE iie.is_deleted = 0 AND ii.tenant = :tenant " +
             "AND ii.indent_status NOT IN ('" + IndentStatusConstants.STATUS_CANCELLED + "','" + IndentStatusConstants.STATUS_REJECTED + "') " +
-            "AND iie.line_item_status NOT IN ('" + IndentLineItemStatusConstants.STATUS_SHORT_CLOSED + "','" + IndentLineItemStatusConstants.STATUS_CANCELLED + "') " +
+            "AND (iie.line_item_status IS NULL OR iie.line_item_status <> '" + IndentLineItemStatusConstants.STATUS_CANCELLED + "') " +
             "GROUP BY iie.productId")
             .setParameter("tenant", tenantCode)
-            .getResultList();
-
-        // --- Inward totals (tenant schema) ---
-        @SuppressWarnings("unchecked")
-        List<Object[]> inwardRows = em.createNativeQuery(
-            "SELECT ioe.productId, SUM(ioe.quantity) " +
-            "FROM inward_outward_entries ioe " +
-            "JOIN inwardinventory_entry ie ON ie.entryId = ioe.entryid " +
-            "JOIN inward_inventory ii ON ii.inwardId = ie.inwardid AND ii.is_deleted = 0 " +
-            "WHERE ioe.is_deleted = 0 " +
-            "GROUP BY ioe.productId")
             .getResultList();
 
         // --- Outward totals (tenant schema) ---
@@ -1421,10 +1431,12 @@ public class BOQService {
         }
 
         Map<Long, Double> indentMap = new HashMap<>();
-        for (Object[] r : indentRows) indentMap.put(toLong(r[0]), toDouble(r[1]));
-
         Map<Long, Double> inwardMap = new HashMap<>();
-        for (Object[] r : inwardRows) inwardMap.put(toLong(r[0]), toDouble(r[1]));
+        for (Object[] r : indentRows) {
+            Long pid = toLong(r[0]);
+            indentMap.put(pid, toDouble(r[1]));   // requested
+            inwardMap.put(pid, toDouble(r[2]));   // received via indent->PO->inward
+        }
 
         Map<Long, Double> outwardMap = new HashMap<>();
         for (Object[] r : outwardRows) outwardMap.put(toLong(r[0]), toDouble(r[1]));
@@ -1470,6 +1482,7 @@ public class BOQService {
             row.setTotalInward(inward > 0 ? inward : null);
             row.setTotalOutward(outward > 0 ? outward : null);
             row.setBoqBalance(boq > 0 ? boq - outward : null);
+            row.setConsumedPct(boq > 0 ? Math.round((outward / boq) * 10000.0) / 100.0 : null);
 
             if (boq <= 0) row.setBucket("no_boq");
             else if (outward > boq) row.setBucket("over");
@@ -1707,7 +1720,7 @@ public class BOQService {
             headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-            String[] headers = {"Category", "Product", "Code", "Unit", "BOQ Planned", "Total Indented", "Total Inward", "Total Outward", "BOQ Balance", "Status"};
+            String[] headers = {"Category", "Product", "Code", "Unit", "BOQ Planned", "Total Indented", "Total Inward", "Total Outward", "BOQ Balance", "% Consumed", "Status"};
             Row hRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
                 Cell c = hRow.createCell(i);
@@ -1727,7 +1740,8 @@ public class BOQService {
                 if (r.getTotalInward() != null) row.createCell(6).setCellValue(r.getTotalInward());
                 if (r.getTotalOutward() != null) row.createCell(7).setCellValue(r.getTotalOutward());
                 if (r.getBoqBalance() != null) row.createCell(8).setCellValue(r.getBoqBalance());
-                row.createCell(9).setCellValue(r.getBucket() != null ? r.getBucket() : "");
+                if (r.getConsumedPct() != null) row.createCell(9).setCellValue(r.getConsumedPct());
+                row.createCell(10).setCellValue(r.getBucket() != null ? r.getBucket() : "");
             }
 
             for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);

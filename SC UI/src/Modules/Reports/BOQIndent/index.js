@@ -18,10 +18,35 @@ class BOQIndentReport extends Component {
     search: '',
     hideNoBOQ: false,
     selectedCategory: '',
+    expanded: {},   // { [rowKey]: true }
   };
 
   componentDidMount() {
     this.fetchData();
+  }
+
+  rowKey(row) {
+    return `${row.productCode || ''}|${row.productName || ''}`;
+  }
+
+  toggleRow(key) {
+    this.setState(s => {
+      const expanded = { ...s.expanded };
+      if (expanded[key]) delete expanded[key];
+      else expanded[key] = true;
+      return { expanded };
+    });
+  }
+
+  toggleAll(visibleRows) {
+    const allOpen = visibleRows.length > 0 && visibleRows.every(r => this.state.expanded[this.rowKey(r)]);
+    if (allOpen) {
+      this.setState({ expanded: {} });
+    } else {
+      const expanded = {};
+      visibleRows.forEach(r => { expanded[this.rowKey(r)] = true; });
+      this.setState({ expanded });
+    }
   }
 
   async fetchData() {
@@ -41,7 +66,7 @@ class BOQIndentReport extends Component {
   }
 
   render() {
-    const { rows, loading, search, hideNoBOQ, selectedCategory } = this.state;
+    const { rows, loading, search, hideNoBOQ, selectedCategory, expanded } = this.state;
 
     const categoryOptions = [...new Set(rows.map(r => r.categoryName).filter(Boolean))].sort();
 
@@ -128,6 +153,18 @@ class BOQIndentReport extends Component {
             />
             Hide products with no BOQ
           </label>
+          {!loading && filtered.length > 0 && (
+            <button
+              onClick={() => this.toggleAll(filtered)}
+              style={{
+                marginLeft: 'auto', padding: '8px 14px', borderRadius: 6,
+                border: '1px solid #cbd5e0', background: '#fff', color: '#4a5568',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', outline: 'none',
+              }}
+            >
+              {filtered.every(r => expanded[this.rowKey(r)]) ? '▾ Collapse all' : '▸ Expand all'}
+            </button>
+          )}
         </div>
 
         {/* Table */}
@@ -144,6 +181,7 @@ class BOQIndentReport extends Component {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f7f8fa', borderBottom: '2px solid #e2e8f0' }}>
+                  <th style={{ width: 34 }} />
                   {['Category', 'Product', 'Code', 'Unit', 'BOQ Planned', 'Total Indented', 'Balance', 'Coverage %', 'Status'].map(h => (
                     <th key={h} style={{
                       padding: '10px 12px',
@@ -163,12 +201,22 @@ class BOQIndentReport extends Component {
                   const balanceColor = row.bucket === 'over' ? '#c0392b' : row.bucket === 'under' ? '#27ae60' : '#7f8c8d';
                   const pct = row.coveragePct != null ? row.coveragePct : null;
                   const pctClamped = pct != null ? Math.min(pct, 200) : 0;
+                  const key = this.rowKey(row);
+                  const isOpen = !!expanded[key];
 
                   return (
-                    <tr key={idx} style={{
-                      background: idx % 2 === 0 ? '#fff' : '#fafbfc',
-                      borderBottom: '1px solid #f0f2f5',
-                    }}>
+                    <React.Fragment key={idx}>
+                    <tr
+                      onClick={() => this.toggleRow(key)}
+                      style={{
+                        background: isOpen ? '#f0f6ff' : (idx % 2 === 0 ? '#fff' : '#fafbfc'),
+                        borderBottom: '1px solid #f0f2f5', cursor: 'pointer',
+                      }}
+                    >
+                      {/* Expand chevron */}
+                      <td style={{ padding: '10px 8px', textAlign: 'center', color: '#a0aec0', fontSize: 11, userSelect: 'none' }}>
+                        {isOpen ? '▾' : '▸'}
+                      </td>
                       {/* Category */}
                       <td style={{ padding: '10px 12px', color: '#718096', fontSize: 12 }}>
                         {row.categoryName || '—'}
@@ -232,6 +280,39 @@ class BOQIndentReport extends Component {
                         </span>
                       </td>
                     </tr>
+                    {isOpen && (
+                      <tr style={{ background: '#f7fbff', borderBottom: '1px solid #e2e8f0' }}>
+                        <td colSpan={10} style={{ padding: '4px 12px 14px 46px' }}>
+                          <div style={{ fontSize: 11, color: '#718096', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, margin: '6px 0 8px' }}>
+                            Indent status breakup {row.unit ? `(${row.unit})` : ''}
+                          </div>
+                          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            {[
+                              { label: 'Requested', value: row.totalIndented, color: '#2d3748', bg: '#edf2f7', border: '#cbd5e0' },
+                              { label: 'Received', value: row.totalReceived, color: '#1a7a40', bg: '#eafaf1', border: '#a9dfbf' },
+                              { label: 'Pending', value: row.totalPending, color: '#2980b9', bg: '#ebf5fb', border: '#aed6f1' },
+                              { label: 'Short Closed', value: row.totalShortClosed, color: '#b9770e', bg: '#fef5e7', border: '#f5cba7' },
+                            ].map(c => (
+                              <div key={c.label} style={{
+                                background: c.bg, border: `1px solid ${c.border}`,
+                                borderRadius: 8, padding: '8px 16px', minWidth: 120,
+                              }}>
+                                <div style={{ fontSize: 10, color: c.color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                                  {c.label}
+                                </div>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: c.color, marginTop: 3 }}>
+                                  {this.fmt(c.value)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#a0aec0', marginTop: 8 }}>
+                            Requested = Received + Pending + Short Closed. Short Closed = ordered qty that was closed out and will not arrive.
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>

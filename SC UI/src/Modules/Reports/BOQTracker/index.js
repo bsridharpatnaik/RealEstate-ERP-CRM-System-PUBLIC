@@ -28,6 +28,36 @@ const BUCKET_FILTERS = [
   { value: 'no_boq',   label: 'No BOQ Set' },
 ];
 
+const CONSUMPTION_FILTERS = [
+  { value: '',       label: 'Any % Consumed' },
+  { value: 'zero',   label: '0% (nothing used)' },
+  { value: 'lt50',   label: '< 50%' },
+  { value: '50_80',  label: '50–80%' },
+  { value: '80_100', label: '80–100%' },
+  { value: 'gt100',  label: '> 100% (over)' },
+  { value: 'no_boq', label: 'No BOQ' },
+];
+
+// Client-side match on a row's consumedPct. No-BOQ products are ALWAYS surfaced under a
+// percentage bucket — they're the ones still needing a BOQ, so we never hide them. The
+// explicit 'no_boq' option selects only No-BOQ rows.
+function matchesConsumption(row, filter) {
+  if (!filter) return true;
+  const noBoq = row.boqPlanned == null;
+  if (filter === 'no_boq') return noBoq;
+  if (noBoq) return true;
+  const p = row.consumedPct;
+  if (p == null) return true;
+  switch (filter) {
+    case 'zero':   return p === 0;
+    case 'lt50':   return p > 0 && p < 50;
+    case '50_80':  return p >= 50 && p < 80;
+    case '80_100': return p >= 80 && p <= 100;
+    case 'gt100':  return p > 100;
+    default:       return true;
+  }
+}
+
 class BOQTracker extends Component {
   // Props:
   //   tenantCode  — when set (global page), all API calls send this as tenant-id header
@@ -41,7 +71,8 @@ class BOQTracker extends Component {
     search: '',
     selectedCategory: '',
     gapFilter: '',
-    bucketFilter: '',    // client-side status filter — no re-fetch needed
+    bucketFilter: '',       // client-side status filter — no re-fetch needed
+    consumptionFilter: '',  // client-side % consumed filter — no re-fetch needed
     isFiltered: false,
     drillModal: null,
   };
@@ -52,7 +83,7 @@ class BOQTracker extends Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.tenantCode !== this.props.tenantCode && this.props.tenantCode) {
-      this.setState({ rows: [], allCategories: [], globalTotals: null, search: '', selectedCategory: '', gapFilter: '', bucketFilter: '', isFiltered: false });
+      this.setState({ rows: [], allCategories: [], globalTotals: null, search: '', selectedCategory: '', gapFilter: '', bucketFilter: '', consumptionFilter: '', isFiltered: false });
       this.fetchUnfiltered();
     }
   }
@@ -106,7 +137,7 @@ class BOQTracker extends Component {
   };
 
   clearFilters = () =>
-    this.setState({ search: '', selectedCategory: '', gapFilter: '', bucketFilter: '' }, this.fetchUnfiltered);
+    this.setState({ search: '', selectedCategory: '', gapFilter: '', bucketFilter: '', consumptionFilter: '' }, this.fetchUnfiltered);
 
   async openDrill(row) {
     this.setState({ drillModal: { productId: row.productId, productName: row.productName, unit: row.unit, data: null, loading: true } });
@@ -170,7 +201,7 @@ class BOQTracker extends Component {
   }
 
   render() {
-    const { rows, allCategories, globalTotals, loading, search, selectedCategory, gapFilter, bucketFilter, isFiltered, drillModal } = this.state;
+    const { rows, allCategories, globalTotals, loading, search, selectedCategory, gapFilter, bucketFilter, consumptionFilter, isFiltered, drillModal } = this.state;
     const { tenantCode } = this.props;
 
     // If in global mode and no project selected yet, show a prompt
@@ -182,18 +213,19 @@ class BOQTracker extends Component {
       );
     }
 
-    // Client-side bucket filter applied on top of server-fetched rows
-    const visibleRows = bucketFilter ? rows.filter(r => r.bucket === bucketFilter) : rows;
+    // Client-side status + % consumed filters applied on top of server-fetched rows
+    let visibleRows = bucketFilter ? rows.filter(r => r.bucket === bucketFilter) : rows;
+    if (consumptionFilter) visibleRows = visibleRows.filter(r => matchesConsumption(r, consumptionFilter));
 
     const tiles = globalTotals ? [
-      { label: 'Total Products',      value: isFiltered || bucketFilter ? `${visibleRows.length} / ${globalTotals.totalProducts}` : globalTotals.totalProducts, color: '#2980b9', bg: '#ebf5fb', border: '#aed6f1' },
+      { label: 'Total Products',      value: isFiltered || bucketFilter || consumptionFilter ? `${visibleRows.length} / ${globalTotals.totalProducts}` : globalTotals.totalProducts, color: '#2980b9', bg: '#ebf5fb', border: '#aed6f1' },
       { label: 'Outward Without BOQ', value: globalTotals.noBOQWithOutward, color: '#e67e22', bg: '#fef9e7', border: '#f9e79f',  tooltip: 'Products with outward consumption but no BOQ planned' },
       { label: '80–100% Consumed',    value: globalTotals.atRiskCount,      color: '#d35400', bg: '#fdf2e9', border: '#f5cba7',  tooltip: 'Products where outward is 80–100% of BOQ (nearing limit)' },
       { label: 'Exceeded BOQ',        value: globalTotals.exceededCount,    color: '#c0392b', bg: '#fdedec', border: '#f1948a',  tooltip: 'Products where outward exceeds planned BOQ quantity' },
       { label: 'No BOQ Set',          value: globalTotals.noBOQCount,       color: '#7f8c8d', bg: '#f2f3f4', border: '#d5d8dc', tooltip: 'Products with activity but no BOQ defined' },
     ] : [];
 
-    const hasAnyFilter = !!(selectedCategory || search || gapFilter || bucketFilter);
+    const hasAnyFilter = !!(selectedCategory || search || gapFilter || bucketFilter || consumptionFilter);
 
     return (
       <div style={{ padding: '16px 16px', fontFamily: 'inherit' }}>
@@ -267,6 +299,14 @@ class BOQTracker extends Component {
           >
             {BUCKET_FILTERS.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
           </select>
+          <select
+            value={consumptionFilter}
+            onChange={e => this.setState({ consumptionFilter: e.target.value })}
+            title="Filter by consumption % (Outward ÷ BOQ Planned)"
+            style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #d1d5db', fontSize: 13, background: '#fff', outline: 'none', cursor: 'pointer', minWidth: 170 }}
+          >
+            {CONSUMPTION_FILTERS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
           <button
             onClick={this.applyFilters}
             style={{ padding: '8px 16px', borderRadius: 6, background: '#2980b9', color: '#fff', border: 'none', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
@@ -303,6 +343,7 @@ class BOQTracker extends Component {
                     { label: 'Inward Received', align: 'right' },
                     { label: 'Outward Used',    align: 'right', note: 'click to drill down' },
                     { label: 'Balance',         align: 'right' },
+                    { label: '% Consumed',      align: 'right', note: 'outward ÷ BOQ' },
                     { label: 'Status',          align: 'center' },
                   ].map(h => (
                     <th key={h.label} style={{ padding: '8px 6px', textAlign: h.align, fontSize: 11, fontWeight: 700, color: '#718096', textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -344,6 +385,9 @@ class BOQTracker extends Component {
                       </td>
                       <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 600, color: balanceColor }}>
                         {row.boqBalance != null ? this.fmt(row.boqBalance) : <span style={{ color: '#a0aec0' }}>—</span>}
+                      </td>
+                      <td style={{ padding: '8px 6px', textAlign: 'right' }}>
+                        {this.renderPct(row.consumedPct, row.boqPlanned)}
                       </td>
                       <td style={{ padding: '8px 6px', textAlign: 'center' }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: bs.color, background: bs.bg, padding: '2px 8px', borderRadius: 8, border: `1px solid ${bs.border}`, whiteSpace: 'nowrap' }}>
