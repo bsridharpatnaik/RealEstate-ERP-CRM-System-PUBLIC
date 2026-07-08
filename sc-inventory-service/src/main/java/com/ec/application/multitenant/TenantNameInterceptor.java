@@ -62,7 +62,8 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
                     Pattern.compile(".*/error.*"),
                     Pattern.compile(".*/master-file.*"),      // master-schema file upload/download (PO attachments)
                     Pattern.compile(".*/admin.*"),           // admin/backfill endpoints — always master schema
-                    Pattern.compile(".*/quote-comparison.*") // quote comparison — master schema global module
+                    Pattern.compile(".*/quote-comparison.*"), // quote comparison — master schema global module
+                    Pattern.compile(".*/health.*")           // public DB health check — no tenant header, routes to master
             ));
 
 
