@@ -30,9 +30,16 @@ class Details extends Component {
   }
   async download(file) {
     this.setState({ isLoading: true });
-    const response = await API.GET(apiEndpoints.download + file.fileUUId, {
-      responseType: "blob",
-    });
+    // When this detail view was opened cross-tenant (e.g. an inward reached via a
+    // PO's status history from the global menu), the Redux tenant is master/wrong.
+    // The opener passes the owning project's code as `tenantCode` — send it as an
+    // explicit tenant-id header so the file is fetched from the correct schema.
+    // Falls back to the Redux tenant (axios interceptor) when not provided.
+    const config = { responseType: "blob" };
+    if (this.props.tenantCode) {
+      config.headers = { "tenant-id": this.props.tenantCode };
+    }
+    const response = await API.GET(apiEndpoints.download + file.fileUUId, config);
     this.setState({ isLoading: false });
     if (response.status === 200) {
       var a = document.createElement("a");
