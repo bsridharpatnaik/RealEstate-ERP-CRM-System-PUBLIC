@@ -90,7 +90,7 @@
 
     <#-- ── Expiring within 30 days ──────────────────────────────────────── -->
     <#if expiring30?has_content>
-    <div class="section-title-alert">&#9888; Products Expiring Within 30 Days (${expiring30?size} batch${(expiring30?size > 1)?string("es",")})</div>
+    <div class="section-title-alert">&#9888; Products Expiring Within 30 Days (${expiring30?size} batch${(expiring30?size > 1)?string("es","")})</div>
     <p>Immediate action may be required — these batches expire within the next 30 days.</p>
     <table>
       <thead>
@@ -124,7 +124,7 @@
 
     <#-- ── Expiring in 31–60 days ────────────────────────────────────────── -->
     <#if expiring60?has_content>
-    <div class="section-title-warn">&#9888; Products Expiring in 31–60 Days (${expiring60?size} batch${(expiring60?size > 1)?string("es",")})</div>
+    <div class="section-title-warn">&#9888; Products Expiring in 31–60 Days (${expiring60?size} batch${(expiring60?size > 1)?string("es","")})</div>
     <p>Plan consumption or write-off for these batches before they reach the 30-day window.</p>
     <table>
       <thead>
