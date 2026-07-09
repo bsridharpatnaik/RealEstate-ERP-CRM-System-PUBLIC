@@ -726,9 +726,9 @@ public class PurchaseOrderPdfService {
                     ? new ArrayList<>(indent.getInventoryList())
                     : new ArrayList<>();
 
-            PdfPTable lineTable = new PdfPTable(8);
+            PdfPTable lineTable = new PdfPTable(7);
             lineTable.setWidthPercentage(100);
-            lineTable.setWidths(new float[]{2.5f, 1.2f, 0.8f, 0.9f, 0.9f, 0.9f, 1.1f, 1.2f});
+            lineTable.setWidths(new float[]{2.5f, 1.2f, 0.8f, 0.9f, 0.9f, 0.9f, 1.2f});
             lineTable.setSpacingBefore(2f);
             lineTable.setSpacingAfter(12f);
 
@@ -738,12 +738,11 @@ public class PurchaseOrderPdfService {
             addHeaderCell(lineTable, "Qty Ordered", tableHeaderFont);
             addHeaderCell(lineTable, "Qty Received", tableHeaderFont);
             addHeaderCell(lineTable, "Qty Pending", tableHeaderFont);
-            addHeaderCell(lineTable, "Need By Date", tableHeaderFont);
             addHeaderCell(lineTable, "Status", tableHeaderFont);
 
             if (lineItems.isEmpty()) {
                 PdfPCell noData = new PdfPCell(new Phrase("No line items", normalFont));
-                noData.setColspan(8);
+                noData.setColspan(7);
                 noData.setPadding(6f);
                 noData.setHorizontalAlignment(Element.ALIGN_CENTER);
                 lineTable.addCell(noData);
