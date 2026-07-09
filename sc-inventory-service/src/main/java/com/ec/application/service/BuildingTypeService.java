@@ -105,7 +105,7 @@ public class BuildingTypeService {
         if (!checkBeforeDeleteService.isBuildingTypeUsed(id))
             buildingTypeRepo.softDeleteById(id);
         else
-            throw new Exception("Cannot delete BuildingType. BuildingType already assigned to Bulding Unit");
+            throw new Exception("Cannot delete Structure Type — it is used in a Building Unit or BOQ.");
     }
 
     @Cacheable(value = "refBuildingTypes", key = "T(com.ec.application.multitenant.ThreadLocalStorage).getTenantName() + ':all'")

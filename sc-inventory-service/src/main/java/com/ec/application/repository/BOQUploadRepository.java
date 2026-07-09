@@ -217,6 +217,9 @@ public interface BOQUploadRepository extends BaseRepository<BOQUpload, Long> {
     @Query("SELECT COUNT(b) FROM BOQUpload b WHERE b.usageLocation.locationId = :id AND b.isDeleted = false")
     int locationBoqCount(@Param("id") Long id);
 
+    @Query("SELECT COUNT(b) FROM BOQUpload b WHERE b.buildingType.typeId = :id AND b.isDeleted = false")
+    int buildingTypeBoqCount(@Param("id") Long id);
+
     /**
      * Returns [productId, effective_boq_qty] per product for a set of product IDs.
      * Used to enrich cross-tenant reports (e.g. PO Recon) with BOQ planned totals.
