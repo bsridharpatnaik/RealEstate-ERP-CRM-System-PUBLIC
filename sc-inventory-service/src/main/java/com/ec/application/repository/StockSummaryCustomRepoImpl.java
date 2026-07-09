@@ -31,7 +31,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
     @Override
     public Page<StockSummaryAggregatedDTO> fetchAggregatedStock(
             FilterDataList filters,
-            Pageable pageable
+            Pageable pageable,
+            List<String> allowedSchemas
     ) {
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -46,6 +47,11 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
 
         List<Predicate> wherePredicates = new ArrayList<>();
         List<Predicate> havingPredicates = new ArrayList<>();
+
+        // Access control: restrict to the current user's tenants (empty = no restriction, e.g. admin).
+        if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+            wherePredicates.add(root.get("tenantSchema").in(allowedSchemas));
+        }
 
     /* =========================
        AGGREGATE EXPRESSIONS
@@ -255,6 +261,11 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
 
         List<Predicate> countPredicates = new ArrayList<>();
 
+        // Access control (same as main query)
+        if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+            countPredicates.add(countRoot.get("tenantSchema").in(allowedSchemas));
+        }
+
 // reuse SAME where predicates (but rebuilt on countRoot!)
         if (filters != null && filters.getFilterData() != null) {
             for (FilterAttributeData fad : filters.getFilterData()) {
@@ -429,8 +440,12 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
     }
 
     @Override
-    public StockSummaryTilesDTO getTileCounts(FilterDataList filters) {
+    public StockSummaryTilesDTO getTileCounts(FilterDataList filters, List<String> allowedSchemas) {
         StockSummaryTilesDTO dto = new StockSummaryTilesDTO();
+
+        // Access control: restrict to the current user's tenants (empty = no restriction, e.g. admin).
+        String accessWhere = (allowedSchemas == null || allowedSchemas.isEmpty()) ? "" :
+                " AND tenantSchema IN (" + allowedSchemas.stream().map(t -> "'" + t.replace("'", "''") + "'").collect(Collectors.joining(",")) + ")";
 
         // Build optional tenant WHERE clause from filter
         List<String> tenants = new ArrayList<>();
@@ -447,7 +462,7 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
         List<?> lowStockRows = em.createNativeQuery(
                 "SELECT COUNT(*) FROM (" +
                 "  SELECT tenantSchema, productId FROM stock_summary" +
-                "  WHERE is_deleted = 0" + tenantWhere +
+                "  WHERE is_deleted = 0" + accessWhere + tenantWhere +
                 "  GROUP BY tenantSchema, productId" +
                 "  HAVING MAX(reorder_level) IS NOT NULL AND SUM(quantityInHand) <= MAX(reorder_level)" +
                 ") t"
@@ -457,7 +472,7 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
         List<?> deadStockRows = em.createNativeQuery(
                 "SELECT COUNT(*) FROM (" +
                 "  SELECT tenantSchema, productId FROM stock_summary" +
-                "  WHERE is_deleted = 0" + tenantWhere +
+                "  WHERE is_deleted = 0" + accessWhere + tenantWhere +
                 "  GROUP BY tenantSchema, productId" +
                 "  HAVING SUM(CASE WHEN warehouseName = 'Dead Stock Warehouse' THEN quantityInHand ELSE 0 END) > 0" +
                 ") t"
