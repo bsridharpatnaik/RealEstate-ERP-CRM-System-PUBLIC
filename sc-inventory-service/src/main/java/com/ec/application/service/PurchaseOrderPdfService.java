@@ -686,6 +686,9 @@ public class PurchaseOrderPdfService {
         Font tableHeaderFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.BLACK);
         Font normalFont       = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
 
+        // Always start the Associated Indents section on a fresh page
+        document.newPage();
+
         // Page-level section heading
         Paragraph heading = new Paragraph("ASSOCIATED INDENTS", sectionTitleFont);
         heading.setAlignment(Element.ALIGN_CENTER);
