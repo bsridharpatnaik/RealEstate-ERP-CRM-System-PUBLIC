@@ -98,7 +98,7 @@ public class ProductService {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
         checkIfDashboardProductLimitReached(null, payload, "create");
-        if (!productRepo.existsByProductName(payload.getProductName().trim())) {
+        if (!productRepo.existsByProductNameTrimmed(payload.getProductName())) {
             Optional<Category> categoryOpt = categoryRepo.findById(payload.getCategoryId());
             if (categoryOpt.isPresent()) {
                 Product product = getProduct(payload, categoryOpt);
@@ -189,8 +189,8 @@ public class ProductService {
 
         checkIfDashboardProductLimitReached(product, payload, "update");
 
-        if (productRepo.existsByProductName(payload.getProductName())
-                && !payload.getProductName().equalsIgnoreCase(product.getProductName())) {
+        if (productRepo.existsByProductNameTrimmed(payload.getProductName())
+                && !payload.getProductName().trim().equalsIgnoreCase(product.getProductName().trim())) {
             throw new Exception("Product with same Name already exists");
         }
 
