@@ -31,7 +31,7 @@ public class GatewayApplication extends SpringBootServletInitializer{
 	@PostConstruct
 	public void started() {
 	    //TimeZone.setDefault(TimeZone.getTimeZone(ZONE_ID_INDIA));
-	    TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
+	    //TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));   // removed: align JVM/log TZ with inventory-service (UTC). Jackson + hibernate.jdbc.time_zone still pin IST for API/DB.
 	}
 	public static void main(String[] args) {
 		SpringApplication.run(GatewayApplication.class, args);
