@@ -43,5 +43,6 @@ public class ProductMergePreviewDTO {
         private long boqHistoryEntries;
         private long pricingEntries;
         private long stockCommentEntries;
+        private long notificationEntries;
     }
 }

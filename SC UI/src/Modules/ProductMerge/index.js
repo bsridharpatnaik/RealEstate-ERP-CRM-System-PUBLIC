@@ -105,7 +105,9 @@ class ProductMerge extends Component {
     summary.boqUploadEntries +
     summary.boqInventoryEntries +
     summary.boqHistoryEntries +
-    summary.pricingEntries;
+    summary.pricingEntries +
+    summary.stockCommentEntries +
+    summary.notificationEntries;
 
   renderStep0() {
     const { allProducts, sourceProduct, targetProduct, error } = this.state;
@@ -222,7 +224,7 @@ class ProductMerge extends Component {
                   <TableCell align="right">{s.stockEntries + s.stockHistoryEntries}</TableCell>
                   <TableCell align="right">{s.inwardOutwardEntries + s.rejectInwardEntries + s.rejectOutwardEntries + s.returnOutwardEntries}</TableCell>
                   <TableCell align="right">{s.boqUploadEntries + s.boqInventoryEntries + s.boqHistoryEntries}</TableCell>
-                  <TableCell align="right">{s.transferItemEntries + s.lostDamagedEntries + s.pricingEntries}</TableCell>
+                  <TableCell align="right">{s.transferItemEntries + s.lostDamagedEntries + s.pricingEntries + s.stockCommentEntries + s.notificationEntries}</TableCell>
                   <TableCell align="right"><strong>{this.totalUsage(s)}</strong></TableCell>
                 </TableRow>
               ))}

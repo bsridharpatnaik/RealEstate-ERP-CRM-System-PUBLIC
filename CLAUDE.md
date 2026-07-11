@@ -146,6 +146,32 @@ Incremental syncs only touch modified rows, so product renames/unit changes go s
 query `DISTINCT productId` from the master table for that tenant, fetch fresh `Product`s, bulk-`UPDATE`
 `productName`/`unit`. Done in `FifoReportSyncService` (Step 6) and `LowStockSyncService`.
 
+### Product Merge — must cover EVERY table that references a product
+Product merge (`ProductMergeService` + `ProductMergeTenantExecutor`) reassigns all source-product FKs
+to the survivor, then soft-deletes the source `Product`. It hand-writes native SQL per table — there is
+no framework sweep — so it silently goes stale whenever a new product-referencing table is added.
+
+**Whenever you add or discover a table/entity with a `productId`/`product_id` column (or a `@ManyToOne`
+to `Product`), you MUST also update `ProductMergeTenantExecutor`:**
+1. Decide its schema: tenant table → `executeTenantMerge` + `countUsages`; master table → `executeMasterMerge`
+   + `countMasterUsages` (see the Multi-Tenant Schema table — Indents/POs/QuoteComparison/ServiceOrders/Product
+   are master; Inward/Outward/Stock/Batch/BOQ are tenant).
+2. Add the `UPDATE … SET productId=<target> WHERE productId=<source>` (also refresh denormalized
+   `productName`/`productCode`/`measurementUnit`/`category` columns if the table has them).
+3. Add a matching `COUNT(*)` to the preview so the impact table shows it, and surface it in the UI
+   (`SC UI/src/Modules/ProductMerge/index.js` — a column + `totalUsage()`).
+4. **Exceptions that do NOT need a reassign:** `@Subselect`/`@Immutable` views (derived), and
+   full-rebuild sync tables that `deleteByTenantSchema` then rebuild (aging/dead/expired/low-stock reports
+   self-heal). **Incremental** sync tables (`global_fifo_report`) DO need reassign — they never self-heal.
+   The `all_inventory` rollup (proc `update_all_inventory()`) is refreshed per tenant after merge.
+
+**Table-name casing is load-bearing here** (see native-SQL casing gotcha above). The merge broke on QA
+because it queried `stock` but the real Hibernate table is `Stock` (the `Stock` entity has no `@Table`,
+so the table = class name). **Before writing/merging any native SQL, verify the exact table name** with
+`SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=… AND LOWER(TABLE_NAME)=LOWER('…')`.
+Entities without `@Table` → PascalCase class-name table (`Stock`, `Product`, `BOQUpload`,
+`InventoryMonthPriceMapping`); manually-created tables are lowercase snake_case.
+
 ---
 
 ## Batch Tracking — core model & invariants

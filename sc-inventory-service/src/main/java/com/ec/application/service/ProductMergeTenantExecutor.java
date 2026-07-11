@@ -27,7 +27,7 @@ public class ProductMergeTenantExecutor {
     public ProductMergePreviewDTO.TenantUsageSummary countUsages(String tenantSchema, Long sourceId) {
         ProductMergePreviewDTO.TenantUsageSummary s = new ProductMergePreviewDTO.TenantUsageSummary();
         s.setTenantSchema(tenantSchema);
-        s.setStockEntries(count("SELECT COUNT(*) FROM stock WHERE productId=? AND is_deleted=false", sourceId));
+        s.setStockEntries(count("SELECT COUNT(*) FROM Stock WHERE productId=? AND is_deleted=false", sourceId));
         s.setStockHistoryEntries(count("SELECT COUNT(*) FROM stock_history WHERE productId=?", sourceId));
         s.setInwardOutwardEntries(count("SELECT COUNT(*) FROM inward_outward_entries WHERE productId=?", sourceId));
         s.setRejectInwardEntries(count("SELECT COUNT(*) FROM reject_inward_entries WHERE productId=?", sourceId));
@@ -41,6 +41,7 @@ public class ProductMergeTenantExecutor {
         s.setBoqHistoryEntries(count("SELECT COUNT(*) FROM boq_history WHERE productId=?", sourceId));
         s.setPricingEntries(count("SELECT COUNT(*) FROM InventoryMonthPriceMapping WHERE productId=? AND is_deleted=false", sourceId));
         s.setStockCommentEntries(count("SELECT COUNT(*) FROM stock_comment WHERE productId=?", sourceId));
+        s.setNotificationEntries(count("SELECT COUNT(*) FROM inventorynotification WHERE productId=?", sourceId));
         return s;
     }
 
@@ -115,6 +116,11 @@ public class ProductMergeTenantExecutor {
         jdbcTemplate.update(
             "UPDATE stock_comment SET productId=? WHERE productId=?",
             targetId, sourceId);
+
+        // 14. inventorynotification: reassign notifications to target product
+        jdbcTemplate.update(
+            "UPDATE inventorynotification SET productId=? WHERE productId=?",
+            targetId, sourceId);
     }
 
     // ── Master-schema merge ───────────────────────────────────────────────────
@@ -157,7 +163,7 @@ public class ProductMergeTenantExecutor {
 
     private void mergeStock(Long sourceId, Long targetId) {
         List<Map<String, Object>> sourceRows = jdbcTemplate.queryForList(
-            "SELECT stockId, warehouseId, quantityInHand FROM stock WHERE productId=? AND is_deleted=false",
+            "SELECT stockId, warehouseId, quantityInHand FROM Stock WHERE productId=? AND is_deleted=false",
             sourceId);
 
         for (Map<String, Object> row : sourceRows) {
@@ -166,17 +172,17 @@ public class ProductMergeTenantExecutor {
             double sourceQty = toDouble(row.get("quantityInHand"));
 
             List<Map<String, Object>> targetRows = jdbcTemplate.queryForList(
-                "SELECT stockId, quantityInHand FROM stock WHERE productId=? AND warehouseId=? AND is_deleted=false",
+                "SELECT stockId, quantityInHand FROM Stock WHERE productId=? AND warehouseId=? AND is_deleted=false",
                 targetId, warehouseId);
 
             if (!targetRows.isEmpty()) {
                 long targetStockId = toLong(targetRows.get(0).get("stockId"));
                 double targetQty = toDouble(targetRows.get(0).get("quantityInHand"));
-                jdbcTemplate.update("UPDATE stock SET quantityInHand=? WHERE stockId=?",
+                jdbcTemplate.update("UPDATE Stock SET quantityInHand=? WHERE stockId=?",
                     sourceQty + targetQty, targetStockId);
-                jdbcTemplate.update("UPDATE stock SET is_deleted=true WHERE stockId=?", stockId);
+                jdbcTemplate.update("UPDATE Stock SET is_deleted=true WHERE stockId=?", stockId);
             } else {
-                jdbcTemplate.update("UPDATE stock SET productId=? WHERE stockId=?", targetId, stockId);
+                jdbcTemplate.update("UPDATE Stock SET productId=? WHERE stockId=?", targetId, stockId);
             }
         }
     }

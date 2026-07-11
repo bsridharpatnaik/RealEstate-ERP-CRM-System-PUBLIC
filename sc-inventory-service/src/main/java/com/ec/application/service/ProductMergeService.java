@@ -25,6 +25,7 @@ public class ProductMergeService {
     private final SchemaConfig schemaConfig;
     private final ProductMergeTenantExecutor tenantExecutor;
     private final StockSyncOrchestrator stockSyncOrchestrator;
+    private final AllInventoryService allInventoryService;
 
     // ── Preview ───────────────────────────────────────────────────────────────
 
@@ -114,6 +115,24 @@ public class ProductMergeService {
             stockSyncOrchestrator.syncAllTenants();
         } catch (Exception e) {
             log.warn("Stock sync after merge failed: {}", e.getMessage());
+        }
+
+        // Rebuild the all_inventory rollup per tenant — proc runs in the current
+        // ThreadLocal schema, so switch schema before each call. Otherwise the
+        // dashboard keeps showing the soft-deleted source product until its next
+        // scheduled proc run. Other report syncs (aging/dead/expired/low-stock)
+        // self-heal on their own schedule.
+        try {
+            for (String tenant : schemaConfig.getNonMasterSchemaList()) {
+                try {
+                    ThreadLocalStorage.setTenantName(tenant);
+                    allInventoryService.updateAllInventoryTable();
+                } catch (Exception e) {
+                    log.warn("all_inventory refresh after merge failed for tenant {}: {}", tenant, e.getMessage());
+                }
+            }
+        } finally {
+            ThreadLocalStorage.setTenantName(originalTenant);
         }
 
         ProductMergeResultDTO result = new ProductMergeResultDTO();
