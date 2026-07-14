@@ -860,6 +860,7 @@ public class IndentInventoryService {
                 "Line Item Code",
                 "Product",
                 "Category",
+                "Unit of Measurement",
                 "Quantity Requested",
                 "Quantity Received",
                 "Quantity Pending",
@@ -945,6 +946,11 @@ public class IndentInventoryService {
                 );
                 row.createCell(col++).setCellValue(
                         safeExcel(line.getProduct().getCategory().getCategoryName())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getMeasurementUnit() != null
+                                ? line.getMeasurementUnit()
+                                : line.getProduct().getMeasurementUnit())
                 );
 
                 // Quantities

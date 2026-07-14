@@ -615,10 +615,8 @@ public class PurchaseOrderPdfService {
                     document.add(new Paragraph(line.trim(), smallFont));
                 }
             } else {
-                // HTML content from rich text editor — strip tags and render as plain text
-                for (String line : htmlToPlainLines(notes)) {
-                    document.add(new Paragraph(line, smallFont));
-                }
+                // HTML content from rich text editor — render with formatting (lists, bold, underline)
+                addHtmlNotes(document, notes, smallFont);
             }
         }
 
@@ -870,6 +868,31 @@ public class PurchaseOrderPdfService {
         v.setMinimumHeight(22f);
         v.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(v);
+    }
+
+    private void addHtmlNotes(Document document, String html, Font fallbackFont) throws DocumentException {
+        try {
+            // Quill leaves void tags unclosed (<br>, <hr>); XMLWorker's XHTML parser needs them
+            // self-closed or it throws "Invalid nested tag" and we lose all formatting.
+            String xhtml = html
+                    .replaceAll("(?i)<br\\s*/?>", "<br />")
+                    .replaceAll("(?i)<hr\\s*/?>", "<hr />");
+            // Constrain font to 8pt to match the rest of the PO. XMLWorker defaults to ~12pt and a
+            // body-only rule does NOT cascade to <p>/<li>, so size every block tag explicitly.
+            // Do NOT list strong/em/u here — a size rule on them clobbers their bold/italic default.
+            String css = "body,p,li,ol,ul,div,span{font-size:8pt;color:#000000;}"
+                    + "p{margin:0 0 2pt 0;} ol,ul{margin:0 0 2pt 14pt;padding:0;} li{margin:0;}";
+            com.itextpdf.tool.xml.ElementList elements =
+                    com.itextpdf.tool.xml.XMLWorkerHelper.parseToElementList(xhtml, css);
+            for (Element e : elements) {
+                document.add(e);
+            }
+        } catch (Exception e) {
+            log.warn("Rich-text notes render failed for PO PDF, falling back to plain text: {}", e.getMessage());
+            for (String line : htmlToPlainLines(html)) {
+                document.add(new Paragraph(line, fallbackFont));
+            }
+        }
     }
 
     private List<String> htmlToPlainLines(String html) {
