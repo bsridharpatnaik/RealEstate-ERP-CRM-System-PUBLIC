@@ -183,12 +183,18 @@ This repository represents a **construction-focused ERP/CRM platform** with stro
 - MySQL 8 with a `masterschema` plus one schema per tenant (names must match `schemas.list`).
 - Hibernate runs with per-tenant `hbm2ddl.auto=update`, so **additive** schema changes apply on
   startup; non-additive changes (drops/renames, backfills) are applied manually.
+- **Database views are required.** After the schemas exist, run the `CreateViews.sql` script for
+  each service against the relevant schema(s) — the application depends on these views at runtime:
+  - `sc-inventory-service/src/main/resources/SQLs/CreateViews.sql`
+  - `sc-crm-service/src/main/resources/DB Scripts/CreateViews.sql`
+  - `sc-common-service/src/main/resources/CreateViews.sql`
 
 ### Run order
 
 1. Start MySQL and create the master + tenant schemas.
-2. Start `sc-common-service` (gateway), then `sc-inventory-service` and `sc-crm-service`.
-3. In `SC UI`: `npm install` then `npm start` (serves on port 3000).
+2. Run each service's `CreateViews.sql` against the appropriate schema(s) (see Database section above).
+3. Start `sc-common-service` (gateway), then `sc-inventory-service` and `sc-crm-service`.
+4. In `SC UI`: `npm install` then `npm start` (serves on port 3000).
 
 ## Contact
 
