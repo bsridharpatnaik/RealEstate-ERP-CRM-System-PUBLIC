@@ -61,6 +61,11 @@ public class RejectOutwardList extends ReusableFields
 
 	String remarks;
 
+	// Snapshot of which batch(es) the rejected qty was attributed to, taken once at creation
+	// and never re-derived afterward — same pattern as LostDamagedInventory.batchEntriesJson.
+	@Column(columnDefinition = "TEXT")
+	String batchEntriesJson;
+
 	public RejectOutwardList(Date rejectDate, Product product, Double oldQuantity, Double rejectQuantity,
 			String remarks)
 	{

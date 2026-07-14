@@ -10,9 +10,13 @@
   .body{padding:24px 20px;}
   .body p{font-size:13px;margin:0 0 12px;color:#555;}
   .section-title{font-size:14px;font-weight:bold;color:#2E7D32;margin:28px 0 8px;border-bottom:2px solid #E8F5E9;padding-bottom:4px;}
+  .section-title-warn{font-size:14px;font-weight:bold;color:#E65100;margin:28px 0 8px;border-bottom:2px solid #FFF3E0;padding-bottom:4px;}
+  .section-title-alert{font-size:14px;font-weight:bold;color:#B71C1C;margin:28px 0 8px;border-bottom:2px solid #FFEBEE;padding-bottom:4px;}
   table{border-collapse:collapse;width:100%;margin-top:6px;}
   th{background:#2E7D32;color:#fff;padding:9px 12px;text-align:center;font-size:12px;white-space:nowrap;}
   th.left{text-align:left;}
+  th.warn{background:#E65100;}
+  th.alert{background:#B71C1C;}
   td{padding:8px 12px;font-size:12px;border-bottom:1px solid #eee;text-align:center;vertical-align:middle;}
   td.left{text-align:left;}
   td.total-col{font-weight:700;color:#2E7D32;background:#E8F5E9;}
@@ -83,6 +87,74 @@
         </#list>
       </tbody>
     </table>
+
+    <#-- ── Expiring within 30 days ──────────────────────────────────────── -->
+    <#if expiring30?has_content>
+    <div class="section-title-alert">&#9888; Products Expiring Within 30 Days (${expiring30?size} batch${(expiring30?size > 1)?string("es","")})</div>
+    <p>Immediate action may be required — these batches expire within the next 30 days.</p>
+    <table>
+      <thead>
+        <tr>
+          <th class="left alert">Project</th>
+          <th class="left alert">Product</th>
+          <th class="left alert">Warehouse</th>
+          <th class="alert">Brand</th>
+          <th class="alert">Lot Number</th>
+          <th class="alert">Expiry Date</th>
+          <th class="alert">Qty Remaining</th>
+          <th class="alert">Unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <#list expiring30 as r>
+        <tr>
+          <td class="left">${r.projectName}</td>
+          <td class="left">${r.productName}</td>
+          <td class="left">${r.warehouseName}</td>
+          <td>${r.brand?has_content?string(r.brand, "—")}</td>
+          <td>${r.lotNumber?has_content?string(r.lotNumber, "—")}</td>
+          <td><strong>${r.expiryDate}</strong></td>
+          <td>${r.qtyRemaining?string["0.##"]}</td>
+          <td>${r.unit}</td>
+        </tr>
+        </#list>
+      </tbody>
+    </table>
+    </#if>
+
+    <#-- ── Expiring in 31–60 days ────────────────────────────────────────── -->
+    <#if expiring60?has_content>
+    <div class="section-title-warn">&#9888; Products Expiring in 31–60 Days (${expiring60?size} batch${(expiring60?size > 1)?string("es","")})</div>
+    <p>Plan consumption or write-off for these batches before they reach the 30-day window.</p>
+    <table>
+      <thead>
+        <tr>
+          <th class="left warn">Project</th>
+          <th class="left warn">Product</th>
+          <th class="left warn">Warehouse</th>
+          <th class="warn">Brand</th>
+          <th class="warn">Lot Number</th>
+          <th class="warn">Expiry Date</th>
+          <th class="warn">Qty Remaining</th>
+          <th class="warn">Unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <#list expiring60 as r>
+        <tr>
+          <td class="left">${r.projectName}</td>
+          <td class="left">${r.productName}</td>
+          <td class="left">${r.warehouseName}</td>
+          <td>${r.brand?has_content?string(r.brand, "—")}</td>
+          <td>${r.lotNumber?has_content?string(r.lotNumber, "—")}</td>
+          <td>${r.expiryDate}</td>
+          <td>${r.qtyRemaining?string["0.##"]}</td>
+          <td>${r.unit}</td>
+        </tr>
+        </#list>
+      </tbody>
+    </table>
+    </#if>
 
     <div class="note">
       The attached Excel contains one sheet per project with:<br>

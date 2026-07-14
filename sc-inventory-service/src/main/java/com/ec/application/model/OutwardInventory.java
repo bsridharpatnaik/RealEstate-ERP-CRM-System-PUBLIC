@@ -49,18 +49,14 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 
 	String purpose;
 	String slipNo;
+	String requestedBy;
+	String issuedBy;
 
 	@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinTable(name = "outwardinventory_entry", joinColumns =
 	{ @JoinColumn(name = "outwardid", referencedColumnName = "outwardid") }, inverseJoinColumns =
 	{ @JoinColumn(name = "entryId", referencedColumnName = "entryId") })
 	Set<InwardOutwardList> inwardOutwardList = new HashSet<>();
-
-	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-	@JoinColumn(name = "warehouse_id", nullable = false)
-	@JsonIgnoreProperties(
-	{ "hibernateLazyInitializer", "handler" })
-	Warehouse warehouse;
 
 	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "usageAreaId", nullable = true)
@@ -103,10 +99,21 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	@Column(name = "has_boq")
 	private Boolean hasBOQ;
 
+	@Column(name = "has_fifo_override", columnDefinition = "boolean default false")
+	private Boolean hasFifoOverride = false;
+
 	@Override
 	public Object clone() throws CloneNotSupportedException
 	{
-		return super.clone();
+		// Default Object.clone() is shallow — the cloned OutwardInventory would share the exact
+		// same inwardOutwardList Set instance as the original. OutwardInventoryService.updateOutwardnventory
+		// relies on a clone taken BEFORE the edit to snapshot the old quantities (modifyStockBeforeUpdate,
+		// activity-log diff, indent reconciliation delta) while the live entity's collection is mutated
+		// in place for the new quantities. Sharing the same Set would let that in-place mutation also
+		// wipe out the "old" snapshot, since clear()/addAll() act on the container both references point to.
+		OutwardInventory cloned = (OutwardInventory) super.clone();
+		cloned.inwardOutwardList = new HashSet<>(this.inwardOutwardList);
+		return cloned;
 	}
 
 	public Boolean getHasBOQ()
@@ -117,6 +124,16 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	public void setHasBOQ(Boolean hasBOQ)
 	{
 		this.hasBOQ = hasBOQ;
+	}
+
+	public Boolean getHasFifoOverride()
+	{
+		return hasFifoOverride;
+	}
+
+	public void setHasFifoOverride(Boolean hasFifoOverride)
+	{
+		this.hasFifoOverride = hasFifoOverride;
 	}
 
 	public Set<RejectOutwardList> getRejectOutwardList()
@@ -214,16 +231,6 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 		this.inwardOutwardList = inwardOutwardList;
 	}
 
-	public Warehouse getWarehouse()
-	{
-		return warehouse;
-	}
-
-	public void setWarehouse(Warehouse warehouse)
-	{
-		this.warehouse = warehouse;
-	}
-
 	public Contractor getContractor()
 	{
 		return contractor;
@@ -252,5 +259,25 @@ public class OutwardInventory extends ReusableFields implements Cloneable
 	public void setAdditionalInfo(String additionalInfo)
 	{
 		this.additionalInfo = additionalInfo;
+	}
+
+	public String getRequestedBy()
+	{
+		return requestedBy;
+	}
+
+	public void setRequestedBy(String requestedBy)
+	{
+		this.requestedBy = requestedBy;
+	}
+
+	public String getIssuedBy()
+	{
+		return issuedBy;
+	}
+
+	public void setIssuedBy(String issuedBy)
+	{
+		this.issuedBy = issuedBy;
 	}
 }

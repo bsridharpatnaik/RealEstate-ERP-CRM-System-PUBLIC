@@ -270,12 +270,7 @@ public class PurchaseOrderPdfService {
         left.addElement(new Paragraph("Status: " + po.getStatus(), normal));
         if (notBlank(po.getProjectName()))
             left.addElement(new Paragraph("Project: " + po.getProjectName(), normal));
-        if (po.getNeedByDate() != null) {
-            left.addElement(new Paragraph("Expected Delivery: " + DATE_FORMAT.format(po.getNeedByDate()), normal));
-        }
-        if (po.getPriority() != null) {
-            left.addElement(new Paragraph("Priority: " + po.getPriority(), normal));
-        }
+
         left.addElement(new Paragraph(" "));
         left.addElement(new Paragraph(s.getName(), bold));
         if (notBlank(s.getAddr_line1())) left.addElement(new Paragraph(s.getAddr_line1(), normal));
@@ -345,8 +340,8 @@ public class PurchaseOrderPdfService {
      */
     private void addItemsTable(Document document, PurchaseOrder po, boolean hideMoneyFields)
             throws DocumentException {
-        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8);
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7);
+        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 7);
 
         List<PurchaseOrderLine> lines = new ArrayList<>(po.getLines());
 
@@ -361,9 +356,9 @@ public class PurchaseOrderPdfService {
         table.setSpacingAfter(0f);
 
         if (hasImages) {
-            table.setWidths(new float[]{2.5f, 1.8f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 1.0f, 0.75f, 0.95f, 1.2f});
+            table.setWidths(new float[]{1.7f, 1.4f, 0.55f, 0.5f, 0.75f, 0.95f, 0.55f, 0.5f, 0.95f, 0.85f, 0.5f, 0.75f, 0.95f});
         } else {
-            table.setWidths(new float[]{2.5f, 0.85f, 0.85f, 1.0f, 1.0f, 0.9f, 0.85f, 1.0f, 1.0f, 0.75f, 0.95f, 1.2f});
+            table.setWidths(new float[]{1.9f, 0.6f, 0.55f, 0.85f, 1.05f, 0.6f, 0.55f, 1.05f, 0.95f, 0.55f, 0.85f, 1.05f});
         }
 
         // Column headers — money columns blanked for executives
@@ -373,13 +368,13 @@ public class PurchaseOrderPdfService {
         addHeaderCell(table, "UOM", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Rate \u20B9", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Total \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Discount %", headerFont);
-        addHeaderCell(table, "Tolerance %", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Disc %", headerFont);
+        addHeaderCell(table, "Tol %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "Net Value \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Net Value/Unit \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Net/Unit \u20B9", headerFont);
         addHeaderCell(table, "GST %", headerFont);
         addHeaderCell(table, hideMoneyFields ? "" : "GST Amt \u20B9", headerFont);
-        addHeaderCell(table, hideMoneyFields ? "" : "Amt Incl Tax \u20B9", headerFont);
+        addHeaderCell(table, hideMoneyFields ? "" : "Incl. Tax \u20B9", headerFont);
 
         for (PurchaseOrderLine line : lines) {
             Product product = line.getProduct();
@@ -388,6 +383,7 @@ public class PurchaseOrderPdfService {
                     + (notBlank(line.getBrand())          ? "\nBrand Name: " + line.getBrand() : "")
                     + (notBlank(line.getGrade())          ? "\nGrade: " + line.getGrade() : "")
                     + (notBlank(line.getDiameter())       ? "\nDia: " + line.getDiameter() : "")
+                    + (notBlank(line.getSize())           ? "\nSize: " + line.getSize() : "")
                     + (notBlank(line.getSpecification()) && !"-".equals(line.getSpecification())
                     ? "\nSpec: " + line.getSpecification() : "");
 
@@ -482,7 +478,9 @@ public class PurchaseOrderPdfService {
         boolean hasCustomCharges = po.getCustomCharges() != null
                 && po.getCustomCharges().stream().anyMatch(c -> c.getChargeAmount() != null && c.getChargeAmount() > 0);
 
-        if (freightCharges <= 0 && !hasCustomCharges) return;
+        double poDiscount = po.getPoDiscount() != null ? po.getPoDiscount() : 0.0;
+
+        if (freightCharges <= 0 && !hasCustomCharges && poDiscount <= 0) return;
 
         PdfPTable charges = new PdfPTable(2);
         charges.setWidthPercentage(40);
@@ -548,6 +546,16 @@ public class PurchaseOrderPdfService {
             }
         }
 
+        if (poDiscount > 0) {
+            PdfPCell discLabel = new PdfPCell(new Phrase("PO Discount", bold));
+            discLabel.setPadding(4f);
+            charges.addCell(discLabel);
+            PdfPCell discVal = new PdfPCell(new Phrase(hideMoneyFields ? "" : "- " + fmt(poDiscount), bold));
+            discVal.setPadding(4f);
+            discVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            charges.addCell(discVal);
+        }
+
         document.add(charges);
     }
 
@@ -607,10 +615,8 @@ public class PurchaseOrderPdfService {
                     document.add(new Paragraph(line.trim(), smallFont));
                 }
             } else {
-                // HTML content from rich text editor — strip tags and render as plain text
-                for (String line : htmlToPlainLines(notes)) {
-                    document.add(new Paragraph(line, smallFont));
-                }
+                // HTML content from rich text editor — render with formatting (lists, bold, underline)
+                addHtmlNotes(document, notes, smallFont);
             }
         }
 
@@ -678,6 +684,9 @@ public class PurchaseOrderPdfService {
         Font tableHeaderFont  = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.BLACK);
         Font normalFont       = FontFactory.getFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
 
+        // Always start the Associated Indents section on a fresh page
+        document.newPage();
+
         // Page-level section heading
         Paragraph heading = new Paragraph("ASSOCIATED INDENTS", sectionTitleFont);
         heading.setAlignment(Element.ALIGN_CENTER);
@@ -718,9 +727,9 @@ public class PurchaseOrderPdfService {
                     ? new ArrayList<>(indent.getInventoryList())
                     : new ArrayList<>();
 
-            PdfPTable lineTable = new PdfPTable(8);
+            PdfPTable lineTable = new PdfPTable(7);
             lineTable.setWidthPercentage(100);
-            lineTable.setWidths(new float[]{2.5f, 1.2f, 0.8f, 0.9f, 0.9f, 0.9f, 1.1f, 1.2f});
+            lineTable.setWidths(new float[]{2.5f, 1.2f, 0.8f, 0.9f, 0.9f, 0.9f, 1.2f});
             lineTable.setSpacingBefore(2f);
             lineTable.setSpacingAfter(12f);
 
@@ -730,12 +739,11 @@ public class PurchaseOrderPdfService {
             addHeaderCell(lineTable, "Qty Ordered", tableHeaderFont);
             addHeaderCell(lineTable, "Qty Received", tableHeaderFont);
             addHeaderCell(lineTable, "Qty Pending", tableHeaderFont);
-            addHeaderCell(lineTable, "Need By Date", tableHeaderFont);
             addHeaderCell(lineTable, "Status", tableHeaderFont);
 
             if (lineItems.isEmpty()) {
                 PdfPCell noData = new PdfPCell(new Phrase("No line items", normalFont));
-                noData.setColspan(8);
+                noData.setColspan(7);
                 noData.setPadding(6f);
                 noData.setHorizontalAlignment(Element.ALIGN_CENTER);
                 lineTable.addCell(noData);
@@ -752,7 +760,6 @@ public class PurchaseOrderPdfService {
                     addBodyCell(lineTable, item.getQuantity() != null ? fmt(item.getQuantity()) : "-", normalFont);
                     addBodyCell(lineTable, item.getQuantityReceived() != null ? fmt(item.getQuantityReceived()) : "-", normalFont);
                     addBodyCell(lineTable, item.getQuantityPending() != null ? fmt(item.getQuantityPending()) : "-", normalFont);
-                    addBodyCell(lineTable, item.getNeedByDate() != null ? DATE_FORMAT.format(item.getNeedByDate()) : "-", normalFont);
                     addBodyCell(lineTable, notBlank(item.getLineItemStatus()) ? item.getLineItemStatus() : "-", normalFont);
                 }
             }
@@ -836,7 +843,7 @@ public class PurchaseOrderPdfService {
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setBackgroundColor(new BaseColor(230, 230, 230));
-        cell.setPadding(4f);
+        cell.setPadding(2f);
         table.addCell(cell);
     }
 
@@ -845,7 +852,7 @@ public class PurchaseOrderPdfService {
         cell.setHorizontalAlignment(Element.ALIGN_LEFT);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         cell.setBackgroundColor(BaseColor.WHITE);
-        cell.setPadding(4f);
+        cell.setPadding(2f);
         table.addCell(cell);
     }
 
@@ -861,6 +868,31 @@ public class PurchaseOrderPdfService {
         v.setMinimumHeight(22f);
         v.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(v);
+    }
+
+    private void addHtmlNotes(Document document, String html, Font fallbackFont) throws DocumentException {
+        try {
+            // Quill leaves void tags unclosed (<br>, <hr>); XMLWorker's XHTML parser needs them
+            // self-closed or it throws "Invalid nested tag" and we lose all formatting.
+            String xhtml = html
+                    .replaceAll("(?i)<br\\s*/?>", "<br />")
+                    .replaceAll("(?i)<hr\\s*/?>", "<hr />");
+            // Constrain font to 8pt to match the rest of the PO. XMLWorker defaults to ~12pt and a
+            // body-only rule does NOT cascade to <p>/<li>, so size every block tag explicitly.
+            // Do NOT list strong/em/u here — a size rule on them clobbers their bold/italic default.
+            String css = "body,p,li,ol,ul,div,span{font-size:8pt;color:#000000;}"
+                    + "p{margin:0 0 2pt 0;} ol,ul{margin:0 0 2pt 14pt;padding:0;} li{margin:0;}";
+            com.itextpdf.tool.xml.ElementList elements =
+                    com.itextpdf.tool.xml.XMLWorkerHelper.parseToElementList(xhtml, css);
+            for (Element e : elements) {
+                document.add(e);
+            }
+        } catch (Exception e) {
+            log.warn("Rich-text notes render failed for PO PDF, falling back to plain text: {}", e.getMessage());
+            for (String line : htmlToPlainLines(html)) {
+                document.add(new Paragraph(line, fallbackFont));
+            }
+        }
     }
 
     private List<String> htmlToPlainLines(String html) {

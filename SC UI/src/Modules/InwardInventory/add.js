@@ -12,6 +12,12 @@ import { apiEndpoints } from "./../../endpoints";
 import { messages } from "./../../messages";
 import Button from "./../../Shared/Button";
 import CloseIcon from "@material-ui/icons/Close";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import MuiButton from "@material-ui/core/Button";
+import TextField from "@material-ui/core/TextField";
 //style
 import "./style.scss";
 import { fetchUnit } from "./../../actions/measurementUnit";
@@ -36,13 +42,24 @@ class InwardInventoryForm extends AddForm {
     selectedPO: null,
     selectedSupplier: null,
     isDirectInward: true,
-    isSampleInward: false,     // NEW: tracks sample inward mode
+    isSampleInward: false,
+    showNoChallanBillPopup: false,
+    noChallanBillPopupReason: '',
     isEditMode: false,
     isLoaded: false,
     isProductsLoaded: false,
     createdFromPO: false,
     originalSupplierId: null,
     formKey: 0,
+    batchSplitModal: {
+      open: false,
+      productKey: null,
+      productName: '',
+      totalQty: 0,
+      batchMode: 'BATCH_WITH_EXPIRY',   // drives expiry required / lot number visibility
+      modalMode: 'add',                 // 'add' | 'reduce'
+      entries: [{ batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }]
+    },
     // Store form field values in state for React to track changes
     formValues: {
       ourSlipNo: '',
@@ -134,10 +151,12 @@ class InwardInventoryForm extends AddForm {
               productCode: item.product.productCode,
               productName: item.product.productName,
               measurementUnit: item.product.measurementUnit,
+              batchMode: item.product.batchMode || 'NONE',
+              defaultExpiryDays: item.product.defaultExpiryDays || null,
               poQuantity: poQty,
               tolerancePercent: tolPct,
               maxAllowedQuantity: maxAllowed,
-              quantity: "",
+              quantity: !!this.props.id ? (item.quantity || "") : "",
               warehouseId: item.warehouse?.warehouseId || null,
               lineItemCode: item.lineItemCode
             };
@@ -190,9 +209,34 @@ class InwardInventoryForm extends AddForm {
 
       // Process existing line items
       if (isDirectInward) {
+        // Load existing batch records so edit mode can pre-populate the split modal
+        let batchesByProduct = {};
+        try {
+          const batchRes = await API.GET(apiEndpoints.getInwardBatches(data.inwardId));
+          if (batchRes.success && Array.isArray(batchRes.data)) {
+            batchRes.data.forEach(b => {
+              const pid = b.product?.productId;
+              if (pid) {
+                if (!batchesByProduct[pid]) batchesByProduct[pid] = [];
+                batchesByProduct[pid].push(b);
+              }
+            });
+          }
+        } catch (e) { /* non-fatal — batch split modal falls back to empty entry */ }
+
         for (let i = 0; i < data.inwardOutwardList.length; i++) {
           const item = data.inwardOutwardList[i];
           const pid = item.product.productId;
+          const existingBatches = batchesByProduct[pid] || [];
+          const batchSplits = existingBatches.map(b => ({
+            batchId: b.batchId,
+            qty: b.qtyReceived,
+            qtyRemaining: b.qtyRemaining,  // for reduce modal — actual available qty
+            // Keep dd-MM-yyyy (backend format). Modal converts to yyyy-MM-dd for <input type="date">.
+            expiryDate: b.expiryDate || '',
+            brand: b.brand || '',
+            lotNumber: b.lotNumber || '',
+          }));
           p[keyCounter] = {
             quantity: item.quantity,
             productId: pid,
@@ -201,8 +245,11 @@ class InwardInventoryForm extends AddForm {
             productName: item.product.productName,
             unit: item.product.measurementUnit,
             measurementUnit: item.product.measurementUnit,
+            batchMode: item.product.batchMode || 'NONE',
+            defaultExpiryDays: item.product.defaultExpiryDays || null,
             poQuantity: item.poQuantity,
             lineItemCode: item.lineItemCode,
+            batchSplits: batchSplits.length > 0 ? batchSplits : null,
             selectedProduct: {
               id: pid,
               name: item.product.productName,
@@ -322,6 +369,8 @@ class InwardInventoryForm extends AddForm {
           measurementUnit: product.measurementUnit,
           productCode: product.productCode,
           isManagedInventory: product.isManagedInventory,
+          batchMode: product.batchMode || 'NONE',
+          defaultExpiryDays: product.defaultExpiryDays || null,
         }));
 
       // In edit mode, also include existing products from the inward data
@@ -415,6 +464,8 @@ class InwardInventoryForm extends AddForm {
             productCode: item.productCode,
             productName: item.productName,
             measurementUnit: item.measurementUnit,
+            batchMode: item.batchMode || 'NONE',
+            defaultExpiryDays: item.defaultExpiryDays || null,
             poQuantity: poQty,
             tolerancePercent: tolPct,
             pendingQuantity: pendingQty,
@@ -439,6 +490,284 @@ class InwardInventoryForm extends AddForm {
     }
   }
 
+  // For a brand-new batch row: today + product.defaultExpiryDays (if the product has one
+  // configured and is BATCH_WITH_EXPIRY). Returns '' otherwise — never overwrites an
+  // already-set expiry date, only fills in genuinely blank ones for new batches.
+  computeDefaultExpiryDate(product) {
+    const batchMode = product.batchMode || 'BATCH_WITH_EXPIRY';
+    const days = product.defaultExpiryDays;
+    if (batchMode !== 'BATCH_WITH_EXPIRY' || !days) return '';
+    return moment().add(days, 'days').format('YYYY-MM-DD');
+  }
+
+  openBatchSplitModal(key) {
+    const product = this.state.noproduct[key];
+    const totalQty = parseFloat(product.quantity) || 0;
+    const batchMode = product.batchMode || 'BATCH_WITH_EXPIRY';
+    const isEditMode = this.state.isEditMode;
+    const defaultExpiry = this.computeDefaultExpiryDate(product);
+
+    // Determine modal mode: 'reduce' when editing and qty decreased vs original
+    const originalQty = (this.oldStock || {})[product.productId] || 0;
+    const delta = totalQty - originalQty;
+    const isReduce = isEditMode && delta < -0.001 && product.batchSplits && product.batchSplits.length > 1;
+    const modalMode = isReduce ? 'reduce' : 'add';
+
+    let entries;
+    if (isReduce) {
+      // Reduce mode: show existing batches (from batchSplits, never overwritten), user enters reduction qty
+      // Pre-fill qty from any previously-confirmed _reduceSplits
+      const prevReduceByBatchId = {};
+      (product._reduceSplits || []).forEach(s => {
+        if (s.batchId) prevReduceByBatchId[s.batchId] = s.qty;
+      });
+      entries = (product.batchSplits || []).map(s => ({
+        batchId: s.batchId,
+        qty: prevReduceByBatchId[s.batchId] ?? '',
+        expiryDate: s.expiryDate || '',
+        brand: s.brand || '',
+        lotNumber: s.lotNumber || '',
+        qtyAvailable: s.qtyRemaining ?? s.qty ?? 0,  // actual remaining (not qtyReceived — some may be consumed)
+      }));
+    } else {
+      entries = product.batchSplits && product.batchSplits.length > 0
+        ? product.batchSplits.map(s => ({
+            batchId: s.batchId || null,
+            qty: s.qty || '',
+            // s.expiryDate is dd-MM-yyyy (backend format); convert to yyyy-MM-dd for <input type="date">
+            // Brand-new row (no batchId) with no expiry yet → default it; existing/edited rows are left untouched.
+            expiryDate: s.expiryDate
+              ? s.expiryDate.split('-').reverse().join('-')
+              : (s.batchId ? '' : defaultExpiry),
+            brand: s.brand || '',
+            lotNumber: s.lotNumber || ''
+          }))
+        : [{ batchId: null, qty: '', expiryDate: defaultExpiry, brand: '', lotNumber: '' }];
+    }
+
+    this.setState({
+      batchSplitModal: {
+        open: true,
+        productKey: key,
+        productName: product.productName || product.selectedProduct?.name || 'Product',
+        totalQty: isReduce ? Math.abs(delta) : totalQty,
+        batchMode,
+        entries,
+        modalMode,
+        defaultExpiry,
+      }
+    });
+  }
+
+  closeBatchSplitModal() {
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, open: false } }));
+  }
+
+  updateBatchEntry(idx, field, value) {
+    const entries = [...this.state.batchSplitModal.entries];
+    entries[idx] = { ...entries[idx], [field]: value };
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries } }));
+  }
+
+  addBatchEntry() {
+    const defaultExpiry = this.state.batchSplitModal.defaultExpiry || '';
+    const entries = [...this.state.batchSplitModal.entries, { batchId: null, qty: '', expiryDate: defaultExpiry, brand: '', lotNumber: '' }];
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries } }));
+  }
+
+  removeBatchEntry(idx) {
+    const entries = this.state.batchSplitModal.entries.filter((_, i) => i !== idx);
+    this.setState(prev => ({
+      batchSplitModal: {
+        ...prev.batchSplitModal,
+        entries: entries.length > 0 ? entries : [{ batchId: null, qty: '', expiryDate: '', brand: '', lotNumber: '' }]
+      }
+    }));
+  }
+
+  fillRemaining() {
+    const { entries, totalQty } = this.state.batchSplitModal;
+    const allocated = entries.slice(0, -1).reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
+    const remaining = Math.round((totalQty - allocated) * 1000) / 1000;
+    if (remaining <= 0) return;
+    const newEntries = [...entries];
+    newEntries[newEntries.length - 1] = { ...newEntries[newEntries.length - 1], qty: remaining };
+    this.setState(prev => ({ batchSplitModal: { ...prev.batchSplitModal, entries: newEntries } }));
+  }
+
+  confirmBatchSplits() {
+    const { productKey, entries, modalMode } = this.state.batchSplitModal;
+    const p = this.state.noproduct;
+
+    if (modalMode === 'reduce') {
+      // Reduce: only batchId + qty needed. Backend ignores expiryDate/brand/lotNumber on reduce path.
+      // Store in _reduceSplits so original batchSplits (display data) stay intact.
+      p[productKey]._reduceSplits = entries.map(e => ({
+        batchId: e.batchId || null,
+        qty: parseFloat(e.qty) || 0,
+        expiryDate: null,
+        brand: null,
+        lotNumber: null,
+      }));
+    } else {
+      // Increase / metadata update: entries come from date input (yyyy-MM-dd) — convert to dd-MM-yyyy for backend.
+      p[productKey].batchSplits = entries.map(e => ({
+        batchId: e.batchId || null,
+        qty: parseFloat(e.qty) || 0,
+        expiryDate: e.expiryDate ? e.expiryDate.split('-').reverse().join('-') : null,
+        brand: e.brand || null,
+        lotNumber: e.lotNumber || null,
+      }));
+    }
+
+    this.setState({ noproduct: { ...p } });
+    this.closeBatchSplitModal();
+  }
+
+  renderBatchSplitModal() {
+    const { batchSplitModal } = this.state;
+    if (!batchSplitModal.open) return null;
+    const { entries, totalQty, productName, batchMode, modalMode } = batchSplitModal;
+    const isReduceMode = modalMode === 'reduce';
+    const requiresExpiry = batchMode === 'BATCH_WITH_EXPIRY';
+    const allocated = entries.reduce((s, e) => s + (parseFloat(e.qty) || 0), 0);
+    const remaining = Math.round((totalQty - allocated) * 1000) / 1000;
+    const isExact = Math.abs(remaining) < 0.001;
+    const isOver = remaining < -0.001;
+    const pct = totalQty > 0 ? Math.min((allocated / totalQty) * 100, 100) : 0;
+    const barColor = isOver ? '#c62828' : isExact ? '#2e7d32' : '#1976d2';
+    const canConfirm = isExact && entries.every(e =>
+      parseFloat(e.qty) >= 0 && (!requiresExpiry || e.expiryDate || isReduceMode)
+    );
+    const modalTitle = isReduceMode ? 'Specify Batch Reduction' : 'Set Batches';
+    const modalSubtitle = isReduceMode
+      ? 'Enter the qty to reduce per batch — total must equal quantity reduction'
+      : (requiresExpiry ? 'Track by Brand / Lot + Expiry Date' : 'Track by Brand / Lot (no expiry)');
+
+    return (
+      <Dialog open maxWidth="sm" fullWidth onClose={() => this.closeBatchSplitModal()}>
+        <DialogTitle disableTypography>
+          <div style={{ fontWeight: 600, fontSize: '16px' }}>{modalTitle}</div>
+          <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>{productName} — {modalSubtitle}</div>
+        </DialogTitle>
+        <DialogContent>
+          <div style={{ display: 'flex', gap: '24px', marginBottom: '10px', fontSize: '13px' }}>
+            <span>{isReduceMode ? 'To Reduce' : 'Total'}: <strong>{totalQty}</strong></span>
+            <span>Allocated: <strong style={{ color: isOver ? '#c62828' : isExact ? '#2e7d32' : '#1976d2' }}>{Math.round(allocated * 1000) / 1000}</strong></span>
+            <span>Remaining: <strong style={{ color: remaining > 0.001 ? '#e65100' : isOver ? '#c62828' : '#2e7d32' }}>{remaining}</strong></span>
+          </div>
+          <div style={{ height: '6px', borderRadius: '3px', background: '#e0e0e0', marginBottom: '16px' }}>
+            <div style={{ height: '100%', borderRadius: '3px', width: `${pct}%`, background: barColor, transition: 'width 0.2s, background 0.2s' }} />
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ background: '#f5f5f5' }}>
+                {isReduceMode && <th style={{ padding: '6px 8px', textAlign: 'left', width: '70px' }}>Batch #</th>}
+                <th style={{ padding: '6px 8px', textAlign: 'left', width: '80px' }}>
+                  {isReduceMode ? 'Reduce By *' : 'Qty *'}
+                </th>
+                {isReduceMode && <th style={{ padding: '6px 8px', textAlign: 'left', width: '80px' }}>Available</th>}
+                {!isReduceMode && requiresExpiry && (
+                  <th style={{ padding: '6px 8px', textAlign: 'left', width: '145px' }}>Expiry Date *</th>
+                )}
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Identifier</th>
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Lot / Batch No.</th>
+                {!isReduceMode && <th style={{ width: '30px' }} />}
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  {isReduceMode && (
+                    <td style={{ padding: '4px 8px', color: '#555', fontSize: '12px' }}>
+                      #{entry.batchId}
+                    </td>
+                  )}
+                  <td style={{ padding: '4px 8px' }}>
+                    <input type="number" min="0" step="any" value={entry.qty}
+                      max={isReduceMode ? entry.qtyAvailable : undefined}
+                      onChange={e => this.updateBatchEntry(idx, 'qty', e.target.value)}
+                      style={{ width: '70px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
+                      placeholder="0" />
+                  </td>
+                  {isReduceMode && (
+                    <td style={{ padding: '4px 8px', color: '#888', fontSize: '12px' }}>
+                      {entry.qtyAvailable}
+                    </td>
+                  )}
+                  {!isReduceMode && requiresExpiry && (
+                    <td style={{ padding: '4px 8px' }}>
+                      <input type="date" value={entry.expiryDate || ''}
+                        onChange={e => this.updateBatchEntry(idx, 'expiryDate', e.target.value)}
+                        style={{ width: '135px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px' }}
+                        min={new Date().toISOString().split('T')[0]} />
+                    </td>
+                  )}
+                  <td style={{ padding: '4px 8px' }}>
+                    <input type="text" value={entry.brand || ''}
+                      readOnly={isReduceMode}
+                      onChange={isReduceMode ? undefined : e => this.updateBatchEntry(idx, 'brand', e.target.value)}
+                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px', background: isReduceMode ? '#f9f9f9' : undefined }}
+                      placeholder={isReduceMode ? '—' : 'e.g. Brand, Type, Grade'} />
+                  </td>
+                  <td style={{ padding: '4px 8px' }}>
+                    <input type="text" value={entry.lotNumber || ''}
+                      readOnly={isReduceMode}
+                      onChange={isReduceMode ? undefined : e => this.updateBatchEntry(idx, 'lotNumber', e.target.value)}
+                      style={{ width: '100%', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '3px', fontSize: '13px', background: isReduceMode ? '#f9f9f9' : undefined }}
+                      placeholder={isReduceMode ? '—' : 'Optional'} />
+                  </td>
+                  {!isReduceMode && (
+                    <td style={{ padding: '4px 4px', textAlign: 'center' }}>
+                      {entries.length > 1 && (
+                        <button type="button" onClick={() => this.removeBatchEntry(idx)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c62828', fontSize: '18px', lineHeight: 1, padding: '0 2px' }}>×</button>
+                      )}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!isReduceMode && (
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="button" onClick={() => this.addBatchEntry()}
+              style={{ fontSize: '12px', color: '#1976d2', background: 'none', border: '1px dashed #1976d2', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer' }}>
+              + Add Batch
+            </button>
+            {remaining > 0.001 && (
+              <button type="button" onClick={() => this.fillRemaining()}
+                style={{ fontSize: '12px', color: '#e65100', background: 'none', border: '1px dashed #e65100', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer' }}>
+                Fill Remaining ({remaining})
+              </button>
+            )}
+          </div>
+          )}
+          {isOver && <div style={{ color: '#c62828', fontSize: '12px', marginTop: '8px' }}>Allocated exceeds total by {Math.round(Math.abs(remaining) * 1000) / 1000} units.</div>}
+          {!canConfirm && !isOver && !isExact && allocated > 0 && (
+            <div style={{ color: '#888', fontSize: '12px', marginTop: '6px' }}>
+              {isReduceMode
+                ? `Total reduction must equal ${totalQty} units.`
+                : requiresExpiry
+                  ? `Allocate all ${totalQty} units and set expiry dates to confirm.`
+                  : `Allocate all ${totalQty} units to confirm.`}
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions style={{ padding: '12px 16px' }}>
+          <button type="button" onClick={() => this.closeBatchSplitModal()}
+            style={{ padding: '6px 16px', background: 'none', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', marginRight: '8px' }}>
+            Cancel
+          </button>
+          <button type="button" disabled={!canConfirm} onClick={() => this.confirmBatchSplits()}
+            style={{ padding: '6px 20px', background: canConfirm ? '#2e7d32' : '#e0e0e0', color: canConfirm ? '#fff' : '#999', border: 'none', borderRadius: '4px', cursor: canConfirm ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 600 }}>
+            Confirm
+          </button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+
   renderProduct(key) {
     const product = this.state.noproduct[key];
     if (!product) return null;
@@ -458,331 +787,339 @@ class InwardInventoryForm extends AddForm {
 
       const remainingProducts = dropdownProducts.filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
 
+      const hasBatchSplits = product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+      const isBatchTracked = product.productId && product.batchMode && product.batchMode !== 'NONE';
+
       return (
-        <div key={key} className="product-row-container" style={{ marginBottom: '16px', position: 'relative' }}>
-          {!isEditMode && (
-            <IconButton
-              aria-label="close"
-              onClick={() => {
+        <div key={key} style={{
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1.8fr 1fr 90px 130px 130px auto 32px',
+          gap: '0 8px',
+          alignItems: 'start',
+          padding: '8px 12px',
+          background: '#fff',
+          borderBottom: '1px solid #eef0f3',
+        }}>
+          {/* Warehouse */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `warehouse_${key}`,
+              placeholder: "Warehouse",
+              options: this.props.dropdowns?.warehouse || [],
+              value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
+              disableClearable: true,
+              required: true,
+              disabled: isEditMode,
+              getOption: (option) => option?.name || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].warehouseId = value?.id || null;
+                if (value?.id) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
+
+          {/* Product Name */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `productName_${key}`,
+              placeholder: "Product Name",
+              options: remainingProducts,
+              disableClearable: true,
+              required: true,
+              disabled: isEditMode,
+              value: product.selectedProduct || null,
+              getOption: (option) => option?.name || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].productId = value?.id || "";
+                p[key].productCode = value?.productCode || "";
+                p[key].unit = value?.measurementUnit || "";
+                p[key].batchMode = value?.batchMode || 'NONE';
+                p[key].defaultExpiryDays = value?.defaultExpiryDays || null;
+                p[key].selectedProduct = value;
+                if (value) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
+
+          {/* Product Code */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `productCode_${key}`,
+              placeholder: "Product Code",
+              options: remainingProducts,
+              disableClearable: false,
+              required: true,
+              disabled: isEditMode,
+              value: product.selectedProduct || null,
+              getOption: (option) => option?.productCode || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].productId = value?.id || "";
+                p[key].productCode = value?.productCode || "";
+                p[key].unit = value?.measurementUnit || "";
+                p[key].batchMode = value?.batchMode || 'NONE';
+                p[key].defaultExpiryDays = value?.defaultExpiryDays || null;
+                p[key].selectedProduct = value;
+                if (value) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
+
+          {/* Unit */}
+          <div>
+            {this.renderTextField({
+              fieldname: `unit_${key}`,
+              placeholder: "Unit",
+              value: product.unit || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Receive Qty */}
+          <div>
+            {this.renderTextField({
+              fieldname: `quantity_${key}`,
+              placeholder: "Receive Qty",
+              type: "number",
+              required: true,
+              skipAdd: true,
+              validation: "nonegative",
+              value: product.quantity,
+              onChange: (value) => {
+                const p = this.state.noproduct;
+                p[key].quantity = parseFloat(value) || 0;
+                // Changing qty invalidates any previously-confirmed reduce splits
+                if (p[key]._reduceSplits) delete p[key]._reduceSplits;
+                this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+              },
+            })}
+          </div>
+
+          {/* Closing Stock — only after qty entered */}
+          <div>
+            {this.renderTextField({
+              fieldname: `closingStock_${key}`,
+              placeholder: "Closing Stock",
+              value: product.productId && product.quantity > 0 ? (this.state.currentStock[product.productId] ?? '') : '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Batch button — only when batch-tracked product selected */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {isBatchTracked && (
+              hasBatchSplits ? (
+                <div>
+                  {product._reduceSplits ? (
+                    <span style={{ fontSize: '11px', color: '#e65100', fontWeight: 600, display: 'block' }}>
+                      ⚠ Reduction set ({product._reduceSplits.reduce((s, b) => s + (b.qty || 0), 0)} units)
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+                      ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
+                    </span>
+                  )}
+                  <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                    style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    {isEditMode ? 'View / Edit' : 'Edit'}
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                  disabled={!product.quantity}
+                  style={{ padding: '5px 12px', background: product.quantity ? '#e3f2fd' : '#f5f5f5', color: product.quantity ? '#1565c0' : '#aaa', border: '1px solid', borderColor: product.quantity ? '#90caf9' : '#ddd', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  {isEditMode ? 'Edit Batches' : 'Set Batches *'}
+                </button>
+              )
+            )}
+          </div>
+
+          {/* Delete button */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {!isEditMode && (
+              <IconButton size="small" onClick={() => {
                 const p = this.state.noproduct;
                 delete p[key];
                 this.setState({ noproduct: { ...p } });
-              }}
-              className="close-icon"
-              disableRipple
-              disableFocusRipple
-              size="small"
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                backgroundColor: 'transparent',
-                padding: '4px',
-                width: '24px',
-                height: '24px',
-                zIndex: 10
-              }}
-            >
-              <CloseIcon style={{ fontSize: '18px' }} />
-            </IconButton>
-          )}
-
-          <div className="product-row-scroll" style={{ overflowX: 'auto', overflowY: 'hidden', paddingRight: '40px', paddingBottom: '20px' }}>
-            <div className="flex product-row" style={{ alignItems: 'center', paddingTop: '16px', display: 'flex', flexWrap: 'nowrap', width: 'fit-content' }}>
-              {/* Warehouse */}
-              <div style={{ width: '200px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `warehouse_${key}`,
-                  placeholder: "Warehouse",
-                  options: this.props.dropdowns?.warehouse || [],
-                  value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
-                  disableClearable: true,
-                  required: true,
-                  disabled: isEditMode,
-                  getOption: (option) => option?.name || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].warehouseId = value?.id || null;
-                    if (value?.id) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
-              </div>
-
-              {/* Product Name */}
-              <div style={{ width: '220px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `productName_${key}`,
-                  placeholder: "Product Name",
-                  options: remainingProducts,
-                  disableClearable: true,
-                  required: true,
-                  disabled: isEditMode,
-                  value: product.selectedProduct || null,
-                  getOption: (option) => option?.name || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].productId = value?.id || "";
-                    p[key].productCode = value?.productCode || "";
-                    p[key].unit = value?.measurementUnit || "";
-                    p[key].selectedProduct = value;
-                    if (value) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
-              </div>
-
-              {/* Product Code */}
-              <div style={{ width: '180px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `productCode_${key}`,
-                  placeholder: "Product Code",
-                  options: remainingProducts,
-                  disableClearable: false,
-                  required: true,
-                  disabled: isEditMode,
-                  value: product.selectedProduct || null,
-                  getOption: (option) => option?.productCode || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].productId = value?.id || "";
-                    p[key].productCode = value?.productCode || "";
-                    p[key].unit = value?.measurementUnit || "";
-                    p[key].selectedProduct = value;
-                    if (value) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
-              </div>
-
-              {/* Measurement Unit */}
-              <div style={{ width: '50px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `unit_${key}`,
-                  placeholder: "Unit",
-                  value: product.unit || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-
-              {/* Quantity */}
-              <div style={{ width: '90px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `quantity_${key}`,
-                  placeholder: "Receive Qty",
-                  type: "number",
-                  required: true,
-                  skipAdd: true,
-                  validation: "nonegative",
-                  value: product.quantity,
-                  onChange: (value) => {
-                    const p = this.state.noproduct;
-                    p[key].quantity = parseFloat(value) || 0;
-                    this.setState({ noproduct: { ...p } }, () => {
-                      this.getCurrentStock(key);
-                    });
-                  },
-                })}
-              </div>
-
-              {/* Closing Stock */}
-              <div style={{ width: '110px', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `closingStock_${key}`,
-                  placeholder: "Closing Stock",
-                  type: "number",
-                  value: this.state.currentStock[product.productId] || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-            </div>
+              }} style={{ padding: '4px' }}>
+                <CloseIcon style={{ fontSize: '16px', color: '#999' }} />
+              </IconButton>
+            )}
           </div>
-
-          {/* Warning: all products used up */}
-          {productList.length > 0 && remainingProducts.length === 0 && (
-            <div style={{
-              color: '#ff9800',
-              fontSize: '12px',
-              marginTop: '8px',
-              marginBottom: '12px',
-              paddingLeft: '4px'
-            }}>
-              {this.state.isSampleInward
-                ? "All available products have been added."
-                : "All available unmanaged products have been added. Please remove a product from another row to add a different one."}
-            </div>
-          )}
         </div>
       );
     } else {
-      // PO Inward Layout
+      // PO Inward Layout — grid row (same pattern as direct inward)
+      const hasBatchSplits = product.batchSplits && product.batchSplits.length > 0 && product.batchSplits[0].qty > 0;
+      const isBatchTracked = product.productId && product.batchMode && product.batchMode !== 'NONE';
+
       return (
-        <div key={key} className="product-row-container" style={{ marginBottom: '16px', position: 'relative' }}>
-          <IconButton
-            aria-label="close"
-            onClick={() => {
-              const p = this.state.noproduct;
-              delete p[key];
-              this.setState({ noproduct: { ...p } });
-            }}
-            className="close-icon"
-            disableRipple
-            disableFocusRipple
-            size="small"
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              backgroundColor: 'transparent',
-              padding: '4px',
-              width: '24px',
-              height: '24px',
-              zIndex: 10
-            }}
-          >
-            <CloseIcon style={{ fontSize: '18px' }} />
-          </IconButton>
+        <div key={key} style={{
+          display: 'grid',
+          gridTemplateColumns: '1.2fr 1.8fr 90px 100px 120px 130px 130px auto 32px',
+          gap: '0 8px',
+          alignItems: 'start',
+          padding: '8px 12px',
+          background: '#fff',
+          borderBottom: '1px solid #eef0f3',
+        }}>
 
-          <div className="product-row-scroll" style={{ overflowX: 'auto', overflowY: 'hidden', paddingRight: '40px', paddingBottom: '20px' }}>
-            <div className="flex product-row" style={{ alignItems: 'center', paddingTop: '16px', flexWrap: 'nowrap', display: 'flex', width: 'fit-content' }}>
-              {/* Warehouse */}
-              <div style={{ width: '200px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderAutoComplete({
-                  fieldname: `warehouse_${key}`,
-                  placeholder: "Warehouse",
-                  options: this.props.dropdowns?.warehouse || [],
-                  value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
-                  disableClearable: true,
-                  required: true,
-                  getOption: (option) => option?.name || '',
-                  onChange: (e, value) => {
-                    const p = this.state.noproduct;
-                    p[key].warehouseId = value?.id || null;
-                    if (value?.id) {
-                      this.setState({ noproduct: { ...p } }, () => {
-                        this.getCurrentStock(key);
-                      });
-                    }
-                  },
-                })}
+          {/* Warehouse */}
+          <div>
+            {this.renderAutoComplete({
+              fieldname: `warehouse_${key}`,
+              placeholder: "Warehouse",
+              options: this.props.dropdowns?.warehouse || [],
+              value: this.props.dropdowns?.warehouse?.find(w => w.id === product.warehouseId) || null,
+              disableClearable: true,
+              required: true,
+              disabled: isEditMode,
+              getOption: (option) => option?.name || '',
+              onChange: (e, value) => {
+                const p = this.state.noproduct;
+                p[key].warehouseId = value?.id || null;
+                if (value?.id) {
+                  this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+                }
+              },
+            })}
+          </div>
+
+          {/* Product Name */}
+          <div>
+            {this.renderTextField({
+              fieldname: `productName_${key}`,
+              placeholder: "Product Name",
+              value: product.productName || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Unit */}
+          <div>
+            {this.renderTextField({
+              fieldname: `unit_${key}`,
+              placeholder: "Unit",
+              value: product.measurementUnit || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* PO Qty */}
+          <div>
+            {this.renderTextField({
+              fieldname: `poQuantity_${key}`,
+              placeholder: "PO Qty",
+              type: "number",
+              value: product.poQuantity || '',
+              disabled: true,
+              skipAdd: true,
+            })}
+            {product.billingUnit && product.billingQuantity && (
+              <div style={{ fontSize: 11, color: '#1976d2', marginTop: 2, paddingLeft: 4 }}>
+                = {product.billingQuantity} {product.billingUnit} (billing)
               </div>
+            )}
+          </div>
 
-              {/* Product Name - Read Only */}
-              <div style={{ width: '220px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `productName_${key}`,
-                  placeholder: "Product Name",
-                  value: product.productName || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
+          {/* Max Allowed */}
+          <div>
+            {this.renderTextField({
+              fieldname: `maxAllowed_${key}`,
+              placeholder: "Max Allowed",
+              type: "number",
+              value: product.maxAllowedQuantity != null ? Math.floor(product.maxAllowedQuantity * 100) / 100 : '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
 
-              {/* PO Quantity - Read Only */}
-              <div style={{ width: '50px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `poQuantity_${key}`,
-                  placeholder: "PO Qty",
-                  type: "number",
-                  value: product.poQuantity || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
+          {/* Receive Qty */}
+          <div>
+            {this.renderTextField({
+              fieldname: `quantity_${key}`,
+              placeholder: "Receive Qty",
+              type: "number",
+              required: true,
+              skipAdd: true,
+              validation: "nonegative",
+              value: product.quantity,
+              error: product.quantity > 0 && product.maxAllowedQuantity != null && product.quantity > product.maxAllowedQuantity,
+              onChange: (value) => {
+                const p = this.state.noproduct;
+                p[key].quantity = parseFloat(value) || 0;
+                // Changing qty invalidates any previously-confirmed reduce splits
+                if (p[key]._reduceSplits) delete p[key]._reduceSplits;
+                this.setState({ noproduct: { ...p } }, () => { this.getCurrentStock(key); });
+              },
+            })}
+          </div>
 
-              {product.billingUnit && product.billingQuantity && (
-                <div style={{ fontSize: '10px', color: '#1976d2', marginTop: '2px', paddingLeft: '2px' }}>
-                  = {product.billingQuantity} {product.billingUnit} (billing)
+          {/* Closing Stock */}
+          <div>
+            {this.renderTextField({
+              fieldname: `closingStock_${key}`,
+              placeholder: "Closing Stock",
+              value: product.quantity > 0 && this.state.currentStock[product.productId] != null
+                ? Math.round(this.state.currentStock[product.productId] * 100) / 100
+                : '',
+              disabled: true,
+              skipAdd: true,
+            })}
+          </div>
+
+          {/* Batch button */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {isBatchTracked && (
+              hasBatchSplits ? (
+                <div>
+                  {product._reduceSplits ? (
+                    <span style={{ fontSize: '11px', color: '#e65100', fontWeight: 600, display: 'block' }}>
+                      ⚠ Reduction set ({product._reduceSplits.reduce((s, b) => s + (b.qty || 0), 0)} units)
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+                      ✓ {product.batchSplits.length} batch{product.batchSplits.length > 1 ? 'es' : ''} · {product.batchSplits.reduce((s, b) => s + (b.qty || 0), 0)} units
+                    </span>
+                  )}
+                  <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                    style={{ fontSize: '11px', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    {isEditMode ? 'View / Edit' : 'Edit'}
+                  </button>
                 </div>
-              )}
+              ) : (
+                <button type="button" onClick={() => this.openBatchSplitModal(key)}
+                  disabled={!product.quantity}
+                  style={{ padding: '5px 12px', background: product.quantity ? '#e3f2fd' : '#f5f5f5', color: product.quantity ? '#1565c0' : '#aaa', border: '1px solid', borderColor: product.quantity ? '#90caf9' : '#ddd', borderRadius: '4px', cursor: product.quantity ? 'pointer' : 'not-allowed', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  {isEditMode ? 'Edit Batches' : 'Set Batches *'}
+                </button>
+              )
+            )}
+          </div>
 
-              {/* Max Allowed - Read Only, always shown for PO-linked inwards */}
-              {product.maxAllowedQuantity != null && (
-                <div style={{ width: '80px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  {this.renderTextField({
-                    fieldname: `maxAllowed_${key}`,
-                    placeholder: "Max Allowed",
-                    type: "number",
-                    value: Math.floor(product.maxAllowedQuantity * 100) / 100,
-                    disabled: true,
-                    skipAdd: true,
-                  })}
-                  <span style={{ fontSize: '10px', color: '#888', marginTop: '2px' }}>
-                    {product.tolerancePercent > 0
-                      ? `Max (incl. ${product.tolerancePercent}% tol.)`
-                      : 'Max Allowed (pending)'}
-                  </span>
-                </div>
-              )}
-
-              {/* Measurement Unit - Read Only */}
-              <div style={{ width: '70px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `unit_${key}`,
-                  placeholder: "Unit",
-                  value: product.measurementUnit || '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-
-              {/* Quantity - Editable */}
-              <div style={{ width: '90px', flexShrink: 0, marginRight: '4px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                {this.renderTextField({
-                  fieldname: `quantity_${key}`,
-                  placeholder: "Receive Qty",
-                  type: "number",
-                  required: true,
-                  skipAdd: true,
-                  validation: "nonegative",
-                  value: product.quantity,
-                  onChange: (value) => {
-                    const p = this.state.noproduct;
-                    p[key].quantity = parseFloat(value) || 0;
-                    this.setState({ noproduct: { ...p } }, () => {
-                      this.getCurrentStock(key);
-                    });
-                  },
-                })}
-                {product.quantity > product.maxAllowedQuantity && (
-                  <span style={{ fontSize: '10px', color: '#c62828', marginTop: '2px' }}>
-                    {product.tolerancePercent > 0
-                      ? `Exceeds max allowed (${Math.floor(product.maxAllowedQuantity * 100) / 100}). Pending: ${Math.round(product.pendingQuantity * 100) / 100}, Tolerance: ${product.tolerancePercent}%`
-                      : `Exceeds pending qty (${Math.round(product.pendingQuantity * 100) / 100}). No tolerance set.`}
-                  </span>
-                )}
-                {product.tolerancePercent > 0 && product.quantity > product.pendingQuantity && product.quantity <= product.maxAllowedQuantity && (
-                  <span style={{ fontSize: '10px', color: '#2e7d32', marginTop: '2px' }}>
-                    Within {product.tolerancePercent}% tolerance. Max: {Math.floor(product.maxAllowedQuantity * 100) / 100}
-                  </span>
-                )}
-              </div>
-
-              {/* Closing Stock - Read Only */}
-              <div style={{ width: '50px', flexShrink: 0, marginRight: '4px', display: 'flex', alignItems: 'center' }}>
-                {this.renderTextField({
-                  fieldname: `closingStock_${key}`,
-                  placeholder: "Closing Stock",
-                  type: "number",
-                  value: this.state.currentStock[product.productId] != null
-                    ? Math.round(this.state.currentStock[product.productId] * 100) / 100
-                    : '',
-                  disabled: true,
-                  skipAdd: true,
-                })}
-              </div>
-            </div>
+          {/* Delete */}
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px' }}>
+            {!isEditMode && (
+              <IconButton size="small" onClick={() => {
+                const p = this.state.noproduct;
+                delete p[key];
+                this.setState({ noproduct: { ...p } });
+              }} style={{ padding: '4px' }}>
+                <CloseIcon style={{ fontSize: '16px', color: '#999' }} />
+              </IconButton>
+            )}
           </div>
         </div>
       );
@@ -829,6 +1166,133 @@ class InwardInventoryForm extends AddForm {
       return;
     }
 
+    const noChallan = !this.formData.challanNo || !this.formData.challanNo.trim();
+    const noBill = !this.formData.billNo || !this.formData.billNo.trim();
+    if (noChallan && noBill && (!this.formData.noChallanBillReason || !this.formData.noChallanBillReason.trim())) {
+      this.setState({ showNoChallanBillPopup: true, noChallanBillPopupReason: '' });
+      return;
+    }
+
+    // Validate batch splits for batch-tracked products (create mode)
+    if (!this.state.isEditMode) {
+      for (const product of Object.values(this.state.noproduct)) {
+        if (product.batchMode === 'NONE') continue;
+        const splits = product.batchSplits;
+        if (!splits || splits.length === 0 || !splits[0].qty) {
+          this.props.enqueueSnackbar(
+            `Batch splits with expiry dates are required for "${product.productName || product.selectedProduct?.name || 'product'}". Click "Set Batches".`,
+            { variant: "error" }
+          );
+          return;
+        }
+        const splitSum = splits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+        const totalQty = parseFloat(product.quantity) || 0;
+        if (Math.abs(splitSum - totalQty) > 0.001) {
+          this.props.enqueueSnackbar(
+            `Batch split totals (${splitSum}) must equal quantity (${totalQty}) for "${product.productName || product.selectedProduct?.name}".`,
+            { variant: "error" }
+          );
+          return;
+        }
+        if (product.batchMode === 'BATCH_WITH_EXPIRY' && splits.some(b => !b.expiryDate)) {
+          this.props.enqueueSnackbar(
+            `All batch splits must have an expiry date for "${product.productName || product.selectedProduct?.name}".`,
+            { variant: "error" }
+          );
+          return;
+        }
+      }
+    }
+
+    // Validate batch splits for batch-tracked products (edit mode) — mirrors the create-mode
+    // check above, but targets the DELTA (new qty - original qty), since that's what the modal
+    // actually populates batchSplits/_reduceSplits with on edit (see confirmBatchSplits()).
+    // Without this, increasing qty without clicking "Edit Batches" would submit stale splits
+    // (still summing to the ORIGINAL qty) and only get caught by a raw 500 from the backend.
+    if (this.state.isEditMode) {
+      for (const product of Object.values(this.state.noproduct)) {
+        if (product.batchMode === 'NONE') continue;
+        const originalQty = (this.oldStock || {})[product.productId] || 0;
+        const totalQty = parseFloat(product.quantity) || 0;
+        const delta = totalQty - originalQty;
+        const label = product.productName || product.selectedProduct?.name || 'product';
+
+        if (Math.abs(delta) < 0.001) continue; // qty unchanged — batch metadata edits are optional
+
+        if (delta > 0) {
+          const splits = product.batchSplits;
+          if (!splits || splits.length === 0 || !splits[0].qty) {
+            this.props.enqueueSnackbar(
+              `Please specify which batch the increased quantity of ${delta} belongs to for "${label}". Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+          const splitSum = splits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+          if (Math.abs(splitSum - delta) > 0.001) {
+            this.props.enqueueSnackbar(
+              `Batch split totals (${splitSum}) must equal the increased quantity (${delta}) for "${label}". Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+          if (product.batchMode === 'BATCH_WITH_EXPIRY' && splits.some(b => !b.expiryDate)) {
+            this.props.enqueueSnackbar(
+              `All batch splits must have an expiry date for "${label}".`,
+              { variant: "error" }
+            );
+            return;
+          }
+        } else {
+          // delta < 0 — reduction. Single-batch inwards auto-resolve on the backend; only
+          // multi-batch inwards need the user to specify which batch(es) via the reduce modal.
+          const isMultiBatch = product.batchSplits && product.batchSplits.length > 1;
+          if (!isMultiBatch) continue;
+
+          const reduceSplits = product._reduceSplits;
+          if (!reduceSplits || reduceSplits.length === 0) {
+            this.props.enqueueSnackbar(
+              `"${label}" has ${product.batchSplits.length} batches in this inward. Please specify which batch(es) the reduction of ${Math.abs(delta)} should come from. Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+          const reduceSum = reduceSplits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+          if (Math.abs(reduceSum - Math.abs(delta)) > 0.001) {
+            this.props.enqueueSnackbar(
+              `Batch reduction totals (${reduceSum}) must equal the decreased quantity (${Math.abs(delta)}) for "${label}". Click "Edit Batches".`,
+              { variant: "error" }
+            );
+            return;
+          }
+        }
+      }
+    }
+
+    // Validate batch splits for PO inward batch-tracked products (create mode)
+    if (!this.state.isEditMode && !this.state.isDirectInward) {
+      for (const item of Object.values(this.state.noproduct)) {
+        if (item.batchMode === 'NONE') continue;
+        const splits = item.batchSplits;
+        if (!splits || splits.length === 0 || !splits[0].qty) {
+          this.props.enqueueSnackbar(
+            `Batch splits with expiry dates are required for "${item.productName}". Click "Set Batches".`,
+            { variant: "error" }
+          );
+          return;
+        }
+        const splitSum = splits.reduce((s, b) => s + (parseFloat(b.qty) || 0), 0);
+        const totalQty = parseFloat(item.quantity) || 0;
+        if (Math.abs(splitSum - totalQty) > 0.001) {
+          this.props.enqueueSnackbar(
+            `Batch split totals (${splitSum}) must equal quantity (${totalQty}) for "${item.productName}".`,
+            { variant: "error" }
+          );
+          return;
+        }
+      }
+    }
+
     // Block submission if any PO-linked line item exceeds its max allowed quantity
     if (!this.state.isDirectInward) {
       for (const product of Object.values(this.state.noproduct)) {
@@ -861,10 +1325,29 @@ class InwardInventoryForm extends AddForm {
       params = {
         inwardDate: (this.state.isDirectInward ? this.formData.date : this.formData.inwardDate) || null,
         supplierId: supplierIdToSend,
-        productWithQuantities: Object.values(this.state.noproduct).map(product => ({
-          productId: product.productId,
-          quantity: product.quantity
-        })),
+        productWithQuantities: Object.values(this.state.noproduct).map(product => {
+          // For reduce path: send _reduceSplits (delta); for increase/metadata: send batchSplits.
+          // Strip extra UI-only fields (qtyRemaining, batchId on non-reduce) — backend DTO only knows:
+          // batchId, qty, expiryDate (dd-MM-yyyy), brand, lotNumber.
+          const isReducePath = !!product._reduceSplits;
+          const rawSplits = product._reduceSplits
+            || (product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null);
+          const effectiveSplits = rawSplits ? rawSplits.map(s => ({
+            // Only include batchId for the reduce path — backend uses it to target specific batches.
+            // Sending batchId on original/increase splits would trigger the reduce-detection check incorrectly.
+            batchId: isReducePath ? (s.batchId || null) : null,
+            qty: s.qty,
+            expiryDate: s.expiryDate || null,
+            brand: s.brand || null,
+            lotNumber: s.lotNumber || null,
+          })) : null;
+          return {
+            productId: product.productId,
+            quantity: product.quantity,
+            expiryDate: product.expiryDate || null,
+            batchSplits: product.batchMode !== 'NONE' ? effectiveSplits : null,
+          };
+        }),
         vehicleNo: this.formData.vehicleNo,
         supplierSlipNo: this.formData.supplierSlipNo,
         ourSlipNo: this.formData.ourSlipNo,
@@ -874,6 +1357,7 @@ class InwardInventoryForm extends AddForm {
         billNo: this.formData.billNo,
         challanDate: this.formData.challanDate || null,
         billDate: this.formData.billDate || null,
+        noChallanBillReason: this.formData.noChallanBillReason || null,
         fileInformations: this.formData.fileInformations || []
       };
     } else if (this.state.isDirectInward) {
@@ -887,7 +1371,10 @@ class InwardInventoryForm extends AddForm {
         productWithQuantities: Object.values(this.state.noproduct).map(product => ({
           warehouseId: product.warehouseId,
           productId: product.productId,
-          quantity: product.quantity
+          quantity: product.quantity,
+          brand: product.batchMode !== 'NONE' && product.batchSplits ? null : (product.brand || null),
+          expiryDate: product.batchMode !== 'NONE' && product.batchSplits ? null : (product.expiryDate || null),
+          batchSplits: product.batchMode !== 'NONE' && product.batchSplits && product.batchSplits.length > 0 ? product.batchSplits : null,
         })),
         fileInformations: this.formData.fileInformations || [],
         invoiceReceived: this.formData.invoiceReceived || false,
@@ -898,7 +1385,8 @@ class InwardInventoryForm extends AddForm {
         challanNo: this.formData.challanNo,
         challanDate: this.formData.challanDate || null,
         billNo: this.formData.billNo,
-        billDate: this.formData.billDate || null
+        billDate: this.formData.billDate || null,
+        noChallanBillReason: this.formData.noChallanBillReason || null
       };
     } else {
       // PO Inward
@@ -915,12 +1403,16 @@ class InwardInventoryForm extends AddForm {
         challanNo: this.formData.challanNo,
         challanDate: this.formData.challanDate || null,
         billDate: this.formData.billDate || null,
+        noChallanBillReason: this.formData.noChallanBillReason || null,
         additionalInfo: this.formData.additionalInfo,
         fileInformations: this.formData.fileInformations || [],
         lineItems: Object.values(this.state.noproduct).map(item => ({
           lineItemCode: item.lineItemCode,
           quantityReceived: item.quantity,
-          warehouseId: item.warehouseId
+          warehouseId: item.warehouseId,
+          brand: item.batchMode !== 'NONE' && item.batchSplits ? null : (item.brand || null),
+          expiryDate: item.batchMode !== 'NONE' && item.batchSplits ? null : (item.expiryDate || null),
+          batchSplits: item.batchMode !== 'NONE' && item.batchSplits && item.batchSplits.length > 0 ? item.batchSplits : null,
         }))
       };
     }
@@ -955,6 +1447,50 @@ class InwardInventoryForm extends AddForm {
       });
       this.setState({ currentStock });
     }
+  }
+
+  handleNoChallanBillSubmit = async () => {
+    const reason = this.state.noChallanBillPopupReason;
+    if (!reason || !reason.trim()) {
+      this.props.enqueueSnackbar("Reason is required.", { variant: "error" });
+      return;
+    }
+    this.formData.noChallanBillReason = reason;
+    this.setState({ showNoChallanBillPopup: false }, () => {
+      this.add({ preventDefault: () => {} });
+    });
+  };
+
+  renderNoChallanBillPopup() {
+    return (
+      <Dialog open={this.state.showNoChallanBillPopup} maxWidth="sm" fullWidth>
+        <DialogTitle>Challan / Bill No. Missing</DialogTitle>
+        <DialogContent>
+          <p style={{ marginBottom: '12px', color: '#555', fontSize: '14px' }}>
+            Neither Challan No. nor Bill No. has been entered. Please provide a reason.
+          </p>
+          <TextField
+            label="Reason *"
+            multiline
+            rows={3}
+            variant="outlined"
+            fullWidth
+            inputProps={{ maxLength: 500 }}
+            value={this.state.noChallanBillPopupReason}
+            onChange={(e) => this.setState({ noChallanBillPopupReason: e.target.value })}
+            helperText={`${(this.state.noChallanBillPopupReason || '').length}/500`}
+          />
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={() => this.setState({ showNoChallanBillPopup: false })} color="default">
+            Cancel
+          </MuiButton>
+          <MuiButton onClick={this.handleNoChallanBillSubmit} color="primary" variant="contained">
+            Submit
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+    );
   }
 
   renderFooter() {
@@ -993,6 +1529,7 @@ class InwardInventoryForm extends AddForm {
 
     return (
       <div className="list-section add">
+        {this.renderBatchSplitModal()}
         {this.renderHeading()}
         {this.state.isEditMode && !this.state.isLoaded && (
           <div className="loading-section" style={{ textAlign: 'center', padding: '20px' }}>
@@ -1229,8 +1766,20 @@ class InwardInventoryForm extends AddForm {
                         {noProductsMessage}
                       </div>
                     )}
-                    {Object.keys(this.state.noproduct).map((key) =>
-                      this.renderProduct(key)
+                    {this.state.isDirectInward && Object.keys(this.state.noproduct).length > 0 && (
+                      <div style={{ border: '1px solid #dde3ea', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
+                        {/* Table rows */}
+                        {Object.keys(this.state.noproduct).map((key) =>
+                          this.renderProduct(key)
+                        )}
+                      </div>
+                    )}
+                    {!this.state.isDirectInward && Object.keys(this.state.noproduct).length > 0 && (
+                      <div style={{ border: '1px solid #dde3ea', borderRadius: '6px', overflow: 'hidden', marginBottom: '12px' }}>
+                        {Object.keys(this.state.noproduct).map((key) =>
+                          this.renderProduct(key)
+                        )}
+                      </div>
                     )}
                     {this.state.isDirectInward && !this.state.isEditMode && this.renderProductAddButton()}
                   </div>
@@ -1242,6 +1791,7 @@ class InwardInventoryForm extends AddForm {
             </form>
           );
         })()}
+      {this.renderNoChallanBillPopup()}
       </div>
     );
   }

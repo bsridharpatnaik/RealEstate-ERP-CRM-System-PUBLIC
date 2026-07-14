@@ -32,4 +32,6 @@ public class StockSummaryAggregatedDTO {
     /** Effective reorder level (tenant override or global default), MAX across warehouse rows. */
     @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
     private Double reorderLevel;
+
+    private String categoryName;
 }

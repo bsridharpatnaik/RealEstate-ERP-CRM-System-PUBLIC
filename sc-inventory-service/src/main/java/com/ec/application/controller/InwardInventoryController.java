@@ -74,6 +74,12 @@ public class InwardInventoryController {
         return iiService.getTotalsForInward(filterDataList);
     }
 
+    @GetMapping("/tiles")
+    @ResponseStatus(HttpStatus.OK)
+    public com.ec.application.data.InwardTilesDTO getInwardTiles() {
+        return iiService.getTiles();
+    }
+
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
     public List<InwardInventoryExportDAO2> fetchAllInwardInventoryForExport2(@RequestBody FilterDataList filterDataList)

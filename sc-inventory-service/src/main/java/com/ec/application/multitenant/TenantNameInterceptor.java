@@ -60,8 +60,28 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
                     Pattern.compile(".*/stale-charts.*"),
                     Pattern.compile(".*/firm.*"),
                     Pattern.compile(".*/error.*"),
-                    Pattern.compile(".*/master-file.*"),  // master-schema file upload/download (PO attachments)
-                    Pattern.compile(".*/admin.*")          // admin/backfill endpoints — always master schema
+                    Pattern.compile(".*/master-file.*"),      // master-schema file upload/download (PO attachments)
+                    Pattern.compile(".*/admin.*"),           // admin/backfill endpoints — always master schema
+                    Pattern.compile(".*/quote-comparison.*"), // quote comparison — master schema global module
+                    Pattern.compile(".*/health.*"),          // public DB health check — no tenant header, routes to master
+                    // Global reports — master-schema sync tables, routed via @UseDefaultTenant and
+                    // filtered per-query by getCurrentUserAllowedSchemas(). They must NOT be gated on the
+                    // caller's selected tenant-id (a store-incharge may not have access to the currently
+                    // selected project yet still needs the cross-tenant report of their own tenants).
+                    // NB: /indent-fulfillment is already covered by the .*/indent.* pattern above.
+                    Pattern.compile(".*/fifo-report.*"),
+                    Pattern.compile(".*/stock-aging.*"),
+                    Pattern.compile(".*/expired-stock.*"),
+                    // NB: match only the global report path (/dead-stock-report), NOT /dead-stock —
+                    // the latter (DeadStockController) has tenant-scoped endpoints used in the indent flow
+                    // (GET /dead-stock?productId=) which must keep the tenant header.
+                    Pattern.compile(".*/dead-stock-report.*"),
+                    Pattern.compile(".*/po-recon.*"),
+                    Pattern.compile(".*/low-stock.*"),
+                    // Stock Summary: service is @UseDefaultTenant (master) and its import uses the per-row
+                    // tenantSchema from the file, so no endpoint here depends on the caller's tenant header.
+                    // Data is scoped to the user's allowed tenants inside StockSummaryCustomRepoImpl.
+                    Pattern.compile(".*/stock-summary.*")
             ));
 
 

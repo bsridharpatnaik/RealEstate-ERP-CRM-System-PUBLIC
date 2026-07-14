@@ -39,13 +39,30 @@ public class StockSummaryService {
     private final SchemaConfig schemaConfig;
     private final ProductTenantConfigService productTenantConfigService;
     private final ProductRepo productRepo;
+    private final UserDetailsService userDetailsService;
 
     Logger log = LoggerFactory.getLogger(StockSummaryService.class);
+
+    /**
+     * Current user's allowed tenant schemas — used to scope this cross-tenant report.
+     * Fails closed: if the user can't be resolved we abort rather than return all tenants.
+     */
+    private List<String> resolveAllowedSchemas() {
+        try {
+            return userDetailsService.getCurrentUserAllowedSchemas();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to resolve user's allowed tenants", e);
+        }
+    }
+
+    public com.ec.application.data.StockSummaryTilesDTO getTiles(FilterDataList filterDataList) {
+        return stockSummaryRepo.getTileCounts(filterDataList, resolveAllowedSchemas());
+    }
 
     public StockSummaryWithDropdownData findFilteredStockSummary(FilterDataList filterDataList, Pageable pageable) {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         StockSummaryWithDropdownData returnData = new StockSummaryWithDropdownData();
-        Page<StockSummaryAggregatedDTO> data = stockSummaryRepo.fetchAggregatedStock(filterDataList, pageable);
+        Page<StockSummaryAggregatedDTO> data = stockSummaryRepo.fetchAggregatedStock(filterDataList, pageable, resolveAllowedSchemas());
         returnData.setStockSummaries(data);
         returnData.setStockDropdown(populateDropdownService.fetchData("deadstock"));
         returnData.setLastSyncDate(jobExecutionLogRepo.findLastSuccessfulRunTime("STOCK_SYNC"));
@@ -62,8 +79,10 @@ public class StockSummaryService {
     public void streamExportExcel(FilterDataList filterDataList, HttpServletResponse response) throws IOException {
         // Fetch all matching rows (no pagination cap)
         Page<StockSummaryAggregatedDTO> page =
-                stockSummaryRepo.fetchAggregatedStock(filterDataList, PageRequest.of(0, Integer.MAX_VALUE));
+                stockSummaryRepo.fetchAggregatedStock(filterDataList, PageRequest.of(0, Integer.MAX_VALUE), resolveAllowedSchemas());
         List<StockSummaryAggregatedDTO> rows = page.getContent();
+        if (rows.size() > 5000)
+            throw new IOException("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=\"stock-summary.xlsx\"");

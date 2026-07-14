@@ -1,0 +1,28 @@
+// Scoped to .service-order-wrapper only — never bleeds into PurchaseOrder/Indent, which already
+// have their own (differently-scoped) .form-section / .section-title / .table-total rules under
+// .step2-fill-details. ServiceOrder's add.js doesn't have that ancestor, so those rules never
+// matched here; this file gives the same card look without touching PO/Indent's CSS.
+.service-order-wrapper {
+  .create-po-content {
+    .form-section {
+      background-color: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #323c47;
+        margin: 0 0 14px 0;
+      }
+    }
+
+    // Indent's own .indent-items-section rule (unscoped, so it does apply here) only sets
+    // margin-top — add matching bottom spacing so it sits consistently with the .form-section cards.
+    .indent-items-section {
+      margin-bottom: 20px;
+    }
+  }
+}

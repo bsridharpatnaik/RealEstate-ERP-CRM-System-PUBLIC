@@ -42,6 +42,8 @@ public class ContactService {
     private final Logger log = LoggerFactory.getLogger(ContactService.class);
 
     public Contact createContact(Contact payload) throws Exception {
+        if (payload.getName() != null)
+            payload.setName(payload.getName().trim());
         validatePayload(payload);
         formatMobileNo(payload);
         exitIfMobileNoExists(payload);
@@ -55,6 +57,8 @@ public class ContactService {
     }
 
     public Contact updateContact(Long id, Contact payload) throws Exception {
+        if (payload.getName() != null)
+            payload.setName(payload.getName().trim());
         Contact existing = findContactById(id);
         validatePayload(payload);
         formatMobileNo(payload);
@@ -83,6 +87,9 @@ public class ContactService {
 
     public void streamContactExcel(FilterDataList filterDataList, OutputStream os) throws Exception {
         Specification<Contact> spec = ContactSpecifications.getSpecification(filterDataList);
+        long count = spec != null ? contactRepo.count(spec) : contactRepo.count();
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<Contact> contacts = spec != null ? contactRepo.findAll(spec) : contactRepo.findAll();
 
         SXSSFWorkbook workbook = new SXSSFWorkbook(100);

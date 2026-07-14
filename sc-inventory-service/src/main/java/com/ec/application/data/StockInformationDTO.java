@@ -1,5 +1,6 @@
 package com.ec.application.data;
 
+import com.ec.application.constants.BatchMode;
 import com.ec.application.model.AllInventoryTransactions;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.google.gson.JsonObject;
@@ -19,6 +20,11 @@ public class StockInformationDTO {
     String categoryName;
     Double totalQuantityInHand;
     String stockStatus;
+    /** Deprecated — kept for backward compat. Use batchMode instead. */
+    Boolean isExpirable;
+    BatchMode batchMode;
+    /** Optional — new batch entries default their expiry to today + this many days. */
+    Integer defaultExpiryDays;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd") // Adjusted to match DATE type
     Date lastInwardDate;
     List<SingleStockInformationDTO> detailedStock;

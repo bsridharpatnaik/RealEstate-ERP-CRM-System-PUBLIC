@@ -12,15 +12,17 @@ import com.ec.application.data.StaleBucketConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.data.IdNameDTO;
 import com.ec.application.data.NameAndProjectionDataForDropDown;
 import com.ec.application.repository.BuildingTypeRepo;
 import com.ec.application.repository.CategoryRepo;
 import com.ec.application.repository.ContractorRepo;
 import com.ec.application.repository.LocationRepo;
+import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.MachineryRepo;
+import com.ec.application.repository.OutwardInventoryRepo;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.SupplierRepo;
 import com.ec.application.repository.UsageAreaRepo;
@@ -64,8 +66,14 @@ public class PopulateDropdownService {
     @Autowired
     BuildingTypeRepo buildingTypeRepo;
 
-    @Value("${boq.enforcement.block:true}")
-    private boolean boqEnforcementBlock;
+    @Autowired
+    OutwardInventoryRepo outwardInventoryRepo;
+
+    @Autowired
+    IndentInventoryRepo indentInventoryRepo;
+
+    @Autowired
+    ProjectConstantsService projectConstantsService;
 
     @Autowired
     SchemaConfig schemaConfig;
@@ -101,7 +109,10 @@ public class PopulateDropdownService {
                 morDropdownDataList.setUsageArea(usageAreaRepo.findIdAndNames());
                 morDropdownDataList.setBuildingtype(buildingTypeRepo.findIdAndNames());
                 morDropdownDataList.setUsagelocationWithType(locationRepo.findIdNamesAndTypes());
-                morDropdownDataList.setBoqEnforcementBlock(boqEnforcementBlock);
+                morDropdownDataList.setBoqEnforcementBlock(projectConstantsService.isBoqBlockOnExceed());
+                morDropdownDataList.setBoqBlockWhenMissing(projectConstantsService.isBoqBlockWhenMissing());
+                morDropdownDataList.setRequestedByOptions(toIdNameDTOList(outwardInventoryRepo.findDistinctRequestedBy()));
+                morDropdownDataList.setIssuedByOptions(toIdNameDTOList(outwardInventoryRepo.findDistinctIssuedBy()));
                 break;
             case "stock":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
@@ -135,6 +146,7 @@ public class PopulateDropdownService {
                 morDropdownDataList.setIndentStatus(IndentStatusConstants.getAllStatuses());
                 morDropdownDataList.setIndentLineItemStatus(IndentLineItemStatusConstants.getAllStatuses());
                 morDropdownDataList.setStalebuckets(StaleBucketConstants.getAllBuckets());
+                morDropdownDataList.setRequiredByOptions(toIdNameDTOList(indentInventoryRepo.findDistinctRequiredBy()));
                 break;
             case "purchaseorder":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
@@ -153,9 +165,19 @@ public class PopulateDropdownService {
             case "deadstock":
                 morDropdownDataList.setProduct(productRepo.findIdAndNames());
                 morDropdownDataList.setProductCodes(productRepo.findIdAndProductCodes());
+                morDropdownDataList.setCategory(categoryRepo.findIdAndNames());
+                morDropdownDataList.setProductWithCategory(productRepo.findIdNamesAndCategory());
                 morDropdownDataList.setTenants(fetchTenantNames());
         }
         return morDropdownDataList;
+    }
+
+    private List<IdNameDTO> toIdNameDTOList(List<String> values) {
+        List<IdNameDTO> result = new ArrayList<>();
+        for (String value : values) {
+            result.add(new IdNameDTO(value, value));
+        }
+        return result;
     }
 
     private List<String> fetchTenantNames() {

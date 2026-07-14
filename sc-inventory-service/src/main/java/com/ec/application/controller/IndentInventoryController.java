@@ -55,6 +55,12 @@ public class IndentInventoryController {
 
     Logger log = LoggerFactory.getLogger(IndentInventoryController.class);
 
+    @GetMapping("/tiles")
+    public com.ec.application.data.IndentTilesDTO getTiles(
+            @RequestHeader(value = "tenant-id", required = false) String tenantId) {
+        return iiService.getTiles(tenantId);
+    }
+
     @GetMapping("/for-dropdown")
     public List<IndentForDropdownDTO> getIndentsForDropdown() {
         return indentInventoryRepo.findForDropdown(

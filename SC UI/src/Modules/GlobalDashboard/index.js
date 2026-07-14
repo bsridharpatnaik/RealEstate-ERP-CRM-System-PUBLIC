@@ -11,7 +11,7 @@ import Chart from "../../Shared/Chart";
 import SemiPieChart from "../../Shared/Chart/semiPieChart";
 import IndentTrendChart from "../../Shared/Chart/IndentTrendChart";
 import SupplierLeadTimeHeatmap from "../../Shared/Chart/SupplierLeadTimeHeatmap";
-import StaleStackedColumnChart, { STALE_COLOR_PALETTE } from "../../Shared/Chart/StaleStackedColumnChart";
+import StaleHorizontalBarChart, { buildHorizontalStaleData, StaleChartLegend } from "../../Shared/Chart/StaleHorizontalBarChart";
 import moment from "moment";
 import { API } from "../../axios";
 import { apiEndpoints, appRoutes } from "../../endpoints";
@@ -54,6 +54,7 @@ const LIVE_DATA_KEYS = [
   "inwardPartialIndents",
   "statusNewPO",
   "statusPartialPO",
+  "overduePOLines",
 ];
 
 const METRIC_LABELS = {
@@ -72,6 +73,7 @@ const METRIC_LABELS = {
   inwardPartialIndents: "Inward Partial Indents",
   statusNewPO: "Status New PO",
   statusPartialPO: "Status Partial PO",
+  overduePOLines: "Overdue POs",
 };
 
 /** Slice metric key -> status value for Indent (path: /globalIndent). */
@@ -115,6 +117,10 @@ const LIVE_PRESETS = {
     path: appRoutes.purchaseOrder,
     filterData: [{ attrName: "status", attrValue: ["PARTIAL"] }],
   },
+  overduePOLines: {
+    path: appRoutes.purchaseOrder,
+    filterData: [{ attrName: "hasOverdueOnly", attrValue: ["true"] }],
+  },
 };
 
 const height = 35;
@@ -138,6 +144,11 @@ class GlobalDashboard extends Component {
     isPOTrendLoaded: false,
     suppliersHeatmapData: [],
     isSuppliersHeatmapLoaded: false,
+    overdueLines: [],
+    overdueLinesTotalPages: 0,
+    overdueLinesTotalElements: 0,
+    overdueLinesCurPage: 0,
+    isOverdueLinesLoaded: false,
     indentStaleBuckets: [],
     poStaleBuckets: [],
     isStaleLoaded: false,
@@ -173,6 +184,7 @@ class GlobalDashboard extends Component {
     this.fetchIndentTrend();
     this.fetchPOTrend();
     this.fetchSuppliersHeatmap();
+    this.fetchOverdueLines(0);
     this.fetchStaleCharts();
   }
 
@@ -239,6 +251,22 @@ class GlobalDashboard extends Component {
       });
     } else {
       this.setState({ isSuppliersHeatmapLoaded: true });
+    }
+  }
+
+  async fetchOverdueLines(page = 0) {
+    this.setState({ isOverdueLinesLoaded: false });
+    const response = await API.GET(apiEndpoints.getOverduePOLines(page, 10));
+    if (response.success && response.data) {
+      this.setState({
+        overdueLines: response.data.content || [],
+        overdueLinesTotalPages: response.data.totalPages || 0,
+        overdueLinesTotalElements: response.data.totalElements || 0,
+        overdueLinesCurPage: page,
+        isOverdueLinesLoaded: true,
+      });
+    } else {
+      this.setState({ isOverdueLinesLoaded: true });
     }
   }
 
@@ -505,7 +533,7 @@ class GlobalDashboard extends Component {
   }
 
   renderMetricList(keys) {
-    const URGENT_KEYS = ["awaitingApprovalIndents", "zeroPOIndents", "partialPOIndents"];
+    const URGENT_KEYS = ["awaitingApprovalIndents", "zeroPOIndents", "partialPOIndents", "overduePOLines"];
     return keys.map((key) => {
           const item = this.data[key];
           const count = item?.totalCount ?? 0;
@@ -775,30 +803,71 @@ class GlobalDashboard extends Component {
     );
   }
 
-  renderSuppliersHeatmap() {
-    const { suppliersHeatmapData, isSuppliersHeatmapLoaded } = this.state;
-    if (!isSuppliersHeatmapLoaded) {
-      return (
-        <div className="heatmap-card">
-          <div className="dashboard-heading indent-trend-title">Supplier Lead Time Heat Map</div>
-          {this.renderLoader()}
-        </div>
-      );
-    }
-    if (!suppliersHeatmapData || !suppliersHeatmapData.length) {
-      return (
-        <div className="heatmap-card">
-          <div className="dashboard-heading indent-trend-title">Supplier Lead Time Heat Map</div>
-          <div className="indent-trend-empty">No supplier data</div>
-        </div>
-      );
-    }
+  renderOverduePOLines() {
+    const {
+      overdueLines, overdueLinesTotalPages, overdueLinesTotalElements,
+      overdueLinesCurPage, isOverdueLinesLoaded
+    } = this.state;
+
     return (
-      <div className="heatmap-card">
-        <div className="dashboard-heading indent-trend-title">Supplier Lead Time Heat Map</div>
-        <div className="heatmap-chart-wrap">
-          <SupplierLeadTimeHeatmap data={suppliersHeatmapData} />
+      <div className="heatmap-card overdue-po-widget">
+        <div className="dashboard-heading indent-trend-title">
+          ⚠ Overdue PO Lines
+          {overdueLinesTotalElements > 0 && (
+            <span className="overdue-total-badge">{overdueLinesTotalElements}</span>
+          )}
         </div>
+        {!isOverdueLinesLoaded ? (
+          this.renderLoader()
+        ) : overdueLines.length === 0 ? (
+          <div className="indent-trend-empty" style={{ color: '#27ae60' }}>✓ No overdue PO lines</div>
+        ) : (
+          <>
+            <div className="overdue-po-table-wrap">
+              <table className="overdue-po-table">
+                <thead>
+                  <tr>
+                    <th>PO #</th>
+                    <th>Project</th>
+                    <th>Supplier</th>
+                    <th>Product</th>
+                    <th>Lead Time</th>
+                    <th>Days Overdue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {overdueLines.map((row, i) => (
+                    <tr key={i}>
+                      <td>{row.purchaseOrderId}</td>
+                      <td>{row.projectName || '—'}</td>
+                      <td>{row.supplierName || '—'}</td>
+                      <td>{row.productName} <span style={{ color: '#888', fontSize: '11px' }}>({row.measurementUnit})</span></td>
+                      <td>{row.leadTimeDays != null ? `${row.leadTimeDays}d` : '—'}</td>
+                      <td><span className="overdue-badge">+{row.daysOverdue}d</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {overdueLinesTotalPages > 1 && (
+              <div className="overdue-po-pagination">
+                <button
+                  className="overdue-page-btn"
+                  disabled={overdueLinesCurPage === 0}
+                  onClick={() => this.fetchOverdueLines(overdueLinesCurPage - 1)}
+                >‹ Prev</button>
+                <span className="overdue-page-info">
+                  Page {overdueLinesCurPage + 1} of {overdueLinesTotalPages}
+                </span>
+                <button
+                  className="overdue-page-btn"
+                  disabled={overdueLinesCurPage >= overdueLinesTotalPages - 1}
+                  onClick={() => this.fetchOverdueLines(overdueLinesCurPage + 1)}
+                >Next ›</button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     );
   }
@@ -813,12 +882,12 @@ class GlobalDashboard extends Component {
         </div>
       );
     }
-    const { data, seriesKeys } = this.buildStaleChartData(
+    const rows = buildHorizontalStaleData(
       indentStaleBuckets,
       "tenantCounts",
       (code) => this.resolveTenantName(code)
     );
-    if (!data.length || !seriesKeys.length) {
+    if (!rows.length) {
       return (
         <div className="indent-trend-card">
           <div className="dashboard-heading indent-trend-title">Stale Indents</div>
@@ -829,23 +898,17 @@ class GlobalDashboard extends Component {
     return (
       <div className="indent-trend-card">
         <div className="dashboard-heading indent-trend-title">Stale Indents</div>
-        <div className="stale-chart-legend">
-          {seriesKeys.map((key, i) => (
-            <div key={key} className="stale-legend-item">
-              <span
-                className="stale-legend-color"
-                style={{ background: STALE_COLOR_PALETTE[i % STALE_COLOR_PALETTE.length] }}
-              />
-              <span className="stale-legend-label" title={key}>{key}</span>
-            </div>
-          ))}
-        </div>
-        <div className="indent-trend-chart-wrap">
-          <StaleStackedColumnChart
-            chartId="indentStaleChartDiv"
-            data={data}
-            categoryField="bucketLabel"
-            seriesKeys={seriesKeys}
+        <StaleChartLegend clickable />
+        <div className="stale-chart-scroll-wrap">
+          <StaleHorizontalBarChart
+            rows={rows}
+            onRowClick={(row) => {
+              setSession("indentPresetFilterData", [
+                { attrName: "tenants", attrValue: [row.key] },
+                { attrName: "staleBuckets", attrValue: [{ id: "GT_3_DAYS", name: "More than 3 days" }] },
+              ]);
+              this.props.history.push("/globalIndent");
+            }}
           />
         </div>
       </div>
@@ -862,11 +925,8 @@ class GlobalDashboard extends Component {
         </div>
       );
     }
-    const { data, seriesKeys } = this.buildStaleChartData(
-      poStaleBuckets,
-      "supplierCounts"
-    );
-    if (!data.length || !seriesKeys.length) {
+    const rows = buildHorizontalStaleData(poStaleBuckets, "supplierCounts");
+    if (!rows.length) {
       return (
         <div className="indent-trend-card">
           <div className="dashboard-heading indent-trend-title">Stale POs</div>
@@ -877,23 +937,17 @@ class GlobalDashboard extends Component {
     return (
       <div className="indent-trend-card">
         <div className="dashboard-heading indent-trend-title">Stale POs</div>
-        <div className="stale-chart-legend">
-          {seriesKeys.map((key, i) => (
-            <div key={key} className="stale-legend-item">
-              <span
-                className="stale-legend-color"
-                style={{ background: STALE_COLOR_PALETTE[i % STALE_COLOR_PALETTE.length] }}
-              />
-              <span className="stale-legend-label" title={key}>{key}</span>
-            </div>
-          ))}
-        </div>
-        <div className="indent-trend-chart-wrap">
-          <StaleStackedColumnChart
-            chartId="poStaleChartDiv"
-            data={data}
-            categoryField="bucketLabel"
-            seriesKeys={seriesKeys}
+        <StaleChartLegend clickable />
+        <div className="stale-chart-scroll-wrap">
+          <StaleHorizontalBarChart
+            rows={rows}
+            onRowClick={(row) => {
+              setSession("poPresetFilterData", [
+                { attrName: "suppliers", attrValue: [row.name] },
+                { attrName: "staleBuckets", attrValue: [{ id: "GT_3_DAYS", name: "More than 3 days" }] },
+              ]);
+              this.props.history.push(appRoutes.purchaseOrder);
+            }}
           />
         </div>
       </div>
@@ -1056,7 +1110,7 @@ class GlobalDashboard extends Component {
           </div>
         </div>
         <div className="heatmap-section">
-          {this.renderSuppliersHeatmap()}
+          {this.renderOverduePOLines()}
         </div>
       </div>
     );

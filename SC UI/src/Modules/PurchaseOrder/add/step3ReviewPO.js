@@ -68,7 +68,8 @@ class Step3ReviewPO extends Component {
   }
 
   render() {
-    const { orderTo, orderFrom, poSubject, isSpecialPo, noteText, projectName, overridePhoneNumber, overrideEmail, fileInformations, freightCharges, freightGstPercent, customCharges, poDate } = this.props;
+    const { orderTo, orderFrom, poSubject, isSpecialPo, noteText, projectName, overridePhoneNumber, overrideEmail, fileInformations, freightCharges, freightGstPercent, customCharges, poDate, poDiscount } = this.props;
+    const poDiscountAmt = parseFloat(poDiscount || 0);
     const lineItems = this.computeLineItems();
     const lineItemsTotal = lineItems.reduce((sum, item) => sum + (item.totalAmt || 0), 0);
     const fc = parseFloat(freightCharges || 0);
@@ -83,7 +84,9 @@ class Step3ReviewPO extends Component {
         return { name: c.chargeName || "Additional Charges", amt, gst, total };
       });
     const totalCustom = customChargeRows.reduce((sum, c) => sum + c.total, 0);
-    const grandTotal = lineItemsTotal + totalFreight + totalCustom;
+    // PO Discount is a flat, post-tax PO-level deduction — applied once at the very end,
+    // after line/freight/custom totals (which already include their own GST) are summed.
+    const grandTotal = lineItemsTotal + totalFreight + totalCustom - poDiscountAmt;
 
     return (
       <div className="step3-review-po">
@@ -279,6 +282,13 @@ class Step3ReviewPO extends Component {
               </div>
             </div>
           ))}
+          {poDiscountAmt > 0 && (
+            <div style={{ textAlign: "right", padding: "8px 8px 0", fontSize: "13px", color: "#323c47", borderTop: "1px solid #e0e0e0", marginTop: "4px" }}>
+              <div style={{ marginBottom: "3px" }}>
+                PO Discount: <strong>- ₹ {this.formatCurrency(poDiscountAmt)}</strong>
+              </div>
+            </div>
+          )}
           <div className="review-grand-total">
             Grand Total: <strong>₹ {this.formatCurrency(grandTotal)}</strong>
           </div>

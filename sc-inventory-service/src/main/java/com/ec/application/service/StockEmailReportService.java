@@ -1,10 +1,13 @@
 package com.ec.application.service;
 
 import com.ec.application.aspects.UseDefaultTenant;
+import com.ec.application.data.ExpiryAlertRow;
 import com.ec.application.data.ProductStockRow;
 import com.ec.application.data.ProjectStockEmailData;
 import com.ec.application.data.WarehouseStockRow;
+import com.ec.application.model.InventoryBatch;
 import com.ec.application.model.Stock;
+import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.PurchaseOrderLineRepository;
 import com.ec.application.repository.StockRepo;
 import org.apache.poi.ss.usermodel.*;
@@ -18,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.text.SimpleDateFormat;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +32,9 @@ public class StockEmailReportService {
 
     @Autowired
     PurchaseOrderLineRepository purchaseOrderLineRepo;
+
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
 
     Logger log = LoggerFactory.getLogger(StockEmailReportService.class);
 
@@ -102,6 +109,35 @@ public class StockEmailReportService {
         data.setStockRows(stockRows);
         data.setZeroStockItems(zeroStockItems);
         return data;
+    }
+
+    /**
+     * Collects batch rows expiring between [from, to] for the current tenant.
+     * ThreadLocalStorage must already be set to the target tenant by the caller.
+     *
+     * @param tenantDisplayName Human-readable project name shown in the email.
+     * @param from              Window start (inclusive).
+     * @param to                Window end (inclusive).
+     */
+    public List<ExpiryAlertRow> collectExpiryRows(String tenantDisplayName, Date from, Date to) {
+        List<InventoryBatch> batches = inventoryBatchRepository.findBatchesExpiringBetween(from, to);
+        List<ExpiryAlertRow> rows = new ArrayList<>();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        for (InventoryBatch b : batches) {
+            ExpiryAlertRow r = new ExpiryAlertRow();
+            r.setProjectName(tenantDisplayName);
+            r.setProductName(b.getProduct() != null ? b.getProduct().getProductName() : "");
+            r.setWarehouseName(b.getWarehouse() != null ? b.getWarehouse().getWarehouseName() : "");
+            r.setBrand(b.getBrand() != null ? b.getBrand() : "");
+            r.setLotNumber(b.getLotNumber() != null ? b.getLotNumber() : "");
+            r.setExpiryDate(b.getExpiryDate() != null ? sdf.format(b.getExpiryDate()) : "");
+            r.setQtyRemaining(b.getQtyRemaining());
+            r.setUnit(b.getProduct() != null ? b.getProduct().getMeasurementUnit() : "");
+            rows.add(r);
+        }
+        rows.sort(Comparator.comparing(ExpiryAlertRow::getExpiryDate)
+                .thenComparing(ExpiryAlertRow::getProductName));
+        return rows;
     }
 
     /**

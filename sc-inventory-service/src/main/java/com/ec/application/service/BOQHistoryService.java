@@ -89,6 +89,9 @@ public class BOQHistoryService {
 
     public byte[] exportExcel(FilterDataList filterDataList) throws Exception {
         Specification<BOQHistory> spec = BOQHistorySpecifications.getSpecification(filterDataList);
+        long count = spec == null ? boqHistoryRepository.count() : boqHistoryRepository.count(spec);
+        if (count > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         List<BOQHistory> rows = (spec == null)
                 ? boqHistoryRepository.findAll()
                 : boqHistoryRepository.findAll(spec);

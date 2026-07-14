@@ -1,9 +1,12 @@
 package com.ec.application.controller;
 
+import com.ec.application.constants.RoleConstants;
 import com.ec.application.data.ProjectConstantsUpdateDTO;
 import com.ec.application.model.ProjectConstantsTable;
 import com.ec.application.service.ProjectConstantsService;
+import com.ec.application.service.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,9 @@ public class ProjectConstantsController {
 
     @Autowired
     private ProjectConstantsService projectConstantsService;
+
+    @Autowired
+    private UserDetailsService userDetailsService;
 
     // Get all project constants
     @GetMapping
@@ -42,6 +48,16 @@ public class ProjectConstantsController {
             @PathVariable Long id,
             @Valid @RequestBody ProjectConstantsUpdateDTO updateDTO,
             BindingResult bindingResult) {
+
+        // Server-side guard — the Configuration page is admin-only in the menu, but
+        // menu gating alone doesn't protect the endpoint from direct API calls.
+        try {
+            if (!userDetailsService.hasRole(RoleConstants.ADMIN)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin can update configuration");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only admin can update configuration");
+        }
 
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());

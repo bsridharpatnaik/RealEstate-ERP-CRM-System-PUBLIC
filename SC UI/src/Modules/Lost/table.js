@@ -31,9 +31,23 @@ class Table extends CommonTable {
         <td data-label={"Quantity"}>{`${row.product.measurementUnit}`}</td>
       );
     } else if (key === "entryType") {
-      const label = row.entryType === "EXCESS_FOUND" ? "Excess Found" : "Lost / Damaged";
+      const isExcess = row.entryType === "EXCESS_FOUND";
       return (
-        <td data-label="Type">{label}</td>
+        <td data-label="Type">
+          <span style={{
+            display: 'inline-block',
+            padding: '2px 10px',
+            borderRadius: 12,
+            fontSize: 12,
+            fontWeight: 600,
+            background: isExcess ? '#e8f5e9' : '#ffebee',
+            color: isExcess ? '#2e7d32' : '#c62828',
+            border: `1px solid ${isExcess ? '#a5d6a7' : '#ef9a9a'}`,
+            whiteSpace: 'nowrap',
+          }}>
+            {isExcess ? '↑ Excess Found' : '↓ Lost / Damaged'}
+          </span>
+        </td>
       );
     } else if (key === "id") {
       return (

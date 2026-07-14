@@ -3,16 +3,19 @@ import React from "react";
 //Third Party
 import ListCommon from "./../../Shared/List";
 import { withSnackbar } from "notistack";
+import * as XLSX from "xlsx";
 import AddIcon from "@material-ui/icons/Add";
 import Popper from "@material-ui/core/Popper";
 import { connect } from "react-redux";
+import { Slide } from "@material-ui/core";
 
 //component
 import Table from "./table";
 import Filter from "./filter";
 import Button from "./../../Shared/Button";
+import Details from "./details";
 //misc
-import { apiEndpoints, exportURL, noOfRecords } from "./../../endpoints";
+import { apiEndpoints, exportURL } from "./../../endpoints";
 import { messages } from "./../../messages";
 import { API } from "./../../axios";
 import { getTenantName } from "./../../helper";
@@ -27,6 +30,8 @@ class List extends ListCommon {
     pages: 0,
     totalRecords: 0,
     filterOpen: false,
+    showDetails: false,
+    selectedRow: null,
   };
   filterData = {};
   filterRef = React.createRef();
@@ -145,13 +150,25 @@ class List extends ListCommon {
   getExportData(response) {
     return response.data?.inventoryTransfers?.content || response.data?.content || [];
   }
+  async exportToCSV() {
+    const response = await this.getExportAPIData();
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage, { variant: "error" });
+      return;
+    }
+    const data = this.getExportData(response);
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inventory Transfer");
+    XLSX.writeFile(wb, this.exportFile + ".xlsx");
+  }
 
   async search(page = 0, sortkey = null, sortby = null) {
     const params = this.prepareRequestBody();
 
     // Add pagination to request body for POST request
     params.page = page;
-    params.size = noOfRecords;
+    params.size = this.pageSize;
 
     // Build sort parameter for URL
     let sortParam = "";
@@ -174,7 +191,8 @@ class List extends ListCommon {
       this.props.isLoading(true);
     }
 
-    const response = await API.POST(this.url + "&page=" + page + sortParam, params);
+    const baseUrl = this.url.replace(/([?&])size=\d+/, `$1size=${this.pageSize}`);
+    const response = await API.POST(baseUrl + "&page=" + page + sortParam, params);
 
     if (this.props.isLoading) {
       this.props.isLoading(false);
@@ -244,9 +262,14 @@ class List extends ListCommon {
     }
   }
 
+  showDetail = (row) => {
+    this.setState({ showDetails: true, selectedRow: row });
+  };
+
   render() {
+    const { showDetails, selectedRow } = this.state;
     return (
-      <div className="inventory-transfer-list-wrapper">
+      <div className={showDetails ? "split" : "inventory-transfer-list-wrapper"}>
         <div className="list-section">
           <div className="filter-section" style={{ justifyContent: "flex-end" }}>
             <div className="top-button-wrapper">
@@ -259,20 +282,6 @@ class List extends ListCommon {
               innerRef={this.filterRef}
               label={messages.common.filter}
             />
-            {/* {this.props.onAdd && (
-              <Button
-                onClick={this.props.onAdd}
-                color="primary"
-                variant="contained"
-                startIcon={<AddIcon />}
-                classes={{
-                  root: "add-button",
-                  label: "add-label",
-                }}
-              >
-                {messages.common.add} {messages.common.inventoryTransfer}
-              </Button>
-            )} */}
             </div>
           </div>
           <Popper
@@ -299,6 +308,7 @@ class List extends ListCommon {
               rows={this.state.data}
               hidedelete={true}
               hideedit={true}
+              showDetail={(row) => this.showDetail(row)}
               sortby={this.sortby}
               sortkey={this.sortkey}
               search={(sortkey, sortby) => {
@@ -310,6 +320,22 @@ class List extends ListCommon {
           )}
           {this.renderPagination()}
         </div>
+        <Slide
+          direction="left"
+          in={showDetails}
+          mountOnEnter
+          unmountOnExit
+          timeout={{ exit: 0 }}
+        >
+          <div>
+            {showDetails && (
+              <Details
+                row={selectedRow}
+                back={() => this.setState({ showDetails: false, selectedRow: null })}
+              />
+            )}
+          </div>
+        </Slide>
       </div>
     );
   }

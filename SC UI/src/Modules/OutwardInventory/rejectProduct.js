@@ -17,19 +17,35 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 
 class RejectProduct extends AddForm {
-  sourceDetails = this.props?.data?.inwardOutwardList.map((item) => {
-    return {
-      value: item.product.productId,
+  // value must be unique per LINE, not per product — a product can appear on two lines
+  // if the outward drew it from two different warehouses. Display name is disambiguated
+  // with the warehouse name whenever the same product appears more than once.
+  sourceDetails = (() => {
+    const lines = (this.props?.data?.inwardOutwardList || []).map((item, idx) => ({
+      value: `${item.product.productId}_${item.warehouse ? item.warehouse.warehouseId : idx}`,
+      productId: item.product.productId,
+      warehouseId: item.warehouse ? item.warehouse.warehouseId : null,
+      warehouseName: item.warehouse ? item.warehouse.warehouseName : null,
       name: item.product.productName,
       measurementUnit: item.product.measurementUnit,
       quantity: item.quantity,
-    };
-  });
+    }));
+    const countByProduct = {};
+    lines.forEach((l) => { countByProduct[l.productId] = (countByProduct[l.productId] || 0) + 1; });
+    lines.forEach((l) => {
+      if (countByProduct[l.productId] > 1 && l.warehouseName) {
+        l.name = `${l.name} (${l.warehouseName})`;
+      }
+    });
+    return lines;
+  })();
   state = {
     value: 0,
     noproduct: {},
     enableSave: true,
     currentsourceDetails: this.sourceDetails,
+    // batchConsumptions: { [lineValue]: [{ batchId, brand, lotNumber, expiryDate, qtyConsumed }] }
+    batchConsumptions: {},
   };
   key = 1;
 
@@ -42,6 +58,39 @@ class RejectProduct extends AddForm {
     p[this.key++] = {};
     this.setState({ noproduct: { ...p } });
   }
+
+  /** Load batch consumptions for one line of this outward. Cached per LINE (lineValue), not per
+   *  product — a product on two lines (different warehouses) consumed two different sets of
+   *  batches, and a productId-only cache key would conflate them. */
+  async loadBatchConsumptions(lineValue, productId, warehouseId) {
+    if (!productId) return;
+    const outwardId = this.props?.data?.outwardid;
+    if (!outwardId) return;
+    try {
+      const response = await API.GET(apiEndpoints.getOutwardBatchConsumptions(outwardId));
+      if (response.success && Array.isArray(response.data)) {
+        const forLine = response.data.filter((c) =>
+          c.productId === productId && (warehouseId == null || c.warehouseId === warehouseId)
+        );
+        this.setState((prev) => ({
+          batchConsumptions: { ...prev.batchConsumptions, [lineValue]: forLine },
+        }));
+      }
+    } catch (e) {
+      // ignore — batch selection UI just won't show
+    }
+  }
+
+  /**
+   * Returns true if this line used multiple distinct batches in the outward
+   * (i.e., batch selection is required for reject).
+   */
+  hasMultipleBatches(lineValue) {
+    const consumptions = this.state.batchConsumptions[lineValue] || [];
+    const distinctBatches = new Set(consumptions.map((c) => c.batch?.batchId));
+    return distinctBatches.size > 1;
+  }
+
   checkValidation() {
     let isValid = this.key > 1 ? true : false;
     if (isValid) {
@@ -49,7 +98,7 @@ class RejectProduct extends AddForm {
       if (val.length === 0) {
         isValid = false;
       }
-      Object.values(this.state.noproduct).map((item) => {
+      Object.values(this.state.noproduct).forEach((item) => {
         if (
           item &&
           item.productId &&
@@ -58,14 +107,98 @@ class RejectProduct extends AddForm {
           item.remarks &&
           isValid
         ) {
-          isValid = true;
+          if (this.hasMultipleBatches(item.value)) {
+            const batchEntries = item.batchRejectQtys || {};
+            const batchTotal = Object.values(batchEntries).reduce((s, v) => s + (v || 0), 0);
+            if (Math.abs(batchTotal - Number(item.returnquantity)) > 0.001) {
+              isValid = false;
+            }
+          }
         } else {
           isValid = false;
         }
-        return null;
       });
     }
     this.setState({ enableSave: !isValid });
+  }
+
+  renderBatchRejectSection(key, item) {
+    const productId = item.productId;
+    if (!productId) return null;
+    const consumptions = this.state.batchConsumptions[item.value] || [];
+    if (!this.hasMultipleBatches(item.value)) return null;
+
+    const batchMap = {};
+    consumptions.forEach((c) => {
+      const bId = c.batch?.batchId;
+      if (!bId) return;
+      if (!batchMap[bId]) {
+        batchMap[bId] = {
+          batchId: bId,
+          brand: c.batch?.brand,
+          lotNumber: c.batch?.lotNumber,
+          expiryDate: c.batch?.expiryDate,
+          totalConsumed: 0,
+        };
+      }
+      batchMap[bId].totalConsumed += c.qtyConsumed;
+    });
+
+    const batchEntries = item.batchRejectQtys || {};
+    const batchTotal = Object.values(batchEntries).reduce((s, v) => s + (v || 0), 0);
+    const required = Number(item.returnquantity) || 0;
+    const remaining = Math.round((required - batchTotal) * 1000) / 1000;
+    const isExact = Math.abs(remaining) < 0.001;
+    const isOver = remaining < -0.001;
+
+    return (
+      <Grid item sm={12} style={{ marginTop: 8 }}>
+        <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>
+          Multiple batches used — specify reject qty per batch:
+        </div>
+        {Object.values(batchMap).map((b) => {
+          const label = [
+            b.brand,
+            b.lotNumber,
+            b.expiryDate ? "Exp: " + b.expiryDate : null,
+            `(consumed: ${b.totalConsumed})`,
+          ]
+            .filter(Boolean)
+            .join(" | ");
+          return (
+            <div key={b.batchId} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 12, minWidth: 220 }}>{label || `Batch #${b.batchId}`}</span>
+              <input
+                type="number"
+                min="0"
+                max={b.totalConsumed}
+                step="any"
+                placeholder="Reject qty"
+                style={{
+                  padding: "4px 8px",
+                  border: "1px solid #ccc",
+                  borderRadius: 4,
+                  fontSize: 13,
+                  width: 100,
+                }}
+                onChange={(e) => {
+                  const p = this.state.noproduct;
+                  if (!p[key].batchRejectQtys) p[key].batchRejectQtys = {};
+                  p[key].batchRejectQtys[b.batchId] = parseFloat(e.target.value) || 0;
+                  this.setState({ noproduct: { ...p } }, () => this.checkValidation());
+                }}
+              />
+            </div>
+          );
+        })}
+        <div style={{ fontSize: 12, marginTop: 4, color: isOver ? '#c62828' : isExact ? '#2e7d32' : '#e65100' }}>
+          Allocated: <strong>{batchTotal}</strong> / {required}
+          {!isExact && !isOver && ` — ${remaining} remaining`}
+          {isOver && ` — over by ${Math.abs(remaining)}`}
+          {isExact && ' ✓'}
+        </div>
+      </Grid>
+    );
   }
   renderProductAddButton() {
     return (
@@ -102,7 +235,12 @@ class RejectProduct extends AddForm {
             },
             onChange: (e, item) => {
               const p = this.state.noproduct;
-              p[key].productId = item.value || "";
+              // value is a composite per-line key (product can be on two lines from two
+              // warehouses) — productId/warehouseId are the real identifiers sent to the backend.
+              p[key].value = item.value || "";
+              p[key].productId = item.productId || "";
+              p[key].warehouseId = item.warehouseId || null;
+              p[key].batchRejectQtys = {};
               this.setState({
                 currentsourceDetails: this.state.currentsourceDetails.filter(
                   (x) => x.value !== item.value
@@ -112,6 +250,7 @@ class RejectProduct extends AddForm {
                 p[key].quantity = item.quantity;
                 p[key].measurementUnit = item.measurementUnit;
               }
+              this.loadBatchConsumptions(item.value, item.productId, item.warehouseId);
               this.checkValidation();
             },
           })}
@@ -144,6 +283,7 @@ class RejectProduct extends AddForm {
             },
           })}
         </Grid>
+        {this.renderBatchRejectSection(key, this.state.noproduct[key] || {})}
         <Grid item container sm={12} md={12} justify="flex-end">
           <Link
             component="button"
@@ -154,10 +294,10 @@ class RejectProduct extends AddForm {
               const p = this.state.noproduct;
               const updatedsourceDetails = this.state.currentsourceDetails;
               p &&
-                p[key].productId &&
+                p[key].value &&
                 updatedsourceDetails.push(
                   this.sourceDetails.filter(
-                    (x) => x.value === p[key].productId
+                    (x) => x.value === p[key].value
                   )[0]
                 );
               this.setState({ currentsourceDetails: updatedsourceDetails });
@@ -227,11 +367,19 @@ class RejectProduct extends AddForm {
       return;
     }
     const data = Object.values(this.state.noproduct).map((item) => {
-      return {
+      const entry = {
         productId: item.productId,
+        warehouseId: item.warehouseId,
         quantity: Number(item.returnquantity),
         remarks: item.remarks,
       };
+      // Include rejectBatches if user specified per-batch qtys (multi-batch scenario)
+      if (item.batchRejectQtys && Object.keys(item.batchRejectQtys).length > 0) {
+        entry.rejectBatches = Object.entries(item.batchRejectQtys)
+          .filter(([, qty]) => qty > 0)
+          .map(([batchId, qty]) => ({ batchId: Number(batchId), qty }));
+      }
+      return entry;
     });
 
     const params = {

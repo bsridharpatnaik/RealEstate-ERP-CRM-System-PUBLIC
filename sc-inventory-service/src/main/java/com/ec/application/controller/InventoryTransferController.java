@@ -3,6 +3,9 @@ package com.ec.application.controller;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.data.*;
+
+import java.util.List;
+import java.util.Map;
 import com.ec.application.model.InventoryTransfer;
 import com.ec.application.service.InventoryTransferService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/inventory-transfer")
@@ -56,6 +57,29 @@ public class InventoryTransferController {
     @ResponseStatus(HttpStatus.OK)
     public ReturnInventoryTransferData fetchAllTransfers(@RequestBody FilterDataList filterDataList, @PageableDefault(page = 0, size = 10, sort = "creationDate", direction = Sort.Direction.DESC) Pageable pageable) throws Exception {
         return inventoryTransferService.fetchTransfers(filterDataList, pageable);
+    }
+
+    /**
+     * Preview which batches will be consumed from source for a single transfer item.
+     * Read-only — does not modify any data.
+     *
+     * Request body:
+     * {
+     *   "sourceTenant": "...",
+     *   "productId": 123,
+     *   "sourceWarehouseId": 1,
+     *   "qty": 10.0,
+     *   "overrideBatches": [{"batchId": 5, "qty": 4}, ...]   // optional
+     * }
+     */
+    @PostMapping("/preview-batches")
+    public ResponseEntity<List<Map<String, Object>>> previewTransferBatches(
+            @RequestBody TransferBatchPreviewRequest request) throws Exception {
+        List<Map<String, Object>> preview = inventoryTransferService.previewTransferBatches(
+                request.getSourceTenant(), request.getProductId(),
+                request.getSourceWarehouseId(), request.getQty(),
+                request.getOverrideBatches());
+        return ResponseEntity.ok(preview);
     }
 
     @ExceptionHandler({JpaSystemException.class})

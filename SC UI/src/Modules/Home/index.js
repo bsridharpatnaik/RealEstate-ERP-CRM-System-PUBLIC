@@ -30,13 +30,31 @@ import {
   BOQ,
   BOQStatus,
   BOQHistory,
+  Activity,
+  ProjectActivity,
   GlobalBOQView,
   Indent,
   PurchaseOrder,
+  ServiceOrder,
   InventoryTransfer,
   DeadStock,
   HistoricalPricing,
   Firm,
+  ProductMerge,
+  FifoReport,
+  StockAgingReport,
+  LowStockReport,
+  GlobalStockReports,
+  PoReconciliationReport,
+  IndentFulfillmentReport,
+  SupplierPerformanceReport,
+  ProcurementSpend,
+  BOQIndentReport,
+  BOQTracker,
+  BOQTrackerGlobal,
+  QuoteComparison,
+  QuoteComparisonCreate,
+  Configuration,
 } from "./../index";
 import BOQReport from "../BOQReport";
 
@@ -96,11 +114,59 @@ class Home extends React.Component {
                 <Route path={appRoutes.boqHistory}>
                   <BOQHistory key={new Date()} {...props} />
                 </Route>
+                <Route path={appRoutes.activityLog}>
+                  <Activity key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.projectActivityLog}>
+                  <ProjectActivity key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.projectConfiguration}>
+                  <Configuration key={new Date()} {...props} />
+                </Route>
                 <Route path={appRoutes.globalBOQ}>
                   <GlobalBOQView key={new Date()} {...props} />
                 </Route>
+                <Route path={appRoutes.fifoReport}>
+                  <FifoReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.stockAgingReport}>
+                  <StockAgingReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.lowStockReport}>
+                  <LowStockReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.globalStockReports}>
+                  <GlobalStockReports key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.poReconReport}>
+                  <PoReconciliationReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.indentFulfillmentReport}>
+                  <IndentFulfillmentReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.supplierPerformanceReport}>
+                  <SupplierPerformanceReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.procurementSpend}>
+                  <ProcurementSpend key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.boqIndentReport}>
+                  <BOQIndentReport key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.boqTracker}>
+                  <BOQTracker key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.globalBOQTracker}>
+                  <BOQTrackerGlobal key={new Date()} {...props} />
+                </Route>
                 <Route path={"/boqReport"}>
                   <BOQReport key={new Date()} {...props} />
+                </Route>
+                <Route path={"/quoteComparison/create"}>
+                  <QuoteComparisonCreate key={new Date()} {...props} />
+                </Route>
+                <Route path={"/quoteComparison"}>
+                  <QuoteComparison key={new Date()} {...props} />
                 </Route>
                 <Route path={"/contact"}>
                   <Contact key={new Date()} {...props} />
@@ -116,6 +182,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={"/firm"}>
                   <Firm key={new Date()} {...props} />
+                </Route>
+                <Route path={appRoutes.productMerge}>
+                  <ProductMerge key={new Date()} {...props} />
                 </Route>
                 <Route path={"/inventory"}>
                   <Product key={new Date()} {...props} />
@@ -140,6 +209,9 @@ class Home extends React.Component {
                 </Route>
                 <Route path={"/purchaseOrder"}>
                   <PurchaseOrder key={new Date()} {...props} />
+                </Route>
+                <Route path={"/serviceOrder"}>
+                  <ServiceOrder key={new Date()} {...props} />
                 </Route>
                 <Route path={"/inventoryTransfer"}>
                   <InventoryTransfer key={new Date()} {...props} />

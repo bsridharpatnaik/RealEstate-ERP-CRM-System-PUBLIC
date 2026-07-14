@@ -20,6 +20,7 @@ import { useSnackbar } from "notistack";
 import {
   setToken,
   setRole,
+  setAllRoles,
   setUserName,
   setUserId,
   getRole,
@@ -102,6 +103,7 @@ function Login(props) {
           variant: "success",
         });
         setRole(response.data.roles[0]);
+        setAllRoles(response.data.roles);
         setToken(response.data.token);
         setUserId(response.data.userid);
         clearSession("dealLostReasons");
@@ -161,13 +163,14 @@ function Login(props) {
         });
       } else {
         const status = response.status;
+        const errorMsg = response.errorMessage;
         let msg;
-        if (status === 401 || status === 403) {
+        if (status === 401) {
           msg = messages.common.loginFailure;
         } else if (!status) {
           msg = "Unable to reach server. Please check your connection.";
         } else {
-          msg = `Something went wrong. Please try again later. (Error ${status})`;
+          msg = "Something went wrong. Please contact administrator.";
         }
         enqueueSnackbar(msg, { variant: "error" });
       }

@@ -29,6 +29,9 @@ public class AllNotificationService
 	@Autowired
 	ClearNotificationAsyncService clearNotificationAsyncService;
 
+	@Autowired
+	ProjectConstantsService projectConstantsService;
+
 	Logger log = LoggerFactory.getLogger(AllNotificationService.class);
 
 	public ReturnAllNotificationsData getAllNotifications()
@@ -57,6 +60,9 @@ public class AllNotificationService
 	{
 		String source = "inventory";
 		List<ReturnSingleNotification> inventoryNormalizedNotifications = new ArrayList<ReturnSingleNotification>();
+		// Configured near-expiry window — keeps EXPIRY_ALERT_30 message text in sync
+		// with the window the alert job actually used
+		int nearExpiryDays = projectConstantsService.getNearExpiryDays();
 		List<InventoryNotification> inventoryNotifications = inventoryNotificationService
 				.returnInventoryNotifications();
 
@@ -118,7 +124,40 @@ public class AllNotificationService
 						message, inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(),
 						true);
 			}
-			inventoryNormalizedNotifications.add(returnAllNotification);
+
+			if (inventoryNotification.getType().equals("EXPIRY_ALERT_30"))
+			{
+				message = "Product " + inventoryNotification.getProduct().getProductName()
+						+ " in " + inventoryNotification.getWarehouseName()
+						+ " is expiring within " + nearExpiryDays + " days. Qty remaining: "
+						+ df.format(inventoryNotification.getQuantity()) + ".";
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "EXPIRY_ALERT_30", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
+			}
+
+			if (inventoryNotification.getType().equals("EXPIRY_ALERT_60"))
+			{
+				message = "Product " + inventoryNotification.getProduct().getProductName()
+						+ " in " + inventoryNotification.getWarehouseName()
+						+ " is expiring within 60 days. Qty remaining: "
+						+ df.format(inventoryNotification.getQuantity()) + ".";
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "EXPIRY_ALERT_60", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
+			}
+
+			if (inventoryNotification.getType().equals("EXPIRY_EXPIRED"))
+			{
+				message = "Product " + inventoryNotification.getProduct().getProductName()
+						+ " in " + inventoryNotification.getWarehouseName()
+						+ " has expired. Qty remaining: "
+						+ df.format(inventoryNotification.getQuantity()) + ". Please write off expired stock.";
+				setFields(returnAllNotification, inventoryNotification.getId(), source, "EXPIRY_EXPIRED", message,
+						inventoryNotification.getCreationDate(), inventoryNotification.getLastModifiedDate(), true);
+			}
+
+			// Only add notifications that have a message — skip unknown/unhandled types
+			if (!message.isEmpty())
+				inventoryNormalizedNotifications.add(returnAllNotification);
 		}
 		return inventoryNormalizedNotifications;
 	}

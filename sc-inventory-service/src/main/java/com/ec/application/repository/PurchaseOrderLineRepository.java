@@ -13,7 +13,7 @@ public interface PurchaseOrderLineRepository
 
     @Query(
             "SELECT po.purchaseOrderId, po.poDate, s.name, pol.quantity, pol.rate, " +
-                    "pol.discountPercent, pol.gstPercent, pol.netRate " +
+                    "pol.discountPercent, pol.gstPercent, pol.netRate, s.contactId " +
                     "FROM PurchaseOrderLine pol " +
                     "JOIN pol.purchaseOrder po " +
                     "JOIN po.supplier s " +

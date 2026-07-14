@@ -15,7 +15,6 @@ import com.ec.application.model.PurchaseOrderStatusHistory;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.IndentInventoryRepo;
 import com.ec.application.repository.PurchaseOrderIndentRefRepository;
-import com.ec.application.service.PriorityComputeService;
 import com.ec.application.service.PurchaseOrderPdfService;
 import com.ec.application.service.PurchaseOrderService;
 import com.ec.application.service.PurchaseOrderStatusHistoryService;
@@ -53,7 +52,6 @@ public class PurchaseOrderController {
     private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
     private final SchemaConfig schemaConfig;
     private final PurchaseOrderPdfService purchaseOrderPdfService;
-    private final PriorityComputeService priorityComputeService;
     private final PurchaseOrderIndentRefRepository purchaseOrderIndentRefRepository;
     private final IndentInventoryRepo indentInventoryRepo;
 
@@ -75,6 +73,11 @@ public class PurchaseOrderController {
         return purchaseOrderService.fetchPurchaseOrdersPage(filterDataList, pageable);
     }
 
+    @GetMapping("/tiles")
+    public com.ec.application.data.POTilesDTO getTiles() {
+        return purchaseOrderService.getTiles();
+    }
+
     @GetMapping("/{id}")
     public PurchaseOrder findPurchaseOrderByID(@PathVariable String id) throws Exception {
         return purchaseOrderService.getPurchaseOrderWithInit(id);
@@ -93,6 +96,54 @@ public class PurchaseOrderController {
     public ResponseEntity<?> cancelPurchaseOrderById(@PathVariable String id) throws Exception {
         purchaseOrderService.cancelPurchaseOrderById(id);
         return ResponseEntity.ok("Entity deleted");
+    }
+
+    /**
+     * Adds a new line item to an existing PO.
+     * PO must be in NEW or PARTIAL status.
+     * The indent line item being added must be in NEW status.
+     */
+    @PostMapping("/{id}/line")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder addLineItem(@PathVariable String id, @RequestBody CreatePoLineRequest payload) throws Exception {
+        return purchaseOrderService.addLineItem(id, payload);
+    }
+
+    /**
+     * Adds multiple new line items to an existing PO in one call.
+     * PO must be in NEW or PARTIAL status.
+     * All supplied indent line items must be in NEW status.
+     */
+    @PostMapping("/{id}/lines")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder addLineItems(@PathVariable String id, @RequestBody List<CreatePoLineRequest> payload) throws Exception {
+        return purchaseOrderService.addLineItems(id, payload);
+    }
+
+    /**
+     * Removes an open line item from an existing PO.
+     * The line's linked indent item must be in PO CREATED status (no inward started).
+     */
+    @DeleteMapping("/{id}/line/{lineId}")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder removeLineItem(@PathVariable String id, @PathVariable Long lineId) throws Exception {
+        return purchaseOrderService.removeLineItem(id, lineId);
+    }
+
+    /**
+     * Updates only the tolerance % of a single PO line.
+     * Allowed in NEW and PARTIAL status; blocked once the PO reaches a terminal status
+     * (CANCELLED, COMPLETED, SHORT CLOSED).
+     */
+    @PutMapping("/{id}/line/{lineId}/tolerance")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder updateLineTolerance(@PathVariable String id, @PathVariable Long lineId,
+                                              @RequestBody UpdateToleranceRequest payload) throws Exception {
+        return purchaseOrderService.updateLineTolerance(id, lineId, payload.getTolerancePercent());
     }
 
     @PostMapping("/short-close")
@@ -227,23 +278,16 @@ public class PurchaseOrderController {
                 .body(stream);
     }
 
-    /**
-     * Manually triggers PO priority recomputation.
-     * POs live in the master schema — @UseDefaultTenant on this class sets the correct schema context.
-     * Accessible only to ADMIN and PURCHASE_MANAGER roles.
-     */
-    @PostMapping("/po-prioritize")
-    @CheckAuthority
-    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
-    public ResponseEntity<String> triggerPoPrioritization() {
-        log.info("Manual PO priority recompute triggered");
-        priorityComputeService.recomputeAllPriorities();
-        return ResponseEntity.ok("PO prioritization completed successfully");
-    }
-
     @GetMapping("/project-list")
     public List<String> getProjectList() {
         return schemaConfig.getNonMasterSchemaList();
+    }
+
+    @GetMapping("/overdue-lines")
+    public Map<String, Object> getOverdueLines(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) throws Exception {
+        return purchaseOrderService.getOverdueLines(page, size);
     }
 
     @ExceptionHandler({JpaSystemException.class})

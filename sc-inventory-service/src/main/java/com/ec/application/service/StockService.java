@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,6 +61,9 @@ public class StockService {
     PopulateDropdownService populateDropdownService;
 
     @Autowired
+    ProjectConstantsService projectConstantsService;
+
+    @Autowired
     WarehouseService warehouseService;
 
     @Autowired
@@ -88,7 +93,29 @@ public class StockService {
     @Autowired
     ActiveProfileService activeProfileService;
 
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
+
+    @javax.persistence.PersistenceContext
+    private javax.persistence.EntityManager entityManager;
+
     Logger log = LoggerFactory.getLogger(StockService.class);
+
+    private static final int STOCK_LOCK_MAX_ATTEMPTS = 6;
+
+    private boolean isOptimisticLockFailure(Exception e) {
+        Throwable t = e;
+        while (t != null) {
+            if (t instanceof org.springframework.orm.ObjectOptimisticLockingFailureException
+                    || t instanceof javax.persistence.OptimisticLockException
+                    || t instanceof org.hibernate.StaleObjectStateException
+                    || t instanceof org.hibernate.StaleStateException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
 
     public StockInformationV2 fetchStockInformation(Pageable page, FilterDataList filterDataList) throws ParseException {
         StockInformationV2 stockInformation = new StockInformationV2();
@@ -98,6 +125,92 @@ public class StockService {
         }
 
         Specification<StockInformationFromView> spec = StockInformationSpecification.getSpecification(filterDataList);
+
+        // Expiry tile filter — fetch matching productIds from batch repo and restrict spec
+        List<String> expiryFilter = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "expiryFilter");
+        if (expiryFilter != null && !expiryFilter.isEmpty()) {
+            LocalDate today = LocalDate.now();
+            ZoneId zone = ZoneId.systemDefault();
+            Date now = Date.from(today.atStartOfDay(zone).toInstant());
+            String filterType = expiryFilter.get(0);
+
+            if ("lowStock".equals(filterType)) {
+                Specification<StockInformationFromView> s = (root, q, cb) -> cb.equal(root.get("stockStatus"), "Low");
+                spec = (spec == null) ? s : spec.and(s);
+            } else if ("highStock".equals(filterType)) {
+                Specification<StockInformationFromView> s = (root, q, cb) -> cb.equal(root.get("stockStatus"), "High");
+                spec = (spec == null) ? s : spec.and(s);
+            } else {
+                List<Long> expiryProductIds;
+                // Near-expiry window is tenant-configurable; must match getStockTiles so
+                // tile counts and the filtered list agree.
+                int nearExpiryDays = projectConstantsService.getNearExpiryDays();
+                if ("expiring30".equals(filterType)) {
+                    Date in30 = Date.from(today.plusDays(nearExpiryDays).atStartOfDay(zone).toInstant());
+                    expiryProductIds = inventoryBatchRepository.findProductIdsExpiringBetween(now, in30);
+                } else if ("expiring60".equals(filterType)) {
+                    Date in30 = Date.from(today.plusDays(nearExpiryDays).atStartOfDay(zone).toInstant());
+                    Date in60 = Date.from(today.plusDays(60).atStartOfDay(zone).toInstant());
+                    expiryProductIds = inventoryBatchRepository.findProductIdsExpiringBetween(in30, in60);
+                } else if ("expired".equals(filterType)) {
+                    expiryProductIds = inventoryBatchRepository.findProductIdsWithExpiredStock(now);
+                } else if ("aging30".equals(filterType)) {
+                    Date cutoff = Date.from(today.minusDays(30).atStartOfDay(zone).toInstant());
+                    expiryProductIds = findAgingProductIdsFifo(cutoff, null);
+                } else if ("aging60".equals(filterType)) {
+                    Date cutoff = Date.from(today.minusDays(60).atStartOfDay(zone).toInstant());
+                    expiryProductIds = findAgingProductIdsFifo(cutoff, null);
+                } else if ("aging90".equals(filterType)) {
+                    Date cutoff = Date.from(today.minusDays(90).atStartOfDay(zone).toInstant());
+                    expiryProductIds = findAgingProductIdsFifo(cutoff, null);
+                } else if ("untracked".equals(filterType)) {
+                    // Batch-tracked products where stock > sum of batch qtyRemaining in same warehouse
+                    List<Long> batchTrackedIds = productRepo.findBatchTrackedProductIds();
+                    if (batchTrackedIds.isEmpty()) {
+                        expiryProductIds = Collections.emptyList();
+                    } else {
+                        List<Stock> stocks = stockRepo.findByProductIdIn(batchTrackedIds);
+                        if (stocks.isEmpty()) {
+                            expiryProductIds = Collections.emptyList();
+                        } else {
+                            // Get batch sums per product+warehouse
+                            List<Long> warehouseIds = stocks.stream()
+                                    .map(s -> s.getWarehouse().getWarehouseId())
+                                    .distinct()
+                                    .collect(Collectors.toList());
+                            List<Object[]> batchSums =
+                                    inventoryBatchRepository.sumQtyRemainingGroupByProductAndWarehouse(batchTrackedIds, warehouseIds);
+                            // Map: productId_warehouseId → batch qty
+                            Map<String, Double> batchQtyMap = new HashMap<>();
+                            for (Object[] row : batchSums) {
+                                Long productId = ((Number) row[0]).longValue();
+                                Long warehouseId = ((Number) row[1]).longValue();
+                                Double qty = ((Number) row[2]).doubleValue();
+                                batchQtyMap.put(productId + "_" + warehouseId, qty);
+                            }
+                            // Filter stocks with untracked gap
+                            expiryProductIds = stocks.stream()
+                                    .filter(stock -> {
+                                        String key = stock.getProduct().getProductId() + "_" + stock.getWarehouse().getWarehouseId();
+                                        Double batchQty = batchQtyMap.getOrDefault(key, 0.0);
+                                        return stock.getQuantityInHand() > batchQty + 0.001;
+                                    })
+                                    .map(s -> s.getProduct().getProductId())
+                                    .distinct()
+                                    .collect(Collectors.toList());
+                        }
+                    }
+                } else {
+                    expiryProductIds = Collections.emptyList();
+                }
+                final List<Long> finalIds = expiryProductIds;
+                Specification<StockInformationFromView> idSpec = expiryProductIds.isEmpty()
+                        ? (root, query, cb) -> cb.disjunction()
+                        : (root, query, cb) -> root.get("productId").in(finalIds);
+                spec = (spec == null) ? idSpec : spec.and(idSpec);
+            }
+        }
+
         Page<StockInformationFromView> list = (spec == null) ? siRepo.findAll(page) : siRepo.findAll(spec, page);
 
         // Fetch all ProductIds in the current page
@@ -144,7 +257,7 @@ public class StockService {
             List<AllInventoryTransactions> filtered = aiList.stream().filter(i -> i.getDate().before(closingDate)).collect(Collectors.toList());
             s.setInwardOutwardHistory(filtered);
             if (!filtered.isEmpty()) {
-                List<AllInventoryTransactions> iList = filtered.stream().filter(i -> i.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+                List<AllInventoryTransactions> iList = filtered.stream().filter(i -> isStockIncreaseType(i.getType())).collect(Collectors.toList());
                 Date lastInwardDate = !iList.isEmpty() ? aiList.get(0).getDate() : null;
                 s.setLastInwardDate(lastInwardDate);
             }
@@ -362,8 +475,18 @@ public class StockService {
         try {
             ObjectMapper mapper = new ObjectMapper();
             StockInformationDTO dto = new StockInformationDTO();
-            dto.setDetailedStock(mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
-            }));
+            List<SingleStockInformationDTO> detailedStocks = mapper.readValue(si.getDetailedStock(), new TypeReference<List<SingleStockInformationDTO>>() {
+            });
+            // Hydrate null warehouseIds — view may return null if Warehouse PK column alias differs
+            for (SingleStockInformationDTO ds : detailedStocks) {
+                if (ds.getWarehouseId() == null && ds.getWarehouseName() != null) {
+                    List<com.ec.application.model.Warehouse> matches = warehouseRepo.findByName(ds.getWarehouseName());
+                    if (!matches.isEmpty()) {
+                        ds.setWarehouseId(matches.get(0).getWarehouseId());
+                    }
+                }
+            }
+            dto.setDetailedStock(detailedStocks);
             dto.updateDetailedStock(dto.getDetailedStock(), getStockAgingData(aiList, dto.getDetailedStock()));
             dto.setLastInwardDate(getLastInwardDate(aiList));
             dto.setCategoryName(si.getCategoryName());
@@ -371,6 +494,11 @@ public class StockService {
             dto.setMeasurementUnit(si.getMeasurementUnit());
             dto.setProductName(si.getProductName());
             dto.setProductCode(si.getProductCode());
+            productRepo.findById(si.getProductId()).ifPresent(p -> {
+                dto.setIsExpirable(p.getIsExpirable());
+                dto.setBatchMode(p.getBatchMode());
+                dto.setDefaultExpiryDays(p.getDefaultExpiryDays());
+            });
             // Use pre-fetched override map — no per-row DB call
             Double effectiveReorder = overrideMap.getOrDefault(si.getProductId(), si.getReorderQuantity());
             dto.setReorderQuantity(effectiveReorder);
@@ -378,7 +506,15 @@ public class StockService {
             // Recompute status using tenant-specific reorder level (DB view uses global value)
             String computedStatus = (si.getTotalQuantityInHand() != null && si.getTotalQuantityInHand() <= effectiveReorder) ? "Low" : "High";
             dto.setStockStatus(computedStatus);
-            dto.setInwardOutwardHistory(aiList);
+            // Match all-inventory page order: date DESC, sort_order DESC, entryid DESC
+            List<AllInventoryTransactions> orderedHistory = aiList.stream()
+                    .sorted(Comparator
+                            .comparing(AllInventoryTransactions::getDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(AllInventoryTransactions::getSortOrder, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .thenComparing(AllInventoryTransactions::getEntryid, Comparator.nullsLast(Comparator.naturalOrder()))
+                            .reversed())
+                    .collect(Collectors.toList());
+            dto.setInwardOutwardHistory(orderedHistory);
             return dto;
         } catch (Exception e) {
             System.out.println(e);
@@ -386,8 +522,34 @@ public class StockService {
         }
     }
 
+    /** Stock-increasing transaction types — must match all_inventory_view's closingstock CASE (Inward, Transfer-In, Excess-Found). */
+    private static boolean isStockIncreaseType(String type) {
+        return type != null && (type.equalsIgnoreCase("inward")
+                || type.equalsIgnoreCase("Transfer-In")
+                || type.equalsIgnoreCase("Excess-Found"));
+    }
+
+    /**
+     * Returns the IDs (restricted to candidateProductIds, or all products if null) whose oldest
+     * surviving stock chunk is on or before cutoffDate — i.e. the oldest Inward/Transfer-In/
+     * Excess-Found transaction date among warehouses that currently still have stock for that
+     * product. Per StockService.calculateStockAges' FIFO assumption, that oldest date IS the age
+     * of a warehouse's surviving stock, so this is computed directly in SQL (AllInventoryRepo)
+     * rather than fetching full transaction history per product and walking it in Java.
+     * <p>
+     * This replaces the old "last stock-increase date <= cutoffDate" approach, which incorrectly
+     * cleared a product's aging the moment ANY new inward happened — even if older, still-unconsumed
+     * stock from a prior inward was sitting untouched in the warehouse (e.g. inwarded 10-Jan, never
+     * outwarded, then inwarded again yesterday — age should still be reported from 10-Jan).
+     */
+    public List<Long> findAgingProductIdsFifo(Date cutoffDate, List<Long> candidateProductIds) {
+        return candidateProductIds != null
+                ? allInventoryRepo.findAgingProductIdsFifoIn(cutoffDate, candidateProductIds)
+                : allInventoryRepo.findAgingProductIdsFifo(cutoffDate);
+    }
+
     private Date getLastInwardDate(List<AllInventoryTransactions> aiList) {
-        List<AllInventoryTransactions> filtered = aiList.stream().filter(e -> e.getType().equalsIgnoreCase("inward")).collect(Collectors.toList());
+        List<AllInventoryTransactions> filtered = aiList.stream().filter(e -> isStockIncreaseType(e.getType())).collect(Collectors.toList());
         if (!filtered.isEmpty())
             return filtered.get(0).getDate();
         return null;
@@ -402,8 +564,8 @@ public class StockService {
 
             String warehouse = si.getWarehouseName();
             Double stock = si.getQuantityInHand();
-            List<AllInventoryTransactions> aiListFIltered = aiList.stream().filter(ai -> ai.getType()
-                            .equalsIgnoreCase("Inward") && ai.getWarehouseName()
+            List<AllInventoryTransactions> aiListFIltered = aiList.stream().filter(ai -> isStockIncreaseType(ai.getType())
+                            && ai.getWarehouseName()
                             .equalsIgnoreCase(warehouse))
                     .sorted(Comparator.comparing(AllInventoryTransactions::getId))
                     .collect(Collectors.toList());
@@ -515,6 +677,8 @@ public class StockService {
                     exportData.add(si);
                 }
             }
+            if (exportData.size() > 5000)
+                throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
             return (List<T>) exportData;
         }
     }
@@ -528,6 +692,11 @@ public class StockService {
 
         StockInformationV2 stockData = fetchStockInformation(
                 PageRequest.of(0, Integer.MAX_VALUE), filterDataList);
+
+        long totalRows = stockData.getStockInformation().stream()
+                .mapToLong(dto -> dto.getDetailedStock() != null ? dto.getDetailedStock().size() : 0).sum();
+        if (totalRows > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader("Content-Disposition", "attachment; filename=\"stock-export.xlsx\"");
@@ -582,31 +751,53 @@ public class StockService {
         }
     }
 
+    /**
+     * Updates quantityInHand for a product+warehouse. Retries on optimistic-lock conflict
+     * (Stock.version) — two concurrent stock-mutating operations (inward/outward/transfer/etc.)
+     * on the same product+warehouse used to race via a plain read-modify-write with no locking,
+     * which could silently corrupt quantityInHand (one update's effect lost or double-applied).
+     * Each retry calls entityManager.clear() so the next findOrInsertStock re-reads the row's
+     * freshest committed value instead of returning the same stale managed instance from the
+     * Hibernate session's identity map.
+     */
     @Transactional(rollbackFor = Exception.class)
     public Double updateStock(Long productId, Long warehouseId, Double quantity, String operation) throws Exception {
         System.out.println("updateStock - Tenant =- " + ThreadLocalStorage.getTenantName());
-        Stock currentStock = findOrInsertStock(productId, warehouseId);
-        Double oldStock = currentStock.getQuantityInHand();
-        Double newStock = (double) 0;
-        switch (operation) {
-            case "inward":
-                newStock = oldStock + quantity;
-                break;
-            case "outward":
-                newStock = oldStock - quantity;
-        }
-        if (newStock < 0) {
-            log.info("stock update failed for product " + currentStock.getProduct().getProductName()
-                    + ".  Stock will go Negative");
-            throw new Exception("stock update failed for product " + currentStock.getProduct().getProductName()
-                    + ".  Stock will go Negative");
-        } else {
+        for (int attempt = 1; attempt <= STOCK_LOCK_MAX_ATTEMPTS; attempt++) {
+            Stock currentStock = findOrInsertStock(productId, warehouseId);
+            Double oldStock = currentStock.getQuantityInHand();
+            Double newStock = (double) 0;
+            switch (operation) {
+                case "inward":
+                    newStock = oldStock + quantity;
+                    break;
+                case "outward":
+                    newStock = oldStock - quantity;
+            }
+            if (newStock < 0) {
+                log.info("stock update failed for product " + currentStock.getProduct().getProductName()
+                        + ".  Stock will go Negative");
+                throw new Exception("stock update failed for product " + currentStock.getProduct().getProductName()
+                        + ".  Stock will go Negative");
+            }
             currentStock.setQuantityInHand(newStock);
-
-            stockRepo.save(currentStock);
-            inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
-            return newStock;
+            try {
+                stockRepo.save(currentStock);
+                inventoryNotificationService.checkStockAndPushLowStockNotification(currentStock.getProduct());
+                return newStock;
+            } catch (Exception e) {
+                if (!isOptimisticLockFailure(e) || attempt == STOCK_LOCK_MAX_ATTEMPTS) {
+                    throw e;
+                }
+                entityManager.clear();
+                try {
+                    Thread.sleep(30L * attempt);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
+        throw new Exception("Unable to update stock after concurrent update retries.");
     }
 
     @Transactional(rollbackFor = Exception.class)

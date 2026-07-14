@@ -13,6 +13,9 @@ import com.ec.application.indentpo.IndentInventoryAsyncUpdater;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.repository.*;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ec.application.ReusableClasses.ReusableMethods;
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.InwardInventorySpecification;
 import org.springframework.context.ApplicationEventPublisher;
@@ -87,7 +91,21 @@ public class InwardInventoryService {
     @Autowired
     SystemContactRepo systemContactRepo;
 
+    @Autowired
+    InventoryBatchRepository inventoryBatchRepository;
+
+    @Autowired
+    ActivityLogService activityLogService;
+
+    @Autowired
+    UserDetailsService userDetailsService;
+
     Logger log = LoggerFactory.getLogger(InwardInventoryService.class);
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
+    }
 
     public List<PoDropdownItem> getPendingPoDropdown() {
         String tenant = ThreadLocalStorage.getTenantName();
@@ -156,6 +174,11 @@ public class InwardInventoryService {
         li.setBillingUnit(v.getBillingUnit());
         li.setBillingQuantity(v.getBillingQuantity());
         li.setBillingConversionFactor(v.getBillingConversionFactor());
+        productRepo.findById(v.getProductId()).ifPresent(p -> {
+            li.setIsExpirable(p.requiresExpiry());
+            li.setBatchMode(p.getBatchMode());
+            li.setDefaultExpiryDays(p.getDefaultExpiryDays());
+        });
         return li;
     }
 
@@ -180,6 +203,16 @@ public class InwardInventoryService {
         setFieldsFromPO(inwardInventory, iiData, pendingItemsForInward);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
+        Map<Long, List<InwardBatchSplit>> poSplitsMap = new HashMap<>();
+        for (LineItemForInwardThroughPODTO li : iiData.getLineItems()) {
+            if (li.getBatchSplits() != null && !li.getBatchSplits().isEmpty()) {
+                pendingItemsForInward.stream()
+                        .filter(r -> r.getLineItemCode().equalsIgnoreCase(li.getLineItemCode()))
+                        .findFirst()
+                        .ifPresent(r -> poSplitsMap.put(r.getProductId(), li.getBatchSplits()));
+            }
+        }
+        createBatchesForInward(inwardInventory, poSplitsMap);
         List<IndentInwardDeltaDTO> deltas = new ArrayList<>();
 
         for (InwardOutwardList io : inwardInventory.getInwardOutwardList()) {
@@ -188,6 +221,14 @@ public class InwardInventoryService {
 
         IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.CREATE, inwardInventory.getPurchaseOrderNo(), deltas);
         applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "create"));
+        String createPoUser = resolveCurrentUser();
+        List<Map<String, Object>> createPoItems = inwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(io.getProduct().getProductName(), io.getQuantity()))
+                .collect(Collectors.toList());
+        activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
+                ActivityLogDescription.withItemsAndType("Inward " + inwardInventory.getInwardId()
+                        + " created from PO " + iiData.getPoNumber() + " by " + createPoUser, "From PO", createPoItems),
+                createPoUser);
         return inwardInventory;
     }
 
@@ -222,6 +263,13 @@ public class InwardInventoryService {
             inward.setDate(data.getInwardDate());
         }
 
+        boolean noChallanUpd = data.getChallanNo() == null || data.getChallanNo().trim().isEmpty();
+        boolean noBillUpd = data.getBillNo() == null || data.getBillNo().trim().isEmpty();
+        if (noChallanUpd && noBillUpd) {
+            if (data.getNoChallanBillReason() == null || data.getNoChallanBillReason().trim().isEmpty())
+                throw new Exception("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
+
         inward.setSupplier(supplierRepo.findById(data.getSupplierId()).get());
         inward.setVehicleNo(data.getVehicleNo());
         inward.setSupplierSlipNo(data.getSupplierSlipNo());
@@ -232,6 +280,7 @@ public class InwardInventoryService {
         inward.setBillNo(data.getBillNo());
         inward.setChallanDate(data.getChallanDate());
         inward.setBillDate(data.getBillDate());
+        inward.setNoChallanBillReason(data.getNoChallanBillReason());
 
         if (data.getFileInformations() != null) {
             inward.setFileInformations(ReusableMethods.convertFilesListToSet(data.getFileInformations()));
@@ -331,6 +380,7 @@ public class InwardInventoryService {
             io.setQuantity(newQty);
         }
         inwardInventoryRepo.save(inward);
+        reconcileBatchesForEditedInward(inward, data.getProductWithQuantities());
 
         // -------------------------------------------------
         // Trigger async indent / PO reconciliation
@@ -352,6 +402,24 @@ public class InwardInventoryService {
                 applicationEventPublisher.publishEvent(new InwardSyncEvent(this, syncDTO, "update"));
             }
         }
+        String updateUser = resolveCurrentUser();
+        List<Map<String, Object>> changedItems = ActivityLogDescription.list();
+        for (InwardOutwardList io : inward.getInwardOutwardList()) {
+            Double oldQty = oldQuantityMap.get(io.getLineItemCode());
+            if (oldQty != null && Double.compare(oldQty, io.getQuantity()) != 0) {
+                String productName = io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode();
+                changedItems.add(ActivityLogDescription.itemChanged(productName, oldQty, io.getQuantity()));
+            }
+        }
+        if (!changedItems.isEmpty()) {
+            activityLogService.record("UPDATED", "INWARD", String.valueOf(inward.getInwardId()),
+                    ActivityLogDescription.withItems("Inward " + inward.getInwardId() + " updated by " + updateUser, changedItems),
+                    updateUser);
+        } else {
+            activityLogService.record("UPDATED", "INWARD", String.valueOf(inward.getInwardId()),
+                    ActivityLogDescription.of("Inward " + inward.getInwardId() + " updated by " + updateUser),
+                    updateUser);
+        }
         return inward;
     }
 
@@ -371,6 +439,7 @@ public class InwardInventoryService {
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setNoChallanBillReason(iiData.getNoChallanBillReason());
         inwardInventory.setInwardOutwardList(fetchInwardOutwardListFromPOLine(iiData.getLineItems(), pendingItemsForInward));
         inwardInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         inwardInventory.setCreatedFromPO(true);
@@ -387,12 +456,21 @@ public class InwardInventoryService {
             }
             IndentsForInwardView row = rowsWithLineItemCode.get(0);
             Product product = productRepo.findById(row.getProductId()).get();
+            boolean hasSplits = lineItem.getBatchSplits() != null && !lineItem.getBatchSplits().isEmpty();
+            if (product.isBatchTracked()) {
+                if (!hasSplits && product.requiresExpiry() && lineItem.getExpiryDate() == null)
+                    throw new IllegalArgumentException(
+                            "Expiry date is required for product: '" + product.getProductName() + "'");
+                if (hasSplits) validateBatchSplits(lineItem.getBatchSplits(), lineItem.getQuantityReceived(), product.getProductName(), product.requiresExpiry());
+            }
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(lineItem.getQuantityReceived());
             inwardOutwardList.setWarehouse(warehouseRepo.findById(lineItem.getWarehouseId()).get());
             inwardOutwardList.setLineItemCode(row.getLineItemCode());
             inwardOutwardList.setIndentRemarks(row.getRemarks());
             inwardOutwardList.setIndentSpecification(row.getSpecification());
+            inwardOutwardList.setBrand(hasSplits ? lineItem.getBatchSplits().get(0).getBrand() : lineItem.getBrand());
+            inwardOutwardList.setExpiryDate(hasSplits ? lineItem.getBatchSplits().get(0).getExpiryDate() : lineItem.getExpiryDate());
             inwardOutwardListSet.add(inwardOutwardList);
         }
         return inwardOutwardListSet;
@@ -450,6 +528,13 @@ public class InwardInventoryService {
 
         if (duplicateProductIdCount > 0)
             throw new IllegalArgumentException("Inventory List should be Unique. Same line item added multiple times.");
+
+        boolean noChallanPO = iiData.getChallanNo() == null || iiData.getChallanNo().trim().isEmpty();
+        boolean noBillPO = iiData.getBillNo() == null || iiData.getBillNo().trim().isEmpty();
+        if (noChallanPO && noBillPO) {
+            if (iiData.getNoChallanBillReason() == null || iiData.getNoChallanBillReason().trim().isEmpty())
+                throw new IllegalArgumentException("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -499,6 +584,24 @@ public class InwardInventoryService {
         setFieldsForInward(inwardInventory, iiData);
         updateStockForCreateInwardInventory(inwardInventory);
         inwardInventoryRepo.save(inwardInventory);
+        Map<Long, List<InwardBatchSplit>> directSplitsMap = new HashMap<>();
+        for (ProductWithQuantity pwq : iiData.getProductWithQuantities()) {
+            if (pwq.getBatchSplits() != null && !pwq.getBatchSplits().isEmpty()) {
+                directSplitsMap.put(pwq.getProductId(), pwq.getBatchSplits());
+            }
+        }
+        createBatchesForInward(inwardInventory, directSplitsMap);
+        String directCreateUser = resolveCurrentUser();
+        List<Map<String, Object>> directItems = inwardInventory.getInwardOutwardList().stream()
+                .map(io -> ActivityLogDescription.item(
+                        io.getProduct() != null ? io.getProduct().getProductName() : io.getLineItemCode(),
+                        io.getQuantity()))
+                .collect(Collectors.toList());
+        String directInwardType = Boolean.TRUE.equals(iiData.getIsSampleInward()) ? "Sample Inward" : "Direct Inward";
+        activityLogService.record("CREATED", "INWARD", String.valueOf(inwardInventory.getInwardId()),
+                ActivityLogDescription.withItemsAndType("Inward " + inwardInventory.getInwardId()
+                        + " created by " + directCreateUser, directInwardType, directItems),
+                directCreateUser);
         return inwardInventory;
     }
 
@@ -540,9 +643,21 @@ public class InwardInventoryService {
 
             // ---------- Process only once per product ----------
             if (processedProductIds.add(pwq.getProductId())) {
-                addReturnForInward(inwardId, pwq.getProductId(), pwq.getQuantity(), pwq.getRemarks());
+                addReturnForInward(inwardId, pwq.getProductId(), pwq.getQuantity(), pwq.getRemarks(), pwq.getOverrideBatches());
             }
         }
+
+        String rejectUser = resolveCurrentUser();
+        List<Map<String, Object>> rejectItems = rd.getProductWithQuantities().stream()
+                .map(pwq -> {
+                    String name = productRepo.findById(pwq.getProductId())
+                            .map(p -> p.getProductName()).orElse("ID:" + pwq.getProductId());
+                    return ActivityLogDescription.item(name, pwq.getQuantity());
+                })
+                .collect(Collectors.toList());
+        activityLogService.record("REJECTED", "INWARD", String.valueOf(inwardId),
+                ActivityLogDescription.withItems("Inward " + inwardId + " rejected by " + rejectUser, rejectItems),
+                rejectUser);
 
         return inwardInventoryRepo.findById(inwardId).get();
     }
@@ -552,7 +667,8 @@ public class InwardInventoryService {
             Long inwardId,
             Long productId,
             Double quantity,
-            String remarks
+            String remarks,
+            List<com.ec.application.data.BatchOverrideEntry> overrideBatches
     ) throws Exception {
 
         log.info("Invoked addReturnForInward");
@@ -591,7 +707,81 @@ public class InwardInventoryService {
         Double currentQuantity = target.getQuantity();
 
         // -----------------------------------------
-        // Stock OUTWARD
+        // Reduce batch qty for rejected inward — MUST run before stock update
+        // so we can fail fast if batch qty was already consumed via outward.
+        // If user specified batches (multi-batch inward) — drain those; else auto-drain last first
+        // -----------------------------------------
+        if (overrideBatches != null && !overrideBatches.isEmpty()) {
+            // Filter valid entries and check for duplicates
+            List<com.ec.application.data.BatchOverrideEntry> validOverrides = overrideBatches.stream()
+                    .filter(e -> e.getBatchId() != null && e.getQty() != null && e.getQty() > 0)
+                    .collect(Collectors.toList());
+            java.util.Set<Long> seenBatchIds = new java.util.HashSet<>();
+            for (com.ec.application.data.BatchOverrideEntry e : validOverrides) {
+                if (!seenBatchIds.add(e.getBatchId())) {
+                    throw new Exception("Duplicate batch ID " + e.getBatchId() + " in rejection entries.");
+                }
+            }
+            // Validate sum of override qtys equals reject quantity
+            double overrideTotal = validOverrides.stream()
+                    .mapToDouble(e -> e.getQty()).sum();
+            if (Math.abs(overrideTotal - quantity) > 0.001) {
+                throw new Exception("Batch quantities (" + overrideTotal
+                        + ") must equal the reject quantity (" + quantity + ").");
+            }
+            for (com.ec.application.data.BatchOverrideEntry entry : validOverrides) {
+                InventoryBatch rb = inventoryBatchRepository.findById(entry.getBatchId())
+                        .orElseThrow(() -> new Exception("Batch not found: " + entry.getBatchId()));
+                // Product ownership
+                if (!rb.getProduct().getProductId().equals(productId)) {
+                    throw new Exception("Batch #" + entry.getBatchId() + " belongs to product '"
+                            + rb.getProduct().getProductName() + "', not the rejected product.");
+                }
+                // Warehouse ownership
+                if (!rb.getWarehouse().getWarehouseId().equals(warehouseId)) {
+                    throw new Exception("Batch #" + entry.getBatchId() + " belongs to warehouse '"
+                            + rb.getWarehouse().getWarehouseName() + "', not the inward's warehouse.");
+                }
+                // Inward ownership — batch must belong to this specific inward
+                if (!rb.getInwardId().equals(inwardId)) {
+                    throw new Exception("Batch #" + entry.getBatchId()
+                            + " belongs to inward #" + rb.getInwardId()
+                            + ", not the inward being rejected (#" + inwardId + ").");
+                }
+                if (entry.getQty() > rb.getQtyRemaining() + 0.001) {
+                    throw new Exception("Cannot reject. Batch #" + entry.getBatchId()
+                            + " has only " + String.format("%.3f", rb.getQtyRemaining())
+                            + " units remaining — some qty was already consumed via outward.");
+                }
+                rb.setQtyRemaining(rb.getQtyRemaining() - entry.getQty());
+                inventoryBatchRepository.save(rb);
+            }
+        } else {
+            List<InventoryBatch> rejectBatches = inventoryBatchRepository.findAllByInwardIdAndProductId(inwardId, productId);
+            if (!rejectBatches.isEmpty()) {
+                if (rejectBatches.size() > 1) {
+                    // Multiple batches — cannot auto-drain; user must specify which batch(es)
+                    String pName = rejectBatches.get(0).getProduct() != null
+                            ? rejectBatches.get(0).getProduct().getProductName() : "product";
+                    throw new Exception(
+                            "'" + pName + "' has " + rejectBatches.size() + " batches in this inward. "
+                            + "Please specify which batch(es) the rejection of " + quantity
+                            + " units should come from.");
+                }
+                // Single batch — auto drain
+                InventoryBatch rb = rejectBatches.get(0);
+                if (quantity > rb.getQtyRemaining() + 0.001) {
+                    throw new Exception("Cannot reject " + quantity
+                            + " units. Only " + String.format("%.3f", rb.getQtyRemaining())
+                            + " units remain in the batch — the rest has already been consumed via outward.");
+                }
+                rb.setQtyRemaining(rb.getQtyRemaining() - quantity);
+                inventoryBatchRepository.save(rb);
+            }
+        }
+
+        // -----------------------------------------
+        // Stock OUTWARD — runs only after batch validation passes
         // -----------------------------------------
         Double closingStock = stockService.updateStock(
                 productId,
@@ -681,6 +871,7 @@ public class InwardInventoryService {
         inwardInventory.setChallanNo(iiData.getChallanNo() == null ? null : iiData.getChallanNo());
         inwardInventory.setBillDate(iiData.getBillDate() == null ? null : iiData.getBillDate());
         inwardInventory.setBillNo(iiData.getBillNo() == null ? null : iiData.getBillNo());
+        inwardInventory.setNoChallanBillReason(iiData.getNoChallanBillReason());
         inwardInventory.setIsSampleInward(
                 iiData.getIsSampleInward() != null && iiData.getIsSampleInward()
         );
@@ -693,8 +884,17 @@ public class InwardInventoryService {
         for (ProductWithQuantity productWithQuantity : productWithQuantities) {
             InwardOutwardList inwardOutwardList = new InwardOutwardList();
             Product product = productRepo.findById(productWithQuantity.getProductId()).get();
+            boolean hasSplitsDirect = productWithQuantity.getBatchSplits() != null && !productWithQuantity.getBatchSplits().isEmpty();
+            if (product.isBatchTracked()) {
+                if (!hasSplitsDirect && product.requiresExpiry() && productWithQuantity.getExpiryDate() == null)
+                    throw new IllegalArgumentException(
+                            "Expiry date is required for product: '" + product.getProductName() + "'");
+                if (hasSplitsDirect) validateBatchSplits(productWithQuantity.getBatchSplits(), productWithQuantity.getQuantity(), product.getProductName(), product.requiresExpiry());
+            }
             inwardOutwardList.setProduct(product);
             inwardOutwardList.setQuantity(productWithQuantity.getQuantity());
+            inwardOutwardList.setBrand(hasSplitsDirect ? productWithQuantity.getBatchSplits().get(0).getBrand() : productWithQuantity.getBrand());
+            inwardOutwardList.setExpiryDate(hasSplitsDirect ? productWithQuantity.getBatchSplits().get(0).getExpiryDate() : productWithQuantity.getExpiryDate());
             inwardOutwardListSet.add(inwardOutwardList);
             inwardOutwardList.setWarehouse(warehouseRepo.findById(productWithQuantity.getWarehouseId()).get());
         }
@@ -755,6 +955,12 @@ public class InwardInventoryService {
         if (duplicateProductIdCount > 0)
             throw new Exception("Inventory List should be Unique. Same product added multiple times. Please correct.");
 
+        boolean noChallan = iiData.getChallanNo() == null || iiData.getChallanNo().trim().isEmpty();
+        boolean noBill = iiData.getBillNo() == null || iiData.getBillNo().trim().isEmpty();
+        if (noChallan && noBill) {
+            if (iiData.getNoChallanBillReason() == null || iiData.getNoChallanBillReason().trim().isEmpty())
+                throw new Exception("Please provide a reason since both Challan No. and Bill No. are missing.");
+        }
     }
 
     public List<ProductGroupedDAO> getTotalsForInward(FilterDataList filterDataList) throws Exception {
@@ -772,8 +978,8 @@ public class InwardInventoryService {
         Specification<InwardInventory> spec = InwardInventorySpecification.getSpecification(filterDataList);
         long size = spec != null ? inwardInventoryRepo.count(spec) : inwardInventoryRepo.count();
         System.out.println("Size of inward inventory after filter -" + size);
-        if (size > 2000)
-            throw new Exception("Too many rows to export. Apply some more filters and try again");
+        if (size > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
         System.out.println("Fetching data from db");
         List<InwardInventory> iiData = spec != null ? inwardInventoryRepo.findAll(spec) : inwardInventoryRepo.findAll();
         List<InwardInventoryExportDAO2> clonedData = transformDataForExport(iiData);
@@ -855,7 +1061,12 @@ public class InwardInventoryService {
             IndentInwardSyncDTO syncDTO = new IndentInwardSyncDTO(inwardInventory.getDate(), ThreadLocalStorage.getTenantName(), inwardInventory.getInwardId(), InwardActionType.DELETE, inwardInventory.getPurchaseOrderNo(), deltas);
             indentInventoryAsyncUpdater.updateIndentAfterInwardAsync(syncDTO, "delete");
         }
+        zeroBatchesForDeletedInward(id);
         inwardInventoryRepo.softDeleteById(id);
+        String deleteUser = resolveCurrentUser();
+        activityLogService.record("DELETED", "INWARD", String.valueOf(id),
+                ActivityLogDescription.of("Inward " + id + " deleted by " + deleteUser),
+                deleteUser);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -905,6 +1116,42 @@ public class InwardInventoryService {
         return snap;
     }
 
+    private void createBatchesForInward(InwardInventory inwardInventory, Map<Long, List<InwardBatchSplit>> splitsByProductId) {
+        for (InwardOutwardList iol : inwardInventory.getInwardOutwardList()) {
+            if (!iol.getProduct().isBatchTracked()) continue;
+            Long productId = iol.getProduct().getProductId();
+            List<InwardBatchSplit> splits = splitsByProductId != null ? splitsByProductId.get(productId) : null;
+            if (splits != null && !splits.isEmpty()) {
+                for (InwardBatchSplit split : splits) {
+                    InventoryBatch batch = new InventoryBatch();
+                    batch.setProduct(iol.getProduct());
+                    batch.setWarehouse(iol.getWarehouse());
+                    batch.setInwardId(inwardInventory.getInwardId());
+                    batch.setBrand(split.getBrand());
+                    batch.setLotNumber(split.getLotNumber());
+                    batch.setExpiryDate(split.getExpiryDate());
+                    batch.setReceivedDate(inwardInventory.getDate());
+                    batch.setQtyReceived(split.getQty());
+                    batch.setQtyRemaining(split.getQty());
+                    inventoryBatchRepository.save(batch);
+                }
+            } else {
+                // Single-batch fallback (used only when NONE products have no splits,
+                // or legacy PO path without splits for batch-tracked product)
+                InventoryBatch batch = new InventoryBatch();
+                batch.setProduct(iol.getProduct());
+                batch.setWarehouse(iol.getWarehouse());
+                batch.setInwardId(inwardInventory.getInwardId());
+                batch.setBrand(iol.getBrand());
+                batch.setExpiryDate(iol.getExpiryDate());
+                batch.setReceivedDate(inwardInventory.getDate());
+                batch.setQtyReceived(iol.getQuantity());
+                batch.setQtyRemaining(iol.getQuantity());
+                inventoryBatchRepository.save(batch);
+            }
+        }
+    }
+
     private IndentsForInwardView fetchPoLine(String lineItemCode, String tenant) {
 
         List<IndentsForInwardView> result = indentsForInwardViewRepository.getLineItemDetails(lineItemCode, tenant);
@@ -937,6 +1184,186 @@ public class InwardInventoryService {
                             maxAllowed
                     )
             );
+        }
+    }
+
+    private void validateBatchSplits(List<InwardBatchSplit> splits, Double totalQty, String productName, boolean requireExpiry) {
+        double splitSum = splits.stream().mapToDouble(s -> s.getQty() != null ? s.getQty() : 0.0).sum();
+        if (Math.abs(splitSum - totalQty) > 0.001)
+            throw new IllegalArgumentException(
+                    "Batch split quantities (" + splitSum + ") must equal total quantity (" + totalQty + ") for product: '" + productName + "'");
+        for (InwardBatchSplit split : splits) {
+            if (split.getQty() == null || split.getQty() <= 0)
+                throw new IllegalArgumentException(
+                        "Each batch split quantity must be greater than zero for product: '" + productName + "'");
+            if (requireExpiry && split.getExpiryDate() == null)
+                throw new IllegalArgumentException(
+                        "Expiry date is required for each batch split of product: '" + productName + "'");
+        }
+    }
+
+    private void reconcileBatchesForEditedInward(InwardInventory inward, List<ProductAndQuantity> productWithQuantities) {
+        Map<Long, ProductAndQuantity> paqByProductId = productWithQuantities.stream()
+                .collect(Collectors.toMap(ProductAndQuantity::getProductId, p -> p));
+
+        for (InwardOutwardList iol : inward.getInwardOutwardList()) {
+            Long productId = iol.getProduct().getProductId();
+            if (!iol.getProduct().isBatchTracked()) continue;
+            boolean requireExpiry = iol.getProduct().requiresExpiry();
+
+            ProductAndQuantity paq = paqByProductId.get(productId);
+            if (paq == null) continue;
+
+            Double newTotal = paq.getQuantity();
+            List<InventoryBatch> batches = inventoryBatchRepository.findAllByInwardIdAndProductId(inward.getInwardId(), productId);
+
+            if (batches.isEmpty()) {
+                // Pre-tracking inward — no batch records exist yet.
+                // Skip: use "Split Existing Stock" on the Stock page instead.
+                continue;
+            }
+
+            // Use the inward line's own authoritative quantity as the baseline, not sum(batch.qtyReceived).
+            // Inward Reject only ever decrements batch.qtyRemaining (never qtyReceived), so after any
+            // partial reject those two permanently diverge — using qtyReceived here would compute a
+            // phantom delta on every future edit, even for products whose qty isn't actually changing.
+            double existingTotal = iol.getQuantity();
+            double delta = newTotal - existingTotal;
+            if (Math.abs(delta) < 0.001) {
+                // Qty unchanged — but user may have supplied updated batch metadata (brand / lot / expiry).
+                // Update existing batches positionally: split[0] → batches[0], split[1] → batches[1], …
+                boolean hasSplits = paq.getBatchSplits() != null && !paq.getBatchSplits().isEmpty();
+                if (hasSplits) {
+                    List<InwardBatchSplit> splits = paq.getBatchSplits();
+                    for (int i = 0; i < Math.min(splits.size(), batches.size()); i++) {
+                        InwardBatchSplit split = splits.get(i);
+                        InventoryBatch batch = batches.get(i);
+                        if (split.getBrand() != null)      batch.setBrand(split.getBrand());
+                        if (split.getLotNumber() != null)  batch.setLotNumber(split.getLotNumber());
+                        if (split.getExpiryDate() != null) batch.setExpiryDate(split.getExpiryDate());
+                        inventoryBatchRepository.save(batch);
+                    }
+                }
+                continue;
+            }
+
+            if (delta < 0) {
+                double reduction = Math.abs(delta);
+                String productName = iol.getProduct().getProductName();
+
+                if (batches.size() == 1) {
+                    // Single batch — auto reduce (we know exactly which batch)
+                    InventoryBatch batch = batches.get(0);
+                    double consumed = batch.getQtyReceived() - batch.getQtyRemaining();
+                    double actualReduce = Math.min(batch.getQtyRemaining(), reduction);
+                    batch.setQtyRemaining(batch.getQtyRemaining() - actualReduce);
+                    batch.setQtyReceived(Math.max(batch.getQtyReceived() - actualReduce, consumed));
+                    reduction -= actualReduce;
+                    inventoryBatchRepository.save(batch);
+                    if (reduction > 0.001) {
+                        double alreadyConsumed = Math.abs(delta) - reduction;
+                        throw new IllegalArgumentException(
+                                "Cannot reduce inward quantity by " + Math.abs(delta) + " for product '"
+                                + productName + "'. Only "
+                                + String.format("%.3f", alreadyConsumed)
+                                + " units remain in the batch — the rest has already been consumed via outward.");
+                    }
+                } else {
+                    // Multiple batches — user must specify which batches to reduce via batchSplits with batchId
+                    boolean hasSplitsWithBatchId = paq.getBatchSplits() != null
+                            && !paq.getBatchSplits().isEmpty()
+                            && paq.getBatchSplits().stream().anyMatch(s -> s.getBatchId() != null);
+                    if (!hasSplitsWithBatchId) {
+                        throw new IllegalArgumentException(
+                                "Product '" + productName + "' has " + batches.size()
+                                + " batches in this inward. Please specify which batch(es) the quantity reduction of "
+                                + String.format("%.3f", reduction)
+                                + " units should come from using the 'Edit Batches' button.");
+                    }
+                    // Validate sum of splits equals reduction
+                    double splitTotal = paq.getBatchSplits().stream()
+                            .filter(s -> s.getBatchId() != null && s.getQty() != null)
+                            .mapToDouble(InwardBatchSplit::getQty).sum();
+                    if (Math.abs(splitTotal - reduction) > 0.001) {
+                        throw new IllegalArgumentException(
+                                "Batch reduction quantities (" + splitTotal + ") must equal the quantity reduction ("
+                                + String.format("%.3f", reduction) + ") for product '" + productName + "'.");
+                    }
+                    // Apply reduction per specified batch
+                    for (InwardBatchSplit split : paq.getBatchSplits()) {
+                        if (split.getBatchId() == null || split.getQty() == null || split.getQty() <= 0) continue;
+                        InventoryBatch batch = batches.stream()
+                                .filter(b -> b.getBatchId().equals(split.getBatchId()))
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                        "Batch #" + split.getBatchId() + " not found in this inward for product '" + productName + "'."));
+                        if (split.getQty() > batch.getQtyRemaining() + 0.001) {
+                            throw new IllegalArgumentException(
+                                    "Cannot reduce batch #" + split.getBatchId() + " by " + split.getQty()
+                                    + " — only " + String.format("%.3f", batch.getQtyRemaining())
+                                    + " units remaining (the rest was consumed via outward).");
+                        }
+                        double consumed = batch.getQtyReceived() - batch.getQtyRemaining();
+                        batch.setQtyRemaining(batch.getQtyRemaining() - split.getQty());
+                        batch.setQtyReceived(Math.max(batch.getQtyReceived() - split.getQty(), consumed));
+                        inventoryBatchRepository.save(batch);
+                    }
+                }
+            } else {
+                // delta > 0 — increase: user MUST specify batch splits for the new quantity
+                boolean hasSplits = paq.getBatchSplits() != null && !paq.getBatchSplits().isEmpty();
+                if (!hasSplits) {
+                    throw new IllegalArgumentException(
+                            "Please specify which batch the increased quantity of "
+                            + String.format("%.3f", delta) + " units belongs to for product '"
+                            + iol.getProduct().getProductName()
+                            + "' using the 'Edit Batches' button.");
+                }
+                validateBatchSplits(paq.getBatchSplits(), delta, iol.getProduct().getProductName(), requireExpiry);
+                for (InwardBatchSplit split : paq.getBatchSplits()) {
+                    InventoryBatch last = batches.get(batches.size() - 1);
+                    // Merge into existing batch only if expiry AND brand AND lot match
+                    boolean sameBatch = split.getQty() != null
+                            && objectsEqual(split.getExpiryDate(), last.getExpiryDate())
+                            && objectsEqual(split.getBrand(), last.getBrand())
+                            && objectsEqual(split.getLotNumber(), last.getLotNumber());
+                    if (sameBatch) {
+                        last.setQtyReceived(last.getQtyReceived() + split.getQty());
+                        last.setQtyRemaining(last.getQtyRemaining() + split.getQty());
+                        inventoryBatchRepository.save(last);
+                    } else {
+                        InventoryBatch nb = new InventoryBatch();
+                        nb.setProduct(iol.getProduct()); nb.setWarehouse(iol.getWarehouse());
+                        nb.setInwardId(inward.getInwardId()); nb.setBrand(split.getBrand());
+                        nb.setLotNumber(split.getLotNumber());
+                        nb.setExpiryDate(split.getExpiryDate()); nb.setReceivedDate(inward.getDate());
+                        nb.setQtyReceived(split.getQty()); nb.setQtyRemaining(split.getQty());
+                        inventoryBatchRepository.save(nb);
+                    }
+                }
+            }
+        }
+    }
+
+    private void zeroBatchesForDeletedInward(Long inwardId) throws Exception {
+        List<InventoryBatch> batches = inventoryBatchRepository.findAllByInwardId(inwardId);
+        // Guard: if any batch from this inward was partially consumed (via outward or stock adjustment),
+        // deleting would orphan OutwardBatchConsumption records and corrupt batch vs stock totals.
+        for (InventoryBatch batch : batches) {
+            double consumed = batch.getQtyReceived() - batch.getQtyRemaining();
+            if (consumed > 0.001) {
+                throw new Exception(
+                    "Cannot delete this inward. Batch #" + batch.getBatchId()
+                    + " (product: " + batch.getProduct().getProductName() + ")"
+                    + " has already been partially consumed via outward or stock adjustment ("
+                    + String.format("%.3f", consumed) + " units consumed). "
+                    + "Please reverse those records first before deleting this inward.");
+            }
+        }
+        for (InventoryBatch batch : batches) {
+            batch.setQtyRemaining(0.0);
+            batch.setDeleted(true);
+            inventoryBatchRepository.save(batch);
         }
     }
 
@@ -1060,5 +1487,41 @@ public class InwardInventoryService {
                 inwardInventory.getInwardOutwardList().size());
 
         return inwardInventory;
+    }
+
+    /** Null-safe equals used when deciding whether to merge into existing batch. */
+    private static boolean objectsEqual(Object a, Object b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+
+    public com.ec.application.data.InwardTilesDTO getTiles() {
+        Calendar cal = Calendar.getInstance();
+
+        // Monday of current week
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);      cal.set(Calendar.MILLISECOND, 0);
+        int dow = cal.get(Calendar.DAY_OF_WEEK);
+        int diffToMonday = (dow == Calendar.SUNDAY) ? 6 : dow - Calendar.MONDAY;
+        cal.add(Calendar.DAY_OF_YEAR, -diffToMonday);
+        Date weekStart = cal.getTime();
+
+        // 1st of current month
+        cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);      cal.set(Calendar.MILLISECOND, 0);
+        Date monthStart = cal.getTime();
+
+        com.ec.application.data.InwardTilesDTO dto = new com.ec.application.data.InwardTilesDTO();
+        dto.setThisWeekCount(inwardInventoryRepo.countSince(weekStart));
+        dto.setThisMonthCount(inwardInventoryRepo.countSince(monthStart));
+        dto.setMissingChallanBillCount(inwardInventoryRepo.countMissingChallanBill());
+        dto.setRejectCount(inwardInventoryRepo.countWithReject());
+        dto.setFromPOCount(inwardInventoryRepo.countFromPO());
+        dto.setDirectCount(inwardInventoryRepo.countDirect());
+        dto.setSampleCount(inwardInventoryRepo.countSample());
+        return dto;
     }
 }

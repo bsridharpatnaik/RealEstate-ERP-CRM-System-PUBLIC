@@ -42,12 +42,15 @@ public class BuildingTypeService {
     public BuildingType createBuildingType(BuildingType payload) throws Exception {
         log.info("Invoked - " + new Throwable().getStackTrace()[0].getMethodName());
         validatePayload(payload);
+        payload.setTypeName(payload.getTypeName().trim());
+        if (payload.getTypeDescription() != null)
+            payload.setTypeDescription(payload.getTypeDescription().trim());
         long currentSize = buildingTypeRepo.count();
         /*
          * if (currentSize == 10) throw new
          * Exception("Limit reached. Cannot add more than 10 building types");
          */
-        if (!buildingTypeRepo.existsBytypeName(payload.getTypeName().trim())) {
+        if (!buildingTypeRepo.existsBytypeName(payload.getTypeName())) {
             buildingTypeRepo.save(payload);
             return payload;
         } else {
@@ -76,10 +79,12 @@ public class BuildingTypeService {
 
         if (!buildingTypeRepo.existsBytypeName(payload.getTypeName())
                 && !payload.getTypeName().equalsIgnoreCase(BuildingTypeForUpdate.getTypeName())) {
-            BuildingTypeForUpdate.setTypeName(payload.getTypeName());
-            BuildingTypeForUpdate.setTypeDescription(payload.getTypeDescription());
+            BuildingTypeForUpdate.setTypeName(payload.getTypeName().trim());
+            BuildingTypeForUpdate.setTypeDescription(payload.getTypeDescription() == null ? ""
+                    : payload.getTypeDescription().trim());
         } else if (payload.getTypeName().equalsIgnoreCase(BuildingTypeForUpdate.getTypeName())) {
-            BuildingTypeForUpdate.setTypeDescription(payload.getTypeDescription());
+            BuildingTypeForUpdate.setTypeDescription(payload.getTypeDescription() == null ? ""
+                    : payload.getTypeDescription().trim());
         } else {
             throw new Exception("BuildingType with same Name already exists");
         }
@@ -100,7 +105,7 @@ public class BuildingTypeService {
         if (!checkBeforeDeleteService.isBuildingTypeUsed(id))
             buildingTypeRepo.softDeleteById(id);
         else
-            throw new Exception("Cannot delete BuildingType. BuildingType already assigned to Bulding Unit");
+            throw new Exception("Cannot delete Structure Type — it is used in a Building Unit or BOQ.");
     }
 
     @Cacheable(value = "refBuildingTypes", key = "T(com.ec.application.multitenant.ThreadLocalStorage).getTenantName() + ':all'")

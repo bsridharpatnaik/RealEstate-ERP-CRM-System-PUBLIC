@@ -27,7 +27,7 @@ SELECT
 
     SUM(CASE
         WHEN q.type IN ('Inward', 'Transfer-In', 'Excess-Found')   THEN  q.quantity
-        WHEN q.type IN ('Transfer-Out', 'Outward', 'Lost-Damaged') THEN -q.quantity
+        WHEN q.type IN ('Transfer-Out', 'Outward', 'Lost-Damaged', 'Write-Off') THEN -q.quantity
         ELSE 0
     END) OVER (
         PARTITION BY q.warehouse_id, q.productid
@@ -152,7 +152,7 @@ FROM (
     JOIN inward_outward_entries ioe ON oie.entryid    = ioe.entryid
     JOIN Product p                  ON p.productid    = ioe.productid
     JOIN Category cat               ON cat.categoryid = p.categoryid
-    JOIN Warehouse w                ON w.warehouse_id = oi.warehouse_id
+    JOIN Warehouse w                ON w.warehouse_id = ioe.warehouse_id
     WHERE oi.is_deleted = 0
 
     UNION ALL
@@ -204,6 +204,31 @@ FROM (
     JOIN Category cat ON cat.categoryid = p.categoryid
     JOIN Warehouse w  ON w.warehouse_id = ldi.warehousename
     WHERE ldi.is_deleted = 0 AND ldi.entry_type = 'EXCESS_FOUND'
+
+    UNION ALL
+
+    /* === BATCH WRITE-OFF — sort_order 6 === */
+    SELECT
+        'Write-Off'             AS type,
+        bwo.write_off_id        AS keyid,
+        bwo.write_off_id        AS entryid,
+        DATE(bwo.write_off_date) AS date,
+        NULL                    AS contactid,
+        bwo.product_id          AS productid,
+        bwo.quantity,
+        bwo.creationDate,
+        bwo.lastModifiedDate,
+        p.product_name,
+        cat.category_name,
+        p.measurementunit,
+        w.warehouse_id,
+        w.warehousename,
+        6                       AS sort_order
+    FROM batch_write_off bwo
+    JOIN Product p    ON p.productid    = bwo.product_id
+    JOIN Category cat ON cat.categoryid = p.categoryid
+    JOIN Warehouse w  ON w.warehouse_id = bwo.warehouse_id
+    WHERE bwo.is_deleted = 0
 
 ) q
 LEFT JOIN contacts c ON c.contactid = q.contactid;
@@ -498,7 +523,7 @@ select
         p.measurementUnit,
         c.category_name,
         ROUND(SUM(ai1.closingstock),2) as totalQuantityInHand,
-        CASE WHEN ROUND(SUM(ai1.closingstock),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
+        CASE WHEN p.reorderQuantity > 0 AND ROUND(SUM(ai1.closingstock),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
         JSON_ARRAYAGG(JSON_OBJECT(
 			'warehouseName',ai1.warehousename,
             'quantityInHand',ai1.closingstock,
@@ -1174,11 +1199,12 @@ CREATE OR REPLACE VIEW stockInformation as
         p.measurementUnit,
         c.category_name,
         ROUND(SUM(s.quantityInHand),2) as totalQuantityInHand,
-        CASE WHEN ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
+        CASE WHEN p.reorderQuantity > 0 AND ROUND(SUM(s.quantityInHand),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus,
         JSON_ARRAYAGG(JSON_OBJECT(
-			'warehouseName',w.warehouseName,
-            'quantityInHand',s.quantityInHand,
-            'measurementUnit',p.measurementUnit
+			'warehouseId', w.warehouse_id,
+			'warehouseName', w.warehouseName,
+            'quantityInHand', s.quantityInHand,
+            'measurementUnit', p.measurementUnit
             )) as detailedStock
 	FROM Stock s
 	INNER JOIN Product p on p.productId=s.productId
@@ -1333,20 +1359,68 @@ WHERE
 
 
  -- BOQUpload: filter by is_deleted + JOIN columns
- CREATE INDEX idx_boqupload_active
-   ON BOQUpload (is_deleted, buildingTypeId, usageLocationId, locationId, productId);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'BOQUpload'
+   AND index_name = 'idx_boqupload_active';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_boqupload_active
+      ON BOQUpload (is_deleted, buildingTypeId, usageLocationId, locationId, productId)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
  -- outward_inventory: JOIN condition in subquery
- CREATE INDEX idx_outward_inv_join
-   ON outward_inventory (is_deleted, locationId, usageAreaId);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'outward_inventory'
+   AND index_name = 'idx_outward_inv_join';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_outward_inv_join
+      ON outward_inventory (is_deleted, locationId, usageAreaId)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
  -- outwardinventory_entry: JOIN on outwardid
- CREATE INDEX idx_oie_outwardid
-   ON outwardinventory_entry (outwardid);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'outwardinventory_entry'
+   AND index_name = 'idx_oie_outwardid';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_oie_outwardid
+      ON outwardinventory_entry (outwardid)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
  -- inward_outward_entries: JOIN on entryId + productId filter
- CREATE INDEX idx_ioe_entry_product
-   ON inward_outward_entries (entryId, productId);
+ SELECT COUNT(*) INTO @idx_exists
+ FROM information_schema.statistics
+ WHERE table_schema = DATABASE()
+   AND table_name = 'inward_outward_entries'
+   AND index_name = 'idx_ioe_entry_product';
+
+ SET @sql = IF(@idx_exists = 0,
+     'CREATE INDEX idx_ioe_entry_product
+      ON inward_outward_entries (entryId, productId)',
+     'SELECT ''Index already exists''');
+
+ PREPARE stmt FROM @sql;
+ EXECUTE stmt;
+ DEALLOCATE PREPARE stmt;
 
 
 -- =====================================================

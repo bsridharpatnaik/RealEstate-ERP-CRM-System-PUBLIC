@@ -31,6 +31,7 @@ class AutoCompleteWithSearch extends Component {
         defaultValue={this.props.defaultValue}
         // disabled={disabled}
         filterSelectedOptions={true}
+        forcePopupIcon={false}
         renderInput={(params) => (
           <TextField
             {...params}

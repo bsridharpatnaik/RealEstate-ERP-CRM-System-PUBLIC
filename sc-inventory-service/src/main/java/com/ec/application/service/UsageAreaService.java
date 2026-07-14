@@ -43,6 +43,8 @@ public class UsageAreaService {
     public UsageArea createUsageArea(UsageArea payload) throws Exception {
         validatePayload(payload);
         payload.setUsageAreaName(payload.getUsageAreaName().trim());
+        if (payload.getUsageAreaDescription() != null)
+            payload.setUsageAreaDescription(payload.getUsageAreaDescription().trim());
         if (!usageAreaRepo.existsByUsageAreaName(payload.getUsageAreaName())) {
             usageAreaRepo.save(payload);
             return payload;
@@ -69,7 +71,8 @@ public class UsageAreaService {
         if (!usageAreaRepo.existsByUsageAreaName(newUsageArea.getUsageAreaName())
                 && !newUsageArea.getUsageAreaName().equalsIgnoreCase(UsageAreaForUpdate.getUsageAreaName())) {
             UsageAreaForUpdate.setUsageAreaName(newUsageArea.getUsageAreaName());
-            UsageAreaForUpdate.setUsageAreaDescription(newUsageArea.getUsageAreaDescription());
+            UsageAreaForUpdate.setUsageAreaDescription(newUsageArea.getUsageAreaDescription() == null ? ""
+                    : newUsageArea.getUsageAreaDescription().trim());
         } else if (newUsageArea.getUsageAreaName().equalsIgnoreCase(UsageAreaForUpdate.getUsageAreaName())) {
             UsageAreaForUpdate.setUsageAreaDescription(newUsageArea.getUsageAreaDescription() == null ? ""
                     : newUsageArea.getUsageAreaDescription().trim());

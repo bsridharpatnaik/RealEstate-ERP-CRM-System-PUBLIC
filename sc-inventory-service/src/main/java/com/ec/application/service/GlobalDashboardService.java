@@ -67,6 +67,10 @@ public class GlobalDashboardService {
         Map<String, DashboardChartDTO> poStaticDashboards =
                 purchaseOrderService.getCurrentPODashboards();
 
+        // Overdue PO count (distinct POs with at least one line exceeding lead time, not terminal)
+        long overduePOCount = purchaseOrderService.getOverduePOCount();
+        DashboardChartDTO overduePOLinesDTO = new DashboardChartDTO(overduePOCount, Collections.emptyList());
+
         // --------------------------------------------------------------------
         // 3. ASSEMBLE FINAL DASHBOARD RESPONSE
         // --------------------------------------------------------------------
@@ -98,7 +102,8 @@ public class GlobalDashboardService {
 
                 // -------- PO (STATIC / CURRENT STATE) --------
                 poStaticDashboards.get(POStatusConstants.STATUS_NEW),     // PO Zero Inward
-                poStaticDashboards.get(POStatusConstants.STATUS_PARTIAL)  // PO Partial
+                poStaticDashboards.get(POStatusConstants.STATUS_PARTIAL), // PO Partial
+                overduePOLinesDTO
         );
     }
 

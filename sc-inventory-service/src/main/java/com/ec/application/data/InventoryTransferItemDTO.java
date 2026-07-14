@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 public class InventoryTransferItemDTO {
 
@@ -14,5 +16,9 @@ public class InventoryTransferItemDTO {
     private Double quantity;
     private Double sourceClosingStock;
     private Double targetClosingStock;
+
+    // Optional: if user wants to override FIFO batch selection for this item
+    private List<BatchOverrideEntry> overrideBatches;
+    private String overrideComment;
 }
 

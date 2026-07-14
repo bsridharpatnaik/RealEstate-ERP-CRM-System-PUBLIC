@@ -5,7 +5,6 @@ import { Slide } from "@material-ui/core";
 //components
 import List from "./list";
 import Add from "./add";
-import Edit from "./edit";
 import Common from "./../../Shared/CommonIndex";
 //misc
 import { messages } from "./../../messages";
@@ -15,7 +14,6 @@ class Lost extends Common {
   state = {
     add: false,
     list: true,
-    edit: false,
   };
   title = messages.common.lost;
   render() {
@@ -38,10 +36,6 @@ class Lost extends Common {
           <List
             isLoading={(bIsLoading) => this.setState({ isLoading: bIsLoading })}
             setOptions={(options) => (this.dropdowns = options)}
-            edit={(data) => {
-              this.id = data.id;
-              this.setState({ edit: true, list: false });
-            }}
           />
         </Slide>
         <Slide
@@ -55,21 +49,6 @@ class Lost extends Common {
             dropdowns={this.dropdowns}
             back={() => {
               this.setState({ add: false, list: true });
-            }}
-          />
-        </Slide>
-        <Slide
-          direction="left"
-          in={this.state.edit}
-          mountOnEnter
-          unmountOnExit
-          timeout={{ exit: 0 }}
-        >
-          <Edit
-            id={this.id}
-            dropdowns={this.dropdowns}
-            back={() => {
-              this.setState({ edit: false, list: true });
             }}
           />
         </Slide>

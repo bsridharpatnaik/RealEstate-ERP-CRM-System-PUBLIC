@@ -29,6 +29,13 @@ class Add extends AddForm {
             placeholder: messages.common.description,
           })}
         </div>
+        <div class="flex">
+          {this.renderTextField({
+            fieldname: "leadTimeDays",
+            placeholder: "Lead Time (Days)",
+            type: "number",
+          })}
+        </div>
 
           {this.renderFooter()}
         </form>

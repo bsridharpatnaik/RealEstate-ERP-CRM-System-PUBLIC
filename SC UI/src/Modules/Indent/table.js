@@ -4,6 +4,8 @@ import React from "react";
 import { withStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
 import Typography from "@material-ui/core/Typography";
+import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
 //style
 import "./style.scss";
 //misc
@@ -33,8 +35,24 @@ const HtmlTooltip = withStyles((theme) => ({
 }))(Tooltip);
 
 class Table extends CommonTable {
+  state = {
+    ...this.state,
+    expandedRowId: null,
+    deleteConfirmOpen: false,
+  };
+
+  toggleExpand = (id, e) => {
+    e.stopPropagation();
+    this.setState(prev => ({
+      expandedRowId: prev.expandedRowId === id ? null : id,
+    }));
+  };
+
+  isRowExpanded(id) {
+    return this.props.allExpanded || this.state.expandedRowId === id;
+  }
+
   checkDelete(row) {
-    // Add delete constraint logic if needed
     return false;
   }
 
@@ -116,13 +134,7 @@ class Table extends CommonTable {
     );
   }
   renderCell(key, row, index) {
-    if (key === "needByDate") {
-      return (
-        <td data-label="Expected Date">
-          {row["needByDate"] || "-"}
-        </td>
-      );
-    } else if (key === "daysRemaining") {
+    if (key === "daysRemaining") {
       const days = row["daysRemaining"];
       const normalizedStatus = (row["status"] || "").toLowerCase().trim();
       const isTerminal = normalizedStatus === "cancelled" || normalizedStatus === "rejected" || normalizedStatus === "po completed" || normalizedStatus === "closed" || normalizedStatus === "short closed";
@@ -140,9 +152,23 @@ class Table extends CommonTable {
         </td>
       );
     } else if (key === "indentId") {
+      const expanded = this.isRowExpanded(row.indentId);
+      const hasItems = (row.inventoryList || row.inventoryItems || []).length > 0;
       return (
-        <td data-label="Indent. No.">
-          {row["indentId"]}
+        <td data-label="Indent. No." style={{ whiteSpace: 'nowrap' }}>
+          {hasItems && (
+            <IconButton
+              size="small"
+              onClick={(e) => this.toggleExpand(row.indentId, e)}
+              title={expanded ? 'Collapse items' : 'Expand items'}
+              style={{ marginRight: 4 }}
+            >
+              {expanded
+                ? <KeyboardArrowUpIcon fontSize="small" />
+                : <KeyboardArrowDownIcon fontSize="small" />}
+            </IconButton>
+          )}
+          <span style={{ verticalAlign: 'middle' }}>{row["indentId"]}</span>
         </td>
       );
     } else if (key === "projectName") {
@@ -180,9 +206,13 @@ class Table extends CommonTable {
         statusClass = `status-${normalizedStatus.replace(/\s+/g, '-')}`;
       }
       
+      const quoteBadge = this.renderQuoteRequestedBadge(row);
       return (
         <td data-label="Status">
-          <span className={`status-badge ${statusClass}`}>{statusValue}</span>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
+            <span className={`status-badge ${statusClass}`}>{statusValue}</span>
+            {quoteBadge}
+          </div>
         </td>
       );
     } else if (key === "poNumbers") {
@@ -199,80 +229,133 @@ class Table extends CommonTable {
         </td>
       );
     } else if (key === "inventoryCount") {
-      const inventoryList = row.inventoryList || row.inventoryItems || [];
-      const inventoryCount = row.inventoryCount || inventoryList.length || 0;
-      
-      // Check if there's expanded inventory details
-      if (row.inventoryDetails && Array.isArray(row.inventoryDetails)) {
-        return (
-          <td data-label="Inventory Count">
-            {row.inventoryDetails.map((item, idx) => (
-              <div key={idx}>{item.productName} {item.quantity} {item.unit}</div>
-            ))}
-          </td>
-        );
-      }
-      
-      // Render with tooltip if inventory items exist
-      if (inventoryList.length > 0) {
-        const tooltipContent = (
-          <div className="inventory-tooltip-content">
-            <Typography className="inventory-tooltip-title">Inventory Details</Typography>
-            <div className="inventory-tooltip-items">
-              {inventoryList.map((item, idx) => {
-                const productName = item.product?.productName || item.productName || "Unknown";
-                const quantity = item.quantity || 0;
-                const unit = item.measurementUnit || item.unit || "";
-                return (
-                  <div key={idx} className="inventory-tooltip-item">
-                    <span className="inventory-tooltip-name">{productName}</span>
-                    <span className="inventory-tooltip-quantity">{quantity} {unit}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-        
-        return (
-          <td data-label="Inventory Count">
-            <HtmlTooltip title={tooltipContent} placement="top" arrow>
-              <span className="inventory-count-hoverable">{inventoryCount}</span>
-            </HtmlTooltip>
-          </td>
-        );
-      }
-      
-      return <td data-label="Inventory Count">{inventoryCount}</td>;
+      const count = row.inventoryCount || (row.inventoryList || row.inventoryItems || []).length || 0;
+      return (
+        <td data-label="Inventory Count" style={{ textAlign: 'center' }}>
+          <span style={{
+            display: 'inline-block',
+            minWidth: 24,
+            padding: '1px 8px',
+            borderRadius: 12,
+            background: '#e3f2fd',
+            color: '#1565c0',
+            fontWeight: 600,
+            fontSize: 12,
+          }}>{count}</span>
+        </td>
+      );
     } else {
       return super.renderCell(key, row, index);
     }
   }
 
+  // Aggregate "Quote Requested" / "Partial Quote Requested" badge — derived client-side from
+  // each line item's quoteRequestedQcId (set when a Quote Comparison references that line).
+  // Independent of indentStatus, so it shows regardless of NEW/APPROVED/PO progress.
+  renderQuoteRequestedBadge(row) {
+    const items = row.inventoryList || row.inventoryItems || [];
+    const activeItems = items.filter(item => (item.lineItemStatus || "").toUpperCase() !== "CANCELLED");
+    if (activeItems.length === 0) return null;
+    const requestedCount = activeItems.filter(item => !!item.quoteRequestedQcId).length;
+    if (requestedCount === 0) return null;
+    const allRequested = requestedCount === activeItems.length;
+    return (
+      <span
+        className="status-badge status-quote-requested"
+        title={`${requestedCount} of ${activeItems.length} line item(s) referenced by a Quote Comparison`}
+      >
+        {allRequested ? "Quote Requested" : "Partial Quote Requested"}
+      </span>
+    );
+  }
+
+  renderExpansionRow(row, colSpan) {
+    const items = row.inventoryList || row.inventoryItems || [];
+    return (
+      <tr key={`expand-${row.indentId}`} className="indent-expansion-row">
+        <td colSpan={colSpan} style={{ padding: 0, borderTop: '1px solid #e0e0e0' }}>
+          <div style={{ background: '#f9fbff', padding: '10px 24px 14px' }}>
+            {items.length === 0 ? (
+              <span style={{ color: '#888', fontSize: 13 }}>No line items.</span>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #ddd' }}>
+                    <th style={{ textAlign: 'left', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Product</th>
+                    <th style={{ textAlign: 'right', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Qty</th>
+                    <th style={{ textAlign: 'left', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Unit</th>
+                    <th style={{ textAlign: 'left', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Specification</th>
+                    <th style={{ textAlign: 'center', padding: '5px 10px', fontWeight: 600, color: '#555' }}>Line Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, i) => {
+                    const productName = item.product?.productName || item.productName || '—';
+                    const qty = item.quantity != null ? item.quantity : '—';
+                    const unit = item.measurementUnit || item.unit || item.product?.measurementUnit || '';
+                    const spec = item.specification || '';
+                    const lineStatus = item.lineItemStatus || '';
+                    const leadTime = item.leadTimeDays;
+                    return (
+                      <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
+                        <td style={{ padding: '5px 10px' }}>
+                          <span>{productName}</span>
+                          {leadTime != null && (
+                            <span style={{ marginLeft: 8, fontSize: 11, color: '#888' }}>
+                              ⏱ {leadTime}d
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '5px 10px', textAlign: 'right' }}>{qty}</td>
+                        <td style={{ padding: '5px 10px' }}>{unit}</td>
+                        <td style={{ padding: '5px 10px', color: '#666' }}>{spec || '—'}</td>
+                        <td style={{ padding: '5px 10px', textAlign: 'center' }}>
+                          {lineStatus
+                            ? <span className={`status-badge status-${lineStatus.toLowerCase().replace(/\s+/g, '-')}`}>{lineStatus}</span>
+                            : '—'}
+                          {item.quoteRequestedQcId && (
+                            <span className="status-badge status-quote-requested" style={{ marginLeft: 4 }}
+                              title={`Quote requested via ${item.quoteRequestedQcId}`}>
+                              Quote Req.
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
   renderBody() {
     const rows = this.state.rows || [];
     const keys = this.state.keys || [];
+    const colSpan = keys.length + 1;
     if (rows.length === 0) {
       return (
         <tr>
-          <td colSpan={keys.length + 1}>{messages.common.noRecords}</td>
+          <td colSpan={colSpan}>{messages.common.noRecords}</td>
         </tr>
       );
     }
-    return rows.map((row, index) => (
-      <tr
-        key={index}
-        className={index === rows.length - 1 ? "row last clickable-row" : "row clickable-row"}
-        onClick={() => {
-          this.props.showDetail(row);
-        }}
-      >
-        {keys.map((key, index) => {
-          return this.renderCell(key, row, index);
-        })}
-        {this.renderAction(row)}
-      </tr>
-    ));
+    return rows.map((row, index) => {
+      const isExpanded = this.isRowExpanded(row.indentId);
+      return [
+        <tr
+          key={index}
+          className={index === rows.length - 1 ? "row last" : "row"}
+        >
+          {keys.map((key, i) => this.renderCell(key, row, i))}
+          {this.renderAction(row)}
+        </tr>,
+        isExpanded && this.renderExpansionRow(row, colSpan),
+      ];
+    });
   }
 
   render() {

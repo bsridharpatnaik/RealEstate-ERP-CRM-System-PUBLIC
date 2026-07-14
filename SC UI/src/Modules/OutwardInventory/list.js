@@ -3,6 +3,7 @@ import React from "react";
 //Third Party
 import ListCommon from "./../../Shared/List";
 import { withSnackbar } from "notistack";
+import * as XLSX from "xlsx";
 
 //component
 import Table from "./table";
@@ -15,6 +16,7 @@ import Button from "./../../Shared/Button";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
 import { Slide } from "@material-ui/core";
 import Details from "./details";
+import DetailsPopup from "./../../Shared/DetailsPopup";
 import Total from "./../../Shared/TotalSidePanel";
 import { API } from '../../axios';
 
@@ -23,14 +25,17 @@ class List extends ListCommon {
   deleteUrl = apiEndpoints.individualOutwardInventory;
   title = messages.common.outwardInventory;
   filterData = {};
+  searchDebounceTimer = null;
   state = {
     data: [],
-    options: [],
+    globalSearchText: "",
     showDetails: false,
     key: 1,
     showTotal: false,
     pageno: 0,
-    totals: []
+    totals: [],
+    tiles: {},
+    activeTile: null,
   };
   url = apiEndpoints.getOutwardInventory;
   exportUrl = exportURL.getOutwardInventory;
@@ -62,7 +67,97 @@ class List extends ListCommon {
 
   componentDidMount() {
     this.search();
+    this.fetchTiles();
     this.filterRef = React.createRef();
+  }
+
+  fetchTiles = async () => {
+    const response = await API.GET(apiEndpoints.getOutwardInventoryTiles);
+    if (response.success) {
+      this.setState({ tiles: response.data || {} });
+    }
+  };
+
+  fmtDate = (d) => {
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  };
+
+  TILES = [
+    { key: "noBoq", label: "No BOQ", color: "#e67e22", bg: "#fdf2e9", countKey: "noBoqCount", filterAttr: "boqBypassed" },
+    { key: "fifoOverride", label: "FIFO Override", color: "#8e44ad", bg: "#f4ecf7", countKey: "fifoOverrideCount", filterAttr: "fifoOverride" },
+    { key: "reject", label: "Stock Reject", color: "#e74c3c", bg: "#fdedec", countKey: "rejectCount", filterAttr: "showOnlyRejected" },
+    { key: "return", label: "Stock Return", color: "#16a085", bg: "#e8f8f5", countKey: "returnCount", filterAttr: "showOnlyReturned" },
+    { key: "thisWeek", label: "This Week", color: "#2980b9", bg: "#eaf2f8", countKey: "thisWeekCount", dateWindow: "week" },
+    { key: "thisMonth", label: "This Month", color: "#27ae60", bg: "#eafaf1", countKey: "thisMonthCount", dateWindow: "month" },
+  ];
+
+  handleTileClick = (tile) => {
+    const isActive = this.state.activeTile === tile.key;
+
+    // Clear anything a tile might have set, then re-apply only if not toggling off.
+    delete this.filterData.boqBypassed;
+    delete this.filterData.fifoOverride;
+    delete this.filterData.showOnlyRejected;
+    delete this.filterData.showOnlyReturned;
+    if (this.state.activeTile && this.TILES.find((t) => t.key === this.state.activeTile)?.dateWindow) {
+      delete this.filterData.startDate;
+      delete this.filterData.endDate;
+    }
+
+    if (isActive) {
+      this.setState({ activeTile: null }, () => this.search(0));
+      return;
+    }
+
+    if (tile.filterAttr) {
+      this.filterData[tile.filterAttr] = "true";
+    } else if (tile.dateWindow) {
+      const end = new Date();
+      const start = new Date();
+      if (tile.dateWindow === "week") {
+        const day = start.getDay(); // 0=Sun..6=Sat
+        const diffToMonday = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - diffToMonday);
+      } else {
+        start.setDate(1);
+      }
+      start.setHours(0, 0, 0, 0);
+      this.filterData.startDate = this.fmtDate(start);
+      this.filterData.endDate = this.fmtDate(end);
+    }
+    this.setState({ activeTile: tile.key }, () => this.search(0));
+  };
+
+  renderTiles() {
+    const { tiles, activeTile } = this.state;
+    return (
+      <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "12px 0" }}>
+        {this.TILES.map((t) => {
+          const count = tiles[t.countKey] || 0;
+          const isActive = activeTile === t.key;
+          return (
+            <div
+              key={t.key}
+              onClick={() => this.handleTileClick(t)}
+              style={{
+                cursor: "pointer",
+                minWidth: 130,
+                padding: "10px 16px",
+                borderRadius: 8,
+                background: t.bg,
+                border: isActive ? `2px solid ${t.color}` : "2px solid transparent",
+                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 700, color: t.color }}>{count}</div>
+              <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
   replaceSortKey(sortKey) {
     if (sortKey === "warehouse") {
@@ -76,10 +171,21 @@ class List extends ListCommon {
     let params;
     params = {};
     params.filterData = [];
-    if (this.searchValue.length) {
+    const nameFilters = [
+      "productNames",
+      "contractorNames",
+      "warehouseNames",
+      "usageLocation",
+      "usageArea",
+      "categoryNames",
+      "structureTypes",
+      "requestedByNames",
+      "issuedByNames",
+    ];
+    if (this.state.globalSearchText.trim().length) {
       params.filterData.push({
         attrName: "globalSearch",
-        attrValue: this.searchValue.map((v) => v.name),
+        attrValue: [this.state.globalSearchText.trim()],
       });
     }
     if (this.filterData) {
@@ -87,18 +193,9 @@ class List extends ListCommon {
         let value = this.filterData[field];
 
         if (value && value.length) {
-          if (
-            [
-              "productNames",
-              "contractorNames",
-              "warehouseNames",
-              "usageLocation",
-              "usageArea",
-              "categoryNames",
-            ].includes(field)
-          ) {
-            value = value.map((v) => v.name);
-          } else if (["showOnlyRejected", "showOnlyReturned", "startDate", "endDate", "textSearch", "boqBypassed"].includes(field)) {
+          if (nameFilters.includes(field)) {
+            value = value.map((v) => (typeof v === "object" ? v.name : v));
+          } else if (["showOnlyRejected", "showOnlyReturned", "startDate", "endDate", "textSearch", "boqBypassed", "fifoOverride"].includes(field)) {
             value = [value];
           }
           params.filterData.push({
@@ -113,6 +210,18 @@ class List extends ListCommon {
   getExportData(response) {
     return response.data;
   }
+  async exportToCSV() {
+    const response = await this.getExportAPIData();
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage, { variant: "error" });
+      return;
+    }
+    const data = this.getExportData(response);
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Outward Inventory");
+    XLSX.writeFile(wb, this.exportFile + ".xlsx");
+  }
   async search(page = 0, sortkey = null, sortby = null) {
     if (sortkey !== null) this.sortkey = sortkey;
     if (sortby !== null) this.sortby = sortby;
@@ -123,14 +232,11 @@ class List extends ListCommon {
     this.getTotals();
     if (response.success) {
       this.dropdowns = response.data.iiDropdown;
-      const options = [...this.dropdowns.product, ...this.dropdowns.contractor];
       this.props.setOptions(this.dropdowns);
       this.setState({
         data: response.data.outwardInventory.content,
         pages: response.data.outwardInventory.totalPages,
         totalRecords: response.data.outwardInventory.totalElements,
-        options: options,
-        // totals: response.data.totals,
       });
     }
   }
@@ -175,24 +281,31 @@ class List extends ListCommon {
     return (
       <div
         className={
-          this.state.showDetails || this.state.showTotal ? "split" : ""
+          this.state.showTotal ? "split" : ""
         }
       >
         <div className="list-section">
+          {this.renderTiles()}
           <div className="filter-section">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                clearTimeout(this.searchDebounceTimer);
                 this.search(0);
               }}
             >
-              {this.renderAutoComplete(
-                this.state.options,
-                messages.common.searchByName,
-                (option) => {
-                  return option.name;
-                }
-              )}
+              <input
+                className="global-search-input"
+                type="text"
+                placeholder="Search by ID, product, contractor, slip no..."
+                value={this.state.globalSearchText}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  this.setState({ globalSearchText: val });
+                  clearTimeout(this.searchDebounceTimer);
+                  this.searchDebounceTimer = setTimeout(() => this.search(0), 3000);
+                }}
+              />
             </form>
             <div className="top-button-wrapper">
               <Button
@@ -253,24 +366,22 @@ class List extends ListCommon {
           )}
           {this.renderPagination()}
         </div>
-        <Slide
-          direction="right"
-          in={this.state.showDetails}
-          mountOnEnter
-          unmountOnExit
-          timeout={{ exit: 0 }}
+        <DetailsPopup
+          open={this.state.showDetails}
+          onClose={() => this.setState({ showDetails: false, key: this.state.key + 1 })}
         >
-          <Details
-            
-            data={this.state.selectedData}
-            edit={this.props.edit}
-            delete={(row) => this.delete(row)}
-            goToDetails={() => this.goToDetails()}
-            close={() =>
-              this.setState({ showDetails: false, key: this.state.key + 1 })
-            }
-          />
-        </Slide>
+          {this.state.showDetails && (
+            <Details
+              data={this.state.selectedData}
+              edit={this.props.edit}
+              delete={(row) => this.delete(row)}
+              goToDetails={() => this.goToDetails()}
+              close={() =>
+                this.setState({ showDetails: false, key: this.state.key + 1 })
+              }
+            />
+          )}
+        </DetailsPopup>
         <Slide
           direction="right"
           in={this.state.showTotal}

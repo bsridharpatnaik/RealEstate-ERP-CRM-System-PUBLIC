@@ -1,5 +1,6 @@
 package com.ec.application.service;
 
+import com.ec.application.constants.ProjectConstants;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.Filters.IndentInventorySpecification;
 import com.ec.application.Filters.InventoryTransferSpecification;
@@ -10,6 +11,7 @@ import com.ec.application.exception.InsufficientStockException;
 import com.ec.application.mapper.InventoryTransferMapper;
 import com.ec.application.model.*;
 import com.ec.application.multitenant.ThreadLocalStorage;
+import com.ec.application.repository.InventoryBatchRepository;
 import com.ec.application.repository.InventoryTransferRepository;
 import com.ec.application.repository.ProductRepo;
 import com.ec.application.repository.WarehouseRepo;
@@ -45,6 +47,11 @@ public class InventoryTransferService {
     private final WarehouseRepo warehouseRepo;
     private final InventoryTransferMapper inventoryTransferMapper;
     private final PopulateDropdownService populateDropdownService;
+    private final InventoryBatchRepository inventoryBatchRepository;
+    private final BatchTrackingService batchTrackingService;
+    private final StockCommentService stockCommentService;
+    private final ActivityLogService activityLogService;
+    private final UserDetailsService userDetailsService;
 
     @Value("${master.schema}")
     private String masterSchema;
@@ -54,7 +61,6 @@ public class InventoryTransferService {
        ===================================================== */
 
     public InventoryTransferResult createTransfer(CreateTransferDTO dto) throws Exception {
-        replaceTenantNamesForSuncity(dto);
         validateTransferRequest(dto);
         validateDuplicateProducts(dto);
         validateSourceStockAvailability(dto);
@@ -83,34 +89,110 @@ public class InventoryTransferService {
            ===================================================== */
         for (InventoryTransferItem item : transfer.getItems()) {
 
+            // Declare compensation lists outside all try blocks so the catch can always see them,
+            // even when helpers threw mid-loop. Helpers populate these incrementally (not on return)
+            // so partial saves are visible to the compensation path.
+            final List<TransferredBatchData> transferredBatches = new ArrayList<>();
+            final List<Long> createdTargetBatchIds = new ArrayList<>();
+
             try {
                 // DEBIT SOURCE
                 Double sourceClosingStock = withTenant(sourceTenant, () ->
                         stockService.updateStock(item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity(), "outward"));
 
+                // Track whether credit succeeded so we know what to roll back
+                final Double[] targetClosingStockRef = {null};
+
                 try {
                     // CREDIT TARGET
-                    Double targetClosingStock = withTenant(targetTenant, () ->
+                    targetClosingStockRef[0] = withTenant(targetTenant, () ->
                             stockService.updateStock(item.getProductId(), targetWarehouse.getWarehouseId(), item.getQuantity(), "inward"));
 
-                    // SET CLOSING STOCKS ONLY ON FULL SUCCESS
-                    item.setSourceClosingStock(sourceClosingStock);
-                    item.setTargetClosingStock(targetClosingStock);
-                    successfulItems.add(item);
-                    itemResults.add(new TransferItemResult(item.getProductId(), true, "Transfer successful"));
-                } catch (Exception creditEx) {
+                    // BATCH — helpers populate transferredBatches / createdTargetBatchIds
+                    // incrementally so compensation sees partial saves if a helper throws mid-loop.
+                    final InventoryTransferItemDTO dtoItem = dto.getItems().stream()
+                            .filter(d -> d.getProductId().equals(item.getProductId()))
+                            .findFirst().orElse(null);
+                    final Product sourceProduct = productMap.get(item.getProductId());
 
-                    // 3️⃣ COMPENSATE DEBIT
                     withTenant(sourceTenant, () -> {
-                        stockService.updateStock(item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity(), "inward");
+                        deductSourceBatchesForTransfer(
+                                item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity(),
+                                sourceProduct, dtoItem, transferredBatches);
+                        return null;
+                    });
+                    withTenant(targetTenant, () -> {
+                        createTargetBatchesForTransfer(
+                                item.getProductId(), targetWarehouse.getWarehouseId(), transferredBatches,
+                                sourceProduct, createdTargetBatchIds);
                         return null;
                     });
 
-                    itemResults.add(new TransferItemResult(item.getProductId(), false, "Credit failed: " + creditEx.getMessage()));
+                    // SET CLOSING STOCKS ONLY ON FULL SUCCESS
+                    item.setSourceClosingStock(sourceClosingStock);
+                    item.setTargetClosingStock(targetClosingStockRef[0]);
+                    successfulItems.add(item);
+                    itemResults.add(new TransferItemResult(item.getProductId(), true, "Transfer successful"));
+
+                } catch (Exception creditOrBatchEx) {
+                    // COMPENSATE CREDIT if it already went through
+                    if (targetClosingStockRef[0] != null) {
+                        try {
+                            withTenant(targetTenant, () -> {
+                                stockService.updateStock(item.getProductId(), targetWarehouse.getWarehouseId(), item.getQuantity(), "outward");
+                                return null;
+                            });
+                        } catch (Exception reverseEx) {
+                            log.error("Failed to reverse target credit for productId={}: {}", item.getProductId(), reverseEx.getMessage());
+                        }
+                    }
+                    // COMPENSATE DEBIT
+                    try {
+                        withTenant(sourceTenant, () -> {
+                            stockService.updateStock(item.getProductId(), sourceWarehouse.getWarehouseId(), item.getQuantity(), "inward");
+                            return null;
+                        });
+                    } catch (Exception reverseEx) {
+                        log.error("Failed to reverse source debit for productId={}: {}", item.getProductId(), reverseEx.getMessage());
+                    }
+                    // REVERSE SOURCE BATCH DEDUCTIONS — visible even if helper threw mid-loop
+                    if (!transferredBatches.isEmpty()) {
+                        try {
+                            withTenant(sourceTenant, () -> {
+                                for (TransferredBatchData tbd : transferredBatches) {
+                                    inventoryBatchRepository.findById(tbd.batchId).ifPresent(b -> {
+                                        b.setQtyRemaining(b.getQtyRemaining() + tbd.qty);
+                                        inventoryBatchRepository.save(b);
+                                    });
+                                }
+                                return null;
+                            });
+                        } catch (Exception reverseEx) {
+                            log.error("Failed to reverse source batch deductions for productId={}: {}", item.getProductId(), reverseEx.getMessage());
+                        }
+                    }
+                    // SOFT-DELETE PARTIALLY-CREATED TARGET BATCHES
+                    if (!createdTargetBatchIds.isEmpty()) {
+                        try {
+                            withTenant(targetTenant, () -> {
+                                for (Long bid : createdTargetBatchIds) {
+                                    inventoryBatchRepository.findById(bid).ifPresent(b -> {
+                                        b.setDeleted(true);
+                                        b.setQtyRemaining(0.0);
+                                        inventoryBatchRepository.save(b);
+                                    });
+                                }
+                                return null;
+                            });
+                        } catch (Exception reverseEx) {
+                            log.error("Failed to delete created target batches for productId={}: {}", item.getProductId(), reverseEx.getMessage());
+                        }
+                    }
+                    itemResults.add(new TransferItemResult(item.getProductId(), false, resolveFailureMessage(creditOrBatchEx)));
                 }
 
             } catch (Exception debitEx) {
-                itemResults.add(new TransferItemResult(item.getProductId(), false, "Debit failed: " + debitEx.getMessage()));
+                itemResults.add(new TransferItemResult(item.getProductId(), false, "Debit failed: " + resolveFailureMessage(debitEx)));
             }
         }
         /* =====================================================
@@ -129,7 +211,60 @@ public class InventoryTransferService {
             }
         }
         boolean fullySuccessful = itemResults.stream().allMatch(TransferItemResult::isSuccess);
+
+        if (!successfulItems.isEmpty()) {
+            logTransferActivity(transfer, sourceWarehouse, targetWarehouse, successfulItems, sourceTenant);
+        }
+
         return new InventoryTransferResult(transfer.getTransferId(), fullySuccessful, itemResults);
+    }
+
+    private void logTransferActivity(InventoryTransfer transfer, Warehouse sourceWarehouse, Warehouse targetWarehouse,
+                                      List<InventoryTransferItem> successfulItems, String sourceTenant) {
+        // withTenant() leaves ThreadLocal = null in its finally block.
+        // Restore sourceTenant so activityLogService.record() and stockCommentService
+        // both write to the correct tenant schema.
+        ThreadLocalStorage.setTenantName(sourceTenant);
+
+        String user = resolveCurrentUser();
+        boolean involvesDeadStock = ProjectConstants.deadStockWarehouseName.equals(sourceWarehouse.getWarehouseName())
+                || ProjectConstants.deadStockWarehouseName.equals(targetWarehouse.getWarehouseName());
+
+        boolean toDeadStock = ProjectConstants.deadStockWarehouseName.equals(targetWarehouse.getWarehouseName());
+        for (InventoryTransferItem item : successfulItems) {
+            String productName = item.getProductName() != null ? item.getProductName() : "Product";
+            Long productId = item.getProductId();
+
+            try {
+                String desc = com.ec.application.ReusableClasses.ActivityLogDescription.of(
+                        "Transfer #" + transfer.getTransferId() + " — " + user
+                                + " moved " + item.getQuantity() + " units of " + productName
+                                + " from " + sourceWarehouse.getWarehouseName()
+                                + " to " + targetWarehouse.getWarehouseName());
+                activityLogService.record("CREATED", "INVENTORY_TRANSFER",
+                        String.valueOf(transfer.getTransferId()), desc, user);
+            } catch (Exception e) {
+                log.warn("Failed to log activity for transfer item productId={}", productId, e);
+            }
+
+            if (involvesDeadStock) {
+                try {
+                    String commentText = "Transfer #" + transfer.getTransferId() + " — " + user
+                            + " moved " + item.getQuantity() + " units "
+                            + (toDeadStock ? "to Dead Stock Warehouse" : "from Dead Stock Warehouse")
+                            + " on " + new java.text.SimpleDateFormat("dd-MM-yyyy").format(transfer.getTransferDate());
+                    stockCommentService.addSystemComment(productId, productName, commentText, "TRANSFER_AUTO",
+                            transfer.getTransferId());
+                } catch (Exception e) {
+                    log.warn("Failed to create auto stock comment for transfer item productId={}", productId, e);
+                }
+            }
+        }
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     /* =====================================================
@@ -286,9 +421,386 @@ public class InventoryTransferService {
         }
     }
 
-    private void replaceTenantNamesForSuncity(CreateTransferDTO transfer) {
-        transfer.setSourceTenant(transfer.getSourceTenant());
-        transfer.setTargetTenant(transfer.getTargetTenant());
+    /**
+     * Converts a raw exception into a user-facing message. Optimistic-lock failures
+     * on {@code InventoryBatch} (concurrent transfer/outward/write-off touching the
+     * same batch at the same time) surface as a generic Hibernate stack trace by
+     * default — replace with an actionable message instead.
+     */
+    private String resolveFailureMessage(Exception ex) {
+        if (isOptimisticLockFailure(ex)) {
+            return "Batch stock was updated by another transaction at the same time. Please retry the transfer.";
+        }
+        return ex.getMessage();
+    }
+
+    private static final int BATCH_LOCK_MAX_ATTEMPTS = 6;
+
+    private void sleepBackoff(int attempt) {
+        try {
+            Thread.sleep(30L * attempt);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private boolean isOptimisticLockFailure(Exception e) {
+        Throwable t = e;
+        while (t != null) {
+            if (t instanceof org.springframework.orm.ObjectOptimisticLockingFailureException
+                    || t instanceof javax.persistence.OptimisticLockException
+                    || t instanceof org.hibernate.StaleObjectStateException
+                    || t instanceof org.hibernate.StaleStateException) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
+
+    /**
+     * Deducts a fixed {@code qty} from a single override-selected batch, re-fetching and
+     * retrying on optimistic-lock conflict instead of letting a concurrent transfer/outward
+     * on the same batch fail this entire item outright.
+     */
+    private void consumeOverrideBatchWithRetry(
+            Long batchId, double qty, List<TransferredBatchData> out, String productName) {
+        for (int attempt = 1; attempt <= BATCH_LOCK_MAX_ATTEMPTS; attempt++) {
+            InventoryBatch fresh = inventoryBatchRepository.findById(batchId)
+                    .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
+            if (qty > fresh.getQtyRemaining() + 0.001) {
+                throw new IllegalArgumentException(
+                        "Batch #" + batchId + " has only "
+                        + String.format("%.3f", fresh.getQtyRemaining())
+                        + " units remaining — requested " + qty + " for transfer of '" + productName + "'.");
+            }
+            fresh.setQtyRemaining(fresh.getQtyRemaining() - qty);
+            try {
+                inventoryBatchRepository.save(fresh);
+                out.add(new TransferredBatchData(fresh.getBatchId(), fresh.getBrand(), fresh.getLotNumber(),
+                        fresh.getExpiryDate(), fresh.getReceivedDate(), qty));
+                return;
+            } catch (Exception e) {
+                if (!isOptimisticLockFailure(e) || attempt == BATCH_LOCK_MAX_ATTEMPTS) {
+                    throw e;
+                }
+                sleepBackoff(attempt);
+            }
+        }
+    }
+
+    /**
+     * Consumes up to {@code remainingNeeded} from one FIFO/FEFO batch, re-fetching its
+     * freshest {@code qtyRemaining} on every attempt (another concurrent consumer may have
+     * already taken some of it since the ordered batch list was loaded) and retrying on
+     * optimistic-lock conflict. Returns the actual quantity consumed (may be less than
+     * {@code remainingNeeded} if the batch has less available now than originally seen).
+     */
+    private double consumeFifoBatchWithRetry(
+            Long batchId, double remainingNeeded, List<TransferredBatchData> out) {
+        for (int attempt = 1; attempt <= BATCH_LOCK_MAX_ATTEMPTS; attempt++) {
+            InventoryBatch fresh = inventoryBatchRepository.findById(batchId)
+                    .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + batchId));
+            double available = fresh.getQtyRemaining();
+            if (available <= 0.0009) {
+                return 0.0; // drained by a concurrent consumer between list load and now
+            }
+            double consume = Math.min(remainingNeeded, available);
+            fresh.setQtyRemaining(available - consume);
+            try {
+                inventoryBatchRepository.save(fresh);
+                out.add(new TransferredBatchData(fresh.getBatchId(), fresh.getBrand(), fresh.getLotNumber(),
+                        fresh.getExpiryDate(), fresh.getReceivedDate(), consume));
+                return consume;
+            } catch (Exception e) {
+                if (!isOptimisticLockFailure(e) || attempt == BATCH_LOCK_MAX_ATTEMPTS) {
+                    throw e;
+                }
+                sleepBackoff(attempt);
+            }
+        }
+        return 0.0;
+    }
+
+    /* =====================================================
+       BATCH SPLIT HELPERS (#6)
+       ===================================================== */
+
+    /**
+     * Deducts source batches for a transfer item.
+     * Populates {@code out} incrementally — each batch is added immediately after its save —
+     * so the caller's compensation path can reverse partial saves even if this method throws mid-loop.
+     */
+    private void deductSourceBatchesForTransfer(
+            Long productId, Long sourceWarehouseId, Double qtyToTransfer,
+            Product product, InventoryTransferItemDTO dtoItem,
+            List<TransferredBatchData> out) {
+
+        // Untracked-stock guard — runs for BOTH override and FIFO paths.
+        // Must execute before the override early-return so manual batch selection
+        // cannot bypass it when untracked stock exists.
+        if (product != null && product.isBatchTracked()) {
+            List<InventoryBatch> allBatches = product.requiresExpiry()
+                    ? inventoryBatchRepository.findAvailableBatchesFifoOrder(productId, sourceWarehouseId)
+                    : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceived(productId, sourceWarehouseId);
+            double totalBatchQty = allBatches.stream().mapToDouble(InventoryBatch::getQtyRemaining).sum();
+            Double currentStock = stockService.findStockForProductWarehouse(productId, sourceWarehouseId);
+            double originalStock = (currentStock != null ? currentStock : 0.0) + qtyToTransfer;
+            double untrackedStock = originalStock - totalBatchQty;
+            if (untrackedStock > 0.001) {
+                throw new IllegalArgumentException(
+                        "Product '" + product.getProductName() + "' has "
+                        + String.format("%.3f", untrackedStock)
+                        + " units of untracked stock in the source warehouse. "
+                        + "Go to Stock → Batches tab and split existing stock into batches first.");
+            }
+        }
+
+        List<BatchOverrideEntry> overrideBatches = dtoItem != null ? dtoItem.getOverrideBatches() : null;
+
+        if (overrideBatches != null && !overrideBatches.isEmpty()) {
+            // Filter to valid entries only — skip null/zero-qty to prevent sum-check bypass
+            List<BatchOverrideEntry> validEntries = overrideBatches.stream()
+                    .filter(e -> e.getBatchId() != null && e.getQty() != null && e.getQty() > 0)
+                    .collect(Collectors.toList());
+            if (validEntries.isEmpty()) {
+                throw new IllegalArgumentException("No valid batch entries provided for transfer override.");
+            }
+            // Mandatory reason for any manual batch override — same convention as Outward/Lost-Damaged
+            if (dtoItem.getOverrideComment() == null || dtoItem.getOverrideComment().trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Please provide a reason for the manual batch override on product '"
+                        + product.getProductName() + "'.");
+            }
+            // Duplicate batchId check
+            Set<Long> seenBatchIds = new HashSet<>();
+            for (BatchOverrideEntry e : validEntries) {
+                if (!seenBatchIds.add(e.getBatchId())) {
+                    throw new IllegalArgumentException("Duplicate batch ID " + e.getBatchId() + " in transfer override.");
+                }
+            }
+            // PASS 1: validate total + per-batch ownership + availability — NO SAVES YET
+            double totalConsumed = validEntries.stream().mapToDouble(BatchOverrideEntry::getQty).sum();
+            if (Math.abs(totalConsumed - qtyToTransfer) > 0.001) {
+                throw new IllegalArgumentException(
+                        "Override batch total (" + totalConsumed
+                        + ") does not equal transfer quantity (" + qtyToTransfer + ").");
+            }
+            for (BatchOverrideEntry entry : validEntries) {
+                InventoryBatch batch = inventoryBatchRepository.findById(entry.getBatchId())
+                        .orElseThrow(() -> new IllegalArgumentException("Batch not found: " + entry.getBatchId()));
+                // Ownership: product must match
+                if (!batch.getProduct().getProductId().equals(productId)) {
+                    throw new IllegalArgumentException(
+                            "Batch #" + entry.getBatchId() + " belongs to product '"
+                            + batch.getProduct().getProductName() + "', not the transferred product.");
+                }
+                // Ownership: warehouse must match source
+                if (!batch.getWarehouse().getWarehouseId().equals(sourceWarehouseId)) {
+                    throw new IllegalArgumentException(
+                            "Batch #" + entry.getBatchId() + " belongs to warehouse '"
+                            + batch.getWarehouse().getWarehouseName() + "', not the source warehouse.");
+                }
+                if (entry.getQty() > batch.getQtyRemaining() + 0.001) {
+                    throw new IllegalArgumentException(
+                            "Batch #" + entry.getBatchId() + " has only "
+                            + String.format("%.3f", batch.getQtyRemaining())
+                            + " units remaining — requested " + entry.getQty() + " for transfer.");
+                }
+            }
+            // PASS 2: all validations passed — save and populate out incrementally.
+            // Re-fetch + retry on optimistic-lock conflict so a concurrent transfer/outward
+            // touching the same batch doesn't fail this entire item outright.
+            for (BatchOverrideEntry entry : validEntries) {
+                consumeOverrideBatchWithRetry(entry.getBatchId(), entry.getQty(), out, product.getProductName());
+            }
+            return; // override path done
+        }
+
+        // Not batch-tracked — nothing to deduct
+        if (product == null || !product.isBatchTracked()) {
+            return;
+        }
+
+        // FIFO / FEFO path — orderedBatches already fetched by the guard above; re-fetch for clarity
+        boolean useExpiry = product.requiresExpiry();
+        List<InventoryBatch> orderedBatches = useExpiry
+                ? inventoryBatchRepository.findAvailableBatchesFifoOrder(productId, sourceWarehouseId)
+                : inventoryBatchRepository.findAvailableBatchesFifoOrderByReceived(productId, sourceWarehouseId);
+
+        double remaining = qtyToTransfer;
+        for (InventoryBatch batch : orderedBatches) {
+            if (remaining <= 0) break;
+            // Re-fetch + retry on optimistic-lock conflict, recomputing the consumable amount
+            // from the freshest qtyRemaining each attempt (a concurrent consumer may have
+            // already taken some of this batch since orderedBatches was loaded).
+            remaining -= consumeFifoBatchWithRetry(batch.getBatchId(), remaining, out);
+        }
+        if (remaining > 0.001) {
+            throw new IllegalArgumentException(
+                    "Insufficient batch quantity. " + remaining + " units could not be allocated from available batches.");
+        }
+    }
+
+    /**
+     * Creates (or merges into existing) target batches for a transfer.
+     *
+     * Upsert rule: if a non-deleted batch already exists at (product, targetWarehouse)
+     * with the same lot#, brand, expiryDate (day-truncated), and receivedDate (day-truncated),
+     * add qty to it instead of creating a duplicate. This handles repeated dead-stock marking
+     * of the same physical batch, and repeated same-source transfers to the same warehouse.
+     *
+     * Populates {@code createdIds} only for genuinely NEW batches — used by the compensation
+     * path to soft-delete partial creates on rollback.
+     */
+    private void createTargetBatchesForTransfer(
+            Long productId, Long targetWarehouseId, List<TransferredBatchData> transferredBatches,
+            Product product, List<Long> createdIds) {
+
+        if (transferredBatches.isEmpty()) return;
+        Warehouse targetWarehouse = warehouseRepo.findById(targetWarehouseId)
+                .orElseThrow(() -> new IllegalArgumentException("Warehouse not found: " + targetWarehouseId));
+
+        // Load existing batches at target once — used for upsert matching
+        List<InventoryBatch> existingBatches =
+                inventoryBatchRepository.findAllActiveByProductAndWarehouse(productId, targetWarehouseId);
+
+        for (TransferredBatchData td : transferredBatches) {
+            InventoryBatch match = findMatchingBatch(existingBatches, td);
+            if (match != null) {
+                // Upsert: add qty to existing batch instead of creating a duplicate
+                match.setQtyReceived(match.getQtyReceived() + td.qty);
+                match.setQtyRemaining(match.getQtyRemaining() + td.qty);
+                inventoryBatchRepository.save(match);
+                // Do NOT add to createdIds — compensation must not soft-delete a pre-existing batch
+            } else {
+                InventoryBatch targetBatch = new InventoryBatch();
+                targetBatch.setInwardId(0L); // sentinel: transfer-origin batch
+                targetBatch.setProduct(product);
+                targetBatch.setWarehouse(targetWarehouse);
+                targetBatch.setBrand(td.brand);
+                targetBatch.setLotNumber(td.lotNumber);
+                targetBatch.setExpiryDate(td.expiryDate);
+                targetBatch.setReceivedDate(td.receivedDate);
+                targetBatch.setQtyReceived(td.qty);
+                targetBatch.setQtyRemaining(td.qty);
+                InventoryBatch saved = inventoryBatchRepository.save(targetBatch);
+                createdIds.add(saved.getBatchId()); // incremental — visible to compensation even on throw
+                existingBatches.add(saved); // make it visible to subsequent iterations in same call
+            }
+        }
+    }
+
+    /**
+     * Returns an existing batch whose metadata matches the transferred batch data.
+     * All four fields are compared null-safely; dates are truncated to calendar day.
+     */
+    private InventoryBatch findMatchingBatch(List<InventoryBatch> existing, TransferredBatchData td) {
+        for (InventoryBatch b : existing) {
+            if (!nullSafeStringEquals(b.getLotNumber(), td.lotNumber)) continue;
+            if (!nullSafeStringEquals(b.getBrand(), td.brand)) continue;
+            if (!nullSafeDateEquals(b.getExpiryDate(), td.expiryDate)) continue;
+            if (!nullSafeDateEquals(b.getReceivedDate(), td.receivedDate)) continue;
+            return b;
+        }
+        return null;
+    }
+
+    private boolean nullSafeStringEquals(String a, String b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return a.equals(b);
+    }
+
+    private boolean nullSafeDateEquals(Date a, Date b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+        return truncateToDay(a).equals(truncateToDay(b));
+    }
+
+    private Date truncateToDay(Date d) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(d);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    private static class TransferredBatchData {
+        final Long batchId;
+        final String brand;
+        final String lotNumber;
+        final Date expiryDate;
+        final Date receivedDate;
+        final double qty;
+
+        TransferredBatchData(Long batchId, String brand, String lotNumber,
+                             Date expiryDate, Date receivedDate, double qty) {
+            this.batchId = batchId;
+            this.brand = brand;
+            this.lotNumber = lotNumber;
+            this.expiryDate = expiryDate;
+            this.receivedDate = receivedDate;
+            this.qty = qty;
+        }
+    }
+
+    /**
+     * Preview which batches will be deducted from source for a transfer item.
+     * Mirrors deductSourceBatchesForTransfer but read-only.
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> previewTransferBatches(
+            String sourceTenant, Long productId, Long sourceWarehouseId, Double qty,
+            List<BatchOverrideEntry> overrideBatches) throws Exception {
+
+        // Fetch product from master schema before switching tenant — avoids connection reuse issue
+        // with AbstractRoutingDataSource (connection bound at masterschema would be reused for batch query)
+        com.ec.application.model.Product product;
+        try {
+            ThreadLocalStorage.setTenantName(masterSchema);
+            product = productRepo.findById(productId).orElse(null);
+        } finally {
+            ThreadLocalStorage.setTenantName(null);
+        }
+        final boolean useExpiry = product != null && product.requiresExpiry();
+
+        return withTenant(sourceTenant, () -> {
+            List<InventoryBatch> batches;
+            if (overrideBatches != null && !overrideBatches.isEmpty()) {
+                List<Long> ids = overrideBatches.stream()
+                        .filter(e -> e.getBatchId() != null)
+                        .map(BatchOverrideEntry::getBatchId)
+                        .collect(java.util.stream.Collectors.toList());
+                batches = batchTrackingService.fetchBatchesByIdsNewTx(ids);
+            } else {
+                batches = batchTrackingService.fetchAvailableBatchesNewTx(productId, sourceWarehouseId, useExpiry);
+            }
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            double remaining = qty;
+            for (InventoryBatch b : batches) {
+                if (remaining <= 0) break;
+                double consume = (overrideBatches != null && !overrideBatches.isEmpty())
+                        ? overrideBatches.stream()
+                                .filter(e -> e.getBatchId().equals(b.getBatchId()))
+                                .mapToDouble(e -> e.getQty() != null ? e.getQty() : 0).sum()
+                        : Math.min(remaining, b.getQtyRemaining());
+                Map<String, Object> item = new java.util.LinkedHashMap<>();
+                item.put("batchId", b.getBatchId());
+                item.put("brand", b.getBrand());
+                item.put("lotNumber", b.getLotNumber());
+                item.put("expiryDate", b.getExpiryDate());
+                item.put("receivedDate", b.getReceivedDate());
+                item.put("qtyAvailable", b.getQtyRemaining());
+                item.put("qtyToTransfer", consume);
+                result.add(item);
+                remaining -= consume;
+            }
+            return result;
+        });
     }
 
     /* =====================================================

@@ -15,7 +15,7 @@ public class StockSyncJob {
 
     Logger log = LoggerFactory.getLogger(StockSyncJob.class);
 
-    @Scheduled(cron = "0 0 * * * *") // every 1 hour
+    @Scheduled(cron = "0 15 * * * *") // every hour at :15
     public void run() {
         log.info("DeadStock global sync job started");
         deadStockSyncService.syncAllTenants();

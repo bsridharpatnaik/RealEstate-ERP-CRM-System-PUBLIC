@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SingleStockInformationDTO {
+    Long warehouseId;
     String warehouseName;
     Double quantityInHand;
     String measurementUnit;

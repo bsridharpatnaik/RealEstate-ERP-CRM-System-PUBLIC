@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.ec.application.ReusableClasses.IdNameProjections;
 import com.ec.application.ReusableClasses.LocationWithTypeProjection;
+import com.ec.application.ReusableClasses.ProductWithCategoryProjection;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.Data;
@@ -28,6 +29,11 @@ public class NameAndProjectionDataForDropDown {
     List<IdNameDTO> stalebuckets;
     List<IdNameProjections> buildingtype;
     List<LocationWithTypeProjection> usagelocationWithType;
+    List<ProductWithCategoryProjection> productWithCategory;
     Boolean boqEnforcementBlock;
+    Boolean boqBlockWhenMissing;
+    List<IdNameDTO> requestedByOptions;
+    List<IdNameDTO> issuedByOptions;
+    List<IdNameDTO> requiredByOptions;
 }
 

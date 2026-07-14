@@ -21,6 +21,7 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.lang.NonNull;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
@@ -77,6 +78,17 @@ public class LostDamagedInventory extends ReusableFields
 
 	@Column(name = "entry_type", nullable = false)
 	private String entryType = "LOST_DAMAGED";
+
+	/**
+	 * For LOST_DAMAGED: the specific batch the loss was deducted from.
+	 * For EXCESS_FOUND: the new batch that was created for this entry.
+	 * Nullable — null means product is not batch-tracked or legacy record.
+	 */
+	@ManyToOne(fetch = FetchType.EAGER)
+	@JoinColumn(name = "batch_id", nullable = true)
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+	private InventoryBatch batch;
 
 	public String getEntryType()
 	{
@@ -187,4 +199,25 @@ public class LostDamagedInventory extends ReusableFields
 	{
 		this.locationOfTheft = locationOfTheft;
 	}
+
+	public InventoryBatch getBatch()
+	{
+		return batch;
+	}
+
+	public void setBatch(InventoryBatch batch)
+	{
+		this.batch = batch;
+	}
+
+	/**
+	 * JSON array of [{batchId, qty}] entries for multi-batch operations.
+	 * LOST_DAMAGED: batches drained. EXCESS_FOUND (add to existing): batches filled.
+	 * Null for single-batch and non-batch-tracked records.
+	 */
+	@Column(name = "batch_entries_json", columnDefinition = "TEXT")
+	private String batchEntriesJson;
+
+	public String getBatchEntriesJson() { return batchEntriesJson; }
+	public void setBatchEntriesJson(String batchEntriesJson) { this.batchEntriesJson = batchEntriesJson; }
 }

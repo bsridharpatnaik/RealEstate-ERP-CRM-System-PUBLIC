@@ -22,7 +22,17 @@ class Table extends CommonTable {
     if (key === "contractor") {
       return <td data-label={key}>{`${row["contractor"]["name"]}`}</td>;
     } else if (key === "warehouse") {
-      return <td data-label={key}>{`${row["warehouse"]["warehouseName"]}`}</td>;
+      // Each line carries its own warehouse — show it directly, or "Multiple (n)" when
+      // lines disagree. No header-level warehouse exists.
+      const distinctNames = Array.from(new Set(
+        (row.inwardOutwardList || [])
+          .map((line) => line.warehouse && line.warehouse.warehouseName)
+          .filter(Boolean)
+      ));
+      const label = distinctNames.length > 1
+        ? `Multiple (${distinctNames.length})`
+        : (distinctNames[0] || "—");
+      return <td data-label={key}>{label}</td>;
     } else if (key === "inventoryCount") {
       return <td data-label={key}>{`${row["inwardOutwardList"].length}`}</td>;
     } else if (key === "usageLocation") {
@@ -31,11 +41,13 @@ class Table extends CommonTable {
       return <td data-label={messages.common.finalLocation}>{`${row["usageArea"]["usageAreaName"]}`}</td>;
     } else if (key === "outwardid") {
       const noBOQ = row.hasBOQ !== true;
+      const hasFifoOverride = row.hasFifoOverride === true;
       return (
         <td data-label='ID'>
           <Button
             color="primary"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               this.hideedit = true;
               this.hidedelete = true;
               this.props.showDetail(row);
@@ -50,6 +62,11 @@ class Table extends CommonTable {
           {noBOQ && (
             <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
               <WarningRoundedIcon style={{ color: '#e65100', fontSize: '18px', verticalAlign: 'middle', marginLeft: '6px', cursor: 'default' }} />
+            </Tooltip>
+          )}
+          {hasFifoOverride && (
+            <Tooltip title="FIFO Override — batch selection was manually overridden" arrow>
+              <WarningRoundedIcon style={{ color: '#1565c0', fontSize: '18px', verticalAlign: 'middle', marginLeft: '4px', cursor: 'default' }} />
             </Tooltip>
           )}
         </td>

@@ -14,9 +14,11 @@ public class PreviousPurchaseRateDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date poDate;
     private String supplierName;
+    private Long supplierId;
     private Double quantity;
     private Double rate;
     private Double discountPercent;
     private Double gstPercent;
     private Double netRate;
+    private Double onTimeRate;
 }

@@ -15,6 +15,7 @@ public class StockSummaryDTO {
     private Long productId;
     private String productName;
     private String productCode;   // ✅ NEW
+    private String categoryName;
 
     private Long warehouseId;
     private String warehouseName;

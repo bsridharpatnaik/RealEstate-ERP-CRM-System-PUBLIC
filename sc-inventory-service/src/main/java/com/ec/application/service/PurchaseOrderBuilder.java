@@ -40,6 +40,7 @@ public class PurchaseOrderBuilder {
         po.setFreightCharges(request.getFreightCharges());
         po.setFreightGstPercent(request.getFreightGstPercent());
         po.setTotalFreightCharges(request.getTotalFreightCharges());
+        po.setPoDiscount(request.getPoDiscount());
         po.setStatus(POStatusConstants.STATUS_NEW);
         po.setLastStatusUpdatedAt(new Date());
         po.setSubject(request.getSubject());
@@ -63,7 +64,7 @@ public class PurchaseOrderBuilder {
         return po;
     }
 
-    private PurchaseOrderLine buildPoLine(PurchaseOrder po, CreatePoLineRequest itemReq) throws Exception {
+    public PurchaseOrderLine buildPoLine(PurchaseOrder po, CreatePoLineRequest itemReq) throws Exception {
         PurchaseOrderLine line = new PurchaseOrderLine();
         line.setPurchaseOrder(po);
         line.setBrand(itemReq.getBrand());
@@ -76,6 +77,7 @@ public class PurchaseOrderBuilder {
         line.setSpecification(itemReq.getSpecification());
         line.setQuantity(itemReq.getQuantity());
         line.setDiameter(itemReq.getDiameter());
+        line.setSize(itemReq.getSize());
         line.setTotalAmount(itemReq.getTotalAmount());
         line.setTolerancePercent(itemReq.getTolerancePercent() != null ? itemReq.getTolerancePercent() : 0.0);
         line.setSampleImageFileId(itemReq.getSampleImageFileId());

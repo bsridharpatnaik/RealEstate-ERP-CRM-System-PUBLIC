@@ -58,12 +58,36 @@ class Table extends CommonTable {
         </td>
       );
 
+    } else if (key === "missingChallanBillFlag") {
+      const missing = (!row.challanNo || !row.challanNo.trim()) && (!row.billNo || !row.billNo.trim());
+      if (!missing) return <td data-label="Doc Status"></td>;
+      return (
+        <td data-label="Doc Status">
+          <span
+            title={row.noChallanBillReason || ''}
+            style={{
+              display: 'inline-block',
+              padding: '3px 10px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#b71c1c',
+              backgroundColor: '#ffebee',
+              border: '1px solid #b71c1c',
+              whiteSpace: 'nowrap',
+              cursor: row.noChallanBillReason ? 'help' : 'default',
+            }}>
+            No Challan/Bill
+          </span>
+        </td>
+      );
     } else if (key === "inwardId") {
       return (
         <td data-label={messages.common.id}>
           <Button
             color="primary"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               this.hideedit = true;
               this.hidedelete = true;
               this.props.showDetail(row);
@@ -79,6 +103,27 @@ class Table extends CommonTable {
           >
             {`${row["inwardId"]}`}
           </Button>
+        </td>
+      );
+    } else if (key === "purchaseOrderNo") {
+      const val = row["purchaseOrderNo"];
+      if (!val) return <td data-label="PO No">—</td>;
+      const pos = String(val).split(",").map(s => s.trim()).filter(Boolean);
+      return (
+        <td data-label="PO No">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {pos.map((po, i) => (
+              <span key={i} style={{
+                display: 'inline-block',
+                padding: '2px 10px',
+                background: '#e3f0ff',
+                color: '#1565c0',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}>{po}</span>
+            ))}
+          </div>
         </td>
       );
     } else {

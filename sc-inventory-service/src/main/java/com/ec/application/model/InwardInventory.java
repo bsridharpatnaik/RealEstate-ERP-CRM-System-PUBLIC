@@ -75,6 +75,8 @@ public class InwardInventory extends ReusableFields implements Cloneable {
     private String ourSlipNo;
     private String billNo;
     private String challanNo;
+    @Column(length = 500)
+    private String noChallanBillReason;
 
     /* =========================================================
        Reference Dates

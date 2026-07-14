@@ -34,6 +34,7 @@ public class InwardFromPODTO {
     private String ourSlipNo;
     private String billNo;
     private String challanNo;
+    private String noChallanBillReason;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @JsonDeserialize(using = DateDeserializers.DateDeserializer.class)

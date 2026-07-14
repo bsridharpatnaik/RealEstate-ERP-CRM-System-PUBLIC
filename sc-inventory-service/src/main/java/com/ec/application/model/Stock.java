@@ -54,6 +54,24 @@ public class Stock extends ReusableFields {
     @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
     Double quantityInHand;
 
+    /**
+     * Optimistic-lock version column. Prevents lost-update races when two concurrent
+     * stock-mutating operations (inward/outward/transfer/etc.) on the same product+warehouse
+     * read-modify-write quantityInHand at the same time. Additive column — self-applies via
+     * Hibernate hbm2ddl.auto=update on next backend startup.
+     */
+    @javax.persistence.Version
+    @javax.persistence.Column(name = "version", nullable = false)
+    private Long version = 0L;
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
     public Stock(@NonNull Product product, @NonNull Warehouse warehouse, @NonNull Double quantityInHand) {
         super();
         this.product = product;

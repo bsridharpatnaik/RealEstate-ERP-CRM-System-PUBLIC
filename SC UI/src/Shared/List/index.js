@@ -14,10 +14,31 @@ const height = 35;
 
 class ListCommon extends Component {
   searchValue = [];
+  pageSize = 12;
   constructor(props) {
     super(props);
     this.isAdmin = isAdmin();
     this.inputRef = React.createRef();
+  }
+  renderPageSizeSelector() {
+    const options = [10, 20, 50, 100];
+    return (
+      <div className="page-size-selector">
+        <span>Show:</span>
+        <select
+          value={this.pageSize}
+          onChange={(e) => {
+            this.pageSize = Number(e.target.value);
+            this.forceUpdate();
+            this.search(0);
+          }}
+        >
+          {options.map((n) => (
+            <option key={n} value={n}>{n}</option>
+          ))}
+        </select>
+      </div>
+    );
   }
   renderPagination() {
     return (
@@ -30,6 +51,7 @@ class ListCommon extends Component {
           <div className="totalRecords"></div>
         )}
         <div className="pagination">
+          {this.renderPageSizeSelector()}
           <form
             className="go-to-form"
             onSubmit={(e) => {
@@ -73,7 +95,9 @@ class ListCommon extends Component {
   async getData(page, params) {
     console.log('params at getData: ',params);
     this.page = page;
-    this.inputRef.current.value = page + 1;
+    if (this.inputRef && this.inputRef.current) {
+      this.inputRef.current.value = page + 1;
+    }
     this.setState({ isLoading: true });
     if (this.props.isLoading) {
       this.props.isLoading(true);
@@ -86,8 +110,9 @@ class ListCommon extends Component {
         sortParam += "," + this.sortby;
       }
     }
+    const baseUrl = this.url.replace(/([?&])size=\d+/, `$1size=${this.pageSize}`);
     const response = await API.POST(
-      this.url + "&page=" + page + sortParam,
+      baseUrl + "&page=" + page + sortParam,
       params
     );
 

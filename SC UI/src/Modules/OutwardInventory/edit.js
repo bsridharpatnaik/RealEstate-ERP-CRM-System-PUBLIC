@@ -32,6 +32,16 @@ class Edit extends EditForm {
     boqViolationDialog: { open: false, violations: [] },
     selectedStructureTypeId: "ALL",
     filteredStructures: [],
+    // Batch re-allocation modal — shown when an override outward's qty is changed
+    batchReassignModal: {
+      open: false,
+      productKey: null,
+      productId: null,
+      productName: '',
+      newQty: 0,
+      entries: [],          // [{batchId, label, consumed, reassignQty:''}]
+      overrideComment: '',
+    },
   };
   key = 1;
 
@@ -53,8 +63,9 @@ class Edit extends EditForm {
       this.formData.usageLocationId = data.usageLocation.locationId;
       this.formData.usageAreaId = data.usageArea.usageAreaId;
       this.formData.contractorId = data.contractor.contactId;
-      this.formData.warehouseId = data.warehouse.warehouseId;
       this.formData.slipNo = data.slipNo;
+      this.formData.requestedBy = data.requestedBy;
+      this.formData.issuedBy = data.issuedBy;
       this.formData.additionalInfo = data.additionalInfo;
       this.formData.date = data.date;
       this.formData.fileInformations = data.fileInformations;
@@ -71,17 +82,41 @@ class Edit extends EditForm {
       this.formData.structureTypeId = structureTypeId;
 
       const currentStock = {};
+      // Keyed by (productId, warehouseId) — the same product can appear on two lines if
+      // it was originally outwarded from two different warehouses in this transaction.
+      this.originalQtyMap = {};   // track original qty per line for override preservation
       for (let i = 0; i < data.inwardOutwardList.length; i++) {
         const item = data.inwardOutwardList[i];
         const pid = item.product.productId;
-        p[this.key++] = {
+        const whId = item.warehouse.warehouseId;
+        const rowKey = this.key++;
+        p[rowKey] = {
           quantity: item.quantity,
           productId: pid,
+          warehouseId: whId,
+          warehouseName: item.warehouse.warehouseName,
         };
-        currentStock[pid] = item.closingStock;
+        currentStock[rowKey] = item.closingStock;
+        this.originalQtyMap[this.lineKey(pid, whId)] = item.quantity;
         this.getBoqQuantity(pid);
       }
       this.oldStock = currentStock;
+
+      // Load batch consumption data so overrides can be preserved when qty is unchanged.
+      // Keyed by (productId, warehouseId) for the same reason as originalQtyMap above.
+      // Awaited BEFORE isLoaded is set — otherwise the form renders (and Save becomes
+      // clickable) before this data exists, and an override edit silently bypasses the
+      // re-allocation modal because hasOverride/needsRealloc read an empty map.
+      this.batchConsumptionData = {};
+      const bcResp = await API.GET(apiEndpoints.getOutwardBatchConsumptions(this.props.id));
+      if (bcResp.success) {
+        (bcResp.data || []).forEach(c => {
+          const key = this.lineKey(c.productId, c.warehouseId);
+          if (!this.batchConsumptionData[key]) this.batchConsumptionData[key] = [];
+          this.batchConsumptionData[key].push(c);
+        });
+      }
+
       this.setState({
         isLoaded: true,
         noproduct: { ...p },
@@ -91,90 +126,114 @@ class Edit extends EditForm {
       });
     }
   }
-  renderProduct(key) {
-    const currentProductId = this.state.noproduct?.[key]?.productId;
-    const selectedProducts = Object.keys(this.state.noproduct).map(index => this?.state?.noproduct?.[index]?.productId);
-    const remainingProducts = (this.props.dropdowns?.product??[]).filter(item => (!selectedProducts.includes(item.id) || currentProductId === item.id));
-    return (
-      <div className="flex" key={key}>
-        {this.renderAutoComplete({
-          fieldname: "productId",
-          placeholder: messages.common.inventory,
-          options: remainingProducts,
-          disableClearable: true,
-          required: true,
-          defaultKey: "productId",
-          data: this.state.noproduct[key],
-          skipAdd: true,
-          disabled: true,
-          getOption: (option) => {
-            return option["name"];
-          },
-          onChange: (e, value) => {
-            const p = this.state.noproduct;
-            p[key].productId = value.id || "";
-            if (value) {
-              this.getCurrentStock(key);
-              this.getBoqQuantity(key);
-            }
-          },
-        })}
-        {this.renderTextField({
-          fieldname: "measurementUnit",
-          placeholder: "Measurement Unit",
-          disabled: true,
-          value: this.props.units[this.state.noproduct[key].productId],
-        })}
-        {this.renderTextField({
-          fieldname: "quantity",
-          placeholder: "Quantity",
-          type: "number",
-          required: true,
-          defaultKey: "quantity",
-          data: this.state.noproduct[key],
-          skipAdd: true,
-          validation: "nonegative",
-          onChange: (value) => {
-            const p = this.state.noproduct;
-            p[key].quantity = value;
-            this.getCurrentStock(key);
-          },
-        })}
 
-        {this.renderTextField({
-          fieldname: "ClosingStock",
-          placeholder: "Closing Stock",
-          type: "number",
-          disabled: true,
-          data: this.state.noproduct[key],
-          value: this.state.currentStock[this.state.noproduct[key].productId],
-        })}
-        {this.renderTextField({
-          fieldname: "boq",
-          placeholder: "BOQ Remaining",
-          disabled: true,
-          data: this.state.noproduct[key],
-          value: this.state.boqQuantity[this.state.noproduct[key].productId],
-        })}
-        <IconButton
-          aria-label="back"
-          onClick={() => {
-            const p = this.state.noproduct;
-            delete p[key];
-            this.setState({ noproduct: { ...p } });
-          }}
-          disabled={true}
-          className="back-icon"
-        >
-          <DeleteIcon />
-        </IconButton>
+  lineKey(productId, warehouseId) {
+    return `${productId}_${warehouseId}`;
+  }
+  renderProduct(key) {
+    // Product list isn't editable here (field is disabled below), but the same product
+    // can legitimately appear on two rows if the original outward drew it from two
+    // different warehouses — so no cross-row exclusion is needed.
+    const remainingProducts = this.props.dropdowns?.product ?? [];
+    const productId = this.state.noproduct[key].productId;
+    const warehouseName = this.state.noproduct[key].warehouseName;
+    const unit = this.props.units[productId] || '—';
+    // Stock keyed per row (not per product) — the same product can be on two rows
+    // with two different warehouses and two different stock levels.
+    const closingStock = productId ? (this.state.currentStock[key] ?? '—') : '—';
+    const boqRemaining = productId ? (this.state.boqQuantity[productId] ?? '—') : '—';
+
+    return (
+      <div key={key} style={{
+        border: '1px solid #dce3ec', borderRadius: '8px', marginBottom: '12px',
+        overflow: 'hidden', backgroundColor: '#fff',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      }}>
+        {/* Card header */}
+        <div style={{
+          background: '#f5f7fa', borderBottom: '1px solid #dce3ec',
+          padding: '4px 8px 4px 14px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          minHeight: '32px',
+        }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Product
+          </span>
+          {/* Delete disabled in edit mode */}
+          <IconButton
+            size="small"
+            disabled
+            style={{ color: '#ccc' }}
+            title="Products cannot be removed in edit mode"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </div>
+
+        <div style={{ padding: '10px 12px 4px' }}>
+          {/* Row 1: Product (disabled) + Quantity */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <div style={{ flex: 3 }}>
+              {this.renderAutoComplete({
+                fieldname: "productId",
+                placeholder: messages.common.inventory,
+                options: remainingProducts,
+                disableClearable: true,
+                required: true,
+                defaultKey: "productId",
+                data: this.state.noproduct[key],
+                skipAdd: true,
+                disabled: true,
+                getOption: (option) => option["name"],
+                onChange: (e, value) => {
+                  const p = this.state.noproduct;
+                  p[key].productId = value.id || "";
+                  if (value) {
+                    this.getCurrentStock(key);
+                    this.getBoqQuantity(key);
+                  }
+                },
+              })}
+            </div>
+            <div style={{ flex: 1 }}>
+              {this.renderTextField({
+                fieldname: "quantity",
+                placeholder: "Quantity",
+                type: "number",
+                required: true,
+                defaultKey: "quantity",
+                data: this.state.noproduct[key],
+                skipAdd: true,
+                validation: "nonegative",
+                disabled: false,
+                onChange: (value) => {
+                  const p = this.state.noproduct;
+                  p[key].quantity = value;
+                  this.getCurrentStock(key);
+                },
+              })}
+            </div>
+          </div>
+
+          {/* Row 2: read-only info strip */}
+          <div style={{
+            display: 'flex', gap: 24, padding: '5px 10px',
+            background: '#f5f7fa', borderRadius: 4, fontSize: 12,
+            color: '#555', marginBottom: 6, marginTop: 2,
+          }}>
+            <span><span style={{ color: '#999' }}>Warehouse:</span> <strong>{warehouseName || '—'}</strong></span>
+            <span><span style={{ color: '#999' }}>Unit:</span> <strong>{unit}</strong></span>
+            <span><span style={{ color: '#999' }}>Closing Stock:</span> <strong>{closingStock}</strong></span>
+            <span><span style={{ color: '#999' }}>BOQ Remaining:</span> <strong>{boqRemaining}</strong></span>
+          </div>
+        </div>
       </div>
     );
   }
   async getCurrentStock(index) {
-    const warehouseId = this.formData.warehouseId;
+    const warehouseId = this.state.noproduct[index].warehouseId;
     const productId = this.state.noproduct[index].productId;
-    if (!productId) {
+    if (!productId || !warehouseId) {
       return;
     }
     const response = await API.GET(
@@ -185,12 +244,9 @@ class Edit extends EditForm {
         warehouseId
     );
     if (response.success) {
+      // Keyed per row, not per product — see renderProduct() for why.
       const currentStock = this.state.currentStock;
-      const productId = this.state.noproduct[index].productId;
-      currentStock[productId] =
-        Number(response.data) -
-        Number(this.state.noproduct[index].quantity) +
-        (this.oldStock[productId] || 0);
+      currentStock[index] = Number(response.data);
       this.setState({ currentStock: { ...currentStock } });
     }
   }
@@ -211,7 +267,8 @@ class Edit extends EditForm {
           finalLocationId
       );
       const boqQuantity = this.state.boqQuantity;
-      let value = 0;
+      // null = no BOQ configured ("NA" from backend) — distinct from 0 (fully consumed)
+      let value = null;
       if (boqResponse.success && boqResponse.data != null && boqResponse.data !== "" && String(boqResponse.data).toUpperCase() !== "NA") {
         const num = Number(boqResponse.data);
         value = Number.isFinite(num) ? Math.round(num * 100) / 100 : 0;
@@ -245,7 +302,69 @@ class Edit extends EditForm {
 
     const params = this.formData;
 
-    params.productWithQuantities = Object.values(this.state.noproduct);
+    // Batch override handling for edit — keyed by (productId, warehouseId) since the
+    // same product can be on two lines with two different warehouses.
+    params.productWithQuantities = Object.values(this.state.noproduct).map(p => {
+      const result = { ...p };
+      const lineKey = this.lineKey(p.productId, p.warehouseId);
+      const originalQty = (this.originalQtyMap || {})[lineKey];
+      const consumptions = (this.batchConsumptionData || {})[lineKey] || [];
+      const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
+      const hasOverride = overriddenConsumptions.length > 0;
+      const qtyChanged = originalQty != null && Math.abs(p.quantity - originalQty) > 0.001;
+
+      if (!hasOverride) {
+        // No override — FIFO re-applies automatically. Safe: user never chose specific batches.
+        return result;
+      }
+
+      if (!qtyChanged) {
+        // Qty unchanged — re-send same override batches to preserve them.
+        result.overrideBatches = consumptions.map(c => ({
+          batchId: c.batch ? c.batch.batchId : c.batchId,
+          qty: c.qtyConsumed,
+        }));
+        result.overrideComment = consumptions.find(c => c.overrideComment)?.overrideComment || 'Override preserved';
+        return result;
+      }
+
+      // Qty changed with override.
+      const isSingleBatchOverride = consumptions.length === 1 && overriddenConsumptions.length === 1;
+      if (isSingleBatchOverride) {
+        // Single batch — auto-adjust: same batch, new qty. Unambiguous.
+        const c = overriddenConsumptions[0];
+        const batchId = c.batch ? c.batch.batchId : c.batchId;
+        result.overrideBatches = [{ batchId, qty: parseFloat(p.quantity) }];
+        result.overrideComment = c.overrideComment || 'Qty adjusted';
+        return result;
+      }
+
+      // Multi-batch override + qty changed: user explicitly chose batches — NEVER silently reassign.
+      // If user has already confirmed re-allocation via the modal, overrideBatches is set on p.
+      // If not, we need to open the modal — handled below before API call.
+      return result;
+    });
+
+    // Check if any product with multi-batch override + qty change still needs re-allocation
+    const needsRealloc = Object.keys(this.state.noproduct).find(key => {
+      const p = this.state.noproduct[key];
+      const lineKey = this.lineKey(p.productId, p.warehouseId);
+      const originalQty = (this.originalQtyMap || {})[lineKey];
+      const consumptions = (this.batchConsumptionData || {})[lineKey] || [];
+      const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
+      const hasMultiOverride = overriddenConsumptions.length > 1 || (consumptions.length > 1 && overriddenConsumptions.length > 0);
+      const qtyChanged = originalQty != null && Math.abs(p.quantity - originalQty) > 0.001;
+      const alreadySet = p.overrideBatches && p.overrideBatches.length > 0;
+      return hasMultiOverride && qtyChanged && !alreadySet;
+    });
+
+    if (needsRealloc) {
+      // Open re-allocation modal for this product before proceeding with save
+      this.openBatchReassignModal(needsRealloc);
+      this.setState({ isUpdating: false });
+      return;
+    }
+
     const response = await API.PUT(this.updateUrl, params);
     this.setState({ isUpdating: false });
 
@@ -261,26 +380,111 @@ class Edit extends EditForm {
       }
     }
   }
-  async updateStockInfo(id) {
-    const params = {};
-    params.warehouseId = id;
-    params.productIds = Object.values(this.state.noproduct).map(
-      (p) => p.productId
-    );
-    const response = await API.POST(apiEndpoints.getMultiStock, params);
-    if (response.success) {
-      const data = response.data;
-      const currentStock = {};
-      const products = Object.values(this.state.noproduct);
-      data.forEach((element) => {
-        const productId = element.productId;
-        let product = products.filter((p) => p.productId === productId);
-        product = product[0];
-        currentStock[productId] = element.stock - Number(product.quantity);
-      });
-      this.setState({ currentStock: currentStock });
+  async openBatchReassignModal(productKey) {
+    const p = this.state.noproduct[productKey];
+    const consumptions = (this.batchConsumptionData || {})[this.lineKey(p.productId, p.warehouseId)] || [];
+    const overriddenConsumptions = consumptions.filter(c => c.fifoOverridden === true);
+    const productEntry = (this.props.dropdowns?.product || []).find(pr => pr.id === p.productId);
+    const productName = (productEntry?.name || `Product ${p.productId}`) + (p.warehouseName ? ` (${p.warehouseName})` : '');
+
+    const consumedByBatchId = {};
+    consumptions.forEach(c => {
+      const bid = c.batch ? c.batch.batchId : c.batchId;
+      consumedByBatchId[bid] = (consumedByBatchId[bid] || 0) + c.qtyConsumed;
+    });
+
+    const labelFor = (batch) => {
+      const parts = [batch.brand, batch.lotNumber, batch.expiryDate].filter(Boolean);
+      return parts.length > 0 ? parts.join(' · ') : `Batch #${batch.batchId}`;
+    };
+
+    // Available-to-allocate for a batch = its current qtyRemaining + whatever this outward
+    // line already has consumed from it (that qty gets restored before re-consuming).
+    let entries = consumptions.map(c => {
+      const batch = c.batch || {};
+      const batchId = batch.batchId || c.batchId;
+      return {
+        batchId,
+        label: labelFor(batch),
+        consumed: c.qtyConsumed,
+        available: (batch.qtyRemaining || 0) + (consumedByBatchId[batchId] || 0),
+        reassignQty: '',
+      };
+    });
+
+    // If qty is being increased, the extra may need to come from a batch this line never
+    // touched before — fetch all batches with stock for this product/warehouse and offer
+    // any not already listed.
+    const newQty = parseFloat(p.quantity);
+    const totalPreviouslyConsumed = consumptions.reduce((s, c) => s + c.qtyConsumed, 0);
+    if (newQty > totalPreviouslyConsumed) {
+      const resp = await API.GET(apiEndpoints.getBatchesForProduct(p.productId, p.warehouseId));
+      if (resp.success) {
+        const extra = (resp.data || [])
+          .filter(b => !consumedByBatchId[b.batchId] && (b.qtyRemaining || 0) > 0)
+          .map(b => ({
+            batchId: b.batchId,
+            label: labelFor(b),
+            consumed: 0,
+            available: b.qtyRemaining,
+            reassignQty: '',
+          }));
+        entries = [...entries, ...extra];
+      }
     }
+
+    const existingComment = overriddenConsumptions.find(c => c.overrideComment)?.overrideComment || '';
+    this.setState({
+      batchReassignModal: {
+        open: true,
+        productKey,
+        productId: p.productId,
+        productName,
+        newQty,
+        entries,
+        overrideComment: existingComment,
+      },
+    });
   }
+
+  confirmBatchReassign() {
+    const { productKey, newQty, entries, overrideComment } = this.state.batchReassignModal;
+    const total = entries.reduce((s, e) => s + (parseFloat(e.reassignQty) || 0), 0);
+    if (Math.abs(total - newQty) > 0.001) {
+      this.props.enqueueSnackbar(
+        `Total allocated (${total}) must equal new quantity (${newQty})`,
+        { variant: 'error' }
+      );
+      return;
+    }
+    if (!overrideComment.trim()) {
+      this.props.enqueueSnackbar('Override comment is required', { variant: 'error' });
+      return;
+    }
+    const overAllocated = entries.find(e => parseFloat(e.reassignQty) > e.available + 0.001);
+    if (overAllocated) {
+      this.props.enqueueSnackbar(
+        `${overAllocated.label}: only ${overAllocated.available} available`,
+        { variant: 'error' }
+      );
+      return;
+    }
+    const overrideBatches = entries
+      .filter(e => parseFloat(e.reassignQty) > 0)
+      .map(e => ({ batchId: e.batchId, qty: parseFloat(e.reassignQty) }));
+    const noproduct = { ...this.state.noproduct };
+    noproduct[productKey] = { ...noproduct[productKey], overrideBatches, overrideComment };
+    this.setState({
+      noproduct,
+      batchReassignModal: {
+        open: false, productKey: null, productId: null,
+        productName: '', newQty: 0, entries: [], overrideComment: '',
+      },
+    }, () => {
+      this.update({ preventDefault: () => {} });
+    });
+  }
+
   render() {
     return (
       <div className="list-section add">
@@ -296,27 +500,6 @@ class Edit extends EditForm {
                 maxDate: moment(),
                 //minDate: moment(this.formData.date).add(-3, 'd'),
               })}
-
-              {this.renderAutoComplete({
-                fieldname: "warehouseId",
-                placeholder: "Warehouse",
-                options: this.props.dropdowns.warehouse,
-                disableClearable: true,
-                required: true,
-                skipAdd: true,
-                disabled: true,
-                getOption: (option) => {
-                  return option["name"];
-                },
-                onChange: (e, value) => {
-                  if (value) {
-                    this.formData.warehouseId = value.id;
-                    this.updateStockInfo(value.id);
-                  }
-                },
-              })}
-            </div>
-            <div className="flex width50">
               {this.renderAutoComplete({
                 fieldname: "contractorId",
                 placeholder: "Contractor",
@@ -328,6 +511,8 @@ class Edit extends EditForm {
                   return option["name"];
                 },
               })}
+            </div>
+            <div className="flex width50">
               {this.renderAutoComplete({
                 fieldname: "structureTypeId",
                 placeholder: "Structure Type",
@@ -390,7 +575,27 @@ class Edit extends EditForm {
                 placeholder: "Purpose",
               })}
             </div>
-            <div class="flex">
+            <div className="width50 flex">
+              {this.renderAutoComplete({
+                fieldname: "requestedBy",
+                placeholder: "Requested By",
+                options: this.props.dropdowns.requestedByOptions || [],
+                freeSolo: true,
+                helperText: "Type to search existing, or enter a new name",
+                getOption: (option) =>
+                  typeof option === "string" ? option : option["name"] || "",
+              })}
+              {this.renderAutoComplete({
+                fieldname: "issuedBy",
+                placeholder: "Issued By",
+                options: this.props.dropdowns.issuedByOptions || [],
+                freeSolo: true,
+                helperText: "Type to search existing, or enter a new name",
+                getOption: (option) =>
+                  typeof option === "string" ? option : option["name"] || "",
+              })}
+            </div>
+            <div className="flex">
               {this.renderTextArea({
                 defaultKey: "additionalInfo",
                 fieldname: "additionalInfo",
@@ -420,10 +625,11 @@ class Edit extends EditForm {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Limit Exceeded — Save Blocked</DialogTitle>
+          <DialogTitle style={{ color: '#c62828' }}>⚠ BOQ Check Failed — Save Blocked</DialogTitle>
           <DialogContent>
             <DialogContentText style={{ marginBottom: 12 }}>
-              The following products exceed their BOQ limit (including wastage allowance).
+              The following products either exceed their BOQ limit (including wastage
+              allowance) or have no BOQ defined for the selected location.
             </DialogContentText>
             {this.state.boqViolationDialog.violations.map((v, i) => {
               const parts = v.split(':');
@@ -450,6 +656,104 @@ class Edit extends EditForm {
             </MuiButton>
           </DialogActions>
         </Dialog>
+        {/* Batch re-allocation modal */}
+        {(() => {
+          const m = this.state.batchReassignModal;
+          if (!m.open) return null;
+          const total = m.entries.reduce((s, e) => s + (parseFloat(e.reassignQty) || 0), 0);
+          const remaining = Math.round((m.newQty - total) * 1000) / 1000;
+          const anyOverAllocated = m.entries.some(e => parseFloat(e.reassignQty) > e.available + 0.001);
+          const isValid = Math.abs(total - m.newQty) < 0.001 && !anyOverAllocated;
+          return (
+            <Dialog open maxWidth="sm" fullWidth onClose={() =>
+              this.setState({ batchReassignModal: { ...m, open: false } })
+            }>
+              <DialogTitle style={{ color: '#1565c0' }}>
+                Re-allocate Batches — {m.productName}
+              </DialogTitle>
+              <DialogContent>
+                <DialogContentText style={{ marginBottom: 12 }}>
+                  New quantity is <strong>{m.newQty}</strong>. Specify how much to draw from each batch.
+                </DialogContentText>
+                {m.entries.map((entry, i) => {
+                  const overCap = parseFloat(entry.reassignQty) > entry.available + 0.001;
+                  return (
+                  <div key={entry.batchId} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: '#f5f7fa', border: overCap ? '1px solid #c62828' : '1px solid #dce3ec',
+                    borderRadius: 6, padding: '8px 12px', marginBottom: 8,
+                  }}>
+                    <div style={{ flex: 1, fontSize: 13 }}>
+                      <strong>{entry.label}</strong>
+                      <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
+                        Previously consumed: {entry.consumed} · Available: {entry.available}
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Qty"
+                      value={entry.reassignQty}
+                      style={{
+                        width: 80, padding: '5px 8px',
+                        border: overCap ? '1px solid #c62828' : '1px solid #bbb',
+                        borderRadius: 4, fontSize: 13,
+                      }}
+                      onChange={e => {
+                        const entries = m.entries.map((en, idx) =>
+                          idx === i ? { ...en, reassignQty: e.target.value } : en
+                        );
+                        this.setState({ batchReassignModal: { ...m, entries } });
+                      }}
+                    />
+                  </div>
+                  );
+                })}
+                <div style={{
+                  display: 'flex', justifyContent: 'flex-end', gap: 16,
+                  fontSize: 13, color: remaining < 0 ? '#c62828' : remaining === 0 ? '#2e7d32' : '#555',
+                  marginBottom: 12,
+                }}>
+                  <span>Allocated: <strong>{total}</strong></span>
+                  <span>Remaining: <strong>{remaining}</strong></span>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 4 }}>
+                    Override comment *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Reason for batch selection"
+                    value={m.overrideComment}
+                    style={{
+                      width: '100%', padding: '7px 10px', border: '1px solid #bbb',
+                      borderRadius: 4, fontSize: 13, boxSizing: 'border-box',
+                    }}
+                    onChange={e =>
+                      this.setState({ batchReassignModal: { ...m, overrideComment: e.target.value } })
+                    }
+                  />
+                </div>
+              </DialogContent>
+              <DialogActions>
+                <MuiButton onClick={() =>
+                  this.setState({ batchReassignModal: { ...m, open: false } })
+                }>
+                  Cancel
+                </MuiButton>
+                <MuiButton
+                  variant="contained"
+                  color="primary"
+                  disabled={!isValid || !m.overrideComment.trim()}
+                  onClick={() => this.confirmBatchReassign()}
+                >
+                  Confirm &amp; Save
+                </MuiButton>
+              </DialogActions>
+            </Dialog>
+          );
+        })()}
       </div>
     );
   }

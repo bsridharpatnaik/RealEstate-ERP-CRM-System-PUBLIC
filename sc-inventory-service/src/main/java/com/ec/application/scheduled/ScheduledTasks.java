@@ -14,8 +14,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.ec.application.data.ExpiryAlertRow;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -47,9 +49,6 @@ public class ScheduledTasks {
     StockSyncJob stockSyncJob;
 
     @Autowired
-    PriorityComputeService priorityComputeService;
-
-    @Autowired
     StockBalanceValidationService stockBalanceValidationService;
 
     @Autowired
@@ -60,6 +59,12 @@ public class ScheduledTasks {
 
     @Autowired
     Environment environment;
+
+    @Autowired
+    com.ec.application.service.BatchTrackingService batchTrackingService;
+
+    @Autowired
+    ProjectConstantsService projectConstantsService;
 
  /*   //@Scheduled(cron = "0 0 9,18 * * *")
     public void sendStockNotificationEmailInEvening() throws Exception {
@@ -88,15 +93,6 @@ public class ScheduledTasks {
         smsService.sendIOStats();
     }*/
 
-    /** Runs every hour from 9 AM to 6 PM IST. Recomputes PO priority from indent expected dates.
-     *  POs are stored in the master schema — @UseDefaultTenant sets the correct schema context. */
-    @Scheduled(cron = "0 0 9-18 * * *", zone = "Asia/Kolkata")
-    @UseDefaultTenant
-    public void computePoPriority() {
-        log.info("Scheduled PO priority recompute triggered");
-        priorityComputeService.recomputeAllPriorities();
-    }
-
     @Scheduled(cron = "0 0 21 * * *", zone = "Asia/Kolkata")
     public void sendDailyStockEmailReport() {
         log.info("Daily stock email report triggered");
@@ -104,23 +100,74 @@ public class ScheduledTasks {
             List<String> tenants = schemaConfig.getNonMasterSchemaList();
             Map<Long, Double> netRateMap = stockEmailReportService.fetchLatestNetRateMap();
             List<ProjectStockEmailData> allProjects = new ArrayList<>();
+
+            Calendar cal = Calendar.getInstance();
+            Date today = truncateToDay(cal);
+            Date day60 = addDays(cal, 60);
+
+            List<ExpiryAlertRow> expiring30 = new ArrayList<>();  // 0–nearExpiryDays
+            List<ExpiryAlertRow> expiring60 = new ArrayList<>();  // nearExpiryDays+1 – 60 days
+
             for (String tenantName : tenants) {
                 com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
                 try {
-                    ProjectStockEmailData data = stockEmailReportService.collectTenantStockData(tenantName, netRateMap);
-                    allProjects.add(data);
+                    // Near-expiry window is per-tenant config — compute inside the loop
+                    int nearDays = projectConstantsService.getNearExpiryDays();
+                    Date dayNear     = addDays(cal, nearDays);
+                    Date dayNearPlus = addDays(cal, nearDays + 1);
+                    allProjects.add(stockEmailReportService.collectTenantStockData(tenantName, netRateMap));
+                    expiring30.addAll(stockEmailReportService.collectExpiryRows(tenantName, today, dayNear));
+                    if (nearDays < 60)
+                        expiring60.addAll(stockEmailReportService.collectExpiryRows(tenantName, dayNearPlus, day60));
                 } finally {
                     com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
                 }
             }
             if (!allProjects.isEmpty()) {
                 byte[] excelBytes = stockEmailReportService.buildExcelBytes(allProjects);
-                emailHelper.sendDailyStockReport(allProjects, excelBytes);
+                emailHelper.sendDailyStockReport(allProjects, excelBytes, expiring30, expiring60);
             } else {
                 log.info("No tenants found — skipping daily stock report");
             }
         } catch (Exception e) {
             log.error("Daily stock email report failed", e);
+        }
+    }
+
+    /** Strips time component — start of today. */
+    private static Date truncateToDay(Calendar cal) {
+        cal.setTime(new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    /** Returns a new Date = today + days, time 23:59:59 (end of that day). */
+    private static Date addDays(Calendar cal, int days) {
+        cal.setTime(new Date());
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        cal.add(Calendar.DAY_OF_YEAR, days);
+        return cal.getTime();
+    }
+
+    @Scheduled(cron = "0 0 7 * * *", zone = "Asia/Kolkata")
+    public void processExpiryAlerts() {
+        log.info("Expiry alert job triggered");
+        List<String> tenants = schemaConfig.getNonMasterSchemaList();
+        for (String tenantName : tenants) {
+            com.ec.application.multitenant.ThreadLocalStorage.setTenantName(tenantName);
+            try {
+                batchTrackingService.processExpiryAlerts();
+            } catch (Exception e) {
+                log.error("Expiry alert processing failed for tenant: {}", tenantName, e);
+            } finally {
+                com.ec.application.multitenant.ThreadLocalStorage.setTenantName(null);
+            }
         }
     }
 
@@ -134,7 +181,7 @@ public class ScheduledTasks {
         }
     }
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 20 * * * *") // every hour at :20
     public void updateClosingStock() throws Exception {
         List<String> tenants = schemaConfig.getNonMasterSchemaList();
         List<JobFailureAlertDTO> failures = new ArrayList<>();

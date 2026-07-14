@@ -42,6 +42,14 @@ class Add extends AddForm {
     resultModalData: null,
     stockValidationErrors: {}, // Store stock validation errors by product key
     currentStocks: {}, // Store current stock values by product key
+    // Batch preview per product key: { [key]: [ {batchId, brand, lotNumber, expiryDate, qtyToTransfer, qtyAvailable} ] }
+    batchPreviews: {},
+    // Whether the user has toggled batch override for a product key
+    showBatchOverride: {},
+    // All available batches per product key (loaded when override is toggled on)
+    allBatches: {},
+    // Products where preview returned empty despite being batch-tracked (needs split before transfer)
+    batchBlockedKeys: {},
   };
   _isMounted = false;
   key = 1;
@@ -127,6 +135,7 @@ class Add extends AddForm {
           measurementUnit: product.measurementUnit,
           productCode: product.productCode,
           isManagedInventory: product.isManagedInventory,
+          batchMode: product.batchMode,
         }));
         // productCodes for Product Code dropdown: { id, name } where name = productCode
         const productCodes = transformedProducts
@@ -160,11 +169,8 @@ class Add extends AddForm {
       const customAxios = axios.create({
         baseURL: process.env.REACT_APP_BASE_URL,
       });
-      const store = require("./../../index").store;
-      const state = store.getState();
-
       const response = await customAxios.get(
-        apiEndpoints.getInventoryTransferCurrentStock + `tenant=${state.tennant.tennant_id}&productId=${productId}&warehouseId=${this.formData.fromWarehouseId}`,
+        apiEndpoints.getInventoryTransferCurrentStock + `tenant=${this.formData.fromProjectId}&productId=${productId}&warehouseId=${this.formData.fromWarehouseId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -200,6 +206,72 @@ class Add extends AddForm {
     } catch (error) {
       // Silently fail stock validation - don't block user if API call fails
       console.error("Failed to validate stock:", error);
+    }
+  }
+
+  /** Fetch FIFO batch preview for a product in source warehouse. */
+  async fetchBatchPreview(key, productId, qty) {
+    const fromWarehouseId = this.formData.fromWarehouseId;
+    const fromProjectId = this.formData.fromProjectId;
+    if (!productId || !fromWarehouseId || !fromProjectId || !qty || qty <= 0) {
+      const batchPreviews = { ...this.state.batchPreviews };
+      delete batchPreviews[key];
+      const batchBlockedKeys = { ...this.state.batchBlockedKeys };
+      delete batchBlockedKeys[key];
+      this.setState({ batchPreviews, batchBlockedKeys });
+      return;
+    }
+    const productList = this.state.dropdowns?.product || this.props.dropdowns?.product || [];
+    const selectedProduct = productList.find(p => p.id === productId);
+    if (selectedProduct && selectedProduct.batchMode === 'NONE') {
+      return;
+    }
+    try {
+      const overrideEntries = this.state.products[key]?.overrideBatches || [];
+      const response = await API.POST(apiEndpoints.previewTransferBatches, {
+        sourceTenant: fromProjectId,
+        productId: productId,
+        sourceWarehouseId: fromWarehouseId,
+        qty: parseFloat(qty),
+        overrideBatches: overrideEntries.length > 0 ? overrideEntries : undefined,
+      });
+      if (response.success && Array.isArray(response.data)) {
+        const batchPreviews = { ...this.state.batchPreviews };
+        batchPreviews[key] = response.data;
+        const batchBlockedKeys = { ...this.state.batchBlockedKeys };
+        // Empty preview = batch-tracked product with no batches split yet
+        batchBlockedKeys[key] = response.data.length === 0;
+        this.setState({ batchPreviews, batchBlockedKeys });
+      }
+    } catch (e) {
+      // silently fail — batch preview is informational
+    }
+  }
+
+  /** Fetch ALL available batches for source product+warehouse so user can pick any in override mode. */
+  async fetchAllBatchesForProduct(key, productId, warehouseId) {
+    const fromProjectId = this.formData.fromProjectId;
+    if (!productId || !warehouseId || !fromProjectId) return;
+    try {
+      const token = getToken();
+      const customAxios = axios.create({ baseURL: process.env.REACT_APP_BASE_URL });
+      const response = await customAxios.get(
+        apiEndpoints.getBatchesForProduct(productId, warehouseId),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "tenant-id": fromProjectId,
+          },
+        }
+      );
+      if (response.data && Array.isArray(response.data) && this._isMounted) {
+        const batches = response.data.filter((b) => b.qtyRemaining > 0);
+        const allBatches = { ...this.state.allBatches };
+        allBatches[key] = batches;
+        this.setState({ allBatches });
+      }
+    } catch (e) {
+      // silently fail
     }
   }
 
@@ -253,6 +325,9 @@ class Add extends AddForm {
     const productKeys = Object.keys(this.state.products).sort((a, b) => Number(a) - Number(b));
     const productNumber = productKeys.indexOf(key.toString()) + 1;
 
+    const batchPreview = this.state.batchPreviews[key] || [];
+    const showBatchOverride = this.state.showBatchOverride[key] || false;
+
     return (
       <div className="inventory-item" key={key}>
         <div className="inventory-item-header">
@@ -294,17 +369,19 @@ class Add extends AddForm {
               p[key].productCode = value?.productCode || "";
               p[key].measurementUnit = value?.measurementUnit || "";
               p[key].selectedProduct = value; // Store the full product object
-              
+              p[key].overrideBatches = []; // Clear overrides when product changes
+
               // Clear validation error for this product if product changes
               const errors = { ...this.state.stockValidationErrors };
               delete errors[key];
-              
+
               if (value) {
                 this.setState({ products: { ...p }, stockValidationErrors: errors });
                 // Fetch current stock immediately when product is selected (if warehouse is also selected)
                 if (this.formData.fromWarehouseId) {
                   const quantity = p[key].quantity ? parseFloat(p[key].quantity) : null;
                   await this.validateStockForProduct(key, value.id, quantity);
+                  await this.fetchBatchPreview(key, value.id, quantity);
                 }
               }
             },
@@ -329,6 +406,7 @@ class Add extends AddForm {
                 p[key].productCode = value.name || "";
                 p[key].measurementUnit = fullProduct?.measurementUnit || "";
                 p[key].selectedProduct = fullProduct || { id: value.id, name: value.name, productCode: value.name, measurementUnit: "" };
+                p[key].overrideBatches = [];
               } else {
                 p[key].productId = "";
                 p[key].productName = "";
@@ -336,17 +414,18 @@ class Add extends AddForm {
                 p[key].measurementUnit = "";
                 p[key].selectedProduct = null;
               }
-              
+
               // Clear validation error for this product if product changes
               const errors = { ...this.state.stockValidationErrors };
               delete errors[key];
-              
+
               if (value) {
                 this.setState({ products: { ...p }, stockValidationErrors: errors });
                 // Fetch current stock immediately when product is selected (if warehouse is also selected)
                 if (this.formData.fromWarehouseId) {
                   const quantity = p[key].quantity ? parseFloat(p[key].quantity) : null;
                   await this.validateStockForProduct(key, value.id, quantity);
+                  await this.fetchBatchPreview(key, value.id, quantity);
                 }
               }
             },
@@ -364,11 +443,19 @@ class Add extends AddForm {
             onChange: async (value) => {
               const p = this.state.products;
               p[key].quantity = value;
+              // Reset any batch override entries when qty changes — they no longer match
+              p[key].overrideBatches = [];
+              p[key].overrideComment = "";
               this.setState({ products: { ...p } });
 
               // Validate stock when quantity is entered
               if (value && p[key].productId && this.formData.fromWarehouseId) {
+                // Reset override mode when qty changes
+                const showBatchOverride = { ...this.state.showBatchOverride };
+                delete showBatchOverride[key];
+                this.setState({ showBatchOverride });
                 await this.validateStockForProduct(key, p[key].productId, parseFloat(value) || 0);
+                await this.fetchBatchPreview(key, p[key].productId, parseFloat(value) || 0);
               } else {
                 // Clear validation error if quantity is empty or product/warehouse not selected
                 const errors = { ...this.state.stockValidationErrors };
@@ -384,6 +471,203 @@ class Add extends AddForm {
             value: this.state.products[key]?.measurementUnit || "",
           })}
         </div>
+
+        {/* Batch blocked warning — batch-tracked but no batches split yet */}
+        {this.state.batchBlockedKeys[key] && (
+          <div style={{ marginTop: this.state.stockValidationErrors[key] ? 28 : 8, padding: "8px 12px", background: "#fff3e0", borderRadius: 4, color: "#e65100", fontSize: 12 }}>
+            ⚠ This product is batch-tracked but has no batches in the source warehouse. Go to <strong>Stock → Batches tab</strong> and split existing stock into batches before transferring.
+          </div>
+        )}
+
+        {/* Batch preview — only shown when batch-tracked product has preview data */}
+        {batchPreview.length > 0 && (
+          <div style={{ marginTop: this.state.stockValidationErrors[key] ? 28 : 8, padding: "8px 12px", background: "#f5f5f5", borderRadius: 4 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <span style={{ fontSize: 12, color: "#555", fontWeight: 500 }}>
+                Batch allocation (FIFO preview)
+              </span>
+              <button
+                type="button"
+                style={{
+                  fontSize: 11,
+                  color: "#1976d2",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+                onClick={() => {
+                  const showBatchOverride = { ...this.state.showBatchOverride };
+                  showBatchOverride[key] = !showBatchOverride[key];
+                  if (!showBatchOverride[key]) {
+                    // Toggling OFF — clear override entries and restore FIFO preview
+                    const p = this.state.products;
+                    p[key].overrideBatches = [];
+                    this.setState({ products: { ...p } });
+                    this.fetchBatchPreview(key, p[key].productId, parseFloat(p[key].quantity) || 0);
+                  } else {
+                    // Toggling ON — load ALL available batches so user can pick any batch, not just FIFO picks
+                    const p = this.state.products;
+                    this.fetchAllBatchesForProduct(key, p[key].productId, this.formData.fromWarehouseId);
+                  }
+                  this.setState({ showBatchOverride });
+                }}
+              >
+                {showBatchOverride ? "Use FIFO (reset)" : "Override batch selection"}
+              </button>
+            </div>
+
+            {!showBatchOverride && (
+              <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ color: "#888" }}>
+                    <th style={{ textAlign: "left", padding: "2px 6px" }}>Batch</th>
+                    <th style={{ textAlign: "right", padding: "2px 6px" }}>Available</th>
+                    <th style={{ textAlign: "right", padding: "2px 6px" }}>To Transfer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batchPreview.map((b, idx) => {
+                    const fmtDate = (d) => { if (!d) return null; if (/^\d{2}-\d{2}-\d{4}$/.test(String(d))) return d; try { const dt = new Date(d); if (isNaN(dt.getTime())) return d; return `${String(dt.getDate()).padStart(2,'0')}-${String(dt.getMonth()+1).padStart(2,'0')}-${dt.getFullYear()}`; } catch(e) { return d; } };
+                    const label = [b.brand, b.lotNumber, b.expiryDate ? fmtDate(b.expiryDate) : null]
+                      .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
+                    return (
+                      <tr key={idx}>
+                        <td style={{ padding: "2px 6px" }}>{label}</td>
+                        <td style={{ textAlign: "right", padding: "2px 6px" }}>{b.qtyAvailable}</td>
+                        <td style={{ textAlign: "right", padding: "2px 6px", fontWeight: 600 }}>{b.qtyToTransfer}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+
+            {showBatchOverride && (
+              <div>
+                <div style={{ fontSize: 11, color: "#e65100", marginBottom: 6 }}>
+                  Enter specific batch quantities. Total must equal transfer quantity.
+                </div>
+                {(() => {
+                  const transferQty = parseFloat(this.state.products[key]?.quantity) || 0;
+                  const overrides = this.state.products[key]?.overrideBatches || [];
+                  const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+                  const matches = Math.abs(totalEntered - transferQty) <= 0.001;
+                  return (
+                    <div style={{ fontSize: 12, marginBottom: 6, color: matches ? "#2e7d32" : "#c62828", fontWeight: 600 }}>
+                      Allocated: {totalEntered} / {transferQty} {matches ? "✓" : `(remaining: ${(transferQty - totalEntered).toFixed(2)})`}
+                    </div>
+                  );
+                })()}
+                {(this.state.allBatches[key] || batchPreview).map((b, idx) => {
+                  const fmtDate = (d) => { if (!d) return null; if (/^\d{2}-\d{2}-\d{4}$/.test(String(d))) return d; try { const dt = new Date(d); if (isNaN(dt.getTime())) return d; return `${String(dt.getDate()).padStart(2,'0')}-${String(dt.getMonth()+1).padStart(2,'0')}-${dt.getFullYear()}`; } catch(e) { return d; } };
+                  const avail = b.qtyRemaining != null ? b.qtyRemaining : b.qtyAvailable;
+                  const label = [b.brand, b.lotNumber, b.expiryDate ? fmtDate(b.expiryDate) : null]
+                    .filter(Boolean).join(" | ") || `Batch #${b.batchId}`;
+                  const overrides = this.state.products[key]?.overrideBatches || [];
+                  const entry = overrides.find((e) => e.batchId === b.batchId);
+                  return (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, flex: 1 }}>{label} (avail: {avail})</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={avail}
+                        step="any"
+                        placeholder="Qty"
+                        value={entry?.qty || ""}
+                        style={{
+                          padding: "4px 8px",
+                          border: "1px solid #ccc",
+                          borderRadius: 4,
+                          fontSize: 13,
+                          width: 80,
+                        }}
+                        onChange={(e) => {
+                          const p = this.state.products;
+                          if (!p[key].overrideBatches) p[key].overrideBatches = [];
+                          const existing = p[key].overrideBatches.findIndex((oe) => oe.batchId === b.batchId);
+                          const val = parseFloat(e.target.value) || 0;
+                          if (existing >= 0) {
+                            p[key].overrideBatches[existing].qty = val;
+                          } else {
+                            p[key].overrideBatches.push({ batchId: b.batchId, qty: val });
+                          }
+                          this.setState({ products: { ...p } });
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+                <div style={{ marginTop: 6, marginBottom: 6 }}>
+                  <input
+                    type="text"
+                    placeholder="Reason for manual override (required)"
+                    value={this.state.products[key]?.overrideComment || ""}
+                    style={{
+                      padding: "4px 8px",
+                      border: "1px solid #ccc",
+                      borderRadius: 4,
+                      fontSize: 12,
+                      width: "100%",
+                    }}
+                    onChange={(e) => {
+                      const p = this.state.products;
+                      p[key].overrideComment = e.target.value;
+                      this.setState({ products: { ...p } });
+                    }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  disabled={(() => {
+                    const transferQty = parseFloat(this.state.products[key]?.quantity) || 0;
+                    const overrides = (this.state.products[key]?.overrideBatches || []).filter(e => e.qty > 0);
+                    const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+                    return Math.abs(totalEntered - transferQty) > 0.001;
+                  })()}
+                  style={{
+                    marginTop: 4,
+                    fontSize: 11,
+                    color: "#1976d2",
+                    background: "none",
+                    border: "1px solid #1976d2",
+                    borderRadius: 3,
+                    cursor: "pointer",
+                    padding: "2px 8px",
+                  }}
+                  onClick={async () => {
+                    const p = this.state.products;
+                    const transferQty = parseFloat(p[key].quantity) || 0;
+                    const overrides = (p[key].overrideBatches || []).filter(e => e.qty > 0);
+                    const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+                    if (Math.abs(totalEntered - transferQty) > 0.001) {
+                      this.props.enqueueSnackbar(
+                        `Batch quantities must total ${transferQty}. Currently entered: ${totalEntered}.`,
+                        { variant: "error" }
+                      );
+                      return;
+                    }
+                    if (!p[key].overrideComment || !p[key].overrideComment.trim()) {
+                      this.props.enqueueSnackbar(
+                        "Please provide a reason for the manual batch override.",
+                        { variant: "error" }
+                      );
+                      return;
+                    }
+                    await this.fetchBatchPreview(key, p[key].productId, transferQty);
+                    // Switch to table view so user can see the applied override allocation
+                    const showBatchOverride = { ...this.state.showBatchOverride };
+                    showBatchOverride[key] = false;
+                    this.setState({ showBatchOverride });
+                  }}
+                >
+                  Apply override
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -456,11 +740,77 @@ class Add extends AddForm {
       }
     }
 
+    // Block if a batch override panel is still open (unapplied) for any product
+    const openOverrideKeys = Object.keys(this.state.showBatchOverride || {}).filter(
+      (k) => this.state.showBatchOverride[k]
+    );
+    if (openOverrideKeys.length > 0) {
+      const names = openOverrideKeys.map((k) => this.state.products[k]?.productName || `Product ${k}`).join(", ");
+      this.props.enqueueSnackbar(
+        `Please apply or cancel the batch override for: ${names}.`,
+        { variant: "error" }
+      );
+      return;
+    }
+
+    // Block if any product's override batch quantities don't total the transfer quantity
+    const mismatchedOverrideKeys = Object.entries(this.state.products).filter(([, product]) => {
+      const overrides = (product.overrideBatches || []).filter((e) => e.qty > 0);
+      if (overrides.length === 0) return false;
+      const transferQty = parseFloat(product.quantity) || 0;
+      const totalEntered = overrides.reduce((sum, e) => sum + (parseFloat(e.qty) || 0), 0);
+      return Math.abs(totalEntered - transferQty) > 0.001;
+    });
+    if (mismatchedOverrideKeys.length > 0) {
+      const names = mismatchedOverrideKeys
+        .map(([, product]) => product.productName || "a product")
+        .join(", ");
+      this.props.enqueueSnackbar(
+        `Batch override quantities must total the transfer quantity for: ${names}.`,
+        { variant: "error" }
+      );
+      return;
+    }
+
+    // Block if any batch-tracked product has no batches split yet
+    const blockedKeys = Object.entries(this.state.batchBlockedKeys)
+      .filter(([, blocked]) => blocked)
+      .map(([k]) => k);
+    if (blockedKeys.length > 0) {
+      const names = blockedKeys.map((k) => this.state.products[k]?.productName || `Product ${k}`).join(", ");
+      this.props.enqueueSnackbar(
+        `Cannot transfer: ${names} is batch-tracked but has no batches in the source warehouse. Go to Stock → Batches tab and split existing stock into batches first.`,
+        { variant: "error", autoHideDuration: 8000 }
+      );
+      return;
+    }
+
     // Transform products data to match API payload structure
-    const items = Object.values(this.state.products).map((product) => ({
-      productId: product.productId,
-      quantity: parseFloat(product.quantity) || 0,
-    }));
+    const items = Object.values(this.state.products).map((product) => {
+      const item = {
+        productId: product.productId,
+        quantity: parseFloat(product.quantity) || 0,
+      };
+      // Include override batches if user specified them
+      if (product.overrideBatches && product.overrideBatches.length > 0) {
+        item.overrideBatches = product.overrideBatches.filter((e) => e.qty > 0);
+        item.overrideComment = product.overrideComment || "";
+      }
+      return item;
+    });
+
+    // Block submission if any product has an override but never confirmed a reason for it
+    const missingReason = Object.values(this.state.products).find(
+      (product) => product.overrideBatches && product.overrideBatches.length > 0
+        && (!product.overrideComment || !product.overrideComment.trim())
+    );
+    if (missingReason) {
+      this.props.enqueueSnackbar(
+        `Please provide a reason for the manual batch override on "${missingReason.productName || "a product"}".`,
+        { variant: "error" }
+      );
+      return;
+    }
 
     // Create product lookup for confirmation dialog
     const productLookup = {};
@@ -502,7 +852,7 @@ class Add extends AddForm {
       sourceWarehouseId: transferData.sourceWarehouseId,
       targetWarehouseId: transferData.targetWarehouseId,
       remarks: transferData.remarks,
-      items: transferData.items,
+      items: transferData.items, // already includes overrideBatches if set
     };
 
     try {
@@ -597,6 +947,7 @@ class Add extends AddForm {
   }
 
   handleConfirmSubmit = () => {
+    if (this.state.isAdding) return; // guard against double-click double-submit
     this.submitTransfer();
   }
 
@@ -733,12 +1084,13 @@ class Add extends AddForm {
                       selectedFromWarehouse: value,
                       stockValidationErrors: {} // Clear stock validation errors when warehouse changes
                     });
-                    // Fetch stock for all products when warehouse changes
+                    // Fetch stock + batch preview for all products when warehouse changes
                     const products = this.state.products;
                     for (const [key, product] of Object.entries(products)) {
                       if (product.productId) {
                         const quantity = product.quantity ? parseFloat(product.quantity) : null;
                         await this.validateStockForProduct(key, product.productId, quantity);
+                        await this.fetchBatchPreview(key, product.productId, quantity);
                       }
                     }
                   }
@@ -824,6 +1176,7 @@ class Add extends AddForm {
           transferData={this.state.transferData}
           onCancel={this.handleConfirmCancel}
           onConfirm={this.handleConfirmSubmit}
+          submitting={this.state.isAdding}
         />
         <InventoryTransferResultModal
           open={this.state.showResultModal}

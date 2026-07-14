@@ -1,10 +1,12 @@
 package com.ec.application.model;
 
+import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,6 +40,7 @@ public class PurchaseOrderLine extends ReusableFields {
     private String brand;
     private String grade;
     private String diameter;
+    private String size;
     @Column(columnDefinition = "TEXT")
     private String specification;
 
@@ -68,20 +71,22 @@ public class PurchaseOrderLine extends ReusableFields {
     @Column(name = "sample_image_file_uuid")
     private String sampleImageFileId;
 
-    /** Traceability */
+    /** Traceability — indent refs */
     @JsonIgnoreProperties("poLine")
     @OneToMany(mappedBy = "poLine", cascade = CascadeType.ALL)
     private List<PurchaseOrderIndentRef> indentRefs = new ArrayList<>();
 
-    /**
-     * Per-line expected delivery date derived from the linked indent line item.
-     * Not persisted — populated at query time by PurchaseOrderService.
-     * @JsonProperty forces Jackson to include this @Transient field in serialization.
-     */
-    @Transient
-    @JsonProperty("needByDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    private Date needByDate;
+    /** Quote comparison line linked to this PO line (optional, for traceability) */
+    @Column(name = "linked_qc_line_id")
+    private Long linkedQcLineId;
+
+    /** Supplier quote line ID linked to this PO line */
+    @Column(name = "linked_supplier_quote_line_id")
+    private Long linkedSupplierQuoteLineId;
+
+    /** QC ID for display reference */
+    @Column(name = "linked_qc_id")
+    private String linkedQcId;
 
     /**
      * Raw image bytes pre-fetched in tenant context by PurchaseOrderService.
@@ -90,4 +95,39 @@ public class PurchaseOrderLine extends ReusableFields {
     @Transient
     @JsonIgnore
     private byte[] sampleImageData;
+
+    @Transient
+    @JsonProperty("receivedQuantity")
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double receivedQuantity;
+
+    @Transient
+    @JsonProperty("balanceQuantity")
+    @JsonSerialize(using = DoubleTwoDigitDecimalSerializer.class)
+    private Double balanceQuantity;
+
+    /**
+     * Indent line item status for this PO line — derived at query time from the linked
+     * IndentInventoryList.lineItemStatus. Used by the frontend to decide whether the line
+     * can be removed (only removable when status is "PO CREATED").
+     * Not persisted — populated by PurchaseOrderService.getPurchaseOrderWithInit().
+     */
+    @Transient
+    @JsonProperty("lineItemStatus")
+    private String lineItemStatus;
+
+    /** Effective lead time in days (product override → category fallback). Populated at query time. */
+    @Transient
+    @JsonProperty("leadTimeDays")
+    private Integer leadTimeDays;
+
+    /** Days remaining until lead time expires (negative = overdue). Null when no lead time set. */
+    @Transient
+    @JsonProperty("daysLeft")
+    private Integer daysLeft;
+
+    /** True when daysLeft < 0 and PO is still open. */
+    @Transient
+    @JsonProperty("isOverdue")
+    private Boolean isOverdue;
 }

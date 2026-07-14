@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 public interface StockInformationRepo extends BaseRepository<StockInformationFromView, Long> {
@@ -20,7 +21,7 @@ public interface StockInformationRepo extends BaseRepository<StockInformationFro
             "        p.measurementUnit, " +
             "        c.category_name, " +
             "        ROUND(SUM(ai1.closingstock),2) as totalQuantityInHand, " +
-            "        CASE WHEN ROUND(SUM(ai1.closingstock),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus, " +
+            "        CASE WHEN p.reorderQuantity > 0 AND ROUND(SUM(ai1.closingstock),2)<=p.reorderQuantity THEN 'Low' ELSE 'High' END as stockStatus, " +
             "        JSON_ARRAYAGG(JSON_OBJECT( " +
             "'warehouseName',ai1.warehousename, " +
             "            'quantityInHand',ai1.closingstock, " +
@@ -41,4 +42,10 @@ public interface StockInformationRepo extends BaseRepository<StockInformationFro
             "GROUP BY ai1.ProductId,ai1.Product_name,p.product_code,p.reorderQuantity,p.measurementUnit,c.category_name",  // ✅ ADD p.product_code here too
             nativeQuery = true)
     List<StockInformationFromView> getHistoricalStock(@Param("maxDate") Date maxDate);
+
+    long countByStockStatus(String stockStatus);
+
+    long countByStockStatusAndProductIdIn(String stockStatus, List<Long> productIds);
+
+    List<StockInformationFromView> findByProductIdInAndTotalQuantityInHandGreaterThan(List<Long> ids, Double qty);
 }

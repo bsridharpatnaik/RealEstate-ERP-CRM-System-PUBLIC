@@ -79,6 +79,12 @@ public class OutwardInventoryController {
         return oiService.getTotalsForOutward(filterDataList);
     }
 
+    @GetMapping("/tiles")
+    @ResponseStatus(HttpStatus.OK)
+    public com.ec.application.data.OutwardTilesDTO getTiles() {
+        return oiService.getTiles();
+    }
+
     @PostMapping("/export")
     @ResponseStatus(HttpStatus.OK)
     public List<OutwardInventoryExportDAO2> fetchAllOutwardInventoryForExport(

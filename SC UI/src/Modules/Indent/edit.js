@@ -4,7 +4,6 @@ import { connect } from "react-redux";
 
 //third party
 import { withSnackbar } from "notistack";
-import moment from "moment";
 import EditForm from "./../../Shared/EditForm";
 import { API } from "./../../axios";
 import Autocomplete from "@material-ui/lab/Autocomplete";
@@ -13,6 +12,12 @@ import Breadcrumbs from "@material-ui/core/Breadcrumbs";
 import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 import IconButton from "@material-ui/core/IconButton";
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
+import EditIcon from "@material-ui/icons/Edit";
+import AddIcon from "@material-ui/icons/Add";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
 
 //misc
 import { apiEndpoints } from "./../../endpoints";
@@ -30,12 +35,10 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 class Edit extends EditForm {
   title = messages.common.indent;
   updateUrl = apiEndpoints.updateIndent;
-  rowRefs = {};
   state = {
     value: 0,
     noinventory: {},
     isLoaded: false,
-    showValidation: false,
     products: [],
     categories: [],
     productsLoaded: false,
@@ -45,6 +48,12 @@ class Edit extends EditForm {
     selectedFilePreview: null,
     isFileUploading: false,
     currentStep: 1,
+    // Item add/edit dialog — items are only added to noinventory once
+    // validated and saved here, never edited inline in the list.
+    itemDialogOpen: false,
+    dialogItem: {},
+    dialogEditingKey: null,
+    dialogValidation: false,
   };
   fileInputRef = React.createRef();
   key = 1;
@@ -81,64 +90,8 @@ class Edit extends EditForm {
     }
   }
 
-  clearRowProductSelection(key) {
-    const p = { ...this.state.noinventory };
-    if (p[key]) {
-      p[key] = {
-        ...p[key],
-        productId: "",
-        productCode: "",
-        unit: "",
-        selectedProduct: null,
-      };
-      this.setState({ noinventory: p });
-    }
-  }
-
-  async fetchProductsByCategoryForRow(key, categoryValue) {
-    const p = { ...this.state.noinventory };
-    if (!p[key]) return;
-    p[key] = {
-      ...p[key],
-      selectedCategory: categoryValue,
-      productId: "",
-      productCode: "",
-      unit: "",
-      selectedProduct: null,
-      products: [],
-    };
-    this.setState({ noinventory: p });
-    if (!categoryValue?.id) return;
-    const response = await API.GET(apiEndpoints.getProductForIndentByCategory(categoryValue.id));
-    const np = { ...this.state.noinventory };
-    if (!np[key]) return;
-    if (response.success && Array.isArray(response.data)) {
-      if (response.data.length === 0) {
-        this.props.enqueueSnackbar(
-          "There are no inventories under selected category. Please select a different category.",
-          { variant: "warning" }
-        );
-        np[key] = { ...np[key], products: [] };
-        this.setState({ noinventory: np });
-        return;
-      }
-      const transformedProducts = response.data.map((product) => ({
-        id: product.productId,
-        name: product.productName,
-        measurementUnit: product.measurementUnit,
-        productCode: product.productCode,
-        isManagedInventory: product.isManagedInventory,
-      }));
-      np[key] = { ...np[key], products: transformedProducts };
-      this.setState({ noinventory: np });
-    } else {
-      np[key] = { ...np[key], products: [] };
-      this.setState({ noinventory: np });
-    }
-  }
-
   async fetchProducts() {
-    const response = await API.GET(apiEndpoints.getProductForIndentWithManagedInventory(true));
+    const response = await API.GET(apiEndpoints.getProductForIndentWithManagedInventory());
     if (response.success && Array.isArray(response.data)) {
       const transformedProducts = response.data.map((product) => ({
         id: product.productId,
@@ -146,6 +99,7 @@ class Edit extends EditForm {
         measurementUnit: product.measurementUnit,
         productCode: product.productCode,
         isManagedInventory: product.isManagedInventory,
+        leadTimeDays: product.leadTimeDays ?? null,
       }));
       this.setState({
         products: transformedProducts,
@@ -166,7 +120,7 @@ class Edit extends EditForm {
       const data = response.data;
 
       this.formData.indentDate = data.indentDate || data.dateCreation || "";
-      this.formData.needByDate = data.needByDate || null;
+      this.formData.requiredBy = data.requiredBy;
       this.formData.fileInformations = data.fileInformations || [];
 
       const inventoryItems = data.inventoryItems || data.inventoryList || [];
@@ -189,22 +143,21 @@ class Edit extends EditForm {
             productId: pid,
             productCode: productCode,
             unit: unit,
+            leadTimeDays: item.leadTimeDays ?? null,
             specification: item.specification || "",
             remarks: item.remarks || "",
-            needByDate: item.needByDate || null,
+            lineItemStatus: item.lineItemStatus || "NEW",
+            lineItemCode: item.lineItemCode || null,
             selectedCategory,
             selectedProduct: {
               id: pid,
               name: item.product?.productName || "",
               measurementUnit: unit,
               productCode: productCode,
+              leadTimeDays: item.leadTimeDays ?? null,
             },
           };
         }
-      }
-
-      if (Object.keys(p).length === 0) {
-        p[this.key++] = {};
       }
 
       this.setState({
@@ -224,247 +177,450 @@ class Edit extends EditForm {
     }
   }
 
-  renderInventory(key) {
-    const inventoryItem = this.state.noinventory?.[key];
-    if (!inventoryItem) return null;
+  /** Item add/edit dialog — opens empty for a new item. */
+  openAddItemDialog = () => {
+    this.setState({
+      itemDialogOpen: true,
+      dialogItem: {},
+      dialogEditingKey: null,
+      dialogValidation: false,
+    });
+  };
 
-    const currentInventoryId = inventoryItem.productId;
-    const selectedInventories = Object.keys(this.state.noinventory)
-      .map(index => this?.state?.noinventory?.[index]?.productId)
-      .filter(id => id && id !== currentInventoryId);
+  /** Item add/edit dialog — opens pre-filled with an existing item's data. */
+  openEditItemDialog = (key) => {
+    this.setState({
+      itemDialogOpen: true,
+      dialogItem: { ...this.state.noinventory[key] },
+      dialogEditingKey: key,
+      dialogValidation: false,
+    });
+  };
 
-    const productList = (this.state.noinventory[key]?.products?.length > 0)
-      ? this.state.noinventory[key].products
+  closeItemDialog = () => {
+    this.setState({
+      itemDialogOpen: false,
+      dialogItem: {},
+      dialogEditingKey: null,
+      dialogValidation: false,
+    });
+  };
+
+  /** Products already used by other items, excluded from the dialog's product list (unless editing that same item). */
+  getDialogRemainingProducts() {
+    const item = this.state.dialogItem || {};
+    const productList = (item.products && item.products.length > 0)
+      ? item.products
       : (this.state.products.length > 0 ? this.state.products : (this.props.dropdowns?.product || []));
-    const remainingInventories = productList.filter(item =>
-      !selectedInventories.includes(item.id) || item.id === currentInventoryId
+    const editingKey = this.state.dialogEditingKey;
+    const selectedElsewhere = Object.keys(this.state.noinventory)
+      .filter((k) => String(k) !== String(editingKey))
+      .map((k) => this.state.noinventory[k]?.productId);
+    return productList.filter(
+      (p) => !selectedElsewhere.includes(p.id) || item.productId === p.id
     );
+  }
 
-    const inventoryNumber = Number(key);
-    const selectedProduct = productList.find(p => p.id === currentInventoryId) || inventoryItem.selectedProduct || null;
+  handleDialogCategoryChange = async (categoryValue) => {
+    this.setState((prev) => ({
+      dialogItem: {
+        ...prev.dialogItem,
+        selectedCategory: categoryValue,
+        productId: "",
+        productCode: "",
+        unit: "",
+        selectedProduct: null,
+        leadTimeDays: null,
+        products: [],
+      },
+    }));
+    if (!categoryValue?.id) return;
+    const response = await API.GET(apiEndpoints.getProductForIndentByCategory(categoryValue.id));
+    if (!this.state.itemDialogOpen) return;
+    if (response.success && Array.isArray(response.data)) {
+      if (response.data.length === 0) {
+        this.props.enqueueSnackbar(
+          "There are no inventories under selected category. Please select a different category.",
+          { variant: "warning" }
+        );
+      }
+      const transformedProducts = response.data.map((product) => ({
+        id: product.productId,
+        name: product.productName,
+        measurementUnit: product.measurementUnit,
+        productCode: product.productCode,
+        isManagedInventory: product.isManagedInventory,
+        leadTimeDays: product.leadTimeDays ?? null,
+      }));
+      this.setState((prev) =>
+        prev.itemDialogOpen
+          ? { dialogItem: { ...prev.dialogItem, products: transformedProducts } }
+          : prev
+      );
+    } else {
+      this.setState((prev) =>
+        prev.itemDialogOpen ? { dialogItem: { ...prev.dialogItem, products: [] } } : prev
+      );
+    }
+  };
 
-    const quantityMissing = this.state.showValidation &&
-      (!this.state.noinventory[key]?.quantity || Number(this.state.noinventory[key]?.quantity) <= 0);
+  handleDialogProductChange = (value) => {
+    this.setState((prev) => ({
+      dialogItem: {
+        ...prev.dialogItem,
+        productId: value?.id || "",
+        productCode: value?.productCode || "",
+        unit: value?.measurementUnit || "",
+        leadTimeDays: value?.leadTimeDays ?? null,
+        selectedProduct: value || null,
+      },
+    }));
+  };
+
+  saveDialogItem = () => {
+    const item = this.state.dialogItem || {};
+    const hasProduct = !!item.productId;
+    const qty = item.quantity;
+    const hasQty = qty !== undefined && qty !== null && qty !== "" && !isNaN(Number(qty)) && Number(qty) > 0;
+    const specTooLong = item.specification && item.specification.length > 100;
+    const remarksTooLong = item.remarks && item.remarks.length > 100;
+
+    if (!hasProduct || !hasQty || specTooLong || remarksTooLong) {
+      this.setState({ dialogValidation: true });
+      if (!hasProduct) {
+        this.props.enqueueSnackbar("Please select a product", { variant: "error" });
+      } else if (!hasQty) {
+        this.props.enqueueSnackbar("Please enter a valid quantity", { variant: "error" });
+      } else {
+        this.props.enqueueSnackbar("Only 100 characters allowed", { variant: "error" });
+      }
+      return;
+    }
+
+    const key = this.state.dialogEditingKey !== null ? this.state.dialogEditingKey : this.key++;
+    const updated = { ...this.state.noinventory, [key]: { ...item } };
+    this.setState(
+      {
+        noinventory: updated,
+        itemDialogOpen: false,
+        dialogItem: {},
+        dialogEditingKey: null,
+        dialogValidation: false,
+      },
+      () => {
+        if (this.props.onValidationChange) {
+          this.props.onValidationChange();
+        }
+      }
+    );
+  };
+
+  deleteItem = (key) => {
+    const item = this.state.noinventory[key];
+    const isLineItemLocked = item?.lineItemStatus && item.lineItemStatus.toUpperCase() !== "NEW";
+    if (isLineItemLocked) {
+      this.props.enqueueSnackbar(
+        `Line item is ${item.lineItemStatus} — cannot be deleted`,
+        { variant: "warning" }
+      );
+      return;
+    }
+    const p = { ...this.state.noinventory };
+    delete p[key];
+    this.setState({ noinventory: p }, () => {
+      if (this.props.onValidationChange) {
+        this.props.onValidationChange();
+      }
+    });
+  };
+
+  /** Small inline flags shown on each list row — lead time only (no BOQ/stock data in edit). */
+  renderItemRowBadges(item) {
+    const badges = [];
+    if (item.leadTimeDays != null) {
+      badges.push(
+        <span key="lead" className="item-badge item-badge-neutral">
+          ⏱ {item.leadTimeDays}d
+        </span>
+      );
+    }
+    return badges;
+  }
+
+  renderItemRow(key, item) {
+    const isLineItemLocked = item?.lineItemStatus && item.lineItemStatus.toUpperCase() !== "NEW";
+    const productName = item?.selectedProduct?.name || "—";
+    const productCode = item?.productCode || "";
+    const categoryName = item?.selectedCategory?.name || "—";
+    const qty = item?.quantity || 0;
+    const unit = item?.unit || "";
+    const spec = item?.specification || "";
+    const remarks = item?.remarks || "";
+    const truncate = (text) => (text.length > 28 ? text.slice(0, 26) + "…" : text);
+    const badges = this.renderItemRowBadges(item || {});
 
     return (
       <div
-        className="inventory-item"
-        key={`${key}-${this.state.products.length}-${currentInventoryId}`}
-        ref={(el) => { this.rowRefs[key] = el; }}
+        className="indent-item-row"
+        key={key}
+        onClick={() => this.openEditItemDialog(key)}
       >
-        <div className="inventory-item-header">
-          <span>Inventory {inventoryNumber}</span>
+        <div className="item-col item-col-product">
+          <div className="item-product-name">{productName}</div>
+          {productCode && <div className="item-product-code">{productCode}</div>}
+        </div>
+        <div className="item-col item-col-category">{categoryName}</div>
+        <div className="item-col item-col-qty">
+          {qty} {unit}
+        </div>
+        <div className="item-col item-col-spec" title={spec}>
+          {spec ? truncate(spec) : <span className="item-col-empty">—</span>}
+        </div>
+        <div className="item-col item-col-remarks" title={remarks}>
+          {remarks ? truncate(remarks) : <span className="item-col-empty">—</span>}
+        </div>
+        <div className="item-col item-col-badges">
+          {isLineItemLocked ? (
+            <span
+              className={`status-badge-table status-${(item.lineItemStatus || "").toLowerCase().replace(/\s+/g, "-")}`}
+              title={`Line item is ${item.lineItemStatus} — cannot be edited`}
+            >
+              {item.lineItemStatus}
+            </span>
+          ) : badges.length > 0 ? (
+            badges
+          ) : (
+            <span className="item-col-empty">—</span>
+          )}
+        </div>
+        <div className="item-col item-col-actions">
           <IconButton
-            aria-label="delete"
-            onClick={() => {
-              if (Object.keys(this.state.noinventory).length <= 1) {
-                this.props.enqueueSnackbar("At least one inventory option must be present", {
-                  variant: "warning",
-                });
-                return;
-              }
-              const p = { ...this.state.noinventory };
-              delete p[key];
-              this.setState({ noinventory: p }, () => {
-                if (this.props.onValidationChange) {
-                  this.props.onValidationChange();
-                }
-              });
+            size="small"
+            aria-label="edit"
+            onClick={(e) => {
+              e.stopPropagation();
+              this.openEditItemDialog(key);
             }}
-            className="delete-icon"
           >
-            <img src={trashRedIcon} alt="Delete" className="trash-red-icon" />
+            <EditIcon fontSize="small" />
           </IconButton>
-        </div>
-        <div className="flex">
-          <Autocomplete
-            disabled={false}
-            id={`category-autocomplete-${key}`}
-            options={this.state.categories}
-            getOptionLabel={(option) => option.name || ""}
-            value={this.state.noinventory[key]?.selectedCategory || null}
-            onChange={(e, value) => {
-              this.fetchProductsByCategoryForRow(key, value);
-              if (this.props.onValidationChange) this.props.onValidationChange();
-            }}
-            disableClearable={false}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                name={`category_${key}`}
-                variant="outlined"
-                margin="normal"
-                label="Category Name"
-                required={true}
-                InputLabelProps={{ shrink: true }}
-              />
-            )}
-          />
-          <Autocomplete
-            disabled={false}
-            id={`product-autocomplete-${key}`}
-            options={remainingInventories}
-            getOptionLabel={(option) => option["name"] || ""}
-            value={selectedProduct || null}
-            onChange={(e, value) => {
-              const p = { ...this.state.noinventory };
-              if (value) {
-                p[key].productId = value.id || "";
-                p[key].productCode = value.productCode || "";
-                p[key].unit = value.measurementUnit || "";
-                p[key].selectedProduct = value;
-                this.setState({ noinventory: p }, () => {
-                  if (this.props.onValidationChange) {
-                    this.props.onValidationChange();
-                  }
-                });
-              } else {
-                p[key].productId = "";
-                p[key].productCode = "";
-                p[key].unit = "";
-                p[key].selectedProduct = null;
-                this.setState({ noinventory: p }, () => {
-                  if (this.props.onValidationChange) {
-                    this.props.onValidationChange();
-                  }
-                });
-              }
-            }}
-            disableClearable={true}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                name="productId"
-                variant="outlined"
-                margin="normal"
-                label="Inventory Name"
-                required={true}
-                InputLabelProps={{ shrink: true }}
-              />
-            )}
-          />
-          <Autocomplete
-            disabled={false}
-            id={`product-code-autocomplete-${key}`}
-            options={remainingInventories}
-            getOptionLabel={(option) => option["productCode"] || ""}
-            value={selectedProduct || null}
-            onChange={(e, value) => {
-              const p = { ...this.state.noinventory };
-              if (value) {
-                p[key].productId = value.id || "";
-                p[key].productCode = value.productCode || "";
-                p[key].unit = value.measurementUnit || "";
-                p[key].selectedProduct = value;
-                this.setState({ noinventory: p }, () => {
-                  if (this.props.onValidationChange) {
-                    this.props.onValidationChange();
-                  }
-                });
-              } else {
-                p[key].productId = "";
-                p[key].productCode = "";
-                p[key].unit = "";
-                p[key].selectedProduct = null;
-                this.setState({ noinventory: p }, () => {
-                  if (this.props.onValidationChange) {
-                    this.props.onValidationChange();
-                  }
-                });
-              }
-            }}
-            disableClearable={true}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                name="productCode"
-                variant="outlined"
-                margin="normal"
-                label="Inventory Code"
-                required={true}
-                InputLabelProps={{ shrink: true }}
-              />
-            )}
-          />
-        </div>
-        <div className="flex">
-          <div className={`quantity-field-wrapper${quantityMissing ? " quantity-error" : ""}`}>
-            {this.renderTextField({
-              fieldname: "quantity",
-              placeholder: "Enter Quantity",
-              type: "number",
-              required: true,
-              data: this.state.noinventory[key],
-              skipAdd: true,
-              validation: "nonegative",
-              value: this.state.noinventory[key]?.quantity || "",
-              onChange: (value) => {
-                const p = this.state.noinventory;
-                p[key].quantity = value;
-                this.setState({ noinventory: { ...p } }, () => {
-                  if (this.props.onValidationChange) this.props.onValidationChange();
-                });
-              },
-            })}
-            {quantityMissing && (
-              <span className="quantity-error-msg">Quantity is required</span>
-            )}
-          </div>
-          {this.renderTextField({
-            fieldname: `unit_${key}`,
-            placeholder: "Measurement Unit",
-            disabled: true,
-            value: this.state.noinventory[key]?.unit || "",
-            skipAdd: true,
-          })}
-        </div>
-        <div className="flex">
-          {this.renderTextField({
-            fieldname: "specification",
-            placeholder: "Enter Specification",
-            data: this.state.noinventory[key],
-            skipAdd: true,
-            validation: "maxlength",
-            lengthConstraint: 100,
-            errorMessage: "only 100 characters allowed",
-            value: this.state.noinventory[key]?.specification || "",
-            onChange: (value) => {
-              const p = this.state.noinventory;
-              p[key].specification = value;
-              this.setState({ noinventory: { ...p } });
-            },
-          })}
-          {this.renderTextField({
-            fieldname: "remarks",
-            placeholder: "Enter Remarks",
-            data: this.state.noinventory[key],
-            skipAdd: true,
-            validation: "maxlength",
-            lengthConstraint: 100,
-            errorMessage: "only 100 characters allowed",
-            value: this.state.noinventory[key]?.remarks || "",
-            onChange: (value) => {
-              const p = this.state.noinventory;
-              p[key].remarks = value;
-              this.setState({ noinventory: { ...p } });
-            },
-          })}
-        </div>
-        <div className="item-need-by-date-wrapper">
-          {this.renderDate({
-            fieldname: `needByDate_${key}`,
-            label: "Override Date",
-            emptyDate: true,
-            type: "date",
-            value: this.state.noinventory[key]?.needByDate || null,
-            onChange: () => {
-              const p = this.state.noinventory;
-              p[key].needByDate = this.formData[`needByDate_${key}`] || null;
-              this.setState({ noinventory: { ...p } });
-            },
-          })}
+          {!isLineItemLocked && (
+            <IconButton
+              size="small"
+              aria-label="delete"
+              onClick={(e) => {
+                e.stopPropagation();
+                this.deleteItem(key);
+              }}
+            >
+              <img src={trashRedIcon} alt="Delete" className="trash-red-icon" />
+            </IconButton>
+          )}
         </div>
       </div>
+    );
+  }
+
+  renderItemsSection() {
+    const keys = Object.keys(this.state.noinventory).sort((a, b) => Number(a) - Number(b));
+    return (
+      <div className="indent-items-section">
+        <div className="indent-items-header-row">
+          <div className="indent-items-title">
+            Items{keys.length > 0 ? ` (${keys.length})` : ""}
+          </div>
+          {keys.length > 0 && (
+            <Button
+              onClick={this.openAddItemDialog}
+              buttonClass="blue"
+              label="Add Product"
+              startIcon={<AddIcon />}
+            />
+          )}
+        </div>
+        {keys.length === 0 ? (
+          <div className="indent-items-empty">
+            <div className="indent-items-empty-text">No items added yet.</div>
+            <Button onClick={this.openAddItemDialog} buttonClass="blue" label="+ Add Product" />
+          </div>
+        ) : (
+          <div className="indent-items-table">
+            <div className="indent-items-table-head">
+              <div className="item-col item-col-product">Product</div>
+              <div className="item-col item-col-category">Category</div>
+              <div className="item-col item-col-qty">Qty</div>
+              <div className="item-col item-col-spec">Specification</div>
+              <div className="item-col item-col-remarks">Remarks</div>
+              <div className="item-col item-col-badges">Status / Lead Time</div>
+              <div className="item-col item-col-actions" />
+            </div>
+            {keys.map((key) => this.renderItemRow(key, this.state.noinventory[key]))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  renderItemDialog() {
+    const item = this.state.dialogItem || {};
+    const showValidation = this.state.dialogValidation;
+    const remainingProducts = this.getDialogRemainingProducts();
+    const isLineItemLocked = item.lineItemStatus && item.lineItemStatus.toUpperCase() !== "NEW";
+    const quantityMissing = showValidation && (!item.quantity || Number(item.quantity) <= 0);
+    const productMissing = showValidation && !item.productId;
+
+    return (
+      <Dialog
+        open={this.state.itemDialogOpen}
+        onClose={this.closeItemDialog}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="item-dialog-title"
+      >
+        <DialogTitle id="item-dialog-title">
+          {this.state.dialogEditingKey !== null ? "Edit Item" : "Add Item"}
+          {isLineItemLocked && (
+            <span
+              className={`status-badge-table status-${(item.lineItemStatus || "").toLowerCase().replace(/\s+/g, "-")}`}
+              style={{ marginLeft: 12 }}
+            >
+              {item.lineItemStatus}
+            </span>
+          )}
+        </DialogTitle>
+        <DialogContent>
+          <div className="item-dialog-row">
+            <Autocomplete
+              id="dialog-category-autocomplete"
+              options={this.state.categories}
+              getOptionLabel={(option) => option.name || ""}
+              value={item.selectedCategory || null}
+              onChange={(e, value) => this.handleDialogCategoryChange(value)}
+              disableClearable={false}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  name="dialogCategory"
+                  variant="outlined"
+                  margin="normal"
+                  label="Category Name"
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+            />
+          </div>
+          <div className="item-dialog-row two-col">
+            <Autocomplete
+              id="dialog-product-autocomplete"
+              options={remainingProducts}
+              getOptionLabel={(option) => option["name"] || ""}
+              value={item.selectedProduct || null}
+              onChange={(e, value) => this.handleDialogProductChange(value)}
+              disableClearable
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  name="dialogProductName"
+                  variant="outlined"
+                  margin="normal"
+                  label="Inventory Name"
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+            />
+            <Autocomplete
+              id="dialog-product-code-autocomplete"
+              options={remainingProducts}
+              getOptionLabel={(option) => option["productCode"] || ""}
+              value={item.selectedProduct || null}
+              onChange={(e, value) => this.handleDialogProductChange(value)}
+              disableClearable
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  name="dialogProductCode"
+                  variant="outlined"
+                  margin="normal"
+                  label="Inventory Code"
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
+            />
+          </div>
+          {productMissing && (
+            <div className="quantity-error-msg">Please select a product</div>
+          )}
+          <div className="item-dialog-row two-col">
+            <div className={`quantity-field-wrapper${quantityMissing ? " quantity-error" : ""}`}>
+              {this.renderTextField({
+                fieldname: "dialogQuantity",
+                placeholder: "Enter Quantity",
+                type: "number",
+                required: true,
+                disabled: isLineItemLocked,
+                skipAdd: true,
+                validation: "nonegative",
+                value: item.quantity || "",
+                onChange: (value) => {
+                  if (isLineItemLocked) return;
+                  this.setState((prev) => ({ dialogItem: { ...prev.dialogItem, quantity: value } }));
+                },
+              })}
+              {quantityMissing && <span className="quantity-error-msg">Quantity is required</span>}
+            </div>
+            {this.renderTextField({
+              fieldname: "dialogUnit",
+              placeholder: "Measurement Unit",
+              disabled: true,
+              skipAdd: true,
+              value: item.unit || "",
+            })}
+          </div>
+          <div className="item-dialog-row">
+            {this.renderTextField({
+              fieldname: "dialogSpecification",
+              placeholder: "Enter Specification",
+              skipAdd: true,
+              validation: "maxlength",
+              lengthConstraint: 100,
+              errorMessage: "only 100 characters allowed",
+              value: item.specification ?? "",
+              onChange: (value) =>
+                this.setState((prev) => ({ dialogItem: { ...prev.dialogItem, specification: value } })),
+            })}
+          </div>
+          <div className="item-dialog-row">
+            {this.renderTextField({
+              fieldname: "dialogRemarks",
+              placeholder: "Enter Remarks",
+              skipAdd: true,
+              validation: "maxlength",
+              lengthConstraint: 100,
+              errorMessage: "only 100 characters allowed",
+              value: item.remarks ?? "",
+              onChange: (value) =>
+                this.setState((prev) => ({ dialogItem: { ...prev.dialogItem, remarks: value } })),
+            })}
+          </div>
+          {item.leadTimeDays != null && (
+            <div className="lead-time-chip">
+              <span className="lead-time-chip-icon">⏱</span>
+              Lead Time: <strong>{item.leadTimeDays} days</strong>
+            </div>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={this.closeItemDialog} buttonClass="grey" label="Cancel" />
+          <Button
+            onClick={this.saveDialogItem}
+            buttonClass="blue"
+            label={this.state.dialogEditingKey !== null ? "Save Changes" : "Add Item"}
+          />
+        </DialogActions>
+      </Dialog>
     );
   }
 
@@ -490,32 +646,17 @@ class Edit extends EditForm {
       return;
     }
 
-    // Transform inventory data to match API payload structure
     const inventoryList = Object.values(this.state.noinventory).map((item) => ({
       productId: item.productId,
       quantity: parseFloat(item.quantity) || 0,
       specification: item.specification || "",
       remarks: item.remarks || "",
       measurementUnit: item.unit || "",
-      needByDate: item.needByDate || null,
     }));
-
-    // Auto-compute header needByDate as min of item dates if not explicitly set
-    let headerNeedByDate = this.formData.needByDate || null;
-    if (!headerNeedByDate) {
-      const itemDates = Object.values(this.state.noinventory)
-        .map((item) => item.needByDate)
-        .filter((d) => d);
-      if (itemDates.length > 0) {
-        headerNeedByDate = itemDates.reduce((min, d) =>
-          moment(d, "DD-MM-YYYY").isBefore(moment(min, "DD-MM-YYYY")) ? d : min
-        );
-      }
-    }
 
     const params = {
       indentDate: this.formData.indentDate || "",
-      needByDate: headerNeedByDate,
+      requiredBy: this.formData.requiredBy,
       fileInformations: this.formData.fileInformations || [],
       inventoryList: inventoryList,
     };
@@ -527,25 +668,26 @@ class Edit extends EditForm {
   }
 
   submitForm = () => {
-    // Find first inventory key with missing quantity
-    const firstInvalidKey = Object.keys(this.state.noinventory).find(key => {
-      const item = this.state.noinventory[key];
-      const qty = item?.quantity;
-      return !qty || isNaN(Number(qty)) || Number(qty) <= 0;
-    });
-
-    if (firstInvalidKey) {
-      this.setState({ showValidation: true }, () => {
-        const ref = this.rowRefs[firstInvalidKey];
-        if (ref) {
-          ref.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      });
+    const keys = Object.keys(this.state.noinventory);
+    if (keys.length === 0) {
+      this.props.enqueueSnackbar("Add at least one item.", { variant: "error" });
       return;
     }
 
-    // Validation passed — advance to review step
-    this.setState({ showValidation: false, currentStep: 2 });
+    const invalidKey = keys.find((key) => {
+      const item = this.state.noinventory[key];
+      const qty = item?.quantity;
+      return !item?.productId || !qty || isNaN(Number(qty)) || Number(qty) <= 0;
+    });
+    if (invalidKey) {
+      this.props.enqueueSnackbar("Please complete this item's details before proceeding.", {
+        variant: "error",
+      });
+      this.openEditItemDialog(invalidKey);
+      return;
+    }
+
+    this.setState({ currentStep: 2 });
   }
 
   handleConfirmSave = () => {
@@ -559,23 +701,6 @@ class Edit extends EditForm {
       this.state.isFileUploading ||
       Object.keys(this.formValidation).length > 0
     );
-  }
-
-  hasEmptyInventoryRecords = () => {
-    const inventories = Object.values(this.state.noinventory || {});
-    if (inventories.length === 0) return true;
-
-    return inventories.some(inventory => {
-      if (!inventory) return true;
-      const hasProduct = inventory.productId && inventory.productId !== "" && inventory.productId !== null && inventory.productId !== undefined;
-      const quantityValue = inventory.quantity;
-      const hasQuantity = quantityValue !== undefined &&
-                         quantityValue !== null &&
-                         quantityValue !== "" &&
-                         !isNaN(Number(quantityValue)) &&
-                         Number(quantityValue) > 0;
-      return !hasProduct || !hasQuantity;
-    });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -716,7 +841,6 @@ class Edit extends EditForm {
 
     return (
       <div className="indent-upload-section">
-        <div className="upload-documents-heading">Upload Documents</div>
         <div className="upload-controls">
           <div className="upload-left">
             <div className="upload-buttons-row">
@@ -742,7 +866,7 @@ class Edit extends EditForm {
                   type="text"
                   className="file-name-input"
                   value={this.state.selectedFileName}
-                  placeholder="choose file"
+                  placeholder="Upload Documents"
                   readOnly
                 />
               </label>
@@ -868,31 +992,11 @@ class Edit extends EditForm {
     );
   }
 
-  renderInventoryAddButton() {
-    return (
-      <div className="add-inventory-button-wrapper">
-        <Button
-          onClick={() => {
-            const p = this.state.noinventory;
-            p[this.key++] = {};
-            this.setState({ noinventory: { ...p } }, () => {
-              if (this.props.onValidationChange) {
-                this.props.onValidationChange();
-              }
-            });
-          }}
-          buttonClass="grey"
-          label="+ Add Inventory"
-          disabled={Object.keys(this.state.noinventory).length === 50}
-        />
-      </div>
-    );
-  }
-
   render() {
     const { currentStep } = this.state;
     return (
       <div className="list-section add create-po-wrapper">
+        {this.renderItemDialog()}
         <div className="create-po-header">
           <div className="create-po-header-row">
             {this.renderEditHeading()}
@@ -906,7 +1010,7 @@ class Edit extends EditForm {
               noinventory={this.state.noinventory}
               fileInformations={this.formData.fileInformations || []}
               indentDate={this.formData.indentDate || ""}
-              needByDate={this.formData.needByDate || null}
+              requiredBy={this.formData.requiredBy}
               isSaving={this.state.isUpdating}
               onBack={() => this.setState({ currentStep: 1 })}
               onConfirm={this.handleConfirmSave}
@@ -914,35 +1018,29 @@ class Edit extends EditForm {
           ) : (
             this.state.isLoaded && (
               <form onSubmit={(e) => this.update(e)}>
-                <div className="flex">
-                  <div className="indent-header-fields">
+                <div className="indent-header-card">
+                  <div className="header-required-by header-required-by-group">
                     {this.renderDate({
                       fieldname: "indentDate",
                       label: "Indent Date",
                       required: true,
                     })}
-                  </div>
-                  <div className="indent-header-fields">
-                    {this.renderDate({
-                      fieldname: "needByDate",
-                      label: "Expected Date",
-                      emptyDate: true,
-                      type: "date",
-                      value: this.formData.needByDate || null,
+                    {this.renderAutoComplete({
+                      fieldname: "requiredBy",
+                      placeholder: "Required By",
+                      options: this.props.dropdowns?.requiredByOptions || [],
+                      freeSolo: true,
+                      helperText: "Type to search existing, or enter a new name",
+                      getOption: (option) =>
+                        typeof option === "string" ? option : option["name"] || "",
                     })}
                   </div>
+                  <div className="header-divider" />
+                  <div className="header-upload-documents">
+                    {this.renderFileArea()}
+                  </div>
                 </div>
-                {this.renderInventoryAddButton()}
-                <div className="inventories-list">
-                  {Object.keys(this.state.noinventory).length > 0 ? (
-                    Object.keys(this.state.noinventory).sort((a, b) => Number(b) - Number(a)).map((key) =>
-                      this.renderInventory(key)
-                    )
-                  ) : (
-                    <div>No inventory items found</div>
-                  )}
-                </div>
-                {this.renderFileArea()}
+                {this.renderItemsSection()}
               </form>
             )
           )}

@@ -23,6 +23,9 @@ import Popover from "@material-ui/core/Popover";
 import moment from "moment";
 import DatePicker from "./../../../Shared/Date";
 import { constants } from "./../../../messages";
+import SettingsIcon from "@material-ui/icons/Settings";
+import Tooltip from "@material-ui/core/Tooltip";
+import UnitConversionConfig from "./../../Product/UnitConversionConfig";
 
 class Step2FillDetails extends React.Component {
   lineFileInputRefs = {};
@@ -44,6 +47,11 @@ class Step2FillDetails extends React.Component {
     tooltipProductId: null,   // which product is hovered
     projectList: [],
     unitConversionsCache: {}, // productId -> [{id, unitName, conversionFactor}]
+    // Quote linkage
+    finalizedQuoteLines: [],   // finalized supplier quote lines for selected supplier+indents
+    quoteLinkAnchorEl: null,   // anchor for quote link dropdown
+    quoteLinkLineIndex: null,  // which line the dropdown is for
+    unitConversionProduct: null, // { productId, productName, measurementUnit } — set to open the edit dialog
   };
 
   componentDidMount() {
@@ -83,6 +91,7 @@ class Step2FillDetails extends React.Component {
       (!prevProps.orderTo || prevProps.orderTo.id !== this.props.orderTo.id)
     ) {
       this.loadSupplierDetails(this.props.orderTo.id);
+      this.fetchFinalizedQuoteLines(this.props.orderTo.id);
     }
     // If orderFrom changes and has an ID, fetch its details if not already loaded
     if (
@@ -121,6 +130,18 @@ class Step2FillDetails extends React.Component {
         }
       })
     );
+  };
+
+  refreshUnitConversionsForProduct = async (productId) => {
+    try {
+      const res = await API.GET(apiEndpoints.getUnitConversions(productId));
+      const conversions = res.success ? res.data : [];
+      this.setState((prev) => ({
+        unitConversionsCache: { ...prev.unitConversionsCache, [productId]: conversions },
+      }));
+    } catch (_) {
+      // leave existing cache as-is on error
+    }
   };
 
   handleBillingUnitChange = (index, selectedUnit, conversions, baseUnit) => {
@@ -294,6 +315,40 @@ class Step2FillDetails extends React.Component {
         isLoadingFirms: false,
       });
     }
+  };
+
+  fetchFinalizedQuoteLines = async (supplierId) => {
+    if (!supplierId) return;
+    try {
+      const items = this.props.items || [];
+      const indentIds = [...new Set(
+        items.flatMap(i => (i.indentRefs || []).map(r => String(r.indentId || r.actualIndentId || "")).filter(Boolean))
+      )];
+      const params = new URLSearchParams();
+      params.append("supplierId", supplierId);
+      indentIds.forEach(id => params.append("indentIds", id));
+      const res = await API.GET(`${apiEndpoints.quoteComparisonFinalizedForPo}?${params.toString()}`);
+      if (res && res.data) {
+        this.setState({ finalizedQuoteLines: res.data });
+      }
+    } catch (e) {
+      // non-critical — quote linkage is optional
+    }
+  };
+
+  openQuoteLink = (e, idx) => this.setState({ quoteLinkAnchorEl: e.currentTarget, quoteLinkLineIndex: idx });
+  closeQuoteLink = () => this.setState({ quoteLinkAnchorEl: null, quoteLinkLineIndex: null });
+
+  applyQuoteLink = (line) => {
+    const idx = this.state.quoteLinkLineIndex;
+    if (idx == null) return;
+    this.handleItemChange(idx, "rate", String(line.quotedRate || ""));
+    this.handleItemChange(idx, "discount", String(line.discountPercent || "0"));
+    this.handleItemChange(idx, "gst", String(line.gstPercent || "0"));
+    this.handleItemChange(idx, "_linkedQcLineId", line.qcLineId);
+    this.handleItemChange(idx, "_linkedSupplierQuoteLineId", line.supplierQuoteLineId);
+    this.handleItemChange(idx, "_linkedQcId", line.qcId);
+    this.closeQuoteLink();
   };
 
   fetchSupplierDetails = async (supplierId) => {
@@ -599,6 +654,13 @@ const firmDetails = {
     }, 0);
   };
 
+  // PO Discount is a flat, post-tax PO-level deduction — does not touch line items, rates, or GST.
+  calculateNetTotalAfterPoDiscount = () => {
+    const lineTotal = this.calculateTotal();
+    const poDiscount = parseFloat(this.props.poDiscount || 0);
+    return lineTotal - poDiscount;
+  };
+
   handleAddSupplier = async (supplier) => {
     // Supplier is already created via API, just add it to the list and select it
     const newSupplier = {
@@ -800,6 +862,8 @@ handleAddFirm = async (firm) => {
   render() {
     const mergedItems = this.groupItemsByProductId();
     const total = this.calculateTotal();
+    const poDiscount = parseFloat(this.props.poDiscount || 0);
+    const netTotal = this.calculateNetTotalAfterPoDiscount();
 
     return (
       <div className="step2-fill-details">
@@ -815,8 +879,19 @@ handleAddFirm = async (firm) => {
           ref={(ref) => { this.firmModalRef = ref; }}
         />
 
+        {this.state.unitConversionProduct && (
+          <UnitConversionConfig
+            product={this.state.unitConversionProduct}
+            onClose={() => {
+              const productId = this.state.unitConversionProduct.productId;
+              this.setState({ unitConversionProduct: null });
+              this.refreshUnitConversionsForProduct(productId);
+            }}
+          />
+        )}
+
         {/* Order To and Order From Sections - Side by Side */}
-        <div className="order-sections-container">
+        {!this.props.addLinesMode && <div className="order-sections-container">
           {/* Order To Section */}
           <div className="form-section">
             <h3 className="section-title">Order To</h3>
@@ -1028,11 +1103,11 @@ handleAddFirm = async (firm) => {
               </div>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* Purchase Order Subject */}
         {/* Purchase Order Subject + SPL PO inline */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div style={{ flex: 1 }}>
               <h3 className="section-title">Purchase order Subject</h3>
@@ -1070,7 +1145,7 @@ handleAddFirm = async (firm) => {
               />
             </div>
           )}
-          {/* Project (optional) */}
+          {/* Project (required) */}
           <div style={{ marginTop: "12px" }}>
             <Autocomplete
               options={this.state.projectList}
@@ -1079,7 +1154,7 @@ handleAddFirm = async (firm) => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Project (optional)"
+                  label="Project *"
                   size="small"
                   variant="outlined"
                   placeholder="Select project"
@@ -1087,7 +1162,7 @@ handleAddFirm = async (firm) => {
               )}
             />
           </div>
-        </div>
+        </div>}
         {/* Purchase Order Items Table */}
         <div className="form-section items-section">
           <h3 className="section-title">Purchase order Items</h3>
@@ -1128,6 +1203,12 @@ handleAddFirm = async (firm) => {
                             {this.formatValue(item.inventoryName)} ({this.formatValue(item.unit)})
                           </span>
                         </span>
+                        {item.leadTimeDays != null && (
+                          <div className="lead-time-chip" style={{ marginTop: '4px' }}>
+                            <span className="lead-time-chip-icon">⏱</span>
+                            Lead Time: <strong>{item.leadTimeDays} days</strong>
+                          </div>
+                        )}
                         {item.projectInfo && (
                           <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
                             Projects: {item.projectInfo}
@@ -1202,44 +1283,92 @@ handleAddFirm = async (firm) => {
 
                           return (
                             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                              {/* Unit selector — only when alternate units configured */}
                               {hasAlternateUnits ? (
-                                <select
-                                  value={selectedBillingUnit}
-                                  onChange={(e) =>
-                                    this.handleBillingUnitChange(index, e.target.value, conversions, baseUnit)
-                                  }
-                                  style={{
-                                    fontSize: 12,
-                                    padding: "5px 6px",
-                                    border: "1px solid #ccc",
-                                    borderRadius: 4,
-                                    width: "100%",
-                                    height: 34,
-                                    background: "#fff",
-                                  }}
-                                >
-                                  <option value={baseUnit}>{baseUnit}</option>
-                                  {conversions.map((c) => (
-                                    <option key={c.id} value={c.unitName}>{c.unitName}</option>
-                                  ))}
-                                </select>
+                                <>
+                                  {/* Unit dropdown when alternate units configured */}
+                                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                    <select
+                                      value={selectedBillingUnit}
+                                      onChange={(e) =>
+                                        this.handleBillingUnitChange(index, e.target.value, conversions, baseUnit)
+                                      }
+                                      style={{
+                                        fontSize: 12,
+                                        padding: "5px 6px",
+                                        border: "1px solid #ccc",
+                                        borderRadius: 4,
+                                        width: "100%",
+                                        height: 34,
+                                        background: "#fff",
+                                      }}
+                                    >
+                                      <option value={baseUnit}>{baseUnit}</option>
+                                      {conversions.map((c) => (
+                                        <option key={c.id} value={c.unitName}>{c.unitName}</option>
+                                      ))}
+                                    </select>
+                                    <Tooltip title="Edit billing units">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          this.setState({
+                                            unitConversionProduct: {
+                                              productId: item.productId,
+                                              productName: item.inventoryName,
+                                              measurementUnit: baseUnit,
+                                            },
+                                          })
+                                        }
+                                      >
+                                        <SettingsIcon style={{ fontSize: 16 }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </div>
+                                  {/* Qty — billing qty when billing unit active, base qty otherwise */}
+                                  <TextField
+                                    value={item.billingUnit ? (item.billingQuantity || "") : (item.quantity || "")}
+                                    size="small"
+                                    variant="outlined"
+                                    type="number"
+                                    disabled
+                                    inputProps={{ style: { fontSize: "12px", padding: "6px 8px" } }}
+                                  />
+                                  {/* Base qty reference when billing unit is active */}
+                                  {item.billingUnit && (
+                                    <div style={{ fontSize: 10, color: "#888", lineHeight: 1.2 }}>
+                                      = {item.quantity || 0} {baseUnit}
+                                    </div>
+                                  )}
+                                </>
                               ) : (
-                                <span style={{ fontSize: 11, color: "#666", paddingBottom: 2 }}>{baseUnit}</span>
-                              )}
-                              {/* Quantity — billing qty when unit selected, base qty otherwise */}
-                              <TextField
-                                value={item.billingUnit ? (item.billingQuantity || "") : (item.quantity || "")}
-                                size="small"
-                                variant="outlined"
-                                type="number"
-                                disabled
-                                inputProps={{ style: { fontSize: "12px", padding: "6px 8px" } }}
-                              />
-                              {/* Base qty reference when billing unit is active */}
-                              {item.billingUnit && (
-                                <div style={{ fontSize: 10, color: "#888", lineHeight: 1.2 }}>
-                                  = {item.quantity || 0} {baseUnit}
+                                /* No conversions — qty and unit inline */
+                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <TextField
+                                    value={item.quantity || ""}
+                                    size="small"
+                                    variant="outlined"
+                                    type="number"
+                                    disabled
+                                    inputProps={{ style: { fontSize: "12px", padding: "6px 8px" } }}
+                                    style={{ width: 80 }}
+                                  />
+                                  <span style={{ fontSize: 12, color: "#555", whiteSpace: "nowrap" }}>{baseUnit}</span>
+                                  <Tooltip title="Add billing units">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        this.setState({
+                                          unitConversionProduct: {
+                                            productId: item.productId,
+                                            productName: item.inventoryName,
+                                            measurementUnit: baseUnit,
+                                          },
+                                        })
+                                      }
+                                    >
+                                      <SettingsIcon style={{ fontSize: 16 }} />
+                                    </IconButton>
+                                  </Tooltip>
                                 </div>
                               )}
                             </div>
@@ -1259,42 +1388,71 @@ handleAddFirm = async (firm) => {
                         />
                       </TableCell>
                       <TableCell className="rate-cell">
-                        <TextField
-                          value={item.rate || ""}
-                          onChange={(e) =>
-                            this.handleItemChange(index, "rate", e.target.value)
-                          }
-                          size="small"
-                          variant="outlined"
-                          type="number"
-                          required
-                          inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                        />
+                        {item.willBeClubbed ? (
+                          <div style={{ fontSize: "12px" }}>
+                            <div>Rs. {item.rate}</div>
+                            <div style={{ color: "#1976d2", fontStyle: "italic", fontSize: "11px", marginTop: "2px" }}>
+                              Clubbed
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <TextField
+                              value={item.rate || ""}
+                              onChange={(e) =>
+                                this.handleItemChange(index, "rate", e.target.value)
+                              }
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              required
+                              inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
+                            />
+                            {this.props.orderTo && this.state.finalizedQuoteLines.length > 0 && (
+                              <IconButton
+                                size="small"
+                                title="Link finalized quote rate"
+                                onClick={(e) => this.openQuoteLink(e, index)}
+                                style={{ padding: 4, color: item._linkedQcId ? "#2e7d32" : "#999" }}
+                              >
+                                <span style={{ fontSize: 14 }}>🔗</span>
+                              </IconButton>
+                            )}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          type="number"
-                          size="small"
-                          variant="outlined"
-                          placeholder="0"
-                          value={item.discount || ""}
-                          inputProps={{ min: 0, max: 100, step: 0.01 }}
-                          onChange={(e) => this.handleItemChange(index, "discount", e.target.value)}
-                          style={{ width: "80px" }}
-                        />
+                        {item.willBeClubbed ? (
+                          <span style={{ fontSize: "12px" }}>{item.discount || "0"}%</span>
+                        ) : (
+                          <TextField
+                            type="number"
+                            size="small"
+                            variant="outlined"
+                            placeholder="0"
+                            value={item.discount || ""}
+                            inputProps={{ min: 0, max: 100, step: 0.01 }}
+                            onChange={(e) => this.handleItemChange(index, "discount", e.target.value)}
+                            style={{ width: "80px" }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell>
-                        <TextField
-                          value={item.gst ?? ""}
-                          onChange={(e) =>
-                            this.handleItemChange(index, "gst", e.target.value)
-                          }
-                          size="small"
-                          variant="outlined"
-                          type="number"
-                          placeholder="%"
-                          inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
-                        />
+                        {item.willBeClubbed ? (
+                          <span style={{ fontSize: "12px" }}>{item.gst || "0"}%</span>
+                        ) : (
+                          <TextField
+                            value={item.gst ?? ""}
+                            onChange={(e) =>
+                              this.handleItemChange(index, "gst", e.target.value)
+                            }
+                            size="small"
+                            variant="outlined"
+                            type="number"
+                            placeholder="%"
+                            inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell className="net-rate-cell calculated-cell">
                         {item.netRate ? `Rs. ${parseFloat(item.netRate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
@@ -1351,14 +1509,47 @@ handleAddFirm = async (firm) => {
             </div>
             <div className="table-total">
               <strong>Total: Rs. {total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+              {poDiscount > 0 && (
+                <>
+                  <div style={{ fontSize: 13, marginTop: 4 }}>
+                    PO Discount: <strong>- Rs. {poDiscount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  </div>
+                  <div style={{ marginTop: 4 }}>
+                    <strong>Net Total: Rs. {netTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
 
 
 
+        {/* PO Discount Section */}
+        {!this.props.addLinesMode && <div className="form-section">
+          <h3 className="section-title">PO Discount</h3>
+          <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
+            <div style={{ flex: "1", minWidth: "160px" }}>
+              <div style={{ fontSize: "12px", marginBottom: "4px", color: "#555" }}>PO Discount (₹)</div>
+              <TextField
+                type="number"
+                variant="outlined"
+                size="small"
+                placeholder="0.00"
+                value={this.props.poDiscount || ""}
+                onChange={(e) => this.props.onPoDiscountChange(e.target.value)}
+                inputProps={{ min: 0, step: 0.01, style: { fontSize: "12px", padding: "8px" } }}
+                style={{ width: "100%" }}
+              />
+            </div>
+          </div>
+          <div style={{ fontSize: "11px", color: "#888", marginTop: "6px" }}>
+            A flat, special discount applied at the PO level after GST. Line item rates, GST, and totals are not affected.
+          </div>
+        </div>}
+
         {/* Freight Charges Section */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <h3 className="section-title">Freight Charges</h3>
           <div style={{ display: "flex", gap: "16px", alignItems: "flex-start", flexWrap: "wrap" }}>
             <div style={{ flex: "1", minWidth: "160px" }}>
@@ -1411,10 +1602,10 @@ handleAddFirm = async (firm) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* Custom / Additional Charges Section */}
-        <div className="form-section">
+        {!this.props.addLinesMode && <div className="form-section">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
             <h3 className="section-title" style={{ margin: 0 }}>Additional Charges</h3>
             <button
@@ -1502,15 +1693,15 @@ handleAddFirm = async (firm) => {
               </div>
             );
           })}
-        </div>
+        </div>}
 
         {/* Notes Section */}
-        {this.props.fileArea ? (
+        {!this.props.addLinesMode && (this.props.fileArea ? (
           <div className="form-section">
             {this.props.fileArea}
           </div>
-        ) : null}
-        <div className="form-section">
+        ) : null)}
+        {!this.props.addLinesMode && <div className="form-section">
           <h3 className="section-title">Notes</h3>
           <ReactQuill
             value={this.props.noteText}
@@ -1526,7 +1717,38 @@ handleAddFirm = async (firm) => {
             placeholder="Enter notes..."
             style={{ background: '#fff' }}
           />
-        </div>
+        </div>}
+
+        {/* Quote Linkage Popover */}
+        <Popover
+          open={Boolean(this.state.quoteLinkAnchorEl)}
+          anchorEl={this.state.quoteLinkAnchorEl}
+          onClose={this.closeQuoteLink}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        >
+          <div style={{ padding: 12, minWidth: 280, maxHeight: 300, overflowY: "auto" }}>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Select Finalized Quote Line</div>
+            {this.state.finalizedQuoteLines.length === 0 ? (
+              <div style={{ fontSize: 12, color: "#aaa" }}>No finalized lines for this supplier</div>
+            ) : (
+              this.state.finalizedQuoteLines.map((line, i) => (
+                <div
+                  key={i}
+                  onClick={() => this.applyQuoteLink(line)}
+                  style={{
+                    padding: "8px 10px", borderRadius: 4, cursor: "pointer",
+                    borderBottom: "1px solid #f0f0f0", fontSize: 12,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#f5f5f5"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{ fontWeight: 600 }}>{line.productName}</div>
+                  <div style={{ color: "#555" }}>Rate: ₹{line.quotedRate} | QC: {line.qcId}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </Popover>
       </div>
     );
   }

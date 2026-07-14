@@ -11,8 +11,7 @@ public interface PurchaseOrderIndentRefRepository extends JpaRepository<Purchase
 
     /**
      * For all active PO lines belonging to non-cancelled / non-completed POs,
-     * return the indent line item codes so we can look up needByDate on
-     * IndentInventoryList.
+     * return the indent line item codes and their linked line items.
      *
      * @param excludedStatuses PO statuses that are considered "closed" (e.g. CANCELLED, SHORT CLOSE, COMPLETE INWARD)
      */

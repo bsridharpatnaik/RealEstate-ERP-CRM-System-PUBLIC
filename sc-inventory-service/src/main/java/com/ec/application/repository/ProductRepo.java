@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import com.ec.application.ReusableClasses.BaseRepository;
 import com.ec.application.ReusableClasses.IdNameProjections;
+import com.ec.application.ReusableClasses.ProductWithCategoryProjection;
 import com.ec.application.data.IdNameAndUnit;
 import com.ec.application.model.Product;
 
@@ -37,6 +38,9 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value = "SELECT productId as id,productName as name from Product m  order by name")
 	List<IdNameProjections> findIdAndNames();
 
+	@Query(value = "SELECT p.productId as id, p.productName as name, p.productCode as productCode, c.categoryName as categoryName FROM Product p LEFT JOIN p.category c ORDER BY p.productName")
+	List<ProductWithCategoryProjection> findIdNamesAndCategory();
+
 	@Query(value = "SELECT count(*) from Product m where m.category.categoryId=:categoryId")
 	int categoryUsageCount(@Param("categoryId") Long categoryId);
 
@@ -46,16 +50,18 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 	@Query(value = "SELECT distinct productId from Product m")
 	List<Long> fetchUniqueProductIds();
 
-	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory) from Product m")
+	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory, batchMode) from Product m")
 	List<IdNameAndUnit> getProductMeasurementUnit();
 
 	@Query(
 			"SELECT new com.ec.application.data.IdNameAndUnit(" +
-					"   m.productId, m.productName, m.measurementUnit, m.productCode, m.isManagedInventory" +
+					"   m.productId, m.productName, m.measurementUnit, m.productCode, m.isManagedInventory, m.batchMode," +
+					"   COALESCE(m.leadTimeDays, m.category.leadTimeDays)" +
 					") " +
 					"FROM Product m " +
 					"WHERE (:isManagedInventory IS NULL OR m.isManagedInventory = :isManagedInventory) " +
-					"AND (:categoryId IS NULL OR m.category.categoryId = :categoryId)"
+					"AND (:categoryId IS NULL OR m.category.categoryId = :categoryId) " +
+					"ORDER BY m.productName ASC"
 	)
 	List<IdNameAndUnit> getProducts(
 			@Param("isManagedInventory") Boolean isManagedInventory,
@@ -64,7 +70,7 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 
 
-	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory) from Product m")
+	@Query(value = "SELECT new com.ec.application.data.IdNameAndUnit(productId,productName,measurementUnit, productCode, isManagedInventory, batchMode) from Product m")
 	List<IdNameAndUnit> getProducts();
 
 	@Query(value = "SELECT p from Product p where p.showOnDashboard=true")
@@ -90,4 +96,10 @@ public interface ProductRepo extends BaseRepository<Product, Long>
 
 //	@Query(value = "SELECT productId as id,measurementUnit as name from Product m  where m.productId=:id order by name")
 //	List<IdNameProjections> findIdAndMeasurementUnitNames(long productId);
+
+	@Query(value = "SELECT * FROM Product WHERE productId = :productId", nativeQuery = true)
+	java.util.Optional<Product> findByIdIncludingDeleted(@Param("productId") Long productId);
+
+	@Query("SELECT p.productId FROM Product p WHERE p.batchMode != com.ec.application.constants.BatchMode.NONE AND p.isDeleted = false")
+	List<Long> findBatchTrackedProductIds();
 }

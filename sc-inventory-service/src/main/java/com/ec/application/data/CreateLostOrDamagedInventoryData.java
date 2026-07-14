@@ -35,6 +35,26 @@ public class CreateLostOrDamagedInventoryData
 
 	String entryType = "LOST_DAMAGED";
 
+	// Lost/Damaged: user selects which batch the loss came from
+	Long batchId;
+
+	// Excess Found: user can add to an existing batch instead of creating a new one
+	Long existingBatchId;
+
+	// Excess Found: user enters batch details for the new batch
+	String brand;
+
+	String lotNumber;
+
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+	Date expiryDate;
+
+	// Multi-batch: LOST_DAMAGED — distribute loss across multiple batches
+	List<BatchOverrideEntry> batchEntries;
+
+	// Multi-batch: EXCESS_FOUND add-to-existing — distribute excess across multiple existing batches
+	List<BatchOverrideEntry> excessBatchEntries;
+
 	public String getEntryType()
 	{
 		return entryType;
@@ -113,5 +133,75 @@ public class CreateLostOrDamagedInventoryData
 	public void setWarehouseId(Long warehouseId)
 	{
 		this.warehouseId = warehouseId;
+	}
+
+	public Long getBatchId()
+	{
+		return batchId;
+	}
+
+	public void setBatchId(Long batchId)
+	{
+		this.batchId = batchId;
+	}
+
+	public Long getExistingBatchId()
+	{
+		return existingBatchId;
+	}
+
+	public void setExistingBatchId(Long existingBatchId)
+	{
+		this.existingBatchId = existingBatchId;
+	}
+
+	public String getBrand()
+	{
+		return brand;
+	}
+
+	public void setBrand(String brand)
+	{
+		this.brand = brand;
+	}
+
+	public String getLotNumber()
+	{
+		return lotNumber;
+	}
+
+	public void setLotNumber(String lotNumber)
+	{
+		this.lotNumber = lotNumber;
+	}
+
+	public Date getExpiryDate()
+	{
+		return expiryDate;
+	}
+
+	public void setExpiryDate(Date expiryDate)
+	{
+		this.expiryDate = expiryDate;
+	}
+
+	public List<BatchOverrideEntry> getBatchEntries()
+	{
+		return batchEntries;
+	}
+
+	public void setBatchEntries(List<BatchOverrideEntry> batchEntries)
+	{
+		this.batchEntries = batchEntries;
+	}
+
+	public List<BatchOverrideEntry> getExcessBatchEntries()
+	{
+		return excessBatchEntries;
+	}
+
+	public void setExcessBatchEntries(List<BatchOverrideEntry> excessBatchEntries)
+	{
+		this.excessBatchEntries = excessBatchEntries;
 	}
 }

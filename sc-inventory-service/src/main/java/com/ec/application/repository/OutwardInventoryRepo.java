@@ -23,7 +23,7 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 	@Query(value="SELECT count(m) from OutwardInventory m where m.usageLocation.locationId=:locationId")
 	int locationUsageCount(@Param("locationId")Long locationId);
 
-	@Query(value="SELECT count(m) from OutwardInventory m where m.warehouse.warehouseName=:warehouseName")
+	@Query(value="SELECT count(m) from OutwardInventory m join m.inwardOutwardList l where l.warehouse.warehouseName=:warehouseName")
 	int warehouseUsageCount(@Param("warehouseName")String warehouseName);
 
 	@Query(value="SELECT count(m) from OutwardInventory m where m.usageArea.usageAreaId=:usageAreaId")
@@ -38,4 +38,31 @@ public interface OutwardInventoryRepo extends BaseRepository<OutwardInventory, L
 
 	@Query(value="SELECT i from OutwardInventory i WHERE year(i.date)=year(current_date) AND month(i.date)=month(current_date)")
 	List<OutwardInventory> getCurrentMonthData();
+
+	/** Used by FIFO report sync to bulk-fetch outward headers for a set of outward IDs. */
+	@Query("SELECT o FROM OutwardInventory o WHERE o.outwardid IN :ids")
+	List<OutwardInventory> findByOutwardidIn(@Param("ids") List<Long> ids);
+
+	@Query("SELECT DISTINCT o.requestedBy FROM OutwardInventory o WHERE o.requestedBy IS NOT NULL AND o.requestedBy <> ''")
+	List<String> findDistinctRequestedBy();
+
+	@Query("SELECT DISTINCT o.issuedBy FROM OutwardInventory o WHERE o.issuedBy IS NOT NULL AND o.issuedBy <> ''")
+	List<String> findDistinctIssuedBy();
+
+	// ── Tile counts ──────────────────────────────────────────────────────────
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE o.hasBOQ IS NULL")
+	long countNoBOQ();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE o.hasFifoOverride = true")
+	long countFifoOverride();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE SIZE(o.rejectOutwardList) > 0")
+	long countWithReject();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE SIZE(o.returnOutwardList) > 0")
+	long countWithReturn();
+
+	@Query("SELECT COUNT(o) FROM OutwardInventory o WHERE o.date >= :from")
+	long countSince(@Param("from") java.util.Date from);
 }

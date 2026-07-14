@@ -1,54 +1,61 @@
 package com.ec.application.Filters;
 
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
-import com.ec.application.model.*;
+import com.ec.application.model.StockInformationFromView;
+import com.ec.application.model.StockInformationFromView_;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
-public class StockInformationSpecification {
-    static SpecificationsBuilder<StockInformationFromView> specbldr = new SpecificationsBuilder<StockInformationFromView>();
+public final class StockInformationSpecification {
+
+    private static final SpecificationsBuilder<StockInformationFromView> specbldr = new SpecificationsBuilder<>();
 
     public static Specification<StockInformationFromView> getSpecification(FilterDataList filterDataList) {
-        List<String> products = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "products");
+        List<String> products     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "products");
         List<String> productCodes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "productCodes");
-        List<String> categories = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categories");
-        List<String> warehouses = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "warehouses");
+        List<String> categories   = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "categories");
+        List<String> warehouses   = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "warehouses");
+        List<String> stockStatus  = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stockStatus");
         List<String> globalSearch = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "globalSearch");
-        List<String>  stockStatus = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "stockStatus");
-        Specification<StockInformationFromView> finalSpec = null;
 
-        if (products != null && !products.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_NAME, products));
+        Specification<StockInformationFromView> spec = null;
 
-        if (productCodes != null && !productCodes.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_CODE, productCodes));
+        if (notEmpty(products))
+            spec = and(spec, specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_NAME, products));
 
-        if (categories != null && !categories.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec, specbldr.whereDirectFieldContains(StockInformationFromView_.CATEGORY_NAME, categories));
+        if (notEmpty(productCodes))
+            spec = and(spec, specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_CODE, productCodes));
 
-        if (warehouses != null && !warehouses.isEmpty())
-            finalSpec = specbldr.specAndCondition(finalSpec,
-                    specbldr.whereDirectFieldContains(StockInformationFromView_.DETAILED_STOCK, warehouses));
+        if (notEmpty(categories))
+            spec = and(spec, specbldr.whereDirectFieldContains(StockInformationFromView_.CATEGORY_NAME, categories));
 
-        if (stockStatus != null && !stockStatus.isEmpty()) {
-            if(!stockStatus.contains("All")) {
-                finalSpec = specbldr.specAndCondition(finalSpec,
-                        specbldr.whereDirectFieldContains(StockInformationFromView_.STOCK_STATUS, stockStatus));
-            }
+        if (notEmpty(warehouses))
+            spec = and(spec, specbldr.whereDirectFieldContains(StockInformationFromView_.DETAILED_STOCK, warehouses));
+
+        if (notEmpty(stockStatus) && !stockStatus.contains("All"))
+            spec = and(spec, specbldr.whereDirectFieldContains(StockInformationFromView_.STOCK_STATUS, stockStatus));
+
+        if (notEmpty(globalSearch)) {
+            Specification<StockInformationFromView> gs = null;
+            gs = or(gs, specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_NAME, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_CODE, globalSearch));
+            gs = or(gs, specbldr.whereDirectFieldContains(StockInformationFromView_.DETAILED_STOCK, globalSearch));
+            spec = and(spec, gs);
         }
-        if (globalSearch != null && !globalSearch.isEmpty()) {
-            Specification<StockInformationFromView> internalSpec = null;
-            internalSpec = specbldr.specOrCondition(internalSpec,
-                    specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_NAME, globalSearch));
-            internalSpec = specbldr.specOrCondition(internalSpec,
-                    specbldr.whereDirectFieldContains(StockInformationFromView_.PRODUCT_CODE, globalSearch));
-            internalSpec = specbldr.specOrCondition(internalSpec,
-                    specbldr.whereDirectFieldContains(StockInformationFromView_.DETAILED_STOCK, globalSearch));
-            finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
-        }
-        return finalSpec;
+
+        return spec;
+    }
+
+    private static <T> Specification<T> and(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.and(next);
+    }
+
+    private static <T> Specification<T> or(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.or(next);
+    }
+
+    private static boolean notEmpty(List<?> list) {
+        return list != null && !list.isEmpty();
     }
 }

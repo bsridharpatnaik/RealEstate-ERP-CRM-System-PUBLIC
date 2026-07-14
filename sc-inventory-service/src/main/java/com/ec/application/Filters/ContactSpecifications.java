@@ -1,73 +1,71 @@
 package com.ec.application.Filters;
 
-import java.util.List;
-
-import org.springframework.data.jpa.domain.Specification;
-
 import com.ec.application.ReusableClasses.SpecificationsBuilder;
 import com.ec.application.model.Contact;
 import com.ec.application.model.Contact_;
+import org.springframework.data.jpa.domain.Specification;
 
-public final class ContactSpecifications
-{
-	static SpecificationsBuilder<Contact> specbldr = new SpecificationsBuilder<Contact>();
+import java.util.List;
 
-	public static Specification<Contact> getSpecification(FilterDataList filterDataList)
-	{
-		List<String> names = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "name");
-		List<String> contacttypes = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "contacttype");
-		List<String> mobilenumber = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "mobilenumber");
-		List<String> address = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "address");
-		List<String> nameormobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "nameormobile");
+public final class ContactSpecifications {
 
-		Specification<Contact> finalSpec = null;
+    private static final SpecificationsBuilder<Contact> specbldr = new SpecificationsBuilder<>();
 
-		if (names != null && names.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(Contact_.name.getName(), names));
+    public static Specification<Contact> getSpecification(FilterDataList filterDataList) {
+        List<String> names       = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "name");
+        List<String> types       = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "contacttype");
+        List<String> mobile      = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "mobilenumber");
+        List<String> address     = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "address");
+        List<String> nameOrMobile = SpecificationsBuilder.fetchValueFromFilterList(filterDataList, "nameormobile");
 
-		if (contacttypes != null && contacttypes.size() > 0)
-		{
-			if (contacttypes.contains("All"))
-				feedContactTypes(contacttypes);
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(Contact_.contactType.getName(), contacttypes));
-		}
+        Specification<Contact> spec = null;
 
-		if (mobilenumber != null && mobilenumber.size() > 0)
-			finalSpec = specbldr.specAndCondition(finalSpec,
-					specbldr.whereDirectFieldContains(Contact_.mobileNo.getName(), mobilenumber));
+        if (notEmpty(names))
+            spec = and(spec, specbldr.whereDirectFieldContains(Contact_.name.getName(), names));
 
-		if (address != null && address.size() > 0)
-		{
-			Specification<Contact> internalSpec = null;
-			internalSpec = specbldr.specOrCondition(internalSpec,
-					specbldr.whereDirectFieldContains(Contact_.addr_line1.getName(), address));
-			internalSpec = specbldr.specOrCondition(internalSpec,
-					specbldr.whereDirectFieldContains(Contact_.addr_line2.getName(), address));
-			internalSpec = specbldr.specOrCondition(internalSpec,
-					specbldr.whereDirectFieldContains(Contact_.city.getName(), address));
-			internalSpec = specbldr.specOrCondition(internalSpec,
-					specbldr.whereDirectFieldContains(Contact_.state.getName(), address));
-			finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
-		}
+        if (notEmpty(types)) {
+            if (types.contains("All"))
+                expandAllContactTypes(types);
+            spec = and(spec, specbldr.whereDirectFieldContains(Contact_.contactType.getName(), types));
+        }
 
-		if (nameormobile != null && nameormobile.size() > 0)
-		{
-			Specification<Contact> internalSpec = null;
-			internalSpec = specbldr.specOrCondition(internalSpec,
-					specbldr.whereDirectFieldContains(Contact_.name.getName(), nameormobile));
-			internalSpec = specbldr.specOrCondition(internalSpec,
-					specbldr.whereDirectFieldContains(Contact_.mobileNo.getName(), nameormobile));
-			finalSpec = specbldr.specAndCondition(finalSpec, internalSpec);
-		}
-		return finalSpec;
-	}
+        if (notEmpty(mobile))
+            spec = and(spec, specbldr.whereDirectFieldContains(Contact_.mobileNo.getName(), mobile));
 
-	private static void feedContactTypes(List<String> contacttypes)
-	{
-		contacttypes.clear();
-		contacttypes.add("SUPPLIER");
-		contacttypes.add("CONTRACTOR");
-	}
+        if (notEmpty(address)) {
+            Specification<Contact> addrSpec = null;
+            addrSpec = or(addrSpec, specbldr.whereDirectFieldContains(Contact_.addr_line1.getName(), address));
+            addrSpec = or(addrSpec, specbldr.whereDirectFieldContains(Contact_.addr_line2.getName(), address));
+            addrSpec = or(addrSpec, specbldr.whereDirectFieldContains(Contact_.city.getName(), address));
+            addrSpec = or(addrSpec, specbldr.whereDirectFieldContains(Contact_.state.getName(), address));
+            spec = and(spec, addrSpec);
+        }
+
+        if (notEmpty(nameOrMobile)) {
+            Specification<Contact> nmSpec = null;
+            nmSpec = or(nmSpec, specbldr.whereDirectFieldContains(Contact_.name.getName(), nameOrMobile));
+            nmSpec = or(nmSpec, specbldr.whereDirectFieldContains(Contact_.mobileNo.getName(), nameOrMobile));
+            spec = and(spec, nmSpec);
+        }
+
+        return spec;
+    }
+
+    private static void expandAllContactTypes(List<String> types) {
+        types.clear();
+        types.add("SUPPLIER");
+        types.add("CONTRACTOR");
+    }
+
+    private static <T> Specification<T> and(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.and(next);
+    }
+
+    private static <T> Specification<T> or(Specification<T> base, Specification<T> next) {
+        return base == null ? next : base.or(next);
+    }
+
+    private static boolean notEmpty(List<?> list) {
+        return list != null && !list.isEmpty();
+    }
 }

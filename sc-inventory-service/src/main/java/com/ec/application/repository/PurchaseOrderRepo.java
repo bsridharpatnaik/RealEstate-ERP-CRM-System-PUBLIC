@@ -86,4 +86,17 @@ public interface PurchaseOrderRepo extends BaseRepository<PurchaseOrder, String>
 
     @Query("SELECT COUNT(p) FROM PurchaseOrder p WHERE p.supplier.contactId = :id")
     int supplierUsageCount(@Param("id") Long id);
+
+    @Query("SELECT COUNT(po) FROM PurchaseOrder po WHERE po.isDeleted = false AND po.poDate >= :from")
+    long countSince(@Param("from") java.util.Date from);
+
+    @Query("SELECT COUNT(po) FROM PurchaseOrder po WHERE po.isDeleted = false AND po.status NOT IN :excluded")
+    long countOpen(@Param("excluded") java.util.List<String> excluded);
+
+    @Query("SELECT COUNT(po) FROM PurchaseOrder po WHERE po.isDeleted = false " +
+            "AND po.status NOT IN :excluded AND po.lastStatusUpdatedAt < :cutoff")
+    long countStale(@Param("cutoff") java.util.Date cutoff, @Param("excluded") java.util.List<String> excluded);
+
+    @Query("SELECT COUNT(po) FROM PurchaseOrder po WHERE po.isDeleted = false AND po.specialPo = true")
+    long countSpecialPo();
 }

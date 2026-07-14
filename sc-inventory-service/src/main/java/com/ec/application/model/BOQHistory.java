@@ -1,6 +1,8 @@
 package com.ec.application.model;
 
 import javax.persistence.*;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import java.util.Date;
 
 @Entity
@@ -22,18 +24,22 @@ public class BOQHistory {
     private String changedBy;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @NotFound(action = NotFoundAction.IGNORE)
     @JoinColumn(name = "buildingTypeId")
     private BuildingType buildingType;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @NotFound(action = NotFoundAction.IGNORE)
     @JoinColumn(name = "usageLocationId")
     private UsageLocation usageLocation;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @NotFound(action = NotFoundAction.IGNORE)
     @JoinColumn(name = "productId")
     private Product product;
 
     @ManyToOne(fetch = FetchType.EAGER)
+    @NotFound(action = NotFoundAction.IGNORE)
     @JoinColumn(name = "finalLocationId")
     private UsageArea finalLocation;
 

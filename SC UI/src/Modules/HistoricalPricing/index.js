@@ -5,6 +5,10 @@ import TextField from "@material-ui/core/TextField";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Button from "@material-ui/core/Button";
+import Checkbox from "@material-ui/core/Checkbox";
+import CheckBoxOutlineBlankIcon from "@material-ui/icons/CheckBoxOutlineBlank";
+import CheckBoxIcon from "@material-ui/icons/CheckBox";
+import IndeterminateCheckBoxIcon from "@material-ui/icons/IndeterminateCheckBox";
 import * as XLSX from "xlsx";
 //components
 import Common from "./../../Shared/CommonIndex";
@@ -16,16 +20,29 @@ import { withSnackbar } from "notistack";
 //style
 import "./style.scss";
 
+function renderOnTimeRate(rate) {
+  if (rate === null || rate === undefined) return <span style={{ color: "#bbb", fontSize: 12 }}>N/A</span>;
+  const color = rate >= 90 ? "#2e7d32" : rate >= 70 ? "#e65100" : "#b71c1c";
+  const bg    = rate >= 90 ? "#e8f5e9"  : rate >= 70 ? "#fff3e0"  : "#ffebee";
+  return (
+    <span style={{ fontWeight: 700, color, background: bg, padding: "2px 7px", borderRadius: 4, fontSize: 12 }}>
+      {rate.toFixed(1)}%
+    </span>
+  );
+}
+
 class HistoricalPricing extends Common {
   title = messages.common.historicalPricing;
 
   state = {
     // Dropdown data
-    productList: [],
+    productList: [],          // all products (full list)
+    categoryList: [],         // derived from productList on load
     indentList: [],
     productsLoading: true,
     indentsLoading: true,
     // Selections
+    selectedCategory: null,   // { id, name } or null
     directProducts: [],       // products chosen directly in product dropdown
     selectedIndents: [],      // indents chosen in indent dropdown
     // Cache: indentId → [{ id, name, productCode }]
@@ -38,7 +55,18 @@ class HistoricalPricing extends Common {
 
   async componentDidMount() {
     this.fetchProducts();
+    this.fetchCategories();
     this.fetchIndents();
+  }
+
+  async fetchCategories() {
+    const response = await API.GET(apiEndpoints.getCategoryIdAndNames);
+    if (response.success && Array.isArray(response.data)) {
+      const categoryList = response.data
+        .map((cat) => ({ id: cat.categoryId ?? cat.id, name: cat.categoryName ?? cat.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      this.setState({ categoryList });
+    }
   }
 
   async fetchProducts() {
@@ -118,9 +146,52 @@ class HistoricalPricing extends Common {
     );
   }
 
-  onProductsChange = (value) => {
+  onCategoryChange = async (value) => {
     const prevEffective = new Set(this.getEffectiveProducts().map((p) => p.id));
-    this.setState({ directProducts: value || [] }, () => {
+    const newCat = value || null;
+    if (!newCat) {
+      // Cleared — reload full product list, clear selection
+      this.setState({ selectedCategory: null, directProducts: [], productsLoading: true }, async () => {
+        await this.fetchProducts();
+        this.syncRatesForEffectiveProducts(prevEffective);
+      });
+      return;
+    }
+    // Fetch products for this category, then auto-select all of them
+    this.setState({ selectedCategory: newCat, productsLoading: true });
+    const res = await API.GET(apiEndpoints.getProductForIndentByCategory(newCat.id));
+    const categoryProducts = (res.success && Array.isArray(res.data))
+      ? res.data.map((p) => ({
+          id: p.productId,
+          name: p.productName,
+          productCode: p.productCode || "",
+        }))
+      : [];
+    const autoSelected = categoryProducts.slice(0, this.MAX_PRODUCTS);
+    if (categoryProducts.length > this.MAX_PRODUCTS) {
+      this.props.enqueueSnackbar(
+        `${categoryProducts.length} products in this category. Showing first ${this.MAX_PRODUCTS} — use the product dropdown to pick specific ones.`,
+        { variant: "info", autoHideDuration: 5000 }
+      );
+    }
+    this.setState({ productList: categoryProducts, directProducts: autoSelected, productsLoading: false }, () => {
+      this.syncRatesForEffectiveProducts(prevEffective);
+    });
+  };
+
+  MAX_PRODUCTS = 20;
+
+  onProductsChange = (value) => {
+    const selected = value || [];
+    if (selected.length > this.MAX_PRODUCTS) {
+      this.props.enqueueSnackbar(
+        `Please select at most ${this.MAX_PRODUCTS} products at a time to avoid overloading the page.`,
+        { variant: "warning" }
+      );
+      return;
+    }
+    const prevEffective = new Set(this.getEffectiveProducts().map((p) => p.id));
+    this.setState({ directProducts: selected }, () => {
       this.syncRatesForEffectiveProducts(prevEffective);
     });
   };
@@ -217,18 +288,44 @@ class HistoricalPricing extends Common {
     return Number(net).toFixed(2);
   };
 
+  // Excel sheet names can't contain \ / ? * [ ] : , must be 1–31 chars, and must be unique —
+  // otherwise book_append_sheet throws and the export stops after the sheets added so far
+  // (which is why only the first product used to export). Sanitise + dedupe here.
+  makeSheetName = (product, usedNames) => {
+    let base = (product.name || `Product_${product.id}`)
+      .replace(/[\\/?*[\]:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .substring(0, 31);
+    if (!base) base = `Product_${product.id}`.substring(0, 31);
+    let name = base;
+    let i = 1;
+    while (usedNames.has(name.toLowerCase())) {
+      const suffix = ` (${i++})`;
+      name = base.substring(0, 31 - suffix.length) + suffix;
+    }
+    usedNames.add(name.toLowerCase());
+    return name;
+  };
+
   downloadExcel = () => {
     const effective = this.getEffectiveProducts();
+    if (effective.length === 0) {
+      this.props.enqueueSnackbar("No products to export", { variant: "warning" });
+      return;
+    }
     const { productRatesMap } = this.state;
     const wb = XLSX.utils.book_new();
+    const usedNames = new Set();
 
     effective.forEach((product) => {
       const rates = productRatesMap[product.id] || [];
-      const sheetName = (product.name || `Product_${product.id}`).substring(0, 31);
+      const sheetName = this.makeSheetName(product, usedNames);
       const headers = [
         "Purchase Order",
         "PO Date",
         "Supplier",
+        "On-time %",
         "Rate",
         "Discount %",
         "GST %",
@@ -238,6 +335,7 @@ class HistoricalPricing extends Common {
         r.purchaseOrderId || "-",
         r.poDate || "-",
         r.supplierName || "-",
+        r.onTimeRate != null ? `${r.onTimeRate.toFixed(1)}%` : "N/A",
         r.rate != null ? Number(r.rate).toFixed(2) : "-",
         r.discountPercent != null ? Number(r.discountPercent).toFixed(2) : "-",
         r.gstPercent != null ? Number(r.gstPercent).toFixed(2) : "-",
@@ -277,6 +375,7 @@ class HistoricalPricing extends Common {
                   <th>Purchase Order</th>
                   <th>PO Date</th>
                   <th>Supplier</th>
+                  <th>On-time %</th>
                   <th>Rate</th>
                   <th>Discount %</th>
                   <th>GST %</th>
@@ -286,7 +385,7 @@ class HistoricalPricing extends Common {
               <tbody>
                 {rates.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="hp-no-data">
+                    <td colSpan={8} className="hp-no-data">
                       No records found
                     </td>
                   </tr>
@@ -296,6 +395,7 @@ class HistoricalPricing extends Common {
                       <td>{r.purchaseOrderId || "-"}</td>
                       <td>{r.poDate || "-"}</td>
                       <td>{r.supplierName || "-"}</td>
+                      <td>{renderOnTimeRate(r.onTimeRate)}</td>
                       <td>{this.formatNum(r.rate)}</td>
                       <td>{this.formatNum(r.discountPercent)}</td>
                       <td>{this.formatNum(r.gstPercent)}</td>
@@ -314,9 +414,11 @@ class HistoricalPricing extends Common {
   render() {
     const {
       productList,
+      categoryList,
       indentList,
       productsLoading,
       indentsLoading,
+      selectedCategory,
       directProducts,
       selectedIndents,
       indentFetchingMap,
@@ -324,6 +426,10 @@ class HistoricalPricing extends Common {
 
     const effective = this.getEffectiveProducts();
     const anyIndentFetching = Object.values(indentFetchingMap).some(Boolean);
+    const hasAnySelection = effective.length > 0 || selectedIndents.length > 0 || selectedCategory;
+
+    // productList is already filtered when category is selected (via onCategoryChange fetch)
+    const filteredProductList = productList;
 
     return (
       <div className="page historical-pricing-page">
@@ -334,24 +440,134 @@ class HistoricalPricing extends Common {
           </div>
           {effective.length > 0 && (
             <div className="historical-pricing-download-btn">
-              <Button
-                variant="contained"
-                color="primary"
-                size="small"
-                onClick={this.downloadExcel}
-              >
+              <Button variant="contained" color="primary" size="small" onClick={this.downloadExcel}>
                 Download Excel
               </Button>
             </div>
           )}
         </div>
 
+        {/* Filter bar — Category → Product → Indent */}
         <div className="historical-pricing-filters">
-          {/* Indent selector */}
+          {/* Category */}
+          <Autocomplete
+            id="historical-pricing-category"
+            className="historical-pricing-category-field"
+            options={categoryList}
+            value={selectedCategory}
+            onChange={(e, value) => this.onCategoryChange(value)}
+            getOptionLabel={(option) => option.name || ""}
+            getOptionSelected={(option, value) => option.id === value.id}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                variant="outlined"
+                margin="normal"
+                label="Category"
+                InputLabelProps={{ shrink: true }}
+                placeholder="All categories"
+              />
+            )}
+          />
+
+          {/* Product — checkbox multi-select with Select All */}
+          {productsLoading ? (
+            <div className="historical-pricing-loading">
+              <CircularProgress size={24} /><span>Loading…</span>
+            </div>
+          ) : (() => {
+            const allSelected = filteredProductList.length > 0 && directProducts.length === filteredProductList.length;
+            const someSelected = directProducts.length > 0 && !allSelected;
+            const SELECT_ALL_OPT = { id: "__select_all__", name: "__select_all__" };
+            const optionsWithSelectAll = filteredProductList.length > 0
+              ? [SELECT_ALL_OPT, ...filteredProductList]
+              : filteredProductList;
+            return (
+              <Autocomplete
+                multiple
+                id="historical-pricing-inventory-name"
+                className="historical-pricing-inventory-name-field"
+                options={optionsWithSelectAll}
+                value={directProducts}
+                onChange={(e, newValue) => {
+                  if (newValue.some((v) => v.id === "__select_all__")) {
+                    // Toggle: if all selected → deselect all, else select all
+                    this.onProductsChange(allSelected ? [] : filteredProductList.slice(0, this.MAX_PRODUCTS));
+                  } else {
+                    this.onProductsChange(newValue);
+                  }
+                }}
+                getOptionLabel={(option) =>
+                  option.id === "__select_all__" ? "Select All" :
+                  option.productCode ? `${option.name} (${option.productCode})` : option.name || ""
+                }
+                getOptionSelected={(option, value) => option.id === value.id}
+                disableCloseOnSelect
+                disableClearable={false}
+                renderTags={() => (
+                  <span style={{ paddingLeft: 8, color: "#333", fontSize: 14 }}>
+                    {directProducts.length === 0
+                      ? ""
+                      : directProducts.length === filteredProductList.length
+                      ? `All ${directProducts.length} products selected`
+                      : `${directProducts.length} product${directProducts.length > 1 ? "s" : ""} selected`}
+                  </span>
+                )}
+                renderOption={(option, { selected }) => {
+                  if (option.id === "__select_all__") {
+                    return (
+                      <div style={{ display: "flex", alignItems: "center", fontWeight: 600 }}>
+                        <Checkbox
+                          icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                          checkedIcon={<CheckBoxIcon fontSize="small" />}
+                          indeterminateIcon={<IndeterminateCheckBoxIcon fontSize="small" />}
+                          checked={allSelected}
+                          indeterminate={someSelected}
+                          style={{ marginRight: 8, color: "#1565c0" }}
+                        />
+                        {allSelected ? "Deselect All" : filteredProductList.length > this.MAX_PRODUCTS ? `Select All (max ${this.MAX_PRODUCTS})` : "Select All"}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <Checkbox
+                        icon={<CheckBoxOutlineBlankIcon fontSize="small" />}
+                        checkedIcon={<CheckBoxIcon fontSize="small" />}
+                        checked={selected}
+                        style={{ marginRight: 8 }}
+                      />
+                      <span style={{ fontSize: 13 }}>
+                        {option.name}
+                        {option.productCode && (
+                          <span style={{ color: "#999", marginLeft: 6, fontSize: 11 }}>
+                            ({option.productCode})
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    margin="normal"
+                    label="Products"
+                    InputLabelProps={{ shrink: true }}
+                    placeholder={directProducts.length === 0
+                      ? selectedCategory ? `Search in ${selectedCategory.name}…` : "Search by name or code…"
+                      : ""}
+                  />
+                )}
+              />
+            );
+          })()}
+
+          {/* Indent — pre-fills products from indent */}
           {indentsLoading ? (
             <div className="historical-pricing-loading">
-              <CircularProgress size={24} />
-              <span>Loading indents…</span>
+              <CircularProgress size={24} /><span>Loading indents…</span>
             </div>
           ) : (
             <Autocomplete
@@ -370,47 +586,31 @@ class HistoricalPricing extends Common {
                   {...params}
                   variant="outlined"
                   margin="normal"
-                  label="Select Indents"
+                  label="Indents (optional)"
                   InputLabelProps={{ shrink: true }}
-                  placeholder={selectedIndents.length === 0 ? "Search by indent no…" : ""}
+                  placeholder={selectedIndents.length === 0 ? "Auto-fill products from indent…" : ""}
                 />
               )}
             />
           )}
 
-          {/* Product selector */}
-          {productsLoading ? (
-            <div className="historical-pricing-loading">
-              <CircularProgress size={24} />
-              <span>Loading products…</span>
+          {/* Clear all */}
+          {hasAnySelection && (
+            <div style={{ display: "flex", alignItems: "center", paddingTop: 8 }}>
+              <Button
+                size="small"
+                style={{ color: "#999", textTransform: "none", fontSize: 12 }}
+                onClick={() => {
+                  const prevEffective = new Set(this.getEffectiveProducts().map((p) => p.id));
+                  this.setState(
+                    { selectedCategory: null, directProducts: [], selectedIndents: [], indentProductsCache: {}, indentFetchingMap: {} },
+                    () => this.syncRatesForEffectiveProducts(prevEffective)
+                  );
+                }}
+              >
+                Clear all
+              </Button>
             </div>
-          ) : (
-            <Autocomplete
-              multiple
-              id="historical-pricing-inventory-name"
-              className="historical-pricing-inventory-name-field"
-              options={productList}
-              value={directProducts}
-              onChange={(e, value) => this.onProductsChange(value)}
-              getOptionLabel={(option) =>
-                option.productCode
-                  ? `${option.name} (${option.productCode})`
-                  : option.name || ""
-              }
-              getOptionSelected={(option, value) => option.id === value.id}
-              disableCloseOnSelect
-              filterSelectedOptions
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  margin="normal"
-                  label="Select Products"
-                  InputLabelProps={{ shrink: true }}
-                  placeholder={directProducts.length === 0 ? "Search by name or code…" : ""}
-                />
-              )}
-            />
           )}
         </div>
 

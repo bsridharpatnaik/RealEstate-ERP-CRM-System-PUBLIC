@@ -1,14 +1,18 @@
 package com.ec.application.data;
 
 import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 
 import javax.persistence.Column;
+import java.util.Date;
 import java.util.List;
 
 @Data
 public class UpdatePoRequest {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    private Date poDate;
     private Long supplierId;
     private Long firmId;
     @JsonDeserialize(using = ToSentenceCaseDeserializer.class)
@@ -18,6 +22,7 @@ public class UpdatePoRequest {
     private Double freightCharges;
     private Double freightGstPercent;
     private Double totalFreightCharges;
+    private Double poDiscount;
     @Column(length = 35)
     private String overridePhoneNumber;
     private String overrideEmail;

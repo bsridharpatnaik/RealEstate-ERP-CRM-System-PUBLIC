@@ -4,6 +4,7 @@ import com.ec.application.Filters.FilterAttributeData;
 import com.ec.application.Filters.FilterDataList;
 import com.ec.application.data.ProductStockSumDTO;
 import com.ec.application.data.StockSummaryAggregatedDTO;
+import com.ec.application.data.StockSummaryTilesDTO;
 import com.ec.application.model.StockSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,7 +31,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
     @Override
     public Page<StockSummaryAggregatedDTO> fetchAggregatedStock(
             FilterDataList filters,
-            Pageable pageable
+            Pageable pageable,
+            List<String> allowedSchemas
     ) {
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -45,6 +47,11 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
 
         List<Predicate> wherePredicates = new ArrayList<>();
         List<Predicate> havingPredicates = new ArrayList<>();
+
+        // Access control: restrict to the current user's tenants (empty = no restriction, e.g. admin).
+        if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+            wherePredicates.add(root.get("tenantSchema").in(allowedSchemas));
+        }
 
     /* =========================
        AGGREGATE EXPRESSIONS
@@ -111,6 +118,12 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                         );
                         break;
 
+                    case "categoryNames":
+                        wherePredicates.add(
+                                root.get("categoryName").in(values)
+                        );
+                        break;
+
                     case "globalSearch":
                         List<Predicate> orPredicates = new ArrayList<>();
 
@@ -174,7 +187,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 deadStockExpr,                         // dead stock
                 root.get("measurementUnit"),
                 cb.greatest(root.<Date>get("syncedAt")), // latest sync
-                reorderLevelExpr                       // effective reorder level (MAX across warehouse rows)
+                reorderLevelExpr,                      // effective reorder level (MAX across warehouse rows)
+                root.get("categoryName")
         ));
 
     /* =========================
@@ -189,7 +203,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 root.get("productId"),
                 root.get("productCode"),
                 root.get("productName"),
-                root.get("measurementUnit")
+                root.get("measurementUnit"),
+                root.get("categoryName")
         );
 
         if (!havingPredicates.isEmpty()) {
@@ -246,6 +261,11 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
 
         List<Predicate> countPredicates = new ArrayList<>();
 
+        // Access control (same as main query)
+        if (allowedSchemas != null && !allowedSchemas.isEmpty()) {
+            countPredicates.add(countRoot.get("tenantSchema").in(allowedSchemas));
+        }
+
 // reuse SAME where predicates (but rebuilt on countRoot!)
         if (filters != null && filters.getFilterData() != null) {
             for (FilterAttributeData fad : filters.getFilterData()) {
@@ -277,6 +297,9 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                                         .in(values.stream().map(String::toLowerCase).collect(Collectors.toList()))
                         );
                         break;
+                    case "categoryNames":
+                        countPredicates.add(countRoot.get("categoryName").in(values));
+                        break;
                     case "globalSearch":
                         List<Predicate> ors = new ArrayList<>();
                         for (String term : values) {
@@ -304,7 +327,8 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
                 countRoot.get("productId"),
                 countRoot.get("productCode"),
                 countRoot.get("productName"),
-                countRoot.get("measurementUnit")
+                countRoot.get("measurementUnit"),
+                countRoot.get("categoryName")
         );
 
         // Rebuild aggregate expressions on countRoot for HAVING conditions
@@ -413,5 +437,48 @@ public class StockSummaryCustomRepoImpl implements StockSummaryCustomRepo {
             }
         }
         return predicates;
+    }
+
+    @Override
+    public StockSummaryTilesDTO getTileCounts(FilterDataList filters, List<String> allowedSchemas) {
+        StockSummaryTilesDTO dto = new StockSummaryTilesDTO();
+
+        // Access control: restrict to the current user's tenants (empty = no restriction, e.g. admin).
+        String accessWhere = (allowedSchemas == null || allowedSchemas.isEmpty()) ? "" :
+                " AND tenantSchema IN (" + allowedSchemas.stream().map(t -> "'" + t.replace("'", "''") + "'").collect(Collectors.joining(",")) + ")";
+
+        // Build optional tenant WHERE clause from filter
+        List<String> tenants = new ArrayList<>();
+        if (filters != null && filters.getFilterData() != null) {
+            for (FilterAttributeData fad : filters.getFilterData()) {
+                if ("tenants".equals(fad.getAttrName()) && fad.getAttrValue() != null) {
+                    tenants.addAll(fad.getAttrValue());
+                }
+            }
+        }
+        String tenantWhere = tenants.isEmpty() ? "" :
+                " AND tenantSchema IN (" + tenants.stream().map(t -> "'" + t.replace("'", "''") + "'").collect(Collectors.joining(",")) + ")";
+
+        List<?> lowStockRows = em.createNativeQuery(
+                "SELECT COUNT(*) FROM (" +
+                "  SELECT tenantSchema, productId FROM stock_summary" +
+                "  WHERE is_deleted = 0" + accessWhere + tenantWhere +
+                "  GROUP BY tenantSchema, productId" +
+                "  HAVING MAX(reorder_level) IS NOT NULL AND SUM(quantityInHand) <= MAX(reorder_level)" +
+                ") t"
+        ).getResultList();
+        dto.setLowStockCount(lowStockRows.isEmpty() ? 0L : ((Number) lowStockRows.get(0)).longValue());
+
+        List<?> deadStockRows = em.createNativeQuery(
+                "SELECT COUNT(*) FROM (" +
+                "  SELECT tenantSchema, productId FROM stock_summary" +
+                "  WHERE is_deleted = 0" + accessWhere + tenantWhere +
+                "  GROUP BY tenantSchema, productId" +
+                "  HAVING SUM(CASE WHEN warehouseName = 'Dead Stock Warehouse' THEN quantityInHand ELSE 0 END) > 0" +
+                ") t"
+        ).getResultList();
+        dto.setDeadStockCount(deadStockRows.isEmpty() ? 0L : ((Number) deadStockRows.get(0)).longValue());
+
+        return dto;
     }
 }

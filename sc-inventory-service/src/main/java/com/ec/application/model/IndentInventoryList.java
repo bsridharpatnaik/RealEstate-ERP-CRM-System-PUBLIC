@@ -8,8 +8,9 @@ import org.hibernate.envers.Audited;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
-import com.fasterxml.jackson.annotation.JsonIgnore;  // ADD THIS IMPORT
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -63,15 +64,16 @@ public class IndentInventoryList extends ReusableFields {
     @Column(name = "remarks")
     String remarks;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    @Column(name = "need_by_date", nullable = true)
-    private Date needByDate;
-
     @Column(name = "measurement_unit")
     String measurementUnit;
 
     @Column(name = "line_item_status")
     String lineItemStatus;
+
+    /** Effective lead time resolved from product → category. Populated at query time. */
+    @Transient
+    @JsonProperty("leadTimeDays")
+    private Integer leadTimeDays;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "indent_id", nullable = false)
@@ -79,6 +81,13 @@ public class IndentInventoryList extends ReusableFields {
     private IndentInventory indentInventory;
 
     private String purchaseOrderId;
+
+    // Set when a Quote Comparison (RFQ) is created referencing this line — independent of
+    // lineItemStatus, which is owned by the PO/inward pipeline and gets recomputed on every
+    // inward sync. This is a non-destructive marker: it's never cleared or overwritten by that
+    // pipeline, so "a quote was requested for this line" stays visible regardless of PO progress.
+    @Column(name = "quote_requested_qc_id")
+    private String quoteRequestedQcId;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(

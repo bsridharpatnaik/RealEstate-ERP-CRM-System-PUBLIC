@@ -119,8 +119,9 @@ class List extends ListCommon {
         sortParam += "," + this.sortby;
       }
     }
+    const baseUrl = this.url.replace(/([?&])size=\d+/, `$1size=${this.pageSize}`);
     const response = await API.POST(
-      this.url + "&page=" + page + sortParam,
+      baseUrl + "&page=" + page + sortParam,
       params,
       this.getTenantConfig()
     );

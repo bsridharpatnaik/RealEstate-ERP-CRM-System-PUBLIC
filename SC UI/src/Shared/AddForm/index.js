@@ -216,6 +216,8 @@ class AddForm extends Component {
     multiple,
     disabled,
     value,
+    freeSolo,
+    helperText,
   }) {
     return (
       <Autocomplete
@@ -223,11 +225,12 @@ class AddForm extends Component {
         disabled={disabled}
         options={options}
         value={value}
+        freeSolo={freeSolo}
         getOptionLabel={getOption}
         onChange={onChange}
         disableClearable={disableClearable}
         multiple={multiple}
-        filterSelectedOptions={true}
+        filterSelectedOptions={!freeSolo}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -236,7 +239,15 @@ class AddForm extends Component {
             margin="normal"
             label={placeholder}
             required={required}
+            helperText={helperText}
             InputLabelProps={{ shrink: true }}
+            onBlur={(e) => {
+              params.inputProps.onBlur && params.inputProps.onBlur(e);
+              if (freeSolo && !multiple) {
+                const typed = e.target.value;
+                if (typed) onChange && onChange(e, typed);
+              }
+            }}
           />
         )}
       />
@@ -258,6 +269,8 @@ class AddForm extends Component {
     lengthConstraint,
     compRef,
     key,
+    multiline,
+    rows,
   }) {
     // Use defaultValue instead of value to allow uncontrolled behavior
     // This allows users to type in the fields without re-render issues
@@ -299,6 +312,8 @@ class AddForm extends Component {
         error={error}
         helperText={helperText}
         lengthConstraint={lengthConstraint}
+        multiline={multiline}
+        rows={rows}
         inValidateForm={(bFlag) => {
           if (bFlag) {
             this.formValidation[fieldname] = bFlag;

@@ -28,6 +28,7 @@ import org.springframework.lang.NonNull;
 
 import com.ec.application.ReusableClasses.ReusableFields;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 @Entity
@@ -80,13 +81,17 @@ public class PurchaseOrder extends ReusableFields {
     @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
     private Double totalFreightCharges;
 
+    /** Overall PO-level discount amount, deducted from line net rates before GST. Null = 0. */
+    @JsonSerialize(using= DoubleTwoDigitDecimalSerializer.class)
+    private Double poDiscount;
+
     private String shortCloseReason;
 
     @Lob
     @Column(name="notes", columnDefinition = "TEXT")
     private String notes;
 
-    @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("purchaseOrder")
     @OrderBy("id ASC")
     private Set<PurchaseOrderLine> lines = new HashSet<>();
@@ -136,21 +141,14 @@ public class PurchaseOrder extends ReusableFields {
     @Column(name = "project_name", length = 100)
     private String projectName;
 
-    /** Nightly-computed priority: CRITICAL, HIGH, MEDIUM, NORMAL (null = no expected date set). */
-    @Column(name = "priority", length = 20)
-    private String priority;
-
-    /** Days remaining to the earliest open-indent expected date (negative = overdue, null = no expected date). */
-    @Column(name = "days_to_deadline")
-    private Integer daysToDeadline;
-
-    /** Earliest needByDate across all linked open indent line items — populated at query time, not persisted. */
-    @Transient
-    private java.util.Date needByDate;
-
     @Transient
     Boolean approvalAllowed;
 
     @Transient
     Boolean cancellationAllowed;
+
+    /** True when any non-completed line item has exceeded its lead time. Populated at query time. */
+    @Transient
+    @JsonProperty("hasOverdueLines")
+    Boolean hasOverdueLines;
 }

@@ -52,8 +52,9 @@ public class LocationService {
 
         if (payload.getTypeId() != null)
             usageLocation.setBuildingType(buildingTypeRepo.findById(payload.getTypeId()).get());
-        usageLocation.setLocationName(payload.getLocationName());
-        usageLocation.setLocationDescription(payload.getLocationDescription());
+        usageLocation.setLocationName(payload.getLocationName().trim());
+        usageLocation.setLocationDescription(payload.getLocationDescription() == null ? ""
+                : payload.getLocationDescription().trim());
     }
 
     private void validatePayload(UsageLocationData payload) throws Exception {
@@ -91,10 +92,12 @@ public class LocationService {
 
         } else if (LocationForUpdate.getLocationName().equalsIgnoreCase(newLocation.getLocationName())) {
             if (payload.getTypeId() != null) {
-                LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+                LocationForUpdate.setLocationDescription(newLocation.getLocationDescription() == null ? ""
+                        : newLocation.getLocationDescription().trim());
                 LocationForUpdate.setBuildingType(buildingTypeRepo.getOne(payload.getTypeId()));
             } else {
-                LocationForUpdate.setLocationDescription(newLocation.getLocationDescription());
+                LocationForUpdate.setLocationDescription(newLocation.getLocationDescription() == null ? ""
+                        : newLocation.getLocationDescription().trim());
                 LocationForUpdate.setBuildingType(null);
             }
         } else {

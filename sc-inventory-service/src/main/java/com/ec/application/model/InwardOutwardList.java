@@ -8,8 +8,11 @@ import org.hibernate.envers.Audited;
 
 import com.ec.application.Deserializers.DoubleTwoDigitDecimalSerializer;
 import com.ec.application.ReusableClasses.ReusableFields;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import java.util.Date;
 
 @Entity
 @Table(name = "inward_outward_entries")
@@ -45,10 +48,23 @@ public class InwardOutwardList extends ReusableFields {
     @Transient
     private String indentId;
 
+    @Column(name = "brand")
+    private String brand;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    @Column(name = "expiry_date")
+    private Date expiryDate;
+
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "warehouse_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     Warehouse warehouse;
+
+    // Cumulative qty rejected against this line so far. Kept separate from `quantity` —
+    // `quantity` must stay net-of-returns-only since it feeds the stock ledger view; reject
+    // does not change stock (already deducted at outward time), so it must not shrink it.
+    @Column(name = "rejected_quantity")
+    private Double rejectedQuantity = 0.0;
 
     @Transient
     public String getIndentId() {

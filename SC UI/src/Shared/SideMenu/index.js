@@ -1,5 +1,5 @@
 //react
-import React, { useEffect } from "react";
+import React from "react";
 //third party
 import Drawer from "@material-ui/core/Drawer";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
@@ -18,7 +18,7 @@ import { InventoryIcon, CRMIcon } from "./../Icons/Index";
 import DashboardItem from "./../../Shared/DashboardItem";
 //css
 import "./style.scss";
-import { removeToken, getRole, getUserName, setSession } from "./../../helper";
+import { removeToken, getRole, getUserName, setSession, hasRole } from "./../../helper";
 import { messages } from "./../../messages";
 import { appRoutes } from "./../../endpoints";
 import { connect } from "react-redux";
@@ -47,13 +47,13 @@ function SideMenu(props) {
     tennant = selectenant[0] ? selectenant[0] : tennant;
   }
   const isCRM =
-    eval(tennant?.crm ?? false) &&
+    (tennant?.crm === true || tennant?.crm === "true") &&
     (currentUserRole.toLowerCase().indexOf("crm") > -1 ||
       currentUserRole.toLowerCase().indexOf("crm-manager") > -1 ||
       currentUserRole.toLowerCase().indexOf("admin") > -1);
   const _role = currentUserRole.toLowerCase();
   const isInventory =
-    eval(tennant?.inventory ?? false) &&
+    (tennant?.inventory === true || tennant?.inventory === "true") &&
     (_role === "admin" ||
       _role === "purchase-manager" ||
       _role === "management" ||
@@ -72,12 +72,27 @@ function SideMenu(props) {
     props.history.location.pathname === "/inventoryTransfer" ||
     props.history.location.pathname === "/stockSummary" ||
     props.history.location.pathname === "/purchaseOrder" ||
+    props.history.location.pathname === "/serviceOrder" ||
     props.history.location.pathname === "/globalIndent" ||
     props.history.location.pathname === "/contact" ||
     props.history.location.pathname === "/historicalPricing" ||
     props.history.location.pathname === "/user" ||
     props.history.location.pathname === "/firm" ||
-    props.history.location.pathname === "/globalBOQ"
+    props.history.location.pathname === appRoutes.productMerge ||
+    props.history.location.pathname === appRoutes.activityLog ||
+    props.history.location.pathname === appRoutes.projectConfiguration ||
+    props.history.location.pathname === "/globalBOQ" ||
+    props.history.location.pathname === appRoutes.fifoReport ||
+    props.history.location.pathname === appRoutes.stockAgingReport ||
+    props.history.location.pathname === appRoutes.lowStockReport ||
+    props.history.location.pathname === appRoutes.globalStockReports ||
+    props.history.location.pathname === appRoutes.poReconReport ||
+    props.history.location.pathname === appRoutes.indentFulfillmentReport ||
+    props.history.location.pathname === appRoutes.supplierPerformanceReport ||
+    props.history.location.pathname === appRoutes.procurementSpend ||
+    props.history.location.pathname === appRoutes.globalBOQTracker ||
+    props.history.location.pathname === "/quoteComparison" ||
+    props.history.location.pathname === "/quoteComparison/create"
   )
   let isOpenMenu = props.sideMenu.isOpen;
   return (
@@ -176,6 +191,7 @@ function SideMenu(props) {
                     linkurl={appendURL("/lost")}
                   />
 
+                  {/* Pricing menu hidden — not in use
                   <DashboardItem
                       nodeId="19"
                       labelText={messages.common.pricingHeader}
@@ -193,6 +209,7 @@ function SideMenu(props) {
                         linkurl={appendURL("/pricingReport")}
                     ></DashboardItem>
                   </DashboardItem>
+                  */}
                 </DashboardItem>
               )}
 
@@ -244,12 +261,18 @@ function SideMenu(props) {
                     labelText={"History"}
                     linkurl={appendURL("/boqHistory")}
                   />
-                  {/* <DashboardItem
-                    nodeId="16"
+                  <DashboardItem
+                    nodeId="70"
                     onClick={props.setSideBarValue}
-                    labelText={"Report"}
-                    linkurl={appendURL("/boqReport")}
-                  /> */}
+                    labelText={"BOQ vs Indent"}
+                    linkurl={appendURL(appRoutes.boqIndentReport)}
+                  />
+                  <DashboardItem
+                    nodeId="71"
+                    onClick={props.setSideBarValue}
+                    labelText={"BOQ Tracker"}
+                    linkurl={appendURL(appRoutes.boqTracker)}
+                  />
                 </DashboardItem>
               )}
               {isCRM && (
@@ -342,6 +365,12 @@ function SideMenu(props) {
                     labelText={messages.common.role}
                     linkurl={appendURL("/role")}
                   /> */}
+                    <DashboardItem
+                      nodeId="54"
+                      labelText="Activity Log"
+                      onClick={props.setSideBarValue}
+                      linkurl={appendURL(appRoutes.projectActivityLog)}
+                    />
                   </DashboardItem>
                 )}
                 {isCRM && (
@@ -447,22 +476,32 @@ function SideMenu(props) {
               onClick={props.setSideBarValue}
               linkurl="/project"
             />
-                          <DashboardItem
-  nodeId="38"
-  labelText={messages.common.stockSummary}
-  labelIcon={InventoryIcon}
-  onClick={props.setSideBarValue}
-  linkurl="/stockSummary"
-/>
-            {(_role === "admin" || _role === "project-manager") && (
+            <DashboardItem
+              nodeId="80"
+              labelText="Inventory"
+              labelIcon={InventoryIcon}
+            >
               <DashboardItem
-                nodeId="41"
-                labelText={messages.common.globalBOQ}
-                labelIcon={HomeWorkIcon}
+                nodeId="81"
+                labelText={messages.common.stockSummary}
                 onClick={props.setSideBarValue}
-                linkurl={appRoutes.globalBOQ}
+                linkurl="/stockSummary"
               />
-            )}
+              <DashboardItem
+                nodeId="10"
+                labelText={messages.common.inventoryTransfer}
+                onClick={props.setSideBarValue}
+                linkurl="/inventoryTransfer"
+              />
+              {(_role === "admin" || _role === "project-manager") && (
+                <DashboardItem
+                  nodeId="41"
+                  labelText={messages.common.globalBOQ}
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.globalBOQ}
+                />
+              )}
+            </DashboardItem>
             <DashboardItem
               nodeId="39"
               labelText={messages.common.indentPO}
@@ -479,18 +518,30 @@ function SideMenu(props) {
                   linkurl="/globalIndent"
                 />
               )}
+              {(currentUserRole.toLowerCase() === "admin" ||
+                currentUserRole.toLowerCase() === "purchase-manager") && (
+                <DashboardItem
+                  nodeId="73"
+                  labelText={messages.common.quoteComparison}
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.quoteComparison}
+                />
+              )}
               <DashboardItem
                 nodeId="11"
                 labelText={messages.common.purchaseOrder}
                 onClick={props.setSideBarValue}
                 linkurl="/purchaseOrder"
               />
-              <DashboardItem
-                nodeId="10"
-                labelText={messages.common.inventoryTransfer}
-                onClick={props.setSideBarValue}
-                linkurl="/inventoryTransfer"
-              />
+              {(currentUserRole.toLowerCase() === "admin" ||
+                currentUserRole.toLowerCase() === "purchase-manager") && (
+                <DashboardItem
+                  nodeId="74"
+                  labelText="Service Order"
+                  onClick={props.setSideBarValue}
+                  linkurl="/serviceOrder"
+                />
+              )}
               {(currentUserRole.toLowerCase() === "admin" ||
                 currentUserRole.toLowerCase() === "purchase-manager" ||
                 currentUserRole.toLowerCase() === "management") && (
@@ -518,8 +569,88 @@ function SideMenu(props) {
   }}
   linkurl={appRoutes.user}
 />
+    {hasRole('product-merge-admin') && <DashboardItem
+  nodeId="52"
+  labelText="Merge Products"
+  onClick={props.setSideBarValue}
+  linkurl={appRoutes.productMerge}
+/>}
+    <DashboardItem
+  nodeId="53"
+  labelText="Activity Log"
+  onClick={props.setSideBarValue}
+  linkurl={appRoutes.activityLog}
+/>
+    <DashboardItem
+  nodeId="56"
+  labelText="Configuration"
+  onClick={props.setSideBarValue}
+  linkurl={appRoutes.projectConfiguration}
+/>
   </DashboardItem>
 )}
+            {(_role === "admin" || _role === "purchase-manager" || _role === "management" || _role === "project-manager" || _role === "store-incharge") && (
+              <DashboardItem
+                nodeId="60"
+                labelText="Reports"
+                labelIcon={DescriptionIcon}
+              >
+                <DashboardItem
+                  nodeId="61"
+                  labelText="FIFO Override Report"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.fifoReport}
+                />
+                <DashboardItem
+                  nodeId="62"
+                  labelText="Stock Aging Report"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.stockAgingReport}
+                />
+                <DashboardItem
+                  nodeId="68"
+                  labelText="Stock Reports"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.globalStockReports}
+                />
+                <DashboardItem
+                  nodeId="64"
+                  labelText="PO vs Inward Recon"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.poReconReport}
+                />
+                <DashboardItem
+                  nodeId="65"
+                  labelText="Indent Fulfillment"
+                  onClick={props.setSideBarValue}
+                  linkurl={appRoutes.indentFulfillmentReport}
+                />
+                {(_role === "admin" || _role === "purchase-manager") && (
+                  <DashboardItem
+                    nodeId="69"
+                    labelText="Supplier Performance"
+                    onClick={props.setSideBarValue}
+                    linkurl={appRoutes.supplierPerformanceReport}
+                  />
+                )}
+                {_role === "admin" && (
+                  <DashboardItem
+                    nodeId="82"
+                    labelText="Procurement Spend"
+                    onClick={props.setSideBarValue}
+                    linkurl={appRoutes.procurementSpend}
+                  />
+                )}
+                {(_role === "admin" || _role === "purchase-manager" || _role === "project-manager") && (
+                  <DashboardItem
+                    nodeId="72"
+                    labelText="BOQ Tracker"
+                    onClick={props.setSideBarValue}
+                    linkurl={appRoutes.globalBOQTracker}
+                  />
+                )}
+              </DashboardItem>
+            )}
             <DashboardItem
               nodeId="17"
               labelText="Global Config"

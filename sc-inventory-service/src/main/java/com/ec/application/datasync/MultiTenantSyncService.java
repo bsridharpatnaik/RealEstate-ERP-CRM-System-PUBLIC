@@ -161,6 +161,12 @@ public class MultiTenantSyncService {
                 continue;
             }
 
+            // Serialize enums as their name() string — JDBC would otherwise binary-serialize Serializable enums
+            if (value instanceof Enum) {
+                normalized.put(column, ((Enum<?>) value).name());
+                continue;
+            }
+
             normalized.put(column, value);
         }
 

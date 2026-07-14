@@ -168,7 +168,8 @@ class CommonFilter extends Component {
     fieldname,
     getoption,
     multiple = true,
-    disabled = false
+    disabled = false,
+    onChangeCb = null
   ) {
     const optionsArray = Array.isArray(options) ? options : [];
     const rawValue = this.filterData[fieldname];
@@ -183,6 +184,9 @@ class CommonFilter extends Component {
         disabled={disabled}
         onChange={(event, values) => {
           this.filterData[fieldname] = values;
+          if (onChangeCb) {
+            onChangeCb(values);
+          }
           if (this.onFilterChange) {
             this.onFilterChange();
           }

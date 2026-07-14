@@ -41,6 +41,15 @@ import {
 import TextField from "@material-ui/core/TextField";
 import Button from "./../../Shared/Button";
 
+const INDENT_ACTION_STYLES = {
+  CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
+  UPDATED:     { color: '#e65100', background: '#fff3e0' },
+  APPROVED:    { color: '#1565c0', background: '#e3f2fd' },
+  CANCELLED:   { color: '#c62828', background: '#ffebee' },
+  DELETED:     { color: '#c62828', background: '#ffebee' },
+  SPLIT:       { color: '#4e342e', background: '#efebe9' },
+};
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -102,6 +111,9 @@ class Details extends CommonDetails {
     statusHistoryLoading: false,
     statusHistoryError: null,
     statusHistoryIndentId: null,
+    activityLogs: [],
+    activityLoading: false,
+    boqDataByProduct: {},
   };
 
   async download(file) {
@@ -126,6 +138,7 @@ class Details extends CommonDetails {
 
   componentDidMount() {
     this.detailTabRef = React.createRef();
+    this.fetchBOQForItems();
   }
 
   componentDidUpdate(prevProps) {
@@ -134,12 +147,39 @@ class Details extends CommonDetails {
         statusHistory: null,
         statusHistoryError: null,
         statusHistoryIndentId: null,
+        boqDataByProduct: {},
       });
       if (this.state.value === 1) {
         this.fetchStatusHistory();
+        this.loadActivityLog();
       }
+      this.fetchBOQForItems();
     }
   }
+
+  fetchBOQForItems = async () => {
+    const data = this.props.data;
+    if (!data) return;
+    const status = (data.status || "").toUpperCase().trim();
+    if (status !== "NEW") return;
+    const items = data.inventoryItems || data.inventoryList || [];
+    const productIds = [...new Set(items.map(i => i.product?.productId || i.productId).filter(Boolean))];
+    if (productIds.length === 0) return;
+    const results = await Promise.allSettled(
+      productIds.map(pid =>
+        API.GET(`${apiEndpoints.getProductBOQSummary}?productId=${pid}`)
+          .then(r => ({ pid, data: r.success && r.data?.hasBOQ ? r.data : null }))
+          .catch(() => ({ pid, data: null }))
+      )
+    );
+    const boqDataByProduct = {};
+    results.forEach(r => {
+      if (r.status === 'fulfilled' && r.value.data) {
+        boqDataByProduct[r.value.pid] = r.value.data;
+      }
+    });
+    this.setState({ boqDataByProduct });
+  };
 
   fetchStatusHistory = async () => {
     const data = this.props.data;
@@ -171,9 +211,22 @@ class Details extends CommonDetails {
     }
   };
 
+  loadActivityLog = async () => {
+    const data = this.props.data;
+    const indentId = data?.indentId;
+    if (!indentId) return;
+    this.setState({ activityLoading: true });
+    const r = await API.GET(apiEndpoints.activityLogByEntity('INDENT', indentId));
+    if (r.success) {
+      this.setState({ activityLogs: r.data || [] });
+    }
+    this.setState({ activityLoading: false });
+  };
+
   handleHistoryTabClick = () => {
     this.setState({ value: 1 });
     this.fetchStatusHistory();
+    this.loadActivityLog();
   };
 
   handleCloseMenu = () => {
@@ -236,10 +289,8 @@ class Details extends CommonDetails {
           specification: item.specification || "",
           remarks: item.remarks || item.remark || "",
           measurementUnit: item.measurementUnit || item.product?.measurementUnit || "",
-          needByDate: item.needByDate || null,
         }))
         .filter((item) => item.productId),
-      needByDate: data.needByDate || null,
     };
     if (this.props.onResubmit) this.props.onResubmit(prefillData);
   };
@@ -281,7 +332,7 @@ class Details extends CommonDetails {
   };
 
   handlePrevious = () => {
-    const { currentIndex, allEntries, onNavigate } = this.props;
+    const { currentIndex, onNavigate } = this.props;
     if (currentIndex > 0 && onNavigate) onNavigate(currentIndex - 1);
   };
 
@@ -315,6 +366,8 @@ class Details extends CommonDetails {
     const canShowManagerReject = !fromRelation && canManagerRejectIndentRecord(data.status);
     const canShowCancel        = !fromRelation && canCancelIndentRecord(data.status);
     const canShowResubmit      = !fromRelation && canResubmitIndentRecord(data.status);
+    const showBOQChips         = canShowApprove || canShowManagerReject;
+    const { boqDataByProduct } = this.state;
 
     return (
       <div className="list-section detail-section indent-detail-section">
@@ -424,34 +477,10 @@ class Details extends CommonDetails {
                   <span className="detail-label">Indent Date:</span>
                   <span className="detail-value">{data.indentDate || "-"}</span>
                 </div>
-                {data.needByDate && (
+                {data.requiredBy && (
                   <div className="detail-item">
-                    <span className="detail-label">Expected Delivery:</span>
-                    <span className="detail-value">
-                      {data.needByDate}
-                      {(() => {
-                        const normalizedStatus = (data.indentStatus || data.status || "").toLowerCase().trim();
-                        const isTerminal = normalizedStatus === "cancelled" || normalizedStatus === "rejected" || normalizedStatus === "po completed" || normalizedStatus === "closed" || normalizedStatus === "short closed";
-                        if (isTerminal) return null;
-                        const parts = data.needByDate.split("-");
-                        if (parts.length !== 3) return null;
-                        const deadline = new Date(parts[2], parts[1] - 1, parts[0]);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        deadline.setHours(0, 0, 0, 0);
-                        const days = Math.round((deadline - today) / (1000 * 60 * 60 * 24));
-                        let badgeClass = "days-badge-normal";
-                        if (days <= 3) badgeClass = "days-badge-critical";
-                        else if (days <= 7) badgeClass = "days-badge-high";
-                        else if (days <= 14) badgeClass = "days-badge-medium";
-                        const label = days < 0 ? `${Math.abs(days)}d overdue` : `${days}d left`;
-                        return (
-                          <span className={`days-badge ${badgeClass}`} style={{ marginLeft: 8 }}>
-                            {label}
-                          </span>
-                        );
-                      })()}
-                    </span>
+                    <span className="detail-label">Required By:</span>
+                    <span className="detail-value">{data.requiredBy}</span>
                   </div>
                 )}
                 <div className="detail-item">
@@ -502,7 +531,6 @@ class Details extends CommonDetails {
                           <TableCell className="inventory-qty-col">Quantity</TableCell>
                           <TableCell className="inventory-spec-col">Specification</TableCell>
                           <TableCell className="inventory-remark-col">Remark</TableCell>
-                          <TableCell className="inventory-expdate-col">Exp. Date</TableCell>
                           {showPOColumn && (
                             <TableCell className="inventory-po-col">PO Number</TableCell>
                           )}
@@ -524,6 +552,39 @@ class Details extends CommonDetails {
                               <Tooltip title={item.product?.productName || "-"} placement="top">
                                 <span className="inventory-name-truncate">{item.product?.productName || "-"}</span>
                               </Tooltip>
+                              {item.leadTimeDays != null && (
+                                <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>
+                                  ⏱ Lead: <strong>{item.leadTimeDays}d</strong>
+                                </div>
+                              )}
+                              {showBOQChips && (() => {
+                                const pid = item.product?.productId || item.productId;
+                                const boq = boqDataByProduct[pid];
+                                if (!boq) return null;
+                                const rem = typeof boq.remaining === 'number' ? boq.remaining : 0;
+                                const unit = item.measurementUnit || "";
+                                const exceeded = rem < 0;
+                                const style = exceeded
+                                  ? { color: '#c0392b', background: '#fdedec', border: '1px solid #f1948a' }
+                                  : { color: '#1a7a40', background: '#eafaf1', border: '1px solid #a9dfbf' };
+                                const label = exceeded
+                                  ? `⚠ Exceeded by ${Math.abs(rem).toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`
+                                  : `BOQ Rem. ${rem.toLocaleString('en-IN', { maximumFractionDigits: 2 })} ${unit}`;
+                                return (
+                                  <Tooltip
+                                    title={`Planned: ${(boq.totalPlanned||0).toLocaleString('en-IN',{maximumFractionDigits:2})} ${unit} | Already Indented: ${(boq.totalConsumed||0).toLocaleString('en-IN',{maximumFractionDigits:2})} ${unit}`}
+                                    placement="top"
+                                  >
+                                    <div style={{
+                                      display: 'inline-block', marginTop: 4, padding: '2px 7px',
+                                      borderRadius: 4, fontSize: 11, fontWeight: 600,
+                                      ...style
+                                    }}>
+                                      {label}
+                                    </div>
+                                  </Tooltip>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell className="inventory-code-col">
                               {item.product?.productCode || "-"}
@@ -536,9 +597,6 @@ class Details extends CommonDetails {
                             </TableCell>
                             <TableCell className="inventory-remark-col">
                               {item.remarks || item.remark || "-"}
-                            </TableCell>
-                            <TableCell className="inventory-expdate-col">
-                              {item.needByDate || "-"}
                             </TableCell>
                             {showPOColumn && (
                               <TableCell className="inventory-po-col">
@@ -572,6 +630,12 @@ class Details extends CommonDetails {
                                   <StatusBadgeWithTooltip lineItemStatus={lineItemStatus} statusClass={statusClass} />
                                 ) : "-";
                               })()}
+                              {item.quoteRequestedQcId && (
+                                <span className="status-badge status-quote-requested" style={{ marginLeft: 4 }}
+                                  title={`Quote requested via ${item.quoteRequestedQcId}`}>
+                                  Quote Req.
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell className="inventory-action-col">
                               {item.lineItemStatus === "NEW" && (
@@ -706,6 +770,50 @@ class Details extends CommonDetails {
                 <div className="history-empty">No history available</div>
               )}
             </div>
+
+            {/* Activity Log section */}
+            {this.state.activityLogs.length > 0 && (
+            <div style={{ marginTop: '24px', borderTop: '1px solid #e0e0e0', paddingTop: '16px' }}>
+              <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '12px', color: '#444' }}>
+                Activity Log
+              </div>
+              {this.state.activityLoading ? (
+                <div className="history-loading">Loading activity log...</div>
+              ) : (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Action</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell>By</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {this.state.activityLogs.map((log, i) => (
+                      <TableRow key={i}>
+                        <TableCell style={{ whiteSpace: 'nowrap', fontSize: '12px' }}>
+                          {log.activityTime ? new Date(log.activityTime).toLocaleString() : ''}
+                        </TableCell>
+                        <TableCell>
+                          <span style={{
+                            padding: '2px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '12px',
+                            ...INDENT_ACTION_STYLES[log.action]
+                          }}>
+                            {log.action}
+                          </span>
+                        </TableCell>
+                        <TableCell style={{ fontSize: '13px', wordBreak: 'break-word', maxWidth: '280px' }}>
+                          {log.description}
+                        </TableCell>
+                        <TableCell style={{ fontSize: '12px' }}>{log.performedBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+            )}
           </TabPanel>
         </div>
         <DeleteConfirm

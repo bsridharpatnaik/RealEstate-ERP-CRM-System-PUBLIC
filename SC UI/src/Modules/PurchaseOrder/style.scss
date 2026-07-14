@@ -67,13 +67,33 @@
     background: #9e9e9e;
     color: #fff;
 
-    &.status-approved    { background: #388e3c; }
-    &.status-new         { background: #1976d2; }
-    &.status-po_partial  { background: #f57c00; }
-    &.status-po_completed { background: #388e3c; }
-    &.status-closed      { background: #616161; }
-    &.status-rejected    { background: #c62828; }
-    &.status-cancelled   { background: #9e9e9e; }
+    &.status-approved {
+      background: #388e3c;
+    }
+
+    &.status-new {
+      background: #1976d2;
+    }
+
+    &.status-po_partial {
+      background: #f57c00;
+    }
+
+    &.status-po_completed {
+      background: #388e3c;
+    }
+
+    &.status-closed {
+      background: #616161;
+    }
+
+    &.status-rejected {
+      background: #c62828;
+    }
+
+    &.status-cancelled {
+      background: #9e9e9e;
+    }
   }
 
   .po-indent-table-wrapper {
@@ -137,11 +157,25 @@
       background: #9e9e9e;
       color: #fff;
 
-      &.status-pending     { background: #1976d2; }
-      &.status-partial     { background: #f57c00; }
-      &.status-completed   { background: #388e3c; }
-      &.status-closed      { background: #616161; }
-      &.status-cancelled   { background: #9e9e9e; }
+      &.status-pending {
+        background: #1976d2;
+      }
+
+      &.status-partial {
+        background: #f57c00;
+      }
+
+      &.status-completed {
+        background: #388e3c;
+      }
+
+      &.status-closed {
+        background: #616161;
+      }
+
+      &.status-cancelled {
+        background: #9e9e9e;
+      }
     }
   }
 }
@@ -162,17 +196,29 @@
   color: #fff;
   white-space: nowrap;
 
-  &.priority-badge-critical { background: #d32f2f; }
-  &.priority-badge-high     { background: #f57c00; }
-  &.priority-badge-medium   { background: #f9a825; color: #333; }
-  &.priority-badge-normal   { background: #388e3c; }
+  &.priority-badge-critical {
+    background: #d32f2f;
+  }
+
+  &.priority-badge-high {
+    background: #f57c00;
+  }
+
+  &.priority-badge-medium {
+    background: #f9a825;
+    color: #333;
+  }
+
+  &.priority-badge-normal {
+    background: #388e3c;
+  }
 }
 
 .notes-content {
   font-size: 13px;
   color: #333333;
   line-height: 1.6;
-  white-space: pre-wrap;  // ← this is the fix
+  white-space: pre-wrap; // ← this is the fix
 }
 
 // SPL PO column in list table
@@ -199,15 +245,21 @@
 .purchase-order-list-wrapper {
   .list-section {
     box-shadow: none;
+
     .filter-section {
       .MuiTextField-root {
         width: 400px;
         max-width: 400px;
-        @media screen and (max-width: 768px) { width: 100%; max-width: 100%; }
+
+        @media screen and (max-width: 768px) {
+          width: 100%;
+          max-width: 100%;
+        }
       }
 
       // Add Purchase Order button: slightly bigger height than Filter/Download
       .top-button-wrapper {
+
         .filterIcon.MuiButton-root,
         .filter.MuiButton-root,
         .download.MuiButton-root,
@@ -215,6 +267,7 @@
         .add-button.MuiButton-root {
           text-transform: none !important;
         }
+
         .filterIcon.MuiButton-root,
         .filter.MuiButton-root,
         .download.MuiButton-root,
@@ -222,11 +275,13 @@
           height: 34px !important;
           min-height: 34px !important;
         }
+
         .add-button.MuiButton-root {
           height: 38px !important;
           min-height: 38px !important;
           padding: 6px 14px !important;
           background: #3f51b5 !important;
+
           &:hover {
             background: #303f9f !important;
           }
@@ -252,6 +307,7 @@
           tr {
             border-bottom: 1px solid #e0e0e0;
           }
+
           th {
             background: #fff;
             font-weight: 600;
@@ -265,10 +321,12 @@
 
             &.sortable {
               cursor: pointer;
+
               span {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
+
                 .MuiSvgIcon-root {
                   color: rgba(0, 0, 0, 0.35);
                   font-size: 18px;
@@ -290,10 +348,12 @@
             &:last-child {
               border-bottom: none;
             }
+
             &.clickable-row:hover {
               background: #f5f5f5 !important;
             }
           }
+
           td {
             padding: 12px 16px;
             font-size: 13px;
@@ -305,41 +365,58 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            max-width: 0;
           }
         }
 
         // Column widths
-        th, td {
-          &:nth-child(1) { // PO Number
+        th,
+        td {
+          &:nth-child(1) {
+            // PO Number
             min-width: 150px;
             width: 150px;
           }
-          &:nth-child(2) { // Date Creation
+
+          &:nth-child(2) {
+            // Date Creation
             min-width: 180px;
             width: 180px;
           }
-          &:nth-child(3) { // Inventory Count
+
+          &:nth-child(3) {
+            // Inventory Count
             min-width: 140px;
             width: 140px;
             text-align: center;
           }
-          &:nth-child(4) { // Project
+
+          &:nth-child(4) {
+            // Project
             min-width: 180px;
             width: 180px;
           }
-          &:nth-child(5) { // Supplier Name
+
+          &:nth-child(5) {
+            // Supplier Name
             min-width: 200px;
             width: 200px;
           }
-          &:nth-child(6) { // Created By
+
+          &:nth-child(6) {
+            // Created By
             min-width: 150px;
             width: 150px;
           }
-          &:nth-child(7) { // PO Status
+
+          &:nth-child(7) {
+            // PO Status
             min-width: 150px;
             width: 150px;
           }
-          &:nth-child(8) { // SPL
+
+          &:nth-child(8) {
+            // SPL
             min-width: 60px;
             width: 60px;
             text-align: center;
@@ -350,36 +427,45 @@
         thead th:nth-child(6) {
           text-align: left !important;
         }
+
         tbody td.po-status-cell {
           padding: 12px 16px;
           vertical-align: middle;
           text-align: left !important;
+          overflow: visible;
+          white-space: nowrap;
         }
+
         tbody td.po-status-cell .po-status-cell-inner {
           display: block;
           width: 100%;
           text-align: left;
         }
+
         tbody td.po-status-cell .status-badge {
           display: inline-block;
         }
 
         // Action header and cells: centered, buttons close together
         th.action {
-          min-width: 70px;
-          width: 70px;
+          min-width: 100px;
+          width: 100px;
           text-align: center;
           padding-right: 0;
         }
 
         // Action columns: black icons, right-aligned, close together
         .action-view,
+        .action-edit,
         .action-delete {
           width: 28px;
           min-width: 28px;
           padding: 0 2px;
           text-align: center;
           vertical-align: middle;
+          overflow: visible;
+          white-space: nowrap;
+          max-width: none;
 
           .MuiIconButton-root {
             color: #000000 !important;
@@ -388,10 +474,12 @@
             height: 28px;
             min-width: 28px;
             border-radius: 4px;
+
             &:hover {
               background-color: rgba(0, 0, 0, 0.06) !important;
               color: #000000 !important;
             }
+
             &:disabled {
               color: rgba(0, 0, 0, 0.26) !important;
             }
@@ -407,10 +495,22 @@
             fill: #000000 !important;
             width: 18px !important;
             height: 18px !important;
-            path { fill: #000000 !important; }
-            rect { fill: transparent !important; }
-            g path { fill: #000000 !important; }
-            g rect { fill: transparent !important; }
+
+            path {
+              fill: #000000 !important;
+            }
+
+            rect {
+              fill: transparent !important;
+            }
+
+            g path {
+              fill: #000000 !important;
+            }
+
+            g rect {
+              fill: transparent !important;
+            }
           }
         }
 
@@ -419,6 +519,9 @@
           text-align: center;
           vertical-align: middle;
           padding: 0;
+          overflow: visible;
+          max-width: none;
+
           .MuiIconButton-root {
             color: #000000 !important;
             padding: 2px !important;
@@ -426,6 +529,7 @@
             height: 38px;
             min-width: 38px;
             border-radius: 4px;
+
             &:hover {
               background-color: rgba(0, 0, 0, 0.06) !important;
               color: #000000 !important;
@@ -433,8 +537,9 @@
           }
         }
 
-        // View: keep compact
-        .action-view {
+        // View and Edit: keep compact
+        .action-view,
+        .action-edit {
           padding-right: 0;
 
           .MuiIconButton-root {
@@ -442,12 +547,14 @@
             height: 28px;
             min-width: 28px;
           }
+
           .MuiSvgIcon-root,
           svg {
             width: 18px !important;
             height: 18px !important;
           }
         }
+
         // Delete: noticeably larger than view
         .action-delete {
           padding-left: 0;
@@ -458,6 +565,7 @@
             min-width: 38px;
             padding: 6px !important;
           }
+
           .MuiSvgIcon-root,
           svg {
             width: 26px !important;
@@ -485,11 +593,13 @@
       padding-top: 8px;
       border-top: none;
       margin-top: 0;
+
       .totalRecords {
         padding-top: 8px;
         font-size: 13px;
         color: #616161;
       }
+
       .pagination {
         padding-top: 8px;
       }
@@ -539,13 +649,13 @@
   }
 }
 
-.detail-content-panel{
-  padding: 0 !important; 
+.detail-content-panel {
+  padding: 0 !important;
   background-color: #f5f5f5;
 }
 
-.history-content-panel{
-  padding: 0 !important; 
+.history-content-panel {
+  padding: 0 !important;
   background-color: #f5f5f5;
 }
 
@@ -713,26 +823,31 @@
     border: 1px solid #e0e0e0;
   }
 
-    .spl-po-badge {
-      display: inline-block;
-      background-color: #f57c00;
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 6px;
-      letter-spacing: 0.5px;
-    }
+  .spl-po-badge {
+    display: inline-block;
+    background-color: #f57c00;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
 
   .detail-content {
     padding: 12px 16px 16px;
-    background-color: #f5f5f5; /* greyish details section as in design - extends to edges */
+    background-color: #f5f5f5;
+    /* greyish details section as in design - extends to edges */
     overflow-x: hidden;
 
     .detail-section-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+
+      @media screen and (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+
       gap: 12px 16px;
       padding-bottom: 12px;
       margin-bottom: 12px;
@@ -824,7 +939,8 @@
           border-collapse: separate;
           border-spacing: 0;
 
-          th, td {
+          th,
+          td {
             padding: 8px 12px;
             text-align: left;
             vertical-align: middle;
@@ -861,7 +977,7 @@
           .inventory-cell {
             white-space: normal;
             min-width: 160px;
-            
+
             .inventory-name {
               font-weight: 600;
               color: #333333;
@@ -956,7 +1072,7 @@
 
       .notes-list {
         grid-column: 1 / -1;
-        
+
         .note-item {
           padding: 8px 0;
           font-size: 13px;
@@ -1023,7 +1139,10 @@
 .purchase-order-list-wrapper.split {
   display: flex;
   align-items: flex-start;
-  @media screen and (max-width: 768px) { flex-direction: column; }
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+  }
 
   .list-section {
     height: auto;
@@ -1031,7 +1150,12 @@
     overflow-y: auto;
     min-width: 400px;
     box-shadow: none;
-    @media screen and (max-width: 768px) { min-width: 0; width: 100%; max-height: none; }
+
+    @media screen and (max-width: 768px) {
+      min-width: 0;
+      width: 100%;
+      max-height: none;
+    }
   }
 
   .detail-section {
@@ -1041,7 +1165,14 @@
     background-color: #ffffff;
     border-left: 1px solid #e0e0e0;
     box-shadow: none;
-    @media screen and (max-width: 768px) { min-width: 0; width: 100%; max-height: none; border-left: none; border-top: 1px solid #e0e0e0; }
+
+    @media screen and (max-width: 768px) {
+      min-width: 0;
+      width: 100%;
+      max-height: none;
+      border-left: none;
+      border-top: 1px solid #e0e0e0;
+    }
   }
 }
 
@@ -1077,7 +1208,10 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     padding: 12px 16px;
-    @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+
+    @media screen and (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
 
     .filter-item-full {
       grid-column: 1 / -1;
@@ -1089,7 +1223,10 @@
       grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
       align-items: start;
-      @media screen and (max-width: 768px) { grid-template-columns: 1fr; }
+
+      @media screen and (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
     }
 
     .filter-field-label {
@@ -1140,5 +1277,108 @@
       color: #fff !important;
       border-radius: 8px;
     }
+  }
+}
+// ── PO Filter toggle switches & advanced section ───────────────────────────
+.po-filter {
+  .po-filter-toggles {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 4px 0 0;
+
+    .MuiFormControlLabel-root {
+      margin: 0;
+    }
+
+    .MuiFormControlLabel-label {
+      font-size: 14px;
+      color: #323c47;
+      font-weight: 500;
+    }
+  }
+
+  .po-filter-advanced-toggle {
+    padding-top: 4px;
+  }
+
+  .po-filter-advanced-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3f51b5;
+    padding: 4px 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    .po-filter-advanced-arrow {
+      font-size: 10px;
+    }
+  }
+}
+
+// ── PO expand row ──────────────────────────────────────────────────────────
+.po-expansion-row {
+  td {
+    background: #f9fbff;
+  }
+
+  table {
+    th, td {
+      white-space: nowrap;
+    }
+    td:first-child {
+      white-space: normal;
+    }
+  }
+}
+
+// ── Lead time / overdue styles ─────────────────────────────────────────────
+
+.overdue-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  background: #fdecea;
+  color: #c0392b;
+  border: 1px solid #f5c6cb;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-left: 6px;
+}
+
+.po-status-cell-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.days-left-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.days-left-ok {
+    background: #eafaf1;
+    color: #1e8449;
+    border: 1px solid #a9dfbf;
+  }
+
+  &.days-left-overdue {
+    background: #fdecea;
+    color: #c0392b;
+    border: 1px solid #f5c6cb;
   }
 }

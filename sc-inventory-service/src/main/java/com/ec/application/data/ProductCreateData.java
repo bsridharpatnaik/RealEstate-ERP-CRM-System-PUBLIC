@@ -7,6 +7,7 @@ import org.springframework.lang.NonNull;
 
 import com.ec.application.Deserializers.ToSentenceCaseDeserializer;
 import com.ec.application.Deserializers.ToTitleCaseDeserializer;
+import com.ec.application.constants.BatchMode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @Data
@@ -24,4 +25,11 @@ public class ProductCreateData {
     String measurementUnit;
     Boolean showOnDashboard;
     Boolean isManagedInventory;
+    /** Legacy field — kept for backward compat. Use batchMode when set. */
+    Boolean isExpirable;
+    /** New batch tracking mode. Supersedes isExpirable. */
+    BatchMode batchMode;
+    Integer leadTimeDays;
+    /** Optional — new batch entries default their expiry to today + this many days. */
+    Integer defaultExpiryDays;
 }

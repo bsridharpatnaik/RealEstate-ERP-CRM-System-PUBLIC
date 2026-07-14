@@ -36,7 +36,7 @@ function App(props) {
   }
   let tennant = props.tennant;
   if (!tennant) {
-    let params = new URLSearchParams(window.location.hash);
+    let params = new URLSearchParams(window.location.hash.split("?")[1] || "");
     tennant = params.get("tennant-id");
     if (!tennant) {
       tennant = localStorage.getItem("tennant-id");

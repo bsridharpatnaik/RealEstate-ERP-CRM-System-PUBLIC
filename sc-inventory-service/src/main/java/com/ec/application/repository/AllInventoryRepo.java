@@ -94,4 +94,34 @@ public interface AllInventoryRepo extends BaseRepository<AllInventoryTransaction
 
 	@Query("SELECT a FROM AllInventoryTransactions a WHERE a.productId IN :productIds ORDER BY a.id")
 	List<AllInventoryTransactions> findInwardOutwardByProductIds(@Param("productIds") List<Long> productIds);
+
+	// Aging: product IDs whose oldest stock-increasing transaction date (Inward/Transfer-In/
+	// Excess-Found), in a warehouse that currently still has stock, is on or before cutoffDate.
+	// Per StockService.calculateStockAges' FIFO assumption, the oldest such transaction's date IS
+	// the age of a warehouse's surviving stock — done in SQL instead of fetching full transaction
+	// history per product and walking it in Java.
+	@Query(value =
+		"SELECT ai.productid FROM all_inventory ai " +
+		"WHERE ai.type IN ('Inward','Transfer-In','Excess-Found') " +
+		"AND EXISTS (" +
+		"  SELECT 1 FROM Stock s WHERE s.productId = ai.productid AND s.warehouseId = ai.warehouse_id" +
+		"  AND s.quantityInHand > 0 AND s.is_deleted = 0" +
+		") " +
+		"GROUP BY ai.productid " +
+		"HAVING MIN(ai.date) <= :cutoffDate",
+		nativeQuery = true)
+	List<Long> findAgingProductIdsFifo(@Param("cutoffDate") Date cutoffDate);
+
+	@Query(value =
+		"SELECT ai.productid FROM all_inventory ai " +
+		"WHERE ai.type IN ('Inward','Transfer-In','Excess-Found') " +
+		"AND ai.productid IN (:ids) " +
+		"AND EXISTS (" +
+		"  SELECT 1 FROM Stock s WHERE s.productId = ai.productid AND s.warehouseId = ai.warehouse_id" +
+		"  AND s.quantityInHand > 0 AND s.is_deleted = 0" +
+		") " +
+		"GROUP BY ai.productid " +
+		"HAVING MIN(ai.date) <= :cutoffDate",
+		nativeQuery = true)
+	List<Long> findAgingProductIdsFifoIn(@Param("cutoffDate") Date cutoffDate, @Param("ids") List<Long> ids);
 }

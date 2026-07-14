@@ -14,6 +14,7 @@ import com.ec.application.model.PurchaseOrderStatusHistory;
 import com.ec.application.repository.IndentInventoryListRepo;
 import com.ec.application.repository.PurchaseOrderRepo;
 import com.ec.application.repository.PurchaseOrderStatusHistoryRepo;
+import com.ec.application.service.ActivityLogService;
 import com.ec.application.service.IndentStatusHistoryService;
 import com.ec.application.service.IndentStatusUpdater;
 import com.ec.application.service.PurchaseOrderStatusHistoryService;
@@ -37,6 +38,7 @@ public class PurchaseOrderLifecycleManager {
     private final IndentStatusHistoryService indentStatusHistoryService;
     private final PurchaseOrderStatusHistoryService purchaseOrderStatusHistoryService;
     private final UserDetailsService userDetailsService;
+    private final ActivityLogService activityLogService;
 
     @Transactional
     public void cancelIfAllowed(String poId) throws Exception {
@@ -48,11 +50,14 @@ public class PurchaseOrderLifecycleManager {
             throw new IllegalStateException("PO can be cancelled only in status NEW. It must be short closed.");
         }
 
-        purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_CANCELLED, "System", "PO cancelled by user " + userDetailsService.getCurrentUser().getUsername(), null);
+        String cancelUser = resolveCurrentUser();
+        purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_CANCELLED, "System", "PO cancelled by user " + cancelUser, null);
         po.setLastStatusUpdatedAt(new Date());
         po.setStatus(POStatusConstants.STATUS_CANCELLED);
         purchaseOrderRepo.save(po);
         indentStatusUpdater.updateIndentStatuses(po, POIndentUpdateAction.CANCEL_PO);
+        activityLogService.record("CANCELLED", "PURCHASE_ORDER", poId,
+                "Purchase Order " + poId + " cancelled by " + cancelUser, cancelUser);
     }
 
     @Transactional
@@ -67,7 +72,8 @@ public class PurchaseOrderLifecycleManager {
         }
 
         // 3. Update PO status
-        purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_SHORT_CLOSED, "System", "PO short closed by user " + userDetailsService.getCurrentUser().getUsername(), null);
+        String shortCloseUser = resolveCurrentUser();
+        purchaseOrderStatusHistoryService.logStatusChange(po, po.getStatus(), POStatusConstants.STATUS_SHORT_CLOSED, "System", "PO short closed by user " + shortCloseUser, null);
         po.setLastStatusUpdatedAt(new Date());
         po.setStatus(POStatusConstants.STATUS_SHORT_CLOSED);
         po.setShortCloseReason(request.getReason()); // optional column
@@ -97,5 +103,13 @@ public class PurchaseOrderLifecycleManager {
                     indentCompletionEvaluator.evaluate(indent);
                 })
         );
+
+        activityLogService.record("SHORT_CLOSED", "PURCHASE_ORDER", request.getPurchaseOrderNo(),
+                "Purchase Order " + request.getPurchaseOrderNo() + " short closed by " + shortCloseUser, shortCloseUser);
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 }

@@ -3,6 +3,7 @@ import React from "react";
 //Third Party
 import ListCommon from "./../../Shared/List";
 import { withSnackbar } from "notistack";
+import * as XLSX from "xlsx";
 
 //component
 import Table from "./table";
@@ -27,10 +28,11 @@ class List extends ListCommon {
   deleteUrl = apiEndpoints.deleteInwardInventory;
   title = messages.common.inwardInventory;
   filterData = {};
+  searchDebounceTimer = null;
   state = {
     pageno: 0,
     data: [],
-    options: [],
+    globalSearchText: "",
     showDetails: false,
     selectedData: null,
     key: 1,
@@ -38,29 +40,35 @@ class List extends ListCommon {
     totals: [],
     currentIndex: 0,
     detailStack: [],
+    tiles: {},
+    activeTile: null,
   };
   tableData = {
     headers: [
       messages.common.id,
       messages.fields.date,
       messages.fields.supplier,
+      "PO No",
       "Inventory Count",
       "Challan No",
       "Challan Date",
       "Bill No",
       "Bill Date",
-        "Inward Type",
+      "Doc Status",
+      "Inward Type",
       "Created By",
     ],
     keys: [
       "inwardId",
       "date",
       "supplier",
+      "purchaseOrderNo",
       "inventoryCount",
       "challanNo",
       "challanDate",
       "billNo",
       "billDate",
+      "missingChallanBillFlag",
       "inwardType",
       "createdBy",
     ],
@@ -72,7 +80,96 @@ class List extends ListCommon {
 
   componentDidMount() {
     this.search();
+    this.fetchTiles();
     this.filterRef = React.createRef();
+  }
+
+  fetchTiles = async () => {
+    const response = await API.GET(apiEndpoints.getInwardInventoryTiles);
+    if (response.success) {
+      this.setState({ tiles: response.data || {} });
+    }
+  };
+
+  fmtDate = (d) => {
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  };
+
+  TILES = [
+    { key: "missingChallan",   label: "Missing Challan/Bill",color: "#e67e22", bg: "#fdf2e9", countKey: "missingChallanBillCount", filterAttr: "missingChallanBill" },
+    { key: "reject",           label: "Having Reject",       color: "#e74c3c", bg: "#fdedec", countKey: "rejectCount",           filterAttr: "showOnlyRejected" },
+    { key: "fromPO",           label: "From PO",             color: "#8e44ad", bg: "#f4ecf7", countKey: "fromPOCount",           filterAttr: "inwardType", filterValue: "PO" },
+    { key: "direct",           label: "Direct",              color: "#16a085", bg: "#e8f8f5", countKey: "directCount",           filterAttr: "inwardType", filterValue: "DIRECT" },
+    { key: "sample",           label: "Sample",              color: "#d35400", bg: "#fef9e7", countKey: "sampleCount",           filterAttr: "inwardType", filterValue: "SAMPLE" },
+    { key: "thisWeek",         label: "This Week",           color: "#2980b9", bg: "#eaf2f8", countKey: "thisWeekCount",         dateWindow: "week" },
+    { key: "thisMonth",        label: "This Month",          color: "#27ae60", bg: "#eafaf1", countKey: "thisMonthCount",        dateWindow: "month" },
+  ];
+
+  handleTileClick = (tile) => {
+    const isActive = this.state.activeTile === tile.key;
+
+    delete this.filterData.missingChallanBill;
+    delete this.filterData.showOnlyRejected;
+    delete this.filterData.inwardType;
+    if (this.state.activeTile && this.TILES.find((t) => t.key === this.state.activeTile)?.dateWindow) {
+      delete this.filterData.startDate;
+      delete this.filterData.endDate;
+    }
+
+    if (isActive) {
+      this.setState({ activeTile: null }, () => this.search(0));
+      return;
+    }
+
+    if (tile.filterAttr) {
+      this.filterData[tile.filterAttr] = tile.filterValue || "true";
+    } else if (tile.dateWindow) {
+      const end = new Date();
+      const start = new Date();
+      if (tile.dateWindow === "week") {
+        const day = start.getDay();
+        const diffToMonday = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - diffToMonday);
+      } else {
+        start.setDate(1);
+      }
+      start.setHours(0, 0, 0, 0);
+      this.filterData.startDate = this.fmtDate(start);
+      this.filterData.endDate = this.fmtDate(end);
+    }
+    this.setState({ activeTile: tile.key }, () => this.search(0));
+  };
+
+  renderTiles() {
+    const { tiles, activeTile } = this.state;
+    return (
+      <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "12px 0" }}>
+        {this.TILES.map((t) => {
+          const count = tiles[t.countKey] || 0;
+          const isActive = activeTile === t.key;
+          return (
+            <div
+              key={t.key}
+              onClick={() => this.handleTileClick(t)}
+              style={{
+                cursor: "pointer",
+                minWidth: 130,
+                padding: "10px 16px",
+                borderRadius: 8,
+                background: t.bg,
+                border: isActive ? `2px solid ${t.color}` : "2px solid transparent",
+                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 700, color: t.color }}>{count}</div>
+              <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>{t.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
   }
   replaceSortKey(sortKey) {
     if (sortKey === "warehouse") {
@@ -86,11 +183,10 @@ class List extends ListCommon {
     let params;
     params = {};
     params.filterData = [];
-    if (this.searchValue.length) {
-      const searchVal = this.searchValue.map((v) => v.name);
+    if (this.state.globalSearchText.trim().length) {
       params.filterData.push({
         attrName: "globalSearch",
-        attrValue: Array.isArray(searchVal) ? searchVal : [searchVal],
+        attrValue: [this.state.globalSearchText.trim()],
       });
     }
     if (this.filterData) {
@@ -102,7 +198,7 @@ class List extends ListCommon {
             ["productNames", "supplierNames", "warehouseNames", "categoryNames"].includes(field)
           ) {
             value = value.map((v) => v.name);
-          } else if (["startDate", "endDate", "showOnlyRejected", "textSearch"].includes(field)) {
+          } else if (["startDate", "endDate", "showOnlyRejected", "textSearch", "missingChallanBill", "inwardType"].includes(field)) {
             value = [value];
           }
           params.filterData.push({
@@ -130,6 +226,18 @@ class List extends ListCommon {
   getExportData(response) {
     return response.data;
   }
+  async exportToCSV() {
+    const response = await this.getExportAPIData();
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage, { variant: "error" });
+      return;
+    }
+    const data = this.getExportData(response);
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inward Inventory");
+    XLSX.writeFile(wb, this.exportFile + ".xlsx");
+  }
   async search(page = 0, sortkey = null, sortby = null) {
     if (sortkey !== null) this.sortkey = sortkey;
     if (sortby !== null) this.sortby = sortby;
@@ -139,14 +247,11 @@ class List extends ListCommon {
     this.getTotals();
     if (response.success) {
       this.dropdowns = response.data.iiDropdown;
-      const options = [...this.dropdowns.product, ...this.dropdowns.supplier];
       this.props.setOptions(this.dropdowns);
       this.setState({
         data: response.data.inwardInventory.content,
         pages: response.data.inwardInventory.totalPages,
         totalRecords: response.data.inwardInventory.totalElements,
-        options: options,
-        // totals: response.data.totals,
       });
     }
   }
@@ -315,22 +420,29 @@ class List extends ListCommon {
     return (
       <div className={this.state.showTotal ? "split" : ""}>
         <div className="list-section">
+          {this.renderTiles()}
           <div className="filter-section">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                clearTimeout(this.searchDebounceTimer);
                 this.search(0);
               }}
             >
-              {this.renderAutoComplete(
-                this.state.options,
-                messages.common.searchByName,
-                (option) => {
-                  return option.name;
-                }
-              )}
+              <input
+                className="global-search-input"
+                type="text"
+                placeholder="Search by ID, product, supplier, bill no, challan no..."
+                value={this.state.globalSearchText}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  this.setState({ globalSearchText: val });
+                  clearTimeout(this.searchDebounceTimer);
+                  this.searchDebounceTimer = setTimeout(() => this.search(0), 3000);
+                }}
+              />
             </form>
-            <div className="top-button-wrapper">
+          <div className="top-button-wrapper">
               <Button
                 onClick={() => {
                   this.setState({ showTotal: true, showDetail: false });

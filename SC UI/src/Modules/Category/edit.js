@@ -24,6 +24,7 @@ class Edit extends EditForm {
       const data = response.data;
       this.formData.categoryName = data.categoryName;
       this.formData.categoryDescription = data.categoryDescription;
+      this.formData.leadTimeDays = data.leadTimeDays != null ? String(data.leadTimeDays) : "";
       this.setState({
         isLoaded: true,
       });
@@ -47,6 +48,13 @@ class Edit extends EditForm {
             {this.renderTextField({
               fieldname: "categoryDescription",
               placeholder: messages.common.description,
+            })}
+            </div>
+            <div class="flex">
+            {this.renderTextField({
+              fieldname: "leadTimeDays",
+              placeholder: "Lead Time (Days)",
+              type: "number",
             })}
             </div>
             {this.renderFooter()}

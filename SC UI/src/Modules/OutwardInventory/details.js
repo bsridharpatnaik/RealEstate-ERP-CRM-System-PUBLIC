@@ -8,7 +8,7 @@ import {
 import IconButton from "@material-ui/core/IconButton";
 import Paper from "@material-ui/core/Paper";
 import { messages } from "./../../messages";
-import Popper from "@material-ui/core/Popper";
+
 import CommonDetails from "./../../Shared/Details";
 import ReturnProduct from "./ReturnProduct";
 import DeleteConfirm from "./../../Shared/DeleteConfirm";
@@ -17,6 +17,8 @@ import Tab from "@material-ui/core/Tab";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import RejectProduct from "./rejectProduct";
+import { API } from "./../../axios";
+import { apiEndpoints } from "./../../endpoints";
 import { checkifDateLessThan, getRoleEditConstraintDays, getRoleRejectReturnConstraintDays, canCreateInward } from "./../../helper";
 import Tooltip from "@material-ui/core/Tooltip";
 import WarningRoundedIcon from "@material-ui/icons/WarningRounded";
@@ -30,6 +32,16 @@ import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Print from "./outwardPrint";
+import { renderActivityDescription } from '../Activity/renderActivityDescription';
+
+const ACTION_BADGE_STYLES = {
+  CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
+  UPDATED:     { color: '#e65100', background: '#fff3e0' },
+  DELETED:     { color: '#c62828', background: '#ffebee' },
+  REJECTED:    { color: '#6a1b9a', background: '#f3e5f5' },
+  RETURNED:    { color: '#0d47a1', background: '#e3f2fd' },
+};
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -53,6 +65,10 @@ class Details extends CommonDetails {
     deleteConfirmOpen: false,
     rejectopen: false,
     anchorEl: null,
+    historyLogs: [],
+    historyLoading: false,
+    batchConsumptions: [],
+    batchConsumptionsLoaded: false,
   };
   deleteRow = null;
 
@@ -62,11 +78,64 @@ class Details extends CommonDetails {
     this.componentRef = React.createRef();
     this.componentRef1 = React.createRef();
     this.detailTabRef = React.createRef();
+    this.loadBatchConsumptions();
+  }
+
+  async loadHistory() {
+    const { data } = this.props;
+    if (!data || !data.outwardid) return;
+    this.setState({ historyLoading: true });
+    const r = await API.GET(apiEndpoints.activityLogByEntity('OUTWARD', data.outwardid));
+    if (r.success) {
+      this.setState({ historyLogs: r.data || [] });
+    }
+    this.setState({ historyLoading: false });
+  }
+
+  componentDidUpdate(prevProps) {
+    const prevId = prevProps.data?.outwardid;
+    const currId = this.props.data?.outwardid;
+    // Build a signature of product quantities to detect edits on the same outward
+    const sig = (d) => (d?.inwardOutwardList || [])
+      .map(i => `${i.product?.productId}:${i.quantity}`).sort().join(',');
+    if (prevId !== currId || sig(prevProps.data) !== sig(this.props.data)) {
+      this.setState({ batchConsumptions: [], batchConsumptionsLoaded: false }, () =>
+        this.loadBatchConsumptions()
+      );
+    }
+  }
+
+  async loadBatchConsumptions() {
+    const { data } = this.props;
+    if (!data || !data.outwardid || this.state.batchConsumptionsLoaded) return;
+    const r = await API.GET(apiEndpoints.getOutwardBatchConsumptions(data.outwardid));
+    if (r.success) {
+      this.setState({ batchConsumptions: r.data || [], batchConsumptionsLoaded: true });
+    }
   }
 
   handleCloseMenu = () => {
     this.setState({ anchorEl: null });
   };
+
+  // One-time snapshot taken at return/reject creation — same pattern as Lost/details.js's
+  // batchEntriesJson rendering. Never re-derived from current batch state afterward.
+  renderBatchEntriesCell(batchEntriesJson) {
+    if (!batchEntriesJson) return "-";
+    let rows = [];
+    try {
+      rows = JSON.parse(batchEntriesJson);
+    } catch (e) {
+      return "-";
+    }
+    if (!rows.length) return "-";
+    return rows
+      .map((r) => {
+        const label = [r.brand, r.lotNumber].filter(Boolean).join(" / ") || `Batch #${r.batchId}`;
+        return `${label}: ${r.qty}`;
+      })
+      .join(", ");
+  }
 
   render() {
     const data = this.props.data;
@@ -333,7 +402,10 @@ class Details extends CommonDetails {
         <Tabs
           indicatorColor="primary"
           textColor="primary"
-          onChange={(e, value) => this.setState({ value: value })}
+          onChange={(e, value) => {
+            this.setState({ value });
+            if (value === 1) this.loadHistory();
+          }}
           value={this.state.value}
         >
           <Tab label="Details" id="simple-tabpanel-0" />
@@ -341,44 +413,64 @@ class Details extends CommonDetails {
         </Tabs>
         <TabPanel value={this.state.value} index={1}>
           <Paper elevation={0}>
-            {data.createdBy && (
-              <div className="detail-item">
-                <div className="label">Created By</div>
-                <div className="value">{data.createdBy}</div>
-              </div>
-            )}
-            {data.creationDate && (
-              <div className="detail-item">
-                <div className="label">Creation Date</div>
-                <div className="value">{data.creationDate}</div>
-              </div>
-            )}
-            {data.inwardOutwardList && data.inwardOutwardList[0] && (
-              <div className="detail-item">
-                <div className="label">Last Modified By</div>
-                <div className="value">
-                  {data.inwardOutwardList[0].lastModifiedBy}
-                </div>
-              </div>
-            )}
-            {data.inwardOutwardList && data.inwardOutwardList[0] && (
-              <div className="detail-item">
-                <div className="label">Last Modified On</div>
-                <div className="value">
-                  {data.inwardOutwardList[0].lastModifiedDate}
-                </div>
-              </div>
+            {this.state.historyLoading ? (
+              <div style={{ padding: '16px', color: '#666' }}>Loading history...</div>
+            ) : this.state.historyLogs.length === 0 ? (
+              <div style={{ padding: '16px', color: '#999' }}>No history available.</div>
+            ) : (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Action</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell>By</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {this.state.historyLogs.map((log, i) => (
+                    <TableRow key={i}>
+                      <TableCell style={{ whiteSpace: 'nowrap', fontSize: '12px' }}>
+                        {log.activityTime ? new Date(log.activityTime).toLocaleString() : ''}
+                      </TableCell>
+                      <TableCell>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '12px',
+                          ...ACTION_BADGE_STYLES[log.action]
+                        }}>
+                          {log.action}
+                        </span>
+                      </TableCell>
+                      <TableCell style={{ fontSize: '13px', maxWidth: '360px' }}>
+                        {renderActivityDescription(log.description)}
+                      </TableCell>
+                      <TableCell style={{ fontSize: '12px' }}>{log.performedBy}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </Paper>
         </TabPanel>
         <TabPanel value={this.state.value} index={0}>
           <div className="details-print-content">
             <Paper elevation={0}>
-              {data.hasBOQ !== true && (
-                <div style={{ padding: '10px 16px 0' }}>
-                  <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
-                    <WarningRoundedIcon style={{ color: '#e65100', fontSize: '22px', cursor: 'default' }} />
-                  </Tooltip>
+              {(data.hasBOQ !== true || data.hasFifoOverride === true) && (
+                <div style={{ padding: '10px 16px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {data.hasBOQ !== true && (
+                    <Tooltip title="BOQ Bypassed — outward created without BOQ configured" arrow>
+                      <WarningRoundedIcon style={{ color: '#e65100', fontSize: '22px', cursor: 'default' }} />
+                    </Tooltip>
+                  )}
+                  {data.hasFifoOverride === true && (
+                    <Tooltip title="FIFO batch order was manually overridden on this outward" arrow>
+                      <span style={{
+                        background: '#fff3e0', color: '#e65100', border: '1px solid #ffcc80',
+                        borderRadius: '4px', padding: '2px 8px', fontSize: '11px',
+                        fontWeight: 600, cursor: 'default',
+                      }}>⚡ FIFO Override</span>
+                    </Tooltip>
+                  )}
                 </div>
               )}
               <div className="details-wrapper">
@@ -387,16 +479,16 @@ class Details extends CommonDetails {
                   <div className="value">{data.contractor.name}</div>
                 </div>
                 <div className="detail-item">
-                  <div className="label">{messages.common.warehouse}</div>
-                  <div className="value">{data.warehouse.warehouseName}</div>
+                  <div className="label">{messages.common.buildingType}</div>
+                  <div className="value">{data.usageLocation?.buildingType?.typeName || "-"}</div>
                 </div>
                 <div className="detail-item">
                   <div className="label">{messages.common.location}</div>
-                  <div className="value">{data.usageLocation.locationName}</div>
+                  <div className="value">{data.usageLocation?.locationName}</div>
                 </div>
                 <div className="detail-item">
                   <div className="label">{messages.common.finalLocation}</div>
-                  <div className="value">{data.usageArea.usageAreaName}</div>
+                  <div className="value">{data.usageArea?.usageAreaName}</div>
                 </div>
                 <div className="detail-item">
                   <div className="label">{messages.fields.date}</div>
@@ -410,6 +502,18 @@ class Details extends CommonDetails {
                   <div className="label">{messages.common.purpose}</div>
                   <div className="value">{data.purpose}</div>
                 </div>
+                {data.requestedBy && (
+                  <div className="detail-item">
+                    <div className="label">Requested By</div>
+                    <div className="value">{data.requestedBy}</div>
+                  </div>
+                )}
+                {data.issuedBy && (
+                  <div className="detail-item">
+                    <div className="label">Issued By</div>
+                    <div className="value">{data.issuedBy}</div>
+                  </div>
+                )}
               </div>
               <div className="detail-item">
                 <div className="label">{messages.common.comment}</div>
@@ -423,15 +527,17 @@ class Details extends CommonDetails {
                 <TableHead>
                   <TableRow>
                     <TableCell>{messages.common.inventory}</TableCell>
+                    <TableCell>{messages.common.warehouse}</TableCell>
                     <TableCell>{messages.common.unit}</TableCell>
                     <TableCell>{messages.common.quantity}</TableCell>
                     <TableCell>{messages.common.closingStock}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {data.inwardOutwardList.map((row) => (
-                    <TableRow key={row.productName}>
+                  {data.inwardOutwardList.map((row, i) => (
+                    <TableRow key={`${row.product.productId}-${row.warehouse ? row.warehouse.warehouseId : i}`}>
                       <TableCell>{row.product.productName}</TableCell>
+                      <TableCell>{row.warehouse ? row.warehouse.warehouseName : '—'}</TableCell>
                       <TableCell>{row.product.measurementUnit}</TableCell>
                       <TableCell>{row.quantity}</TableCell>
                       <TableCell>{row.closingStock}</TableCell>
@@ -440,6 +546,56 @@ class Details extends CommonDetails {
                 </TableBody>
               </Table>
             </Paper>
+
+            {/* Batch consumption section — shown when data available */}
+            {this.state.batchConsumptions.length > 0 && (() => {
+              // Build productId → productName lookup from outward line items
+              const productMap = {};
+              (this.props.data?.inwardOutwardList || []).forEach((line) => {
+                if (line.product) {
+                  productMap[line.product.productId] = line.product.productName;
+                }
+              });
+              return (
+                <>
+                  <h4 className="reject-stock">Batch Usage</h4>
+                  <Paper elevation={0} className="table-wrapper">
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Product</TableCell>
+                          <TableCell>Warehouse</TableCell>
+                          <TableCell>Batch #</TableCell>
+                          <TableCell>Expiry</TableCell>
+                          <TableCell>Brand</TableCell>
+                          <TableCell>Qty Consumed</TableCell>
+                          <TableCell>FIFO Override</TableCell>
+                          <TableCell>Override Reason</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {this.state.batchConsumptions.map((c) => (
+                          <TableRow key={c.id} style={c.fifoOverridden ? { backgroundColor: '#fff8e1' } : {}}>
+                            <TableCell>{productMap[c.productId] || '—'}</TableCell>
+                            <TableCell>{c.batch && c.batch.warehouse ? c.batch.warehouse.warehouseName : '—'}</TableCell>
+                            <TableCell>#{c.batch ? c.batch.batchId : '—'}</TableCell>
+                            <TableCell>{c.batch && c.batch.expiryDate ? c.batch.expiryDate.replace(/-/g, '/') : '—'}</TableCell>
+                            <TableCell>{c.batch && c.batch.brand ? c.batch.brand : '—'}</TableCell>
+                            <TableCell>{c.qtyConsumed}</TableCell>
+                            <TableCell>
+                              {c.fifoOverridden
+                                ? <span style={{ color: '#e65100', fontWeight: 600 }}>Yes</span>
+                                : <span style={{ color: '#2e7d32' }}>No</span>}
+                            </TableCell>
+                            <TableCell style={{ color: '#e65100' }}>{c.overrideComment || '—'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Paper>
+                </>
+              );
+            })()}
 
             {hasReturn ? (
               <>
@@ -455,16 +611,18 @@ class Details extends CommonDetails {
                         <TableCell>
                           {messages.common.returnedQauntity}
                         </TableCell>
+                        <TableCell>Batch Details</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {data.returnOutwardList.map((row) => (
-                        <TableRow key={row.productName}>
+                        <TableRow key={row.returnentryid}>
                           <TableCell>{row.returnDate}</TableCell>
                           <TableCell>{row.product.productName}</TableCell>
                           <TableCell>{row.product.measurementUnit}</TableCell>
                           <TableCell>{row.oldQuantity}</TableCell>
                           <TableCell>{row.returnQuantity}</TableCell>
+                          <TableCell>{this.renderBatchEntriesCell(row.batchEntriesJson)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -483,19 +641,21 @@ class Details extends CommonDetails {
                         <TableCell>{messages.common.inventory}</TableCell>
                         <TableCell>{messages.common.unit}</TableCell>
                         <TableCell>{messages.common.oldquantity}</TableCell>
-                        <TableCell>
-                          {messages.common.returnedQauntity}
-                        </TableCell>
+                        <TableCell>Rejected Qty</TableCell>
+                        <TableCell>Remarks</TableCell>
+                        <TableCell>Batch Details</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {data.rejectOutwardList.map((row) => (
-                        <TableRow key={row.productName}>
+                        <TableRow key={row.rejectentryid}>
                           <TableCell>{row.rejectDate}</TableCell>
                           <TableCell>{row.product.productName}</TableCell>
                           <TableCell>{row.product.measurementUnit}</TableCell>
                           <TableCell>{row.oldQuantity}</TableCell>
                           <TableCell>{row.rejectQuantity}</TableCell>
+                          <TableCell>{row.remarks || '-'}</TableCell>
+                          <TableCell>{this.renderBatchEntriesCell(row.batchEntriesJson)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

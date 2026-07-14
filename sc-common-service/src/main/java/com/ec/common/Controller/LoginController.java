@@ -48,7 +48,15 @@ public class LoginController {
         LoginData loginData = new LoginData();
         String username = userData.getUserName().trim();
         String password = userData.getPassword();
-        authenticate(username, password);
+        try {
+            authenticate(username, password);
+        } catch (Exception e) {
+            if ("INVALID_CREDENTIALS".equals(e.getMessage())) {
+                return ResponseEntity.status(401)
+                        .body(new java.util.HashMap<String, String>() {{ put("message", "INVALID_CREDENTIALS"); }});
+            }
+            throw e;
+        }
         final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         if (!userDetails.isEnabled()) {
             throw new Exception("USER_DISABLED");

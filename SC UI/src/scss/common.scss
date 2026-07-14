@@ -121,6 +121,28 @@ html {
   }
 
 }
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+  span {
+    padding-right: 8px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+  select {
+    border: 1px solid #c4c4c4;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 0.875rem;
+    background: #fff;
+    cursor: pointer;
+    &:focus {
+      outline: none;
+      border-color: #3f51b5;
+    }
+  }
+}
 .go-to-form {
   .goto-page-label {
     display: flex;
@@ -148,6 +170,28 @@ html {
   .MuiTextField-root {
     width: 500px;
     margin-top: 0;
+    @media screen and (max-width: 768px) {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    @media screen and (max-width: 425px) {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+  }
+  .global-search-input {
+    width: 500px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 14px;
+    border: 1px solid #c4c4c4;
+    border-radius: 4px;
+    outline: none;
+    box-sizing: border-box;
+    &:focus {
+      border-color: #3f51b5;
+      box-shadow: 0 0 0 1px #3f51b5;
+    }
     @media screen and (max-width: 768px) {
       width: 100%;
       margin-bottom: 12px;
@@ -248,6 +292,7 @@ html {
   box-shadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2),
     0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
   .table-wrapper {
+    overflow-x: auto;
     @media screen and (max-width: 768px) {
       overflow: auto;
     }
@@ -379,7 +424,13 @@ html {
 .MuiFormHelperText-root.Mui-error {
   font-size: 10px;
   position: absolute;
-  bottom: -15px;
+  // Anchor from the top of the field (growing downward) instead of the bottom (growing
+  // upward into the field). bottom:-15px worked for short single-line messages but made
+  // longer/wrapped messages grow upward and overlap the field's border — see Inventory
+  // Transfer's "Current stock for inventory X is Y. Please enter a quantity less than the
+  // current stock." Still absolutely positioned so it doesn't shift surrounding layout.
+  top: 100%;
+  margin-top: 2px;
 }
 .add {
   padding: 0 20px;

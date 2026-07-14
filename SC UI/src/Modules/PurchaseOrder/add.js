@@ -51,6 +51,7 @@ class Add extends AddForm {
     poDate: moment().format(constants.dateFormat),
     freightCharges: "",
     freightGstPercent: 18,
+    poDiscount: "",
     customCharges: [],
     poNumber: "", // Generated PO number
     isEditMode: false,
@@ -74,8 +75,22 @@ class Add extends AddForm {
       this.loadEditData(this.props.editData);
     } else if (this.props.draftData) {
       this.loadDraftData(this.props.draftData, this.props.draftId);
+    } else if (this.props.quotePrefill) {
+      this.loadQuotePrefill(this.props.quotePrefill);
     }
   }
+
+  // Arrived from Quote Comparison's "Create PO" button — skip indent selection (step 1) since
+  // the awarded supplier, products, rates and terms are already known from the finalized quote.
+  loadQuotePrefill = (prefill) => {
+    this.setState({
+      isLoaded: true,
+      currentStep: 2,
+      items: prefill.items || [],
+      orderTo: prefill.orderTo || null,
+      projectName: prefill.projectName || "",
+    });
+  };
 
   componentWillUnmount() {
     // Clean up blob URLs to prevent memory leaks
@@ -106,11 +121,13 @@ class Add extends AddForm {
       brandName: line.brand || "",
       grade: line.grade || "",
       diameter: line.diameter || "",
+      size: line.size || "",
       specification: line.specification || "",
       netRate: line.netRate != null ? String(line.netRate) : "",
       totalAmt: line.totalAmount != null ? String(line.totalAmount) : "",
       sampleImageFileId: line.sampleImageFileId || null,
       sampleImagePreview: null, // will fall back to download URL in the UI
+      leadTimeDays: line.leadTimeDays ?? null,
       billingUnit: line.billingUnit || null,
       billingQuantity: line.billingQuantity != null ? line.billingQuantity : null,
       billingConversionFactor: line.billingConversionFactor != null ? line.billingConversionFactor : null,
@@ -134,6 +151,7 @@ class Add extends AddForm {
       isSpecialPo: data.specialPo || false,
       freightCharges: data.freightCharges != null ? String(data.freightCharges) : "",
       freightGstPercent: data.freightGstPercent != null ? data.freightGstPercent : 18,
+      poDiscount: data.poDiscount != null ? String(data.poDiscount) : "",
       customCharges: (data.customCharges || []).map(c => ({
         chargeName: c.chargeName || "",
         chargeAmount: c.chargeAmount != null ? String(c.chargeAmount) : "",
@@ -159,6 +177,7 @@ class Add extends AddForm {
       isSpecialPo: this.state.isSpecialPo,
       freightCharges: this.state.freightCharges,
       freightGstPercent: this.state.freightGstPercent,
+      poDiscount: this.state.poDiscount,
       customCharges: this.state.customCharges,
       fileInformations: (this.formData.fileInformations || []).map((f) => ({
         fileUUId: f.fileUUId,
@@ -228,6 +247,7 @@ class Add extends AddForm {
       isSpecialPo: draft.isSpecialPo || false,
       freightCharges: draft.freightCharges || "",
       freightGstPercent: draft.freightGstPercent !== undefined ? draft.freightGstPercent : 18,
+      poDiscount: draft.poDiscount || "",
       customCharges: draft.customCharges || [],
     });
     this.forceUpdate();
@@ -248,6 +268,7 @@ class Add extends AddForm {
       return (
         !this.state.orderTo ||
         !this.state.orderFrom ||
+        !this.state.projectName ||
         this.state.items.length === 0 ||
         hasMissingRate
       );
@@ -260,6 +281,7 @@ class Add extends AddForm {
     if (this.state.isAdding) return "Please wait...";
     if (!this.state.orderTo) return "Please select Order To supplier";
     if (!this.state.orderFrom) return "Please select Order From firm";
+    if (!this.state.projectName) return "Please select a Project";
     if (this.state.items.length === 0) return "Please add at least one item";
     const hasMissingRate = this.state.items.some(
       (item) =>
@@ -344,6 +366,7 @@ class Add extends AddForm {
           inventoryName: indent.inventoryName,
           quantity,
           unit: indent.unit || "NOS",
+          leadTimeDays: indent.leadTimeDays ?? null,
           specification: indent.specification || "",
           remarks: indent.remarks || "",
           diameter: "",
@@ -418,6 +441,7 @@ class Add extends AddForm {
           brand: item.brandName || "",
           grade: item.grade || "",
           diameter: item.diameter || "",
+          size: item.size || "",
           specification: item.specification || "",
           rate: parseFloat(item.rate || 0),
           discountPercent: parseFloat(item.discount || 0),
@@ -468,6 +492,7 @@ class Add extends AddForm {
         brand: item.brand,
         grade: item.grade,
         diameter: item.diameter,
+        size: item.size,
         specification: item.specification,
         rate,
         discountPercent: discount,
@@ -482,6 +507,10 @@ class Add extends AddForm {
         indentRefs: item.indentRefs,
       };
     });
+
+    // PO Discount is a flat, special, post-tax PO-level deduction — it must not change line
+    // item rates, GST, or totals. It's subtracted once from the grand total below.
+    const poDiscountAmt = parseFloat(this.state.poDiscount || 0);
 
     // Calculate grandTotal from lineItems
     const lineItemsTotal = lineItems.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
@@ -502,7 +531,7 @@ class Add extends AddForm {
       });
     const totalCustomCharges = customChargesPayload.reduce((sum, c) => sum + c.totalChargeAmount, 0);
 
-    const grandTotal = Math.round((lineItemsTotal + totalFreightCharges + totalCustomCharges) * 100) / 100;
+    const grandTotal = Math.round((lineItemsTotal + totalFreightCharges + totalCustomCharges - poDiscountAmt) * 100) / 100;
 
     // Prepare payload matching API structure
     const payload = {
@@ -522,6 +551,7 @@ class Add extends AddForm {
       freightCharges: freightCharges || null,
       freightGstPercent: freightCharges > 0 ? freightGstPercent : null,
       totalFreightCharges: freightCharges > 0 ? totalFreightCharges : null,
+      poDiscount: poDiscountAmt || null,
       customCharges: customChargesPayload,
       specialPo: this.state.isSpecialPo || false,
       lineItems: lineItems
@@ -554,6 +584,7 @@ class Add extends AddForm {
             brand: item.brandName || "",
             grade: item.grade || "",
             diameter: item.diameter || "",
+            size: item.size || "",
             specification: item.specification || "",
             sampleImageFileId: item.sampleImageFileId || null,
             billingUnit: item.billingUnit || null,
@@ -561,6 +592,9 @@ class Add extends AddForm {
             billingConversionFactor: item.billingConversionFactor || null,
           };
         });
+
+        // PO Discount is a flat, special, post-tax PO-level deduction — does not touch line items.
+        const poDiscountEdit = parseFloat(this.state.poDiscount || 0);
 
         const lineItemsTotal = lineUpdates.reduce((sum, l) => sum + (l.totalAmount || 0), 0);
         const freightChargesEdit = parseFloat(this.state.freightCharges || 0);
@@ -575,9 +609,10 @@ class Add extends AddForm {
             return { chargeName: c.chargeName || null, chargeAmount: amt, chargeGstPercent: gst, totalChargeAmount: total };
           });
         const totalCustomEdit = customChargesEdit.reduce((sum, c) => sum + c.totalChargeAmount, 0);
-        const grandTotalEdit = Math.round((lineItemsTotal + totalFreightEdit + totalCustomEdit) * 100) / 100;
+        const grandTotalEdit = Math.round((lineItemsTotal + totalFreightEdit + totalCustomEdit - poDiscountEdit) * 100) / 100;
 
         const updatePayload = {
+          poDate: this.state.poDate,
           supplierId: this.state.orderTo?.id || null,
           firmId: this.state.orderFrom?.id || null,
           subject: this.state.poSubject || "",
@@ -589,6 +624,7 @@ class Add extends AddForm {
           freightCharges: freightChargesEdit || null,
           freightGstPercent: freightChargesEdit > 0 ? freightGstEdit : null,
           totalFreightCharges: freightChargesEdit > 0 ? totalFreightEdit : null,
+          poDiscount: poDiscountEdit || null,
           customCharges: customChargesEdit,
           grandTotal: grandTotalEdit,
           fileInformations: (this.formData.fileInformations || []).map((f) => ({
@@ -620,6 +656,19 @@ class Add extends AddForm {
           });
           if (this.state.loadedDraftId) {
             API.DELETE(apiEndpoints.deleteDraftById(this.state.loadedDraftId)).catch(() => {});
+          }
+          // If this PO was created from a Quote Comparison "Create PO" action, mark those
+          // quote lines as PO-linked so the comparison reflects that it's been ordered.
+          const poId = response.data?.purchaseOrderId;
+          const linkedItems = this.state.items.filter(i => i._linkedQcLineId && i._linkedSupplierQuoteLineId && i._linkedQcId);
+          if (poId && linkedItems.length > 0) {
+            await Promise.all(linkedItems.map(li => API.POST(apiEndpoints.quoteComparisonLinkToPo, {
+              supplierQuoteLineId: li._linkedSupplierQuoteLineId,
+              qcLineId: li._linkedQcLineId,
+              qcId: li._linkedQcId,
+              purchaseOrderId: poId,
+              poLineId: null,
+            }).catch(() => {})));
           }
           this.props.back();
         } else {
@@ -1067,6 +1116,8 @@ class Add extends AddForm {
               freightGstPercent={this.state.freightGstPercent}
               onFreightChargesChange={(val) => this.setState({ freightCharges: val })}
               onFreightGstPercentChange={(val) => this.setState({ freightGstPercent: val })}
+              poDiscount={this.state.poDiscount}
+              onPoDiscountChange={(val) => this.setState({ poDiscount: val })}
               customCharges={this.state.customCharges}
               onCustomChargesChange={(val) => this.setState({ customCharges: val })}
               fileArea={this.renderIndentStyleFileArea()}
@@ -1090,6 +1141,7 @@ class Add extends AddForm {
               fileInformations={this.formData.fileInformations || []}
               freightCharges={this.state.freightCharges}
               freightGstPercent={this.state.freightGstPercent}
+              poDiscount={this.state.poDiscount}
               customCharges={this.state.customCharges}
             />
           )}

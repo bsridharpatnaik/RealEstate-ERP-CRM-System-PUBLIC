@@ -249,7 +249,8 @@ public class StockSummarySyncService {
                 stockSummaryRepo.updateProductDetails(
                         tenantSchema, productId,
                         p.getProductName() != null ? p.getProductName() : "",
-                        p.getProductCode() != null ? p.getProductCode() : ""
+                        p.getProductCode() != null ? p.getProductCode() : "",
+                        p.getCategory() != null ? p.getCategory().getCategoryName() : null
                 );
             }
         }
@@ -322,6 +323,7 @@ public class StockSummarySyncService {
         summary.setProductId(stock.getProductId());
         summary.setProductName(stock.getProductName());
         summary.setProductCode(stock.getProductCode());
+        summary.setCategoryName(stock.getCategoryName());
         summary.setWarehouseId(stock.getWarehouseId());
         summary.setWarehouseName(stock.getWarehouseName());
         summary.setQuantityInHand(stock.getQuantityInHand());
@@ -345,6 +347,8 @@ public class StockSummarySyncService {
             dto.setProductId(stock.getProduct().getProductId());
             dto.setProductCode(stock.getProduct().getProductCode());
             dto.setProductName(stock.getProduct().getProductName());
+            dto.setCategoryName(stock.getProduct().getCategory() != null
+                    ? stock.getProduct().getCategory().getCategoryName() : null);
             dto.setWarehouseId(stock.getWarehouse().getWarehouseId());
             dto.setWarehouseName(stock.getWarehouse().getWarehouseName());
             dto.setQuantityInHand(stock.getQuantityInHand());

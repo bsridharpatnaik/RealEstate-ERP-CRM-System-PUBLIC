@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ec.application.ReusableClasses.EmailHelper;
 import com.ec.application.config.SchemaConfig;
+import com.ec.application.data.ExpiryAlertRow;
 import com.ec.application.data.ProjectStockEmailData;
 import com.ec.application.multitenant.ThreadLocalStorage;
 import com.ec.application.service.StockBalanceValidationService;
@@ -44,6 +46,9 @@ public class AutomaticEmailController {
 
     @Autowired
     SchemaConfig schemaConfig;
+
+    @Autowired
+    com.ec.application.service.ProjectConstantsService projectConstantsService;
 
     @GetMapping("/stockupdate")
     public void sendEmail() throws Exception {
@@ -104,10 +109,31 @@ public class AutomaticEmailController {
             List<String> tenants = schemaConfig.getNonMasterSchemaList();
             Map<Long, Double> netRateMap = stockEmailReportService.fetchLatestNetRateMap();
             List<ProjectStockEmailData> allProjects = new ArrayList<>();
+
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0);
+            Date today = cal.getTime();
+            cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, 60);
+            cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59); Date day60 = cal.getTime();
+
+            List<ExpiryAlertRow> expiring30 = new ArrayList<>();
+            List<ExpiryAlertRow> expiring60 = new ArrayList<>();
+
             for (String tenantName : tenants) {
                 ThreadLocalStorage.setTenantName(tenantName);
                 try {
+                    // Near-expiry window is per-tenant config — compute inside the loop
+                    int nearDays = projectConstantsService.getNearExpiryDays();
+                    cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, nearDays);
+                    cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59);
+                    cal.set(Calendar.SECOND, 59); Date dayNear = cal.getTime();
+                    cal.setTime(today); cal.add(Calendar.DAY_OF_YEAR, nearDays + 1); Date dayNearPlus = cal.getTime();
                     allProjects.add(stockEmailReportService.collectTenantStockData(tenantName, netRateMap));
+                    expiring30.addAll(stockEmailReportService.collectExpiryRows(tenantName, today, dayNear));
+                    if (nearDays < 60)
+                        expiring60.addAll(stockEmailReportService.collectExpiryRows(tenantName, dayNearPlus, day60));
                 } finally {
                     ThreadLocalStorage.setTenantName(null);
                 }
@@ -116,7 +142,7 @@ public class AutomaticEmailController {
                 return "No tenants found — nothing to send";
             }
             byte[] excelBytes = stockEmailReportService.buildExcelBytes(allProjects);
-            emailHelper.sendDailyStockReport(allProjects, excelBytes);
+            emailHelper.sendDailyStockReport(allProjects, excelBytes, expiring30, expiring60);
             return "Daily stock report triggered successfully for " + allProjects.size() + " project(s)";
         } catch (Exception e) {
             log.error("Manual trigger of daily stock report failed", e);

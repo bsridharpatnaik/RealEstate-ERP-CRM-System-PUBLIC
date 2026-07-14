@@ -57,6 +57,9 @@ public class MachineryOnRentService {
     @Autowired
     ProjectConstantsService projectConstantsService;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
     Logger log = LoggerFactory.getLogger(MachineryOnRentService.class);
 
     public MachineryOnRent createData(CreateMORentData payload) throws Exception {
@@ -66,8 +69,11 @@ public class MachineryOnRentService {
         nullifyNonRequiredFields(payload);
         MachineryOnRent machineryOnRent = new MachineryOnRent();
         populateData(machineryOnRent, payload);
-        return morRepo.save(machineryOnRent);
-
+        MachineryOnRent saved = morRepo.save(machineryOnRent);
+        String createUser = resolveCurrentUser();
+        activityLogService.record("CREATED", "MACHINERY_ON_RENT", String.valueOf(saved.getMorid()),
+                "Machinery on rent entry " + saved.getMorid() + " created by " + createUser, createUser);
+        return saved;
     }
 
     private void nullifyNonRequiredFields(CreateMORentData payload) {
@@ -177,8 +183,11 @@ public class MachineryOnRentService {
         MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
         exitIfNotAuthorized(machineryOnRent, payload, APICallTypeForAuthorization.Update);
         populateData(machineryOnRent, payload);
-        return morRepo.save(machineryOnRent);
-
+        MachineryOnRent updated = morRepo.save(machineryOnRent);
+        String updateUser = resolveCurrentUser();
+        activityLogService.record("UPDATED", "MACHINERY_ON_RENT", String.valueOf(id),
+                "Machinery on rent entry " + id + " updated by " + updateUser, updateUser);
+        return updated;
     }
 
     public MachineryOnRent findById(Long id) throws Exception {
@@ -199,6 +208,14 @@ public class MachineryOnRentService {
         // MachineryOnRent machineryOnRent = machineryOnRentOpt.get();
         exitIfNotAuthorized(machineryOnRentOpt.get(), null, APICallTypeForAuthorization.Delete);
         morRepo.softDeleteById(id);
+        String deleteUser = resolveCurrentUser();
+        activityLogService.record("DELETED", "MACHINERY_ON_RENT", String.valueOf(id),
+                "Machinery on rent entry " + id + " deleted by " + deleteUser, deleteUser);
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     private MachineryOnRent populateData(MachineryOnRent machineryOnRent, CreateMORentData payload) throws Exception {
@@ -336,10 +353,10 @@ public class MachineryOnRentService {
         Specification<MachineryOnRent> spec = MachineryOnRentSpecifications.getSpecification(filterDataList);
 
         if (spec != null) {
-            if (morRepo.count(spec) > 2000)
-                throw new Exception("Too many rows to export. Apply some more filters and try again");
-        } else if (morRepo.count() > 2000)
-            throw new Exception("Too many rows to export. Apply some more filters and try again");
+            if (morRepo.count(spec) > 5000)
+                throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
+        } else if (morRepo.count() > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
         List<MachineryOnRent> morList = spec == null ? morRepo.findAll() : morRepo.findAll(spec);
         return transformForExport(morList);

@@ -14,6 +14,7 @@ public class CreatePoLineRequest {
     private String brand;
     private String grade;
     private String diameter;
+    private String size;
     @JsonDeserialize(using = ToTitleCaseDeserializer.class)
     private String specification;
     private Double rate;

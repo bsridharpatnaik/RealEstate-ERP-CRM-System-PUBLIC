@@ -12,6 +12,15 @@ class Print extends Component {
     let selectenant = this.props.allTenant.filter(t => t.tenantCode === this.props.tennant);
     selectenant = selectenant[0] ? selectenant[0] : this.props.tennant;
 
+    // Each line carries its own warehouse — show it directly, or "Multiple" when lines
+    // disagree. No header-level warehouse exists.
+    const distinctWarehouseNames = Array.from(new Set(
+      items.map((item) => item.warehouse?.warehouseName).filter(Boolean)
+    ));
+    const warehouseDisplay = distinctWarehouseNames.length > 1
+      ? "Multiple (see items below)"
+      : (distinctWarehouseNames[0] || "-");
+
     return (
       <>
         {/* Title Block */}
@@ -30,7 +39,7 @@ class Print extends Component {
             </div>
             <div className="mis-info-row">
               <span className="mis-label">Warehouse:</span>
-              <span className="mis-value">{data.warehouse?.warehouseName || "-"}</span>
+              <span className="mis-value">{warehouseDisplay}</span>
             </div>
             <div className="mis-info-row">
               <span className="mis-label">Location:</span>
@@ -68,6 +77,7 @@ class Print extends Component {
             <tr>
               <th className="col-no">SR.</th>
               <th className="col-desc">DESCRIPTION</th>
+              <th className="col-desc">WAREHOUSE</th>
               <th className="col-uom">UOM</th>
               <th className="col-qty">QUANTITY</th>
               <th className="col-qty">CLOSING STOCK</th>
@@ -78,6 +88,7 @@ class Print extends Component {
               <tr key={index}>
                 <td className="col-no">{index + 1}</td>
                 <td className="col-desc">{item.product.productName}</td>
+                <td className="col-desc">{item.warehouse?.warehouseName || "-"}</td>
                 <td className="col-uom">{item.product?.measurementUnit || "-"}</td>
                 <td className="col-qty">{item.quantity}</td>
                 <td className="col-qty">{item.closingStock}</td>

@@ -2,6 +2,7 @@ package com.ec.application.controller;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Map;
 
 import com.ec.application.aspects.AllowOnly;
 import com.ec.application.aspects.CheckAuthority;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ec.application.ReusableClasses.ApiOnlyMessageAndCodeError;
 import com.ec.application.ReusableClasses.IdNameProjections;
@@ -146,6 +148,45 @@ public class ProductController {
             @PathVariable String tenantName) {
         productTenantConfigService.removeOverrideForTenant(id, tenantName);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /product/import — upload an Excel file to bulk-update products.
+     * Only productName, reorderLevel, managedInventory, batchMode are updated.
+     * Returns { updated, skipped, errors }.
+     */
+    @PostMapping("/import")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public ResponseEntity<?> importProducts(
+            @RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Collections.singletonMap("message", "No file uploaded."));
+        }
+        String filename = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
+        if (!filename.endsWith(".xlsx")) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Collections.singletonMap("message",
+                            "Invalid file format. Please upload an .xlsx file (Excel). Received: "
+                            + (file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown")));
+        }
+        try {
+            Map<String, Object> result = productService.importProducts(file);
+            return ResponseEntity.ok(result);
+        } catch (org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException e) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Collections.singletonMap("message",
+                            "File could not be read as Excel. Make sure you upload a valid .xlsx file."));
+        } catch (java.io.IOException e) {
+            return ResponseEntity.badRequest()
+                    .body(java.util.Collections.singletonMap("message",
+                            "Could not read file: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(java.util.Collections.singletonMap("message",
+                            "Import failed: " + e.getMessage()));
+        }
     }
 
     // ── Unit Conversion endpoints ──────────────────────────────────────────────

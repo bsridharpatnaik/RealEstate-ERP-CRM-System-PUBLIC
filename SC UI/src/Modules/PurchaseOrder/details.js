@@ -2,16 +2,16 @@ import React from "react";
 import 'react-quill/dist/quill.core.css';
 import CommonDetails from "./../../Shared/Details";
 import IconButton from "@material-ui/core/IconButton";
+import TextField from "@material-ui/core/TextField";
+import CheckIcon from "@material-ui/icons/Check";
+import CloseIconMui from "@material-ui/icons/Close";
 import { messages } from "./../../messages";
 import {
-  EditIcon,
-  DeleteIcon,
   MoreIcon,
   CloseIcon,
 } from "./../../Shared/Icons/Index.js";
 import DeleteConfirm from "./../../Shared//DeleteConfirm";
 import ShortCloseConfirm from "./../../Shared/ShortCloseConfirm";
-import ReactToPrint from "react-to-print";
 import Print from "./purchaseOrderPrint";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
@@ -32,9 +32,11 @@ import Button from "@material-ui/core/Button";
 import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
 import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 import PrintIcon from "@material-ui/icons/Print";
+import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import AddIcon from "@material-ui/icons/Add";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { withSnackbar } from "notistack";
-import { canEditInventoryModules, canViewMoneyFields, getRole } from "./../../helper";
+import { canEditInventoryModules, canViewMoneyFields, getRole, isAdmin } from "./../../helper";
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
 
@@ -74,6 +76,16 @@ class Details extends CommonDetails {
     statusHistoryPoId: null,
     lineImageUrls: {},  // lineId → object-URL for sample images (loaded via axios to carry auth headers)
     lightboxUrl: null,  // URL of image to show in lightbox, null = closed
+    // local PO data override — refreshed after add/remove line operations
+    localData: null,
+    // Remove line
+    removeLineConfirmOpen: false,
+    lineToRemove: null,
+    removeLineLoading: false,
+    // Inline tolerance % edit (allowed in NEW/PARTIAL, blocked once terminal)
+    editingToleranceLineId: null,
+    editingToleranceValue: "",
+    savingTolerance: false,
   };
 
   async download(file) {
@@ -302,10 +314,85 @@ class Details extends CommonDetails {
     this.setState({ shortCloseConfirmOpen: false });
   };
 
+  // ─── Remove line ────────────────────────────────────────────────────────────
+
+  openRemoveLineConfirm = (line) => {
+    this.setState({ removeLineConfirmOpen: true, lineToRemove: line });
+  };
+
+  closeRemoveLineConfirm = () => {
+    this.setState({ removeLineConfirmOpen: false, lineToRemove: null });
+  };
+
+  handleRemoveLine = async () => {
+    const data = this.getEffectiveData();
+    const { lineToRemove } = this.state;
+    if (!data || !lineToRemove) return;
+    this.setState({ removeLineLoading: true });
+    try {
+      const url = apiEndpoints.removePOLine(data.purchaseOrderId, lineToRemove.id);
+      const response = await API.DELETE(url);
+      if (response.success) {
+        this.props.enqueueSnackbar("Line item removed successfully", { variant: "success" });
+        this.setState({ removeLineConfirmOpen: false, lineToRemove: null, localData: response.data });
+        if (this.props.onRefresh) this.props.onRefresh();
+      } else {
+        this.props.enqueueSnackbar(response.errorMessage || "Failed to remove line item", { variant: "error" });
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("An error occurred while removing the line item", { variant: "error" });
+    } finally {
+      this.setState({ removeLineLoading: false });
+    }
+  };
+
+
+  /** Returns localData if set (after add/remove), otherwise falls back to props.data. */
+  getEffectiveData = () => this.state.localData || this.props.data;
+
+  startEditTolerance = (line) => {
+    this.setState({
+      editingToleranceLineId: line.id,
+      editingToleranceValue: line.tolerancePercent != null ? String(line.tolerancePercent) : "",
+    });
+  };
+
+  cancelEditTolerance = () => {
+    this.setState({ editingToleranceLineId: null, editingToleranceValue: "" });
+  };
+
+  saveTolerance = async (lineId) => {
+    const data = this.getEffectiveData();
+    if (!data) return;
+    const value = parseFloat(this.state.editingToleranceValue || 0);
+    this.setState({ savingTolerance: true });
+    try {
+      const response = await API.PUT(
+        apiEndpoints.updatePOLineTolerance(data.purchaseOrderId, lineId),
+        { tolerancePercent: isNaN(value) ? 0 : value }
+      );
+      if (response.success) {
+        this.props.enqueueSnackbar("Tolerance % updated successfully", { variant: "success" });
+        this.setState({
+          localData: response.data,
+          editingToleranceLineId: null,
+          editingToleranceValue: "",
+        });
+        if (this.props.onRefresh) this.props.onRefresh();
+      } else {
+        this.props.enqueueSnackbar(response.errorMessage || "Failed to update tolerance %", { variant: "error" });
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("An error occurred while updating tolerance %", { variant: "error" });
+    } finally {
+      this.setState({ savingTolerance: false });
+    }
+  };
+
   // ─── Navigation ────────────────────────────────────────────────────────────
 
   handlePrevious = () => {
-    const { currentIndex, allEntries, onNavigate } = this.props;
+    const { currentIndex, onNavigate } = this.props;
     if (currentIndex > 0 && onNavigate) onNavigate(currentIndex - 1);
   };
 
@@ -379,7 +466,6 @@ class Details extends CommonDetails {
                       <th>Qty Ordered</th>
                       <th>Qty Received</th>
                       <th>Qty Pending</th>
-                      <th>Need By Date</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -404,7 +490,6 @@ class Details extends CommonDetails {
                           <td>{item.quantity != null ? Number(item.quantity).toFixed(2) : "-"}</td>
                           <td>{item.quantityReceived != null ? Number(item.quantityReceived).toFixed(2) : "-"}</td>
                           <td>{item.quantityPending != null ? Number(item.quantityPending).toFixed(2) : "-"}</td>
-                          <td>{item.needByDate || "-"}</td>
                           <td>
                             <span className={`po-indent-line-status status-${(item.lineItemStatus || "").toLowerCase().replace(/\s+/g, "-")}`}>
                               {item.lineItemStatus || "-"}
@@ -491,7 +576,7 @@ class Details extends CommonDetails {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   render() {
-    const data = this.props.data;
+    const data = this.getEffectiveData();
     if (!data) return null;
 
     const { currentIndex = 0, allEntries = [], fromRelation } = this.props;
@@ -584,7 +669,7 @@ class Details extends CommonDetails {
                       Print
                     </MenuItem>
 
-                    {canEditInventoryModules() && data.status === "NEW" && (
+                    {canEditInventoryModules() && (isAdmin() || data.status === "NEW") && (
                       <MenuItem
                         onClick={() => {
                           this.handleCloseMenu();
@@ -661,47 +746,6 @@ class Details extends CommonDetails {
                   <span className="detail-label">Date Creation:</span>
                   <span className="detail-value">{data.poDate || "-"}</span>
                 </div>
-                {data.needByDate && (
-                  <div className="detail-item">
-                    <span className="detail-label">Expected Delivery:</span>
-                    <span className="detail-value">
-                      {(() => {
-                        const fmtDate = data.needByDate instanceof Date
-                          ? data.needByDate.toLocaleDateString("en-IN")
-                          : data.needByDate;
-                        return fmtDate;
-                      })()}
-                      {data.priority && (
-                        <span
-                          className={`priority-badge priority-badge-${data.priority.toLowerCase()}`}
-                          style={{ marginLeft: 8 }}
-                        >
-                          {data.priority}
-                          {data.daysToDeadline !== null && data.daysToDeadline !== undefined
-                            ? (data.daysToDeadline < 0
-                                ? ` (${Math.abs(data.daysToDeadline)}d overdue)`
-                                : ` (${data.daysToDeadline}d left)`)
-                            : ""}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                )}
-                {data.priority && !data.needByDate && (
-                  <div className="detail-item">
-                    <span className="detail-label">Priority:</span>
-                    <span className="detail-value">
-                      <span className={`priority-badge priority-badge-${data.priority.toLowerCase()}`}>
-                        {data.priority}
-                        {data.daysToDeadline !== null && data.daysToDeadline !== undefined
-                          ? (data.daysToDeadline < 0
-                              ? ` (${Math.abs(data.daysToDeadline)}d overdue)`
-                              : ` (${data.daysToDeadline}d left)`)
-                          : ""}
-                      </span>
-                    </span>
-                  </div>
-                )}
                 <div className="detail-item">
                   <span className="detail-label">Subject:</span>
                   <span className="detail-value">{data.subject || "-"}</span>
@@ -824,8 +868,21 @@ class Details extends CommonDetails {
               {/* Line items */}
               {items.length > 0 && (
                 <div className="detail-section-group">
-                  <h3 className="section-title purchase-orders-title">
-                    Purchase Orders
+                  <h3 className="section-title purchase-orders-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span>Purchase Orders</span>
+                    {canEditInventoryModules() &&
+                      (data.status === "NEW" || data.status === "PARTIAL") && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        startIcon={<AddIcon />}
+                        onClick={() => this.props.onAddLineToPO && this.props.onAddLineToPO(data.purchaseOrderId)}
+                        style={{ fontSize: 12 }}
+                      >
+                        Add Line
+                      </Button>
+                    )}
                   </h3>
                   <div
                     className={
@@ -840,17 +897,24 @@ class Details extends CommonDetails {
                           <TableCell>Inventory</TableCell>
                           {hasImages && <TableCell style={{ textAlign: 'center' }}>Sample Image</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Qty / UOM</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Exp. Date</TableCell>
+                          <TableCell>Line Status</TableCell>
+                          {data.status === "PARTIAL" && <TableCell style={{ whiteSpace: 'nowrap' }}>Received Qty</TableCell>}
+                          {data.status === "PARTIAL" && <TableCell style={{ whiteSpace: 'nowrap' }}>Balance Qty</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Rate</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Total</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Discount %</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>Tolerance %</TableCell>
+                          <TableCell style={{ whiteSpace: 'nowrap' }}>Days Left</TableCell>
+                          <TableCell style={{ whiteSpace: 'nowrap' }}>Exp. Date</TableCell>
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Net Value/Unit</TableCell>}
                           <TableCell style={{ whiteSpace: 'nowrap' }}>GST %</TableCell>
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>GST Amt</TableCell>}
                           {showMoneyFields && <TableCell style={{ whiteSpace: 'nowrap' }}>Amt Incl Tax</TableCell>}
+                          {canEditInventoryModules() &&
+                            (data.status === "NEW" || data.status === "PARTIAL") && (
+                            <TableCell style={{ whiteSpace: 'nowrap', width: 48 }}></TableCell>
+                          )}
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -887,6 +951,7 @@ class Details extends CommonDetails {
                             item.brand && `Brand Name: ${item.brand}`,
                             item.grade && `Grade: ${item.grade}`,
                             item.diameter && `Diameter: ${item.diameter}`,
+                            item.size && `Size: ${item.size}`,
                             item.specification &&
                               `Spec: ${item.specification}`,
                           ].filter(Boolean);
@@ -895,6 +960,14 @@ class Details extends CommonDetails {
                             : details.join(", ");
 
                           const status = data.status || "Complete Inward";
+
+                          const lineStatus = item.lineItemStatus || data.status || "";
+                          const isRemovable = canEditInventoryModules() &&
+                            (data.status === "NEW" || data.status === "PARTIAL") &&
+                            lineStatus === "PO CREATED";
+                          const isRemoveBlocked = canEditInventoryModules() &&
+                            (data.status === "NEW" || data.status === "PARTIAL") &&
+                            lineStatus === "INWARD PARTIAL";
 
                           return (
                             <TableRow key={index}>
@@ -927,14 +1000,23 @@ class Details extends CommonDetails {
                               </TableCell>
                               <TableCell>
                                 <span
-                                  className={`status-badge-table status-${status
+                                  className={`status-badge-table status-${(lineStatus)
                                     .toLowerCase()
                                     .replace(/\s+/g, "-")}`}
                                 >
-                                  {status}
+                                  {lineStatus || "-"}
                                 </span>
                               </TableCell>
-                              <TableCell>{item.needByDate || "-"}</TableCell>
+                              {data.status === "PARTIAL" && (
+                                <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                  {item.receivedQuantity != null ? Number(item.receivedQuantity).toFixed(2) : "-"}
+                                </TableCell>
+                              )}
+                              {data.status === "PARTIAL" && (
+                                <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                  {item.balanceQuantity != null ? Number(item.balanceQuantity).toFixed(2) : "-"}
+                                </TableCell>
+                              )}
                               {showMoneyFields && (
                                 <>
                                   <TableCell style={{ whiteSpace: 'nowrap' }}>
@@ -949,8 +1031,62 @@ class Details extends CommonDetails {
                                 </>
                               )}
                               <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                {tolerancePercent > 0 ? `${tolerancePercent}%` : "-"}
+                                {canEditInventoryModules() && (data.status === "NEW" || data.status === "PARTIAL") ? (
+                                  this.state.editingToleranceLineId === item.id ? (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                      <TextField
+                                        type="number"
+                                        size="small"
+                                        variant="outlined"
+                                        value={this.state.editingToleranceValue}
+                                        onChange={(e) => this.setState({ editingToleranceValue: e.target.value })}
+                                        inputProps={{ min: 0, max: 100, step: 0.01, style: { fontSize: 12, padding: "4px 6px", width: 50 } }}
+                                        disabled={this.state.savingTolerance}
+                                      />
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => this.saveTolerance(item.id)}
+                                        disabled={this.state.savingTolerance}
+                                        title="Save"
+                                      >
+                                        <CheckIcon fontSize="small" />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        onClick={this.cancelEditTolerance}
+                                        disabled={this.state.savingTolerance}
+                                        title="Cancel"
+                                      >
+                                        <CloseIconMui fontSize="small" />
+                                      </IconButton>
+                                    </div>
+                                  ) : (
+                                    <span
+                                      onClick={() => this.startEditTolerance(item)}
+                                      style={{ cursor: "pointer", borderBottom: "1px dashed #999" }}
+                                      title="Click to edit tolerance %"
+                                    >
+                                      {tolerancePercent > 0 ? `${tolerancePercent}%` : "Set %"}
+                                    </span>
+                                  )
+                                ) : (
+                                  tolerancePercent > 0 ? `${tolerancePercent}%` : "-"
+                                )}
                               </TableCell>
+                              <TableCell style={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                {item.daysLeft != null ? (
+                                  <span
+                                    className={`days-left-chip ${item.isOverdue ? "days-left-overdue" : "days-left-ok"}`}
+                                  >
+                                    {item.isOverdue
+                                      ? `⚠ ${Math.abs(item.daysLeft)}d overdue`
+                                      : `${item.daysLeft}d left`}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#aaa' }}>—</span>
+                                )}
+                              </TableCell>
+                              <TableCell style={{ whiteSpace: 'nowrap' }}>{item.needByDate || "-"}</TableCell>
                               {showMoneyFields && (
                                 <>
                                   <TableCell className="net-rate-cell" style={{ whiteSpace: 'nowrap' }}>
@@ -971,6 +1107,25 @@ class Details extends CommonDetails {
                                     Rs. {totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </TableCell>
                                 </>
+                              )}
+                              {canEditInventoryModules() &&
+                                (data.status === "NEW" || data.status === "PARTIAL") && (
+                                <TableCell style={{ padding: "0 4px" }}>
+                                  {isRemovable ? (
+                                    <IconButton
+                                      size="small"
+                                      title="Remove this line item"
+                                      onClick={() => this.openRemoveLineConfirm(item)}
+                                      style={{ color: "#c62828" }}
+                                    >
+                                      <DeleteOutlineIcon fontSize="small" />
+                                    </IconButton>
+                                  ) : isRemoveBlocked ? (
+                                    <IconButton size="small" disabled title="Inward already started — cannot remove">
+                                      <DeleteOutlineIcon fontSize="small" />
+                                    </IconButton>
+                                  ) : null}
+                                </TableCell>
                               )}
                             </TableRow>
                           );
@@ -1015,6 +1170,14 @@ class Details extends CommonDetails {
                             </span>
                           </div>
                         ))}
+                        {data.poDiscount > 0 && (
+                          <div className="total-row">
+                            <span className="total-label">PO Discount: </span>
+                            <span className="total-amount">
+                              - Rs. {data.poDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        )}
                         <div className="total-row">
                           <span className="total-label">Grand Total: </span>
                           <span className="total-amount">
@@ -1132,6 +1295,35 @@ class Details extends CommonDetails {
           onCancel={this.handleShortCloseCancel}
           onConfirm={this.handleShortClose}
         />
+
+        {/* ── Remove Line Confirmation ── */}
+        <Dialog
+          open={this.state.removeLineConfirmOpen}
+          onClose={this.closeRemoveLineConfirm}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle>Remove Line Item</DialogTitle>
+          <DialogContent>
+            <p style={{ margin: 0, fontSize: 14 }}>
+              This will remove the selected line item and revert the linked indent back to
+              <strong> NEW</strong> status. This action cannot be undone. Continue?
+            </p>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={this.closeRemoveLineConfirm} disabled={this.state.removeLineLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={this.handleRemoveLine}
+              color="secondary"
+              variant="contained"
+              disabled={this.state.removeLineLoading}
+            >
+              {this.state.removeLineLoading ? <CircularProgress size={18} /> : "Remove"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Image lightbox */}
         {this.state.lightboxUrl && (

@@ -15,6 +15,8 @@ import Tab from "@material-ui/core/Tab";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import RejectProduct from "./rejectProduct";
+import { API } from "./../../axios";
+import { apiEndpoints } from "./../../endpoints";
 import { checkifDateLessThan, getRoleEditConstraintDays, getRoleRejectReturnConstraintDays, canCreateInward } from "./../../helper";
 import DebitNotePrint from "./../../Shared/DebitNotePrint";
 import ReactToPrint from "react-to-print";
@@ -29,6 +31,15 @@ import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
 import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 import PrintIcon from "@material-ui/icons/Print";
 import Print from "./inwardPrint";
+import { renderActivityDescription } from '../Activity/renderActivityDescription';
+const ACTION_BADGE_STYLES = {
+  CREATED:     { color: '#2e7d32', background: '#e8f5e9' },
+  UPDATED:     { color: '#e65100', background: '#fff3e0' },
+  DELETED:     { color: '#c62828', background: '#ffebee' },
+  REJECTED:    { color: '#6a1b9a', background: '#f3e5f5' },
+  RETURNED:    { color: '#0d47a1', background: '#e3f2fd' },
+};
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -51,6 +62,10 @@ class Details extends CommonDetails {
     deleteConfirmOpen: false,
     rejectopen: false,
     anchorEl: null,
+    historyLogs: [],
+    historyLoading: false,
+    inwardBatches: [],
+    inwardBatchesLoaded: false,
   };
   detailTabRef = React.createRef();
   deleteRow = null;
@@ -58,6 +73,27 @@ class Details extends CommonDetails {
   componentDidMount() {
     this.addRejRef = React.createRef();
     this.componentRef = React.createRef();
+    this.loadInwardBatches();
+  }
+
+  async loadInwardBatches() {
+    const { data } = this.props;
+    if (!data || !data.inwardId || this.state.inwardBatchesLoaded) return;
+    const r = await API.GET(apiEndpoints.getInwardBatches(data.inwardId));
+    if (r.success) {
+      this.setState({ inwardBatches: r.data || [], inwardBatchesLoaded: true });
+    }
+  }
+
+  async loadHistory() {
+    const { data } = this.props;
+    if (!data || !data.inwardId) return;
+    this.setState({ historyLoading: true });
+    const r = await API.GET(apiEndpoints.activityLogByEntity('INWARD', data.inwardId));
+    if (r.success) {
+      this.setState({ historyLogs: r.data || [] });
+    }
+    this.setState({ historyLoading: false });
   }
 
   handleCloseMenu = () => {
@@ -65,7 +101,7 @@ class Details extends CommonDetails {
   };
 
   handlePrevious = () => {
-    const { currentIndex, allEntries, onNavigate } = this.props;
+    const { currentIndex, onNavigate } = this.props;
     if (currentIndex > 0 && onNavigate) {
       onNavigate(currentIndex - 1);
     }
@@ -250,7 +286,10 @@ content={() => this.detailTabRef.current}
         <Tabs
           indicatorColor="primary"
           textColor="primary"
-          onChange={(e, value) => this.setState({ value: value })}
+          onChange={(e, value) => {
+            this.setState({ value });
+            if (value === 1) this.loadHistory();
+          }}
           value={this.state.value}
         >
           <Tab label="Details" id="simple-tabpanel-0" />
@@ -355,6 +394,30 @@ content={() => this.detailTabRef.current}
                   <div className="label">{"Bill No"}</div>
                   <div className="value">{data.billNo}</div>
                 </div>
+                {(!data.challanNo || !data.challanNo.trim()) && (!data.billNo || !data.billNo.trim()) && (
+                  <div className="detail-item">
+                    <div className="label">{"Doc Status"}</div>
+                    <div className="value">
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: '#b71c1c',
+                        backgroundColor: '#ffebee',
+                        border: '1px solid #b71c1c',
+                      }}>
+                        No Challan / Bill
+                      </span>
+                      {data.noChallanBillReason && (
+                        <div style={{ marginTop: '4px', fontSize: '12px', color: '#555' }}>
+                          Reason: {data.noChallanBillReason}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="detail-item">
                   <div className="label">{"Bill Date"}</div>
                   <div className="value">{data.billDate}</div>
@@ -380,6 +443,8 @@ content={() => this.detailTabRef.current}
                     <TableCell>{messages.common.unit}</TableCell>
                     <TableCell>{messages.common.quantity}</TableCell>
                     <TableCell>{messages.common.closingStock}</TableCell>
+                    <TableCell>Brand</TableCell>
+                    <TableCell>Expiry Date</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -421,11 +486,45 @@ content={() => this.detailTabRef.current}
                       <TableCell>{row.product.measurementUnit}</TableCell>
                       <TableCell>{row.quantity}</TableCell>
                       <TableCell>{row.closingStock}</TableCell>
+                      <TableCell>{row.brand || '—'}</TableCell>
+                      <TableCell>{row.expiryDate ? new Date(row.expiryDate).toLocaleDateString('en-GB') : '—'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </Paper>
+            {this.state.inwardBatches.length > 0 && (
+              <>
+                <h4 className="reject-stock">Batch Details</h4>
+                <Paper elevation={0} className="table-wrapper">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Product</TableCell>
+                        <TableCell>Lot / Identifier</TableCell>
+                        <TableCell>Brand</TableCell>
+                        <TableCell>Expiry Date</TableCell>
+                        <TableCell>Qty Received</TableCell>
+                        <TableCell>Qty Remaining</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {this.state.inwardBatches.map((b) => (
+                        <TableRow key={b.batchId}>
+                          <TableCell>{b.product ? b.product.productName : '—'}</TableCell>
+                          <TableCell>{b.lotNumber || '—'}</TableCell>
+                          <TableCell>{b.brand || '—'}</TableCell>
+                          <TableCell>{b.expiryDate ? b.expiryDate.replace(/-/g, '/') : '—'}</TableCell>
+                          <TableCell>{b.qtyReceived}</TableCell>
+                          <TableCell>{b.qtyRemaining}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </>
+            )}
+
             {hasReject ? (
               <>
                 <h4 className="reject-stock">Inward Rejected Stocks</h4>
@@ -440,6 +539,7 @@ content={() => this.detailTabRef.current}
                         <TableCell>
                           {messages.common.returnedQauntity}
                         </TableCell>
+                        <TableCell>Remarks</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -450,6 +550,7 @@ content={() => this.detailTabRef.current}
                           <TableCell>{row.product.measurementUnit}</TableCell>
                           <TableCell>{row.oldQuantity}</TableCell>
                           <TableCell>{row.rejectQuantity}</TableCell>
+                          <TableCell>{row.remarks || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -461,33 +562,42 @@ content={() => this.detailTabRef.current}
         </TabPanel>
         <TabPanel value={this.state.value} index={1}>
           <Paper elevation={0}>
-            {data.createdBy && (
-              <div className="detail-item">
-                <div className="label">Created By</div>
-                <div className="value">{data.createdBy}</div>
-              </div>
-            )}
-            {data.creationDate && (
-              <div className="detail-item">
-                <div className="label">Creation Date</div>
-                <div className="value">{data.creationDate}</div>
-              </div>
-            )}
-            {data.inwardOutwardList && data.inwardOutwardList[0] && (
-              <div className="detail-item">
-                <div className="label">Last Modified By</div>
-                <div className="value">
-                  {data.inwardOutwardList[0].lastModifiedBy}
-                </div>
-              </div>
-            )}
-            {data.inwardOutwardList && data.inwardOutwardList[0] && (
-              <div className="detail-item">
-                <div className="label">Last Modified On</div>
-                <div className="value">
-                  {data.inwardOutwardList[0].lastModifiedDate}
-                </div>
-              </div>
+            {this.state.historyLoading ? (
+              <div style={{ padding: '16px', color: '#666' }}>Loading history...</div>
+            ) : this.state.historyLogs.length === 0 ? (
+              <div style={{ padding: '16px', color: '#999' }}>No history available.</div>
+            ) : (
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Action</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell>By</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {this.state.historyLogs.map((log, i) => (
+                    <TableRow key={i}>
+                      <TableCell style={{ whiteSpace: 'nowrap', fontSize: '12px' }}>
+                        {log.activityTime ? new Date(log.activityTime).toLocaleString() : ''}
+                      </TableCell>
+                      <TableCell>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '12px',
+                          ...ACTION_BADGE_STYLES[log.action]
+                        }}>
+                          {log.action}
+                        </span>
+                      </TableCell>
+                      <TableCell style={{ fontSize: '13px', maxWidth: '360px' }}>
+                        {renderActivityDescription(log.description)}
+                      </TableCell>
+                      <TableCell style={{ fontSize: '12px' }}>{log.performedBy}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </Paper>
         </TabPanel>

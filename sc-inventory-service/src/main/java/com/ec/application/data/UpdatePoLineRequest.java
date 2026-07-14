@@ -16,6 +16,7 @@ public class UpdatePoLineRequest {
     private String brand;
     private String grade;
     private String diameter;
+    private String size;
     @JsonDeserialize(using = ToTitleCaseDeserializer.class)
     private String specification;
     /** UUID of the DBFile used as a sample image for this line item */

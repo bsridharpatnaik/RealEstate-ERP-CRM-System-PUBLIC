@@ -18,6 +18,7 @@ import com.ec.application.data.UserReturnData;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.Cacheable;
 
@@ -128,6 +129,16 @@ public class UserDetailsService {
         return hasRole(RoleConstants.STORE_INCHARGE)
                 && !hasRole(RoleConstants.ADMIN)
                 && !hasRole(RoleConstants.PURCHASE_MANAGER);
+    }
+
+    /** Tenant schema codes the current user is allowed to access. */
+    public List<String> getCurrentUserAllowedSchemas() throws Exception {
+        UserReturnData user = getCurrentUser();
+        if (user.getTenantList() == null) return Collections.emptyList();
+        return user.getTenantList().stream()
+                .filter(m -> m.getTenant() != null && m.getTenant().getName() != null)
+                .map(m -> m.getTenant().getName())
+                .collect(Collectors.toList());
     }
 
     /** Roles that must NOT see pricing/rate data anywhere in the system. */

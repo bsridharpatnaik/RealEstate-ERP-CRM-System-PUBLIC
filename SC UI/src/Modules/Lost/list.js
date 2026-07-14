@@ -6,6 +6,7 @@ import { withSnackbar } from "notistack";
 
 //component
 import ListCommon from "./../../Shared/List";
+import * as XLSX from "xlsx";
 import Table from "./table";
 //misc
 import { apiEndpoints, exportURL } from "./../../endpoints";
@@ -70,6 +71,18 @@ class List extends ListCommon {
   }
   getExportData(response) {
     return response.data.lostDamagedInventories.content;
+  }
+  async exportToCSV() {
+    const response = await this.getExportAPIData();
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage, { variant: "error" });
+      return;
+    }
+    const data = this.getExportData(response);
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Lost & Damaged");
+    XLSX.writeFile(wb, this.exportFile + ".xlsx");
   }
   prepareRequestBody() {
     let params;
@@ -173,8 +186,6 @@ class List extends ListCommon {
               key={this.state.key}
               tableData={this.tableData}
               rows={this.state.data}
-              edit={this.props.edit}
-              delete={(row) => this.delete(row)}
               sortby={this.sortby}
               sortkey={this.sortkey}
               search={(sortkey, sortby) => {
@@ -198,8 +209,6 @@ class List extends ListCommon {
         >
           <Details
             data={this.state.selectedData}
-            edit={this.props.edit}
-            delete={(row) => this.delete(row)}
             close={() =>
               this.setState({ showDetails: false, key: this.state.key + 1 })
             }

@@ -6,6 +6,7 @@ import Popper from "@material-ui/core/Popper";
 //component
 import Table from "./table";
 import ListCommon from "./../../Shared/List";
+import * as XLSX from "xlsx";
 
 //misc
 import { apiEndpoints, exportURL } from "./../../endpoints";
@@ -93,6 +94,18 @@ class List extends ListCommon {
   }
   getExportData(response) {
     return response.data;
+  }
+  async exportToCSV() {
+    const response = await this.getExportAPIData();
+    if (!response.success) {
+      this.props.enqueueSnackbar(response.errorMessage, { variant: "error" });
+      return;
+    }
+    const data = this.getExportData(response);
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Machinery on Rent");
+    XLSX.writeFile(wb, this.exportFile + ".xlsx");
   }
   async search(page = 0, sortkey = null, sortby = null) {
     if (sortkey !== null) this.sortkey = sortkey;

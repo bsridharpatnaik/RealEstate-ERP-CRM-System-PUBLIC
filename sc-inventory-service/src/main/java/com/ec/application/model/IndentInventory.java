@@ -52,19 +52,13 @@ public class IndentInventory extends ReusableFields implements Cloneable {
     @Column(name = "indent_status", nullable = false, length = 20)
     private String indentStatus;
 
+    @Column(name = "required_by")
+    private String requiredBy;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     @Column(name = "indent_date", nullable = false)
     @NonNull
     Date indentDate;
-
-    /**
-     * Effective expected date — computed as the minimum needByDate across all active line items.
-     * Not persisted in the header table; populated at query time by IndentInventoryUiEnricher.
-     */
-    @Transient
-    @JsonProperty("needByDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
-    Date needByDate;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "indent_fileinformation", joinColumns =

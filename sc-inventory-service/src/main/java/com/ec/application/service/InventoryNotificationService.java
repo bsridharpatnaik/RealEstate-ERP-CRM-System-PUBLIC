@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.ec.application.ReusableClasses.ActivityLogDescription;
 import com.ec.application.model.InventoryNotification;
 import com.ec.application.model.Product;
 import com.ec.application.repository.InventoryNotificationRepo;
@@ -35,6 +36,9 @@ public class InventoryNotificationService {
     @Autowired
     ProductTenantConfigService productTenantConfigService;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
     Logger log = LoggerFactory.getLogger(InventoryNotificationService.class);
 
     final String lowStock = "lowStock";
@@ -53,9 +57,9 @@ public class InventoryNotificationService {
         currentStock = currentStock == null ? 0 : currentStock;
         reorderQuantity = reorderQuantity == null ? 0 : reorderQuantity;
         if (currentStock <= reorderQuantity && reorderQuantity > 0)
-            pushLowStockNotification(product, currentStock);
+            pushLowStockNotification(product, currentStock, reorderQuantity);
         else if (currentStock > reorderQuantity && reorderQuantity > 0)
-            removeLowStockNotification(product);
+            removeLowStockNotification(product, currentStock, reorderQuantity);
     }
 
     @Transactional(rollbackOn = Exception.class)
@@ -96,34 +100,53 @@ public class InventoryNotificationService {
     }
 
     @Transactional(rollbackOn = Exception.class)
-    private void removeLowStockNotification(Product product) {
+    private void removeLowStockNotification(Product product, Double currentStock, Double reorderQuantity) {
         List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
                 .findByProductAndType(product.getProductId(), lowStock);
         if (inventoryNotifications.size() > 0) {
             for (InventoryNotification inventoryNotification : inventoryNotifications) {
                 inventoryNotificationRepo.softDelete(inventoryNotification);
             }
-            System.out.println("Deleted all low stock notification for product " + product.getProductName());
+            // Log stock restored — only when transitioning from low → normal
+            String desc = ActivityLogDescription.of(product.getProductName()
+                    + " stock restored. Current: " + fmt(currentStock)
+                    + ", Reorder level: " + fmt(reorderQuantity));
+            activityLogService.record("STOCK_RESTORED", "STOCK_ALERT",
+                    String.valueOf(product.getProductId()), desc, "System");
+            log.info("Stock restored for product {}", product.getProductName());
         }
     }
 
     @Transactional(rollbackOn = Exception.class)
-    private void pushLowStockNotification(Product product, Double currentStock) {
+    private void pushLowStockNotification(Product product, Double currentStock, Double reorderQuantity) {
         List<InventoryNotification> inventoryNotifications = inventoryNotificationRepo
                 .findByProductAndType(product.getProductId(), lowStock);
         if (inventoryNotifications.size() == 0) {
+            // First time crossing threshold — log activity
             InventoryNotification inventoryNotificationNew = new InventoryNotification();
             inventoryNotificationNew.setProduct(product);
             inventoryNotificationNew.setType(lowStock);
             inventoryNotificationNew.setQuantity(currentStock);
             inventoryNotificationNew.setUpdatedBy("System");
             inventoryNotificationRepo.save(inventoryNotificationNew);
+            String action = currentStock <= 0 ? "OUT_OF_STOCK" : "LOW_STOCK";
+            String desc = ActivityLogDescription.of(product.getProductName()
+                    + (currentStock <= 0 ? " is out of stock." : " is low on stock.")
+                    + " Current: " + fmt(currentStock)
+                    + ", Reorder level: " + fmt(reorderQuantity));
+            activityLogService.record(action, "STOCK_ALERT",
+                    String.valueOf(product.getProductId()), desc, "System");
+            log.info("{} alert logged for product {}", action, product.getProductName());
         } else {
-            System.out.println("Low stock notification already exists for produt " + product.getProductName());
             InventoryNotification inventoryNotification = inventoryNotifications.get(0);
             inventoryNotification.setQuantity(currentStock);
             inventoryNotificationRepo.save(inventoryNotification);
         }
+    }
+
+    private String fmt(Double val) {
+        if (val == null) return "0";
+        return val == Math.floor(val) ? String.valueOf(val.intValue()) : String.valueOf(val);
     }
 
     List<InventoryNotification> returnInventoryNotifications() {

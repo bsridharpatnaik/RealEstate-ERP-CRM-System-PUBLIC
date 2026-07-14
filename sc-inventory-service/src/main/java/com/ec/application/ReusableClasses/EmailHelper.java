@@ -29,6 +29,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import com.ec.application.data.ConsolidatedProductRow;
 import com.ec.application.data.EmailConfigData;
+import com.ec.application.data.ExpiryAlertRow;
 import com.ec.application.data.JobFailureAlertDTO;
 import com.ec.application.data.ProductStockRow;
 import com.ec.application.data.ProjectStockEmailData;
@@ -207,7 +208,8 @@ public class EmailHelper
 		}
 	}
 
-	public void sendDailyStockReport(List<ProjectStockEmailData> projects, byte[] excelBytes) throws Exception {
+	public void sendDailyStockReport(List<ProjectStockEmailData> projects, byte[] excelBytes,
+			List<ExpiryAlertRow> expiring30, List<ExpiryAlertRow> expiring60) throws Exception {
 		String recipients = emailRecipientService.getRecipientsAsString(EmailRecipientService.DAILY_STOCK_REPORT);
 		if (recipients == null || recipients.isEmpty()) {
 			log.warn("No active recipients configured for daily_stock_report — skipping email");
@@ -261,6 +263,8 @@ public class EmailHelper
 
 			model.put("projectNames", projectNames);
 			model.put("consolidatedRows", consolidatedRows);
+			model.put("expiring30", expiring30 != null ? expiring30 : new java.util.ArrayList<>());
+			model.put("expiring60", expiring60 != null ? expiring60 : new java.util.ArrayList<>());
 
 			Template template = config.getTemplate("email-daily-stock.ftl");
 			String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);

@@ -28,6 +28,12 @@ public class StockSummaryController {
     @Autowired
     StockSummaryService stockSummaryService;
 
+    @PostMapping("/tiles")
+    public com.ec.application.data.StockSummaryTilesDTO getTiles(
+            @RequestBody(required = false) com.ec.application.Filters.FilterDataList filterDataList) {
+        return stockSummaryService.getTiles(filterDataList);
+    }
+
     @PostMapping("/sync")
     public ResponseEntity<Map<String, String>> sync() {
         String message = stockSyncOrchestrator.syncAllTenants();

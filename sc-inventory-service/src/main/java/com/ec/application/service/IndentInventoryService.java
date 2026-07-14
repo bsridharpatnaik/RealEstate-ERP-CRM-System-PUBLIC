@@ -79,6 +79,12 @@ public class IndentInventoryService {
     @Autowired
     IndentCompletionEvaluator indentCompletionEvaluator;
 
+    @Autowired
+    ActivityLogService activityLogService;
+
+    @Autowired
+    LeadTimeResolver leadTimeResolver;
+
     List<String> indentPOEligibleStatuses = Arrays.asList(
             IndentStatusConstants.STATUS_APPROVED,
             IndentStatusConstants.STATUS_PO_PARTIAL,
@@ -104,6 +110,7 @@ public class IndentInventoryService {
         indentInventory.setTenantSchemaCode(schemaConfig.getSchemaCode(tenantService.fetchTenantFromHeader()));
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(iiData.getFileInformations()));
         indentInventory.setIndentDate(iiData.getIndentDate());
+        indentInventory.setRequiredBy(iiData.getRequiredBy());
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_NEW);
         indentInventory.setLastStatusUpdatedAt(new Date());
         // First save to generate indentId
@@ -122,7 +129,15 @@ public class IndentInventoryService {
         indentStatusHistoryService.logStatusChange(indentInventory, null, IndentStatusConstants.STATUS_NEW, userDetailsService.getCurrentUser().getUsername(), "Indent created by " + userDetailsService.getCurrentUser().getUsername(), null);
         draftService.deleteDraftForUser("INDENT");
         indentInventoryUiEnricher.enrich(indentInventory);
+        activityLogService.record("CREATED", "INDENT", indentInventory.getIndentId(),
+                "Indent " + indentInventory.getIndentId() + " created with " + indentInventory.getInventoryList().size() + " line item(s)",
+                resolveCurrentUser());
         return indentInventory;
+    }
+
+    private String resolveCurrentUser() {
+        try { return userDetailsService.getCurrentUser().getUsername(); }
+        catch (Exception e) { return "System"; }
     }
 
     private void exitIfReadOnly(String tenantName) throws Exception {
@@ -163,7 +178,6 @@ public class IndentInventoryService {
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setNeedByDate(dto.getNeedByDate());
             item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
 
             // Generate unique line item code: INDENT_ID/PRODUCT_ID
@@ -197,7 +211,6 @@ public class IndentInventoryService {
             item.setRemarks(dto.getRemarks());
             item.setSpecification(dto.getSpecification());
             item.setMeasurementUnit(product.getMeasurementUnit());
-            item.setNeedByDate(dto.getNeedByDate());
             /*
              * CASE 1: Existing line item (update)
              * - Keep same lineItemCode
@@ -271,7 +284,12 @@ public class IndentInventoryService {
             IndentInventoryList existingItem = existingItemsMap.get(lineItemCode);
 
             if (existingItem != null) {
-                // Item exists - update mutable fields only
+                // Non-NEW line items are locked — skip silently, keep as-is
+                if (!IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(existingItem.getLineItemStatus())) {
+                    itemsToKeep.add(existingItem);
+                    continue;
+                }
+                // Item exists and is NEW — update mutable fields
                 existingItem.setProduct(newItem.getProduct());
                 existingItem.setQuantity(newItem.getQuantity());
                 existingItem.setSpecification(newItem.getSpecification());
@@ -288,9 +306,10 @@ public class IndentInventoryService {
         for (IndentInventoryList existingItem : indentInventory.getInventoryList()) {
             if (!itemsToKeep.contains(existingItem)) {
 
-                // 🚨 Business rule check (optional but recommended)
-                if (existingItem.getPurchaseOrderId() != null) {
-                    throw new RuntimeException("Cannot remove line item linked to Purchase Order");
+                // Only NEW line items can be removed
+                if (!IndentLineItemStatusConstants.STATUS_NEW.equalsIgnoreCase(existingItem.getLineItemStatus())) {
+                    throw new RuntimeException("Cannot remove line item '" + existingItem.getLineItemCode()
+                            + "' — it is in status: " + existingItem.getLineItemStatus());
                 }
 
                 existingItem.setDeleted(true);   // ✅ SOFT DELETE
@@ -364,8 +383,6 @@ public class IndentInventoryService {
 
             if (!productOpt.isPresent())
                 throw new Exception("Product not found with ID " + dto.getProductId());
-            else if (productOpt.get().getIsManagedInventory() == false)
-                throw new Exception("Product with ID " + dto.getProductId() + x);
             if (dto.getQuantity() <= 0)
                 throw new Exception("Quantity cannot be less than or equal to zero");
         }
@@ -469,7 +486,13 @@ public class IndentInventoryService {
                     null);
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_CANCELLED);
             indentInventory.setLastStatusUpdatedAt(new Date());
+            indentInventory.getInventoryList().forEach(line -> {
+                if (!IndentLineItemStatusConstants.STATUS_CANCELLED.equals(line.getLineItemStatus()))
+                    line.setLineItemStatus(IndentLineItemStatusConstants.STATUS_CANCELLED);
+            });
             indentInventoryRepo.save(indentInventory);
+            activityLogService.record("CANCELLED", "INDENT", id,
+                    "Indent " + id + " cancelled by " + currentUser, currentUser);
 
         } else if (action.equalsIgnoreCase("REJECT")) {
             String message = "Indent rejected by " + currentUser;
@@ -485,7 +508,13 @@ public class IndentInventoryService {
                     null);
             indentInventory.setIndentStatus(IndentStatusConstants.STATUS_REJECTED);
             indentInventory.setLastStatusUpdatedAt(new Date());
+            indentInventory.getInventoryList().forEach(line -> {
+                if (!IndentLineItemStatusConstants.STATUS_CANCELLED.equals(line.getLineItemStatus()))
+                    line.setLineItemStatus(IndentLineItemStatusConstants.STATUS_CANCELLED);
+            });
             indentInventoryRepo.save(indentInventory);
+            activityLogService.record("DELETED", "INDENT", id,
+                    "Indent " + id + " rejected by " + currentUser, currentUser);
         }
     }
 
@@ -519,6 +548,7 @@ public class IndentInventoryService {
 
         indentInventory.setFileInformations(ReusableMethods.convertFilesListToSet(payload.getFileInformations()));
         indentInventory.setIndentDate(payload.getIndentDate());
+        indentInventory.setRequiredBy(payload.getRequiredBy());
 
         // Process and synchronize inventory list
         Set<IndentInventoryList> processedInventoryList = processInventoryListForUpdate(
@@ -544,6 +574,9 @@ public class IndentInventoryService {
         // ──────────────────────────────────────────────────────────────────
 
         indentInventoryRepo.save(indentInventory);
+        String updatedBy = resolveCurrentUser();
+        activityLogService.record("UPDATED", "INDENT", id,
+                "Indent " + id + " updated by " + updatedBy, updatedBy);
         return indentInventory;
     }
 
@@ -607,6 +640,9 @@ public class IndentInventoryService {
         splitItem1.setRemarks(originalItem.getRemarks());
         splitItem1.setMeasurementUnit(originalItem.getMeasurementUnit());
         splitItem1.setLineItemStatus(originalItem.getLineItemStatus());
+        // Carry the "quote requested" marker forward — the original line is being soft-deleted,
+        // so without this a split would silently lose the fact that an RFQ covers this quantity.
+        splitItem1.setQuoteRequestedQcId(originalItem.getQuoteRequestedQcId());
 
         String splitCode1 = LineItemCodeGenerator.generateSplitCode(rootParentCode, splitIndex1);
         splitItem1.setLineItemCode(splitCode1);
@@ -621,6 +657,7 @@ public class IndentInventoryService {
         splitItem2.setRemarks(originalItem.getRemarks());
         splitItem2.setMeasurementUnit(originalItem.getMeasurementUnit());
         splitItem2.setLineItemStatus(originalItem.getLineItemStatus());
+        splitItem2.setQuoteRequestedQcId(originalItem.getQuoteRequestedQcId());
 
         String splitCode2 = LineItemCodeGenerator.generateSplitCode(rootParentCode, splitIndex2);
         splitItem2.setLineItemCode(splitCode2);
@@ -635,6 +672,8 @@ public class IndentInventoryService {
         originalItem.setDeleted(true);
         // Save changes
         indentInventoryRepo.save(indentInventory);
+        activityLogService.record("SPLIT", "INDENT", indentId,
+                "Indent " + indentId + " line item split by " + resolveCurrentUser(), resolveCurrentUser());
         return indentInventory;
     }
 
@@ -647,6 +686,8 @@ public class IndentInventoryService {
         indentInventory.setIndentStatus(IndentStatusConstants.STATUS_APPROVED);
         indentInventory.setLastStatusUpdatedAt(new Date());
         indentInventoryRepo.save(indentInventory);
+        activityLogService.record("APPROVED", "INDENT", id,
+                "Indent " + id + " approved by " + resolveCurrentUser(), resolveCurrentUser());
         return indentInventory;
     }
 
@@ -755,7 +796,8 @@ public class IndentInventoryService {
                 Category c = p.getCategory();
                 DeadStockDTOForIndent deadStock = deadStocks.getOrDefault(p.getProductId(), new DeadStockDTOForIndent(0.0, Collections.emptyList()));
                 CurrentStockDTOForIndent currentStock = currentStocks.getOrDefault(p.getProductId(), new CurrentStockDTOForIndent(0.0, Collections.emptyList()));
-                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock, currentStock);
+                ConsolidatedIndentLineDTO dto = new ConsolidatedIndentLineDTO(tenant, tenantCode, indent.getIndentDate(), indent.getIndentId(), line.getLineItemCode(), c.getCategoryName(), p.getProductId(), p.getProductName(), p.getMeasurementUnit(), line.getQuantity(), line.getSpecification(), line.getRemarks(), line.getLineItemStatus(), indent.getCreationDate(), deadStock, currentStock, null, line.getQuoteRequestedQcId());
+                dto.setLeadTimeDays(leadTimeResolver.resolve(p));
                 result.add(dto);
             }
         }
@@ -818,6 +860,7 @@ public class IndentInventoryService {
                 "Line Item Code",
                 "Product",
                 "Category",
+                "Unit of Measurement",
                 "Quantity Requested",
                 "Quantity Received",
                 "Quantity Pending",
@@ -838,6 +881,10 @@ public class IndentInventoryService {
                         tenantService.fetchTenantFromHeader(),
                         userDetailsService.getCurrentUser().getAllowedTenants()
                 );
+
+        long totalCount = indentInventoryRepo.count(spec);
+        if (totalCount > 5000)
+            throw new Exception("Too many rows to export. Please apply filters to reduce results below 5000 and try again.");
 
         int page = 0;
         int size = 500;
@@ -899,6 +946,11 @@ public class IndentInventoryService {
                 );
                 row.createCell(col++).setCellValue(
                         safeExcel(line.getProduct().getCategory().getCategoryName())
+                );
+                row.createCell(col++).setCellValue(
+                        safeExcel(line.getMeasurementUnit() != null
+                                ? line.getMeasurementUnit()
+                                : line.getProduct().getMeasurementUnit())
                 );
 
                 // Quantities
@@ -1032,4 +1084,44 @@ public class IndentInventoryService {
         }
         return indentInventoryRepo.findById(indentId).get();
     }
+
+    public com.ec.application.data.IndentTilesDTO getTiles(String tenant) {
+        com.ec.application.data.IndentTilesDTO dto = new com.ec.application.data.IndentTilesDTO();
+
+        java.util.Calendar weekCal = java.util.Calendar.getInstance();
+        weekCal.setFirstDayOfWeek(java.util.Calendar.MONDAY);
+        weekCal.set(java.util.Calendar.DAY_OF_WEEK, weekCal.getFirstDayOfWeek());
+        weekCal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        weekCal.set(java.util.Calendar.MINUTE, 0);
+        weekCal.set(java.util.Calendar.SECOND, 0);
+        weekCal.set(java.util.Calendar.MILLISECOND, 0);
+        dto.setThisWeekCount(indentInventoryRepo.countSince(weekCal.getTime(), tenant));
+
+        java.util.Calendar monthCal = java.util.Calendar.getInstance();
+        monthCal.set(java.util.Calendar.DAY_OF_MONTH, 1);
+        monthCal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        monthCal.set(java.util.Calendar.MINUTE, 0);
+        monthCal.set(java.util.Calendar.SECOND, 0);
+        monthCal.set(java.util.Calendar.MILLISECOND, 0);
+        dto.setThisMonthCount(indentInventoryRepo.countSince(monthCal.getTime(), tenant));
+
+        dto.setOpenCount(indentInventoryRepo.countByStatusIn(
+                java.util.Arrays.asList("NEW", "APPROVED"), tenant));
+        dto.setQuoteRequestedCount(indentInventoryRepo.countWithQuoteRequested(tenant));
+
+        Calendar staleCal = Calendar.getInstance();
+        staleCal.add(Calendar.DAY_OF_MONTH, -3);
+        dto.setStaleCount(indentInventoryRepo.countStale(
+                staleCal.getTime(), IndentStatusConstants.getTerminalStatuses(), tenant));
+
+        Map<String, Long> statusCounts = new java.util.LinkedHashMap<>();
+        indentInventoryRepo.fetchCurrentIndentStatusCounts(IndentStatusConstants.getAllStatuses())
+                .stream()
+                .filter(r -> tenant == null || tenant.equals(r.getGroupKey()))
+                .forEach(r -> statusCounts.merge(r.getStatus(), r.getCount(), Long::sum));
+        dto.setStatusCounts(statusCounts);
+
+        return dto;
+    }
+
 }

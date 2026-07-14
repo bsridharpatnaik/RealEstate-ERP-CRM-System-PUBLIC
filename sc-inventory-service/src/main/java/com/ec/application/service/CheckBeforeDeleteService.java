@@ -146,7 +146,8 @@ public class CheckBeforeDeleteService {
     }
 
     public boolean isBuildingTypeUsed(Long id) {
-        if (locationRepo.getBuildingTypeUsageCount(id) > 0 || bimRepo.buildingTypeUsageCount(id) > 0)
+        if (locationRepo.getBuildingTypeUsageCount(id) > 0 || bimRepo.buildingTypeUsageCount(id) > 0
+                || boqUploadRepository.buildingTypeBoqCount(id) > 0)
             return true;
         else
             return false;

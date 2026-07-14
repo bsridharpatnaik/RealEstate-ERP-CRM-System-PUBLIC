@@ -12,15 +12,15 @@ import { messages } from "./../../messages";
 import Popper from "@material-ui/core/Popper";
 import Filter from "./filter";
 import IconButtons from "./../../Shared/Button/IconButtons.js";
-import { Slide } from "@material-ui/core";
 import Details from "./details";
+import DetailsPopup from "./../../Shared/DetailsPopup";
 import { API } from "./../../axios";
 import { triggerBlobDownload } from "./../../helper";
 
 class List extends ListCommon {
   filterData = {};
   title = messages.common.stock;
-  state = { data: [], options: [], showDetails: false, key: 1 };
+  state = { data: [], options: [], showDetails: false, key: 1, expiryTiles: null, expiryFilter: null };
   tableData = {
     headers: [
       messages.common.id,
@@ -53,6 +53,17 @@ class List extends ListCommon {
     this.search();
     this.filterRef = React.createRef();
     this.getOptions();
+    this.loadExpiryTiles();
+  }
+
+  async loadExpiryTiles() {
+    const body = this.prepareRequestBody();
+    // Strip expiryFilter so tile counts reflect regular filters only (not circular)
+    const tileBody = { filterData: (body.filterData || []).filter(f => f.attrName !== 'expiryFilter') };
+    const response = await API.POST(apiEndpoints.getExpiryTiles, tileBody);
+    if (response.success) {
+      this.setState({ expiryTiles: response.data });
+    }
   }
   async getOptions() {
     const response = await API.GET(apiEndpoints.stockDropdown);
@@ -115,6 +126,12 @@ class List extends ListCommon {
         }
       }
     }
+    if (this.state.expiryFilter) {
+      params.filterData.push({
+        attrName: "expiryFilter",
+        attrValue: [this.state.expiryFilter],
+      });
+    }
     return params;
   }
   async search(page = 0, sortkey = null, sortby = null) {
@@ -126,17 +143,27 @@ class List extends ListCommon {
     const response = await this.getData(page, params);
 
     if (response.success) {
-      this.setState({
-        data: response.data.stockInformation.content,
+      const freshRows = response.data.stockInformation.content;
+      const newState = {
+        data: freshRows,
         pages: response.data.stockInformation.totalPages,
         totalRecords: response.data.stockInformation.totalElements,
-      });
+      };
+      // If detail panel is open, refresh selectedData with the updated row
+      if (this.state.showDetails && this.state.selectedData) {
+        const refreshed = freshRows.find(
+          (r) => r.productId === this.state.selectedData.productId
+        );
+        if (refreshed) newState.selectedData = refreshed;
+      }
+      this.setState(newState);
+      this.loadExpiryTiles();
     }
   }
 
   render() {
     return (
-      <div className={this.state.showDetails ? "split" : ""}>
+      <div>
         <div className="list-section">
           <div className="filter-section">
             <form
@@ -181,6 +208,52 @@ class List extends ListCommon {
               />
             </Popper>
           </div>
+          {this.state.expiryTiles && (() => {
+            const t = this.state.expiryTiles;
+            // Near-expiry window is tenant-configurable (Admin → Configuration)
+            const nearDays = t.nearExpiryDays || 30;
+            const tiles = [
+              { key: 'expiring30', label: `Expiring ≤${nearDays}d`, count: t.expiring30Days, color: '#e65100', bg: '#fff3e0', border: '#ffcc80' },
+              { key: 'expiring60', label: nearDays < 60 ? `Expiring ${nearDays + 1}–60d` : 'Expiring ≤60d', count: t.expiring60Days, color: '#f57f17', bg: '#fff8e1', border: '#ffe082' },
+              { key: 'expired',    label: 'Expired',          count: t.expiredCount,   color: '#c62828', bg: '#ffebee', border: '#ef9a9a' },
+              { key: 'lowStock',   label: 'Low Stock',        count: t.lowStockCount,  color: '#1565c0', bg: '#e3f2fd', border: '#90caf9' },
+              { key: 'highStock',  label: 'High Stock',       count: t.highStockCount, color: '#2e7d32', bg: '#e8f5e9', border: '#a5d6a7' },
+              { key: 'aging30',    label: 'Aging 30d+',       count: t.aging30Days,    color: '#6a1b9a', bg: '#f3e5f5', border: '#ce93d8' },
+              { key: 'aging60',    label: 'Aging 60d+',       count: t.aging60Days,    color: '#4a148c', bg: '#ede7f6', border: '#b39ddb' },
+              { key: 'aging90',    label: 'Aging 90d+',       count: t.aging90Days,    color: '#311b92', bg: '#e8eaf6', border: '#9fa8da' },
+              { key: 'untracked',  label: 'Untracked',        count: t.untrackedCount, color: '#37474f', bg: '#eceff1', border: '#b0bec5' },
+            ];
+            return (
+              <div style={{ display: 'flex', gap: '8px', margin: '10px 0', flexWrap: 'wrap' }}>
+                {tiles.map(({ key, label, count, color, bg, border }) => {
+                  const active = this.state.expiryFilter === key;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => {
+                        const next = active ? null : key;
+                        this.setState({ expiryFilter: next }, () => this.search(0));
+                      }}
+                      style={{
+                        flex: '1 1 100px', minWidth: '90px', maxWidth: '160px',
+                        padding: '6px 10px', borderRadius: '5px',
+                        backgroundColor: bg,
+                        border: `${active ? '2px' : '1px'} solid ${active ? color : border}`,
+                        cursor: 'pointer',
+                        boxShadow: active ? `0 0 0 2px ${color}30` : 'none',
+                        transition: 'border 0.15s, box-shadow 0.15s',
+                        position: 'relative',
+                      }}
+                    >
+                      <div style={{ fontSize: '10px', color, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                      <div style={{ fontSize: '20px', fontWeight: 'bold', color, lineHeight: 1.2 }}>{count}</div>
+                      {active && <div style={{ position: 'absolute', top: '4px', right: '6px', fontSize: '10px', color, fontWeight: 700 }}>✕</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
           {this.state.isLoading ? (
             this.renderLoader()
           ) : (
@@ -205,22 +278,22 @@ class List extends ListCommon {
           )}
           {this.renderPagination()}
         </div>
-        <Slide
-          direction="right"
-          in={this.state.showDetails}
-          mountOnEnter
-          unmountOnExit
-          timeout={{ exit: 0 }}
+        <DetailsPopup
+          open={this.state.showDetails}
+          onClose={() => this.setState({ showDetails: false, key: this.state.key + 1 })}
         >
-          <Details
-            data={this.state.selectedData}
-            edit={this.props.edit}
-            delete={(row) => this.delete(row)}
-            close={() =>
-              this.setState({ showDetails: false, key: this.state.key + 1 })
-            }
-          />
-        </Slide>
+          {this.state.showDetails && (
+            <Details
+              data={this.state.selectedData}
+              edit={this.props.edit}
+              delete={(row) => this.delete(row)}
+              reloadData={() => this.search(this.page)}
+              close={() =>
+                this.setState({ showDetails: false, key: this.state.key + 1 })
+              }
+            />
+          )}
+        </DetailsPopup>
       </div>
     );
   }
