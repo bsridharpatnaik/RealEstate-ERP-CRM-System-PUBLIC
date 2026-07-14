@@ -80,3 +80,7 @@ This repository represents a **construction-focused ERP/CRM platform** with stro
 - BOQ management
 - tenant-aware operational control
 - CRM, sales pipeline, and post-sales processes
+
+## Contact
+
+Sridhar Patnaik — bsridharpatnaik@gmail.com
