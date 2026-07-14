@@ -2,6 +2,10 @@
 
 Multi-tenant ERP/CRM platform for real-estate and construction operations, covering inventory, procurement, BOQ-driven planning, and customer lifecycle management.
 
+## Demo
+
+📺 **6-minute product walkthrough:** https://youtu.be/YskdyNqE4K0
+
 ## What This Platform Covers
 
 - **Inventory operations** for material planning, stock movement, inward/outward handling, and project supply execution
