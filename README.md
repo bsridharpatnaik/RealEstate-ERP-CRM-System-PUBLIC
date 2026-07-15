@@ -4,7 +4,7 @@ Multi-tenant ERP/CRM platform for real-estate and construction operations, cover
 
 ## Demo
 
-📺 **6-minute product walkthrough:** https://youtu.be/pEZFzI2J8eI
+📺 **4-minute product walkthrough:** https://youtu.be/pEZFzI2J8eI
 
 ## What This Platform Covers
 
