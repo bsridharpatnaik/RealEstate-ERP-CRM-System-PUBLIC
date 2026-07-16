@@ -214,6 +214,10 @@ For developers exploring the code, some of the notable patterns and libraries us
 3. Start `sc-common-service` (gateway), then `sc-inventory-service` and `sc-crm-service`.
 4. In `SC UI`: `npm install` then `npm start` (serves on port 3000).
 
+## License
+
+Released under the [MIT License](LICENSE) — free to use, modify, and distribute.
+
 ## Contact
 
 Sridhar Patnaik — bsridharpatnaik@gmail.com
