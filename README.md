@@ -141,6 +141,20 @@ This repository represents a **construction-focused ERP/CRM platform** with stro
 | CRM | `sc-crm-service` | 8092 |
 | Frontend | `SC UI` | 3000 |
 
+### Implementation highlights
+
+For developers exploring the code, some of the notable patterns and libraries used:
+
+- **Netflix Zuul** API gateway — routing plus a custom logging filter (`LoggingZuulFilter`)
+- **Spring Security + JWT** (`io.jsonwebtoken`) — token issuance and a request filter for stateless auth
+- **JPA Criteria API + Specifications** — dynamic, type-safe query building (`SpecificationsBuilder`, `UserSpecifications`) powering the filterable reports
+- **Hibernate Envers** — entity auditing / revision history
+- **Multi-tenant routing** — per-tenant schema resolution with a shared master schema
+- **iText** — server-side PDF generation for purchase orders and service orders
+- **MinIO** SDK — object storage for file/document attachments
+- **Firebase Cloud Messaging** — push notifications
+- **Spring `@Async` + `@Scheduled`** — asynchronous API/activity logging and scheduled cleanup jobs
+
 ## Configuration Before Running
 
 > **Note:** For security, environment-specific `application-*.properties` files and hardcoded
