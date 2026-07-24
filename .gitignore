@@ -79,3 +79,6 @@ Thumbs.db
 # Claude Code: ignore local config, but commit shared agents
 /.claude/*
 !/.claude/agents/
+
+# Deploy script holds server hosts/credentials — keep out of the repo
+deploy.sh
