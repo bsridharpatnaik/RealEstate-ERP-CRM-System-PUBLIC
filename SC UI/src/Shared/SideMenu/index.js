@@ -77,6 +77,7 @@ function SideMenu(props) {
     props.history.location.pathname === "/contact" ||
     props.history.location.pathname === "/historicalPricing" ||
     props.history.location.pathname === "/user" ||
+    props.history.location.pathname === appRoutes.activeUsers ||
     props.history.location.pathname === "/firm" ||
     props.history.location.pathname === appRoutes.productMerge ||
     props.history.location.pathname === appRoutes.activityLog ||
@@ -360,6 +361,12 @@ function SideMenu(props) {
   onClick={props.setSideBarValue}
   linkurl="/user"
 />
+                    <DashboardItem
+  nodeId="55"
+  labelText="Live Activity"
+  onClick={props.setSideBarValue}
+  linkurl={appendURL(appRoutes.activeUsers)}
+/>
                     {/* <DashboardItem
                     nodeId="4"
                     labelText={messages.common.role}
@@ -580,6 +587,15 @@ function SideMenu(props) {
   labelText="Activity Log"
   onClick={props.setSideBarValue}
   linkurl={appRoutes.activityLog}
+/>
+    <DashboardItem
+  nodeId="57"
+  labelText="Live Activity"
+  onClick={() => {
+    setSession("tennant-id", null);
+    props.setSideBarValue();
+  }}
+  linkurl={appRoutes.activeUsers}
 />
     <DashboardItem
   nodeId="56"

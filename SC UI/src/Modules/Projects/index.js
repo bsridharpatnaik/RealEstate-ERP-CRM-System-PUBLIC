@@ -30,6 +30,7 @@ class Project extends Component {
     bextension: "/bextension.png",
     anantamsamosharan: "anantamsamosharan.png",
     bbextension: "/bbextension.png",
+    mhvrbuilders: "/mhvrbuilders.png"
   };
   async componentDidMount() {
     this.setState({ isLoading: true });

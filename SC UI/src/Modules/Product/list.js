@@ -18,6 +18,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import IconButton from "@material-ui/core/IconButton";
+import TextField from "@material-ui/core/TextField";
 import CloseIcon from "@material-ui/icons/Close";
 import UnitConversionConfig from "./UnitConversionConfig";
 import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
@@ -45,6 +46,7 @@ class List extends ListCommon {
     importResult: null,
     importLoading: false,
     filterOpen: false,
+    searchText: "",
   };
   importFileRef = React.createRef();
   tableData = {
@@ -89,6 +91,15 @@ class List extends ListCommon {
       ? [...new Set((prodRes.data || []).map((p) => p.productCode).filter(Boolean))].sort()
       : [];
     this.filterDropdowns = { category: categories, productCodes };
+  }
+
+  handleSearchInput(text) {
+    this.setState({ searchText: text });
+    clearTimeout(this.searchDebounce);
+    this.searchDebounce = setTimeout(() => {
+      this.searchValue = text ? [text.trim()] : [];
+      this.search(0);
+    }, 300);
   }
 
   prepareRequestBody() {
@@ -240,13 +251,22 @@ class List extends ListCommon {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              clearTimeout(this.searchDebounce);
+              this.searchValue = this.state.searchText
+                ? [this.state.searchText.trim()]
+                : [];
               this.search(0);
             }}
           >
-            {this.renderAutoSearch(
-              apiEndpoints.productGlobalSearch,
-              "Search by Inventory Name or Category Name"
-            )}
+            <TextField
+              variant="outlined"
+              margin="normal"
+              size="small"
+              style={{ minWidth: 340 }}
+              placeholder="Search by Name, Category or Product Code"
+              value={this.state.searchText}
+              onChange={(e) => this.handleSearchInput(e.target.value)}
+            />
           </form>
           <div className="top-button-wrapper">
             {this.renderExport()}

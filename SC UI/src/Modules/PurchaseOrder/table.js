@@ -4,6 +4,7 @@ import React from "react";
 import Tooltip from "@material-ui/core/Tooltip";
 import KeyboardArrowDownIcon from "@material-ui/icons/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
+import AttachFileIcon from "@material-ui/icons/AttachFile";
 //style
 import "./style.scss";
 //misc
@@ -156,6 +157,13 @@ class Table extends CommonTable {
             </IconButton>
           )}
           <span style={{ verticalAlign: 'middle' }}>{row["poNumber"]}</span>
+          {(row.fileInformations || []).length > 0 && (
+            <AttachFileIcon
+              fontSize="small"
+              titleAccess="Has attachments"
+              style={{ verticalAlign: 'middle', marginLeft: 4, color: '#888', fontSize: 16 }}
+            />
+          )}
         </td>
       );
     } else if (key === "poStatus") {

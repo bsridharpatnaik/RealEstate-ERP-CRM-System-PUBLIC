@@ -28,6 +28,7 @@ public final class ProductSpecifications {
             Specification<Product> nameSpec = null;
             nameSpec = or(nameSpec, specbldr.whereDirectFieldContains(Product_.PRODUCT_NAME, names));
             nameSpec = or(nameSpec, specbldr.whereChildFieldContains(Product_.CATEGORY, Category_.CATEGORY_NAME, names));
+            nameSpec = or(nameSpec, specbldr.whereDirectFieldContains(Product_.PRODUCT_CODE, names));
             spec = and(spec, nameSpec);
         }
 

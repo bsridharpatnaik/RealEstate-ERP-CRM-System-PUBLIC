@@ -611,6 +611,56 @@ public class PurchaseOrderService extends ReusableFields {
         return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
     }
 
+    /**
+     * Edits the billing unit conversion (and rate) of a single PO line, then recomputes the line's
+     * netRate/totalAmount and the PO grand total server-side. Allowed in any non-terminal status
+     * (blocked once CANCELLED / COMPLETED / SHORT CLOSED — same guard as add-line/tolerance).
+     */
+    @Transactional
+    public PurchaseOrder updateLineBilling(String poId, Long lineId, UpdateLineBillingRequest req) throws Exception {
+        PurchaseOrder po = purchaseOrderRepo.findById(poId)
+                .orElseThrow(() -> new Exception("Purchase Order not found: " + poId));
+
+        validator.validateAddLineToPO(po); // reuses terminal-status check
+
+        PurchaseOrderLine line = po.getLines().stream()
+                .filter(l -> l.getId().equals(lineId))
+                .findFirst()
+                .orElseThrow(() -> new Exception("PO line not found: " + lineId));
+
+        if (req.getRate() == null)
+            throw new Exception("Rate is required.");
+        boolean hasBilling = req.getBillingUnit() != null && !req.getBillingUnit().isEmpty();
+        if (hasBilling && (req.getBillingQuantity() == null || req.getBillingQuantity() <= 0))
+            throw new Exception("Billing quantity must be a positive number when a billing unit is set.");
+
+        line.setRate(req.getRate());
+        line.setBillingUnit(hasBilling ? req.getBillingUnit() : null);
+        line.setBillingQuantity(hasBilling ? req.getBillingQuantity() : null);
+        line.setBillingConversionFactor(hasBilling ? req.getBillingConversionFactor() : null);
+
+        // Effective quantity priced = billing qty when a billing unit is set, else the base quantity.
+        double effQty = hasBilling ? req.getBillingQuantity()
+                : (line.getQuantity() != null ? line.getQuantity() : 0.0);
+        double disc = line.getDiscountPercent() != null ? line.getDiscountPercent() : 0.0;
+        double gst = line.getGstPercent() != null ? line.getGstPercent() : 0.0;
+        double netRate = req.getRate() * effQty * (1 - disc / 100.0);
+        double totalAmount = netRate * (1 + gst / 100.0);
+        line.setNetRate(netRate);
+        line.setTotalAmount(totalAmount);
+
+        recalculateGrandTotal(po);
+
+        PurchaseOrder saved = purchaseOrderRepo.save(po);
+        String username = userDetailsService.getCurrentUser().getUsername();
+        poStatusHistoryService.logStatusChange(saved, saved.getStatus(), saved.getStatus(), username,
+                "Billing conversion updated on line (ID: " + lineId + ") by " + username, null);
+        String activityUser = resolveCurrentUser();
+        activityLogService.record("UPDATED", "PURCHASE_ORDER", saved.getPurchaseOrderId(),
+                "Billing conversion updated on PO " + saved.getPurchaseOrderId() + " by " + activityUser, activityUser);
+        return getPurchaseOrderWithInit(saved.getPurchaseOrderId());
+    }
+
     /** Returns an integer rank for indent line item status (higher = more advanced). */
     private int statusRank(String status) {
         if (status == null) return 0;

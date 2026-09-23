@@ -1,7 +1,0 @@
-2020-11-10 00:03:39,309 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(82)-127.0.0.1] Application shutdown requested.
-2020-11-10 00:03:39,365 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(82)-127.0.0.1] Closing org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@49c66ade: startup date [Mon Nov 09 22:44:51 IST 2020]; parent: org.springframework.context.annotation.AnnotationConfigApplicationContext@26b3fd41
-2020-11-10 00:03:39,846 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(82)-127.0.0.1] Stopping filter initializer
-2020-11-10 00:03:39,964 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(82)-127.0.0.1] Unregistering JMX-exposed beans on shutdown
-2020-11-10 00:03:39,973 INFO org.apache.commons.logging.impl.Jdk14Logger [RMI TCP Connection(82)-127.0.0.1] Unregistering JMX-exposed beans
-2020-11-10 00:03:40,215 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(82)-127.0.0.1] HikariPool-1 - Shutdown initiated...
-2020-11-10 00:03:40,243 INFO com.zaxxer.hikari.HikariDataSource [RMI TCP Connection(82)-127.0.0.1] HikariPool-1 - Shutdown completed.

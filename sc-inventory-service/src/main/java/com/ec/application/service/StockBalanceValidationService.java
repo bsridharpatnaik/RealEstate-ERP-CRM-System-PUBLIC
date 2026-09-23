@@ -61,6 +61,11 @@ public class StockBalanceValidationService {
             return;
         }
 
+        if (allDiscrepancies.isEmpty()) {
+            log.info("Stock balance validation — all stock matched, no email sent");
+            return;
+        }
+
         if (!tenants.isEmpty()) {
             ThreadLocalStorage.setTenantName(tenants.get(0));
         }
@@ -72,7 +77,7 @@ public class StockBalanceValidationService {
     }
 
     private List<StockDiscrepancyRow> validateTenant(String tenant) {
-        // Indices: 0=inward, 1=transferIn, 2=outward, 3=lostDamaged, 4=transferOut, 5=stockInHand
+        // Indices: 0=inward, 1=transferIn, 2=outward, 3=lostDamaged(net), 4=transferOut, 5=stockInHand, 6=writeOff
         Map<Long, double[]> data = new HashMap<>();
 
         mergeInto(queryInward(), data, 0);
@@ -81,14 +86,15 @@ public class StockBalanceValidationService {
         mergeInto(queryLostDamaged(), data, 3);
         mergeInto(queryTransferOut(tenant), data, 4);
         mergeInto(queryStockInHand(), data, 5);
+        mergeInto(queryWriteOff(), data, 6);
 
         Map<Long, String> productNames = queryProductNames();
 
         List<StockDiscrepancyRow> result = new ArrayList<>();
         for (Map.Entry<Long, double[]> entry : data.entrySet()) {
             double[] d = entry.getValue();
-            // Formula: inward + transferIn - outward - lostDamaged - transferOut = stockInHand
-            double expected = d[0] + d[1] - d[2] - d[3] - d[4];
+            // Formula: inward + transferIn - outward - lostDamaged - transferOut - writeOff = stockInHand
+            double expected = d[0] + d[1] - d[2] - d[3] - d[4] - d[6];
             double actual   = d[5];
             double diff     = expected - actual;
             if (Math.abs(diff) > TOLERANCE) {
@@ -96,7 +102,7 @@ public class StockBalanceValidationService {
                     tenant,
                     productNames.getOrDefault(entry.getKey(), "Product#" + entry.getKey()),
                     round(d[0]), round(d[1]), round(d[2]), round(d[3]), round(d[4]),
-                    round(expected), round(actual), round(diff)
+                    round(d[6]), round(expected), round(actual), round(diff)
                 ));
             }
         }
@@ -124,7 +130,7 @@ public class StockBalanceValidationService {
     @SuppressWarnings("unchecked")
     private List<Object[]> queryLostDamaged() {
         return entityManager.createQuery(
-            "SELECT l.product.id, SUM(l.quantity) " +
+            "SELECT l.product.id, SUM(CASE WHEN l.entryType = 'EXCESS_FOUND' THEN -l.quantity ELSE l.quantity END) " +
             "FROM LostDamagedInventory l " +
             "GROUP BY l.product.id"
         ).getResultList();
@@ -148,6 +154,15 @@ public class StockBalanceValidationService {
             "WHERE t.targetTenant = :tenant " +
             "GROUP BY ti.productId"
         ).setParameter("tenant", tenant).getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object[]> queryWriteOff() {
+        return entityManager.createQuery(
+            "SELECT w.productId, SUM(w.quantity) " +
+            "FROM BatchWriteOff w " +
+            "GROUP BY w.productId"
+        ).getResultList();
     }
 
     @SuppressWarnings("unchecked")
@@ -176,7 +191,7 @@ public class StockBalanceValidationService {
             if (row[0] == null) continue;
             Long productId = ((Number) row[0]).longValue();
             double qty = row[1] == null ? 0.0 : ((Number) row[1]).doubleValue();
-            data.computeIfAbsent(productId, k -> new double[6])[index] = qty;
+            data.computeIfAbsent(productId, k -> new double[7])[index] = qty;
         }
     }
 

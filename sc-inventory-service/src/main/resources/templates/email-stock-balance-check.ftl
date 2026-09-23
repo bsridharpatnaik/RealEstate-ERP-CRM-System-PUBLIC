@@ -31,7 +31,7 @@
 <body>
   <p>Hi,</p>
   <p>Nightly stock balance validation completed on <strong>${currentDate}</strong>.</p>
-  <p>Formula checked: <em>Inward + Transfer In − Outward − Lost/Damaged − Transfer Out = Stock in Hand</em></p>
+  <p>Formula checked: <em>Inward + Transfer In − Outward − Lost/Damaged − Transfer Out − Write-Off = Stock in Hand</em></p>
   <p>Tolerance: ±0.001</p>
 
   <#if discrepancies?has_content>
@@ -46,6 +46,7 @@
           <th>Outward</th>
           <th>Lost / Damaged</th>
           <th>Transfer Out</th>
+          <th>Write-Off</th>
           <th>Expected Stock</th>
           <th>Actual Stock</th>
           <th>Discrepancy</th>
@@ -61,6 +62,7 @@
           <td>${row.totalOutward?string["0.###"]}</td>
           <td>${row.totalLostDamaged?string["0.###"]}</td>
           <td>${row.totalTransferOut?string["0.###"]}</td>
+          <td>${row.totalWriteOff?string["0.###"]}</td>
           <td>${row.expectedStock?string["0.###"]}</td>
           <td>${row.actualStock?string["0.###"]}</td>
           <td class="${(row.discrepancy < 0)?string('neg','pos')}">${row.discrepancy?string["0.###"]}</td>

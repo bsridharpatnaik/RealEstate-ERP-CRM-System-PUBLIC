@@ -202,7 +202,20 @@ public class ProductController {
     public ProductUnitConversion addUnitConversion(
             @PathVariable Long id,
             @RequestBody ProductUnitConversion body) {
-        return productUnitConversionService.addConversion(id, body.getUnitName(), body.getConversionFactor());
+        return productUnitConversionService.addConversion(id, body.getUnitName(), body.getConversionFactor(),
+                body.getDisplayDirection(), body.getReferenceUnit(), body.getReferenceValue());
+    }
+
+    @PutMapping("/{id}/unit-conversions/{conversionId}")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public ProductUnitConversion updateUnitConversion(
+            @PathVariable Long id,
+            @PathVariable Long conversionId,
+            @RequestBody ProductUnitConversion body) {
+        return productUnitConversionService.updateConversion(conversionId, body.getUnitName(),
+                body.getConversionFactor(), body.getDisplayDirection(), body.getReferenceUnit(),
+                body.getReferenceValue());
     }
 
     @DeleteMapping("/{id}/unit-conversions/{conversionId}")

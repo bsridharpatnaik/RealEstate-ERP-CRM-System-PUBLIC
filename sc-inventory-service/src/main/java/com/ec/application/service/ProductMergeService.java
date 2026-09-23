@@ -37,6 +37,7 @@ public class ProductMergeService {
         Product target = getProduct(targetId);
 
         validateBatchModeCompatibility(source, target);
+        validateMeasurementUnitCompatibility(source, target);
 
         ProductMergePreviewDTO dto = new ProductMergePreviewDTO();
         dto.setSourceProduct(toInfo(source));
@@ -71,6 +72,7 @@ public class ProductMergeService {
         Product target = getProduct(targetId);
 
         validateBatchModeCompatibility(source, target);
+        validateMeasurementUnitCompatibility(source, target);
 
         List<ProductMergeResultDTO.TenantMergeResult> results = new ArrayList<>();
         String originalTenant = ThreadLocalStorage.getTenantName();
@@ -158,6 +160,23 @@ public class ProductMergeService {
                     + " but '" + target.getProductName() + "' is " + targetMode
                     + ". Both products must have the same batch mode before merging.");
         }
+    }
+
+    private void validateMeasurementUnitCompatibility(Product source, Product target) {
+        String su = normalizeUnit(source.getMeasurementUnit());
+        String tu = normalizeUnit(target.getMeasurementUnit());
+        if (!su.equals(tu)) {
+            throw new IllegalArgumentException(
+                    "Cannot merge products with different units of measurement. "
+                    + "'" + source.getProductName() + "' is in '" + source.getMeasurementUnit()
+                    + "' but '" + target.getProductName() + "' is in '" + target.getMeasurementUnit()
+                    + "'. Units of measurement must match before merging.");
+        }
+    }
+
+    /** Case/space-insensitive unit compare — data has Sqft/sqft/SQFT variants. */
+    private String normalizeUnit(String u) {
+        return u == null ? "" : u.trim().toLowerCase();
     }
 
     private void validate(Long sourceId, Long targetId) {

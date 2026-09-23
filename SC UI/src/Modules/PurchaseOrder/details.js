@@ -33,7 +33,9 @@ import ArrowBackIosIcon from "@material-ui/icons/ArrowBackIos";
 import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 import PrintIcon from "@material-ui/icons/Print";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
+import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
 import AddIcon from "@material-ui/icons/Add";
+import POLineBillingDialog from "./POLineBillingDialog";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { withSnackbar } from "notistack";
 import { canEditInventoryModules, canViewMoneyFields, getRole, isAdmin } from "./../../helper";
@@ -86,6 +88,9 @@ class Details extends CommonDetails {
     editingToleranceLineId: null,
     editingToleranceValue: "",
     savingTolerance: false,
+
+    // Billing unit/rate edit dialog (allowed in any non-terminal state)
+    billingDialogLine: null,
   };
 
   async download(file) {
@@ -359,6 +364,11 @@ class Details extends CommonDetails {
 
   cancelEditTolerance = () => {
     this.setState({ editingToleranceLineId: null, editingToleranceValue: "" });
+  };
+
+  onBillingSaved = (updatedPo) => {
+    this.setState({ localData: updatedPo, billingDialogLine: null });
+    if (this.props.onRefresh) this.props.onRefresh();
   };
 
   saveTolerance = async (lineId) => {
@@ -1110,7 +1120,16 @@ class Details extends CommonDetails {
                               )}
                               {canEditInventoryModules() &&
                                 (data.status === "NEW" || data.status === "PARTIAL") && (
-                                <TableCell style={{ padding: "0 4px" }}>
+                                <TableCell style={{ padding: "0 4px", whiteSpace: "nowrap" }}>
+                                  {showMoneyFields && (
+                                    <IconButton
+                                      size="small"
+                                      title="Edit billing unit / rate"
+                                      onClick={() => this.setState({ billingDialogLine: item })}
+                                    >
+                                      <SwapHorizIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
                                   {isRemovable ? (
                                     <IconButton
                                       size="small"
@@ -1356,6 +1375,16 @@ class Details extends CommonDetails {
               }}
             >✕</span>
           </div>
+        )}
+
+        {this.state.billingDialogLine && (
+          <POLineBillingDialog
+            poId={this.getEffectiveData().purchaseOrderId}
+            line={this.state.billingDialogLine}
+            productId={this.state.billingDialogLine.product?.productId}
+            onClose={() => this.setState({ billingDialogLine: null })}
+            onSaved={this.onBillingSaved}
+          />
         )}
       </div>
     );

@@ -26,7 +26,11 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import com.ec.application.service.IndentInventoryPdfService;
+import com.itextpdf.text.DocumentException;
+import java.io.IOException;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,6 +56,9 @@ public class IndentInventoryController {
 
     @Autowired
     private IndentStatusHistoryService indentStatusHistoryService;
+
+    @Autowired
+    private IndentInventoryPdfService indentInventoryPdfService;
 
     Logger log = LoggerFactory.getLogger(IndentInventoryController.class);
 
@@ -87,6 +94,43 @@ public class IndentInventoryController {
     @GetMapping("/{id}")
     public IndentInventory findInwardInventoryById(@PathVariable String id) throws Exception {
         return iiService.findById(id);
+    }
+
+    @GetMapping(value = "/print-indent/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<StreamingResponseBody> printIndentAsPdf(@PathVariable String id) {
+        String tenant = schemaConfig.getMasterSchema();
+        IndentInventory indent;
+        try {
+            indent = iiService.findById(id);
+        } catch (Exception e) {
+            log.error("Failed to fetch indent for print", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        String filename = indent.getIndentId() + ".pdf";
+
+        StreamingResponseBody stream = outputStream -> {
+            try {
+                // The streaming body runs after the controller returns (past the tenant aspect's
+                // finally), so re-pin master here — attachments are fetched during streaming.
+                ThreadLocalStorage.setTenantName(tenant != null ? tenant : "masterschema");
+                indentInventoryPdfService.generatePdf(indent, outputStream);
+                outputStream.flush();
+            } catch (DocumentException e) {
+                log.error("iText PDF generation failed for indent", e);
+            } catch (IOException e) {
+                log.error("IO error writing PDF for indent", e);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                ThreadLocalStorage.setTenantName(null);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(stream);
     }
 
     @DeleteMapping(value = "/{id}")

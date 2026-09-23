@@ -57,6 +57,7 @@ import {
   Configuration,
 } from "./../index";
 import BOQReport from "../BOQReport";
+import ActiveUsers from "../ActiveUsers";
 
 import CRM from "./../CRM";
 import DashboardwithTabs from "./../Dashboard/Dashboard";
@@ -95,6 +96,11 @@ class Home extends React.Component {
                 <PrivateRoute
                   component={(props) => <User {...props} key={new Date()} />}
                   path={appRoutes.user}
+                  onlyAdmin={true}
+                />
+                <PrivateRoute
+                  component={(props) => <ActiveUsers {...props} key={new Date()} />}
+                  path={appRoutes.activeUsers}
                   onlyAdmin={true}
                 />
                 <PrivateRoute

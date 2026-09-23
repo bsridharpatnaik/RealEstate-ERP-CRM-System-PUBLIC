@@ -146,6 +146,18 @@ public class PurchaseOrderController {
         return purchaseOrderService.updateLineTolerance(id, lineId, payload.getTolerancePercent());
     }
 
+    /**
+     * Edits the billing unit conversion (and rate) of a single PO line. Allowed in any non-terminal
+     * status; blocked once CANCELLED / COMPLETED / SHORT CLOSED. Recomputes line + grand totals.
+     */
+    @PutMapping("/{id}/line/{lineId}/billing")
+    @CheckAuthority
+    @AllowOnly(roles = {RoleConstants.ADMIN, RoleConstants.PURCHASE_MANAGER})
+    public PurchaseOrder updateLineBilling(@PathVariable String id, @PathVariable Long lineId,
+                                           @RequestBody UpdateLineBillingRequest payload) throws Exception {
+        return purchaseOrderService.updateLineBilling(id, lineId, payload);
+    }
+
     @PostMapping("/short-close")
     public PurchaseOrder shortClosePo(@RequestBody ShortClosePoRequest request) throws Exception {
         PurchaseOrder po = purchaseOrderService.shortClosePurchaseOrder(request);

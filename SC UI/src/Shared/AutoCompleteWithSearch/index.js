@@ -13,7 +13,7 @@ class AutoCompleteWithSearch extends Component {
   };
   onChangeHandle = async (value) => {
     this.setState({ isLoading: true });
-    const response = await API.GET(this.props.url + value);
+    const response = await API.GET(this.props.url + encodeURIComponent(value));
     if (response.success) {
       this.setState({ options: response.data });
     }

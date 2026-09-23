@@ -142,10 +142,13 @@ public class ProductMergeTenantExecutor {
             "UPDATE quote_comparison_line SET product_id=?, product_name=?, unit=? WHERE product_id=?",
             targetId, targetProduct.getProductName(), targetProduct.getMeasurementUnit(), sourceId);
 
-        // Product unit conversions (master schema)
+        // Product unit conversions (master schema): keep the SURVIVOR's config, drop the source's.
+        // Reassigning would create duplicate/conflicting billing units (e.g. two "kg" rows with
+        // different factors) on the survivor. Existing PO lines snapshot their own billing, so they
+        // are unaffected. Base UOM is guaranteed equal (merge is blocked otherwise).
         jdbcTemplate.update(
-            "UPDATE product_unit_conversions SET product_id=? WHERE product_id=?",
-            targetId, sourceId);
+            "UPDATE product_unit_conversions SET is_active=false WHERE product_id=?",
+            sourceId);
 
         jdbcTemplate.update("UPDATE Product SET is_deleted=true WHERE productId=?", sourceId);
 

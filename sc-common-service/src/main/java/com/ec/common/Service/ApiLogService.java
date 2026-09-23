@@ -136,15 +136,16 @@ public class ApiLogService {
     }
 
     @Async
+    // Gated by apilog.enabled (see LoggingZuulFilter). Off by default — heavy per-request DB write.
     public void logToDatabase(String tenant, String url, String method, String payload, String username) {
-/*        ApiLog log = new ApiLog();
+        ApiLog log = new ApiLog();
         log.setTenantName(tenant);
         log.setUrl(url);
         log.setMethod(method);
         log.setPayload(payload != null ? payload.substring(0, Math.min(payload.length(), 255)) : null);
         log.setUsername(username);
         log.setTimestamp(LocalDateTime.now());
-        apiLogRepository.save(log);*/
+        apiLogRepository.save(log);
     }
 
     public List<ApiLogReportDTO> generateReport() {

@@ -329,8 +329,8 @@ class BOQTracker extends Component {
         ) : visibleRows.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 48, color: '#a0aec0', fontSize: 14 }}>No data found.</div>
         ) : (
-          <div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div className="x-scroll">
+            <table style={{ minWidth: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ background: '#f7f8fa', borderBottom: '2px solid #e2e8f0' }}>
                   {[

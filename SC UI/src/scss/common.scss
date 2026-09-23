@@ -282,6 +282,12 @@ html {
     text-align: left;
   }
 }
+// Horizontal-scroll utility for wide tables that don't use `.table-wrapper`
+// (e.g. custom report tables). Gets the vertical-wheel → horizontal-scroll
+// behaviour from index.js, which targets `.table-wrapper, .x-scroll`.
+.x-scroll {
+  overflow-x: auto;
+}
 .list-section {
   width: 100%;
   border-radius: 15px;
@@ -304,7 +310,10 @@ html {
       border-radius: 8px;
       border-collapse: separate;
       border-spacing: 0;
-      overflow: hidden;
+      // NOTE: must stay `visible` (not `hidden`) — an overflow!=visible table
+      // becomes a scroll container and traps the sticky action column that the
+      // JS in index.js pins.
+      overflow: visible;
       tr {
         box-shadow: inset 0 -1px 0 0 #a2a2c3;
       }
@@ -312,6 +321,12 @@ html {
       tr.expand {
         box-shadow: none;
       }
+    }
+    // Shadow on the pinned action column, shown only while there is content
+    // hidden to the right (class toggled by index.js on scroll). Positioning of
+    // the pinned cells themselves is done inline by the JS.
+    &.pin-shadow .pinned-action-edge {
+      box-shadow: -6px 0 6px -4px rgba(0, 0, 0, 0.18);
     }
   }
   .filter-section {

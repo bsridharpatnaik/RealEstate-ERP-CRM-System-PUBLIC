@@ -148,6 +148,7 @@ class Edit extends EditForm {
             remarks: item.remarks || "",
             lineItemStatus: item.lineItemStatus || "NEW",
             lineItemCode: item.lineItemCode || null,
+            parentLineItemCode: item.parentLineItemCode || null,
             selectedCategory,
             selectedProduct: {
               id: pid,
@@ -652,6 +653,10 @@ class Edit extends EditForm {
       specification: item.specification || "",
       remarks: item.remarks || "",
       measurementUnit: item.unit || "",
+      // Round-trip the line identity so the backend updates existing lines (and keeps
+      // split lineage) instead of regenerating codes → duplicate line_item_code / lost splits.
+      lineItemCode: item.lineItemCode || null,
+      parentLineItemCode: item.parentLineItemCode || null,
     }));
 
     const params = {

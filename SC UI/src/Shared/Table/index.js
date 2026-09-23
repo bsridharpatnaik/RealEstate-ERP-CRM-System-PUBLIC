@@ -5,8 +5,8 @@ import ArrowDropUpIcon from "@material-ui/icons/ArrowDropUp";
 import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
 
 //import shared icons
-import { DeleteIcon } from "./../Icons/Index.js";
 import pencilIcon from "./../Icons/pencil.png";
+import trashOutlineIcon from "./../Icons/trash-outline.png";
 //style
 import "./style.scss";
 //misc
@@ -181,7 +181,7 @@ class Table extends React.Component {
               disabled={this.checkDelete ? this.checkDelete(row) : undefined}
               className="back-icon"
             >
-              {DeleteIcon({ fontSize: "medium" })}
+              <img src={trashOutlineIcon} alt="Delete" style={{ width: 15, height: 15 }} />
             </IconButton>
           </td>
         )}

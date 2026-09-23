@@ -245,9 +245,25 @@ public class IndentInventoryService {
                         indentInventory.getIndentId(),
                         String.valueOf(product.getProductId())
                 );
-                item.setLineItemCode(lineItemCode);
-                item.setParentLineItemCode(null);
-                item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
+
+                // The edit form can omit lineItemCode for lines that already exist (seen on
+                // split indents). Those lines would otherwise be re-generated as "brand new"
+                // with the same deterministic code as the live row → unique-key violation on
+                // line_item_code (surfaced as a blank error) AND the real row silently
+                // soft-deleted. If the generated code already belongs to a live line, treat
+                // this as an edit of that line instead of a duplicate insert.
+                IndentInventoryList existing = existingInventoryList.stream()
+                        .filter(e -> !e.isDeleted() && lineItemCode.equals(e.getLineItemCode()))
+                        .findFirst().orElse(null);
+                if (existing != null) {
+                    item.setLineItemCode(existing.getLineItemCode());
+                    item.setParentLineItemCode(existing.getParentLineItemCode());
+                    // status intentionally NOT set — DB value survives (same as CASE 1)
+                } else {
+                    item.setLineItemCode(lineItemCode);
+                    item.setParentLineItemCode(null);
+                    item.setLineItemStatus(IndentLineItemStatusConstants.STATUS_NEW);
+                }
             }
             processedList.add(item);
         }
@@ -322,6 +338,16 @@ public class IndentInventoryService {
      */
     private void validateInputsForCreate(IndentInventoryData iiData) throws Exception {
         basicValidation(iiData, " is not managed inventory. Cannot be added to Indent Inventory.");
+
+        // During creation there are no split line items yet, so the same product must not
+        // appear twice. (On UPDATE this is allowed via split — validated by productToRoots
+        // in validateInputsForUpdate — so this check must NOT live in shared basicValidation.)
+        long duplicateProductIdCount = iiData.getInventoryList().stream()
+                .collect(Collectors.groupingBy(IndentProductDTO::getProductId, counting())).entrySet().stream()
+                .filter(e -> e.getValue() > 1).count();
+
+        if (duplicateProductIdCount > 0)
+            throw new Exception("Same product cannot be added multiple times during creation. Use split functionality if needed.");
     }
 
     /**
@@ -386,14 +412,6 @@ public class IndentInventoryService {
             if (dto.getQuantity() <= 0)
                 throw new Exception("Quantity cannot be less than or equal to zero");
         }
-
-        // During creation, same product cannot appear multiple times
-        Long duplicateProductIdCount = iiData.getInventoryList().stream()
-                .collect(Collectors.groupingBy(IndentProductDTO::getProductId, counting())).entrySet().stream()
-                .filter(e -> e.getValue() > 1).count();
-
-        if (duplicateProductIdCount > 0)
-            throw new Exception("Same product cannot be added multiple times during creation/updation. Use split functionality if needed.");
     }
 
     @Transactional(readOnly = true)

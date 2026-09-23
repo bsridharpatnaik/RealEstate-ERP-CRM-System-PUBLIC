@@ -592,6 +592,21 @@ public class OutwardInventoryService {
             throw new Exception("Inventory Entry with ID not found");
         OutwardInventory outwardInventory = outwardInventoryOpt.get();
 
+        // Adding or removing product lines during an outward edit is not allowed. modifyStockBeforeUpdate
+        // reconciles stock by delta over the payload lines only, so a removed line's outward deduction
+        // would never be restored (silent stock leak) while removeOrphans still drops the row. To reduce
+        // an outward, use Return. Mirrors the same guard on inward edits (updateInwardInventory).
+        Set<String> existingLineKeys = outwardInventory.getInwardOutwardList().stream()
+                .map(io -> lineKey(io.getProduct().getProductId(), io.getWarehouse().getWarehouseId()))
+                .collect(Collectors.toSet());
+        Set<String> payloadLineKeys = iiData.getProductWithQuantities().stream()
+                .map(pwq -> lineKey(pwq.getProductId(), pwq.getWarehouseId()))
+                .collect(Collectors.toSet());
+        if (!existingLineKeys.equals(payloadLineKeys)) {
+            throw new Exception("Adding or removing product lines is not allowed during an outward update. "
+                    + "Use Return to reduce an outward.");
+        }
+
         // Validate non-BOQ fields
         boolean allHaveBOQ = validateInputs(iiData, true);
 

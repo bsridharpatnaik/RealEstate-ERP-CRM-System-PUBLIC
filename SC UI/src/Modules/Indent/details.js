@@ -9,7 +9,6 @@ import {
   CloseIcon,
 } from "./../../Shared/Icons/Index.js";
 import DeleteConfirm from "./../../Shared//DeleteConfirm";
-import Print from "./indentPrint";
 import Typography from "@material-ui/core/Typography";
 import Box from "@material-ui/core/Box";
 import Table from "@material-ui/core/Table";
@@ -90,9 +89,6 @@ function StatusBadgeWithTooltip({ lineItemStatus, statusClass }) {
 }
 
 class Details extends CommonDetails {
-  // Ref to the Print component instance so we can call handlePrint() on it
-  printRef = React.createRef();
-
   state = {
     value: 0,
     deleteConfirmOpen: false,
@@ -233,11 +229,27 @@ class Details extends CommonDetails {
     this.setState({ anchorEl: null });
   };
 
-  // Calls the Print component's handlePrint() method directly
-  triggerPrint = () => {
+  // Fetches the server-generated indent PDF (details + attachments) and opens it
+  // in a new tab for preview, mirroring the Purchase Order print.
+  triggerPrint = async () => {
     this.handleCloseMenu();
-    if (this.printRef.current) {
-      this.printRef.current.handlePrint();
+    const indentId = this.props.data?.indentId;
+    if (!indentId) {
+      this.props.enqueueSnackbar("Invalid indent data", { variant: "error" });
+      return;
+    }
+    try {
+      const response = await API.GETBlob(apiEndpoints.printIndent(indentId));
+      if (response.success) {
+        const blobUrl = window.URL.createObjectURL(
+          new Blob([response.data], { type: "application/pdf" })
+        );
+        window.open(blobUrl, "_blank");
+      } else {
+        this.props.enqueueSnackbar("Failed to generate PDF", { variant: "error" });
+      }
+    } catch (e) {
+      this.props.enqueueSnackbar("Failed to generate PDF", { variant: "error" });
     }
   };
 
@@ -371,12 +383,6 @@ class Details extends CommonDetails {
 
     return (
       <div className="list-section detail-section indent-detail-section">
-        {/*
-          Print component renders null but holds handlePrint().
-          forwardRef:true in connect() makes this ref point to the class instance.
-        */}
-        <Print ref={this.printRef} data={data} />
-
         <div className="po-detail-card">
           <div className="details-header">
             <div className="po-header-left">

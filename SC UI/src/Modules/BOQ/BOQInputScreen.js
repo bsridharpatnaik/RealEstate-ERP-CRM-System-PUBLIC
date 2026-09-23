@@ -234,10 +234,10 @@ const BOQInputScreen = () => {
       let btVal = cellText(row, 1);
       let buVal = cellText(row, 2);
       for (let j = 0; j < buildingTypeData.length; j++) {
-        if (buildingTypeData[j].label === btVal) { btVal = buildingTypeData[j].value; break; }
+        if (buildingTypeData[j].label.trim() === btVal) { btVal = buildingTypeData[j].value; break; }
       }
       for (let u = 0; u < buildingUnitData.length; u++) {
-        if (buildingUnitData[u].label === buVal) { buVal = buildingUnitData[u].value; break; }
+        if (buildingUnitData[u].label.trim() === buVal) { buVal = buildingUnitData[u].value; break; }
       }
 
       // Read columns by fixed DOM index — immune to empty cells

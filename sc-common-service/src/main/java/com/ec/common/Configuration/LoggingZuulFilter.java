@@ -2,11 +2,13 @@ package com.ec.common.Configuration;
 
 import com.ec.common.Repository.ApiLogRepository;
 import com.ec.common.Service.ApiLogService;
+import com.ec.common.Service.RecentActivityService;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -30,6 +32,13 @@ public class LoggingZuulFilter extends ZuulFilter {
     @Autowired
     ApiLogService apiLogService;
 
+    @Autowired
+    RecentActivityService recentActivityService;
+
+    // Full request logging to DB (heavy: reads body + JPA insert per request). Off by default.
+    @Value("${apilog.enabled:false}")
+    private boolean apiLogEnabled;
+
     @Override
     public String filterType() {
         return "pre"; // or "post" for response logging
@@ -42,7 +51,8 @@ public class LoggingZuulFilter extends ZuulFilter {
 
     @Override
     public boolean shouldFilter() {
-        return true;
+        // Run only if something needs it; when both are off this filter does nothing.
+        return apiLogEnabled || recentActivityService.isEnabled();
     }
 
     @Override
@@ -51,10 +61,17 @@ public class LoggingZuulFilter extends ZuulFilter {
         HttpServletRequest request = ctx.getRequest();
         String url = request.getRequestURI();
         String method = request.getMethod();
-        String payload = getRequestBody(request);
         String username = getUsername(request);
         String tenantName = getTenantName(request);
-        apiLogService.logToDatabase(tenantName, url, method, payload, username);
+
+        // Cheap in-memory activity record (powers the live-activity view).
+        recentActivityService.record(username, method, url, tenantName);
+
+        // Heavy path: only when explicitly enabled (reads request body + DB insert).
+        if (apiLogEnabled) {
+            String payload = getRequestBody(request);
+            apiLogService.logToDatabase(tenantName, url, method, payload, username);
+        }
         return null;
     }
 

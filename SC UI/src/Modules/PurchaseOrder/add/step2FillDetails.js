@@ -27,6 +27,31 @@ import SettingsIcon from "@material-ui/icons/Settings";
 import Tooltip from "@material-ui/core/Tooltip";
 import UnitConversionConfig from "./../../Product/UnitConversionConfig";
 
+// Existing sample thumbnail. Falls back to a "file" box when the image can't load
+// (legacy PDF samples or broken files) so the user can still see it is set and
+// remove it via the adjacent × button, then upload a valid image.
+class SampleThumb extends React.Component {
+  state = { failed: false };
+  render() {
+    if (this.state.failed) {
+      return (
+        <div style={{ width: 64, height: 64, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ddd", borderRadius: 4, color: "#888", fontSize: 10 }}>
+          <span style={{ fontSize: 22, lineHeight: 1 }}>📄</span>
+          <span>file</span>
+        </div>
+      );
+    }
+    return (
+      <img
+        src={this.props.src}
+        alt="sample"
+        onError={() => this.setState({ failed: true })}
+        style={{ width: 64, height: 64, objectFit: "contain", border: "1px solid #ddd", borderRadius: 4 }}
+      />
+    );
+  }
+}
+
 class Step2FillDetails extends React.Component {
   lineFileInputRefs = {};
 
@@ -491,9 +516,9 @@ const firmDetails = {
       inputEl.value = "";
       return;
     }
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!validTypes.includes(file.type)) {
-      this.props.enqueueSnackbar && this.props.enqueueSnackbar("Only JPG, PNG and PDF files are allowed", { variant: "error" });
+      this.props.enqueueSnackbar && this.props.enqueueSnackbar("Only JPG and PNG images are allowed", { variant: "error" });
       inputEl.value = "";
       return;
     }
@@ -521,8 +546,14 @@ const firmDetails = {
     const target = mergedItems[index];
     if (!target) return;
     if (target.sampleImagePreview) URL.revokeObjectURL(target.sampleImagePreview);
-    this.handleItemChange(index, "sampleImageFileId", null);
-    this.handleItemChange(index, "sampleImagePreview", null);
+    // Clear both fields in one update — two sequential handleItemChange calls both
+    // read stale props inside a (batched) click handler, so the second clobbers the first.
+    const updatedItems = this.props.items.map((originalItem) =>
+      originalItem.productId === target.productId
+        ? { ...originalItem, sampleImageFileId: null, sampleImagePreview: null }
+        : originalItem
+    );
+    this.props.onItemsChange(updatedItems);
   };
 
   handleItemChange = (index, field, value) => {
@@ -911,6 +942,7 @@ handleAddFirm = async (firm) => {
               <Autocomplete
                 options={this.state.orderToOptions}
                 getOptionLabel={(option) => this.formatValue(option?.name)}
+                getOptionSelected={(option, value) => option?.id === value?.id}
                 value={this.props.orderTo}
                 onChange={this.handleOrderToChange}
                 loading={this.state.isLoadingSuppliers}
@@ -978,6 +1010,7 @@ handleAddFirm = async (firm) => {
                 <Autocomplete
                   options={this.state.orderFromOptions}
                   getOptionLabel={(option) => this.formatValue(option?.name)}
+                  getOptionSelected={(option, value) => option?.id === value?.id}
                   value={this.props.orderFrom}
                   onChange={this.handleOrderFromChange}
                   loading={this.state.isLoadingFirms}
@@ -1463,10 +1496,8 @@ handleAddFirm = async (firm) => {
                       <TableCell style={{ minWidth: "90px", textAlign: "center" }}>
                         {item.sampleImageFileId ? (
                           <div style={{ position: "relative", display: "inline-block" }}>
-                            <img
+                            <SampleThumb
                               src={item.sampleImagePreview || `${apiEndpoints.masterFileDownload}${item.sampleImageFileId}`}
-                              alt="sample"
-                              style={{ width: 64, height: 64, objectFit: "contain", border: "1px solid #ddd", borderRadius: 4 }}
                             />
                             <span
                               onClick={() => this.handleLineImageRemove(index)}
@@ -1477,7 +1508,7 @@ handleAddFirm = async (firm) => {
                           <>
                             <input
                               type="file"
-                              accept="image/jpeg,image/jpg,image/png,application/pdf"
+                              accept="image/jpeg,image/jpg,image/png"
                               style={{ display: "none" }}
                               ref={(el) => { this.lineFileInputRefs[index] = el; }}
                               onChange={(e) => this.handleLineImageUpload(index, e)}

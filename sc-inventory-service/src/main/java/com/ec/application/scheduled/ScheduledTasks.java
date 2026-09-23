@@ -93,8 +93,19 @@ public class ScheduledTasks {
         smsService.sendIOStats();
     }*/
 
+    /** True only when a "prod" profile is active — gates side-effecting jobs so QA/staging stay silent. */
+    private boolean isProdProfile() {
+        return Arrays.stream(environment.getActiveProfiles()).anyMatch(p -> p.contains("prod"));
+    }
+
     @Scheduled(cron = "0 0 21 * * *", zone = "Asia/Kolkata")
     public void sendDailyStockEmailReport() {
+        // Only the prod instance sends to the real recipient list; QA/staging must stay silent
+        // (recipients auto-seed real addresses on every startup — see EmailRecipientService).
+        if (!isProdProfile()) {
+            log.info("Daily stock email report skipped — non-prod profile");
+            return;
+        }
         log.info("Daily stock email report triggered");
         try {
             List<String> tenants = schemaConfig.getNonMasterSchemaList();
@@ -157,6 +168,10 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 7 * * *", zone = "Asia/Kolkata")
     public void processExpiryAlerts() {
+        if (!isProdProfile()) {
+            log.info("Expiry alert job skipped — non-prod profile");
+            return;
+        }
         log.info("Expiry alert job triggered");
         List<String> tenants = schemaConfig.getNonMasterSchemaList();
         for (String tenantName : tenants) {
@@ -173,6 +188,10 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Kolkata")
     public void runNightlyStockBalanceValidation() {
+        if (!isProdProfile()) {
+            log.info("Nightly stock balance validation skipped — non-prod profile");
+            return;
+        }
         log.info("Nightly stock balance validation triggered");
         try {
             stockBalanceValidationService.runNightlyValidation();

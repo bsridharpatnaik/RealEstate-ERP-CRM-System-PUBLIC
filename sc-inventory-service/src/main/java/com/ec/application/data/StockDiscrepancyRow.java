@@ -13,6 +13,7 @@ public class StockDiscrepancyRow {
     private double totalOutward;
     private double totalLostDamaged;
     private double totalTransferOut;
+    private double totalWriteOff;
     private double expectedStock;
     private double actualStock;
     private double discrepancy;
