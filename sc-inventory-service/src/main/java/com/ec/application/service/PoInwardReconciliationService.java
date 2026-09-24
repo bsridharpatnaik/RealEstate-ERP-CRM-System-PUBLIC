@@ -69,7 +69,7 @@ public class PoInwardReconciliationService {
         "  COALESCE(SUM(iie.quantity_received), 0) AS received_qty," +
         "  COALESCE(p.lead_time_days, cat.lead_time_days) AS lead_time_days," +
         "  CASE WHEN COALESCE(p.lead_time_days, cat.lead_time_days) IS NOT NULL" +
-        "            AND po.status NOT IN ('CANCELLED','COMPLETE INWARD','SHORT CLOSED','SHORT CLOSE')" +
+        "            AND po.status NOT IN ('CANCELLED','COMPLETED','SHORT CLOSED','SHORT CLOSE')" +
         "       THEN (DATEDIFF(CURDATE(), po.po_date) - COALESCE(p.lead_time_days, cat.lead_time_days))" +
         "       ELSE NULL END AS days_overdue";
 
