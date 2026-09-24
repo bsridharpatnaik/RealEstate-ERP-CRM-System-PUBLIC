@@ -15,6 +15,7 @@ import Login from "./Modules/Login";
 import Home from "./Modules/Home";
 //scss
 import "./App.scss";
+import "./scss/mobile.scss"; // phone-only overrides, must load after all other styles
 import { MuiPickersUtilsProvider } from "@material-ui/pickers";
 import MomentUtils from "@date-io/moment";
 import { connect } from "react-redux";

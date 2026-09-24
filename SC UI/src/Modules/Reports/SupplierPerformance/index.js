@@ -353,7 +353,7 @@ class SupplierPerformanceReport extends Component {
 
         <div className="list-section">
           {/* Summary Tiles */}
-          <Grid container spacing={2} style={{ marginBottom: 20 }}>
+          <Grid container spacing={2} className="report-kpi-grid" style={{ marginBottom: 20 }}>
             <Grid item>
               {this.renderTile("Total Suppliers", tiles.totalSuppliers, "#5e81f4", "#eef1fe")}
             </Grid>

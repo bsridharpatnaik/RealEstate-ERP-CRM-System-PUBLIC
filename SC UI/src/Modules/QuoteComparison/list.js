@@ -196,17 +196,17 @@ class QuoteComparisonList extends ListCommon {
                     <tr><td colSpan={9} style={{ textAlign: "center", padding: 32, color: "#aaa" }}>No records found</td></tr>
                   ) : data.map(row => (
                     <tr key={row.qcId} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                      <td style={{ padding: "10px 12px", fontWeight: 600, color: "#1565c0" }}>{row.qcId}</td>
-                      <td style={{ padding: "10px 12px" }}>{row.title}</td>
-                      <td style={{ padding: "10px 12px" }}>{this.resolveProjectDisplay(row.project)}</td>
-                      <td style={{ padding: "10px 12px", fontSize: 12, color: "#555" }}>
+                      <td data-label="QC No" style={{ padding: "10px 12px", fontWeight: 600, color: "#1565c0" }}>{row.qcId}</td>
+                      <td data-label="Title" style={{ padding: "10px 12px" }}>{row.title}</td>
+                      <td data-label="Project" style={{ padding: "10px 12px" }}>{this.resolveProjectDisplay(row.project)}</td>
+                      <td data-label="Indent(s)" style={{ padding: "10px 12px", fontSize: 12, color: "#555" }}>
                         {(row.indentIds || []).join(", ") || "—"}
                       </td>
-                      <td style={{ padding: "10px 12px" }}>{row.comparisonDate ? new Date(row.comparisonDate).toLocaleDateString("en-IN") : "—"}</td>
-                      <td style={{ padding: "10px 12px" }}>{this.renderStatusChip(row.status)}</td>
-                      <td style={{ padding: "10px 12px", textAlign: "center" }}>{(row.supplierQuotes || []).length}</td>
-                      <td style={{ padding: "10px 12px", textAlign: "center" }}>{(row.lines || []).length}</td>
-                      <td style={{ padding: "10px 12px" }}>
+                      <td data-label="Date" style={{ padding: "10px 12px" }}>{row.comparisonDate ? new Date(row.comparisonDate).toLocaleDateString("en-IN") : "—"}</td>
+                      <td data-label="Status" style={{ padding: "10px 12px" }}>{this.renderStatusChip(row.status)}</td>
+                      <td data-label="Suppliers" style={{ padding: "10px 12px", textAlign: "center" }}>{(row.supplierQuotes || []).length}</td>
+                      <td data-label="Lines" style={{ padding: "10px 12px", textAlign: "center" }}>{(row.lines || []).length}</td>
+                      <td data-label="Actions" style={{ padding: "10px 12px" }}>
                         <Button size="small" variant="outlined" onClick={() => this.openDetails(row.qcId)}>
                           View
                         </Button>

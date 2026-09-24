@@ -137,7 +137,7 @@ class List extends ListCommon {
     return (
       <div style={{ marginBottom: 8 }}>
         {/* Stat tiles */}
-        <div style={{ display: "flex", gap: 12, overflowX: "auto", padding: "12px 0 8px" }}>
+        <div className="list-stat-cards" style={{ display: "flex", gap: 12, overflowX: "auto", padding: "12px 0 8px" }}>
           {this.TILES.map((t) => {
             const count = tiles[t.countKey] || 0;
             const isActive = activeTile === t.key;

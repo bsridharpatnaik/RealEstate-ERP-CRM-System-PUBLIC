@@ -235,7 +235,7 @@ class QuoteComparisonDetails extends Component {
     const s = STATUS_COLORS[h.status] || STATUS_COLORS.DRAFT;
     return (
       <div style={{ background: "#f9fafc", border: "1px solid #e0e0e0", borderRadius: 8, padding: 16, marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+        <div className="qc-header-row" style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
               <span style={{ fontWeight: 700, fontSize: 18, color: "#1565c0" }}>{h.qcId}</span>
@@ -243,7 +243,7 @@ class QuoteComparisonDetails extends Component {
                 style={{ background: s.bg, color: s.color, fontWeight: 600 }} />
             </div>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>{h.title}</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, fontSize: 13 }}>
+            <div className="qc-info-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, fontSize: 13 }}>
               <div><span style={{ color: "#888" }}>Project: </span>{h.project || "—"}</div>
               <div><span style={{ color: "#888" }}>Date: </span>{h.comparisonDate ? new Date(h.comparisonDate).toLocaleDateString("en-IN") : "—"}</div>
               <div><span style={{ color: "#888" }}>Created by: </span>{h.createdByUser || "—"}</div>
@@ -428,7 +428,7 @@ class QuoteComparisonDetails extends Component {
                 ))}
               </div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, fontSize: 12, color: "#555", marginBottom: 12 }}>
+            <div className="qc-info-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, fontSize: 12, color: "#555", marginBottom: 12 }}>
               {sq.paymentTerms && <span>Payment: {sq.paymentTerms}</span>}
               {sq.freightTerms && <span>Freight: {sq.freightTerms}</span>}
               {sq.deliveryLeadDays && <span>Lead: {sq.deliveryLeadDays}d</span>}

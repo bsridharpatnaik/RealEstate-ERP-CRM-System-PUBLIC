@@ -121,7 +121,7 @@ function ProductCard({ productName, productCode, unit, category, rows, onRowClic
 
       {/* ── Project Rows ── */}
       {expanded && (
-        <div>
+        <div className="report-card-lines">
           {/* Column headers */}
           <div style={{
             display: 'grid',

@@ -206,6 +206,13 @@
     }
   }
 
+  // Phone-only cart controls (shown in scss/mobile.scss)
+  .indent-cart-fab,
+  .indent-cart-backdrop,
+  .indent-cart-close {
+    display: none;
+  }
+
   .step1-side-panel {
     width: 300px;
     border: 1px solid #e0e0e0;

@@ -431,6 +431,7 @@ class Configuration extends Component {
             </div>
             {activeTenant && (
               <div
+                className="config-sections-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(440px, 1fr))",

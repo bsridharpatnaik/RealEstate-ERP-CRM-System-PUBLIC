@@ -255,7 +255,7 @@ class List extends ListCommon {
   renderTiles() {
     const { tiles, activeTile } = this.state;
     return (
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 0" }}>
+      <div className="list-stat-cards" style={{ display: "flex", gap: 12, flexWrap: "wrap", padding: "12px 0" }}>
         {this.PO_TILES.map((t) => {
           const count = tiles[t.countKey] || 0;
           const isActive = activeTile === t.key;

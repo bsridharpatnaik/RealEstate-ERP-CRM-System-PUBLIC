@@ -229,24 +229,24 @@ class Step3ReviewPO extends Component {
               <tbody>
                 {lineItems.map((item, index) => (
                   <tr key={index}>
-                    <td>{index + 1}</td>
-                    <td className="review-inventory-cell">
+                    <td data-label="#">{index + 1}</td>
+                    <td data-label="Inventory" className="review-inventory-cell">
                       {item.inventoryName}
                       {item.unit && <span className="review-unit"> ({item.unit})</span>}
                     </td>
-                    <td>{this.formatValue(item.diameter)}</td>
-                    <td>{this.formatValue(item.size)}</td>
-                    <td>{this.formatValue(item.brandName)}</td>
-                    <td>{this.formatValue(item.grade)}</td>
-                    <td className="review-spec-cell">{this.formatValue(item.specification)}</td>
-                    <td className="text-right">{item.displayQty || item.quantity}</td>
-                    <td className="text-right">{this.formatCurrency(item.rate)}</td>
-                    <td className="text-right">{item.discount > 0 ? `${item.discount}%` : "-"}</td>
-                    <td className="text-right">{item.tolerance > 0 ? `${item.tolerance}%` : "-"}</td>
-                    <td className="text-right">{item.gst > 0 ? `${item.gst}%` : "-"}</td>
-                    <td className="text-right">{this.formatCurrency(item.netRate)}</td>
-                    <td className="text-right review-total-cell">{this.formatCurrency(item.totalAmt)}</td>
-                    <td style={{ textAlign: "center" }}>
+                    <td data-label="Diameter">{this.formatValue(item.diameter)}</td>
+                    <td data-label="Size">{this.formatValue(item.size)}</td>
+                    <td data-label="Brand">{this.formatValue(item.brandName)}</td>
+                    <td data-label="Grade">{this.formatValue(item.grade)}</td>
+                    <td data-label="Specification" className="review-spec-cell">{this.formatValue(item.specification)}</td>
+                    <td data-label="Qty" className="text-right">{item.displayQty || item.quantity}</td>
+                    <td data-label="Rate" className="text-right">{this.formatCurrency(item.rate)}</td>
+                    <td data-label="Discount %" className="text-right">{item.discount > 0 ? `${item.discount}%` : "-"}</td>
+                    <td data-label="Tolerance %" className="text-right">{item.tolerance > 0 ? `${item.tolerance}%` : "-"}</td>
+                    <td data-label="GST %" className="text-right">{item.gst > 0 ? `${item.gst}%` : "-"}</td>
+                    <td data-label="Net Rate" className="text-right">{this.formatCurrency(item.netRate)}</td>
+                    <td data-label="Total Amt" className="text-right review-total-cell">{this.formatCurrency(item.totalAmt)}</td>
+                    <td data-label="Sample Image" style={{ textAlign: "center" }}>
                       {item.sampleImageFileId ? (
                         <img
                           src={item.sampleImagePreview}

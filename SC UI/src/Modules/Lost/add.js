@@ -561,8 +561,8 @@ class Add extends AddForm {
 
           {/* ── SECTION 2: QUANTITY & DATE ────────────────────── */}
           {sectionHeader('2. Quantity & Details')}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 1 }}>
-            <div style={{ width: 160, flexShrink: 0 }}>
+          <div className="lost-qty-row" style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 1 }}>
+            <div className="lost-qty-field" style={{ width: 160, flexShrink: 0 }}>
               {this.renderTextField({
                 fieldname: "quantity",
                 placeholder: isLost ? "Qty Lost *" : "Qty Found *",

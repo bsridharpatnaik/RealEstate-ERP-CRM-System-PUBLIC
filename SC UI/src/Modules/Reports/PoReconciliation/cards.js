@@ -148,7 +148,7 @@ function PoCard({ purchaseOrderId, project, poDate, poStatus, supplier, lines, t
 
       {/* ── Product Lines ── */}
       {expanded && (
-        <div>
+        <div className="report-card-lines">
           {/* Column headers */}
           <div style={{
             display: 'grid',

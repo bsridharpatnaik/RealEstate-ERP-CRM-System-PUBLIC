@@ -25,6 +25,8 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import SearchIcon from "@material-ui/icons/Search";
 import ArrowDropUpIcon from "@material-ui/icons/ArrowDropUp";
 import ArrowDropDownIcon from "@material-ui/icons/ArrowDropDown";
+import ShoppingCartIcon from "@material-ui/icons/ShoppingCart";
+import CloseIcon from "@material-ui/icons/Close";
 
 
 const HtmlTooltip = withStyles((theme) => ({
@@ -41,6 +43,7 @@ const HtmlTooltip = withStyles((theme) => ({
 
 class Step1SelectIndents extends React.Component {
   state = {
+    showIndentCart: false, // phones only: Indent List opens from a cart button
     selectedCategory: 0,
     selectedRows: new Set(),
     indentData: [],
@@ -78,6 +81,9 @@ class Step1SelectIndents extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
+    if (this.state.showIndentCart && this.state.indentList.length === 0) {
+      this.setState({ showIndentCart: false });
+    }
     // Check scroll buttons when categories change
     if (prevState.categories !== this.state.categories) {
       setTimeout(() => {
@@ -666,7 +672,7 @@ class Step1SelectIndents extends React.Component {
                       className={this.itemMatchesSearch(row) ? "search-match-row" : ""}
                       style={!selectable ? { opacity: 0.55 } : undefined}
                     >
-                      <TableCell padding="checkbox">
+                      <TableCell padding="checkbox" data-label="Select">
                         <HtmlTooltip
                           title={!selectable ? `Already part of quote comparison ${row.quoteRequestedQcId}. Cancel it before requesting a new quote for this line.` : ""}
                           placement="right"
@@ -680,8 +686,8 @@ class Step1SelectIndents extends React.Component {
                           </span>
                         </HtmlTooltip>
                       </TableCell>
-                    <TableCell>{this.formatValue(row.indentNo || row.indentId)}</TableCell>
-                    <TableCell>
+                    <TableCell data-label="Indent No.">{this.formatValue(row.indentNo || row.indentId)}</TableCell>
+                    <TableCell data-label="Inventory Name">
                       {this.formatValue(row.inventoryName)}
                       {!selectable && (
                         <div style={{ fontSize: 11, color: "#00695c", marginTop: 2 }}>
@@ -689,12 +695,12 @@ class Step1SelectIndents extends React.Component {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Quantity - Unit">
                       {this.formatValue(row.quantity)} {this.formatValue(row.unit)}
                     </TableCell>
-                    <TableCell>{this.formatValue(row.projectName)}</TableCell>
-                    <TableCell>{this.formatValue(row.specification)}</TableCell>
-                    <TableCell>
+                    <TableCell data-label="Project Name">{this.formatValue(row.projectName)}</TableCell>
+                    <TableCell data-label="Specification">{this.formatValue(row.specification)}</TableCell>
+                    <TableCell data-label="Remarks">
                       {row.remarks && row.remarks.trim() ? (
                         <HtmlTooltip
                           title={
@@ -729,7 +735,7 @@ class Step1SelectIndents extends React.Component {
                         <span style={{ fontSize: "12px", color: "#999" }}>-</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Dead Stock">
                       {row.deadStockData && 
                        row.deadStockData.detailedDeadStock && 
                        Array.isArray(row.deadStockData.detailedDeadStock) && 
@@ -768,8 +774,8 @@ class Step1SelectIndents extends React.Component {
                         <span>{this.formatValue(row.deadStock)}</span>
                       )}
                     </TableCell>
-                    <TableCell>{this.formatValue(row.dateCreation)}</TableCell>
-                      {!this.props.hideSplitAction && <TableCell align="center">
+                    <TableCell data-label="Date Creation">{this.formatValue(row.dateCreation)}</TableCell>
+                      {!this.props.hideSplitAction && <TableCell align="center" data-label="Split Action">
                       <IconButton
                         size="small"
                         onClick={(e) => this.handleSplitClick(e, row)}
@@ -801,9 +807,33 @@ class Step1SelectIndents extends React.Component {
           </div>
         </div>
         {this.state.indentList.length > 0 && (
-          <div className="step1-side-panel">
+          // Cart button + backdrop are hidden on desktop (see mobile.scss); on phones the panel opens as a sheet
+          <button
+            type="button"
+            className="indent-cart-fab"
+            onClick={() => this.setState({ showIndentCart: true })}
+          >
+            <ShoppingCartIcon />
+            <span className="indent-cart-count">{this.state.indentList.length}</span>
+          </button>
+        )}
+        {this.state.showIndentCart && this.state.indentList.length > 0 && (
+          <div
+            className="indent-cart-backdrop"
+            onClick={() => this.setState({ showIndentCart: false })}
+          />
+        )}
+        {this.state.indentList.length > 0 && (
+          <div className={`step1-side-panel${this.state.showIndentCart ? " cart-open" : ""}`}>
             <div className="indent-list-header">
               Indent List ({this.state.indentList.length})
+              <IconButton
+                size="small"
+                className="indent-cart-close"
+                onClick={() => this.setState({ showIndentCart: false })}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
             </div>
             <div className="indent-list-items">
               {this.getGroupedIndentList().map((groupedItem) => (

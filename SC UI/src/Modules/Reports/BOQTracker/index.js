@@ -248,7 +248,7 @@ class BOQTracker extends Component {
 
         {/* Summary tiles */}
         {!loading && globalTotals && (
-          <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="list-stat-cards" style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
             {tiles.map(tile => (
               <div key={tile.label} title={tile.tooltip || ''} style={{
                 background: tile.bg, border: `1px solid ${tile.border}`,

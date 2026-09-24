@@ -199,7 +199,7 @@ class FifoReportList extends ListCommon {
   renderTiles() {
     const { tiles, activeTile } = this.state;
     return (
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div className="list-stat-cards" style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         {TILES.map((t) => {
           const data = tiles[t.key] || { total: 0, byProject: [] };
           const isActive = activeTile === t.key;

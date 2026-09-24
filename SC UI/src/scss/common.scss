@@ -336,6 +336,12 @@ html {
     display: flex !important;
     align-items: center !important;
 
+    // Phones: wrap the toolbar instead of clipping the last button ("Add Purchase Order")
+    @media screen and (max-width: 600px) {
+      flex-wrap: wrap !important;
+      gap: 8px;
+    }
+
     // Base: all buttons in list top bar (same height, label, icon, no shadow)
     .MuiButton-root {
       height: 34px !important;

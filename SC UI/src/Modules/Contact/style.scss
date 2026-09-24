@@ -154,6 +154,22 @@
     border-bottom: 0;
   }
 
+  // Card layout above needs natural widths: list pages (PO, Indent…) set fixed desktop column widths,
+  // min-width ~1300px and max-width:0 + ellipsis, which truncated values like the PO number to "…".
+  table {
+    min-width: 0 !important;
+    table-layout: auto !important;
+  }
+
+  table td {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+
   .warehouse-cell {
     display: flex;
     align-items: center;

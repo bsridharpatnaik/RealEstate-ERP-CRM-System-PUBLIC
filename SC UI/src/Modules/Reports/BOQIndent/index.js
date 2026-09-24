@@ -95,7 +95,7 @@ class BOQIndentReport extends Component {
 
         {/* Summary tiles */}
         {!loading && (
-          <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div className="list-stat-cards" style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
             {[
               { label: 'Total Products', value: rows.length, color: '#2980b9', bg: '#ebf5fb', border: '#aed6f1' },
               { label: 'Total BOQ Planned', value: this.fmt(totalBOQ), color: '#1a7a40', bg: '#eafaf1', border: '#a9dfbf' },

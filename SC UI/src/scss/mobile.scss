@@ -1,0 +1,572 @@
+// Phone-only layout fixes (≤ 600px). Loaded last (App.js) so it wins over module styles.
+// Everything lives inside the media query below: desktop and tablet layouts are untouched.
+// Tables become cards on phones via the global rule in Modules/Contact/style.scss (td::before = data-label);
+// the rules here make those cards and the detail popups fit a 360–414px screen.
+
+@media screen and (max-width: 600px) {
+  /* ── List pages: use the full screen width ─────────────────────────── */
+  .list-section {
+    padding: 12px 10px !important;
+  }
+  .list-section .filter-section .MuiTextField-root {
+    min-width: 0 !important; // some search boxes have a fixed desktop min-width (340px+) and overflowed
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .list-section table {
+    width: 100% !important; // some list tables shrank to their content width once rows became cards
+  }
+  .list-section table tbody td {
+    padding: 6px 8px;
+  }
+  .purchase-order-list-wrapper .list-section,
+  .indent-list-wrapper .list-section {
+    padding: 12px 0 !important;
+  }
+
+  /* Stat cards (This Week / This Month …): two per row, full width */
+  .list-stat-cards {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+  .list-stat-cards > div {
+    flex: 1 1 calc(50% - 6px) !important;
+    min-width: 0 !important;
+  }
+
+  /* List toolbar: two equal buttons per row */
+  .list-section .filter-section .top-button-wrapper {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 8px;
+  }
+  .list-section .filter-section .top-button-wrapper > * {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 0 !important;
+  }
+  .home .list-section .filter-section .top-button-wrapper {
+    flex-direction: row !important; // some modules stack it in a column at ≤768px
+  }
+  .home .list-section .filter-section .top-button-wrapper > .MuiButton-root,
+  .home .list-section .filter-section .top-button-wrapper .download.MuiButton-root,
+  .home .list-section .filter-section .top-button-wrapper .add-button.MuiButton-root {
+    margin: 0 !important;
+  }
+  .home .list-section .filter-section .top-button-wrapper .download.MuiButton-root::after {
+    display: none; // desktop separator line between button groups
+  }
+
+  /* ── Card rows: label left, value right (badges, chips and icons too) ─ */
+  // Card tables are plain blocks, so a wide nested table (e.g. expanded PO lines) can't stretch every card.
+  table:has(td[data-label]),
+  table:has(td[data-label]) > tbody {
+    display: block !important;
+  }
+  table tbody td > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  table tbody td[colspan]:not([data-label]) {
+    display: block !important; // expansion rows (nested line tables) scroll inside the card
+    width: 100% !important;
+    overflow-x: auto;
+  }
+  table tbody td.action-single {
+    padding: 8px 16px !important;
+  }
+  table tbody td {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    text-align: right !important;
+  }
+  table tbody td::before {
+    margin-right: auto;
+    text-align: left;
+    font-size: 12px; // same label size on every card (cells have different font sizes)
+    color: #444;
+  }
+  table tbody td .action-buttons-wrapper {
+    width: auto !important;
+  }
+
+  /* PO list: View / Edit / Delete side by side instead of three rows */
+  table tbody td.action-view,
+  table tbody td.action-edit,
+  table tbody td.action-delete {
+    display: inline-flex !important;
+    width: 33.33% !important;
+    justify-content: center !important;
+    padding: 8px 0 !important;
+    border-bottom: 0 !important;
+  }
+  table tbody td.action-view::before,
+  table tbody td.action-edit::before,
+  table tbody td.action-delete::before {
+    margin-right: 4px;
+  }
+  table tbody td.po-status-cell .po-status-cell-inner {
+    width: auto !important;
+  }
+  table tbody td.spl-po-cell:empty {
+    display: none !important;
+  }
+
+  /* ── Detail popups (PO, Indent, …): full screen, no stacked paddings ── */
+  .details-popup-paper {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+  }
+  .details-popup-content {
+    height: 100%;
+  }
+  .details-popup-content .detail-section {
+    max-height: none !important;
+    min-height: 100%;
+  }
+  .details-popup-content .details-main-content {
+    max-height: none !important; // common.scss caps it at 250px ≤768px — inside a full-screen popup use the height
+  }
+  .purchase-order-detail-section,
+  .indent-detail-section {
+    padding: 0 !important;
+  }
+  .detail-content-panel > .MuiBox-root {
+    padding: 8px 0 !important;
+  }
+  .purchase-order-detail-section .detail-content,
+  .indent-detail-section .detail-content {
+    padding: 12px !important;
+  }
+  .detail-section-group {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .detail-section-group > * {
+    min-width: 0;
+  }
+  .details-header {
+    padding: 10px 12px !important;
+  }
+  .details-header .po-number {
+    white-space: nowrap;
+  }
+  .details-header {
+    gap: 4px;
+  }
+  .details-header > * {
+    min-width: 0;
+  }
+  .details-header > :last-child {
+    display: flex !important; // action icons (⋮, edit, delete, close) stay on one line
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .details-header .MuiIconButton-root {
+    padding: 8px;
+  }
+
+  /* Tables whose cells have no data-label can't become readable cards (they'd show values without
+     labels): keep them as real tables with visible headers that scroll sideways. */
+  table:not(:has(td[data-label])) thead {
+    position: static !important;
+    clip: auto !important;
+    height: auto !important;
+    width: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+  table:not(:has(td[data-label])) tr {
+    display: table-row !important;
+    margin: 0 !important;
+  }
+  table:not(:has(td[data-label])) td,
+  table:not(:has(td[data-label])) th {
+    display: table-cell !important;
+    text-align: left !important;
+  }
+  table:not(:has(td[data-label])) td {
+    min-width: 110px !important; // avoid one-word-per-line columns; the table scrolls sideways anyway
+  }
+  // …except icon-only / checkbox / empty cells (expand arrows, selection boxes)
+  table:not(:has(td[data-label])) td:empty,
+  table:not(:has(td[data-label])) td:has(> .MuiIconButton-root:only-child),
+  table:not(:has(td[data-label])) td:has(> svg:only-child),
+  table:not(:has(td[data-label])) td:has(> .MuiCheckbox-root),
+  table:not(:has(td[data-label])) td:has(> input[type="checkbox"]) {
+    min-width: 0 !important;
+  }
+  // Pinned (sticky) header/columns stick at wrong offsets inside a sideways-scrolling table on phones
+  // (Global Dashboard stock table: "Total Stock" floated over the first row)
+  table:not(:has(td[data-label])) th,
+  table:not(:has(td[data-label])) td {
+    position: static !important;
+  }
+  table:not(:has(td[data-label])) td::before {
+    content: none !important;
+  }
+  table:not(:has(td[data-label])) {
+    display: block !important; // the table itself scrolls sideways, not its whole page section
+    overflow-x: auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Tables that must stay real tables on phones (line items in details, AI chat answers):
+     undo the global card layout and scroll sideways instead */
+  .inventory-table-wrapper {
+    overflow-x: auto !important;
+  }
+  .inventory-table-wrapper table tr,
+  .ai-assistant table tr {
+    display: table-row !important;
+    margin: 0 !important;
+  }
+  .inventory-table-wrapper table td,
+  .inventory-table-wrapper table th,
+  .ai-assistant table td,
+  .ai-assistant table th {
+    display: table-cell !important;
+    text-align: left !important;
+  }
+  .inventory-table-wrapper table td::before,
+  .ai-assistant table td::before {
+    content: none !important;
+  }
+  .ai-assistant table thead {
+    position: static !important;
+    clip: auto !important;
+    height: auto !important;
+    width: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+  .inventory-table-wrapper table td:first-child,
+  .inventory-table-wrapper table th:first-child {
+    min-width: 170px; // item name + spec, otherwise squeezed into a tall narrow column
+  }
+  .inventory-table-wrapper thead {
+    position: static !important;
+    clip: auto !important;
+    height: auto !important;
+    width: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Report cards (PO reconciliation, stock aging): the line grid has fixed desktop columns —
+     scroll it sideways inside the card instead of clipping the right-hand columns */
+  .report-card-lines {
+    overflow-x: auto;
+  }
+  .report-card-lines > div {
+    min-width: 780px; // fixed columns ≈ 600px + room for the product name
+  }
+
+  /* Report KPI tiles laid out with MUI Grid: two per row */
+  .report-kpi-grid > .MuiGrid-item {
+    flex: 1 1 50%;
+    max-width: 50%;
+  }
+  .report-kpi-grid .MuiPaper-root {
+    min-width: 0 !important;
+  }
+
+  /* Form fields with fixed desktop min-widths (e.g. Historical Pricing product search, 400px) */
+  .MuiAutocomplete-root {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  .MuiFormControl-root {
+    max-width: 100%;
+  }
+
+  /* BOQ upload: structure-type / structure dropdown pair wraps under each other */
+  .boq-target-row {
+    flex-wrap: wrap;
+  }
+  .boq-target-row > div {
+    min-width: 0 !important;
+    flex: 1 1 calc(100% - 40px); // one dropdown per line, next to the "1." index
+  }
+
+  /* Tabbed pages with an action button (Pricing, All Inventory): button goes under the tabs */
+  .top-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-right: 10px !important;
+  }
+  .top-tabs .MuiTabs-root {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .top-tabs .add-button {
+    margin-left: auto !important;
+  }
+
+  /* Product merge: source / target cards stacked, arrow points down */
+  .product-merge-page .merge-product-selectors {
+    flex-direction: column;
+  }
+  .product-merge-page .merge-product-card {
+    width: 100%;
+  }
+  .product-merge-page .merge-arrow {
+    transform: rotate(90deg);
+  }
+
+  /* Project configuration: one settings panel per row (desktop grid has 440px minimum columns) */
+  .config-sections-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* Global BOQ: project picker takes the remaining width (desktop min-width 280px overflowed) */
+  .global-boq-page .global-boq-project-selector .project-select {
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* Add/Edit Indent & PO headers: title on one line, Cancel / Save as Draft / Review below it */
+  .create-po-header-row {
+    flex-wrap: wrap !important;
+    gap: 8px;
+  }
+  .create-po-header-row .po-action-buttons {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .create-po-header-row .po-action-buttons .MuiButton-root {
+    white-space: nowrap;
+  }
+
+  /* Create PO step 2: "Order To" / "Order From" stacked; picker full width, "Or + Add New" below */
+  .step2-fill-details .order-sections-container {
+    flex-direction: column !important;
+    gap: 12px;
+  }
+  .step2-fill-details .order-sections-container > .form-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  .step2-fill-details .order-to-content {
+    width: 100% !important;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .step2-fill-details .order-to-content .MuiAutocomplete-root {
+    flex: 1 1 100% !important;
+    width: auto !important;
+  }
+
+  /* Add/Edit forms (.add .flex rows stack below 768px but had no spacing → labels touched the field above) */
+  .add .flex {
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .add .flex > .MuiFormControl-root,
+  .add .flex > .MuiAutocomplete-root {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Filter panels: their floating wrapper had no z-index, so a table's pinned "Action" header (z-index 3)
+     painted on top of the open filter */
+  *:has(> .filter-container) {
+    z-index: 1200;
+  }
+
+  /* Right-side slide-in panels (e.g. supplier price comparison, fixed 560px) fit the screen */
+  .MuiDrawer-paperAnchorRight {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  .MuiDrawer-paperAnchorRight > * {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Form sections with an inline two-column grid (e.g. Add Service Order): one field per row */
+  .form-section [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* Stock adjustment: Qty (+unit) on one line, Date and Remarks full width below */
+  .lost-qty-row {
+    flex-wrap: wrap;
+  }
+  .lost-qty-row > .MuiFormControl-root {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+  .lost-qty-row > .lost-qty-field {
+    flex: 1 1 auto !important;
+  }
+
+  /* Quote comparison details: actions go under the summary; summary fields two per row */
+  .qc-header-row {
+    flex-wrap: wrap;
+  }
+  .qc-header-row > :first-child {
+    flex: 1 1 100% !important;
+    min-width: 0;
+  }
+  .qc-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Dashboard charts: the D/W/M + month header (fixed 21px) overlapped the chart; let it wrap and grow */
+  .chartwrapper {
+    height: auto !important;
+  }
+  .chartwrapper .topchart {
+    height: auto !important;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .chartwrapper .topchart .rightPanel {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding-left: 10px;
+  }
+  .chartwrapper .chartDetail {
+    height: 190px !important;
+  }
+
+  /* Create PO / New Quote Comparison step 1: the "Indent List (n)" panel sat beside the cards (fixed 300px) and
+     squeezed them to ~130px — on phones it is hidden behind a cart button and opens as a bottom sheet */
+  .step1-select-indents > .step1-side-panel {
+    display: none !important;
+  }
+  .step1-select-indents > .step1-side-panel.cart-open {
+    display: flex !important;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1301;
+    width: 100% !important;
+    margin: 0 !important;
+    max-height: 70vh !important;
+    border-radius: 12px 12px 0 0 !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  }
+  .step1-select-indents .indent-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .step1-select-indents .indent-cart-close {
+    display: inline-flex !important;
+  }
+  .step1-select-indents .indent-cart-backdrop {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .step1-select-indents .indent-cart-fab {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 1200;
+    width: 52px;
+    height: 52px;
+    border: none;
+    border-radius: 50%;
+    background: #3f51b5;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  }
+  .step1-select-indents .indent-cart-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: #f44336;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 20px;
+    text-align: center;
+  }
+
+  /* Create PO step 2: supplier / firm info boxes — label column was fixed 150px, values got cut off */
+  .step2-fill-details .order-to-details,
+  .step2-fill-details .order-from-details {
+    padding: 12px !important;
+  }
+  .step2-fill-details .order-to-details .detail-row,
+  .step2-fill-details .order-from-details .detail-row {
+    gap: 8px;
+  }
+  .step2-fill-details .order-to-details .detail-row .detail-label,
+  .step2-fill-details .order-from-details .detail-row .detail-label {
+    min-width: 105px !important;
+    width: 105px;
+    flex-shrink: 0;
+  }
+  .step2-fill-details .order-to-details .detail-row .detail-value,
+  .step2-fill-details .order-from-details .detail-row .detail-value {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  /* Create/Edit PO review step: supplier / firm cards stacked; label column narrow so values have room */
+  .step3-review-po {
+    padding: 0 0 24px !important;
+  }
+  .step3-review-po .review-two-col {
+    flex-direction: column;
+    gap: 12px !important;
+  }
+  .step3-review-po .review-card .review-field-row .review-field-label {
+    min-width: 105px !important;
+    width: 105px;
+  }
+  .step3-review-po .review-card .review-field-row .review-field-value {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  /* Inward/Outward product lines (inline 8-column grid): two columns, Warehouse and Product full width */
+  .products-list [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    row-gap: 10px !important;
+  }
+  .products-list [style*="grid-template-columns"] > :nth-child(1),
+  .products-list [style*="grid-template-columns"] > :nth-child(2) {
+    grid-column: 1 / -1;
+  }
+  .products-list [style*="grid-template-columns"] > :last-child {
+    justify-self: end;
+  }
+
+  /* Legends / hints above list toolbars wrap instead of squeezing */
+  .list-section .filter-section > div {
+    flex-wrap: wrap;
+  }
+
+  /* Smart suggestion card (indent / PO details) */
+  .smart-suggestion {
+    margin: 8px 12px 12px !important;
+  }
+}

@@ -337,19 +337,19 @@ class List extends ListCommon {
                         onClick={() => this.showDetail(row)}
                         style={{ borderBottom: "1px solid #f0f0f0", cursor: "pointer" }}
                       >
-                        <td style={{ padding: "10px 8px", fontWeight: 600 }}>{row.serviceOrderId}</td>
-                        <td style={{ padding: "10px 8px" }}>{row.serviceDate}</td>
-                        <td style={{ padding: "10px 8px" }}>{row.vendor?.name || "-"}</td>
-                        <td style={{ padding: "10px 8px" }}>{row.projectName || "-"}</td>
-                        <td style={{ padding: "10px 8px" }}>{row.subject || "-"}</td>
-                        <td style={{ padding: "10px 8px" }}>
+                        <td data-label="SO Number" style={{ padding: "10px 8px", fontWeight: 600 }}>{row.serviceOrderId}</td>
+                        <td data-label="Service Date" style={{ padding: "10px 8px" }}>{row.serviceDate}</td>
+                        <td data-label="Vendor" style={{ padding: "10px 8px" }}>{row.vendor?.name || "-"}</td>
+                        <td data-label="Project" style={{ padding: "10px 8px" }}>{row.projectName || "-"}</td>
+                        <td data-label="Subject" style={{ padding: "10px 8px" }}>{row.subject || "-"}</td>
+                        <td data-label="Service Type(s)" style={{ padding: "10px 8px" }}>
                           {serviceTypes.length > 0 ? serviceTypes.join(", ") : <span style={{ color: "#bbb" }}>-</span>}
                         </td>
-                        <td style={{ padding: "10px 8px" }}>{row.lines ? row.lines.length : 0}</td>
-                        <td style={{ padding: "10px 8px", textAlign: "right" }}>
+                        <td data-label="Lines" style={{ padding: "10px 8px" }}>{row.lines ? row.lines.length : 0}</td>
+                        <td data-label="Grand Total" style={{ padding: "10px 8px", textAlign: "right" }}>
                           {row.grandTotal != null ? `₹ ${Number(row.grandTotal).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                         </td>
-                        <td style={{ padding: "10px 8px" }}>
+                        <td data-label="Next Service" style={{ padding: "10px 8px" }}>
                           {row.nextServiceDate ? (
                             <span style={isOverdue ? { color: "#c62828", fontWeight: 600 } : {}}>
                               {row.nextServiceDate}{isOverdue ? " (overdue)" : ""}
@@ -358,12 +358,12 @@ class List extends ListCommon {
                             <span style={{ color: "#bbb" }}>-</span>
                           )}
                         </td>
-                        <td style={{ padding: "10px 8px" }}>
+                        <td data-label="Status" style={{ padding: "10px 8px" }}>
                           <span style={{ ...statusStyle, padding: "3px 10px", borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
                             {(row.status || "").replace(/_/g, " ")}
                           </span>
                         </td>
-                        <td style={{ padding: "10px 8px" }}>{row.createdBy || "-"}</td>
+                        <td data-label="Created By" style={{ padding: "10px 8px" }}>{row.createdBy || "-"}</td>
                       </tr>
                     );
                   })

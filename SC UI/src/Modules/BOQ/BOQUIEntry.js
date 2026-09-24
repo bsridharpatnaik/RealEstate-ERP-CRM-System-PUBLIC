@@ -564,7 +564,7 @@ const BOQUIEntry = ({ buildingTypeData, onDone }) => {
       </div>
 
       {targets.map((t, idx) => (
-        <div key={t.id} style={s.targetRow}>
+        <div key={t.id} className="boq-target-row" style={s.targetRow}>
           <span style={{ ...s.hint, minWidth: '20px' }}>{idx + 1}.</span>
 
           <div style={s.selectBox}>
