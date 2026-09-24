@@ -13,6 +13,7 @@ Multi-tenant ERP/CRM platform for real-estate and construction operations, cover
 - **BOQ-driven control** for planning, tracking, and cross-project visibility
 - **CRM and post-sales workflows** for leads, pipeline execution, customer engagement, and payment tracking
 - **Shared platform services** for authentication, tenants, users, and role-based access
+- **AI assistant and smart suggestions** that answer questions from live data and flag what needs attention while approving indents and raising POs
 
 ## Core Modules
 
@@ -85,10 +86,24 @@ The platform has grown well beyond its initial inventory scope. Major capabiliti
 - Global and cross-project dashboards
 
 **Platform**
+- **Phone-friendly layouts** across list, detail, report and form pages, including the multi-step PO wizard
 - **Multi-tenant** schema routing (per-tenant schemas plus a shared master schema)
 - JWT authentication via an API gateway, with role-based access
 - Firebase-based push notifications
 - Timezone-aware operations (Asia/Kolkata)
+
+## AI Assistant & Smart Suggestions
+
+**AI assistant (chat)**
+- Admins and purchase managers ask questions in plain English ("Which POs are pending delivery?", "Cement stock across all sites?", "PO value by month for the last 6 months") and get answers, tables and charts from live ERP data
+- Runs sandboxed with read-only data access; conversations can continue with follow-up questions
+- **Per-user daily limits** (a default plus per-user overrides) managed from an admin **AI Usage** page, which also shows usage and cost per user and a full history of who asked what
+
+**Smart suggestions (rule-based, instant, no AI cost)**
+- **Indent approval** — every item is checked before approval: stock already at the project (with how long it has been sitting), unused stock at other projects that could be transferred, material already on order and still to arrive, similar indents raised recently, and BOQ overruns. Ends with the top suggested actions. No prices are shown to approvers.
+- **Purchase order creation** — as rates are entered: last price paid (supplier, date), the 6-month price range and lowest price, how the entered rate compares with both, a note when the last price is stale, and the same item already on order for other projects
+- **PO details** — received vs pending per line, short-close / cancellation, and the last real status change in plain English
+- **Dashboard "Needs attention" banner** — indents waiting for approval, approved indents without a PO, POs with nothing received, and POs with no progress, each with the oldest example; role- and project-aware
 
 ## Product Highlights
 
@@ -131,6 +146,7 @@ This repository represents a **construction-focused ERP/CRM platform** with stro
 - **PDF:** iText
 - **Notifications:** Firebase
 - **Frontend:** React 16 (Create React App, `env-cmd`)
+- **AI:** Anthropic Claude, via the Claude Code CLI, for the chat assistant
 
 ### Services & ports
 
@@ -154,6 +170,7 @@ For developers exploring the code, some of the notable patterns and libraries us
 - **MinIO** SDK — object storage for file/document attachments
 - **Firebase Cloud Messaging** — push notifications
 - **Spring `@Async` + `@Scheduled`** — asynchronous API/activity logging and scheduled cleanup jobs
+- **Deterministic smart-suggestion writer** (`SmartSuggestionWriter`) — turns SQL facts into natural sentences with stable wording per record and Indian number formatting; unit-tested with JUnit and Jest
 
 ## Configuration Before Running
 
@@ -206,6 +223,13 @@ For developers exploring the code, some of the notable patterns and libraries us
   - `sc-inventory-service/src/main/resources/SQLs/CreateViews.sql`
   - `sc-crm-service/src/main/resources/DB Scripts/CreateViews.sql`
   - `sc-common-service/src/main/resources/CreateViews.sql`
+
+### 4. AI assistant (optional)
+
+- `ai.assistant.command` (inventory service) — external command that answers a question: receives the question on stdin and a session id (or `-`) as its argument, and prints the Claude CLI JSON result. Default: `sudo -n /usr/local/bin/erp-ai-ask`.
+- `ai.assistant.timeout-seconds` — default 180.
+- The assistant's runtime (sandbox wrapper, prompt and data skills) is environment-specific and **not included** in this repository. Without it the chat returns an error; everything else, including smart suggestions, works without AI.
+- Daily limits are set from the **AI Usage** admin page (built-in default: 5 questions per user per day).
 
 ### Run order
 
