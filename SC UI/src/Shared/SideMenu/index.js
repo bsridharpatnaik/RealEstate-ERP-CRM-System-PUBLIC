@@ -78,6 +78,7 @@ function SideMenu(props) {
     props.history.location.pathname === "/historicalPricing" ||
     props.history.location.pathname === "/user" ||
     props.history.location.pathname === appRoutes.activeUsers ||
+    props.history.location.pathname === appRoutes.aiUsage ||
     props.history.location.pathname === "/firm" ||
     props.history.location.pathname === appRoutes.productMerge ||
     props.history.location.pathname === appRoutes.activityLog ||
@@ -367,6 +368,12 @@ function SideMenu(props) {
   onClick={props.setSideBarValue}
   linkurl={appendURL(appRoutes.activeUsers)}
 />
+                    <DashboardItem
+  nodeId="58"
+  labelText="AI Usage"
+  onClick={props.setSideBarValue}
+  linkurl={appendURL(appRoutes.aiUsage)}
+/>
                     {/* <DashboardItem
                     nodeId="4"
                     labelText={messages.common.role}
@@ -596,6 +603,15 @@ function SideMenu(props) {
     props.setSideBarValue();
   }}
   linkurl={appRoutes.activeUsers}
+/>
+    <DashboardItem
+  nodeId="59"
+  labelText="AI Usage"
+  onClick={() => {
+    setSession("tennant-id", null);
+    props.setSideBarValue();
+  }}
+  linkurl={appRoutes.aiUsage}
 />
     <DashboardItem
   nodeId="56"

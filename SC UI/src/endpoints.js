@@ -418,6 +418,16 @@ export const apiEndpoints = {
   quoteComparisonCancel: (qcId) => `/api/inventory/quote-comparison/${qcId}/cancel`,
   quoteComparisonLinkToPo: "/api/inventory/quote-comparison/link-to-po",
   quoteComparisonFinalizedForPo: "/api/inventory/quote-comparison/finalized-for-po",
+  aiAssistantAsk: "/api/inventory/ai-assistant/ask",
+  aiAssistantUsage: "/api/inventory/ai-assistant/usage",
+  aiUsageReport: "/api/inventory/ai-assistant/usage-report",
+  aiUsageLimits: "/api/inventory/ai-assistant/limits",
+  aiUsageHistory: (username) => `/api/inventory/ai-assistant/history?days=30${username ? "&username=" + encodeURIComponent(username) : ""}`,
+  smartSuggestionPo: (poId) => `/api/inventory/smart-suggestion/po/${poId}`,
+  smartSuggestionIndent: (indentId) => `/api/inventory/smart-suggestion/indent/${indentId}`,
+  smartSuggestionAttention: "/api/inventory/smart-suggestion/attention",
+  smartSuggestionOpenPos: (productIds, excludePoId) =>
+    `/api/inventory/smart-suggestion/open-pos?productIds=${productIds.join(",")}${excludePoId ? "&excludePoId=" + encodeURIComponent(excludePoId) : ""}`,
   quoteComparisonRfqPdf: (qcId) => `/api/inventory/quote-comparison/${qcId}/rfq-pdf`,
 };
 export const exportURL = {
@@ -469,6 +479,7 @@ export const appRoutes = {
   home: "/",
   user: "/user",
   activeUsers: "/activeUsers",
+  aiUsage: "/aiUsage",
   role: "/role",
   broker: "/crm/broker",
   sentiment: "/crm/sentiment",

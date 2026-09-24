@@ -58,11 +58,13 @@ import {
 } from "./../index";
 import BOQReport from "../BOQReport";
 import ActiveUsers from "../ActiveUsers";
+import AiUsage from "../AiUsage";
 
 import CRM from "./../CRM";
 import DashboardwithTabs from "./../Dashboard/Dashboard";
 import GlobalDashboard from "./../GlobalDashboard";
 import SideMenu from "./../../Shared/SideMenu";
+import AiAssistant from "./../../Shared/AiAssistant";
 import PrivateRoute from "./../../Shared/PrivateRoute";
 import { appRoutes } from "./../../endpoints";
 import { setSideBarValue } from "../../actions/sideMenu";
@@ -101,6 +103,11 @@ class Home extends React.Component {
                 <PrivateRoute
                   component={(props) => <ActiveUsers {...props} key={new Date()} />}
                   path={appRoutes.activeUsers}
+                  onlyAdmin={true}
+                />
+                <PrivateRoute
+                  component={(props) => <AiUsage {...props} key={new Date()} />}
+                  path={appRoutes.aiUsage}
                   onlyAdmin={true}
                 />
                 <PrivateRoute
@@ -258,6 +265,7 @@ class Home extends React.Component {
                 <Redirect from="/" to={appRoutes.globalDashboard} />
               </Switch>
             </main>
+            <AiAssistant />
           </div>
         </Router>
       </React.Fragment>

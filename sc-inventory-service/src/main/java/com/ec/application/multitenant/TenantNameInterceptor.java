@@ -64,6 +64,8 @@ public class TenantNameInterceptor extends HandlerInterceptorAdapter {
                     Pattern.compile(".*/admin.*"),           // admin/backfill endpoints — always master schema
                     Pattern.compile(".*/quote-comparison.*"), // quote comparison — master schema global module
                     Pattern.compile(".*/health.*"),          // public DB health check — no tenant header, routes to master
+                    Pattern.compile(".*/ai-assistant.*"),    // admin AI chat — global, not project-scoped
+                    Pattern.compile(".*/smart-suggestion.*"), // indent/PO smart suggestions — read master tables
                     // Global reports — master-schema sync tables, routed via @UseDefaultTenant and
                     // filtered per-query by getCurrentUserAllowedSchemas(). They must NOT be gated on the
                     // caller's selected tenant-id (a store-incharge may not have access to the currently
