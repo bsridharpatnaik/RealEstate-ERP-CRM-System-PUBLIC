@@ -21,6 +21,8 @@ import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Popover from "@material-ui/core/Popover";
 import moment from "moment";
+import SmartSuggestion from "./../../../Shared/SmartSuggestion";
+import { poRateSuggestion } from "./../../../Shared/SmartSuggestion/poRates";
 import DatePicker from "./../../../Shared/Date";
 import { constants } from "./../../../messages";
 import SettingsIcon from "@material-ui/icons/Settings";
@@ -67,6 +69,7 @@ class Step2FillDetails extends React.Component {
     firmDetailsCache: {}, // Cache for firm details by ID
     // PO rate history tooltip
     ratesCache: {},           // productId -> previousRates[]
+    openPos: null,            // open POs for these items at any project (Smart suggestion); null = not loaded / no access
     ratesLoading: {},         // productId -> bool
     tooltipAnchorEl: null,    // DOM element for Popover anchor
     tooltipProductId: null,   // which product is hovered
@@ -83,6 +86,8 @@ class Step2FillDetails extends React.Component {
     this.fetchSupplierNames();
     this.fetchFirmList();
     this.fetchUnitConversionsForItems(this.props.items || []);
+    (this.props.items || []).forEach((item) => this.loadRates(item.productId));
+    this.loadOpenPos();
     API.GET(apiEndpoints.getTenants)
       .then((res) => {
         if (res.success && Array.isArray(res.data)) {
@@ -108,6 +113,8 @@ class Step2FillDetails extends React.Component {
     // Fetch unit conversions for newly added items
     if (prevProps.items !== this.props.items) {
       this.fetchUnitConversionsForItems(this.props.items || []);
+      (this.props.items || []).forEach((item) => this.loadRates(item.productId));
+      this.loadOpenPos();
     }
     // If orderTo changes and has an ID, fetch its details if not already loaded
     if (
@@ -801,23 +808,35 @@ handleAddFirm = async (firm) => {
   };
 
   // ── PO Rate History Tooltip ──────────────────────────────────────────────
-  handleProductHover = async (e, productId) => {
+  handleProductHover = (e, productId) => {
     this.setState({ tooltipAnchorEl: e.currentTarget, tooltipProductId: productId });
-    if (this.state.ratesCache[productId] !== undefined) return; // already cached
+    this.loadRates(productId);
+  };
+
+  // Shared by the hover and the Smart suggestion card. null = could not load (e.g. role without access).
+  loadRates = async (productId) => {
+    if (!productId || this.state.ratesCache[productId] !== undefined || this.state.ratesLoading[productId]) return;
     this.setState((prev) => ({ ratesLoading: { ...prev.ratesLoading, [productId]: true } }));
+    let rates = null;
     try {
       const response = await API.GET(apiEndpoints.getPurchaseOrderPreviousRates(productId));
-      const rates = response.success ? (response.data || []) : [];
-      this.setState((prev) => ({
-        ratesCache: { ...prev.ratesCache, [productId]: rates },
-        ratesLoading: { ...prev.ratesLoading, [productId]: false },
-      }));
+      if (response.success) rates = response.data || [];
     } catch {
-      this.setState((prev) => ({
-        ratesCache: { ...prev.ratesCache, [productId]: [] },
-        ratesLoading: { ...prev.ratesLoading, [productId]: false },
-      }));
+      // leave null
     }
+    this.setState((prev) => ({
+      ratesCache: { ...prev.ratesCache, [productId]: rates },
+      ratesLoading: { ...prev.ratesLoading, [productId]: false },
+    }));
+  };
+
+  loadOpenPos = async () => {
+    const ids = [...new Set((this.props.items || []).map((i) => i.productId).filter(Boolean))].sort();
+    const key = ids.join(",");
+    if (!key || key === this.openPosKey) return;
+    this.openPosKey = key;
+    const res = await API.GET(apiEndpoints.smartSuggestionOpenPos(ids, this.props.excludePoId));
+    if (this.openPosKey === key) this.setState({ openPos: res.success ? res.data || [] : null });
   };
 
   handleProductLeave = () => {
@@ -1199,6 +1218,10 @@ handleAddFirm = async (firm) => {
         {/* Purchase Order Items Table */}
         <div className="form-section items-section">
           <h3 className="section-title">Purchase order Items</h3>
+          <SmartSuggestion
+            text={poRateSuggestion(mergedItems, this.state.ratesCache, this.props.orderTo && this.props.orderTo.id, this.state.openPos)}
+            footer="Based on earlier and open purchase orders for these items across all projects (cancelled POs excluded). Hover an item for the full price list."
+          />
           <div className="items-table-wrapper">
             <div className="table-scroll-container">
               <Table>
@@ -1225,7 +1248,7 @@ handleAddFirm = async (firm) => {
                   {this.renderRateTooltip()}
                   {mergedItems.map((item, index) => (
                     <TableRow key={item.productId || index}>
-                      <TableCell
+                      <TableCell data-label="Inventory"
                         className="inventory-name-cell"
                         onMouseEnter={(e) => this.handleProductHover(e, item.productId)}
                         onMouseLeave={this.handleProductLeave}
@@ -1248,7 +1271,7 @@ handleAddFirm = async (firm) => {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Diameter">
                         <TextField
                           value={item.diameter || ""}
                           onChange={(e) =>
@@ -1259,7 +1282,7 @@ handleAddFirm = async (firm) => {
                           inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Size">
                         <TextField
                           value={item.size || ""}
                           onChange={(e) =>
@@ -1270,7 +1293,7 @@ handleAddFirm = async (firm) => {
                           inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Brand Name">
                         <TextField
                           value={item.brandName || ""}
                           onChange={(e) =>
@@ -1281,7 +1304,7 @@ handleAddFirm = async (firm) => {
                           inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Grade">
                         <TextField
                           value={item.grade || ""}
                           onChange={(e) =>
@@ -1292,7 +1315,7 @@ handleAddFirm = async (firm) => {
                           inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
                         />
                       </TableCell>
-                      <TableCell className="specification-cell">
+                      <TableCell data-label="Specification" className="specification-cell">
                         <TextField
                           value={item.specification || ""}
                           onChange={(e) =>
@@ -1307,7 +1330,7 @@ handleAddFirm = async (firm) => {
                           inputProps={{ style: { fontSize: "12px", padding: "8px" } }}
                         />
                       </TableCell>
-                      <TableCell style={{ minWidth: 130 }}>
+                      <TableCell data-label="Qty / Unit" style={{ minWidth: 130 }}>
                         {(() => {
                           const conversions = this.state.unitConversionsCache[item.productId] || [];
                           const baseUnit = item.unit || "";
@@ -1408,7 +1431,7 @@ handleAddFirm = async (firm) => {
                           );
                         })()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Tolerance %">
                         <TextField
                           type="number"
                           size="small"
@@ -1420,7 +1443,7 @@ handleAddFirm = async (firm) => {
                           style={{ width: "70px" }}
                         />
                       </TableCell>
-                      <TableCell className="rate-cell">
+                      <TableCell data-label="Rate *" className="rate-cell">
                         {item.willBeClubbed ? (
                           <div style={{ fontSize: "12px" }}>
                             <div>Rs. {item.rate}</div>
@@ -1454,7 +1477,7 @@ handleAddFirm = async (firm) => {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="Discount %">
                         {item.willBeClubbed ? (
                           <span style={{ fontSize: "12px" }}>{item.discount || "0"}%</span>
                         ) : (
@@ -1470,7 +1493,7 @@ handleAddFirm = async (firm) => {
                           />
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell data-label="GST">
                         {item.willBeClubbed ? (
                           <span style={{ fontSize: "12px" }}>{item.gst || "0"}%</span>
                         ) : (
@@ -1487,13 +1510,13 @@ handleAddFirm = async (firm) => {
                           />
                         )}
                       </TableCell>
-                      <TableCell className="net-rate-cell calculated-cell">
+                      <TableCell data-label="Net Rate" className="net-rate-cell calculated-cell">
                         {item.netRate ? `Rs. ${parseFloat(item.netRate).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                       </TableCell>
-                      <TableCell className="total-amt-cell calculated-cell">
+                      <TableCell data-label="Total Amt." className="total-amt-cell calculated-cell">
                         {item.totalAmt ? `Rs. ${parseFloat(item.totalAmt).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-"}
                       </TableCell>
-                      <TableCell style={{ minWidth: "90px", textAlign: "center" }}>
+                      <TableCell data-label="Sample Image" style={{ minWidth: "90px", textAlign: "center" }}>
                         {item.sampleImageFileId ? (
                           <div style={{ position: "relative", display: "inline-block" }}>
                             <SampleThumb
@@ -1522,7 +1545,7 @@ handleAddFirm = async (firm) => {
                         )}
                       </TableCell>
                       {!this.props.isEditMode && (
-                        <TableCell>
+                        <TableCell data-label="Action">
                           <IconButton
                             size="small"
                             className="delete-item-button"

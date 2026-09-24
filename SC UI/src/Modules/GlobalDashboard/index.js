@@ -22,6 +22,7 @@ import IconButton from "@material-ui/core/IconButton";
 import NavigateNextIcon from "@material-ui/icons/NavigateNext";
 import NavigateBeforeIcon from "@material-ui/icons/NavigateBefore";
 import InfoIcon from "@material-ui/icons/Info";
+import AttentionBanner from "../../Shared/SmartSuggestion/AttentionBanner";
 import "./style.scss";
 
 const STOCK_PIE_COLORS = [
@@ -1080,6 +1081,7 @@ class GlobalDashboard extends Component {
   render() {
     return (
       <div className="global-dashboard-wrapper">
+        <AttentionBanner />
         <div className="top">
           <div className="left box">
             {this.state.isLoaded ? this.renderPipeline() : this.renderLoader()}

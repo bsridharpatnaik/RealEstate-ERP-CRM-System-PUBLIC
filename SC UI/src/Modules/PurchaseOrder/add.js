@@ -1123,6 +1123,7 @@ class Add extends AddForm {
               fileArea={this.renderIndentStyleFileArea()}
               dropdowns={this.props.dropdowns || {}}
               isEditMode={this.state.isEditMode}
+              excludePoId={this.props.editData && this.props.editData.purchaseOrderId}
               enqueueSnackbar={this.props.enqueueSnackbar}
             />
           )}

@@ -28,6 +28,7 @@ import ArrowForwardIosIcon from "@material-ui/icons/ArrowForwardIos";
 import CheckIcon from "@material-ui/icons/Check";
 import CloseIconMui from "@material-ui/icons/Close";
 import PrintIcon from "@material-ui/icons/Print";
+import SmartSuggestion from "./../../Shared/SmartSuggestion";
 import { API } from "./../../axios";
 import { apiEndpoints } from "./../../endpoints";
 import { withSnackbar } from "notistack";
@@ -525,6 +526,12 @@ class Details extends CommonDetails {
                   <span className="detail-value">{data.createdBy || "-"}</span>
                 </div>
               </div>
+              {canShowApprove && (
+                <SmartSuggestion
+                  url={apiEndpoints.smartSuggestionIndent(data.indentId)}
+                  footer="Based on current stock (as of last sync), BOQ and this project's indents from the last 30 days."
+                />
+              )}
               {((data.inventoryItems || data.inventoryList) || []).length > 0 && (
                 <div className="detail-section-group">
                   <h3 className="section-title purchase-orders-title">Inventory List</h3>

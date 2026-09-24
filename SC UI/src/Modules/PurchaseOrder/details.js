@@ -26,6 +26,7 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
+import SmartSuggestion from "./../../Shared/SmartSuggestion";
 import Checkbox from "@material-ui/core/Checkbox";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
@@ -720,6 +721,8 @@ class Details extends CommonDetails {
               </IconButton>
             </div>
           </div>
+
+          <SmartSuggestion url={apiEndpoints.smartSuggestionPo(data.purchaseOrderId)} footer="Based on the PO lines, material received so far and status history." />
 
           {/* ── Tabs header ── */}
           <div className="po-tabs-header">

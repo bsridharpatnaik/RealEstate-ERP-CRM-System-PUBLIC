@@ -253,6 +253,7 @@ class AddLinesToPO extends React.Component {
           {currentStep === 2 && (
             <Step2FillDetails
               addLinesMode={true}
+              excludePoId={this.props.poId}
               items={items}
               onItemsChange={(updated) => this.setState({ items: updated })}
               /* supply no-op callbacks for props Step2 still accesses */
